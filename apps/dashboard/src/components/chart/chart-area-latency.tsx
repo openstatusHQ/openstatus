@@ -21,11 +21,13 @@ import {
 } from "recharts";
 
 import {
+  type INTERVALS,
   type PERCENTILES,
   type PERIODS,
   mapLatency,
 } from "@/data/metrics.client";
 import { periodToFromDate } from "@/data/metrics.client";
+import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { ChartTooltipNumber } from "./chart-tooltip-number";
@@ -45,17 +47,19 @@ export function ChartAreaLatency({
   period,
   type,
   percentile,
+  interval,
   regions,
 }: {
   monitorId: string;
   degradedAfter: number | null;
   percentile: (typeof PERCENTILES)[number];
   period: (typeof PERIODS)[number];
+  interval: (typeof INTERVALS)[number];
   type: "http" | "tcp" | "dns" | "icmp" | "grpc";
   regions: string[] | undefined;
 }) {
   const trpc = useTRPC();
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate(period);
   const toDate = endOfDay(new Date());
 
   const { data: latency } = useQuery(
@@ -63,6 +67,7 @@ export function ChartAreaLatency({
       monitorId,
       period,
       type,
+      interval,
       regions,
       fromDate: fromDate.toISOString(),
       toDate: toDate.toISOString(),
@@ -80,13 +85,18 @@ export function ChartAreaLatency({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          //   tickFormatter={(value) => value.slice(0, 3)}
+          tickFormatter={(value) =>
+            formatAxisTick(new Date(value), period, interval)
+          }
         />
         <ChartTooltip
           cursor={false}
           content={
             <ChartTooltipContent
               indicator="dot"
+              labelFormatter={(_, payload) =>
+                formatDateTime(new Date(payload[0]?.payload.timestamp))
+              }
               formatter={(value, name) => (
                 <ChartTooltipNumber
                   chartConfig={chartConfig}
@@ -119,7 +129,14 @@ export function ChartAreaLatency({
           </ReferenceLine>
         ) : null}
         <YAxis
-          domain={["dataMin", "dataMax"]}
+          domain={[
+            "dataMin",
+            // show the degraded line unless it would squash the series below half height
+            (dataMax: number) =>
+              degradedAfter && degradedAfter <= dataMax * 2
+                ? degradedAfter
+                : dataMax,
+          ]}
           tickLine={false}
           axisLine={false}
           tickMargin={8}

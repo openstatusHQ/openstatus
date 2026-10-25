@@ -54,6 +54,14 @@ export function NavActions() {
     }),
   );
 
+  const updateMonitorsMutation = useMutation(
+    trpc.monitor.updateMonitors.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
+      },
+    }),
+  );
+
   const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
@@ -64,8 +72,28 @@ export function NavActions() {
   const curlCommand =
     monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
 
+  function setActive(active: boolean) {
+    const promise = updateMonitorsMutation.mutateAsync({
+      ids: [Number.parseInt(id)],
+      active,
+    });
+    toast.promise(promise, {
+      loading: active ? "Resuming monitor..." : "Pausing monitor...",
+      success: active ? "Monitor resumed" : "Monitor paused",
+      error: (error) => {
+        if (isTRPCClientError(error)) {
+          return error.message;
+        }
+        return active ? "Failed to resume monitor" : "Failed to pause monitor";
+      },
+    });
+  }
+
+  const hiddenAction = monitor?.active ? "resume" : "pause";
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
+    pause: () => setActive(false),
+    resume: () => setActive(true),
     "copy-id": async () => {
       await navigator.clipboard.writeText(id);
       toast.success("Monitor ID copied to clipboard");
@@ -91,7 +119,11 @@ export function NavActions() {
         },
       });
     },
-  }).filter((action) => action.id !== "copy-curl" || Boolean(curlCommand));
+  }).filter(
+    (action) =>
+      action.id !== hiddenAction &&
+      (action.id !== "copy-curl" || Boolean(curlCommand)),
+  );
 
   async function testAction() {
     if (monitor?.jobType === "http") {

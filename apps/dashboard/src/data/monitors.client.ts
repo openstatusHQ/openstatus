@@ -6,6 +6,8 @@ import {
   Duplicate,
   Globe,
   Network,
+  Pause,
+  Play,
   Speed,
   Server,
   Terminal,
@@ -63,6 +65,19 @@ export const actions = [
     id: "clone",
     label: "Clone",
     icon: Duplicate,
+    variant: "default" as const,
+  },
+  // mutually exclusive: callers keep the one matching `monitor.active`
+  {
+    id: "pause",
+    label: "Pause",
+    icon: Pause,
+    variant: "default" as const,
+  },
+  {
+    id: "resume",
+    label: "Resume",
+    icon: Play,
     variant: "default" as const,
   },
   // {

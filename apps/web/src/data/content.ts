@@ -130,6 +130,10 @@ const companySection = {
       label: "Subprocessors",
       href: "/subprocessors",
     },
+    {
+      label: "Contact",
+      href: "/contact",
+    },
   ],
 };
 

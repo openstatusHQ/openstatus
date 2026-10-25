@@ -59,6 +59,16 @@ export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
 export const NUMBER_OF_DAYS = [30, 45] as const;
 export type NumberOfDays = (typeof NUMBER_OF_DAYS)[number];
 
+// mirrors `configurationLabels` in the dashboard's form-configuration.tsx
+const LABELS = {
+  type: { absolute: "Monitor checks", manual: "Reports only" },
+  value: {
+    duration: "Time per status",
+    requests: "Number of checks",
+    manual: "Worst status of the day",
+  },
+} as const;
+
 interface StatusPageContextType {
   cardType: CardType;
   setCardType: (cardType: CardType) => void;
@@ -237,7 +247,7 @@ export function FloatingButton({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="bar-type">Bar Type</Label>
+                <Label htmlFor="bar-type">Status source</Label>
                 <Select
                   value={barType}
                   onValueChange={(v) => {
@@ -249,39 +259,46 @@ export function FloatingButton({
                     }
                   }}
                 >
-                  <SelectTrigger id="bar-type" className="w-full capitalize">
+                  <SelectTrigger id="bar-type" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {BAR_TYPE.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
+                      <SelectItem key={v} value={v}>
+                        {LABELS.type[v]}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="card-type">Card Type</Label>
+                <Label htmlFor="card-type">Card shows</Label>
                 <Select
                   value={cardType}
                   onValueChange={(v) => setCardType(v as CardType)}
                   disabled={barType !== "absolute"}
                 >
-                  <SelectTrigger id="card-type" className="w-full capitalize">
-                    <SelectValue />
+                  <SelectTrigger id="card-type" className="w-full">
+                    {barType === "manual" ? (
+                      <span className="text-muted-foreground truncate">
+                        Not available for reports only
+                      </span>
+                    ) : (
+                      <SelectValue />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
-                    {CARD_TYPE.map((v) => (
-                      <SelectItem
-                        key={v}
-                        value={v}
-                        className="capitalize"
-                        disabled={["dominant", "manual"].includes(v)}
-                      >
-                        {v}
+                    {(["duration", "requests"] as const).map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {LABELS.value[v]}
                       </SelectItem>
                     ))}
+                    {/* stored configs may pair an absolute source with a manual value */}
+                    {cardType === "manual" ? (
+                      <SelectItem value="manual" disabled>
+                        {LABELS.value.manual}
+                      </SelectItem>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>

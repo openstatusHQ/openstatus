@@ -1,10 +1,9 @@
 "use client";
 
-import { Pause, Play, Trend } from "@openstatus/icons";
+import { Pause, Trend } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
-import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import React, { useEffect } from "react";
@@ -65,15 +64,6 @@ export function Client() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const queryClient = useQueryClient();
-  const resumeMonitor = useMutation(
-    trpc.monitor.updateMonitors.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
-      },
-      onError: () => toast.error("Failed to resume the monitor"),
-    }),
-  );
 
   const isBlockedPeriod = workspace?.plan === "free" && isPaidPeriod(period);
   // snap free workspaces back synchronously so charts never fire (and the server
@@ -83,8 +73,8 @@ export function Client() {
   useEffect(() => {
     if (!isBlockedPeriod) return;
     const timeout = setTimeout(() => {
-      toast.error("30 and 90 day windows require a paid plan", {
-        description: "Showing the last 14 days instead.",
+      toast.error("Windows beyond 7 days require a paid plan", {
+        description: "Showing the last 7 days instead.",
       });
       setSearchParams({ period: FREE_MAX_PERIOD });
     }, 0);
@@ -92,7 +82,7 @@ export function Client() {
   }, [isBlockedPeriod, setSearchParams]);
 
   const selectedRegions = regions ?? undefined;
-  const fromDate = periodToFromDate[effectivePeriod];
+  const fromDate = periodToFromDate(effectivePeriod);
   const toDate = endOfDay(new Date());
 
   const regionTimelineQuery = {
@@ -138,7 +128,6 @@ export function Client() {
   const filtersRegions =
     workspace?.plan !== "free" && !!selectedRegions?.length;
   const filteredOut = noData && filtersRegions;
-  const maxPeriod = workspace?.plan === "free" ? FREE_MAX_PERIOD : "90d";
 
   const configuredRegions = React.useMemo(
     () => [
@@ -214,21 +203,6 @@ export function Client() {
               <Pause />
             </EmptyStateMedia>
             <EmptyStateTitle>This monitor is paused</EmptyStateTitle>
-            <EmptyStateActions>
-              <Button
-                size="sm"
-                disabled={resumeMonitor.isPending}
-                onClick={() =>
-                  resumeMonitor.mutate({ ids: [monitor.id], active: true })
-                }
-              >
-                <Play />
-                Resume monitor
-              </Button>
-              <Button size="sm" variant="outline" asChild>
-                <NextLink href={`/monitors/${id}/edit`}>Edit monitor</NextLink>
-              </Button>
-            </EmptyStateActions>
           </ChartEmpty>
         ) : noData ? (
           <ChartEmpty className="h-[130px]">
@@ -309,6 +283,7 @@ export function Client() {
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc"}
             period={effectivePeriod}
+            interval={interval}
             regions={selectedRegions}
           />
         )}

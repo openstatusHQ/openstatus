@@ -89,7 +89,7 @@ export function DialogConfirmIncident({
           <AlertDialogTitle>Confirm your action</AlertDialogTitle>
           <AlertDialogDescription>
             You are about to <span className="font-semibold">{type}</span> this
-            incident.
+            downtime.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
