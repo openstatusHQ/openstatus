@@ -326,16 +326,21 @@ export function mapTimingPhases(
   timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"],
   percentile: (typeof PERCENTILES)[number],
 ) {
-  return timingPhases.data?.map((metric) => {
-    return {
-      timestamp: metric.timestamp,
-      dns: metric[`${percentile}Dns`],
-      ttfb: metric[`${percentile}Ttfb`],
-      transfer: metric[`${percentile}Transfer`],
-      connect: metric[`${percentile}Connect`],
-      tls: metric[`${percentile}Tls`],
-    };
-  });
+  return [...(timingPhases.data ?? [])]
+    .sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+    .map((metric) => {
+      return {
+        timestamp: metric.timestamp,
+        dns: metric[`${percentile}Dns`],
+        ttfb: metric[`${percentile}Ttfb`],
+        transfer: metric[`${percentile}Transfer`],
+        connect: metric[`${percentile}Connect`],
+        tls: metric[`${percentile}Tls`],
+      };
+    });
 }
 
 export const periodToInterval = {
