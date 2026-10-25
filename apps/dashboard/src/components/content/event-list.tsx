@@ -57,7 +57,9 @@ export function EventRow({ className, ...props }: React.ComponentProps<"li">) {
     <li
       data-slot="event-row"
       className={cn(
-        "group/row relative grid items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm",
+        "group/row relative grid items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg",
+        // the title link covers the row, so the row shows its focus (the truncated title would clip it)
+        "has-[[data-slot=event-row-link]:focus-visible]:ring-ring/50 has-[[data-slot=event-row-link]:focus-visible]:ring-[3px] has-[[data-slot=event-row-link]:focus-visible]:ring-inset",
         // folded: actor and menu sit on the title line, the duration under them
         "grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] [grid-template-areas:'title_title_title_actor_menu'_'status_date_meta_duration_duration']",
         // fixed duration column so avatars line up across rows ("10d 15h" fits)
@@ -172,7 +174,11 @@ export function EventRowTitle({
       {...props}
     >
       {href ? (
-        <Link href={href} className="after:absolute after:inset-0">
+        <Link
+          href={href}
+          data-slot="event-row-link"
+          className="outline-none after:absolute after:inset-0"
+        >
           {text}
         </Link>
       ) : (
