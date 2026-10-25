@@ -56,7 +56,10 @@ import {
 } from "@/data/activity.client";
 import { downtimeActivity } from "@/data/incidents.client";
 import { maintenanceActivity } from "@/data/maintenances.client";
-import { incidentActivity, incidentSpan } from "@/data/managed-incidents.client";
+import {
+  incidentActivity,
+  incidentSpan,
+} from "@/data/managed-incidents.client";
 import {
   type OverviewEvent,
   buildOverviewData,
