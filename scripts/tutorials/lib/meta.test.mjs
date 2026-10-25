@@ -8,9 +8,12 @@ import { validateMeta } from "./meta.mjs";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tutorials = readdirSync(dir).filter((f) => f.endsWith(".mjs"));
-// Terminal casts (scripts/record-terminal.mjs) share the meta contract.
+// Terminal casts (scripts/record-terminal.mjs) and Slack threads
+// (scripts/record-slack.mjs) share the meta contract.
 const castsDir = join(dir, "..", "casts");
 const casts = readdirSync(castsDir).filter((f) => f.endsWith(".mjs"));
+const threadsDir = join(dir, "..", "slack", "threads");
+const threads = readdirSync(threadsDir).filter((f) => f.endsWith(".mjs"));
 
 const valid = {
   order: 1,
@@ -101,5 +104,16 @@ describe("casts", () => {
       casts.map(async (f) => (await import(join(castsDir, f))).meta.order),
     );
     expect(new Set(orders).size).toBe(orders.length);
+  });
+});
+
+describe("slack threads", () => {
+  test("every thread exports a valid meta and a cast to play", async () => {
+    for (const file of threads) {
+      const thread = await import(join(threadsDir, file));
+      expect(validateMeta(thread.meta, file)).toEqual([]);
+      expect(thread.people.length).toBeGreaterThan(0);
+      expect(thread.channels.length).toBeGreaterThan(0);
+    }
   });
 });

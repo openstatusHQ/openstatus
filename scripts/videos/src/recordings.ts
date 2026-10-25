@@ -11,12 +11,14 @@ export function recordingsFrom(files: { name: string }[]): string[] {
 }
 
 // Recordings a thumbnail can be drawn from: browser recordings with a
-// thumbnail.png (recorded since thumbnails), and terminal recordings, whose
-// screens are drawn directly.
+// thumbnail.png (recorded since thumbnails), and terminal and Slack
+// recordings, which are drawn directly.
 export function thumbnailsFrom(files: { name: string }[]): string[] {
   const names = new Set(files.map((f) => f.name));
-  return recordingsFrom(files).filter(
-    (r) => names.has(`${r}/thumbnail.png`) || names.has(`${r}/terminal.json`),
+  return recordingsFrom(files).filter((r) =>
+    ["thumbnail.png", "terminal.json", "slack.json"].some((f) =>
+      names.has(`${r}/${f}`),
+    ),
   );
 }
 

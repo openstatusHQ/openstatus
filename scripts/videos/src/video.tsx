@@ -12,6 +12,8 @@ import "./fonts";
 import { buildSegments, pacedDuration, type Segment } from "./pacing";
 import { copyOf } from "./recordings";
 import { Scene } from "./scene";
+import { SlackScene } from "./slack";
+import type { SlackData } from "./slack-data";
 import { TerminalScene } from "./terminal";
 import type { TerminalData } from "./terminal-data";
 import type { Timeline } from "./timeline";
@@ -26,8 +28,9 @@ export type VideoProps = {
   // Folder under .recordings, e.g. "create-monitor".
   recording: string;
   timeline: Timeline | null;
-  // terminal.json, for terminal recordings.
+  // terminal.json and slack.json, for those recordings.
   terminal: TerminalData | null;
+  slack: SlackData | null;
 };
 
 // Section lengths in whole frames: the composition length and the sequences
@@ -80,7 +83,7 @@ function Fade({
   return <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;
 }
 
-export function Video({ recording, timeline, terminal }: VideoProps) {
+export function Video({ recording, timeline, terminal, slack }: VideoProps) {
   const { fps } = useVideoConfig();
   const segments = useMemo(
     () => (timeline ? buildSegments(timeline) : []),
@@ -105,7 +108,9 @@ export function Video({ recording, timeline, terminal }: VideoProps) {
       </Sequence>
       <Sequence from={bodyStart} durationInFrames={body}>
         <Fade frames={body} inAt outAt>
-          {timeline.kind === "terminal" && terminal ? (
+          {timeline.kind === "slack" && slack ? (
+            <SlackScene timeline={timeline} slack={slack} segments={segments} />
+          ) : timeline.kind === "terminal" && terminal ? (
             <TerminalScene
               timeline={timeline}
               terminal={terminal}

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Bring up (or tear down) what a dashboard screenshot needs: sqld,
 // the env files, a seeded libSQL on :8080 and the dashboard on :3001.
-// --api adds the API server (apps/server) on :3000, for the CLI and API casts.
+// --api adds the API server (apps/server) on :3000, for the CLI and API casts;
+// --fake-slack (implies --api) loads scripts/slack/fake.mjs into it, so the
+// Slack app runs without Slack, Redis or a model, for scripts/record-slack.mjs.
 //
-//   node scripts/dev-stack.mjs up [--reseed] [--api] [--warm /incidents/1 ...]
+//   node scripts/dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--warm /incidents/1 ...]
 //   node scripts/dev-stack.mjs down
 //   node scripts/dev-stack.mjs status
 //   node scripts/dev-stack.mjs tools      # only fetch sqld, agent-browser
@@ -55,7 +57,7 @@ for (let i = 0; i < args.length; i++) {
 }
 if (!["up", "down", "status", "tools"].includes(command)) {
   console.error(
-    "usage: dev-stack.mjs up [--reseed] [--api] [--warm <path> ...] [--port 3001] [--db-port 8080] | down | status | tools",
+    "usage: dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--warm <path> ...] [--port 3001] [--db-port 8080] | down | status | tools",
   );
   process.exit(2);
 }
@@ -347,9 +349,12 @@ async function up() {
     log(`dashboard answering after ${since(t)}`);
   }
 
-  if (flags.api) {
+  if (flags.api || flags["fake-slack"]) {
+    const fakeSlack = Boolean(flags["fake-slack"]);
     if (await apiUp()) {
-      log(`reusing API at ${apiUrl}`);
+      log(
+        `reusing API at ${apiUrl}${fakeSlack ? " (if it was started without --fake-slack, run down first)" : ""}`,
+      );
       if (!ours(state.api, API_GROUP)) delete state.api;
     } else {
       // Development mode: an API key stands in for its workspace id (key "1"
@@ -360,6 +365,9 @@ async function up() {
         "node",
         [
           "--env-file=.env",
+          ...(fakeSlack
+            ? ["--import", join(repo, "scripts/slack/fake.mjs")]
+            : []),
           "--import",
           "@oxc-node/core/register",
           "src/serve.ts",
@@ -372,6 +380,15 @@ async function up() {
             FLY_REGION: "ams",
             // Validated at import by @openstatus/emails; nothing here mails.
             RESEND_API_KEY: "re_local",
+            // The fake answers Redis and the model; these only have to be set.
+            ...(fakeSlack && {
+              SLACK_SIGNING_SECRET: "local-slack-signing-secret",
+              AI_GATEWAY_API_KEY: "fake",
+              UPSTASH_REDIS_REST_URL: "https://redis.fake.local",
+              UPSTASH_REDIS_REST_TOKEN: "fake",
+              // Only how the app's links read in the recorded messages.
+              DASHBOARD_URL: "https://app.openstatus.dev",
+            }),
             ...env,
           },
         },
@@ -398,7 +415,7 @@ async function up() {
   }
   writeState(state);
   log(
-    `ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}${flags.api ? `, API ${apiUrl}` : ""}`,
+    `ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}${flags.api || flags["fake-slack"] ? `, API ${apiUrl}` : ""}`,
   );
 }
 

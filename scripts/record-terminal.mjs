@@ -262,9 +262,12 @@ function execute(command) {
   });
 }
 
+// Escape codes are control characters, so these patterns must match them.
 const stripAnsi = (text) =>
   text
+    // oxlint-disable-next-line no-control-regex
     .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "")
+    // oxlint-disable-next-line no-control-regex
     .replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, "")
     .replace(/\r/g, "");
 

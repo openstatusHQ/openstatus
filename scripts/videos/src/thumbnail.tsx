@@ -4,6 +4,8 @@ import { Mark, palette } from "./brand";
 import { fonts } from "./fonts";
 import { panFor } from "./pan";
 import { copyOf } from "./recordings";
+import { SlackWindow } from "./slack";
+import type { SlackData } from "./slack-data";
 import { TerminalWindow } from "./terminal";
 import type { TerminalData } from "./terminal-data";
 import type { Timeline } from "./timeline";
@@ -22,9 +24,15 @@ export type ThumbnailProps = {
   recording: string;
   timeline: Timeline | null;
   terminal: TerminalData | null;
+  slack: SlackData | null;
 };
 
-export function Thumbnail({ recording, timeline, terminal }: ThumbnailProps) {
+export function Thumbnail({
+  recording,
+  timeline,
+  terminal,
+  slack,
+}: ThumbnailProps) {
   const { width, height } = useVideoConfig();
   if (!timeline) return null;
   const colors = palette.light;
@@ -91,7 +99,13 @@ export function Thumbnail({ recording, timeline, terminal }: ThumbnailProps) {
           {copy.thumbSubtitle ?? copy.subtitle}
         </div>
       </div>
-      {terminal ? (
+      {slack ? (
+        <SlackWindow
+          data={slack}
+          t={timeline.thumbnail?.t ?? timeline.duration}
+          style={{ position: "absolute", left: WINDOW_X, top: WINDOW_Y }}
+        />
+      ) : terminal ? (
         // A terminal recording ends on its result; draw that screen.
         <TerminalWindow
           data={terminal}

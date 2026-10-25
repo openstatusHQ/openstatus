@@ -228,6 +228,26 @@ its tag and pass it with `--cli`: `git clone --branch v1.4.0
 https://github.com/openstatusHQ/cli && cd cli && go build -o openstatus
 ./cmd/openstatus` (Go 1.26; `GOTOOLCHAIN=auto` fetches it).
 
+### Slack videos
+
+`node scripts/record-slack.mjs <thread>` plays `scripts/slack/threads/<thread>.mjs`
+against the real Slack app in `apps/server`, started with
+`dev-stack up --fake-slack`. That loads `scripts/slack/fake.mjs` into the
+server: Slack's Web API, response URLs, Upstash Redis and the AI model are
+answered in-process (the server builds them on `globalThis.fetch` and the AI
+SDK's default provider), with nothing changed in the product. A thread
+script sets the people (mapped to seeded users), channels and the model's
+scripted answers (the status-report draft, the postmortem), then plays the
+story: `say`, `command("/openstatus incident declare …")`, `click(actionId)`,
+`submit(values)` for the status modal, `react(person, ts, "pushpin")`. The
+recorder signs each request like Slack, waits for the server's background
+work, and keeps every message the app sent, in order:
+`.recordings/remotion/slack-<thread>/{timeline.json,slack.json}`.
+`scripts/videos` draws them in a Slack-style client (people's messages come
+from the script, the app's are its real Block Kit payloads). Run it on a
+fresh `--reseed`: the recorder replaces the workspace's Slack install and
+member mapping in the local database.
+
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.

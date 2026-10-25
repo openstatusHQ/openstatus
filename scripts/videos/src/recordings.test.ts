@@ -28,6 +28,11 @@ describe("thumbnailsFrom", () => {
     expect(thumbnailsFrom(files)).toEqual(["a"]);
   });
 
+  test("keeps Slack recordings, drawn from their events", () => {
+    const files = ["s/timeline.json", "s/slack.json"].map((name) => ({ name }));
+    expect(thumbnailsFrom(files)).toEqual(["s"]);
+  });
+
   test("keeps terminal recordings, drawn from their screens", () => {
     const files = ["t/timeline.json", "t/terminal.json"].map((name) => ({
       name,

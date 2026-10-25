@@ -33,8 +33,9 @@ export type TutorialMeta = {
 export type Timeline = {
   name: string;
   // "terminal" recordings (scripts/record-terminal.mjs) keep their screens in
-  // terminal.json, and their viewport counts character cells, not pixels.
-  kind?: "page" | "terminal";
+  // terminal.json, and their viewport counts character cells, not pixels;
+  // "slack" ones (scripts/record-slack.mjs) keep their events in slack.json.
+  kind?: "page" | "terminal" | "slack";
   meta?: TutorialMeta;
   theme: "light" | "dark";
   fps: number;
@@ -42,7 +43,9 @@ export type Timeline = {
   scale: number;
   duration: number;
   // The element thumbnail.png should keep in frame, if the tutorial named one.
-  thumbnail?: { focus: Rect | null };
+  // The element thumbnail.png should keep in frame, if the tutorial named
+  // one; for drawn recordings (slack), the moment to draw.
+  thumbnail?: { focus: Rect | null; t?: number };
   events: TimelineEvent[];
 };
 
