@@ -414,6 +414,10 @@ let failed = null;
 let shot = false;
 try {
   await tutorial.default(rec);
+  // Hold on the result: the last action's outcome (a posted update, a saved
+  // form) lands after its confirmation toast, and the video ends here.
+  await rec.settle();
+  await rec.wait(2000);
 } catch (e) {
   failed = e;
   shot = await page

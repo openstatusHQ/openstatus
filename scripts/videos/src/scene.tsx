@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import {
   AbsoluteFill,
-  Freeze,
   OffthreadVideo,
+  Sequence,
   interpolate,
   staticFile,
   useCurrentFrame,
@@ -85,13 +85,16 @@ export function Scene({
             backgroundColor: colors.background,
           }}
         >
-          <Freeze frame={Math.round(t * fps)}>
+          {/* Seek by shifting a sequence, not with <Freeze>: Remotion clamps a
+              frozen frame to the composition length, and a paced video is
+              shorter than its recording, so its tail would stand still. */}
+          <Sequence from={frame - Math.round(t * fps)} layout="none">
             <OffthreadVideo
               src={staticFile(`${recording}/video.mp4`)}
               style={{ width: vw, height: vh }}
               muted
             />
-          </Freeze>
+          </Sequence>
           {ripples.map((c) => {
             const p = (t - c.t) / RIPPLE;
             return (
