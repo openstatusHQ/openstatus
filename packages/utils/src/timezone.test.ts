@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { timeZoneShortName, timeZoneShortNames } from "./timezone";
+import {
+  resolveTimeZone,
+  timeZoneShortName,
+  timeZoneShortNames,
+} from "./timezone";
+
+describe("resolveTimeZone", () => {
+  it("keeps a zone the runtime knows", () => {
+    expect(resolveTimeZone("Asia/Tokyo")).toBe("Asia/Tokyo");
+  });
+
+  it("falls back to UTC for an unknown zone", () => {
+    expect(resolveTimeZone("Mars/Olympus")).toBe("UTC");
+  });
+});
 
 describe("timeZoneShortName", () => {
   it("keeps UTC as is", () => {
