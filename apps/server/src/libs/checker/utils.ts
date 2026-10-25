@@ -1,6 +1,10 @@
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
-import { type CheckerPayload, buildCheckerPayload } from "@openstatus/utils";
+import {
+  type CheckerPayload,
+  buildCheckerPayload,
+  isCheckerJobType,
+} from "@openstatus/utils";
 
 import { OpenStatusApiError } from "@/libs/errors";
 
@@ -8,6 +12,13 @@ export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,
   status: z.infer<typeof selectMonitorSchema>["status"],
 ): CheckerPayload {
+  // The v1 routes build the payload before the URL, so reject here to keep a 400.
+  if (!isCheckerJobType(monitor.jobType)) {
+    throw new OpenStatusApiError({
+      code: "BAD_REQUEST",
+      message: `Invalid jobType '${monitor.jobType}'`,
+    });
+  }
   return buildCheckerPayload({
     monitor,
     status,

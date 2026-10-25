@@ -26,6 +26,7 @@ export { buildCurlCommand, type CurlRequest } from "./curl";
 export { type HeaderPair, headerPairSchema, transformHeaders } from "./headers";
 export {
   buildCheckerPayload,
+  isCheckerJobType,
   type CheckerMonitor,
   type CheckerPayload,
 } from "./checker-payload";

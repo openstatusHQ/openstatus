@@ -127,6 +127,21 @@ describe("buildCheckerPayload", () => {
     });
   });
 
+  test.each(["icmp", "grpc"] as const)(
+    "%s ignores a malformed assertions string",
+    (jobType) => {
+      expect(() =>
+        build(monitor({ jobType, assertions: "{not json" })),
+      ).not.toThrow();
+    },
+  );
+
+  test("http still rejects a malformed assertions string", () => {
+    expect(() => build(monitor({ assertions: "{not json" }))).toThrow(
+      SyntaxError,
+    );
+  });
+
   test("rejects an unsupported job type", () => {
     expect(() => build(monitor({ jobType: "udp" }))).toThrow("Invalid jobType");
   });

@@ -15,6 +15,15 @@ import type {
 
 type KeyValue = { key: string; value: string };
 
+/** Job types the Go checker can run; anything else is rejected by `buildCheckerPayload`. */
+const CHECKER_JOB_TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+
+export function isCheckerJobType(
+  jobType: string,
+): jobType is (typeof CHECKER_JOB_TYPES)[number] {
+  return (CHECKER_JOB_TYPES as readonly string[]).includes(jobType);
+}
+
 /** The monitor fields the checker needs; a parsed `selectMonitorSchema` row satisfies it. */
 export type CheckerMonitor = {
   id: number;
@@ -71,7 +80,9 @@ export function buildCheckerPayload({
     // The checker treats 0 as its own default of 3, so `??` and `||` agree on the wire.
     retry: monitor.retry ?? 3,
   };
-  const assertions = monitor.assertions ? JSON.parse(monitor.assertions) : null;
+  // Lazy: ICMP and gRPC ignore assertions, so a stale string must not fail their run.
+  const assertions = () =>
+    monitor.assertions ? JSON.parse(monitor.assertions) : null;
 
   switch (monitor.jobType) {
     case "http":
@@ -81,12 +92,12 @@ export function buildCheckerPayload({
         method: monitor.method || "GET",
         body: monitor.body ?? undefined,
         headers: monitor.headers,
-        assertions,
+        assertions: assertions(),
         followRedirects: monitor.followRedirects ?? true,
       };
     case "tcp":
     case "dns":
-      return { ...common, uri: monitor.url, assertions };
+      return { ...common, uri: monitor.url, assertions: assertions() };
     // ICMP and gRPC only report reachability / serving status: no assertions.
     case "icmp":
       return { ...common, uri: monitor.url };
