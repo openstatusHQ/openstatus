@@ -47,3 +47,32 @@ export function incidentEndedAt(incident: {
   }
   return incident.closedAt;
 }
+
+export const severityLevels = {
+  minor: 1,
+  major: 2,
+  critical: 3,
+} as const satisfies Record<IncidentSeverity, 1 | 2 | 3>;
+
+export function incidentSpan(incident: {
+  status: IncidentStatus;
+  startedAt: Date;
+  resolvedAt: Date | null;
+  closedAt: Date | null;
+}) {
+  return { start: incident.startedAt, end: incidentEndedAt(incident) };
+}
+
+/** Calendar mark by severity; a canceled incident fades to grey. */
+export function incidentActivity(incident: {
+  status: IncidentStatus;
+  severity: IncidentSeverity;
+}) {
+  if (incident.status === "canceled") {
+    return { variant: "default", level: 1 } as const;
+  }
+  return {
+    variant: severityConfig[incident.severity].variant,
+    level: severityLevels[incident.severity],
+  };
+}

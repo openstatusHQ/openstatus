@@ -42,16 +42,18 @@ export async function listIncidents(args: {
         ? isNotNull(incident.closedAt)
         : isNull(incident.closedAt),
   );
-  const items = await db.query.incident.findMany({
-    where,
-    orderBy: [desc(incident.declaredAt), desc(incident.id)],
-    limit: input.limit,
-    offset: input.offset,
-    with: {
-      commander: { columns: incidentUserColumns },
-      statusReport: { columns: { id: true, title: true, status: true } },
-    },
-  });
+  const items = (
+    await db.query.incident.findMany({
+      where,
+      orderBy: [desc(incident.declaredAt), desc(incident.id)],
+      limit: input.limit,
+      offset: input.offset,
+      with: {
+        commander: { columns: incidentUserColumns },
+        statusReport: { columns: { id: true, title: true, status: true } },
+      },
+    })
+  ).map(toIncidentView);
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;

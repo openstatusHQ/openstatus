@@ -95,6 +95,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return (
         <TableCellLink
           value={row.getValue("name")}
+          empty="No name"
           href={`/monitors/${row.original.id}/overview`}
         />
       );

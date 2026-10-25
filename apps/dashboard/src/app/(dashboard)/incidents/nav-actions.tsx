@@ -1,23 +1,34 @@
 "use client";
 
-import { Button } from "@openstatus/ui/components/ui/button";
+import { Copy } from "@openstatus/icons";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 
-import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 
 export function NavActions() {
-  const params = useParams<{ id?: string }>();
-  // The layout also wraps /incidents/[id]; the detail page has its own actions.
-  const isList = !params.id;
+  // The layout also wraps /incidents/[id]; only the detail page has a menu.
+  const { id } = useParams<{ id?: string }>();
 
   return (
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
-      {isList ? (
-        <DeclareIncidentButton>
-          <Button size="sm">Declare incident</Button>
-        </DeclareIncidentButton>
+      {id ? (
+        <QuickActions
+          actions={[
+            {
+              id: "copy-id",
+              label: "Copy ID",
+              icon: Copy,
+              variant: "default",
+              onClick: async () => {
+                await navigator.clipboard.writeText(id);
+                toast.success("Incident ID copied to clipboard");
+              },
+            },
+          ]}
+        />
       ) : null}
     </div>
   );

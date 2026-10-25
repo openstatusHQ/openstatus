@@ -11,6 +11,7 @@ import {
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
+import { getMonitorHealth } from "@/data/monitors.client";
 import {
   reportResolvedAt,
   reportStartedAt,
@@ -125,6 +126,8 @@ function isOpen(event: OverviewEvent, now: Date): boolean {
 export type OverviewMetric = {
   title: string;
   value: number;
+  /** Mono aside after the value: "12 up · 1 down". */
+  detail?: string;
   href?: string;
   variant: "default" | "destructive" | "warning" | "info";
   icon: IconType;
@@ -169,15 +172,23 @@ export function buildOverviewData(
     })),
   ];
 
-  const needsAttention = events.filter(
-    (event) => event.type !== "maintenance" && isOpen(event, now),
-  );
+  const byStart = (a: OverviewEvent, b: OverviewEvent) =>
+    getStartedAt(b).getTime() - getStartedAt(a).getTime();
+  const needsAttention = events
+    .filter((event) => event.type !== "maintenance" && isOpen(event, now))
+    .sort(byStart);
   // calendar, not triage — scheduled/in-progress maintenance gets its own section
-  const upcomingMaintenances = events.filter(
-    (event) => event.type === "maintenance" && isOpen(event, now),
-  );
-  const recentlyResolved = events.filter((event) => {
-    if (isOpen(event, now)) return false;
+  const upcomingMaintenances = events
+    .filter((event) => event.type === "maintenance" && isOpen(event, now))
+    .sort((a, b) => byStart(b, a));
+  // newest end first; `recentlyResolved` is the head of `allResolved`
+  const allResolved = events
+    .filter((event) => !isOpen(event, now) && getResolvedAt(event) !== null)
+    .sort(
+      (a, b) =>
+        (getResolvedAt(b)?.getTime() ?? 0) - (getResolvedAt(a)?.getTime() ?? 0),
+    );
+  const recentlyResolved = allResolved.filter((event) => {
     const resolvedAt = getResolvedAt(event);
     return resolvedAt !== null && resolvedAt >= sevenDaysAgo;
   });
@@ -187,38 +198,62 @@ export function buildOverviewData(
     : monitorIncidents.filter((i) => !i.resolvedAt).length;
   const openReports = statusReports.filter((r) => r.status !== "resolved");
   const activeMaintenances = maintenances.filter((m) => m.to >= now);
+  const runningMaintenances = activeMaintenances.filter((m) => m.from <= now);
+  const pagesWithReport = pages.filter((p) => p.hasActiveStatusReport).length;
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const incidentsIn30d = managedIncidents
+    ? [...managedIncidents, ...(endedIncidents ?? [])].filter(
+        (i) => i.declaredAt >= thirtyDaysAgo,
+      ).length
+    : monitorIncidents.filter((i) => i.startedAt >= thirtyDaysAgo).length;
+  const reportsIn30d = statusReports.filter(
+    (r) => reportStartedAt(r) >= thirtyDaysAgo,
+  ).length;
 
   const metrics: OverviewMetric[] = [
     {
       title: "Monitors",
       value: monitors.length,
+      detail: monitorHealthDetail(monitors),
       href: "/monitors",
       variant: "default",
       icon: Monitor,
     },
     {
-      title: "Status Pages",
+      title: "Status pages",
       value: pages.length,
+      detail:
+        pages.length === 0
+          ? undefined
+          : pagesWithReport === 0
+            ? "all operational"
+            : `${pagesWithReport} with open report`,
       href: "/status-pages",
       variant: "default",
       icon: StatusPage,
     },
     {
-      title: "Open Incidents",
+      title: "Open incidents",
       value: openIncidentsCount,
+      detail: `${incidentsIn30d} in 30d`,
       href: managedIncidents ? "/incidents" : undefined,
       variant: openIncidentsCount > 0 ? "destructive" : "default",
       icon: IncidentIcon,
     },
     {
-      title: "Open Reports",
+      title: "Open reports",
       value: openReports.length,
+      detail: `${reportsIn30d} in 30d`,
       variant: openReports.length > 0 ? "warning" : "default",
       icon: eventTypeConfig.report.icon,
     },
     {
-      title: "Scheduled Maintenances",
+      title: "Maintenances",
       value: activeMaintenances.length,
+      detail: joinDetail([
+        [runningMaintenances.length, "running"],
+        [activeMaintenances.length - runningMaintenances.length, "upcoming"],
+      ]),
       variant: activeMaintenances.length > 0 ? "info" : "default",
       icon: eventTypeConfig.maintenance.icon,
     },
@@ -228,6 +263,39 @@ export function buildOverviewData(
     needsAttention,
     upcomingMaintenances,
     recentlyResolved,
+    allResolved,
     metrics,
   };
+}
+
+/** "12 up · 1 down · 2 paused"; zero counts drop out. */
+function monitorHealthDetail(monitors: RouterOutputs["monitor"]["list"]) {
+  const counts = { active: 0, degraded: 0, error: 0, inactive: 0 };
+  for (const monitor of monitors) counts[getMonitorHealth(monitor)] += 1;
+  return joinDetail([
+    [counts.active, "up"],
+    [counts.degraded, "degraded"],
+    [counts.error, "down"],
+    [counts.inactive, "paused"],
+  ]);
+}
+
+function joinDetail(parts: [number, string][]): string | undefined {
+  const text = parts
+    .filter(([count]) => count > 0)
+    .map(([count, label]) => `${count} ${label}`)
+    .join(" · ");
+  return text || undefined;
+}
+
+export function eventKey(event: OverviewEvent): string {
+  switch (event.type) {
+    case "incident":
+    case "managedIncident":
+      return `${event.type}-${event.incident.id}`;
+    case "report":
+      return `report-${event.report.id}`;
+    case "maintenance":
+      return `maintenance-${event.maintenance.id}`;
+  }
 }

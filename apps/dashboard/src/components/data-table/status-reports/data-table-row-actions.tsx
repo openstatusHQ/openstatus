@@ -18,17 +18,28 @@ export function DataTableRowActions({ row }: { row: Row<StatusReport> }) {
   return <StatusReportRowActions report={row.original} />;
 }
 
-export function StatusReportRowActions({ report }: { report: StatusReport }) {
+export function StatusReportRowActions({
+  report,
+  onAddUpdate,
+  onResolve,
+}: {
+  report: StatusReport;
+  onAddUpdate?: () => void;
+  onResolve?: () => void;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  // only wired actions: a resolved report has nothing to add or resolve
   const actions = getActions({
+    "add-update": onAddUpdate,
+    resolve: onResolve,
     "view-report": () => {
       window.open(
         `${getPageUrl(report.page)}/events/report/${report.id}`,
         "_blank",
       );
     },
-  });
+  }).filter((action) => action.onClick);
   const deleteStatusReportMutation = useMutation(
     trpc.statusReport.delete.mutationOptions({
       // no-input prefix key — matches every statusReport.list query (overview, page detail)

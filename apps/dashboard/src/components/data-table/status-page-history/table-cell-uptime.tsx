@@ -151,7 +151,11 @@ export function TableCellUptime({
                 const node = <EventItem event={event} />;
                 if (!href) return <Fragment key={key}>{node}</Fragment>;
                 return (
-                  <Link key={key} href={href} className="group/event">
+                  <Link
+                    key={key}
+                    href={href}
+                    className="group/event hover:no-underline"
+                  >
                     {node}
                   </Link>
                 );

@@ -13,7 +13,7 @@ import {
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -38,23 +38,9 @@ export function NavActions() {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const router = useRouter();
-  const pathname = usePathname();
 
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-
-  const deleteMonitorMutation = useMutation(
-    trpc.monitor.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.monitor.list.queryKey(),
-        });
-        if (pathname.includes(`/monitors/${id}`)) {
-          router.push("/monitors");
-        }
-      },
-    }),
   );
 
   const cloneMonitorMutation = useMutation(
@@ -231,17 +217,8 @@ export function NavActions() {
           <TooltipContent>Test Monitor</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <QuickActions
-        actions={actions}
-        deleteAction={{
-          confirmationValue: monitor.name ?? "monitor",
-          submitAction: async () => {
-            await deleteMonitorMutation.mutateAsync({
-              id: Number.parseInt(id),
-            });
-          },
-        }}
-      />
+      {/* no delete up here: on a nested page the bar belongs to the parent */}
+      <QuickActions actions={actions} />
       <DataTableSheetTest
         data={test}
         monitor={monitor}

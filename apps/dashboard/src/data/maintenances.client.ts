@@ -1,6 +1,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Settings, Delete } from "@openstatus/icons";
 
+import { levelFor } from "@/data/activity.client";
+
 export const actions = [
   {
     id: "edit",
@@ -38,4 +40,23 @@ export function toUpdateInput(maintenance: Maintenance) {
     endDate: maintenance.to,
     pageComponents: maintenance.pageComponentIds,
   };
+}
+
+const HOUR = 60 * 60 * 1000;
+
+export function maintenanceSpan(maintenance: { from: Date; to: Date }) {
+  return { start: maintenance.from, end: maintenance.to };
+}
+
+/** Calendar mark: blue by window length; a ring while it is still ahead. */
+export function maintenanceActivity(
+  maintenance: { from: Date; to: Date },
+  now = new Date(),
+) {
+  const length = maintenance.to.getTime() - maintenance.from.getTime();
+  return {
+    variant: "info",
+    level: levelFor(length, [HOUR, 4 * HOUR]),
+    outline: maintenance.from > now,
+  } as const;
 }

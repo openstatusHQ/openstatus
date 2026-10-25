@@ -67,7 +67,7 @@ describe("buildOverviewData", () => {
     );
     expect(data.needsAttention.map((e) => e.type)).toEqual(["incident"]);
     expect(data.recentlyResolved).toHaveLength(1);
-    expect(metric(data, "Open Incidents")).toMatchObject({
+    expect(metric(data, "Open incidents")).toMatchObject({
       value: 1,
       variant: "destructive",
       href: undefined,
@@ -77,14 +77,17 @@ describe("buildOverviewData", () => {
   it("counts managed incidents instead of monitor incidents when provided", () => {
     const data = buildOverviewData(
       {
-        ...input({ monitorIncidents: [{ resolvedAt: null }] }),
+        ...input({
+          monitorIncidents: [{ startedAt: daysAgo(1), resolvedAt: null }],
+        }),
         managedIncidents: [
-          { status: "open" },
-          { status: "mitigated" },
+          { status: "open", startedAt: daysAgo(1) },
+          { status: "mitigated", startedAt: daysAgo(2) },
         ] as unknown as Input["managedIncidents"],
         endedIncidents: [
           {
             status: "resolved",
+            startedAt: daysAgo(2),
             resolvedAt: daysAgo(1),
             closedAt: daysAgo(1),
           },
@@ -92,7 +95,7 @@ describe("buildOverviewData", () => {
       },
       now,
     );
-    expect(metric(data, "Open Incidents")).toMatchObject({
+    expect(metric(data, "Open incidents")).toMatchObject({
       value: 2,
       href: "/incidents",
     });
@@ -111,7 +114,7 @@ describe("buildOverviewData", () => {
     expect(data.needsAttention).toEqual([]);
     expect(data.upcomingMaintenances).toHaveLength(1);
     expect(data.recentlyResolved).toHaveLength(1);
-    expect(metric(data, "Scheduled Maintenances")).toMatchObject({
+    expect(metric(data, "Maintenances")).toMatchObject({
       value: 1,
       variant: "info",
     });
@@ -134,7 +137,7 @@ describe("buildOverviewData", () => {
     );
     expect(data.needsAttention.map((e) => e.type)).toEqual(["report"]);
     expect(data.recentlyResolved.map((e) => e.type)).toEqual(["report"]);
-    expect(metric(data, "Open Reports")).toMatchObject({
+    expect(metric(data, "Open reports")).toMatchObject({
       value: 1,
       variant: "warning",
     });
@@ -153,10 +156,10 @@ describe("buildOverviewData", () => {
       })),
     ).toEqual([
       { title: "Monitors", value: 2, variant: "default" },
-      { title: "Status Pages", value: 1, variant: "default" },
-      { title: "Open Incidents", value: 0, variant: "default" },
-      { title: "Open Reports", value: 0, variant: "default" },
-      { title: "Scheduled Maintenances", value: 0, variant: "default" },
+      { title: "Status pages", value: 1, variant: "default" },
+      { title: "Open incidents", value: 0, variant: "default" },
+      { title: "Open reports", value: 0, variant: "default" },
+      { title: "Maintenances", value: 0, variant: "default" },
     ]);
   });
 });

@@ -1,5 +1,7 @@
 import { Acknowledge, Check, Delete } from "@openstatus/icons";
 
+import { levelFor } from "@/data/activity.client";
+
 export const actions = [
   {
     id: "acknowledge",
@@ -33,3 +35,25 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+const MINUTE = 60 * 1000;
+
+export function downtimeSpan(incident: {
+  startedAt: Date;
+  resolvedAt: Date | null;
+}) {
+  return { start: incident.startedAt, end: incident.resolvedAt };
+}
+
+/** Calendar mark: red by how long the monitor was down. */
+export function downtimeActivity(
+  incident: { startedAt: Date; resolvedAt: Date | null },
+  now = new Date(),
+) {
+  const length =
+    (incident.resolvedAt ?? now).getTime() - incident.startedAt.getTime();
+  return {
+    variant: "destructive",
+    level: levelFor(length, [15 * MINUTE, 2 * 60 * MINUTE]),
+  } as const;
+}

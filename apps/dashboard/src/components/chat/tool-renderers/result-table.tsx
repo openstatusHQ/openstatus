@@ -64,7 +64,7 @@ export function ResultTable<K extends string>({
         </TableHeader>
         <TableBody>
           {rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow key={row.id} className="group/row">
               {columns.map((col) => (
                 <TableCell key={col.key} className={col.cellClassName}>
                   {row.cells[col.key]}
