@@ -47,7 +47,10 @@ dashboard on :3001 and warms the given routes. Servers already answering
 are reused and left alone by `down`. The session-start hook has usually
 already fetched the tools and compiled the dashboard, so `up` takes about
 15 seconds. `status` shows what is up; logs are in `.screenshots/stack/`.
-`--port` and `--db-port` move the two servers.
+`--port` and `--db-port` move the two servers. `--api` also starts the API
+server (`apps/server`) on :3000 in development mode, where an API key stands
+in for its workspace id: key `1` is the seeded workspace, and Unkey is never
+called.
 
 `pnpm -w dev:dashboard` does not work there: it runs `turso dev`, which the
 sandbox lacks. agent-browser uses the sandbox's Chromium through
@@ -202,9 +205,28 @@ their own rows.
   studio` to preview, `pnpm --filter @openstatus/videos render <tutorial>` to
   export, `pnpm --filter @openstatus/videos thumbnails` for the 1920×1080
   thumbnails (`01 · Label`, title and subtitle beside the still) in
-  `.recordings/final/<tutorial>.png`. In a cloud session pass `--browser-executable` pointing at the
-  Playwright headless shell under `/opt/pw-browsers`; Remotion cannot
-  download its own there.
+  `.recordings/final/<tutorial>.png`. In a cloud session pass
+  `--browser-executable` pointing at the Playwright headless shell under
+  `/opt/pw-browsers`; Remotion cannot download its own there.
+
+### Terminal videos (CLI, API)
+
+`node scripts/record-terminal.mjs <cast>` records `scripts/casts/<cast>.mjs`
+against the stack from `dev-stack up --api`. Each `run()` is typed (or
+`paste`d) at a prompt, runs for real in a pseudo-terminal (`script`) with
+`OPENSTATUS_API_URL`, `OPENSTATUS_API_TOKEN` and `OPENSTATUS_API_KEY` pointing
+at the local API, and its output goes through a headless xterm: colors,
+spinners and tables come out as the CLI draws them. The recorder answers the
+CLI's background-color query with white, so it picks its light-theme colors.
+It writes `.recordings/remotion/<cast>/{timeline.json,terminal.json}`, which
+`scripts/videos` renders and thumbnails like any recording. `exec` runs a
+different command from the one shown (the API cast shows
+`api.openstatus.dev` and calls the local API).
+
+The CLI is not in this repo. Build the release the video should show from
+its tag and pass it with `--cli`: `git clone --branch v1.4.0
+https://github.com/openstatusHQ/cli && cd cli && go build -o openstatus
+./cmd/openstatus` (Go 1.26; `GOTOOLCHAIN=auto` fetches it).
 
 ## Rules
 

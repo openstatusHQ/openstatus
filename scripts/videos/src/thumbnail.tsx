@@ -4,6 +4,8 @@ import { Mark, palette } from "./brand";
 import { fonts } from "./fonts";
 import { panFor } from "./pan";
 import { copyOf } from "./recordings";
+import { TerminalWindow } from "./terminal";
+import type { TerminalData } from "./terminal-data";
 import type { Timeline } from "./timeline";
 
 // 1920×1080: copy on the left, the dashboard in its window on the right,
@@ -19,9 +21,10 @@ const GRID = 76;
 export type ThumbnailProps = {
   recording: string;
   timeline: Timeline | null;
+  terminal: TerminalData | null;
 };
 
-export function Thumbnail({ recording, timeline }: ThumbnailProps) {
+export function Thumbnail({ recording, timeline, terminal }: ThumbnailProps) {
   const { width, height } = useVideoConfig();
   if (!timeline) return null;
   const colors = palette.light;
@@ -88,28 +91,38 @@ export function Thumbnail({ recording, timeline }: ThumbnailProps) {
           {copy.thumbSubtitle ?? copy.subtitle}
         </div>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          left: WINDOW_X,
-          top: WINDOW_Y,
-          width: vw * ZOOM,
-          height: vh * ZOOM,
-          borderRadius: 24,
-          overflow: "hidden",
-          backgroundColor: colors.background,
-          boxShadow: `0 0 0 1px ${colors.border}, ${colors.shadow}`,
-        }}
-      >
-        <Img
-          src={staticFile(`${recording}/thumbnail.png`)}
+      {terminal ? (
+        // A terminal recording ends on its result; draw that screen.
+        <TerminalWindow
+          data={terminal}
+          frame={terminal.frames[terminal.frames.length - 1]}
+          fontSize={24}
+          style={{ position: "absolute", left: WINDOW_X, top: WINDOW_Y }}
+        />
+      ) : (
+        <div
           style={{
+            position: "absolute",
+            left: WINDOW_X,
+            top: WINDOW_Y,
             width: vw * ZOOM,
             height: vh * ZOOM,
-            transform: `translate(${-dx * ZOOM}px, ${-dy * ZOOM}px)`,
+            borderRadius: 24,
+            overflow: "hidden",
+            backgroundColor: colors.background,
+            boxShadow: `0 0 0 1px ${colors.border}, ${colors.shadow}`,
           }}
-        />
-      </div>
+        >
+          <Img
+            src={staticFile(`${recording}/thumbnail.png`)}
+            style={{
+              width: vw * ZOOM,
+              height: vh * ZOOM,
+              transform: `translate(${-dx * ZOOM}px, ${-dy * ZOOM}px)`,
+            }}
+          />
+        </div>
+      )}
     </AbsoluteFill>
   );
 }

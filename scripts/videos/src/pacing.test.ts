@@ -47,6 +47,15 @@ describe("buildSegments", () => {
   });
 });
 
+describe("terminal output", () => {
+  test("plays a running command at real speed", () => {
+    const run = timeline(20, [{ type: "output", t: 2, t1: 14 }]);
+    const segments = buildSegments(run);
+    const at = (t: number) => segments.find((s) => s.from <= t && t < s.to);
+    expect(at(8)?.rate).toBe(1);
+  });
+});
+
 describe("sourceTime", () => {
   const segments = buildSegments(idle);
 

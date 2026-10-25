@@ -27,6 +27,13 @@ describe("thumbnailsFrom", () => {
     ].map((name) => ({ name }));
     expect(thumbnailsFrom(files)).toEqual(["a"]);
   });
+
+  test("keeps terminal recordings, drawn from their screens", () => {
+    const files = ["t/timeline.json", "t/terminal.json"].map((name) => ({
+      name,
+    }));
+    expect(thumbnailsFrom(files)).toEqual(["t"]);
+  });
 });
 
 describe("copyOf", () => {

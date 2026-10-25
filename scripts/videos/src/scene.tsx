@@ -18,7 +18,7 @@ import { eventsOf, type Timeline } from "./timeline";
 // Share of the frame height the window takes when the camera is fully out.
 const WINDOW_HEIGHT = 0.84;
 const RIPPLE = 0.5;
-const CAPTION_FADE = 0.25;
+export const CAPTION_FADE = 0.25;
 
 // Where the recorded viewport sits in the frame, and how to map into it.
 function layout(timeline: Timeline, width: number, height: number) {
@@ -137,7 +137,7 @@ export function Scene({
   );
 }
 
-function Caption({
+export function Caption({
   label,
   opacity,
   theme,

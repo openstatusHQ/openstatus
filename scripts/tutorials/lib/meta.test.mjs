@@ -8,6 +8,9 @@ import { validateMeta } from "./meta.mjs";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tutorials = readdirSync(dir).filter((f) => f.endsWith(".mjs"));
+// Terminal casts (scripts/record-terminal.mjs) share the meta contract.
+const castsDir = join(dir, "..", "casts");
+const casts = readdirSync(castsDir).filter((f) => f.endsWith(".mjs"));
 
 const valid = {
   order: 1,
@@ -80,6 +83,22 @@ describe("tutorials", () => {
   test("series order is unique", async () => {
     const orders = await Promise.all(
       tutorials.map(async (f) => (await import(join(dir, f))).meta.order),
+    );
+    expect(new Set(orders).size).toBe(orders.length);
+  });
+});
+
+describe("casts", () => {
+  test("every cast exports a valid meta", async () => {
+    for (const file of casts) {
+      const { meta } = await import(join(castsDir, file));
+      expect(validateMeta(meta, file)).toEqual([]);
+    }
+  });
+
+  test("series order is unique", async () => {
+    const orders = await Promise.all(
+      casts.map(async (f) => (await import(join(castsDir, f))).meta.order),
     );
     expect(new Set(orders).size).toBe(orders.length);
   });

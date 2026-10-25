@@ -12,6 +12,8 @@ import "./fonts";
 import { buildSegments, pacedDuration, type Segment } from "./pacing";
 import { copyOf } from "./recordings";
 import { Scene } from "./scene";
+import { TerminalScene } from "./terminal";
+import type { TerminalData } from "./terminal-data";
 import type { Timeline } from "./timeline";
 import { Intro, Outro } from "./titles";
 
@@ -24,6 +26,8 @@ export type VideoProps = {
   // Folder under .recordings, e.g. "create-monitor".
   recording: string;
   timeline: Timeline | null;
+  // terminal.json, for terminal recordings.
+  terminal: TerminalData | null;
 };
 
 // Section lengths in whole frames: the composition length and the sequences
@@ -76,7 +80,7 @@ function Fade({
   return <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;
 }
 
-export function Video({ recording, timeline }: VideoProps) {
+export function Video({ recording, timeline, terminal }: VideoProps) {
   const { fps } = useVideoConfig();
   const segments = useMemo(
     () => (timeline ? buildSegments(timeline) : []),
@@ -101,11 +105,19 @@ export function Video({ recording, timeline }: VideoProps) {
       </Sequence>
       <Sequence from={bodyStart} durationInFrames={body}>
         <Fade frames={body} inAt outAt>
-          <Scene
-            recording={recording}
-            timeline={timeline}
-            segments={segments}
-          />
+          {timeline.kind === "terminal" && terminal ? (
+            <TerminalScene
+              timeline={timeline}
+              terminal={terminal}
+              segments={segments}
+            />
+          ) : (
+            <Scene
+              recording={recording}
+              timeline={timeline}
+              segments={segments}
+            />
+          )}
         </Fade>
       </Sequence>
       <Sequence from={outroStart} durationInFrames={outro}>

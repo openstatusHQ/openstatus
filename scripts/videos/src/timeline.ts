@@ -9,6 +9,8 @@ export type TimelineEvent =
   | { type: "type"; t: number; t1: number; box: Rect; text: string }
   | { type: "step"; t: number; label: string }
   | { type: "scroll"; t: number; t1: number; dy: number }
+  // A command running in a terminal recording.
+  | { type: "output"; t: number; t1: number }
   | { type: "nav"; t: number; url: string };
 
 // The `meta` a tutorial exports (scripts/tutorials/lib/meta.mjs).
@@ -30,6 +32,9 @@ export type TutorialMeta = {
 
 export type Timeline = {
   name: string;
+  // "terminal" recordings (scripts/record-terminal.mjs) keep their screens in
+  // terminal.json, and their viewport counts character cells, not pixels.
+  kind?: "page" | "terminal";
   meta?: TutorialMeta;
   theme: "light" | "dark";
   fps: number;

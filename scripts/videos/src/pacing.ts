@@ -23,6 +23,7 @@ function activity(timeline: Timeline): [number, number][] {
       case "move":
       case "type":
       case "scroll":
+      case "output":
         return [e.t, e.t1];
       case "click":
         return [e.t, e.t + 0.5];

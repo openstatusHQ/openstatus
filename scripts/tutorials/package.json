@@ -2,10 +2,13 @@
   "name": "@openstatus/tutorials",
   "version": "0.0.0",
   "private": true,
-  "description": "Walkthrough scripts that scripts/record.mjs drives against the seeded dashboard",
+  "description": "Walkthrough scripts that scripts/record.mjs and scripts/record-terminal.mjs drive against the seeded stack",
   "type": "module",
   "scripts": {
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@xterm/headless": "catalog:"
   },
   "devDependencies": {
     "@openstatus/test-utils": "workspace:*",

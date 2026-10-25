@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Bring up (or tear down) what a dashboard screenshot needs: sqld,
 // the env files, a seeded libSQL on :8080 and the dashboard on :3001.
+// --api adds the API server (apps/server) on :3000, for the CLI and API casts.
 //
-//   node scripts/dev-stack.mjs up [--reseed] [--warm /incidents/1 ...]
+//   node scripts/dev-stack.mjs up [--reseed] [--api] [--warm /incidents/1 ...]
 //   node scripts/dev-stack.mjs down
 //   node scripts/dev-stack.mjs status
 //   node scripts/dev-stack.mjs tools      # only fetch sqld, agent-browser
@@ -54,7 +55,7 @@ for (let i = 0; i < args.length; i++) {
 }
 if (!["up", "down", "status", "tools"].includes(command)) {
   console.error(
-    "usage: dev-stack.mjs up [--reseed] [--warm <path> ...] [--port 3001] [--db-port 8080] | down | status | tools",
+    "usage: dev-stack.mjs up [--reseed] [--api] [--warm <path> ...] [--port 3001] [--db-port 8080] | down | status | tools",
   );
   process.exit(2);
 }
@@ -63,6 +64,8 @@ const port = Number(flags.port ?? 3001);
 const dbPort = Number(flags["db-port"] ?? 8080);
 const base = `http://localhost:${port}`;
 const dbUrl = `http://127.0.0.1:${dbPort}`;
+// apps/server/src/serve.ts listens on a fixed port.
+const apiUrl = "http://localhost:3000";
 
 const log = (msg) => console.error(`dev-stack: ${msg}`);
 const since = (t) => `${((Date.now() - t) / 1000).toFixed(1)}s`;
@@ -141,7 +144,7 @@ function ensureSqld() {
 }
 
 function ensureEnvFiles() {
-  for (const dir of ["apps/dashboard", "packages/db"]) {
+  for (const dir of ["apps/dashboard", "apps/server", "packages/db"]) {
     const target = join(repo, dir, ".env");
     if (!existsSync(target)) {
       copyFileSync(join(repo, dir, ".env.example"), target);
@@ -171,6 +174,15 @@ async function dashboardUp() {
     signal: AbortSignal.timeout(5000),
   }).catch(() => null);
   return res?.status === 200;
+}
+
+// /ping answers 503 only when the database is down; missing Unkey or Redis
+// only degrade it.
+async function apiUp() {
+  const res = await fetch(`${apiUrl}/ping`, {
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => null);
+  return Boolean(res) && res.status < 500;
 }
 
 async function waitFor(check, what, ms) {
@@ -234,6 +246,7 @@ function groupMembers(pgid) {
 
 const SQLD_GROUP = /\bsqld\b/;
 const DASHBOARD_GROUP = /\b(pnpm|node|next-server)\b/;
+const API_GROUP = /\bnode\b/;
 const ours = (pid, expected) =>
   Boolean(pid) && groupMembers(pid).some((m) => expected.test(m));
 
@@ -334,6 +347,42 @@ async function up() {
     log(`dashboard answering after ${since(t)}`);
   }
 
+  if (flags.api) {
+    if (await apiUp()) {
+      log(`reusing API at ${apiUrl}`);
+      if (!ours(state.api, API_GROUP)) delete state.api;
+    } else {
+      // Development mode: an API key stands in for its workspace id (key "1"
+      // is the seeded workspace) and Unkey is never called. Tinybird is off.
+      // .env fills the rest; variables set here win over it.
+      state.api = launch(
+        "api",
+        "node",
+        [
+          "--env-file=.env",
+          "--import",
+          "@oxc-node/core/register",
+          "src/serve.ts",
+        ],
+        {
+          cwd: join(repo, "apps/server"),
+          env: {
+            NODE_ENV: "development",
+            TINYBIRD_NOOP: "true",
+            FLY_REGION: "ams",
+            // Validated at import by @openstatus/emails; nothing here mails.
+            RESEND_API_KEY: "re_local",
+            ...env,
+          },
+        },
+      );
+      writeState(state);
+      const t = Date.now();
+      await waitFor(apiUp, "API", 60000);
+      log(`API answering after ${since(t)}`);
+    }
+  }
+
   // The first request to a route pays the Turbopack compile (10s+); do it here
   // so the screenshot's navigation never races a timeout.
   for (const path of flags.warm) {
@@ -348,14 +397,17 @@ async function up() {
     log(`warmed ${path}: ${res?.status ?? "unreachable"} in ${since(t)}`);
   }
   writeState(state);
-  log(`ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}`);
+  log(
+    `ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}${flags.api ? `, API ${apiUrl}` : ""}`,
+  );
 }
 
 async function down() {
   const state = readState();
+  stop("api", state.api, API_GROUP);
   stop("dashboard", state.dashboard, DASHBOARD_GROUP);
   stop("sqld", state.sqld, SQLD_GROUP);
-  if (!state.dashboard && !state.sqld)
+  if (!state.api && !state.dashboard && !state.sqld)
     log("nothing started by this script is running");
   rmSync(stateFile, { force: true });
 }
@@ -367,6 +419,9 @@ async function status() {
   );
   console.log(
     `sqld ${dbUrl}: ${(await sql(["select 1"])) ? "up" : "down"}${state.sqld ? ` (pid ${state.sqld}${alive(state.sqld) ? "" : ", gone"})` : ""}`,
+  );
+  console.log(
+    `API ${apiUrl}: ${(await apiUp()) ? "up" : "down"}${state.api ? ` (pid ${state.api}${alive(state.api) ? "" : ", gone"})` : ""}`,
   );
 }
 

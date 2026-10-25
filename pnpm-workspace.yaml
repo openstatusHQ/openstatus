@@ -151,6 +151,7 @@ catalog:
   "@upstash/redis": 1.39.0
   "@vercel/blob": 2.8.0
   "@workos-inc/node": 10.13.0
+  "@xterm/headless": 6.0.0
   ai: 7.0.109
   bcryptjs: 3.0.3
   class-variance-authority: 0.7.1

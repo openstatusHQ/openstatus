@@ -1,17 +1,27 @@
 import { Composition, Still, getStaticFiles, staticFile } from "remotion";
 
 import { recordingsFrom, thumbnailsFrom } from "./recordings";
+import type { TerminalData } from "./terminal-data";
 import { Thumbnail, type ThumbnailProps } from "./thumbnail";
 import type { Timeline } from "./timeline";
 import { Video, totalFrames, type VideoProps } from "./video";
 
-const timelineOf = async (recording: string) =>
-  (await (
-    await fetch(staticFile(`${recording}/timeline.json`))
-  ).json()) as Timeline;
+const json = async <T,>(path: string) =>
+  (await (await fetch(staticFile(path))).json()) as T;
 
-// One composition per recording (node scripts/record.mjs <id> --remotion),
-// and a <id>-thumbnail still for each that has a thumbnail.png.
+// A recording's timeline, plus its screens when it is a terminal recording.
+async function load(recording: string) {
+  const timeline = await json<Timeline>(`${recording}/timeline.json`);
+  const terminal =
+    timeline.kind === "terminal"
+      ? await json<TerminalData>(`${recording}/terminal.json`)
+      : null;
+  return { timeline, terminal };
+}
+
+// One composition per recording (node scripts/record.mjs <id> --remotion, or
+// node scripts/record-terminal.mjs <id>), and a <id>-thumbnail still for
+// each that has a thumbnail.png or a terminal.json.
 export function RemotionRoot() {
   const files = getStaticFiles();
   return (
@@ -25,13 +35,15 @@ export function RemotionRoot() {
           height={1080}
           fps={30}
           durationInFrames={1}
-          defaultProps={{ recording, timeline: null } satisfies VideoProps}
+          defaultProps={
+            { recording, timeline: null, terminal: null } satisfies VideoProps
+          }
           calculateMetadata={async ({ props }) => {
-            const timeline = await timelineOf(props.recording);
+            const { timeline, terminal } = await load(props.recording);
             return {
               fps: timeline.fps,
               durationInFrames: totalFrames(timeline, timeline.fps),
-              props: { ...props, timeline },
+              props: { ...props, timeline, terminal },
             };
           }}
         />
@@ -43,9 +55,15 @@ export function RemotionRoot() {
           component={Thumbnail}
           width={1920}
           height={1080}
-          defaultProps={{ recording, timeline: null } satisfies ThumbnailProps}
+          defaultProps={
+            {
+              recording,
+              timeline: null,
+              terminal: null,
+            } satisfies ThumbnailProps
+          }
           calculateMetadata={async ({ props }) => ({
-            props: { ...props, timeline: await timelineOf(props.recording) },
+            props: { ...props, ...(await load(props.recording)) },
           })}
         />
       ))}

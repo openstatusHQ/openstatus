@@ -10,10 +10,14 @@ export function recordingsFrom(files: { name: string }[]): string[] {
     .sort();
 }
 
-// Recordings that also hold a thumbnail.png (recorded since thumbnails).
+// Recordings a thumbnail can be drawn from: browser recordings with a
+// thumbnail.png (recorded since thumbnails), and terminal recordings, whose
+// screens are drawn directly.
 export function thumbnailsFrom(files: { name: string }[]): string[] {
   const names = new Set(files.map((f) => f.name));
-  return recordingsFrom(files).filter((r) => names.has(`${r}/thumbnail.png`));
+  return recordingsFrom(files).filter(
+    (r) => names.has(`${r}/thumbnail.png`) || names.has(`${r}/terminal.json`),
+  );
 }
 
 // The words around a video. Recordings made before tutorials exported `meta`
