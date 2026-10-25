@@ -717,3 +717,34 @@ export function getUptime({
   if (total === 0) return "100%";
   return `${floorPct(up / total)}%`;
 }
+
+const JOB_TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+
+// Tinybird pipes are split per job type: query every type that has monitors
+// in parallel, then key the rows by monitor id.
+export async function fetchByJobType<Row extends { monitorId: string }>(
+  components: { monitor: { id: number; jobType: string } }[],
+  procedureFor: (
+    type: (typeof JOB_TYPES)[number],
+  ) => (args: { monitorIds: string[] }) => Promise<{ data: Row[] }>,
+): Promise<Map<string, Row[]>> {
+  const results = await Promise.all(
+    JOB_TYPES.map((type) => {
+      const monitorIds = components
+        .filter((c) => c.monitor.jobType === type)
+        .map((c) => c.monitor.id.toString());
+      if (monitorIds.length === 0) return null;
+      return procedureFor(type)({ monitorIds });
+    }),
+  );
+
+  const byMonitorId = new Map<string, Row[]>();
+  for (const result of results) {
+    for (const row of result?.data ?? []) {
+      const rows = byMonitorId.get(row.monitorId);
+      if (rows) rows.push(row);
+      else byMonitorId.set(row.monitorId, [row]);
+    }
+  }
+  return byMonitorId;
+}

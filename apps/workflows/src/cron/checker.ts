@@ -33,7 +33,7 @@ import {
   type CheckerPublisher,
   type Periodicity,
   type TaskInput,
-  buildCheckerPayload,
+  buildCronCheckerPayload,
   publishCheckerTasks,
 } from "./checker-payload";
 
@@ -320,7 +320,7 @@ const createCronTask = async (
   parent: string,
   client: CloudTasksClient,
 ) => {
-  const payload = buildCheckerPayload({ row, timestamp, status });
+  const payload = buildCronCheckerPayload({ row, timestamp, status });
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {

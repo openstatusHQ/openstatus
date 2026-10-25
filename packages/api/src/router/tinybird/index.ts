@@ -18,6 +18,17 @@ const types = ["http", "tcp", "dns", "icmp", "grpc"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
+// Read-only ownership check before querying Tinybird by monitor id.
+async function getMonitorOrThrow(workspaceId: number, monitorId: number) {
+  const row = await db.query.monitor.findFirst({
+    where: and(eq(monitor.id, monitorId), eq(monitor.workspaceId, workspaceId)),
+  });
+  if (!row) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Monitor not found" });
+  }
+  return row;
+}
+
 // Free workspaces only get up to 7d; longer windows are blocked server-side.
 function assertPaidPeriod(plan: string, period: Period) {
   if (plan === "free" && period !== "1d" && period !== "7d") {
@@ -380,21 +391,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
+      await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       // only 90d is gated here; 30d is the default uptime MV used by all windows
       if (opts.ctx.workspace.plan === "free" && opts.input.period === "90d") {
@@ -416,21 +416,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
+      await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       return await tb.getAuditLog({
         monitorId: `monitor:${opts.input.monitorId}`,
@@ -449,24 +438,13 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
+      await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
-      }
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
       }
 
       assertPaidPeriod(opts.ctx.workspace.plan, opts.input.period);
@@ -490,21 +468,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
+      await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
@@ -533,21 +500,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
+      const _monitor = await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       const procedure = getGetProcedure(
         opts.input.period,
@@ -597,21 +553,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
+      await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
@@ -648,21 +593,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
+      await getMonitorOrThrow(
+        opts.ctx.workspace.id,
+        Number.parseInt(opts.input.monitorId),
+      );
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
