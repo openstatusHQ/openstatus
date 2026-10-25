@@ -28,7 +28,7 @@ describe("frameAt", () => {
 });
 
 describe("colors", () => {
-  test("draws the 16 ANSI colors from the light theme", () => {
+  test("draws ANSI colors from the light theme", () => {
     expect(paletteColor(1)).toBe("#cf222e");
     // "White" must stay readable on a white terminal.
     expect(paletteColor(7)).not.toBe("#ffffff");

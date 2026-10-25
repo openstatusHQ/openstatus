@@ -75,37 +75,27 @@ describe("validateMeta", () => {
   });
 });
 
-describe("tutorials", () => {
-  test("every tutorial exports a valid meta", async () => {
-    for (const file of tutorials) {
-      const { meta } = await import(join(dir, file));
-      expect(validateMeta(meta, file)).toEqual([]);
-    }
-  });
+// Tutorials and casts are each a series: valid metas, one order per video.
+for (const [name, from, files] of [
+  ["tutorial", dir, tutorials],
+  ["cast", castsDir, casts],
+]) {
+  describe(`${name}s`, () => {
+    test(`every ${name} exports a valid meta`, async () => {
+      for (const file of files) {
+        const { meta } = await import(join(from, file));
+        expect(validateMeta(meta, file)).toEqual([]);
+      }
+    });
 
-  test("series order is unique", async () => {
-    const orders = await Promise.all(
-      tutorials.map(async (f) => (await import(join(dir, f))).meta.order),
-    );
-    expect(new Set(orders).size).toBe(orders.length);
+    test("series order is unique", async () => {
+      const orders = await Promise.all(
+        files.map(async (f) => (await import(join(from, f))).meta.order),
+      );
+      expect(new Set(orders).size).toBe(orders.length);
+    });
   });
-});
-
-describe("casts", () => {
-  test("every cast exports a valid meta", async () => {
-    for (const file of casts) {
-      const { meta } = await import(join(castsDir, file));
-      expect(validateMeta(meta, file)).toEqual([]);
-    }
-  });
-
-  test("series order is unique", async () => {
-    const orders = await Promise.all(
-      casts.map(async (f) => (await import(join(castsDir, f))).meta.order),
-    );
-    expect(new Set(orders).size).toBe(orders.length);
-  });
-});
+}
 
 describe("slack threads", () => {
   test("every thread exports a valid meta and a cast to play", async () => {

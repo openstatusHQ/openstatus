@@ -94,6 +94,9 @@ const post = (path, body) =>
     body: JSON.stringify(body),
   }).then((r) => r.json());
 
+const { workspace } = await import(
+  pathToFileURL(join(repo, "scripts", "tutorials", "lib", "fixtures.mjs")).href
+);
 const { team, people, channels, model } = thread;
 const bot = { id: "U_BOT", name: "openstatus" };
 const viewer = people[0];
@@ -108,11 +111,15 @@ const scopes = [
   ).matchAll(/^\s+"([a-z_.:]+)",$/gm),
 ].map((m) => m[1]);
 await sql([
-  `delete from integration where name = 'slack-agent' and workspace_id = 1`,
-  `delete from slack_user where workspace_id = 1`,
   {
-    q: `insert into integration (name, workspace_id, credential, external_id, data) values ('slack-agent', 1, ?, ?, ?)`,
+    q: `delete from integration where name = 'slack-agent' and workspace_id = ?`,
+    params: [workspace],
+  },
+  { q: `delete from slack_user where workspace_id = ?`, params: [workspace] },
+  {
+    q: `insert into integration (name, workspace_id, credential, external_id, data) values ('slack-agent', ?, ?, ?, ?)`,
     params: [
+      workspace,
       JSON.stringify({ botToken: "xoxb-fake", botUserId: bot.id }),
       team.id,
       JSON.stringify({
@@ -125,8 +132,8 @@ await sql([
     ],
   },
   ...people.map((p) => ({
-    q: `insert into slack_user (workspace_id, slack_team_id, slack_user_id, user_id) values (1, ?, ?, ?)`,
-    params: [team.id, p.id, p.userId],
+    q: `insert into slack_user (workspace_id, slack_team_id, slack_user_id, user_id) values (?, ?, ?, ?)`,
+    params: [workspace, team.id, p.id, p.userId],
   })),
 ]);
 await post("/reset", {

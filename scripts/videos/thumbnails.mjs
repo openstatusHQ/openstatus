@@ -8,7 +8,10 @@ const recordings = join(import.meta.dirname, "../../.recordings");
 const remotionDir = join(recordings, "remotion");
 const names = existsSync(remotionDir)
   ? readdirSync(remotionDir).filter((name) =>
-      existsSync(join(remotionDir, name, "thumbnail.png")),
+      // The same rule as thumbnailsFrom in src/recordings.ts.
+      ["thumbnail.png", "terminal.json", "slack.json"].some((file) =>
+        existsSync(join(remotionDir, name, file)),
+      ),
     )
   : [];
 if (!names.length) {

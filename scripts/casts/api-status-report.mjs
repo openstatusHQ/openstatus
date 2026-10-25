@@ -39,6 +39,7 @@ export default async function ({ sql, step, run, pause, api }) {
     `"pageId": ${pages.main}`,
   ]);
   const id = JSON.parse(created).id;
+  if (!id) throw new Error(`no status report id in:\n${created}`);
   await pause(1600);
 
   step("Post updates as you learn more");

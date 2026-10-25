@@ -46,7 +46,7 @@ const available = readdirSync(castsDir, { withFileTypes: true })
   .map((f) => f.name.slice(0, -4));
 if (flags.list || names.length !== 1 || !available.includes(names[0])) {
   console.error(
-    `usage: record-terminal.mjs <cast> [--cli path/to/openstatus] [--api http://localhost:3000] [--cols 104 --rows 24] [--out .recordings]\ncasts: ${available.join(", ")}`,
+    `usage: record-terminal.mjs <cast> [--cli path/to/openstatus] [--api http://localhost:3000] [--cols 104 --rows 24] [--db http://127.0.0.1:8080] [--out .recordings]\ncasts: ${available.join(", ")}`,
   );
   process.exit(flags.list ? 0 : 2);
 }
@@ -57,7 +57,8 @@ for (const url of [api, db])
   if (!["localhost", "127.0.0.1"].includes(new URL(url).hostname))
     fail(`refusing non-local ${url}: casts write to the stack they run on`);
 const positive = (key, fallback) => {
-  const value = Number(flags[key] ?? fallback);
+  // A bare flag parses as true; it is not a size.
+  const value = flags[key] === true ? NaN : Number(flags[key] ?? fallback);
   if (!Number.isInteger(value) || value <= 0)
     fail(`--${key} must be a positive integer, got ${flags[key]}`);
   return value;
@@ -175,7 +176,9 @@ function snapshot() {
       styles[runs.at(-1)[1]].bg === null
     )
       runs.pop();
-    if (runs.length) runs[runs.length - 1][0] = runs.at(-1)[0].trimEnd() || " ";
+    // Blanks on a colored background are drawn, so only plain ones go.
+    if (runs.length && styles[runs.at(-1)[1]].bg === null)
+      runs[runs.length - 1][0] = runs.at(-1)[0].trimEnd() || " ";
     lines.push(runs);
   }
   const cursor = cursorVisible ? [buffer.cursorX, buffer.cursorY] : null;
@@ -234,11 +237,19 @@ function execute(command) {
     let output = "";
     let stderr = "";
     let queue = Promise.resolve();
-    child.stdout.on("data", (chunk) => {
-      const data = chunk.toString("utf8");
+    // Decoded as one stream, so a character split across chunks survives.
+    child.stdout.setEncoding("utf8");
+    // A query can arrive split across chunks; look for it in what came last.
+    let tail = "";
+    child.stdout.on("data", (data) => {
       const at = t0 + (performance.now() - started);
+      tail += data;
       for (const [ask, answer] of ANSWERS)
-        if (data.includes(ask)) child.stdin.write(answer);
+        if (tail.includes(ask)) {
+          child.stdin.write(answer);
+          tail = tail.replace(ask, "");
+        }
+      tail = tail.slice(-16);
       output += data;
       queue = queue.then(() => {
         now = Math.max(now, at);

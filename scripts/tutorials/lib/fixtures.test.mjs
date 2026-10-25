@@ -11,6 +11,7 @@ describe("cleanup", () => {
       ...cleanup.notification({ name: title }),
       ...cleanup.monitor({ name: title }),
       ...cleanup.page({ slug: title }),
+      ...cleanup.incident({ title }),
     ]) {
       expect(statement.q).not.toContain(title);
       expect(statement.params).toContain(title);
@@ -23,6 +24,7 @@ describe("cleanup", () => {
     for (const [statement] of [
       cleanup.monitor({ name: "npm Registry" }),
       cleanup.page({ slug: "acme-payments" }),
+      cleanup.incident({ title: "Checkout API timeouts in eu-central" }),
     ]) {
       expect(statement.q).toContain("workspace_id = ?");
       expect(statement.params).toContain(workspace);

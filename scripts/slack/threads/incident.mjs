@@ -1,6 +1,8 @@
 // An incident run from Slack: declared with one command, worked in its own
 // channel, pinned messages on the timeline, status from the pinned card, and
 // the postmortem drafted and approved — the openstatus app's real messages.
+import { cleanup } from "../../tutorials/lib/fixtures.mjs";
+
 export const meta = {
   order: 1,
   label: "Slack",
@@ -99,18 +101,7 @@ export default async function ({
   thumbnail,
 }) {
   const [max, thibault] = people;
-  const ids = `select id from incident where title = ? and workspace_id = 1`;
-  await sql([
-    {
-      q: `delete from incident_event where incident_id in (${ids})`,
-      params: [TITLE],
-    },
-    {
-      q: `delete from incident_postmortem where incident_id in (${ids})`,
-      params: [TITLE],
-    },
-    { q: `delete from incident where id in (${ids})`, params: [TITLE] },
-  ]);
+  await sql(cleanup.incident({ title: TITLE }));
 
   step("Something is wrong");
   await say(

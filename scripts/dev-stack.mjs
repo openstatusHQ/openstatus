@@ -178,13 +178,13 @@ async function dashboardUp() {
   return res?.status === 200;
 }
 
-// /ping answers 503 only when the database is down; missing Unkey or Redis
-// only degrade it.
+// /ping answers 200 while the database is up, even with Unkey or Redis
+// missing; anything else on :3000 is not this API.
 async function apiUp() {
   const res = await fetch(`${apiUrl}/ping`, {
     signal: AbortSignal.timeout(5000),
   }).catch(() => null);
-  return Boolean(res) && res.status < 500;
+  return res?.status === 200;
 }
 
 async function waitFor(check, what, ms) {
@@ -234,7 +234,8 @@ function alive(pid) {
 // next does, and after a reboot the pid can belong to something else, so the
 // group's members decide, not the leader.
 function groupMembers(pgid) {
-  const r = spawnSync("pgrep", ["-l", "-g", String(pgid)], {
+  // Full command lines, so a group can be told apart by what it runs.
+  const r = spawnSync("pgrep", ["-a", "-g", String(pgid)], {
     encoding: "utf8",
   });
   // pgrep exits 1 for "no match"; anything else means it could not answer,
@@ -248,7 +249,8 @@ function groupMembers(pgid) {
 
 const SQLD_GROUP = /\bsqld\b/;
 const DASHBOARD_GROUP = /\b(pnpm|node|next-server)\b/;
-const API_GROUP = /\bnode\b/;
+// Any Node app can reuse a stale pid; only the API server runs src/serve.ts.
+const API_GROUP = /\bsrc\/serve\.ts\b/;
 const ours = (pid, expected) =>
   Boolean(pid) && groupMembers(pid).some((m) => expected.test(m));
 
@@ -374,7 +376,10 @@ async function up() {
         ],
         {
           cwd: join(repo, "apps/server"),
+          // These win over the inherited environment: a NODE_ENV=production
+          // shell would make the API reject the development key.
           env: {
+            ...env,
             NODE_ENV: "development",
             TINYBIRD_NOOP: "true",
             FLY_REGION: "ams",
@@ -389,7 +394,6 @@ async function up() {
               // Only how the app's links read in the recorded messages.
               DASHBOARD_URL: "https://app.openstatus.dev",
             }),
-            ...env,
           },
         },
       );

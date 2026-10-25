@@ -67,6 +67,22 @@ export const cleanup = {
       q(`delete from status_report where id in (${ids})`, title, pageId),
     ];
   },
+  incident: ({ title }) => {
+    const ids = "select id from incident where title = ? and workspace_id = ?";
+    return [
+      q(
+        `delete from incident_event where incident_id in (${ids})`,
+        title,
+        workspace,
+      ),
+      q(
+        `delete from incident_postmortem where incident_id in (${ids})`,
+        title,
+        workspace,
+      ),
+      q(`delete from incident where id in (${ids})`, title, workspace),
+    ];
+  },
   maintenance: ({ title, pageId }) => {
     const ids = "select id from maintenance where title = ? and page_id = ?";
     return [

@@ -1,5 +1,7 @@
 // Run an incident from the terminal with the openstatus CLI: declare it, note
 // what you find, mitigate, resolve, then read the timeline back.
+import { cleanup } from "../tutorials/lib/fixtures.mjs";
+
 export const meta = {
   order: 1,
   label: "CLI",
@@ -13,18 +15,7 @@ export const meta = {
 const TITLE = "Checkout API timeouts in eu-central";
 
 export default async function ({ sql, step, run, pause }) {
-  const ids = `select id from incident where title = ? and workspace_id = 1`;
-  await sql([
-    {
-      q: `delete from incident_event where incident_id in (${ids})`,
-      params: [TITLE],
-    },
-    {
-      q: `delete from incident_postmortem where incident_id in (${ids})`,
-      params: [TITLE],
-    },
-    { q: `delete from incident where id in (${ids})`, params: [TITLE] },
-  ]);
+  await sql(cleanup.incident({ title: TITLE }));
 
   step("Declare it");
   const declared = await run(
