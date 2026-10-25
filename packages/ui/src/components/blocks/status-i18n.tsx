@@ -7,7 +7,7 @@ import type {
   ThemeValue,
 } from "@openstatus/ui/components/blocks/status.types";
 import { defaultStatusBlocksLabels } from "@openstatus/ui/components/blocks/status.utils";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 
 /**
  * Labels and locale-aware formatters consumed by block components.
@@ -68,6 +68,11 @@ export type StatusBlocksLabels = {
   formatDay: (day: string) => string;
   /** Compact banner stamp such as `Oct 03, 2026 14:41 (UTC)`. */
   formatTimestamp: (d: Date) => string;
+  /**
+   * IANA zone the formatters render in, when not UTC. The rich timestamp
+   * hover card adds a row for it next to the viewer's zone and UTC.
+   */
+  timeZone?: string;
   formatDateRange: (from?: Date, to?: Date) => string;
   /**
    * Returns the start/end of a closed range as separate strings, so callers
@@ -83,6 +88,13 @@ export type StatusBlocksLabels = {
   formatDateRangeParts: (from: Date, to: Date) => { from: string; to: string };
 };
 
+/** Provider input: formatters added after the first release fall back to the defaults. */
+export type StatusBlocksLabelsInput = Omit<
+  StatusBlocksLabels,
+  "formatDay" | "formatTimestamp"
+> &
+  Partial<Pick<StatusBlocksLabels, "formatDay" | "formatTimestamp">>;
+
 const StatusBlocksLabelsContext = createContext<StatusBlocksLabels | null>(
   null,
 );
@@ -91,11 +103,19 @@ export function StatusBlocksI18nProvider({
   value,
   children,
 }: {
-  value: StatusBlocksLabels;
+  value: StatusBlocksLabelsInput;
   children: React.ReactNode;
 }) {
+  const labels = useMemo<StatusBlocksLabels>(
+    () => ({
+      formatDay: defaultStatusBlocksLabels.formatDay,
+      formatTimestamp: defaultStatusBlocksLabels.formatTimestamp,
+      ...value,
+    }),
+    [value],
+  );
   return (
-    <StatusBlocksLabelsContext.Provider value={value}>
+    <StatusBlocksLabelsContext.Provider value={labels}>
       {children}
     </StatusBlocksLabelsContext.Provider>
   );

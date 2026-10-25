@@ -1,6 +1,5 @@
 "use client";
 
-import { UTCDate } from "@date-fns/utc";
 import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import {
   HoverCard,
@@ -207,8 +206,9 @@ SimpleTimestamp.displayName = "SimpleTimestamp";
  * RichTimestamp - Internal hover card timestamp display with timezone details
  *
  * Displays a hover card with comprehensive timestamp information:
- * - Local timezone timestamp with timezone abbreviation (e.g., "PST", "EST")
- * - UTC timestamp
+ * - The labels' `timeZone`, when set, as the visible text is rendered in it
+ * - The viewer's local timezone
+ * - UTC (each zone listed once)
  * - Relative time ("2 hours ago") that updates every second while open
  *
  * Each row in the hover card is clickable to copy the value to clipboard, with
@@ -253,10 +253,11 @@ function RichTimestamp({
   const isTouch = useMediaQuery("(hover: none)");
   const [_, setRerender] = useState(0);
 
+  const { timeZone: pageTimeZone } = useStatusBlocksLabels();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // the zone the visible text is in first, then the viewer's and UTC; each once
+  const timezones = [...new Set([pageTimeZone ?? timezone, timezone, "UTC"])];
   const relative = formatDistanceToNowStrict(date, { addSuffix: true });
-  const formatted = format(date, "LLL dd, y HH:mm:ss");
-  const utc = format(new UTCDate(date), "LLL dd, y HH:mm:ss");
 
   useEffect(() => {
     // only setInterval if open
@@ -288,8 +289,13 @@ function RichTimestamp({
         {...{ side, align, alignOffset, sideOffset }}
       >
         <dl className="flex flex-col gap-1">
-          <StatusTimestampRow value={formatted} label={timezone} />
-          <StatusTimestampRow value={utc} label="UTC" />
+          {timezones.map((zone) => (
+            <StatusTimestampRow
+              key={zone}
+              value={formatInTimeZone(date, zone)}
+              label={zone}
+            />
+          ))}
           <StatusTimestampRow value={relative} label="Relative" />
         </dl>
       </HoverCardContent>
@@ -297,6 +303,23 @@ function RichTimestamp({
   );
 }
 RichTimestamp.displayName = "RichTimestamp";
+
+/** `LLL dd, y HH:mm:ss` like the other rows, in `timeZone`. */
+function formatInTimeZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("month")} ${part("day")}, ${part("year")} ${part("hour")}:${part("minute")}:${part("second")}`;
+}
 
 /**
  * StatusTimestampRow - Internal component for hover card timestamp rows

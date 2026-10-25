@@ -181,7 +181,6 @@
       "dependencies": [
         "@radix-ui/react-hover-card",
         "date-fns",
-        "@date-fns/utc@2.1.0",
         "lucide-react"
       ],
       "files": [
