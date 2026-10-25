@@ -60,6 +60,10 @@ export function incidentSpan(incident: {
   resolvedAt: Date | null;
   closedAt: Date | null;
 }) {
+  // canceled never really happened: mark the start day, not the weeks until someone canceled it
+  if (incident.status === "canceled") {
+    return { start: incident.startedAt, end: incident.startedAt };
+  }
   return { start: incident.startedAt, end: incidentEndedAt(incident) };
 }
 

@@ -114,7 +114,7 @@ export function ActivityCalendarGrid({
   }, []);
 
   return (
-    <div ref={scroller} className="overflow-x-auto">
+    <div ref={scroller} className="relative overflow-x-auto">
       <div
         data-slot="activity-calendar-grid"
         className={cn("grid grid-flow-col gap-(--activity-gap)", className)}

@@ -56,7 +56,7 @@ import {
 } from "@/data/activity.client";
 import { downtimeActivity } from "@/data/incidents.client";
 import { maintenanceActivity } from "@/data/maintenances.client";
-import { incidentActivity } from "@/data/managed-incidents.client";
+import { incidentActivity, incidentSpan } from "@/data/managed-incidents.client";
 import {
   type OverviewEvent,
   buildOverviewData,
@@ -105,6 +105,7 @@ function activityOf(
 
 function spanOf(event: OverviewEvent): ActivitySpan {
   if (event.type === "report") return reportSpan(event.report);
+  if (event.type === "managedIncident") return incidentSpan(event.incident);
   return { start: getStartedAt(event), end: getResolvedAt(event) };
 }
 
@@ -129,9 +130,12 @@ export default function Page() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
   // no period — an incident open for weeks must still surface here
-  const { data: monitorIncidents } = useQuery(
-    trpc.monitorIncident.list.queryOptions(),
-  );
+  const { data: monitorIncidents } = useQuery({
+    ...trpc.monitorIncident.list.queryOptions(),
+    // downtime of deleted monitors would surface under a monitor that no longer exists
+    select: (incidents) =>
+      incidents.filter((i) => i.monitor && i.monitor.deletedAt === null),
+  });
   const { data: statusReports } = useQuery(
     trpc.statusReport.list.queryOptions({}),
   );
