@@ -1,35 +1,25 @@
-import { useState } from "react";
 import { Button } from "@openstatus/ui/components/button";
 import { Check, Copy } from "lucide-react";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 
 interface CopyMarkdownProps {
   markdown: string;
 }
 
 export const CopyMarkdown = ({ markdown }: CopyMarkdownProps) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(markdown);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy markdown:", error);
-    }
-  };
+  const { copied, copy } = useCopyToClipboard({ timeout: 2000 });
 
   return (
     <Button
       variant="outline"
       size="sm"
-      onClick={handleCopy}
+      onClick={() => copy(markdown)}
       className="gap-2"
       type="button"
     >
       {copied ? (
         <>
-          <Check className="h-4 w-4 text-green-500" />
+          <Check className="h-4 w-4 text-success" />
           <span>Copied</span>
         </>
       ) : (
