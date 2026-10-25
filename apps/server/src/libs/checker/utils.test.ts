@@ -78,7 +78,13 @@ test("getCheckerPayload marks the run as api-triggered", () => {
 });
 
 test("getCheckerPayload rejects an unsupported job type as a bad request", () => {
-  expect(() =>
-    getCheckerPayload(buildMonitor({ jobType: "udp" }), "active"),
-  ).toThrow(OpenStatusApiError);
+  let error: unknown;
+  try {
+    getCheckerPayload(buildMonitor({ jobType: "udp" }), "active");
+  } catch (err) {
+    error = err;
+  }
+
+  expect(error).toBeInstanceOf(OpenStatusApiError);
+  expect(error).toMatchObject({ code: "BAD_REQUEST", status: 400 });
 });
