@@ -90,13 +90,13 @@ export const incidentRouter = createTRPCRouter({
           return (await listIncidents({ ctx: serviceCtx, input })).items;
         // no limit = every incident; dashboard calendars and counts need the full history
         const items = [];
-        for (let offset = 0; ; offset += 100) {
+        for (let offset = input?.offset ?? 0; ; offset += 100) {
           const page = await listIncidents({
             ctx: serviceCtx,
             input: { ...input, limit: 100, offset },
           });
           items.push(...page.items);
-          if (page.items.length < 100 || items.length >= page.totalSize)
+          if (page.items.length < 100 || offset + 100 >= page.totalSize)
             return items;
         }
       } catch (err) {

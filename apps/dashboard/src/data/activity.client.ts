@@ -138,11 +138,20 @@ export function activityDayLabel(
   return `${day} · ${titles.length} ${noun}`;
 }
 
-/** The mark with the highest level, for a day that holds several. */
-export function strongestMark<T extends { level: number }>(
+/** The mark with the highest level, for a day that holds several; on a tie a colored mark beats a neutral one. */
+export function strongestMark<T extends { level: number; variant?: string }>(
   marks: T[],
 ): T | null {
   let best: T | null = null;
-  for (const mark of marks) if (!best || mark.level > best.level) best = mark;
+  for (const mark of marks) {
+    if (
+      !best ||
+      mark.level > best.level ||
+      (mark.level === best.level &&
+        best.variant === "default" &&
+        mark.variant !== "default")
+    )
+      best = mark;
+  }
   return best;
 }

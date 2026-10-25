@@ -56,14 +56,18 @@ export function MaintenanceRow({
     <EventRow>
       <EventRowDate date={from} />
       <EventRowStatus>
-        <StatusDot variant={status === "in-progress" ? "info" : "default"} />
+        <StatusDot variant={maintenanceStatusConfig[status].variant} />
         <span>
           {kind ? "Maintenance" : maintenanceStatusConfig[status].label}
         </span>
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
-          href={`/status-pages/${maintenance.pageId}/maintenances/${maintenance.id}`}
+          href={
+            maintenance.pageId
+              ? `/status-pages/${maintenance.pageId}/maintenances/${maintenance.id}`
+              : undefined
+          }
         >
           {maintenance.title}
         </EventRowTitle>

@@ -25,7 +25,7 @@ export function MaintenanceEditSheet({
     // only an open sheet needs the component tree
     trpc.page.get.queryOptions(
       { id: maintenance.pageId ?? 0 },
-      { enabled: open },
+      { enabled: open && maintenance.pageId !== null },
     ),
   );
   const update = useMutation(

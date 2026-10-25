@@ -59,18 +59,24 @@ export function IncidentRow({
     queryClient.invalidateQueries({ queryKey: trpc.incident.list.queryKey() });
   const setStatus = useMutation(
     trpc.incident.setStatus.mutationOptions({
-      onSuccess: async (row) => {
-        await invalidate();
+      onSuccess: (row) => {
         setConfirmCancel(false);
         const report = incident.statusReport;
-        if (!row || !report || report.status === "resolved") return;
-        if (row.status === "resolved" || row.status === "canceled") {
+        if (
+          row &&
+          report &&
+          report.status !== "resolved" &&
+          (row.status === "resolved" || row.status === "canceled")
+        ) {
+          // refetch on dialog close: it moves the row to the closed list and unmounts it
           setFollowUp(
             row.status === "resolved"
               ? "This incident has been resolved."
               : "This incident has been canceled.",
           );
+          return;
         }
+        return invalidate();
       },
       onError: (error) => toast.error(errorMessage(error, "Failed to save")),
     }),
@@ -216,7 +222,9 @@ export function IncidentRow({
           defaultMessage={followUp ?? ""}
           open={followUp !== null}
           onOpenChange={(isOpen) => {
-            if (!isOpen) setFollowUp(null);
+            if (isOpen) return;
+            setFollowUp(null);
+            void invalidate();
           }}
         />
       ) : null}
