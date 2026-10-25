@@ -67,7 +67,7 @@
       "type": "registry:lib",
       "title": "Status Utilities",
       "description": "Utility functions for status formatting and display",
-      "dependencies": ["date-fns"],
+      "dependencies": ["date-fns", "@date-fns/utc@2.1.0"],
       "cssVars": {
         "theme": {
           "color-success": "var(--success)",
