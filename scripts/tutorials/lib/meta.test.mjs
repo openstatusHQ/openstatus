@@ -27,7 +27,17 @@ describe("validateMeta", () => {
       { ...valid, order: 0, title: " ", requires: ["database"] },
       "t",
     );
-    expect(problems).toHaveLength(3);
+    expect(problems).toEqual([
+      "t: meta.order must be a positive integer",
+      "t: meta.title must be a non-empty string",
+      't: unknown requirement "database"',
+    ]);
+  });
+
+  test("reports a requires that is not a list", () => {
+    expect(validateMeta({ ...valid, requires: {} }, "t")).toEqual([
+      "t: meta.requires must be an array",
+    ]);
   });
 });
 

@@ -13,8 +13,8 @@ const MIN_IDLE = 1;
 const MAX_RATE = 4;
 // The last moments (a "Saved" toast) stay at real speed for the outro.
 const HOLD_END = 1.5;
-// Keystrokes are recorded at a readable 70ms each; played back faster they
-// still read, and long messages stop dominating the video.
+// Keystrokes are recorded at a readable 70ms each (at --speed 1); played back
+// faster they still read, and long messages stop dominating the video.
 export const TYPE_RATE = 1.6;
 
 function activity(timeline: Timeline): [number, number][] {

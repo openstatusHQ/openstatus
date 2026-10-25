@@ -120,7 +120,10 @@ const problems = validateMeta(tutorial.meta, name);
 if (problems.length) fail(problems.join("\n"));
 if (tutorial.meta.requires?.includes("checker")) {
   const checker = process.env.CHECKER_URL ?? "http://localhost:8090";
-  if (!(await fetch(checker).catch(() => null)))
+  const answer = await fetch(checker, {
+    signal: AbortSignal.timeout(2000),
+  }).catch(() => null);
+  if (!answer)
     fail(
       `${name} needs the checker, nothing answers at ${checker}: run apps/checker and start the dashboard with CHECKER_URL and CRON_SECRET (see the screenshot skill)`,
     );

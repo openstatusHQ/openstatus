@@ -32,7 +32,8 @@ export function createUi({ page, click, type, wait, expect }) {
   }
 
   // The date-time popover: walk the grid to the month, pick the day, then set
-  // the native <input type="time">, which typing cannot overwrite.
+  // the native <input type="time">, which typing cannot overwrite. The fill
+  // is instant, so it is not logged as typing; the click before it is.
   async function pickDateTime(trigger, date, time) {
     await click(button(trigger));
     const picker = page

@@ -1,7 +1,8 @@
 import type { Timeline, TutorialMeta } from "./timeline";
 
 // Recording folders under .recordings/remotion, from the public dir listing:
-// every folder that holds a timeline.json, in series order when known.
+// every folder that holds a timeline.json, by name. Series order (meta.order)
+// lives inside each timeline, which the composition list cannot wait for.
 export function recordingsFrom(files: { name: string }[]): string[] {
   return files
     .map((f) => f.name.match(/^([\w-]+)\/timeline\.json$/)?.[1])

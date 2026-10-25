@@ -11,7 +11,9 @@ export function validateMeta(meta, name) {
   for (const key of ["title", "subtitle", "outroTitle", "outroSubtitle"])
     if (typeof meta[key] !== "string" || meta[key].trim() === "")
       problems.push(`${name}: meta.${key} must be a non-empty string`);
-  for (const r of meta.requires ?? [])
+  if (meta.requires !== undefined && !Array.isArray(meta.requires))
+    problems.push(`${name}: meta.requires must be an array`);
+  for (const r of Array.isArray(meta.requires) ? meta.requires : [])
     if (!REQUIREMENTS.includes(r))
       problems.push(`${name}: unknown requirement "${r}"`);
   return problems;

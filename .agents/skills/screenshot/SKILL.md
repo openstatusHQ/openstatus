@@ -177,10 +177,12 @@ their own rows.
 
 - A tutorial exports `meta` (series `order`, intro and outro copy,
   `requires`) next to its steps; `scripts/tutorials/lib/meta.mjs` checks it
-  before the browser starts. Seed ids, names and cleanup statements live in
-  `lib/fixtures.mjs`; sheets, date pickers, multi-select menus, comboboxes
-  and tabs have helpers in `lib/ui.mjs`. `pnpm --filter @openstatus/tutorials
-  test` covers them and validates every tutorial's `meta`.
+  before the browser starts. The shared workspace, page and monitor
+  fixtures and the cleanup statements live in `lib/fixtures.mjs`; sheets,
+  date pickers, multi-select menus, comboboxes and tabs have helpers in
+  `lib/ui.mjs`. `pnpm --filter @openstatus/tutorials test` covers the
+  fixtures, the date helper and every tutorial's `meta`; the UI helpers are
+  exercised by recording the tutorials.
 - `requires: ["checker"]` (`create-monitor`: saving tests the URL) fails fast
   unless a checker answers at `CHECKER_URL` (default `http://localhost:8090`):
   build and run `apps/checker` (`FLY_REGION=ams CLOUD_PROVIDER=fly
