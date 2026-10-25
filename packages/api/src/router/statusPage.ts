@@ -40,6 +40,7 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
   activeReportStatus,
+  fetchByJobType,
   fillStatusDataFor45Days,
   fillStatusDataFor45DaysNoop,
   getEvents,
@@ -80,6 +81,10 @@ const gateFieldsSchema = selectPageSchema.pick({
 // Password for cookie-less server callers (feeds, `?pw=` links).
 const queryPasswordSchema = z.string().nullish();
 
+// A host reaches its page through either the slug or the custom domain.
+const bySlugOrDomain = (slug: string) =>
+  sql`lower(${page.slug}) = ${slug} OR lower(${page.customDomain}) = ${slug}`;
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -98,7 +103,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         with: {
           workspace: true,
           statusReports: {
@@ -550,7 +555,7 @@ export const statusPageRouter = createTRPCRouter({
 
       // Single query with all relations
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         with: {
           workspace: true,
           statusReports: {
@@ -657,7 +662,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         columns: {
           slug: true,
           customDomain: true,
@@ -694,9 +699,7 @@ export const statusPageRouter = createTRPCRouter({
       const _page = await opts.ctx.db
         .select()
         .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
-        )
+        .where(bySlugOrDomain(opts.input.slug))
         .get();
 
       if (!_page) return null;
@@ -749,7 +752,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${input.slug} OR lower(${page.customDomain}) = ${input.slug}`,
+        where: bySlugOrDomain(input.slug),
         with: {
           maintenances: {
             with: {
@@ -793,70 +796,17 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitors = pageComponents.filter(isMonitorComponent);
 
-      const monitorsByType = {
-        http: monitors.filter((c) => c.monitor.jobType === "http"),
-        tcp: monitors.filter((c) => c.monitor.jobType === "tcp"),
-        dns: monitors.filter((c) => c.monitor.jobType === "dns"),
-        icmp: monitors.filter((c) => c.monitor.jobType === "icmp"),
-        grpc: monitors.filter((c) => c.monitor.jobType === "grpc"),
-      };
-
-      const proceduresByType = {
-        http: getStatusProcedure("45d", "http"),
-        tcp: getStatusProcedure("45d", "tcp"),
-        dns: getStatusProcedure("45d", "dns"),
-        icmp: getStatusProcedure("45d", "icmp"),
-        grpc: getStatusProcedure("45d", "grpc"),
-      };
-
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
       // whole page to manual mode so bars still render from DB events.
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
-          ? Promise.resolve([null, null, null, null, null])
-          : Promise.all(
-              Object.entries(proceduresByType).map(([type, procedure]) => {
-                const monitorIds = monitorsByType[
-                  type as keyof typeof proceduresByType
-                ].map((c) => c.monitor.id.toString());
-                if (monitorIds.length === 0) return null;
-                return procedure({ monitorIds });
-              }),
-            ),
+          ? Promise.resolve(null)
+          : fetchByJobType(monitors, (type) => getStatusProcedure("45d", type)),
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
-      const [statusHttp, statusTcp, statusDns, statusIcmp, statusGrpc] =
-        tinybird.data ?? [null, null, null, null, null];
-
-      const statusDataByMonitorId = new Map<
-        string,
-        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
-      >();
-
-      // Consolidate status data from all monitor types into the map
-      for (const statusResult of [
-        statusHttp,
-        statusTcp,
-        statusDns,
-        statusIcmp,
-        statusGrpc,
-      ]) {
-        if (statusResult?.data) {
-          statusResult.data.forEach((status) => {
-            const monitorId = status.monitorId;
-            if (!statusDataByMonitorId.has(monitorId)) {
-              statusDataByMonitorId.set(monitorId, []);
-            }
-            statusDataByMonitorId.get(monitorId)?.push(status);
-          });
-        }
-      }
+      const statusDataByMonitorId = tinybird.data ?? new Map<string, never[]>();
 
       const parsedConfiguration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -999,9 +949,7 @@ export const statusPageRouter = createTRPCRouter({
       const _page = await opts.ctx.db
         .select()
         .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
-        )
+        .where(bySlugOrDomain(opts.input.slug))
         .get();
 
       if (!_page) return null;
@@ -1121,7 +1069,7 @@ export const statusPageRouter = createTRPCRouter({
 
       // NOTE: revalidate the public monitors first
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         with: {
           pageComponents: {
             with: {
@@ -1143,101 +1091,13 @@ export const statusPageRouter = createTRPCRouter({
         .filter(isMonitorComponent)
         .filter((c) => c.monitor?.public);
 
-      const monitorsByType = {
-        http: publicMonitors.filter((c) => c.monitor.jobType === "http"),
-        tcp: publicMonitors.filter((c) => c.monitor.jobType === "tcp"),
-        dns: publicMonitors.filter((c) => c.monitor.jobType === "dns"),
-        icmp: publicMonitors.filter((c) => c.monitor.jobType === "icmp"),
-        grpc: publicMonitors.filter((c) => c.monitor.jobType === "grpc"),
-      };
-
-      const proceduresByType = {
-        http: getMetricsLatencyMultiProcedure("1d", "http"),
-        tcp: getMetricsLatencyMultiProcedure("1d", "tcp"),
-        dns: getMetricsLatencyMultiProcedure("1d", "dns"),
-        icmp: getMetricsLatencyMultiProcedure("1d", "icmp"),
-        grpc: getMetricsLatencyMultiProcedure("1d", "grpc"),
-      };
-
       // Slow/erroring Tinybird → empty latency data so the page still renders.
       const metrics = await withTinybirdFallback(() =>
-        Promise.all(
-          Object.entries(proceduresByType).map(([type, procedure]) => {
-            const monitorIds = monitorsByType[
-              type as keyof typeof proceduresByType
-            ].map((c) => c.monitor.id.toString());
-            if (monitorIds.length === 0) return null;
-            return procedure({ monitorIds });
-          }),
+        fetchByJobType(publicMonitors, (type) =>
+          getMetricsLatencyMultiProcedure("1d", type),
         ),
       );
-
-      const [
-        metricsLatencyMultiHttp,
-        metricsLatencyMultiTcp,
-        metricsLatencyMultiDns,
-        metricsLatencyMultiIcmp,
-        metricsLatencyMultiGrpc,
-      ] = metrics.data ?? [null, null, null, null, null];
-
-      const metricsDataByMonitorId = new Map<
-        string,
-        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["grpc"]>>["data"]
-      >();
-
-      if (metricsLatencyMultiHttp?.data) {
-        metricsLatencyMultiHttp.data.forEach((metric) => {
-          const monitorId = metric.monitorId;
-          if (!metricsDataByMonitorId.has(monitorId)) {
-            metricsDataByMonitorId.set(monitorId, []);
-          }
-          metricsDataByMonitorId.get(monitorId)?.push(metric);
-        });
-      }
-
-      if (metricsLatencyMultiTcp?.data) {
-        metricsLatencyMultiTcp.data.forEach((metric) => {
-          const monitorId = metric.monitorId;
-          if (!metricsDataByMonitorId.has(monitorId)) {
-            metricsDataByMonitorId.set(monitorId, []);
-          }
-          metricsDataByMonitorId.get(monitorId)?.push(metric);
-        });
-      }
-
-      if (metricsLatencyMultiDns?.data) {
-        metricsLatencyMultiDns.data.forEach((metric) => {
-          const monitorId = metric.monitorId;
-          if (!metricsDataByMonitorId.has(monitorId)) {
-            metricsDataByMonitorId.set(monitorId, []);
-          }
-          metricsDataByMonitorId.get(monitorId)?.push(metric);
-        });
-      }
-
-      if (metricsLatencyMultiIcmp?.data) {
-        metricsLatencyMultiIcmp.data.forEach((metric) => {
-          const monitorId = metric.monitorId;
-          if (!metricsDataByMonitorId.has(monitorId)) {
-            metricsDataByMonitorId.set(monitorId, []);
-          }
-          metricsDataByMonitorId.get(monitorId)?.push(metric);
-        });
-      }
-
-      if (metricsLatencyMultiGrpc?.data) {
-        metricsLatencyMultiGrpc.data.forEach((metric) => {
-          const monitorId = metric.monitorId;
-          if (!metricsDataByMonitorId.has(monitorId)) {
-            metricsDataByMonitorId.set(monitorId, []);
-          }
-          metricsDataByMonitorId.get(monitorId)?.push(metric);
-        });
-      }
+      const metricsDataByMonitorId = metrics.data ?? new Map<string, never[]>();
 
       return publicMonitors.map((c) => {
         const monitorId = c.monitor.id.toString();
@@ -1262,7 +1122,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         with: {
           pageComponents: {
             where: eq(pageComponent.monitorId, opts.input.id),
@@ -1384,7 +1244,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         with: {
           workspace: true,
         },
@@ -1514,7 +1374,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
       });
 
       if (!_page) {
@@ -1583,7 +1443,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
       });
 
       if (!_page) {
@@ -1622,7 +1482,7 @@ export const statusPageRouter = createTRPCRouter({
     )
     .query(async (opts) => {
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: bySlugOrDomain(opts.input.slug),
         columns: { password: true, accessType: true },
       });
       if (!_page || _page.accessType !== "password") return false;

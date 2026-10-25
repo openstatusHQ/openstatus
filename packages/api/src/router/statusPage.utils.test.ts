@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   currentImpactByComponent,
+  fetchByJobType,
   fillStatusDataFor45Days,
   getEvents,
   getUptime,
@@ -2261,5 +2262,65 @@ describe("withTinybirdFallback", () => {
     );
     clearTimeout(slowRead);
     expect(result).toEqual({ ok: false, data: null });
+  });
+});
+
+describe("fetchByJobType", () => {
+  const component = (id: number, jobType: string) => ({
+    monitor: { id, jobType },
+  });
+
+  it("queries each job type once, only with its own monitors", async () => {
+    const calls: { type: string; monitorIds: string[] }[] = [];
+    await fetchByJobType(
+      [component(1, "http"), component(2, "tcp"), component(3, "http")],
+      (type) =>
+        async ({ monitorIds }) => {
+          calls.push({ type, monitorIds });
+          return { data: [] };
+        },
+    );
+
+    expect(calls).toEqual([
+      { type: "http", monitorIds: ["1", "3"] },
+      { type: "tcp", monitorIds: ["2"] },
+    ]);
+  });
+
+  it("skips job types the pipes don't cover", async () => {
+    const types: string[] = [];
+    await fetchByJobType([component(1, "udp")], (type) => async () => {
+      types.push(type);
+      return { data: [] };
+    });
+    expect(types).toEqual([]);
+  });
+
+  it("groups rows from every pipe by monitor id, keeping order", async () => {
+    const rows: Record<string, { monitorId: string; day: string }[]> = {
+      http: [
+        { monitorId: "1", day: "a" },
+        { monitorId: "3", day: "a" },
+        { monitorId: "1", day: "b" },
+      ],
+      dns: [{ monitorId: "2", day: "a" }],
+    };
+    const result = await fetchByJobType(
+      [component(1, "http"), component(2, "dns"), component(3, "http")],
+      (type) => async () => ({ data: rows[type] ?? [] }),
+    );
+
+    expect(result.get("1")?.map((r) => r.day)).toEqual(["a", "b"]);
+    expect(result.get("2")).toEqual([{ monitorId: "2", day: "a" }]);
+    expect(result.get("3")).toHaveLength(1);
+    expect(result.has("4")).toBe(false);
+  });
+
+  it("propagates a pipe failure so withTinybirdFallback can catch it", async () => {
+    await expect(
+      fetchByJobType([component(1, "http")], () => async () => {
+        throw new Error("tinybird down");
+      }),
+    ).rejects.toThrow("tinybird down");
   });
 });
