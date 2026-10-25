@@ -183,7 +183,12 @@ if (!app.auth) {
     () => null,
   );
   // a status page in dev answers /login too when a page has that slug
-  const html = login?.status === 200 ? await login.text().catch(() => "") : "";
+  const html =
+    login?.status === 200 ? await login.text().catch(() => null) : "";
+  if (html === null) {
+    console.error(`could not read ${base}/login to identify the app; retry`);
+    process.exit(1);
+  }
   if (/<title>Sign In \|/.test(html)) {
     console.error(
       `${base} serves the dashboard, not ${flags.app}; pass --base`,
