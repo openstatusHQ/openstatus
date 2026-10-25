@@ -30,7 +30,7 @@ import { useMaintenanceStatus } from "./use-maintenance-status";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
-/** `kind` labels the row by type for a mixed list; the dot still carries the status. */
+/** `kind` labels the row by type for a mixed list, with the maintenance blue of the activity lanes. */
 export function MaintenanceRow({
   maintenance,
   kind = false,
@@ -56,7 +56,9 @@ export function MaintenanceRow({
     <EventRow>
       <EventRowDate date={from} />
       <EventRowStatus>
-        <StatusDot variant={maintenanceStatusConfig[status].variant} />
+        <StatusDot
+          variant={kind ? "info" : maintenanceStatusConfig[status].variant}
+        />
         <span>
           {kind ? "Maintenance" : maintenanceStatusConfig[status].label}
         </span>
