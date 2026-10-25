@@ -1,6 +1,6 @@
 "use client";
 
-import { UTCDate } from "@date-fns/utc";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import {
   HoverCard,
   HoverCardContent,
@@ -160,12 +160,12 @@ StatusTimestamp.displayName = "StatusTimestamp";
  * the full formatted date in a tooltip on hover. The timestamp is shown in monospace
  * font with muted foreground color.
  *
- * If no children are provided, displays the date in UTC format. If children are
- * provided, they are used as the trigger text while the tooltip still shows the
- * formatted date in the user's local timezone.
+ * If no children are provided, displays the date with the labels' `formatTimestamp`
+ * (UTC by default). If children are provided, they are used as the trigger text
+ * while the tooltip still shows the formatted date in the user's local timezone.
  *
  * @param date - The date to display
- * @param children - Optional custom text to display (falls back to formatted UTC date)
+ * @param children - Optional custom text to display (falls back to `formatTimestamp`)
  *
  * @example
  * ```tsx
@@ -180,6 +180,7 @@ function SimpleTimestamp({
   children,
   ...props
 }: Omit<SimpleVariantProps, "variant">) {
+  const labels = useStatusBlocksLabels();
   return (
     <TooltipProvider>
       <Tooltip>
@@ -190,7 +191,7 @@ function SimpleTimestamp({
           )}
           {...props}
         >
-          {children || format(new UTCDate(date), "LLL dd, y HH:mm '(UTC)'")}
+          {children || labels.formatTimestamp(date)}
         </TooltipTrigger>
         <TooltipContent data-slot="status-timestamp-content">
           <p className="font-mono">{format(date, "LLL dd, y HH:mm (z)")}</p>
@@ -205,8 +206,9 @@ SimpleTimestamp.displayName = "SimpleTimestamp";
  * RichTimestamp - Internal hover card timestamp display with timezone details
  *
  * Displays a hover card with comprehensive timestamp information:
- * - Local timezone timestamp with timezone abbreviation (e.g., "PST", "EST")
- * - UTC timestamp
+ * - The labels' `timeZone`, when set and not UTC, as the visible text is in it
+ * - The viewer's local timezone
+ * - UTC (each zone listed once)
  * - Relative time ("2 hours ago") that updates every second while open
  *
  * Each row in the hover card is clickable to copy the value to clipboard, with
@@ -251,10 +253,12 @@ function RichTimestamp({
   const isTouch = useMediaQuery("(hover: none)");
   const [_, setRerender] = useState(0);
 
+  const { timeZone: pageTimeZone } = useStatusBlocksLabels();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // a non-UTC page zone leads, as the visible text is in it; each zone once
+  const lead = pageTimeZone && pageTimeZone !== "UTC" ? pageTimeZone : timezone;
+  const timezones = [...new Set([lead, timezone, "UTC"])];
   const relative = formatDistanceToNowStrict(date, { addSuffix: true });
-  const formatted = format(date, "LLL dd, y HH:mm:ss");
-  const utc = format(new UTCDate(date), "LLL dd, y HH:mm:ss");
 
   useEffect(() => {
     // only setInterval if open
@@ -286,8 +290,13 @@ function RichTimestamp({
         {...{ side, align, alignOffset, sideOffset }}
       >
         <dl className="flex flex-col gap-1">
-          <StatusTimestampRow value={formatted} label={timezone} />
-          <StatusTimestampRow value={utc} label="UTC" />
+          {timezones.map((zone) => (
+            <StatusTimestampRow
+              key={zone}
+              value={formatInTimeZone(date, zone)}
+              label={zone}
+            />
+          ))}
           <StatusTimestampRow value={relative} label="Relative" />
         </dl>
       </HoverCardContent>
@@ -295,6 +304,23 @@ function RichTimestamp({
   );
 }
 RichTimestamp.displayName = "RichTimestamp";
+
+/** `LLL dd, y HH:mm:ss` like the other rows, in `timeZone`. */
+function formatInTimeZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("month")} ${part("day")}, ${part("year")} ${part("hour")}:${part("minute")}:${part("second")}`;
+}
 
 /**
  * StatusTimestampRow - Internal component for hover card timestamp rows

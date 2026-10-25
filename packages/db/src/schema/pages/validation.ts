@@ -6,6 +6,7 @@ import {
   THEME_KEYS,
   validateCustomTheme,
 } from "@openstatus/theme-store";
+import { isKnownTimeZone } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -32,16 +33,6 @@ export const customDomainSchema = z
     "Should not start with http://, https:// or www.",
   )
   .or(z.enum([""]));
-
-function isKnownTimeZone(value: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
-    return true;
-  } catch (error) {
-    if (error instanceof RangeError) return false;
-    throw error;
-  }
-}
 
 // ClickHouse rejects offsets like "+09:00" that Intl accepts.
 export const timeZoneSchema = z

@@ -15,6 +15,7 @@ import {
   selectStatusReportPageSchema,
   selectWorkspaceSchema,
   statusReport,
+  timeZoneSchema,
 } from "@openstatus/db/src/schema";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import { constantTimeEqual } from "@openstatus/services/page-access";
@@ -54,6 +55,7 @@ import {
   getMetricsLatencyMultiProcedure,
   getMetricsLatencyProcedure,
   getMetricsRegionsProcedure,
+  getStatusInTimeZoneProcedure,
   getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
@@ -84,6 +86,42 @@ const queryPasswordSchema = z.string().nullish();
 // A host reaches its page through either the slug or the custom domain.
 const bySlugOrDomain = (slug: string) =>
   sql`lower(${page.slug}) = ${slug} OR lower(${page.customDomain}) = ${slug}`;
+
+// Status rows grouped into `timeZone` days, with the zone they ended up in.
+async function fetchStatusDays(
+  monitors: Parameters<typeof fetchByJobType>[0],
+  timeZone: string,
+) {
+  const readUtc = async () => ({
+    timeZone: "UTC",
+    rows: await fetchByJobType(monitors, (type) =>
+      getStatusProcedure("45d", type),
+    ),
+  });
+  // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
+  if (timeZone === "UTC") return readUtc();
+  try {
+    const rows = await fetchByJobType(
+      monitors,
+      (type) =>
+        ({ monitorIds }) =>
+          getStatusInTimeZoneProcedure(type)({
+            monitorIds,
+            timezone: timeZone,
+          }),
+    );
+    return { timeZone, rows };
+  } catch (err) {
+    // ClickHouse's tz database can reject a zone Node accepts: keep real bars
+    // in UTC days; other errors still drop the page to manual mode
+    if (!(err instanceof Error) || !/time ?zone/i.test(err.message)) throw err;
+    console.error(
+      `[status-page] zone ${timeZone} failed, using UTC days:`,
+      err,
+    );
+    return readUtc();
+  }
+}
 
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
@@ -794,17 +832,24 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitors = pageComponents.filter(isMonitorComponent);
 
+      // a zone this runtime cannot resolve renders the page in UTC instead of failing it
+      const pageTimeZone = timeZoneSchema
+        .catch("UTC")
+        .parse(_page.defaultTimezone);
+
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
       // whole page to manual mode so bars still render from DB events.
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
           ? Promise.resolve(null)
-          : fetchByJobType(monitors, (type) => getStatusProcedure("45d", type)),
+          : fetchStatusDays(monitors, pageTimeZone),
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
-      const statusDataByMonitorId = tinybird.data ?? new Map<string, never[]>();
+      const timeZone = tinybird.data?.timeZone ?? pageTimeZone;
+      const statusDataByMonitorId =
+        tinybird.data?.rows ?? new Map<string, never[]>();
 
       const parsedConfiguration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -861,6 +906,7 @@ export const statusPageRouter = createTRPCRouter({
             rawData,
             monitorId,
             lookbackPeriod,
+            timeZone,
           );
         } else {
           // Static components, manual mode, or NOOP mode: use synthetic data
@@ -868,6 +914,7 @@ export const statusPageRouter = createTRPCRouter({
             errorDays: [],
             degradedDays: [],
             lookbackPeriod,
+            timeZone,
           });
         }
 
@@ -882,12 +929,14 @@ export const statusPageRouter = createTRPCRouter({
           data: filledData,
           cardType: effectiveCardType,
           barType: effectiveBarType,
+          timeZone,
         });
         const uptime = getUptime({
           data: filledData,
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
+          timeZone,
           privateLocationOnly:
             c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
         });
@@ -902,6 +951,8 @@ export const statusPageRouter = createTRPCRouter({
           ...(c.monitor ? { monitor: c.monitor } : {}),
           data: processedData,
           uptime,
+          // the zone the days were grouped in, UTC if the page's was rejected
+          timeZone,
         };
       });
     }),

@@ -35,9 +35,10 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
+import { resolveTimeZone } from "@openstatus/utils";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { clearThemeDraft } from "../../lib/theme-draft";
 import { ThemeSelect } from "../themes/theme-select";
@@ -83,6 +84,8 @@ interface StatusPageContextType {
   /** Unregistered theme previewed from the explorer's builder. */
   draftTheme: Theme | null;
   setDraftTheme: (draftTheme: Theme | null) => void;
+  /** IANA zone the page's days and timestamps are rendered in. */
+  timezone: string;
 }
 
 const StatusPageContext = createContext<StatusPageContextType | null>(null);
@@ -103,6 +106,7 @@ export function StatusPageProvider({
   defaultNumberOfDays = 45,
   defaultCommunityTheme = "default",
   customTheme,
+  timezone: pageTimezone = "UTC",
 }: {
   children: React.ReactNode;
   defaultCardType?: CardType;
@@ -111,6 +115,7 @@ export function StatusPageProvider({
   defaultNumberOfDays?: NumberOfDays;
   defaultCommunityTheme?: CommunityTheme;
   customTheme?: CustomTheme | null;
+  timezone?: string;
 }) {
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
@@ -121,6 +126,9 @@ export function StatusPageProvider({
     defaultCommunityTheme,
   );
   const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+  // the server vetted the zone against Node; an older browser may still not
+  // know it and would throw on every formatter
+  const timezone = useMemo(() => resolveTimeZone(pageTimezone), [pageTimezone]);
 
   // a draft shadows the community theme, so picking one discards the draft
   function setCommunityTheme(theme: CommunityTheme) {
@@ -167,6 +175,7 @@ export function StatusPageProvider({
         setCommunityTheme,
         draftTheme,
         setDraftTheme,
+        timezone,
       }}
     >
       {children}

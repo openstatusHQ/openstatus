@@ -196,6 +196,16 @@ export function getStatusProcedure(_period: "45d", type: Type) {
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
+/** 15m buckets regrouped into the days of a time zone; the 45d pipes are UTC only. */
+export function getStatusInTimeZoneProcedure(type: Type) {
+  if (type === "dns") return tb.dnsStatus15m;
+  if (type === "http") return tb.httpStatus15m;
+  if (type === "tcp") return tb.tcpStatus15m;
+  if (type === "icmp") return tb.icmpStatus15m;
+  if (type === "grpc") return tb.grpcStatus15m;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+}
+
 export function getGetProcedure(period: "14d", type: Type) {
   switch (period) {
     case "14d":

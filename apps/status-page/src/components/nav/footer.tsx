@@ -7,17 +7,16 @@ import {
   StatusPageFooterContent,
   StatusPagePoweredBy,
 } from "@openstatus/ui/components/blocks/status-page-footer";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import { useEmbed } from "../../hooks/use-embed";
 import { useTRPC } from "../../lib/trpc/client";
 import { Link } from "../common/link";
 import { TimestampHoverCard } from "../content/timestamp-hover-card";
 import { LocaleSwitcher } from "../locale-switcher";
+import { useStatusPage } from "../status-page/floating-button";
 import { ThemeSwitcher } from "../themes/theme-switcher";
 
 export function Footer({
@@ -25,17 +24,13 @@ export function Footer({
   ...props
 }: React.ComponentProps<"footer">) {
   const { domain } = useParams<{ domain: string }>();
-  const [isMounted, setIsMounted] = useState(false);
   const trpc = useTRPC();
   const { data: page, dataUpdatedAt } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
   const embed = useEmbed();
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // the zone the page's days and timestamps render in, not the viewer's
+  const { timezone } = useStatusPage();
 
   if (!page) return null;
 
@@ -69,14 +64,8 @@ export function Footer({
             align="end"
             className="text-muted-foreground/70 mr-2 flex items-center gap-1.5"
           >
-            {isMounted ? (
-              <>
-                <Clock className="size-3" />
-                <span className="font-mono text-xs">{timezone}</span>
-              </>
-            ) : (
-              <Skeleton className="h-4 w-28" />
-            )}
+            <Clock className="size-3" />
+            <span className="font-mono text-xs">{timezone}</span>
           </TimestampHoverCard>
           <LocaleSwitcher
             pageLocales={page.locales}

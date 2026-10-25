@@ -460,7 +460,7 @@ Internally, `useStatusBlocksLabels()` returns `defaultStatusBlocksLabels` (expor
 
 ### Localizing in your app
 
-Mount `<StatusBlocksI18nProvider>` once near the root of your tree and pass a `StatusBlocksLabels` object:
+Mount `<StatusBlocksI18nProvider>` once near the root of your tree and pass a `StatusBlocksLabelsInput` object (`StatusBlocksLabels` with `formatDay` and `formatTimestamp` optional; missing ones fall back to the defaults):
 
 ```tsx
 "use client";
@@ -469,14 +469,14 @@ import { useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl"; // or any i18n library
 import {
   StatusBlocksI18nProvider,
-  type StatusBlocksLabels,
+  type StatusBlocksLabelsInput,
 } from "@openstatus/ui/components/blocks/status-i18n";
 
 export function MyStatusBlocksProvider({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
   const locale = useLocale();
 
-  const labels = useMemo<StatusBlocksLabels>(() => {
+  const labels = useMemo<StatusBlocksLabelsInput>(() => {
     const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "long" });
     const dateShortFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
     const dateTimeFmt = new Intl.DateTimeFormat(locale, {
@@ -557,6 +557,21 @@ const labels: StatusBlocksLabels = {
   formatDateShort: (d) => new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(d),
   formatDateTime: (d) =>
     new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(d),
+};
+```
+
+### Rendering in a time zone
+
+Pass `timeZone` to every instant formatter and set `timeZone` on the labels so the rich timestamp hover card lists it first, ahead of the viewer's zone and UTC. `formatDay` receives a bar's `YYYY-MM-DD` key, a calendar date already in that zone, so it must format without shifting it. The example shows two formatters; give every other instant formatter (`formatDate`, `formatTimestamp`, the ranges) the same `timeZone`:
+
+```tsx
+const labels: StatusBlocksLabelsInput = {
+  ...defaultStatusBlocksLabels,
+  timeZone: "Asia/Tokyo",
+  formatDateTime: (d) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" }).format(d),
+  formatDay: (day) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(day)),
 };
 ```
 
