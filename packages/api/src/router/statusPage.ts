@@ -113,7 +113,8 @@ async function fetchStatusDays(
     return { timeZone, rows };
   } catch (err) {
     // ClickHouse's tz database can reject a zone Node accepts: keep real bars
-    // in UTC days rather than dropping the page to manual mode
+    // in UTC days; other errors still drop the page to manual mode
+    if (!(err instanceof Error) || !/time ?zone/i.test(err.message)) throw err;
     console.error(
       `[status-page] zone ${timeZone} failed, using UTC days:`,
       err,
