@@ -46,7 +46,10 @@ describe("validateMeta", () => {
 
   test("checks thumbnail copy only when set", () => {
     expect(validateMeta({ ...valid, thumbTitle: "Short." }, "t")).toEqual([]);
-    expect(validateMeta({ ...valid, thumbSubtitle: "" }, "t")).toEqual([
+    expect(
+      validateMeta({ ...valid, thumbEyebrow: " ", thumbSubtitle: "" }, "t"),
+    ).toEqual([
+      "t: meta.thumbEyebrow must be a non-empty string if set",
       "t: meta.thumbSubtitle must be a non-empty string if set",
     ]);
   });
