@@ -4,7 +4,7 @@ import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
 } from "@openstatus/ui/components/blocks/status-i18n";
-import { timeZoneShortNames } from "@openstatus/utils";
+import { timeZoneShortName, timeZoneShortNames } from "@openstatus/utils";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo } from "react";
 
@@ -30,12 +30,16 @@ import { useStatusPage } from "../status-page/floating-button";
  */
 export function StatusBlocksProvider({
   children,
+  timezone: timezoneOverride,
 }: {
   children: React.ReactNode;
+  /** Defaults to the page's zone. */
+  timezone?: string;
 }) {
   const t = useExtracted();
   const locale = useLocale();
-  const { timezone } = useStatusPage();
+  const { timezone: pageTimezone } = useStatusPage();
+  const timezone = timezoneOverride ?? pageTimezone;
 
   const value = useMemo<StatusBlocksLabels>(() => {
     // timestamps render in the page zone; the suffix names the zone as of
@@ -127,7 +131,10 @@ export function StatusBlocksProvider({
       // bar keys are calendar dates stored as UTC midnight, so no zone here
       formatDay: (day: string) =>
         formatDate(new Date(day), { month: "short", locale }),
-      formatTimestamp: (d: Date) => withZone(formatTimestamp(d, timezone), d),
+      timeZone: timezone,
+      // the banner stamp is en-US throughout, zone name included
+      formatTimestamp: (d: Date) =>
+        `${formatTimestamp(d, timezone)} (${timeZoneShortName(timezone, "en-US", d)})`,
       formatDateRange: (from?: Date, to?: Date) => {
         const range = formatDateRange(from, to, locale, timezone);
         const instants = [from, to].filter((d): d is Date => d !== undefined);

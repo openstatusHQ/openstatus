@@ -109,8 +109,12 @@ export function formatTime(date: Date, locale?: string, timeZone = "UTC") {
   });
 }
 
-/** Compact banner stamp, `Oct 03, 2026 14:41`, in `timeZone`. */
-export function formatTimestamp(date: Date, timeZone = "UTC") {
+/** Compact banner stamp, `Oct 03, 2026 14:41` (`:05` with seconds), in `timeZone`. */
+export function formatTimestamp(
+  date: Date,
+  timeZone = "UTC",
+  withSeconds = false,
+) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hourCycle: "h23",
@@ -119,10 +123,12 @@ export function formatTimestamp(date: Date, timeZone = "UTC") {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    ...(withSeconds && { second: "2-digit" }),
   }).formatToParts(date);
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((p) => p.type === type)?.value ?? "";
-  return `${part("month")} ${part("day")}, ${part("year")} ${part("hour")}:${part("minute")}`;
+  const stamp = `${part("month")} ${part("day")}, ${part("year")} ${part("hour")}:${part("minute")}`;
+  return withSeconds ? `${stamp}:${part("second")}` : stamp;
 }
 
 /**

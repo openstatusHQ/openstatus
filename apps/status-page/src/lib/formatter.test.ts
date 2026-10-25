@@ -85,6 +85,13 @@ describe("formatTimestamp", () => {
       "Jan 15, 2024 17:30",
     );
   });
+
+  test("appends seconds for the hover card rows", () => {
+    const at = new Date("2024-01-15T22:30:05Z");
+    expect(formatTimestamp(at, "Asia/Tokyo", true)).toBe(
+      "Jan 16, 2024 07:30:05",
+    );
+  });
 });
 
 describe("formatMilliseconds", () => {

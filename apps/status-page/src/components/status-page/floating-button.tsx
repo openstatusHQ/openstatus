@@ -35,9 +35,10 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
+import { resolveTimeZone } from "@openstatus/utils";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { clearThemeDraft } from "../../lib/theme-draft";
 import { ThemeSelect } from "../themes/theme-select";
@@ -105,7 +106,7 @@ export function StatusPageProvider({
   defaultNumberOfDays = 45,
   defaultCommunityTheme = "default",
   customTheme,
-  timezone = "UTC",
+  timezone: pageTimezone = "UTC",
 }: {
   children: React.ReactNode;
   defaultCardType?: CardType;
@@ -125,6 +126,9 @@ export function StatusPageProvider({
     defaultCommunityTheme,
   );
   const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+  // the server vetted the zone against Node; an older browser may still not
+  // know it and would throw on every formatter
+  const timezone = useMemo(() => resolveTimeZone(pageTimezone), [pageTimezone]);
 
   // a draft shadows the community theme, so picking one discards the draft
   function setCommunityTheme(theme: CommunityTheme) {

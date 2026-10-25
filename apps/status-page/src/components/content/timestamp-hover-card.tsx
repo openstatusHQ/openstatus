@@ -1,6 +1,5 @@
 "use client";
 
-import { UTCDate } from "@date-fns/utc";
 import { Check, Copy } from "@openstatus/icons";
 import {
   HoverCard,
@@ -13,10 +12,12 @@ import {
   type HoverCardContentProps,
   HoverCardPortal,
 } from "@radix-ui/react-hover-card";
-import { format } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
+
+import { formatTimestamp } from "../../lib/formatter";
+import { useStatusPage } from "../status-page/floating-button";
 
 export function TimestampHoverCard({
   date,
@@ -39,10 +40,11 @@ export function TimestampHoverCard({
   const isTouch = useMediaQuery("(hover: none)");
   const [_, setRerender] = useState(0);
 
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { timezone: pageTimezone } = useStatusPage();
+  const viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // the page's zone first, as the visible text is in it; each zone once
+  const timezones = [...new Set([pageTimezone, viewerTimezone, "UTC"])];
   const relative = formatDistanceToNowStrict(date, { addSuffix: true });
-  const formatted = format(date, "LLL dd, y HH:mm:ss");
-  const utc = format(new UTCDate(date), "LLL dd, y HH:mm:ss");
 
   useEffect(() => {
     // only setInterval if open
@@ -74,8 +76,13 @@ export function TimestampHoverCard({
           {...{ side, align, alignOffset, sideOffset }}
         >
           <dl className="flex flex-col gap-1">
-            <Row value={formatted} label={timezone} />
-            <Row value={utc} label="UTC" />
+            {timezones.map((timezone) => (
+              <Row
+                key={timezone}
+                value={formatTimestamp(date, timezone, true)}
+                label={timezone}
+              />
+            ))}
             {/* <Row value={date.toISOString()} label="ISO" /> */}
             {/* <Row value={String(date.getTime())} label="Timestamp" /> */}
             <Row value={relative} label={t("Relative")} />
