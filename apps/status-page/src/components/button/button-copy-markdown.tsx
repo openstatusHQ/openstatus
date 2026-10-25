@@ -19,9 +19,9 @@ export function ButtonCopyMarkdown({
   const handleCopy = async () => {
     if (isLoading) return;
     try {
+      setIsLoading(true);
       let content = markdown;
       if (!content && typeof window !== "undefined") {
-        setIsLoading(true);
         const mdUrl = window.location.pathname.replace(/\/$/, "") + ".md";
         const res = await fetch(mdUrl);
         if (res.ok) {
@@ -29,7 +29,7 @@ export function ButtonCopyMarkdown({
         }
       }
       if (content) {
-        copy(content, {
+        await copy(content, {
           successMessage: t("Markdown copied to clipboard"),
           withToast: true,
         });
