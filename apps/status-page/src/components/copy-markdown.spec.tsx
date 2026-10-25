@@ -1,8 +1,7 @@
+// @vitest-environment jsdom
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CopyMarkdown } from "./copy-markdown";
 import { describe, it, expect, vi } from "vitest";
-
-// @vitest-environment jsdom
 
 describe("CopyMarkdown", () => {
   it("copies markdown to clipboard", async () => {
