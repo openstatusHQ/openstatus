@@ -20,8 +20,11 @@ export type TutorialMeta = {
   subtitle: string;
   outroTitle: string;
   outroSubtitle: string;
+  // Replaces the thumbnail's "01 · Label" line, e.g. "Migrate · Instatus".
+  thumbEyebrow?: string;
   thumbTitle?: string;
   thumbSubtitle?: string;
+  viewport?: { width: number; height: number };
   requires?: string[];
 };
 

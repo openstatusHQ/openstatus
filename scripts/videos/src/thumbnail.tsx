@@ -60,7 +60,8 @@ export function Thumbnail({ recording, timeline }: ThumbnailProps) {
           }}
         >
           <Mark size={48} color={colors.foreground} />
-          {String(copy.order).padStart(2, "0")} · {copy.label}
+          {copy.thumbEyebrow ??
+            `${String(copy.order).padStart(2, "0")} · ${copy.label}`}
         </div>
         <div
           style={{

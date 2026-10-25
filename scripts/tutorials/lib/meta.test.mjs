@@ -42,6 +42,14 @@ describe("validateMeta", () => {
     ]);
   });
 
+  test("checks a viewport only when set", () => {
+    const viewport = { width: 1120, height: 900 };
+    expect(validateMeta({ ...valid, viewport }, "t")).toEqual([]);
+    expect(validateMeta({ ...valid, viewport: { width: 1120 } }, "t")).toEqual([
+      "t: meta.viewport needs a positive integer width and height",
+    ]);
+  });
+
   test("reports a requires that is not a list", () => {
     expect(validateMeta({ ...valid, requires: {} }, "t")).toEqual([
       "t: meta.requires must be an array",

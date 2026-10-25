@@ -17,13 +17,23 @@ export function validateMeta(meta, name) {
   ])
     if (typeof meta[key] !== "string" || meta[key].trim() === "")
       problems.push(`${name}: meta.${key} must be a non-empty string`);
-  // The thumbnail says the title and subtitle unless these replace them.
-  for (const key of ["thumbTitle", "thumbSubtitle"])
+  // The thumbnail shows "01 · Label", title and subtitle unless these replace
+  // them.
+  for (const key of ["thumbEyebrow", "thumbTitle", "thumbSubtitle"])
     if (
       meta[key] !== undefined &&
       (typeof meta[key] !== "string" || meta[key].trim() === "")
     )
       problems.push(`${name}: meta.${key} must be a non-empty string if set`);
+  if (
+    meta.viewport !== undefined &&
+    !["width", "height"].every(
+      (k) => Number.isInteger(meta.viewport?.[k]) && meta.viewport[k] > 0,
+    )
+  )
+    problems.push(
+      `${name}: meta.viewport needs a positive integer width and height`,
+    );
   if (meta.requires !== undefined && !Array.isArray(meta.requires))
     problems.push(`${name}: meta.requires must be an array`);
   for (const r of Array.isArray(meta.requires) ? meta.requires : [])

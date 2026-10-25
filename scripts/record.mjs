@@ -68,8 +68,6 @@ const positive = (key, fallback) => {
     fail(`--${key} must be a positive number, got ${flags[key]}`);
   return value;
 };
-const width = positive("width", 1440);
-const height = positive("height", 900);
 const speed = positive("speed", 1);
 const remotion = Boolean(flags.remotion);
 // scripts/videos only has light compositions.
@@ -119,6 +117,9 @@ const { validateMeta } = await import(
 );
 const problems = validateMeta(tutorial.meta, name);
 if (problems.length) fail(problems.join("\n"));
+// A tutorial may need a narrower window, e.g. for a card that runs wide.
+const width = positive("width", tutorial.meta.viewport?.width ?? 1440);
+const height = positive("height", tutorial.meta.viewport?.height ?? 900);
 if (tutorial.meta.requires?.includes("checker")) {
   const checker = process.env.CHECKER_URL ?? "http://localhost:8090";
   const answer = await fetch(checker, {

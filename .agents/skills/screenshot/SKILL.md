@@ -176,9 +176,9 @@ last frame. It refuses a `--db` that is not local, since tutorials delete
 their own rows.
 
 - A tutorial exports `meta` (series `order`, a one-word `label`, intro and
-  outro copy, optional `thumbTitle`/`thumbSubtitle`, `requires`) next to its
-  steps; `scripts/tutorials/lib/meta.mjs` checks it
-  before the browser starts. The shared workspace, page and monitor
+  outro copy, optional `thumbEyebrow`/`thumbTitle`/`thumbSubtitle` for the
+  thumbnail, an optional `viewport`, `requires`) next to its steps;
+  `scripts/tutorials/lib/meta.mjs` checks it before the browser starts. The shared workspace, page and monitor
   fixtures and the cleanup statements live in `lib/fixtures.mjs`; sheets,
   date pickers, multi-select menus, comboboxes and tabs have helpers in
   `lib/ui.mjs`. `pnpm --filter @openstatus/tutorials test` covers the
