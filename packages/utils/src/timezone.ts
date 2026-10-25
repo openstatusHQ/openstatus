@@ -11,7 +11,13 @@ export function isKnownTimeZone(timeZone: string): boolean {
 
 /** `timeZone` if this runtime can format in it, otherwise UTC. */
 export function resolveTimeZone(timeZone: string): string {
-  return isKnownTimeZone(timeZone) ? timeZone : "UTC";
+  if (!isKnownTimeZone(timeZone)) return "UTC";
+  // UTC aliases (Etc/UTC, GMT) collapse so callers can compare with "UTC";
+  // other zones keep their name, as Intl renames some (Asia/Kolkata)
+  const resolved = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+  }).resolvedOptions().timeZone;
+  return resolved === "UTC" ? "UTC" : timeZone;
 }
 
 // formatters are costly to build and labels ask for one per instant

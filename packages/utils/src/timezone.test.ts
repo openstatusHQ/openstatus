@@ -11,6 +11,15 @@ describe("resolveTimeZone", () => {
     expect(resolveTimeZone("Asia/Tokyo")).toBe("Asia/Tokyo");
   });
 
+  it("collapses UTC aliases", () => {
+    expect(resolveTimeZone("Etc/UTC")).toBe("UTC");
+    expect(resolveTimeZone("GMT")).toBe("UTC");
+  });
+
+  it("keeps a zone Intl would rename", () => {
+    expect(resolveTimeZone("Asia/Kolkata")).toBe("Asia/Kolkata");
+  });
+
   it("falls back to UTC for an unknown zone", () => {
     expect(resolveTimeZone("Mars/Olympus")).toBe("UTC");
   });
