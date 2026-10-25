@@ -11,7 +11,8 @@
 // default function of steps. Needs the seeded stack from
 // `node scripts/dev-stack.mjs up`; writes .recordings/<name>[.dark].mp4.
 // --remotion captures at 2x without the in-page cursor and writes
-// .recordings/remotion/<name>/{video.mp4,timeline.json} for scripts/videos.
+// .recordings/remotion/<name>/{video.mp4,timeline.json,thumbnail.png} for
+// scripts/videos.
 // Tutorials reset their own rows, so only a local database is accepted.
 
 import { spawnSync } from "node:child_process";
@@ -393,6 +394,18 @@ const rec = {
   async warm(paths) {
     for (const path of paths) await context.request.get(path);
   },
+  // The still behind the video's thumbnail: this moment, without cursor or
+  // toasts, keeping `focus` in frame. Without a call, the final state is used.
+  async thumbnail(focus) {
+    const box = focus ? await focus.boundingBox() : null;
+    rec.thumb = {
+      png: await page.screenshot({
+        style:
+          "#__rec-cursor, .__rec-ripple, [data-sonner-toaster] { display: none !important; }",
+      }),
+      focus: box && rect(box),
+    };
+  },
   // Open the first page and mark where the video starts; everything before
   // (login, first load, cleanup) is cut. The label is the opening caption.
   async start(path, label) {
@@ -421,6 +434,7 @@ try {
   // form) lands after its confirmation toast, and the video ends here.
   await rec.settle();
   await rec.wait(2000);
+  if (remotion && !rec.thumb) await rec.thumbnail();
 } catch (e) {
   failed = e;
   shot = await page
@@ -497,6 +511,7 @@ if (remotion) {
     viewport: { width, height },
     scale,
     duration: endAt - startAt,
+    thumbnail: { focus: rec.thumb?.focus ?? null },
     events: events
       .filter((e) => e.t >= startAt)
       .map((e) => ({
@@ -506,5 +521,6 @@ if (remotion) {
       })),
   };
   writeFileSync(join(dir, "timeline.json"), JSON.stringify(timeline, null, 2));
+  writeFileSync(join(dir, "thumbnail.png"), rec.thumb.png);
 }
 console.log(file);

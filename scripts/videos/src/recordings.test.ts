@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { copyOf, recordingsFrom } from "./recordings";
+import { copyOf, recordingsFrom, thumbnailsFrom } from "./recordings";
 import type { Timeline } from "./timeline";
 
 describe("recordingsFrom", () => {
@@ -14,6 +14,18 @@ describe("recordingsFrom", () => {
         { name: "nested/deeper/timeline.json" },
       ]),
     ).toEqual(["create-monitor", "set-up-alerts"]);
+  });
+});
+
+describe("thumbnailsFrom", () => {
+  test("keeps recordings that have a thumbnail.png", () => {
+    const files = [
+      "a/timeline.json",
+      "a/thumbnail.png",
+      "b/timeline.json",
+      "c/thumbnail.png",
+    ].map((name) => ({ name }));
+    expect(thumbnailsFrom(files)).toEqual(["a"]);
   });
 });
 
@@ -31,6 +43,7 @@ describe("copyOf", () => {
   test("uses the tutorial's meta when the recording has it", () => {
     const meta = {
       order: 4,
+      label: "Report",
       title: "Post a status report",
       subtitle: "s",
       outroTitle: "o",

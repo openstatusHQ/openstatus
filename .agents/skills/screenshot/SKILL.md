@@ -175,8 +175,9 @@ never appears, and leaves `.recordings/<tutorial>[.dark].failure.png` with the
 last frame. It refuses a `--db` that is not local, since tutorials delete
 their own rows.
 
-- A tutorial exports `meta` (series `order`, intro and outro copy,
-  `requires`) next to its steps; `scripts/tutorials/lib/meta.mjs` checks it
+- A tutorial exports `meta` (series `order`, a one-word `label`, intro and
+  outro copy, optional `thumbTitle`/`thumbSubtitle`, `requires`) next to its
+  steps; `scripts/tutorials/lib/meta.mjs` checks it
   before the browser starts. The shared workspace, page and monitor
   fixtures and the cleanup statements live in `lib/fixtures.mjs`; sheets,
   date pickers, multi-select menus, comboboxes and tabs have helpers in
@@ -191,13 +192,17 @@ their own rows.
 - Tutorials delete their own previous output first, so they re-run cleanly;
   run them on a fresh `--reseed` and in `meta.order` for consistent videos.
 - `--remotion` (light only) captures at 2x without the in-page cursor and
-  writes `.recordings/remotion/<tutorial>/{video.mp4,timeline.json}`.
+  writes `.recordings/remotion/<tutorial>/{video.mp4,timeline.json,
+  thumbnail.png}`. The still is the final state unless the tutorial calls
+  `thumbnail(locator)` at a better moment; the locator stays in frame.
   `scripts/videos` has one composition per recording there and turns it into
   the edited cut: shared intro and outro from `meta`, the recording in a
   window under a camera that follows the clicks, `step()` captions, typing
   played faster and idle stretches sped up. `pnpm --filter @openstatus/videos
   studio` to preview, `pnpm --filter @openstatus/videos render <tutorial>` to
-  export. In a cloud session pass `--browser-executable` pointing at the
+  export, `pnpm --filter @openstatus/videos thumbnails` for the 1920×1080
+  thumbnails (`01 · Label`, title and subtitle beside the still) in
+  `.recordings/final/<tutorial>.png`. In a cloud session pass `--browser-executable` pointing at the
   Playwright headless shell under `/opt/pw-browsers`; Remotion cannot
   download its own there.
 

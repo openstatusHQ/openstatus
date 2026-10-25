@@ -4,6 +4,7 @@ import { cleanup } from "./lib/fixtures.mjs";
 
 export const meta = {
   order: 2,
+  label: "Monitor",
   title: "Create your first monitor",
   subtitle: "From zero to uptime monitoring in under a minute.",
   outroTitle: "You're monitoring.",
@@ -23,6 +24,7 @@ export default async function ({
   type,
   settle,
   expect,
+  thumbnail,
 }) {
   await sql(cleanup.monitor({ name: NAME }));
   await warm(["/monitors/create", "/monitors/1/edit"]);
@@ -40,6 +42,9 @@ export default async function ({
     page.getByRole("textbox", { name: "URL" }),
     "https://registry.npmjs.org",
   );
+
+  // The filled-in form makes a clearer thumbnail than the regions it ends on.
+  await thumbnail(page.getByRole("textbox", { name: "URL" }));
 
   step("Save: the endpoint is tested first");
   await click(page.getByRole("button", { name: "Submit" }));

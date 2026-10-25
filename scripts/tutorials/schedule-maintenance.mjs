@@ -5,6 +5,7 @@ import { cleanup, monitors, pages } from "./lib/fixtures.mjs";
 
 export const meta = {
   order: 5,
+  label: "Schedule",
   title: "Schedule maintenance",
   subtitle: "Warn customers before planned downtime, not after.",
   outroTitle: "Your users are warned.",

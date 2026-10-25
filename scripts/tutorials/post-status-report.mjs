@@ -4,6 +4,7 @@ import { cleanup, monitors, pages } from "./lib/fixtures.mjs";
 
 export const meta = {
   order: 4,
+  label: "Report",
   title: "Post a status report",
   subtitle: "Keep customers in the loop, from first alert to fix.",
   outroTitle: "Everyone knows what happened.",

@@ -1,14 +1,22 @@
-import { Composition, getStaticFiles, staticFile } from "remotion";
+import { Composition, Still, getStaticFiles, staticFile } from "remotion";
 
-import { recordingsFrom } from "./recordings";
+import { recordingsFrom, thumbnailsFrom } from "./recordings";
+import { Thumbnail, type ThumbnailProps } from "./thumbnail";
 import type { Timeline } from "./timeline";
 import { Video, totalFrames, type VideoProps } from "./video";
 
-// One composition per recording: node scripts/record.mjs <id> --remotion.
+const timelineOf = async (recording: string) =>
+  (await (
+    await fetch(staticFile(`${recording}/timeline.json`))
+  ).json()) as Timeline;
+
+// One composition per recording (node scripts/record.mjs <id> --remotion),
+// and a <id>-thumbnail still for each that has a thumbnail.png.
 export function RemotionRoot() {
+  const files = getStaticFiles();
   return (
     <>
-      {recordingsFrom(getStaticFiles()).map((recording) => (
+      {recordingsFrom(files).map((recording) => (
         <Composition
           key={recording}
           id={recording}
@@ -19,16 +27,26 @@ export function RemotionRoot() {
           durationInFrames={1}
           defaultProps={{ recording, timeline: null } satisfies VideoProps}
           calculateMetadata={async ({ props }) => {
-            const res = await fetch(
-              staticFile(`${props.recording}/timeline.json`),
-            );
-            const timeline = (await res.json()) as Timeline;
+            const timeline = await timelineOf(props.recording);
             return {
               fps: timeline.fps,
               durationInFrames: totalFrames(timeline, timeline.fps),
               props: { ...props, timeline },
             };
           }}
+        />
+      ))}
+      {thumbnailsFrom(files).map((recording) => (
+        <Still
+          key={`${recording}-thumbnail`}
+          id={`${recording}-thumbnail`}
+          component={Thumbnail}
+          width={1920}
+          height={1080}
+          defaultProps={{ recording, timeline: null } satisfies ThumbnailProps}
+          calculateMetadata={async ({ props }) => ({
+            props: { ...props, timeline: await timelineOf(props.recording) },
+          })}
         />
       ))}
     </>

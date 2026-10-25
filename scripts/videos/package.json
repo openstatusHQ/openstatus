@@ -7,7 +7,8 @@
     "check": "tsc --noEmit",
     "render": "remotion render",
     "studio": "remotion studio",
-    "test": "vitest run"
+    "test": "vitest run",
+    "thumbnails": "node thumbnails.mjs"
   },
   "dependencies": {
     "@remotion/cli": "catalog:",

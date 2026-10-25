@@ -8,9 +8,22 @@ export function validateMeta(meta, name) {
     return [`${name}: export a meta object`];
   if (!Number.isInteger(meta.order) || meta.order < 1)
     problems.push(`${name}: meta.order must be a positive integer`);
-  for (const key of ["title", "subtitle", "outroTitle", "outroSubtitle"])
+  for (const key of [
+    "label",
+    "title",
+    "subtitle",
+    "outroTitle",
+    "outroSubtitle",
+  ])
     if (typeof meta[key] !== "string" || meta[key].trim() === "")
       problems.push(`${name}: meta.${key} must be a non-empty string`);
+  // The thumbnail says the title and subtitle unless these replace them.
+  for (const key of ["thumbTitle", "thumbSubtitle"])
+    if (
+      meta[key] !== undefined &&
+      (typeof meta[key] !== "string" || meta[key].trim() === "")
+    )
+      problems.push(`${name}: meta.${key} must be a non-empty string if set`);
   if (meta.requires !== undefined && !Array.isArray(meta.requires))
     problems.push(`${name}: meta.requires must be an array`);
   for (const r of Array.isArray(meta.requires) ? meta.requires : [])

@@ -3,6 +3,7 @@ import { cleanup, monitors } from "./lib/fixtures.mjs";
 
 export const meta = {
   order: 6,
+  label: "Alert",
   title: "Get alerted",
   subtitle: "Hear about downtime before your customers do.",
   outroTitle: "You'll be the first to know.",

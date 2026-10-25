@@ -3,6 +3,7 @@ import { cleanup, pages } from "./lib/fixtures.mjs";
 
 export const meta = {
   order: 1,
+  label: "Launch",
   title: "Launch a status page",
   subtitle: "One place for your customers to check what is up.",
   outroTitle: "Your status page is live.",

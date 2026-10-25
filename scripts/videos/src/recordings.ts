@@ -10,6 +10,12 @@ export function recordingsFrom(files: { name: string }[]): string[] {
     .sort();
 }
 
+// Recordings that also hold a thumbnail.png (recorded since thumbnails).
+export function thumbnailsFrom(files: { name: string }[]): string[] {
+  const names = new Set(files.map((f) => f.name));
+  return recordingsFrom(files).filter((r) => names.has(`${r}/thumbnail.png`));
+}
+
 // The words around a video. Recordings made before tutorials exported `meta`
 // still render, titled after their file name.
 export function copyOf(timeline: Timeline): TutorialMeta {
@@ -17,6 +23,7 @@ export function copyOf(timeline: Timeline): TutorialMeta {
   const title = timeline.name.replace(/-/g, " ");
   return {
     order: 0,
+    label: "Tutorial",
     title: title[0].toUpperCase() + title.slice(1),
     subtitle: "",
     outroTitle: "That's it.",

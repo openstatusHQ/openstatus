@@ -5,6 +5,7 @@ import { cleanup, monitors, pages } from "./lib/fixtures.mjs";
 
 export const meta = {
   order: 3,
+  label: "Connect",
   title: "Show your monitors",
   subtitle: "Turn uptime checks into a page your users can read.",
   outroTitle: "Your page shows live status.",

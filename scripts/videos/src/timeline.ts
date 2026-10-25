@@ -14,10 +14,14 @@ export type TimelineEvent =
 // The `meta` a tutorial exports (scripts/tutorials/lib/meta.mjs).
 export type TutorialMeta = {
   order: number;
+  // One word for the thumbnail's "01 · Launch" line.
+  label: string;
   title: string;
   subtitle: string;
   outroTitle: string;
   outroSubtitle: string;
+  thumbTitle?: string;
+  thumbSubtitle?: string;
   requires?: string[];
 };
 
@@ -29,6 +33,8 @@ export type Timeline = {
   viewport: { width: number; height: number };
   scale: number;
   duration: number;
+  // The element thumbnail.png should keep in frame, if the tutorial named one.
+  thumbnail?: { focus: Rect | null };
   events: TimelineEvent[];
 };
 

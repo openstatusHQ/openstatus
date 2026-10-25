@@ -11,6 +11,7 @@ const tutorials = readdirSync(dir).filter((f) => f.endsWith(".mjs"));
 
 const valid = {
   order: 1,
+  label: "Launch",
   title: "Title",
   subtitle: "Subtitle",
   outroTitle: "Done.",
@@ -31,6 +32,13 @@ describe("validateMeta", () => {
       "t: meta.order must be a positive integer",
       "t: meta.title must be a non-empty string",
       't: unknown requirement "database"',
+    ]);
+  });
+
+  test("checks thumbnail copy only when set", () => {
+    expect(validateMeta({ ...valid, thumbTitle: "Short." }, "t")).toEqual([]);
+    expect(validateMeta({ ...valid, thumbSubtitle: "" }, "t")).toEqual([
+      "t: meta.thumbSubtitle must be a non-empty string if set",
     ]);
   });
 
