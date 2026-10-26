@@ -31,6 +31,7 @@ import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { ChartTooltipNumber } from "./chart-tooltip-number";
+import { computeLatencyYAxisDomain } from "./chart-latency-domain";
 
 const chartConfig = {
   latency: {
@@ -133,9 +134,7 @@ export function ChartAreaLatency({
             "dataMin",
             // show the degraded line unless it would squash the series below half height
             (dataMax: number) =>
-              degradedAfter && degradedAfter <= dataMax * 2
-                ? degradedAfter
-                : dataMax,
+              computeLatencyYAxisDomain(dataMax, degradedAfter),
           ]}
           tickLine={false}
           axisLine={false}

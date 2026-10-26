@@ -34,6 +34,7 @@ import {
   ChartTooltipNumber,
   ChartTooltipNumberRaw,
 } from "./chart-tooltip-number";
+import { computeLatencyYAxisDomain } from "./chart-latency-domain";
 
 const chartConfig = {
   dns: {
@@ -212,9 +213,7 @@ export function ChartAreaTimingPhases({
             "dataMin",
             // show the degraded line unless it would squash the series below half height
             (dataMax: number) =>
-              degradedAfter && degradedAfter <= dataMax * 2
-                ? degradedAfter
-                : dataMax,
+              computeLatencyYAxisDomain(dataMax, degradedAfter),
           ]}
           tickLine={false}
           axisLine={false}
