@@ -30,8 +30,8 @@ import { periodToFromDate } from "@/data/metrics.client";
 import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { ChartTooltipNumber } from "./chart-tooltip-number";
 import { computeLatencyYAxisDomain } from "./chart-latency-domain";
+import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
   latency: {
