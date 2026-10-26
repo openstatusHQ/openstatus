@@ -787,10 +787,21 @@ describe("updatePageTimezone", () => {
         ctx,
         input: { title: "Free", slug: uniqueSlug("zone-free-utc") },
       });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultTimezone: "Asia/Tokyo" })
+        .where(eq(pageTable.id, p.id));
       await updatePageTimezone({
         ctx,
         input: { id: p.id, defaultTimezone: "UTC" },
       });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultTimezone).toBe("UTC");
     });
   });
 
