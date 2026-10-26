@@ -94,11 +94,7 @@ describe("statusPage.get and statusPage.getLight report order", () => {
       },
     ]);
 
-    const expectedOrder = [
-      noUpdates.id,
-      recentActivity.id,
-      olderActivity.id,
-    ];
+    const expectedOrder = [noUpdates.id, recentActivity.id, olderActivity.id];
 
     const result = await caller().statusPage.get({ slug });
     expect(result?.statusReports.map((report) => report.id)).toEqual(
