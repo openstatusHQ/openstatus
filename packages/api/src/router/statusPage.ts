@@ -91,10 +91,7 @@ export function sortStatusReportsByLatestUpdate<
   T extends { id: number; statusReportUpdates: { date: Date }[] },
 >(a: T, b: T): number {
   // Sort reports without updates to the beginning
-  if (
-    a.statusReportUpdates.length === 0 &&
-    b.statusReportUpdates.length === 0
-  )
+  if (a.statusReportUpdates.length === 0 && b.statusReportUpdates.length === 0)
     return b.id - a.id;
   if (a.statusReportUpdates.length === 0) return -1;
   if (b.statusReportUpdates.length === 0) return 1;
