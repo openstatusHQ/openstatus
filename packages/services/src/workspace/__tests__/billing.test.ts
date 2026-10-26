@@ -282,6 +282,33 @@ describe("updateWorkspaceLimits", () => {
     });
   });
 
+  test("keeps plan defaults for limits added after the row was stored", async () => {
+    await withTestTransaction(async (tx) => {
+      // a row stored before `i18n` existed: the key is missing, not false
+      const { i18n: _, ...storedBeforeI18n } = getLimits("starter");
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "starter", limits: JSON.stringify(storedBeforeI18n) },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await updateWorkspaceLimits({
+        ctx,
+        input: { addon: "white-label", value: true },
+      });
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(JSON.parse(after?.limits ?? "{}").i18n).toBe(true);
+    });
+  });
+
   test("leaves trialEndsAt alone when not given", async () => {
     await withTestTransaction(async (tx) => {
       const trialEndsAt = new Date("2027-01-15T00:00:00Z");
