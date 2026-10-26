@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -26,8 +27,10 @@ var resolver = net.DefaultResolver
 func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", host).Logger()
 
+	// A host can legitimately carry no address or CNAME (e.g. a TXT-only
+	// record), so a not-found answer is an empty set, not a failed check.
 	ips, err := resolver.LookupIP(ctx, "ip", host)
-	if err != nil {
+	if err != nil && !isNotFound(err) {
 		logger.Warn().Err(err).Msg("DNS IP lookup failed")
 		return nil, fmt.Errorf("failed to lookup IPs: %w", err)
 	}
@@ -43,14 +46,14 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 		}
 	}
 	CNAME, err := lookupCNAME(ctx, host)
-	if err != nil {
+	if err != nil && !isNotFound(err) {
 		logger.Warn().Err(err).Msg("DNS CNAME record lookup failed")
 		return nil, fmt.Errorf("failed to lookup CNAME record: %w", err)
 	}
 	MXRecords := lookupMX(ctx, host)
 
 	NS, err := lookupNS(ctx, host)
-	if err != nil {
+	if err != nil && !isNotFound(err) {
 		logger.Warn().Err(err).Msg("DNS NS record lookup failed")
 		return nil, fmt.Errorf("failed to lookup NS record: %w", err)
 	}
@@ -61,6 +64,11 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 	if err := ctx.Err(); err != nil {
 		logger.Warn().Err(err).Msg("DNS lookup did not complete before the deadline")
 		return nil, fmt.Errorf("DNS lookup for %s did not complete: %w", host, err)
+	}
+
+	if len(A) == 0 && len(AAAA) == 0 && CNAME == "" && len(MXRecords) == 0 && len(NS) == 0 && len(TXT) == 0 {
+		logger.Warn().Msg("DNS lookup returned no records")
+		return nil, fmt.Errorf("no DNS records found for %s", host)
 	}
 
 	response := &DnsResponse{
@@ -136,6 +144,13 @@ func lookupTXT(ctx context.Context, domain string) []string {
 		records = append(records, txt)
 	}
 	return records
+}
+
+// isNotFound reports whether a lookup failed because the name has no records of
+// the requested type, as opposed to a resolver or network failure.
+func isNotFound(err error) bool {
+	var dnsErr *net.DNSError
+	return errors.As(err, &dnsErr) && dnsErr.IsNotFound
 }
 
 func isSubdomain(domain string) bool {
