@@ -21,7 +21,12 @@ async function load(recording: string) {
     timeline.kind === "slack"
       ? await json<SlackData>(`${recording}/slack.json`)
       : null;
-  const clips: Record<string, Timeline> = Object.fromEntries(
+  return { timeline, terminal, slack };
+}
+
+// The dashboard clips cut into a recording; only its video plays them.
+async function loadClips(recording: string, timeline: Timeline) {
+  return Object.fromEntries(
     await Promise.all(
       (timeline.inserts ?? []).map(
         async ({ clip }) =>
@@ -31,8 +36,7 @@ async function load(recording: string) {
           ] as const,
       ),
     ),
-  );
-  return { timeline, terminal, slack, clips };
+  ) as Record<string, Timeline>;
 }
 
 // One composition per recording (node scripts/record.mjs <id> --remotion, or
@@ -62,14 +66,15 @@ export function RemotionRoot() {
           }
           calculateMetadata={async ({ props }) => {
             const loaded = await load(props.recording);
+            const clips = await loadClips(props.recording, loaded.timeline);
             return {
               fps: loaded.timeline.fps,
               durationInFrames: totalFrames(
                 loaded.timeline,
-                loaded.clips,
+                clips,
                 loaded.timeline.fps,
               ),
-              props: { ...props, ...loaded },
+              props: { ...props, ...loaded, clips },
             };
           }}
         />

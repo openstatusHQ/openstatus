@@ -81,7 +81,7 @@ for (const key of ["export", "name", "clock"])
 const name = flags.name ?? basename(names[0], ".mjs");
 if (!/^[\w-]+$/.test(name))
   fail(`--name must be a plain file name, got ${name}`);
-const clock = flags.clock ? new Date(flags.clock) : null;
+const clock = flags.clock !== undefined ? new Date(flags.clock) : null;
 if (clock && Number.isNaN(clock.getTime()))
   fail(`--clock must be an ISO date, got ${flags.clock}`);
 const base = (flags.base ?? "http://localhost:3001").replace(/\/$/, "");

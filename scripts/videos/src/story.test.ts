@@ -67,15 +67,24 @@ describe("partsOf", () => {
 
 describe("layoutParts", () => {
   test("overlaps parts by the fade", () => {
+    // 10s of Slack, a 5s clip, the last 10s: 300, 150 and 300 frames, each
+    // starting 18 frames before the one before it ends.
     const parts = partsOf(timeline({ inserts: [{ t: 10, clip: "a" }] }), {
       a: timeline({ duration: 5 }),
     });
     const { placed, frames } = layoutParts(parts, 30, 18);
-    expect(placed.map((p) => p.from)).toEqual([
-      0,
-      placed[0].frames - 18,
-      placed[0].frames + placed[1].frames - 36,
+    expect(placed.map((p) => [p.from, p.frames])).toEqual([
+      [0, 300],
+      [282, 150],
+      [414, 300],
     ]);
-    expect(frames).toBe(placed[2].from + placed[2].frames);
+    expect(frames).toBe(714);
+  });
+
+  test("fails on a part shorter than its cross-fades", () => {
+    const parts = partsOf(timeline({ inserts: [{ t: 19.5, clip: "a" }] }), {
+      a: timeline({ duration: 5 }),
+    });
+    expect(() => layoutParts(parts, 30, 18)).toThrow(/part 3 \(main\)/);
   });
 });

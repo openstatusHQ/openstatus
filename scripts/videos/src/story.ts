@@ -54,11 +54,16 @@ export function partsOf(
 }
 
 // Part lengths and starts in whole frames; parts overlap by `fade` to
-// cross-fade.
+// cross-fade. A part must outlast its fades in and out, or the next part
+// would start before it shows: cut the story further apart instead.
 export function layoutParts(parts: Part[], fps: number, fade: number) {
   let start = 0;
-  const placed = parts.map((part) => {
+  const placed = parts.map((part, i) => {
     const frames = Math.ceil(pacedDuration(part.segments) * fps);
+    if (parts.length > 1 && frames < 2 * fade)
+      throw new Error(
+        `part ${i + 1} (${part.kind === "clip" ? part.clip : "main"}) is ${frames} frames, shorter than its cross-fades (${2 * fade})`,
+      );
     const at = start;
     start += frames - fade;
     return { part, from: at, frames };

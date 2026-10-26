@@ -288,22 +288,29 @@ async function retime() {
           `when ${col} >= ${m.wall} then ${m.story} + min(${col} - ${m.wall}, 50)`,
       )
       .join(" ")} else ${col} end`;
+  // Only the incidents this recording declared.
+  const ours = "select id from incident where workspace_id = ? and id > ?";
   const scope = {
-    incident: "workspace_id = ?",
-    incident_event:
-      "incident_id in (select id from incident where workspace_id = ?)",
-    incident_postmortem:
-      "incident_id in (select id from incident where workspace_id = ?)",
+    incident: `id in (${ours})`,
+    incident_event: `incident_id in (${ours})`,
+    incident_postmortem: `incident_id in (${ours})`,
   };
   await sql(
     Object.entries(RETIMED).map(([table, cols]) => ({
       q: `update ${table} set ${cols.map((c) => `${c} = ${moved(c)}`).join(", ")} where ${scope[table]}`,
-      params: [workspace],
+      params: [workspace, incidentsBefore],
     })),
   );
 }
 const inserts = [];
 if (withDashboard) rmSync(dir, { recursive: true, force: true });
+// Incidents up to this id were there before the recording; retime() leaves
+// them alone.
+const [
+  {
+    rows: [[incidentsBefore]],
+  },
+] = await sql(["select coalesce(max(id), 0) from incident"]);
 const events = [];
 const view = [];
 const log = (event) => events.push(event);
