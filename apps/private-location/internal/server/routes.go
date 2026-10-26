@@ -150,16 +150,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/health", s.healthHandler)
 
-	tinyBirdToken := os.Getenv("TINYBIRD_TOKEN")
-
-	httpClient := &http.Client{
-		Timeout: 45 * time.Second,
-	}
-
-	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
-
-	privateLocationServer := NewPrivateLocationServer(s.db, tinybirdClient)
-	privateLocationServer.WorkflowsClient = workflows.NewClient(httpClient, os.Getenv("CRON_SECRET"))
+	privateLocationServer := NewPrivateLocationServer(s.db, s.tbClient)
+	privateLocationServer.WorkflowsClient = workflows.NewClient(s.httpClient, os.Getenv("CRON_SECRET"))
 	path, handler := v1.NewPrivateLocationServiceHandler(privateLocationServer)
 
 	r.Group(func(r chi.Router) {

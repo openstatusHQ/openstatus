@@ -279,7 +279,8 @@ func TestBatcher(t *testing.T) {
 		select {
 		case err := <-sent:
 			require.ErrorContains(t, err, "unexpected status code: 503")
-		default:
+		// The row's error is already queued; only the SendEvent goroutine has to be scheduled.
+		case <-time.After(time.Second):
 			t.Fatal("the row should fail as soon as Close returns")
 		}
 	})
