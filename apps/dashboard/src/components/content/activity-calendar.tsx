@@ -143,11 +143,7 @@ export function ActivityCalendarGrid({
     // up/down stay in the week's column
     const row = (i: number) => (days[i].date.getDay() + 6) % DAYS_PER_WEEK;
     // blank future days aren't buttons: hop over them
-    for (
-      let i = start + step;
-      i >= 0 && i < days.length;
-      i += step
-    ) {
+    for (let i = start + step; i >= 0 && i < days.length; i += step) {
       if (Math.abs(step) === 1 && row(i) !== row(i - step) + step) return;
       const next = scroller.current?.querySelector<HTMLElement>(
         `button[data-index="${i}"]`,

@@ -131,9 +131,6 @@ describe("buildOverviewData", () => {
       }),
       now,
     );
-    expect(data.events.map((e) => e.type)).toEqual([
-      "maintenance",
-      "incident",
-    ]);
+    expect(data.events.map((e) => e.type)).toEqual(["maintenance", "incident"]);
   });
 });

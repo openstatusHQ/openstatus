@@ -234,7 +234,10 @@ export default function Page() {
   // looks ahead as far as the last scheduled window ends, capped
   const until = maintenances
     .map((m) => m.to)
-    .reduce<Date | undefined>((max, to) => (!max || to > max ? to : max), undefined);
+    .reduce<Date | undefined>(
+      (max, to) => (!max || to > max ? to : max),
+      undefined,
+    );
   const range = activityRange(now, until);
   const days = groupByDay(range, events, spanOf, now).map(({ date, items }) => {
     if (items.length === 0) return { date };
