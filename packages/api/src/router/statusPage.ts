@@ -18,7 +18,7 @@ import {
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
-import { constantTimeEqual } from "@openstatus/services/page-access";
+import { constantTimeEqual, isEmailDomainAuthorized } from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
   hasPendingSubscriber,
@@ -1443,7 +1443,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const allowedDomains = _page.authEmailDomains?.split(",") ?? [];
 
-      if (!allowedDomains.includes(opts.input.email.split("@")[1])) {
+      if (!isEmailDomainAuthorized(opts.input.email, allowedDomains)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invalid email domain",
