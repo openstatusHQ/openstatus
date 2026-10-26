@@ -154,6 +154,7 @@ export function FormTimezone({
                               <CommandItem
                                 key={zone}
                                 value={zone}
+                                keywords={[label]}
                                 onSelect={() => {
                                   field.onChange(zone);
                                   setOpen(false);
