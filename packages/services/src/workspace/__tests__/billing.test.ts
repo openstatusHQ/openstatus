@@ -282,12 +282,13 @@ describe("updateWorkspaceLimits", () => {
     });
   });
 
-  test("keeps plan defaults for limits added after the row was stored", async () => {
+  test("only writes the addon, so unstored limits keep following the plan", async () => {
     await withTestTransaction(async (tx) => {
-      // a row stored before `i18n` existed: the key is missing, not false
+      // a row stored before `i18n` existed, with one hand-set override
       const { i18n: _, ...storedBeforeI18n } = getLimits("starter");
+      const stored = { ...storedBeforeI18n, monitors: 77 };
       const { workspace: ws, user } = await createTestWorkspace(
-        { plan: "starter", limits: JSON.stringify(storedBeforeI18n) },
+        { plan: "starter", limits: JSON.stringify(stored) },
         tx,
       );
       const ctx = {
@@ -305,7 +306,11 @@ describe("updateWorkspaceLimits", () => {
         .from(workspace)
         .where(eq(workspace.id, ws.id))
         .get();
-      expect(JSON.parse(after?.limits ?? "{}").i18n).toBe(true);
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual({
+        ...stored,
+        "white-label": true,
+      });
+      expect(selectWorkspaceSchema.parse(after).limits.i18n).toBe(true);
     });
   });
 
