@@ -109,7 +109,7 @@
 
   /* activity calendar: lightness is severity, hue only failure vs planned */
   --activity-0: var(--muted);
-  --activity-1: color-mix(in oklab, var(--warning) 40%, var(--muted));
+  --activity-1: color-mix(in oklab, var(--warning) 50%, var(--muted));
   --activity-2: var(--warning);
   --activity-3: var(--destructive);
   --activity-planned-1: color-mix(in oklab, var(--info) 30%, var(--muted));
