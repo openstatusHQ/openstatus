@@ -13,6 +13,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { appRouter } from "../root";
 import { createInnerTRPCContext } from "../trpc";
+import { sortStatusReportsByLatestUpdate } from "./statusPage";
 
 let workspaceId: number;
 let pageId: number;
@@ -27,20 +28,56 @@ function caller() {
   );
 }
 
-beforeAll(async () => {
-  const fixture = await createTestWorkspace();
-  workspaceId = fixture.workspace.id;
-  const createdPage = await createPage(workspaceId);
-  pageId = createdPage.id;
-  slug = createdPage.slug;
-});
+describe("sortStatusReportsByLatestUpdate", () => {
+  test("orders reports without updates first, then by latest update date descending, breaking ties by id", () => {
+    const reports = [
+      {
+        id: 1,
+        statusReportUpdates: [{ date: new Date("2026-02-01T00:00:00Z") }],
+      },
+      {
+        id: 2,
+        statusReportUpdates: [
+          { date: new Date("2026-03-01T00:00:00Z") },
+          { date: new Date("2026-01-01T00:00:00Z") },
+        ],
+      },
+      {
+        id: 3,
+        statusReportUpdates: [],
+      },
+      {
+        id: 4,
+        statusReportUpdates: [],
+      },
+      {
+        id: 5,
+        statusReportUpdates: [{ date: new Date("2026-03-01T00:00:00Z") }],
+      },
+    ];
 
-afterAll(async () => {
-  await db.delete(statusReport).where(eq(statusReport.pageId, pageId));
-  await db.delete(page).where(eq(page.workspaceId, workspaceId));
+    const sortedIds = [...reports]
+      .sort(sortStatusReportsByLatestUpdate)
+      .map((report) => report.id);
+
+    expect(sortedIds).toEqual([4, 3, 5, 2, 1]);
+  });
 });
 
 describe("statusPage.get and statusPage.getLight report order", () => {
+  beforeAll(async () => {
+    const fixture = await createTestWorkspace();
+    workspaceId = fixture.workspace.id;
+    const createdPage = await createPage(workspaceId);
+    pageId = createdPage.id;
+    slug = createdPage.slug;
+  });
+
+  afterAll(async () => {
+    await db.delete(statusReport).where(eq(statusReport.pageId, pageId));
+    await db.delete(page).where(eq(page.workspaceId, workspaceId));
+  });
+
   test("uses each report's newest update and puts reports without updates first", async () => {
     const olderActivity = await db
       .insert(statusReport)
@@ -94,7 +131,11 @@ describe("statusPage.get and statusPage.getLight report order", () => {
       },
     ]);
 
-    const expectedOrder = [noUpdates.id, recentActivity.id, olderActivity.id];
+    const expectedOrder = [
+      noUpdates.id,
+      recentActivity.id,
+      olderActivity.id,
+    ];
 
     const result = await caller().statusPage.get({ slug });
     expect(result?.statusReports.map((report) => report.id)).toEqual(
