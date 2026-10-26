@@ -87,6 +87,20 @@ const queryPasswordSchema = z.string().nullish();
 const bySlugOrDomain = (slug: string) =>
   sql`lower(${page.slug}) = ${slug} OR lower(${page.customDomain}) = ${slug}`;
 
+export function sortStatusReportsByLatestUpdate<
+  T extends { id: number; statusReportUpdates: { date: Date }[] },
+>(a: T, b: T): number {
+  // Sort reports without updates to the beginning
+  if (a.statusReportUpdates.length === 0 && b.statusReportUpdates.length === 0)
+    return b.id - a.id;
+  if (a.statusReportUpdates.length === 0) return -1;
+  if (b.statusReportUpdates.length === 0) return 1;
+  return (
+    b.statusReportUpdates[0].date.getTime() -
+      a.statusReportUpdates[0].date.getTime() || b.id - a.id
+  );
+}
+
 // Status rows grouped into `timeZone` days, with the zone they ended up in.
 async function fetchStatusDays(
   monitors: Parameters<typeof fetchByJobType>[0],
@@ -522,20 +536,9 @@ export const statusPageRouter = createTRPCRouter({
         ? _page.customTheme
         : null;
 
-      const statusReports = _page.statusReports.sort((a, b) => {
-        // Sort reports without updates to the beginning
-        if (
-          a.statusReportUpdates.length === 0 &&
-          b.statusReportUpdates.length === 0
-        )
-          return b.id - a.id;
-        if (a.statusReportUpdates.length === 0) return -1;
-        if (b.statusReportUpdates.length === 0) return 1;
-        return (
-          b.statusReportUpdates[0].date.getTime() -
-            a.statusReportUpdates[0].date.getTime() || b.id - a.id
-        );
-      });
+      const statusReports = _page.statusReports.sort(
+        sortStatusReportsByLatestUpdate,
+      );
 
       const maintenances = _page.maintenances.sort(
         (a, b) => b.from.getTime() - a.from.getTime(),
@@ -675,12 +678,16 @@ export const statusPageRouter = createTRPCRouter({
         ? _page.customTheme
         : null;
 
+      const statusReports = _page.statusReports.sort(
+        sortStatusReportsByLatestUpdate,
+      );
+
       return selectPublicPageLightSchemaWithRelation.parse({
         ..._page,
         customTheme,
         monitors,
         incidents,
-        statusReports: _page.statusReports,
+        statusReports,
         maintenances: _page.maintenances,
         pageComponents: _page.pageComponents,
         pageComponentGroups: _page.pageComponentGroups,
