@@ -373,6 +373,7 @@ func runConsumer(ctx context.Context, h *handlers.Handler, region string) error 
 			},
 		},
 		Drain:   consumerDrain,
+		Spread:  envDuration("PUBSUB_SPREAD", 2*time.Second),
 		OnEvent: logConsumerEvent,
 	}
 
