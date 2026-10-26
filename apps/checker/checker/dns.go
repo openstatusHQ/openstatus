@@ -53,7 +53,7 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 	MXRecords := lookupMX(ctx, host)
 
 	NS, err := lookupNS(ctx, host)
-	if err != nil {
+	if err != nil && !isNotFound(err) {
 		logger.Warn().Err(err).Msg("DNS NS record lookup failed")
 		return nil, fmt.Errorf("failed to lookup NS record: %w", err)
 	}
