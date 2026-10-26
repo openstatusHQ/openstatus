@@ -24,14 +24,22 @@ import {
   activityColorVariants,
 } from "./activity";
 
+export type ActivityLink = {
+  href: string;
+  title: string;
+  kind?: string;
+  /** Mono aside after the title, e.g. "12m". */
+  meta?: string;
+};
+
 export type ActivityDay = Partial<ActivityMark> & {
   date: Date;
   /** Scheduled, not recorded: a dashed ring over the lightest planned fill. */
   upcoming?: boolean;
   /** Tooltip lines under the date; with the date they make the aria-label. */
   lines?: string[];
-  /** Opens a popover on click listing these, e.g. the reports behind the mark. */
-  links?: { href: string; title: string }[];
+  /** Opens a popover on click listing these; `kind` labels each in a mixed calendar. */
+  links?: ActivityLink[];
 };
 
 /** Sets the minimum cell size; the grid stretches cells to fill the width above it. */
@@ -255,6 +263,7 @@ function ActivityCalendarDay({
   const date = format(day.date, "EEE, MMM d");
   const lines = day.lines ?? [];
   const linked = !!day.links?.length;
+  const kinds = day.links?.some((link) => link.kind);
   const cell = (
     <button
       type="button"
@@ -297,20 +306,43 @@ function ActivityCalendarDay({
         </TooltipTrigger>
         {tooltip}
       </Tooltip>
-      <PopoverContent side="top" className="w-auto max-w-72 p-1">
+      <PopoverContent
+        side="top"
+        className={cn("w-auto p-1", kinds ? "max-w-80" : "max-w-72")}
+      >
         <div className="text-muted-foreground px-2 py-1 font-mono text-xs">
           {date}
         </div>
-        <ul>
+        {/* subgrid: the label column is as wide as this popover's longest label */}
+        <ul
+          className={cn(
+            "grid gap-x-2",
+            kinds ? "grid-cols-[auto_minmax(0,1fr)]" : "grid-cols-1",
+          )}
+        >
           {day.links?.map((link) => (
-            <li key={link.href}>
+            <li key={link.href} className="col-span-full grid grid-cols-subgrid">
               <NextLink
                 href={link.href}
-                className="hover:bg-muted focus-visible:bg-muted block truncate rounded-sm px-2 py-1.5 text-sm outline-none"
+                className="hover:bg-muted focus-visible:bg-muted col-span-full grid grid-cols-subgrid items-baseline gap-x-2 rounded-sm px-2 py-1.5 text-sm outline-none"
               >
-                {link.title.trim() || (
-                  <span className="text-muted-foreground/50">No title</span>
-                )}
+                {kinds ? (
+                  <span className="text-muted-foreground font-mono text-xs uppercase">
+                    {link.kind}
+                  </span>
+                ) : null}
+                <span className="flex min-w-0 items-baseline gap-2">
+                  <span className="truncate">
+                    {link.title.trim() || (
+                      <span className="text-muted-foreground/50">No title</span>
+                    )}
+                  </span>
+                  {link.meta ? (
+                    <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                      {link.meta}
+                    </span>
+                  ) : null}
+                </span>
               </NextLink>
             </li>
           ))}

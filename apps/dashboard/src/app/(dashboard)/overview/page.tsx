@@ -22,6 +22,7 @@ import {
   ActivityCalendarLegend,
   ActivityCalendarLegendItem,
   ActivityCalendarLegendSeparator,
+  type ActivityLink,
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateContainer,
@@ -139,29 +140,55 @@ function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
   return entries.sort((a, b) => rank(b) - rank(a));
 }
 
-function linkOf(event: OverviewEvent): { href: string; title: string } {
+/** Same type labels as the list rows below the calendar. */
+function linkOf(event: OverviewEvent): ActivityLink {
   switch (event.type) {
     case "incident":
       return {
         href: `/monitors/${event.incident.monitor.id}/incidents`,
         title: event.incident.monitor.name,
+        kind: "Downtime",
       };
     case "managedIncident":
       return {
         href: `/incidents/${event.incident.id}`,
         title: event.incident.title,
+        kind: "Incident",
       };
     case "report":
       return {
         href: `/status-pages/${event.report.pageId}/status-reports/${event.report.id}`,
         title: event.report.title,
+        kind: "Report",
       };
     case "maintenance":
       return {
         href: `/status-pages/${event.maintenance.pageId}/maintenances/${event.maintenance.id}`,
         title: event.maintenance.title,
+        kind: "Maintenance",
       };
   }
+}
+
+/** A day's links, one per href; downtime carries that monitor's time down that day. */
+function dayLinks(items: OverviewEvent[], date: Date, now: Date) {
+  const links = new Map<string, ActivityLink>();
+  const downtime = new Map<string, ActivitySpan[]>();
+  for (const event of items) {
+    const link = linkOf(event);
+    links.set(link.href, link);
+    if (event.type === "incident") {
+      downtime.set(link.href, [
+        ...(downtime.get(link.href) ?? []),
+        spanOf(event),
+      ]);
+    }
+  }
+  for (const [href, spans] of downtime) {
+    const link = links.get(href);
+    if (link) link.meta = formatDurationShort(spansOnDay(date, spans, now));
+  }
+  return [...links.values()];
 }
 
 function spanOf(event: OverviewEvent): ActivitySpan {
@@ -242,7 +269,6 @@ export default function Page() {
   const days = groupByDay(range, events, spanOf, now).map(({ date, items }) => {
     if (items.length === 0) return { date };
     const [lead, ...others] = dayEntries(items, date, now);
-    const links = new Map(items.map(linkOf).map((l) => [l.href, l]));
     // dashed only when the day holds nothing but maintenance still ahead
     const upcoming = items.every(
       (e) => e.type === "maintenance" && e.maintenance.from > now,
@@ -260,7 +286,7 @@ export default function Page() {
         ),
         ...(upcoming ? ["Upcoming"] : []),
       ],
-      links: [...links.values()],
+      links: dayLinks(items, date, now),
     };
   });
   const anyUpcoming = days.some((day) => day.upcoming);
