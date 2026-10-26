@@ -675,12 +675,27 @@ export const statusPageRouter = createTRPCRouter({
         ? _page.customTheme
         : null;
 
+      const statusReports = _page.statusReports.sort((a, b) => {
+        // Sort reports without updates to the beginning
+        if (
+          a.statusReportUpdates.length === 0 &&
+          b.statusReportUpdates.length === 0
+        )
+          return b.id - a.id;
+        if (a.statusReportUpdates.length === 0) return -1;
+        if (b.statusReportUpdates.length === 0) return 1;
+        return (
+          b.statusReportUpdates[0].date.getTime() -
+            a.statusReportUpdates[0].date.getTime() || b.id - a.id
+        );
+      });
+
       return selectPublicPageLightSchemaWithRelation.parse({
         ..._page,
         customTheme,
         monitors,
         incidents,
-        statusReports: _page.statusReports,
+        statusReports,
         maintenances: _page.maintenances,
         pageComponents: _page.pageComponents,
         pageComponentGroups: _page.pageComponentGroups,

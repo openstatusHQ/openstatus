@@ -40,7 +40,7 @@ afterAll(async () => {
   await db.delete(page).where(eq(page.workspaceId, workspaceId));
 });
 
-describe("statusPage.get report order", () => {
+describe("statusPage.get and statusPage.getLight report order", () => {
   test("uses each report's newest update and puts reports without updates first", async () => {
     const olderActivity = await db
       .insert(statusReport)
@@ -94,12 +94,21 @@ describe("statusPage.get report order", () => {
       },
     ]);
 
-    const result = await caller().statusPage.get({ slug });
-    expect(result?.statusReports.map((report) => report.id)).toEqual([
+    const expectedOrder = [
       noUpdates.id,
       recentActivity.id,
       olderActivity.id,
-    ]);
+    ];
+
+    const result = await caller().statusPage.get({ slug });
+    expect(result?.statusReports.map((report) => report.id)).toEqual(
+      expectedOrder,
+    );
+
+    const lightResult = await caller().statusPage.getLight({ slug });
+    expect(lightResult?.statusReports.map((report) => report.id)).toEqual(
+      expectedOrder,
+    );
   });
 
   test("breaks equal activity dates and reports without updates by id", async () => {
@@ -160,6 +169,13 @@ describe("statusPage.get report order", () => {
       },
     ]);
 
+    const expectedTieOrder = [
+      secondNoUpdates.id,
+      firstNoUpdates.id,
+      second.id,
+      first.id,
+    ];
+
     const result = await caller().statusPage.get({ slug });
     const ids = result?.statusReports.map((report) => report.id);
     expect(
@@ -168,6 +184,16 @@ describe("statusPage.get report order", () => {
           id,
         ),
       ),
-    ).toEqual([secondNoUpdates.id, firstNoUpdates.id, second.id, first.id]);
+    ).toEqual(expectedTieOrder);
+
+    const lightResult = await caller().statusPage.getLight({ slug });
+    const lightIds = lightResult?.statusReports.map((report) => report.id);
+    expect(
+      lightIds?.filter((id) =>
+        [first.id, second.id, firstNoUpdates.id, secondNoUpdates.id].includes(
+          id,
+        ),
+      ),
+    ).toEqual(expectedTieOrder);
   });
 });
