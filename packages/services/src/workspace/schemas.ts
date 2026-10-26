@@ -50,7 +50,7 @@ export type UpdateWorkspaceStripeIdInput = z.infer<
 export const UpdateWorkspaceLimitsInput = z
   .object({
     addon: z.enum(addons),
-    value: z.union([z.boolean(), z.number()]),
+    value: z.union([z.boolean(), z.number().nonnegative()]),
     trialEndsAt: z.date().nullable().optional(),
     reason: z.string().optional(),
   })

@@ -377,6 +377,33 @@ describe("updateWorkspaceLimits", () => {
     });
   });
 
+  test("rejects a negative limit", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "starter", limits: JSON.stringify(getLimits("starter")) },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await expect(
+        updateWorkspaceLimits({
+          ctx,
+          input: { addon: "monitors", value: -1 },
+        }),
+      ).rejects.toBeInstanceOf(ZodError);
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("starter"));
+    });
+  });
+
   test("rejects a read-only api key actor", async () => {
     await withTestTransaction(async (tx) => {
       const { workspace: ws } = await createTestWorkspace({ plan: "free" }, tx);
