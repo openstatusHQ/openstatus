@@ -321,7 +321,10 @@ function ActivityCalendarDay({
           )}
         >
           {day.links?.map((link) => (
-            <li key={link.href} className="col-span-full grid grid-cols-subgrid">
+            <li
+              key={link.href}
+              className="col-span-full grid grid-cols-subgrid"
+            >
               <NextLink
                 href={link.href}
                 className="hover:bg-muted focus-visible:bg-muted col-span-full grid grid-cols-subgrid items-baseline gap-x-2 rounded-sm px-2 py-1.5 text-sm outline-none"
