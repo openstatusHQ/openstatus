@@ -132,7 +132,9 @@ describe("isEmailDomainAuthorized", () => {
   test("matching is whitespace-insensitive on both sides", () => {
     expect(isEmailDomainAuthorized(" dev@acme.com ", ["acme.com"])).toBe(true);
     expect(isEmailDomainAuthorized("dev@acme.com", [" acme.com "])).toBe(true);
-    expect(isEmailDomainAuthorized("  dev@ACME.COM  ", ["  acme.com  "])).toBe(true);
+    expect(isEmailDomainAuthorized("  dev@ACME.COM  ", ["  acme.com  "])).toBe(
+      true,
+    );
   });
 
   test("a subdomain of an allowed domain is not allowed", () => {

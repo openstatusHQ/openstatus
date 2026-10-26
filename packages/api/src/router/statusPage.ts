@@ -18,7 +18,10 @@ import {
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
-import { constantTimeEqual, isEmailDomainAuthorized } from "@openstatus/services/page-access";
+import {
+  constantTimeEqual,
+  isEmailDomainAuthorized,
+} from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
   hasPendingSubscriber,
