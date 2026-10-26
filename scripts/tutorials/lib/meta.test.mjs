@@ -108,4 +108,13 @@ describe("slack threads", () => {
       expect(thread.channels.length).toBeGreaterThan(0);
     }
   });
+
+  test("a thread cut with the dashboard has its own valid copy", async () => {
+    for (const file of threads) {
+      const thread = await import(join(threadsDir, file));
+      if (thread.dashboardMeta === undefined) continue;
+      expect(validateMeta(thread.dashboardMeta, file)).toEqual([]);
+      expect(thread.dashboardMeta.title).not.toBe(thread.meta.title);
+    }
+  });
 });

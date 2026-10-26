@@ -14,11 +14,24 @@
 // .recordings/remotion/<name>/{video.mp4,timeline.json,thumbnail.png} for
 // scripts/videos.
 // Tutorials reset their own rows, so only a local database is accepted.
+//
+// Other recorders cut to the dashboard through this one (record-slack.mjs
+// --dashboard): they pass a module path instead of a tutorial name, the
+// export that holds the steps, the output name, and the story's time, which
+// the browser's clock shows (in UTC) instead of the real one:
+//   node scripts/record.mjs scripts/slack/threads/incident.mjs \
+//     --export working --name working --clock 2026-10-25T10:21:00Z --remotion
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,13 +61,29 @@ const available = readdirSync(tutorialsDir, { withFileTypes: true })
   .map((f) => f.name)
   .filter((f) => f.endsWith(".mjs"))
   .map((f) => f.slice(0, -4));
-if (flags.list || names.length !== 1 || !available.includes(names[0])) {
+// A path to a module (ends in .mjs) instead of a tutorial name.
+const external =
+  names.length === 1 && names[0].endsWith(".mjs") && existsSync(names[0])
+    ? resolve(names[0])
+    : null;
+if (
+  flags.list ||
+  names.length !== 1 ||
+  (!external && !available.includes(names[0]))
+) {
   console.error(
-    `usage: record.mjs <tutorial> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--base url] [--width 1440 --height 900] [--speed 1]\ntutorials: ${available.join(", ")}`,
+    `usage: record.mjs <tutorial | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--base url] [--width 1440 --height 900] [--speed 1] [--export steps --name out --clock ISO]\ntutorials: ${available.join(", ")}`,
   );
   process.exit(flags.list ? 0 : 2);
 }
-const name = names[0];
+for (const key of ["export", "name", "clock"])
+  if (flags[key] === true) fail(`--${key} needs a value`);
+const name = flags.name ?? basename(names[0], ".mjs");
+if (!/^[\w-]+$/.test(name))
+  fail(`--name must be a plain file name, got ${name}`);
+const clock = flags.clock ? new Date(flags.clock) : null;
+if (clock && Number.isNaN(clock.getTime()))
+  fail(`--clock must be an ISO date, got ${flags.clock}`);
 const base = (flags.base ?? "http://localhost:3001").replace(/\/$/, "");
 const db = flags.db ?? "http://127.0.0.1:8080";
 if (!["localhost", "127.0.0.1"].includes(new URL(db).hostname))
@@ -107,11 +136,14 @@ async function sql(statements) {
 let tutorial;
 try {
   tutorial = await import(
-    pathToFileURL(join(tutorialsDir, `${name}.mjs`)).href
+    pathToFileURL(external ?? join(tutorialsDir, `${names[0]}.mjs`)).href
   );
 } catch (e) {
-  fail(`tutorial ${name} does not load: ${e.message}`);
+  fail(`tutorial ${names[0]} does not load: ${e.message}`);
 }
+const steps = tutorial[flags.export ?? "default"];
+if (typeof steps !== "function")
+  fail(`${names[0]} has no function export ${flags.export ?? "default"}`);
 const { validateMeta } = await import(
   pathToFileURL(join(tutorialsDir, "lib", "meta.mjs")).href
 );
@@ -219,7 +251,11 @@ const context = await browser.newContext({
   viewport: { width, height },
   deviceScaleFactor: scale,
   colorScheme: theme,
+  // The story's clock reads in UTC, as the Slack messages beside it do.
+  ...(clock && { timezoneId: "UTC" }),
 });
+// Date.now() and new Date() show the story's time; timers keep running.
+if (clock) await context.clock.setFixedTime(clock);
 await context.addCookies([
   {
     name: "authjs.session-token",
@@ -432,7 +468,7 @@ rmSync(failureShot, { force: true });
 let failed = null;
 let shot = false;
 try {
-  await tutorial.default(rec);
+  await steps(rec);
   // Hold on the result: the last action's outcome (a posted update, a saved
   // form) lands after its confirmation toast, and the video ends here.
   await rec.settle();

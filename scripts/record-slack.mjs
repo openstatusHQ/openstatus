@@ -12,9 +12,24 @@
 // and a default function of steps. Needs
 // `node scripts/dev-stack.mjs up --fake-slack`. Writes
 // .recordings/remotion/slack-<name>/{timeline.json,slack.json}.
+//
+// --dashboard also cuts to the dashboard where the thread calls
+// dashboard("<export>"): the browser recorder (scripts/record.mjs) plays that
+// export of the thread module against the same incident, with the browser's
+// clock and the incident's rows set to the story's time, and the video plays
+// those clips between the Slack parts. It writes
+// .recordings/remotion/slack-<name>-dashboard/, the copy from `dashboardMeta`.
 
+import { spawnSync } from "node:child_process";
 import { createHmac } from "node:crypto";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -28,7 +43,12 @@ for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a.startsWith("--")) {
     const next = args[i + 1];
-    if (a === "--list" || next === undefined || next.startsWith("--"))
+    if (
+      a === "--list" ||
+      a === "--dashboard" ||
+      next === undefined ||
+      next.startsWith("--")
+    )
       flags[a.slice(2)] = true;
     else flags[a.slice(2)] = args[++i];
   } else names.push(a);
@@ -43,7 +63,7 @@ const available = readdirSync(threadsDir, { withFileTypes: true })
   .map((f) => f.name.slice(0, -4));
 if (flags.list || names.length !== 1 || !available.includes(names[0])) {
   console.error(
-    `usage: record-slack.mjs <thread> [--api http://localhost:3000] [--out .recordings]\nthreads: ${available.join(", ")}`,
+    `usage: record-slack.mjs <thread> [--dashboard] [--api http://localhost:3000] [--out .recordings]\nthreads: ${available.join(", ")}`,
   );
   process.exit(flags.list ? 0 : 2);
 }
@@ -67,16 +87,40 @@ try {
 const { validateMeta } = await import(
   pathToFileURL(join(repo, "scripts", "tutorials", "lib", "meta.mjs")).href
 );
-const problems = validateMeta(thread.meta, name);
+const withDashboard = Boolean(flags.dashboard);
+const meta = withDashboard ? thread.dashboardMeta : thread.meta;
+const problems = validateMeta(
+  meta,
+  withDashboard ? `${name} (dashboardMeta)` : name,
+);
 if (problems.length) fail(problems.join("\n"));
+const slug = withDashboard ? `slack-${name}-dashboard` : `slack-${name}`;
+const dir = join(out, "remotion", slug);
+if (withDashboard) {
+  const probe = await fetch("http://localhost:3001/login").catch(() => null);
+  if (probe?.status !== 200)
+    fail(`--dashboard needs the dashboard at http://localhost:3001`);
+}
 const calls = await fetch(`${control}/calls`).catch(() => null);
 if (!calls?.ok)
   fail(
     `${name} needs the API with the Slack fake, nothing answers at ${control}: run node scripts/dev-stack.mjs down, then up --fake-slack`,
   );
 
+// A dashboard clip keeps the local servers idle for half a minute, longer
+// than they keep a connection open: a request on a socket they closed never
+// reached them, so it is sent once more on a fresh one.
+async function request(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (e) {
+    if (e.cause?.code !== "UND_ERR_SOCKET") throw e;
+    return fetch(url, init);
+  }
+}
+
 async function sql(statements) {
-  const res = await fetch(db, {
+  const res = await request(db, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ statements }),
@@ -88,7 +132,7 @@ async function sql(statements) {
   });
 }
 const post = (path, body) =>
-  fetch(`${control}${path}`, {
+  request(`${control}${path}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -154,7 +198,7 @@ let seen = 0;
 async function toSlack(path, body, contentType) {
   const ts = Math.floor(Date.now() / 1000);
   const signature = `v0=${createHmac("sha256", SIGNING_SECRET).update(`v0:${ts}:${body}`).digest("hex")}`;
-  const res = await fetch(`${api}/slack/${path}`, {
+  const res = await request(`${api}/slack/${path}`, {
     method: "POST",
     headers: {
       "content-type": contentType,
@@ -179,8 +223,8 @@ async function settle({ quiet = 700, max = 20000 } = {}) {
   let last = Date.now();
   const fresh = [];
   while (Date.now() < until) {
-    const { calls } = await fetch(`${control}/calls?after=${seen}`).then((r) =>
-      r.json(),
+    const { calls } = await request(`${control}/calls?after=${seen}`).then(
+      (r) => r.json(),
     );
     if (calls.length) {
       fresh.push(...calls);
@@ -195,6 +239,71 @@ async function settle({ quiet = 700, max = 20000 } = {}) {
 // Video time in ms, as in the terminal recorder.
 let now = 0;
 let clock = thread.clock ?? "10:00";
+
+// The story happens yesterday (UTC) at the thread's clock. Each clock() call
+// marks the wall time it was made, so a row the app wrote in between can be
+// moved to the story's time: the mark's time plus the seconds since, capped.
+// Story times sit before the recording started, so moving is idempotent.
+const storyDay =
+  Date.UTC(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+    new Date().getUTCDate() - 1,
+  ) / 1000;
+const storyAt = (time) => {
+  const [h, m] = time.split(":").map(Number);
+  return storyDay + h * 3600 + m * 60;
+};
+const wallNow = () => Math.floor(Date.now() / 1000);
+// The app names an incident's channel after the day it is declared; in the
+// story, that is the story's day, which the dashboard clips show too.
+const isoDay = (seconds) => new Date(seconds * 1000).toISOString().slice(0, 10);
+const onStoryDay = (text) =>
+  text.replaceAll(isoDay(wallNow()), isoDay(storyDay));
+const marks = [{ wall: wallNow(), story: storyAt(clock) }];
+const RETIMED = {
+  incident: [
+    "declared_at",
+    "started_at",
+    "mitigated_at",
+    "resolved_at",
+    "closed_at",
+    "created_at",
+    "updated_at",
+  ],
+  incident_event: ["created_at"],
+  incident_postmortem: [
+    "approved_at",
+    "published_at",
+    "created_at",
+    "updated_at",
+  ],
+};
+async function retime() {
+  const moved = (col) =>
+    `case ${[...marks]
+      .reverse()
+      .map(
+        (m) =>
+          `when ${col} >= ${m.wall} then ${m.story} + min(${col} - ${m.wall}, 50)`,
+      )
+      .join(" ")} else ${col} end`;
+  const scope = {
+    incident: "workspace_id = ?",
+    incident_event:
+      "incident_id in (select id from incident where workspace_id = ?)",
+    incident_postmortem:
+      "incident_id in (select id from incident where workspace_id = ?)",
+  };
+  await sql(
+    Object.entries(RETIMED).map(([table, cols]) => ({
+      q: `update ${table} set ${cols.map((c) => `${c} = ${moved(c)}`).join(", ")} where ${scope[table]}`,
+      params: [workspace],
+    })),
+  );
+}
+const inserts = [];
+if (withDashboard) rmSync(dir, { recursive: true, force: true });
 const events = [];
 const view = [];
 const log = (event) => events.push(event);
@@ -258,7 +367,7 @@ function replay(fresh) {
       show({
         op: "channel",
         channel: call.result?.channel?.id,
-        name: args.name,
+        name: withDashboard ? onStoryDay(args.name) : args.name,
       });
     } else if (method === "conversations.setTopic") {
       show({ op: "topic", channel: args.channel, topic: args.topic });
@@ -310,6 +419,36 @@ const rec = {
   // The wall clock shown on messages from here on, e.g. "10:12".
   clock(time) {
     clock = time;
+    marks.push({ wall: wallNow(), story: storyAt(time) });
+  },
+  // With --dashboard, cut to the dashboard: record the thread's export
+  // `clip` in the browser, a minute after the story's clock. Without, nothing.
+  async dashboard(clip) {
+    if (!withDashboard) return;
+    await retime();
+    const tmp = join(out, `.clip-${process.pid}`);
+    const run = spawnSync(
+      process.execPath,
+      [
+        join(repo, "scripts", "record.mjs"),
+        join(threadsDir, `${name}.mjs`),
+        "--export",
+        clip,
+        "--name",
+        clip,
+        "--clock",
+        new Date((storyAt(clock) + 60) * 1000).toISOString(),
+        "--remotion",
+        "--out",
+        tmp,
+      ],
+      { stdio: ["ignore", "ignore", "inherit"] },
+    );
+    if (run.status !== 0) throw new Error(`dashboard clip ${clip} failed`);
+    mkdirSync(dir, { recursive: true });
+    renameSync(join(tmp, "remotion", clip), join(dir, clip));
+    rmSync(tmp, { recursive: true, force: true });
+    inserts.push({ t: now, clip });
   },
   // Mark this moment as the thumbnail; without a call, the end is used.
   thumbnail() {
@@ -529,7 +668,9 @@ const matches = (id, wanted) =>
 show({ op: "open", channel });
 try {
   await thread.default(rec);
-  now += 2500;
+  // Hold on the end, unless the story ends on the dashboard: the video ends
+  // on that clip then, not back in Slack.
+  if (inserts.at(-1)?.t !== now) now += 2500;
 } catch (e) {
   console.error(`thread ${name} failed, nothing written: ${e.message}`);
   process.exit(1);
@@ -541,7 +682,6 @@ for (const e of events) {
   e.t = sec(e.t);
   if (e.t1 !== undefined) e.t1 = sec(e.t1);
 }
-const dir = join(out, "remotion", `slack-${name}`);
 mkdirSync(dir, { recursive: true });
 writeFileSync(
   join(dir, "slack.json"),
@@ -562,9 +702,9 @@ writeFileSync(
   join(dir, "timeline.json"),
   JSON.stringify(
     {
-      name: `slack-${name}`,
+      name: slug,
       kind: "slack",
-      meta: thread.meta,
+      meta,
       theme: "light",
       fps: 30,
       viewport: { width: 1600, height: 1000 },
@@ -572,6 +712,9 @@ writeFileSync(
       duration: sec(now),
       thumbnail: { focus: null, t: sec(thumbnailAt ?? now) },
       events,
+      ...(inserts.length && {
+        inserts: inserts.map((i) => ({ ...i, t: sec(i.t) })),
+      }),
     },
     null,
     2,

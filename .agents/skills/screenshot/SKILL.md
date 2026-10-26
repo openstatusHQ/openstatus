@@ -248,6 +248,18 @@ from the script, the app's are its real Block Kit payloads). Run it on a
 fresh `--reseed`: the recorder replaces the workspace's Slack install and
 member mapping in the local database.
 
+`--dashboard` cuts to the dashboard where the thread calls
+`dashboard("<export>")`, for one video of an incident in Slack and in
+openstatus. It needs the dashboard on :3001 as well. At each cut, the
+recorder moves the incident's rows from the real clock to the story's (the
+thread's `clock(...)` calls, the day before), then runs `scripts/record.mjs`
+on that export of the thread module with `--clock` pinned a minute after the
+story's time, so the page reads "10:06" and "15 minutes" like the Slack
+messages beside it. The clips land next to the Slack data in
+`.recordings/remotion/slack-<thread>-dashboard/<export>/`, the copy comes
+from the thread's `dashboardMeta`, and `scripts/videos` cross-fades between
+the Slack parts and the clips.
+
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.

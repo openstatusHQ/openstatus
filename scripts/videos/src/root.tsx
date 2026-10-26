@@ -21,7 +21,18 @@ async function load(recording: string) {
     timeline.kind === "slack"
       ? await json<SlackData>(`${recording}/slack.json`)
       : null;
-  return { timeline, terminal, slack };
+  const clips: Record<string, Timeline> = Object.fromEntries(
+    await Promise.all(
+      (timeline.inserts ?? []).map(
+        async ({ clip }) =>
+          [
+            clip,
+            await json<Timeline>(`${recording}/${clip}/timeline.json`),
+          ] as const,
+      ),
+    ),
+  );
+  return { timeline, terminal, slack, clips };
 }
 
 // One composition per recording (node scripts/record.mjs <id> --remotion, or
@@ -46,6 +57,7 @@ export function RemotionRoot() {
               timeline: null,
               terminal: null,
               slack: null,
+              clips: {},
             } satisfies VideoProps
           }
           calculateMetadata={async ({ props }) => {
@@ -54,6 +66,7 @@ export function RemotionRoot() {
               fps: loaded.timeline.fps,
               durationInFrames: totalFrames(
                 loaded.timeline,
+                loaded.clips,
                 loaded.timeline.fps,
               ),
               props: { ...props, ...loaded },

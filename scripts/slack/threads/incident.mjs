@@ -1,7 +1,7 @@
 // An incident run from Slack: declared with one command, worked in its own
 // channel, pinned messages on the timeline, status from the pinned card, and
 // the postmortem drafted and approved — the openstatus app's real messages.
-import { cleanup } from "../../tutorials/lib/fixtures.mjs";
+import { cleanup, workspace } from "../../tutorials/lib/fixtures.mjs";
 
 export const meta = {
   order: 1,
@@ -10,6 +10,17 @@ export const meta = {
   title: "Run incidents from Slack",
   subtitle: "Declare, respond and close without leaving the channel.",
   outroTitle: "One timeline for Slack, the dashboard and the API.",
+  outroSubtitle: "Next: review every incident in openstatus.",
+};
+
+// The same story with the dashboard cut in (record-slack.mjs --dashboard).
+export const dashboardMeta = {
+  order: 2,
+  label: "Incidents",
+  thumbEyebrow: "Slack + Dashboard",
+  title: "One incident, Slack and the dashboard",
+  subtitle: "Work it in Slack, everything lands in openstatus.",
+  outroTitle: "Slack and the dashboard, one timeline.",
   outroSubtitle: "Next: review every incident in openstatus.",
 };
 
@@ -86,6 +97,59 @@ export const clock = "10:05";
 
 const TITLE = "Checkout API timeouts in eu-central";
 
+// The dashboard clips, played by scripts/record.mjs at the dashboard() cuts.
+async function openIncident({ sql, warm, start }, label) {
+  const [{ rows }] = await sql([
+    {
+      q: "select id from incident where title = ? and workspace_id = ? order by id desc limit 1",
+      params: [TITLE, workspace],
+    },
+  ]);
+  if (!rows.length) throw new Error(`no incident "${TITLE}"`);
+  const path = `/incidents/${rows[0][0]}`;
+  await warm([path]);
+  await start(path, label);
+}
+
+// While it is worked: the Slack messages are on its timeline.
+export async function working(rec) {
+  const { page, moveTo, step, wait } = rec;
+  await openIncident(rec, "Meanwhile, in the dashboard");
+  step("Pinned messages land on the timeline");
+  await moveTo(page.getByText("Pool is at 100/100", { exact: false }).first());
+  await wait(1800);
+}
+
+// Resolved: mitigated and resolved from Slack, the postmortem still to do.
+export async function resolved(rec) {
+  const { page, moveTo, step, wait } = rec;
+  await openIncident(rec, "Resolved from Slack, timed to the minute");
+  await moveTo(
+    page
+      .getByText("Export job runs on the read replica", { exact: false })
+      .first(),
+  );
+  await wait(1200);
+  step("The postmortem is still to write");
+  await moveTo(page.getByText("No postmortem yet").first());
+  await wait(1600);
+}
+
+// Closed: the approved postmortem on the incident.
+export async function closed(rec) {
+  const { page, moveTo, step, wait } = rec;
+  await openIncident(rec, "Closed, with the postmortem on it");
+  await moveTo(page.getByText("Approved", { exact: true }).first());
+  await wait(1200);
+  step("Ready to share");
+  await moveTo(
+    page
+      .getByText("Run batch jobs against the read replica", { exact: false })
+      .first(),
+  );
+  await wait(1600);
+}
+
 export default async function ({
   sql,
   step,
@@ -99,6 +163,7 @@ export default async function ({
   clock,
   createdChannel,
   thumbnail,
+  dashboard,
 }) {
   const [max, thibault] = people;
   await sql(cleanup.incident({ title: TITLE }));
@@ -137,6 +202,7 @@ export default async function ({
   await react(max, pool, "pushpin");
   await pause(1000);
   thumbnail();
+  await dashboard("working");
 
   clock("10:37");
   step("Update the status from the pinned card");
@@ -154,6 +220,7 @@ export default async function ({
     note: "Export job runs on the read replica now. No errors for 30 minutes.",
   });
   await pause(1200);
+  await dashboard("resolved");
 
   clock("11:09");
   step("The agent drafts the postmortem");
@@ -162,4 +229,5 @@ export default async function ({
   step("Approve it, the incident closes");
   await click("approve");
   await pause(1500);
+  await dashboard("closed");
 }

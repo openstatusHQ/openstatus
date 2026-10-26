@@ -47,6 +47,10 @@ export type Timeline = {
   // one; for drawn recordings (slack), the moment to draw.
   thumbnail?: { focus: Rect | null; t?: number };
   events: TimelineEvent[];
+  // Dashboard clips cut into a Slack recording (record-slack.mjs
+  // --dashboard): at Slack time `t`, play the browser recording in the
+  // folder `clip` next to this timeline.
+  inserts?: { t: number; clip: string }[];
 };
 
 export const eventsOf = <T extends TimelineEvent["type"]>(
