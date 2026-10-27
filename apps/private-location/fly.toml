@@ -5,6 +5,8 @@
 
 app = "openstatus-private-location"
 primary_region = "ams"
+# Shutdown drains HTTP (5s) then flushes pending Tinybird batches (5s).
+kill_timeout = "15s"
 
 [build]
   dockerfile = "./Dockerfile"

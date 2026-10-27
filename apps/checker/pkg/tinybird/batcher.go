@@ -70,7 +70,8 @@ type Batcher struct {
 	mu      sync.Mutex
 	closed  bool
 	batches map[string]*batch
-	senders map[string]*sync.Mutex
+	// senders holds one slot per data source: a flush owns it while sending.
+	senders map[string]chan struct{}
 	flushes sync.WaitGroup
 }
 
@@ -94,7 +95,7 @@ func NewBatcher(httpClient *http.Client, apiKey string, opts BatcherOptions) *Ba
 		stop:       stop,
 		cancelStop: cancelStop,
 		batches:    map[string]*batch{},
-		senders:    map[string]*sync.Mutex{},
+		senders:    map[string]chan struct{}{},
 	}
 }
 
@@ -187,22 +188,28 @@ func (b *Batcher) detachLocked(target *batch) {
 
 	sender, ok := b.senders[target.dataSource]
 	if !ok {
-		sender = &sync.Mutex{}
+		sender = make(chan struct{}, 1)
 		b.senders[target.dataSource] = sender
 	}
 
 	b.flushes.Add(1)
 	go func() {
 		defer b.flushes.Done()
+		ctx, cancel := context.WithDeadline(b.stop, target.deadline)
+		defer cancel()
+
 		// One request per data source at a time, so retries don't pile up; the
-		// batch deadline bounds the wait for the lock.
-		sender.Lock()
-		defer sender.Unlock()
-		b.flush(target)
+		// batch deadline and Close bound the wait for the sender.
+		select {
+		case sender <- struct{}{}:
+			defer func() { <-sender }()
+		case <-ctx.Done():
+		}
+		b.flush(ctx, target)
 	}()
 }
 
-func (b *Batcher) flush(target *batch) {
+func (b *Batcher) flush(ctx context.Context, target *batch) {
 	start := time.Now()
 	event := FlushEvent{
 		DataSource:         target.dataSource,
@@ -211,9 +218,6 @@ func (b *Batcher) flush(target *batch) {
 		RateLimitLimit:     -1,
 		RateLimitRemaining: -1,
 	}
-
-	ctx, cancel := context.WithDeadline(b.stop, target.deadline)
-	defer cancel()
 
 	event.Err = b.sendWithRetry(ctx, target, &event)
 	event.Duration = time.Since(start)
