@@ -37,6 +37,12 @@ type Server struct {
 // instanceID is generated once at startup
 var instanceID = uuid.New().String()
 
+const (
+	writeTimeout = 30 * time.Second
+	// flushTimeout bounds the Tinybird flush on shutdown, after the HTTP drain.
+	flushTimeout = 5 * time.Second
+)
+
 // NewServer returns an HTTP server and a cleanup function to shutdown the log provider.
 func NewServer() (*http.Server, func(context.Context)) {
 	portStr := os.Getenv("PORT")
@@ -71,7 +77,7 @@ func NewServer() (*http.Server, func(context.Context)) {
 		Handler:      newServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		WriteTimeout: writeTimeout,
 	}
 
 	// Startup logging
@@ -85,7 +91,10 @@ func NewServer() (*http.Server, func(context.Context)) {
 	// Return cleanup function for graceful shutdown
 	cleanup := func(ctx context.Context) {
 		// Ingests that finished during the HTTP drain may still sit in a batch.
-		if err := tbClient.Close(ctx); err != nil {
+		// The drain can use up ctx, so the flush gets its own bound.
+		flushCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), flushTimeout)
+		defer cancel()
+		if err := tbClient.Close(flushCtx); err != nil {
 			slog.Error("failed to flush tinybird batches", "error", err)
 		}
 		if logProvider != nil {
@@ -157,12 +166,19 @@ func tinybirdOptions() tinybird.BatcherOptions {
 	opts.FlushInterval = envDuration("TINYBIRD_FLUSH_INTERVAL", opts.FlushInterval)
 	opts.FlushJitter = envDuration("TINYBIRD_FLUSH_JITTER", opts.FlushJitter)
 	opts.MaxBytes = envInt("TINYBIRD_MAX_BATCH_BYTES", opts.MaxBytes)
-	// The ingest handler waits for its row's flush, so the flush delay plus the
-	// retry budget must stay under the server's 30s WriteTimeout.
 	opts.RetryBudget = 20 * time.Second
 	// A zero budget would expire before the first request.
 	if retryBudget := envDuration("TINYBIRD_RETRY_BUDGET", 0); retryBudget > 0 {
 		opts.RetryBudget = retryBudget
+	}
+	// The ingest handler waits for its row's flush, so the flush delay plus the
+	// retry budget must stay under the server's WriteTimeout.
+	if maxBudget := writeTimeout - opts.FlushInterval - opts.FlushJitter - time.Second; opts.RetryBudget > maxBudget {
+		slog.Warn("tinybird retry budget exceeds the write timeout, clamping it",
+			"retry_budget", opts.RetryBudget,
+			"max_retry_budget", maxBudget,
+		)
+		opts.RetryBudget = max(maxBudget, time.Second)
 	}
 	opts.OnFlush = logTinybirdFlush
 

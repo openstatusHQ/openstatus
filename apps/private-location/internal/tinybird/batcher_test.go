@@ -128,11 +128,16 @@ func TestBatcher(t *testing.T) {
 		api := &fakeEventsAPI{}
 		b := tinybird.NewBatcher(api.client(), "apiKey", options())
 
+		dataSources := []string{"ping_response__v8", "tcp_response__v0"}
+		errs := make([]error, len(dataSources))
 		var wg sync.WaitGroup
-		for _, ds := range []string{"ping_response__v8", "tcp_response__v0"} {
-			wg.Go(func() { require.NoError(t, b.SendEvent(t.Context(), "event", ds)) })
+		for i, ds := range dataSources {
+			wg.Go(func() { errs[i] = b.SendEvent(t.Context(), "event", ds) })
 		}
 		wg.Wait()
+		for _, err := range errs {
+			require.NoError(t, err)
+		}
 
 		requests := api.recorded()
 		require.Len(t, requests, 2)
@@ -238,7 +243,7 @@ func TestBatcher(t *testing.T) {
 		api := &fakeEventsAPI{respond: func(attempt int) *http.Response {
 			if attempt == 1 {
 				// A slow request holds the sender past the queued batch's deadline.
-				time.Sleep(2 * opts.RetryBudget)
+				time.Sleep(5 * opts.RetryBudget)
 			}
 			return status(http.StatusServiceUnavailable, nil)
 		}}
@@ -254,6 +259,7 @@ func TestBatcher(t *testing.T) {
 		start := time.Now()
 		err := b.SendEvent(t.Context(), "event", "test")
 		require.Len(t, api.recorded(), 1)
+		// It fails on its own deadline, not once the first flush frees the sender.
 		require.Less(t, time.Since(start), 3*opts.RetryBudget)
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 		require.ErrorContains(t, err, "flush not attempted")

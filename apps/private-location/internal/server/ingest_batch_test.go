@@ -59,7 +59,7 @@ func (f *fakeEventsAPI) recorded() []eventsRequest {
 func newBatcher(t *testing.T, api *fakeEventsAPI) *tinybird.Batcher {
 	t.Helper()
 	b := tinybird.NewBatcher(api.client(), "apiKey", tinybird.BatcherOptions{
-		FlushInterval: 50 * time.Millisecond,
+		FlushInterval: 500 * time.Millisecond,
 		MaxBytes:      1 << 20,
 		RetryBudget:   time.Second,
 	})
