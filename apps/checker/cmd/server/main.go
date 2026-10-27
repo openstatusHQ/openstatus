@@ -163,6 +163,16 @@ func Logger() gin.HandlerFunc {
 }
 
 func main() {
+	// Registered first so it runs after every other defer (log flush included).
+	// fly only restarts machines that exit non-zero, so a consumer failure must
+	// not end in a clean exit.
+	var consumerFailed bool
+	defer func() {
+		if consumerFailed {
+			os.Exit(1)
+		}
+	}()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -292,9 +302,12 @@ func main() {
 	if env("PUBSUB_ENABLED", "false") == "true" {
 		go func() {
 			defer close(consumerDone)
-			if err := runConsumer(ctx, h, region); err != nil {
+			err := runConsumer(ctx, h, region)
+			if err != nil {
 				log.Error().Err(err).Msg("pubsub consumer stopped")
 			}
+			// Receive returns nil on shutdown; stopping any other way is a failure.
+			consumerFailed = err != nil || ctx.Err() == nil
 			// A consumer that stopped while the process keeps serving /health
 			// would never be restarted, so take the whole process down.
 			cancel()
