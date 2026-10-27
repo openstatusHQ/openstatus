@@ -30,11 +30,11 @@ import {
 import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { computeLatencyYAxisDomain } from "./chart-latency-domain";
 import {
   ChartTooltipNumber,
   ChartTooltipNumberRaw,
 } from "./chart-tooltip-number";
-import { computeLatencyYAxisDomain } from "./chart-latency-domain";
 
 const chartConfig = {
   dns: {
