@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
@@ -58,7 +59,11 @@ type Consumer struct {
 	Loops  []Loop
 	// Drain is how long in-flight checks get to finish after shutdown starts
 	// before their message is nacked for redelivery.
-	Drain   time.Duration
+	Drain time.Duration
+	// Spread offsets each check past its cronTimestamp by a per-monitor delay
+	// in [0, Spread), so the checks of one cron tick do not all resolve and
+	// handshake in the same instant. Zero disables it.
+	Spread  time.Duration
 	OnEvent func(ctx context.Context, e Event)
 }
 
@@ -158,7 +163,8 @@ func (c *Consumer) handle(ctx context.Context, subscription string, slots chan s
 		return finish(OutcomePoison, errors.New("missing cronTimestamp"))
 	}
 
-	if wait := time.Until(time.UnixMilli(env.CronTimestamp)); wait > 0 {
+	startAt := time.UnixMilli(env.CronTimestamp).Add(spread(e.MonitorID, c.Spread))
+	if wait := time.Until(startAt); wait > 0 {
 		e.Wait = wait
 		timer := time.NewTimer(wait)
 		select {
@@ -210,6 +216,18 @@ func (c *Consumer) handle(ctx context.Context, subscription string, slots chan s
 	default:
 		return finish(OutcomeNack, err)
 	}
+}
+
+// spread maps a monitor to a fixed delay in [0, window): the same monitor keeps
+// the same offset every tick, so its checks stay one interval apart.
+func spread(monitorID string, window time.Duration) time.Duration {
+	if window <= 0 {
+		return 0
+	}
+	h := fnv.New64a()
+	h.Write([]byte(monitorID))
+
+	return time.Duration(h.Sum64() % uint64(window))
 }
 
 var errUnknownJobType = errors.New("unknown job type")
