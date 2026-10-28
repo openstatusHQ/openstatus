@@ -1,3 +1,4 @@
+import type { HeartbeatPingKind } from "@openstatus/db/src/schema";
 import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
@@ -13,6 +14,7 @@ import { parseDnsAssertions, parseHttpAssertions } from "./assertions";
 import { MONITOR_DEFAULTS } from "./defaults";
 import {
   stringToGrpcTlsMode,
+  stringToHeartbeatPingKind,
   stringToHttpMethod,
   stringToMonitorStatus,
   stringToPeriodicity,
@@ -171,9 +173,11 @@ export function heartbeatPingUrl(token: string): string {
 /**
  * Transform database heartbeat monitor to proto HeartbeatMonitor.
  */
+export type HeartbeatLastPing = { at: Date; kind: HeartbeatPingKind };
+
 export function dbMonitorToHeartbeatProto(
   dbMon: Monitor,
-  lastPingAt: Date | null = null,
+  lastPing: HeartbeatLastPing | null = null,
 ): HeartbeatMonitor {
   return {
     $typeName: "openstatus.monitor.v1.HeartbeatMonitor",
@@ -185,7 +189,8 @@ export function dbMonitorToHeartbeatProto(
     active: dbMon.active ?? MONITOR_DEFAULTS.active,
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
     pingUrl: dbMon.heartbeatToken ? heartbeatPingUrl(dbMon.heartbeatToken) : "",
-    lastPingAt: lastPingAt?.toISOString(),
+    lastPingAt: lastPing?.at.toISOString(),
+    lastPingKind: stringToHeartbeatPingKind(lastPing?.kind ?? null),
     status: stringToMonitorStatus(dbMon.status),
   };
 }

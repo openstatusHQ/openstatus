@@ -8,7 +8,18 @@ import "openstatus/monitor/v1/monitor.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
-// HeartbeatMonitor is pinged by your job; it goes down when a ping is missed.
+// HeartbeatPingKind is what the last ping reported.
+enum HeartbeatPingKind {
+  // HEARTBEAT_PING_KIND_UNSPECIFIED means no ping has arrived yet.
+  HEARTBEAT_PING_KIND_UNSPECIFIED = 0;
+  // HEARTBEAT_PING_KIND_SUCCESS is a ping to the ping URL.
+  HEARTBEAT_PING_KIND_SUCCESS = 1;
+  // HEARTBEAT_PING_KIND_FAIL is a ping to the ping URL followed by /fail.
+  HEARTBEAT_PING_KIND_FAIL = 2;
+}
+
+// HeartbeatMonitor is pinged by your job; it goes down when a ping is missed
+// or the job pings its URL followed by /fail.
 message HeartbeatMonitor {
   // Unique identifier for the monitor (output only for create requests).
   string id = 1;
@@ -57,4 +68,7 @@ message HeartbeatMonitor {
 
   // Current operational status of the monitor.
   MonitorStatus status = 10;
+
+  // What the last ping reported, unspecified until the first one. Read-only.
+  HeartbeatPingKind last_ping_kind = 11 [(gnostic.openapi.v3.property) = {read_only: true}];
 }

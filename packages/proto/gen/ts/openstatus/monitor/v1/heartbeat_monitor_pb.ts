@@ -2,8 +2,8 @@
 // @generated from file openstatus/monitor/v1/heartbeat_monitor.proto (package openstatus.monitor.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
 import type { MonitorStatus } from "./monitor_pb.ts";
@@ -14,10 +14,11 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/heartbeat_monitor.proto.
  */
 export const file_openstatus_monitor_v1_heartbeat_monitor: GenFile = /*@__PURE__*/
-  fileDesc("Ci1vcGVuc3RhdHVzL21vbml0b3IvdjEvaGVhcnRiZWF0X21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKSAwoQSGVhcnRiZWF0TW9uaXRvchIKCgJpZBgBIAEoCRItCgRuYW1lGAIgASgJQh+6RxI6EBIOTmlnaHRseSBiYWNrdXC6SAdyBRABGIACEicKBnBlcmlvZBgDIAEoA0IXukcIOgYSBDM2MDC6SAkiBxiAmp4BKDwSJAoFZ3JhY2UYBCABKANCFbpHBzoFEgMzMDC6SAgiBhiA9SQoPBIiCgtkZXNjcmlwdGlvbhgFIAEoCUIIukgFcgMYgAhIAIgBARITCgZhY3RpdmUYBiABKAhIAYgBARITCgZwdWJsaWMYByABKAhIAogBARIXCghwaW5nX3VybBgIIAEoCUIFukcCGAESIAoMbGFzdF9waW5nX2F0GAkgASgJQgW6RwIYAUgDiAEBEjQKBnN0YXR1cxgKIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzQg4KDF9kZXNjcmlwdGlvbkIJCgdfYWN0aXZlQgkKB19wdWJsaWNCDwoNX2xhc3RfcGluZ19hdEJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_monitor]);
+  fileDesc("Ci1vcGVuc3RhdHVzL21vbml0b3IvdjEvaGVhcnRiZWF0X21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLbAwoQSGVhcnRiZWF0TW9uaXRvchIKCgJpZBgBIAEoCRItCgRuYW1lGAIgASgJQh+6RxI6EBIOTmlnaHRseSBiYWNrdXC6SAdyBRABGIACEicKBnBlcmlvZBgDIAEoA0IXukcIOgYSBDM2MDC6SAkiBxiAmp4BKDwSJAoFZ3JhY2UYBCABKANCFbpHBzoFEgMzMDC6SAgiBhiA9SQoPBIiCgtkZXNjcmlwdGlvbhgFIAEoCUIIukgFcgMYgAhIAIgBARITCgZhY3RpdmUYBiABKAhIAYgBARITCgZwdWJsaWMYByABKAhIAogBARIXCghwaW5nX3VybBgIIAEoCUIFukcCGAESIAoMbGFzdF9waW5nX2F0GAkgASgJQgW6RwIYAUgDiAEBEjQKBnN0YXR1cxgKIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzEkcKDmxhc3RfcGluZ19raW5kGAsgASgOMigub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYXJ0YmVhdFBpbmdLaW5kQgW6RwIYAUIOCgxfZGVzY3JpcHRpb25CCQoHX2FjdGl2ZUIJCgdfcHVibGljQg8KDV9sYXN0X3BpbmdfYXQqdwoRSGVhcnRiZWF0UGluZ0tpbmQSIwofSEVBUlRCRUFUX1BJTkdfS0lORF9VTlNQRUNJRklFRBAAEh8KG0hFQVJUQkVBVF9QSU5HX0tJTkRfU1VDQ0VTUxABEhwKGEhFQVJUQkVBVF9QSU5HX0tJTkRfRkFJTBACQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_monitor]);
 
 /**
- * HeartbeatMonitor is pinged by your job; it goes down when a ping is missed.
+ * HeartbeatMonitor is pinged by your job; it goes down when a ping is missed
+ * or the job pings its URL followed by /fail.
  *
  * @generated from message openstatus.monitor.v1.HeartbeatMonitor
  */
@@ -91,6 +92,13 @@ export type HeartbeatMonitor = Message<"openstatus.monitor.v1.HeartbeatMonitor">
    * @generated from field: openstatus.monitor.v1.MonitorStatus status = 10;
    */
   status: MonitorStatus;
+
+  /**
+   * What the last ping reported, unspecified until the first one. Read-only.
+   *
+   * @generated from field: openstatus.monitor.v1.HeartbeatPingKind last_ping_kind = 11;
+   */
+  lastPingKind: HeartbeatPingKind;
 };
 
 /**
@@ -99,4 +107,38 @@ export type HeartbeatMonitor = Message<"openstatus.monitor.v1.HeartbeatMonitor">
  */
 export const HeartbeatMonitorSchema: GenMessage<HeartbeatMonitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_heartbeat_monitor, 0);
+
+/**
+ * HeartbeatPingKind is what the last ping reported.
+ *
+ * @generated from enum openstatus.monitor.v1.HeartbeatPingKind
+ */
+export enum HeartbeatPingKind {
+  /**
+   * HEARTBEAT_PING_KIND_UNSPECIFIED means no ping has arrived yet.
+   *
+   * @generated from enum value: HEARTBEAT_PING_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * HEARTBEAT_PING_KIND_SUCCESS is a ping to the ping URL.
+   *
+   * @generated from enum value: HEARTBEAT_PING_KIND_SUCCESS = 1;
+   */
+  SUCCESS = 1,
+
+  /**
+   * HEARTBEAT_PING_KIND_FAIL is a ping to the ping URL followed by /fail.
+   *
+   * @generated from enum value: HEARTBEAT_PING_KIND_FAIL = 2;
+   */
+  FAIL = 2,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.HeartbeatPingKind.
+ */
+export const HeartbeatPingKindSchema: GenEnum<HeartbeatPingKind> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_heartbeat_monitor, 0);
 

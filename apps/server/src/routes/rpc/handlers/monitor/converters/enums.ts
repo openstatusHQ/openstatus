@@ -2,6 +2,7 @@ import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constan
 import type { GrpcTlsMode } from "@openstatus/db/src/schema/monitors/validation";
 import {
   GRPCTlsMode,
+  HeartbeatPingKind,
   HTTPMethod,
   MonitorStatus,
   Periodicity,
@@ -95,6 +96,23 @@ const DB_TO_MONITOR_STATUS: Record<string, MonitorStatus> = {
 
 export function stringToMonitorStatus(value: string): MonitorStatus {
   return DB_TO_MONITOR_STATUS[value] ?? MonitorStatus.UNSPECIFIED;
+}
+
+// ============================================================
+// Heartbeat Ping Kind Conversions
+// ============================================================
+
+const DB_TO_HEARTBEAT_PING_KIND: Record<string, HeartbeatPingKind> = {
+  success: HeartbeatPingKind.SUCCESS,
+  fail: HeartbeatPingKind.FAIL,
+};
+
+export function stringToHeartbeatPingKind(
+  value: string | null,
+): HeartbeatPingKind {
+  return (
+    (value && DB_TO_HEARTBEAT_PING_KIND[value]) || HeartbeatPingKind.UNSPECIFIED
+  );
 }
 
 // ============================================================
