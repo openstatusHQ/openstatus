@@ -1,0 +1,142 @@
+import { AbsoluteFill, Img, staticFile, useVideoConfig } from "remotion";
+
+import { Mark, palette } from "./brand";
+import { fonts } from "./fonts";
+import { panFor } from "./pan";
+import { copyOf } from "./recordings";
+import { SlackWindow } from "./slack";
+import type { SlackData } from "./slack-data";
+import { TerminalWindow } from "./terminal";
+import type { TerminalData } from "./terminal-data";
+import type { Timeline } from "./timeline";
+
+// 1920×1080: copy on the left, the dashboard in its window on the right,
+// running off the right and bottom edges.
+const PAD = 100;
+const TOP = 112;
+const WINDOW_X = 880;
+const WINDOW_Y = 128;
+// Thumbnails are seen small; the UI is drawn larger than 1:1 to stay legible.
+const ZOOM = 1.1;
+const GRID = 76;
+
+export type ThumbnailProps = {
+  recording: string;
+  timeline: Timeline | null;
+  terminal: TerminalData | null;
+  slack: SlackData | null;
+};
+
+export function Thumbnail({
+  recording,
+  timeline,
+  terminal,
+  slack,
+}: ThumbnailProps) {
+  const { width, height } = useVideoConfig();
+  if (!timeline) return null;
+  const colors = palette.light;
+  const copy = copyOf(timeline);
+  const { width: vw, height: vh } = timeline.viewport;
+  const visibleW = (width - WINDOW_X) / ZOOM;
+  const visibleH = (height - WINDOW_Y) / ZOOM;
+  const focus = timeline.thumbnail?.focus;
+  const dx = focus ? panFor(focus[0], focus[2], vw, visibleW) : 0;
+  const dy = focus ? panFor(focus[1], focus[3], vh, visibleH) : 0;
+  const line = "rgb(0 0 0 / 0.045)";
+
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: colors.stage,
+        backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
+        backgroundSize: `${GRID}px ${GRID}px`,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          left: PAD,
+          top: TOP,
+          width: WINDOW_X - PAD - 60,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 20,
+            fontFamily: fonts.mono,
+            fontSize: 36,
+            color: colors.muted,
+          }}
+        >
+          <Mark size={48} color={colors.foreground} />
+          {copy.thumbEyebrow ??
+            `${String(copy.order).padStart(2, "0")} · ${copy.label}`}
+        </div>
+        <div
+          style={{
+            marginTop: 52,
+            fontFamily: fonts.display,
+            fontSize: 112,
+            lineHeight: 1,
+            letterSpacing: "-0.035em",
+            color: colors.foreground,
+          }}
+        >
+          {copy.thumbTitle ?? copy.title}
+        </div>
+        <div
+          style={{
+            marginTop: 48,
+            fontFamily: fonts.mono,
+            fontSize: 32,
+            lineHeight: 1.45,
+            color: colors.muted,
+          }}
+        >
+          {copy.thumbSubtitle ?? copy.subtitle}
+        </div>
+      </div>
+      {slack ? (
+        <SlackWindow
+          data={slack}
+          t={timeline.thumbnail?.t ?? timeline.duration}
+          style={{ position: "absolute", left: WINDOW_X, top: WINDOW_Y }}
+        />
+      ) : terminal ? (
+        // A terminal recording ends on its result; draw that screen.
+        <TerminalWindow
+          data={terminal}
+          frame={terminal.frames[terminal.frames.length - 1]}
+          fontSize={24}
+          style={{ position: "absolute", left: WINDOW_X, top: WINDOW_Y }}
+        />
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            left: WINDOW_X,
+            top: WINDOW_Y,
+            width: vw * ZOOM,
+            height: vh * ZOOM,
+            borderRadius: 24,
+            overflow: "hidden",
+            backgroundColor: colors.background,
+            boxShadow: `0 0 0 1px ${colors.border}, ${colors.shadow}`,
+          }}
+        >
+          <Img
+            src={staticFile(`${recording}/thumbnail.png`)}
+            style={{
+              width: vw * ZOOM,
+              height: vh * ZOOM,
+              transform: `translate(${-dx * ZOOM}px, ${-dy * ZOOM}px)`,
+            }}
+          />
+        </div>
+      )}
+    </AbsoluteFill>
+  );
+}

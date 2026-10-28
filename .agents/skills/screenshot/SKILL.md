@@ -39,7 +39,7 @@ node scripts/screenshot.mjs --app dashboard /incidents/1 --user max@openstatus.d
 node scripts/dev-stack.mjs down      # when finished; stops only what `up` started
 ```
 
-`up` fetches pinned deno, sqld and agent-browser from npm when they are not
+`up` fetches pinned sqld and agent-browser from npm when they are not
 on PATH (the official download hosts are blocked in the sandbox; npm is
 not), creates the two `.env` files from their examples, starts sqld on
 :8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
@@ -47,7 +47,10 @@ dashboard on :3001 and warms the given routes. Servers already answering
 are reused and left alone by `down`. The session-start hook has usually
 already fetched the tools and compiled the dashboard, so `up` takes about
 15 seconds. `status` shows what is up; logs are in `.screenshots/stack/`.
-`--port` and `--db-port` move the two servers.
+`--port` and `--db-port` move the two servers. `--api` also starts the API
+server (`apps/server`) on :3000 in development mode, where an API key stands
+in for its workspace id: key `1` is the seeded workspace, and Unkey is never
+called.
 
 `pnpm -w dev:dashboard` does not work there: it runs `turso dev`, which the
 sandbox lacks. agent-browser uses the sandbox's Chromium through
@@ -73,7 +76,7 @@ it and the script sets it itself when unset. No `agent-browser install`.
    throwaway seeded one; pass `--db http://127.0.0.1:8099` and point the
    dashboard at it with `DATABASE_URL`.
 3. Auth, dashboard only. The seed (`pnpm --filter @openstatus/db seed`,
-   through `devbox run --` because of the deno pin) creates two maintainers
+   through `devbox run --`) creates two maintainers
    with sessions that expire in 2099: `max@openstatus.dev` (token
    `seed-session-max`, owner of workspace 1 `love-openstatus`) and
    `thibault@openstatus.dev` (token `seed-session-thibault`, admin of 1).
@@ -165,6 +168,98 @@ re-seed to reset.
 - Not handled: avatar images from blocked hosts render as initials or alt
   text in the sandbox. Say so when it shows; do not chase it.
 
+## Walkthrough videos
+
+`node scripts/record.mjs <tutorial> [--theme dark]` drives the same seeded
+stack through a step file in `scripts/tutorials/` and writes
+`.recordings/<tutorial>[.dark].mp4` (gitignored). It fails without writing a
+video when an on-screen image does not load or an `expect()`ed confirmation
+never appears, and leaves `.recordings/<tutorial>[.dark].failure.png` with the
+last frame. It refuses a `--db` that is not local, since tutorials delete
+their own rows.
+
+- A tutorial exports `meta` (series `order`, a one-word `label`, intro and
+  outro copy, optional `thumbEyebrow`/`thumbTitle`/`thumbSubtitle` for the
+  thumbnail, an optional `viewport`, `requires`) next to its steps;
+  `scripts/tutorials/lib/meta.mjs` checks it before the browser starts. The shared workspace, page and monitor
+  fixtures and the cleanup statements live in `lib/fixtures.mjs`; sheets,
+  date pickers, multi-select menus, comboboxes and tabs have helpers in
+  `lib/ui.mjs`. `pnpm --filter @openstatus/tutorials test` covers the
+  fixtures, the date helper and every tutorial's `meta`; the UI helpers are
+  exercised by recording the tutorials.
+- `requires: ["checker"]` (`create-monitor`: saving tests the URL) fails fast
+  unless a checker answers at `CHECKER_URL` (default `http://localhost:8090`):
+  build and run `apps/checker` (`FLY_REGION=ams CLOUD_PROVIDER=fly
+  CRON_SECRET=x PORT=8090`) and start the stack with
+  `CHECKER_URL=http://localhost:8090 CRON_SECRET=x`.
+- Tutorials delete their own previous output first, so they re-run cleanly;
+  run them on a fresh `--reseed` and in `meta.order` for consistent videos.
+- `--remotion` (light only) captures at 2x without the in-page cursor and
+  writes `.recordings/remotion/<tutorial>/{video.mp4,timeline.json,
+  thumbnail.png}`. The still is the final state unless the tutorial calls
+  `thumbnail(locator)` at a better moment; the locator stays in frame.
+  `scripts/videos` has one composition per recording there and turns it into
+  the edited cut: shared intro and outro from `meta`, the recording in a
+  window under a camera that follows the clicks, `step()` captions, typing
+  played faster and idle stretches sped up. `pnpm --filter @openstatus/videos
+  studio` to preview, `pnpm --filter @openstatus/videos render <tutorial>` to
+  export, `pnpm --filter @openstatus/videos thumbnails` for the 1920×1080
+  thumbnails (`01 · Label`, title and subtitle beside the still) in
+  `.recordings/final/<tutorial>.png`. In a cloud session pass
+  `--browser-executable` pointing at the Playwright headless shell under
+  `/opt/pw-browsers`; Remotion cannot download its own there.
+
+### Terminal videos (CLI, API)
+
+`node scripts/record-terminal.mjs <cast>` records `scripts/casts/<cast>.mjs`
+against the stack from `node scripts/dev-stack.mjs up --api`. Each `run()` is typed (or
+`paste`d) at a prompt, runs for real in a pseudo-terminal (`script`) with
+`OPENSTATUS_API_URL`, `OPENSTATUS_API_TOKEN` and `OPENSTATUS_API_KEY` pointing
+at the local API, and its output goes through a headless xterm: colors,
+spinners and tables come out as the CLI draws them. The recorder answers the
+CLI's background-color query with white, so it picks its light-theme colors.
+It writes `.recordings/remotion/<cast>/{timeline.json,terminal.json}`, which
+`scripts/videos` renders and thumbnails like any recording. `exec` runs a
+different command from the one shown (the API cast shows
+`api.openstatus.dev` and calls the local API).
+
+The CLI is not in this repo. Build the release the video should show from
+its tag and pass it with `--cli`: `git clone --branch v1.4.0
+https://github.com/openstatusHQ/cli && cd cli && go build -o openstatus
+./cmd/openstatus` (Go 1.26; `GOTOOLCHAIN=auto` fetches it).
+
+### Slack videos
+
+`node scripts/record-slack.mjs <thread>` plays `scripts/slack/threads/<thread>.mjs`
+against the real Slack app in `apps/server`, started with
+`node scripts/dev-stack.mjs up --fake-slack`. That loads `scripts/slack/fake.mjs` into the
+server: Slack's Web API, response URLs, Upstash Redis and the AI model are
+answered in-process (the server builds them on `globalThis.fetch` and the AI
+SDK's default provider), with nothing changed in the product. A thread
+script sets the people (mapped to seeded users), channels and the model's
+scripted answers (the status-report draft, the postmortem), then plays the
+story: `say`, `command("/openstatus incident declare …")`, `click(actionId)`,
+`submit(values)` for the status modal, `react(person, ts, "pushpin")`. The
+recorder signs each request like Slack, waits for the server's background
+work, and keeps every message the app sent, in order:
+`.recordings/remotion/slack-<thread>/{timeline.json,slack.json}`.
+`scripts/videos` draws them in a Slack-style client (people's messages come
+from the script, the app's are its real Block Kit payloads). Run it on a
+fresh `--reseed`: the recorder replaces the workspace's Slack install and
+member mapping in the local database.
+
+`--dashboard` cuts to the dashboard where the thread calls
+`dashboard("<export>")`, for one video of an incident in Slack and in
+openstatus. It needs the dashboard on :3001 as well. At each cut, the
+recorder moves the incident's rows from the real clock to the story's (the
+thread's `clock(...)` calls, the day before), then runs `scripts/record.mjs`
+on that export of the thread module with `--clock` pinned a minute after the
+story's time, so the page reads "10:06" and "15 minutes" like the Slack
+messages beside it. The clips land next to the Slack data in
+`.recordings/remotion/slack-<thread>-dashboard/<export>/`, the copy comes
+from the thread's `dashboardMeta`, and `scripts/videos` cross-fades between
+the Slack parts and the clips.
+
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.
@@ -174,7 +269,7 @@ re-seed to reset.
   that state; say so when you do.
 - A redirect to `/login` means auth failed. Fix auth; do not screenshot the
   login page and call it done.
-- Stop any dev server you started (`dev-stack down`, or by port, never by
+- Stop any dev server you started (`node scripts/dev-stack.mjs down`, or by port, never by
   process name) and close any agent-browser session you opened.
 
 ## Sharing
