@@ -1,6 +1,9 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Settings, Delete } from "@openstatus/icons";
 
+import type { ActivityMark } from "@/components/content/activity";
+import { levelFor } from "@/data/activity.client";
+
 export const actions = [
   {
     id: "edit",
@@ -38,4 +41,15 @@ export function toUpdateInput(maintenance: Maintenance) {
     endDate: maintenance.to,
     pageComponents: maintenance.pageComponentIds,
   };
+}
+
+const HOUR = 60 * 60 * 1000;
+
+export function maintenanceSpan(maintenance: { from: Date; to: Date }) {
+  return { start: maintenance.from, end: maintenance.to };
+}
+
+/** Calendar mark by planned time: under 1h, 1 to 4h, over 4h. */
+export function maintenanceActivity(planned: number): ActivityMark {
+  return { scale: "planned", level: levelFor(planned, [HOUR, 4 * HOUR]) };
 }

@@ -190,7 +190,7 @@ export function DataTable<TData, TValue>({
                       if ((e.target as HTMLElement).closest("a,button")) return;
                       onRowClick?.(row);
                     }}
-                    className="data-[state=selected]:bg-muted/50"
+                    className="group/row data-[state=selected]:bg-muted/50"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell

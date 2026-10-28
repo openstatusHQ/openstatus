@@ -39,7 +39,7 @@ export function StatusReportActions({
     "view-report": () => {
       window.open(publicUrl, "_blank", "noopener,noreferrer");
     },
-  });
+  }).filter((action) => action.onClick);
 
   return (
     <QuickActions

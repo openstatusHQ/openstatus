@@ -8,8 +8,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
@@ -21,24 +21,9 @@ export function NavActions() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const pathname = usePathname();
 
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-
-  const deleteStatusPageMutation = useMutation(
-    trpc.page.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.page.list.queryKey(),
-        });
-        if (pathname.includes(`/status-pages/${id}`)) {
-          router.push("/status-pages");
-        }
-      },
-    }),
   );
 
   const actions = getActions({
@@ -66,17 +51,8 @@ export function NavActions() {
           <TooltipContent>View Page</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <QuickActions
-        actions={actions}
-        deleteAction={{
-          confirmationValue: statusPage.title ?? "status page",
-          submitAction: async () => {
-            await deleteStatusPageMutation.mutateAsync({
-              id: Number.parseInt(id),
-            });
-          },
-        }}
-      />
+      {/* no delete up here: on a nested page the bar belongs to the parent */}
+      <QuickActions actions={actions} />
     </div>
   );
 }
