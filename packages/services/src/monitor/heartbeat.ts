@@ -1,4 +1,4 @@
-import { db as defaultDb, eq } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull } from "@openstatus/db";
 import {
   type HeartbeatPingKind,
   monitor,
@@ -198,4 +198,53 @@ export async function getHeartbeatState(args: {
     lastPingKind: state?.lastPingAt ? state.lastPingKind : null,
     nextDueAt: state?.nextDueAt ?? null,
   };
+}
+
+export type HeartbeatPingResult =
+  | { kind: "not-found" }
+  | { kind: "paused"; monitorId: number; workspaceId: number }
+  | { kind: "recorded"; monitorId: number; workspaceId: number };
+
+/**
+ * The public ping write: authenticated by the token alone and not audited,
+ * like a check result. Only the deadline drives alerting; the sweep in
+ * `apps/workflows` applies the transitions.
+ */
+export async function recordHeartbeatPing(args: {
+  token: string;
+  at: Date;
+  db?: DB;
+}): Promise<HeartbeatPingResult> {
+  const db = args.db ?? defaultDb;
+  const row = await db
+    .select({
+      id: monitor.id,
+      workspaceId: monitor.workspaceId,
+      active: monitor.active,
+      heartbeatPeriod: monitor.heartbeatPeriod,
+      heartbeatGrace: monitor.heartbeatGrace,
+    })
+    .from(monitor)
+    .where(
+      and(
+        eq(monitor.heartbeatToken, args.token),
+        eq(monitor.jobType, "heartbeat"),
+        isNull(monitor.deletedAt),
+      ),
+    )
+    .get();
+  if (!row?.workspaceId) return { kind: "not-found" };
+
+  const ids = { monitorId: row.id, workspaceId: row.workspaceId };
+  if (!row.active) return { kind: "paused", ...ids };
+
+  const nextDueAt = heartbeatDeadline(args.at, row);
+  await db
+    .insert(monitorHeartbeatState)
+    .values({ monitorId: row.id, lastPingAt: args.at, nextDueAt })
+    .onConflictDoUpdate({
+      target: monitorHeartbeatState.monitorId,
+      set: { lastPingAt: args.at, nextDueAt },
+    });
+  return { kind: "recorded", ...ids };
 }
