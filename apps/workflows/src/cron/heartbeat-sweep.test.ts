@@ -99,7 +99,10 @@ async function ping(monitorId: number, at: number) {
   await db
     .insert(monitorHeartbeatState)
     .values({ monitorId, ...values })
-    .onConflictDoUpdate({ target: monitorHeartbeatState.monitorId, set: values })
+    .onConflictDoUpdate({
+      target: monitorHeartbeatState.monitorId,
+      set: values,
+    })
     .run();
 }
 
