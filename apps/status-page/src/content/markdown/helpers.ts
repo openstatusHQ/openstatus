@@ -1,3 +1,6 @@
+import { TZDate } from "@date-fns/tz";
+import { timeZoneShortName } from "@openstatus/utils";
+
 import { isoOrNull } from "../status-vocab";
 
 export type ComponentStatus = "success" | "degraded" | "error" | "info";
@@ -75,6 +78,8 @@ export function frontmatter(fields: {
   canonical: string;
   homepageUrl?: string | null;
   contactUrl?: string | null;
+  /** The zone the page's dates and times are written in. */
+  timeZone?: string;
   live?: FrontmatterLive;
 }): string {
   const lines = [
@@ -89,6 +94,7 @@ export function frontmatter(fields: {
     lines.push(`homepage_url: ${escapeYaml(fields.homepageUrl)}`);
   if (fields.contactUrl)
     lines.push(`contact_url: ${escapeYaml(fields.contactUrl)}`);
+  if (fields.timeZone) lines.push(`time_zone: ${escapeYaml(fields.timeZone)}`);
   if (fields.live) {
     const fetched = isoOrNull(fields.live.fetchedAt);
     lines.push(`status: ${escapeYaml(fields.live.status)}`);
@@ -333,34 +339,46 @@ function toDate(date: Date | string | number): Date {
   return date instanceof Date ? date : new Date(date);
 }
 
-/** "Jan 25, 2026" (UTC, deterministic). */
-export function formatDay(date: Date | string | number): string {
-  const d = toDate(date);
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+function inZone(date: Date | string | number, timeZone: string): TZDate {
+  return new TZDate(toDate(date), timeZone);
 }
 
-/** "Feb 3, 1:42 PM" (UTC, deterministic). Null/invalid → "—". */
+/** "Jan 25, 2026" in `timeZone`. */
+export function formatDay(
+  date: Date | string | number,
+  timeZone = "UTC",
+): string {
+  const d = inZone(date, timeZone);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+/** "Feb 3, 1:42 PM" in `timeZone`. Null/invalid → "—". */
 export function formatDayTime(
   date: Date | string | number | null | undefined,
+  timeZone = "UTC",
 ): string {
   if (date === null || date === undefined) return "—";
-  const d = toDate(date);
-  if (Number.isNaN(d.getTime())) return "—";
-  const h = d.getUTCHours();
+  const instant = toDate(date);
+  if (Number.isNaN(instant.getTime())) return "—";
+  const d = inZone(instant, timeZone);
+  const h = d.getHours();
   const period = h < 12 ? "AM" : "PM";
   const hour12 = h % 12 === 0 ? 12 : h % 12;
-  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${hour12}:${minutes} ${period}`;
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${hour12}:${minutes} ${period}`;
 }
 
-/** "2026-06-18 14:50" (UTC, sortable, fixed-width). */
-export function formatLogStamp(date: Date | string | number): string {
-  const d = toDate(date);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const min = String(d.getUTCMinutes()).padStart(2, "0");
+/** "2026-06-18 14:50" in `timeZone` (sortable, fixed-width). */
+export function formatLogStamp(
+  date: Date | string | number,
+  timeZone = "UTC",
+): string {
+  const d = inZone(date, timeZone);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
 
@@ -378,7 +396,7 @@ export type EventLogRow = {
  * which trails as free text. Newlines are stripped from the title so it can't
  * inject a line that closes the fenced block.
  */
-export function eventLog(rows: EventLogRow[]): string {
+export function eventLog(rows: EventLogRow[], timeZone = "UTC"): string {
   if (rows.length === 0) return "";
   const sorted = [...rows].sort(
     (a, b) => toDate(b.timestamp).getTime() - toDate(a.timestamp).getTime(),
@@ -388,17 +406,23 @@ export function eventLog(rows: EventLogRow[]): string {
   const header = `# ${"timestamp".padEnd(16)}  ${"status".padEnd(statusW)}  event`;
   const lines = sorted.map(
     (r) =>
-      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title.replace(/[\r\n]+/g, " ")}`,
+      `${formatLogStamp(r.timestamp, timeZone)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title.replace(/[\r\n]+/g, " ")}`,
   );
   return ["```text", header, ...lines, "```"].join("\n");
 }
 
-/** "Jun 18, 2026 14:50 (GMT+0)" (UTC, deterministic). */
-export function formatStamp(date: Date | string | number): string {
-  const d = toDate(date);
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()} ${hh}:${mm} (GMT+0)`;
+/** "Jun 18, 2026 14:50 (GMT+0)", "(GMT+9)" in Tokyo. */
+export function formatStamp(
+  date: Date | string | number,
+  timeZone = "UTC",
+): string {
+  const d = inZone(date, timeZone);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  // timeZoneShortName would print "UTC" and change the stamp on every UTC page
+  const zone =
+    timeZone === "UTC" ? "GMT+0" : timeZoneShortName(timeZone, "en-US", d);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${hh}:${mm} (${zone})`;
 }
 
 const MINUTE = 60_000;
