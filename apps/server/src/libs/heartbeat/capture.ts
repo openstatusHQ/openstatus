@@ -1,4 +1,7 @@
-import { redactSensitiveHeaders } from "@openstatus/services/monitor";
+import {
+  redactSensitiveBody,
+  redactSensitiveHeaders,
+} from "@openstatus/services/monitor";
 
 export const MAX_BODY_BYTES = 10 * 1024;
 export const MAX_HEADERS_BYTES = 4 * 1024;
@@ -15,7 +18,10 @@ const DROPPED_HEADERS = new Set([
 const DROPPED_PREFIXES = ["fly-", "x-forwarded-"];
 const SENSITIVE_NAME = /token|secret|key|password|signature/i;
 
-/** Redacted, infrastructure noise removed, serialised and cut at 4 KB. */
+/**
+ * Redacted, infrastructure noise removed and serialised. Entries that would
+ * push it past 4 KB are left out whole, so the stored value stays valid JSON.
+ */
 export function captureHeaders(headers: Headers): string | null {
   const kept: Record<string, string> = {};
   headers.forEach((value, rawName) => {
@@ -24,9 +30,19 @@ export function captureHeaders(headers: Headers): string | null {
     if (DROPPED_PREFIXES.some((p) => name.startsWith(p))) return;
     kept[name] = SENSITIVE_NAME.test(name) ? REDACTED : value;
   });
-  const redacted = redactSensitiveHeaders(kept);
-  if (Object.keys(redacted).length === 0) return null;
-  return truncateUtf8(JSON.stringify(redacted), MAX_HEADERS_BYTES).text;
+  const fitted: Record<string, string> = {};
+  let size = 2; // {}
+  for (const [name, value] of Object.entries(redactSensitiveHeaders(kept))) {
+    // `"name":"value"` plus the comma before it
+    const entry = byteLength(
+      `${JSON.stringify(name)}:${JSON.stringify(value)}`,
+    );
+    if (size + entry + 1 > MAX_HEADERS_BYTES) continue;
+    fitted[name] = value;
+    size += entry + 1;
+  }
+  if (Object.keys(fitted).length === 0) return null;
+  return JSON.stringify(fitted);
 }
 
 export function captureUserAgent(headers: Headers): string | null {
@@ -42,7 +58,10 @@ export function captureIp(headers: Headers): string | null {
   return forwarded?.split(",").at(-1)?.trim() || null;
 }
 
-/** Reads at most `limit` bytes and cancels the rest, so a huge POST is never buffered. */
+/**
+ * Reads at most `limit` bytes and cancels the rest, so a huge POST is never
+ * buffered. Secrets are scrubbed after the cut, like stored response bodies.
+ */
 export async function readCappedBody(
   request: Request,
   limit = MAX_BODY_BYTES,
@@ -76,21 +95,14 @@ export async function readCappedBody(
     offset += chunk.byteLength;
   }
   // a cut may land inside a multi-byte character; drop the partial one
-  return {
-    body: new TextDecoder("utf-8", { fatal: false })
-      .decode(bytes)
-      .replace(/�$/, ""),
-    truncated,
-  };
+  const text = new TextDecoder("utf-8", { fatal: false })
+    .decode(bytes)
+    .replace(/\uFFFD$/, "");
+  return { body: redactSensitiveBody(text), truncated };
 }
 
-function truncateUtf8(text: string, limit: number) {
-  const bytes = new TextEncoder().encode(text);
-  if (bytes.byteLength <= limit) return { text, truncated: false };
-  return {
-    text: new TextDecoder().decode(bytes.subarray(0, limit)).replace(/�$/, ""),
-    truncated: true,
-  };
+function byteLength(text: string): number {
+  return new TextEncoder().encode(text).byteLength;
 }
 
 /** Ping URLs carry the token; keep it out of request logs. */

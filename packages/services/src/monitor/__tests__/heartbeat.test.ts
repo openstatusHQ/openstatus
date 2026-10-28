@@ -25,6 +25,7 @@ import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
 import {
   getHeartbeatState,
+  recordHeartbeatPing,
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,
 } from "../heartbeat";
@@ -450,6 +451,26 @@ describe("getHeartbeatState", () => {
         lastPingKind: null,
         nextDueAt: null,
       });
+    });
+  });
+});
+
+describe("recordHeartbeatPing", () => {
+  test("an older ping landing late does not move the deadline back", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const token = row.heartbeatToken ?? "";
+      const newer = new Date("2026-01-01T00:01:00.000Z");
+      const older = new Date("2026-01-01T00:00:00.000Z");
+
+      await recordHeartbeatPing({ token, at: newer, db: tx });
+      await recordHeartbeatPing({ token, at: older, db: tx });
+
+      const state = await readState(tx, row.id);
+      expect(state?.lastPingAt?.getTime()).toBe(newer.getTime());
+      expect(state?.nextDueAt?.getTime()).toBe(
+        newer.getTime() + (HOUR + FIVE_MIN) * 1000,
+      );
     });
   });
 });

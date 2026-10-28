@@ -8,6 +8,7 @@ export type BatcherOptions = {
   flushIntervalMs: number;
   /** How long one batch may keep retrying (send time included) before it is dropped. */
   retryBudgetMs: number;
+  /** Cap on events held at once, buffered or in a batch still retrying. */
   maxBufferSize: number;
 };
 
@@ -34,6 +35,8 @@ export class Batcher<T> {
   private buffer: T[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
   private inFlight = new Set<Promise<void>>();
+  /** Buffered events plus those in batches not yet sent or dropped. */
+  private pending = 0;
 
   constructor(
     private readonly send: (events: T[]) => Promise<void>,
@@ -44,12 +47,13 @@ export class Batcher<T> {
   ) {}
 
   add(event: T): void {
-    if (this.buffer.length >= this.options.maxBufferSize) {
+    if (this.pending >= this.options.maxBufferSize) {
       logger.warn("heartbeat batcher buffer full, dropping event", {
-        buffer_size: this.buffer.length,
+        pending: this.pending,
       });
       return;
     }
+    this.pending++;
     this.buffer.push(event);
     if (this.buffer.length >= this.options.maxBatchSize) {
       this.flushNow();
@@ -78,6 +82,7 @@ export class Batcher<T> {
     while (this.buffer.length > 0) {
       const batch = this.buffer.splice(0, this.options.maxBatchSize);
       const task = this.sendWithRetry(batch).finally(() => {
+        this.pending -= batch.length;
         this.inFlight.delete(task);
       });
       this.inFlight.add(task);

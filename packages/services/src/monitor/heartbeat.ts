@@ -1,4 +1,4 @@
-import { and, db as defaultDb, eq, isNull } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull, lt, or } from "@openstatus/db";
 import {
   type HeartbeatPingKind,
   monitor,
@@ -245,6 +245,11 @@ export async function recordHeartbeatPing(args: {
     .onConflictDoUpdate({
       target: monitorHeartbeatState.monitorId,
       set: { lastPingAt: args.at, nextDueAt },
+      // a slower, older ping must not pull the deadline back
+      setWhere: or(
+        isNull(monitorHeartbeatState.lastPingAt),
+        lt(monitorHeartbeatState.lastPingAt, args.at),
+      ),
     });
   return { kind: "recorded", ...ids };
 }
