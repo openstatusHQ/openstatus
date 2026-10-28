@@ -69,7 +69,7 @@ export async function deleteMonitor(args: {
       action: "monitor.delete",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
+      before: await monitorAuditSnapshot(existing),
     });
   });
 }
@@ -153,7 +153,7 @@ export async function deleteMonitors(args: {
         action: "monitor.delete",
         entityType: "monitor",
         entityId: row.id,
-        before: monitorAuditSnapshot(row),
+        before: await monitorAuditSnapshot(row),
       });
     }
   });

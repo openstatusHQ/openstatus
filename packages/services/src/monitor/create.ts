@@ -84,7 +84,7 @@ export async function createMonitor(args: {
       action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
-      after: monitorAuditSnapshot(row),
+      after: await monitorAuditSnapshot(row),
       metadata: { jobType: row.jobType, url: row.url },
     });
 

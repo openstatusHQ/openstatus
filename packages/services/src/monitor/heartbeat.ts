@@ -34,6 +34,16 @@ export function heartbeatDeadline(
   return new Date(from.getTime() + seconds * 1000);
 }
 
+export function heartbeatConfigChanged(
+  before: { heartbeatPeriod: number | null; heartbeatGrace: number | null },
+  after: { heartbeatPeriod: number | null; heartbeatGrace: number | null },
+): boolean {
+  return (
+    before.heartbeatPeriod !== after.heartbeatPeriod ||
+    before.heartbeatGrace !== after.heartbeatGrace
+  );
+}
+
 function assertHeartbeat(row: { jobType: string; id: number }) {
   if (row.jobType !== "heartbeat") {
     throw new ValidationError(`Monitor ${row.id} is not a heartbeat monitor`);
@@ -44,12 +54,15 @@ function assertHeartbeat(row: { jobType: string; id: number }) {
  * Re-anchor the deadline of a heartbeat that has been pinged at least once:
  * on `last-ping` after a config change, on `now` when it is resumed.
  * A heartbeat still waiting for its first ping keeps a NULL deadline.
+ * A down heartbeat keeps its deadline on a config change: the sweep reads a
+ * future deadline as "pinged again", and only a ping may recover it.
  */
 export async function syncHeartbeatDeadline(args: {
   tx: DB;
   row: {
     id: number;
     jobType: string;
+    status: string;
     heartbeatPeriod: number | null;
     heartbeatGrace: number | null;
   };
@@ -57,6 +70,7 @@ export async function syncHeartbeatDeadline(args: {
 }): Promise<void> {
   const { tx, row, anchor } = args;
   if (row.jobType !== "heartbeat") return;
+  if (anchor === "last-ping" && row.status === "error") return;
 
   const state = await tx
     .select()
@@ -99,14 +113,17 @@ export async function updateMonitorHeartbeat(args: {
       .returning()
       .get();
 
-    await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
+    // An unchanged save must not undo the fresh deadline a resume granted.
+    if (heartbeatConfigChanged(existing, updated)) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
+    }
 
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);
@@ -140,8 +157,8 @@ export async function regenerateHeartbeatToken(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);

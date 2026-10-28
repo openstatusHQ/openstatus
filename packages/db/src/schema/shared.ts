@@ -28,6 +28,10 @@ const selectPublicMonitorBaseSchema = selectMonitorSchema.omit({
   method: true,
   otelEndpoint: true,
   otelHeaders: true,
+  // authenticates pings: whoever holds it can keep a down heartbeat green
+  heartbeatToken: true,
+  heartbeatCron: true,
+  heartbeatTz: true,
 });
 
 export const selectPublicMonitorSchema =
