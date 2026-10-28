@@ -5,7 +5,6 @@ import {
   monitorHeartbeatState,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
-
 import { z } from "zod";
 
 import { emitAudit } from "../audit";
