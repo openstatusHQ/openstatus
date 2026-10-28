@@ -50,12 +50,11 @@ export type UpdateWorkspaceStripeIdInput = z.infer<
 export const UpdateWorkspaceLimitsInput = z
   .object({
     addon: z.enum(addons),
-    value: z.union([z.boolean(), z.number()]),
+    value: z.union([z.boolean(), z.number().nonnegative()]),
     trialEndsAt: z.date().nullable().optional(),
     reason: z.string().optional(),
   })
-  // `updateAddonInLimits` ignores a value of the wrong kind, which would
-  // record the change in Stripe but never in the limits.
+  // the limit's own schema would reject it later too, with a less clear error
   .refine(
     (i) => (typeof i.value === "number") === isAddonQuantityKey(i.addon),
     { message: "Value does not match the addon type", path: ["value"] },
