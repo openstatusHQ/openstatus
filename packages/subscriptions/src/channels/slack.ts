@@ -10,6 +10,7 @@ import type { PageUpdate, Subscription } from "../types";
 import { buildReplyMessage, buildRootMessage } from "./slack-blocks";
 import {
   type SlackAnchorStore,
+  type SlackThreadAnchor,
   type SlackThreadEvent,
   createRedisAnchorStore,
 } from "./slack-store";
@@ -28,7 +29,14 @@ export interface SlackChannelDeps {
   createClient: (token: string) => SlackClient;
   getBotToken: (teamId: string) => Promise<string | null>;
   softUnsubscribe: (subscriberId: number) => Promise<void>;
+  sleep?: (ms: number) => Promise<void>;
 }
+
+// A concurrent delivery that lost the root claim waits for the winner's root
+// (one postMessage round trip). Slack deliveries are not retried by the
+// dispatcher, so giving up here drops the update.
+const ANCHOR_WAIT_ATTEMPTS = 10;
+const ANCHOR_WAIT_MS = 500;
 
 // Channel-scoped terminal errors: this subscriber's destination is gone for
 // good, so we stop delivering to that one subscriber.
@@ -99,6 +107,26 @@ async function softUnsubscribeInDb(subscriberId: number): Promise<void> {
 }
 
 export function createSlackChannel(deps: SlackChannelDeps) {
+  const sleep =
+    deps.sleep ??
+    ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+
+  // Existing anchor, a claim token when this caller must post the root, or
+  // null if another caller held the claim for the whole wait.
+  async function acquireAnchor(
+    event: SlackThreadEvent,
+    subscriberId: number,
+  ): Promise<SlackThreadAnchor | { claim: string } | null> {
+    for (let attempt = 0; attempt < ANCHOR_WAIT_ATTEMPTS; attempt++) {
+      if (attempt > 0) await sleep(ANCHOR_WAIT_MS);
+      const anchor = await deps.store.getAnchor(event, subscriberId);
+      if (anchor) return anchor;
+      const claim = await deps.store.claimAnchor(event, subscriberId);
+      if (claim) return { claim };
+    }
+    return null;
+  }
+
   async function runSlack(
     subscriberId: number,
     fn: () => Promise<SlackPostResult>,
@@ -150,10 +178,17 @@ export function createSlackChannel(deps: SlackChannelDeps) {
     // failed post we release it below so the delivery stays retriable.
     if (!(await deps.store.reserveDelivery(event, sub.id, updateId))) return;
 
-    const anchor = await deps.store.getAnchor(event, sub.id);
+    const anchor = await acquireAnchor(event, sub.id);
+    if (!anchor) {
+      console.error(
+        `slack: ${event.kind} ${event.id} root still in flight for subscriber ${sub.id} — dropping update ${updateId}`,
+      );
+      await deps.store.releaseDelivery(event, sub.id, updateId);
+      return;
+    }
     const root = buildRootMessage(pageUpdate, sub);
 
-    if (!anchor) {
+    if ("claim" in anchor) {
       const res = await runSlack(sub.id, () =>
         client.postMessage({
           channel: channelId,
@@ -161,24 +196,32 @@ export function createSlackChannel(deps: SlackChannelDeps) {
         }),
       );
       if (!res || res === TEAM_TOKEN_INVALID) {
+        await deps.store.releaseAnchorClaim(event, sub.id, anchor.claim);
         await deps.store.releaseDelivery(event, sub.id, updateId);
         return res === TEAM_TOKEN_INVALID ? TEAM_TOKEN_INVALID : undefined;
       }
-      if (res.ts) {
-        // Stash this first update so the next one can backfill it into the
-        // thread before the root is re-rendered and its content lost.
-        await deps.store.setAnchor(event, sub.id, {
-          ts: res.ts,
-          channelId,
-          pendingRootReply: buildReplyMessage(pageUpdate),
-        });
+      if (!res.ts) {
+        await deps.store.releaseAnchorClaim(event, sub.id, anchor.claim);
+        return;
       }
+      // Stash this first update so the next one can backfill it into the
+      // thread before the root is re-rendered and its content lost.
+      await deps.store.setAnchor(event, sub.id, {
+        ts: res.ts,
+        channelId,
+        pendingRootReply: buildReplyMessage(pageUpdate),
+      });
       return;
     }
 
     // The first update only ever lived in the root. Before we overwrite the
     // root below, post it into the thread so its history is preserved.
-    if (anchor.pendingRootReply) {
+    // Reserved per root: losers woken together all see `pendingRootReply`.
+    const backfillKey = `root:${anchor.ts}`;
+    if (
+      anchor.pendingRootReply &&
+      (await deps.store.reserveDelivery(event, sub.id, backfillKey))
+    ) {
       const backfill = anchor.pendingRootReply;
       const backfillRes = await runSlack(sub.id, () =>
         client.postMessage({
@@ -189,6 +232,7 @@ export function createSlackChannel(deps: SlackChannelDeps) {
         }),
       );
       if (!backfillRes || backfillRes === TEAM_TOKEN_INVALID) {
+        await deps.store.releaseDelivery(event, sub.id, backfillKey);
         await deps.store.releaseDelivery(event, sub.id, updateId);
         return backfillRes === TEAM_TOKEN_INVALID
           ? TEAM_TOKEN_INVALID
