@@ -1,6 +1,7 @@
 CREATE TABLE `monitor_heartbeat_state` (
 	`monitor_id` integer PRIMARY KEY NOT NULL,
 	`last_ping_at` integer,
+	`last_ping_kind` text DEFAULT 'success' NOT NULL,
 	`next_due_at` integer,
 	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade
 );

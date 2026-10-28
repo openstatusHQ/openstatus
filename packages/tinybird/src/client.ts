@@ -364,6 +364,7 @@ export const heartbeatPingShape = z.object({
   headers: z.string().nullable(),
   body: z.string().nullable(),
   bodyTruncated: z.int(),
+  kind: z.enum(["success", "fail"]).catch("success"),
 });
 export type HeartbeatPing = z.infer<typeof heartbeatPingShape>;
 

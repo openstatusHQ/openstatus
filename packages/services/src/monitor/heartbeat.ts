@@ -1,5 +1,6 @@
 import { db as defaultDb, eq } from "@openstatus/db";
 import {
+  type HeartbeatPingKind,
   monitor,
   monitorHeartbeatState,
   selectMonitorSchema,
@@ -23,6 +24,8 @@ import {
 
 export type HeartbeatState = {
   lastPingAt: Date | null;
+  /** `fail` when the last ping was a `/fail`; null before the first ping. */
+  lastPingKind: HeartbeatPingKind | null;
   nextDueAt: Date | null;
 };
 
@@ -82,7 +85,11 @@ export async function syncHeartbeatDeadline(args: {
   const from = anchor === "now" ? new Date() : state.lastPingAt;
   await tx
     .update(monitorHeartbeatState)
-    .set({ nextDueAt: heartbeatDeadline(from, row) })
+    .set({
+      nextDueAt: heartbeatDeadline(from, row),
+      // a resume starts fresh: a failure reported before the pause no longer counts
+      ...(anchor === "now" ? { lastPingKind: "success" as const } : {}),
+    })
     .where(eq(monitorHeartbeatState.monitorId, row.id));
 }
 
@@ -188,6 +195,7 @@ export async function getHeartbeatState(args: {
 
   return {
     lastPingAt: state?.lastPingAt ?? null,
+    lastPingKind: state?.lastPingAt ? state.lastPingKind : null,
     nextDueAt: state?.nextDueAt ?? null,
   };
 }
