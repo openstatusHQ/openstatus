@@ -20,9 +20,7 @@ function isHeartbeat(path: string): boolean {
 }
 
 function isPublic(path: string): boolean {
-  return (
-    path === "/public" || path.startsWith("/public/") || isHeartbeat(path)
-  );
+  return path === "/public" || path.startsWith("/public/") || isHeartbeat(path);
 }
 
 const RPC_READ = /\/(Get|List|Check)[A-Za-z]*$/;

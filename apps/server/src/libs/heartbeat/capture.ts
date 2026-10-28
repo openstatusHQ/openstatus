@@ -88,9 +88,7 @@ function truncateUtf8(text: string, limit: number) {
   const bytes = new TextEncoder().encode(text);
   if (bytes.byteLength <= limit) return { text, truncated: false };
   return {
-    text: new TextDecoder()
-      .decode(bytes.subarray(0, limit))
-      .replace(/�$/, ""),
+    text: new TextDecoder().decode(bytes.subarray(0, limit)).replace(/�$/, ""),
     truncated: true,
   };
 }

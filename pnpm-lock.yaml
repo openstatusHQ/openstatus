@@ -1239,6 +1239,9 @@ importers:
       ai:
         specifier: 'catalog:'
         version: 7.0.109(zod@4.6.5)
+      effect:
+        specifier: 'catalog:'
+        version: 4.0.0-rc.117
       hono:
         specifier: 'catalog:'
         version: 4.13.8

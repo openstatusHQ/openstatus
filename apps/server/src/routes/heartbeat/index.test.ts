@@ -8,12 +8,20 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { recordHeartbeatPing } from "@openstatus/services/monitor";
 import type { HeartbeatPingEvent } from "@openstatus/tinybird";
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { app } from "../../index";
-import { createHeartbeatRoute } from "./index";
+import { heartbeatBatcher, heartbeatRoute as route } from "./index";
 
 const TOKEN = `hb-route-test-${crypto.randomUUID()}`;
 const PAUSED_TOKEN = `hb-route-paused-${crypto.randomUUID()}`;
@@ -22,12 +30,6 @@ const NOW = new Date("2026-03-01T12:00:00.000Z");
 let workspaceId: number;
 let monitorId: number;
 let published: HeartbeatPingEvent[];
-
-const route = createHeartbeatRoute({
-  record: recordHeartbeatPing,
-  publish: (event) => published.push(event),
-  now: () => NOW,
-});
 
 beforeAll(async () => {
   const ws = await createWorkspace();
@@ -55,6 +57,17 @@ beforeAll(async () => {
 
 beforeEach(() => {
   published = [];
+  vi.spyOn(heartbeatBatcher, "add").mockImplementation((event) => {
+    published.push(event);
+  });
+  // only Date: real timers keep the libSQL client working
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -72,7 +85,9 @@ async function readState() {
 
 describe("heartbeat route", () => {
   test("unknown token returns 404 and records nothing", async () => {
-    const res = await route.request(`/hb-route-test-unknown-${crypto.randomUUID()}`);
+    const res = await route.request(
+      `/hb-route-test-unknown-${crypto.randomUUID()}`,
+    );
     expect(res.status).toBe(404);
     expect(published).toHaveLength(0);
   });
@@ -131,15 +146,12 @@ describe("heartbeat route", () => {
   });
 
   test("a failing publish still records the ping", async () => {
-    const failing = createHeartbeatRoute({
-      record: recordHeartbeatPing,
-      publish: () => {
-        throw new Error("tinybird down");
-      },
-      now: () => new Date(NOW.getTime() + 60_000),
+    vi.spyOn(heartbeatBatcher, "add").mockImplementation(() => {
+      throw new Error("tinybird down");
     });
+    vi.setSystemTime(NOW.getTime() + 60_000);
 
-    const res = await failing.request(`/${TOKEN}`);
+    const res = await route.request(`/${TOKEN}`);
 
     expect(res.status).toBe(200);
     const state = await readState();
