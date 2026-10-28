@@ -51,6 +51,7 @@ export {
   dbMonitorToDnsProto,
   dbMonitorToGrpcProto,
   dbMonitorToIcmpProto,
+  dbMonitorToHeartbeatProto,
 } from "./monitors";
 
 // Regions

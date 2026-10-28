@@ -2,11 +2,13 @@ import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
   GRPCMonitor,
+  HeartbeatMonitor,
   HTTPMonitor,
   ICMPMonitor,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 
+import { env } from "../../../../../env";
 import { parseDnsAssertions, parseHttpAssertions } from "./assertions";
 import { MONITOR_DEFAULTS } from "./defaults";
 import {
@@ -158,5 +160,32 @@ export function dbMonitorToDnsProto(
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
     status: stringToMonitorStatus(dbMon.status),
     privateLocationIds,
+  };
+}
+
+export function heartbeatPingUrl(token: string): string {
+  const base = env.HEARTBEAT_PING_BASE_URL || "https://api.openstatus.dev";
+  return `${base}/heartbeat/${token}`;
+}
+
+/**
+ * Transform database heartbeat monitor to proto HeartbeatMonitor.
+ */
+export function dbMonitorToHeartbeatProto(
+  dbMon: Monitor,
+  lastPingAt: Date | null = null,
+): HeartbeatMonitor {
+  return {
+    $typeName: "openstatus.monitor.v1.HeartbeatMonitor",
+    id: String(dbMon.id),
+    name: dbMon.name,
+    period: BigInt(dbMon.heartbeatPeriod ?? 0),
+    grace: BigInt(dbMon.heartbeatGrace ?? 0),
+    description: dbMon.description,
+    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    public: dbMon.public ?? MONITOR_DEFAULTS.public,
+    pingUrl: dbMon.heartbeatToken ? heartbeatPingUrl(dbMon.heartbeatToken) : "",
+    lastPingAt: lastPingAt?.toISOString(),
+    status: stringToMonitorStatus(dbMon.status),
   };
 }

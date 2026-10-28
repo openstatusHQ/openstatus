@@ -6,6 +6,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
+import { OSTinybird } from "@openstatus/tinybird";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -15,6 +16,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
+import { listResponseLogsTool } from "../../agent-tools/monitor";
 import type { DrizzleTx, ServiceContext } from "../../context";
 import {
   ForbiddenError,
@@ -23,8 +25,10 @@ import {
 } from "../../errors";
 import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
+import { getMonitorSummary } from "../get-monitor-summary";
 import {
   getHeartbeatState,
+  listHeartbeatPings,
   recordHeartbeatPing,
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,
@@ -593,6 +597,66 @@ describe("visibility", () => {
         .where(eq(monitor.id, row.id))
         .get();
       expect(stored?.public).toBe(false);
+    });
+  });
+});
+
+describe("heartbeat reads", () => {
+  const tb = new OSTinybird({ token: "", noop: true });
+
+  test("getMonitorSummary reports the last ping instead of throwing", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const lastPing = new Date("2026-02-01T10:00:00.000Z");
+      await setLastPing(tx, row.id, lastPing);
+
+      const summary = await getMonitorSummary({
+        ctx: { ...ctx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "1d" },
+      });
+
+      expect(summary.regions).toEqual(["heartbeat"]);
+      expect(summary.totalFailed).toBe(0);
+      expect(summary.lastPingAt).toBe(lastPing.toISOString());
+    });
+  });
+
+  test("list_response_logs answers for a heartbeat", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const result = await listResponseLogsTool.run({
+        ctx: { ...ctx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "1d", limit: 25 },
+      });
+      expect(result).toEqual({
+        logs: [],
+        limit: 25,
+        hasMore: false,
+        nextCursor: undefined,
+      });
+    });
+  });
+
+  test("listHeartbeatPings rejects other monitor types", async () => {
+    await withTestTransaction(async (tx) => {
+      const http = await createMonitor({
+        ctx: { ...ctx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-http-pings`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      await expect(
+        listHeartbeatPings({
+          ctx: { ...ctx, db: tx, tb },
+          input: { monitorId: http.id },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
     });
   });
 });
