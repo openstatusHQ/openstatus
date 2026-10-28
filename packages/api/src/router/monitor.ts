@@ -7,7 +7,6 @@ import {
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { NotFoundError } from "@openstatus/services";
-import { TRPCError } from "@trpc/server";
 import {
   type CreateMonitorInput,
   type UpdateMonitorGeneralInput,
@@ -37,12 +36,13 @@ import {
   updateMonitorTags,
 } from "@openstatus/services/monitor";
 import { headerPairSchema } from "@openstatus/utils";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
-import { tb } from "../tb";
 import { heartbeatPingUrl, isHeartbeatEnabled } from "../lib/heartbeat";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
+import { tb } from "../tb";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { testDns, testGrpc, testHttp, testIcmp, testTcp } from "./checker";
 
