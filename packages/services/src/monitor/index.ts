@@ -45,7 +45,10 @@ export {
   updateMonitorSchedulingRegions,
   updateMonitorTags,
 } from "./relations";
-export { redactSensitiveHeaders } from "./response-logs-internal";
+export {
+  redactSensitiveBody,
+  redactSensitiveHeaders,
+} from "./response-logs-internal";
 export {
   type CheckResult,
   type CheckResultError,

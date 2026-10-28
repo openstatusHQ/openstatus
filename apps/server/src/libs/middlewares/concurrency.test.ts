@@ -32,6 +32,7 @@ function build(maxInFlight: number) {
     throw new Error("boom");
   });
   app.get("/ping", (c) => c.text("pong"));
+  app.get("/heartbeat/:token", (c) => c.text("OK"));
   app.post("/rpc/*", (c) => c.text("ok"));
   app.onError((_, c) => c.text("error", 500));
 
@@ -87,6 +88,16 @@ describe("concurrency guard", () => {
     expect(guard.inFlight()).toBe(1);
     expect((await app.request("/fast")).status).toBe(503);
     expect((await app.request("/ping")).status).toBe(200);
+    release();
+    await held;
+  });
+
+  test("heartbeat pings are never shed", async () => {
+    const { app, guard, release } = build(1);
+    const held = app.request("/slow");
+    await tick();
+    expect(guard.inFlight()).toBe(1);
+    expect((await app.request("/heartbeat/some-token")).status).toBe(200);
     release();
     await held;
   });

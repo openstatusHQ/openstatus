@@ -37,11 +37,24 @@ describe("captureHeaders", () => {
     expect(captureHeaders(new Headers({ host: "x" }))).toBeNull();
   });
 
-  test("cuts the serialised headers at 4 KB", () => {
-    const headers = new Headers({ "x-big": "a".repeat(10_000) });
-    expect(
-      new TextEncoder().encode(captureHeaders(headers) ?? "").byteLength,
-    ).toBeLessThanOrEqual(4 * 1024);
+  test("leaves out whole entries past 4 KB and stays valid JSON", () => {
+    const headers = new Headers({
+      "x-big": "a".repeat(10_000),
+      "x-medium-1": "b".repeat(2_500),
+      "x-medium-2": "c".repeat(2_500),
+      "content-type": "text/plain",
+    });
+
+    const captured = captureHeaders(headers) ?? "";
+
+    expect(new TextEncoder().encode(captured).byteLength).toBeLessThanOrEqual(
+      4 * 1024,
+    );
+    const parsed = JSON.parse(captured);
+    expect(parsed["content-type"]).toBe("text/plain");
+    expect(parsed["x-big"]).toBeUndefined();
+    expect(parsed["x-medium-1"]).toHaveLength(2_500);
+    expect(parsed["x-medium-2"]).toBeUndefined();
   });
 });
 
@@ -79,11 +92,29 @@ describe("readCappedBody", () => {
   });
 
   test("does not leave a broken multi-byte character at the cut", async () => {
+    // the ASCII prefix puts the 10 KB cut in the middle of an `é`
     const result = await readCappedBody(
-      new Request("http://x", { method: "POST", body: "é".repeat(6_000) }),
+      new Request("http://x", {
+        method: "POST",
+        body: `a${"é".repeat(6_000)}`,
+      }),
     );
     expect(result.truncated).toBe(true);
-    expect(result.body?.endsWith("é")).toBe(true);
+    expect(result.body).toBe(`a${"é".repeat((MAX_BODY_BYTES - 2) / 2)}`);
+  });
+
+  test("scrubs secrets from the body", async () => {
+    const result = await readCappedBody(
+      new Request("http://x", {
+        method: "POST",
+        body: JSON.stringify({ status: "ok", api_key: "sk_live_123" }),
+      }),
+    );
+    expect(result.body).not.toContain("sk_live_123");
+    expect(JSON.parse(result.body ?? "{}")).toEqual({
+      status: "ok",
+      api_key: "[redacted]",
+    });
   });
 
   test("returns null without a body", async () => {
