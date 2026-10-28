@@ -105,3 +105,21 @@ func TestNewHTTPClientZeroTimeoutFallsBack(t *testing.T) {
 	assert.Equal(t, defaultHTTPTimeout, transport.TLSHandshakeTimeout)
 	assert.True(t, transport.DisableKeepAlives)
 }
+
+func TestTimingClearIncompletePhases(t *testing.T) {
+	// Timeout after the TLS handshake: first byte never arrived.
+	timing := Timing{
+		DnsStart: 1000, DnsDone: 1001,
+		ConnectStart: 1001, ConnectDone: 1003,
+		TlsHandshakeStart: 1003, TlsHandshakeDone: 1017,
+		FirstByteStart: 1017,
+	}
+
+	timing.clearIncompletePhases()
+
+	assert.Equal(t, Timing{
+		DnsStart: 1000, DnsDone: 1001,
+		ConnectStart: 1001, ConnectDone: 1003,
+		TlsHandshakeStart: 1003, TlsHandshakeDone: 1017,
+	}, timing)
+}
