@@ -64,6 +64,7 @@ const configurationSchema = z
       .union([z.literal(30), z.literal(45)])
       .or(z.literal("30").or(z.literal("45")))
       .nullish(),
+    width: z.enum(["default", "wide"]).nullish(),
   })
   .refine(
     (data) => {
@@ -107,6 +108,8 @@ export function FormConfiguration({
     | "true"
     | "false";
   const watchConfigurationDays = form.watch("configuration.days") ?? 45;
+  const watchConfigurationWidth = (form.watch("configuration.width") ??
+    "default") as "default" | "wide";
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
@@ -340,6 +343,47 @@ export function FormConfiguration({
                 </ul>
               </Note>
             </FormCardContent>
+            <FormCardSeparator />
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="configuration.width"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Width</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={String(field.value ?? "default")}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a width" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(["default", "wide"] as const).map((width) => (
+                          <SelectItem key={width} value={width}>
+                            {configurationLabels.width[width]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Note className="col-span-full">
+                <ul className="list-inside list-disc">
+                  <li>
+                    <span>Width </span>
+                    <span className="font-medium">
+                      {configurationLabels.width[watchConfigurationWidth]}
+                    </span>
+                    : <span>{message.width[watchConfigurationWidth]}</span>
+                  </li>
+                </ul>
+              </Note>
+            </FormCardContent>
             <FormCardFooter className="flex-wrap">
               <FormCardFooterInfo>
                 Learn more about{" "}
@@ -397,6 +441,10 @@ export const configurationLabels = {
     requests: "Number of checks",
     manual: "Worst status of the day",
   },
+  width: {
+    default: "Default",
+    wide: "Wide",
+  },
 } as const;
 
 const message = {
@@ -414,6 +462,10 @@ const message = {
   uptime: {
     true: "shares the uptime percentage and current status of your endpoint.",
     false: "shares only the current status.",
+  },
+  width: {
+    default: "the page content is 672px wide on desktop.",
+    wide: "the page content is 896px wide on desktop. Mobile is unchanged.",
   },
 } as const;
 

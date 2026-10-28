@@ -153,6 +153,10 @@ export const pageConfigurationSchema = z.object({
     .union([z.literal(30), z.literal(45)])
     .nullish()
     .transform((v) => v ?? 45),
+  width: z
+    .enum(["default", "wide"])
+    .nullish()
+    .transform((v) => v ?? "default"),
 });
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
