@@ -44,21 +44,26 @@ export function postWebhookWithRetry(opts: {
 }): Promise<void> {
   const send = Effect.tryPromise({
     try: (signal) =>
-      safeFetch(opts.url, {
-        method: "POST",
-        headers: opts.headers,
-        body: opts.body,
-        signal,
-      }),
-    catch: (cause) => new WebhookSendError("Webhook request failed", { cause }),
+      safeFetch(
+        opts.url,
+        {
+          method: "POST",
+          headers: opts.headers,
+          body: opts.body,
+          signal,
+        },
+        { timeoutMs: opts.timeoutMs },
+      ),
+    catch: (cause) => {
+      if (cause instanceof DOMException && cause.name === "TimeoutError") {
+        return new WebhookSendError(
+          `Webhook timed out after ${opts.timeoutMs}ms`,
+          { cause },
+        );
+      }
+      return new WebhookSendError("Webhook request failed", { cause });
+    },
   }).pipe(
-    Effect.timeoutOrElse({
-      duration: `${opts.timeoutMs} millis`,
-      orElse: () =>
-        Effect.fail(
-          new WebhookSendError(`Webhook timed out after ${opts.timeoutMs}ms`),
-        ),
-    }),
     Effect.flatMap((response) =>
       response.ok
         ? Effect.void
