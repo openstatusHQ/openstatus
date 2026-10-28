@@ -6,9 +6,16 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 
+import { z } from "zod";
+
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  defaultTb,
+  withTransaction,
+} from "../context";
 import { ValidationError } from "../errors";
 import type { Monitor } from "../types";
 import {
@@ -18,6 +25,7 @@ import {
 } from "./internal";
 import {
   GetMonitorInput,
+  ListHeartbeatPingsInput,
   RegenerateHeartbeatTokenInput,
   UpdateMonitorHeartbeatInput,
 } from "./schemas";
@@ -255,4 +263,69 @@ export async function recordHeartbeatPing(args: {
       ),
     });
   return { kind: "recorded", ...ids };
+}
+
+export type HeartbeatPingLog = {
+  id: string;
+  timestamp: number;
+  ip: string | null;
+  method: string;
+  userAgent: string | null;
+  headers: Record<string, string>;
+  body: string | null;
+  bodyTruncated: boolean;
+};
+
+const storedHeaders = z.record(z.string(), z.string());
+
+function parseHeaders(raw: string | null): Record<string, string> {
+  if (!raw) return {};
+  try {
+    return storedHeaders.catch({}).parse(JSON.parse(raw));
+  } catch {
+    // stored cut at 4 KB, so the JSON can be incomplete
+    return {};
+  }
+}
+
+/** Newest first; headers were redacted at capture time. */
+export async function listHeartbeatPings(args: {
+  ctx: ServiceContext;
+  input: ListHeartbeatPingsInput;
+}): Promise<{ data: HeartbeatPingLog[]; nextCursor: number | null }> {
+  const { ctx } = args;
+  const input = ListHeartbeatPingsInput.parse(args.input);
+  const db = ctx.db ?? defaultDb;
+
+  const existing = await getMonitorInWorkspace({
+    tx: db,
+    id: input.monitorId,
+    workspaceId: ctx.workspace.id,
+  });
+  assertHeartbeat(existing);
+
+  const tb = ctx.tb ?? defaultTb;
+  const result = await tb.heartbeatList({
+    monitorId: String(existing.id),
+    fromDate: input.fromTimestamp,
+    toDate: input.toTimestamp,
+    cursor: input.cursor,
+    limit: input.limit,
+  });
+
+  const data = result.data.map((row) => ({
+    id: row.id,
+    timestamp: row.timestamp,
+    ip: row.ip,
+    method: row.method,
+    userAgent: row.userAgent,
+    headers: parseHeaders(row.headers),
+    body: row.body,
+    bodyTruncated: row.bodyTruncated === 1,
+  }));
+  const last = data.at(-1);
+  return {
+    data,
+    nextCursor: data.length === input.limit && last ? last.timestamp : null,
+  };
 }
