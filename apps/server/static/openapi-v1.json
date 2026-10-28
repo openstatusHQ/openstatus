@@ -928,7 +928,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-10-28T12:27:26.624Z",
+            "default": "2026-10-08T18:46:39.061Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -6585,7 +6585,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-28T12:27:26.624Z",
+                    "default": "2026-10-08T18:46:39.061Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7040,7 +7040,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-28T12:27:26.624Z",
+                    "default": "2026-10-08T18:46:39.061Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7341,7 +7341,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-28T12:27:26.624Z",
+                    "default": "2026-10-08T18:46:39.061Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
