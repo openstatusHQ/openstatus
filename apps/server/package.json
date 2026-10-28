@@ -76,6 +76,7 @@
     "@unkey/api": "catalog:",
     "@upstash/qstash": "catalog:",
     "ai": "catalog:",
+    "effect": "catalog:",
     "hono": "catalog:",
     "hono-rate-limiter": "catalog:",
     "nanoid": "catalog:",

@@ -26,10 +26,12 @@ import { requestId } from "hono/request-id";
 
 import { env } from "./env";
 import { handleError } from "./libs/errors";
+import { redactHeartbeatToken } from "./libs/heartbeat/capture";
 import { concurrencyGuard } from "./libs/middlewares/concurrency";
 import { rateLimit } from "./libs/middlewares/rate-limit";
 import { shouldSample } from "./libs/sampling";
 import { pingRoute } from "./routes/health";
+import { heartbeatRoute } from "./routes/heartbeat";
 import { mcpRoute } from "./routes/mcp";
 import { createOAuthRoutes } from "./routes/oauth";
 import { oauthConfigFromEnv } from "./routes/oauth/config";
@@ -124,7 +126,7 @@ app.use("*", async (c, next) => {
     {
       request_id: reqId,
       method: c.req.method,
-      url: c.req.url,
+      url: redactHeartbeatToken(c.req.url),
       user_agent: c.req.header("User-Agent"),
     },
     async () => {
@@ -134,8 +136,8 @@ app.use("*", async (c, next) => {
         request_id: reqId,
         // Request context
         method: c.req.method,
-        path: c.req.path,
-        url: c.req.url,
+        path: redactHeartbeatToken(c.req.path),
+        url: redactHeartbeatToken(c.req.url),
         // Client context
         user_agent: c.req.header("User-Agent"),
         // Request metadata
@@ -178,7 +180,7 @@ app.use("*", async (c, next) => {
         logger.info("request", {
           request_id: reqId,
           method: c.req.method,
-          path: c.req.path,
+          path: redactHeartbeatToken(c.req.path),
           status_code: c.res.status,
           duration_ms: duration,
           outcome: event.outcome,
@@ -214,6 +216,11 @@ app.route("/", createOAuthRoutes(oauthConfigFromEnv()));
  * Public Routes
  */
 app.route("/public", publicRoute);
+
+/**
+ * Heartbeat pings, authenticated by the token in the path
+ */
+app.route("/heartbeat", heartbeatRoute);
 
 /**
  * Health check — probes the database, Tinybird, Unkey and Upstash and reports
