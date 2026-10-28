@@ -52,7 +52,10 @@ export const sendRecovery = async ({
   const body = new FormData();
   body.set("To", notificationData.sms);
   body.set("From", "+14807252613");
-  body.set("Body", `Your monitor ${name} / ${monitorTarget(monitor)} is up again`);
+  body.set(
+    "Body",
+    `Your monitor ${name} / ${monitorTarget(monitor)} is up again`,
+  );
 
   const res = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
@@ -81,7 +84,10 @@ export const sendDegraded = async ({
   const body = new FormData();
   body.set("To", notificationData.sms);
   body.set("From", "+14807252613");
-  body.set("Body", `Your monitor ${name} / ${monitorTarget(monitor)} is degraded `);
+  body.set(
+    "Body",
+    `Your monitor ${name} / ${monitorTarget(monitor)} is degraded `,
+  );
 
   const res = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,

@@ -45,7 +45,9 @@ export async function updateMonitorSchedulingRegions(args: {
       workspaceId: ctx.workspace.id,
     });
     if (existing.jobType === "heartbeat") {
-      throw new ValidationError("Heartbeat monitors have no regions to schedule");
+      throw new ValidationError(
+        "Heartbeat monitors have no regions to schedule",
+      );
     }
 
     const validatedLocations = await validatePrivateLocationIds({

@@ -21,8 +21,8 @@ import {
 import { regionDict } from "@openstatus/regions";
 
 import type { DB } from "../context";
-import { toBase64Url } from "../oauth/crypto";
 import { ForbiddenError, LimitExceededError, NotFoundError } from "../errors";
+import { toBase64Url } from "../oauth/crypto";
 import type { Workspace } from "../types";
 
 /** Load a monitor by id, scoped to the workspace and excluding soft-deleted. */
@@ -217,9 +217,9 @@ export function assertSchedulingWithinPlan(
 }
 
 // The token authenticates pings; keep only a suffix so a rotation still diffs.
-export function monitorAuditSnapshot<T extends { heartbeatToken: string | null }>(
-  row: T,
-): T {
+export function monitorAuditSnapshot<
+  T extends { heartbeatToken: string | null },
+>(row: T): T {
   if (!row.heartbeatToken) return row;
   return { ...row, heartbeatToken: `…${row.heartbeatToken.slice(-4)}` };
 }
