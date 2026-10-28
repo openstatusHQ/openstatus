@@ -1,0 +1,83 @@
+---
+category: Reference
+title: Heartbeat Monitor Reference
+description: Complete technical specification for heartbeat (cron job) monitoring.
+---
+
+A heartbeat monitor watches jobs that run on their own schedule: cron jobs, queue workers, backups, ETL pipelines. openstatus never calls your job. Instead, your job sends a request to a unique **ping URL** every time it runs, and the monitor goes down when a ping does not arrive in time.
+
+**Use cases:**
+
+- Nightly backups and database dumps.
+- Scheduled scripts on a server, in Kubernetes `CronJob`s or in CI.
+- Background workers that should report in at a steady pace.
+
+## How it works
+
+1. Create a heartbeat monitor and set how often your job runs (**period**) and how late a ping may be (**grace period**).
+2. Add a request to the ping URL at the end of your job.
+3. Every ping moves the deadline to `last ping + period + grace`.
+4. If the deadline passes without a ping, the monitor goes down, an incident opens and your notification channels are alerted. The next ping recovers it and resolves the incident.
+
+Deadlines are checked every minute, so an alert can arrive up to a minute after the deadline.
+
+<Aside>
+A new heartbeat monitor sends no alerts until it receives its first ping, so you can create it before the job is deployed.
+Pausing a monitor stops alerts; resuming it restarts the deadline from the moment you resume.
+</Aside>
+
+## Configuration
+
+### Period
+
+**Type:** Duration (required)
+**Range:** `1 minute` to `30 days`
+
+How often your job is expected to ping, for example `1 hour` for an hourly cron job.
+
+### Grace period
+
+**Type:** Duration (required)
+**Range:** `1 minute` to `7 days`
+
+Extra time after the period before a late ping counts as missed. Set it to cover how long your job runs plus any start-up delay.
+
+## Sending pings
+
+The ping URL looks like `https://api.openstatus.dev/heartbeat/<token>`. It accepts `GET`, `POST` and `HEAD` requests and needs no authentication: the token in the URL identifies the monitor, so keep it secret. You can regenerate it from the monitor settings, after which the old URL stops working.
+
+```bash
+# at the end of a script
+curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
+```
+
+```bash
+# crontab: ping only when the job succeeds
+0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
+```
+
+A ping only means "the job ran". To report a failure, simply do not ping: the monitor goes down once the grace period runs out.
+
+### Responses
+
+| Status | Meaning |
+| --- | --- |
+| `200 OK` | The ping was recorded. |
+| `200 OK (paused)` | The monitor is paused; the ping was ignored. |
+| `404 Not Found` | The token does not match any heartbeat monitor. |
+| `429 Too Many Requests` | More than 6 pings per minute for this token. |
+
+### What is stored
+
+Each ping is kept with its time, the client IP, the HTTP method and user agent, the request headers and, for `POST` requests, the first **10 KB** of the body. Headers that look like credentials (`Authorization`, `Cookie`, or any name containing `token`, `secret`, `key`, `password` or `signature`) are redacted before they are stored. You can see each ping in the monitor's **Logs** tab, which is a handy place to send the tail of your job's output.
+
+Ping details are only visible to members of your workspace. They never appear on status pages.
+
+## Status pages
+
+A heartbeat monitor can be added to a status page like any other monitor. Its bar shows the days on which pings were received, and its uptime is computed from the incidents opened by missed pings.
+
+## Related resources
+
+- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
+- **[Notification Channels Reference](/docs/reference/notification)** — where heartbeat alerts are sent.

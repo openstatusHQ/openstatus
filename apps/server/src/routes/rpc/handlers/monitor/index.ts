@@ -1,7 +1,7 @@
-import type { ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, isNull, sql } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
+import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
+import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
@@ -10,6 +10,7 @@ import type {
   HTTPMonitor,
   HTTPResponseLogPagination,
   GRPCMonitor,
+  HeartbeatMonitor,
   ICMPMonitor,
   ListMonitorHTTPResponseLogsResponse,
   MonitorConfig,
@@ -29,6 +30,7 @@ import {
   type UpdateMonitorConfigInput,
   createMonitor,
   deleteMonitor,
+  getHeartbeatState,
   getMonitorStatus,
   getMonitorSummary,
   getPrivateLocationIdsByMonitor,
@@ -37,6 +39,7 @@ import {
   triggerMonitorRun,
   updateMonitorConfig,
 } from "@openstatus/services/monitor";
+import { isHeartbeatAllowed } from "@openstatus/utils";
 
 import { env } from "../../../../env";
 import {
@@ -52,6 +55,7 @@ import {
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
   dbMonitorToGrpcProto,
+  dbMonitorToHeartbeatProto,
   dbMonitorToIcmpProto,
   grpcTlsModeToString,
   dbMonitorToTcpProto,
@@ -123,7 +127,7 @@ type DBMonitor = NonNullable<Awaited<ReturnType<typeof getMonitorById>>>;
 async function validateAndGetMonitor(
   id: string | undefined,
   workspaceId: number,
-  expectedJobType: "http" | "tcp" | "dns" | "icmp" | "grpc",
+  expectedJobType: "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat",
 ): Promise<DBMonitor> {
   if (!id || id.trim() === "") {
     throw monitorIdRequiredError();
@@ -142,6 +146,32 @@ async function validateAndGetMonitor(
 }
 
 type ParsedMonitor = ReturnType<typeof selectMonitorSchema.parse>;
+
+async function lastPingsByMonitor(ids: number[]): Promise<Map<number, Date>> {
+  if (ids.length === 0) return new Map();
+  const rows = await db
+    .select({
+      monitorId: monitorHeartbeatState.monitorId,
+      lastPingAt: monitorHeartbeatState.lastPingAt,
+    })
+    .from(monitorHeartbeatState)
+    .where(inArray(monitorHeartbeatState.monitorId, ids))
+    .all();
+  const map = new Map<number, Date>();
+  for (const row of rows) {
+    if (row.lastPingAt) map.set(row.monitorId, row.lastPingAt);
+  }
+  return map;
+}
+
+function assertHeartbeatAllowed(workspaceId: number) {
+  if (!isHeartbeatAllowed(workspaceId, env.HEARTBEAT_WORKSPACE_IDS)) {
+    throw new ConnectError(
+      "Heartbeat monitors are not available yet",
+      Code.PermissionDenied,
+    );
+  }
+}
 
 /** Apply a built patch through the service and shape the proto response. */
 async function applyUpdate<T>(
@@ -314,6 +344,72 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     } catch (err) {
       toConnectError(err);
     }
+  },
+
+  async createHeartbeatMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    if (!req.monitor) {
+      throw monitorRequiredError();
+    }
+    assertHeartbeatAllowed(rpcCtx.workspace.id);
+
+    const mon = req.monitor;
+    try {
+      const created = await createMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          name: mon.name,
+          jobType: "heartbeat",
+          url: "",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: mon.active ?? MONITOR_DEFAULTS.active,
+          description: mon.description || MONITOR_DEFAULTS.description,
+          public: mon.public ?? MONITOR_DEFAULTS.public,
+          heartbeatPeriod: Number(mon.period),
+          heartbeatGrace: Number(mon.grace),
+        },
+      });
+      return { monitor: dbMonitorToHeartbeatProto(created) };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
+  async updateHeartbeatMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const dbMon = await validateAndGetMonitor(
+      req.id,
+      rpcCtx.workspace.id,
+      "heartbeat",
+    );
+    const lastPings = await lastPingsByMonitor([dbMon.id]);
+    const lastPingAt = lastPings.get(dbMon.id) ?? null;
+
+    if (!req.monitor) {
+      const parsed = selectMonitorSchema.safeParse(dbMon);
+      if (!parsed.success) {
+        throw monitorParseFailedError(req.id);
+      }
+      return { monitor: dbMonitorToHeartbeatProto(parsed.data, lastPingAt) };
+    }
+
+    // This method skips the protovalidate interceptor, so the bounds that
+    // matter for a partial update are left to the service schema.
+    const mon = req.monitor;
+    const updateValues: Omit<UpdateMonitorConfigInput, "id"> = {};
+    if (mon.name) updateValues.name = mon.name;
+    if (mon.description !== undefined)
+      updateValues.description = mon.description;
+    if (mon.active !== undefined) updateValues.active = mon.active;
+    if (mon.public !== undefined) updateValues.public = mon.public;
+    if (mon.period) updateValues.heartbeatPeriod = Number(mon.period);
+    if (mon.grace) updateValues.heartbeatGrace = Number(mon.grace);
+
+    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
+      dbMonitorToHeartbeatProto(data, lastPingAt),
+    );
   },
 
   async createGRPCMonitor(req, ctx) {
@@ -803,6 +899,10 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const dnsMonitors: DNSMonitor[] = [];
     const icmpMonitors: ICMPMonitor[] = [];
     const grpcMonitors: GRPCMonitor[] = [];
+    const heartbeatMonitors: HeartbeatMonitor[] = [];
+    const lastPings = await lastPingsByMonitor(
+      parsedMonitors.filter((m) => m.jobType === "heartbeat").map((m) => m.id),
+    );
 
     for (const data of parsedMonitors) {
       const privateLocationIds = plMap.get(data.id) ?? [];
@@ -822,6 +922,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         case "grpc":
           grpcMonitors.push(dbMonitorToGrpcProto(data, privateLocationIds));
           break;
+        case "heartbeat":
+          heartbeatMonitors.push(
+            dbMonitorToHeartbeatProto(data, lastPings.get(data.id) ?? null),
+          );
+          break;
       }
     }
 
@@ -831,6 +936,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       dnsMonitors,
       icmpMonitors,
       grpcMonitors,
+      heartbeatMonitors,
       totalSize: totalCount,
     };
   },
@@ -929,10 +1035,24 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           },
         };
         break;
+      case "heartbeat": {
+        const state = await getHeartbeatState({
+          ctx: toServiceCtx(rpcCtx),
+          input: { id: monitorData.id },
+        });
+        monitorConfig = {
+          $typeName: "openstatus.monitor.v1.MonitorConfig",
+          config: {
+            case: "heartbeat",
+            value: dbMonitorToHeartbeatProto(monitorData, state.lastPingAt),
+          },
+        };
+        break;
+      }
       default:
         throw monitorTypeMismatchError(
           req.id,
-          "http, tcp, dns, icmp, or grpc",
+          "http, tcp, dns, icmp, grpc, or heartbeat",
           monitorData.jobType,
         );
     }

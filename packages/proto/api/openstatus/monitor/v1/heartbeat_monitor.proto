@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "openstatus/monitor/v1/monitor.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+// HeartbeatMonitor is pinged by your job; it goes down when a ping is missed.
+message HeartbeatMonitor {
+  // Unique identifier for the monitor (output only for create requests).
+  string id = 1;
+
+  // Name of the monitor (required, max 256 characters).
+  string name = 2 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 256
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "Nightly backup"}}
+  ];
+
+  // Expected time between pings in seconds (60 to 2592000).
+  int64 period = 3 [
+    (buf.validate.field).int64 = {
+      gte: 60
+      lte: 2592000
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "3600"}}
+  ];
+
+  // Extra time in seconds before a late ping counts as missed (60 to 604800).
+  int64 grace = 4 [
+    (buf.validate.field).int64 = {
+      gte: 60
+      lte: 604800
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "300"}}
+  ];
+
+  // Description of the monitor (optional).
+  optional string description = 5 [(buf.validate.field).string.max_len = 1024];
+
+  // Whether the monitor is active (defaults to false).
+  optional bool active = 6;
+
+  // Whether the monitor is publicly visible (defaults to false).
+  optional bool public = 7;
+
+  // URL your job pings. Read-only.
+  string ping_url = 8 [(gnostic.openapi.v3.property) = {read_only: true}];
+
+  // Time of the last ping in ISO 8601, unset until the first one. Read-only.
+  optional string last_ping_at = 9 [(gnostic.openapi.v3.property) = {read_only: true}];
+
+  // Current operational status of the monitor.
+  MonitorStatus status = 10;
+}
