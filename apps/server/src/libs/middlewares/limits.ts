@@ -13,4 +13,6 @@ export const limits = {
   burstPer10s: Number(env.API_RATE_LIMIT_BURST_PER_10S) || 100,
   writesPerMinute: Number(env.API_RATE_LIMIT_WRITES_PER_MINUTE) || 60,
   publicPerMinute: Number(env.API_RATE_LIMIT_PUBLIC_PER_MINUTE) || 120,
+  heartbeatPerTokenPerMinute:
+    Number(env.API_RATE_LIMIT_HEARTBEAT_PER_MINUTE) || 6,
 };

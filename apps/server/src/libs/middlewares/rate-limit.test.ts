@@ -15,6 +15,7 @@ function build(
     burstPer10s?: number;
     writesPerMinute?: number;
     publicPerMinute?: number;
+    heartbeatPerTokenPerMinute?: number;
   },
   handler: (c: Context<Env>) => Response = (c) => c.text("ok"),
 ) {
@@ -35,6 +36,7 @@ function build(
       burstPer10s: HUGE,
       writesPerMinute: HUGE,
       publicPerMinute: HUGE,
+      heartbeatPerTokenPerMinute: HUGE,
       ...config,
     }),
   );
@@ -352,5 +354,21 @@ describe("rate limit", () => {
         })
       ).status,
     ).toBe(401);
+  });
+});
+
+const heartbeat = build({ heartbeatPerTokenPerMinute: 2 });
+
+describe("heartbeat rate limit", () => {
+  test("limits each token on its own", async () => {
+    const { app } = heartbeat;
+    expect((await fire(app, "/heartbeat/token-a", 2)).status).toBe(200);
+    expect((await app.request("/heartbeat/token-a")).status).toBe(429);
+    expect((await app.request("/heartbeat/token-b")).status).toBe(200);
+  });
+
+  test("does not touch other routes", async () => {
+    const { app } = heartbeat;
+    expect((await fire(app, "/v1/monitor", 5)).status).toBe(200);
   });
 });

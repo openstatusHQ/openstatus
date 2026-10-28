@@ -57,6 +57,8 @@ export {
   getHeartbeatState,
   type HeartbeatState,
   heartbeatDeadline,
+  type HeartbeatPingResult,
+  recordHeartbeatPing,
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,
 } from "./heartbeat";

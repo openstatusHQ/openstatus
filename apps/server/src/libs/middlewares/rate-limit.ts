@@ -15,8 +15,14 @@ function isExempt(path: string): boolean {
   );
 }
 
+function isHeartbeat(path: string): boolean {
+  return path.startsWith("/heartbeat/");
+}
+
 function isPublic(path: string): boolean {
-  return path === "/public" || path.startsWith("/public/");
+  return (
+    path === "/public" || path.startsWith("/public/") || isHeartbeat(path)
+  );
 }
 
 const RPC_READ = /\/(Get|List|Check)[A-Za-z]*$/;
@@ -61,6 +67,10 @@ function clientIp(c: Context): string {
   const forwarded = c.req.header("x-forwarded-for");
   if (forwarded) return forwarded.split(",").at(-1)?.trim() || "unknown";
   return "unknown";
+}
+
+async function heartbeatTokenKey(c: Context): Promise<string> {
+  return `heartbeat:${await fingerprint(c.req.path.split("/")[2] ?? "")}`;
 }
 
 export async function credentialKey(c: Context): Promise<string> {
@@ -117,6 +127,7 @@ export type RateLimitConfig = {
   burstPer10s: number;
   writesPerMinute: number;
   publicPerMinute: number;
+  heartbeatPerTokenPerMinute: number;
 };
 
 /**
@@ -165,7 +176,14 @@ export function createRateLimit(config: RateLimitConfig): MiddlewareHandler[] {
     skip: (c) => !isPublic(c.req.path),
   });
 
-  return [authFailures, burst, minute, writes, publicLimiter];
+  const heartbeatToken = limiter({
+    windowMs: 60_000,
+    limit: () => config.heartbeatPerTokenPerMinute,
+    keyGenerator: heartbeatTokenKey,
+    skip: (c) => !isHeartbeat(c.req.path),
+  });
+
+  return [authFailures, burst, minute, writes, publicLimiter, heartbeatToken];
 }
 
 export const rateLimit = createRateLimit(limits);
