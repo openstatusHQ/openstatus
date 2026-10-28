@@ -4,7 +4,7 @@ title: Heartbeat Monitor Reference
 description: Complete technical specification for heartbeat (cron job) monitoring.
 ---
 
-A heartbeat monitor watches jobs that run on their own schedule: cron jobs, queue workers, backups, ETL pipelines. openstatus never calls your job. Instead, your job sends a request to a unique **ping URL** every time it runs, and the monitor goes down when a ping does not arrive in time.
+A heartbeat monitor watches jobs that run on their own schedule: cron jobs, queue workers, backups, ETL pipelines. openstatus never calls your job. Instead, your job sends a request to a unique **ping URL** every time it runs, and the monitor goes down when a ping does not arrive in time or when the job reports a failure.
 
 **Use cases:**
 
@@ -18,8 +18,9 @@ A heartbeat monitor watches jobs that run on their own schedule: cron jobs, queu
 2. Add a request to the ping URL at the end of your job.
 3. Every ping moves the deadline to `last ping + period + grace`.
 4. If the deadline passes without a ping, the monitor goes down, an incident opens and your notification channels are alerted. The next ping recovers it and resolves the incident.
+5. If your job pings its URL followed by `/fail`, the monitor goes down the same way. The next ping to the plain URL recovers it.
 
-Deadlines are checked every minute, so an alert can arrive up to a minute after the deadline.
+Deadlines and failures are checked every minute, so an alert can arrive up to a minute later.
 
 <Aside>
 A new heartbeat monitor sends no alerts until it receives its first ping, so you can create it before the job is deployed.
@@ -56,26 +57,45 @@ curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
 0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
 ```
 
-A ping only means "the job ran". To report a failure, simply do not ping: the monitor goes down once the grace period runs out.
+### Reporting failures
+
+Add `/fail` to the ping URL to report that the job failed. The monitor goes down within a minute instead of waiting for the grace period, and the alert says the job reported a failure. A fail also counts as hearing from the job: the deadline moves forward as with a normal ping, so a job that keeps failing alerts once and stays down until it succeeds again.
+
+```bash
+# ping on success, report the failure otherwise
+/path/to/job.sh && curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token> \
+  || curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>/fail
+```
+
+Send the job's error output as a `POST` body to keep it with the failed ping:
+
+```bash
+/path/to/job.sh 2> /tmp/job.err \
+  || curl -fsS -m 10 --retry 3 --data-binary @/tmp/job.err https://api.openstatus.dev/heartbeat/<token>/fail
+```
+
+The body is never included in alerts. It stays in the monitor's **Logs** tab.
+
+If you would rather not report failures, simply do not ping: the monitor goes down once the grace period runs out.
 
 ### Responses
 
 | Status | Meaning |
 | --- | --- |
-| `200 OK` | The ping was recorded. |
+| `200 OK` | The ping (or failure) was recorded. |
 | `200 OK (paused)` | The monitor is paused; the ping was ignored. |
 | `404 Not Found` | The token does not match any heartbeat monitor. |
-| `429 Too Many Requests` | More than 6 pings per minute for this token. |
+| `429 Too Many Requests` | More than 6 pings per minute for this token, `/fail` included. |
 
 ### What is stored
 
-Each ping is kept with its time, the client IP, the HTTP method and user agent, the request headers and, for `POST` requests, the first **10 KB** of the body. Headers that look like credentials (`Authorization`, `Cookie`, or any name containing `token`, `secret`, `key`, `password` or `signature`) are redacted before they are stored. You can see each ping in the monitor's **Logs** tab, which is a handy place to send the tail of your job's output.
+Each ping is kept with its time, whether it reported a failure, the client IP, the HTTP method and user agent, the request headers and, for `POST` requests, the first **10 KB** of the body. Headers that look like credentials (`Authorization`, `Cookie`, or any name containing `token`, `secret`, `key`, `password` or `signature`) are redacted before they are stored, and so are values that look like secrets in the body (bearer tokens, JWTs, `token=…` pairs, JSON fields such as `api_key`). You can see each ping in the monitor's **Logs** tab, which is a handy place to send the tail of your job's output.
 
 Ping details are only visible to members of your workspace. They never appear on status pages.
 
 ## Status pages
 
-A heartbeat monitor can be added to a status page like any other monitor. Its bar shows the days on which pings were received, and its uptime is computed from the incidents opened by missed pings.
+A heartbeat monitor can be added to a status page like any other monitor. Its bar shows the days on which pings were received, in red when the job reported a failure that day, and its uptime is computed from the incidents opened by missed pings and reported failures.
 
 ## Related resources
 

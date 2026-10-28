@@ -2813,11 +2813,27 @@
             "title": "status",
             "description": "Current operational status of the monitor.",
             "$ref": "#/components/schemas/openstatus.monitor.v1.MonitorStatus"
+          },
+          "lastPingKind": {
+            "title": "last_ping_kind",
+            "description": "What the last ping reported, unspecified until the first one. Read-only.",
+            "readOnly": true,
+            "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatPingKind"
           }
         },
         "title": "HeartbeatMonitor",
         "additionalProperties": false,
-        "description": "HeartbeatMonitor is pinged by your job; it goes down when a ping is missed."
+        "description": "HeartbeatMonitor is pinged by your job; it goes down when a ping is missed\n or the job pings its URL followed by /fail."
+      },
+      "openstatus.monitor.v1.HeartbeatPingKind": {
+        "type": "string",
+        "title": "HeartbeatPingKind",
+        "enum": [
+          "HEARTBEAT_PING_KIND_UNSPECIFIED",
+          "HEARTBEAT_PING_KIND_SUCCESS",
+          "HEARTBEAT_PING_KIND_FAIL"
+        ],
+        "description": "HeartbeatPingKind is what the last ping reported."
       },
       "openstatus.monitor.v1.ICMPMonitor": {
         "type": "object",

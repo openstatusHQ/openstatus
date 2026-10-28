@@ -372,7 +372,7 @@ export const listResponseLogsTool: AgentTool<
 > = {
   name: "list_response_logs",
   description:
-    "Check results for a monitor, newest first (per-region, with status code, latency, and request status). Use to diagnose 'what's failing?'. Filter with `status: [\"error\"]` to find failures directly, and narrow `from`/`to` to the minutes around a known incident time instead of paging. Pair with get_response_log for the full detail of a specific check. For heartbeat monitors, returns the times pings were received.",
+    "Check results for a monitor, newest first (per-region, with status code, latency, and request status). Use to diagnose 'what's failing?'. Filter with `status: [\"error\"]` to find failures directly, and narrow `from`/`to` to the minutes around a known incident time instead of paging. Pair with get_response_log for the full detail of a specific check. For heartbeat monitors, returns the times pings were received; a ping the job sent to its /fail URL has request status error.",
   scope: "read",
   destructive: false,
   inputSchema: ListResponseLogsInputShape,
@@ -401,7 +401,8 @@ export const listResponseLogsTool: AgentTool<
           id: ping.id,
           monitorId: String(input.monitorId),
           region: HEARTBEAT_REGION,
-          requestStatus: "success" as const,
+          requestStatus:
+            ping.kind === "fail" ? ("error" as const) : ("success" as const),
           trigger: null,
           statusCode: null,
           latency: 0,

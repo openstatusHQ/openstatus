@@ -109,16 +109,19 @@ export async function getMonitorSummary(args: {
         .get(),
     ]);
     const since = Date.now() - TIME_RANGE_DAYS[input.timeRange] * 86_400_000;
-    const pings = days.data
-      .filter((day) => new Date(day.day).getTime() >= since - 86_400_000)
-      .reduce((sum, day) => sum + day.count, 0);
+    const inRange = days.data.filter(
+      (day) => new Date(day.day).getTime() >= since - 86_400_000,
+    );
+    // a `/fail` ping is the job reporting a failure
+    const failed = inRange.reduce((sum, day) => sum + day.error, 0);
+    const pings = inRange.reduce((sum, day) => sum + day.count, 0);
     return {
       monitorId: record.id,
       timeRange: input.timeRange,
       regions: [HEARTBEAT_REGION],
-      totalSuccessful: pings,
+      totalSuccessful: pings - failed,
       totalDegraded: 0,
-      totalFailed: 0,
+      totalFailed: failed,
       p50: 0,
       p75: 0,
       p90: 0,

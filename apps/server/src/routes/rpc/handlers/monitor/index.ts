@@ -68,6 +68,7 @@ import {
   stringToRegion,
   stringsToRegions,
   timeRangeToKey,
+  type HeartbeatLastPing,
 } from "./converters";
 import {
   monitorIdInvalidError,
@@ -147,19 +148,24 @@ async function validateAndGetMonitor(
 
 type ParsedMonitor = ReturnType<typeof selectMonitorSchema.parse>;
 
-async function lastPingsByMonitor(ids: number[]): Promise<Map<number, Date>> {
+async function lastPingsByMonitor(
+  ids: number[],
+): Promise<Map<number, HeartbeatLastPing>> {
   if (ids.length === 0) return new Map();
   const rows = await db
     .select({
       monitorId: monitorHeartbeatState.monitorId,
       lastPingAt: monitorHeartbeatState.lastPingAt,
+      lastPingKind: monitorHeartbeatState.lastPingKind,
     })
     .from(monitorHeartbeatState)
     .where(inArray(monitorHeartbeatState.monitorId, ids))
     .all();
-  const map = new Map<number, Date>();
+  const map = new Map<number, HeartbeatLastPing>();
   for (const row of rows) {
-    if (row.lastPingAt) map.set(row.monitorId, row.lastPingAt);
+    if (row.lastPingAt) {
+      map.set(row.monitorId, { at: row.lastPingAt, kind: row.lastPingKind });
+    }
   }
   return map;
 }
@@ -385,14 +391,14 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       "heartbeat",
     );
     const lastPings = await lastPingsByMonitor([dbMon.id]);
-    const lastPingAt = lastPings.get(dbMon.id) ?? null;
+    const lastPing = lastPings.get(dbMon.id) ?? null;
 
     if (!req.monitor) {
       const parsed = selectMonitorSchema.safeParse(dbMon);
       if (!parsed.success) {
         throw monitorParseFailedError(req.id);
       }
-      return { monitor: dbMonitorToHeartbeatProto(parsed.data, lastPingAt) };
+      return { monitor: dbMonitorToHeartbeatProto(parsed.data, lastPing) };
     }
 
     // This method skips the protovalidate interceptor, so the bounds that
@@ -408,7 +414,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     if (mon.grace) updateValues.heartbeatGrace = Number(mon.grace);
 
     return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
-      dbMonitorToHeartbeatProto(data, lastPingAt),
+      dbMonitorToHeartbeatProto(data, lastPing),
     );
   },
 
@@ -1044,7 +1050,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           $typeName: "openstatus.monitor.v1.MonitorConfig",
           config: {
             case: "heartbeat",
-            value: dbMonitorToHeartbeatProto(monitorData, state.lastPingAt),
+            value: dbMonitorToHeartbeatProto(
+              monitorData,
+              state.lastPingAt && state.lastPingKind
+                ? { at: state.lastPingAt, kind: state.lastPingKind }
+                : null,
+            ),
           },
         };
         break;

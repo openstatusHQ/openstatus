@@ -54,6 +54,7 @@ describe("MonitorService heartbeat", () => {
       /^https:\/\/api\.openstatus\.dev\/heartbeat\/[\w-]{32}$/,
     );
     expect(mon.lastPingAt).toBeUndefined();
+    expect(mon.lastPingKind).toBeUndefined();
 
     const row = await db
       .select()
@@ -88,6 +89,7 @@ describe("MonitorService heartbeat", () => {
     await db.insert(monitorHeartbeatState).values({
       monitorId: Number(mon.id),
       lastPingAt,
+      lastPingKind: "fail",
       nextDueAt: new Date(lastPingAt.getTime() + 3_900_000),
     });
 
@@ -95,13 +97,16 @@ describe("MonitorService heartbeat", () => {
     expect(get.status).toBe(200);
     const getData = await get.json();
     expect(getData.monitor.heartbeat.lastPingAt).toBe(lastPingAt.toISOString());
+    expect(getData.monitor.heartbeat.lastPingKind).toBe(
+      "HEARTBEAT_PING_KIND_FAIL",
+    );
 
     const list = await connectRequest("ListMonitors", { limit: 100 });
     const listData = await list.json();
-    const ids = (listData.heartbeatMonitors ?? []).map(
-      (m: { id: string }) => m.id,
+    const listed = (listData.heartbeatMonitors ?? []).find(
+      (m: { id: string }) => m.id === mon.id,
     );
-    expect(ids).toContain(mon.id);
+    expect(listed?.lastPingKind).toBe("HEARTBEAT_PING_KIND_FAIL");
   });
 
   test("updates period and grace", async () => {
