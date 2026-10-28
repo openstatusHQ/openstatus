@@ -2,6 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import * as Sentry from "@sentry/node";
 import { Effect, Fiber, Schedule } from "effect";
 
+import { handleHeartbeatSweepCron } from "./heartbeat-sweep";
 import { runIncidentRemindersTick } from "./incident-reminders";
 import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
@@ -27,6 +28,11 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     name: "outbox-drain",
     expression: "* * * * *",
     run: handleOutboxDrainCron,
+  },
+  {
+    name: "heartbeat-sweep",
+    expression: "* * * * *",
+    run: () => handleHeartbeatSweepCron(),
   },
   {
     name: "status-drift",
