@@ -456,6 +456,26 @@ describe("getHeartbeatState", () => {
 });
 
 describe("recordHeartbeatPing", () => {
+  test("a fail moves the deadline and a later ping clears it", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const token = row.heartbeatToken ?? "";
+      const failedAt = new Date("2026-01-01T00:00:00.000Z");
+      const pingedAt = new Date("2026-01-01T01:00:00.000Z");
+
+      await recordHeartbeatPing({ token, at: failedAt, kind: "fail", db: tx });
+      let state = await readState(tx, row.id);
+      expect(state?.lastPingKind).toBe("fail");
+      expect(state?.nextDueAt?.getTime()).toBe(
+        failedAt.getTime() + (HOUR + FIVE_MIN) * 1000,
+      );
+
+      await recordHeartbeatPing({ token, at: pingedAt, db: tx });
+      state = await readState(tx, row.id);
+      expect(state?.lastPingKind).toBe("success");
+    });
+  });
+
   test("an older ping landing late does not move the deadline back", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createHeartbeat(tx);

@@ -1,7 +1,8 @@
 import { getLogger } from "@logtape/logtape";
+import type { HeartbeatPingKind } from "@openstatus/db/src/schema";
 import { recordHeartbeatPing } from "@openstatus/services/monitor";
 import type { HeartbeatPingEvent } from "@openstatus/tinybird";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 
 import { tb } from "@/libs/clients";
 import { Batcher } from "@/libs/heartbeat/batcher";
@@ -22,14 +23,19 @@ export const heartbeatBatcher = new Batcher<HeartbeatPingEvent>(
 
 const TOKEN_PATTERN = /^[\w-]{16,64}$/;
 
+const METHODS = ["GET", "POST", "HEAD"];
+
 export const heartbeatRoute = new Hono();
 
-heartbeatRoute.on(["GET", "POST", "HEAD"], "/:token", async (c) => {
-  const { token } = c.req.param();
+heartbeatRoute.on(METHODS, "/:token", (c) => handlePing(c, "success"));
+heartbeatRoute.on(METHODS, "/:token/fail", (c) => handlePing(c, "fail"));
+
+async function handlePing(c: Context, kind: HeartbeatPingKind) {
+  const token = c.req.param("token") ?? "";
   if (!TOKEN_PATTERN.test(token)) return c.text("Not Found", 404);
 
   const at = new Date();
-  const result = await recordHeartbeatPing({ token, at });
+  const result = await recordHeartbeatPing({ token, at, kind });
   if (result.kind === "not-found") return c.text("Not Found", 404);
   if (result.kind === "paused") return c.text("OK (paused)", 200);
 
@@ -47,6 +53,7 @@ heartbeatRoute.on(["GET", "POST", "HEAD"], "/:token", async (c) => {
       headers: captureHeaders(c.req.raw.headers),
       body,
       bodyTruncated: truncated ? 1 : 0,
+      kind,
     });
   } catch (error) {
     logger.warn("heartbeat ping capture failed", {
@@ -56,4 +63,4 @@ heartbeatRoute.on(["GET", "POST", "HEAD"], "/:token", async (c) => {
   }
 
   return c.text("OK", 200);
-});
+}

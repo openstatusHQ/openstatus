@@ -129,6 +129,36 @@ describe("heartbeat route", () => {
     expect(event?.headers).not.toContain("secret");
   });
 
+  test("/fail records a failure and publishes it as one", async () => {
+    // after the ping above: older pings never overwrite newer state
+    const failedAt = NOW.getTime() + 30_000;
+    vi.setSystemTime(failedAt);
+
+    const res = await route.request(`/${TOKEN}/fail`, {
+      method: "POST",
+      body: "exit 1",
+    });
+
+    expect(res.status).toBe(200);
+    const state = await readState();
+    expect(state?.lastPingKind).toBe("fail");
+    expect(state?.nextDueAt?.getTime()).toBe(failedAt + 3_900_000);
+    expect(published[0]).toMatchObject({ kind: "fail", body: "exit 1" });
+
+    vi.setSystemTime(failedAt + 15_000);
+    await route.request(`/${TOKEN}`);
+    expect((await readState())?.lastPingKind).toBe("success");
+    expect(published[1]?.kind).toBe("success");
+  });
+
+  test("/fail with an unknown token returns 404", async () => {
+    const res = await route.request(
+      `/hb-route-test-unknown-${crypto.randomUUID()}/fail`,
+    );
+    expect(res.status).toBe(404);
+    expect(published).toHaveLength(0);
+  });
+
   test("a large body is cut and flagged", async () => {
     await route.request(`/${TOKEN}`, {
       method: "POST",
