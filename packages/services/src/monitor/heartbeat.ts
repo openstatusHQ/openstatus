@@ -213,6 +213,8 @@ export type HeartbeatPingResult =
 export async function recordHeartbeatPing(args: {
   token: string;
   at: Date;
+  /** `fail` (the `/fail` URL) still resets the deadline, but keeps the heartbeat down. */
+  kind?: HeartbeatPingKind;
   db?: DB;
 }): Promise<HeartbeatPingResult> {
   const db = args.db ?? defaultDb;
@@ -239,12 +241,13 @@ export async function recordHeartbeatPing(args: {
   if (!row.active) return { kind: "paused", ...ids };
 
   const nextDueAt = heartbeatDeadline(args.at, row);
+  const lastPingKind = args.kind ?? "success";
   await db
     .insert(monitorHeartbeatState)
-    .values({ monitorId: row.id, lastPingAt: args.at, nextDueAt })
+    .values({ monitorId: row.id, lastPingAt: args.at, lastPingKind, nextDueAt })
     .onConflictDoUpdate({
       target: monitorHeartbeatState.monitorId,
-      set: { lastPingAt: args.at, nextDueAt },
+      set: { lastPingAt: args.at, lastPingKind, nextDueAt },
       // a slower, older ping must not pull the deadline back
       setWhere: or(
         isNull(monitorHeartbeatState.lastPingAt),
