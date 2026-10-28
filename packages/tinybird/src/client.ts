@@ -1494,7 +1494,9 @@ export class OSTinybird {
         days: z.int().max(45).optional(),
       }),
       data: z.object({
-        day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
         count: z.number().prefault(0),
         ok: z.number().prefault(0),
         degraded: z.number().prefault(0),

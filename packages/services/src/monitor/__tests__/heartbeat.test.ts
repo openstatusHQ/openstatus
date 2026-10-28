@@ -51,10 +51,7 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-function createHeartbeat(
-  tx: DrizzleTx,
-  overrides: { active?: boolean } = {},
-) {
+function createHeartbeat(tx: DrizzleTx, overrides: { active?: boolean } = {}) {
   return createMonitor({
     ctx: { ...ctx, db: tx },
     input: {

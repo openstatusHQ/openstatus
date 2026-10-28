@@ -78,7 +78,11 @@ export const sendAlert = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  await sendMessage(notificationData.whatsapp, monitorTarget(monitor), TEMPLATES.alert);
+  await sendMessage(
+    notificationData.whatsapp,
+    monitorTarget(monitor),
+    TEMPLATES.alert,
+  );
 };
 
 export const sendRecovery = async ({
@@ -88,7 +92,11 @@ export const sendRecovery = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  await sendMessage(notificationData.whatsapp, monitorTarget(monitor), TEMPLATES.recovery);
+  await sendMessage(
+    notificationData.whatsapp,
+    monitorTarget(monitor),
+    TEMPLATES.recovery,
+  );
 };
 
 export const sendDegraded = async ({
@@ -98,7 +106,11 @@ export const sendDegraded = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  await sendMessage(notificationData.whatsapp, monitorTarget(monitor), TEMPLATES.degraded);
+  await sendMessage(
+    notificationData.whatsapp,
+    monitorTarget(monitor),
+    TEMPLATES.degraded,
+  );
 };
 
 export const sendTest = async ({ phoneNumber }: { phoneNumber: string }) => {
