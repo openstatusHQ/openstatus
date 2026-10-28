@@ -86,8 +86,8 @@ export async function updateMonitorSchedulingRegions(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }

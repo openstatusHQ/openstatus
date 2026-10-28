@@ -6,7 +6,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ValidationError } from "../errors";
 import type { Monitor } from "../types";
-import { syncHeartbeatDeadline } from "./heartbeat";
+import { heartbeatConfigChanged, syncHeartbeatDeadline } from "./heartbeat";
 import {
   assertSchedulingWithinPlan,
   getMonitorInWorkspace,
@@ -55,6 +55,18 @@ export async function updateMonitorConfig(args: {
     if (touchesHeartbeat && existing.jobType !== "heartbeat") {
       throw new ValidationError(
         `Monitor ${existing.id} is not a heartbeat monitor`,
+      );
+    }
+    // Same invariants as create: a heartbeat has no target and no schedule,
+    // which keeps it out of every checker cron.
+    if (
+      existing.jobType === "heartbeat" &&
+      ((input.url !== undefined && input.url !== "") ||
+        (input.periodicity !== undefined && input.periodicity !== "other") ||
+        (input.regions !== undefined && input.regions.length > 0))
+    ) {
+      throw new ValidationError(
+        "Heartbeat monitors cannot have a URL, periodicity or regions",
       );
     }
 
@@ -106,7 +118,7 @@ export async function updateMonitorConfig(args: {
 
     if (!existing.active && updated.active) {
       await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
-    } else if (touchesHeartbeat) {
+    } else if (heartbeatConfigChanged(existing, updated)) {
       await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
     }
 
@@ -114,8 +126,8 @@ export async function updateMonitorConfig(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);
@@ -181,8 +193,8 @@ export async function updateMonitorGeneral(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);
@@ -212,8 +224,8 @@ export async function updateMonitorRetry(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -241,8 +253,8 @@ export async function updateMonitorFollowRedirects(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -274,8 +286,8 @@ export async function updateMonitorOtel(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -303,8 +315,8 @@ export async function updateMonitorPublic(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -336,8 +348,8 @@ export async function updateMonitorResponseTime(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: monitorAuditSnapshot(existing),
-      after: monitorAuditSnapshot(updated),
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -412,8 +424,8 @@ export async function bulkUpdateMonitors(args: {
         action: "monitor.update",
         entityType: "monitor",
         entityId: updated.id,
-        before: monitorAuditSnapshot(before),
-        after: monitorAuditSnapshot(updated),
+        before: await monitorAuditSnapshot(before),
+        after: await monitorAuditSnapshot(updated),
       });
     }
   });

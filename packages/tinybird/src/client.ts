@@ -1491,7 +1491,6 @@ export class OSTinybird {
       pipe: "endpoint__heartbeat_status_45d__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        days: z.int().max(45).optional(),
       }),
       data: z.object({
         day: z

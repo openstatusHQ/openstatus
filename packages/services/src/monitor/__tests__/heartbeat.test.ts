@@ -16,7 +16,11 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DrizzleTx, ServiceContext } from "../../context";
-import { ForbiddenError, ValidationError } from "../../errors";
+import {
+  ForbiddenError,
+  PreconditionFailedError,
+  ValidationError,
+} from "../../errors";
 import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
 import {
@@ -138,6 +142,26 @@ describe("createMonitor (heartbeat)", () => {
     });
   });
 
+  test("requires grace on its own", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createMonitor({
+          ctx: { ...ctx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-missing-grace`,
+            jobType: "heartbeat",
+            url: "",
+            method: "GET",
+            headers: [],
+            assertions: [],
+            active: true,
+            heartbeatPeriod: HOUR,
+          },
+        }),
+      ).rejects.toThrow(/heartbeatGrace/);
+    });
+  });
+
   test("rejects a period below one minute", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
@@ -194,6 +218,46 @@ describe("updateMonitorHeartbeat", () => {
       expect(state?.nextDueAt?.getTime()).toBe(
         lastPing.getTime() + (2 * HOUR + 600) * 1000,
       );
+    });
+  });
+
+  test("an unchanged save keeps the deadline a resume granted", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx, { active: false });
+      await setLastPing(tx, row.id, new Date("2026-01-01T00:00:00.000Z"));
+      await updateMonitorConfig({
+        ctx: { ...ctx, db: tx },
+        input: { id: row.id, active: true },
+      });
+      const resumed = await readState(tx, row.id);
+
+      await updateMonitorHeartbeat({
+        ctx: { ...ctx, db: tx },
+        input: { id: row.id, heartbeatPeriod: HOUR, heartbeatGrace: FIVE_MIN },
+      });
+
+      const state = await readState(tx, row.id);
+      expect(state?.nextDueAt?.getTime()).toBe(resumed?.nextDueAt?.getTime());
+    });
+  });
+
+  test("a config change does not recover a down heartbeat", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const lastPing = new Date("2026-01-01T00:00:00.000Z");
+      await setLastPing(tx, row.id, lastPing);
+      await tx
+        .update(monitor)
+        .set({ status: "error" })
+        .where(eq(monitor.id, row.id));
+
+      await updateMonitorHeartbeat({
+        ctx: { ...ctx, db: tx },
+        input: { id: row.id, heartbeatPeriod: 2 * HOUR, heartbeatGrace: 600 },
+      });
+
+      const state = await readState(tx, row.id);
+      expect(state?.nextDueAt?.getTime()).toBe(lastPing.getTime());
     });
   });
 
@@ -277,6 +341,31 @@ describe("type switching", () => {
           },
         }),
       ).rejects.toBeInstanceOf(ValidationError);
+
+      const http = await createMonitor({
+        ctx: { ...ctx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-http`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      await expect(
+        updateMonitorGeneral({
+          ctx: { ...ctx, db: tx },
+          input: {
+            id: http.id,
+            name: http.name,
+            jobType: "heartbeat",
+            url: "",
+            method: "GET",
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
     });
   });
 });
@@ -349,21 +438,40 @@ describe("triggerMonitorRun (heartbeat)", () => {
       const row = await createHeartbeat(tx);
       await expect(
         triggerMonitorRun({ ctx: { ...ctx, db: tx }, input: { id: row.id } }),
-      ).rejects.toBeInstanceOf(ValidationError);
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
     });
   });
 });
 
-describe("checker selection", () => {
-  test("heartbeats are never scheduled", async () => {
+// The checker cron itself also filters on jobType; these keep the stored row
+// unschedulable so no other cron can pick a heartbeat up.
+describe("scheduling invariants", () => {
+  test("a config patch cannot give a heartbeat a target or schedule", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createHeartbeat(tx);
+      for (const patch of [
+        { url: "https://example.com" },
+        { periodicity: "1m" as const },
+        { regions: ["ams"] },
+      ]) {
+        await expect(
+          updateMonitorConfig({
+            ctx: { ...ctx, db: tx },
+            input: { id: row.id, ...patch },
+          }),
+        ).rejects.toBeInstanceOf(ValidationError);
+      }
+
       const stored = await tx
-        .select({ periodicity: monitor.periodicity })
+        .select({
+          url: monitor.url,
+          periodicity: monitor.periodicity,
+          regions: monitor.regions,
+        })
         .from(monitor)
         .where(eq(monitor.id, row.id))
         .get();
-      expect(stored?.periodicity).toBe("other");
+      expect(stored).toEqual({ url: "", periodicity: "other", regions: "" });
     });
   });
 });

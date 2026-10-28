@@ -216,12 +216,19 @@ export function assertSchedulingWithinPlan(
   }
 }
 
-// The token authenticates pings; keep only a suffix so a rotation still diffs.
-export function monitorAuditSnapshot<
+// The token authenticates pings; keep a fingerprint so a rotation still diffs
+// without storing any of it. Web Crypto keeps this module Edge-safe.
+export async function monitorAuditSnapshot<
   T extends { heartbeatToken: string | null },
->(row: T): T {
+>(row: T): Promise<T> {
   if (!row.heartbeatToken) return row;
-  return { ...row, heartbeatToken: `…${row.heartbeatToken.slice(-4)}` };
+  const data = new TextEncoder().encode(row.heartbeatToken);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  const fingerprint = Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 16);
+  return { ...row, heartbeatToken: `sha256:${fingerprint}` };
 }
 
 export function generateHeartbeatToken(): string {

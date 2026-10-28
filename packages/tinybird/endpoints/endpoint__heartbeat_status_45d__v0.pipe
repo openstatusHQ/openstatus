@@ -4,6 +4,8 @@ NODE endpoint
 SQL >
 
 %
+-- Ping activity per day. A missed ping writes no row, so every bucket is
+-- `ok`: this is not uptime. Downtime lives in the heartbeat's incidents.
 SELECT
     toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(timestamp), 'UTC')) AS day,
     monitorId,

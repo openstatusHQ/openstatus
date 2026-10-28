@@ -8,7 +8,11 @@ import { z } from "zod";
 
 import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
-import { LimitExceededError, ValidationError } from "../errors";
+import {
+  LimitExceededError,
+  PreconditionFailedError,
+  ValidationError,
+} from "../errors";
 import {
   countSyntheticChecksSince,
   getWorkspaceLimit,
@@ -71,7 +75,7 @@ export async function triggerMonitorRun(args: {
     throw new ValidationError(`Monitor ${input.id} has invalid data`);
   }
   if (parsed.data.jobType === "heartbeat") {
-    throw new ValidationError(
+    throw new PreconditionFailedError(
       "Heartbeat monitors are pinged by your job, not run by openstatus",
     );
   }

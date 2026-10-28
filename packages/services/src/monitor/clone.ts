@@ -70,7 +70,7 @@ export async function cloneMonitor(args: {
       action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
-      after: monitorAuditSnapshot(row),
+      after: await monitorAuditSnapshot(row),
       metadata: { clonedFromMonitorId: source.id },
     });
 

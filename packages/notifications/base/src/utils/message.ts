@@ -50,6 +50,21 @@ export function formatStatusCode(statusCode?: number): string {
   return description ? `${statusCode} ${description}` : `${statusCode}`;
 }
 
+export function monitorDashboardUrl(monitor: { id: number }): string {
+  return `https://app.openstatus.dev/monitors/${monitor.id}`;
+}
+
+/** A heartbeat has no URL of its own, so point at its dashboard page. */
+export function monitorTarget(monitor: {
+  id: number;
+  jobType: string;
+  url: string;
+}): string {
+  return monitor.jobType === "heartbeat"
+    ? monitorDashboardUrl(monitor)
+    : monitor.url;
+}
+
 /**
  * Build common formatted message data from notification context
  *
@@ -76,21 +91,6 @@ export function formatStatusCode(statusCode?: number): string {
  * @param options.incident - Include incident data for duration calculation
  * @returns Formatted message data ready for rendering
  */
-export function monitorDashboardUrl(monitor: { id: number }): string {
-  return `https://app.openstatus.dev/monitors/${monitor.id}`;
-}
-
-/** A heartbeat has no URL of its own, so point at its dashboard page. */
-export function monitorTarget(monitor: {
-  id: number;
-  jobType: string;
-  url: string;
-}): string {
-  return monitor.jobType === "heartbeat"
-    ? monitorDashboardUrl(monitor)
-    : monitor.url;
-}
-
 export function buildCommonMessageData(
   context: NotificationContext,
   options?: {
