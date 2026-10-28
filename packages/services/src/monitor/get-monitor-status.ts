@@ -4,6 +4,7 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { statusRegions } from "@openstatus/utils";
 
 import type { ServiceContext } from "../context";
 import { getMonitorInWorkspace } from "./internal";
@@ -33,8 +34,7 @@ export async function getMonitorStatus(args: {
     workspaceId: ctx.workspace.id,
   });
   const parsed = selectMonitorSchema.parse(record);
-  const regions =
-    parsed.jobType === "heartbeat" ? ["heartbeat"] : parsed.regions;
+  const regions = statusRegions(parsed);
 
   if (regions.length === 0) {
     return { id: record.id, regions: [] };

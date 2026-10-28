@@ -25,3 +25,14 @@ export function heartbeatExpectation(config: {
   const grace = formatHeartbeatSeconds(config.heartbeatGrace ?? 0);
   return `Expected every ${period} (+${grace} grace)`;
 }
+
+/** The single pseudo-region a heartbeat's status is recorded under. */
+export const HEARTBEAT_REGION = "heartbeat";
+
+/** Regions whose `monitor_status` rows decide a monitor's status. */
+export function statusRegions<R extends string>(monitor: {
+  jobType: string;
+  regions: R[];
+}): string[] {
+  return monitor.jobType === "heartbeat" ? [HEARTBEAT_REGION] : monitor.regions;
+}
