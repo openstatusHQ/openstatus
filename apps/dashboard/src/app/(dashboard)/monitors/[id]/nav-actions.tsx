@@ -81,6 +81,10 @@ export function NavActions() {
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
   const testIcmpMutation = useMutation(trpc.checker.testIcmp.mutationOptions());
   const testGrpcMutation = useMutation(trpc.checker.testGrpc.mutationOptions());
+  const { data: heartbeat, refetch: refetchHeartbeat } = useQuery({
+    ...trpc.monitor.heartbeat.queryOptions({ id: Number.parseInt(id) }),
+    enabled: monitor?.jobType === "heartbeat",
+  });
 
   // curl only speaks HTTP — the action is hidden for tcp/dns monitors
   const curlCommand =
@@ -140,6 +144,26 @@ export function NavActions() {
   );
 
   async function testAction() {
+    if (monitor?.jobType === "heartbeat") {
+      const pingUrl = heartbeat?.pingUrl;
+      if (!pingUrl) return;
+      const promise = fetch(pingUrl, {
+        method: "POST",
+        body: "Test ping from the openstatus dashboard",
+      }).then((res) => {
+        if (!res.ok) throw new Error(`Ping failed with ${res.status}`);
+        return refetchHeartbeat();
+      });
+      toast.promise(promise, {
+        loading: "Sending test ping...",
+        success: monitor.active
+          ? "Test ping received"
+          : "Test ping received, but the monitor is paused",
+        error: (error) =>
+          error instanceof Error ? error.message : "Test ping failed",
+      });
+      return;
+    }
     if (monitor?.jobType === "http") {
       const assertions = deserialize(monitor.assertions ?? "[]");
       const promise = testHttpMutation.mutateAsync({
@@ -260,7 +284,11 @@ export function NavActions() {
               <Speed className="text-muted-foreground group-hover:text-foreground" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Test Monitor</TooltipContent>
+          <TooltipContent>
+            {monitor.jobType === "heartbeat"
+              ? "Send test ping"
+              : "Test Monitor"}
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <QuickActions

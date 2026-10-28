@@ -21,7 +21,12 @@ import {
 import { regionDict } from "@openstatus/regions";
 
 import type { DB } from "../context";
-import { ForbiddenError, LimitExceededError, NotFoundError } from "../errors";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from "../errors";
 import { toBase64Url } from "../oauth/crypto";
 import type { Workspace } from "../types";
 
@@ -229,6 +234,17 @@ export async function monitorAuditSnapshot<
     .join("")
     .slice(0, 16);
   return { ...row, heartbeatToken: `sha256:${fingerprint}` };
+}
+
+// Ping details are private and a heartbeat has no latency to chart, so the
+// public monitor pages never show one.
+export function assertHeartbeatNotPublic(
+  row: { jobType: string },
+  isPublic: boolean | undefined,
+) {
+  if (row.jobType === "heartbeat" && isPublic) {
+    throw new ValidationError("Heartbeat monitors cannot be public");
+  }
 }
 
 export function generateHeartbeatToken(): string {

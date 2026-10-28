@@ -51,11 +51,25 @@ import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { HeartbeatOverview } from "./heartbeat-overview";
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
 
 export function Client() {
+  const trpc = useTRPC();
+  const { id } = useParams<{ id: string }>();
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
+  );
+  if (!monitor) return null;
+  if (monitor.jobType === "heartbeat") {
+    return <HeartbeatOverview id={monitor.id} />;
+  }
+  return <CheckOverview />;
+}
+
+function CheckOverview() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const [{ period, regions, percentile, interval }, setSearchParams] =

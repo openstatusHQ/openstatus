@@ -2296,6 +2296,26 @@ describe("fetchByJobType", () => {
     expect(types).toEqual([]);
   });
 
+  it("queries heartbeat monitors through their own pipe", async () => {
+    const calls: string[] = [];
+    await fetchByJobType([component(4, "heartbeat")], (type) => async () => {
+      calls.push(type);
+      return { data: [] };
+    });
+    expect(calls).toEqual(["heartbeat"]);
+  });
+
+  it("skips a type whose procedure is null", async () => {
+    const result = await fetchByJobType(
+      [component(1, "http"), component(2, "heartbeat")],
+      (type) =>
+        type === "heartbeat"
+          ? null
+          : async () => ({ data: [{ monitorId: "1" }] }),
+    );
+    expect([...result.keys()]).toEqual(["1"]);
+  });
+
   it("groups rows from every pipe by monitor id, keeping order", async () => {
     const rows: Record<string, { monitorId: string; day: string }[]> = {
       http: [

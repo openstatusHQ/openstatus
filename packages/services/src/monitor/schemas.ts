@@ -167,6 +167,16 @@ export type RegenerateHeartbeatTokenInput = z.infer<
   typeof RegenerateHeartbeatTokenInput
 >;
 
+export const ListHeartbeatPingsInput = z.object({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  /** `timestamp` of the last row of the previous page, exclusive. */
+  cursor: z.number().int().optional(),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+export type ListHeartbeatPingsInput = z.input<typeof ListHeartbeatPingsInput>;
+
 export const UpdateMonitorRetryInput = z.object({
   id: z.number().int(),
   retry: z.number().int(),
