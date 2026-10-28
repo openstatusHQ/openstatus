@@ -1,11 +1,12 @@
 import { getLogger } from "@logtape/logtape";
+import { Effect, Schedule } from "effect";
 
 const logger = getLogger("api-server");
 
 export type BatcherOptions = {
   maxBatchSize: number;
   flushIntervalMs: number;
-  /** Total backoff one batch may wait through before it is dropped. */
+  /** How long one batch may keep retrying (send time included) before it is dropped. */
   retryBudgetMs: number;
   maxBufferSize: number;
 };
@@ -17,10 +18,12 @@ export const DEFAULT_BATCHER_OPTIONS: BatcherOptions = {
   maxBufferSize: 10_000,
 };
 
-type Sleep = (ms: number) => Promise<void>;
-
-const defaultSleep: Sleep = (ms) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+/** Exponential backoff from 250 ms, capped at 8 s, for at most `budgetMs`. */
+export const retrySchedule = (budgetMs: number) =>
+  Schedule.min([
+    Schedule.exponential("250 millis").pipe(Schedule.jittered),
+    Schedule.spaced("8 seconds"),
+  ]).pipe(Schedule.upTo({ duration: `${budgetMs} millis` }));
 
 /**
  * Buffers events and sends them in NDJSON batches, so a burst of pings is one
@@ -35,7 +38,9 @@ export class Batcher<T> {
   constructor(
     private readonly send: (events: T[]) => Promise<void>,
     private readonly options: BatcherOptions = DEFAULT_BATCHER_OPTIONS,
-    private readonly sleep: Sleep = defaultSleep,
+    private readonly retry: Schedule.Schedule<unknown> = retrySchedule(
+      options.retryBudgetMs,
+    ),
   ) {}
 
   add(event: T): void {
@@ -49,7 +54,10 @@ export class Batcher<T> {
     if (this.buffer.length >= this.options.maxBatchSize) {
       this.flushNow();
     } else if (!this.timer) {
-      this.timer = setTimeout(() => this.flushNow(), this.options.flushIntervalMs);
+      this.timer = setTimeout(
+        () => this.flushNow(),
+        this.options.flushIntervalMs,
+      );
       this.timer.unref?.();
     }
   }
@@ -76,25 +84,26 @@ export class Batcher<T> {
     }
   }
 
-  private async sendWithRetry(batch: T[]): Promise<void> {
-    let waited = 0;
-    for (let attempt = 0; ; attempt++) {
-      try {
-        await this.send(batch);
-        return;
-      } catch (error) {
-        const delay = Math.min(250 * 2 ** attempt, 8_000);
-        waited += delay;
-        if (waited > this.options.retryBudgetMs) {
+  private sendWithRetry(batch: T[]): Promise<void> {
+    let attempts = 0;
+    return Effect.tryPromise({
+      try: () => {
+        attempts++;
+        return this.send(batch);
+      },
+      catch: (error) => error,
+    }).pipe(
+      Effect.retry(this.retry),
+      Effect.catch((error) =>
+        Effect.sync(() =>
           logger.error("heartbeat batch dropped after retries", {
             error,
             batch_size: batch.length,
-            attempts: attempt + 1,
-          });
-          return;
-        }
-        await this.sleep(delay);
-      }
-    }
+            attempts,
+          }),
+        ),
+      ),
+      Effect.runPromise,
+    );
   }
 }

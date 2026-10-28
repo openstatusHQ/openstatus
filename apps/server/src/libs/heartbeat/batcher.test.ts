@@ -1,6 +1,7 @@
+import { Duration, Effect, Schedule } from "effect";
 import { describe, expect, test } from "vitest";
 
-import { Batcher } from "./batcher";
+import { Batcher, retrySchedule } from "./batcher";
 
 const options = {
   maxBatchSize: 3,
@@ -8,7 +9,8 @@ const options = {
   retryBudgetMs: 1_000,
   maxBufferSize: 5,
 };
-const instant = () => Promise.resolve();
+// no backoff delay, give up after the 3rd attempt
+const instant = Schedule.recurs(2);
 
 describe("Batcher", () => {
   test("sends full batches immediately and the rest on flush", async () => {
@@ -44,7 +46,7 @@ describe("Batcher", () => {
     expect(calls).toBe(3);
   });
 
-  test("drops a batch once the retry budget is spent", async () => {
+  test("drops a batch once retries are exhausted", async () => {
     let calls = 0;
     const batcher = new Batcher<number>(
       async () => {
@@ -58,8 +60,27 @@ describe("Batcher", () => {
     batcher.add(1);
     await batcher.flush();
 
-    // 250 + 500 fit in 1 s, the third backoff (1 s) does not
     expect(calls).toBe(3);
+  });
+
+  test("default schedule backs off exponentially and caps at 8 s", async () => {
+    const delays = await Effect.runPromise(
+      Schedule.toStep(retrySchedule(60_000)).pipe(
+        Effect.flatMap((step) =>
+          Effect.forEach(Array.from({ length: 7 }), () =>
+            step(0, undefined).pipe(
+              Effect.map(([, d]) => Duration.toMillis(d)),
+            ),
+          ),
+        ),
+      ),
+    );
+    // jittered between 80% and 120% of 250, 500, ... then capped
+    const base = [250, 500, 1_000, 2_000, 4_000, 8_000, 8_000];
+    delays.forEach((d, i) => {
+      expect(d).toBeGreaterThanOrEqual(base[i] * 0.8);
+      expect(d).toBeLessThanOrEqual(Math.min(base[i] * 1.2, 8_000));
+    });
   });
 
   test("drops events past the buffer cap", async () => {
