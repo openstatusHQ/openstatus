@@ -6,6 +6,7 @@ import "buf/validate/validate.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
 import "openstatus/monitor/v1/grpc_monitor.proto";
+import "openstatus/monitor/v1/heartbeat_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
 import "openstatus/monitor/v1/icmp_monitor.proto";
 import "openstatus/monitor/v1/monitor.proto";
@@ -46,6 +47,9 @@ service MonitorService {
   // CreateGRPCMonitor creates a new gRPC health check monitor.
   rpc CreateGRPCMonitor(CreateGRPCMonitorRequest) returns (CreateGRPCMonitorResponse);
 
+  // CreateHeartbeatMonitor creates a new heartbeat monitor that your job pings.
+  rpc CreateHeartbeatMonitor(CreateHeartbeatMonitorRequest) returns (CreateHeartbeatMonitorResponse);
+
   // UpdateHTTPMonitor updates an existing HTTP monitor.
   rpc UpdateHTTPMonitor(UpdateHTTPMonitorRequest) returns (UpdateHTTPMonitorResponse);
 
@@ -60,6 +64,9 @@ service MonitorService {
 
   // UpdateGRPCMonitor updates an existing gRPC monitor.
   rpc UpdateGRPCMonitor(UpdateGRPCMonitorRequest) returns (UpdateGRPCMonitorResponse);
+
+  // UpdateHeartbeatMonitor updates an existing heartbeat monitor.
+  rpc UpdateHeartbeatMonitor(UpdateHeartbeatMonitorRequest) returns (UpdateHeartbeatMonitorResponse);
 
   // TriggerMonitor initiates an immediate check for a monitor across all configured regions.
   rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse) {
@@ -154,6 +161,18 @@ message CreateICMPMonitorResponse {
   ICMPMonitor monitor = 1;
 }
 
+// CreateHeartbeatMonitorRequest is the request to create a new heartbeat monitor.
+message CreateHeartbeatMonitorRequest {
+  // Monitor configuration (required).
+  HeartbeatMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateHeartbeatMonitorResponse is the response after creating a heartbeat monitor.
+message CreateHeartbeatMonitorResponse {
+  // The created monitor with its ping URL.
+  HeartbeatMonitor monitor = 1;
+}
+
 // CreateGRPCMonitorRequest is the request to create a new gRPC monitor.
 message CreateGRPCMonitorRequest {
   // Monitor configuration (required).
@@ -226,6 +245,21 @@ message UpdateICMPMonitorResponse {
   ICMPMonitor monitor = 1;
 }
 
+// UpdateHeartbeatMonitorRequest is the request to update an existing heartbeat monitor.
+message UpdateHeartbeatMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional HeartbeatMonitor monitor = 2;
+}
+
+// UpdateHeartbeatMonitorResponse is the response after updating a heartbeat monitor.
+message UpdateHeartbeatMonitorResponse {
+  // The updated monitor.
+  HeartbeatMonitor monitor = 1;
+}
+
 // UpdateGRPCMonitorRequest is the request to update an existing gRPC monitor.
 message UpdateGRPCMonitorRequest {
   // Monitor ID to update (required).
@@ -294,6 +328,9 @@ message ListMonitorsResponse {
   // gRPC monitors in the workspace.
   repeated GRPCMonitor grpc_monitors = 6;
 
+  // Heartbeat monitors in the workspace.
+  repeated HeartbeatMonitor heartbeat_monitors = 7;
+
   // Total number of monitors across all types.
   int32 total_size = 4;
 }
@@ -335,6 +372,8 @@ message MonitorConfig {
     ICMPMonitor icmp = 4;
     // gRPC monitor configuration.
     GRPCMonitor grpc = 5;
+    // Heartbeat monitor configuration.
+    HeartbeatMonitor heartbeat = 6;
   }
 }
 
