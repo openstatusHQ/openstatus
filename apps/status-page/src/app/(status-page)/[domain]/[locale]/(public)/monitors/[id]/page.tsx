@@ -17,6 +17,7 @@ import { useMemo } from "react";
 
 import { ButtonBack } from "../../../../../../../components/button/button-back";
 import { ButtonCopyLink } from "../../../../../../../components/button/button-copy-link";
+import { ButtonCopyMarkdown } from "../../../../../../../components/button/button-copy-markdown";
 import {
   ChartAreaPercentiles,
   ChartAreaPercentilesSkeleton,
@@ -227,7 +228,10 @@ export default function Page() {
       <StatusContent className="flex flex-col gap-6">
         <div className="flex w-full flex-row items-center justify-between gap-2 py-0.5">
           <ButtonBack href="./" />
-          <ButtonCopyLink />
+          <div className="flex items-center gap-2">
+            <ButtonCopyMarkdown />
+            <ButtonCopyLink />
+          </div>
         </div>
         <StatusMonitorTabs
           defaultValue={tab}
