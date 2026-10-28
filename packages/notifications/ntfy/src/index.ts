@@ -1,5 +1,8 @@
 import { ntfyDataSchema } from "@openstatus/db/src/schema";
-import type { NotificationContext } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
 import { safeFetch } from "@openstatus/utils";
 
 export const sendAlert = async ({
@@ -11,7 +14,7 @@ export const sendAlert = async ({
   const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is down with ${
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is down with ${
     statusCode ? `status code ${statusCode}` : `error: ${message}`
   }`;
 
@@ -44,7 +47,7 @@ export const sendRecovery = async ({
   const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is up again`;
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is up again`;
   const authorization = notificationData.ntfy.token
     ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
     : undefined;
@@ -74,7 +77,7 @@ export const sendDegraded = async ({
   const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is degraded `;
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is degraded `;
 
   const authorization = notificationData.ntfy.token
     ? { Authorization: `Bearer ${notificationData.ntfy.token}` }

@@ -1,5 +1,8 @@
 import { googleChatDataSchema } from "@openstatus/db/src/schema";
-import type { NotificationContext } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
 import { safeFetch } from "@openstatus/utils";
 
 const postToWebhook = async (content: string, webhookUrl: string) => {
@@ -34,7 +37,7 @@ export const sendAlert = async ({
 
   try {
     await postToWebhook(
-      `*🚨 Alert <${monitor.url}|${name}>*\nStatus Code: ${
+      `*🚨 Alert <${monitorTarget(monitor)}|${name}>*\nStatus Code: ${
         statusCode || "_empty_"
       }\nMessage: ${
         message || "_empty_"
@@ -61,7 +64,7 @@ export const sendRecovery = async ({
 
   try {
     await postToWebhook(
-      `*✅ Recovered <${monitor.url}|${name}>*\n> Check your <https://www.openstatus.dev/app/|Dashboard>.\n`,
+      `*✅ Recovered <${monitorTarget(monitor)}|${name}>*\n> Check your <https://www.openstatus.dev/app/|Dashboard>.\n`,
       webhookUrl,
     );
   } catch (err) {
@@ -82,7 +85,7 @@ export const sendDegraded = async ({
 
   try {
     await postToWebhook(
-      `*⚠️ Degraded <${monitor.url}|${name}>*\n> Check your <https://www.openstatus.dev/app/|Dashboard>.\n`,
+      `*⚠️ Degraded <${monitorTarget(monitor)}|${name}>*\n> Check your <https://www.openstatus.dev/app/|Dashboard>.\n`,
       webhookUrl,
     );
   } catch (err) {

@@ -79,12 +79,26 @@ function fullMonth(
 
 function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
   const pipe = () => Promise.resolve({ data: rows });
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
+  return {
+    http: pipe,
+    tcp: pipe,
+    dns: pipe,
+    icmp: pipe,
+    grpc: pipe,
+    heartbeat: pipe,
+  };
 }
 
 function failingPipes(): UptimeFreezePipes {
   const pipe = () => Promise.reject(new Error("tinybird down"));
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
+  return {
+    http: pipe,
+    tcp: pipe,
+    dns: pipe,
+    icmp: pipe,
+    grpc: pipe,
+    heartbeat: pipe,
+  };
 }
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];

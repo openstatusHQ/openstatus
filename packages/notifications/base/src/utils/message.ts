@@ -1,5 +1,6 @@
 import type { MonitorIncident } from "@openstatus/db/src/schema";
 import { getRegionInfo } from "@openstatus/regions";
+import { heartbeatExpectation } from "@openstatus/utils";
 
 import type { FormattedMessageData, NotificationContext } from "../types";
 import { getIncidentDuration } from "./incident";
@@ -47,6 +48,21 @@ export function formatStatusCode(statusCode?: number): string {
 
   const description = statusDescriptions[statusCode];
   return description ? `${statusCode} ${description}` : `${statusCode}`;
+}
+
+export function monitorDashboardUrl(monitor: { id: number }): string {
+  return `https://app.openstatus.dev/monitors/${monitor.id}`;
+}
+
+/** A heartbeat has no URL of its own, so point at its dashboard page. */
+export function monitorTarget(monitor: {
+  id: number;
+  jobType: string;
+  url: string;
+}): string {
+  return monitor.jobType === "heartbeat"
+    ? monitorDashboardUrl(monitor)
+    : monitor.url;
 }
 
 /**
@@ -106,6 +122,24 @@ export function buildCommonMessageData(
     incidentDuration = duration ?? undefined;
   }
 
+  const dashboardUrl = monitorDashboardUrl(monitor);
+
+  if (monitor.jobType === "heartbeat") {
+    return {
+      monitorName: monitor.name,
+      monitorUrl: dashboardUrl,
+      monitorMethod: undefined,
+      monitorJobType: monitor.jobType,
+      statusCodeFormatted: heartbeatExpectation(monitor),
+      errorMessage: message || "No ping received",
+      timestampFormatted: formatTimestamp(cronTimestamp),
+      regionsDisplay: "Heartbeat",
+      latencyDisplay: "N/A",
+      dashboardUrl,
+      incidentDuration,
+    };
+  }
+
   return {
     monitorName: monitor.name,
     monitorUrl: monitor.url,
@@ -117,7 +151,7 @@ export function buildCommonMessageData(
     regionsDisplay,
     latencyDisplay:
       typeof latency === "number" ? `${latency.toLocaleString()}ms` : "N/A",
-    dashboardUrl: `https://app.openstatus.dev/monitors/${monitor.id}`,
+    dashboardUrl,
     incidentDuration,
   };
 }
