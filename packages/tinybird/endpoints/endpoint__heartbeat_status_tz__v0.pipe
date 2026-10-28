@@ -1,0 +1,22 @@
+TOKEN "endpoint__heartbeat_status_tz__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+WITH {{ String(timezone, 'UTC') }} AS tz
+SELECT
+    -- calendar date of the local day; the client re-keys it as UTC midnight like the 45d pipes
+    toDate(toTimeZone(fromUnixTimestamp64Milli(timestamp), tz)) AS day,
+    monitorId,
+    count() AS count,
+    count() AS ok,
+    0 AS error,
+    0 AS degraded
+FROM heartbeat_ping__v0
+WHERE monitorId IN {{ Array(monitorIds, 'String', '1') }}
+    AND fromUnixTimestamp64Milli(timestamp) >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL 45 DAY
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint

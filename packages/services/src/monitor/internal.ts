@@ -21,6 +21,7 @@ import {
 import { regionDict } from "@openstatus/regions";
 
 import type { DB } from "../context";
+import { toBase64Url } from "../oauth/crypto";
 import { ForbiddenError, LimitExceededError, NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 
@@ -213,4 +214,18 @@ export function assertSchedulingWithinPlan(
   ) {
     throw new LimitExceededError("regions", limits.regions.length);
   }
+}
+
+// The token authenticates pings; keep only a suffix so a rotation still diffs.
+export function monitorAuditSnapshot<T extends { heartbeatToken: string | null }>(
+  row: T,
+): T {
+  if (!row.heartbeatToken) return row;
+  return { ...row, heartbeatToken: `…${row.heartbeatToken.slice(-4)}` };
+}
+
+export function generateHeartbeatToken(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return toBase64Url(bytes);
 }

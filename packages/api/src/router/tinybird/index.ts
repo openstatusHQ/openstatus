@@ -187,7 +187,8 @@ export function getMetricsRegionsProcedure(period: Period, type: Type) {
   }
 }
 
-export function getStatusProcedure(_period: "45d", type: Type) {
+export function getStatusProcedure(_period: "45d", type: Type | "heartbeat") {
+  if (type === "heartbeat") return tb.heartbeatStatus45d;
   if (type === "dns") return tb.dnsStatus45d;
   if (type === "http") return tb.httpStatus45d;
   if (type === "tcp") return tb.tcpStatus45d;
@@ -197,7 +198,8 @@ export function getStatusProcedure(_period: "45d", type: Type) {
 }
 
 /** 15m buckets regrouped into the days of a time zone; the 45d pipes are UTC only. */
-export function getStatusInTimeZoneProcedure(type: Type) {
+export function getStatusInTimeZoneProcedure(type: Type | "heartbeat") {
+  if (type === "heartbeat") return tb.heartbeatStatus15m;
   if (type === "dns") return tb.dnsStatus15m;
   if (type === "http") return tb.httpStatus15m;
   if (type === "tcp") return tb.tcpStatus15m;

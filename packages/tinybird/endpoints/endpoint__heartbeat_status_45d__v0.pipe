@@ -1,0 +1,20 @@
+TOKEN "endpoint__heartbeat_status_45d__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+SELECT
+    toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(timestamp), 'UTC')) AS day,
+    monitorId,
+    count() AS count,
+    count() AS ok,
+    0 AS error,
+    0 AS degraded
+FROM heartbeat_ping__v0
+WHERE monitorId IN {{ Array(monitorIds, 'String', '1') }}
+    AND timestamp >= toUnixTimestamp64Milli(toDateTime64(toStartOfDay(now() - INTERVAL 45 DAY), 3))
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint

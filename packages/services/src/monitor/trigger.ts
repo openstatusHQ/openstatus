@@ -70,6 +70,11 @@ export async function triggerMonitorRun(args: {
   if (!parsed.success) {
     throw new ValidationError(`Monitor ${input.id} has invalid data`);
   }
+  if (parsed.data.jobType === "heartbeat") {
+    throw new ValidationError(
+      "Heartbeat monitors are pinged by your job, not run by openstatus",
+    );
+  }
 
   const statusRows = await db
     .select()

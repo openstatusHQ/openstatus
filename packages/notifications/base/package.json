@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
-    "@openstatus/regions": "workspace:*"
+    "@openstatus/regions": "workspace:*",
+    "@openstatus/utils": "workspace:*"
   },
   "devDependencies": {
     "@openstatus/test-utils": "workspace:*",
