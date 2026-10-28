@@ -1,3 +1,4 @@
+import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -32,11 +33,19 @@ export function MonitorCard({ id }: { id: number }) {
         <EntityCardRow label="Status">
           {monitorHealthConfig[getMonitorHealth(data)].label}
         </EntityCardRow>
-        <EntityCardRow label={data.jobType.toUpperCase()} title={data.url}>
-          {data.url}
-        </EntityCardRow>
-        <EntityCardRow label="Frequency">{data.periodicity}</EntityCardRow>
-        <EntityCardRow label="Regions">{data.regions.length}</EntityCardRow>
+        {data.jobType === "heartbeat" ? (
+          <EntityCardRow label="HEARTBEAT">
+            {heartbeatExpectation(data)}
+          </EntityCardRow>
+        ) : (
+          <>
+            <EntityCardRow label={data.jobType.toUpperCase()} title={data.url}>
+              {data.url}
+            </EntityCardRow>
+            <EntityCardRow label="Frequency">{data.periodicity}</EntityCardRow>
+            <EntityCardRow label="Regions">{data.regions.length}</EntityCardRow>
+          </>
+        )}
       </EntityCardContent>
     </EntityCard>
   );
