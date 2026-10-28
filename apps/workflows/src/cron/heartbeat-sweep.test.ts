@@ -31,7 +31,11 @@ import {
 
 import { providerToFunction } from "../checker/utils";
 import { stubPublishAuditLog } from "../test/stub-audit-log";
-import { handleHeartbeatSweepCron, missedPingMessage } from "./heartbeat-sweep";
+import {
+  failedPingMessage,
+  handleHeartbeatSweepCron,
+  missedPingMessage,
+} from "./heartbeat-sweep";
 
 const HOUR_MS = 3_600_000;
 const GRACE_MS = 300_000;
@@ -91,9 +95,14 @@ async function createHeartbeat(lastPingAt: number | null) {
   return row;
 }
 
-async function ping(monitorId: number, at: number) {
+async function ping(
+  monitorId: number,
+  at: number,
+  kind: "success" | "fail" = "success",
+) {
   const values = {
     lastPingAt: new Date(at),
+    lastPingKind: kind,
     nextDueAt: new Date(at + HOUR_MS + GRACE_MS),
   };
   await db
@@ -177,6 +186,41 @@ describe("handleHeartbeatSweepCron", () => {
     expect(events).toEqual(["alert", "recovery"]);
   });
 
+  test("a /fail takes it down at the failure, and a ping recovers it", async () => {
+    const failedAt = Date.now() - 60_000;
+    const row = await createHeartbeat(failedAt - HOUR_MS);
+    await ping(row.id, failedAt, "fail");
+
+    await handleHeartbeatSweepCron();
+
+    expect(await statusOf(row.id)).toBe("error");
+    const incidents = await openIncidents(row.id);
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]?.startedAt?.getTime()).toBe(
+      Math.floor(failedAt / 1000) * 1000,
+    );
+    expect((await outboxFor(row.id)).map((r) => r.eventType)).toEqual([
+      "alert",
+    ]);
+
+    await ping(row.id, Date.now());
+    await handleHeartbeatSweepCron();
+
+    expect(await statusOf(row.id)).toBe("active");
+    expect(await openIncidents(row.id)).toHaveLength(0);
+  });
+
+  test("a failed heartbeat whose deadline then lapses does not alert again", async () => {
+    const row = await createHeartbeat(null);
+    await ping(row.id, Date.now() - 2 * HOUR_MS, "fail");
+
+    await handleHeartbeatSweepCron();
+    await handleHeartbeatSweepCron();
+
+    expect(await statusOf(row.id)).toBe("error");
+    expect(await outboxFor(row.id)).toHaveLength(1);
+  });
+
   test("a heartbeat on time is left alone", async () => {
     const row = await createHeartbeat(Date.now());
     await handleHeartbeatSweepCron();
@@ -238,6 +282,12 @@ describe("handleHeartbeatSweepCron", () => {
 
     expect(await statusOf(row.id)).toBe("active");
   });
+});
+
+test("failedPingMessage", () => {
+  expect(failedPingMessage({ last_ping_at: Date.UTC(2026, 0, 1) })).toBe(
+    "Job reported a failure at 2026-01-01T00:00:00.000Z",
+  );
 });
 
 test("missedPingMessage", () => {

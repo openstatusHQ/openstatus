@@ -30,15 +30,16 @@ type SweepRow = {
   monitor_id: number;
   status: MonitorStatus;
   last_ping_at: number;
+  last_ping_kind: "success" | "fail";
   next_due_at: number;
   heartbeat_period: number | null;
   heartbeat_grace: number | null;
 };
 
 /**
- * Heartbeats whose deadline disagrees with their status: overdue but not down,
- * or pinged again while down. Paused, deleted, in-maintenance and never-pinged
- * heartbeats are left alone.
+ * Heartbeats whose signal disagrees with their status: overdue or reporting a
+ * `/fail` but not down, or pinged successfully again while down. Paused,
+ * deleted, in-maintenance and never-pinged heartbeats are left alone.
  */
 async function findCandidates(now: number): Promise<SweepRow[]> {
   return withBusyRetry(() =>
@@ -46,6 +47,7 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
       SELECT ${monitor.id} AS monitor_id,
              ${monitor.status} AS status,
              ${monitorHeartbeatState.lastPingAt} AS last_ping_at,
+             ${monitorHeartbeatState.lastPingKind} AS last_ping_kind,
              ${monitorHeartbeatState.nextDueAt} AS next_due_at,
              ${monitor.heartbeatPeriod} AS heartbeat_period,
              ${monitor.heartbeatGrace} AS heartbeat_grace
@@ -57,8 +59,15 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
         AND ${monitorHeartbeatState.nextDueAt} IS NOT NULL
         AND ${monitorHeartbeatState.lastPingAt} IS NOT NULL
         AND (
-          (${monitorHeartbeatState.nextDueAt} < ${now} AND ${monitor.status} <> 'error')
-          OR (${monitorHeartbeatState.nextDueAt} >= ${now} AND ${monitor.status} = 'error')
+          (
+            (${monitorHeartbeatState.nextDueAt} < ${now} OR ${monitorHeartbeatState.lastPingKind} = 'fail')
+            AND ${monitor.status} <> 'error'
+          )
+          OR (
+            ${monitorHeartbeatState.nextDueAt} >= ${now}
+            AND ${monitorHeartbeatState.lastPingKind} <> 'fail'
+            AND ${monitor.status} = 'error'
+          )
         )
         AND ${monitor.id} NOT IN (
           SELECT ${pageComponent.monitorId} FROM ${maintenancesToPageComponents}
@@ -71,6 +80,10 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
       LIMIT ${CANDIDATE_LIMIT}
     `),
   );
+}
+
+export function failedPingMessage(row: { last_ping_at: number }): string {
+  return `Job reported a failure at ${new Date(row.last_ping_at).toISOString()}`;
 }
 
 export function missedPingMessage(row: {
@@ -118,15 +131,21 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
   let recovered = 0;
 
   for (const row of candidates) {
-    const overdue = row.next_due_at < now;
+    const failed = row.last_ping_kind === "fail";
+    const overdue = !failed && row.next_due_at < now;
     // Deterministic timestamps: both machines write the same dedup key, the
-    // incident starts at the missed deadline, and each step moves forward.
+    // incident starts at the failure or the missed deadline, and each step
+    // moves forward.
     const input: TransitionInput = {
       monitorId: row.monitor_id,
       region: HEARTBEAT_REGION,
-      status: overdue ? "error" : "active",
+      status: failed || overdue ? "error" : "active",
       cronTimestamp: overdue ? row.next_due_at : row.last_ping_at,
-      message: overdue ? missedPingMessage(row) : undefined,
+      message: failed
+        ? failedPingMessage(row)
+        : overdue
+          ? missedPingMessage(row)
+          : undefined,
       deadlineSeconds: Math.floor(env().OUTBOX_DEADLINE_MS / 1000),
       rolloutPct: env().OUTBOX_ROLLOUT_PCT,
     };
@@ -134,7 +153,7 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
     const result = await transition(input);
     if (result.kind !== "evaluated" || !result.transitioned) continue;
 
-    if (overdue) down += 1;
+    if (input.status === "error") down += 1;
     else recovered += 1;
     logger.info("Heartbeat status changed", {
       monitor_id: row.monitor_id,
