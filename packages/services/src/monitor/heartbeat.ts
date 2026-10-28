@@ -273,6 +273,7 @@ export type HeartbeatPingLog = {
   headers: Record<string, string>;
   body: string | null;
   bodyTruncated: boolean;
+  kind: HeartbeatPingKind;
 };
 
 const storedHeaders = z.record(z.string(), z.string());
@@ -321,6 +322,7 @@ export async function listHeartbeatPings(args: {
     headers: parseHeaders(row.headers),
     body: row.body,
     bodyTruncated: row.bodyTruncated === 1,
+    kind: row.kind,
   }));
   const last = data.at(-1);
   return {

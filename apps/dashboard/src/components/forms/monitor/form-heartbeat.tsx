@@ -58,6 +58,7 @@ export function heartbeatSnippets(pingUrl: string) {
   return {
     curl: `curl -fsS -m 10 --retry 3 ${pingUrl}`,
     crontab: `0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 ${pingUrl}`,
+    "report failures": `/path/to/job.sh && curl -fsS -m 10 --retry 3 ${pingUrl} || curl -fsS -m 10 --retry 3 ${pingUrl}/fail`,
   };
 }
 
@@ -85,8 +86,10 @@ export function HeartbeatPingUrl({ pingUrl }: { pingUrl: string }) {
           )}
         </Button>
         <p className="text-muted-foreground text-sm">
-          Send a GET, POST or HEAD request when your job finishes. A POST body
-          (up to 10 KB) is kept with the ping for debugging.
+          Send a GET, POST or HEAD request when your job finishes, or to the
+          same URL ending in <code className="font-mono">/fail</code> when it
+          fails: the monitor goes down within a minute and recovers on the next
+          ping. A POST body (up to 10 KB) is kept with the ping for debugging.
         </p>
       </div>
       <div className="grid gap-1.5">

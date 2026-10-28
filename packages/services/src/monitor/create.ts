@@ -6,6 +6,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
 import {
+  assertHeartbeatNotPublic,
   assertSchedulingWithinPlan,
   generateHeartbeatToken,
   headersToDbJson,
@@ -26,6 +27,7 @@ export async function createMonitor(args: {
 
   const isHeartbeat = input.jobType === "heartbeat";
   assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
+  assertHeartbeatNotPublic(input, input.public);
   // Only caller-supplied values: the plan defaults below are picked from the
   // plan, and a workspace's stored limits can lag behind newly added regions.
   if (!isHeartbeat) assertSchedulingWithinPlan(ctx.workspace.limits, input);

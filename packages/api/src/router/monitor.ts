@@ -498,6 +498,7 @@ export const monitorRouter = createTRPCRouter({
           period: row.heartbeatPeriod,
           grace: row.heartbeatGrace,
           lastPingAt: state.lastPingAt,
+          lastPingKind: state.lastPingKind,
           nextDueAt: state.nextDueAt,
         };
       } catch (err) {

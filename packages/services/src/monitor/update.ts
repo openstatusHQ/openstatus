@@ -8,6 +8,7 @@ import { ValidationError } from "../errors";
 import type { Monitor } from "../types";
 import { heartbeatConfigChanged, syncHeartbeatDeadline } from "./heartbeat";
 import {
+  assertHeartbeatNotPublic,
   assertSchedulingWithinPlan,
   getMonitorInWorkspace,
   headersToDbJson,
@@ -69,6 +70,7 @@ export async function updateMonitorConfig(args: {
         "Heartbeat monitors cannot have a URL, periodicity or regions",
       );
     }
+    assertHeartbeatNotPublic(existing, input.public);
 
     const values: Record<string, unknown> = { updatedAt: new Date() };
     if (input.name !== undefined) values.name = input.name;
@@ -305,6 +307,7 @@ export async function updateMonitorPublic(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    assertHeartbeatNotPublic(existing, input.public);
     const updated = await tx
       .update(monitor)
       .set({ public: input.public, updatedAt: new Date() })
@@ -385,6 +388,7 @@ export async function bulkUpdateMonitors(args: {
       )
       .all();
     if (existingRows.length === 0) return;
+    for (const row of existingRows) assertHeartbeatNotPublic(row, input.public);
 
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (input.public !== undefined) set.public = input.public;

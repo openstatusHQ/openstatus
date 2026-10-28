@@ -39,9 +39,13 @@ function relative(date: Date | null) {
   return date ? formatDistanceToNow(date, { addSuffix: true }) : "Never";
 }
 
-function PingBars({ days }: { days: { day: string; count: number }[] }) {
-  const counts = new Map(
-    days.map((d) => [startOfDay(new Date(d.day)).getTime(), d.count]),
+function PingBars({
+  days,
+}: {
+  days: { day: string; count: number; error: number }[];
+}) {
+  const byDay = new Map(
+    days.map((d) => [startOfDay(new Date(d.day)).getTime(), d]),
   );
   const today = startOfDay(new Date());
   const range = Array.from({ length: DAYS }, (_, i) =>
@@ -51,19 +55,25 @@ function PingBars({ days }: { days: { day: string; count: number }[] }) {
   return (
     <div className="flex h-10 gap-0.5">
       {range.map((day) => {
-        const count = counts.get(day.getTime()) ?? 0;
+        const count = byDay.get(day.getTime())?.count ?? 0;
+        const failed = byDay.get(day.getTime())?.error ?? 0;
         return (
           <Tooltip key={day.getTime()}>
             <TooltipTrigger asChild>
               <div
                 className={cn(
                   "flex-1 rounded-sm",
-                  count > 0 ? "bg-success" : "bg-muted",
+                  failed > 0
+                    ? "bg-destructive"
+                    : count > 0
+                      ? "bg-success"
+                      : "bg-muted",
                 )}
               />
             </TooltipTrigger>
             <TooltipContent>
               {day.toLocaleDateString()}: {count} ping{count === 1 ? "" : "s"}
+              {failed > 0 ? `, ${failed} failed` : null}
             </TooltipContent>
           </Tooltip>
         );
@@ -86,6 +96,7 @@ export function HeartbeatOverview({ id }: { id: number }) {
 
   const waiting = heartbeat.lastPingAt === null;
   const down = monitor.status === "error";
+  const failed = down && heartbeat.lastPingKind === "fail";
 
   return (
     <SectionGroup>
@@ -114,9 +125,11 @@ export function HeartbeatOverview({ id }: { id: number }) {
                 ? "Paused"
                 : waiting
                   ? "Waiting"
-                  : down
-                    ? "Missed"
-                    : "On time"}
+                  : failed
+                    ? "Failed"
+                    : down
+                      ? "Missed"
+                      : "On time"}
             </MetricCardValue>
           </MetricCard>
           <MetricCard>
