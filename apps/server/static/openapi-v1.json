@@ -367,7 +367,16 @@
           },
           "jobType": {
             "type": "string",
-            "enum": ["http", "tcp", "icmp", "grpc", "udp", "dns", "ssl"],
+            "enum": [
+              "http",
+              "tcp",
+              "icmp",
+              "grpc",
+              "udp",
+              "dns",
+              "ssl",
+              "heartbeat"
+            ],
             "default": "http",
             "description": "The type of the monitor"
           },
@@ -928,7 +937,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-10-08T18:46:39.061Z",
+            "default": "2026-10-28T12:20:42.493Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -1609,7 +1618,8 @@
                       "grpc",
                       "udp",
                       "dns",
-                      "ssl"
+                      "ssl",
+                      "heartbeat"
                     ],
                     "default": "http",
                     "description": "The type of the monitor"
@@ -2234,7 +2244,8 @@
                       "grpc",
                       "udp",
                       "dns",
-                      "ssl"
+                      "ssl",
+                      "heartbeat"
                     ],
                     "default": "http",
                     "description": "The type of the monitor"
@@ -6585,7 +6596,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T18:46:39.061Z",
+                    "default": "2026-10-28T12:20:42.493Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7040,7 +7051,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T18:46:39.061Z",
+                    "default": "2026-10-28T12:20:42.493Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7341,7 +7352,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T18:46:39.061Z",
+                    "default": "2026-10-28T12:20:42.493Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
