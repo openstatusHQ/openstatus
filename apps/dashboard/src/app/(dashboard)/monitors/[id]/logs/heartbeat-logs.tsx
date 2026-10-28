@@ -42,6 +42,14 @@ type Ping = NonNullable<
 
 const PAGE_SIZE = 50;
 
+function PingKind({ kind }: { kind: Ping["kind"] }) {
+  return kind === "fail" ? (
+    <Badge variant="destructive">Failed</Badge>
+  ) : (
+    <Badge variant="outline">Success</Badge>
+  );
+}
+
 function PingDetail({ ping }: { ping: Ping }) {
   const headers = Object.entries(ping.headers);
   return (
@@ -49,6 +57,10 @@ function PingDetail({ ping }: { ping: Ping }) {
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
         <dt className="text-muted-foreground">Received</dt>
         <dd className="font-mono">{new Date(ping.timestamp).toISOString()}</dd>
+        <dt className="text-muted-foreground">Result</dt>
+        <dd>
+          <PingKind kind={ping.kind} />
+        </dd>
         <dt className="text-muted-foreground">Method</dt>
         <dd className="font-mono">{ping.method}</dd>
         <dt className="text-muted-foreground">IP</dt>
@@ -124,6 +136,7 @@ export function HeartbeatLogs({ monitorId }: { monitorId: number }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Received</TableHead>
+                <TableHead>Result</TableHead>
                 <TableHead>Method</TableHead>
                 <TableHead>IP</TableHead>
                 <TableHead>User agent</TableHead>
@@ -138,6 +151,9 @@ export function HeartbeatLogs({ monitorId }: { monitorId: number }) {
                 >
                   <TableCell className="font-mono">
                     {format(new Date(ping.timestamp), "LLL dd, HH:mm:ss")}
+                  </TableCell>
+                  <TableCell>
+                    <PingKind kind={ping.kind} />
                   </TableCell>
                   <TableCell className="font-mono">{ping.method}</TableCell>
                   <TableCell className="font-mono">{ping.ip ?? "—"}</TableCell>

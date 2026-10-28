@@ -295,19 +295,19 @@ export function FormMonitorUpdate() {
               });
             }}
           />
+          <FormVisibility
+            defaultValues={{
+              visibility: monitor.public ?? false,
+            }}
+            onSubmit={async (values) => {
+              await updatePublicMutation.mutateAsync({
+                id: Number.parseInt(id),
+                public: values.visibility,
+              });
+            }}
+          />
         </>
       )}
-      <FormVisibility
-        defaultValues={{
-          visibility: monitor.public ?? false,
-        }}
-        onSubmit={async (values) => {
-          await updatePublicMutation.mutateAsync({
-            id: Number.parseInt(id),
-            public: values.visibility,
-          });
-        }}
-      />
       <FormDangerZone
         title={monitor.name}
         onSubmit={async () => {
