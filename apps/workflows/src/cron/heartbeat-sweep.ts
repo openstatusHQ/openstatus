@@ -9,10 +9,7 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
-import {
-  HEARTBEAT_REGION,
-  formatHeartbeatSeconds,
-} from "@openstatus/utils";
+import { HEARTBEAT_REGION, formatHeartbeatSeconds } from "@openstatus/utils";
 
 import { triggerNotifications } from "../checker/alerting";
 import { enqueueOutbox } from "../checker/outbox";

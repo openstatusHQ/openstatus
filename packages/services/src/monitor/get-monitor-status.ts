@@ -4,7 +4,6 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
-
 import { statusRegions } from "@openstatus/utils";
 
 import type { ServiceContext } from "../context";
