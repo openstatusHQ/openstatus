@@ -6946,6 +6946,14 @@
           "notNull": false,
           "autoincrement": false
         },
+        "last_ping_kind": {
+          "name": "last_ping_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'success'"
+        },
         "next_due_at": {
           "name": "next_due_at",
           "type": "integer",

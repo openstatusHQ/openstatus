@@ -10,8 +10,8 @@ SELECT
     toDate(toTimeZone(fromUnixTimestamp64Milli(timestamp), tz)) AS day,
     monitorId,
     count() AS count,
-    count() AS ok,
-    0 AS error,
+    countIf(kind != 'fail') AS ok,
+    countIf(kind = 'fail') AS error,
     0 AS degraded
 FROM heartbeat_ping__v0
 WHERE monitorId IN {{ Array(monitorIds, 'String', '1') }}

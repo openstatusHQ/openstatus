@@ -4,14 +4,15 @@ NODE endpoint
 SQL >
 
 %
--- Ping activity per day. A missed ping writes no row, so every bucket is
--- `ok`: this is not uptime. Downtime lives in the heartbeat's incidents.
+-- Ping activity per day: success pings are `ok`, `/fail` pings are `error`.
+-- A missed ping writes no row, so this is not uptime. Downtime lives in the
+-- heartbeat's incidents.
 SELECT
     toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(timestamp), 'UTC')) AS day,
     monitorId,
     count() AS count,
-    count() AS ok,
-    0 AS error,
+    countIf(kind != 'fail') AS ok,
+    countIf(kind = 'fail') AS error,
     0 AS degraded
 FROM heartbeat_ping__v0
 WHERE monitorId IN {{ Array(monitorIds, 'String', '1') }}

@@ -8,7 +8,8 @@ SCHEMA >
     `userAgent` Nullable(String) `json:$.userAgent`,
     `headers` Nullable(String) `json:$.headers`,
     `body` Nullable(String) `json:$.body`,
-    `bodyTruncated` Int8 `json:$.bodyTruncated`
+    `bodyTruncated` Int8 `json:$.bodyTruncated`,
+    `kind` LowCardinality(String) `json:$.kind` DEFAULT 'success'
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(timestamp))"

@@ -403,6 +403,24 @@ describe("resume", () => {
       expect(state?.nextDueAt?.getTime()).toBeGreaterThan(Date.now());
     });
   });
+
+  test("resuming clears a failure reported before the pause", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx, { active: false });
+      await setLastPing(tx, row.id, new Date("2026-01-01T00:00:00.000Z"));
+      await tx
+        .update(monitorHeartbeatState)
+        .set({ lastPingKind: "fail" })
+        .where(eq(monitorHeartbeatState.monitorId, row.id));
+
+      await updateMonitorConfig({
+        ctx: { ...ctx, db: tx },
+        input: { id: row.id, active: true },
+      });
+
+      expect((await readState(tx, row.id))?.lastPingKind).toBe("success");
+    });
+  });
 });
 
 describe("cloneMonitor (heartbeat)", () => {
@@ -427,7 +445,11 @@ describe("getHeartbeatState", () => {
         ctx: { ...ctx, db: tx },
         input: { id: row.id },
       });
-      expect(state).toEqual({ lastPingAt: null, nextDueAt: null });
+      expect(state).toEqual({
+        lastPingAt: null,
+        lastPingKind: null,
+        nextDueAt: null,
+      });
     });
   });
 });

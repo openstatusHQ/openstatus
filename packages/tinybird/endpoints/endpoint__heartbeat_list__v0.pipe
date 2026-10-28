@@ -13,7 +13,8 @@ SELECT
     userAgent,
     headers,
     body,
-    bodyTruncated
+    bodyTruncated,
+    kind
 FROM heartbeat_ping__v0
 WHERE
     monitorId = {{ Int32(monitorId, 1, required=True) }}
