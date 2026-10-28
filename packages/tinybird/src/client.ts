@@ -362,6 +362,112 @@ export type OSTinybirdConfig = {
   noop?: boolean | string;
 };
 
+const attemptsParameters = z.object({
+  monitorId: z.string(),
+  region: z.string(),
+  cronTimestamp: z.int(),
+});
+
+const httpGetRowShape = {
+  type: z.literal("http").prefault("http"),
+  latency: z.int(),
+  statusCode: z.int().nullable(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  monitorId: z.string(),
+  url: z.url(),
+  error: z.coerce.boolean(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  message: z.string().nullable(),
+  headers: headersSchema,
+  timing: timingPhasesSchema,
+  assertions: z.string().nullable(),
+  body: z.string().nullable(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  workspaceId: z.string(),
+  id: z.string().nullable(),
+};
+
+const tcpGetRowShape = {
+  type: z.literal("tcp").prefault("tcp"),
+  id: z.string().nullable(),
+  uri: z.string(),
+  latency: z.int(),
+  monitorId: z.coerce.string(),
+  error: z.coerce.boolean(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  errorMessage: z.string().nullable(),
+};
+
+const icmpGetRowShape = {
+  type: z.literal("icmp").prefault("icmp"),
+  id: z.string().nullable(),
+  uri: z.string(),
+  latency: z.int(),
+  latencyMin: z.int().prefault(0),
+  latencyMax: z.int().prefault(0),
+  packetsSent: z.int().prefault(0),
+  packetsReceived: z.int().prefault(0),
+  monitorId: z.coerce.string(),
+  error: z.coerce.boolean(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  errorMessage: z.string().nullable(),
+};
+
+const grpcGetRowShape = {
+  type: z.literal("grpc").prefault("grpc"),
+  id: z.string().nullable(),
+  uri: z.string(),
+  latency: z.int(),
+  servingStatus: z.string().nullable(),
+  grpcCode: z.int().nullable(),
+  service: z.string().nullable(),
+  monitorId: z.coerce.string(),
+  error: z.coerce.boolean(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  errorMessage: z.string().nullable(),
+};
+
+const dnsGetRowShape = {
+  type: z.literal("dns").prefault("dns"),
+  id: z.coerce.string().nullable(),
+  uri: z.string(),
+  latency: z.int(),
+  monitorId: z.coerce.string(),
+  error: z.coerce.boolean(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  errorMessage: z.string().nullable(),
+  assertions: z.string().nullable(),
+  records: z
+    .string()
+    .transform((str) => {
+      try {
+        return JSON.parse(str) as Record<string, unknown>;
+      } catch (error) {
+        console.error(error);
+        return {};
+      }
+    })
+    .pipe(z.record(z.string(), z.array(z.string()))),
+};
+
 export class OSTinybird {
   private readonly tb: Client;
 
@@ -896,27 +1002,53 @@ export class OSTinybird {
         id: z.string().nullable(),
         monitorId: z.string(),
       }),
-      data: z.object({
-        type: z.literal("http").prefault("http"),
-        latency: z.int(),
-        statusCode: z.int().nullable(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        monitorId: z.string(),
-        url: z.url(),
-        error: z.coerce.boolean(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        message: z.string().nullable(),
-        headers: headersSchema,
-        timing: timingPhasesSchema,
-        assertions: z.string().nullable(),
-        body: z.string().nullable(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        workspaceId: z.string(),
-        id: z.string().nullable(),
-      }),
+      data: z.object(httpGetRowShape),
       // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { cache: "force-cache" },
+    });
+  }
+
+  public get httpAttempts() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_attempts__v0",
+      parameters: attemptsParameters,
+      data: z.object({ ...httpGetRowShape, attempt: z.int() }),
+      opts: { cache: "force-cache" },
+    });
+  }
+
+  public get tcpAttempts() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_attempts__v0",
+      parameters: attemptsParameters,
+      data: z.object({ ...tcpGetRowShape, attempt: z.int() }),
+      opts: { cache: "force-cache" },
+    });
+  }
+
+  public get dnsAttempts() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_attempts__v0",
+      parameters: attemptsParameters,
+      data: z.object({ ...dnsGetRowShape, attempt: z.int() }),
+      opts: { cache: "force-cache" },
+    });
+  }
+
+  public get grpcAttempts() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_attempts__v0",
+      parameters: attemptsParameters,
+      data: z.object({ ...grpcGetRowShape, attempt: z.int() }),
+      opts: { cache: "force-cache" },
+    });
+  }
+
+  public get icmpAttempts() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_attempts__v0",
+      parameters: attemptsParameters,
+      data: z.object({ ...icmpGetRowShape, attempt: z.int() }),
       opts: { cache: "force-cache" },
     });
   }
@@ -1506,20 +1638,7 @@ export class OSTinybird {
         id: z.string().nullable(),
         monitorId: z.string(),
       }),
-      data: z.object({
-        type: z.literal("tcp").prefault("tcp"),
-        id: z.string().nullable(),
-        uri: z.string(),
-        latency: z.int(),
-        monitorId: z.coerce.string(),
-        error: z.coerce.boolean(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        errorMessage: z.string().nullable(),
-      }),
+      data: z.object(tcpGetRowShape),
       // REMINDER: cache the result for accessing the data for a check as it won't change
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -1643,24 +1762,7 @@ export class OSTinybird {
         id: z.string().nullable(),
         monitorId: z.string(),
       }),
-      data: z.object({
-        type: z.literal("icmp").prefault("icmp"),
-        id: z.string().nullable(),
-        uri: z.string(),
-        latency: z.int(),
-        latencyMin: z.int().prefault(0),
-        latencyMax: z.int().prefault(0),
-        packetsSent: z.int().prefault(0),
-        packetsReceived: z.int().prefault(0),
-        monitorId: z.coerce.string(),
-        error: z.coerce.boolean(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        errorMessage: z.string().nullable(),
-      }),
+      data: z.object(icmpGetRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2108,23 +2210,7 @@ export class OSTinybird {
         id: z.string().nullable(),
         monitorId: z.string(),
       }),
-      data: z.object({
-        type: z.literal("grpc").prefault("grpc"),
-        id: z.string().nullable(),
-        uri: z.string(),
-        latency: z.int(),
-        servingStatus: z.string().nullable(),
-        grpcCode: z.int().nullable(),
-        service: z.string().nullable(),
-        monitorId: z.coerce.string(),
-        error: z.coerce.boolean(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        errorMessage: z.string().nullable(),
-      }),
+      data: z.object(grpcGetRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2916,32 +3002,7 @@ export class OSTinybird {
         id: z.string().nullable(),
         monitorId: z.string(),
       }),
-      data: z.object({
-        type: z.literal("dns").prefault("dns"),
-        id: z.coerce.string().nullable(),
-        uri: z.string(),
-        latency: z.int(),
-        monitorId: z.coerce.string(),
-        error: z.coerce.boolean(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        errorMessage: z.string().nullable(),
-        assertions: z.string().nullable(),
-        records: z
-          .string()
-          .transform((str) => {
-            try {
-              return JSON.parse(str) as Record<string, unknown>;
-            } catch (error) {
-              console.error(error);
-              return {};
-            }
-          })
-          .pipe(z.record(z.string(), z.array(z.string()))),
-      }),
+      data: z.object(dnsGetRowShape),
       // REMINDER: cache the result for accessing the data for a check as it won't change
       opts: { next: { revalidate: REVALIDATE } },
     });
