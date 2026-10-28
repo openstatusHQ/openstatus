@@ -354,6 +354,25 @@ export function isTinybirdNoop(noop: OSTinybirdConfig["noop"]): boolean {
   return env.NODE_ENV === "test" || noopFlagSchema.parse(noop);
 }
 
+export const heartbeatPingShape = z.object({
+  id: z.string(),
+  timestamp: z.int(),
+  monitorId: z.coerce.string(),
+  ip: z.string().nullable(),
+  method: z.string(),
+  userAgent: z.string().nullable(),
+  headers: z.string().nullable(),
+  body: z.string().nullable(),
+  bodyTruncated: z.int(),
+});
+export type HeartbeatPing = z.infer<typeof heartbeatPingShape>;
+
+const heartbeatPingEvent = heartbeatPingShape.extend({
+  monitorId: z.int(),
+  workspaceId: z.int(),
+});
+export type HeartbeatPingEvent = z.input<typeof heartbeatPingEvent>;
+
 export type OSTinybirdConfig = {
   token: string;
   /** Instance to query. Callers pass their app's validated env value. */
@@ -1464,6 +1483,58 @@ export class OSTinybird {
         monitorId: z.coerce.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get heartbeatStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__heartbeat_status_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        days: z.int().max(45).optional(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  /** Pings regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get heartbeatStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__heartbeat_status_tz__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get heartbeatList() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__heartbeat_list__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+        cursor: z.int().optional(),
+        direction: z.enum(["next", "prev"]).optional(),
+        limit: z.int().min(1).max(100),
+      }),
+      data: heartbeatPingShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get publishHeartbeatPing() {
+    return this.tb.buildIngestEndpoint({
+      datasource: "heartbeat_ping__v0",
+      event: heartbeatPingEvent,
     });
   }
 

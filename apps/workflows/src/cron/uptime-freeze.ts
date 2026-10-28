@@ -23,6 +23,7 @@ const pipes: UptimeFreezePipes = {
   dns: tb.dnsStatus45d,
   icmp: tb.icmpStatus45d,
   grpc: tb.grpcStatus45d,
+  heartbeat: tb.heartbeatStatus45d,
 };
 
 export async function handleUptimeFreezeCron(c: Context) {

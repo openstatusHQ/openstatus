@@ -1,0 +1,176 @@
+import { db as defaultDb, eq } from "@openstatus/db";
+import {
+  monitor,
+  monitorHeartbeatState,
+  selectMonitorSchema,
+} from "@openstatus/db/src/schema";
+
+import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
+import { type DB, type ServiceContext, withTransaction } from "../context";
+import { ValidationError } from "../errors";
+import type { Monitor } from "../types";
+import {
+  generateHeartbeatToken,
+  getMonitorInWorkspace,
+  monitorAuditSnapshot,
+} from "./internal";
+import {
+  GetMonitorInput,
+  RegenerateHeartbeatTokenInput,
+  UpdateMonitorHeartbeatInput,
+} from "./schemas";
+
+export type HeartbeatState = {
+  lastPingAt: Date | null;
+  nextDueAt: Date | null;
+};
+
+export function heartbeatDeadline(
+  from: Date,
+  config: { heartbeatPeriod: number | null; heartbeatGrace: number | null },
+): Date {
+  const seconds = (config.heartbeatPeriod ?? 0) + (config.heartbeatGrace ?? 0);
+  return new Date(from.getTime() + seconds * 1000);
+}
+
+function assertHeartbeat(row: { jobType: string; id: number }) {
+  if (row.jobType !== "heartbeat") {
+    throw new ValidationError(`Monitor ${row.id} is not a heartbeat monitor`);
+  }
+}
+
+/**
+ * Re-anchor the deadline of a heartbeat that has been pinged at least once:
+ * on `last-ping` after a config change, on `now` when it is resumed.
+ * A heartbeat still waiting for its first ping keeps a NULL deadline.
+ */
+export async function syncHeartbeatDeadline(args: {
+  tx: DB;
+  row: {
+    id: number;
+    jobType: string;
+    heartbeatPeriod: number | null;
+    heartbeatGrace: number | null;
+  };
+  anchor: "last-ping" | "now";
+}): Promise<void> {
+  const { tx, row, anchor } = args;
+  if (row.jobType !== "heartbeat") return;
+
+  const state = await tx
+    .select()
+    .from(monitorHeartbeatState)
+    .where(eq(monitorHeartbeatState.monitorId, row.id))
+    .get();
+  if (!state?.lastPingAt) return;
+
+  const from = anchor === "now" ? new Date() : state.lastPingAt;
+  await tx
+    .update(monitorHeartbeatState)
+    .set({ nextDueAt: heartbeatDeadline(from, row) })
+    .where(eq(monitorHeartbeatState.monitorId, row.id));
+}
+
+export async function updateMonitorHeartbeat(args: {
+  ctx: ServiceContext;
+  input: UpdateMonitorHeartbeatInput;
+}): Promise<Monitor> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdateMonitorHeartbeatInput.parse(args.input);
+
+  return withTransaction(ctx, async (tx) => {
+    const existing = await getMonitorInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+    assertHeartbeat(existing);
+
+    const updated = await tx
+      .update(monitor)
+      .set({
+        heartbeatPeriod: input.heartbeatPeriod,
+        heartbeatGrace: input.heartbeatGrace,
+        updatedAt: new Date(),
+      })
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
+
+    await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
+
+    await emitAudit(tx, ctx, {
+      action: "monitor.update",
+      entityType: "monitor",
+      entityId: existing.id,
+      before: monitorAuditSnapshot(existing),
+      after: monitorAuditSnapshot(updated),
+    });
+
+    return selectMonitorSchema.parse(updated);
+  });
+}
+
+export async function regenerateHeartbeatToken(args: {
+  ctx: ServiceContext;
+  input: RegenerateHeartbeatTokenInput;
+}): Promise<Monitor> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = RegenerateHeartbeatTokenInput.parse(args.input);
+
+  return withTransaction(ctx, async (tx) => {
+    const existing = await getMonitorInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+    assertHeartbeat(existing);
+
+    const updated = await tx
+      .update(monitor)
+      .set({ heartbeatToken: generateHeartbeatToken(), updatedAt: new Date() })
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "monitor.update",
+      entityType: "monitor",
+      entityId: existing.id,
+      before: monitorAuditSnapshot(existing),
+      after: monitorAuditSnapshot(updated),
+    });
+
+    return selectMonitorSchema.parse(updated);
+  });
+}
+
+export async function getHeartbeatState(args: {
+  ctx: ServiceContext;
+  input: GetMonitorInput;
+}): Promise<HeartbeatState> {
+  const { ctx } = args;
+  const input = GetMonitorInput.parse(args.input);
+  const db = ctx.db ?? defaultDb;
+
+  const existing = await getMonitorInWorkspace({
+    tx: db,
+    id: input.id,
+    workspaceId: ctx.workspace.id,
+  });
+  assertHeartbeat(existing);
+
+  const state = await db
+    .select()
+    .from(monitorHeartbeatState)
+    .where(eq(monitorHeartbeatState.monitorId, existing.id))
+    .get();
+
+  return {
+    lastPingAt: state?.lastPingAt ?? null,
+    nextDueAt: state?.nextDueAt ?? null,
+  };
+}

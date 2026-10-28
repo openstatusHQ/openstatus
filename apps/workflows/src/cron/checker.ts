@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   lte,
+  ne,
   notInArray,
 } from "@openstatus/db";
 import {
@@ -139,6 +140,7 @@ export async function sendCheckerTasks(
       and(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
+        ne(monitor.jobType, "heartbeat"),
         notInArray(monitor.id, currentMaintenanceMonitors),
       ),
     )

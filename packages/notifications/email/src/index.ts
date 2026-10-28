@@ -1,7 +1,10 @@
 import { emailDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { EmailClient } from "@openstatus/emails/src/client";
-import type { NotificationContext } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
 import { regionDict } from "@openstatus/regions";
 
 import { env } from "../env";
@@ -33,7 +36,7 @@ export const sendAlert = async ({
     degradedAfter: monitor.degradedAfter ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
-    url: monitor.url,
+    url: monitorTarget(monitor),
     status: statusCode?.toString(),
     latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
@@ -70,7 +73,7 @@ export const sendRecovery = async ({
     degradedAfter: monitor.degradedAfter ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
-    url: monitor.url,
+    url: monitorTarget(monitor),
     status: statusCode?.toString(),
     latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",
@@ -106,7 +109,7 @@ export const sendDegraded = async ({
     degradedAfter: monitor.degradedAfter ?? undefined,
     firstSeen: incident?.startedAt?.toISOString(),
     to: config.data.email,
-    url: monitor.url,
+    url: monitorTarget(monitor),
     status: statusCode?.toString(),
     latency: latency ? `${latency} ms` : "N/A",
     region: region ? regionDict[region].location : "N/A",

@@ -718,15 +718,16 @@ export function getUptime({
   return `${floorPct(up / total)}%`;
 }
 
-const JOB_TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+const JOB_TYPES = ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const;
 
 // Tinybird pipes are split per job type: query every type that has monitors
 // in parallel, then key the rows by monitor id.
 export async function fetchByJobType<Row extends { monitorId: string }>(
   components: { monitor: { id: number; jobType: string } }[],
+  // `null` skips a type that has no pipe for this metric
   procedureFor: (
     type: (typeof JOB_TYPES)[number],
-  ) => (args: { monitorIds: string[] }) => Promise<{ data: Row[] }>,
+  ) => ((args: { monitorIds: string[] }) => Promise<{ data: Row[] }>) | null,
 ): Promise<Map<string, Row[]>> {
   const results = await Promise.all(
     JOB_TYPES.map((type) => {
@@ -734,7 +735,7 @@ export async function fetchByJobType<Row extends { monitorId: string }>(
         .filter((c) => c.monitor.jobType === type)
         .map((c) => c.monitor.id.toString());
       if (monitorIds.length === 0) return null;
-      return procedureFor(type)({ monitorIds });
+      return procedureFor(type)?.({ monitorIds }) ?? null;
     }),
   );
 
