@@ -88,6 +88,7 @@ export function Client() {
 
   const componentsVisible =
     !embed.mode || embed.sections.includes("components");
+    const bannerVisible = !embed.mode || embed.sections.includes("banner");
 
   const hasCustomConfig = pageInitial?.configuration
     ? pageInitial.configuration.type !== barType ||
@@ -95,14 +96,20 @@ export function Client() {
     : false;
 
   // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs.
-  // Also skip when `components` section is hidden in embed mode — this query only matters there.
-  const { data: pageWithCustomConfiguration } = useQuery({
+  // Fetch whenever the banner or the components need the refetched page.
+  const {
+        data: pageWithCustomConfiguration,
+        error: customPageError,
+        isFetching: isCustomPageFetching,
+        isSuccess: isCustomPageSuccess,
+  } = useQuery({
     ...trpc.statusPage.get.queryOptions({
       slug: domain,
       cardType,
       barType,
     }),
-    enabled: !!domain && hasCustomConfig && componentsVisible,
+    enabled:
+            !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
   });
 
   // NOTE: we can prefetch that to avoid loading state
@@ -156,12 +163,15 @@ export function Client() {
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
-  // Banner events follow the refetched page for the selected status source,
-    // not the initial fetch: Reports only excludes monitor incidents server-side.
-    // A disabled query keeps stale data, so the initial page is used when unset.
+  // Banner events use the refetched page only after a successful,
+    // non-pending fetch for the selected source; otherwise the initial page.
     const bannerEventsSource =
-          hasCustomConfig && pageWithCustomConfiguration
-            ? pageWithCustomConfiguration
+          hasCustomConfig &&
+          isCustomPageSuccess &&
+          !isCustomPageFetching &&
+          !customPageError &&
+          pageWithCustomConfiguration
+        ? pageWithCustomConfiguration
             : pageInitial;
   const events = useMemo(() => {
     let hasIncident = false;
