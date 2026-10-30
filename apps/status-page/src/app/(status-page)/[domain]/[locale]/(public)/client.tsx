@@ -99,8 +99,6 @@ export function Client() {
   // Fetch whenever the banner or the components need the refetched page.
   const {
     data: pageWithCustomConfiguration,
-    error: customPageError,
-    isFetching: isCustomPageFetching,
     isSuccess: isCustomPageSuccess,
   } = useQuery({
     ...trpc.statusPage.get.queryOptions({
@@ -163,16 +161,11 @@ export function Client() {
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
-  // Banner events use the refetched page only after a successful,
-  // non-pending fetch for the selected source; otherwise the initial page.
+  // Banner events follow the refetched page once it succeeds.
   const bannerEventsSource =
-    hasCustomConfig &&
-    isCustomPageSuccess &&
-    !isCustomPageFetching &&
-    !customPageError &&
-    pageWithCustomConfiguration
-      ? pageWithCustomConfiguration
-      : pageInitial;
+      hasCustomConfig && isCustomPageSuccess && pageWithCustomConfiguration
+        ? pageWithCustomConfiguration
+        : pageInitial;
   const events = useMemo(() => {
     let hasIncident = false;
     return (
