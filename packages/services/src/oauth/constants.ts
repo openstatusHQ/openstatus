@@ -11,9 +11,8 @@ export const SESSION_TTL_MS = 30 * 60 * 1000;
 export const CODE_TTL_MS = 10 * 60 * 1000;
 export const CLIENT_PRUNE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
-// What a client gets when it sends no `scope`: the setup preset, since the
-// setup tools are the reason to connect (plan open decision 2).
-export const DEFAULT_SCOPE: SettableScope[] = [...scopePresets.setup];
+// What a client gets when it sends no `scope`; the consent screen can narrow it.
+export const DEFAULT_SCOPE: SettableScope[] = [...scopePresets.write];
 
 export const GRANT_TYPES = ["authorization_code", "refresh_token"] as const;
 export const RESPONSE_TYPES = ["code"] as const;

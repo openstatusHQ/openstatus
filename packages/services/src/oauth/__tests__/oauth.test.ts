@@ -212,7 +212,7 @@ describe("registerClient", () => {
 });
 
 describe("createSession", () => {
-  test("persists the request and defaults scope to the setup preset", async () => {
+  test("persists the request and defaults scope to the write preset", async () => {
     await withTestTransaction(async (tx) => {
       const client = await register(tx);
       const { id } = await start(tx, client.client_id, { scope: undefined });
@@ -221,7 +221,7 @@ describe("createSession", () => {
         .from(oauthSession)
         .where(eq(oauthSession.id, id))
         .get();
-      expect(row?.scope).toEqual([...scopePresets.setup]);
+      expect(row?.scope).toEqual([...scopePresets.write]);
       expect(row?.state).toBe("state-123");
       expect(row?.codeChallengeMethod).toBe("S256");
       expect(row?.decidedAt).toBeNull();
@@ -572,7 +572,7 @@ describe("decideSession", () => {
     });
   });
 
-  test("an absent scope parameter grants the setup preset", async () => {
+  test("an absent scope parameter grants the write preset", async () => {
     await withTestTransaction(async (tx) => {
       const client = await register(tx);
       const { id } = await start(tx, client.client_id, { scope: undefined });
@@ -586,11 +586,9 @@ describe("decideSession", () => {
         },
         db: tx,
       });
-      expect(tokens.scope).toBe(
-        "monitors:write pages:write incidents:write notifications:read",
-      );
+      expect(tokens.scope).toBe("write");
       const verified = await verifyAccessToken(tokens.access_token, { db: tx });
-      expect(verified?.scopes).toEqual([...scopePresets.setup]);
+      expect(verified?.scopes).toEqual([...scopePresets.write]);
     });
   });
 

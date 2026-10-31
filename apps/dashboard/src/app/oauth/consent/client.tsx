@@ -31,18 +31,6 @@ import { searchParamsParsers } from "./search-params";
 
 const presetOptions: ScopePresetOption[] = [
   {
-    id: "setup",
-    label: "Full setup",
-    description:
-      "Create and edit monitors, status pages and status reports. Reads notification channels.",
-  },
-  {
-    id: "incidents",
-    label: "Incident comms",
-    description:
-      "Publish status reports, post updates and schedule maintenance. Reads monitors and pages.",
-  },
-  {
     id: "write",
     label: "Read & write",
     description: "Create and update monitors, status reports and more.",
@@ -86,12 +74,10 @@ function ConsentForm({
   const [workspaceId, setWorkspaceId] = useState<number | null>(
     workspaces[0]?.id ?? null,
   );
-  // Default to Full setup when the request allows it, else exactly what was asked.
-  const [scope, setScope] = useState<SettableScope[]>(() =>
-    coversAll(requestedScope, scopePresets.setup)
-      ? [...scopePresets.setup]
-      : [...requestedScope],
-  );
+  // Default to the widest preset the request allows, else exactly what was asked.
+  const [scope, setScope] = useState<SettableScope[]>(() => [
+    ...(presets[0] ? scopePresets[presets[0].id] : requestedScope),
+  ]);
 
   const decide = useMutation(
     trpc.oauth.decide.mutationOptions({
@@ -208,7 +194,7 @@ function ConsentForm({
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         You can revoke this connection any time from{" "}
-        <code>Settings / Integrations</code>.
+        <code>{"Settings > Integrations"}</code>.
       </p>
     </div>
   );

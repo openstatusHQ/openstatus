@@ -363,10 +363,8 @@ export default function Page() {
           <SectionDescription>
             Workspace tools need the read or write scope of their resource;
             workspace and content tools work with any credential, audit log
-            tools need Read only or Full access. The{" "}
-            <strong>Incident comms</strong> preset covers status reports,
-            updates and maintenance; <strong>Full setup</strong> is what lets an
-            agent create monitors, status pages and components. Audit log tools
+            tools need Read only or Read & write. Use <strong>Custom</strong>{" "}
+            to grant write access to some resources only. Audit log tools
             require the audit-log feature on your plan. Content tools search
             public openstatus.dev pages and carry no workspace data.
           </SectionDescription>

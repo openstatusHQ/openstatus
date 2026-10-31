@@ -10,8 +10,6 @@ import {
 export const presetLabels = {
   read: "Read only",
   write: "Read & write",
-  incidents: "Incident comms",
-  setup: "Full setup",
 } as const satisfies Record<ScopePreset, string>;
 
 export const groupLabels = {

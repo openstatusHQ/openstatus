@@ -95,9 +95,8 @@ Your browser opens the openstatus consent screen:
 - **Workspace** — the workspace this connection can reach. Pick one per connection.
 - **Access** — a preset, or **Custom** for one `read` / `write` choice per resource group:
   - **Read only** lets the agent list status pages, reports, monitors, and maintenance windows but change nothing.
-  - **Incident comms** adds status reports, updates, incidents, and maintenance windows; monitors, pages, and notification channels stay read-only.
-  - **Full setup** adds creating and changing monitors, status pages, components and component groups. Preselected when the client asks for write access.
-  - **Read & write** is every scope.
+  - **Read & write** is every scope. Preselected when the client asks for write access.
+  - **Custom** lets you give write access to some resources only, for example incidents but not monitors.
 
   You can only narrow what the client requested. Scopes are listed in the [MCP server reference](/docs/reference/mcp-server#scopes).
 
@@ -107,7 +106,7 @@ Click **Approve**. The browser hands a code back to the agent, which exchanges i
 
 ## 3. Verify the connection
 
-Ask your agent to list its MCP servers — `/mcp` in Claude Code and Codex, `opencode mcp list`, the MCP pane in Cursor's settings, the tool picker in Claude Desktop and ChatGPT. `openstatus` should show as connected, with the read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `list_private_locations`, …), the incident tools if you granted **Incident comms** (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …), and the setup tools if you granted **Full setup** (`create_monitor`, `update_monitor`, `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group`, `update_component_group`). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
+Ask your agent to list its MCP servers — `/mcp` in Claude Code and Codex, `opencode mcp list`, the MCP pane in Cursor's settings, the tool picker in Claude Desktop and ChatGPT. `openstatus` should show as connected, with the read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `list_private_locations`, …), the incident tools with `incidents:write` (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …), and the setup tools with `monitors:write` and `pages:write` (`create_monitor`, `update_monitor`, `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group`, `update_component_group`). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
 
 If the server shows as disconnected, see [Troubleshooting](#troubleshooting) below.
 
@@ -131,7 +130,7 @@ If you granted write access, try drafting an incident — the agent shows you th
 
 ### Set up monitoring from the chat
 
-With **Full setup**, one prompt creates the monitor, the page, and the component:
+With **Read & write**, one prompt creates the monitor, the page, and the component:
 
 ```
 > set up monitoring and a status page for api.acme.com
@@ -238,7 +237,7 @@ CLI agents print the authorization URL in the terminal. Copy it into a browser o
 
 ### "Tool not available" when asking the agent to create something
 
-The server only lists the tools your scopes allow. A **Read only** connection sees the read tools; **Incident comms** adds the status report, incident, and maintenance tools, `update_maintenance` included; **Full setup** enables the setup tools: `create_monitor` and `update_monitor` need `monitors:write`, `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group` need `pages:write`, so a Custom credential can hold either half. Connections approved before presets existed hold the Incident comms scopes, so the setup tools are missing until you sign in again and pick **Full setup**, or issue an API key with those scopes.
+The server only lists the tools your scopes allow. A **Read only** connection sees the read tools; `incidents:write` adds the status report, incident, and maintenance tools, `update_maintenance` included; the setup tools are split by group: `create_monitor` and `update_monitor` need `monitors:write`, `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group` need `pages:write`, so a Custom credential can hold either half. Connections approved before per-resource scopes hold incident-only write scopes, so the setup tools are missing until you sign in again and pick **Read & write**, or issue an API key with those scopes.
 
 ### Audit log shows `actor_type = 'mcp'` for changes I made manually
 

@@ -41,9 +41,7 @@ Matching lives in one place, `packages/services/src/auth/matches-scope.ts`.
 | Preset | Scopes | Offered on |
 | --- | --- | --- |
 | Read only | `read` | API key form, consent screen |
-| Incident comms | `incidents:write`, `monitors:read`, `pages:read`, `notifications:read` | consent screen |
-| Full setup | `monitors:write`, `pages:write`, `incidents:write`, `notifications:read` | consent screen (default when a client sends no `scope`) |
-| Read & write | `write` | API key form, consent screen (only when the client requested `write`) |
+| Read & write | `write` | API key form, consent screen (only when the client requested `write`; default when a client sends no `scope`) |
 | Custom | any mix | both |
 
 `scopePresets` in `constants.ts` is the source; the consent screen and the API

@@ -61,25 +61,9 @@ export function isReadScope(scope: RequiredScope): boolean {
   return scope === "read" || scope === "any" || scope.endsWith(":read");
 }
 
-/**
- * Human-readable presets. `incidents` is what the first consent screen
- * promised for "Read & write"; `setup` is what an agent needs to configure a
- * workspace. Subscribers and admin are in neither.
- */
+/** Presets offered next to Custom on the consent screen and the API key form. */
 export const scopePresets = {
   read: ["read"],
-  incidents: [
-    "incidents:write",
-    "monitors:read",
-    "pages:read",
-    "notifications:read",
-  ],
-  setup: [
-    "monitors:write",
-    "pages:write",
-    "incidents:write",
-    "notifications:read",
-  ],
   write: ["write"],
 } as const satisfies Record<string, readonly SettableScope[]>;
 export type ScopePreset = keyof typeof scopePresets;

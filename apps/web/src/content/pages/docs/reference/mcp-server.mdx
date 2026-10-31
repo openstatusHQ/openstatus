@@ -68,13 +68,11 @@ The consent screen offers presets, plus a **Custom** grid with one row per group
 | Preset | Scopes |
 |---|---|
 | Read only | `read` |
-| Incident comms | `incidents:write`, `monitors:read`, `pages:read`, `notifications:read` |
-| Full setup | `monitors:write`, `pages:write`, `incidents:write`, `notifications:read` |
 | Read & write | `write` |
 
-A client may request any of the twelve values in a space-separated `scope` string; what you grant can only be narrower than what it asked for, and a request without `scope` means Full setup. The API key form offers Read only, Read & write and Custom. On a key the scopes are set at creation and **immutable**: to change them, revoke the key and issue a new one.
+A client may request any of the twelve values in a space-separated `scope` string; what you grant can only be narrower than what it asked for, and a request without `scope` means Read & write. The API key form offers the same three choices. On a key the scopes are set at creation and **immutable**: to change them, revoke the key and issue a new one.
 
-The server only advertises tools the credential can call. Read only sees `list_*` and `get_*`; Incident comms adds the status report, incident and maintenance tools, `update_maintenance` included; Full setup adds the setup tools: `create_monitor` and `update_monitor` (which also pauses a monitor and links notification channels), `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group`. The `tools/list` filter is the visible UX, the service-layer scope check is the boundary, so a misconfigured client can't accidentally mutate. The [content tools](#content) and `get_workspace` work with any scope; the audit tools need `read` or `write`.
+The server only advertises tools the credential can call. Read only sees `list_*` and `get_*`; `incidents:write` adds the status report, incident and maintenance tools, `update_maintenance` included; `monitors:write` adds `create_monitor` and `update_monitor` (which also pauses a monitor and links notification channels); `pages:write` adds `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group`. Read & write gets all of them. The `tools/list` filter is the visible UX, the service-layer scope check is the boundary, so a misconfigured client can't accidentally mutate. The [content tools](#content) and `get_workspace` work with any scope; the audit tools need `read` or `write`.
 
 ## Tools
 
@@ -341,7 +339,7 @@ For client authors. openstatus is an OAuth 2.1 authorization server for the `/mc
 | `POST /oauth/token` | `authorization_code` and `refresh_token` grants; form or JSON body |
 | `POST /oauth/revoke` | Token revocation (RFC 7009); accepts either token of a grant |
 
-- `response_type=code` with PKCE `S256` is required. `scope` is a space-separated list of the twelve values in [Scopes](#scopes) (`monitors:write pages:read …`, or the umbrellas `read` and `write`). An authorization request without `scope` asks for the Full setup preset; the granted scope is never wider than the request.
+- `response_type=code` with PKCE `S256` is required. `scope` is a space-separated list of the twelve values in [Scopes](#scopes) (`monitors:write pages:read …`, or the umbrellas `read` and `write`). An authorization request without `scope` asks for `write`; the granted scope is never wider than the request.
 - Clients are public (`token_endpoint_auth_method: none`). There are no client secrets.
 - Dynamic registration only accepts redirect URIs on loopback hosts, `https` URLs on `openstatus.dev`, `claude.ai`, `chatgpt.com`, `cursor.com` and their subdomains, or the `cursor://`, `vscode://`, and `vscode-insiders://` schemes. Loopback redirects match on everything but the port (RFC 8252).
 - Any other client can skip registration and use a **Client ID Metadata Document**: pass a public `https` URL with a path as `client_id`. The document is fetched on every authorization request, must echo its own URL as `client_id`, and its `redirect_uris` are used as-is. Domain ownership replaces the allowlist.

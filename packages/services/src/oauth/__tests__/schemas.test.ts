@@ -13,17 +13,17 @@ import {
 } from "../schemas";
 
 describe("parseScopeParam", () => {
-  test("defaults to the setup preset when absent or blank", () => {
-    expect(DEFAULT_SCOPE).toEqual(scopePresets.setup);
+  test("defaults to the write preset when absent or blank", () => {
+    expect(DEFAULT_SCOPE).toEqual(scopePresets.write);
     expect(parseScopeParam(undefined)).toEqual({
-      scopes: [...scopePresets.setup],
+      scopes: [...scopePresets.write],
       invalid: [],
     });
     expect(parseScopeParam("")).toEqual({
-      scopes: [...scopePresets.setup],
+      scopes: [...scopePresets.write],
       invalid: [],
     });
-    expect(parseScopeParam("   ").scopes).toEqual([...scopePresets.setup]);
+    expect(parseScopeParam("   ").scopes).toEqual([...scopePresets.write]);
   });
 
   test("accepts a mixed string in canonical order", () => {
@@ -91,7 +91,14 @@ describe("normalizeScopes / formatScope", () => {
     expect(
       formatScope(["pages:read", "monitors:write", "incidents:write"]),
     ).toBe("monitors:write pages:read incidents:write");
-    expect(formatScope(scopePresets.setup)).toBe(
+    expect(
+      formatScope([
+        "monitors:write",
+        "pages:write",
+        "incidents:write",
+        "notifications:read",
+      ]),
+    ).toBe(
       "monitors:write pages:write incidents:write notifications:read",
     );
   });
