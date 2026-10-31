@@ -63,7 +63,7 @@ describe("updateStatusPageChanges", () => {
         slug: "acme",
         title: "Acme",
         url: "https://acme.openstatus.dev",
-        dashboardUrl: "http://localhost:3001/status-pages/3/status-reports",
+        dashboardUrl: "http://localhost:3001/status-pages/3/components",
       }),
     ).toEqual([
       { field: "pageId", after: 3 },
@@ -71,7 +71,7 @@ describe("updateStatusPageChanges", () => {
       { field: "url", after: "https://acme.openstatus.dev" },
       {
         field: "dashboardUrl",
-        after: "http://localhost:3001/status-pages/3/status-reports",
+        after: "http://localhost:3001/status-pages/3/components",
       },
     ]);
   });

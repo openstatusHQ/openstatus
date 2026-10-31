@@ -153,7 +153,7 @@ The agent calls `get_monitor`, picks the channel id from `list_notifications`, a
 
 The agent calls `list_page_components`, whose `groups` array shows which groups already exist, calls `create_component_group` for each missing one, then moves every component with `update_page_component({ componentId, groupId })`. `groupId: null` takes a component back out of its group.
 
-Removing a monitor, page, component, group or maintenance window stays a dashboard action; only status report and maintenance timeline entries can be deleted from chat.
+Removing a monitor, page, component, group or maintenance window stays a dashboard action; from chat you can only delete a status report update or a maintenance update, and never the last update of a maintenance window.
 
 ## Using an API key instead
 

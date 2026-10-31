@@ -816,7 +816,8 @@ export const updateMonitorTool: AgentTool<
             ]
           : []),
         ...(input.body !== undefined
-          ? [{ label: "Body", value: input.body || "(cleared)" }]
+          ? // Bodies can carry secrets and Slack caps card size; never echo them.
+            [{ label: "Body", value: input.body ? "(updated)" : "(cleared)" }]
           : []),
         ...(input.assertions !== undefined
           ? [

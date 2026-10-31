@@ -10,6 +10,8 @@
  * opens the db client, so the server `.env` must be loaded.
  */
 
+import { isDeepStrictEqual } from "node:util";
+
 import { agentToolList } from "@openstatus/services/agent-tools";
 import { gateway, generateText, stepCountIs, tool } from "ai";
 
@@ -105,7 +107,7 @@ async function runCase(c: EvalCase): Promise<CaseResult> {
     }
     if (c.argEquals) {
       for (const [key, value] of Object.entries(c.argEquals)) {
-        if (JSON.stringify(args[key]) !== JSON.stringify(value)) {
+        if (!(key in args) || !isDeepStrictEqual(args[key], value)) {
           return {
             case: c,
             pass: false,
