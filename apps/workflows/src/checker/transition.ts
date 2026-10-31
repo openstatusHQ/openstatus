@@ -17,6 +17,7 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
+import { statusRegions } from "@openstatus/utils";
 
 import { checkerAudit } from "../utils/audit-log";
 
@@ -261,7 +262,7 @@ export async function evaluateTransition(
   const parsed = selectMonitorSchema.safeParse(monitorRows[0]);
   if (!parsed.success) return { kind: "monitor-missing" };
 
-  const regions = parsed.data.regions;
+  const regions = statusRegions(parsed.data);
   const regionsJson = JSON.stringify(regions);
   const regionCount = regions.length;
   const configuredRegions = new Set<string>(regions);
