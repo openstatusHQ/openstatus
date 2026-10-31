@@ -40,7 +40,7 @@ export async function triggerMonitorRun(args: {
   input: TriggerMonitorInput;
 }): Promise<TriggerMonitorResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = TriggerMonitorInput.parse(args.input);
   const db = getReadDb(ctx);
 

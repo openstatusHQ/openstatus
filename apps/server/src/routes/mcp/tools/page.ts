@@ -4,6 +4,8 @@ import type {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 import {
+  addPageComponentTool,
+  createStatusPageTool,
   listPageComponentsTool,
   listStatusPagesTool,
 } from "@openstatus/services/agent-tools";
@@ -24,5 +26,7 @@ export function registerPageTools(
   return registerRegistryTools(server, ctx, [
     listStatusPagesTool,
     listPageComponentsTool,
+    createStatusPageTool,
+    addPageComponentTool,
   ]);
 }

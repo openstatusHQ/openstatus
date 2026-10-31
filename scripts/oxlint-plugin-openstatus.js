@@ -166,10 +166,132 @@ const noDbBarrelInClient = {
   },
 };
 
+const LEGACY_SCOPES = new Set(["read", "write"]);
+
+/**
+ * Verbs name their resource group; the bare umbrellas are what credentials
+ * hold, never what a verb requires. Scoped to packages/services/src minus
+ * src/auth in oxlint.config.ts.
+ */
+const servicesNoLegacyScope = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        'requireScope must name a group scope, not the legacy "read"/"write" umbrella.',
+    },
+    messages: {
+      legacy:
+        'requireScope(ctx, "{{scope}}") is the legacy umbrella. Require the group instead: `<group>:read` / `<group>:write` for monitors, pages, incidents, notifications, subscribers, or `admin` — see packages/services/AGENTS.md.',
+    },
+  },
+  create(context) {
+    return {
+      CallExpression(node) {
+        if (calleeName(node) !== "requireScope") return;
+        const arg = node.arguments[1];
+        if (!arg || arg.type !== "Literal") return;
+        if (!LEGACY_SCOPES.has(arg.value)) return;
+        context.report({
+          node: arg,
+          messageId: "legacy",
+          data: { scope: arg.value },
+        });
+      },
+    };
+  },
+};
+
+const READ_VERB_PREFIX = /^(list|get|search|stream|preview)[A-Z]/;
+
+/** `args: { ctx: ServiceContext; ... }`, or a destructured `{ ctx }`. */
+function takesServiceContext(param) {
+  if (!param) return false;
+  if (param.type === "ObjectPattern") {
+    return param.properties.some(
+      (p) =>
+        p.type === "Property" &&
+        p.key?.type === "Identifier" &&
+        p.key.name === "ctx",
+    );
+  }
+  if (param.type !== "Identifier" || param.name !== "args") return false;
+  const annotation = param.typeAnnotation?.typeAnnotation;
+  if (annotation?.type !== "TSTypeLiteral") return false;
+  return annotation.members.some(
+    (m) =>
+      m.type === "TSPropertySignature" &&
+      m.key?.type === "Identifier" &&
+      m.key.name === "ctx" &&
+      m.typeAnnotation?.typeAnnotation?.type === "TSTypeReference" &&
+      m.typeAnnotation.typeAnnotation.typeName?.type === "Identifier" &&
+      m.typeAnnotation.typeAnnotation.typeName.name === "ServiceContext",
+  );
+}
+
+/** Direct statements of the function body only: a nested helper's call does not count. */
+function bodyCallsRequireScope(fn) {
+  if (fn.body?.type !== "BlockStatement") return false;
+  return fn.body.body.some(
+    (statement) =>
+      statement.type === "ExpressionStatement" &&
+      statement.expression?.type === "CallExpression" &&
+      calleeName(statement.expression) === "requireScope",
+  );
+}
+
+/**
+ * Read verbs have no transaction to key off, so this one keys off shape: an
+ * exported list/get/search/stream/preview function taking `ctx: ServiceContext`.
+ */
+const servicesReadVerbsRequireScope = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "An exported read verb taking ctx: ServiceContext must call requireScope.",
+    },
+    messages: {
+      missing:
+        "`{{name}}` reads on behalf of an actor but never calls `requireScope`. Read verbs require `<group>:read` as their first line — see packages/services/AGENTS.md. If this export is not an actor-facing verb, disable this rule inline with the reason above it.",
+    },
+  },
+  create(context) {
+    function check(fn, name) {
+      if (!name || !READ_VERB_PREFIX.test(name)) return;
+      if (!takesServiceContext(fn.params[0])) return;
+      if (bodyCallsRequireScope(fn)) return;
+      context.report({ node: fn, messageId: "missing", data: { name } });
+    }
+    return {
+      ExportNamedDeclaration(node) {
+        const decl = node.declaration;
+        if (!decl) return;
+        if (decl.type === "FunctionDeclaration") {
+          check(decl, decl.id?.name);
+          return;
+        }
+        if (decl.type !== "VariableDeclaration") return;
+        for (const d of decl.declarations) {
+          if (d.id?.type !== "Identifier" || !d.init) continue;
+          if (
+            d.init.type === "ArrowFunctionExpression" ||
+            d.init.type === "FunctionExpression"
+          ) {
+            check(d.init, d.id.name);
+          }
+        }
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: "openstatus" },
   rules: {
     "services-mutation-guards": servicesMutationGuards,
+    "services-no-legacy-scope": servicesNoLegacyScope,
+    "services-read-verbs-require-scope": servicesReadVerbsRequireScope,
     "no-db-barrel-in-client": noDbBarrelInClient,
   },
 };

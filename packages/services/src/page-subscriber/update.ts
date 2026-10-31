@@ -34,7 +34,7 @@ export async function updatePageSubscriberChannel(args: {
   input: UpdatePageSubscriberChannelInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "subscribers:write");
   const input = UpdatePageSubscriberChannelInput.parse(args.input);
 
   // String-only check (no DNS resolution) — a public name pointing at a

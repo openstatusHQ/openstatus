@@ -1,5 +1,6 @@
 "use client";
 
+import type { SettableScope } from "@openstatus/db/src/schema/api-keys/constants";
 import { Check, Copy } from "@openstatus/icons";
 import {
   AlertDialog,
@@ -24,14 +25,14 @@ import { useState } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-import { ApiKeyForm, type FormValues } from "./form";
+import { ApiKeyForm } from "./form";
 
 export function CreateApiKeyDialog({
   children,
-  defaultScope = "read",
+  defaultScopes,
 }: {
   children: React.ReactNode;
-  defaultScope?: FormValues["scope"];
+  defaultScopes?: SettableScope[];
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -65,7 +66,7 @@ export function CreateApiKeyDialog({
             </DialogDescription>
           </DialogHeader>
           <ApiKeyForm
-            defaultValues={{ scope: defaultScope }}
+            defaultValues={{ scopes: defaultScopes }}
             submitDisabled={!workspace}
             onCancel={() => setOpen(false)}
             onSubmit={async (values) => {
@@ -75,7 +76,7 @@ export function CreateApiKeyDialog({
                 expiresAt: values.expiresAt
                   ? new Date(values.expiresAt)
                   : undefined,
-                scopes: [values.scope],
+                scopes: values.scopes,
               });
               if (!data) {
                 throw new Error("Failed to create API key");

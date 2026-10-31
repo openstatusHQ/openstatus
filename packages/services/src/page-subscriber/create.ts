@@ -54,7 +54,7 @@ export async function createPageSubscriber(args: {
   input: CreatePageSubscriberInput;
 }): Promise<CreatePageSubscriberResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "subscribers:write");
   const input = CreatePageSubscriberInput.parse(args.input);
   const componentIds = input.componentIds ?? [];
 

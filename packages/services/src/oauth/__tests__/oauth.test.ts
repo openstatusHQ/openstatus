@@ -8,6 +8,10 @@ import {
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
 import {
+  type SettableScope,
+  scopePresets,
+} from "@openstatus/db/src/schema/api-keys/constants";
+import {
   addUserToWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
@@ -31,7 +35,7 @@ import {
 import { removeMemberInWorkspace } from "../../member/internal";
 import type { Workspace } from "../../types";
 import { deleteAccount } from "../../user/delete";
-import { pkceChallenge } from "../crypto";
+import { pkceChallenge, randomBase64Url, sha256Hex } from "../crypto";
 import { OAuthError } from "../errors";
 import {
   createSession,
@@ -104,7 +108,7 @@ async function consent(
   sessionId: string,
   userId: number,
   workspaceId: number,
-  scope?: ("read" | "write")[],
+  scope?: SettableScope[],
   now?: Date,
 ) {
   const { redirectUrl } = await decideSession({
@@ -121,7 +125,7 @@ async function mintGrant(
     clientId: string;
     userId: number;
     workspaceId: number;
-    scope?: ("read" | "write")[];
+    scope?: SettableScope[];
     now?: Date;
   },
 ) {
@@ -208,7 +212,7 @@ describe("registerClient", () => {
 });
 
 describe("createSession", () => {
-  test("persists the request and defaults scope to write", async () => {
+  test("persists the request and defaults scope to the setup preset", async () => {
     await withTestTransaction(async (tx) => {
       const client = await register(tx);
       const { id } = await start(tx, client.client_id, { scope: undefined });
@@ -217,7 +221,7 @@ describe("createSession", () => {
         .from(oauthSession)
         .where(eq(oauthSession.id, id))
         .get();
-      expect(row?.scope).toEqual(["write"]);
+      expect(row?.scope).toEqual([...scopePresets.setup]);
       expect(row?.state).toBe("state-123");
       expect(row?.codeChallengeMethod).toBe("S256");
       expect(row?.decidedAt).toBeNull();
@@ -248,6 +252,7 @@ describe("createSession", () => {
         [{ code_challenge: undefined }, "invalid_request"],
         [{ code_challenge_method: "plain" }, "invalid_request"],
         [{ scope: "read admin" }, "invalid_scope"],
+        [{ scope: "monitors:read bogus" }, "invalid_scope"],
         [
           {
             resource: "https://elsewhere/mcp",
@@ -265,6 +270,27 @@ describe("createSession", () => {
         expect(err.redirectUri).toBe(REDIRECT);
         expect(err.state).toBe("state-123");
       }
+    });
+  });
+
+  test("stores a mixed scope string in its minimal canonical form", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const { id } = await start(tx, client.client_id, {
+        scope: "pages:read incidents:write monitors:read monitors:write",
+      });
+      const row = await tx
+        .select()
+        .from(oauthSession)
+        .where(eq(oauthSession.id, id))
+        .get();
+      expect(row?.scope).toEqual([
+        "monitors:write",
+        "pages:read",
+        "incidents:write",
+      ]);
+      const pending = await getSession({ input: { id }, db: tx });
+      expect(pending.scope).toEqual(row?.scope);
     });
   });
 
@@ -493,6 +519,78 @@ describe("decideSession", () => {
           db: tx,
         }),
       ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  test("a write request can be narrowed to any mix of group scopes", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const { id } = await start(tx, client.client_id, { scope: "write" });
+      const code = await consent(tx, id, ownerId, team.id, [
+        "incidents:write",
+        "monitors:read",
+      ]);
+      const tokens = await exchangeCode({
+        input: {
+          clientId: client.client_id,
+          code,
+          codeVerifier: VERIFIER,
+          redirectUri: REDIRECT,
+        },
+        db: tx,
+      });
+      expect(tokens.scope).toBe("monitors:read incidents:write");
+      const verified = await verifyAccessToken(tokens.access_token, { db: tx });
+      expect(verified?.scopes).toEqual(["monitors:read", "incidents:write"]);
+    });
+  });
+
+  test("granted scopes must each be covered by the requested set", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const cases: [string, SettableScope[]][] = [
+        ["monitors:read", ["monitors:write"]],
+        ["incidents:write pages:read", ["read"]],
+        ["incidents:write pages:read", ["incidents:write", "monitors:read"]],
+        ["monitors:write", ["write"]],
+      ];
+      for (const [requested, granted] of cases) {
+        const { id } = await start(tx, client.client_id, { scope: requested });
+        await expect(
+          decideSession({
+            input: {
+              id,
+              approved: true,
+              userId: ownerId,
+              workspaceId: team.id,
+              scope: granted,
+            },
+            db: tx,
+          }),
+        ).rejects.toBeInstanceOf(ValidationError);
+      }
+    });
+  });
+
+  test("an absent scope parameter grants the setup preset", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const { id } = await start(tx, client.client_id, { scope: undefined });
+      const code = await consent(tx, id, ownerId, team.id);
+      const tokens = await exchangeCode({
+        input: {
+          clientId: client.client_id,
+          code,
+          codeVerifier: VERIFIER,
+          redirectUri: REDIRECT,
+        },
+        db: tx,
+      });
+      expect(tokens.scope).toBe(
+        "monitors:write pages:write incidents:write notifications:read",
+      );
+      const verified = await verifyAccessToken(tokens.access_token, { db: tx });
+      expect(verified?.scopes).toEqual([...scopePresets.setup]);
     });
   });
 
@@ -865,6 +963,31 @@ describe("verifyAccessToken", () => {
           }),
         ).toBeNull();
       }
+    });
+  });
+
+  test("a legacy grant row holding write still verifies as write", async () => {
+    await withTestTransaction(async (tx) => {
+      const client = await register(tx);
+      const accessToken = `os_oat_${randomBase64Url(32)}`;
+      const later = new Date(Date.now() + 60 * MINUTE);
+      await tx.insert(oauthGrant).values({
+        clientId: client.client_id,
+        userId: ownerId,
+        workspaceId: team.id,
+        scope: ["write"],
+        accessTokenHash: await sha256Hex(accessToken),
+        accessTokenExpiresAt: later,
+        refreshTokenHash: await sha256Hex(randomBase64Url(32)),
+        refreshTokenExpiresAt: later,
+      });
+      const verified = await verifyAccessToken(accessToken, { db: tx });
+      expect(verified?.scopes).toEqual(["write"]);
+      const ctx = { ...makeUserCtx(team, { userId: ownerId }), db: tx };
+      const listed = await listGrants({ ctx });
+      expect(listed.find((g) => g.id === verified?.grantId)?.scope).toEqual([
+        "write",
+      ]);
     });
   });
 
@@ -1262,6 +1385,22 @@ describe("listGrants / revokeGrant", () => {
       };
       await expect(
         revokeGrant({ ctx: readOnlyCtx, input: { grantId: 1 } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx: ServiceContext = {
+        ...makeApiKeyCtx(team, {
+          keyId: "k-write",
+          userId: ownerId,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        revokeGrant({ ctx: writeKeyCtx, input: { grantId: 1 } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });

@@ -14,6 +14,9 @@ const webhookHeaders = z
 export const ListPageSubscribersInput = z.object({
   pageId: z.number().int().positive(),
   order: z.enum(["asc", "desc"]).optional(),
+  includeUnsubscribed: z.boolean().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().min(0).optional(),
 });
 export type ListPageSubscribersInput = z.infer<typeof ListPageSubscribersInput>;
 

@@ -6,8 +6,8 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
-import { NotFoundError } from "../errors";
-import type { AuditLogListItem } from "./list";
+import { ForbiddenError, NotFoundError } from "../errors";
+import { type AuditLogListItem, canReadSubscriberAudit } from "./list";
 
 /** Soft-deleted actors come back with `user: null` (same join shape as listAuditLogs). */
 export async function getAuditLog(args: {
@@ -41,6 +41,12 @@ export async function getAuditLog(args: {
     .get();
 
   if (!row) throw new NotFoundError("audit_log", input.id);
+  if (
+    row.auditLog.entityType === "page_subscriber" &&
+    !canReadSubscriberAudit(ctx)
+  ) {
+    throw new ForbiddenError("API key lacks required scope: subscribers:read");
+  }
 
   return {
     ...selectAuditLogSchema.parse(row.auditLog),

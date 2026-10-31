@@ -4,9 +4,9 @@ import { agentTools, buildAgentSystemPrompt } from "../index";
 
 describe("maintenance update agent tools", () => {
   test("registers write-scoped CRUD tools", () => {
-    expect(agentTools.add_maintenance_update.scope).toBe("write");
-    expect(agentTools.update_maintenance_update.scope).toBe("write");
-    expect(agentTools.delete_maintenance_update.scope).toBe("write");
+    expect(agentTools.add_maintenance_update.scope).toBe("incidents:write");
+    expect(agentTools.update_maintenance_update.scope).toBe("incidents:write");
+    expect(agentTools.delete_maintenance_update.scope).toBe("incidents:write");
   });
 
   test("rejects id-only update payloads", () => {

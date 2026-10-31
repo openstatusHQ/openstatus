@@ -14,7 +14,7 @@ export type Variables = RequestIdVariables & {
    * populated for custom keys.
    *
    * `scopes` carries the access-control scopes for the key — read by
-   * the V1 `requireWriteScope` middleware and the service-level
+   * the V1 `requireGroupScope` middleware and the service-level
    * `requireScope` helper. Custom keys: row scopes. Unkey fallback:
    * `['write']` (legacy posture). Super-admin / dev fallback: `['*']`.
    */

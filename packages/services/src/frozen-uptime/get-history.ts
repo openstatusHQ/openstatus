@@ -4,6 +4,7 @@ import {
   pageConfigurationSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import {
@@ -152,6 +153,7 @@ export async function getUptimeHistory(args: {
   sleep?: (ms: number) => Promise<void>;
 }): Promise<UptimeHistoryResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetUptimeHistoryInput.parse(args.input);
   if (!ctx.workspace.limits["uptime-history"]) {
     throw new ForbiddenError("Uptime history is not enabled on this plan.");

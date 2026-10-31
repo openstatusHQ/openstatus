@@ -1,6 +1,7 @@
 import { and, desc, eq } from "@openstatus/db";
 import { incidentEvent } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { getIncidentInWorkspace, incidentUserColumns } from "./internal";
 import { withLegacySource } from "./legacy-source";
@@ -12,6 +13,7 @@ export async function listIncidentEvents(args: {
   input: ListIncidentEventsInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = ListIncidentEventsInput.parse(args.input);
   const db = getReadDb(ctx);
   const existing = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);
@@ -32,6 +34,7 @@ export async function getIncidentEvent(args: {
   input: GetIncidentEventInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = GetIncidentEventInput.parse(args.input);
   const db = getReadDb(ctx);
   const existing = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);

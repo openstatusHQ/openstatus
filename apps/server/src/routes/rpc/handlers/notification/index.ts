@@ -219,7 +219,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
       try {
         // Sends from platform credentials to a caller-chosen destination.
         const sCtx = toServiceCtx(getRpcContext(ctx));
-        requireScope(sCtx, "write");
+        requireScope(sCtx, "notifications:write");
         assertProviderAllowed(sCtx.workspace, protoProviderToDb(req.provider));
         return await sendTestNotification(req.provider, req.data);
       } catch (err) {

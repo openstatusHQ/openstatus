@@ -25,6 +25,7 @@ import {
   selectPrivateLocationSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type {
   MonitorIncident,
@@ -191,6 +192,7 @@ export async function listMonitors(args: {
   input: ListMonitorsInput;
 }): Promise<ListMonitorsResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = ListMonitorsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -239,6 +241,7 @@ export async function getMonitor(args: {
   input: GetMonitorInput;
 }): Promise<MonitorWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
   const record = await getMonitorInWorkspace({

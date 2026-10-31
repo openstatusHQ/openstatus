@@ -27,7 +27,7 @@ export async function createInvitation(args: {
   input: CreateInvitationInput;
 }): Promise<Invitation> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = CreateInvitationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

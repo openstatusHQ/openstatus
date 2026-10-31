@@ -1,4 +1,4 @@
-import { type SQL, and, desc, eq, gte, isNull, sql } from "@openstatus/db";
+import { type SQL, and, desc, eq, gte, isNull, ne, sql } from "@openstatus/db";
 import {
   auditLog,
   selectAuditLogSchema,
@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { z } from "zod";
 
+import { matchesScope } from "../auth/matches-scope";
 import { type ServiceContext, getReadDb } from "../context";
 import { ListAuditLogsInput } from "./schemas";
 
@@ -17,6 +18,13 @@ import { ListAuditLogsInput } from "./schemas";
  * policy is a separate lever (PR 3+); this is the *read* cap.
  */
 const READ_WINDOW_DAYS = 14;
+
+/** Subscriber snapshots carry emails and webhook URLs, so they follow the `subscribers` group. */
+export function canReadSubscriberAudit(ctx: ServiceContext): boolean {
+  const { actor } = ctx;
+  if (actor.type !== "apiKey" && actor.type !== "mcp") return true;
+  return matchesScope(actor.scopes, "subscribers:read");
+}
 
 export type AuditLogListItem = z.infer<typeof selectAuditLogSchema> & {
   user: {
@@ -64,6 +72,9 @@ export async function listAuditLogs(args: {
   }
   if (input.entityId) {
     conditions.push(eq(auditLog.entityId, input.entityId));
+  }
+  if (!canReadSubscriberAudit(ctx)) {
+    conditions.push(ne(auditLog.entityType, "page_subscriber"));
   }
   const whereClause = and(...conditions);
 

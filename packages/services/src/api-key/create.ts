@@ -29,7 +29,7 @@ export async function createApiKey(args: {
   input: CreateApiKeyInput;
 }): Promise<{ token: string; key: PublicApiKey }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = CreateApiKeyInput.parse(args.input);
 
   const createdById = tryGetActorUserId(ctx.actor);

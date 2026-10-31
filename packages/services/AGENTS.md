@@ -18,8 +18,11 @@ failed. Do not "fix" it by routing it through a verb.
   import from `@openstatus/services/<entity>`.
 - **Signature:** `async function verbEntity(args: { ctx: ServiceContext; input: VerbInput })`.
   `ctx` carries `workspace`, `actor`, and an optional `db`/transaction.
-- **`requireScope(ctx, "write")` is the first line of every write verb** —
-  before `Input.parse(...)`, before `withTransaction`.
+- **`requireScope(ctx, "<group>:write")` is the first line of every write
+  verb** — before `Input.parse(...)`, before `withTransaction`. Exported read
+  verbs (`list*`, `get*`, `search*`, `stream*`, `preview*`) open with
+  `requireScope(ctx, "<group>:read")`; admin verbs with
+  `requireScope(ctx, "admin")`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
@@ -51,9 +54,24 @@ a reason.
 
 ## Scope enforcement
 
-API keys carry `read` / `write` scopes. "Write" means any DB mutation **or**
-side-effecting external call (probe, webhook, notification); everything else is
-read. `requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
+`SCOPES.md` at the repo root lists every scope value and which verbs, routes and tools require which.
+
+Verbs require a group scope, `<group>:read` or `<group>:write`, where the
+group is one of `monitors` (monitor, monitor-tag, private-location,
+monitor-incident, frozen-uptime), `pages` (page, page-component,
+page-component-group, import), `incidents` (status-report, incident,
+maintenance), `notifications` and `subscribers` (page-subscriber). Workspace,
+billing, members, invitations, API keys, OAuth, SSO and integrations require
+`admin`, which only the internal `*` token satisfies. "Write" means any DB
+mutation **or** side-effecting external call (probe, webhook, notification);
+everything else is read. `<g>:write` covers `<g>:read`.
+
+Credentials still hold the legacy umbrellas: `write` covers every group scope,
+`read` covers every `<group>:read`. Never require a
+bare `read` / `write` in a verb — `matchesScope` in `src/auth` is the one
+place that knows what the umbrellas expand to, and lint rejects the literals.
+
+`requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
 `subscriber` actors and active for `apiKey` and `mcp`. MCP tools declare
 `scope` and register through `registerScopedTool`, so read-only keys never see
 write tools.

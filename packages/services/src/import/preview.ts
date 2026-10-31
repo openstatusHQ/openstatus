@@ -1,6 +1,7 @@
 import { db as defaultDb } from "@openstatus/db";
 import type { ImportSummary } from "@openstatus/importers";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { ValidationError } from "../errors";
 import { getPageInWorkspace } from "../page/internal";
@@ -19,6 +20,7 @@ export async function previewImport(args: {
   input: PreviewImportInput;
 }): Promise<ImportSummary> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = PreviewImportInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

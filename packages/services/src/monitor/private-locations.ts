@@ -5,6 +5,7 @@ import {
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { GetPrivateLocationIdsByMonitorInput } from "./schemas";
 
@@ -17,6 +18,7 @@ export async function getPrivateLocationIdsByMonitor(args: {
   ctx: ServiceContext;
   input: GetPrivateLocationIdsByMonitorInput;
 }): Promise<Map<number, string[]>> {
+  requireScope(args.ctx, "monitors:read");
   const input = GetPrivateLocationIdsByMonitorInput.parse(args.input);
   const db = getReadDb(args.ctx);
 

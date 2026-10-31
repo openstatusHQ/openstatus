@@ -25,6 +25,7 @@ import {
   updateMaintenanceUpdateTool,
 } from "./maintenance";
 import {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
@@ -33,8 +34,8 @@ import {
   listResponseLogsTool,
 } from "./monitor";
 import { listNotificationsTool } from "./notification";
-import { listStatusPagesTool } from "./page";
-import { listPageComponentsTool } from "./page-component";
+import { createStatusPageTool, listStatusPagesTool } from "./page";
+import { addPageComponentTool, listPageComponentsTool } from "./page-component";
 import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
@@ -72,6 +73,7 @@ export {
   updateMaintenanceUpdateTool,
 } from "./maintenance";
 export {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
@@ -80,8 +82,8 @@ export {
   listResponseLogsTool,
 } from "./monitor";
 export { listNotificationsTool } from "./notification";
-export { listStatusPagesTool } from "./page";
-export { listPageComponentsTool } from "./page-component";
+export { createStatusPageTool, listStatusPagesTool } from "./page";
+export { addPageComponentTool, listPageComponentsTool } from "./page-component";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
 export {
@@ -122,7 +124,9 @@ export {
  */
 export const agentTools = {
   list_status_pages: listStatusPagesTool,
+  create_status_page: createStatusPageTool,
   list_page_components: listPageComponentsTool,
+  add_page_component: addPageComponentTool,
   list_status_reports: listStatusReportsTool,
   get_status_report: getStatusReportTool,
   create_status_report: createStatusReportTool,
@@ -147,6 +151,7 @@ export const agentTools = {
   update_maintenance_update: updateMaintenanceUpdateTool,
   delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_monitors: listMonitorsTool,
+  create_monitor: createMonitorTool,
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,
   get_monitor_summary: getMonitorSummaryTool,

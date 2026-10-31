@@ -4,6 +4,7 @@ import type {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 import {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
@@ -25,5 +26,6 @@ export function registerMonitorTools(
     getMonitorSummaryTool,
     listResponseLogsTool,
     getResponseLogTool,
+    createMonitorTool,
   ]);
 }

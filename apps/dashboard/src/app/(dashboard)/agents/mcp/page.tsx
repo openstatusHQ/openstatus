@@ -292,8 +292,8 @@ export default function Page() {
           <SectionTitle>Authentication</SectionTitle>
           <SectionDescription>
             OAuth is the default for interactive clients. Point the client at
-            the endpoint with no header, sign in, pick the workspace and access
-            level, and approve. Nothing to copy.
+            the endpoint with no header, sign in, pick the workspace and an
+            access preset, and approve. Nothing to copy.
           </SectionDescription>
         </SectionHeader>
         <Note size="sm">
@@ -313,8 +313,8 @@ export default function Page() {
           For CI, cron jobs or agents running on a server, send an API key in
           the <code>x-openstatus-key</code> header instead. Create one in the{" "}
           <Link href="/settings/general">general settings</Link>. The key's
-          read-only or read &amp; write scope decides which tools the server
-          exposes.
+          scopes decide which tools the server exposes: read only, read &amp;
+          write, or a custom set per resource.
         </p>
       </Section>
       <Section>
@@ -345,10 +345,12 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Tools</SectionTitle>
           <SectionDescription>
-            Read tools are available on every credential. Mutation tools require
-            read &amp; write access. Audit log tools require the audit-log
-            feature on your plan. Content tools search public openstatus.dev
-            pages and carry no workspace data.
+            Each tool needs the read or write scope of its resource. The{" "}
+            <strong>Incident comms</strong> preset covers status reports,
+            updates and maintenance; <strong>Full setup</strong> is what lets an
+            agent create monitors and status pages. Audit log tools require the
+            audit-log feature on your plan. Content tools search public
+            openstatus.dev pages and carry no workspace data.
           </SectionDescription>
         </SectionHeader>
         <ul className="flex flex-col gap-2">

@@ -23,7 +23,7 @@ export async function createNotification(args: {
   input: CreateNotificationInput;
 }): Promise<Notification> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "notifications:write");
   const input = CreateNotificationInput.parse(args.input);
 
   // Static check first: must win over quota/ownership errors, needs no DB.

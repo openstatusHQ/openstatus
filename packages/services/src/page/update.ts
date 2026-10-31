@@ -27,7 +27,7 @@ export async function updatePageGeneral(args: {
   input: UpdatePageGeneralInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageGeneralInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -73,7 +73,7 @@ export async function updatePageCustomDomain(args: {
   input: UpdatePageCustomDomainInput;
 }): Promise<{ existingDomain: string | null }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageCustomDomainInput.parse(args.input);
 
   if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
@@ -126,7 +126,7 @@ export async function updatePagePasswordProtection(args: {
   input: UpdatePagePasswordProtectionInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePagePasswordProtectionInput.parse(args.input);
 
   assertAccessTypeAllowed(ctx.workspace, {
@@ -180,7 +180,7 @@ export async function updatePageAppearance(args: {
   input: UpdatePageAppearanceInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageAppearanceInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -225,7 +225,7 @@ export async function updatePageCustomTheme(args: {
   input: UpdatePageCustomThemeInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageCustomThemeInput.parse(args.input);
 
   if (!ctx.workspace.limits["custom-theme"]) {
@@ -261,7 +261,7 @@ export async function updatePageLinks(args: {
   input: UpdatePageLinksInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageLinksInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -296,7 +296,7 @@ export async function updatePageLocales(args: {
   input: UpdatePageLocalesInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageLocalesInput.parse(args.input);
 
   if (!ctx.workspace.limits.i18n) {
@@ -336,7 +336,7 @@ export async function updatePageConfiguration(args: {
   input: UpdatePageConfigurationInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageConfigurationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

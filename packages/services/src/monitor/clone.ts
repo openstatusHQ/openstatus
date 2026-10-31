@@ -19,7 +19,7 @@ export async function cloneMonitor(args: {
   input: CloneMonitorInput;
 }): Promise<Monitor> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = CloneMonitorInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

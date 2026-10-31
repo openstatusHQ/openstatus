@@ -175,4 +175,30 @@ export const cases: EvalCase[] = [
     prompt: "What plan are we on, and how many monitors do we have?",
     expectedTool: "get_workspace",
   },
+
+  // Setup tools
+  {
+    id: "prereq.create_monitor_lists_monitors_first",
+    prompt: "Monitor https://api.acme.com for me.",
+    expectedTool: "list_monitors",
+  },
+  {
+    id: "select.create_monitor",
+    prompt:
+      "Create a monitor for https://api.acme.com. I already checked, there is none for that URL.",
+    expectedTool: "create_monitor",
+    requiredArgs: ["url", "jobType"],
+  },
+  {
+    id: "select.add_page_component",
+    prompt: "Put monitor 12 on the status page 3.",
+    expectedTool: "add_page_component",
+    requiredArgs: ["pageId", "monitorId"],
+  },
+  {
+    id: "select.create_status_page",
+    prompt: 'Create a status page called "Acme Status".',
+    expectedTool: "create_status_page",
+    requiredArgs: ["title", "slug"],
+  },
 ];

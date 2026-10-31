@@ -5,16 +5,32 @@ Hono, running on Node. Four surfaces under `apps/server/src/routes/`: `v1`
 
 ## API-key scopes
 
-Two layers enforce `read` / `write`, and both must stay:
+`SCOPES.md` at the repo root lists every scope value and which verbs, routes and tools require which.
 
-- **Service level** — `requireScope(ctx, "write")` inside every service verb.
-  This is the real gate for anything routed through `@openstatus/services`.
-- **Transport level** — `requireWriteScope()` in
-  `apps/server/src/libs/middlewares/require-scope.ts`, mounted on the V1 router
-  after `authMiddleware`. V1 predates the services convention and still issues
-  inline Drizzle queries, so service-level checks would skip its write handlers
-  entirely. It maps method to scope: `GET`/`HEAD` are read, everything else is
-  write. Adding a V1 route that mutates through a `GET` silently bypasses it.
+Scopes are per resource group (`monitors`, `pages`, `incidents`,
+`notifications`, `subscribers`, each `:read` / `:write`); `read` and `write`
+are legacy umbrellas (every group, read or write), `*` is the
+super-admin token, `admin` is required by workspace/member/key verbs and held
+by nothing settable, `any` means "any authenticated credential". Matching
+lives in `matchesScope` (`@openstatus/services/auth`). Two layers enforce it,
+and both must stay:
+
+- **Service level** — `requireScope(ctx, "<group>:write")` (or `:read`)
+  inside every verb. This is the real gate for anything routed through
+  `@openstatus/services`.
+- **Transport level**
+  - V1: `requireGroupScope(group)` in
+    `apps/server/src/libs/middlewares/require-scope.ts`, mounted per
+    sub-router in `routes/v1/index.ts` (`/monitor`, `/check` → `monitors`;
+    `/page` → `pages`; `/status_report*`, `/incident`, `/maintenance` →
+    `incidents`; `/notification` → `notifications`; `/page_subscriber` →
+    `subscribers`; `/whoami` → `any`). `GET`/`HEAD` need `:read`, every
+    other method `:write`. V1 still issues inline Drizzle queries, so this is
+    the only gate there; a V1 route that mutates through a `GET` bypasses it.
+  - RPC: `scopeInterceptor` in `routes/rpc/interceptors/scope.ts` maps the
+    proto service type name to a group (`*Subscri*` methods → `subscribers`)
+    and `NO_SIDE_EFFECTS` / `Get*` / `List*` methods to `:read`. Thin guard
+    only; a new service needs an entry in `RPC_SERVICE_GROUP`.
 
 New endpoints should call a service verb rather than query Drizzle directly;
 `oxlint.config.ts` already bans `@openstatus/db` and `drizzle-orm` imports in
@@ -30,6 +46,8 @@ mutate the shared `process.env`, which leaks between cases.
 
 ## MCP
 
-MCP tools declare `scope: 'read' | 'write'` and register via
-`registerScopedTool`, so a read-only key never sees a write tool in
-`tools/list`. A tool registered the plain way leaks regardless of the key.
+Agent tools declare `scope` as a group scope (`incidents:write`,
+`monitors:read`) or `any` for public content, docs, workspace metadata and
+audit logs, and register via `registerScopedTool`, so a key never sees a tool
+its scopes cannot call in `tools/list`. `readOnlyHint` is derived with
+`isReadScope`. A tool registered the plain way leaks regardless of the key.

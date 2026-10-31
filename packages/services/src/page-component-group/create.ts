@@ -11,7 +11,7 @@ export async function createPageComponentGroup(args: {
   input: CreatePageComponentGroupInput;
 }) {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = CreatePageComponentGroupInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

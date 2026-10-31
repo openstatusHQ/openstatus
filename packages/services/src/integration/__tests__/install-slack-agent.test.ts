@@ -241,6 +241,22 @@ describe("installSlackAgent", () => {
     });
   });
 
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(ctx.workspace, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        installSlackAgent({ ctx: writeKeyCtx, input: baseInput }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("propagates the openstatus userId from the slack actor", async () => {
     await withTestTransaction(async (tx) => {
       const ATTRIBUTED_USER_ID = 1;

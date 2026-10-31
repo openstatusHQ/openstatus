@@ -87,7 +87,7 @@ export const listMaintenancesTool: AgentTool<
   name: "list_maintenances",
   description:
     "List maintenance windows in this workspace, newest first. Returns timeline update ids so edit/delete can target a specific entry. Paginated via `page` (1-indexed) and `perPage`.",
-  scope: "read",
+  scope: "incidents:read",
   destructive: false,
   inputSchema: ListMaintenancesInputShape,
   outputSchema: ListMaintenancesOutput,
@@ -178,7 +178,7 @@ export const createMaintenanceTool: AgentTool<
   name: "create_maintenance",
   description:
     "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The maintenance row persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: CreateMaintenanceInputShape,
   outputSchema: CreateMaintenanceOutput,
@@ -277,7 +277,7 @@ export const addMaintenanceUpdateTool: AgentTool<
   name: "add_maintenance_update",
   description:
     "Append a public update to an existing maintenance. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. The maintenanceId MUST come from list_maintenances. Subscriber notification is only available during this call.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: AddMaintenanceUpdateInputShape,
   outputSchema: MaintenanceUpdateOutput,
@@ -355,7 +355,7 @@ export const updateMaintenanceUpdateTool: AgentTool<
   name: "update_maintenance_update",
   description:
     "Edit an existing maintenance timeline entry. PUBLIC and AUDIT-LOGGED. Does not notify subscribers. The update id MUST come from list_maintenances (or a prior create/add result).",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateMaintenanceUpdateInputShape,
   outputSchema: MaintenanceUpdateOutput,
@@ -409,7 +409,7 @@ export const deleteMaintenanceUpdateTool: AgentTool<
   name: "delete_maintenance_update",
   description:
     "Delete a maintenance timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. A maintenance must retain at least one update. The update id MUST come from list_maintenances (or a prior create/add result).",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: DeleteMaintenanceUpdateInputShape,
   outputSchema: DeleteMaintenanceUpdateOutput,

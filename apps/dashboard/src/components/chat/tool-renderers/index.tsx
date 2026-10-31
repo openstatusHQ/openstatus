@@ -10,8 +10,11 @@ import {
   ChangesTable,
 } from "@/components/common/changes-table";
 
+import { addPageComponentChanges } from "./add-page-component";
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
 import { createMaintenanceChanges } from "./create-maintenance";
+import { createMonitorChanges, formatFirstCheck } from "./create-monitor";
+import { createStatusPageChanges } from "./create-status-page";
 import { createStatusReportChanges } from "./create-status-report";
 import { DetailsTable } from "./details-table";
 import { getAuditLogChanges } from "./get-audit-log";
@@ -110,6 +113,28 @@ export const toolRenderers: ToolRendererRegistry = {
   },
 
   // ── Destructive tools ────────────────────────────────────────
+  create_status_page: {
+    renderDraft: (input) => createStatusPageChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createStatusPageChanges(input, output)} />
+    ),
+    summary: (o) => `${o.slug}.openstatus.dev`,
+  },
+  add_page_component: {
+    renderDraft: (input) => addPageComponentChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={addPageComponentChanges(input, output)} />
+    ),
+    summary: (o) => `component #${o.id}`,
+  },
+  create_monitor: {
+    renderDraft: (input) => createMonitorChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createMonitorChanges(input, output)} />
+    ),
+    summary: (o) =>
+      `ID ${o.monitor.id}${o.firstCheck ? ` · ${formatFirstCheck(o.firstCheck)}` : ""}`,
+  },
   create_status_report: {
     renderDraft: (input) => createStatusReportChanges(input),
     renderResult: ({ input, output }) => (

@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "@openstatus/db";
+import { and, eq, isNull, max } from "@openstatus/db";
 import { monitor, pageComponent } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -18,7 +18,7 @@ export async function createPageComponent(args: {
   input: CreatePageComponentInput;
 }) {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = CreatePageComponentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -84,6 +84,16 @@ export async function createPageComponent(args: {
       limit: "page-components",
     });
 
+    let order = input.order;
+    if (order === undefined) {
+      const last = await tx
+        .select({ max: max(pageComponent.order) })
+        .from(pageComponent)
+        .where(eq(pageComponent.pageId, input.pageId))
+        .get();
+      order = (last?.max ?? -1) + 1;
+    }
+
     const created = await tx
       .insert(pageComponent)
       .values({
@@ -93,7 +103,7 @@ export async function createPageComponent(args: {
         monitorId: input.type === "monitor" ? input.monitorId : null,
         name: name ?? "",
         description: input.description ?? null,
-        order: input.order,
+        order,
         groupId: input.groupId ?? null,
       })
       .returning()

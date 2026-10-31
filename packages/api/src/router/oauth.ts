@@ -23,7 +23,7 @@ const DecideInput = z.object({
   id: z.string().min(1),
   approved: z.boolean(),
   workspaceId: z.number().int().optional(),
-  scope: z.enum(apiKeySettableScopes).optional(),
+  scope: z.array(z.enum(apiKeySettableScopes)).min(1).optional(),
 });
 
 /**
@@ -57,7 +57,7 @@ export const oauthRouter = createTRPCRouter({
           approved: input.approved,
           userId: ctx.user.id,
           workspaceId: input.workspaceId,
-          scope: input.scope ? [input.scope] : undefined,
+          scope: input.scope,
         },
       });
     } catch (err) {

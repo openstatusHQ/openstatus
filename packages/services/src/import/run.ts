@@ -42,7 +42,9 @@ export async function runImport(args: {
   input: RunImportInput;
 }): Promise<ImportSummary> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  // The phase writers insert monitors as well as components.
+  requireScope(ctx, "pages:write");
+  requireScope(ctx, "monitors:write");
   const input = RunImportInput.parse(args.input);
   const tx = ctx.db ?? defaultDb;
 

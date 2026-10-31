@@ -65,7 +65,7 @@ openstatus version x.x.x
 ## Configure API authentication
 
 1. In your openstatus dashboard, go to **Settings > General** and find the **API Keys** card.
-2. Click **Create** and copy the value — you won't see it again after closing the dialog.
+2. Click **Create**, pick **Read & write** so every command works (**Read only** covers the `list` and `get` commands and `terraform generate`), and copy the value — you won't see it again after closing the dialog.
 3. Make it available to the CLI as an environment variable:
 
 ```bash

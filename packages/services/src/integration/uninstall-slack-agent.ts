@@ -21,7 +21,7 @@ export async function uninstallSlackAgent(args: {
   input: UninstallSlackTeamInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UninstallSlackTeamInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

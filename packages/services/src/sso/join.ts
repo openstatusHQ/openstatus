@@ -26,7 +26,7 @@ export async function joinSsoWorkspace(args: {
   input: JoinSsoWorkspaceInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = JoinSsoWorkspaceInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

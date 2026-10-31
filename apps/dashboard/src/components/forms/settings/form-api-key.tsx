@@ -36,13 +36,21 @@ export function FormApiKey() {
       </FormCardContent>
       <FormCardFooter>
         <FormCardFooterInfo>
-          Trigger monitors via CLI, CI/CD or create your own status page.{" "}
+          Keys carry read or write access per resource. Read about{" "}
+          <Link
+            href="https://www.openstatus.dev/docs/sdk/nodejs/authentication#scopes"
+            rel="noreferrer"
+            target="_blank"
+          >
+            scopes
+          </Link>{" "}
+          or browse the{" "}
           <Link
             href="https://api.openstatus.dev/openapi"
             rel="noreferrer"
             target="_blank"
           >
-            Learn more
+            API reference
           </Link>
           .
         </FormCardFooterInfo>

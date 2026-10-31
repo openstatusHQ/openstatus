@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { db, eq } from "@openstatus/db";
 import {
+  auditLog,
   monitor,
   page,
   pageComponent,
@@ -22,6 +23,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { toServiceCtx } from "../adapter";
 import { registerMaintenanceTools } from "./maintenance";
+import { registerMonitorTools } from "./monitor";
 import { registerPageTools } from "./page";
 import { registerPrivateLocationTools } from "./private-location";
 import { registerStatusReportTools } from "./status-report";
@@ -111,6 +113,7 @@ function registered(
     | "page"
     | "status-report"
     | "maintenance"
+    | "monitor"
     | "private-location"
     | "workspace",
   ctx: ServiceContext,
@@ -126,6 +129,8 @@ function registered(
       return registerStatusReportTools(server, ctx);
     case "maintenance":
       return registerMaintenanceTools(server, ctx);
+    case "monitor":
+      return registerMonitorTools(server, ctx);
     case "workspace":
       return registerWorkspaceTools(server, ctx);
     case "private-location":
@@ -949,6 +954,229 @@ describe("get_workspace", () => {
       expect(serialized).not.toContain("stripe");
       expect(serialized).not.toContain("subscription");
       expect(serialized).not.toContain('"limits"');
+    });
+  });
+});
+
+describe("create_status_page", () => {
+  test("creates a page with its public url and emits audit with transport=mcp", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const slug = `${TEST_PREFIX}-created-${Date.now()}`;
+      const result = await callTool(tools, "create_status_page", {
+        title: `${TEST_PREFIX}-created`,
+        slug,
+        description: "Acme services",
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        id: number;
+        slug: string;
+        url: string;
+        dashboardUrl: string;
+      };
+      expect(out.id).toBeGreaterThan(0);
+      expect(out.slug).toBe(slug);
+      expect(out.url).toBe(`https://${slug}.openstatus.dev`);
+      expect(out.dashboardUrl).toContain(`/status-pages/${out.id}/`);
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page.create",
+        entityType: "page",
+        entityId: out.id,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  test("returns isError: true for a taken slug (CONFLICT)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "create_status_page", {
+        title: "dup",
+        slug: `${TEST_PREFIX}-page-slug`,
+      });
+      expect(result.isError).toBe(true);
+    });
+  });
+});
+
+describe("add_page_component", () => {
+  test("appends a monitor component and emits audit with transport=mcp", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: teamWorkspace.id,
+          active: true,
+          url: "https://example.com",
+          name: `${TEST_PREFIX}-component-monitor`,
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "add_page_component", {
+        pageId: testPageId,
+        monitorId: m.id,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        id: number;
+        pageId: number;
+        monitorId: number;
+        name: string;
+        order: number;
+      };
+      expect(out).toMatchObject({
+        pageId: testPageId,
+        monitorId: m.id,
+        name: m.name,
+      });
+      // The fixture component sits at order 0; the new one is appended.
+      expect(out.order).toBe(1);
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page_component.create",
+        entityType: "page_component",
+        entityId: out.id,
+        actorType: "mcp",
+        db: tx,
+      });
+
+      const again = await callTool(tools, "add_page_component", {
+        pageId: testPageId,
+        monitorId: m.id,
+      });
+      expect(again.isError).toBe(true);
+    });
+  });
+});
+
+describe("create_monitor", () => {
+  const originalFetch = globalThis.fetch;
+  const originalCronSecret = process.env.CRON_SECRET;
+
+  beforeAll(() => {
+    process.env.CRON_SECRET = "test-cron-secret";
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({ state: "success", status: 200, latency: 90 }),
+        { headers: { "Content-Type": "application/json" } },
+      )) as unknown as typeof fetch;
+  });
+
+  afterAll(() => {
+    globalThis.fetch = originalFetch;
+    if (originalCronSecret === undefined) {
+      process.env.CRON_SECRET = undefined;
+    } else {
+      process.env.CRON_SECRET = originalCronSecret;
+    }
+  });
+
+  test("creates an http monitor, probes its first region and emits audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("monitor", ctx);
+      const result = await callTool(tools, "create_monitor", {
+        name: `${TEST_PREFIX}-monitor`,
+        url: "https://example.com/health",
+        jobType: "http",
+        method: "GET",
+        active: true,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        monitor: {
+          id: number;
+          regions: string[];
+          active: boolean;
+          dashboardUrl: string;
+        };
+        firstCheck: { region: string; state: string; status?: number } | null;
+      };
+      expect(out.monitor.id).toBeGreaterThan(0);
+      expect(out.monitor.active).toBe(true);
+      expect(out.monitor.regions.length).toBeGreaterThan(0);
+      expect(out.monitor.dashboardUrl).toContain(
+        `/monitors/${out.monitor.id}/overview`,
+      );
+      expect(out.firstCheck).toMatchObject({
+        region: out.monitor.regions[0],
+        state: "success",
+        status: 200,
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "monitor.create",
+        entityType: "monitor",
+        entityId: out.monitor.id,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  test("tcp monitors get no first check", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("monitor", ctx);
+      const result = await callTool(tools, "create_monitor", {
+        name: `${TEST_PREFIX}-tcp`,
+        url: "example.com:443",
+        jobType: "tcp",
+      });
+      expect(result.isError).toBeUndefined();
+      expect(
+        (result.structuredContent as { firstCheck: unknown }).firstCheck,
+      ).toBeNull();
+    });
+  });
+
+  test("a monitors:read key does not see create_monitor", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["monitors:read"] });
+    const tools = registered("monitor", ctx);
+    expect(tools.has("list_monitors")).toBe(true);
+    expect(tools.has("create_monitor")).toBe(false);
+    expect(registered("page", ctx).has("list_status_pages")).toBe(false);
+  });
+
+  test("a monitors:write key sees create_monitor but no page tools", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["monitors:write"] });
+    expect(registered("monitor", ctx).has("create_monitor")).toBe(true);
+    expect(registered("page", ctx).has("add_page_component")).toBe(false);
+  });
+});
+
+describe("create budget", () => {
+  test("stops the 31st create of the hour for one key", async () => {
+    await withTestTransaction(async (tx) => {
+      await tx.insert(auditLog).values(
+        Array.from({ length: 30 }, (_, i) => ({
+          workspaceId: teamWorkspace.id,
+          actorType: "mcp",
+          actorId: "test-key",
+          action: "monitor.create",
+          entityType: "monitor",
+          entityId: String(i + 1),
+        })),
+      );
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "create_status_page", {
+        title: "over budget",
+        slug: `${TEST_PREFIX}-budget-${Date.now()}`,
+      });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toContain("30");
     });
   });
 });

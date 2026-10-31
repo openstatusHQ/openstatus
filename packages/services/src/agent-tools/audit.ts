@@ -83,7 +83,7 @@ export const listAuditLogsTool: AgentTool<
   name: "list_audit_logs",
   description:
     "List audit-log entries (mutating actions) for this workspace, newest first. Bounded to the last 14 days. Returns one summary row per entry — call get_audit_log with the numeric audit-log id to see the before/after diff. Optionally filter to a single entity via entityType + entityId. Requires the `audit-log` workspace plan feature.",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: ListAuditLogsInputShape,
   outputSchema: ListAuditLogsOutput,
@@ -150,7 +150,7 @@ export const getAuditLogTool: AgentTool<
   name: "get_audit_log",
   description:
     "Full detail of a single audit-log entry: before/after snapshots and changedFields for the diff view. Use after list_audit_logs to drill into one entry. Requires the `audit-log` workspace plan feature.",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: GetAuditLogInputShape,
   outputSchema: GetAuditLogOutput,

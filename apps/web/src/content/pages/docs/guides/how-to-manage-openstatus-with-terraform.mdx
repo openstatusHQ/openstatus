@@ -8,7 +8,7 @@ description: "Use Terraform to manage monitors, status pages, and notifications 
 |---|---|
 | **Time** | ~15 minutes |
 | **Level** | Intermediate |
-| **Prerequisites** | openstatus account, [Terraform](https://developer.hashicorp.com/terraform/install) installed, API token from workspace settings |
+| **Prerequisites** | openstatus account, [Terraform](https://developer.hashicorp.com/terraform/install) installed, API key from **Settings > General > API Keys** |
 
 In this guide, you'll manage your openstatus infrastructure as code with the official [Terraform provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) — monitors, notification channels, status pages, component groups. These are long-lived resources that change infrequently and benefit from code review, version control, and `terraform plan`.
 
@@ -45,6 +45,8 @@ terraform init
 ```
 
 <Aside>Set the token via an environment variable to avoid passing it on every run: `export TF_VAR_openstatus_api_token="your-token"`</Aside>
+
+<Aside type="note">The key needs **Read & write**, or **Custom** with `monitors:write`, `pages:write` and `notifications:write`. That is every resource the provider manages; see the [provider reference](/docs/reference/terraform#provider-configuration).</Aside>
 
 ## Step 2 — define your monitors
 
