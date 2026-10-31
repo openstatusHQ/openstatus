@@ -45,5 +45,6 @@ export {
   formatHeartbeatSeconds,
   HEARTBEAT_REGION,
   heartbeatExpectation,
+  isHeartbeatAllowed,
   statusRegions,
 } from "./heartbeat";

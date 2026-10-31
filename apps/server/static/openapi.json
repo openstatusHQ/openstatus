@@ -1733,6 +1733,33 @@
         "additionalProperties": false,
         "description": "CreateHTTPMonitorResponse is the response after creating an HTTP monitor."
       },
+      "openstatus.monitor.v1.CreateHeartbeatMonitorRequest": {
+        "type": "object",
+        "properties": {
+          "monitor": {
+            "title": "monitor",
+            "description": "Monitor configuration (required).",
+            "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor"
+          }
+        },
+        "title": "CreateHeartbeatMonitorRequest",
+        "required": ["monitor"],
+        "additionalProperties": false,
+        "description": "CreateHeartbeatMonitorRequest is the request to create a new heartbeat monitor."
+      },
+      "openstatus.monitor.v1.CreateHeartbeatMonitorResponse": {
+        "type": "object",
+        "properties": {
+          "monitor": {
+            "title": "monitor",
+            "description": "The created monitor with its ping URL.",
+            "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor"
+          }
+        },
+        "title": "CreateHeartbeatMonitorResponse",
+        "additionalProperties": false,
+        "description": "CreateHeartbeatMonitorResponse is the response after creating a heartbeat monitor."
+      },
       "openstatus.monitor.v1.CreateICMPMonitorRequest": {
         "type": "object",
         "properties": {
@@ -2720,6 +2747,94 @@
         "additionalProperties": false,
         "description": "Headers represents a key-value pair for HTTP headers."
       },
+      "openstatus.monitor.v1.HeartbeatMonitor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "Unique identifier for the monitor (output only for create requests)."
+          },
+          "name": {
+            "type": "string",
+            "examples": ["Nightly backup"],
+            "title": "name",
+            "maxLength": 256,
+            "minLength": 1,
+            "description": "Name of the monitor (required, max 256 characters)."
+          },
+          "period": {
+            "type": ["integer", "string"],
+            "examples": ["3600"],
+            "title": "period",
+            "maximum": 2592000,
+            "minimum": 60,
+            "format": "int64",
+            "description": "Expected time between pings in seconds (60 to 2592000)."
+          },
+          "grace": {
+            "type": ["integer", "string"],
+            "examples": ["300"],
+            "title": "grace",
+            "maximum": 604800,
+            "minimum": 60,
+            "format": "int64",
+            "description": "Extra time in seconds before a late ping counts as missed (60 to 604800)."
+          },
+          "description": {
+            "type": ["string", "null"],
+            "title": "description",
+            "maxLength": 1024,
+            "description": "Description of the monitor (optional)."
+          },
+          "active": {
+            "type": ["boolean", "null"],
+            "title": "active",
+            "description": "Whether the monitor is active (defaults to false)."
+          },
+          "public": {
+            "type": ["boolean", "null"],
+            "title": "public",
+            "description": "Whether the monitor is publicly visible (defaults to false)."
+          },
+          "pingUrl": {
+            "type": "string",
+            "title": "ping_url",
+            "description": "URL your job pings. Read-only.",
+            "readOnly": true
+          },
+          "lastPingAt": {
+            "type": ["string", "null"],
+            "title": "last_ping_at",
+            "description": "Time of the last ping in ISO 8601, unset until the first one. Read-only.",
+            "readOnly": true
+          },
+          "status": {
+            "title": "status",
+            "description": "Current operational status of the monitor.",
+            "$ref": "#/components/schemas/openstatus.monitor.v1.MonitorStatus"
+          },
+          "lastPingKind": {
+            "title": "last_ping_kind",
+            "description": "What the last ping reported, unspecified until the first one. Read-only.",
+            "readOnly": true,
+            "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatPingKind"
+          }
+        },
+        "title": "HeartbeatMonitor",
+        "additionalProperties": false,
+        "description": "HeartbeatMonitor is pinged by your job; it goes down when a ping is missed\n or the job pings its URL followed by /fail."
+      },
+      "openstatus.monitor.v1.HeartbeatPingKind": {
+        "type": "string",
+        "title": "HeartbeatPingKind",
+        "enum": [
+          "HEARTBEAT_PING_KIND_UNSPECIFIED",
+          "HEARTBEAT_PING_KIND_SUCCESS",
+          "HEARTBEAT_PING_KIND_FAIL"
+        ],
+        "description": "HeartbeatPingKind is what the last ping reported."
+      },
       "openstatus.monitor.v1.ICMPMonitor": {
         "type": "object",
         "properties": {
@@ -2954,6 +3069,14 @@
             "title": "grpc_monitors",
             "description": "gRPC monitors in the workspace."
           },
+          "heartbeatMonitors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor"
+            },
+            "title": "heartbeat_monitors",
+            "description": "Heartbeat monitors in the workspace."
+          },
           "totalSize": {
             "type": "integer",
             "title": "total_size",
@@ -2991,6 +3114,18 @@
             },
             "title": "grpc",
             "required": ["grpc"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "heartbeat": {
+                "title": "heartbeat",
+                "description": "Heartbeat monitor configuration.",
+                "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor"
+              }
+            },
+            "title": "heartbeat",
+            "required": ["heartbeat"]
           },
           {
             "type": "object",
@@ -3490,6 +3625,45 @@
         "title": "UpdateHTTPMonitorResponse",
         "additionalProperties": false,
         "description": "UpdateHTTPMonitorResponse is the response after updating an HTTP monitor."
+      },
+      "openstatus.monitor.v1.UpdateHeartbeatMonitorRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "minLength": 1,
+            "description": "Monitor ID to update (required)."
+          },
+          "monitor": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "monitor",
+            "description": "Updated monitor configuration (all fields optional for partial updates)."
+          }
+        },
+        "title": "UpdateHeartbeatMonitorRequest",
+        "additionalProperties": false,
+        "description": "UpdateHeartbeatMonitorRequest is the request to update an existing heartbeat monitor."
+      },
+      "openstatus.monitor.v1.UpdateHeartbeatMonitorResponse": {
+        "type": "object",
+        "properties": {
+          "monitor": {
+            "title": "monitor",
+            "description": "The updated monitor.",
+            "$ref": "#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor"
+          }
+        },
+        "title": "UpdateHeartbeatMonitorResponse",
+        "additionalProperties": false,
+        "description": "UpdateHeartbeatMonitorResponse is the response after updating a heartbeat monitor."
       },
       "openstatus.monitor.v1.UpdateICMPMonitorRequest": {
         "type": "object",
@@ -8711,6 +8885,49 @@
         }
       }
     },
+    "/rpc/openstatus.monitor.v1.MonitorService/CreateHeartbeatMonitor": {
+      "post": {
+        "tags": ["MonitorService"],
+        "summary": "CreateHeartbeatMonitor",
+        "description": "CreateHeartbeatMonitor creates a new heartbeat monitor that your job pings.",
+        "operationId": "MonitorService_CreateHeartbeatMonitor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.monitor.v1.CreateHeartbeatMonitorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.monitor.v1.CreateHeartbeatMonitorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rpc/openstatus.monitor.v1.MonitorService/CreateICMPMonitor": {
       "post": {
         "tags": ["MonitorService"],
@@ -9514,6 +9731,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rpc/openstatus.monitor.v1.MonitorService/UpdateHeartbeatMonitor": {
+      "post": {
+        "tags": ["MonitorService"],
+        "summary": "UpdateHeartbeatMonitor",
+        "description": "UpdateHeartbeatMonitor updates an existing heartbeat monitor.",
+        "operationId": "MonitorService_UpdateHeartbeatMonitor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.monitor.v1.UpdateHeartbeatMonitorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.monitor.v1.UpdateHeartbeatMonitorResponse"
                 }
               }
             }
