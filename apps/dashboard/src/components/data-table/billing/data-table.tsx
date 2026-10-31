@@ -123,7 +123,7 @@ export function DataTable({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <Tabs
         value={interval}
         onValueChange={(v) => setInterval(v as BillingInterval)}
@@ -135,7 +135,7 @@ export function DataTable({
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      <Table className="relative table-fixed">
+      <Table className="relative">
         <TableCaption>
           {isTrialing
             ? "Upgrading ends your trial and charges your card today."
@@ -147,7 +147,7 @@ export function DataTable({
         </TableCaption>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="p-2 align-bottom">
+            <TableHead className="min-w-40 p-2 align-bottom">
               Features comparison
             </TableHead>
             {filteredPlans.map(({ id, ...plan }) => {
@@ -178,7 +178,7 @@ export function DataTable({
                 <TableHead
                   key={id}
                   className={cn(
-                    "text-foreground h-auto p-2 align-bottom",
+                    "text-foreground h-auto min-w-40 p-2 align-bottom",
                     id === "starter" ? "bg-muted/30" : "",
                   )}
                 >
