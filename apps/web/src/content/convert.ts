@@ -99,16 +99,15 @@ export function convertMdxToMarkdown(data: MDXData): string {
     },
   );
 
-  // Step 8: Convert <ShowcaseYouTube entries={[...]}> to a list of links
-  markdown = markdown.replace(/<ShowcaseYouTube\b[\s\S]*?\/>/g, (match) => {
-    const items: string[] = [];
-    for (const entry of match.matchAll(/\{[^{}]*href:[^{}]*\}/g)) {
-      const href = entry[0].match(/href:\s*['"]([^'"]+)['"]/)?.[1];
-      const title = entry[0].match(/title:\s*['"]([^'"]+)['"]/)?.[1];
-      if (href) items.push(`- [${title ?? "YouTube video"}](${href})`);
-    }
-    return items.join("\n");
-  });
+  // Step 8: Convert <ShowcaseYouTube href="…" title="…" /> to a link list item
+  markdown = markdown.replace(
+    /<ShowcaseYouTube\b([^>]*?)\/>/g,
+    (_match, attrs: string) => {
+      const href = attrs.match(/href=["']([^"']+)["']/)?.[1];
+      const title = attrs.match(/title=["']([^"']+)["']/)?.[1];
+      return href ? `- [${title ?? "YouTube video"}](${href})` : "";
+    },
+  );
 
   // Step 9: Convert card components (unwrap grid, then serialize each card)
   markdown = markdown.replace(
