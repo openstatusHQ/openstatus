@@ -34,12 +34,14 @@ import {
   updatePageCustomTheme,
   updatePageGeneral,
   updatePageLocales,
+  updatePageTimezone,
 } from "../update";
 
 const TEST_PREFIX = "svc-page-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
+let otherTeamCtx: ServiceContext;
 let teamMonitorId: number;
 
 // Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
@@ -55,6 +57,8 @@ const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 beforeAll(async () => {
   const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
+  const otherTeam = (await createWorkspaceFixture("team")).workspace;
+  otherTeamCtx = makeUserCtx(otherTeam, { userId: 3 });
 
   await db
     .delete(workspace)
@@ -166,6 +170,10 @@ describe("createPage (full form)", () => {
       name: "custom domain",
       input: { customDomain: `${TEST_PREFIX}-denied.example.com` },
     },
+    {
+      name: "time zone",
+      input: { defaultTimezone: "Asia/Tokyo" },
+    },
   ] satisfies {
     name: string;
     input: Partial<CreatePageInput>;
@@ -204,6 +212,7 @@ describe("createPage (full form)", () => {
         customTheme: { light: {}, dark: {} },
         defaultLocale: "en",
         locales: ["en"],
+        defaultTimezone: "UTC",
       },
     ] satisfies Partial<CreatePageInput>[]
   ).entries()) {
@@ -721,6 +730,109 @@ describe("updatePageLocales", () => {
           input: { id: p.id, defaultLocale: "en", locales: ["en"] },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("updatePageTimezone", () => {
+  test("stores the zone + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone") },
+      });
+      for (const zone of ["Asia/Tokyo", "Asia/Kolkata"]) {
+        await updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: zone },
+        });
+        const row = await tx
+          .select()
+          .from(pageTable)
+          .where(eq(pageTable.id, p.id))
+          .get();
+        expect(row?.defaultTimezone).toBe(zone);
+      }
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects a name that is not a time zone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone-bad") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Mars/Olympus" },
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  test("lets a plan without timezone go back to UTC", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free-utc") },
+      });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultTimezone: "Asia/Tokyo" })
+        .where(eq(pageTable.id, p.id));
+      await updatePageTimezone({
+        ctx,
+        input: { id: p.id, defaultTimezone: "UTC" },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultTimezone).toBe("UTC");
+    });
+  });
+
+  test("rejects when plan lacks timezone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("cross-workspace → NotFoundError", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await newPage({
+        ctx: { ...teamCtx, db: tx },
+        input: { title: "Zone", slug: uniqueSlug("zone-iso") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx: { ...otherTeamCtx, db: tx },
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });

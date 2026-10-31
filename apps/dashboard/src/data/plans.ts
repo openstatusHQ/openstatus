@@ -64,6 +64,10 @@ export const config: Record<
         value: "i18n",
         label: "Translations",
       },
+      {
+        value: "timezone",
+        label: "Time zone",
+      },
     ],
   },
   "status-page-audience": {

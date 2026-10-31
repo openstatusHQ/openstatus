@@ -40,6 +40,9 @@ export async function createPage(args: {
   ) {
     throw new LimitExceededError("i18n", 0);
   }
+  if (!ctx.workspace.limits.timezone && input.defaultTimezone !== "UTC") {
+    throw new LimitExceededError("timezone", 0);
+  }
 
   return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({
