@@ -1,0 +1,36 @@
+---
+title: "Scopes per resource and MCP setup tools"
+description: "API keys and OAuth grants now carry one read or write scope per resource group, and the MCP server can create monitors, status pages and components."
+publishedAt: "2026-10-29"
+category: "integrations"
+author: "openstatus"
+---
+
+API keys and OAuth connections now carry one scope per resource group instead of a single read or write switch.
+
+The groups are `monitors`, `pages`, `incidents`, `notifications` and `subscribers`, each as `:read` or `:write`, so `incidents:write monitors:read` is a valid key. The consent screen and the API key form offer the same three choices:
+
+- **Read only**: every read.
+- **Read & write**: everything.
+
+**Custom** sets each group by hand. An OAuth client requests the scopes it needs, and you can only narrow them at consent. Existing `write` keys keep full access, so Terraform and the CLI run unchanged.
+
+## MCP setup tools
+
+Three tools join the MCP server, the dashboard chat and the Slack agent: `create_monitor`, `create_status_page` and `add_page_component`. One prompt now sets up a workspace:
+
+```
+> set up monitoring and a status page for api.acme.com
+```
+
+The agent creates the monitor and reports the first check from the first region, asks you to confirm the slug, creates the page and links the two. Plan limit errors say whether an add-on or an upgrade lifts the limit, and a credential may create about 30 resources per hour.
+
+The same release ships update tools: `update_monitor` changes a monitor's configuration, pauses and resumes it, and is the one way to link notification channels to it; `update_status_page` edits a page's title, slug, description, icon and links; `update_page_component`, `create_component_group` and `update_component_group` rename, reorder and group components; `get_maintenance` and `update_maintenance` read and reschedule a maintenance window. Each update tool takes the id plus only the fields that change, and the agent reads the current object first. There are no delete tools for monitors, pages, components, groups or maintenance windows by design; removing those stays a dashboard action.
+
+Connections approved before this release keep their incident-only write scopes; reconnect and pick **Read & write**, or Custom with monitors and pages on write, to get the setup tools.
+
+## Subscribers have their own group
+
+`subscribers:read` and `subscribers:write` let you hand out a key that manages pages but never sees subscriber emails. Existing `read` and `write` keys are unaffected and keep listing subscribers.
+
+Details in the [MCP server reference](/docs/reference/mcp-server#scopes) and the [scope reference](/docs/sdk/nodejs/authentication#scopes).

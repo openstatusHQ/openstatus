@@ -48,7 +48,7 @@ export async function updateStatusReport(args: {
   input: UpdateStatusReportInput;
 }): Promise<StatusReport> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = UpdateStatusReportInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
 
@@ -146,7 +146,7 @@ export async function updateStatusReportUpdate(args: {
   input: UpdateStatusReportUpdateInput;
 }): Promise<StatusReportUpdate> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = UpdateStatusReportUpdateInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
 

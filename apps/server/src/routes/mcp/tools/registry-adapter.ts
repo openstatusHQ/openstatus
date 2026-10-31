@@ -2,6 +2,7 @@ import type {
   McpServer,
   RegisteredTool,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { isReadScope } from "@openstatus/db/src/schema/api-keys/constants";
 import type { ServiceContext } from "@openstatus/services";
 import {
   type AnyAgentTool,
@@ -10,6 +11,7 @@ import {
 import { ZodObject, type ZodRawShape, type ZodType } from "zod";
 
 import { runTool } from "../adapter";
+import { trackToolSuccess } from "../analytics";
 import { registerScopedTool } from "./register-scoped";
 
 /**
@@ -39,7 +41,7 @@ export function registerRegistryTool(
       scope: tool.scope,
       description: tool.description,
       annotations: {
-        readOnlyHint: tool.scope === "read",
+        readOnlyHint: isReadScope(tool.scope),
         destructiveHint: tool.destructive,
         idempotentHint: !tool.destructive,
         // Closed-world: every registry tool only touches resources in
@@ -53,7 +55,14 @@ export function registerRegistryTool(
     },
     async (input: unknown) =>
       runTool(
-        () => tool.run({ ctx, input: tool.inputSchema.parse(input) }),
+        async () => {
+          const value = await tool.run({
+            ctx,
+            input: tool.inputSchema.parse(input),
+          });
+          trackToolSuccess(ctx, tool.name);
+          return value;
+        },
         (value) => {
           const out = tool.outputSchema.parse(value);
           return {

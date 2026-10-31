@@ -20,6 +20,7 @@ import {
   authInterceptor,
   errorInterceptor,
   loggingInterceptor,
+  scopeInterceptor,
   trackingInterceptor,
   validationInterceptor,
 } from "./interceptors";
@@ -30,14 +31,16 @@ import {
  * 1. errorInterceptor - Catches all errors and maps to ConnectError
  * 2. loggingInterceptor - Logs requests/responses with duration
  * 3. authInterceptor - Validates API key and sets workspace context
- * 4. validationInterceptor - Validates request messages using protovalidate
- * 5. trackingInterceptor - Fires OpenPanel `api_request` for authenticated, validated calls + domain events on success
+ * 4. scopeInterceptor - Service/method → scope group guard (service verbs remain the real gate)
+ * 5. validationInterceptor - Validates request messages using protovalidate
+ * 6. trackingInterceptor - Fires OpenPanel `api_request` for authenticated, validated calls + domain events on success
  */
 export const routes = createConnectRouter({
   interceptors: [
     errorInterceptor(),
     loggingInterceptor(),
     authInterceptor(),
+    scopeInterceptor(),
     validationInterceptor(),
     trackingInterceptor(),
   ],

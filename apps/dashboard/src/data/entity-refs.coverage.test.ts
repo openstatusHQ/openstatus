@@ -26,6 +26,9 @@ const notEntityRefs: Record<string, string> = {
   commanderId: "user; no member lookup yet",
   entityId: "polymorphic; rendered through auditEntityKind",
   eventId: "incident timeline event, lives inside the incident",
+  groupId:
+    "page component group; edited on the page's components list, no card",
+  tagIds: "monitor tags; no card",
   initialUpdateId: "status report update, lives inside the report",
   statusReportUpdateId: "status report update, lives inside the report",
   logId: "response log in Tinybird, no card",

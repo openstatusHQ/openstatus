@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { DetailsTableData } from "./details-table";
+import { getMaintenanceDetails } from "./get-maintenance";
 import { getMonitorDetails } from "./get-monitor";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
@@ -203,5 +204,41 @@ describe("getResponseLogDetails", () => {
       asFixture<Output>({ ...log, statusCode: null }),
     );
     expect(value(data, "Status code")).not.toBe("0");
+  });
+});
+
+describe("getMaintenanceDetails", () => {
+  type Output = Parameters<typeof getMaintenanceDetails>[0];
+  const data = getMaintenanceDetails(
+    asFixture<Output>({
+      id: 5,
+      title: "DB upgrade",
+      message: "Done",
+      from: "2026-04-30T14:00:00.000Z",
+      to: "2026-04-30T16:00:00.000Z",
+      pageId: 3,
+      pageComponentIds: [1, 2],
+      updates: [
+        { id: 11, message: "Done", date: "2026-04-30T16:00:00.000Z" },
+        { id: 10, message: "Started", date: "2026-04-30T14:00:00.000Z" },
+      ],
+    }),
+  );
+
+  it("lays out the window and its timeline", () => {
+    expect(labels(data)).toEqual([
+      ["ID", "Title", "Page", "From", "To", "Components"],
+      ["#11", "#10"],
+    ]);
+    expect(value(data, "ID")).toBe("5");
+    expect(value(data, "#10")).toContain("Started");
+  });
+
+  it("references the components by id", () => {
+    const html = renderToStaticMarkup(
+      <>{data.sections[0]?.rows.at(-1)?.value}</>,
+    );
+    expect(html).toContain("Component 1");
+    expect(html).toContain("Component 2");
   });
 });

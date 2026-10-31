@@ -5,6 +5,7 @@ import {
   incident,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { isDeletable } from "./delete";
@@ -30,6 +31,7 @@ export async function listIncidents(args: {
   input?: ListIncidentsInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = ListIncidentsInput.parse(args.input ?? {});
   const db = getReadDb(ctx);
 
@@ -74,6 +76,7 @@ export async function getIncident(args: {
   input: IncidentIdInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = IncidentIdInput.parse(args.input);
   const row = await getReadDb(ctx).query.incident.findFirst({
     where: and(
@@ -96,6 +99,7 @@ export async function getIncidentOrThrow(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
 }) {
+  requireScope(args.ctx, "incidents:read");
   const row = await getIncident(args);
   if (!row) throw new NotFoundError("incident", args.input.id);
   return row;
@@ -107,6 +111,7 @@ export async function getIncidentForStatusReport(args: {
   input: { statusReportId: number };
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   return getReadDb(ctx)
     .select({ id: incident.id, title: incident.title, status: incident.status })
     .from(incident)
@@ -124,6 +129,7 @@ export async function listLinkedStatusReportIds(args: {
   ctx: ServiceContext;
 }): Promise<number[]> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const rows = await getReadDb(ctx)
     .select({ statusReportId: incident.statusReportId })
     .from(incident)
@@ -145,6 +151,7 @@ export async function getIncidentBySlackChannel(args: {
   input: { teamId: string; channelId: string };
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   return getReadDb(ctx).query.incident.findFirst({
     where: and(
       eq(incident.workspaceId, ctx.workspace.id),

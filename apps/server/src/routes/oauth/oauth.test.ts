@@ -5,6 +5,7 @@ import {
   oauthGrant,
   oauthSession,
 } from "@openstatus/db/src/schema";
+import { apiKeySettableScopes } from "@openstatus/db/src/schema/api-keys/constants";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   ClientMetadataUnavailableError,
@@ -179,6 +180,7 @@ describe("well-known metadata", () => {
     const res = await app.request("/.well-known/oauth-authorization-server");
     expect(res.status).toBe(200);
     const body = await res.json();
+    expect(body.scopes_supported).toHaveLength(12);
     expect(body).toMatchObject({
       issuer: config.issuer,
       authorization_endpoint: `${config.issuer}/oauth/authorize`,
@@ -189,7 +191,7 @@ describe("well-known metadata", () => {
       grant_types_supported: ["authorization_code", "refresh_token"],
       code_challenge_methods_supported: ["S256"],
       token_endpoint_auth_methods_supported: ["none"],
-      scopes_supported: ["read", "write"],
+      scopes_supported: [...apiKeySettableScopes],
     });
   });
 
@@ -200,7 +202,7 @@ describe("well-known metadata", () => {
       resource: `${config.issuer}/mcp`,
       authorization_servers: [config.issuer],
       bearer_methods_supported: ["header"],
-      scopes_supported: ["read", "write"],
+      scopes_supported: [...apiKeySettableScopes],
     });
   });
 

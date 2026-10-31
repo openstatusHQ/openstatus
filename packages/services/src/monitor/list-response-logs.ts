@@ -1,5 +1,6 @@
 import { db as defaultDb } from "@openstatus/db";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, defaultTb } from "../context";
 import { ForbiddenError, ValidationError } from "../errors";
 import { getMonitorInWorkspace } from "./internal";
@@ -37,6 +38,7 @@ export async function listResponseLogs(args: {
   input: ListResponseLogsInput;
 }): Promise<ListResponseLogsResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = ListResponseLogsInput.parse(args.input);
   if (!ctx.workspace.limits["response-logs"]) {
     throw new ForbiddenError("Response logs are not enabled on this plan.");

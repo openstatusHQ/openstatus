@@ -1,11 +1,11 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@openstatus/ui/components/ui/radio-group";
+  type SettableScope,
+  scopePresets,
+} from "@openstatus/db/src/schema/api-keys/constants";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,11 +20,32 @@ import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { coversAll } from "@/components/forms/scope-label";
+import {
+  type ScopePresetOption,
+  ScopePicker,
+} from "@/components/forms/scope-picker";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
 
-type Scope = "read" | "write";
+const presetOptions: ScopePresetOption[] = [
+  {
+    id: "write",
+    label: "Read & write",
+    description: "Create and update monitors, status reports and more.",
+  },
+  {
+    id: "read",
+    label: "Read only",
+    description: "List monitors, pages and incidents. Nothing changes.",
+  },
+];
+
+// A client never gets more than it asked for: offer only presets the request covers.
+function allowedPresets(requested: readonly SettableScope[]) {
+  return presetOptions.filter((p) => coversAll(requested, scopePresets[p.id]));
+}
 
 // The page fetched the session server-side and hydrated it, so this query
 // resolves from cache; the guard below only covers a stale or missing id.
@@ -49,11 +70,14 @@ function ConsentForm({
   const trpc = useTRPC();
   const { clientName, clientOrigin, scope: requestedScope } = data.session;
   const { workspaces } = data;
-  const requestedWrite = requestedScope.includes("write");
+  const presets = allowedPresets(requestedScope);
   const [workspaceId, setWorkspaceId] = useState<number | null>(
     workspaces[0]?.id ?? null,
   );
-  const [scope, setScope] = useState<Scope>(requestedWrite ? "write" : "read");
+  // Default to the widest preset the request allows, else exactly what was asked.
+  const [scope, setScope] = useState<SettableScope[]>(() => [
+    ...(presets[0] ? scopePresets[presets[0].id] : requestedScope),
+  ]);
 
   const decide = useMutation(
     trpc.oauth.decide.mutationOptions({
@@ -146,40 +170,13 @@ function ConsentForm({
           <p id="oauth-scope-label" className="text-sm font-medium">
             Access
           </p>
-          <RadioGroup
+          <ScopePicker
             aria-labelledby="oauth-scope-label"
             value={scope}
-            onValueChange={(value) => setScope(value as Scope)}
-            className="gap-3"
-          >
-            <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
-              <RadioGroupItem value="read" className="mt-1" />
-              <div className="space-y-0.5">
-                <div className="text-sm font-medium">Read-only</div>
-                <div className="text-muted-foreground text-xs">
-                  List monitors, pages and incidents. Nothing changes.
-                </div>
-              </div>
-            </label>
-            <label
-              className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-              aria-disabled={!requestedWrite}
-            >
-              <RadioGroupItem
-                value="write"
-                className="mt-1"
-                disabled={!requestedWrite}
-              />
-              <div className="space-y-0.5">
-                <div className="text-sm font-medium">Read &amp; write</div>
-                <div className="text-muted-foreground text-xs">
-                  {requestedWrite
-                    ? "Create and update monitors, status reports and more."
-                    : "Not requested by this client."}
-                </div>
-              </div>
-            </label>
-          </RadioGroup>
+            onChange={setScope}
+            presets={presets}
+            allowed={requestedScope}
+          />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={deny} disabled={decide.isPending}>
@@ -187,7 +184,9 @@ function ConsentForm({
           </Button>
           <Button
             onClick={approve}
-            disabled={decide.isPending || workspaceId === null}
+            disabled={
+              decide.isPending || workspaceId === null || scope.length === 0
+            }
           >
             {pending === true ? "Connecting…" : "Approve"}
           </Button>
@@ -195,7 +194,7 @@ function ConsentForm({
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         You can revoke this connection any time from{" "}
-        <code>Settings / Integrations</code>.
+        <code>{"Settings > Integrations"}</code>.
       </p>
     </div>
   );

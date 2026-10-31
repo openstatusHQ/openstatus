@@ -17,7 +17,7 @@ export async function deletePageComponent(args: {
   input: DeletePageComponentInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = DeletePageComponentInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

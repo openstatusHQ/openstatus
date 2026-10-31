@@ -5,6 +5,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { getMonitorInWorkspace } from "./internal";
 import { GetMonitorStatusInput } from "./schemas";
@@ -24,6 +25,7 @@ export async function getMonitorStatus(args: {
   input: GetMonitorStatusInput;
 }): Promise<GetMonitorStatusResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorStatusInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

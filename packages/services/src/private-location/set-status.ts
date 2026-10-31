@@ -21,7 +21,7 @@ export async function setPrivateLocationStatus(args: {
   input: SetPrivateLocationStatusInput;
 }): Promise<PrivateLocation> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = SetPrivateLocationStatusInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

@@ -1,7 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { db, eq } from "@openstatus/db";
 import {
+  auditLog,
   monitor,
+  monitorTag,
+  notification,
   page,
   pageComponent,
   pageSubscriber,
@@ -13,6 +16,7 @@ import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
 import { SEEDED_WORKSPACE_FREE_ID } from "@openstatus/services/test/fixtures";
 import {
+  clearAuditLogFor,
   expectAuditRow,
   createWorkspaceFixture,
   readAuditLog,
@@ -22,6 +26,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { toServiceCtx } from "../adapter";
 import { registerMaintenanceTools } from "./maintenance";
+import { registerMonitorTools } from "./monitor";
 import { registerPageTools } from "./page";
 import { registerPrivateLocationTools } from "./private-location";
 import { registerStatusReportTools } from "./status-report";
@@ -111,6 +116,7 @@ function registered(
     | "page"
     | "status-report"
     | "maintenance"
+    | "monitor"
     | "private-location"
     | "workspace",
   ctx: ServiceContext,
@@ -126,6 +132,8 @@ function registered(
       return registerStatusReportTools(server, ctx);
     case "maintenance":
       return registerMaintenanceTools(server, ctx);
+    case "monitor":
+      return registerMonitorTools(server, ctx);
     case "workspace":
       return registerWorkspaceTools(server, ctx);
     case "private-location":
@@ -953,6 +961,229 @@ describe("get_workspace", () => {
   });
 });
 
+describe("create_status_page", () => {
+  test("creates a page with its public url and emits audit with transport=mcp", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const slug = `${TEST_PREFIX}-created-${Date.now()}`;
+      const result = await callTool(tools, "create_status_page", {
+        title: `${TEST_PREFIX}-created`,
+        slug,
+        description: "Acme services",
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        id: number;
+        slug: string;
+        url: string;
+        dashboardUrl: string;
+      };
+      expect(out.id).toBeGreaterThan(0);
+      expect(out.slug).toBe(slug);
+      expect(out.url).toBe(`https://${slug}.openstatus.dev`);
+      expect(out.dashboardUrl).toContain(`/status-pages/${out.id}/`);
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page.create",
+        entityType: "page",
+        entityId: out.id,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  test("returns isError: true for a taken slug (CONFLICT)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "create_status_page", {
+        title: "dup",
+        slug: `${TEST_PREFIX}-page-slug`,
+      });
+      expect(result.isError).toBe(true);
+    });
+  });
+});
+
+describe("add_page_component", () => {
+  test("appends a monitor component and emits audit with transport=mcp", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: teamWorkspace.id,
+          active: true,
+          url: "https://example.com",
+          name: `${TEST_PREFIX}-component-monitor`,
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "add_page_component", {
+        pageId: testPageId,
+        monitorId: m.id,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        id: number;
+        pageId: number;
+        monitorId: number;
+        name: string;
+        order: number;
+      };
+      expect(out).toMatchObject({
+        pageId: testPageId,
+        monitorId: m.id,
+        name: m.name,
+      });
+      // The fixture component sits at order 0; the new one is appended.
+      expect(out.order).toBe(1);
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page_component.create",
+        entityType: "page_component",
+        entityId: out.id,
+        actorType: "mcp",
+        db: tx,
+      });
+
+      const again = await callTool(tools, "add_page_component", {
+        pageId: testPageId,
+        monitorId: m.id,
+      });
+      expect(again.isError).toBe(true);
+    });
+  });
+});
+
+describe("create_monitor", () => {
+  const originalFetch = globalThis.fetch;
+  const originalCronSecret = process.env.CRON_SECRET;
+
+  beforeAll(() => {
+    process.env.CRON_SECRET = "test-cron-secret";
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({ state: "success", status: 200, latency: 90 }),
+        { headers: { "Content-Type": "application/json" } },
+      )) as unknown as typeof fetch;
+  });
+
+  afterAll(() => {
+    globalThis.fetch = originalFetch;
+    if (originalCronSecret === undefined) {
+      delete process.env.CRON_SECRET;
+    } else {
+      process.env.CRON_SECRET = originalCronSecret;
+    }
+  });
+
+  test("creates an http monitor, probes its first region and emits audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("monitor", ctx);
+      const result = await callTool(tools, "create_monitor", {
+        name: `${TEST_PREFIX}-monitor`,
+        url: "https://example.com/health",
+        jobType: "http",
+        method: "GET",
+        active: true,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        monitor: {
+          id: number;
+          regions: string[];
+          active: boolean;
+          dashboardUrl: string;
+        };
+        firstCheck: { region: string; state: string; status?: number } | null;
+      };
+      expect(out.monitor.id).toBeGreaterThan(0);
+      expect(out.monitor.active).toBe(true);
+      expect(out.monitor.regions.length).toBeGreaterThan(0);
+      expect(out.monitor.dashboardUrl).toContain(
+        `/monitors/${out.monitor.id}/overview`,
+      );
+      expect(out.firstCheck).toMatchObject({
+        region: out.monitor.regions[0],
+        state: "success",
+        status: 200,
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "monitor.create",
+        entityType: "monitor",
+        entityId: out.monitor.id,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  test("tcp monitors get no first check", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("monitor", ctx);
+      const result = await callTool(tools, "create_monitor", {
+        name: `${TEST_PREFIX}-tcp`,
+        url: "example.com:443",
+        jobType: "tcp",
+      });
+      expect(result.isError).toBeUndefined();
+      expect(
+        (result.structuredContent as { firstCheck: unknown }).firstCheck,
+      ).toBeNull();
+    });
+  });
+
+  test("a monitors:read key does not see create_monitor", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["monitors:read"] });
+    const tools = registered("monitor", ctx);
+    expect(tools.has("list_monitors")).toBe(true);
+    expect(tools.has("create_monitor")).toBe(false);
+    expect(registered("page", ctx).has("list_status_pages")).toBe(false);
+  });
+
+  test("a monitors:write key sees create_monitor but no page tools", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["monitors:write"] });
+    expect(registered("monitor", ctx).has("create_monitor")).toBe(true);
+    expect(registered("page", ctx).has("add_page_component")).toBe(false);
+  });
+});
+
+describe("create budget", () => {
+  test("stops the 31st create of the hour for one key", async () => {
+    await withTestTransaction(async (tx) => {
+      await tx.insert(auditLog).values(
+        Array.from({ length: 30 }, (_, i) => ({
+          workspaceId: teamWorkspace.id,
+          actorType: "mcp",
+          actorId: "test-key",
+          action: "monitor.create",
+          entityType: "monitor",
+          entityId: String(i + 1),
+        })),
+      );
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "create_status_page", {
+        title: "over budget",
+        slug: `${TEST_PREFIX}-budget-${Date.now()}`,
+      });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toContain("30");
+    });
+  });
+});
+
 describe("scope filter", () => {
   test("read-only key sees read tools, no write tools", async () => {
     const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["read"] });
@@ -995,5 +1226,583 @@ describe("scope filter", () => {
     expect(reportTools.has("list_status_reports")).toBe(true);
     expect(reportTools.has("create_status_report")).toBe(true);
     expect(reportTools.has("resolve_status_report")).toBe(true);
+  });
+});
+
+describe("update_monitor", () => {
+  test("patches config and links notifications and tags in one call", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: teamWorkspace.id,
+          active: true,
+          url: "https://example.com",
+          name: `${TEST_PREFIX}-update-monitor`,
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+      const n = await tx
+        .insert(notification)
+        .values({
+          workspaceId: teamWorkspace.id,
+          name: `${TEST_PREFIX}-notif`,
+          provider: "email",
+          data: JSON.stringify({ email: "ops@example.com" }),
+        })
+        .returning()
+        .get();
+      const tag = await tx
+        .insert(monitorTag)
+        .values({
+          workspaceId: teamWorkspace.id,
+          name: `${TEST_PREFIX}-tag`,
+          color: "#000000",
+        })
+        .returning()
+        .get();
+
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("monitor", ctx);
+      const result = await callTool(tools, "update_monitor", {
+        monitorId: m.id,
+        name: `${TEST_PREFIX}-renamed`,
+        active: false,
+        notificationIds: [n.id],
+        tagIds: [tag.id],
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        id: number;
+        name: string;
+        url: string;
+        active: boolean;
+        notificationIds: number[];
+        tagIds: number[];
+      };
+      expect(out).toMatchObject({
+        id: m.id,
+        name: `${TEST_PREFIX}-renamed`,
+        url: "https://example.com",
+        active: false,
+        notificationIds: [n.id],
+        tagIds: [tag.id],
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "monitor.update",
+        entityType: "monitor",
+        entityId: m.id,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  // Runs on the committed db: a threaded test tx would absorb the inner
+  // rollback and hide a half-applied patch.
+  test("a foreign notification id rolls back the whole patch", async () => {
+    const m = await db
+      .insert(monitor)
+      .values({
+        workspaceId: teamWorkspace.id,
+        active: true,
+        url: "https://example.com",
+        name: `${TEST_PREFIX}-atomic`,
+        method: "GET",
+        periodicity: "10m",
+        regions: "ams",
+      })
+      .returning()
+      .get();
+    try {
+      const ctx = makeMcpToolCtx(teamWorkspace);
+      const tools = registered("monitor", ctx);
+      await expect(
+        callTool(tools, "update_monitor", {
+          monitorId: m.id,
+          name: `${TEST_PREFIX}-should-not-apply`,
+          notificationIds: [-1],
+        }),
+      ).rejects.toThrow(/not accessible/);
+      const row = await db
+        .select({ name: monitor.name })
+        .from(monitor)
+        .where(eq(monitor.id, m.id))
+        .get();
+      expect(row?.name).toBe(`${TEST_PREFIX}-atomic`);
+      expect(
+        await readAuditLog({
+          workspaceId: teamWorkspace.id,
+          entityType: "monitor",
+          entityId: m.id,
+        }),
+      ).toEqual([]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, m.id));
+      await clearAuditLogFor({ entityType: "monitor", entityIds: [m.id] });
+    }
+  });
+
+  test("rejects dns assertions on an http monitor", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: teamWorkspace.id,
+          active: true,
+          url: "https://example.com",
+          name: `${TEST_PREFIX}-assert`,
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("monitor", ctx);
+      const result = await callTool(tools, "update_monitor", {
+        monitorId: m.id,
+        assertions: [
+          {
+            type: "dnsRecord",
+            recordType: "A",
+            compare: "eq",
+            target: "1.1.1.1",
+          },
+        ],
+      });
+      expect(result.isError).toBe(true);
+    });
+  });
+
+  test("a monitors:read key does not see update_monitor", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["monitors:read"] });
+    const tools = registered("monitor", ctx);
+    expect(tools.has("get_monitor")).toBe(true);
+    expect(tools.has("update_monitor")).toBe(false);
+  });
+
+  test("a pages:write key sees the page update tools but not update_monitor", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["pages:write"] });
+    expect(registered("monitor", ctx).has("update_monitor")).toBe(false);
+    const pageTools = registered("page", ctx);
+    expect(pageTools.has("update_status_page")).toBe(true);
+    expect(pageTools.has("update_page_component")).toBe(true);
+    expect(pageTools.has("create_component_group")).toBe(true);
+    expect(pageTools.has("update_component_group")).toBe(true);
+  });
+});
+
+describe("update_status_page", () => {
+  test("a title-only patch keeps the slug and emits audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "update_status_page", {
+        pageId: testPageId,
+        title: `${TEST_PREFIX}-renamed-page`,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        id: number;
+        slug: string;
+        title: string;
+        url: string;
+      };
+      expect(out).toMatchObject({
+        id: testPageId,
+        slug: `${TEST_PREFIX}-page-slug`,
+        title: `${TEST_PREFIX}-renamed-page`,
+        url: `https://${TEST_PREFIX}-page-slug.openstatus.dev`,
+      });
+      const row = await tx
+        .select({
+          slug: page.slug,
+          title: page.title,
+          description: page.description,
+        })
+        .from(page)
+        .where(eq(page.id, testPageId))
+        .get();
+      expect(row).toEqual({
+        slug: `${TEST_PREFIX}-page-slug`,
+        title: `${TEST_PREFIX}-renamed-page`,
+        description: "test page",
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: testPageId,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  test("links alone touch only the link columns", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const result = await callTool(tools, "update_status_page", {
+        pageId: testPageId,
+        contactUrl: "https://acme.com/support",
+      });
+      expect(result.isError).toBeUndefined();
+      const row = await tx
+        .select({
+          title: page.title,
+          contactUrl: page.contactUrl,
+          homepageUrl: page.homepageUrl,
+        })
+        .from(page)
+        .where(eq(page.id, testPageId))
+        .get();
+      expect(row).toEqual({
+        title: `${TEST_PREFIX}-page`,
+        contactUrl: "https://acme.com/support",
+        homepageUrl: null,
+      });
+    });
+  });
+});
+
+describe("update_status_page clears", () => {
+  test("empty strings clear the optional fields", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      await callTool(tools, "update_status_page", {
+        pageId: testPageId,
+        homepageUrl: "https://acme.com",
+        icon: "https://acme.com/icon.png",
+      });
+      const result = await callTool(tools, "update_status_page", {
+        pageId: testPageId,
+        description: "",
+        icon: "",
+        homepageUrl: "",
+      });
+      expect(result.isError).toBeUndefined();
+      const row = await tx
+        .select({
+          description: page.description,
+          icon: page.icon,
+          homepageUrl: page.homepageUrl,
+        })
+        .from(page)
+        .where(eq(page.id, testPageId))
+        .get();
+      expect(row).toEqual({ description: "", icon: "", homepageUrl: null });
+    });
+  });
+});
+
+describe("component groups", () => {
+  test("create, list, move a component in and rename the group", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+
+      const created = await callTool(tools, "create_component_group", {
+        pageId: testPageId,
+        name: `${TEST_PREFIX}-group`,
+      });
+      expect(created.isError).toBeUndefined();
+      const group = created.structuredContent as {
+        id: number;
+        pageId: number;
+        name: string;
+        defaultOpen: boolean;
+      };
+      expect(group).toMatchObject({
+        pageId: testPageId,
+        name: `${TEST_PREFIX}-group`,
+        defaultOpen: false,
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page_component_group.create",
+        entityType: "page_component_group",
+        entityId: group.id,
+        actorType: "mcp",
+        db: tx,
+      });
+
+      const listed = await callTool(tools, "list_page_components", {
+        pageId: testPageId,
+      });
+      const list = listed.structuredContent as {
+        items: {
+          id: number;
+          groupId: number | null;
+          groupName: string | null;
+        }[];
+        groups: { id: number; name: string }[];
+      };
+      expect(list.groups.map((g) => g.id)).toContain(group.id);
+      expect(
+        list.items.find((c) => c.id === testPageComponentId)?.groupId,
+      ).toBeNull();
+
+      const moved = await callTool(tools, "update_page_component", {
+        componentId: testPageComponentId,
+        groupId: group.id,
+      });
+      expect(moved.isError).toBeUndefined();
+      expect(moved.structuredContent).toMatchObject({
+        id: testPageComponentId,
+        pageId: testPageId,
+        monitorId: null,
+        groupId: group.id,
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page_component.update",
+        entityType: "page_component",
+        entityId: testPageComponentId,
+        actorType: "mcp",
+        db: tx,
+      });
+
+      const relisted = await callTool(tools, "list_page_components", {
+        pageId: testPageId,
+      });
+      const item = (relisted.structuredContent as typeof list).items.find(
+        (c) => c.id === testPageComponentId,
+      );
+      expect(item).toMatchObject({
+        groupId: group.id,
+        groupName: `${TEST_PREFIX}-group`,
+      });
+
+      const renamed = await callTool(tools, "update_component_group", {
+        groupId: group.id,
+        name: `${TEST_PREFIX}-core`,
+        defaultOpen: true,
+      });
+      expect(renamed.isError).toBeUndefined();
+      expect(renamed.structuredContent).toMatchObject({
+        id: group.id,
+        name: `${TEST_PREFIX}-core`,
+        defaultOpen: true,
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "page_component_group.update",
+        entityType: "page_component_group",
+        entityId: group.id,
+        actorType: "mcp",
+        db: tx,
+      });
+
+      const ungrouped = await callTool(tools, "update_page_component", {
+        componentId: testPageComponentId,
+        groupId: null,
+      });
+      expect(ungrouped.structuredContent).toMatchObject({ groupId: null });
+    });
+  });
+});
+
+describe("update_page_component order", () => {
+  type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
+
+  async function seedComponents(tx: Tx, n: number) {
+    const rows = [];
+    for (let i = 0; i < n; i++) {
+      rows.push(
+        await tx
+          .insert(pageComponent)
+          .values({
+            workspaceId: teamWorkspace.id,
+            pageId: testPageId,
+            name: `${TEST_PREFIX}-order-${i}`,
+            type: "static",
+            order: i + 1,
+          })
+          .returning()
+          .get(),
+      );
+    }
+    return rows.map((r) => r.id);
+  }
+
+  async function readPositions(tx: Tx) {
+    return tx
+      .select({
+        id: pageComponent.id,
+        order: pageComponent.order,
+        groupId: pageComponent.groupId,
+        groupOrder: pageComponent.groupOrder,
+      })
+      .from(pageComponent)
+      .where(eq(pageComponent.pageId, testPageId))
+      .all();
+  }
+
+  test("moving to index 0 shifts the others without duplicates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      await tx
+        .update(pageComponent)
+        .set({ order: 0 })
+        .where(eq(pageComponent.id, testPageComponentId));
+      const [a, b, c] = await seedComponents(tx, 3);
+
+      const result = await callTool(tools, "update_page_component", {
+        componentId: c,
+        order: 0,
+      });
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toMatchObject({ id: c, order: 0 });
+
+      const rows = (await readPositions(tx)).filter((r) => r.groupId === null);
+      const sorted = [...rows].sort((x, y) => (x.order ?? 0) - (y.order ?? 0));
+      expect(sorted.map((r) => r.id).slice(0, 4)).toEqual([
+        c,
+        testPageComponentId,
+        a,
+        b,
+      ]);
+      const orders = rows.map((r) => r.order);
+      expect(new Set(orders).size).toBe(orders.length);
+    });
+  });
+
+  test("positions inside a group by groupOrder; omitted order appends", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const [a, b, c] = await seedComponents(tx, 3);
+      const created = await callTool(tools, "create_component_group", {
+        pageId: testPageId,
+        name: `${TEST_PREFIX}-order-group`,
+      });
+      const groupId = (created.structuredContent as { id: number }).id;
+
+      for (const id of [a, b]) {
+        await callTool(tools, "update_page_component", {
+          componentId: id,
+          groupId,
+        });
+      }
+      await callTool(tools, "update_page_component", {
+        componentId: c,
+        groupId,
+        order: 0,
+      });
+
+      const grouped = (await readPositions(tx))
+        .filter((r) => r.groupId === groupId)
+        .sort((x, y) => (x.groupOrder ?? 0) - (y.groupOrder ?? 0));
+      expect(grouped.map((r) => [r.id, r.groupOrder])).toEqual([
+        [c, 0],
+        [a, 1],
+        [b, 2],
+      ]);
+      expect(new Set(grouped.map((r) => r.order)).size).toBe(1);
+    });
+  });
+});
+
+describe("get_maintenance / update_maintenance", () => {
+  test("reads the window, then moves its end and rewrites the newest message", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("maintenance", ctx);
+      const created = await callTool(tools, "create_maintenance", {
+        title: `${TEST_PREFIX}-mtc-update`,
+        message: "initial",
+        from: "2026-04-30T14:00:00.000Z",
+        to: "2026-04-30T15:00:00.000Z",
+        pageId: testPageId,
+        pageComponentIds: [],
+        notify: false,
+      });
+      const { id } = created.structuredContent as { id: number };
+
+      const read = await callTool(tools, "get_maintenance", {
+        maintenanceId: id,
+      });
+      expect(read.isError).toBeUndefined();
+      expect(read.structuredContent).toMatchObject({
+        id,
+        title: `${TEST_PREFIX}-mtc-update`,
+        from: "2026-04-30T14:00:00.000Z",
+        to: "2026-04-30T15:00:00.000Z",
+        pageId: testPageId,
+        pageComponentIds: [],
+      });
+      const readOut = read.structuredContent as {
+        updates: { id: number; message: string }[];
+      };
+      expect(readOut.updates).toHaveLength(1);
+      expect(readOut.updates[0]?.message).toBe("initial");
+
+      const updated = await callTool(tools, "update_maintenance", {
+        maintenanceId: id,
+        to: "2026-04-30T16:00:00.000Z",
+        message: "rewritten",
+        pageComponentIds: [testPageComponentId],
+      });
+      expect(updated.isError).toBeUndefined();
+      const out = updated.structuredContent as {
+        from: string;
+        to: string;
+        pageComponentIds: number[];
+        updates: { id: number; message: string }[];
+      };
+      expect(out.from).toBe("2026-04-30T14:00:00.000Z");
+      expect(out.to).toBe("2026-04-30T16:00:00.000Z");
+      expect(out.pageComponentIds).toEqual([testPageComponentId]);
+      expect(out.updates).toHaveLength(1);
+      expect(out.updates[0]).toMatchObject({
+        id: readOut.updates[0]?.id,
+        message: "rewritten",
+      });
+      await expectAuditRow({
+        workspaceId: teamWorkspace.id,
+        action: "maintenance.update",
+        entityType: "maintenance",
+        entityId: id,
+        actorType: "mcp",
+        db: tx,
+      });
+    });
+  });
+
+  test("an end before the start is refused", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("maintenance", ctx);
+      const created = await callTool(tools, "create_maintenance", {
+        title: `${TEST_PREFIX}-mtc-range`,
+        message: "x",
+        from: "2026-04-30T14:00:00.000Z",
+        to: "2026-04-30T15:00:00.000Z",
+        pageId: testPageId,
+        pageComponentIds: [],
+        notify: false,
+      });
+      const { id } = created.structuredContent as { id: number };
+      const result = await callTool(tools, "update_maintenance", {
+        maintenanceId: id,
+        to: "2026-04-30T13:00:00.000Z",
+      });
+      expect(result.isError).toBe(true);
+    });
+  });
+
+  test("incidents:read sees get_maintenance but not update_maintenance", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["incidents:read"] });
+    const tools = registered("maintenance", ctx);
+    expect(tools.has("get_maintenance")).toBe(true);
+    expect(tools.has("update_maintenance")).toBe(false);
   });
 });

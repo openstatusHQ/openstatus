@@ -23,6 +23,7 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type {
   Maintenance,
@@ -170,6 +171,7 @@ export async function listPageComponents(args: {
   input: ListPageComponentsInput;
 }): Promise<PageComponentWithRelations[]> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = ListPageComponentsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

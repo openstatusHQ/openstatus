@@ -12,7 +12,7 @@ export async function deleteMonitorIncident(args: {
   input: DeleteMonitorIncidentInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorIncidentInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

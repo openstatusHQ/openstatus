@@ -25,7 +25,7 @@ export async function sendPageSubscriberTestWebhook(args: {
   input: SendPageSubscriberTestWebhookInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "subscribers:write");
   const input = SendPageSubscriberTestWebhookInput.parse(args.input);
 
   const existing = await withTransaction(ctx, async (tx) => {

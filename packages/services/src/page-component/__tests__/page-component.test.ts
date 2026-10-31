@@ -373,6 +373,53 @@ describe("deletePageComponent", () => {
 });
 
 describe("createPageComponent", () => {
+  test("appends after the page's last component when order is omitted", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          title: `${TEST_PREFIX}-append-page`,
+          description: "test",
+          slug: `${TEST_PREFIX}-append-slug`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+
+      const first = await createPageComponent({
+        ctx,
+        input: { pageId: pageRow.id, type: "static", name: "first" },
+      });
+      expect(first.order).toBe(0);
+
+      await tx.insert(pageComponent).values({
+        workspaceId: teamCtx.workspace.id,
+        pageId: pageRow.id,
+        type: "static",
+        name: "gap",
+        order: 4,
+      });
+
+      const appended = await createPageComponent({
+        ctx,
+        input: {
+          pageId: pageRow.id,
+          type: "monitor",
+          monitorId: teamMonitorId,
+        },
+      });
+      expect(appended.order).toBe(5);
+
+      const explicit = await createPageComponent({
+        ctx,
+        input: { pageId: pageRow.id, type: "static", name: "pinned", order: 2 },
+      });
+      expect(explicit.order).toBe(2);
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const readOnlyCtx = {

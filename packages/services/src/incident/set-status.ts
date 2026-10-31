@@ -48,7 +48,7 @@ export async function setIncidentStatus(args: {
   input: SetIncidentStatusInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = SetIncidentStatusInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

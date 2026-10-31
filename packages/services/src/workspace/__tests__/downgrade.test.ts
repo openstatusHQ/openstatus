@@ -555,6 +555,24 @@ describe("downgradeWorkspaceToFree", () => {
     });
   });
 
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const ctx: ServiceContext = {
+        ...makeApiKeyCtx(s.ws, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+
+      await expect(downgradeWorkspaceToFree({ ctx })).rejects.toBeInstanceOf(
+        ForbiddenError,
+      );
+    });
+  });
+
   test("disables SSO so JIT cannot re-add the trimmed members", async () => {
     await withTestTransaction(async (tx) => {
       const s = await seedTeamWorkspace(tx);

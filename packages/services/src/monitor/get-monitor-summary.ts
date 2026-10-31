@@ -1,6 +1,7 @@
 import { db as defaultDb } from "@openstatus/db";
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, defaultTb } from "../context";
 import { ValidationError } from "../errors";
 import { getMonitorInWorkspace } from "./internal";
@@ -77,6 +78,7 @@ export async function getMonitorSummary(args: {
   input: GetMonitorSummaryInput;
 }): Promise<GetMonitorSummaryResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorSummaryInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

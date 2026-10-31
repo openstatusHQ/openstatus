@@ -6,6 +6,7 @@ import {
 import { oauthScopesSchema } from "@openstatus/db/src/schema/oauth/validation";
 import { z } from "zod";
 
+import { matchesScope } from "../auth/matches-scope";
 import {
   DEFAULT_SCOPE,
   GRANT_TYPES,
@@ -13,10 +14,14 @@ import {
   TOKEN_ENDPOINT_AUTH_METHODS,
 } from "./constants";
 
+function isSettableScope(value: string): value is SettableScope {
+  return (apiKeySettableScopes as readonly string[]).includes(value);
+}
+
 /**
- * Space-delimited RFC 6749 scope string to the stored array. Read+write
- * collapses to `["write"]` because `matchesScope` treats write as implying
- * read; an absent parameter means write.
+ * Space-delimited RFC 6749 scope string to the stored array: every token must
+ * be settable, the result is deduped, minimal and in canonical order. An
+ * absent parameter means `DEFAULT_SCOPE`.
  */
 export function parseScopeParam(scope: string | undefined | null): {
   scopes: SettableScope[];
@@ -24,18 +29,28 @@ export function parseScopeParam(scope: string | undefined | null): {
 } {
   const parts = (scope ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { scopes: [...DEFAULT_SCOPE], invalid: [] };
-  const invalid = parts.filter(
-    (p) => !(apiKeySettableScopes as readonly string[]).includes(p),
-  );
-  if (invalid.length > 0) return { scopes: [], invalid };
-  return { scopes: parts.includes("write") ? ["write"] : ["read"], invalid };
+  const known: SettableScope[] = [];
+  const invalid = new Set<string>();
+  for (const part of parts) {
+    if (isSettableScope(part)) known.push(part);
+    else invalid.add(part);
+  }
+  if (invalid.size > 0) return { scopes: [], invalid: [...invalid] };
+  return { scopes: normalizeScopes(known), invalid: [] };
 }
 
-// Grants never store '*'; it is folded into write defensively.
+/**
+ * Minimal canonical form: drops every scope another held scope already
+ * implies (`write` ⊇ `monitors:read`, `monitors:write` ⊇ `monitors:read`),
+ * ordered as `apiKeySettableScopes`. Grants never store '*'; it folds into
+ * write defensively.
+ */
 export function normalizeScopes(scopes: readonly Scope[]): SettableScope[] {
-  return scopes.includes("write") || scopes.includes("*")
-    ? ["write"]
-    : ["read"];
+  const held: Scope[] = scopes.map((s) => (s === "*" ? "write" : s));
+  return apiKeySettableScopes.filter(
+    (s) =>
+      held.includes(s) && !held.some((h) => h !== s && matchesScope([h], s)),
+  );
 }
 
 export function formatScope(scopes: readonly Scope[]): string {

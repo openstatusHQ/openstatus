@@ -5,6 +5,7 @@ import type {
   PageComponentType,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, defaultTb, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { fetchMonitorDailyStats } from "../monitor/get-daily-summary";
@@ -56,6 +57,7 @@ export async function getPageComponentDailySummary(args: {
   input: GetPageComponentDailySummaryInput;
 }): Promise<GetPageComponentDailySummaryResult> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetPageComponentDailySummaryInput.parse(args.input);
   const db = getReadDb(ctx);
   const tb = ctx.tb ?? defaultTb;

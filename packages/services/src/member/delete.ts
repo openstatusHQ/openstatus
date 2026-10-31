@@ -34,7 +34,7 @@ export async function deleteMember(args: {
   input: DeleteMemberInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = DeleteMemberInput.parse(args.input);
 
   if (ctx.actor.type !== "user") {

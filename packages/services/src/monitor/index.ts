@@ -53,6 +53,11 @@ export {
   StreamMonitorPreviewInput,
   streamMonitorPreview,
 } from "./stream-monitor-preview";
+export {
+  firstRegion,
+  RunMonitorCheckInput,
+  runMonitorCheck,
+} from "./run-check";
 export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
 export { assertMonitorUrlSafe } from "./url-safety";
 export {
@@ -82,6 +87,7 @@ export {
   ListMonitorsInput,
   ListResponseLogsInfiniteInput,
   ListResponseLogsInput,
+  monitorAssertionSchema,
   monitorJobTypes,
   monitorMethods,
   monitorPeriodicity,

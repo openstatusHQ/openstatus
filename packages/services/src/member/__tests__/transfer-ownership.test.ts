@@ -179,6 +179,22 @@ describe("transferOwnership", () => {
     });
   });
 
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: OWNER_USER_ID,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        transferOwnership({ ctx: writeKeyCtx, input: { userId: 999_999_999 } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("system actor is rejected on the public verb", async () => {
     await withTestTransaction(async (tx) => {
       await expectRejects(

@@ -25,7 +25,7 @@ export async function installSlackAgent(args: {
   input: InstallSlackAgentInput;
 }) {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = InstallSlackAgentInputSchema.parse(args.input);
   if (!ctx.workspace.limits["slack-agent"]) {
     throw new ForbiddenError("The Slack agent is not included in your plan");

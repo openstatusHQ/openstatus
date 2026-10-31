@@ -107,6 +107,25 @@ describe("deleteMember", () => {
     });
   });
 
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: OWNER_USER_ID,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        deleteMember({
+          ctx: writeKeyCtx,
+          input: { userId: 999_999_999 },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("non-owner caller is rejected with PRECONDITION_FAILED", async () => {
     await withTestTransaction(async (tx) => {
       const nonOwnerCtx = {

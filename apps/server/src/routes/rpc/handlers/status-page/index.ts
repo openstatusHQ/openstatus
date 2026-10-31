@@ -1,15 +1,5 @@
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import {
-  and,
-  count,
-  db,
-  desc,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lte,
-} from "@openstatus/db";
+import { and, db, eq, gte, inArray, lte } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -70,6 +60,8 @@ import {
 } from "@openstatus/services/page-component-group";
 import {
   createPageSubscriber,
+  countPageSubscribers,
+  listPageSubscribers,
   unsubscribePageSubscriber,
   upsertSelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
@@ -1497,49 +1489,36 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async listSubscribers(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(
-      parseEntityId(req.pageId, "page id"),
-      workspaceId,
-    );
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
     const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
     const offset = req.offset ?? 0;
 
-    // Build conditions
-    const conditions = [eq(pageSubscriber.pageId, pageData.id)];
-    if (!req.includeUnsubscribed) {
-      conditions.push(isNull(pageSubscriber.unsubscribedAt));
+    try {
+      const sCtx = toServiceCtx(rpcCtx);
+      const filter = {
+        pageId: parseEntityId(req.pageId, "page id"),
+        includeUnsubscribed: req.includeUnsubscribed ?? false,
+      };
+      const [rows, totalSize] = await Promise.all([
+        listPageSubscribers({ ctx: sCtx, input: { ...filter, limit, offset } }),
+        countPageSubscribers({ ctx: sCtx, input: filter }),
+      ]);
+
+      return {
+        subscribers: rows.map((row) =>
+          dbSubscriberToProto({
+            ...row,
+            updatedAt: row.updatedAt ?? null,
+            componentIds: row.components.map((c) => c.id),
+          }),
+        ),
+        totalSize,
+      };
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw statusPageNotFoundError(req.pageId);
+      }
+      toConnectError(err);
     }
-
-    // Get total count
-    const countResult = await db
-      .select({ count: count() })
-      .from(pageSubscriber)
-      .where(and(...conditions))
-      .get();
-
-    const totalCount = countResult?.count ?? 0;
-
-    // Get subscribers
-    const subscribers = await db
-      .select()
-      .from(pageSubscriber)
-      .where(and(...conditions))
-      .orderBy(desc(pageSubscriber.createdAt))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    return {
-      subscribers: subscribers.map(dbSubscriberToProto),
-      totalSize: totalCount,
-    };
   },
 
   // ==========================================================================

@@ -19,7 +19,7 @@ export async function deleteIncident(args: {
   input: IncidentIdInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = IncidentIdInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

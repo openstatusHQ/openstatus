@@ -1,5 +1,9 @@
 import type { Workspace } from "@openstatus/db/src/schema";
-import { ForbiddenError, NotFoundError } from "@openstatus/services";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+} from "@openstatus/services";
 import { describe, expect, test } from "vitest";
 
 import { mapError, toServiceCtx } from "./adapter";
@@ -40,6 +44,19 @@ describe("mapError", () => {
     // `CallToolResult`. The LLM has no input to retry; this is an
     // auth boundary failure.
     expect(() => mapError(new ForbiddenError("nope"))).toThrow();
+  });
+
+  test("LimitExceededError names the billing fix", () => {
+    const addOn = mapError(new LimitExceededError("monitors", 5, 5));
+    expect(addOn.isError).toBe(true);
+    expect(JSON.stringify(addOn.content)).toContain(
+      "Add more under Settings > Billing (add-on).",
+    );
+    const plan = mapError(new LimitExceededError("custom-domain", 0));
+    expect(plan.isError).toBe(true);
+    expect(JSON.stringify(plan.content)).toContain(
+      "Upgrade the plan under Settings > Billing.",
+    );
   });
 
   test("NotFoundError returns recoverable CallToolResult", () => {

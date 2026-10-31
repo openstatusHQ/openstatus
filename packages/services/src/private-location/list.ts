@@ -1,6 +1,7 @@
 import { count, desc, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { ListPrivateLocationsInput } from "./schemas";
 
@@ -20,6 +21,7 @@ export async function listPrivateLocations(args: {
   ctx: ServiceContext;
   input?: ListPrivateLocationsInput;
 }) {
+  requireScope(args.ctx, "monitors:read");
   const input = ListPrivateLocationsInput.parse(args.input ?? {});
   const db = getReadDb(args.ctx);
 

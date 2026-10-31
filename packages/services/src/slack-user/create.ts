@@ -15,7 +15,7 @@ export async function createSlackUserMapping(args: {
   input: CreateSlackUserMappingInput;
 }): Promise<SlackUser> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = CreateSlackUserMappingInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
