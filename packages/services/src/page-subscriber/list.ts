@@ -88,7 +88,9 @@ export async function listPageSubscribers(args: {
       },
     },
     orderBy: (subs, { desc, asc }) =>
-      input.order === "asc" ? asc(subs.createdAt) : desc(subs.createdAt),
+      input.order === "asc"
+        ? [asc(subs.createdAt), asc(subs.id)]
+        : [desc(subs.createdAt), desc(subs.id)],
     limit: input.limit,
     offset: input.offset,
   });

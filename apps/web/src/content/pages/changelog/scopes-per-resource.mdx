@@ -8,10 +8,10 @@ author: "openstatus"
 
 API keys and OAuth connections now carry one scope per resource group instead of a single read or write switch.
 
-The groups are `monitors`, `pages`, `incidents`, `notifications` and `subscribers`, each as `:read` or `:write`, so `incidents:write monitors:read` is a valid key. The consent screen and the API key form offer presets:
+The groups are `monitors`, `pages`, `incidents`, `notifications` and `subscribers`, each as `:read` or `:write`, so `incidents:write monitors:read` is a valid key. The consent screen offers presets, and the API key form offers Read only, Read & write and Custom:
 
 - **Read only**: every read.
-- **Incident comms**: write status reports, incidents and maintenance; read the rest.
+- **Incident comms**: write status reports, incidents and maintenance; read monitors, pages and notification channels.
 - **Full setup**: also create monitors, status pages and components.
 - **Read & write**: everything.
 

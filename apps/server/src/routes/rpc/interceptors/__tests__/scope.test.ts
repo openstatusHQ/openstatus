@@ -166,6 +166,14 @@ describe("scopeInterceptor", () => {
     await expectDenied(result, Code.PermissionDenied, /monitors:write/);
   });
 
+  test("group read key reads its own group", async () => {
+    const { result } = await run(MONITOR, "ListMonitors", {
+      scopes: ["monitors:read"],
+      idempotency: NO_SIDE_EFFECTS,
+    });
+    await expect(result).resolves.toBeDefined();
+  });
+
   test("group read key cannot read another group", async () => {
     const { result } = await run(REPORT, "ListStatusReports", {
       scopes: ["monitors:read"],

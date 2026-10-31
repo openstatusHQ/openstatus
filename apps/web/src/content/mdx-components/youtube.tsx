@@ -17,7 +17,13 @@ export function ShowcaseYouTube({
   entries: { href: string; title?: string }[];
 }) {
   return (
-    <div className="my-4 grid gap-4 sm:grid-cols-2">
+    <div
+      className={
+        entries.length > 1
+          ? "my-4 grid gap-4 sm:grid-cols-2"
+          : "my-4 grid gap-4"
+      }
+    >
       {entries.map((entry, i) => (
         <div
           key={`${entry.href}-${i}`}

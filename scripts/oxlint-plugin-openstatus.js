@@ -183,6 +183,8 @@ const servicesNoLegacyScope = {
     messages: {
       legacy:
         'requireScope(ctx, "{{scope}}") is the legacy umbrella. Require the group instead: `<group>:read` / `<group>:write` for monitors, pages, incidents, notifications, subscribers, or `admin` — see packages/services/AGENTS.md.',
+      nonLiteral:
+        "requireScope takes a string literal so the required scope is visible at the call site and checkable by lint.",
     },
   },
   create(context) {
@@ -190,7 +192,11 @@ const servicesNoLegacyScope = {
       CallExpression(node) {
         if (calleeName(node) !== "requireScope") return;
         const arg = node.arguments[1];
-        if (!arg || arg.type !== "Literal") return;
+        if (!arg) return;
+        if (arg.type !== "Literal") {
+          context.report({ node: arg, messageId: "nonLiteral" });
+          return;
+        }
         if (!LEGACY_SCOPES.has(arg.value)) return;
         context.report({
           node: arg,
@@ -229,15 +235,49 @@ function takesServiceContext(param) {
   );
 }
 
-/** Direct statements of the function body only: a nested helper's call does not count. */
-function bodyCallsRequireScope(fn) {
-  if (fn.body?.type !== "BlockStatement") return false;
-  return fn.body.body.some(
-    (statement) =>
+/** Service folder → scope group, mirroring SCOPES.md. */
+const FOLDER_GROUP = {
+  monitor: "monitors",
+  "monitor-tag": "monitors",
+  "private-location": "monitors",
+  "monitor-incident": "monitors",
+  "frozen-uptime": "monitors",
+  page: "pages",
+  "page-component": "pages",
+  "page-component-group": "pages",
+  import: "pages",
+  "status-report": "incidents",
+  incident: "incidents",
+  maintenance: "incidents",
+  notification: "notifications",
+  "page-subscriber": "subscribers",
+};
+
+function groupForFile(filename) {
+  const m = /packages\/services\/src\/([^/]+)\//.exec(filename);
+  return m ? FOLDER_GROUP[m[1]] : undefined;
+}
+
+/**
+ * Direct statements of the function body only: a nested helper's call does
+ * not count. Returns the required scopes found, so the caller can check the
+ * group; a verb that probes (streamMonitorPreview) may require `:write`.
+ */
+function bodyRequiredScopes(fn) {
+  if (fn.body?.type !== "BlockStatement") return [];
+  const scopes = [];
+  for (const statement of fn.body.body) {
+    const expr = statement.expression;
+    if (
       statement.type === "ExpressionStatement" &&
-      statement.expression?.type === "CallExpression" &&
-      calleeName(statement.expression) === "requireScope",
-  );
+      expr?.type === "CallExpression" &&
+      calleeName(expr) === "requireScope"
+    ) {
+      const arg = expr.arguments[1];
+      scopes.push(arg?.type === "Literal" ? arg.value : "<non-literal>");
+    }
+  }
+  return scopes;
 }
 
 /**
@@ -254,14 +294,30 @@ const servicesReadVerbsRequireScope = {
     messages: {
       missing:
         "`{{name}}` reads on behalf of an actor but never calls `requireScope`. Read verbs require `<group>:read` as their first line — see packages/services/AGENTS.md. If this export is not an actor-facing verb, disable this rule inline with the reason above it.",
+      wrongGroup:
+        "`{{name}}` lives in the `{{group}}` group but requires `{{scope}}`. Read verbs require `{{group}}:read` (or `{{group}}:write` when they probe or send).",
     },
   },
   create(context) {
+    const group = groupForFile(context.filename ?? context.getFilename?.());
     function check(fn, name) {
       if (!name || !READ_VERB_PREFIX.test(name)) return;
       if (!takesServiceContext(fn.params[0])) return;
-      if (bodyCallsRequireScope(fn)) return;
-      context.report({ node: fn, messageId: "missing", data: { name } });
+      const scopes = bodyRequiredScopes(fn);
+      if (scopes.length === 0) {
+        context.report({ node: fn, messageId: "missing", data: { name } });
+        return;
+      }
+      if (!group) return;
+      const allowed = new Set([`${group}:read`, `${group}:write`]);
+      for (const scope of scopes) {
+        if (allowed.has(scope)) continue;
+        context.report({
+          node: fn,
+          messageId: "wrongGroup",
+          data: { name, group, scope },
+        });
+      }
     }
     return {
       ExportNamedDeclaration(node) {

@@ -3,6 +3,7 @@ import { headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
 import { assertCreateBudget } from "../auth";
+import { ValidationError } from "../errors";
 import {
   type CheckResult,
   type MonitorTimeRange,
@@ -629,6 +630,14 @@ export const createMonitorTool: AgentTool<
     verb: "created",
   },
   async run({ ctx, input }) {
+    const mismatched = (input.assertions ?? []).filter((a) =>
+      input.jobType === "dns" ? a.type !== "dnsRecord" : a.type === "dnsRecord",
+    );
+    if (mismatched.length > 0) {
+      throw new ValidationError(
+        `Assertions of type ${mismatched.map((a) => a.type).join(", ")} do not apply to ${input.jobType} monitors.`,
+      );
+    }
     await assertCreateBudget(ctx);
     const m = await createMonitor({
       ctx,

@@ -532,6 +532,9 @@ describe("MCP transport — group scopes", () => {
       const { tools } = await client.listTools();
       const names = tools.map((t) => t.name);
       for (const name of ANY_TOOLS) expect(names).toContain(name);
+      for (const name of ["list_monitors", "get_monitor", "get_monitor_status"])
+        expect(names).toContain(name);
+      expect(names).not.toContain("create_monitor");
       for (const name of INCIDENT_GROUP_TOOLS)
         expect(names).not.toContain(name);
       for (const tool of tools) {

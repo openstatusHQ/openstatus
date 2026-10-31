@@ -42,10 +42,19 @@ export async function runImport(args: {
   input: RunImportInput;
 }): Promise<ImportSummary> {
   const { ctx } = args;
-  // The phase writers insert monitors as well as components.
+  // Phases write pages and components, monitors, status reports and
+  // maintenances, and (opt-in) subscribers: one group each.
   requireScope(ctx, "pages:write");
-  requireScope(ctx, "monitors:write");
   const input = RunImportInput.parse(args.input);
+  if (input.options?.includeMonitors !== false) {
+    requireScope(ctx, "monitors:write");
+  }
+  if (input.options?.includeStatusReports !== false) {
+    requireScope(ctx, "incidents:write");
+  }
+  if (input.options?.includeSubscribers) {
+    requireScope(ctx, "subscribers:write");
+  }
   const tx = ctx.db ?? defaultDb;
 
   // Verify pageId belongs to the workspace before doing any provider work.

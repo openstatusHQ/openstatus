@@ -53,9 +53,13 @@ describe("createMonitorChanges", () => {
     expect(rows[0]).toEqual({ field: "id", after: 7 });
     expect(rows).toContainEqual({ field: "periodicity", after: "1m" });
     expect(rows).toContainEqual({ field: "regions", after: ["ams", "iad"] });
-    expect(rows.at(-1)).toEqual({
+    expect(rows.at(-2)).toEqual({
       field: "firstCheck",
       after: "ams · 200 · 143 ms",
+    });
+    expect(rows.at(-1)).toEqual({
+      field: "dashboardUrl",
+      after: "http://localhost:3001/monitors/7/overview",
     });
   });
 
@@ -120,6 +124,7 @@ describe("createStatusPageChanges", () => {
       { field: "slug", after: "acme" },
       { field: "description", after: "Status" },
       { field: "url", after: "https://acme.openstatus.dev" },
+      { field: "dashboardUrl", after: "" },
     ]);
   });
 });

@@ -1076,7 +1076,7 @@ describe("create_monitor", () => {
   afterAll(() => {
     globalThis.fetch = originalFetch;
     if (originalCronSecret === undefined) {
-      process.env.CRON_SECRET = undefined;
+      delete process.env.CRON_SECRET;
     } else {
       process.env.CRON_SECRET = originalCronSecret;
     }

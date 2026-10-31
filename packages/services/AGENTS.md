@@ -21,8 +21,10 @@ failed. Do not "fix" it by routing it through a verb.
 - **`requireScope(ctx, "<group>:write")` is the first line of every write
   verb** — before `Input.parse(...)`, before `withTransaction`. Exported read
   verbs (`list*`, `get*`, `search*`, `stream*`, `preview*`) open with
-  `requireScope(ctx, "<group>:read")`; admin verbs with
-  `requireScope(ctx, "admin")`.
+  `requireScope(ctx, "<group>:read")`, unless they probe or send, which makes
+  them writes whatever the name (`streamMonitorPreview` requires
+  `monitors:write`); admin verbs with `requireScope(ctx, "admin")`. Lint
+  checks the group against the folder.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.

@@ -49,5 +49,7 @@ mutate the shared `process.env`, which leaks between cases.
 Agent tools declare `scope` as a group scope (`incidents:write`,
 `monitors:read`) or `any` for public content, docs, workspace metadata and
 audit logs, and register via `registerScopedTool`, so a key never sees a tool
-its scopes cannot call in `tools/list`. `readOnlyHint` is derived with
-`isReadScope`. A tool registered the plain way leaks regardless of the key.
+its scopes cannot call in `tools/list`. The registry adapter derives
+`readOnlyHint` with `isReadScope`; a direct `registerScopedTool` caller must
+set it the same way, and the wrapper rejects a hint that disagrees with the
+scope. A tool registered the plain way leaks regardless of the key.

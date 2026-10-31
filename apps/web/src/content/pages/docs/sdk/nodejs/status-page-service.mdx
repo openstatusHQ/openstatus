@@ -141,7 +141,7 @@ const { success } = await client.statusPage.v1.StatusPageService
 
 ## Subscribers
 
-Manage email subscriptions to status page updates. These three methods need the `subscribers` scope, not `pages`: `listSubscribers` needs `subscribers:read`, `subscribeToPage` and `unsubscribeFromPage` need `subscribers:write`. The umbrellas cover them too: `write` both, `read` the list. See [Scopes](/docs/sdk/nodejs/authentication#scopes).
+Manage email subscriptions to status page updates. These methods need the `subscribers` scope, not `pages`: `listSubscribers` needs `subscribers:read`; `subscribeToPage`, `createPageSubscription` and `unsubscribeFromPage` need `subscribers:write`. The umbrellas cover them too: `write` both, `read` the list. See [Scopes](/docs/sdk/nodejs/authentication#scopes).
 
 ### Subscribe to Page
 

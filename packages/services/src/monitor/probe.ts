@@ -118,12 +118,22 @@ export async function probeRegion(args: {
 
     const json = (await res.json()) as Record<string, unknown>;
 
-    if (json && typeof json === "object" && json.state === "error") {
+    // The checker reports an unreachable target as 200 with a message and
+    // no status, so anything without a numeric status is a failed check.
+    if (
+      !json ||
+      typeof json !== "object" ||
+      json.state === "error" ||
+      typeof json.status !== "number"
+    ) {
+      const message = [json?.message, json?.error].find(
+        (v) => typeof v === "string",
+      ) as string | undefined;
       return {
         state: "error",
         type: "http",
         region,
-        message: typeof json.message === "string" ? json.message : "Failed",
+        message: message ?? "Failed",
         timestamp: Date.now(),
       };
     }

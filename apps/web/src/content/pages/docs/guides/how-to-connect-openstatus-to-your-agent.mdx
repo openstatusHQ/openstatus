@@ -9,7 +9,7 @@ description: "Step-by-step tutorial to add the openstatus MCP server to Claude C
 |---|---|
 | **Time** | ~2 minutes |
 | **Level** | Beginner |
-| **Prerequisites** | openstatus account with at least one status page, an MCP-capable agent installed |
+| **Prerequisites** | openstatus account, an MCP-capable agent installed. A status page helps for the incident examples; the setup prompt below creates one |
 
 openstatus exposes one [Model Context Protocol](https://modelcontextprotocol.io) server at `https://api.openstatus.dev/mcp`. Every MCP-capable agent connects to the same endpoint, signs in through the same OAuth consent screen, and gets the same tools — so this guide is one walkthrough with a per-agent registration step.
 
@@ -222,7 +222,7 @@ CLI agents print the authorization URL in the terminal. Copy it into a browser o
 
 ### "Tool not available" when asking the agent to create something
 
-The server only lists the tools your scopes allow. A **Read only** connection sees the read tools; **Incident comms** adds the status report, incident, and maintenance tools; `create_monitor`, `create_status_page`, and `add_page_component` need **Full setup** (`monitors:write` and `pages:write`). Connections approved before presets existed hold the Incident comms scopes, so the setup tools are missing until you sign in again and pick **Full setup**, or issue an API key with those scopes.
+The server only lists the tools your scopes allow. A **Read only** connection sees the read tools; **Incident comms** adds the status report, incident, and maintenance tools; **Full setup** enables all three setup tools: `create_monitor` needs `monitors:write`, `create_status_page` and `add_page_component` need `pages:write`, so a Custom credential can hold either half. Connections approved before presets existed hold the Incident comms scopes, so the setup tools are missing until you sign in again and pick **Full setup**, or issue an API key with those scopes.
 
 ### Audit log shows `actor_type = 'mcp'` for changes I made manually
 

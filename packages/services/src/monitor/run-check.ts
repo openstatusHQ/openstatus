@@ -1,4 +1,4 @@
-import type { Region } from "@openstatus/regions";
+import { ALL_REGIONS, type Region } from "@openstatus/regions";
 import { z } from "zod";
 
 import { requireScope } from "../auth";
@@ -36,6 +36,9 @@ export async function runMonitorCheck(args: {
   const region = input.region ?? firstRegion(monitor.regions);
   if (!region) {
     throw new ValidationError("Monitor has no region to probe from.");
+  }
+  if (!(ALL_REGIONS as readonly string[]).includes(region)) {
+    throw new ValidationError(`Unknown region: ${region}`);
   }
 
   const cronSecret = process.env.CRON_SECRET;

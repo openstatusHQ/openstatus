@@ -29,6 +29,10 @@ export function createMonitorChanges(
   );
   if (input.jobType === "http") {
     changes.push({ field: "method", after: input.method ?? "GET" });
+    if (input.headers?.length) {
+      changes.push({ field: "headers", after: input.headers });
+    }
+    if (input.body) changes.push({ field: "body", after: input.body });
   }
   changes.push(
     {
@@ -58,6 +62,12 @@ export function createMonitorChanges(
     changes.push({
       field: "firstCheck",
       after: formatFirstCheck(applied.firstCheck),
+    });
+  }
+  if (applied) {
+    changes.push({
+      field: "dashboardUrl",
+      after: applied.monitor.dashboardUrl,
     });
   }
   return changes;

@@ -94,12 +94,8 @@ export function mapError(err: unknown): CallToolResult {
 }
 
 // Count limits that can be raised with an add-on; everything else needs a plan change.
-const ADD_ON_LIMITS = new Set([
-  "monitors",
-  "status-pages",
-  "page-components",
-  "notification-channels",
-]);
+// Keys of `addonQuantityConfig`: the only limits an add-on lifts.
+const ADD_ON_LIMITS = new Set(["monitors", "status-pages"]);
 
 function limitHint(err: LimitExceededError): string {
   return ADD_ON_LIMITS.has(err.limit)

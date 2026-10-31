@@ -928,7 +928,7 @@
             "type": "string",
             "nullable": true,
             "format": "date-time",
-            "default": "2026-10-08T18:46:39.061Z",
+            "default": "2026-10-31T08:51:08.750Z",
             "description": "The date of the update in ISO8601 format"
           },
           "message": {
@@ -1150,7 +1150,20 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["read", "write"]
+              "enum": [
+                "read",
+                "write",
+                "monitors:read",
+                "monitors:write",
+                "pages:read",
+                "pages:write",
+                "incidents:read",
+                "incidents:write",
+                "notifications:read",
+                "notifications:write",
+                "subscribers:read",
+                "subscribers:write"
+              ]
             },
             "description": "Scopes the API key holds. Lets clients introspect what they're allowed to do without probe-and-fail."
           }
@@ -6585,7 +6598,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T18:46:39.061Z",
+                    "default": "2026-10-31T08:51:08.750Z",
                     "description": "The date of the report in ISO8601 format, defaults to now"
                   },
                   "message": {
@@ -7040,7 +7053,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T18:46:39.061Z",
+                    "default": "2026-10-31T08:51:08.750Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {
@@ -7341,7 +7354,7 @@
                     "type": "string",
                     "nullable": true,
                     "format": "date-time",
-                    "default": "2026-10-08T18:46:39.061Z",
+                    "default": "2026-10-31T08:51:08.750Z",
                     "description": "The date of the update in ISO8601 format"
                   },
                   "message": {

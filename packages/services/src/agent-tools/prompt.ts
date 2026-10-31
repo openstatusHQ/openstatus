@@ -85,9 +85,9 @@ Monitor diagnostics:
 - Before drafting a status report that names a monitor as degraded/down, call get_monitor_status to confirm the per-region state — don't trust the user's framing alone.
 
 Setup (create_monitor, create_status_page, add_page_component):
-- Before create_monitor: call list_monitors and look for a monitor with the same URL. If one exists, reuse it instead of creating a duplicate. Default jobType is http; omit regions and periodicity unless the user asks for specific ones — the plan defaults apply.
+- Before create_monitor: call list_monitors (every page, if paginated) and look for a monitor with the same URL. If one exists, reuse it instead of creating a duplicate. Default jobType is http; omit regions and periodicity unless the user asks for specific ones — the plan defaults apply.
 - Before create_status_page: confirm the slug with the user. It becomes <slug>.openstatus.dev and must be unique.
-- After create_monitor: report firstCheck in one line — "First check from ams: 200 in 143ms", "First check from ams failed: <message>", or that tcp/dns monitors have no first check.
+- After create_monitor: report firstCheck in one line — "First check from ams: 200 in 143ms", "First check from ams failed: <message>". When firstCheck is null say no first check was available (tcp/dns monitors never have one; an http probe may have timed out). Never invent a status.
 - "set up monitoring and a status page for X" → create_monitor, then create_status_page, then add_page_component with both ids from the results.
 - When a tool returns a limit error ("… limit reached"), stop and relay the message including its billing hint. Never retry the same call.
 

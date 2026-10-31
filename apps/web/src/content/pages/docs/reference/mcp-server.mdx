@@ -56,12 +56,12 @@ Both credentials carry a list of scopes. A scope is a resource group plus `:read
 | Group | Covers |
 |---|---|
 | `monitors` | monitors, tags, private locations, monitor incidents, on-demand checks, linking notification channels |
-| `pages` | status pages, components, component groups, provider import |
+| `pages` | status pages, components, component groups, provider import (which also needs `monitors:write` and `incidents:write`) |
 | `incidents` | status reports and their updates, managed incidents, postmortems, maintenance |
 | `notifications` | notification channels |
 | `subscribers` | `:read` lists subscribers, `:write` subscribes, imports and unsubscribes |
 
-Two legacy umbrellas stay settable: `write` covers every group, `read` covers every group's read. Workspace settings, members, billing, SSO, API keys and OAuth clients are reachable with no key or grant.
+Two legacy umbrellas stay settable: `write` covers every group, `read` covers every group's read. Workspace settings, members, billing, SSO, API keys and OAuth clients are not reachable with any key or grant.
 
 The consent screen offers presets, plus a **Custom** grid with one row per group:
 
@@ -134,7 +134,7 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 | Tool                  | Scope | Purpose |
 |-----------------------|------|---------|
 | `list_monitors`       | `monitors:read` | List monitors newest-first, including `activeIncidentCount`. Used to discover the numeric `monitorId` the other monitor tools require. |
-| `create_monitor`      | `monitors:write` | Create a monitor: `name`, `url`, `jobType` (`http` / `tcp` / `dns`), `method` (http only, default `GET`), optional `headers`, `body`, `assertions`, `periodicity`, `regions`, `description`, `timeout`, `degradedAfter`, `active` (default `true`). Omitted `regions` and `periodicity` take the plan defaults. Returns the monitor plus `firstCheck`, one probe from the first region (`region`, `state`, `status`, `latency` or `message`), `null` for tcp/dns or when the probe fails. The description tells the model to call `list_monitors` first and reuse a monitor with the same URL. |
+| `create_monitor`      | `monitors:write` | Create a monitor: `name`, `url`, `jobType` (`http` / `tcp` / `dns`), `method` (http only, default `GET`), optional `headers`, `body`, `assertions`, `periodicity`, `regions`, `description`, `timeout`, `degradedAfter`, `active` (default `true`). Omitted `regions` and `periodicity` take the plan defaults. Returns the monitor plus `firstCheck`, one probe from the first region (`region`, `state`, `status`, `latency` or `message`), `null` for tcp/dns or when no probe result came back; a failed http probe returns `state: "error"` with its `message`. The description tells the model to call `list_monitors` first and reuse a monitor with the same URL. |
 | `get_monitor`         | `monitors:read` | Full configuration for one monitor: URL, regions, periodicity, retry/timeout, notification channels, tags. Does not return latency or status. |
 | `get_monitor_status`  | `monitors:read` | Per-region current health (active / degraded / error). No time window. |
 | `get_monitor_summary` | `monitors:read` | Aggregate success/degraded/error counts, p50–p99 latency, and `lastPingAt` over `1d` (default), `7d`, or `14d`. |

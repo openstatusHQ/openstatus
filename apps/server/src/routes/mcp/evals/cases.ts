@@ -185,9 +185,9 @@ export const cases: EvalCase[] = [
   {
     id: "select.create_monitor",
     prompt:
-      "Create a monitor for https://api.acme.com. I already checked, there is none for that URL.",
+      'Create a monitor named "Acme API" for https://api.acme.com. I already checked, there is none for that URL.',
     expectedTool: "create_monitor",
-    requiredArgs: ["url", "jobType"],
+    requiredArgs: ["name", "url", "jobType"],
   },
   {
     id: "select.add_page_component",
@@ -197,7 +197,7 @@ export const cases: EvalCase[] = [
   },
   {
     id: "select.create_status_page",
-    prompt: 'Create a status page called "Acme Status".',
+    prompt: 'Create a status page called "Acme Status" with the slug acme.',
     expectedTool: "create_status_page",
     requiredArgs: ["title", "slug"],
   },

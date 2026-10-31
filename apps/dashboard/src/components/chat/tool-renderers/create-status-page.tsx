@@ -21,6 +21,11 @@ export function createStatusPageChanges(
   if (input.description) {
     changes.push({ field: "description", after: input.description });
   }
-  if (applied) changes.push({ field: "url", after: applied.url });
+  if (applied) {
+    changes.push(
+      { field: "url", after: applied.url },
+      { field: "dashboardUrl", after: applied.dashboardUrl },
+    );
+  }
   return changes;
 }

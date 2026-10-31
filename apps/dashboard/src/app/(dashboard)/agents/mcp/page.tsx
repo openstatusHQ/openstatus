@@ -189,7 +189,12 @@ const prompts = [
 const tools = [
   {
     group: "Status pages",
-    items: ["list_status_pages", "list_page_components"],
+    items: [
+      "list_status_pages",
+      "list_page_components",
+      "create_status_page",
+      "add_page_component",
+    ],
   },
   {
     group: "Status reports",
@@ -215,6 +220,7 @@ const tools = [
       "get_monitor_summary",
       "list_response_logs",
       "get_response_log",
+      "create_monitor",
     ],
   },
   {
@@ -345,12 +351,13 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Tools</SectionTitle>
           <SectionDescription>
-            Each tool needs the read or write scope of its resource. The{" "}
+            Workspace tools need the read or write scope of their resource;
+            workspace, audit log and content tools work with any credential. The{" "}
             <strong>Incident comms</strong> preset covers status reports,
             updates and maintenance; <strong>Full setup</strong> is what lets an
-            agent create monitors and status pages. Audit log tools require the
-            audit-log feature on your plan. Content tools search public
-            openstatus.dev pages and carry no workspace data.
+            agent create monitors, status pages and components. Audit log tools
+            require the audit-log feature on your plan. Content tools search
+            public openstatus.dev pages and carry no workspace data.
           </SectionDescription>
         </SectionHeader>
         <ul className="flex flex-col gap-2">

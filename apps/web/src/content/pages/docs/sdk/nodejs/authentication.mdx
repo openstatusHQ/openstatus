@@ -48,13 +48,13 @@ An API key carries a list of scopes. A scope is a resource group plus `:read` or
 
 | Scope | Service |
 |---|---|
-| `monitors:read` / `monitors:write` | `MonitorService`, `PrivateLocationService`, `POST /v1/check` |
+| `monitors:read` / `monitors:write` | `MonitorService`, `PrivateLocationService`, `POST /v1/check/http` |
 | `pages:read` / `pages:write` | `StatusPageService`, except the subscriber methods |
 | `incidents:read` / `incidents:write` | `StatusReportService`, `IncidentService`, `MaintenanceService` |
 | `notifications:read` / `notifications:write` | `NotificationService` |
-| `subscribers:read` / `subscribers:write` | `listSubscribers`, `subscribeToPage`, `unsubscribeFromPage` on `StatusPageService` |
+| `subscribers:read` / `subscribers:write` | `listSubscribers`, `subscribeToPage`, `createPageSubscription`, `unsubscribeFromPage` on `StatusPageService` |
 
-Two umbrellas cover several groups: `write` covers every group, `read` covers every group's read. Workspace, members, billing, SSO, API keys and OAuth clients are not reachable with any key.
+Two umbrellas cover several groups: `write` covers every group, `read` covers every group's read. Workspace, members, billing, SSO, API keys and OAuth clients are not reachable with any key, with one exception: a key may revoke itself.
 
 The dashboard offers **Read only** (`read`), **Read & write** (`write`), and **Custom**, a grid with one row per group. Scopes are set when the key is created and are **immutable**; to change them, revoke the key and issue a new one. Keys created before scopes existed behave as `write`.
 
