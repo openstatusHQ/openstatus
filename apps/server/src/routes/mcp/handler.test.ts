@@ -447,7 +447,7 @@ const scopedWorkspace = {
   id: SEEDED_WORKSPACE_TEAM_ID,
   slug: "ws",
   name: "ws",
-  // `audit-log` on so the audit tools register and count as `any` tools.
+  // `audit-log` on so the audit tools register (scope `read`).
   limits: { "audit-log": true },
 } as unknown as Workspace;
 
@@ -500,14 +500,15 @@ const INCIDENT_GROUP_TOOLS = [
 ];
 
 const ANY_TOOLS = [
-  "get_audit_log",
   "get_content_page",
   "get_doc_page",
   "get_workspace",
-  "list_audit_logs",
   "search_content",
   "search_docs",
 ];
+
+// Snapshots span every group, so only the `read` umbrella (or above) sees them.
+const AUDIT_TOOLS = ["get_audit_log", "list_audit_logs"];
 
 const OTHER_GROUP_TOOLS = [
   "get_monitor",
@@ -549,6 +550,25 @@ describe("MCP transport — group scopes", () => {
       for (const tool of tools) {
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
       }
+    } finally {
+      await close();
+    }
+  });
+
+  test("audit tools need the read umbrella, not a group scope", async () => {
+    for (const scopes of [["incidents:write"], ["monitors:read"]] as Scope[][]) {
+      const { client, close } = await connectScoped(scopes);
+      try {
+        const names = (await client.listTools()).tools.map((t) => t.name);
+        for (const name of AUDIT_TOOLS) expect(names).not.toContain(name);
+      } finally {
+        await close();
+      }
+    }
+    const { client, close } = await connectScoped(["read"]);
+    try {
+      const names = (await client.listTools()).tools.map((t) => t.name);
+      for (const name of AUDIT_TOOLS) expect(names).toContain(name);
     } finally {
       await close();
     }

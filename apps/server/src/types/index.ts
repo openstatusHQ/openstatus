@@ -19,4 +19,6 @@ export type Variables = RequestIdVariables & {
    * `['write']` (legacy posture). Super-admin / dev fallback: `['*']`.
    */
   apiKey: { id: string; createdById?: number; scopes: Scope[] };
+  /** Set by `requireGroupScope`; `requireScopeChecked` rejects requests without it. */
+  scopeChecked?: boolean;
 };

@@ -7,7 +7,7 @@ import {
 
 import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
-import { type AuditLogListItem, canReadSubscriberAudit } from "./list";
+import type { AuditLogListItem } from "./list";
 
 /** Soft-deleted actors come back with `user: null` (same join shape as listAuditLogs). */
 export async function getAuditLog(args: {
@@ -41,12 +41,6 @@ export async function getAuditLog(args: {
     .get();
 
   if (!row) throw new NotFoundError("audit_log", input.id);
-  if (
-    row.auditLog.entityType === "page_subscriber" &&
-    !canReadSubscriberAudit(ctx)
-  ) {
-    throw new NotFoundError("audit_log", input.id);
-  }
 
   return {
     ...selectAuditLogSchema.parse(row.auditLog),

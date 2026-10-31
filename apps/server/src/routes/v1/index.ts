@@ -10,6 +10,7 @@ import {
   authMiddleware,
   apiTrackMiddleware,
   requireGroupScope,
+  requireScopeChecked,
 } from "@/libs/middlewares";
 
 import { checkApi } from "./check";
@@ -161,6 +162,7 @@ api.use("/maintenance/*", requireGroupScope("incidents"));
 api.use("/notification/*", requireGroupScope("notifications"));
 api.use("/page_subscriber/*", requireGroupScope("subscribers"));
 api.use("/whoami/*", requireGroupScope("any"));
+api.use("/*", requireScopeChecked());
 
 /**
  * Routes

@@ -31,6 +31,21 @@ export function requireGroupScope(
         message: `API key lacks required scope: ${required}`,
       });
     }
+    c.set("scopeChecked", true);
+    return next();
+  };
+}
+
+/** Mounted last on `/*`: a route without its own `requireGroupScope` fails closed. */
+export function requireScopeChecked(): MiddlewareHandler<{
+  Variables: Variables;
+}> {
+  return async (c, next) => {
+    if (c.get("apiKey") && !c.get("scopeChecked")) {
+      throw new HTTPException(403, {
+        message: "API key lacks required scope for this route",
+      });
+    }
     return next();
   };
 }

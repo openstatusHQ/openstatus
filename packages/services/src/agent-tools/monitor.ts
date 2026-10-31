@@ -741,6 +741,7 @@ const UpdateMonitorInputShape = z
     periodicity: z.enum(monitorPeriodicity).optional(),
     regions: z
       .array(z.string())
+      .min(1)
       .optional()
       .describe('Replaces the region set, e.g. ["ams", "iad"].'),
     active: z

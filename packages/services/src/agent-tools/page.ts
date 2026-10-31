@@ -125,6 +125,9 @@ function merge(
   return value === "" ? null : value;
 }
 
+// http(s) only: these render as links and an image src on the public page.
+const optionalHttpUrl = z.union([z.literal(""), z.httpUrl()]).optional();
+
 const UpdateStatusPageInputShape = z
   .object({
     pageId: z
@@ -141,17 +144,11 @@ const UpdateStatusPageInputShape = z
       .string()
       .optional()
       .describe("Public description under the title. Empty string clears it."),
-    icon: z
-      .string()
-      .optional()
+    icon: optionalHttpUrl
       .describe("Icon image URL. Empty string removes it."),
-    homepageUrl: z
-      .string()
-      .optional()
+    homepageUrl: optionalHttpUrl
       .describe("Link back to the product site. Empty string removes it."),
-    contactUrl: z
-      .string()
-      .optional()
+    contactUrl: optionalHttpUrl
       .describe("Support/contact link. Empty string removes it."),
   })
   .refine(

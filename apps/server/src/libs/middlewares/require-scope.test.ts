@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 
 import type { Variables } from "@/types";
 
-import { requireGroupScope } from "./require-scope";
+import { requireGroupScope, requireScopeChecked } from "./require-scope";
 
 /**
  * Mirrors the V1 router: `apiKey` is pre-populated (as `authMiddleware`
@@ -23,6 +23,7 @@ function makeApp(scopes: Scope[] | undefined): Hono<{ Variables: Variables }> {
   app.use("/page/*", requireGroupScope("pages"));
   app.use("/page_subscriber/*", requireGroupScope("subscribers"));
   app.use("/whoami/*", requireGroupScope("any"));
+  app.use("/*", requireScopeChecked());
 
   const crud = () => {
     const sub = new Hono<{ Variables: Variables }>();
@@ -39,6 +40,8 @@ function makeApp(scopes: Scope[] | undefined): Hono<{ Variables: Variables }> {
   const whoami = new Hono<{ Variables: Variables }>();
   whoami.get("/", (c) => c.text("ok-whoami"));
   app.route("/whoami", whoami);
+  // Mounted without a `requireGroupScope` line, as a forgotten route would be.
+  app.route("/unmapped", crud());
   return app;
 }
 
@@ -123,5 +126,11 @@ describe("requireGroupScope", () => {
 
   test("missing apiKey defers to upstream (no 403, would be 401 in prod)", async () => {
     expect(await status(undefined, "POST", "/monitor")).toBe(200);
+  });
+
+  test("a route without a group gate rejects every key", async () => {
+    expect(await status(["write"], "POST", "/unmapped")).toBe(403);
+    expect(await status(["read"], "GET", "/unmapped")).toBe(403);
+    expect(await status(["*"], "DELETE", "/unmapped/1")).toBe(403);
   });
 });

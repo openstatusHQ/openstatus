@@ -26,13 +26,13 @@ mount. Lint (`openstatus/services-no-legacy-scope`) rejects a bare `"read"` /
 | `incidents:write` | yes | itself, `write`, `*` | every mutation on status reports, updates, managed incidents, postmortems, maintenances, and their notifications |
 | `notifications:read` | yes | itself, `notifications:write`, `read`, `write`, `*` | list notification channels (credentials never returned) |
 | `notifications:write` | yes | itself, `write`, `*` | create, update, delete channels; send a test notification |
-| `subscribers:read` | yes | itself, `subscribers:write`, `read`, `write`, `*` | list and count subscribers (emails, webhook targets); audit rows for `page_subscriber` |
+| `subscribers:read` | yes | itself, `subscribers:write`, `read`, `write`, `*` | list and count subscribers (emails, webhook targets) |
 | `subscribers:write` | yes | itself, `write`, `*` | create, update, unsubscribe, delete subscribers; test webhooks |
-| `read` | yes, legacy | itself, `write`, `*` | every `<group>:read` |
+| `read` | yes, legacy | itself, `write`, `*` | every `<group>:read`; audit-log tools (snapshots span every group) |
 | `write` | yes, legacy | itself, `*` | every `<group>:read` and `<group>:write`. Full access for Terraform, the CLI and CI |
 | `*` | no | itself | super-admin token and dev keys only. Satisfies everything, including `admin` |
 | `admin` | never held | `*` | required by workspace, billing, members, invitations, API keys, OAuth clients, SSO, integrations and account deletion. No key or grant can reach these |
-| `any` | never held | any non-empty credential | public content and docs tools, `get_workspace`, audit-log tools, `/v1/whoami` |
+| `any` | never held | any non-empty credential | public content and docs tools, `get_workspace`, `/v1/whoami` |
 
 Matching lives in one place, `packages/services/src/auth/matches-scope.ts`.
 
@@ -94,7 +94,8 @@ lookups) carry no scope by design; the lint rule
 | `incidents:read` | list_status_reports, get_status_report, list_incidents, get_incident, get_postmortem, list_maintenances, get_maintenance |
 | `incidents:write` | create_status_report, update_status_report, add_status_report_update, update_status_report_update, delete_status_report_update, resolve_status_report, declare_incident, update_incident, set_incident_status, resolve_incident, add_incident_note, draft_postmortem, approve_postmortem, create_maintenance, update_maintenance, add_maintenance_update, update_maintenance_update, delete_maintenance_update |
 | `notifications:read` | list_notifications |
-| `any` | get_workspace, list_audit_logs, get_audit_log, search_docs, get_doc_page, search_content, get_content_page |
+| `read` | list_audit_logs, get_audit_log |
+| `any` | get_workspace, search_docs, get_doc_page, search_content, get_content_page |
 
 No tool uses `notifications:write`, `subscribers:*` or `admin` on purpose:
 channel secrets and subscriber emails stay out of transcripts, and admin is

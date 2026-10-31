@@ -74,7 +74,7 @@ The consent screen offers presets, plus a **Custom** grid with one row per group
 
 A client may request any of the twelve values in a space-separated `scope` string; what you grant can only be narrower than what it asked for, and a request without `scope` means Full setup. The API key form offers Read only, Read & write and Custom. On a key the scopes are set at creation and **immutable**: to change them, revoke the key and issue a new one.
 
-The server only advertises tools the credential can call. Read only sees `list_*` and `get_*`; Incident comms adds the status report, incident and maintenance tools, `update_maintenance` included; Full setup adds the setup tools: `create_monitor` and `update_monitor` (which also pauses a monitor and links notification channels), `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group`. The `tools/list` filter is the visible UX, the service-layer scope check is the boundary, so a misconfigured client can't accidentally mutate. The [content tools](#content), `get_workspace` and the audit tools work with any scope.
+The server only advertises tools the credential can call. Read only sees `list_*` and `get_*`; Incident comms adds the status report, incident and maintenance tools, `update_maintenance` included; Full setup adds the setup tools: `create_monitor` and `update_monitor` (which also pauses a monitor and links notification channels), `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group`. The `tools/list` filter is the visible UX, the service-layer scope check is the boundary, so a misconfigured client can't accidentally mutate. The [content tools](#content) and `get_workspace` work with any scope; the audit tools need `read` or `write`.
 
 ## Tools
 
@@ -168,12 +168,12 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 
 ### Audit
 
-Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`.
+Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`. Entries carry full before/after snapshots across every resource, so these tools need the Read only or Full access level (`read` or `write`); group-scoped credentials don't see them.
 
 | Tool              | Scope | Purpose |
 |-------------------|------|---------|
-| `list_audit_logs` | any | List audit-log entries (mutating actions) newest-first, bounded to the last 14 days. Optional `entityType` + `entityId` filter. |
-| `get_audit_log`   | any | Full before/after snapshots and `changedFields` for a single audit-log entry. |
+| `list_audit_logs` | read | List audit-log entries (mutating actions) newest-first, bounded to the last 14 days. Optional `entityType` + `entityId` filter. |
+| `get_audit_log`   | read | Full before/after snapshots and `changedFields` for a single audit-log entry. |
 
 ### Content
 

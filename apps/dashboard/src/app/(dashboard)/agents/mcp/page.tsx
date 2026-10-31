@@ -362,7 +362,8 @@ export default function Page() {
           <SectionTitle>Tools</SectionTitle>
           <SectionDescription>
             Workspace tools need the read or write scope of their resource;
-            workspace, audit log and content tools work with any credential. The{" "}
+            workspace and content tools work with any credential, audit log
+            tools need Read only or Full access. The{" "}
             <strong>Incident comms</strong> preset covers status reports,
             updates and maintenance; <strong>Full setup</strong> is what lets an
             agent create monitors, status pages and components. Audit log tools
