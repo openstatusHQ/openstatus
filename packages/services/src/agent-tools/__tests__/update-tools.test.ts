@@ -29,6 +29,7 @@ describe("update agent tools", () => {
     for (const t of updateTools.filter((t) => t.name.startsWith("update_"))) {
       expect(t.approval?.verb, t.name).toBe("updated");
     }
+    expect(agentTools.create_component_group.approval?.verb).toBe("created");
   });
 
   // The MCP adapter needs `.shape`; `.refine` must keep the ZodObject root.
@@ -130,6 +131,28 @@ describe("update agent tools", () => {
       ["Monitor ID", "12"],
       ["Notifications", "3, 4"],
       ["Tags", "(clear all)"],
+    ]);
+
+    const config = agentTools.update_monitor.approval?.summarize({
+      monitorId: 12,
+      headers: [{ key: "x-a", value: "1" }],
+      body: "",
+      assertions: [
+        { type: "status", compare: "eq", target: 200 },
+        { type: "status", compare: "eq", target: 201 },
+      ],
+      timeout: 5000,
+      degradedAfter: null,
+    } as Parameters<
+      NonNullable<typeof agentTools.update_monitor.approval>["summarize"]
+    >[0]);
+    expect(config?.lines.map((l) => [l.label, l.value])).toEqual([
+      ["Monitor ID", "12"],
+      ["Headers", "x-a"],
+      ["Body", "(cleared)"],
+      ["Assertions", "2 (status)"],
+      ["Timeout", "5000 ms"],
+      ["Degraded after", "cleared"],
     ]);
 
     const page = agentTools.update_status_page.approval?.summarize({

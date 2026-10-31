@@ -20,6 +20,29 @@ import {
 import { buildProviderConfig, createProvider } from "./provider";
 import { RunImportInput } from "./schemas";
 
+const PHASE_ENABLED: Record<
+  string,
+  (options: RunImportInput["options"]) => boolean
+> = {
+  monitors: (o) => o?.includeMonitors !== false,
+  incidents: (o) => o?.includeStatusReports !== false,
+  maintenances: (o) => o?.includeStatusReports !== false,
+  subscribers: (o) => o?.includeSubscribers === true,
+};
+
+// Disabled phases skipped their scope check, so their fetched data must not reach the caller.
+function stripDisabledPhases(
+  summary: ImportSummary,
+  options: RunImportInput["options"],
+) {
+  for (const phase of summary.phases) {
+    if (PHASE_ENABLED[phase.phase]?.(options) === false) {
+      phase.resources = [];
+      phase.status = "skipped";
+    }
+  }
+}
+
 /**
  * Execute a real import: fetches from the provider, validates, applies
  * limit warnings, then walks each phase in sequence writing to the db.
@@ -89,6 +112,7 @@ export async function runImport(args: {
   }
 
   const summary = await provider.run(providerConfig);
+  stripDisabledPhases(summary, input.options);
 
   await addLimitWarnings(summary, {
     limits: ctx.workspace.limits,

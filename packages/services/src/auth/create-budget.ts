@@ -11,6 +11,7 @@ const BUDGETED_ACTIONS = [
   "monitor.create",
   "page.create",
   "page_component.create",
+  "page_component_group.create",
 ];
 
 /**
@@ -42,7 +43,7 @@ export async function assertCreateBudget(
 
   if ((row?.count ?? 0) >= perHour) {
     throw new PreconditionFailedError(
-      `Create budget reached: this credential may create at most ${perHour} resources per hour. Try again later.`,
+      `Create budget reached: this credential is capped at about ${perHour} creates per hour. Try again later.`,
     );
   }
 }

@@ -24,6 +24,8 @@ export type EvalCase = {
    * pageId straight into create_status_report).
    */
   forbiddenArgs?: string[];
+  /** If set, each listed arg must deep-equal the given value. */
+  argEquals?: Record<string, unknown>;
 };
 
 export const cases: EvalCase[] = [
@@ -202,24 +204,28 @@ export const cases: EvalCase[] = [
     requiredArgs: ["title", "slug"],
   },
 
-  // Update tools
+  // Update tools read first; the eval stops after one step.
+  {
+    id: "prereq.update_monitor_gets_monitor_first",
+    prompt: "Pause monitor 12.",
+    expectedTool: "get_monitor",
+  },
   {
     id: "select.update_monitor_pause",
-    prompt: "Pause monitor 12.",
+    prompt: "Monitor 12 is active. Pause it now, I already looked it up.",
     expectedTool: "update_monitor",
     requiredArgs: ["monitorId", "active"],
+    argEquals: { active: false },
   },
   {
-    id: "select.update_status_page_rename",
+    id: "prereq.update_status_page_lists_pages_first",
     prompt: 'Rename status page 3 to "Acme".',
-    expectedTool: "update_status_page",
-    requiredArgs: ["pageId", "title"],
+    expectedTool: "list_status_pages",
   },
   {
-    id: "select.update_page_component_group",
+    id: "prereq.update_page_component_lists_components_first",
     prompt: "Move component 9 into group 2.",
-    expectedTool: "update_page_component",
-    requiredArgs: ["componentId", "groupId"],
+    expectedTool: "list_page_components",
   },
   {
     id: "select.create_component_group",
@@ -228,10 +234,8 @@ export const cases: EvalCase[] = [
     requiredArgs: ["pageId", "name"],
   },
   {
-    id: "select.update_maintenance_end",
-    prompt:
-      "Push maintenance 5 to end at 16:00 UTC today. I already have its details.",
-    expectedTool: "update_maintenance",
-    requiredArgs: ["maintenanceId", "to"],
+    id: "prereq.update_maintenance_gets_maintenance_first",
+    prompt: "Push maintenance 5 to end at 16:00 UTC today.",
+    expectedTool: "get_maintenance",
   },
 ];

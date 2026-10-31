@@ -116,6 +116,15 @@ export const createStatusPageTool: AgentTool<
   },
 };
 
+// Omitted keeps the current value; "" clears it.
+function merge(
+  value: string | undefined,
+  current: string | null | undefined,
+): string | null {
+  if (value === undefined) return current ?? null;
+  return value === "" ? null : value;
+}
+
 const UpdateStatusPageInputShape = z
   .object({
     pageId: z
@@ -195,7 +204,6 @@ export const updateStatusPageTool: AgentTool<
   // Scope and audit come from the verbs inside; the transaction only makes them atomic.
   // oxlint-disable-next-line openstatus/services-mutation-guards
   async run({ ctx, input }) {
-    const existing = await getPage({ ctx, input: { id: input.pageId } });
     const general =
       input.title !== undefined ||
       input.slug !== undefined ||
@@ -204,8 +212,12 @@ export const updateStatusPageTool: AgentTool<
     const links =
       input.homepageUrl !== undefined || input.contactUrl !== undefined;
 
-    await withTransaction(ctx, async (tx) => {
+    const existing = await withTransaction(ctx, async (tx) => {
       const txCtx = { ...ctx, db: tx };
+      const existing = await getPage({
+        ctx: txCtx,
+        input: { id: input.pageId },
+      });
       if (general) {
         await updatePageGeneral({
           ctx: txCtx,
@@ -213,8 +225,8 @@ export const updateStatusPageTool: AgentTool<
             id: existing.id,
             title: input.title ?? existing.title,
             slug: input.slug ?? existing.slug,
-            description: input.description ?? existing.description,
-            icon: input.icon ?? existing.icon,
+            description: merge(input.description, existing.description),
+            icon: merge(input.icon, existing.icon),
           },
         });
       }
@@ -223,11 +235,12 @@ export const updateStatusPageTool: AgentTool<
           ctx: txCtx,
           input: {
             id: existing.id,
-            homepageUrl: input.homepageUrl ?? existing.homepageUrl,
-            contactUrl: input.contactUrl ?? existing.contactUrl,
+            homepageUrl: merge(input.homepageUrl, existing.homepageUrl),
+            contactUrl: merge(input.contactUrl, existing.contactUrl),
           },
         });
       }
+      return existing;
     });
 
     return toStatusPageOutput({

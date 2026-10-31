@@ -2,12 +2,15 @@ import { pageComponentTypes } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import { assertCreateBudget } from "../auth";
+import { withTransaction } from "../context";
 import {
+  type PageComponentWithRelations,
   createPageComponent,
   listPageComponents,
   updatePageComponent,
 } from "../page-component";
 import { listPageComponentGroups } from "../page-component-group";
+import { getPageComponentInWorkspace } from "../page-component/internal";
 import type { AgentTool } from "./types";
 
 const ListPageComponentsInputShape = z.object({
@@ -155,6 +158,71 @@ export const addPageComponentTool: AgentTool<
   },
 };
 
+type Position = { order?: number; groupOrder?: number };
+
+/**
+ * Re-slot `target` at `index` among its siblings and return only the changed
+ * positions. Grouped components sort by `groupOrder` and share their group's
+ * `order`; top-level, a group is one slot positioned by its lowest `order`.
+ */
+function computePositions(
+  target: { id: number; order: number | null; groupOrder: number | null },
+  groupId: number | null,
+  index: number | undefined,
+  components: PageComponentWithRelations[],
+): Map<number, Position> {
+  const changes = new Map<number, Position>();
+  const set = (
+    c: { id: number; order?: number | null; groupOrder?: number | null },
+    key: keyof Position,
+    value: number,
+  ) => {
+    if (c[key] === value) return;
+    changes.set(c.id, { ...changes.get(c.id), [key]: value });
+  };
+  const others = components.filter((c) => c.id !== target.id);
+  const slot = (length: number) =>
+    Math.min(Math.max(index ?? length, 0), length);
+
+  if (groupId !== null) {
+    const siblings: Array<{
+      id: number;
+      order?: number | null;
+      groupOrder?: number | null;
+    }> = others
+      .filter((c) => c.groupId === groupId)
+      .sort((a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0) || a.id - b.id);
+    const groupSlot =
+      siblings.length > 0
+        ? Math.min(...siblings.map((c) => c.order ?? 0))
+        : Math.max(-1, ...others.map((c) => c.order ?? 0)) + 1;
+    siblings.splice(slot(siblings.length), 0, target);
+    siblings.forEach((c, i) => set(c, "groupOrder", i));
+    set(target, "order", groupSlot);
+    return changes;
+  }
+
+  const slots = new Map<string, { order: number; members: typeof others }>();
+  for (const c of others) {
+    const key = c.groupId === null ? `c${c.id}` : `g${c.groupId}`;
+    const entry = slots.get(key);
+    if (entry) {
+      entry.order = Math.min(entry.order, c.order ?? 0);
+      entry.members.push(c);
+    } else {
+      slots.set(key, { order: c.order ?? 0, members: [c] });
+    }
+  }
+  const items: Array<{
+    members: Array<{ id: number; order?: number | null }>;
+  }> = [...slots.values()].sort((a, b) => a.order - b.order);
+  items.splice(slot(items.length), 0, { members: [target] });
+  items.forEach((item, i) => {
+    for (const c of item.members) set(c, "order", i);
+  });
+  return changes;
+}
+
 const UpdatePageComponentInputShape = z
   .object({
     componentId: z
@@ -170,7 +238,9 @@ const UpdatePageComponentInputShape = z
       .int()
       .min(0)
       .optional()
-      .describe("Position on the page, 0-based."),
+      .describe(
+        "0-based position among its siblings: inside its group, or among the page's top-level components and groups when ungrouped. Out-of-range values clamp to the end.",
+      ),
     groupId: z
       .number()
       .int()
@@ -236,16 +306,46 @@ export const updatePageComponentTool: AgentTool<
     }),
     verb: "updated",
   },
+  // Scope and audit come from the verbs inside; the transaction only makes them atomic.
+  // oxlint-disable-next-line openstatus/services-mutation-guards
   async run({ ctx, input }) {
-    const updated = await updatePageComponent({
-      ctx,
-      input: {
+    const updated = await withTransaction(ctx, async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      const target = await getPageComponentInWorkspace({
+        tx,
         id: input.componentId,
-        name: input.name,
-        description: input.description,
-        order: input.order,
-        groupId: input.groupId,
-      },
+        workspaceId: ctx.workspace.id,
+      });
+      const groupId =
+        input.groupId !== undefined ? input.groupId : target.groupId;
+      const positions =
+        input.order !== undefined || groupId !== target.groupId
+          ? computePositions(
+              target,
+              groupId,
+              input.order,
+              await listPageComponents({
+                ctx: txCtx,
+                input: { pageId: target.pageId, order: "asc" },
+              }),
+            )
+          : new Map<number, Position>();
+
+      const row = await updatePageComponent({
+        ctx: txCtx,
+        input: {
+          id: target.id,
+          name: input.name,
+          description: input.description,
+          groupId: input.groupId,
+          ...positions.get(target.id),
+        },
+      });
+      for (const [id, position] of positions) {
+        if (id === target.id) continue;
+        await updatePageComponent({ ctx: txCtx, input: { id, ...position } });
+      }
+      return row;
     });
     return {
       id: updated.id,

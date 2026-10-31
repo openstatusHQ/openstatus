@@ -27,6 +27,11 @@ export function updateStatusPageChanges(
       changes.push({ field, after: input[field] });
     }
   }
-  if (applied) changes.push({ field: "url", after: applied.url });
+  if (applied) {
+    changes.push(
+      { field: "url", after: applied.url },
+      { field: "dashboardUrl", after: applied.dashboardUrl },
+    );
+  }
   return changes;
 }

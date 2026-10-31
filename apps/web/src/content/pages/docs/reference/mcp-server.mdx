@@ -371,7 +371,7 @@ Error messages are not redacted — the consumer is an LLM that benefits from th
 
 - `list_status_reports` and `list_maintenances` use offset pagination: `page` (1-indexed, default 1) and `perPage` (default 50, max 200). The response's `pagination.totalPages` tells the LLM whether more pages exist. `list_status_pages` is unpaginated (workspaces typically have a handful).
 - `list_monitors` and `list_audit_logs` page via `perPage` (max 50); `list_notifications` via `perPage` (max 200); `list_private_locations` via `perPage` (max 100); `list_response_logs` via `limit` (max 100) and `offset`.
-- `create_monitor`, `create_status_page`, `add_page_component` and `create_component_group` share a budget of 30 creates per credential per hour, counted from the audit log. Update tools are not budgeted.
+- `create_monitor`, `create_status_page`, `add_page_component` and `create_component_group` share a budget of about 30 creates per credential per hour, counted from the audit log. The count is approximate: calls that run in parallel can each pass the check before any of them is recorded. Update tools are not budgeted.
 - Every tool invocation is one server call and counts against the [rate limits](#rate-limits) below.
 
 ## Audit log

@@ -56,19 +56,23 @@ describe("updateMonitorChanges", () => {
 describe("updateStatusPageChanges", () => {
   type Input = Parameters<typeof updateStatusPageChanges>[0];
 
-  it("lists the page and the changed fields, then the applied url", () => {
+  it("lists the page and the changed fields, then the applied urls", () => {
     expect(
       updateStatusPageChanges(as<Input>({ pageId: 3, title: "Acme" }), {
         id: 3,
         slug: "acme",
         title: "Acme",
         url: "https://acme.openstatus.dev",
-        dashboardUrl: "",
+        dashboardUrl: "http://localhost:3001/status-pages/3/status-reports",
       }),
     ).toEqual([
       { field: "pageId", after: 3 },
       { field: "title", after: "Acme" },
       { field: "url", after: "https://acme.openstatus.dev" },
+      {
+        field: "dashboardUrl",
+        after: "http://localhost:3001/status-pages/3/status-reports",
+      },
     ]);
   });
 });

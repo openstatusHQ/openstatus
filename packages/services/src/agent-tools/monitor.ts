@@ -749,7 +749,15 @@ const UpdateMonitorInputShape = z
       .describe("false pauses the monitor, true resumes it."),
     description: z.string().optional(),
     timeout: z.number().int().min(0).max(TIMEOUT_MAX_MS).optional(),
-    degradedAfter: z.number().int().min(0).max(TIMEOUT_MAX_MS).optional(),
+    degradedAfter: z
+      .number()
+      .int()
+      .min(0)
+      .max(TIMEOUT_MAX_MS)
+      .nullish()
+      .describe(
+        "Milliseconds before a check counts as degraded. null clears it.",
+      ),
     notificationIds: z
       .array(z.number().int())
       .optional()
@@ -794,6 +802,49 @@ export const updateMonitorTool: AgentTool<
           : []),
         ...(input.url !== undefined
           ? [{ label: "URL", value: input.url }]
+          : []),
+        ...(input.method !== undefined
+          ? [{ label: "Method", value: input.method }]
+          : []),
+        ...(input.headers !== undefined
+          ? [
+              {
+                label: "Headers",
+                value:
+                  input.headers.map((h) => h.key).join(", ") || "(clear all)",
+              },
+            ]
+          : []),
+        ...(input.body !== undefined
+          ? [{ label: "Body", value: input.body || "(cleared)" }]
+          : []),
+        ...(input.assertions !== undefined
+          ? [
+              {
+                label: "Assertions",
+                value:
+                  input.assertions.length === 0
+                    ? "(clear all, assert 2xx)"
+                    : `${input.assertions.length} (${[...new Set(input.assertions.map((a) => a.type))].join(", ")})`,
+              },
+            ]
+          : []),
+        ...(input.description !== undefined
+          ? [{ label: "Description", value: input.description || "(cleared)" }]
+          : []),
+        ...(input.timeout !== undefined
+          ? [{ label: "Timeout", value: `${input.timeout} ms` }]
+          : []),
+        ...(input.degradedAfter !== undefined
+          ? [
+              {
+                label: "Degraded after",
+                value:
+                  input.degradedAfter === null
+                    ? "cleared"
+                    : `${input.degradedAfter} ms`,
+              },
+            ]
           : []),
         ...(input.active !== undefined
           ? [

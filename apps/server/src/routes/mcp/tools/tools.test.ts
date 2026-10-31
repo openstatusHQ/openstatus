@@ -1325,7 +1325,7 @@ describe("update_monitor", () => {
         callTool(tools, "update_monitor", {
           monitorId: m.id,
           name: `${TEST_PREFIX}-should-not-apply`,
-          notificationIds: [999_999],
+          notificationIds: [-1],
         }),
       ).rejects.toThrow(/not accessible/);
       const row = await db
@@ -1471,6 +1471,37 @@ describe("update_status_page", () => {
   });
 });
 
+describe("update_status_page clears", () => {
+  test("empty strings clear the optional fields", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      await callTool(tools, "update_status_page", {
+        pageId: testPageId,
+        homepageUrl: "https://acme.com",
+        icon: "https://acme.com/icon.png",
+      });
+      const result = await callTool(tools, "update_status_page", {
+        pageId: testPageId,
+        description: "",
+        icon: "",
+        homepageUrl: "",
+      });
+      expect(result.isError).toBeUndefined();
+      const row = await tx
+        .select({
+          description: page.description,
+          icon: page.icon,
+          homepageUrl: page.homepageUrl,
+        })
+        .from(page)
+        .where(eq(page.id, testPageId))
+        .get();
+      expect(row).toEqual({ description: "", icon: "", homepageUrl: null });
+    });
+  });
+});
+
 describe("component groups", () => {
   test("create, list, move a component in and rename the group", async () => {
     await withTestTransaction(async (tx) => {
@@ -1574,6 +1605,108 @@ describe("component groups", () => {
         groupId: null,
       });
       expect(ungrouped.structuredContent).toMatchObject({ groupId: null });
+    });
+  });
+});
+
+describe("update_page_component order", () => {
+  type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
+
+  async function seedComponents(tx: Tx, n: number) {
+    const rows = [];
+    for (let i = 0; i < n; i++) {
+      rows.push(
+        await tx
+          .insert(pageComponent)
+          .values({
+            workspaceId: teamWorkspace.id,
+            pageId: testPageId,
+            name: `${TEST_PREFIX}-order-${i}`,
+            type: "static",
+            order: i + 1,
+          })
+          .returning()
+          .get(),
+      );
+    }
+    return rows.map((r) => r.id);
+  }
+
+  async function readPositions(tx: Tx) {
+    return tx
+      .select({
+        id: pageComponent.id,
+        order: pageComponent.order,
+        groupId: pageComponent.groupId,
+        groupOrder: pageComponent.groupOrder,
+      })
+      .from(pageComponent)
+      .where(eq(pageComponent.pageId, testPageId))
+      .all();
+  }
+
+  test("moving to index 0 shifts the others without duplicates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      await tx
+        .update(pageComponent)
+        .set({ order: 0 })
+        .where(eq(pageComponent.id, testPageComponentId));
+      const [a, b, c] = await seedComponents(tx, 3);
+
+      const result = await callTool(tools, "update_page_component", {
+        componentId: c,
+        order: 0,
+      });
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toMatchObject({ id: c, order: 0 });
+
+      const rows = (await readPositions(tx)).filter((r) => r.groupId === null);
+      const sorted = [...rows].sort((x, y) => (x.order ?? 0) - (y.order ?? 0));
+      expect(sorted.map((r) => r.id).slice(0, 4)).toEqual([
+        c,
+        testPageComponentId,
+        a,
+        b,
+      ]);
+      const orders = rows.map((r) => r.order);
+      expect(new Set(orders).size).toBe(orders.length);
+    });
+  });
+
+  test("positions inside a group by groupOrder; omitted order appends", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("page", ctx);
+      const [a, b, c] = await seedComponents(tx, 3);
+      const created = await callTool(tools, "create_component_group", {
+        pageId: testPageId,
+        name: `${TEST_PREFIX}-order-group`,
+      });
+      const groupId = (created.structuredContent as { id: number }).id;
+
+      for (const id of [a, b]) {
+        await callTool(tools, "update_page_component", {
+          componentId: id,
+          groupId,
+        });
+      }
+      await callTool(tools, "update_page_component", {
+        componentId: c,
+        groupId,
+        order: 0,
+      });
+
+      const grouped = (await readPositions(tx))
+        .filter((r) => r.groupId === groupId)
+        .sort((x, y) => (x.groupOrder ?? 0) - (y.groupOrder ?? 0));
+      expect(grouped.map((r) => [r.id, r.groupOrder])).toEqual([
+        [c, 0],
+        [a, 1],
+        [b, 2],
+      ]);
+      expect(new Set(grouped.map((r) => r.order)).size).toBe(1);
     });
   });
 });

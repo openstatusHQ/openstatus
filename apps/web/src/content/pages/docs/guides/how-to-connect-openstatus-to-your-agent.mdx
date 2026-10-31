@@ -142,10 +142,10 @@ The agent checks `list_monitors` for an existing monitor with that URL, calls `c
 The same preset changes what already exists. The agent reads the current object first (`get_monitor`, `list_page_components`, `get_maintenance`) and sends only the fields that change, so a prompt names the outcome, not the fields:
 
 ```
-> pause the checkout monitor and alert the on-call PagerDuty channel when it comes back
+> pause the staging monitor during the migration, and page the on-call PagerDuty channel when it fails after we resume it
 ```
 
-The agent calls `get_monitor`, picks the channel id from `list_notifications`, and makes one `update_monitor` call with `active: false` and `notificationIds` holding the channels already linked plus PagerDuty. Linking a channel to a monitor is only possible through `update_monitor`, and the array replaces the current set, which is why the agent reads first.
+The agent calls `get_monitor`, picks the channel id from `list_notifications`, and makes one `update_monitor` call with `active: false` and `notificationIds` holding the channels already linked plus PagerDuty. A paused monitor runs no checks, so it can't alert; once the migration is done, "resume the staging monitor" sets `active: true` and the linked channel takes over. Linking a channel to a monitor is only possible through `update_monitor`, and the array replaces the current set, which is why the agent reads first.
 
 ```
 > on the "api" page, group the API and Checkout components under "Core" and the rest under "Dashboard"
@@ -153,7 +153,7 @@ The agent calls `get_monitor`, picks the channel id from `list_notifications`, a
 
 The agent calls `list_page_components`, whose `groups` array shows which groups already exist, calls `create_component_group` for each missing one, then moves every component with `update_page_component({ componentId, groupId })`. `groupId: null` takes a component back out of its group.
 
-There are no delete tools. Removing a monitor, a page, a component or a group stays a dashboard action.
+Removing a monitor, page, component, group or maintenance window stays a dashboard action; only status report and maintenance timeline entries can be deleted from chat.
 
 ## Using an API key instead
 

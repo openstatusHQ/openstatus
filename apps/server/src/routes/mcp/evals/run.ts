@@ -103,6 +103,19 @@ async function runCase(c: EvalCase): Promise<CaseResult> {
         }
       }
     }
+    if (c.argEquals) {
+      for (const [key, value] of Object.entries(c.argEquals)) {
+        if (JSON.stringify(args[key]) !== JSON.stringify(value)) {
+          return {
+            case: c,
+            pass: false,
+            reason: `arg ${key}: expected ${JSON.stringify(value)}, got ${JSON.stringify(args[key])}`,
+            chosenTool: firstCall.toolName,
+            args,
+          };
+        }
+      }
+    }
     return { case: c, pass: true, chosenTool: firstCall.toolName, args };
   } catch (err) {
     return {

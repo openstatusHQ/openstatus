@@ -3,6 +3,7 @@ import { auditLog } from "@openstatus/db/src/schema";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import {
+  clearAuditLog,
   createWorkspaceFixture,
   makeApiKeyCtx,
   makeMcpCtx,
@@ -79,10 +80,23 @@ describe("assertCreateBudget", () => {
     });
   });
 
+  test("counts page_component_group creates", async () => {
+    await withTestTransaction(async (tx) => {
+      await seedCreates(tx, 30, { action: "page_component_group.create" });
+      await expect(assertCreateBudget(mcpCtx(tx))).rejects.toThrow(
+        PreconditionFailedError,
+      );
+    });
+  });
+
   test("uses the committed db when no tx is threaded", async () => {
-    await expect(
-      assertCreateBudget(makeMcpCtx(workspace, { keyId: "unused-key" })),
-    ).resolves.toBeUndefined();
-    expect(db).toBeDefined();
+    try {
+      await seedCreates(db, 30);
+      await expect(
+        assertCreateBudget(makeMcpCtx(workspace, { keyId: KEY })),
+      ).rejects.toThrow(PreconditionFailedError);
+    } finally {
+      await clearAuditLog(workspace.id);
+    }
   });
 });
