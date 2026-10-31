@@ -71,4 +71,16 @@ export class OSTinybird {
   get dnsMetricsBiweekly() {
     return empty;
   }
+  get heartbeatStatus45d() {
+    return empty;
+  }
+  get heartbeatStatus15m() {
+    return empty;
+  }
+  get heartbeatList() {
+    return empty;
+  }
+  get publishHeartbeatPing() {
+    return () => Promise.resolve({ successful_rows: 0, quarantined_rows: 0 });
+  }
 }
