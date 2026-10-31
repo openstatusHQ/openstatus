@@ -2435,6 +2435,9 @@ importers:
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../../regions
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
     devDependencies:
       '@openstatus/test-utils':
         specifier: workspace:*

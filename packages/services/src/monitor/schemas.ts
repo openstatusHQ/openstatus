@@ -11,7 +11,11 @@ import {
   monitorJobTypes,
   monitorMethods,
 } from "@openstatus/db/src/schema/monitors/constants";
-import { headerPairSchema } from "@openstatus/utils";
+import {
+  HEARTBEAT_GRACE_RANGE,
+  HEARTBEAT_PERIOD_RANGE,
+  headerPairSchema,
+} from "@openstatus/utils";
 import { z } from "zod";
 
 export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
@@ -29,36 +33,67 @@ const assertion = z.discriminatedUnion("type", [
 // (0–300_000 ms), so no verb rejects a value another surface accepts.
 const timeoutMs = z.coerce.number().gte(0).lte(300_000);
 
+const heartbeatPeriod = z
+  .number()
+  .int()
+  .gte(HEARTBEAT_PERIOD_RANGE.min)
+  .lte(HEARTBEAT_PERIOD_RANGE.max);
+const heartbeatGrace = z
+  .number()
+  .int()
+  .gte(HEARTBEAT_GRACE_RANGE.min)
+  .lte(HEARTBEAT_GRACE_RANGE.max);
+
 /**
  * Create a new monitor. Regions and periodicity are optional — when unset,
  * the service picks sensible plan-based defaults (4 free regions / 6 paid
  * + `30m`/`1m` respectively).
  */
-export const CreateMonitorInput = z.object({
-  name: z.string().trim().min(1),
-  jobType: z.enum(monitorJobTypes),
-  url: z.string(),
-  method: z.enum(monitorMethods),
-  headers: z.array(headerPair).default([]),
-  body: z.string().optional(),
-  assertions: z.array(assertion).default([]),
-  active: z.boolean().default(false),
-  periodicity: z.enum(monitorPeriodicity).optional(),
-  regions: z.array(z.string()).optional(),
-  // Config fields below are omitted by the dashboard create form and set
-  // by the public API. Each stays `undefined` when unset so the insert
-  // falls through to the column default rather than overwriting it.
-  description: z.string().optional(),
-  public: z.boolean().optional(),
-  timeout: timeoutMs.optional(),
-  degradedAfter: timeoutMs.nullish(),
-  retry: z.number().int().min(0).optional(),
-  followRedirects: z.boolean().optional(),
-  grpcService: z.string().optional(),
-  grpcTls: z.enum(grpcTlsModes).optional(),
-  otelEndpoint: z.string().optional(),
-  otelHeaders: z.array(headerPair).optional(),
-});
+export const CreateMonitorInput = z
+  .object({
+    name: z.string().trim().min(1),
+    jobType: z.enum(monitorJobTypes),
+    url: z.string(),
+    method: z.enum(monitorMethods),
+    headers: z.array(headerPair).default([]),
+    body: z.string().optional(),
+    assertions: z.array(assertion).default([]),
+    active: z.boolean().default(false),
+    periodicity: z.enum(monitorPeriodicity).optional(),
+    regions: z.array(z.string()).optional(),
+    // Config fields below are omitted by the dashboard create form and set
+    // by the public API. Each stays `undefined` when unset so the insert
+    // falls through to the column default rather than overwriting it.
+    description: z.string().optional(),
+    public: z.boolean().optional(),
+    timeout: timeoutMs.optional(),
+    degradedAfter: timeoutMs.nullish(),
+    retry: z.number().int().min(0).optional(),
+    followRedirects: z.boolean().optional(),
+    grpcService: z.string().optional(),
+    grpcTls: z.enum(grpcTlsModes).optional(),
+    otelEndpoint: z.string().optional(),
+    otelHeaders: z.array(headerPair).optional(),
+    heartbeatPeriod: heartbeatPeriod.optional(),
+    heartbeatGrace: heartbeatGrace.optional(),
+  })
+  .superRefine((input, ctx) => {
+    if (input.jobType !== "heartbeat") return;
+    if (input.heartbeatPeriod === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["heartbeatPeriod"],
+        message: "Required for heartbeat monitors",
+      });
+    }
+    if (input.heartbeatGrace === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["heartbeatGrace"],
+        message: "Required for heartbeat monitors",
+      });
+    }
+  });
 export type CreateMonitorInput = z.infer<typeof CreateMonitorInput>;
 
 /**
@@ -91,6 +126,8 @@ export const UpdateMonitorConfigInput = z.object({
   grpcTls: z.enum(grpcTlsModes).optional(),
   otelEndpoint: z.string().optional(),
   otelHeaders: z.array(headerPair).optional(),
+  heartbeatPeriod: heartbeatPeriod.optional(),
+  heartbeatGrace: heartbeatGrace.optional(),
 });
 export type UpdateMonitorConfigInput = z.infer<typeof UpdateMonitorConfigInput>;
 
@@ -112,6 +149,22 @@ export const UpdateMonitorGeneralInput = z.object({
 });
 export type UpdateMonitorGeneralInput = z.infer<
   typeof UpdateMonitorGeneralInput
+>;
+
+export const UpdateMonitorHeartbeatInput = z.object({
+  id: z.number().int(),
+  heartbeatPeriod,
+  heartbeatGrace,
+});
+export type UpdateMonitorHeartbeatInput = z.infer<
+  typeof UpdateMonitorHeartbeatInput
+>;
+
+export const RegenerateHeartbeatTokenInput = z.object({
+  id: z.number().int(),
+});
+export type RegenerateHeartbeatTokenInput = z.infer<
+  typeof RegenerateHeartbeatTokenInput
 >;
 
 export const UpdateMonitorRetryInput = z.object({

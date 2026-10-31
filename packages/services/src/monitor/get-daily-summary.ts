@@ -5,7 +5,7 @@ import type { OSTinybird } from "@openstatus/tinybird";
 import type { DB } from "../context";
 import type { StatusData } from "../status-timeline";
 
-type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc";
+type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat";
 
 /**
  * Raw daily status buckets (one row per monitor per day) from the 45d Tinybird
@@ -40,6 +40,7 @@ export async function fetchMonitorDailyStats(args: {
     dns: [],
     icmp: [],
     grpc: [],
+    heartbeat: [],
   };
   for (const row of rows) {
     if (
@@ -47,14 +48,15 @@ export async function fetchMonitorDailyStats(args: {
       row.jobType === "tcp" ||
       row.jobType === "dns" ||
       row.jobType === "icmp" ||
-      row.jobType === "grpc"
+      row.jobType === "grpc" ||
+      row.jobType === "heartbeat"
     ) {
       idsByJobType[row.jobType].push(String(row.id));
     }
   }
 
   const results = await Promise.all(
-    (["http", "tcp", "dns", "icmp", "grpc"] as const)
+    (["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const)
       .filter((jobType) => idsByJobType[jobType].length > 0)
       .map((jobType) => {
         const monitorIds = idsByJobType[jobType];
@@ -67,7 +69,9 @@ export async function fetchMonitorDailyStats(args: {
                 ? args.tb.dnsStatus45d
                 : jobType === "icmp"
                   ? args.tb.icmpStatus45d
-                  : args.tb.grpcStatus45d;
+                  : jobType === "grpc"
+                    ? args.tb.grpcStatus45d
+                    : args.tb.heartbeatStatus45d;
         return pipe({ monitorIds });
       }),
   );

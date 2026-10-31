@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { serialize } from "@openstatus/assertions";
-import { and, db, eq, isNull } from "@openstatus/db";
+import { and, db, eq, isNull, ne } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
@@ -80,6 +80,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           isNull(monitor.deletedAt),
+          ne(monitor.jobType, "heartbeat"),
           eq(monitor.workspaceId, workspaceId),
         ),
       )

@@ -53,6 +53,13 @@ export {
   StreamMonitorPreviewInput,
   streamMonitorPreview,
 } from "./stream-monitor-preview";
+export {
+  getHeartbeatState,
+  type HeartbeatState,
+  heartbeatDeadline,
+  regenerateHeartbeatToken,
+  updateMonitorHeartbeat,
+} from "./heartbeat";
 export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
 export { assertMonitorUrlSafe } from "./url-safety";
 export {
@@ -83,6 +90,8 @@ export {
   ListResponseLogsInfiniteInput,
   ListResponseLogsInput,
   monitorJobTypes,
+  RegenerateHeartbeatTokenInput,
+  UpdateMonitorHeartbeatInput,
   monitorMethods,
   monitorPeriodicity,
   ResponseLogFilters,

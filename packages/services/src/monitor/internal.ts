@@ -22,6 +22,7 @@ import { regionDict } from "@openstatus/regions";
 
 import type { DB } from "../context";
 import { ForbiddenError, LimitExceededError, NotFoundError } from "../errors";
+import { toBase64Url } from "../oauth/crypto";
 import type { Workspace } from "../types";
 
 /** Load a monitor by id, scoped to the workspace and excluding soft-deleted. */
@@ -213,4 +214,25 @@ export function assertSchedulingWithinPlan(
   ) {
     throw new LimitExceededError("regions", limits.regions.length);
   }
+}
+
+// The token authenticates pings; keep a fingerprint so a rotation still diffs
+// without storing any of it. Web Crypto keeps this module Edge-safe.
+export async function monitorAuditSnapshot<
+  T extends { heartbeatToken: string | null },
+>(row: T): Promise<T> {
+  if (!row.heartbeatToken) return row;
+  const data = new TextEncoder().encode(row.heartbeatToken);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  const fingerprint = Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 16);
+  return { ...row, heartbeatToken: `sha256:${fingerprint}` };
+}
+
+export function generateHeartbeatToken(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return toBase64Url(bytes);
 }
