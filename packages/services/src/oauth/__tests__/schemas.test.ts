@@ -98,9 +98,7 @@ describe("normalizeScopes / formatScope", () => {
         "incidents:write",
         "notifications:read",
       ]),
-    ).toBe(
-      "monitors:write pages:write incidents:write notifications:read",
-    );
+    ).toBe("monitors:write pages:write incidents:write notifications:read");
   });
 
   test("folds '*' into write defensively", () => {

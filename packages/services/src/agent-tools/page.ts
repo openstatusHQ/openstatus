@@ -144,12 +144,13 @@ const UpdateStatusPageInputShape = z
       .string()
       .optional()
       .describe("Public description under the title. Empty string clears it."),
-    icon: optionalHttpUrl
-      .describe("Icon image URL. Empty string removes it."),
-    homepageUrl: optionalHttpUrl
-      .describe("Link back to the product site. Empty string removes it."),
-    contactUrl: optionalHttpUrl
-      .describe("Support/contact link. Empty string removes it."),
+    icon: optionalHttpUrl.describe("Icon image URL. Empty string removes it."),
+    homepageUrl: optionalHttpUrl.describe(
+      "Link back to the product site. Empty string removes it.",
+    ),
+    contactUrl: optionalHttpUrl.describe(
+      "Support/contact link. Empty string removes it.",
+    ),
   })
   .refine(
     (input) => Object.values(input).filter((v) => v !== undefined).length > 1,

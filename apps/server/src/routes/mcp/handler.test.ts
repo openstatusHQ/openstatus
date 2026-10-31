@@ -556,7 +556,10 @@ describe("MCP transport — group scopes", () => {
   });
 
   test("audit tools need the read umbrella, not a group scope", async () => {
-    for (const scopes of [["incidents:write"], ["monitors:read"]] as Scope[][]) {
+    for (const scopes of [
+      ["incidents:write"],
+      ["monitors:read"],
+    ] as Scope[][]) {
       const { client, close } = await connectScoped(scopes);
       try {
         const names = (await client.listTools()).tools.map((t) => t.name);
