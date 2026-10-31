@@ -22,6 +22,7 @@ import {
   Close,
   Globe,
   Network,
+  Schedule,
   Server,
   Speed,
 } from "@openstatus/icons";
@@ -84,7 +85,10 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-const TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+import { heartbeatGraceSchema, heartbeatPeriodSchema } from "./form-heartbeat";
+import { HeartbeatDurationInput } from "./heartbeat-duration-input";
+
+const TYPES = ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const;
 const GRPC_TLS_LABELS = {
   tls: "TLS (verify certificate)",
   tls_insecure: "TLS (skip verification)",
@@ -93,40 +97,70 @@ const GRPC_TLS_LABELS = {
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
-const schema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  type: z.enum(TYPES),
-  method: z.enum(monitorMethods),
-  url: z.string().min(1, "URL is required"),
-  headers: z.array(headerPairSchema),
-  active: z.boolean().prefault(true),
-  assertions: z.array(
-    z.discriminatedUnion("type", [
-      statusAssertion,
-      headerAssertion,
-      textBodyAssertion,
-      jsonBodyAssertion,
-      recordAssertion,
-    ]),
-  ),
-  body: z.string().optional(),
-  grpcService: z.string().optional(),
-  grpcTls: z.enum(grpcTlsModes).prefault("tls"),
-  skipCheck: z.boolean().prefault(false),
-  saveCheck: z.boolean().prefault(false),
-});
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    type: z.enum(TYPES),
+    method: z.enum(monitorMethods),
+    url: z.string(),
+    headers: z.array(headerPairSchema),
+    active: z.boolean().prefault(true),
+    assertions: z.array(
+      z.discriminatedUnion("type", [
+        statusAssertion,
+        headerAssertion,
+        textBodyAssertion,
+        jsonBodyAssertion,
+        recordAssertion,
+      ]),
+    ),
+    body: z.string().optional(),
+    grpcService: z.string().optional(),
+    grpcTls: z.enum(grpcTlsModes).prefault("tls"),
+    skipCheck: z.boolean().prefault(false),
+    saveCheck: z.boolean().prefault(false),
+    heartbeatPeriod: z.number().optional(),
+    heartbeatGrace: z.number().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.type !== "heartbeat") {
+      if (values.url.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["url"],
+          message: "URL is required",
+        });
+      }
+      return;
+    }
+    for (const [key, rule] of [
+      ["heartbeatPeriod", heartbeatPeriodSchema],
+      ["heartbeatGrace", heartbeatGraceSchema],
+    ] as const) {
+      const result = rule.safeParse(values[key]);
+      if (!result.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: result.error.issues[0]?.message ?? "Invalid value",
+        });
+      }
+    }
+  });
 
 type FormValues = z.input<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
   disabled,
+  heartbeatAvailable,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
+  heartbeatAvailable?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
@@ -144,6 +178,8 @@ export function FormGeneral({
       grpcTls: "tls",
       skipCheck: false,
       saveCheck: false,
+      heartbeatPeriod: 3_600,
+      heartbeatGrace: 300,
     },
   });
   // Stable row ids so removing a row remounts the shifted controllers.
@@ -163,6 +199,17 @@ export function FormGeneral({
   // Each type has its own reference page; only http and dns support assertions.
   const referenceUrl = `https://www.openstatus.dev/docs/reference/${watchType ?? "http"}-monitor/`;
   const hasAssertions = watchType === "http" || watchType === "dns";
+  const isHeartbeat = watchType === "heartbeat";
+  const typeOptions = [
+    { value: "http", icon: Globe, label: "HTTP" },
+    { value: "tcp", icon: Network, label: "TCP" },
+    { value: "dns", icon: Server, label: "DNS" },
+    { value: "icmp", icon: Speed, label: "ICMP" },
+    { value: "grpc", icon: Api, label: "gRPC" },
+    ...(heartbeatAvailable || defaultValues?.type === "heartbeat"
+      ? [{ value: "heartbeat", icon: Schedule, label: "Heartbeat" }]
+      : []),
+  ];
 
   useEffect(() => {
     // NOTE: reset form when type changes
@@ -306,16 +353,15 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-5"
+                      className={cn(
+                        "grid grid-cols-2 gap-4",
+                        typeOptions.length > 5
+                          ? "sm:grid-cols-3 lg:grid-cols-6"
+                          : "sm:grid-cols-5",
+                      )}
                       disabled={!!defaultValues?.type}
                     >
-                      {[
-                        { value: "http", icon: Globe, label: "HTTP" },
-                        { value: "tcp", icon: Network, label: "TCP" },
-                        { value: "dns", icon: Server, label: "DNS" },
-                        { value: "icmp", icon: Speed, label: "ICMP" },
-                        { value: "grpc", icon: Api, label: "gRPC" },
-                      ].map((type) => {
+                      {typeOptions.map((type) => {
                         return (
                           <Tooltip key={type.value}>
                             <TooltipTrigger asChild>
@@ -361,7 +407,9 @@ export function FormGeneral({
               )}
             />
           </FormCardContent>
-          {watchType ? <FormCardSeparator /> : null}
+          {watchType && !(isHeartbeat && defaultValues?.type) ? (
+            <FormCardSeparator />
+          ) : null}
           {watchType === "http" && (
             <>
               <FormCardContent className="grid grid-cols-4 gap-4">
@@ -708,6 +756,50 @@ export function FormGeneral({
                   </li>
                 </ul>
               </div>
+            </FormCardContent>
+          )}
+          {isHeartbeat && !defaultValues?.type && (
+            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="heartbeatPeriod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expected every</FormLabel>
+                    <FormControl>
+                      <HeartbeatDurationInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>The schedule of your job.</FormDescription>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="heartbeatGrace"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grace period</FormLabel>
+                    <FormControl>
+                      <HeartbeatDurationInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Extra time before a late ping counts as missed.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <p className="text-muted-foreground col-span-full text-sm">
+                Your job pings a unique URL when it finishes. You get it right
+                after creating the monitor. Alerts start after the first ping.
+              </p>
             </FormCardContent>
           )}
           {watchType === "icmp" && (
@@ -1080,7 +1172,10 @@ export function FormGeneral({
                   </Link>
                 </>
               )}
-              . We test your endpoint before saving the monitor.
+              .
+              {isHeartbeat
+                ? " openstatus never calls your job: it waits for its pings."
+                : " We test your endpoint before saving the monitor."}
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending || disabled}>
               {isPending ? "Submitting..." : "Submit"}

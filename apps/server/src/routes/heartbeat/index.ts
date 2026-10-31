@@ -3,6 +3,7 @@ import type { HeartbeatPingKind } from "@openstatus/db/src/schema";
 import { recordHeartbeatPing } from "@openstatus/services/monitor";
 import type { HeartbeatPingEvent } from "@openstatus/tinybird";
 import { type Context, Hono } from "hono";
+import { cors } from "hono/cors";
 
 import { tb } from "@/libs/clients";
 import { Batcher } from "@/libs/heartbeat/batcher";
@@ -26,6 +27,9 @@ const TOKEN_PATTERN = /^[\w-]{16,64}$/;
 const METHODS = ["GET", "POST", "HEAD"];
 
 export const heartbeatRoute = new Hono();
+
+// the dashboard's "send test ping" calls it from the browser
+heartbeatRoute.use("*", cors());
 
 heartbeatRoute.on(METHODS, "/:token", (c) => handlePing(c, "success"));
 heartbeatRoute.on(METHODS, "/:token/fail", (c) => handlePing(c, "fail"));

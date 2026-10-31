@@ -15,14 +15,18 @@ import {
   createMonitor,
   deleteMonitor,
   deleteMonitors,
+  getHeartbeatState,
   getMonitor,
   grpcTlsModes,
+  listHeartbeatPings,
   listMonitors,
   monitorJobTypes,
   monitorMethods,
   monitorPeriodicity,
+  regenerateHeartbeatToken,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
+  updateMonitorHeartbeat,
   updateMonitorNotifiers,
   updateMonitorOtel,
   updateMonitorPublic,
@@ -32,10 +36,13 @@ import {
   updateMonitorTags,
 } from "@openstatus/services/monitor";
 import { headerPairSchema } from "@openstatus/utils";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
+import { heartbeatPingUrl, isHeartbeatEnabled } from "../lib/heartbeat";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
+import { tb } from "../tb";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { testDns, testGrpc, testHttp, testIcmp, testTcp } from "./checker";
 
@@ -67,6 +74,8 @@ const newMonitorTRPCInput = z.object({
   skipCheck: z.boolean().prefault(false),
   grpcService: z.string().optional(),
   grpcTls: z.enum(grpcTlsModes).optional(),
+  heartbeatPeriod: z.number().int().optional(),
+  heartbeatGrace: z.number().int().optional(),
 });
 
 const updateGeneralTRPCInput = z.object({
@@ -402,6 +411,15 @@ export const monitorRouter = createTRPCRouter({
     .input(newMonitorTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
+        if (
+          input.jobType === "heartbeat" &&
+          !isHeartbeatEnabled(ctx.workspace.id)
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Heartbeat monitors are not available yet",
+          });
+        }
         if (!isSelfHost && !input.skipCheck) {
           if (input.jobType === "http") {
             await testHttp({
@@ -448,11 +466,110 @@ export const monitorRouter = createTRPCRouter({
           active: input.active,
           grpcService: input.grpcService,
           grpcTls: input.grpcTls,
+          heartbeatPeriod: input.heartbeatPeriod,
+          heartbeatGrace: input.heartbeatGrace,
         };
         return await createMonitor({
           ctx: toServiceCtx(ctx),
           input: serviceInput,
         });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  heartbeatAvailable: protectedProcedure.query(({ ctx }) =>
+    isHeartbeatEnabled(ctx.workspace.id),
+  ),
+
+  heartbeat: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const serviceCtx = toServiceCtx(ctx);
+        const [row, state] = await Promise.all([
+          getMonitor({ ctx: serviceCtx, input: { id: input.id } }),
+          getHeartbeatState({ ctx: serviceCtx, input: { id: input.id } }),
+        ]);
+        return {
+          pingUrl: row.heartbeatToken
+            ? heartbeatPingUrl(row.heartbeatToken)
+            : null,
+          period: row.heartbeatPeriod,
+          grace: row.heartbeatGrace,
+          lastPingAt: state.lastPingAt,
+          lastPingKind: state.lastPingKind,
+          nextDueAt: state.nextDueAt,
+        };
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  heartbeatStatus: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const row = await getMonitor({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+        if (row.jobType !== "heartbeat") return [];
+        const result = await tb.heartbeatStatus45d({
+          monitorIds: [String(row.id)],
+        });
+        return result.data;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  heartbeatPings: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        cursor: z.number().int().optional(),
+        limit: z.number().int().min(1).max(100).prefault(50),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        return await listHeartbeatPings({
+          ctx: toServiceCtx(ctx),
+          input: {
+            monitorId: input.id,
+            cursor: input.cursor,
+            limit: input.limit,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateHeartbeat: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
+    .input(
+      z.object({
+        id: z.number(),
+        heartbeatPeriod: z.number().int(),
+        heartbeatGrace: z.number().int(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updateMonitorHeartbeat({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  regenerateHeartbeatToken: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await regenerateHeartbeatToken({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

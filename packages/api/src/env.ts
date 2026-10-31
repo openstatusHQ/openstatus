@@ -21,6 +21,8 @@ export const env = createEnv({
     SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
     EXTERNAL_REPORT_SALT: z.string().optional(),
     SELF_HOST: z.stringbool().prefault("false"),
+    HEARTBEAT_WORKSPACE_IDS: z.string().optional(),
+    HEARTBEAT_PING_BASE_URL: z.url().optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).optional(),
   },
 
@@ -40,6 +42,8 @@ export const env = createEnv({
     SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
     EXTERNAL_REPORT_SALT: process.env.EXTERNAL_REPORT_SALT,
     SELF_HOST: process.env.SELF_HOST,
+    HEARTBEAT_WORKSPACE_IDS: process.env.HEARTBEAT_WORKSPACE_IDS,
+    HEARTBEAT_PING_BASE_URL: process.env.HEARTBEAT_PING_BASE_URL,
     NODE_ENV: process.env.NODE_ENV,
   },
   skipValidation: process.env.NODE_ENV === "test",
