@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 import { YouTubeFacade } from "./youtube-facade";
 
 /** Extracts the video id from a watch, youtu.be or embed URL. */
@@ -24,41 +22,31 @@ function toEmbedUrl(href: string): string {
 }
 
 export function ShowcaseYouTube({
-  entries,
+  href,
+  title = "YouTube video",
 }: {
-  entries: { href: string; title?: string }[];
+  href: string;
+  title?: string;
 }) {
+  const id = idOf(href);
   return (
-    <div
-      className={cn("my-4 grid gap-4", entries.length > 1 && "sm:grid-cols-2")}
-    >
-      {entries.map((entry, i) => {
-        const id = idOf(entry.href);
-        const title = entry.title ?? "YouTube video";
-        return (
-          <div
-            key={`${entry.href}-${i}`}
-            className="border-border relative aspect-video w-full overflow-hidden border"
-          >
-            {id ? (
-              <YouTubeFacade
-                embedUrl={toEmbedUrl(entry.href)}
-                thumbnailUrl={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
-                title={title}
-              />
-            ) : (
-              <iframe
-                src={entry.href}
-                title={title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                loading="lazy"
-                allowFullScreen
-                className="absolute inset-0 h-full w-full"
-              />
-            )}
-          </div>
-        );
-      })}
+    <div className="border-border relative my-4 aspect-video w-full overflow-hidden border [.grid>&]:my-0">
+      {id ? (
+        <YouTubeFacade
+          embedUrl={toEmbedUrl(href)}
+          thumbnailUrl={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+          title={title}
+        />
+      ) : (
+        <iframe
+          src={href}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          loading="lazy"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full"
+        />
+      )}
     </div>
   );
 }
