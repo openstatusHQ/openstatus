@@ -201,4 +201,37 @@ export const cases: EvalCase[] = [
     expectedTool: "create_status_page",
     requiredArgs: ["title", "slug"],
   },
+
+  // Update tools
+  {
+    id: "select.update_monitor_pause",
+    prompt: "Pause monitor 12.",
+    expectedTool: "update_monitor",
+    requiredArgs: ["monitorId", "active"],
+  },
+  {
+    id: "select.update_status_page_rename",
+    prompt: 'Rename status page 3 to "Acme".',
+    expectedTool: "update_status_page",
+    requiredArgs: ["pageId", "title"],
+  },
+  {
+    id: "select.update_page_component_group",
+    prompt: "Move component 9 into group 2.",
+    expectedTool: "update_page_component",
+    requiredArgs: ["componentId", "groupId"],
+  },
+  {
+    id: "select.create_component_group",
+    prompt: 'Create a group called "Core" on page 3.',
+    expectedTool: "create_component_group",
+    requiredArgs: ["pageId", "name"],
+  },
+  {
+    id: "select.update_maintenance_end",
+    prompt:
+      "Push maintenance 5 to end at 16:00 UTC today. I already have its details.",
+    expectedTool: "update_maintenance",
+    requiredArgs: ["maintenanceId", "to"],
+  },
 ];

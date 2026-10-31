@@ -2,7 +2,14 @@ import { slugSchema } from "@openstatus/db/src/schema/pages/validation";
 import { z } from "zod";
 
 import { assertCreateBudget } from "../auth";
-import { listPages, newPage } from "../page";
+import { withTransaction } from "../context";
+import {
+  getPage,
+  listPages,
+  newPage,
+  updatePageGeneral,
+  updatePageLinks,
+} from "../page";
 import type { AgentTool } from "./types";
 import { dashboardUrl, statusPageUrl } from "./urls";
 
@@ -47,13 +54,29 @@ const CreateStatusPageInputShape = z.object({
     .describe("Short public description shown under the title."),
 });
 
-const CreateStatusPageOutput = z.object({
+const StatusPageOutput = z.object({
   id: z.number().int(),
   slug: z.string(),
   title: z.string(),
   url: z.string(),
   dashboardUrl: z.string(),
 });
+
+function toStatusPageOutput(page: {
+  id: number;
+  slug: string;
+  title: string;
+}): z.infer<typeof StatusPageOutput> {
+  return {
+    id: page.id,
+    slug: page.slug,
+    title: page.title,
+    url: statusPageUrl(page.slug),
+    dashboardUrl: dashboardUrl(`/status-pages/${page.id}/components`),
+  };
+}
+
+const CreateStatusPageOutput = StatusPageOutput;
 
 export const createStatusPageTool: AgentTool<
   z.infer<typeof CreateStatusPageInputShape>,
@@ -89,12 +112,128 @@ export const createStatusPageTool: AgentTool<
         description: input.description,
       },
     });
-    return {
-      id: page.id,
-      slug: page.slug,
-      title: page.title,
-      url: statusPageUrl(page.slug),
-      dashboardUrl: dashboardUrl(`/status-pages/${page.id}/components`),
-    };
+    return toStatusPageOutput(page);
+  },
+};
+
+const UpdateStatusPageInputShape = z
+  .object({
+    pageId: z
+      .number()
+      .int()
+      .describe("Status page id. Resolve via list_status_pages — never guess."),
+    title: z.string().trim().min(1).max(256).optional(),
+    slug: slugSchema
+      .optional()
+      .describe(
+        "New subdomain (<slug>.openstatus.dev). Changes the public URL; confirm with the user. Fails when taken.",
+      ),
+    description: z
+      .string()
+      .optional()
+      .describe("Public description under the title. Empty string clears it."),
+    icon: z
+      .string()
+      .optional()
+      .describe("Icon image URL. Empty string removes it."),
+    homepageUrl: z
+      .string()
+      .optional()
+      .describe("Link back to the product site. Empty string removes it."),
+    contactUrl: z
+      .string()
+      .optional()
+      .describe("Support/contact link. Empty string removes it."),
+  })
+  .refine(
+    (input) => Object.values(input).filter((v) => v !== undefined).length > 1,
+    { message: "Send at least one field to change besides pageId." },
+  );
+
+export const updateStatusPageTool: AgentTool<
+  z.infer<typeof UpdateStatusPageInputShape>,
+  z.infer<typeof StatusPageOutput>
+> = {
+  name: "update_status_page",
+  description:
+    "Change a status page's basics: title, slug, description, icon, homepage and contact links. AUDIT-LOGGED. Call list_status_pages first and send only the fields that change; omitted fields stay as they are. Custom domain, password/access control, theme and locales are configured in the dashboard, not here.",
+  scope: "pages:write",
+  destructive: true,
+  inputSchema: UpdateStatusPageInputShape,
+  outputSchema: StatusPageOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Update Status Page #${input.pageId}`,
+      lines: [
+        {
+          label: "Page ID",
+          value: String(input.pageId),
+          ref: { kind: "page", pageId: input.pageId },
+        },
+        ...(input.title !== undefined
+          ? [{ label: "Title", value: input.title }]
+          : []),
+        ...(input.slug !== undefined
+          ? [{ label: "Slug", value: input.slug }]
+          : []),
+        ...(input.description !== undefined
+          ? [{ label: "Description", value: input.description || "(cleared)" }]
+          : []),
+        ...(input.icon !== undefined
+          ? [{ label: "Icon", value: input.icon || "(removed)" }]
+          : []),
+        ...(input.homepageUrl !== undefined
+          ? [{ label: "Homepage", value: input.homepageUrl || "(removed)" }]
+          : []),
+        ...(input.contactUrl !== undefined
+          ? [{ label: "Contact", value: input.contactUrl || "(removed)" }]
+          : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  // Scope and audit come from the verbs inside; the transaction only makes them atomic.
+  // oxlint-disable-next-line openstatus/services-mutation-guards
+  async run({ ctx, input }) {
+    const existing = await getPage({ ctx, input: { id: input.pageId } });
+    const general =
+      input.title !== undefined ||
+      input.slug !== undefined ||
+      input.description !== undefined ||
+      input.icon !== undefined;
+    const links =
+      input.homepageUrl !== undefined || input.contactUrl !== undefined;
+
+    await withTransaction(ctx, async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      if (general) {
+        await updatePageGeneral({
+          ctx: txCtx,
+          input: {
+            id: existing.id,
+            title: input.title ?? existing.title,
+            slug: input.slug ?? existing.slug,
+            description: input.description ?? existing.description,
+            icon: input.icon ?? existing.icon,
+          },
+        });
+      }
+      if (links) {
+        await updatePageLinks({
+          ctx: txCtx,
+          input: {
+            id: existing.id,
+            homepageUrl: input.homepageUrl ?? existing.homepageUrl,
+            contactUrl: input.contactUrl ?? existing.contactUrl,
+          },
+        });
+      }
+    });
+
+    return toStatusPageOutput({
+      id: existing.id,
+      slug: input.slug ?? existing.slug,
+      title: input.title ?? existing.title,
+    });
   },
 };

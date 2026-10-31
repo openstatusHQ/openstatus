@@ -96,7 +96,7 @@ Your browser opens the openstatus consent screen:
 - **Access** — a preset, or **Custom** for one `read` / `write` choice per resource group:
   - **Read only** lets the agent list status pages, reports, monitors, and maintenance windows but change nothing.
   - **Incident comms** adds status reports, updates, incidents, and maintenance windows; monitors, pages, and notification channels stay read-only.
-  - **Full setup** adds creating monitors and status pages and adding components. Preselected when the client asks for write access.
+  - **Full setup** adds creating and changing monitors, status pages, components and component groups. Preselected when the client asks for write access.
   - **Read & write** is every scope.
 
   You can only narrow what the client requested. Scopes are listed in the [MCP server reference](/docs/reference/mcp-server#scopes).
@@ -107,7 +107,7 @@ Click **Approve**. The browser hands a code back to the agent, which exchanges i
 
 ## 3. Verify the connection
 
-Ask your agent to list its MCP servers — `/mcp` in Claude Code and Codex, `opencode mcp list`, the MCP pane in Cursor's settings, the tool picker in Claude Desktop and ChatGPT. `openstatus` should show as connected, with the read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `list_private_locations`, …), the incident tools if you granted **Incident comms** (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …), and the setup tools if you granted **Full setup** (`create_monitor`, `create_status_page`, `add_page_component`). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
+Ask your agent to list its MCP servers — `/mcp` in Claude Code and Codex, `opencode mcp list`, the MCP pane in Cursor's settings, the tool picker in Claude Desktop and ChatGPT. `openstatus` should show as connected, with the read tools (`list_status_pages`, `list_monitors`, `get_monitor_status`, `list_private_locations`, …), the incident tools if you granted **Incident comms** (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, …), and the setup tools if you granted **Full setup** (`create_monitor`, `update_monitor`, `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group`, `update_component_group`). See the [MCP server reference](/docs/reference/mcp-server) for the full list.
 
 If the server shows as disconnected, see [Troubleshooting](#troubleshooting) below.
 
@@ -138,6 +138,22 @@ With **Full setup**, one prompt creates the monitor, the page, and the component
 ```
 
 The agent checks `list_monitors` for an existing monitor with that URL, calls `create_monitor` and reports the first probe (`firstCheck`: region, status, latency), confirms a slug with you before `create_status_page`, then links the two with `add_page_component`. Regions and check interval default to your plan. A plan limit stops the run with a message naming the add-on or upgrade that lifts it.
+
+The same preset changes what already exists. The agent reads the current object first (`get_monitor`, `list_page_components`, `get_maintenance`) and sends only the fields that change, so a prompt names the outcome, not the fields:
+
+```
+> pause the checkout monitor and alert the on-call PagerDuty channel when it comes back
+```
+
+The agent calls `get_monitor`, picks the channel id from `list_notifications`, and makes one `update_monitor` call with `active: false` and `notificationIds` holding the channels already linked plus PagerDuty. Linking a channel to a monitor is only possible through `update_monitor`, and the array replaces the current set, which is why the agent reads first.
+
+```
+> on the "api" page, group the API and Checkout components under "Core" and the rest under "Dashboard"
+```
+
+The agent calls `list_page_components`, whose `groups` array shows which groups already exist, calls `create_component_group` for each missing one, then moves every component with `update_page_component({ componentId, groupId })`. `groupId: null` takes a component back out of its group.
+
+There are no delete tools. Removing a monitor, a page, a component or a group stays a dashboard action.
 
 ## Using an API key instead
 
@@ -222,7 +238,7 @@ CLI agents print the authorization URL in the terminal. Copy it into a browser o
 
 ### "Tool not available" when asking the agent to create something
 
-The server only lists the tools your scopes allow. A **Read only** connection sees the read tools; **Incident comms** adds the status report, incident, and maintenance tools; **Full setup** enables all three setup tools: `create_monitor` needs `monitors:write`, `create_status_page` and `add_page_component` need `pages:write`, so a Custom credential can hold either half. Connections approved before presets existed hold the Incident comms scopes, so the setup tools are missing until you sign in again and pick **Full setup**, or issue an API key with those scopes.
+The server only lists the tools your scopes allow. A **Read only** connection sees the read tools; **Incident comms** adds the status report, incident, and maintenance tools, `update_maintenance` included; **Full setup** enables the setup tools: `create_monitor` and `update_monitor` need `monitors:write`, `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group` need `pages:write`, so a Custom credential can hold either half. Connections approved before presets existed hold the Incident comms scopes, so the setup tools are missing until you sign in again and pick **Full setup**, or issue an API key with those scopes.
 
 ### Audit log shows `actor_type = 'mcp'` for changes I made manually
 

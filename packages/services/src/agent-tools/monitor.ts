@@ -3,6 +3,7 @@ import { headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
 import { assertCreateBudget } from "../auth";
+import { withTransaction } from "../context";
 import { ValidationError } from "../errors";
 import {
   type CheckResult,
@@ -19,6 +20,9 @@ import {
   monitorPeriodicity,
   monitorTimeRange,
   runMonitorCheck,
+  updateMonitorConfig,
+  updateMonitorNotifiers,
+  updateMonitorTags,
 } from "../monitor";
 import type { AgentTool } from "./types";
 import { dashboardUrl } from "./urls";
@@ -576,17 +580,40 @@ const FirstCheckOutput = z
   })
   .nullable();
 
+const MonitorOutput = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  url: z.string(),
+  jobType: z.string(),
+  periodicity: z.string(),
+  regions: z.array(z.string()),
+  active: z.boolean(),
+  dashboardUrl: z.string(),
+});
+
+function toMonitorOutput(m: {
+  id: number;
+  name: string;
+  url: string;
+  jobType: string;
+  periodicity: string;
+  regions: string[];
+  active: boolean | null;
+}): z.infer<typeof MonitorOutput> {
+  return {
+    id: m.id,
+    name: m.name,
+    url: m.url,
+    jobType: m.jobType,
+    periodicity: m.periodicity,
+    regions: m.regions,
+    active: m.active ?? false,
+    dashboardUrl: dashboardUrl(`/monitors/${m.id}/overview`),
+  };
+}
+
 const CreateMonitorOutput = z.object({
-  monitor: z.object({
-    id: z.number().int(),
-    name: z.string(),
-    url: z.string(),
-    jobType: z.string(),
-    periodicity: z.string(),
-    regions: z.array(z.string()),
-    active: z.boolean(),
-    dashboardUrl: z.string(),
-  }),
+  monitor: MonitorOutput,
   firstCheck: FirstCheckOutput.describe(
     "One probe from the monitor's first region, http only. null when the type is tcp/dns or the probe did not return in time.",
   ),
@@ -630,14 +657,7 @@ export const createMonitorTool: AgentTool<
     verb: "created",
   },
   async run({ ctx, input }) {
-    const mismatched = (input.assertions ?? []).filter((a) =>
-      input.jobType === "dns" ? a.type !== "dnsRecord" : a.type === "dnsRecord",
-    );
-    if (mismatched.length > 0) {
-      throw new ValidationError(
-        `Assertions of type ${mismatched.map((a) => a.type).join(", ")} do not apply to ${input.jobType} monitors.`,
-      );
-    }
+    assertAssertionsMatchJobType(input.jobType, input.assertions);
     await assertCreateBudget(ctx);
     const m = await createMonitor({
       ctx,
@@ -671,18 +691,174 @@ export const createMonitorTool: AgentTool<
       }
     }
 
+    return { monitor: toMonitorOutput(m), firstCheck };
+  },
+};
+
+function assertAssertionsMatchJobType(
+  jobType: string,
+  assertions: z.infer<typeof monitorAssertionSchema>[] | undefined,
+) {
+  const mismatched = (assertions ?? []).filter((a) =>
+    jobType === "dns" ? a.type !== "dnsRecord" : a.type === "dnsRecord",
+  );
+  if (mismatched.length > 0) {
+    throw new ValidationError(
+      `Assertions of type ${mismatched.map((a) => a.type).join(", ")} do not apply to ${jobType} monitors.`,
+    );
+  }
+}
+
+const UpdateMonitorInputShape = z
+  .object({
+    monitorId: z
+      .number()
+      .int()
+      .describe(
+        "Monitor id (numeric). Resolve via list_monitors — never guess.",
+      ),
+    name: z.string().trim().min(1).max(256).optional(),
+    url: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "New endpoint. The monitor's type (http/tcp/dns) cannot change.",
+      ),
+    method: z
+      .enum(monitorMethods)
+      .optional()
+      .describe("HTTP method (http only)."),
+    headers: z
+      .array(headerPairSchema)
+      .optional()
+      .describe("Replaces all request headers (http only). [] clears them."),
+    body: z.string().optional().describe("Request body (http only)."),
+    assertions: z
+      .array(monitorAssertionSchema)
+      .optional()
+      .describe("Replaces all assertions. [] falls back to asserting a 2xx."),
+    periodicity: z.enum(monitorPeriodicity).optional(),
+    regions: z
+      .array(z.string())
+      .optional()
+      .describe('Replaces the region set, e.g. ["ams", "iad"].'),
+    active: z
+      .boolean()
+      .optional()
+      .describe("false pauses the monitor, true resumes it."),
+    description: z.string().optional(),
+    timeout: z.number().int().min(0).max(TIMEOUT_MAX_MS).optional(),
+    degradedAfter: z.number().int().min(0).max(TIMEOUT_MAX_MS).optional(),
+    notificationIds: z
+      .array(z.number().int())
+      .optional()
+      .describe(
+        "Replaces the linked notification channels. Ids from list_notifications; [] unlinks all.",
+      ),
+    tagIds: z
+      .array(z.number().int())
+      .optional()
+      .describe(
+        "Replaces the monitor's tags. Ids from get_monitor on a monitor that already carries the tag; [] clears.",
+      ),
+  })
+  .refine(
+    (input) => Object.values(input).filter((v) => v !== undefined).length > 1,
+    { message: "Send at least one field to change besides monitorId." },
+  );
+
+const UpdateMonitorOutput = MonitorOutput.extend({
+  notificationIds: z.array(z.number().int()),
+  tagIds: z.array(z.number().int()),
+});
+
+export const updateMonitorTool: AgentTool<
+  z.infer<typeof UpdateMonitorInputShape>,
+  z.infer<typeof UpdateMonitorOutput>
+> = {
+  name: "update_monitor",
+  description:
+    "Change an existing monitor. AUDIT-LOGGED. Call get_monitor first and send only the fields that change; omitted fields stay as they are. `active: false` pauses the monitor, `active: true` resumes it. notificationIds links notification channels to the monitor (this is the only way to do that) and tagIds sets its tags; both replace the full set. The check type (http/tcp/dns) cannot change — create a new monitor instead. All changes apply together or not at all.",
+  scope: "monitors:write",
+  destructive: true,
+  inputSchema: UpdateMonitorInputShape,
+  outputSchema: UpdateMonitorOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Update Monitor #${input.monitorId}`,
+      lines: [
+        { label: "Monitor ID", value: String(input.monitorId) },
+        ...(input.name !== undefined
+          ? [{ label: "Name", value: input.name }]
+          : []),
+        ...(input.url !== undefined
+          ? [{ label: "URL", value: input.url }]
+          : []),
+        ...(input.active !== undefined
+          ? [
+              {
+                label: "Active",
+                value: input.active ? "yes (resume)" : "no (pause)",
+              },
+            ]
+          : []),
+        ...(input.periodicity !== undefined
+          ? [{ label: "Periodicity", value: input.periodicity }]
+          : []),
+        ...(input.regions !== undefined
+          ? [{ label: "Regions", value: input.regions.join(", ") || "(none)" }]
+          : []),
+        ...(input.notificationIds !== undefined
+          ? [
+              {
+                label: "Notifications",
+                value: input.notificationIds.join(", ") || "(unlink all)",
+              },
+            ]
+          : []),
+        ...(input.tagIds !== undefined
+          ? [{ label: "Tags", value: input.tagIds.join(", ") || "(clear all)" }]
+          : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  // Scope and audit come from the verbs inside; the transaction only makes them atomic.
+  // oxlint-disable-next-line openstatus/services-mutation-guards
+  async run({ ctx, input }) {
+    const { monitorId, notificationIds, tagIds, ...config } = input;
+    const existing = await getMonitor({ ctx, input: { id: monitorId } });
+    assertAssertionsMatchJobType(existing.jobType, config.assertions);
+
+    const hasConfig = Object.values(config).some((v) => v !== undefined);
+    await withTransaction(ctx, async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      if (hasConfig) {
+        await updateMonitorConfig({
+          ctx: txCtx,
+          input: { id: monitorId, ...config },
+        });
+      }
+      if (notificationIds !== undefined) {
+        await updateMonitorNotifiers({
+          ctx: txCtx,
+          input: { id: monitorId, notifiers: notificationIds },
+        });
+      }
+      if (tagIds !== undefined) {
+        await updateMonitorTags({
+          ctx: txCtx,
+          input: { id: monitorId, tags: tagIds },
+        });
+      }
+    });
+
+    const m = await getMonitor({ ctx, input: { id: monitorId } });
     return {
-      monitor: {
-        id: m.id,
-        name: m.name,
-        url: m.url,
-        jobType: m.jobType,
-        periodicity: m.periodicity,
-        regions: m.regions,
-        active: m.active ?? false,
-        dashboardUrl: dashboardUrl(`/monitors/${m.id}/overview`),
-      },
-      firstCheck,
+      ...toMonitorOutput(m),
+      notificationIds: m.notifications.map((n) => n.id),
+      tagIds: m.tags.map((t) => t.id),
     };
   },
 };

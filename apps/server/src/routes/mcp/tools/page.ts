@@ -5,9 +5,13 @@ import type {
 import type { ServiceContext } from "@openstatus/services";
 import {
   addPageComponentTool,
+  createComponentGroupTool,
   createStatusPageTool,
   listPageComponentsTool,
   listStatusPagesTool,
+  updateComponentGroupTool,
+  updatePageComponentTool,
+  updateStatusPageTool,
 } from "@openstatus/services/agent-tools";
 
 import { registerRegistryTools } from "./registry-adapter";
@@ -27,6 +31,10 @@ export function registerPageTools(
     listStatusPagesTool,
     listPageComponentsTool,
     createStatusPageTool,
+    updateStatusPageTool,
     addPageComponentTool,
+    updatePageComponentTool,
+    createComponentGroupTool,
+    updateComponentGroupTool,
   ]);
 }

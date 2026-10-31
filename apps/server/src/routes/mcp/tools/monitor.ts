@@ -11,6 +11,7 @@ import {
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "@openstatus/services/agent-tools";
 
 import { registerRegistryTools } from "./registry-adapter";
@@ -27,5 +28,6 @@ export function registerMonitorTools(
     listResponseLogsTool,
     getResponseLogTool,
     createMonitorTool,
+    updateMonitorTool,
   ]);
 }

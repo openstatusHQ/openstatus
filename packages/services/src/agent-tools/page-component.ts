@@ -2,7 +2,12 @@ import { pageComponentTypes } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import { assertCreateBudget } from "../auth";
-import { createPageComponent, listPageComponents } from "../page-component";
+import {
+  createPageComponent,
+  listPageComponents,
+  updatePageComponent,
+} from "../page-component";
+import { listPageComponentGroups } from "../page-component-group";
 import type { AgentTool } from "./types";
 
 const ListPageComponentsInputShape = z.object({
@@ -23,6 +28,16 @@ const ListPageComponentsOutput = z.object({
       type: z.enum(pageComponentTypes),
       pageId: z.number().int(),
       monitorId: z.number().int().nullable(),
+      groupId: z.number().int().nullable(),
+      groupName: z.string().nullable(),
+    }),
+  ),
+  groups: z.array(
+    z.object({
+      id: z.number().int(),
+      pageId: z.number().int(),
+      name: z.string(),
+      defaultOpen: z.boolean(),
     }),
   ),
 });
@@ -33,16 +48,19 @@ export const listPageComponentsTool: AgentTool<
 > = {
   name: "list_page_components",
   description:
-    "List page components in this workspace with their id, name, type ('monitor' or 'static'), pageId and linked monitorId. Use to discover the pageComponentIds required by create_status_report, create_maintenance, and update_status_report — those tools reject ids that don't belong to the workspace/page.",
+    "List page components in this workspace with their id, name, type ('monitor' or 'static'), pageId, linked monitorId and group, plus the component groups of those pages (`groups`, including empty ones). Use to discover the pageComponentIds required by create_status_report, create_maintenance, and update_status_report — those tools reject ids that don't belong to the workspace/page — and the groupId for update_page_component / update_component_group.",
   scope: "pages:read",
   destructive: false,
   inputSchema: ListPageComponentsInputShape,
   outputSchema: ListPageComponentsOutput,
   async run({ ctx, input }) {
-    const components = await listPageComponents({
-      ctx,
-      input: { pageId: input.pageId, order: "asc" },
-    });
+    const [components, groups] = await Promise.all([
+      listPageComponents({
+        ctx,
+        input: { pageId: input.pageId, order: "asc" },
+      }),
+      listPageComponentGroups({ ctx, input: { pageId: input.pageId } }),
+    ]);
     return {
       items: components.map((c) => ({
         id: c.id,
@@ -50,6 +68,14 @@ export const listPageComponentsTool: AgentTool<
         type: c.type,
         pageId: c.pageId,
         monitorId: c.monitorId ?? null,
+        groupId: c.groupId ?? null,
+        groupName: c.group?.name ?? null,
+      })),
+      groups: groups.map((g) => ({
+        id: g.id,
+        pageId: g.pageId,
+        name: g.name,
+        defaultOpen: g.defaultOpen,
       })),
     };
   },
@@ -125,6 +151,109 @@ export const addPageComponentTool: AgentTool<
       monitorId: created.monitorId ?? input.monitorId,
       name: created.name,
       order: created.order ?? 0,
+    };
+  },
+};
+
+const UpdatePageComponentInputShape = z
+  .object({
+    componentId: z
+      .number()
+      .int()
+      .describe(
+        "Page component id. Resolve via list_page_components — never guess.",
+      ),
+    name: z.string().trim().min(1).optional().describe("Public name."),
+    description: z.string().optional(),
+    order: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe("Position on the page, 0-based."),
+    groupId: z
+      .number()
+      .int()
+      .nullable()
+      .optional()
+      .describe(
+        "Group to move the component into (must be on the same page; ids from list_page_components `groups`). null removes it from its group.",
+      ),
+  })
+  .refine(
+    (input) => Object.values(input).filter((v) => v !== undefined).length > 1,
+    { message: "Send at least one field to change besides componentId." },
+  );
+
+const UpdatePageComponentOutput = z.object({
+  id: z.number().int(),
+  pageId: z.number().int(),
+  monitorId: z.number().int().nullable(),
+  name: z.string(),
+  order: z.number().int(),
+  groupId: z.number().int().nullable(),
+});
+
+export const updatePageComponentTool: AgentTool<
+  z.infer<typeof UpdatePageComponentInputShape>,
+  z.infer<typeof UpdatePageComponentOutput>
+> = {
+  name: "update_page_component",
+  description:
+    "Rename, reorder, describe or regroup a status page component. AUDIT-LOGGED. Call list_page_components first and send only the fields that change. groupId moves the component into a group on the same page (create one with create_component_group); null ungroups it. The linked monitor cannot change — add a new component instead.",
+  scope: "pages:write",
+  destructive: true,
+  inputSchema: UpdatePageComponentInputShape,
+  outputSchema: UpdatePageComponentOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Update Page Component #${input.componentId}`,
+      lines: [
+        {
+          label: "Component ID",
+          value: String(input.componentId),
+          ref: { kind: "components", componentIds: [input.componentId] },
+        },
+        ...(input.name !== undefined
+          ? [{ label: "Name", value: input.name }]
+          : []),
+        ...(input.description !== undefined
+          ? [{ label: "Description", value: input.description || "(cleared)" }]
+          : []),
+        ...(input.order !== undefined
+          ? [{ label: "Order", value: String(input.order) }]
+          : []),
+        ...(input.groupId !== undefined
+          ? [
+              {
+                label: "Group ID",
+                value:
+                  input.groupId === null ? "(ungroup)" : String(input.groupId),
+              },
+            ]
+          : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  async run({ ctx, input }) {
+    const updated = await updatePageComponent({
+      ctx,
+      input: {
+        id: input.componentId,
+        name: input.name,
+        description: input.description,
+        order: input.order,
+        groupId: input.groupId,
+      },
+    });
+    return {
+      id: updated.id,
+      pageId: updated.pageId,
+      monitorId: updated.monitorId ?? null,
+      name: updated.name,
+      order: updated.order ?? 0,
+      groupId: updated.groupId ?? null,
     };
   },
 };

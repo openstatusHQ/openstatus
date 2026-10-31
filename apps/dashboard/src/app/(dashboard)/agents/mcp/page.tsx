@@ -193,7 +193,11 @@ const tools = [
       "list_status_pages",
       "list_page_components",
       "create_status_page",
+      "update_status_page",
       "add_page_component",
+      "update_page_component",
+      "create_component_group",
+      "update_component_group",
     ],
   },
   {
@@ -209,7 +213,12 @@ const tools = [
   },
   {
     group: "Maintenance",
-    items: ["list_maintenances", "create_maintenance"],
+    items: [
+      "list_maintenances",
+      "get_maintenance",
+      "create_maintenance",
+      "update_maintenance",
+    ],
   },
   {
     group: "Monitors",
@@ -221,6 +230,7 @@ const tools = [
       "list_response_logs",
       "get_response_log",
       "create_monitor",
+      "update_monitor",
     ],
   },
   {

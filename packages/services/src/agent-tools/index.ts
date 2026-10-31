@@ -21,7 +21,9 @@ import {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
   deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
   listMaintenancesTool,
+  updateMaintenanceTool,
   updateMaintenanceUpdateTool,
 } from "./maintenance";
 import {
@@ -32,10 +34,23 @@ import {
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "./monitor";
 import { listNotificationsTool } from "./notification";
-import { createStatusPageTool, listStatusPagesTool } from "./page";
-import { addPageComponentTool, listPageComponentsTool } from "./page-component";
+import {
+  createStatusPageTool,
+  listStatusPagesTool,
+  updateStatusPageTool,
+} from "./page";
+import {
+  addPageComponentTool,
+  listPageComponentsTool,
+  updatePageComponentTool,
+} from "./page-component";
+import {
+  createComponentGroupTool,
+  updateComponentGroupTool,
+} from "./page-component-group";
 import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
@@ -69,7 +84,9 @@ export {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
   deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
   listMaintenancesTool,
+  updateMaintenanceTool,
   updateMaintenanceUpdateTool,
 } from "./maintenance";
 export {
@@ -80,10 +97,23 @@ export {
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "./monitor";
 export { listNotificationsTool } from "./notification";
-export { createStatusPageTool, listStatusPagesTool } from "./page";
-export { addPageComponentTool, listPageComponentsTool } from "./page-component";
+export {
+  createStatusPageTool,
+  listStatusPagesTool,
+  updateStatusPageTool,
+} from "./page";
+export {
+  addPageComponentTool,
+  listPageComponentsTool,
+  updatePageComponentTool,
+} from "./page-component";
+export {
+  createComponentGroupTool,
+  updateComponentGroupTool,
+} from "./page-component-group";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
 export {
@@ -125,8 +155,12 @@ export {
 export const agentTools = {
   list_status_pages: listStatusPagesTool,
   create_status_page: createStatusPageTool,
+  update_status_page: updateStatusPageTool,
   list_page_components: listPageComponentsTool,
   add_page_component: addPageComponentTool,
+  update_page_component: updatePageComponentTool,
+  create_component_group: createComponentGroupTool,
+  update_component_group: updateComponentGroupTool,
   list_status_reports: listStatusReportsTool,
   get_status_report: getStatusReportTool,
   create_status_report: createStatusReportTool,
@@ -146,12 +180,15 @@ export const agentTools = {
   draft_postmortem: draftPostmortemTool,
   approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
+  get_maintenance: getMaintenanceTool,
   create_maintenance: createMaintenanceTool,
+  update_maintenance: updateMaintenanceTool,
   add_maintenance_update: addMaintenanceUpdateTool,
   update_maintenance_update: updateMaintenanceUpdateTool,
   delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_monitors: listMonitorsTool,
   create_monitor: createMonitorTool,
+  update_monitor: updateMonitorTool,
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,
   get_monitor_summary: getMonitorSummaryTool,

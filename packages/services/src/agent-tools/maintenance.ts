@@ -2,11 +2,14 @@ import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
 import {
+  type MaintenanceWithRelations,
   addMaintenanceUpdate,
   createMaintenance,
   deleteMaintenanceUpdate,
+  getMaintenance,
   listMaintenances,
   notifyMaintenance,
+  updateMaintenance,
   updateMaintenanceUpdate,
 } from "../maintenance";
 import type { AgentTool } from "./types";
@@ -51,27 +54,48 @@ const ListMaintenancesInputShape = z.object({
     ),
 });
 
-const ListMaintenancesOutput = z.object({
-  items: z.array(
+const MaintenanceItemOutput = z.object({
+  id: z.number().int(),
+  title: z.string(),
+  message: z.string(),
+  from: z.string(),
+  to: z.string(),
+  pageId: z.number().int().nullable(),
+  pageComponentIds: z.array(z.number().int()),
+  updates: z.array(
     z.object({
       id: z.number().int(),
-      title: z.string(),
       message: z.string(),
-      from: z.string(),
-      to: z.string(),
-      pageId: z.number().int().nullable(),
-      pageComponentIds: z.array(z.number().int()),
-      updates: z.array(
-        z.object({
-          id: z.number().int(),
-          message: z.string(),
-          date: z.string(),
-        }),
-      ),
-      createdBy: attributedUserSchema.nullable(),
-      updatedBy: attributedUserSchema.nullable(),
+      date: z.string(),
     }),
   ),
+  createdBy: attributedUserSchema.nullable(),
+  updatedBy: attributedUserSchema.nullable(),
+});
+
+function toMaintenanceItem(
+  m: MaintenanceWithRelations,
+): z.infer<typeof MaintenanceItemOutput> {
+  return {
+    id: m.id,
+    title: m.title,
+    message: m.message,
+    from: m.from.toISOString(),
+    to: m.to.toISOString(),
+    pageId: m.pageId,
+    pageComponentIds: m.pageComponentIds,
+    updates: m.updates.map((u) => ({
+      id: u.id,
+      message: u.message,
+      date: u.date.toISOString(),
+    })),
+    createdBy: toAgentUser(m.createdByUser),
+    updatedBy: toAgentUser(m.updatedByUser),
+  };
+}
+
+const ListMaintenancesOutput = z.object({
+  items: z.array(MaintenanceItemOutput),
   pagination: z.object({
     page: z.number().int(),
     perPage: z.number().int(),
@@ -103,22 +127,7 @@ export const listMaintenancesTool: AgentTool<
       },
     });
     return {
-      items: result.items.map((m) => ({
-        id: m.id,
-        title: m.title,
-        message: m.message,
-        from: m.from.toISOString(),
-        to: m.to.toISOString(),
-        pageId: m.pageId,
-        pageComponentIds: m.pageComponentIds,
-        updates: m.updates.map((u) => ({
-          id: u.id,
-          message: u.message,
-          date: u.date.toISOString(),
-        })),
-        createdBy: toAgentUser(m.createdByUser),
-        updatedBy: toAgentUser(m.updatedByUser),
-      })),
+      items: result.items.map(toMaintenanceItem),
       pagination: {
         page,
         perPage,
@@ -126,6 +135,30 @@ export const listMaintenancesTool: AgentTool<
         totalPages: Math.max(1, Math.ceil(result.totalSize / perPage)),
       },
     };
+  },
+};
+
+const GetMaintenanceInputShape = z.object({
+  maintenanceId: z
+    .number()
+    .int()
+    .describe("Maintenance id. Resolve via list_maintenances — never guess."),
+});
+
+export const getMaintenanceTool: AgentTool<
+  z.infer<typeof GetMaintenanceInputShape>,
+  z.infer<typeof MaintenanceItemOutput>
+> = {
+  name: "get_maintenance",
+  description:
+    "Get one maintenance window with its full timeline of updates (newest first) and affected component ids. Call before update_maintenance so you only send the fields that change.",
+  scope: "incidents:read",
+  destructive: false,
+  inputSchema: GetMaintenanceInputShape,
+  outputSchema: MaintenanceItemOutput,
+  async run({ ctx, input }) {
+    const m = await getMaintenance({ ctx, input: { id: input.maintenanceId } });
+    return toMaintenanceItem(m);
   },
 };
 
@@ -423,5 +456,99 @@ export const deleteMaintenanceUpdateTool: AgentTool<
   async run({ ctx, input }) {
     await deleteMaintenanceUpdate({ ctx, input });
     return { id: input.id, success: true };
+  },
+};
+
+const UpdateMaintenanceInputShape = z
+  .object({
+    maintenanceId: z
+      .number()
+      .int()
+      .describe("Maintenance id. Resolve via list_maintenances — never guess."),
+    title: z.string().trim().min(1).max(256).optional(),
+    from: z.iso.datetime().optional().describe("New start time, ISO 8601."),
+    to: z.iso
+      .datetime()
+      .optional()
+      .describe("New end time, ISO 8601. Must stay after `from`."),
+    pageComponentIds: z
+      .array(z.number().int())
+      .optional()
+      .describe(
+        "Replaces the affected components. Ids from list_page_components({ pageId }); [] clears them.",
+      ),
+    message: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "Rewrites the NEWEST timeline entry in place. To add a new entry use add_maintenance_update instead.",
+      ),
+  })
+  .refine(
+    (input) => Object.values(input).filter((v) => v !== undefined).length > 1,
+    { message: "Send at least one field to change besides maintenanceId." },
+  );
+
+export const updateMaintenanceTool: AgentTool<
+  z.infer<typeof UpdateMaintenanceInputShape>,
+  z.infer<typeof MaintenanceItemOutput>
+> = {
+  name: "update_maintenance",
+  description:
+    "Change a maintenance window: title, time range, affected components or the newest message. PUBLIC and AUDIT-LOGGED; does not notify subscribers. Call get_maintenance first and send only the fields that change. `message` rewrites the newest timeline entry (it does not append — use add_maintenance_update for progress). `from` must stay before `to`.",
+  scope: "incidents:write",
+  destructive: true,
+  inputSchema: UpdateMaintenanceInputShape,
+  outputSchema: MaintenanceItemOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Update Maintenance #${input.maintenanceId}`,
+      lines: [
+        { label: "Maintenance ID", value: String(input.maintenanceId) },
+        ...(input.title !== undefined
+          ? [{ label: "Title", value: input.title }]
+          : []),
+        ...(input.from !== undefined
+          ? [{ label: "From", value: formatMaintenanceDate(input.from) }]
+          : []),
+        ...(input.to !== undefined
+          ? [{ label: "To", value: formatMaintenanceDate(input.to) }]
+          : []),
+        ...(input.pageComponentIds !== undefined
+          ? [
+              input.pageComponentIds.length
+                ? {
+                    label: "Components",
+                    value: input.pageComponentIds.join(", "),
+                    ref: {
+                      kind: "components" as const,
+                      componentIds: input.pageComponentIds,
+                    },
+                  }
+                : { label: "Components", value: "(clear all)" },
+            ]
+          : []),
+        ...(input.message !== undefined
+          ? [{ label: "Message", value: input.message }]
+          : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  async run({ ctx, input }) {
+    const updated = await updateMaintenance({
+      ctx,
+      input: {
+        id: input.maintenanceId,
+        title: input.title,
+        from: input.from ? new Date(input.from) : undefined,
+        to: input.to ? new Date(input.to) : undefined,
+        pageComponentIds: input.pageComponentIds,
+        message: input.message,
+      },
+    });
+    const m = await getMaintenance({ ctx, input: { id: updated.id } });
+    return toMaintenanceItem(m);
   },
 };

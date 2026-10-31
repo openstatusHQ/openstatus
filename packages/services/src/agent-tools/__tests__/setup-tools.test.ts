@@ -119,7 +119,7 @@ describe("setup agent tools", () => {
     expect(prompt).toContain("Never retry the same call");
     expect(prompt).toContain("firstCheck");
     expect(prompt).toMatch(
-      /Write tools \(create_monitor, create_status_page, add_page_component/,
+      /Write tools \(create_monitor, update_monitor, create_status_page, update_status_page, add_page_component/,
     );
   });
 });

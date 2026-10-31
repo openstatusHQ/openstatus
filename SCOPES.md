@@ -68,7 +68,7 @@ Generated from `requireScope` calls on 2026-10-30. Regenerate with
 | --- | --- |
 | `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getMonitorIncident, listMonitorIncidents, getUptimeHistory |
 | `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, acknowledgeMonitorIncident, resolveMonitorIncident, deleteMonitorIncident, freezeMonitorMonth, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
-| `pages:read` | listPages, getPage, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponentDailySummary, previewImport |
+| `pages:read` | listPages, getPage, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponentDailySummary, listPageComponentGroups, previewImport |
 | `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write` and `incidents:write`) |
 | `incidents:read` | listStatusReports, getStatusReport, listIncidents, getIncident, getIncidentBySlackChannel, getIncidentForStatusReport, listLinkedStatusReportIds, listIncidentEvents, getIncidentEvent, getPostmortem, listMaintenances, getMaintenance, getMaintenanceUpdate |
 | `incidents:write` | createStatusReport, updateStatusReport, deleteStatusReport, addStatusReportUpdate, updateStatusReportUpdate, deleteStatusReportUpdate, notifyStatusReport, declareIncident, updateIncident, setIncidentStatus, closeIncident, deleteIncident, addIncidentNote, linkIncidentStatusReport, unlinkIncidentStatusReport, bindIncidentSlackChannel, unbindIncidentSlackChannel, draftPostmortem, approvePostmortem, createMaintenance, updateMaintenance, deleteMaintenance, addMaintenanceUpdate, updateMaintenanceUpdate, deleteMaintenanceUpdate, notifyMaintenance |
@@ -88,11 +88,11 @@ lookups) carry no scope by design; the lint rule
 | Scope | Tools |
 | --- | --- |
 | `monitors:read` | list_monitors, get_monitor, get_monitor_status, get_monitor_summary, list_response_logs, get_response_log, list_private_locations |
-| `monitors:write` | create_monitor |
+| `monitors:write` | create_monitor, update_monitor |
 | `pages:read` | list_status_pages, list_page_components |
-| `pages:write` | create_status_page, add_page_component |
-| `incidents:read` | list_status_reports, get_status_report, list_incidents, get_incident, get_postmortem, list_maintenances |
-| `incidents:write` | create_status_report, update_status_report, add_status_report_update, update_status_report_update, delete_status_report_update, resolve_status_report, declare_incident, update_incident, set_incident_status, resolve_incident, add_incident_note, draft_postmortem, approve_postmortem, create_maintenance, add_maintenance_update, update_maintenance_update, delete_maintenance_update |
+| `pages:write` | create_status_page, update_status_page, add_page_component, update_page_component, create_component_group, update_component_group |
+| `incidents:read` | list_status_reports, get_status_report, list_incidents, get_incident, get_postmortem, list_maintenances, get_maintenance |
+| `incidents:write` | create_status_report, update_status_report, add_status_report_update, update_status_report_update, delete_status_report_update, resolve_status_report, declare_incident, update_incident, set_incident_status, resolve_incident, add_incident_note, draft_postmortem, approve_postmortem, create_maintenance, update_maintenance, add_maintenance_update, update_maintenance_update, delete_maintenance_update |
 | `notifications:read` | list_notifications |
 | `any` | get_workspace, list_audit_logs, get_audit_log, search_docs, get_doc_page, search_content, get_content_page |
 
