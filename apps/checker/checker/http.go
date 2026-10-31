@@ -33,6 +33,23 @@ type Timing struct {
 	TransferDone      int64 `json:"transferDone"`
 }
 
+// clearIncompletePhases zeroes any phase whose start or done hook never
+// fired (e.g. a timeout before the first byte). Downstream computes
+// done - start, so a lone epoch timestamp would yield a huge negative duration.
+func (t *Timing) clearIncompletePhases() {
+	for _, phase := range [][2]*int64{
+		{&t.DnsStart, &t.DnsDone},
+		{&t.ConnectStart, &t.ConnectDone},
+		{&t.TlsHandshakeStart, &t.TlsHandshakeDone},
+		{&t.FirstByteStart, &t.FirstByteDone},
+		{&t.TransferStart, &t.TransferDone},
+	} {
+		if *phase[0] == 0 || *phase[1] == 0 {
+			*phase[0], *phase[1] = 0, 0
+		}
+	}
+}
+
 type Response struct {
 	Headers   map[string]string `json:"headers,omitempty"`
 	Body      string            `json:"body,omitempty"`
@@ -218,6 +235,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 
 	if err != nil {
 		errorMsg := httpErrorMessage(err, latency)
+		timing.clearIncompletePhases()
 
 		// A failing customer endpoint is expected, not a checker error.
 		logger.Warn().Err(err).Msg("error while pinging")
@@ -241,6 +259,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	body, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBodyBytes))
 
 	timing.TransferDone = time.Now().UTC().UnixMilli()
+	timing.clearIncompletePhases()
 
 	if err != nil {
 		return Response{
