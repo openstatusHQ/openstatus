@@ -15,12 +15,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useId, useState } from "react";
 
-import {
-  coveredBy,
-  expandScopes,
-  groupLabels,
-  matchPreset,
-} from "./label";
+import { coveredBy, expandScopes, groupLabels, matchPreset } from "./label";
 
 export interface ScopePresetOption {
   id: ScopePreset;
