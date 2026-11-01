@@ -99,9 +99,11 @@ export async function GET(
 
     const body = JSON.stringify(payload);
     const etag = computeETag(body);
+    // `s-maxage` lets the CDN serve public pages without invoking the route;
+    // gated pages stay `private, no-store` so authorized content never caches.
     const cacheControl =
       data.accessType === "public"
-        ? "public, max-age=30, stale-while-revalidate=60"
+        ? "public, max-age=30, s-maxage=30, stale-while-revalidate=60"
         : "private, no-store";
 
     if (isNotModified(request, etag)) {
