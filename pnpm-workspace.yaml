@@ -2,6 +2,8 @@ packages:
   - apps/*
   - packages/**/*
   - packages/config/*
+  - scripts/tutorials
+  - scripts/videos
 # pnpm 12 routes `@jsr` to npm.jsr.io by default when *resolving*, but the
 # supply-chain policy pass (`trustPolicy` / `minimumReleaseAge` below) verifies
 # every lockfile entry against the default registry, so the `@jsr/std__*`
@@ -116,6 +118,7 @@ catalog:
   "@radix-ui/react-toggle": 1.1.18
   "@radix-ui/react-tooltip": 1.2.16
   "@react-email/ui": 6.9.5
+  "@remotion/cli": 4.0.536
   "@scalar/hono-api-reference": 0.8.10
   "@sentry/node": 10.75.1
   "@sentry/nextjs": 10.75.1
@@ -148,6 +151,7 @@ catalog:
   "@upstash/redis": 1.39.0
   "@vercel/blob": 2.8.0
   "@workos-inc/node": 10.13.0
+  "@xterm/headless": 6.0.0
   ai: 7.0.109
   bcryptjs: 3.0.3
   class-variance-authority: 0.7.1
@@ -162,6 +166,7 @@ catalog:
   drizzle-zod: 0.8.3
   effect: 4.0.0-rc.117
   feed: 4.2.2
+  geist: 1.7.2
   gray-matter: 4.0.3
   hono: 4.13.8
   hono-rate-limiter: 0.4.2
@@ -206,6 +211,7 @@ catalog:
   remark-gfm: 4.0.1
   remark-parse: 11.0.0
   remark-rehype: 11.1.2
+  remotion: 4.0.536
   resend: 6.28.1
   sanitize-html: 2.17.7
   schema-dts: 1.1.5
