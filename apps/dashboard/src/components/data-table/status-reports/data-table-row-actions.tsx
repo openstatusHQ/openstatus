@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getPageUrl } from "@/data/status-pages.client";
@@ -11,24 +10,29 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
-// NOTE: avoid using useParams to get status page :id
-// because we are using the table in the /overview page
-
-export function DataTableRowActions({ row }: { row: Row<StatusReport> }) {
-  return <StatusReportRowActions report={row.original} />;
-}
-
-export function StatusReportRowActions({ report }: { report: StatusReport }) {
+// no useParams for the page :id: these rows also render on /overview
+export function StatusReportRowActions({
+  report,
+  onAddUpdate,
+  onResolve,
+}: {
+  report: StatusReport;
+  onAddUpdate?: () => void;
+  onResolve?: () => void;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  // only wired actions: a resolved report has nothing to add or resolve
   const actions = getActions({
+    "add-update": onAddUpdate,
+    resolve: onResolve,
     "view-report": () => {
       window.open(
         `${getPageUrl(report.page)}/events/report/${report.id}`,
         "_blank",
       );
     },
-  });
+  }).filter((action) => action.onClick);
   const deleteStatusReportMutation = useMutation(
     trpc.statusReport.delete.mutationOptions({
       // no-input prefix key — matches every statusReport.list query (overview, page detail)

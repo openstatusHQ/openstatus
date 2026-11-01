@@ -1,5 +1,8 @@
 import { Acknowledge, Check, Delete } from "@openstatus/icons";
 
+import type { ActivityMark } from "@/components/content/activity";
+import { levelFor } from "@/data/activity.client";
+
 export const actions = [
   {
     id: "acknowledge",
@@ -33,3 +36,17 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+const MINUTE = 60 * 1000;
+
+export function downtimeSpan(incident: {
+  startedAt: Date;
+  resolvedAt: Date | null;
+}) {
+  return { start: incident.startedAt, end: incident.resolvedAt };
+}
+
+/** Calendar mark by time down: under 2m, 2 to 10m, over 10m. */
+export function downtimeActivity(down: number): ActivityMark {
+  return { scale: "failure", level: levelFor(down, [2 * MINUTE, 10 * MINUTE]) };
+}

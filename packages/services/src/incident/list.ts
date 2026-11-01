@@ -24,6 +24,26 @@ export function toIncidentView<T extends Incident>(
   };
 }
 
+const incidentListWith = {
+  commander: { columns: incidentUserColumns },
+  statusReport: { columns: { id: true, title: true, status: true } },
+} as const;
+
+function listWhere(
+  ctx: ServiceContext,
+  input: Pick<ListIncidentsInput, "status" | "closed">,
+) {
+  return and(
+    eq(incident.workspaceId, ctx.workspace.id),
+    input.status?.length ? inArray(incident.status, input.status) : undefined,
+    input.closed === undefined
+      ? undefined
+      : input.closed
+        ? isNotNull(incident.closedAt)
+        : isNull(incident.closedAt),
+  );
+}
+
 /** Newest declared first. */
 export async function listIncidents(args: {
   ctx: ServiceContext;
@@ -33,25 +53,16 @@ export async function listIncidents(args: {
   const input = ListIncidentsInput.parse(args.input ?? {});
   const db = getReadDb(ctx);
 
-  const where = and(
-    eq(incident.workspaceId, ctx.workspace.id),
-    input.status?.length ? inArray(incident.status, input.status) : undefined,
-    input.closed === undefined
-      ? undefined
-      : input.closed
-        ? isNotNull(incident.closedAt)
-        : isNull(incident.closedAt),
-  );
-  const items = await db.query.incident.findMany({
-    where,
-    orderBy: [desc(incident.declaredAt), desc(incident.id)],
-    limit: input.limit,
-    offset: input.offset,
-    with: {
-      commander: { columns: incidentUserColumns },
-      statusReport: { columns: { id: true, title: true, status: true } },
-    },
-  });
+  const where = listWhere(ctx, input);
+  const items = (
+    await db.query.incident.findMany({
+      where,
+      orderBy: [desc(incident.declaredAt), desc(incident.id)],
+      limit: input.limit,
+      offset: input.offset,
+      with: incidentListWith,
+    })
+  ).map(toIncidentView);
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;
@@ -67,6 +78,19 @@ export async function listIncidents(args: {
     totalSize = row?.count ?? totalSize;
   }
   return { items, totalSize };
+}
+
+/** Every matching incident in one read, newest declared first; for dashboard calendars and counts. */
+export async function listAllIncidents(args: {
+  ctx: ServiceContext;
+  input?: Pick<ListIncidentsInput, "status" | "closed">;
+}) {
+  const rows = await getReadDb(args.ctx).query.incident.findMany({
+    where: listWhere(args.ctx, args.input ?? {}),
+    orderBy: [desc(incident.declaredAt), desc(incident.id)],
+    with: incidentListWith,
+  });
+  return rows.map(toIncidentView);
 }
 
 export async function getIncident(args: {

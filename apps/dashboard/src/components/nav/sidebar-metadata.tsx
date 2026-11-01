@@ -153,7 +153,7 @@ function SidebarMetadataTable({
       </TableHeader>
       <TableBody>
         {items.map((item, index) => (
-          <TableRow key={`${item.label}-${index}`}>
+          <TableRow key={`${item.label}-${index}`} className="group/row">
             <TableCell className="text-muted-foreground w-26 border-r">
               <div className="max-w-[90px] min-w-[90px] truncate">
                 {item.isNested ? "└ " : ""}

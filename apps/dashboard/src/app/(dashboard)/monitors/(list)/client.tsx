@@ -20,6 +20,7 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/monitors/columns";
@@ -39,6 +40,7 @@ import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table
 import { getMonitorListMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { CreateMonitorButton } from "./create-monitor-button";
 import { type MonitorStatus, searchParamsParsers } from "./search-params";
 
 type MetricType = NonNullable<
@@ -138,12 +140,17 @@ export function Client() {
   return (
     <SectionGroup>
       <Section>
-        <SectionHeader>
-          <SectionTitle>Monitors</SectionTitle>
-          <SectionDescription>
-            Create and manage your monitors.
-          </SectionDescription>
-        </SectionHeader>
+        <SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>Monitors</SectionTitle>
+            <SectionDescription>
+              Create and manage your monitors.
+            </SectionDescription>
+          </SectionHeader>
+          <div>
+            <CreateMonitorButton />
+          </div>
+        </SectionHeaderRow>
         <MetricCardGroup>
           {metrics.map((metric) => {
             const statusArray = columnFilters.find((f) => f.id === "status")

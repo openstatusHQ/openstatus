@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import type { StatusReportStatus } from "@openstatus/db/src/schema";
 import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
@@ -9,14 +10,16 @@ import { getNextStatus } from "@/data/status-report-updates.client";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
-/** Create-update sheet prefilled with the report's next status — `children` is the trigger. */
+/** Create-update sheet prefilled with `status` (default: the next one) — `children` is the trigger. */
 export function FormSheetStatusReportUpdateCreate({
   report,
+  status,
   children,
   open,
   onOpenChange,
 }: {
   report: StatusReport;
+  status?: StatusReportStatus;
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -27,7 +30,7 @@ export function FormSheetStatusReportUpdateCreate({
     (u) => u.componentImpacts.length > 0,
   );
   const currentImpacts = currentImpactsFromUpdates(report.updates);
-  const nextStatus = getNextStatus(report.status);
+  const nextStatus = status ?? getNextStatus(report.status);
   const update = usePublishUpdate(report.id);
 
   return (

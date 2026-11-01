@@ -95,6 +95,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return (
         <TableCellLink
           value={row.getValue("name")}
+          empty="No name"
           href={`/monitors/${row.original.id}/overview`}
         />
       );
@@ -239,6 +240,8 @@ export const columns: ColumnDef<Monitor>[] = [
       if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    // fixed width: the skeleton is narrower than the values, so an auto width jumps on load
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
   },
   {
@@ -256,6 +259,7 @@ export const columns: ColumnDef<Monitor>[] = [
       if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
     enableGlobalFilter: false,
   },
@@ -274,6 +278,7 @@ export const columns: ColumnDef<Monitor>[] = [
       if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
     enableGlobalFilter: false,
   },
