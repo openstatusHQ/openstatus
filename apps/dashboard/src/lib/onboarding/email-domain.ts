@@ -25,7 +25,7 @@ const GENERIC_EMAIL_DOMAINS = new Set([
 export function getCompanyDomainFromEmail(
   email: string | null | undefined,
 ): string | null {
-  const domain = email?.split("@")[1]?.toLowerCase();
+  const domain = email?.trim().split("@")[1]?.trim().toLowerCase();
   if (!domain || GENERIC_EMAIL_DOMAINS.has(domain)) return null;
   return domain;
 }
