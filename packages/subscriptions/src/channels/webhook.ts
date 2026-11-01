@@ -121,16 +121,19 @@ export async function sendWebhookVerification(
     throw new Error("Webhook URL is required for webhook channel");
   }
 
-  const response = await safeFetch(subscription.webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "verification",
-      token: subscription.token,
-      verifyUrl,
-    }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
+  const response = await safeFetch(
+    subscription.webhookUrl,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "verification",
+        token: subscription.token,
+        verifyUrl,
+      }),
+    },
+    { timeoutMs: TIMEOUT_MS },
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -651,12 +654,15 @@ export async function sendTestWebhookRequest(input: {
     ...extraHeaders,
   };
 
-  const response = await safeFetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(buildTestPayload(flavor)),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
+  const response = await safeFetch(
+    url,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(buildTestPayload(flavor)),
+    },
+    { timeoutMs: TIMEOUT_MS },
+  );
 
   if (!response.ok) {
     throw new Error(
