@@ -1,7 +1,16 @@
 import type { Locale as DateFnsLocale } from "date-fns/locale";
-import { de, enUS, fr, hi, ja, ko, tr } from "date-fns/locale";
+import { de, enUS, fr, hi, ja, ko, tr, zhCN } from "date-fns/locale";
 
-export const locales = ["en", "fr", "de", "tr", "hi", "ko", "ja"] as const;
+export const locales = [
+  "en",
+  "fr",
+  "de",
+  "tr",
+  "hi",
+  "ko",
+  "ja",
+  "zh-CN",
+] as const;
 
 export type Locale = (typeof locales)[number];
 
@@ -15,6 +24,7 @@ export const localeDetails: Record<Locale, { name: string; flag: string }> = {
   hi: { name: "हिंदी", flag: "🇮🇳" },
   ko: { name: "한국어", flag: "🇰🇷" },
   ja: { name: "日本語", flag: "🇯🇵" },
+  "zh-CN": { name: "简体中文", flag: "🇨🇳" },
 };
 
 export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
@@ -25,4 +35,5 @@ export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
   hi,
   ko,
   ja,
+  "zh-CN": zhCN,
 };
