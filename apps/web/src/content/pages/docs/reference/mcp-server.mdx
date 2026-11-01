@@ -76,7 +76,7 @@ The server only advertises tools the credential can call. Read only sees `list_*
 
 ## Tools
 
-The server exposes 50 tools (48 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create at most 30 resources per hour.
+The server exposes 50 tools (48 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
 
 ### Pages
 
@@ -166,7 +166,7 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 
 ### Audit
 
-Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`. Entries carry full before/after snapshots across every resource, so these tools need the Read only or Full access level (`read` or `write`); group-scoped credentials don't see them.
+Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`. Entries carry full before/after snapshots across every resource, so these tools need Read only or Read & write (`read` or `write`); group-scoped credentials don't see them.
 
 | Tool              | Scope | Purpose |
 |-------------------|------|---------|
