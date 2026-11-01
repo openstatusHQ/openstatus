@@ -282,6 +282,38 @@ describe("updateWorkspaceLimits", () => {
     });
   });
 
+  test("only writes the addon, so unstored limits keep following the plan", async () => {
+    await withTestTransaction(async (tx) => {
+      // a row stored before `i18n` existed, with one hand-set override
+      const { i18n: _, ...storedBeforeI18n } = getLimits("starter");
+      const stored = { ...storedBeforeI18n, monitors: 77 };
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "starter", limits: JSON.stringify(stored) },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await updateWorkspaceLimits({
+        ctx,
+        input: { addon: "white-label", value: true },
+      });
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual({
+        ...stored,
+        "white-label": true,
+      });
+      expect(selectWorkspaceSchema.parse(after).limits.i18n).toBe(true);
+    });
+  });
+
   test("leaves trialEndsAt alone when not given", async () => {
     await withTestTransaction(async (tx) => {
       const trialEndsAt = new Date("2027-01-15T00:00:00Z");
@@ -333,6 +365,33 @@ describe("updateWorkspaceLimits", () => {
         updateWorkspaceLimits({
           ctx,
           input: { addon: "white-label", value: 3 },
+        }),
+      ).rejects.toBeInstanceOf(ZodError);
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("starter"));
+    });
+  });
+
+  test("rejects a negative limit", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws, user } = await createTestWorkspace(
+        { plan: "starter", limits: JSON.stringify(getLimits("starter")) },
+        tx,
+      );
+      const ctx = {
+        ...makeUserCtx(selectWorkspaceSchema.parse(ws), { userId: user.id }),
+        db: tx,
+      };
+
+      await expect(
+        updateWorkspaceLimits({
+          ctx,
+          input: { addon: "monitors", value: -1 },
         }),
       ).rejects.toBeInstanceOf(ZodError);
 
