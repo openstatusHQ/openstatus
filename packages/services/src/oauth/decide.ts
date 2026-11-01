@@ -4,6 +4,7 @@ import {
   oauthSession,
 } from "@openstatus/db/src/schema";
 
+import { matchesScope } from "../auth/matches-scope";
 import type { DB } from "../context";
 import {
   ForbiddenError,
@@ -77,8 +78,7 @@ export async function decideSession(args: {
     }
 
     const granted = normalizeScopes(input.scope ?? session.scope);
-    const requestedWrite = session.scope.includes("write");
-    if (granted.includes("write") && !requestedWrite) {
+    if (!granted.every((g) => matchesScope(session.scope, g))) {
       throw new ValidationError("Granted scope exceeds the requested scope");
     }
 

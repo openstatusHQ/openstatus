@@ -12,7 +12,7 @@ export async function updatePageComponentGroup(args: {
   input: UpdatePageComponentGroupInput;
 }) {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageComponentGroupInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

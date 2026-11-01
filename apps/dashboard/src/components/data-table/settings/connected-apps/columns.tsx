@@ -1,19 +1,15 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { ScopeBadge } from "@/components/common/scope-badge";
 import { formatDate } from "@/lib/formatter";
 
 import { TableCellEmpty } from "../../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Grant = RouterOutputs["oauth"]["listGrants"][number];
-
-function scopeLabel(scope: Grant["scope"]): string {
-  return scope.includes("write") ? "Read & write" : "Read-only";
-}
 
 function userLabel(user: Grant["user"]): string {
   if (!user) return "Removed user";
@@ -30,9 +26,7 @@ export const columns: ColumnDef<Grant>[] = [
   {
     accessorKey: "scope",
     header: "Access",
-    cell: ({ row }) => (
-      <Badge variant="secondary">{scopeLabel(row.original.scope)}</Badge>
-    ),
+    cell: ({ row }) => <ScopeBadge scopes={row.original.scope} />,
   },
   {
     id: "user",

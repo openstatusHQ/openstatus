@@ -24,7 +24,7 @@ export async function notifyMaintenance(args: {
   input: NotifyMaintenanceInput;
 }): Promise<boolean> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = NotifyMaintenanceInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

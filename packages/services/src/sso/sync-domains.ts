@@ -17,7 +17,7 @@ export async function syncSsoDomain(args: {
   input: SyncSsoDomainInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = SyncSsoDomainInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -155,7 +155,7 @@ export async function removeSsoDomain(args: {
   input: RemoveSsoDomainInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = RemoveSsoDomainInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

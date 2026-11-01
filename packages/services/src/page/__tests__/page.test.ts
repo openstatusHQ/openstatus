@@ -1120,3 +1120,27 @@ describe("status-page count quota", () => {
     });
   });
 });
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-incidents",
+          userId: 1,
+          scopes: ["incidents:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        newPage({
+          ctx,
+          input: { title: "Other group", slug: uniqueSlug("other-group") },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listPages({ ctx, input: { order: "desc" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});

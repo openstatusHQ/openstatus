@@ -12,7 +12,7 @@
     "check": "tsc --noEmit",
     "slack:manifest:prod": "cat slack-manifest.json",
     "slack:manifest:dev": "node --import @oxc-node/core/register --env-file=.env scripts/slack-manifest-dev.ts",
-    "eval:mcp": "node --import @oxc-node/core/register src/routes/mcp/evals/run.ts",
+    "eval:mcp": "node --env-file-if-exists=.env --import @oxc-node/core/register src/routes/mcp/evals/run.ts",
     "openapi:json": "node --import @oxc-node/core/register scripts/build-openapi-json.ts && pnpm exec oxfmt static/openapi.json static/openapi-yaml.ts",
     "openapi:v1": "node --import @oxc-node/core/register --env-file=.env.test scripts/build-openapi-v1-json.ts && pnpm exec oxfmt static/openapi-v1.json",
     "build": "tsdown"

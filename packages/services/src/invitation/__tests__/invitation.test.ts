@@ -108,6 +108,25 @@ describe("createInvitation", () => {
     });
   });
 
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: teamUserId,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createInvitation({
+          ctx: writeKeyCtx,
+          input: { email: "rejects-read@test.dev" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("enforces the members plan cap on free workspace", async () => {
     await withTestTransaction(async (tx) => {
       // Free plan has `members: 1` — the owner already occupies that slot.

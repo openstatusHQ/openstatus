@@ -131,4 +131,109 @@ describe("registerScopedTool", () => {
       ),
     ).not.toThrow();
   });
+
+  test("a group write key sees its group's read and write tools plus `any` tools", () => {
+    const server = makeServer();
+    const ctx = ctxWithScopes(["incidents:write"]);
+    const register = (
+      name: string,
+      scope: Parameters<typeof registerScopedTool>[3]["scope"],
+    ) =>
+      registerScopedTool(
+        server,
+        ctx,
+        name,
+        { scope, description: "demo", inputSchema: {} },
+        async () => ({ content: [{ type: "text", text: "ok" }] }),
+      );
+    expect(register("incident_write", "incidents:write")).toBeDefined();
+    expect(register("incident_read", "incidents:read")).toBeDefined();
+    expect(register("public_doc", "any")).toBeDefined();
+    expect(register("monitor_write", "monitors:write")).toBeUndefined();
+    expect(register("monitor_read", "monitors:read")).toBeUndefined();
+  });
+
+  test("a group read key sees no write tool, not even in its own group", () => {
+    const server = makeServer();
+    const ctx = ctxWithScopes(["monitors:read"]);
+    const register = (
+      name: string,
+      scope: Parameters<typeof registerScopedTool>[3]["scope"],
+    ) =>
+      registerScopedTool(
+        server,
+        ctx,
+        name,
+        { scope, description: "demo", inputSchema: {} },
+        async () => ({ content: [{ type: "text", text: "ok" }] }),
+      );
+    expect(register("monitor_read", "monitors:read")).toBeDefined();
+    expect(register("public_doc", "any")).toBeDefined();
+    expect(register("monitor_write", "monitors:write")).toBeUndefined();
+    expect(register("incident_read", "incidents:read")).toBeUndefined();
+  });
+
+  test("readOnlyHint consistency follows isReadScope for group and `any` scopes", () => {
+    const server = makeServer();
+    const ctx = ctxWithScopes(["*"]);
+    const handler = async () => ({
+      content: [{ type: "text" as const, text: "ok" }],
+    });
+    expect(() =>
+      registerScopedTool(
+        server,
+        ctx,
+        "group_read_ok",
+        {
+          scope: "incidents:read",
+          description: "d",
+          annotations: { readOnlyHint: true },
+          inputSchema: {},
+        },
+        handler,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      registerScopedTool(
+        server,
+        ctx,
+        "any_ok",
+        {
+          scope: "any",
+          description: "d",
+          annotations: { readOnlyHint: true },
+          inputSchema: {},
+        },
+        handler,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      registerScopedTool(
+        server,
+        ctx,
+        "group_write_lies",
+        {
+          scope: "incidents:write",
+          description: "d",
+          annotations: { readOnlyHint: true },
+          inputSchema: {},
+        },
+        handler,
+      ),
+    ).toThrow(/disagrees with annotations.readOnlyHint/);
+    expect(() =>
+      registerScopedTool(
+        server,
+        ctx,
+        "group_read_lies",
+        {
+          scope: "incidents:read",
+          description: "d",
+          annotations: { readOnlyHint: false },
+          inputSchema: {},
+        },
+        handler,
+      ),
+    ).toThrow(/disagrees with annotations.readOnlyHint/);
+  });
 });

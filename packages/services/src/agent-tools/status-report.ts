@@ -154,7 +154,7 @@ export const listStatusReportsTool: AgentTool<
   name: "list_status_reports",
   description:
     "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns each report's timeline newest-first under `updates`, capped at the 10 most recent entries (ids feed update_status_report_update / delete_status_report_update; call get_status_report for the full timeline), plus `latestUpdate` with its author. Paginated via `page` (1-indexed) and `perPage`.",
-  scope: "read",
+  scope: "incidents:read",
   destructive: false,
   inputSchema: ListStatusReportsInputShape,
   outputSchema: ListStatusReportsOutput,
@@ -245,7 +245,7 @@ export const getStatusReportTool: AgentTool<
   name: "get_status_report",
   description:
     "Get one status report with its FULL timeline newest-first under `updates` (no cap — list_status_reports stops at the 10 most recent). Use it to find the id of an older entry for update_status_report_update / delete_status_report_update.",
-  scope: "read",
+  scope: "incidents:read",
   destructive: false,
   inputSchema: GetStatusReportInput,
   outputSchema: GetStatusReportOutput,
@@ -330,7 +330,7 @@ export const createStatusReportTool: AgentTool<
   name: "create_status_report",
   description:
     "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: CreateStatusReportInputShape,
   outputSchema: CreateStatusReportOutput,
@@ -465,7 +465,7 @@ export const addStatusReportUpdateTool: AgentTool<
   name: "add_status_report_update",
   description:
     "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved'). Subscriber notifications dispatch as part of this call only — no retroactive notify. The update persists even if the notify dispatch fails; `notified` reports the actual outcome.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: AddStatusReportUpdateInputShape,
   outputSchema: AddStatusReportUpdateOutput,
@@ -584,7 +584,7 @@ export const updateStatusReportTool: AgentTool<
   name: "update_status_report",
   description:
     "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Does NOT and CANNOT notify subscribers — there is no notify path on this tool because metadata edits do not create a new update entry to dispatch. Audit-logged.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateStatusReportInputShape,
   outputSchema: UpdateStatusReportOutput,
@@ -675,7 +675,7 @@ export const resolveStatusReportTool: AgentTool<
   name: "resolve_status_report",
   description:
     "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report flips to resolved even if the notify dispatch fails; `notified` reports the actual outcome.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: ResolveStatusReportInputShape,
   outputSchema: ResolveStatusReportOutput,
@@ -762,7 +762,7 @@ export const updateStatusReportUpdateTool: AgentTool<
   name: "update_status_report_update",
   description:
     "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status, including to 'resolved'. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateStatusReportUpdateInputShape,
   outputSchema: UpdateStatusReportUpdateOutput,
@@ -833,7 +833,7 @@ export const deleteStatusReportUpdateTool: AgentTool<
   name: "delete_status_report_update",
   description:
     "Delete a status report timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. The report's status is re-derived from the remaining entries. A report must retain at least one update — to remove the only entry, delete the report from the dashboard instead. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: DeleteStatusReportUpdateInputShape,
   outputSchema: DeleteStatusReportUpdateOutput,

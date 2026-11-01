@@ -19,7 +19,7 @@ export async function createMonitor(args: {
   input: CreateMonitorInput;
 }): Promise<Monitor> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = CreateMonitorInput.parse(args.input);
 
   assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });

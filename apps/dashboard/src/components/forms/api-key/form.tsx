@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { apiKeySettableScopes } from "@openstatus/db/src/schema/api-keys/constants";
 import { Calendar as CalendarIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
@@ -20,10 +21,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@openstatus/ui/components/ui/radio-group";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
@@ -33,23 +30,28 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { type ScopePresetOption, ScopePicker } from "../api-scopes/picker";
+
+const presets: ScopePresetOption[] = [
+  {
+    id: "read",
+    label: "Read only",
+    description: "Recommended for AI agents and read-only dashboards.",
+  },
+  {
+    id: "write",
+    label: "Read & write",
+    description: "Required for CI/CD and automation.",
+  },
+];
+
 export const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional(),
   expiresAt: z.string().optional(),
-  // Single-value radio. The wire format on the create-key API is
-  // an array (`scopes: Scope[]`) so per-resource scopes can land
-  // additively later, but the v1 dashboard surface only ever picks
-  // one of two options — flat enum here, lift to array on submit.
-  //
-  // Duplicates `apiKeySettableScopes` from `@openstatus/db` — the
-  // dashboard's client bundle can't reach into the db package
-  // (drizzle pulls in node-only deps via the schema barrel). The
-  // services input schema validates whatever the form sends, so
-  // drift here surfaces as a parse error on submit, not a silent
-  // mismatch. Keep this list in sync with
-  // `packages/db/src/schema/api-keys/constants.ts`.
-  scope: z.enum(["read", "write"]),
+  scopes: z
+    .array(z.enum(apiKeySettableScopes))
+    .min(1, "Pick at least one scope"),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -75,10 +77,8 @@ export function ApiKeyForm({
       name: defaultValues?.name ?? "",
       description: defaultValues?.description ?? "",
       expiresAt: defaultValues?.expiresAt ?? "",
-      // Default Read-only: AI agents are the most common new use
-      // case for keys, and read-only is the safer starting point.
-      // CI/CD users actively pick "Read & write."
-      scope: defaultValues?.scope ?? "read",
+      // Read only by default: agents are the common case, CI picks write.
+      scopes: defaultValues?.scopes ?? ["read"],
     },
   });
 
@@ -142,37 +142,16 @@ export function ApiKeyForm({
           />
           <FormField
             control={form.control}
-            name="scope"
+            name="scopes"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Access</FormLabel>
                 <FormControl>
-                  <RadioGroup
+                  <ScopePicker
                     value={field.value}
-                    onValueChange={field.onChange}
-                    className="gap-3 sm:grid-cols-2"
-                  >
-                    <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
-                      <RadioGroupItem value="read" className="mt-1" />
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-medium">Read-only</div>
-                        <div className="text-muted-foreground text-xs">
-                          Recommended for AI agents and read-only dashboards.
-                        </div>
-                      </div>
-                    </label>
-                    <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
-                      <RadioGroupItem value="write" className="mt-1" />
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-medium">
-                          Read &amp; write
-                        </div>
-                        <div className="text-muted-foreground text-xs">
-                          Required for CI/CD and automation.
-                        </div>
-                      </div>
-                    </label>
-                  </RadioGroup>
+                    onChange={field.onChange}
+                    presets={presets}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

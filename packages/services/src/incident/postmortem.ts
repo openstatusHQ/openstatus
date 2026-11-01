@@ -57,7 +57,7 @@ export async function draftPostmortem(args: {
   input: DraftPostmortemInput;
 }): Promise<IncidentPostmortem> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = DraftPostmortemInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -154,7 +154,7 @@ export async function approvePostmortem(args: {
   input: ApprovePostmortemInput;
 }): Promise<IncidentPostmortem> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = ApprovePostmortemInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -213,6 +213,7 @@ export async function getPostmortem(args: {
   input: IncidentIdInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = IncidentIdInput.parse(args.input);
   const db = getReadDb(ctx);
   const row = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);

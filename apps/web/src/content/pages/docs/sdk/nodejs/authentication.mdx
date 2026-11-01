@@ -44,12 +44,19 @@ Get your API key from the [openstatus dashboard](https://app.openstatus.dev) und
 
 ## Scopes
 
-Each API key carries a scope that controls what it can do:
+An API key carries a list of scopes. A scope is a resource group plus `:read` or `:write`; `<group>:write` includes `<group>:read`. The ConnectRPC API checks the scope per service, the REST API per resource (`GET`/`HEAD` need `:read`, everything else `:write`). A missing scope returns `permission_denied` (`403 Forbidden` on REST).
 
-- **Read-only** (`['read']`) — list/get endpoints only. Mutations return `403 Forbidden`. Recommended for AI agents and read-only dashboards.
-- **Read & write** (`['write']`) — full workspace access. Required for CI/CD and automation.
+| Scope | Service |
+|---|---|
+| `monitors:read` / `monitors:write` | `MonitorService`, `PrivateLocationService`, `POST /v1/check/http` |
+| `pages:read` / `pages:write` | `StatusPageService`, except the subscriber methods |
+| `incidents:read` / `incidents:write` | `StatusReportService`, `IncidentService`, `MaintenanceService` |
+| `notifications:read` / `notifications:write` | `NotificationService` |
+| `subscribers:read` / `subscribers:write` | `listSubscribers`, `subscribeToPage`, `createPageSubscription`, `unsubscribeFromPage` on `StatusPageService` |
 
-Scope is set when the key is created and is **immutable** — to change it, revoke the key and issue a new one. Existing keys created before this feature shipped continue to work as Read & write.
+Two umbrellas cover several groups: `write` covers every group, `read` covers every group's read. Workspace, members, billing, SSO, API keys and OAuth clients are not reachable with any key, with one exception: a key may revoke itself.
+
+The dashboard offers **Read only** (`read`), **Read & write** (`write`), and **Custom**, a grid with one row per group. Scopes are set when the key is created and are **immutable**; to change them, revoke the key and issue a new one. Keys created before scopes existed behave as `write`.
 
 `GET /v1/whoami` echoes the resolved actor's scopes back so a client can introspect what it's allowed to do without probe-and-fail:
 
@@ -61,7 +68,7 @@ Scope is set when the key is created and is **immutable** — to change it, revo
   "actor": {
     "type": "apiKey",
     "keyId": "42",
-    "scopes": ["read"]
+    "scopes": ["monitors:read", "incidents:write"]
   }
 }
 ```

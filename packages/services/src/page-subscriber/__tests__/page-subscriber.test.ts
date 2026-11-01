@@ -34,6 +34,7 @@ import {
   createPageSubscriber,
   getSubscriberByToken,
   hasPendingSubscriber,
+  listPageSubscribers,
   unsubscribePageSubscriber,
   unsubscribeSubscriber,
   updateSubscriberScope,
@@ -1303,5 +1304,44 @@ describe("self-signup visitor gate", () => {
     });
     expect(result.email).toBe(email);
     expect(seen).toEqual([`secured-${gatedSlug}`]);
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(WORKSPACE, {
+          keyId: "k-pages",
+          userId: 1,
+          scopes: ["pages:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createPageSubscriber({
+          ctx,
+          input: {
+            pageId: PAGE_ID,
+            channelType: "email",
+            email: "rejects-other-group@test.dev",
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listPageSubscribers({ ctx, input: { pageId: PAGE_ID } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("pages:read key does not list subscribers", async () => {
+    const ctx = makeApiKeyCtx(WORKSPACE, {
+      keyId: "k-pages-read",
+      userId: 1,
+      scopes: ["pages:read"],
+    });
+    await expect(
+      listPageSubscribers({ ctx, input: { pageId: PAGE_ID } }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

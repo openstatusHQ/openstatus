@@ -32,7 +32,7 @@ export async function addStatusReportUpdate(args: {
   input: AddStatusReportUpdateInput;
 }): Promise<AddStatusReportUpdateResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = AddStatusReportUpdateInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
 

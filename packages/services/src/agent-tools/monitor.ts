@@ -1,17 +1,31 @@
 import { monitorStatusSchema } from "@openstatus/db/src/schema";
+import { headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
+import { assertCreateBudget } from "../auth";
+import { withTransaction } from "../context";
+import { ValidationError } from "../errors";
 import {
+  type CheckResult,
   type MonitorTimeRange,
+  createMonitor,
   getMonitor,
   getMonitorStatus,
   getMonitorSummary,
   getResponseLog,
   listMonitors,
   listResponseLogsInfinite,
+  monitorAssertionSchema,
+  monitorMethods,
+  monitorPeriodicity,
   monitorTimeRange,
+  runMonitorCheck,
+  updateMonitorConfig,
+  updateMonitorNotifiers,
+  updateMonitorTags,
 } from "../monitor";
 import type { AgentTool } from "./types";
+import { dashboardUrl } from "./urls";
 
 const LIST_PER_PAGE_DEFAULT = 25;
 const LIST_PER_PAGE_MAX = 50;
@@ -66,7 +80,7 @@ export const listMonitorsTool: AgentTool<
   name: "list_monitors",
   description:
     "List monitors in this workspace, newest first. Use to discover the numeric monitorId required by get_monitor, get_monitor_status, get_monitor_summary, list_response_logs. Paginated via `page` (1-indexed) and `perPage`.",
-  scope: "read",
+  scope: "monitors:read",
   destructive: false,
   inputSchema: ListMonitorsInputShape,
   outputSchema: ListMonitorsOutput,
@@ -142,7 +156,7 @@ export const getMonitorTool: AgentTool<
   name: "get_monitor",
   description:
     "Get the full configuration for a single monitor: URL, regions, periodicity, retry/timeout, notification channels, tags. Use after list_monitors when the user asks for detail on a specific monitor. Does NOT return latency or status — use get_monitor_summary or get_monitor_status for that.",
-  scope: "read",
+  scope: "monitors:read",
   destructive: false,
   inputSchema: GetMonitorInputShape,
   outputSchema: GetMonitorOutput,
@@ -197,7 +211,7 @@ export const getMonitorStatusTool: AgentTool<
   name: "get_monitor_status",
   description:
     "Per-region health for a monitor (one row per configured region: active/degraded/error). Report at the worst region's level — DO NOT invent a composite 'overall' label. Use before drafting a status report so the public message reflects the actual blast radius.",
-  scope: "read",
+  scope: "monitors:read",
   destructive: false,
   inputSchema: GetMonitorStatusInputShape,
   outputSchema: GetMonitorStatusOutput,
@@ -255,7 +269,7 @@ export const getMonitorSummaryTool: AgentTool<
   name: "get_monitor_summary",
   description:
     "Aggregate health metrics for a monitor over a time window: success/degraded/error counts and p50–p99 latency. Default 1d. Pair with get_monitor_status for per-region detail.",
-  scope: "read",
+  scope: "monitors:read",
   destructive: false,
   inputSchema: GetMonitorSummaryInputShape,
   outputSchema: GetMonitorSummaryOutput,
@@ -371,7 +385,7 @@ export const listResponseLogsTool: AgentTool<
   name: "list_response_logs",
   description:
     "Check results for a monitor, newest first (per-region, with status code, latency, and request status). Use to diagnose 'what's failing?'. Filter with `status: [\"error\"]` to find failures directly, and narrow `from`/`to` to the minutes around a known incident time instead of paging. Pair with get_response_log for the full detail of a specific check.",
-  scope: "read",
+  scope: "monitors:read",
   destructive: false,
   inputSchema: ListResponseLogsInputShape,
   outputSchema: ListResponseLogsOutput,
@@ -445,7 +459,7 @@ export const getResponseLogTool: AgentTool<
   name: "get_response_log",
   description:
     "Full detail of a single HTTP response log: URL, response headers (sensitive values redacted), error message, assertion results, and — for failed or degraded checks only — the response body (redacted, truncated). Use after list_response_logs to drill into one specific failure; the body often says why it failed (e.g. a health check naming the dependency that timed out).",
-  scope: "read",
+  scope: "monitors:read",
   destructive: false,
   inputSchema: GetResponseLogInputShape,
   outputSchema: GetResponseLogOutput,
@@ -496,3 +510,408 @@ function agentTimeRangeToTimestampWindow(
   const ms = value === "1d" ? day : value === "7d" ? 7 * day : 14 * day;
   return { from: to - ms, to };
 }
+
+const TIMEOUT_MAX_MS = 300_000;
+
+const CreateMonitorInputShape = z.object({
+  name: z.string().trim().min(1).max(256).describe("Display name."),
+  url: z
+    .string()
+    .min(1)
+    .describe(
+      "http: full URL with scheme (https://api.acme.com/health). tcp: host:port. dns: hostname.",
+    ),
+  jobType: z
+    .enum(["http", "tcp", "dns"])
+    .describe("Check type. Use http unless the user names a TCP port or DNS."),
+  method: z
+    .enum(monitorMethods)
+    .default("GET")
+    .describe("HTTP method (http only, default GET)."),
+  headers: z
+    .array(headerPairSchema)
+    .optional()
+    .describe("Request headers as { key, value } pairs (http only)."),
+  body: z.string().optional().describe("Request body (http only)."),
+  assertions: z
+    .array(monitorAssertionSchema)
+    .optional()
+    .describe(
+      "Checks on the response: status, header, textBody, jsonBody (http) or dnsRecord (dns). Omit to only assert a 2xx response.",
+    ),
+  periodicity: z
+    .enum(monitorPeriodicity)
+    .optional()
+    .describe("Check interval. Omit for the plan default."),
+  regions: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Region codes to check from (e.g. ["ams", "iad"]). Omit for the plan default.',
+    ),
+  description: z.string().optional(),
+  timeout: z
+    .number()
+    .int()
+    .min(0)
+    .max(TIMEOUT_MAX_MS)
+    .optional()
+    .describe("Request timeout in ms; a slower response fails the check."),
+  degradedAfter: z
+    .number()
+    .int()
+    .min(0)
+    .max(TIMEOUT_MAX_MS)
+    .optional()
+    .describe("Latency in ms above which a check counts as degraded."),
+  active: z
+    .boolean()
+    .default(true)
+    .describe("Start checking right away (default true)."),
+});
+
+const FirstCheckOutput = z
+  .object({
+    region: z.string(),
+    state: z.enum(["success", "error"]),
+    status: z.number().int().optional(),
+    latency: z.number().optional(),
+    message: z.string().optional(),
+  })
+  .nullable();
+
+const MonitorOutput = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  url: z.string(),
+  jobType: z.string(),
+  periodicity: z.string(),
+  regions: z.array(z.string()),
+  active: z.boolean(),
+  dashboardUrl: z.string(),
+});
+
+function toMonitorOutput(m: {
+  id: number;
+  name: string;
+  url: string;
+  jobType: string;
+  periodicity: string;
+  regions: string[];
+  active: boolean | null;
+}): z.infer<typeof MonitorOutput> {
+  return {
+    id: m.id,
+    name: m.name,
+    url: m.url,
+    jobType: m.jobType,
+    periodicity: m.periodicity,
+    regions: m.regions,
+    active: m.active ?? false,
+    dashboardUrl: dashboardUrl(`/monitors/${m.id}/overview`),
+  };
+}
+
+const CreateMonitorOutput = z.object({
+  monitor: MonitorOutput,
+  firstCheck: FirstCheckOutput.describe(
+    "One probe from the monitor's first region, http only. null when the type is tcp/dns or the probe did not return in time.",
+  ),
+});
+
+function toFirstCheck(result: CheckResult) {
+  return result.state === "success"
+    ? {
+        region: result.region,
+        state: result.state,
+        status: result.status,
+        latency: result.latency,
+      }
+    : { region: result.region, state: result.state, message: result.message };
+}
+
+export const createMonitorTool: AgentTool<
+  z.infer<typeof CreateMonitorInputShape>,
+  z.infer<typeof CreateMonitorOutput>
+> = {
+  name: "create_monitor",
+  description:
+    "Create a monitor that checks a URL, TCP endpoint or DNS name on a schedule. AUDIT-LOGGED and counts against the plan's monitor limit. Call list_monitors first and reuse an existing monitor with the same URL instead of creating a duplicate. Omitting regions or periodicity takes the plan defaults. For http monitors one probe runs from the first region and is returned as firstCheck; a failed probe does not undo the create.",
+  scope: "monitors:write",
+  destructive: true,
+  inputSchema: CreateMonitorInputShape,
+  outputSchema: CreateMonitorOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Create Monitor: ${input.name}`,
+      lines: [
+        { label: "Name", value: input.name },
+        { label: "URL", value: input.url },
+        { label: "Type", value: input.jobType },
+        {
+          label: "Periodicity",
+          value: input.periodicity ?? "plan default",
+        },
+      ],
+    }),
+    verb: "created",
+  },
+  async run({ ctx, input }) {
+    assertAssertionsMatchJobType(input.jobType, input.assertions);
+    await assertCreateBudget(ctx);
+    const m = await createMonitor({
+      ctx,
+      input: {
+        name: input.name,
+        jobType: input.jobType,
+        url: input.url,
+        method: input.method,
+        headers: input.headers ?? [],
+        body: input.body,
+        assertions: input.assertions ?? [],
+        active: input.active,
+        periodicity: input.periodicity,
+        regions: input.regions,
+        description: input.description,
+        timeout: input.timeout,
+        degradedAfter: input.degradedAfter,
+      },
+    });
+
+    let firstCheck: z.infer<typeof FirstCheckOutput> = null;
+    if (m.jobType === "http") {
+      try {
+        const result = await runMonitorCheck({
+          ctx,
+          input: { monitorId: m.id },
+        });
+        firstCheck = result ? toFirstCheck(result) : null;
+      } catch (err) {
+        console.warn("runMonitorCheck failed after create_monitor", err);
+      }
+    }
+
+    return { monitor: toMonitorOutput(m), firstCheck };
+  },
+};
+
+function assertAssertionsMatchJobType(
+  jobType: string,
+  assertions: z.infer<typeof monitorAssertionSchema>[] | undefined,
+) {
+  const mismatched = (assertions ?? []).filter((a) =>
+    jobType === "dns" ? a.type !== "dnsRecord" : a.type === "dnsRecord",
+  );
+  if (mismatched.length > 0) {
+    throw new ValidationError(
+      `Assertions of type ${mismatched.map((a) => a.type).join(", ")} do not apply to ${jobType} monitors.`,
+    );
+  }
+}
+
+const UpdateMonitorInputShape = z
+  .object({
+    monitorId: z
+      .number()
+      .int()
+      .describe(
+        "Monitor id (numeric). Resolve via list_monitors — never guess.",
+      ),
+    name: z.string().trim().min(1).max(256).optional(),
+    url: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "New endpoint. The monitor's type (http/tcp/dns) cannot change.",
+      ),
+    method: z
+      .enum(monitorMethods)
+      .optional()
+      .describe("HTTP method (http only)."),
+    headers: z
+      .array(headerPairSchema)
+      .optional()
+      .describe("Replaces all request headers (http only). [] clears them."),
+    body: z.string().optional().describe("Request body (http only)."),
+    assertions: z
+      .array(monitorAssertionSchema)
+      .optional()
+      .describe("Replaces all assertions. [] falls back to asserting a 2xx."),
+    periodicity: z.enum(monitorPeriodicity).optional(),
+    regions: z
+      .array(z.string())
+      .min(1)
+      .optional()
+      .describe('Replaces the region set, e.g. ["ams", "iad"].'),
+    active: z
+      .boolean()
+      .optional()
+      .describe("false pauses the monitor, true resumes it."),
+    description: z.string().optional(),
+    timeout: z.number().int().min(0).max(TIMEOUT_MAX_MS).optional(),
+    degradedAfter: z
+      .number()
+      .int()
+      .min(0)
+      .max(TIMEOUT_MAX_MS)
+      .nullish()
+      .describe(
+        "Milliseconds before a check counts as degraded. null clears it.",
+      ),
+    notificationIds: z
+      .array(z.number().int())
+      .optional()
+      .describe(
+        "Replaces the linked notification channels. Ids from list_notifications; [] unlinks all.",
+      ),
+    tagIds: z
+      .array(z.number().int())
+      .optional()
+      .describe(
+        "Replaces the monitor's tags. Ids from get_monitor on a monitor that already carries the tag; [] clears.",
+      ),
+  })
+  .refine(
+    (input) => Object.values(input).filter((v) => v !== undefined).length > 1,
+    { message: "Send at least one field to change besides monitorId." },
+  );
+
+const UpdateMonitorOutput = MonitorOutput.extend({
+  notificationIds: z.array(z.number().int()),
+  tagIds: z.array(z.number().int()),
+});
+
+export const updateMonitorTool: AgentTool<
+  z.infer<typeof UpdateMonitorInputShape>,
+  z.infer<typeof UpdateMonitorOutput>
+> = {
+  name: "update_monitor",
+  description:
+    "Change an existing monitor. AUDIT-LOGGED. Call get_monitor first and send only the fields that change; omitted fields stay as they are. `active: false` pauses the monitor, `active: true` resumes it. notificationIds links notification channels to the monitor (this is the only way to do that) and tagIds sets its tags; both replace the full set. The check type (http/tcp/dns) cannot change — create a new monitor instead. All changes apply together or not at all.",
+  scope: "monitors:write",
+  destructive: true,
+  inputSchema: UpdateMonitorInputShape,
+  outputSchema: UpdateMonitorOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Update Monitor #${input.monitorId}`,
+      lines: [
+        { label: "Monitor ID", value: String(input.monitorId) },
+        ...(input.name !== undefined
+          ? [{ label: "Name", value: input.name }]
+          : []),
+        ...(input.url !== undefined
+          ? [{ label: "URL", value: input.url }]
+          : []),
+        ...(input.method !== undefined
+          ? [{ label: "Method", value: input.method }]
+          : []),
+        ...(input.headers !== undefined
+          ? [
+              {
+                label: "Headers",
+                value:
+                  input.headers.map((h) => h.key).join(", ") || "(clear all)",
+              },
+            ]
+          : []),
+        ...(input.body !== undefined
+          ? // Bodies can carry secrets and Slack caps card size; never echo them.
+            [{ label: "Body", value: input.body ? "(updated)" : "(cleared)" }]
+          : []),
+        ...(input.assertions !== undefined
+          ? [
+              {
+                label: "Assertions",
+                value:
+                  input.assertions.length === 0
+                    ? "(clear all, assert 2xx)"
+                    : `${input.assertions.length} (${[...new Set(input.assertions.map((a) => a.type))].join(", ")})`,
+              },
+            ]
+          : []),
+        ...(input.description !== undefined
+          ? [{ label: "Description", value: input.description || "(cleared)" }]
+          : []),
+        ...(input.timeout !== undefined
+          ? [{ label: "Timeout", value: `${input.timeout} ms` }]
+          : []),
+        ...(input.degradedAfter !== undefined
+          ? [
+              {
+                label: "Degraded after",
+                value:
+                  input.degradedAfter === null
+                    ? "cleared"
+                    : `${input.degradedAfter} ms`,
+              },
+            ]
+          : []),
+        ...(input.active !== undefined
+          ? [
+              {
+                label: "Active",
+                value: input.active ? "yes (resume)" : "no (pause)",
+              },
+            ]
+          : []),
+        ...(input.periodicity !== undefined
+          ? [{ label: "Periodicity", value: input.periodicity }]
+          : []),
+        ...(input.regions !== undefined
+          ? [{ label: "Regions", value: input.regions.join(", ") || "(none)" }]
+          : []),
+        ...(input.notificationIds !== undefined
+          ? [
+              {
+                label: "Notifications",
+                value: input.notificationIds.join(", ") || "(unlink all)",
+              },
+            ]
+          : []),
+        ...(input.tagIds !== undefined
+          ? [{ label: "Tags", value: input.tagIds.join(", ") || "(clear all)" }]
+          : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  // Scope and audit come from the verbs inside; the transaction only makes them atomic.
+  // oxlint-disable-next-line openstatus/services-mutation-guards
+  async run({ ctx, input }) {
+    const { monitorId, notificationIds, tagIds, ...config } = input;
+    const existing = await getMonitor({ ctx, input: { id: monitorId } });
+    assertAssertionsMatchJobType(existing.jobType, config.assertions);
+
+    const hasConfig = Object.values(config).some((v) => v !== undefined);
+    await withTransaction(ctx, async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      if (hasConfig) {
+        await updateMonitorConfig({
+          ctx: txCtx,
+          input: { id: monitorId, ...config },
+        });
+      }
+      if (notificationIds !== undefined) {
+        await updateMonitorNotifiers({
+          ctx: txCtx,
+          input: { id: monitorId, notifiers: notificationIds },
+        });
+      }
+      if (tagIds !== undefined) {
+        await updateMonitorTags({
+          ctx: txCtx,
+          input: { id: monitorId, tags: tagIds },
+        });
+      }
+    });
+
+    const m = await getMonitor({ ctx, input: { id: monitorId } });
+    return {
+      ...toMonitorOutput(m),
+      notificationIds: m.notifications.map((n) => n.id),
+      tagIds: m.tags.map((t) => t.id),
+    };
+  },
+};

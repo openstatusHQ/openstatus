@@ -21,6 +21,13 @@ export type UpdatePageComponentGroupInput = z.infer<
   typeof UpdatePageComponentGroupInput
 >;
 
+export const ListPageComponentGroupsInput = z.object({
+  pageId: z.number().int().optional(),
+});
+export type ListPageComponentGroupsInput = z.infer<
+  typeof ListPageComponentGroupsInput
+>;
+
 export const DeletePageComponentGroupInput = z.object({
   id: z.number().int(),
 });

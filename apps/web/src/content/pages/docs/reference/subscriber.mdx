@@ -52,6 +52,10 @@ Status page administrators can manage their subscriber lists, including:
 
 There is no ad-hoc broadcast: subscribers are only reached through status report updates and maintenance notifications.
 
+### API access
+
+Subscribers have their own scope on API keys. Listing them needs `subscribers:read`; subscribing and unsubscribing need `subscribers:write` (a provider import that includes subscribers needs it too). The umbrellas cover them as well: `write` both, `read` the list. Pick **Custom** in the API key form to grant `subscribers` on its own, or to hand out a key that reads pages but never subscriber emails. The MCP server has no subscriber tools. See the [scope reference](/docs/sdk/nodejs/authentication#scopes).
+
 ## Adding subscribers from the dashboard
 
 Beyond public self-subscription, administrators can add subscribers directly from the dashboard. This is useful for onboarding partners, internal teams, or automation that should receive updates without going through the public opt-in flow. Each manually added subscriber uses one of three channels:

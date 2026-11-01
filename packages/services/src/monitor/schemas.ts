@@ -17,13 +17,14 @@ import { z } from "zod";
 export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
 const headerPair = headerPairSchema;
-const assertion = z.discriminatedUnion("type", [
+export const monitorAssertionSchema = z.discriminatedUnion("type", [
   statusAssertion,
   headerAssertion,
   textBodyAssertion,
   jsonBodyAssertion,
   recordAssertion,
 ]);
+const assertion = monitorAssertionSchema;
 
 // Bounds mirror `insertMonitorSchema` and the RPC API's proto contract
 // (0–300_000 ms), so no verb rejects a value another surface accepts.
