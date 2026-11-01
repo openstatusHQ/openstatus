@@ -20,7 +20,7 @@ import {
   expandScopes,
   groupLabels,
   matchPreset,
-} from "./scope-label";
+} from "./label";
 
 export interface ScopePresetOption {
   id: ScopePreset;

@@ -1,7 +1,7 @@
 import { Badge } from "@openstatus/ui/components/ui/badge";
 
 import { TableCellBadge } from "@/components/data-table/table-cell-badge";
-import { scopeChips, scopeLabel } from "@/components/forms/scope-label";
+import { scopeChips, scopeLabel } from "@/components/forms/api-scopes/label";
 
 export function ScopeBadge({ scopes }: { scopes: readonly string[] }) {
   const label = scopeLabel(scopes);

@@ -17,18 +17,31 @@ export const RPC_SERVICE_GROUP: Record<string, ScopeGroup> = {
 };
 
 /**
- * Scope a method needs, or `null` for unmapped services. Subscriber
- * methods on StatusPageService belong to `subscribers`, so a `pages:*`
- * key cannot list emails. Reads are the methods the proto marks
- * `NO_SIDE_EFFECTS`, with the `Get*`/`List*` prefix as a fallback.
+ * `service/method` → scope group, checked before `RPC_SERVICE_GROUP`.
+ * Subscriber methods live on StatusPageService but must not be reachable
+ * with a `pages:*` key, since they expose emails.
+ */
+export const RPC_METHOD_GROUP: Record<string, ScopeGroup> = {
+  "openstatus.status_page.v1.StatusPageService/SubscribeToPage": "subscribers",
+  "openstatus.status_page.v1.StatusPageService/CreatePageSubscription":
+    "subscribers",
+  "openstatus.status_page.v1.StatusPageService/UnsubscribeFromPage":
+    "subscribers",
+  "openstatus.status_page.v1.StatusPageService/ListSubscribers": "subscribers",
+};
+
+/**
+ * Scope a method needs, or `null` for unmapped services. Reads are the
+ * methods the proto marks `NO_SIDE_EFFECTS`, with the `Get*`/`List*` prefix
+ * as a fallback.
  */
 export function requiredScopeFor(
   serviceTypeName: string,
   method: { name: string; idempotency?: MethodOptions_IdempotencyLevel },
 ): RequiredScope | null {
-  const group = /subscri/i.test(method.name)
-    ? "subscribers"
-    : RPC_SERVICE_GROUP[serviceTypeName];
+  const group =
+    RPC_METHOD_GROUP[`${serviceTypeName}/${method.name}`] ??
+    RPC_SERVICE_GROUP[serviceTypeName];
   if (!group) return null;
   const read =
     method.idempotency === MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS ||

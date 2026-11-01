@@ -30,7 +30,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { type ScopePresetOption, ScopePicker } from "../scope-picker";
+import { type ScopePresetOption, ScopePicker } from "../api-scopes/picker";
 
 const presets: ScopePresetOption[] = [
   {

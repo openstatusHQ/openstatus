@@ -20,11 +20,11 @@ import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { coversAll } from "@/components/forms/scope-label";
+import { coversAll } from "@/components/forms/api-scopes/label";
 import {
   type ScopePresetOption,
   ScopePicker,
-} from "@/components/forms/scope-picker";
+} from "@/components/forms/api-scopes/picker";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";

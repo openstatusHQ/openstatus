@@ -3,10 +3,11 @@
 import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { Scope } from "@openstatus/db/src/schema";
+import { StatusPageService } from "@openstatus/proto/status_page/v1";
 import { describe, expect, test, vi } from "vitest";
 
 import { RPC_CONTEXT_KEY } from "../auth";
-import { requiredScopeFor, scopeInterceptor } from "../scope";
+import { RPC_METHOD_GROUP, requiredScopeFor, scopeInterceptor } from "../scope";
 
 const MONITOR = "openstatus.monitor.v1.MonitorService";
 const PAGE = "openstatus.status_page.v1.StatusPageService";
@@ -127,6 +128,26 @@ describe("requiredScopeFor", () => {
     );
     expect(requiredScopeFor(PAGE, { name: "UnsubscribeFromPage" })).toBe(
       "subscribers:write",
+    );
+  });
+
+  test("every method override names a real proto method", () => {
+    const known = new Set(
+      [StatusPageService].flatMap((service) =>
+        service.methods.map((m) => `${service.typeName}/${m.name}`),
+      ),
+    );
+    for (const key of Object.keys(RPC_METHOD_GROUP)) {
+      expect(known.has(key), key).toBe(true);
+    }
+  });
+
+  test("method overrides are exact, not name patterns", () => {
+    expect(requiredScopeFor(REPORT, { name: "NotifySubscribers" })).toBe(
+      "incidents:write",
+    );
+    expect(requiredScopeFor(MONITOR, { name: "ListSubscribers" })).toBe(
+      "monitors:read",
     );
   });
 

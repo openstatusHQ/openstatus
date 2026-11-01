@@ -28,9 +28,11 @@ and both must stay:
     other method `:write`. V1 still issues inline Drizzle queries, so this is
     the only gate there; a V1 route that mutates through a `GET` bypasses it.
   - RPC: `scopeInterceptor` in `routes/rpc/interceptors/scope.ts` maps the
-    proto service type name to a group (`*Subscri*` methods → `subscribers`)
+    proto service type name to a group (`RPC_METHOD_GROUP` overrides single
+    methods, e.g. the subscriber methods on StatusPageService → `subscribers`)
     and `NO_SIDE_EFFECTS` / `Get*` / `List*` methods to `:read`. Thin guard
-    only; a new service needs an entry in `RPC_SERVICE_GROUP`.
+    only; a new service needs an entry in `RPC_SERVICE_GROUP`, a method that
+    belongs to another group needs one in `RPC_METHOD_GROUP`.
 
 New endpoints should call a service verb rather than query Drizzle directly;
 `oxlint.config.ts` already bans `@openstatus/db` and `drizzle-orm` imports in
