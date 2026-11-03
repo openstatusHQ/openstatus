@@ -108,9 +108,13 @@ export async function getMonitorSummary(args: {
         .where(eq(monitorHeartbeatState.monitorId, record.id))
         .get(),
     ]);
-    const since = Date.now() - TIME_RANGE_DAYS[input.timeRange] * 86_400_000;
+    // pings come in UTC day buckets: a range of N days is today plus the N-1 before
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const firstDay =
+      today.getTime() - (TIME_RANGE_DAYS[input.timeRange] - 1) * 86_400_000;
     const inRange = days.data.filter(
-      (day) => new Date(day.day).getTime() >= since - 86_400_000,
+      (day) => new Date(day.day).getTime() >= firstDay,
     );
     // a `/fail` ping is the job reporting a failure
     const failed = inRange.reduce((sum, day) => sum + day.error, 0);

@@ -401,9 +401,14 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       return { monitor: dbMonitorToHeartbeatProto(parsed.data, lastPing) };
     }
 
-    // This method skips the protovalidate interceptor, so the bounds that
-    // matter for a partial update are left to the service schema.
+    // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS):
+    // name and description bounds are applied here, period and grace by the
+    // service schema.
     const mon = req.monitor;
+    validateMonitorPatchBounds({
+      name: mon.name,
+      description: mon.description,
+    });
     const updateValues: Omit<UpdateMonitorConfigInput, "id"> = {};
     if (mon.name) updateValues.name = mon.name;
     if (mon.description !== undefined)

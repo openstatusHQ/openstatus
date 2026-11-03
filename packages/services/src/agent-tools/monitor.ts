@@ -1,3 +1,4 @@
+import { db as defaultDb } from "@openstatus/db";
 import { monitorStatusSchema } from "@openstatus/db/src/schema";
 import { HEARTBEAT_REGION } from "@openstatus/utils";
 import { z } from "zod";
@@ -13,6 +14,7 @@ import {
   listResponseLogsInfinite,
   monitorTimeRange,
 } from "../monitor";
+import { getMonitorInWorkspace } from "../monitor/internal";
 import type { AgentTool } from "./types";
 
 const LIST_PER_PAGE_DEFAULT = 25;
@@ -383,8 +385,20 @@ export const listResponseLogsTool: AgentTool<
       ? { from: Date.parse(input.from), to }
       : agentTimeRangeToTimestampWindow(input.timeRange, to);
 
-    const target = await getMonitor({ ctx, input: { id: input.monitorId } });
+    const target = await getMonitorInWorkspace({
+      tx: ctx.db ?? defaultDb,
+      id: input.monitorId,
+      workspaceId: ctx.workspace.id,
+    });
     if (target.jobType === "heartbeat") {
+      // a ping lands in the `heartbeat` region as a `success`, or an `error` for /fail
+      const wanted = input.status && new Set(input.status);
+      if (
+        (wanted && !wanted.has("success") && !wanted.has("error")) ||
+        (input.regions && !input.regions.includes(HEARTBEAT_REGION))
+      ) {
+        return { logs: [], limit: input.limit, hasMore: false };
+      }
       // timestamps only: ping ip, headers and body stay in the dashboard
       const pings = await listHeartbeatPings({
         ctx,
@@ -396,20 +410,24 @@ export const listResponseLogsTool: AgentTool<
           limit: input.limit,
         },
       });
+      const logs = pings.data.map((ping) => ({
+        id: ping.id,
+        monitorId: String(input.monitorId),
+        region: HEARTBEAT_REGION,
+        requestStatus:
+          ping.kind === "fail" ? ("error" as const) : ("success" as const),
+        trigger: null,
+        statusCode: null,
+        latency: 0,
+        cronTimestamp: ping.timestamp,
+        timestamp: ping.timestamp,
+        timing: null,
+      }));
       return {
-        logs: pings.data.map((ping) => ({
-          id: ping.id,
-          monitorId: String(input.monitorId),
-          region: HEARTBEAT_REGION,
-          requestStatus:
-            ping.kind === "fail" ? ("error" as const) : ("success" as const),
-          trigger: null,
-          statusCode: null,
-          latency: 0,
-          cronTimestamp: ping.timestamp,
-          timestamp: ping.timestamp,
-          timing: null,
-        })),
+        // filtered after the page is read, so the cursor still walks every ping
+        logs: wanted
+          ? logs.filter((log) => wanted.has(log.requestStatus))
+          : logs,
         limit: input.limit,
         hasMore: pings.nextCursor !== null,
         nextCursor: pings.nextCursor ?? undefined,

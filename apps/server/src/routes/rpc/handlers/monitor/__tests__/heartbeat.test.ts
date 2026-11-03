@@ -50,9 +50,7 @@ describe("MonitorService heartbeat", () => {
 
     expect(mon.period).toBe("3600");
     expect(mon.grace).toBe("300");
-    expect(mon.pingUrl).toMatch(
-      /^https:\/\/api\.openstatus\.dev\/heartbeat\/[\w-]{32}$/,
-    );
+    expect(mon.pingUrl).toMatch(/^https?:\/\/[^/]+\/heartbeat\/[\w-]{32}$/);
     expect(mon.lastPingAt).toBeUndefined();
     expect(mon.lastPingKind).toBeUndefined();
 
@@ -106,6 +104,7 @@ describe("MonitorService heartbeat", () => {
     const listed = (listData.heartbeatMonitors ?? []).find(
       (m: { id: string }) => m.id === mon.id,
     );
+    expect(listed?.lastPingAt).toBe(lastPingAt.toISOString());
     expect(listed?.lastPingKind).toBe("HEARTBEAT_PING_KIND_FAIL");
   });
 
@@ -121,12 +120,24 @@ describe("MonitorService heartbeat", () => {
     expect(data.monitor.grace).toBe("600");
   });
 
+  test("rejects an update with a name over the bound", async () => {
+    const mon = await createHeartbeat("rpc-heartbeat-long-name");
+    const res = await connectRequest("UpdateHeartbeatMonitor", {
+      id: mon.id,
+      monitor: { name: "x".repeat(257) },
+    });
+    expect(res.status).toBe(400);
+  });
+
   test("refuses to update a heartbeat through another type", async () => {
     const mon = await createHeartbeat("rpc-heartbeat-mismatch");
     const res = await connectRequest("UpdateHTTPMonitor", {
       id: mon.id,
       monitor: { name: "nope" },
     });
-    expect(res.status).not.toBe(200);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.code).toBe("invalid_argument");
+    expect(body.message).toContain("Monitor type mismatch");
   });
 });

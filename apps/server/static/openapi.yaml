@@ -1810,7 +1810,7 @@ components:
       properties:
         monitor:
           title: monitor
-          description: The monitor configuration (one of HTTP, TCP, DNS, ICMP, or gRPC).
+          description: The monitor configuration (one of HTTP, TCP, DNS, ICMP, gRPC, or heartbeat).
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorConfig'
       title: GetMonitorResponse
       additionalProperties: false
@@ -7319,7 +7319,7 @@ paths:
       summary: GetMonitor
       description: |-
         GetMonitor returns a single monitor by ID within the authenticated workspace.
-         Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.
+         Returns the monitor configuration (HTTP, TCP, DNS, ICMP, gRPC, or heartbeat) using the MonitorConfig oneof type.
       operationId: MonitorService_GetMonitor.get
       parameters:
         - name: message
@@ -7349,7 +7349,7 @@ paths:
       summary: GetMonitor
       description: |-
         GetMonitor returns a single monitor by ID within the authenticated workspace.
-         Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.
+         Returns the monitor configuration (HTTP, TCP, DNS, ICMP, gRPC, or heartbeat) using the MonitorConfig oneof type.
       operationId: MonitorService_GetMonitor
       requestBody:
         content:

@@ -1054,7 +1054,7 @@ export const GetMonitorRequestSchema: GenMessage<GetMonitorRequest> = /*@__PURE_
  */
 export type GetMonitorResponse = Message<"openstatus.monitor.v1.GetMonitorResponse"> & {
   /**
-   * The monitor configuration (one of HTTP, TCP, DNS, ICMP, or gRPC).
+   * The monitor configuration (one of HTTP, TCP, DNS, ICMP, gRPC, or heartbeat).
    *
    * @generated from field: openstatus.monitor.v1.MonitorConfig monitor = 1;
    */
@@ -1719,7 +1719,7 @@ export const MonitorService: GenService<{
   },
   /**
    * GetMonitor returns a single monitor by ID within the authenticated workspace.
-   * Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.
+   * Returns the monitor configuration (HTTP, TCP, DNS, ICMP, gRPC, or heartbeat) using the MonitorConfig oneof type.
    *
    * @generated from rpc openstatus.monitor.v1.MonitorService.GetMonitor
    */

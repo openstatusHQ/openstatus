@@ -2154,7 +2154,7 @@
         "properties": {
           "monitor": {
             "title": "monitor",
-            "description": "The monitor configuration (one of HTTP, TCP, DNS, ICMP, or gRPC).",
+            "description": "The monitor configuration (one of HTTP, TCP, DNS, ICMP, gRPC, or heartbeat).",
             "$ref": "#/components/schemas/openstatus.monitor.v1.MonitorConfig"
           }
         },
@@ -9061,7 +9061,7 @@
       "get": {
         "tags": ["MonitorService"],
         "summary": "GetMonitor",
-        "description": "GetMonitor returns a single monitor by ID within the authenticated workspace.\n Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.",
+        "description": "GetMonitor returns a single monitor by ID within the authenticated workspace.\n Returns the monitor configuration (HTTP, TCP, DNS, ICMP, gRPC, or heartbeat) using the MonitorConfig oneof type.",
         "operationId": "MonitorService_GetMonitor.get",
         "parameters": [
           {
@@ -9105,7 +9105,7 @@
       "post": {
         "tags": ["MonitorService"],
         "summary": "GetMonitor",
-        "description": "GetMonitor returns a single monitor by ID within the authenticated workspace.\n Returns the monitor configuration (HTTP, TCP, DNS, ICMP, or gRPC) using the MonitorConfig oneof type.",
+        "description": "GetMonitor returns a single monitor by ID within the authenticated workspace.\n Returns the monitor configuration (HTTP, TCP, DNS, ICMP, gRPC, or heartbeat) using the MonitorConfig oneof type.",
         "operationId": "MonitorService_GetMonitor",
         "requestBody": {
           "content": {
