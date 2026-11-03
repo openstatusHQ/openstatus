@@ -257,6 +257,7 @@ services:
     environment:
       - DB_URL=${DATABASE_URL:-http://libsql:8080}
       - TINYBIRD_URL=${TINYBIRD_URL:-http://tinybird:7181}
+      - TINYBIRD_TOKEN=${TINY_BIRD_API_KEY:-}
       - GIN_MODE=release
       - PORT=${PRIVATE_LOCATION_PORT:-8080}
     depends_on:
