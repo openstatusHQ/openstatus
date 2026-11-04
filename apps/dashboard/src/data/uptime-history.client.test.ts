@@ -6,7 +6,7 @@ import {
   uptimeYears,
 } from "./uptime-history.client";
 
-const now = new Date(2026, 10, 4, 12); // Wednesday
+const now = new Date(Date.UTC(2026, 10, 4, 12)); // Wednesday
 
 describe("uptimeYears", () => {
   it("returns nothing until a day has checks", () => {
@@ -32,7 +32,7 @@ describe("uptimeYears", () => {
     expect(years[1].failedDays).toBe(1);
   });
 
-  it("blank before the first check, hatched for gaps, green without failures", () => {
+  it("blank before the first check, hatched for gaps, muted without failures", () => {
     const [year] = uptimeYears(
       [
         { day: "2026-11-01", ok: 100, degraded: 0, error: 0 },
@@ -44,7 +44,10 @@ describe("uptimeYears", () => {
       year.days.find(
         (x) => x.date.getTime() === new Date(2026, 10, d).getTime(),
       );
-    expect(on(1)).toMatchObject({ scale: "success", level: 1 });
+    expect(on(1)).toMatchObject({
+      level: 0,
+      lines: ["100.00% uptime", "100 checks"],
+    });
     expect(year.days[0].blank).toBe(true);
     expect(on(2)).toMatchObject({ hatched: true, lines: ["No checks"] });
     expect(on(3)).toMatchObject({
@@ -64,26 +67,24 @@ describe("uptimeYears", () => {
     expect(
       year.days.find((d) => d.date.getDate() === 2 && d.date.getMonth() === 10),
     ).toMatchObject({
-      scale: "success",
-      level: 1,
+      level: 0,
       lines: ["100.00% uptime", "100 checks · 10 degraded"],
     });
   });
 
-  it("failure level by failed share: under 1%, 1 to 5%, over 5%", () => {
+  it("failure level by failed share: < 1%, ≤ 5%, > 5%", () => {
     const [year] = uptimeYears(
       [
         { day: "2026-11-01", ok: 999, degraded: 0, error: 1 },
         { day: "2026-11-02", ok: 99, degraded: 0, error: 1 },
         { day: "2026-11-03", ok: 95, degraded: 0, error: 5 },
+        { day: "2026-11-04", ok: 94, degraded: 0, error: 6 },
       ],
       now,
     );
-    const levels = year.days
-      .filter((d) => d.scale === "failure")
-      .map((d) => d.level);
-    expect(levels).toEqual([1, 2, 3]);
-    expect(year.failedDays).toBe(3);
+    const levels = year.days.filter((d) => d.level).map((d) => d.level);
+    expect(levels).toEqual([1, 2, 2, 3]);
+    expect(year.failedDays).toBe(4);
   });
 
   it("a year without checks after the first one has no uptime", () => {
@@ -94,6 +95,21 @@ describe("uptimeYears", () => {
     expect(years.map((y) => y.year)).toEqual([2026, 2025, 2024]);
     expect(years[1].uptime).toBeNull();
     expect(years[1].days.every((d) => d.hatched)).toBe(true);
+  });
+
+  it("today is the UTC day, whatever the local time zone", () => {
+    // 23:30 UTC: already the 5th east of UTC, still the 4th in UTC
+    const late = new Date(Date.UTC(2026, 10, 4, 23, 30));
+    const [year] = uptimeYears(
+      [{ day: "2026-11-04", ok: 10, degraded: 0, error: 0 }],
+      late,
+    );
+    const on = (d: number) =>
+      year.days.find(
+        (x) => x.date.getTime() === new Date(2026, 10, d).getTime(),
+      );
+    expect(on(4)).toMatchObject({ level: 0 });
+    expect(on(5)).toEqual({ date: new Date(2026, 10, 5) });
   });
 
   it("ignores counts dated after now", () => {
@@ -125,6 +141,11 @@ describe("formatUptime", () => {
   it("truncates instead of rounding up", () => {
     expect(formatUptime(0.999999, 3)).toBe("99.999%");
     expect(formatUptime(0.99995)).toBe("99.99%");
+  });
+
+  it("does not under-report exact ratios through float error", () => {
+    expect(formatUptime(0.57)).toBe("57.00%");
+    expect(formatUptime(624 / 625)).toBe("99.84%");
   });
 
   it("pads whole numbers", () => {

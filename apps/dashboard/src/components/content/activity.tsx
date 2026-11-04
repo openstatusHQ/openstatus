@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  */
 export const activityColorVariants = cva("", {
   variants: {
-    scale: { failure: "", planned: "", success: "" },
+    scale: { failure: "", planned: "" },
     level: { 0: "bg-activity-0", 1: "", 2: "", 3: "" },
     /** No severity to show: untriaged or canceled. */
     hatched: {
@@ -23,13 +23,12 @@ export const activityColorVariants = cva("", {
     { scale: "planned", level: 1, className: "bg-activity-planned-1" },
     { scale: "planned", level: 2, className: "bg-activity-planned-2" },
     { scale: "planned", level: 3, className: "bg-activity-planned-3" },
-    { scale: "success", level: 1, className: "bg-activity-success" },
   ],
   defaultVariants: { scale: "failure", level: 0 },
 });
 
 export type ActivityLevel = 0 | 1 | 2 | 3;
-export type ActivityScale = "failure" | "planned" | "success";
+export type ActivityScale = "failure" | "planned";
 export type ActivityMark = {
   scale: ActivityScale;
   level: ActivityLevel;

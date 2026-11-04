@@ -45,6 +45,7 @@ import {
   exampleUptimeCounts,
   formatUptime,
   uptimeYears,
+  utcToday,
 } from "@/data/uptime-history.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -64,6 +65,7 @@ export function Client() {
   });
 
   const now = useMemo(() => new Date(), []);
+  const today = useMemo(() => utcToday(now), [now]);
   const counts = isLimited ? exampleUptimeCounts(now) : history?.days;
   const years = useMemo(() => uptimeYears(counts ?? [], now), [counts, now]);
 
@@ -77,6 +79,12 @@ export function Client() {
         isLimited && "pointer-events-none blur-sm select-none",
       )}
     >
+      {history?.partial ? (
+        <p className="text-muted-foreground text-sm">
+          Recent checks couldn't be loaded, so the last few weeks may be
+          incomplete.
+        </p>
+      ) : null}
       {years.map(({ year, days, uptime, failedDays }) => (
         <Activity key={year}>
           <ActivityHeader>
@@ -91,32 +99,34 @@ export function Client() {
             </ActivityPeriod>
           </ActivityHeader>
           <ActivityCalendar>
-            <ActivityCalendarGrid days={days} today={now} />
+            <ActivityCalendarGrid days={days} today={today} />
           </ActivityCalendar>
         </Activity>
       ))}
       <ActivityCalendar>
         <ActivityCalendarLegend>
           <ActivityCalendarLegendItem>
-            <ActivityCalendarCell scale="success" level={1} />
+            <ActivityCalendarCell level={0} />
             No failures
           </ActivityCalendarLegendItem>
           <ActivityCalendarLegendItem>
             <ActivityCalendarCell level={1} />
-            Under 1% failed
+            {"< 1% failed"}
           </ActivityCalendarLegendItem>
           <ActivityCalendarLegendItem>
-            <ActivityCalendarCell level={2} />1 to 5%
+            <ActivityCalendarCell level={2} />≤ 5%
           </ActivityCalendarLegendItem>
           <ActivityCalendarLegendItem>
             <ActivityCalendarCell level={3} />
-            Over 5%
+            {"> 5%"}
           </ActivityCalendarLegendItem>
           <ActivityCalendarLegendSeparator />
           <ActivityCalendarLegendItem>
             <ActivityCalendarCell hatched />
             No checks
           </ActivityCalendarLegendItem>
+          <ActivityCalendarLegendSeparator />
+          <ActivityCalendarLegendItem>Days in UTC</ActivityCalendarLegendItem>
         </ActivityCalendarLegend>
       </ActivityCalendar>
     </div>

@@ -90,6 +90,7 @@ export function ActivityCalendarCell({
   return (
     <div
       data-slot="activity-calendar-cell"
+      data-empty={!level && !hatched ? "" : undefined}
       className={cn(
         activityColorVariants({ scale, level, hatched }),
         cellVariants({ upcoming }),
@@ -433,7 +434,11 @@ export function ActivityCalendarLegendItem({
   return (
     <li
       data-slot="activity-calendar-legend-item"
-      className={cn("flex items-center gap-1.5", className)}
+      className={cn(
+        // the empty fill nearly vanishes on the page background without a ring
+        "[&>[data-empty]]:ring-border flex items-center gap-1.5 [&>[data-empty]]:ring-1 [&>[data-empty]]:ring-inset",
+        className,
+      )}
       {...props}
     />
   );

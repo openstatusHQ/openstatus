@@ -13,9 +13,15 @@ export default async function Page({
   const monitorId = Number.parseInt(id);
   if (Number.isNaN(monitorId)) notFound();
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
-    trpc.monitor.getUptimeHistory.queryOptions({ id: monitorId }),
+  const workspace = await queryClient.fetchQuery(
+    trpc.workspace.get.queryOptions(),
   );
+  // plans without uptime history get a FORBIDDEN, which would land in Sentry
+  if (workspace.limits["uptime-history"]) {
+    await queryClient.prefetchQuery(
+      trpc.monitor.getUptimeHistory.queryOptions({ id: monitorId }),
+    );
+  }
 
   return (
     <HydrateClient>

@@ -87,9 +87,9 @@ export const incidentRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         const serviceCtx = toServiceCtx(ctx);
-        if (input?.limit !== undefined)
+        if (input?.limit !== undefined || input?.offset !== undefined)
           return (await listIncidents({ ctx: serviceCtx, input })).items;
-        // no limit = every incident; dashboard calendars and counts need the full history
+        // no limit or offset = every incident; dashboard calendars and counts need the full history
         return await listAllIncidents({ ctx: serviceCtx, input });
       } catch (err) {
         toTRPCError(err);

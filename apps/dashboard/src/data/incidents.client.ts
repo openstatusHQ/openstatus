@@ -46,7 +46,7 @@ export function downtimeSpan(incident: {
   return { start: incident.startedAt, end: incident.resolvedAt };
 }
 
-/** Calendar mark by time down: under 2m, 2 to 10m, over 10m. */
+/** Calendar mark by time down: < 2m, < 10m, ≥ 10m. */
 export function downtimeActivity(down: number): ActivityMark {
   return { scale: "failure", level: levelFor(down, [2 * MINUTE, 10 * MINUTE]) };
 }

@@ -1,7 +1,7 @@
 import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
 
 import type { ActivityDay } from "@/components/content/activity-calendar";
-import { dayKey, levelFor } from "@/data/activity.client";
+import { dayKey } from "@/data/activity.client";
 import { formatNumber } from "@/lib/formatter";
 
 export type CheckCounts = {
@@ -23,23 +23,21 @@ export type UptimeYear = {
 /** Truncated, never rounded up: 99.9999% must not read as 100%. */
 export function formatUptime(ratio: number, digits = 2): string {
   const factor = 10 ** digits;
-  return `${(Math.floor(ratio * 100 * factor) / factor).toFixed(digits)}%`;
+  // epsilon: 0.57 * 100 * 100 is 5699.999…, which would floor to 56.99%
+  return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
 }
 
-/** Green without failures, else by failed share of the day's checks: under 1%, 1 to 5%, over 5%. */
+/** Muted without failures, else by failed share of the day's checks: < 1%, ≤ 5%, > 5%. */
 function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
   const total = counts ? counts.ok + counts.degraded + counts.error : 0;
   // a day without checks is no data, never downtime
   if (!counts || total === 0) return { hatched: true, lines: ["No checks"] };
   const { degraded, error } = counts;
+  const failed = error / total;
   return {
     // degraded counts as up, like the uptime math
-    ...(error === 0
-      ? { scale: "success" as const, level: 1 as const }
-      : {
-          scale: "failure" as const,
-          level: levelFor(error / total, [0.01, 0.05]),
-        }),
+    scale: "failure",
+    level: error === 0 ? 0 : failed < 0.01 ? 1 : failed <= 0.05 ? 2 : 3,
     lines: [
       `${formatUptime((total - error) / total)} uptime`,
       [
@@ -51,9 +49,14 @@ function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
   };
 }
 
+/** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */
+export function utcToday(now = new Date()) {
+  return new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+}
+
 /**
  * One calendar per year, newest first, from the oldest recorded day's year;
- * days before the first check are blank, days after today are left empty.
+ * days before the first check are blank, days after today (UTC) are left empty.
  */
 export function uptimeYears(counts: CheckCounts[], now = new Date()) {
   // frozen months are zero-filled: the record starts at the first checked day
@@ -61,8 +64,9 @@ export function uptimeYears(counts: CheckCounts[], now = new Date()) {
   if (!since) return [];
   const byDay = new Map(counts.map((c) => [c.day, c]));
   const first = Number(since.slice(0, 4));
+  const today = utcToday(now);
   const years: UptimeYear[] = [];
-  for (let year = now.getFullYear(); year >= first; year--) {
+  for (let year = today.getFullYear(); year >= first; year--) {
     const start = startOfYear(new Date(year, 0, 1));
     const end = endOfYear(start);
     let up = 0;
@@ -70,7 +74,7 @@ export function uptimeYears(counts: CheckCounts[], now = new Date()) {
     let failedDays = 0;
     const days = eachDayOfInterval({ start, end }).map((date) => {
       const key = dayKey(date);
-      if (date > now) return { date };
+      if (date > today) return { date };
       if (key < since) return { date, blank: true };
       const c = byDay.get(key);
       if (c) {
@@ -97,8 +101,9 @@ export function exampleUptimeCounts(now = new Date()): CheckCounts[] {
     seed = (seed * 16807) % 2147483647;
     return seed / 2147483647;
   };
-  const start = startOfYear(new Date(now.getFullYear() - 1, 0, 1));
-  return eachDayOfInterval({ start, end: now }).map((date) => {
+  const end = utcToday(now);
+  const start = startOfYear(new Date(end.getFullYear() - 1, 0, 1));
+  return eachDayOfInterval({ start, end }).map((date) => {
     const r = random();
     const error = r > 0.97 ? Math.ceil(random() * 90) : r > 0.9 ? 1 : 0;
     const degraded = random() > 0.85 ? Math.ceil(random() * 12) : 0;

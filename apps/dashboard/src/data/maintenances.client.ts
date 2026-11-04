@@ -49,7 +49,7 @@ export function maintenanceSpan(maintenance: { from: Date; to: Date }) {
   return { start: maintenance.from, end: maintenance.to };
 }
 
-/** Calendar mark by planned time: under 1h, 1 to 4h, over 4h. */
+/** Calendar mark by planned time: < 1h, < 4h, ≥ 4h. */
 export function maintenanceActivity(planned: number): ActivityMark {
   return { scale: "planned", level: levelFor(planned, [HOUR, 4 * HOUR]) };
 }

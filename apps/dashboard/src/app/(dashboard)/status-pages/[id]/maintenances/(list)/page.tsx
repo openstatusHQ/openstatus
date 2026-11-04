@@ -232,14 +232,15 @@ export default function Page() {
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell scale="planned" level={1} />
-                    Under 1h
+                    {"< 1h"}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell scale="planned" level={2} />1 to 4h
+                    <ActivityCalendarCell scale="planned" level={2} />
+                    {"< 4h"}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell scale="planned" level={3} />
-                    Over 4h
+                    {"≥ 4h"}
                   </ActivityCalendarLegendItem>
                   {days.some((day) => "upcoming" in day && day.upcoming) ? (
                     <>

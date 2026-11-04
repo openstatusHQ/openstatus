@@ -140,14 +140,15 @@ export default function Page() {
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell level={1} />
-                    Under 2m
+                    {"< 2m"}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={2} />2 to 10m
+                    <ActivityCalendarCell level={2} />
+                    {"< 10m"}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell level={3} />
-                    Over 10m
+                    {"≥ 10m"}
                   </ActivityCalendarLegendItem>
                 </ActivityCalendarLegend>
               </ActivityCalendar>

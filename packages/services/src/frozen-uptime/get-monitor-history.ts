@@ -69,7 +69,7 @@ export async function getMonitorUptimeHistory(args: {
       monitorIdsByJobType: new Map([
         [_monitor.jobType, new Set([String(_monitor.id)])],
       ]),
-      pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
+      pipes: args.pipes ?? uptimeFreezePipes(ctx.tb ?? defaultTb),
       throttleMs: 0,
       sleep: args.sleep,
     }),
