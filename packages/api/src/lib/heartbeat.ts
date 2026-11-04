@@ -1,3 +1,4 @@
+import { isHeartbeatAllowed } from "@openstatus/utils";
 import { z } from "zod";
 
 import { env } from "../env";
@@ -8,11 +9,7 @@ const selfHost = z.stringbool().catch(false);
 /** `*` opens heartbeats to every workspace; self-hosted instances always have them. */
 export function isHeartbeatEnabled(workspaceId: number): boolean {
   if (selfHost.parse(String(env.SELF_HOST))) return true;
-  const allowed = (env.HEARTBEAT_WORKSPACE_IDS ?? "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-  return allowed.includes("*") || allowed.includes(String(workspaceId));
+  return isHeartbeatAllowed(workspaceId, env.HEARTBEAT_WORKSPACE_IDS);
 }
 
 export function heartbeatPingUrl(token: string): string {

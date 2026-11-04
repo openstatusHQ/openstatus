@@ -15,7 +15,7 @@ import {
   defaultTb,
   withTransaction,
 } from "../context";
-import { ValidationError } from "../errors";
+import { ForbiddenError, ValidationError } from "../errors";
 import type { Monitor } from "../types";
 import {
   generateHeartbeatToken,
@@ -295,6 +295,10 @@ export async function listHeartbeatPings(args: {
 }): Promise<{ data: HeartbeatPingLog[]; nextCursor: number | null }> {
   const { ctx } = args;
   const input = ListHeartbeatPingsInput.parse(args.input);
+  // pings are the heartbeat's response logs, behind the same entitlement
+  if (!ctx.workspace.limits["response-logs"]) {
+    throw new ForbiddenError("Response logs are not enabled on this plan.");
+  }
   const db = ctx.db ?? defaultDb;
 
   const existing = await getMonitorInWorkspace({

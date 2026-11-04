@@ -6,6 +6,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
+import { OSTinybird } from "@openstatus/tinybird";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -15,6 +16,7 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
+import { listResponseLogsTool } from "../../agent-tools/monitor";
 import type { DrizzleTx, ServiceContext } from "../../context";
 import {
   ForbiddenError,
@@ -23,8 +25,10 @@ import {
 } from "../../errors";
 import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
+import { getMonitorSummary } from "../get-monitor-summary";
 import {
   getHeartbeatState,
+  listHeartbeatPings,
   recordHeartbeatPing,
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,
@@ -593,6 +597,192 @@ describe("visibility", () => {
         .where(eq(monitor.id, row.id))
         .get();
       expect(stored?.public).toBe(false);
+    });
+  });
+});
+
+describe("heartbeat reads", () => {
+  const tb = new OSTinybird({ token: "", noop: true });
+
+  test("getMonitorSummary reports the last ping instead of throwing", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const lastPing = new Date("2026-02-01T10:00:00.000Z");
+      await setLastPing(tx, row.id, lastPing);
+
+      const summary = await getMonitorSummary({
+        ctx: { ...ctx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "1d" },
+      });
+
+      expect(summary.regions).toEqual(["heartbeat"]);
+      expect(summary.totalFailed).toBe(0);
+      expect(summary.lastPingAt).toBe(lastPing.toISOString());
+    });
+  });
+
+  test("getMonitorSummary counts exactly the days of the range", async () => {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    // one ping a day, including the day just before a 7-day range
+    const days = {
+      heartbeatStatus45d: async () => ({
+        data: Array.from({ length: 8 }, (_, i) => ({
+          day: new Date(today.getTime() - i * 86_400_000).toISOString(),
+          monitorId: "0",
+          count: 1,
+          ok: 1,
+          degraded: 0,
+          error: 0,
+        })),
+      }),
+    } as unknown as OSTinybird;
+
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const summary = (timeRange: "1d" | "7d") =>
+        getMonitorSummary({
+          ctx: { ...ctx, db: tx, tb: days },
+          input: { monitorId: row.id, timeRange },
+        });
+      expect((await summary("7d")).totalSuccessful).toBe(7);
+      expect((await summary("1d")).totalSuccessful).toBe(1);
+    });
+  });
+
+  test("list_response_logs answers for a heartbeat", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const result = await listResponseLogsTool.run({
+        ctx: { ...ctx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "1d", limit: 25 },
+      });
+      expect(result).toEqual({
+        logs: [],
+        limit: 25,
+        hasMore: false,
+        nextCursor: undefined,
+      });
+    });
+  });
+
+  test("list_response_logs maps pings to timestamps only", async () => {
+    const pinged = 1_767_225_600_000;
+    const pings = {
+      heartbeatList: async () => ({
+        data: [
+          {
+            id: "ping-fail",
+            timestamp: pinged + 60_000,
+            monitorId: "0",
+            ip: "203.0.113.7",
+            method: "POST",
+            userAgent: "curl/8.0",
+            headers: JSON.stringify({ "x-job": "backup" }),
+            body: "stack trace",
+            bodyTruncated: 0,
+            kind: "fail" as const,
+          },
+          {
+            id: "ping-ok",
+            timestamp: pinged,
+            monitorId: "0",
+            ip: "203.0.113.7",
+            method: "GET",
+            userAgent: "curl/8.0",
+            headers: null,
+            body: null,
+            bodyTruncated: 0,
+            kind: "success" as const,
+          },
+        ],
+      }),
+    } as unknown as OSTinybird;
+
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const run = (input: {
+        status?: ("success" | "error" | "degraded")[];
+        regions?: string[];
+      }) =>
+        listResponseLogsTool.run({
+          ctx: { ...ctx, db: tx, tb: pings },
+          input: { monitorId: row.id, timeRange: "1d", limit: 25, ...input },
+        });
+
+      const all = await run({});
+      expect(all.logs).toEqual([
+        {
+          id: "ping-fail",
+          monitorId: String(row.id),
+          region: "heartbeat",
+          requestStatus: "error",
+          trigger: null,
+          statusCode: null,
+          latency: 0,
+          cronTimestamp: pinged + 60_000,
+          timestamp: pinged + 60_000,
+          timing: null,
+        },
+        {
+          id: "ping-ok",
+          monitorId: String(row.id),
+          region: "heartbeat",
+          requestStatus: "success",
+          trigger: null,
+          statusCode: null,
+          latency: 0,
+          cronTimestamp: pinged,
+          timestamp: pinged,
+          timing: null,
+        },
+      ]);
+
+      const failed = await run({ status: ["error"] });
+      expect(failed.logs.map((log) => log.id)).toEqual(["ping-fail"]);
+      expect((await run({ status: ["degraded"] })).logs).toEqual([]);
+      expect((await run({ regions: ["fra"] })).logs).toEqual([]);
+    });
+  });
+
+  test("listHeartbeatPings needs the response-logs entitlement", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const free = {
+        ...ctx,
+        db: tx,
+        tb,
+        workspace: {
+          ...ctx.workspace,
+          limits: { ...ctx.workspace.limits, "response-logs": false },
+        },
+      };
+      await expect(
+        listHeartbeatPings({ ctx: free, input: { monitorId: row.id } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("listHeartbeatPings rejects other monitor types", async () => {
+    await withTestTransaction(async (tx) => {
+      const http = await createMonitor({
+        ctx: { ...ctx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-http-pings`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      await expect(
+        listHeartbeatPings({
+          ctx: { ...ctx, db: tx, tb },
+          input: { monitorId: http.id },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
     });
   });
 });

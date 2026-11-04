@@ -36,3 +36,15 @@ export function statusRegions<R extends string>(monitor: {
 }): string[] {
   return monitor.jobType === "heartbeat" ? [HEARTBEAT_REGION] : monitor.regions;
 }
+
+/** `allowlist` is a comma list of workspace ids, or `*` for everyone. */
+export function isHeartbeatAllowed(
+  workspaceId: number,
+  allowlist: string | undefined,
+): boolean {
+  const ids = (allowlist ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return ids.includes("*") || ids.includes(String(workspaceId));
+}
