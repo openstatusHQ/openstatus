@@ -141,6 +141,23 @@ export function ActivityCalendarGrid({
     week.some((slot) => slot?.index === todayIndex),
   );
   const scrollWeek = todayWeek >= 0 ? todayWeek : weeks.length - 1;
+  // the month label sliding under the sticky weekdays would show only its tail
+  const [covered, setCovered] = useState<number | null>(null);
+
+  function updateCovered() {
+    const el = scroller.current;
+    if (!el) return;
+    const edge = el.scrollLeft + (el.querySelector<HTMLElement>("[data-corner]")?.offsetWidth ?? 0);
+    let next: number | null = null;
+    for (const label of el.querySelectorAll<HTMLElement>("[data-week]")) {
+      const left = label.offsetLeft;
+      if (left < edge && left + label.scrollWidth > edge) {
+        next = Number(label.dataset.week);
+        break;
+      }
+    }
+    setCovered(next);
+  }
 
   // today's week at the right edge when the grid is wider than the viewport,
   // else the newest one; the week label's sibling is a cell as wide as the column
@@ -154,6 +171,7 @@ export function ActivityCalendarGrid({
     const padding = 3;
     el.scrollLeft =
       cell.offsetLeft + cell.offsetWidth + padding - el.clientWidth;
+    updateCovered();
   }, [scrollWeek]);
 
   function onArrow(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -179,7 +197,11 @@ export function ActivityCalendarGrid({
   }
 
   return (
-    <div ref={scroller} className="relative overflow-x-auto">
+    <div
+      ref={scroller}
+      className="relative overflow-x-auto"
+      onScroll={updateCovered}
+    >
       <div
         data-slot="activity-calendar-grid"
         // as wide as its weeks, or the sticky weekdays scroll away with the box
@@ -202,7 +224,7 @@ export function ActivityCalendarGrid({
         }}
       >
         {/* the spread shadow covers cells peeking through the gaps */}
-        <div className={STICKY} />
+        <div data-corner className={STICKY} />
         {WEEKDAYS.map((label, i) => (
           <div
             key={i}
@@ -218,7 +240,10 @@ export function ActivityCalendarGrid({
           <Fragment key={w}>
             <div
               data-week={w}
-              className="text-muted-foreground h-3.5 w-0 font-mono text-xs leading-none whitespace-nowrap"
+              className={cn(
+                "text-muted-foreground h-3.5 w-0 font-mono text-xs leading-none whitespace-nowrap",
+                covered === w && "invisible",
+              )}
             >
               {hydrated ? months[w] : null}
             </div>

@@ -49,7 +49,11 @@ export function MaintenanceRow({
           `in ${formatDurationShort(from.getTime() - now.getTime())}`,
         ]
       : status === "in-progress"
-        ? ["in progress", `until ${formatClockOrDay(to, now)}`]
+        ? [
+            // the status column says so unless it carries the type
+            kind ? "in progress" : null,
+            `until ${formatClockOrDay(to, now)}`,
+          ]
         : [formatWindow(from, to)];
 
   return (
@@ -74,9 +78,11 @@ export function MaintenanceRow({
           {maintenance.title}
         </EventRowTitle>
         <EventRowMeta>
-          {meta.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
+          {meta
+            .filter((item) => item !== null)
+            .map((item) => (
+              <span key={item}>{item}</span>
+            ))}
         </EventRowMeta>
       </EventRowContent>
       <EventRowActions>

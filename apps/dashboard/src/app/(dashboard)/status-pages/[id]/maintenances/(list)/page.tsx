@@ -259,7 +259,7 @@ export default function Page() {
                 <EventGroup>
                   <EventGroupHeader>
                     <EventGroupTitle>
-                      Upcoming
+                      Scheduled
                       <EventGroupCount>{upcoming.length}</EventGroupCount>
                     </EventGroupTitle>
                   </EventGroupHeader>

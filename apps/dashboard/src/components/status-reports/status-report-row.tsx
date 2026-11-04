@@ -19,7 +19,10 @@ import {
 } from "@/components/content/event-list";
 import { StatusReportRowActions } from "@/components/data-table/status-reports/data-table-row-actions";
 import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
-import { impactDisplay } from "@/data/status-report-updates.client";
+import {
+  impactConfig,
+  impactDisplay,
+} from "@/data/status-report-updates.client";
 import {
   impactLevels,
   reportResolvedAt,
@@ -30,7 +33,11 @@ import { formatDurationShort, formatWindow } from "@/lib/formatter";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
-const noComponents = { label: "No components", variant: "default" } as const;
+const noComponents = {
+  label: "No impact",
+  short: "No impact",
+  variant: "default",
+} as const;
 
 /** `kind` labels the row by type for a mixed list; the bars still carry the impact. */
 export function StatusReportRow({
@@ -49,22 +56,26 @@ export function StatusReportRow({
     impact === undefined
       ? noComponents
       : impact === "operational"
-        ? { label: "Operational", variant: "default" as const }
+        ? { ...impactConfig.operational, variant: "default" as const }
         : impactDisplay(impact);
   const startedAt = reportStartedAt(report);
   const resolvedAt = reportResolvedAt(report);
   // epoch = legacy report without dates
   const dated = startedAt.getTime() > 0;
   const updates = report.updates.length;
+  const names = report.pageComponents.map((c) => c.name);
+  const affected =
+    names.length > 2
+      ? `${names.slice(0, 2).join(", ")} +${names.length - 2}`
+      : names.join(", ") || null;
   const meta = ongoing
     ? [
         kind ? report.status : null,
         display.label.toLowerCase(),
         `${updates} ${updates === 1 ? "update" : "updates"}`,
+        affected,
       ]
-    : resolvedAt && dated
-      ? [formatWindow(startedAt, resolvedAt)]
-      : [];
+    : [resolvedAt && dated ? formatWindow(startedAt, resolvedAt) : null, affected];
   const endedAt = resolvedAt ?? new Date();
 
   return (
@@ -75,7 +86,13 @@ export function StatusReportRow({
           level={impact ? impactLevels[impact] : 0}
           variant={display.variant}
         />
-        <span>{kind ? "Report" : ongoing ? report.status : display.label}</span>
+        <span>
+          {kind
+            ? "Report"
+            : ongoing
+              ? report.status
+              : display.short}
+        </span>
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
@@ -115,7 +132,8 @@ export function StatusReportRow({
       </EventRowActions>
       <EventRowActor actor={report.createdByUser} label="Created by" optional />
       <EventRowDuration>
-        {dated
+        {/* created already resolved: no window to measure */}
+        {dated && endedAt.getTime() - startedAt.getTime() >= 1000
           ? formatDurationShort(endedAt.getTime() - startedAt.getTime())
           : "–"}
       </EventRowDuration>

@@ -164,7 +164,8 @@ export function EventRowTitle({
     <p
       data-slot="event-row-title"
       className={cn(
-        "text-foreground min-w-0 truncate font-medium",
+        // on one line the meta gives way before the title truncates
+        "text-foreground min-w-0 truncate font-medium tabular-nums @3xl:max-w-full @3xl:shrink-0",
         "[grid-area:title]",
         className,
       )}
@@ -199,6 +200,8 @@ export function EventRowMeta({
       className={cn(
         "text-muted-foreground min-w-0 truncate font-mono text-xs",
         "[&>*+*]:before:mx-1.5 [&>*+*]:before:content-['·']",
+        // folded onto row 2 there is room for the first item only
+        "@max-3xl:[&>*+*]:hidden",
         "not-empty:before:mr-1.5 not-empty:before:content-['·'] @3xl:not-empty:before:content-none",
         "[grid-area:meta]",
         className,

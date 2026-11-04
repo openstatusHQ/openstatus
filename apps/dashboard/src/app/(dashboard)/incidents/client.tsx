@@ -182,7 +182,7 @@ export function Client() {
                 <EventGroup>
                   <EventGroupHeader>
                     <EventGroupTitle>
-                      Closed
+                      Ended
                       <EventGroupCount>{closed.length}</EventGroupCount>
                     </EventGroupTitle>
                   </EventGroupHeader>

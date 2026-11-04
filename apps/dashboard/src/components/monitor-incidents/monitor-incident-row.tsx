@@ -49,16 +49,19 @@ export function MonitorIncidentRow({
 }) {
   const status = getIncidentStatus(incident);
   const { startedAt, resolvedAt, monitor } = incident;
-  const meta = resolvedAt
-    ? [
-        formatWindow(startedAt, resolvedAt),
-        incident.autoResolved ? "auto-resolved" : null,
-      ]
-    : [
-        kind ? (status === "acknowledged" ? "acknowledged" : "down") : null,
-        `since ${formatClockOrDay(startedAt)}`,
-      ];
-  const title = kind ? monitor.name : incident.title || monitor.name;
+  const when = resolvedAt
+    ? formatWindow(startedAt, resolvedAt)
+    : `since ${formatClockOrDay(startedAt)}`;
+  const meta = [
+    kind ? when : null,
+    kind && !resolvedAt
+      ? status === "acknowledged"
+        ? "acknowledged"
+        : "down"
+      : null,
+    resolvedAt && incident.autoResolved ? "auto-resolved" : null,
+  ];
+  const title = kind ? monitor.name : incident.title || when;
 
   return (
     <EventRow>

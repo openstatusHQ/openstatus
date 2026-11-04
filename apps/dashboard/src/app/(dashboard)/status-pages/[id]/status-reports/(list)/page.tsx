@@ -57,6 +57,10 @@ import {
 } from "@/data/activity.client";
 import { getPageUrl } from "@/data/status-pages.client";
 import {
+  impactConfig,
+  untriagedImpact,
+} from "@/data/status-report-updates.client";
+import {
   reportActivity,
   reportSpan,
   reportStartedAt,
@@ -260,20 +264,20 @@ export default function Page() {
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell level={1} />
-                    Degraded
+                    {impactConfig.degraded_performance.short}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell level={2} />
-                    Partial outage
+                    {impactConfig.partial_outage.short}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell level={3} />
-                    Major outage
+                    {impactConfig.major_outage.short}
                   </ActivityCalendarLegendItem>
                   <ActivityCalendarLegendSeparator />
                   <ActivityCalendarLegendItem>
                     <ActivityCalendarCell hatched />
-                    Untriaged
+                    {untriagedImpact.short}
                   </ActivityCalendarLegendItem>
                 </ActivityCalendarLegend>
               </ActivityCalendar>

@@ -106,8 +106,8 @@ export function IncidentRow({
       ? [kind ? "canceled" : null]
       : [
           endedAt ? formatWindow(incident.startedAt, endedAt) : null,
-          // resolved but still awaiting the close (postmortem) step
-          incident.closedAt === null ? "not closed" : null,
+          // resolved, close waits on the postmortem
+          incident.closedAt === null ? "postmortem pending" : null,
         ];
   const commander = incident.commander
     ? { ...incident.commander, name: personName(incident.commander) }

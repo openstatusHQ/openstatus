@@ -1,6 +1,7 @@
 "use client";
 
 import { Agent, Clock, Success } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -25,6 +26,7 @@ import {
   type ActivityLink,
 } from "@/components/content/activity-calendar";
 import {
+  EmptyStateActions,
   EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
@@ -440,13 +442,15 @@ export default function Page() {
                 : "Incidents could not be loaded. Resolved reports and completed maintenances from the last 7 days still show up here."}
             </EmptyStateDescription>
             {allResolved.length > 0 ? (
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground mt-2 text-sm"
-                onClick={() => setShowOlder(true)}
-              >
-                Show older
-              </button>
+              <EmptyStateActions>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowOlder(true)}
+                >
+                  Show older
+                </Button>
+              </EmptyStateActions>
             ) : null}
           </EmptyStateContainer>
         )}
