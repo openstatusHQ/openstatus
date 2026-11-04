@@ -21,6 +21,7 @@ import {
   fetchFreezeCounts,
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
+  uptimeFreezePipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -225,8 +226,8 @@ export async function getUptimeHistory(args: {
     return { frozenRows };
   })();
 
-  // current month is never frozen, the previous may not be yet (freeze runs
-  // on the 10th) — both come live from the 45d pipes; fetchFreezeCounts never
+  // current month is never frozen, the previous may not be yet (the freeze
+  // runs early next month) — both come live from the 45d pipes; fetchFreezeCounts never
   // throws, failed monitors land in failedMonitorIds and render as no-data
   const liveReads = (async () => {
     if (monitorIds.length === 0) {
@@ -242,17 +243,9 @@ export async function getUptimeHistory(args: {
       ids.add(String(c.monitorId));
       monitorIdsByJobType.set(c.monitor.jobType, ids);
     }
-    const pipes = args.pipes ?? {
-      http: defaultTb.httpStatus45d,
-      tcp: defaultTb.tcpStatus45d,
-      dns: defaultTb.dnsStatus45d,
-      icmp: defaultTb.icmpStatus45d,
-      grpc: defaultTb.grpcStatus45d,
-      heartbeat: defaultTb.heartbeatStatus45d,
-    };
     return fetchFreezeCounts({
       monitorIdsByJobType,
-      pipes,
+      pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
       throttleMs: 0,
       sleep: args.sleep,
     });

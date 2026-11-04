@@ -1,7 +1,7 @@
 import { getLogger } from "@logtape/logtape";
 import {
-  type UptimeFreezePipes,
   runUptimeFreeze,
+  uptimeFreezePipes,
 } from "@openstatus/services/frozen-uptime";
 import { OSTinybird } from "@openstatus/tinybird";
 import type { Context } from "hono";
@@ -17,14 +17,7 @@ const tb = new OSTinybird({
   noop: env().TINYBIRD_NOOP,
 });
 
-const pipes: UptimeFreezePipes = {
-  http: tb.httpStatus45d,
-  tcp: tb.tcpStatus45d,
-  dns: tb.dnsStatus45d,
-  icmp: tb.icmpStatus45d,
-  grpc: tb.grpcStatus45d,
-  heartbeat: tb.heartbeatStatus45d,
-};
+const pipes = uptimeFreezePipes(tb);
 
 export async function handleUptimeFreezeCron(c: Context) {
   const { cronCompleted, cronFailed } = runSentryCron("uptime-freeze");

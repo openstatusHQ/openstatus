@@ -1,5 +1,10 @@
 import { eq } from "@openstatus/db";
-import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
+import {
+  frozenMonitorUptime,
+  monitor,
+  monitorJobTypes,
+} from "@openstatus/db/src/schema";
+import type { OSTinybird } from "@openstatus/tinybird";
 import { describe, expect, test } from "vitest";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
@@ -10,6 +15,7 @@ import {
   type UptimeFreezePipes,
   fetchFreezeCounts,
   runUptimeFreeze,
+  uptimeFreezePipes,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
@@ -59,6 +65,19 @@ function insertTestMonitor(
     .returning()
     .get();
 }
+
+describe("uptimeFreezePipes", () => {
+  test("covers every monitor job type except udp and ssl", () => {
+    // safe because uptimeFreezePipes only reads pipe getters off the client
+    const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
+    const pipes = uptimeFreezePipes(tb);
+
+    expect(Object.keys(pipes).sort()).toEqual(
+      monitorJobTypes.filter((t) => t !== "udp" && t !== "ssl").sort(),
+    );
+    expect(pipes.heartbeat).toBe("heartbeatStatus45d");
+  });
+});
 
 describe("fetchFreezeCounts", () => {
   test("chunks ids and concatenates rows", async () => {
