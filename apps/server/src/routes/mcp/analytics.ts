@@ -19,7 +19,7 @@ const TOOL_EVENTS: Record<string, (typeof Events)[keyof typeof Events]> = {
   delete_maintenance_update: Events.DeleteMaintenanceUpdate,
 };
 
-/** Fire-and-forget: a successful MCP create is counted like a dashboard one, with `source: "mcp"`. */
+/** Fire-and-forget: a successful mapped MCP write is counted like a dashboard one, with `source: "mcp"`. */
 export function trackToolSuccess(ctx: ServiceContext, toolName: string): void {
   const event = TOOL_EVENTS[toolName];
   if (!event) return;
