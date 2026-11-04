@@ -3,14 +3,23 @@ import type { LoggerInstance } from "@auth/core/types";
 // throws, even if the catalog and next-auth pin different @auth/core versions.
 import { AuthError } from "next-auth";
 
+// Scanner probes Auth.js rejects at the boundary; logging them would create a
+// Sentry issue per attacker-controlled payload via captureConsoleIntegration.
+const boundaryRejectedProbeTypes = new Set([
+  "UnknownAction",
+  "InvalidCallbackUrl",
+]);
+
 /**
- * Auth.js' default logger, minus `UnknownAction`: scanners probing
- * `/api/auth/<anything>` already get a 400, and each probe would otherwise
- * reach Sentry as a new issue via captureConsoleIntegration.
+ * Auth.js' default logger, minus the scanner probes it rejects at the boundary.
  */
 export const logger: Partial<LoggerInstance> = {
   error(error) {
-    if (error instanceof AuthError && error.type === "UnknownAction") return;
+    if (
+      error instanceof AuthError &&
+      boundaryRejectedProbeTypes.has(error.type)
+    )
+      return;
 
     const name = error instanceof AuthError ? error.type : error.name;
     console.error(`[auth][error] ${name}: ${error.message}`);
