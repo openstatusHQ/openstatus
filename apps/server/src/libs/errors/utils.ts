@@ -12,6 +12,8 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";
 
+import { redactHeartbeatToken } from "@/libs/heartbeat/capture";
+
 const logger = getLogger("api-server");
 export class OpenStatusApiError extends HTTPException {
   public readonly code: ErrorCode;
@@ -89,7 +91,7 @@ export function handleError(err: Error, c: Context): Response {
       stack: err.stack,
     },
     method: c.req.method,
-    url: c.req.url,
+    url: redactHeartbeatToken(c.req.url),
   });
   c.get("sentry").captureException(err);
 

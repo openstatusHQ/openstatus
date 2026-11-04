@@ -6,6 +6,7 @@ import { dispose, getLogger } from "@logtape/logtape";
 import { env } from "./env";
 import { app } from "./index";
 import { settleBackgroundTasks } from "./libs/background";
+import { heartbeatBatcher } from "./routes/heartbeat";
 
 const port = 3000;
 
@@ -31,7 +32,8 @@ const server = serve({ fetch: app.fetch, port });
 // Fly sends kill_signal (SIGTERM, see fly.toml) on deploy and stop, then
 // SIGKILLs after kill_timeout. Stop accepting connections, let in-flight
 // requests and the background work they started (Slack acks, see
-// runInBackground) finish, then flush buffered OTLP logs before exiting.
+// runInBackground) finish, send buffered heartbeat pings to Tinybird, then
+// flush buffered OTLP logs before exiting.
 process.once("SIGTERM", () => {
   void (async () => {
     getLogger("api-server").info("SIGTERM received, draining connections");
@@ -39,6 +41,9 @@ process.once("SIGTERM", () => {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       // After the HTTP drain: a request finishing late can still spawn a task.
       await settleBackgroundTasks();
+      // Last: a late ping still lands in the buffer. Bounded by the race below,
+      // which cuts a batch still retrying against a Tinybird outage.
+      await heartbeatBatcher.flush();
     })();
     await Promise.race([drained, sleep(SHUTDOWN_GRACE_MS)]);
     await dispose();

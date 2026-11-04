@@ -6,7 +6,12 @@ import { type ServiceContext, withTransaction } from "../context";
 import { InternalServiceError } from "../errors";
 import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
-import { assertSchedulingWithinPlan, getMonitorInWorkspace } from "./internal";
+import {
+  assertSchedulingWithinPlan,
+  generateHeartbeatToken,
+  getMonitorInWorkspace,
+  monitorAuditSnapshot,
+} from "./internal";
 import { CloneMonitorInput } from "./schemas";
 
 /**
@@ -35,10 +40,12 @@ export async function cloneMonitor(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    assertSchedulingWithinPlan(ctx.workspace.limits, {
-      periodicity: source.periodicity,
-      regions: source.regions.split(",").filter(Boolean),
-    });
+    if (source.jobType !== "heartbeat") {
+      assertSchedulingWithinPlan(ctx.workspace.limits, {
+        periodicity: source.periodicity,
+        regions: source.regions.split(",").filter(Boolean),
+      });
+    }
 
     const { id: _id, status: _status, ...rest } = source;
     const row = await tx
@@ -49,6 +56,7 @@ export async function cloneMonitor(args: {
         // monitor hasn't been checked yet; let the next check settle it.
         status: "active",
         name: `${source.name} (Copy)`,
+        heartbeatToken: source.heartbeatToken ? generateHeartbeatToken() : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -62,7 +70,7 @@ export async function cloneMonitor(args: {
       action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
-      after: row,
+      after: await monitorAuditSnapshot(row),
       metadata: { clonedFromMonitorId: source.id },
     });
 

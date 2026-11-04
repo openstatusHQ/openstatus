@@ -946,6 +946,7 @@ export const statusPageRouter = createTRPCRouter({
           timeZone,
           privateLocationOnly:
             c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
+          heartbeat: c.monitor?.jobType === "heartbeat",
         });
 
         return {
@@ -1150,7 +1151,9 @@ export const statusPageRouter = createTRPCRouter({
       // Slow/erroring Tinybird → empty latency data so the page still renders.
       const metrics = await withTinybirdFallback(() =>
         fetchByJobType(publicMonitors, (type) =>
-          getMetricsLatencyMultiProcedure("1d", type),
+          type === "heartbeat"
+            ? null
+            : getMetricsLatencyMultiProcedure("1d", type),
         ),
       );
       const metricsDataByMonitorId = metrics.data ?? new Map<string, never[]>();

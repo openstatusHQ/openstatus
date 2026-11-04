@@ -73,9 +73,13 @@ func NewServer() (*http.Server, func(context.Context)) {
 
 	// Declare Server config
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", newServer.port),
-		Handler:      newServer.RegisterRoutes(),
-		IdleTimeout:  time.Minute,
+		Addr:    fmt.Sprintf(":%d", newServer.port),
+		Handler: newServer.RegisterRoutes(),
+		// Probes send results about once a minute and keep idle connections
+		// for 90s (the Go default). The server must keep them longer, or a probe
+		// can send on a connection that the server closes at the same moment and
+		// lose the result with "unexpected EOF".
+		IdleTimeout:  2 * time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: writeTimeout,
 	}

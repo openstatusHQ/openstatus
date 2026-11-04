@@ -8,6 +8,7 @@ export const jobTypes = [
   "udp",
   "dns",
   "ssl",
+  "heartbeat",
 ] as const;
 export const jobTypeEnum = z.enum(jobTypes);
 export type JobType = z.infer<typeof jobTypeEnum>;

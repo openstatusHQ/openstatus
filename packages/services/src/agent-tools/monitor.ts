@@ -1,5 +1,6 @@
+import { db as defaultDb } from "@openstatus/db";
 import { monitorStatusSchema } from "@openstatus/db/src/schema";
-import { headerPairSchema } from "@openstatus/utils";
+import { HEARTBEAT_REGION, headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
 import { assertCreateBudget } from "../auth";
@@ -13,6 +14,7 @@ import {
   getMonitorStatus,
   getMonitorSummary,
   getResponseLog,
+  listHeartbeatPings,
   listMonitors,
   listResponseLogsInfinite,
   monitorAssertionSchema,
@@ -24,6 +26,7 @@ import {
   updateMonitorNotifiers,
   updateMonitorTags,
 } from "../monitor";
+import { getMonitorInWorkspace } from "../monitor/internal";
 import type { AgentTool } from "./types";
 import { dashboardUrl } from "./urls";
 
@@ -384,7 +387,7 @@ export const listResponseLogsTool: AgentTool<
 > = {
   name: "list_response_logs",
   description:
-    "Check results for a monitor, newest first (per-region, with status code, latency, and request status). Use to diagnose 'what's failing?'. Filter with `status: [\"error\"]` to find failures directly, and narrow `from`/`to` to the minutes around a known incident time instead of paging. Pair with get_response_log for the full detail of a specific check.",
+    "Check results for a monitor, newest first (per-region, with status code, latency, and request status). Use to diagnose 'what's failing?'. Filter with `status: [\"error\"]` to find failures directly, and narrow `from`/`to` to the minutes around a known incident time instead of paging. Pair with get_response_log for the full detail of a specific check. For heartbeat monitors, returns the times pings were received; a ping the job sent to its /fail URL has request status error.",
   scope: "monitors:read",
   destructive: false,
   inputSchema: ListResponseLogsInputShape,
@@ -394,6 +397,56 @@ export const listResponseLogsTool: AgentTool<
     const window = input.from
       ? { from: Date.parse(input.from), to }
       : agentTimeRangeToTimestampWindow(input.timeRange, to);
+
+    const target = await getMonitorInWorkspace({
+      tx: ctx.db ?? defaultDb,
+      id: input.monitorId,
+      workspaceId: ctx.workspace.id,
+    });
+    if (target.jobType === "heartbeat") {
+      // a ping lands in the `heartbeat` region as a `success`, or an `error` for /fail
+      const wanted = input.status && new Set(input.status);
+      if (
+        (wanted && !wanted.has("success") && !wanted.has("error")) ||
+        (input.regions && !input.regions.includes(HEARTBEAT_REGION))
+      ) {
+        return { logs: [], limit: input.limit, hasMore: false };
+      }
+      // timestamps only: ping ip, headers and body stay in the dashboard
+      const pings = await listHeartbeatPings({
+        ctx,
+        input: {
+          monitorId: input.monitorId,
+          fromTimestamp: window.from,
+          toTimestamp: window.to,
+          cursor: input.cursor,
+          limit: input.limit,
+        },
+      });
+      const logs = pings.data.map((ping) => ({
+        id: ping.id,
+        monitorId: String(input.monitorId),
+        region: HEARTBEAT_REGION,
+        requestStatus:
+          ping.kind === "fail" ? ("error" as const) : ("success" as const),
+        trigger: null,
+        statusCode: null,
+        latency: 0,
+        cronTimestamp: ping.timestamp,
+        timestamp: ping.timestamp,
+        timing: null,
+      }));
+      return {
+        // filtered after the page is read, so the cursor still walks every ping
+        logs: wanted
+          ? logs.filter((log) => wanted.has(log.requestStatus))
+          : logs,
+        limit: input.limit,
+        hasMore: pings.nextCursor !== null,
+        nextCursor: pings.nextCursor ?? undefined,
+      };
+    }
+
     const result = await listResponseLogsInfinite({
       ctx,
       input: {

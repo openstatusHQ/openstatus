@@ -11,8 +11,10 @@ export {
   type ChunkFailure,
   type RunUptimeFreezeResult,
   type StatusPipeFn,
+  type UptimeFreezeJobType,
   type UptimeFreezePipes,
   fetchFreezeCounts,
   runUptimeFreeze,
+  uptimeFreezePipes,
 } from "./run";
 export { FreezeMonitorMonthInput } from "./schemas";

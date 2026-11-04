@@ -14,6 +14,7 @@ import {
   type Event,
   floorPct,
   getEvents,
+  heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
   requestsTally,
 } from "../status-timeline";
@@ -22,6 +23,7 @@ import {
   fetchFreezeCounts,
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
+  uptimeFreezePipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -140,6 +142,29 @@ function eventOnlyMonth(
   return { percentage: floorPct(up / total), up, total };
 }
 
+// heartbeat months span from the first signal, not just days with pings: a
+// silent day is exactly when a heartbeat is down
+function heartbeatMonth(
+  events: Event[],
+  key: string,
+  nowMs: number,
+  coverageStartMs: number | null,
+  reportsOnly: boolean,
+): MonthValue {
+  if (coverageStartMs === null) return null;
+  const { start, end } = monthRange(`${key}-01`);
+  const from = Math.max(start, coverageStartMs);
+  const to = Math.min(end, nowMs);
+  if (to <= from) return null;
+  const window = { start: from, end: to, now: nowMs };
+  const downtime = reportsOnly
+    ? reportsOnlyDowntimeMs(events, window)
+    : durationDowntimeMs(events, window);
+  const total = to - from;
+  const up = Math.max(0, total - downtime);
+  return { percentage: floorPct(up / total), up, total };
+}
+
 /**
  * Read-time uptime history for a page: frozen monthly counts + live Tinybird
  * for months the freeze hasn't covered, percentages recomputed under the
@@ -227,8 +252,8 @@ export async function getUptimeHistory(args: {
     return { frozenRows };
   })();
 
-  // current month is never frozen, the previous may not be yet (freeze runs
-  // on the 10th) — both come live from the 45d pipes; fetchFreezeCounts never
+  // current month is never frozen, the previous may not be yet (the freeze
+  // runs early next month) — both come live from the 45d pipes; fetchFreezeCounts never
   // throws, failed monitors land in failedMonitorIds and render as no-data
   const liveReads = (async () => {
     if (monitorIds.length === 0) {
@@ -244,16 +269,9 @@ export async function getUptimeHistory(args: {
       ids.add(String(c.monitorId));
       monitorIdsByJobType.set(c.monitor.jobType, ids);
     }
-    const pipes = args.pipes ?? {
-      http: defaultTb.httpStatus45d,
-      tcp: defaultTb.tcpStatus45d,
-      dns: defaultTb.dnsStatus45d,
-      icmp: defaultTb.icmpStatus45d,
-      grpc: defaultTb.grpcStatus45d,
-    };
     return fetchFreezeCounts({
       monitorIdsByJobType,
-      pipes,
+      pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
       throttleMs: 0,
       sleep: args.sleep,
     });
@@ -306,10 +324,30 @@ export async function getUptimeHistory(args: {
       pastDays,
     });
 
+    const heartbeatId =
+      c.type === "monitor" && c.monitor?.jobType === "heartbeat"
+        ? c.monitorId
+        : null;
+    const heartbeatStart =
+      heartbeatId !== null
+        ? heartbeatCoverageStart(
+            months.flatMap((key) => countsFor(heartbeatId, key) ?? []),
+            events,
+          )
+        : null;
+
     const values = new Map<string, MonthValue>();
     for (const key of months) {
       let value: MonthValue = null;
-      if (c.type === "monitor" && c.monitorId !== null) {
+      if (heartbeatId !== null) {
+        value = heartbeatMonth(
+          events,
+          key,
+          nowMs,
+          heartbeatStart,
+          mode === "manual",
+        );
+      } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
         if (mode === "requests") {
           value = requestsMonth(days);

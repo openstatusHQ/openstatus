@@ -3,6 +3,7 @@
 import { deserialize } from "@openstatus/assertions";
 import { Logs } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
+import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 
@@ -24,6 +25,7 @@ export function Sidebar() {
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
   const type = monitorTypes.find((type) => type.id === monitor.jobType);
+  const isHeartbeat = monitor.jobType === "heartbeat";
 
   return (
     <SidebarRight
@@ -65,34 +67,40 @@ export function Sidebar() {
               ),
             },
             {
-              label: "Endpoint",
-              value: monitor.url.replace(/^https?:\/\//, ""),
+              label: isHeartbeat ? "Schedule" : "Endpoint",
+              value: isHeartbeat
+                ? heartbeatExpectation(monitor)
+                : monitor.url.replace(/^https?:\/\//, ""),
             },
-            {
-              label: "Regions",
-              value: (() => {
-                const allRegions = [
-                  ...monitor.regions,
-                  ...(monitor.privateLocations?.map((location) =>
-                    location.id.toString(),
-                  ) ?? []),
-                ];
-                // Sort regions: numeric sort for private location IDs, alphabetic for region codes
-                const sortedRegions = allRegions.sort((a, b) => {
-                  const aNum = Number(a);
-                  const bNum = Number(b);
-                  // If both are numeric, sort numerically
-                  if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return aNum - bNum;
-                  }
-                  // Otherwise, sort alphabetically
-                  return a.localeCompare(b);
-                });
-                return sortedRegions.length > 6
-                  ? `${sortedRegions.length} regions`
-                  : sortedRegions.join(", ");
-              })(),
-            },
+            ...(isHeartbeat
+              ? []
+              : [
+                  {
+                    label: "Regions",
+                    value: (() => {
+                      const allRegions = [
+                        ...monitor.regions,
+                        ...(monitor.privateLocations?.map((location) =>
+                          location.id.toString(),
+                        ) ?? []),
+                      ];
+                      // Sort regions: numeric sort for private location IDs, alphabetic for region codes
+                      const sortedRegions = allRegions.sort((a, b) => {
+                        const aNum = Number(a);
+                        const bNum = Number(b);
+                        // If both are numeric, sort numerically
+                        if (!isNaN(aNum) && !isNaN(bNum)) {
+                          return aNum - bNum;
+                        }
+                        // Otherwise, sort alphabetically
+                        return a.localeCompare(b);
+                      });
+                      return sortedRegions.length > 6
+                        ? `${sortedRegions.length} regions`
+                        : sortedRegions.join(", ");
+                    })(),
+                  },
+                ]),
             {
               label: "Tags",
               value: (
@@ -117,19 +125,24 @@ export function Sidebar() {
         },
         {
           label: "Configuration",
-          items: [
-            { label: "Periodicity", value: monitor.periodicity },
-            {
-              label: "Timeout",
-              value: formatMilliseconds(monitor.timeout),
-            },
-            { label: "Public", value: String(monitor.public) },
-            { label: "Active", value: String(monitor.active) },
-            {
-              label: "Follow redirects",
-              value: String(monitor.followRedirects),
-            },
-          ],
+          items: isHeartbeat
+            ? [
+                { label: "Public", value: String(monitor.public) },
+                { label: "Active", value: String(monitor.active) },
+              ]
+            : [
+                { label: "Periodicity", value: monitor.periodicity },
+                {
+                  label: "Timeout",
+                  value: formatMilliseconds(monitor.timeout),
+                },
+                { label: "Public", value: String(monitor.public) },
+                { label: "Active", value: String(monitor.active) },
+                {
+                  label: "Follow redirects",
+                  value: String(monitor.followRedirects),
+                },
+              ],
         },
         {
           label: "Notifications",

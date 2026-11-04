@@ -13,6 +13,7 @@ import (
 	"net/http/httptrace"
 	"net/url"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -31,6 +32,46 @@ type Timing struct {
 	FirstByteDone     int64 `json:"firstByteDone"`
 	TransferStart     int64 `json:"transferStart"`
 	TransferDone      int64 `json:"transferDone"`
+}
+
+// clearIncompletePhases zeroes any phase whose start or done hook never
+// fired (e.g. a timeout before the first byte). Downstream computes
+// done - start, so a lone epoch timestamp would yield a huge negative duration.
+func (t *Timing) clearIncompletePhases() {
+	for _, phase := range [][2]*int64{
+		{&t.DnsStart, &t.DnsDone},
+		{&t.ConnectStart, &t.ConnectDone},
+		{&t.TlsHandshakeStart, &t.TlsHandshakeDone},
+		{&t.FirstByteStart, &t.FirstByteDone},
+		{&t.TransferStart, &t.TransferDone},
+	} {
+		if *phase[0] == 0 || *phase[1] == 0 {
+			*phase[0], *phase[1] = 0, 0
+		}
+	}
+}
+
+// httpTimer guards the phase struct: net/http can still run ConnectDone or
+// TLSHandshakeDone on its dial goroutine after client.Do has timed out.
+type httpTimer struct {
+	mu     sync.Mutex
+	timing Timing
+}
+
+func (h *httpTimer) set(apply func(t *Timing)) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	apply(&h.timing)
+}
+
+// snapshot returns a copy with incomplete phases cleared, so a hook firing
+// after it cannot put a lone timestamp back into the response.
+func (h *httpTimer) snapshot() Timing {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	timing := h.timing
+	timing.clearIncompletePhases()
+	return timing
 }
 
 type Response struct {
@@ -191,21 +232,26 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	timing := Timing{}
+	timer := &httpTimer{}
+	now := func() int64 { return time.Now().UTC().UnixMilli() }
 
 	trace := &httptrace.ClientTrace{
-		DNSStart:          func(_ httptrace.DNSStartInfo) { timing.DnsStart = time.Now().UTC().UnixMilli() },
-		DNSDone:           func(_ httptrace.DNSDoneInfo) { timing.DnsDone = time.Now().UTC().UnixMilli() },
-		ConnectStart:      func(_, _ string) { timing.ConnectStart = time.Now().UTC().UnixMilli() },
-		ConnectDone:       func(_, _ string, _ error) { timing.ConnectDone = time.Now().UTC().UnixMilli() },
-		TLSHandshakeStart: func() { timing.TlsHandshakeStart = time.Now().UTC().UnixMilli() },
-		TLSHandshakeDone:  func(_ tls.ConnectionState, _ error) { timing.TlsHandshakeDone = time.Now().UTC().UnixMilli() },
+		DNSStart:          func(_ httptrace.DNSStartInfo) { timer.set(func(t *Timing) { t.DnsStart = now() }) },
+		DNSDone:           func(_ httptrace.DNSDoneInfo) { timer.set(func(t *Timing) { t.DnsDone = now() }) },
+		ConnectStart:      func(_, _ string) { timer.set(func(t *Timing) { t.ConnectStart = now() }) },
+		ConnectDone:       func(_, _ string, _ error) { timer.set(func(t *Timing) { t.ConnectDone = now() }) },
+		TLSHandshakeStart: func() { timer.set(func(t *Timing) { t.TlsHandshakeStart = now() }) },
+		TLSHandshakeDone: func(_ tls.ConnectionState, _ error) {
+			timer.set(func(t *Timing) { t.TlsHandshakeDone = now() })
+		},
 		GotConn: func(_ httptrace.GotConnInfo) {
-			timing.FirstByteStart = time.Now().UTC().UnixMilli()
+			timer.set(func(t *Timing) { t.FirstByteStart = now() })
 		},
 		GotFirstResponseByte: func() {
-			timing.FirstByteDone = time.Now().UTC().UnixMilli()
-			timing.TransferStart = time.Now().UTC().UnixMilli()
+			timer.set(func(t *Timing) {
+				t.FirstByteDone = now()
+				t.TransferStart = now()
+			})
 		},
 	}
 
@@ -218,6 +264,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 
 	if err != nil {
 		errorMsg := httpErrorMessage(err, latency)
+		timing := timer.snapshot()
 
 		// A failing customer endpoint is expected, not a checker error.
 		logger.Warn().Err(err).Msg("error while pinging")
@@ -240,7 +287,8 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	// otherwise OOM these 512 MB machines (fleet-wide exit 137 waves).
 	body, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBodyBytes))
 
-	timing.TransferDone = time.Now().UTC().UnixMilli()
+	timer.set(func(t *Timing) { t.TransferDone = now() })
+	timing := timer.snapshot()
 
 	if err != nil {
 		return Response{

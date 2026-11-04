@@ -238,9 +238,14 @@ export const MonitorSchema = z
     followRedirects: z.boolean().prefault(true).openapi({
       description: "If the monitor should follow redirects",
     }),
-    jobType: z.enum(monitorJobTypes).prefault("http").openapi({
-      description: "The type of the monitor",
-    }),
+    // heartbeats are hidden from v1, which cannot represent them
+    jobType: z
+      .enum(monitorJobTypes)
+      .exclude(["heartbeat"])
+      .prefault("http")
+      .openapi({
+        description: "The type of the monitor",
+      }),
     openTelemetry: z
       .object({
         endpoint: z.url().prefault("http://localhost:4317").openapi({
