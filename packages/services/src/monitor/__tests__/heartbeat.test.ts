@@ -25,6 +25,7 @@ import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
 import {
   getHeartbeatState,
+  recordHeartbeatPing,
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,
 } from "../heartbeat";
@@ -450,6 +451,46 @@ describe("getHeartbeatState", () => {
         lastPingKind: null,
         nextDueAt: null,
       });
+    });
+  });
+});
+
+describe("recordHeartbeatPing", () => {
+  test("a fail moves the deadline and a later ping clears it", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const token = row.heartbeatToken ?? "";
+      const failedAt = new Date("2026-01-01T00:00:00.000Z");
+      const pingedAt = new Date("2026-01-01T01:00:00.000Z");
+
+      await recordHeartbeatPing({ token, at: failedAt, kind: "fail", db: tx });
+      let state = await readState(tx, row.id);
+      expect(state?.lastPingKind).toBe("fail");
+      expect(state?.nextDueAt?.getTime()).toBe(
+        failedAt.getTime() + (HOUR + FIVE_MIN) * 1000,
+      );
+
+      await recordHeartbeatPing({ token, at: pingedAt, db: tx });
+      state = await readState(tx, row.id);
+      expect(state?.lastPingKind).toBe("success");
+    });
+  });
+
+  test("an older ping landing late does not move the deadline back", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const token = row.heartbeatToken ?? "";
+      const newer = new Date("2026-01-01T00:01:00.000Z");
+      const older = new Date("2026-01-01T00:00:00.000Z");
+
+      await recordHeartbeatPing({ token, at: newer, db: tx });
+      await recordHeartbeatPing({ token, at: older, db: tx });
+
+      const state = await readState(tx, row.id);
+      expect(state?.lastPingAt?.getTime()).toBe(newer.getTime());
+      expect(state?.nextDueAt?.getTime()).toBe(
+        newer.getTime() + (HOUR + FIVE_MIN) * 1000,
+      );
     });
   });
 });
