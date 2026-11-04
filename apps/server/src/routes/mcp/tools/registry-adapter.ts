@@ -12,6 +12,7 @@ import { ZodObject, type ZodRawShape, type ZodType } from "zod";
 
 import { runTool } from "../adapter";
 import { trackToolSuccess } from "../analytics";
+import { assertCreateBudget } from "../create-budget";
 import { registerScopedTool } from "./register-scoped";
 
 /**
@@ -56,10 +57,9 @@ export function registerRegistryTool(
     async (input: unknown) =>
       runTool(
         async () => {
-          const value = await tool.run({
-            ctx,
-            input: tool.inputSchema.parse(input),
-          });
+          const parsed = tool.inputSchema.parse(input);
+          await assertCreateBudget(ctx, tool.name);
+          const value = await tool.run({ ctx, input: parsed });
           trackToolSuccess(ctx, tool.name);
           return value;
         },

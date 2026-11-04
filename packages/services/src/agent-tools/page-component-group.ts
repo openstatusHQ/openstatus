@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { assertCreateBudget } from "../auth";
 import {
   createPageComponentGroup,
   updatePageComponentGroup,
@@ -55,7 +54,6 @@ export const createComponentGroupTool: AgentTool<
     verb: "created",
   },
   async run({ ctx, input }) {
-    await assertCreateBudget(ctx);
     const created = await createPageComponentGroup({
       ctx,
       input: {

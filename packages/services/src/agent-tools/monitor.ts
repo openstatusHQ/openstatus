@@ -3,7 +3,6 @@ import { monitorStatusSchema } from "@openstatus/db/src/schema";
 import { HEARTBEAT_REGION, headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
-import { assertCreateBudget } from "../auth";
 import { withTransaction } from "../context";
 import { ValidationError } from "../errors";
 import {
@@ -711,7 +710,6 @@ export const createMonitorTool: AgentTool<
   },
   async run({ ctx, input }) {
     assertAssertionsMatchJobType(input.jobType, input.assertions);
-    await assertCreateBudget(ctx);
     const m = await createMonitor({
       ctx,
       input: {

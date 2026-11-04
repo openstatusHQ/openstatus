@@ -76,6 +76,15 @@ function slice(list: string[], start: number, stop: number): string[] {
 
 export const redis = client;
 
+// Same counts as the real Lua script; expiry is ignored like `set`'s `ex`.
+export function incrWithTtl(
+  _client: unknown,
+  keys: string[],
+  _windowSeconds: number,
+) {
+  return Promise.all(keys.map(client.incr));
+}
+
 export const Redis = {
   fromEnv() {
     return client;

@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { db, eq } from "@openstatus/db";
 import {
-  auditLog,
   monitor,
   monitorTag,
   notification,
@@ -1159,28 +1158,32 @@ describe("create_monitor", () => {
   });
 });
 
+const testRedisStore = (globalThis as Record<string, unknown>)
+  .__testRedisStore as Map<string, string>;
+
 describe("create budget", () => {
   test("stops the 31st create of the hour for one key", async () => {
-    await withTestTransaction(async (tx) => {
-      await tx.insert(auditLog).values(
-        Array.from({ length: 30 }, (_, i) => ({
-          workspaceId: teamWorkspace.id,
-          actorType: "mcp",
-          actorId: "test-key",
-          action: "monitor.create",
-          entityType: "monitor",
-          entityId: String(i + 1),
-        })),
-      );
-      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
-      const tools = registered("page", ctx);
-      const result = await callTool(tools, "create_status_page", {
-        title: "over budget",
-        slug: `${TEST_PREFIX}-budget-${Date.now()}`,
+    testRedisStore.set(
+      `ratelimit:mcp-create:${teamWorkspace.id}:test-key`,
+      "30",
+    );
+    try {
+      await withTestTransaction(async (tx) => {
+        const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+        const result = await callTool(
+          registered("page", ctx),
+          "create_status_page",
+          {
+            title: "over budget",
+            slug: `${TEST_PREFIX}-budget-${Date.now()}`,
+          },
+        );
+        expect(result.isError).toBe(true);
+        expect(JSON.stringify(result.content)).toContain("30");
       });
-      expect(result.isError).toBe(true);
-      expect(JSON.stringify(result.content)).toContain("30");
-    });
+    } finally {
+      testRedisStore.clear();
+    }
   });
 });
 

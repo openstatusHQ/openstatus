@@ -1,7 +1,6 @@
 import { slugSchema } from "@openstatus/db/src/schema/pages/validation";
 import { z } from "zod";
 
-import { assertCreateBudget } from "../auth";
 import { withTransaction } from "../context";
 import {
   getPage,
@@ -103,7 +102,6 @@ export const createStatusPageTool: AgentTool<
     verb: "created",
   },
   async run({ ctx, input }) {
-    await assertCreateBudget(ctx);
     const page = await newPage({
       ctx,
       input: {

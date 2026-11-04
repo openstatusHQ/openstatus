@@ -1,7 +1,6 @@
 import { pageComponentTypes } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import { assertCreateBudget } from "../auth";
 import { withTransaction } from "../context";
 import {
   type PageComponentWithRelations,
@@ -137,7 +136,6 @@ export const addPageComponentTool: AgentTool<
     verb: "added",
   },
   async run({ ctx, input }) {
-    await assertCreateBudget(ctx);
     const created = await createPageComponent({
       ctx,
       input: {
