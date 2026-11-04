@@ -60,6 +60,30 @@ export function floorPct(ratio: number): number {
   return Math.floor(ratio * 100_000 + 1e-8) / 1_000;
 }
 
+/**
+ * When a heartbeat started being tracked: the start of its first day with a
+ * ping (counts are daily) or its first incident, whichever is earlier. A missed
+ * ping writes no row, so heartbeat uptime is incident time over this span.
+ */
+export function heartbeatCoverageStart(
+  days: Array<CheckCounts & { day: string }>,
+  events: Event[],
+  timeZone = "UTC",
+): number | null {
+  let start: number | null = null;
+  for (const d of days) {
+    if (d.ok + d.degraded + d.error === 0) continue;
+    const dayStart = dayWindow(d.day, timeZone).start;
+    if (start === null || dayStart < start) start = dayStart;
+  }
+  for (const e of events) {
+    if (e.type !== "incident") continue;
+    const from = e.from.getTime();
+    if (start === null || from < start) start = from;
+  }
+  return start;
+}
+
 export function requestsTally(counts: CheckCounts[]): {
   up: number;
   total: number;

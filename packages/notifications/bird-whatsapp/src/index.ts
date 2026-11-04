@@ -1,5 +1,8 @@
 import { whatsappDataSchema } from "@openstatus/db/src/schema";
-import type { NotificationContext } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
 
 import { env } from "./env";
 
@@ -75,7 +78,11 @@ export const sendAlert = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  await sendMessage(notificationData.whatsapp, monitor.url, TEMPLATES.alert);
+  await sendMessage(
+    notificationData.whatsapp,
+    monitorTarget(monitor),
+    TEMPLATES.alert,
+  );
 };
 
 export const sendRecovery = async ({
@@ -85,7 +92,11 @@ export const sendRecovery = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  await sendMessage(notificationData.whatsapp, monitor.url, TEMPLATES.recovery);
+  await sendMessage(
+    notificationData.whatsapp,
+    monitorTarget(monitor),
+    TEMPLATES.recovery,
+  );
 };
 
 export const sendDegraded = async ({
@@ -95,7 +106,11 @@ export const sendDegraded = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  await sendMessage(notificationData.whatsapp, monitor.url, TEMPLATES.degraded);
+  await sendMessage(
+    notificationData.whatsapp,
+    monitorTarget(monitor),
+    TEMPLATES.degraded,
+  );
 };
 
 export const sendTest = async ({ phoneNumber }: { phoneNumber: string }) => {

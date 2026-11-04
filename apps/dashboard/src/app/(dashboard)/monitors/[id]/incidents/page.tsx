@@ -1,6 +1,7 @@
 "use client";
 
 import { Success } from "@openstatus/icons";
+import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
@@ -98,6 +99,8 @@ export default function Page() {
                 <a href={monitor.url} target="_blank" rel="noopener noreferrer">
                   {monitor.url}
                 </a>
+              ) : monitor.jobType === "heartbeat" ? (
+                `Heartbeat · ${heartbeatExpectation(monitor)}`
               ) : (
                 monitor.url
               )}

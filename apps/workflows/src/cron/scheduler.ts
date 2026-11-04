@@ -1,7 +1,9 @@
 import { getLogger } from "@logtape/logtape";
 import * as Sentry from "@sentry/node";
-import { Effect, Fiber, Schedule } from "effect";
+import { Cause, Effect, Fiber, Schedule } from "effect";
 
+import { runSentryCron } from "../lib/sentry";
+import { handleHeartbeatSweepCron } from "./heartbeat-sweep";
 import { runIncidentRemindersTick } from "./incident-reminders";
 import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
@@ -13,6 +15,16 @@ type ScheduledTask = {
   name: string;
   expression: string;
   run: () => Promise<unknown>;
+  /**
+   * Abandons a hung run so the next tick still starts. The run's promise keeps
+   * going detached, so the task must tolerate overlapping with itself.
+   */
+  timeoutMs?: number;
+  /**
+   * Reports each run as a Sentry cron check-in under the task name, so a task
+   * that stops running on every machine raises a missed check-in.
+   */
+  checkIn?: boolean;
 };
 
 /**
@@ -27,6 +39,14 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     name: "outbox-drain",
     expression: "* * * * *",
     run: handleOutboxDrainCron,
+  },
+  {
+    name: "heartbeat-sweep",
+    expression: "* * * * *",
+    run: () => handleHeartbeatSweepCron(),
+    // A stalled sweep means heartbeat monitors silently stop alerting.
+    timeoutMs: 50_000,
+    checkIn: true,
   },
   {
     name: "status-drift",
@@ -67,22 +87,54 @@ function track(task: ScheduledTask): Promise<unknown> {
   return promise;
 }
 
+function startCheckIn(task: ScheduledTask) {
+  if (!task.checkIn) return undefined;
+  return runSentryCron(task.name, {
+    schedule: { type: "crontab", value: task.expression },
+    checkinMargin: 2,
+    maxRuntime: Math.max(1, Math.ceil((task.timeoutMs ?? 60_000) / 60_000)),
+  });
+}
+
 function scheduleTask(task: ScheduledTask): RunningTask {
-  const body = Effect.tryPromise({
+  const attempt = Effect.tryPromise({
     try: () => track(task),
     catch: (error) =>
       error instanceof Error ? error : new Error(String(error)),
-  }).pipe(
-    Effect.catch((error) =>
-      Effect.sync(() => {
-        logger.error("Scheduled task failed", {
-          task: task.name,
-          error_message: error.message,
-        });
-        Sentry.captureException(error);
-      }),
-    ),
-  );
+  });
+
+  const bounded =
+    task.timeoutMs === undefined
+      ? attempt
+      : attempt.pipe(
+          Effect.timeout(task.timeoutMs),
+          Effect.mapError((error) =>
+            Cause.isTimeoutError(error)
+              ? new Error(`Timed out after ${task.timeoutMs}ms`)
+              : error,
+          ),
+        );
+
+  const body = Effect.suspend(() => {
+    const checkIn = startCheckIn(task);
+    return bounded.pipe(
+      Effect.tap(() =>
+        Effect.promise(async () => {
+          await checkIn?.cronCompleted();
+        }),
+      ),
+      Effect.catch((error) =>
+        Effect.promise(async () => {
+          logger.error("Scheduled task failed", {
+            task: task.name,
+            error_message: error.message,
+          });
+          Sentry.captureException(error);
+          await checkIn?.cronFailed();
+        }),
+      ),
+    );
+  });
 
   return Effect.runFork(
     Effect.repeat(body, Schedule.cron(task.expression)).pipe(

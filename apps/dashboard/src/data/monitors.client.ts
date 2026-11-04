@@ -8,6 +8,7 @@ import {
   Network,
   Pause,
   Play,
+  Schedule,
   Speed,
   Server,
   Terminal,
@@ -39,6 +40,11 @@ export const monitorTypes = [
     id: "grpc",
     label: "gRPC",
     icon: Api,
+  },
+  {
+    id: "heartbeat",
+    label: "Heartbeat",
+    icon: Schedule,
   },
 ] as const;
 

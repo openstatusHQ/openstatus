@@ -30,3 +30,4 @@ export * from "./monitor_transition";
 export * from "./oauth";
 export * from "./incidents";
 export * from "./slack_users";
+export * from "./monitor_heartbeat_state";

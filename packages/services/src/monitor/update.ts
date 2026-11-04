@@ -4,11 +4,15 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { ValidationError } from "../errors";
 import type { Monitor } from "../types";
+import { heartbeatConfigChanged, syncHeartbeatDeadline } from "./heartbeat";
 import {
+  assertHeartbeatNotPublic,
   assertSchedulingWithinPlan,
   getMonitorInWorkspace,
   headersToDbJson,
+  monitorAuditSnapshot,
   serialiseAssertions,
 } from "./internal";
 import {
@@ -47,6 +51,26 @@ export async function updateMonitorConfig(args: {
       // `jobType` is absent from this patch, so the stored type decides.
       assertMonitorUrlSafe({ jobType: existing.jobType, url: input.url });
     }
+    const touchesHeartbeat =
+      input.heartbeatPeriod !== undefined || input.heartbeatGrace !== undefined;
+    if (touchesHeartbeat && existing.jobType !== "heartbeat") {
+      throw new ValidationError(
+        `Monitor ${existing.id} is not a heartbeat monitor`,
+      );
+    }
+    // Same invariants as create: a heartbeat has no target and no schedule,
+    // which keeps it out of every checker cron.
+    if (
+      existing.jobType === "heartbeat" &&
+      ((input.url !== undefined && input.url !== "") ||
+        (input.periodicity !== undefined && input.periodicity !== "other") ||
+        (input.regions !== undefined && input.regions.length > 0))
+    ) {
+      throw new ValidationError(
+        "Heartbeat monitors cannot have a URL, periodicity or regions",
+      );
+    }
+    assertHeartbeatNotPublic(existing, input.public);
 
     const values: Record<string, unknown> = { updatedAt: new Date() };
     if (input.name !== undefined) values.name = input.name;
@@ -80,6 +104,12 @@ export async function updateMonitorConfig(args: {
     if (input.otelHeaders !== undefined) {
       values.otelHeaders = headersToDbJson(input.otelHeaders);
     }
+    if (input.heartbeatPeriod !== undefined) {
+      values.heartbeatPeriod = input.heartbeatPeriod;
+    }
+    if (input.heartbeatGrace !== undefined) {
+      values.heartbeatGrace = input.heartbeatGrace;
+    }
 
     const updated = await tx
       .update(monitor)
@@ -88,12 +118,18 @@ export async function updateMonitorConfig(args: {
       .returning()
       .get();
 
+    if (!existing.active && updated.active) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+    } else if (heartbeatConfigChanged(existing, updated)) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
+    }
+
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);
@@ -121,13 +157,21 @@ export async function updateMonitorGeneral(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    if (
+      (existing.jobType === "heartbeat") !==
+      (input.jobType === "heartbeat")
+    ) {
+      throw new ValidationError(
+        "A monitor cannot be switched to or from the heartbeat type",
+      );
+    }
 
     const updated = await tx
       .update(monitor)
       .set({
         name: input.name,
         jobType: input.jobType,
-        url: input.url,
+        url: input.jobType === "heartbeat" ? "" : input.url,
         method: input.method,
         headers: headersToDbJson(input.headers),
         body: input.body,
@@ -143,12 +187,16 @@ export async function updateMonitorGeneral(args: {
       .returning()
       .get();
 
+    if (!existing.active && updated.active) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+    }
+
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);
@@ -178,8 +226,8 @@ export async function updateMonitorRetry(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -207,8 +255,8 @@ export async function updateMonitorFollowRedirects(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -240,8 +288,8 @@ export async function updateMonitorOtel(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -259,6 +307,7 @@ export async function updateMonitorPublic(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    assertHeartbeatNotPublic(existing, input.public);
     const updated = await tx
       .update(monitor)
       .set({ public: input.public, updatedAt: new Date() })
@@ -269,8 +318,8 @@ export async function updateMonitorPublic(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -302,8 +351,8 @@ export async function updateMonitorResponseTime(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -339,6 +388,7 @@ export async function bulkUpdateMonitors(args: {
       )
       .all();
     if (existingRows.length === 0) return;
+    for (const row of existingRows) assertHeartbeatNotPublic(row, input.public);
 
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (input.public !== undefined) set.public = input.public;
@@ -371,12 +421,15 @@ export async function bulkUpdateMonitors(args: {
       // shouldn't emit an audit row at all.
       const before = existingById.get(updated.id);
       if (!before) continue;
+      if (!before.active && updated.active) {
+        await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+      }
       await emitAudit(tx, ctx, {
         action: "monitor.update",
         entityType: "monitor",
         entityId: updated.id,
-        before,
-        after: updated,
+        before: await monitorAuditSnapshot(before),
+        after: await monitorAuditSnapshot(updated),
       });
     }
   });

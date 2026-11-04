@@ -90,6 +90,11 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     eventProps: ["url", "jobType"],
     normalizeInput: monitorCreateInput("grpc"),
   },
+  "openstatus.monitor.v1.MonitorService/CreateHeartbeatMonitor": {
+    event: Events.CreateMonitor,
+    eventProps: ["jobType"],
+    normalizeInput: monitorCreateInput("heartbeat"),
+  },
   "openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor": {
     event: Events.UpdateMonitor,
   },
@@ -103,6 +108,9 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor": {
+    event: Events.UpdateMonitor,
+  },
+  "openstatus.monitor.v1.MonitorService/UpdateHeartbeatMonitor": {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/DeleteMonitor": {

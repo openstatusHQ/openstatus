@@ -45,7 +45,10 @@ export {
   updateMonitorSchedulingRegions,
   updateMonitorTags,
 } from "./relations";
-export { redactSensitiveHeaders } from "./response-logs-internal";
+export {
+  redactSensitiveBody,
+  redactSensitiveHeaders,
+} from "./response-logs-internal";
 export {
   type CheckResult,
   type CheckResultError,
@@ -53,6 +56,17 @@ export {
   StreamMonitorPreviewInput,
   streamMonitorPreview,
 } from "./stream-monitor-preview";
+export {
+  getHeartbeatState,
+  type HeartbeatState,
+  heartbeatDeadline,
+  type HeartbeatPingLog,
+  listHeartbeatPings,
+  type HeartbeatPingResult,
+  recordHeartbeatPing,
+  regenerateHeartbeatToken,
+  updateMonitorHeartbeat,
+} from "./heartbeat";
 export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
 export { assertMonitorUrlSafe } from "./url-safety";
 export {
@@ -83,6 +97,9 @@ export {
   ListResponseLogsInfiniteInput,
   ListResponseLogsInput,
   monitorJobTypes,
+  ListHeartbeatPingsInput,
+  RegenerateHeartbeatTokenInput,
+  UpdateMonitorHeartbeatInput,
   monitorMethods,
   monitorPeriodicity,
   ResponseLogFilters,

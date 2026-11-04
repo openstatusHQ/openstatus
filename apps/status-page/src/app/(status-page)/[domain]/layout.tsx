@@ -68,6 +68,7 @@ export default async function Layout({
           defaultNumberOfDays={cfg.days}
           defaultCommunityTheme={cfg.theme}
           customTheme={page.customTheme}
+          timezone={page.defaultTimezone}
         >
           {children}
           <FloatingButton

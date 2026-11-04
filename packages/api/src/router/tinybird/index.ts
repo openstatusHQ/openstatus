@@ -187,12 +187,24 @@ export function getMetricsRegionsProcedure(period: Period, type: Type) {
   }
 }
 
-export function getStatusProcedure(_period: "45d", type: Type) {
+export function getStatusProcedure(_period: "45d", type: Type | "heartbeat") {
+  if (type === "heartbeat") return tb.heartbeatStatus45d;
   if (type === "dns") return tb.dnsStatus45d;
   if (type === "http") return tb.httpStatus45d;
   if (type === "tcp") return tb.tcpStatus45d;
   if (type === "icmp") return tb.icmpStatus45d;
   if (type === "grpc") return tb.grpcStatus45d;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+}
+
+/** 15m buckets regrouped into the days of a time zone; the 45d pipes are UTC only. */
+export function getStatusInTimeZoneProcedure(type: Type | "heartbeat") {
+  if (type === "heartbeat") return tb.heartbeatStatus15m;
+  if (type === "dns") return tb.dnsStatus15m;
+  if (type === "http") return tb.httpStatus15m;
+  if (type === "tcp") return tb.tcpStatus15m;
+  if (type === "icmp") return tb.icmpStatus15m;
+  if (type === "grpc") return tb.grpcStatus15m;
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 

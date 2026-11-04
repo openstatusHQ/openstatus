@@ -105,3 +105,47 @@ func TestNewHTTPClientZeroTimeoutFallsBack(t *testing.T) {
 	assert.Equal(t, defaultHTTPTimeout, transport.TLSHandshakeTimeout)
 	assert.True(t, transport.DisableKeepAlives)
 }
+
+func TestTimingClearIncompletePhases(t *testing.T) {
+	// Timeout after the TLS handshake: first byte never arrived.
+	timing := Timing{
+		DnsStart: 1000, DnsDone: 1001,
+		ConnectStart: 1001, ConnectDone: 1003,
+		TlsHandshakeStart: 1003, TlsHandshakeDone: 1017,
+		FirstByteStart: 1017,
+	}
+
+	timing.clearIncompletePhases()
+
+	assert.Equal(t, Timing{
+		DnsStart: 1000, DnsDone: 1001,
+		ConnectStart: 1001, ConnectDone: 1003,
+		TlsHandshakeStart: 1003, TlsHandshakeDone: 1017,
+	}, timing)
+}
+
+func TestTimingClearIncompletePhasesKeepsCompleteTiming(t *testing.T) {
+	complete := Timing{
+		DnsStart: 1000, DnsDone: 1001,
+		ConnectStart: 1001, ConnectDone: 1003,
+		TlsHandshakeStart: 1003, TlsHandshakeDone: 1017,
+		FirstByteStart: 1017, FirstByteDone: 1040,
+		TransferStart: 1040, TransferDone: 1042,
+	}
+
+	timing := complete
+	timing.clearIncompletePhases()
+
+	assert.Equal(t, complete, timing)
+}
+
+func TestHTTPTimerSnapshotIsDetached(t *testing.T) {
+	timer := &httpTimer{}
+	timer.set(func(t *Timing) { t.FirstByteStart = 1017 })
+
+	snapshot := timer.snapshot()
+	// A hook landing after the snapshot must not reach the returned copy.
+	timer.set(func(t *Timing) { t.ConnectDone = 1003 })
+
+	assert.Equal(t, Timing{}, snapshot)
+}

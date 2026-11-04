@@ -35,6 +35,11 @@ const monitor: Monitor = {
   externalName: null,
   grpcService: null,
   grpcTls: null,
+  heartbeatToken: null,
+  heartbeatPeriod: null,
+  heartbeatGrace: null,
+  heartbeatCron: null,
+  heartbeatTz: null,
 };
 
 const notification: Notification = {

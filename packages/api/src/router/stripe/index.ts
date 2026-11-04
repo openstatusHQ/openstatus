@@ -377,6 +377,7 @@ export const stripeRouter = createTRPCRouter({
           enabled: true,
         },
         mode: "subscription",
+        allow_promotion_codes: true,
         success_url:
           opts.input.successUrl ||
           `${billingUrl}?${opts.input.trial ? "trial" : "success"}=true`,

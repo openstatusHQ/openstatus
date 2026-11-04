@@ -5,13 +5,20 @@ import { shedResponse, wideEvent } from "./shed";
 
 /** Health checks must never be shed or Fly restarts a machine that is merely busy. */
 const EXEMPT_PATHS = new Set(["/ping"]);
+/** A shed heartbeat ping reads as a missed one and alerts; the per-token limit bounds them. */
+const EXEMPT_PREFIXES = ["/heartbeat/"];
 
 /** `opts.maxInFlight` is read per request so the shared `limits` object stays live. */
 export function createConcurrencyGuard(opts: { maxInFlight: number }) {
   let inFlight = 0;
 
   const middleware: MiddlewareHandler = async (c, next) => {
-    if (EXEMPT_PATHS.has(c.req.path)) return next();
+    if (
+      EXEMPT_PATHS.has(c.req.path) ||
+      EXEMPT_PREFIXES.some((p) => c.req.path.startsWith(p))
+    ) {
+      return next();
+    }
 
     const event = wideEvent(c);
     if (inFlight >= opts.maxInFlight) {
