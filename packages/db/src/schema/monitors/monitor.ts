@@ -1,5 +1,11 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { monitorPeriodicity } from "../constants";
 import { monitorIncidentTable } from "../monitor_incidents/monitor_incident";
@@ -65,6 +71,13 @@ export const monitor = sqliteTable(
 
     grpcTls: text("grpc_tls", { enum: grpcTlsModes }).default("tls"),
 
+    heartbeatToken: text("heartbeat_token"),
+    // seconds
+    heartbeatPeriod: integer("heartbeat_period"),
+    heartbeatGrace: integer("heartbeat_grace"),
+    heartbeatCron: text("heartbeat_cron"),
+    heartbeatTz: text("heartbeat_tz"),
+
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
@@ -78,6 +91,9 @@ export const monitor = sqliteTable(
     index("monitor_workspace_id_active_idx")
       .on(t.workspaceId)
       .where(sql`${t.deletedAt} IS NULL`),
+    uniqueIndex("monitor_heartbeat_token_idx")
+      .on(t.heartbeatToken)
+      .where(sql`${t.heartbeatToken} IS NOT NULL`),
   ],
 );
 

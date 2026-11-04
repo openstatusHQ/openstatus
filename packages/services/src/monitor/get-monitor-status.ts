@@ -33,8 +33,10 @@ export async function getMonitorStatus(args: {
     workspaceId: ctx.workspace.id,
   });
   const parsed = selectMonitorSchema.parse(record);
+  const regions =
+    parsed.jobType === "heartbeat" ? ["heartbeat"] : parsed.regions;
 
-  if (parsed.regions.length === 0) {
+  if (regions.length === 0) {
     return { id: record.id, regions: [] };
   }
 
@@ -44,7 +46,7 @@ export async function getMonitorStatus(args: {
     .where(
       and(
         eq(monitorStatusTable.monitorId, record.id),
-        inArray(monitorStatusTable.region, parsed.regions),
+        inArray(monitorStatusTable.region, regions),
       ),
     )
     .all();

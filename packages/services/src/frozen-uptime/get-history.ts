@@ -248,6 +248,7 @@ export async function getUptimeHistory(args: {
       dns: defaultTb.dnsStatus45d,
       icmp: defaultTb.icmpStatus45d,
       grpc: defaultTb.grpcStatus45d,
+      heartbeat: defaultTb.heartbeatStatus45d,
     };
     return fetchFreezeCounts({
       monitorIdsByJobType,

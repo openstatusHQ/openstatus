@@ -7,7 +7,9 @@ import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
 import {
   assertSchedulingWithinPlan,
+  generateHeartbeatToken,
   headersToDbJson,
+  monitorAuditSnapshot,
   pickDefaultRegions,
   serialiseAssertions,
 } from "./internal";
@@ -22,10 +24,11 @@ export async function createMonitor(args: {
   requireScope(ctx, "write");
   const input = CreateMonitorInput.parse(args.input);
 
+  const isHeartbeat = input.jobType === "heartbeat";
   assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
   // Only caller-supplied values: the plan defaults below are picked from the
   // plan, and a workspace's stored limits can lag behind newly added regions.
-  assertSchedulingWithinPlan(ctx.workspace.limits, input);
+  if (!isHeartbeat) assertSchedulingWithinPlan(ctx.workspace.limits, input);
 
   return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({
@@ -35,15 +38,18 @@ export async function createMonitor(args: {
     });
 
     const defaults = pickDefaultRegions(ctx.workspace);
-    const regions = input.regions ?? defaults.regions;
-    const periodicity = input.periodicity ?? defaults.periodicity;
+    // Heartbeats are pushed to us: "other" keeps them out of every checker cron.
+    const regions = isHeartbeat ? [] : (input.regions ?? defaults.regions);
+    const periodicity = isHeartbeat
+      ? "other"
+      : (input.periodicity ?? defaults.periodicity);
 
     const row = await tx
       .insert(monitor)
       .values({
         name: input.name,
         jobType: input.jobType,
-        url: input.url,
+        url: isHeartbeat ? "" : input.url,
         method: input.method,
         headers: headersToDbJson(input.headers),
         body: input.body,
@@ -62,6 +68,13 @@ export async function createMonitor(args: {
         grpcTls: input.grpcTls,
         otelEndpoint: input.otelEndpoint,
         otelHeaders: headersToDbJson(input.otelHeaders),
+        ...(isHeartbeat
+          ? {
+              heartbeatToken: generateHeartbeatToken(),
+              heartbeatPeriod: input.heartbeatPeriod,
+              heartbeatGrace: input.heartbeatGrace,
+            }
+          : {}),
         updatedAt: new Date(),
       })
       .returning()
@@ -71,7 +84,7 @@ export async function createMonitor(args: {
       action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
-      after: row,
+      after: await monitorAuditSnapshot(row),
       metadata: { jobType: row.jobType, url: row.url },
     });
 
