@@ -64,11 +64,8 @@ export function resolveRoute({
     return null;
   }
 
-  function isLocale(value: string | undefined): value is Locale {
-    return (
-      typeof value === "string" &&
-      (locales as readonly string[]).includes(value)
-    );
+  function resolveLocale(value: string | undefined): Locale | undefined {
+    return locales.find((locale) => locale.toLowerCase() === value);
   }
 
   // Resolve locale based on routing type
@@ -83,10 +80,9 @@ export function resolveRoute({
         : pathnames;
 
     const firstSegment = segments[1]?.toLowerCase();
-    const locale: Locale = isLocale(firstSegment)
-      ? firstSegment
-      : defaultLocale;
-    const hasLocale = isLocale(firstSegment);
+    const resolvedLocale = resolveLocale(firstSegment);
+    const locale = resolvedLocale ?? defaultLocale;
+    const hasLocale = resolvedLocale !== undefined;
     const rest = (hasLocale ? segments.slice(2) : segments.slice(1))
       .filter(Boolean)
       .join("/");
@@ -102,8 +98,9 @@ export function resolveRoute({
 
   // pathname type: locale is at index 2 (/{slug}/{locale}/...)
   const localeSegment = pathnames[2]?.toLowerCase();
-  const hasLocale = isLocale(localeSegment);
-  const locale: Locale = hasLocale ? localeSegment : defaultLocale;
+  const resolvedLocale = resolveLocale(localeSegment);
+  const hasLocale = resolvedLocale !== undefined;
+  const locale = resolvedLocale ?? defaultLocale;
 
   if (hasLocale) {
     // Already has locale in path — rewrite path is the pathname as-is

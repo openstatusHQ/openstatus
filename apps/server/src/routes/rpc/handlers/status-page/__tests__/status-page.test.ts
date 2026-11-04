@@ -1260,10 +1260,13 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("returns distinct enum values for tr, hi, ko and ja", async () => {
+  test("returns distinct enum values for tr, hi, ko, ja and zh-CN", async () => {
     await db
       .update(page)
-      .set({ defaultLocale: "ja", locales: ["en", "tr", "hi", "ko", "ja"] })
+      .set({
+        defaultLocale: "zh-CN",
+        locales: ["en", "tr", "hi", "ko", "ja", "zh-CN"],
+      })
       .where(eq(page.id, testPageId));
 
     const res = await connectRequest(
@@ -1275,13 +1278,14 @@ describe("StatusPageService locale fields", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.defaultLocale).toBe("LOCALE_JA");
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_ZH_CN");
     expect(data.statusPage.locales).toEqual([
       "LOCALE_EN",
       "LOCALE_TR",
       "LOCALE_HI",
       "LOCALE_KO",
       "LOCALE_JA",
+      "LOCALE_ZH_CN",
     ]);
 
     // Restore defaults
@@ -1291,13 +1295,19 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageId));
   });
 
-  test("round-trips tr, hi, ko and ja through update", async () => {
+  test("round-trips tr, hi, ko, ja and zh-CN through update", async () => {
     const res = await connectRequest(
       "UpdateStatusPage",
       {
         id: String(testPageToUpdateId),
-        defaultLocale: "LOCALE_TR",
-        locales: ["LOCALE_TR", "LOCALE_HI", "LOCALE_KO", "LOCALE_JA"],
+        defaultLocale: "LOCALE_ZH_CN",
+        locales: [
+          "LOCALE_TR",
+          "LOCALE_HI",
+          "LOCALE_KO",
+          "LOCALE_JA",
+          "LOCALE_ZH_CN",
+        ],
       },
       { "x-openstatus-key": "1" },
     );
@@ -1305,12 +1315,13 @@ describe("StatusPageService locale fields", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.defaultLocale).toBe("LOCALE_TR");
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_ZH_CN");
     expect(data.statusPage.locales).toEqual([
       "LOCALE_TR",
       "LOCALE_HI",
       "LOCALE_KO",
       "LOCALE_JA",
+      "LOCALE_ZH_CN",
     ]);
 
     const stored = await db
@@ -1318,8 +1329,8 @@ describe("StatusPageService locale fields", () => {
       .from(page)
       .where(eq(page.id, testPageToUpdateId))
       .get();
-    expect(stored?.defaultLocale).toBe("tr");
-    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja"]);
+    expect(stored?.defaultLocale).toBe("zh-CN");
+    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja", "zh-CN"]);
 
     // Restore defaults
     await db

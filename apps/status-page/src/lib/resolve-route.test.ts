@@ -651,6 +651,21 @@ describe("resolveRoute", () => {
         rewritePath: "/ACME/EN/events",
       });
     });
+
+    test("preserves the canonical casing of a region locale", () => {
+      const result = resolveRoute({
+        host: "www.stpg.dev",
+        urlHost: "www.stpg.dev",
+        pathname: "/acme/zh-CN/events",
+      });
+      expect(result).toEqual({
+        type: "pathname",
+        prefix: "acme",
+        locale: "zh-CN",
+        localeExplicit: true,
+        rewritePath: "/acme/zh-CN/events",
+      });
+    });
   });
 
   describe("hosts with no tenant — these fall through to `/`", () => {
