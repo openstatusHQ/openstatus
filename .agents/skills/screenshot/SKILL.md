@@ -191,7 +191,7 @@ session runs.
   and name the files in the final message. The user opens them directly.
 - **Cloud session:** nothing leaves the sandbox except git, so the files
   vanish with the VM. Publish the generated gallery with the Artifact tool:
-  `file_path` `.screenshots/<branch>/index.html`, `root` `.screenshots/<branch>`, and every PNG
+  `file_path` `.screenshots/<branch>[/<label>]/index.html`, `root` that same folder, and every PNG
   it shows passed in `files` under its own name (`{"incidents-1.desktop.png":
   "incidents-1.desktop.png", ...}`). The gallery is written as a page fragment
   (title, style, body) for exactly that. Put the link in the final message.

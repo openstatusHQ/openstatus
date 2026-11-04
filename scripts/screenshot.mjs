@@ -69,7 +69,8 @@ const out = resolve(
       ".screenshots",
       branchName.replace(/[^\w.-]+/g, "-"),
       typeof flags.label === "string"
-        ? flags.label.replace(/[^\w.-]+/g, "-")
+        ? // no dots: `--label ..` would climb out of the branch folder
+          flags.label.replace(/[^\w-]+/g, "-")
         : "",
     ),
 );
