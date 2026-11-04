@@ -20,6 +20,13 @@ export const groupLabels = {
   subscribers: "Subscribers",
 } as const satisfies Record<ScopeGroup, string>;
 
+// Only where the label hides what the group covers.
+export const groupHints: Partial<Record<ScopeGroup, string>> = {
+  monitors: "private locations",
+  pages: "components, groups",
+  incidents: "status reports, maintenances",
+};
+
 export function sameScopes(
   a: readonly string[],
   b: readonly string[],

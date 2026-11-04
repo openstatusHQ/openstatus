@@ -15,7 +15,13 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useId, useState } from "react";
 
-import { coveredBy, expandScopes, groupLabels, matchPreset } from "./label";
+import {
+  coveredBy,
+  expandScopes,
+  groupHints,
+  groupLabels,
+  matchPreset,
+} from "./label";
 
 export interface ScopePresetOption {
   id: ScopePreset;
@@ -96,7 +102,7 @@ export function ScopePicker({
           <div className="space-y-0.5">
             <div className="text-sm font-medium">Custom</div>
             <div className="text-muted-foreground text-xs">
-              Pick read or write access per resource.
+              Pick access per resource, e.g. write only incidents.
             </div>
           </div>
         </label>
@@ -143,6 +149,11 @@ function ScopeRow({
     <>
       <label htmlFor={`${id}-read`} className="text-sm font-medium">
         {groupLabels[group]}
+        {groupHints[group] ? (
+          <span className="text-muted-foreground ml-2 text-xs font-normal">
+            {groupHints[group]}
+          </span>
+        ) : null}
       </label>
       <Checkbox
         id={`${id}-read`}

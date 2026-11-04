@@ -36,12 +36,12 @@ const presets: ScopePresetOption[] = [
   {
     id: "read",
     label: "Read only",
-    description: "Recommended for AI agents and read-only dashboards.",
+    description: "View everything, change nothing.",
   },
   {
     id: "write",
     label: "Read & write",
-    description: "Required for CI/CD and automation.",
+    description: "Full access for CI/CD, Terraform and setup agents.",
   },
 ];
 
