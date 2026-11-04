@@ -13,3 +13,10 @@ export const GetUptimeHistoryInput = z.object({
   pageId: z.number().int().positive(),
 });
 export type GetUptimeHistoryInput = z.infer<typeof GetUptimeHistoryInput>;
+
+export const GetMonitorUptimeHistoryInput = z.object({
+  monitorId: z.number().int().positive(),
+});
+export type GetMonitorUptimeHistoryInput = z.infer<
+  typeof GetMonitorUptimeHistoryInput
+>;

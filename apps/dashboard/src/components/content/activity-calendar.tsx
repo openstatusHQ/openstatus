@@ -40,6 +40,8 @@ export type ActivityDay = Partial<ActivityMark> & {
   lines?: string[];
   /** Opens a popover on click listing these; `kind` labels each in a mixed calendar. */
   links?: ActivityLink[];
+  /** Outside the record, e.g. before monitoring began: a bare outline like a future day. */
+  blank?: boolean;
 };
 
 /** Sets the minimum cell size; the grid stretches cells to fill the width above it. */
@@ -134,12 +136,24 @@ export function ActivityCalendarGrid({
   // roving tabindex: one cell in the tab order, arrows move it
   const [active, setActive] = useState<number | null>(null);
   const current = active ?? (todayIndex >= 0 ? todayIndex : days.length - 1);
+  const todayWeek = weeks.findIndex((week) =>
+    week.some((slot) => slot?.index === todayIndex),
+  );
+  const scrollWeek = todayWeek >= 0 ? todayWeek : weeks.length - 1;
 
-  // newest week first when the grid is wider than the viewport
+  // today's week at the right edge when the grid is wider than the viewport,
+  // else the newest one; the week label's sibling is a cell as wide as the column
   useEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, []);
+    const cell = el?.querySelector(
+      `[data-week="${scrollWeek}"]`,
+    )?.nextElementSibling;
+    if (!el || !(cell instanceof HTMLElement)) return;
+    // the grid's padding keeps today's outline in view
+    const padding = 3;
+    el.scrollLeft =
+      cell.offsetLeft + cell.offsetWidth + padding - el.clientWidth;
+  }, [scrollWeek]);
 
   function onArrow(e: React.KeyboardEvent<HTMLDivElement>) {
     onKeyDown?.(e);
@@ -201,7 +215,10 @@ export function ActivityCalendarGrid({
         ))}
         {weeks.map((week, w) => (
           <Fragment key={w}>
-            <div className="text-muted-foreground h-3.5 w-0 font-mono text-xs leading-none whitespace-nowrap">
+            <div
+              data-week={w}
+              className="text-muted-foreground h-3.5 w-0 font-mono text-xs leading-none whitespace-nowrap"
+            >
               {hydrated ? months[w] : null}
             </div>
             {week.map((slot, d) =>
@@ -248,7 +265,7 @@ function ActivityCalendarDay({
   // after today: empty days are a bare outline, scheduled ones filled and dashed blue
   const future = day.date > today;
   // not a button, so arrow keys hop over it
-  if (future && !day.upcoming && day.scale === undefined) {
+  if (day.blank || (future && !day.upcoming && day.scale === undefined)) {
     return (
       <div
         aria-hidden

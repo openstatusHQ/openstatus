@@ -7,6 +7,7 @@ import {
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { NotFoundError } from "@openstatus/services";
+import { getMonitorUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
   type CreateMonitorInput,
   type UpdateMonitorGeneralInput,
@@ -174,6 +175,19 @@ export const monitorRouter = createTRPCRouter({
         return await getMonitor({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  getUptimeHistory: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getMonitorUptimeHistory({
+          ctx: toServiceCtx(ctx),
+          input: { monitorId: input.id },
         });
       } catch (err) {
         toTRPCError(err);

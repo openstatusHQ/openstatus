@@ -57,6 +57,7 @@
   --color-activity-planned-1: var(--activity-planned-1);
   --color-activity-planned-2: var(--activity-planned-2);
   --color-activity-planned-3: var(--activity-planned-3);
+  --color-activity-success: var(--activity-success);
   --color-activity-hatch: var(--activity-hatch);
 
   @keyframes shimmer {
@@ -107,7 +108,7 @@
   --warning: oklch(0.77 0.16 70);
   --info: oklch(0.62 0.19 260);
 
-  /* activity calendar: lightness is severity, hue only failure vs planned */
+  /* activity calendar: lightness is severity, hue is failure, planned or success */
   --activity-0: var(--muted);
   --activity-1: color-mix(in oklab, var(--warning) 50%, var(--muted));
   --activity-2: var(--warning);
@@ -115,6 +116,7 @@
   --activity-planned-1: color-mix(in oklab, var(--info) 30%, var(--muted));
   --activity-planned-2: color-mix(in oklab, var(--info) 65%, var(--muted));
   --activity-planned-3: var(--info);
+  --activity-success: color-mix(in oklab, var(--success) 75%, var(--muted));
   --activity-hatch: var(--muted-foreground);
 
   --rainbow-1: oklch(0.64 0.21 25);
