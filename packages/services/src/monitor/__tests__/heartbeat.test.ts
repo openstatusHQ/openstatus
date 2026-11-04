@@ -722,6 +722,7 @@ describe("heartbeat reads", () => {
           latency: 0,
           cronTimestamp: pinged + 60_000,
           timestamp: pinged + 60_000,
+          attempts: 1,
           timing: null,
         },
         {
@@ -734,6 +735,7 @@ describe("heartbeat reads", () => {
           latency: 0,
           cronTimestamp: pinged,
           timestamp: pinged,
+          attempts: 1,
           timing: null,
         },
       ]);
