@@ -59,8 +59,8 @@ export function EventRow({ className, ...props }: React.ComponentProps<"li">) {
         "has-[[data-slot=event-row-link]:focus-visible]:ring-ring/50 has-[[data-slot=event-row-link]:focus-visible]:ring-[3px] has-[[data-slot=event-row-link]:focus-visible]:ring-inset",
         // folded: actor and menu sit on the title line, the duration under them
         "grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] [grid-template-areas:'title_title_title_actor_menu'_'status_date_meta_duration_duration']",
-        // fixed duration column so avatars line up across rows ("10d 15h" fits)
-        "@3xl:grid-cols-[5.5rem_7.5rem_minmax(0,1fr)_auto_auto_4rem_auto] @3xl:[grid-template-areas:'date_status_content_actions_actor_duration_menu']",
+        // fixed actor and duration columns so actions and avatars line up across rows, with or without an avatar ("10d 15h" fits)
+        "@3xl:grid-cols-[5.5rem_7.5rem_minmax(0,1fr)_auto_1.5rem_4rem_auto] @3xl:[grid-template-areas:'date_status_content_actions_actor_duration_menu']",
         className,
       )}
       {...props}
