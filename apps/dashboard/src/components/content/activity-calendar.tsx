@@ -147,7 +147,9 @@ export function ActivityCalendarGrid({
   function updateCovered() {
     const el = scroller.current;
     if (!el) return;
-    const edge = el.scrollLeft + (el.querySelector<HTMLElement>("[data-corner]")?.offsetWidth ?? 0);
+    const edge =
+      el.scrollLeft +
+      (el.querySelector<HTMLElement>("[data-corner]")?.offsetWidth ?? 0);
     let next: number | null = null;
     for (const label of el.querySelectorAll<HTMLElement>("[data-week]")) {
       const left = label.offsetLeft;

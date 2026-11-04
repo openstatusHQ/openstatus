@@ -75,7 +75,10 @@ export function StatusReportRow({
         `${updates} ${updates === 1 ? "update" : "updates"}`,
         affected,
       ]
-    : [resolvedAt && dated ? formatWindow(startedAt, resolvedAt) : null, affected];
+    : [
+        resolvedAt && dated ? formatWindow(startedAt, resolvedAt) : null,
+        affected,
+      ];
   const endedAt = resolvedAt ?? new Date();
 
   return (
@@ -86,13 +89,7 @@ export function StatusReportRow({
           level={impact ? impactLevels[impact] : 0}
           variant={display.variant}
         />
-        <span>
-          {kind
-            ? "Report"
-            : ongoing
-              ? report.status
-              : display.short}
-        </span>
+        <span>{kind ? "Report" : ongoing ? report.status : display.short}</span>
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
