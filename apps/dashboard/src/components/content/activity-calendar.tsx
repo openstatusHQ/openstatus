@@ -90,7 +90,7 @@ export function ActivityCalendarCell({
   return (
     <div
       data-slot="activity-calendar-cell"
-      data-empty={!level && !hatched ? "" : undefined}
+      data-empty={!level && !hatched && !upcoming ? "" : undefined}
       className={cn(
         activityColorVariants({ scale, level, hatched }),
         cellVariants({ upcoming }),
