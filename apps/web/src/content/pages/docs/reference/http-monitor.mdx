@@ -98,6 +98,8 @@ User-Agent: Custom-Agent/1.0
 
 **Note:** openstatus automatically adds `User-Agent: OpenStatus/1.0` to all requests. You can override it with a custom `User-Agent` header.
 
+**Request ID:** scheduled checks also send `x-openstatus-request-id`, a unique ID that stays the same across every retry of a check. It matches the ID of the check's response log, so you can find a request from your server logs in openstatus. A custom header with the same name is ignored. On-demand test requests don't send it.
+
 Up to 20 headers per monitor.
 
 ### Regions

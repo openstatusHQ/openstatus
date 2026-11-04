@@ -151,3 +151,46 @@ func TestNewHTTPClientDoesNotReuseConnections(t *testing.T) {
 
 	assert.Equal(t, int32(2), newConns.Load())
 }
+
+func Test_HttpRequestIDHeader(t *testing.T) {
+	type customHeader = struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	}
+
+	tests := []struct {
+		name      string
+		requestID string
+		headers   []customHeader
+		want      []string
+	}{
+		{name: "sent when set", requestID: "id-1", want: []string{"id-1"}},
+		{
+			name:      "a custom header cannot overwrite it",
+			requestID: "id-1",
+			headers:   []customHeader{{Key: "X-OpenStatus-Request-ID", Value: "custom"}},
+			want:      []string{"id-1"},
+		},
+		{name: "absent when empty", want: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			client := NewTestClient(func(req *http.Request) *http.Response {
+				got = req.Header.Values(request.RequestIDHeader)
+				return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}
+			})
+
+			_, err := checker.Http(context.Background(), client, request.HttpCheckerRequest{
+				URL:       "https://openstat.us",
+				Method:    http.MethodGet,
+				RequestID: tt.requestID,
+				Headers:   tt.headers,
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
