@@ -34,6 +34,7 @@ import {
   bulkUpdateMonitors,
   updateMonitorConfig,
   updateMonitorGeneral,
+  updateMonitorPublic,
 } from "../update";
 
 const TEST_PREFIX = "svc-heartbeat-test";
@@ -535,6 +536,63 @@ describe("scheduling invariants", () => {
         .where(eq(monitor.id, row.id))
         .get();
       expect(stored).toEqual({ url: "", periodicity: "other", regions: "" });
+    });
+  });
+});
+
+describe("visibility", () => {
+  test("a heartbeat cannot be made public", async () => {
+    await withTestTransaction(async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      await expect(
+        createMonitor({
+          ctx: txCtx,
+          input: {
+            name: `${TEST_PREFIX}-public`,
+            jobType: "heartbeat",
+            url: "",
+            method: "GET",
+            headers: [],
+            assertions: [],
+            active: true,
+            public: true,
+            heartbeatPeriod: HOUR,
+            heartbeatGrace: FIVE_MIN,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+
+      const row = await createHeartbeat(tx);
+      await expect(
+        updateMonitorPublic({
+          ctx: txCtx,
+          input: { id: row.id, public: true },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      await expect(
+        updateMonitorConfig({
+          ctx: txCtx,
+          input: { id: row.id, public: true },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      await expect(
+        bulkUpdateMonitors({
+          ctx: txCtx,
+          input: { ids: [row.id], public: true },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+
+      // making it private stays allowed
+      await updateMonitorPublic({
+        ctx: txCtx,
+        input: { id: row.id, public: false },
+      });
+      const stored = await tx
+        .select({ public: monitor.public })
+        .from(monitor)
+        .where(eq(monitor.id, row.id))
+        .get();
+      expect(stored?.public).toBe(false);
     });
   });
 });

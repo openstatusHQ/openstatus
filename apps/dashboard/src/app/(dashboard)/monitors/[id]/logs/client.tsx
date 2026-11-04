@@ -38,6 +38,7 @@ import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { exampleLogs } from "@/data/response-logs";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { HeartbeatLogs } from "./heartbeat-logs";
 import {
   createLogsTable,
   RETENTION_DAYS,
@@ -83,6 +84,10 @@ export function Client({
     <div className="relative flex h-[calc(100svh-var(--spacing-app-header)-var(--spacing-app-tabs))] w-full flex-col overflow-hidden">
       {workspace.plan === "free" ? (
         <BillingPlaceholder />
+      ) : monitor.jobType === "heartbeat" ? (
+        <div className="overflow-y-auto">
+          <HeartbeatLogs monitorId={monitor.id} />
+        </div>
       ) : (
         <LogsTable
           monitor={monitor}
