@@ -2,12 +2,23 @@ import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import {
+  attemptsSchema,
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
   status15mParameters,
   status15mShape,
 } from "./client";
+
+describe("attemptsSchema", () => {
+  test("keeps the stored value", () => {
+    expect(attemptsSchema.parse(3)).toBe(3);
+  });
+
+  test("reads as 1 for rows and endpoints without the column", () => {
+    expect(attemptsSchema.parse(undefined)).toBe(1);
+  });
+});
 
 describe("noopFlagSchema", () => {
   test("treats the string 'false' as disabled, not as a truthy string", () => {

@@ -14,7 +14,8 @@ SELECT
     timestamp,
     cronTimestamp,
     monitorId,
-    requestStatus
+    requestStatus,
+    attempts
 FROM mv__tcp_7d__v1
 WHERE
     monitorId = {{ String(monitorId, '4433', required=True) }}

@@ -26,7 +26,14 @@ import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 
-type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+type StoredResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+
+// On-demand checks (onboarding, test runs) have no stored attempt count.
+type WithOptionalAttempts<T> = T extends { attempts: number }
+  ? Omit<T, "attempts"> & { attempts?: number }
+  : never;
+
+export type ResponseLog = WithOptionalAttempts<StoredResponseLog>;
 
 export function DataTableBasics({
   data,
