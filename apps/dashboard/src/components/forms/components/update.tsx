@@ -153,6 +153,8 @@ export function FormComponentsUpdate() {
               days: (values.configuration.days
                 ? Number(values.configuration.days)
                 : undefined) as PageConfiguration["days"],
+              width: (values.configuration.width ??
+                undefined) as PageConfiguration["width"],
             },
           });
         }}

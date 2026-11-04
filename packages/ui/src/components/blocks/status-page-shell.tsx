@@ -11,6 +11,10 @@ import { cn } from "@openstatus/ui/lib/utils";
  *
  * Override `min-h-screen` via `className` (e.g. `min-h-0`) when mounting
  * inside a constrained container like a dashboard preview card.
+ *
+ * Set `data-width="wide"` to widen the main, header and footer columns
+ * from `max-w-2xl` to `max-w-4xl`. The shell is also the query container
+ * for blocks that respond to the page width (`@container/status-page`).
  */
 export function StatusPageShell({
   className,
@@ -19,7 +23,10 @@ export function StatusPageShell({
   return (
     <div
       data-slot="status-page-shell"
-      className={cn("flex min-h-screen flex-col gap-4", className)}
+      className={cn(
+        "group/status-page @container/status-page flex min-h-screen flex-col gap-4",
+        className,
+      )}
       {...props}
     />
   );
@@ -28,8 +35,8 @@ export function StatusPageShell({
 /**
  * StatusPageMain — inner `<main>` content column.
  *
- * Centers content at `max-w-2xl` with the canonical padding and column
- * layout. Routing- and embed-agnostic: callers that support an embed mode
+ * Centers content at `max-w-2xl` (`max-w-4xl` in a wide shell) with the
+ * canonical padding and column layout. Routing- and embed-agnostic: callers that support an embed mode
  * layer their own `group-data-*` classes via `className`.
  */
 export function StatusPageMain({
@@ -40,7 +47,7 @@ export function StatusPageMain({
     <main
       data-slot="status-page-main"
       className={cn(
-        "mx-auto flex w-full max-w-2xl flex-1 flex-col px-3 py-2",
+        "mx-auto flex w-full max-w-2xl flex-1 flex-col px-3 py-2 group-data-[width=wide]/status-page:max-w-4xl",
         className,
       )}
       {...props}

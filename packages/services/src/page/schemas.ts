@@ -185,6 +185,7 @@ export const UpdatePageConfigurationInput = z.object({
       uptime: z.undefined().or(pageConfigurationSchema.shape.uptime),
       theme: z.undefined().or(pageConfigurationSchema.shape.theme),
       days: z.undefined().or(pageConfigurationSchema.shape.days),
+      width: z.undefined().or(pageConfigurationSchema.shape.width),
     })
     .nullish(),
 });
