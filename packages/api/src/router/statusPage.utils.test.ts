@@ -870,6 +870,32 @@ describe("getUptime", () => {
       expect(uptime).toBe("66.666%");
     });
 
+    it("starts at a mid-day incident before any ping, not at midnight", () => {
+      // no pings at all: the 12h incident on day 0 is the only signal
+      const data = Array.from({ length: 3 }, (_, i) => createStatusData(i));
+      const from = new Date(data[0].day);
+      from.setUTCHours(6);
+      const to = new Date(from.getTime() + 12 * 60 * 60 * 1000);
+      const uptime = getUptime({
+        data,
+        events: [
+          {
+            id: 1,
+            name: "Downtime",
+            from,
+            to,
+            type: "incident",
+            status: "error",
+          },
+        ],
+        barType: "absolute",
+        cardType: "requests",
+        heartbeat: true,
+      });
+      // covered 06:00 → 24:00 = 18h, 12h down
+      expect(uptime).toBe("33.333%");
+    });
+
     it("never pinged and no incident reads 100%", () => {
       const data = Array.from({ length: 45 }, (_, i) => createStatusData(i));
       expect(

@@ -686,13 +686,19 @@ export function getUptime({
   if (heartbeat && barType !== "manual") {
     const start = heartbeatCoverageStart(data, events, timeZone);
     if (start === null) return "100%";
-    return getUptime({
-      data: data.filter((d) => dayWindow(d.day, timeZone).end > start),
-      events,
-      barType,
-      cardType: "duration",
-      timeZone,
-    });
+    const days = data
+      .map((d) => dayWindow(d.day, timeZone))
+      .filter((d) => d.end > start)
+      .map((d) => ({ start: Math.max(d.start, start), end: d.end }));
+    const { segments, totalMs } = dayCoverage(days);
+    if (totalMs === 0) return "100%";
+    const window: UptimeWindow = {
+      start: Math.min(...segments.map((s) => s.start)),
+      end: Math.max(...segments.map((s) => s.end)) - 1,
+      now: Date.now(),
+    };
+    const downtime = durationDowntimeMs(events, window, segments);
+    return `${floorPct((totalMs - downtime) / totalMs)}%`;
   }
 
   if (barType === "manual" || cardType === "duration") {

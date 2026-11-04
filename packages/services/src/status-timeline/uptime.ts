@@ -61,9 +61,9 @@ export function floorPct(ratio: number): number {
 }
 
 /**
- * When a heartbeat started being tracked: its first ping or first incident,
- * whichever is earlier. A missed ping writes no row, so heartbeat uptime is
- * incident time over this span, never a ping tally.
+ * When a heartbeat started being tracked: the start of its first day with a
+ * ping (counts are daily) or its first incident, whichever is earlier. A missed
+ * ping writes no row, so heartbeat uptime is incident time over this span.
  */
 export function heartbeatCoverageStart(
   days: Array<CheckCounts & { day: string }>,
