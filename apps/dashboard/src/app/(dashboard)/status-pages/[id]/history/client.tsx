@@ -288,6 +288,11 @@ export function Client() {
               </li>
             </ul>
             <p className="text-muted-foreground">
+              Heartbeat monitors receive pings, not checks, so in every mode
+              their uptime is the time since the first ping minus incidents from
+              missed or failed pings — a silent month still counts.
+            </p>
+            <p className="text-muted-foreground">
               Months without recorded checks are shown as{" "}
               <span className="text-foreground font-medium">no data</span> and
               excluded from totals — they are never counted as downtime.

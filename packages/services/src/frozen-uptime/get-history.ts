@@ -13,6 +13,7 @@ import {
   type Event,
   floorPct,
   getEvents,
+  heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
   requestsTally,
 } from "../status-timeline";
@@ -136,6 +137,29 @@ function eventOnlyMonth(
     end: clampedEnd,
     now: nowMs,
   });
+  const up = Math.max(0, total - downtime);
+  return { percentage: floorPct(up / total), up, total };
+}
+
+// heartbeat months span from the first signal, not just days with pings: a
+// silent day is exactly when a heartbeat is down
+function heartbeatMonth(
+  events: Event[],
+  key: string,
+  nowMs: number,
+  coverageStartMs: number | null,
+  reportsOnly: boolean,
+): MonthValue {
+  if (coverageStartMs === null) return null;
+  const { start, end } = monthRange(`${key}-01`);
+  const from = Math.max(start, coverageStartMs);
+  const to = Math.min(end, nowMs);
+  if (to <= from) return null;
+  const window = { start: from, end: to, now: nowMs };
+  const downtime = reportsOnly
+    ? reportsOnlyDowntimeMs(events, window)
+    : durationDowntimeMs(events, window);
+  const total = to - from;
   const up = Math.max(0, total - downtime);
   return { percentage: floorPct(up / total), up, total };
 }
@@ -298,10 +322,30 @@ export async function getUptimeHistory(args: {
       pastDays,
     });
 
+    const heartbeatId =
+      c.type === "monitor" && c.monitor?.jobType === "heartbeat"
+        ? c.monitorId
+        : null;
+    const heartbeatStart =
+      heartbeatId !== null
+        ? heartbeatCoverageStart(
+            months.flatMap((key) => countsFor(heartbeatId, key) ?? []),
+            events,
+          )
+        : null;
+
     const values = new Map<string, MonthValue>();
     for (const key of months) {
       let value: MonthValue = null;
-      if (c.type === "monitor" && c.monitorId !== null) {
+      if (heartbeatId !== null) {
+        value = heartbeatMonth(
+          events,
+          key,
+          nowMs,
+          heartbeatStart,
+          mode === "manual",
+        );
+      } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
         if (mode === "requests") {
           value = requestsMonth(days);

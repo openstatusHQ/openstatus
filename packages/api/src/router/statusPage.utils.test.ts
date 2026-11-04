@@ -840,6 +840,50 @@ describe("fillStatusDataFor45Days", () => {
 });
 
 describe("getUptime", () => {
+  describe("heartbeat monitors", () => {
+    it("counts a silent day's incident as downtime in requests mode", () => {
+      // pings only on the first and last day: a ping tally would read 100%
+      const data = Array.from({ length: 10 }, (_, i) =>
+        createStatusData(i, i === 0 || i === 9 ? 1 : 0, 0, 0),
+      );
+      const uptime = getUptime({
+        data,
+        events: [createIncident(1, 5, 24)],
+        barType: "absolute",
+        cardType: "requests",
+        heartbeat: true,
+      });
+      expect(uptime).toBe("90%");
+    });
+
+    it("starts at the first ping, not the start of the lookback", () => {
+      const data = Array.from({ length: 45 }, (_, i) =>
+        createStatusData(i, i === 2 ? 1 : 0, 0, 0),
+      );
+      const uptime = getUptime({
+        data,
+        events: [createIncident(1, 1, 24)],
+        barType: "absolute",
+        cardType: "duration",
+        heartbeat: true,
+      });
+      expect(uptime).toBe("66.666%");
+    });
+
+    it("never pinged and no incident reads 100%", () => {
+      const data = Array.from({ length: 45 }, (_, i) => createStatusData(i));
+      expect(
+        getUptime({
+          data,
+          events: [],
+          barType: "dominant",
+          cardType: "dominant",
+          heartbeat: true,
+        }),
+      ).toBe("100%");
+    });
+  });
+
   describe("manual bar type", () => {
     it("should calculate uptime based on report durations", () => {
       const data = Array.from({ length: 45 }, (_, i) =>

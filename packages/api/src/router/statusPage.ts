@@ -946,6 +946,7 @@ export const statusPageRouter = createTRPCRouter({
           timeZone,
           privateLocationOnly:
             c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
+          heartbeat: c.monitor?.jobType === "heartbeat",
         });
 
         return {

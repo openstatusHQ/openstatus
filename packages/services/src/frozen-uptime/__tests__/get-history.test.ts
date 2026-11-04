@@ -123,7 +123,10 @@ async function insertPage(
     .get();
 }
 
-async function insertMonitor(tx: Tx) {
+async function insertMonitor(
+  tx: Tx,
+  overrides: Partial<typeof monitor.$inferInsert> = {},
+) {
   return tx
     .insert(monitor)
     .values({
@@ -135,6 +138,7 @@ async function insertMonitor(tx: Tx) {
       periodicity: "10m",
       regions: "ams",
       jobType: "http",
+      ...overrides,
     })
     .returning()
     .get();
@@ -800,6 +804,60 @@ describe("getUptimeHistory", () => {
       // 1 day down of 10 days with checks = 90.00 — a full-month denominator
       // would dilute it to ~96.7
       expect(res.rows[0].months[key(1)]).toBe(90);
+    });
+  });
+
+  test("heartbeat: silent months count, incidents are the downtime, any mode", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx, {
+        jobType: "heartbeat",
+        url: "",
+        regions: "",
+        heartbeatPeriod: 86_400,
+      });
+      const testPage = await insertPage(tx);
+      await insertComponent(tx, {
+        pageId: testPage.id,
+        monitorId: testMonitor.id,
+      });
+
+      // one ping on the 1st of key(3), then silence: nothing frozen after it
+      const days = fullMonth(key(3), {});
+      days[0] = { ...days[0], ok: 1 };
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(3)}-01`,
+        days,
+      });
+
+      const base = monthStart(key(2)).getTime() + 3 * MS_PER_DAY;
+      await tx.insert(monitorIncidentTable).values({
+        workspaceId: teamWorkspaceId,
+        monitorId: testMonitor.id,
+        startedAt: new Date(base),
+        createdAt: new Date(base),
+        resolvedAt: new Date(base + 2 * MS_PER_DAY),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.mode).toBe("requests");
+      const row = res.rows[0];
+      const key2Ms = monthEnd(key(2)).getTime() - monthStart(key(2)).getTime();
+      expect(row.months[key(4)]).toBe(null);
+      expect(row.months[key(3)]).toBe(100);
+      expect(row.months[key(2)]).toBe(
+        Math.floor(((key2Ms - 2 * MS_PER_DAY) / key2Ms) * 100_000) / 1_000,
+      );
+      expect(row.months[key(1)]).toBe(100);
+      expect(row.months[key(0)]).toBe(100);
     });
   });
 

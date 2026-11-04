@@ -21,6 +21,7 @@ import {
   floorPct,
   getHighestPriorityStatus,
   getWorstVariant,
+  heartbeatCoverageStart,
   isDateWithinEvent,
   mergedDowntimeMs,
   reportEventDayImpact,
@@ -668,6 +669,7 @@ export function getUptime({
   barType,
   cardType,
   privateLocationOnly = false,
+  heartbeat = false,
   timeZone = "UTC",
 }: {
   data: StatusData[];
@@ -676,9 +678,23 @@ export function getUptime({
   cardType: "requests" | "duration" | "dominant" | "manual";
   /** no public regions and ≥1 private location: include probe errors in duration uptime */
   privateLocationOnly?: boolean;
+  /** pings are not checks: uptime is incident time since the first signal */
+  heartbeat?: boolean;
   /** IANA zone whose calendar days `data` is keyed by */
   timeZone?: string;
 }): string {
+  if (heartbeat && barType !== "manual") {
+    const start = heartbeatCoverageStart(data, events, timeZone);
+    if (start === null) return "100%";
+    return getUptime({
+      data: data.filter((d) => dayWindow(d.day, timeZone).end > start),
+      events,
+      barType,
+      cardType: "duration",
+      timeZone,
+    });
+  }
+
   if (barType === "manual" || cardType === "duration") {
     // Clamp event durations to the data lookback window to avoid
     // events outside the window producing negative uptime values.
