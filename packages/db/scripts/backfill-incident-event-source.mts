@@ -41,6 +41,7 @@ for (const row of rows) {
       message: row.message.replace(FROM_SLACK, ""),
     })
     .where(eq(incidentEvent.id, row.id));
+  if (updated % 100 === 0) console.log(`${updated}/${rows.length}`);
 }
 
 console.log(
