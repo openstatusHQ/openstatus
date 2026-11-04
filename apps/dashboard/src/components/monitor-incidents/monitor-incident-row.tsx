@@ -53,7 +53,8 @@ export function MonitorIncidentRow({
     ? formatWindow(startedAt, resolvedAt)
     : `since ${formatClockOrDay(startedAt)}`;
   const meta = [
-    kind ? when : null,
+    // untitled rows already show `when` as the title
+    kind || incident.title ? when : null,
     kind && !resolvedAt
       ? status === "acknowledged"
         ? "acknowledged"
@@ -80,8 +81,8 @@ export function MonitorIncidentRow({
         <EventRowMeta>
           {meta
             .filter((item) => item !== null)
-            .map((item) => (
-              <span key={item}>{item}</span>
+            .map((item, i) => (
+              <span key={i}>{item}</span>
             ))}
         </EventRowMeta>
       </EventRowContent>

@@ -100,8 +100,8 @@ export function StatusReportRow({
         <EventRowMeta>
           {meta
             .filter((item) => item !== null)
-            .map((item) => (
-              <span key={item}>{item}</span>
+            .map((item, i) => (
+              <span key={i}>{item}</span>
             ))}
         </EventRowMeta>
       </EventRowContent>
@@ -130,7 +130,7 @@ export function StatusReportRow({
       <EventRowActor actor={report.createdByUser} label="Created by" optional />
       <EventRowDuration>
         {/* created already resolved: no window to measure */}
-        {dated && endedAt.getTime() - startedAt.getTime() >= 1000
+        {dated && (ongoing || endedAt.getTime() - startedAt.getTime() >= 1000)
           ? formatDurationShort(endedAt.getTime() - startedAt.getTime())
           : "–"}
       </EventRowDuration>

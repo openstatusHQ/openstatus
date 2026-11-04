@@ -144,22 +144,15 @@ export function ActivityCalendarGrid({
   // the month label sliding under the sticky weekdays would show only its tail
   const [covered, setCovered] = useState<number | null>(null);
 
-  function updateCovered() {
+  // widths change on resize without a scroll event
+  useEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    const edge =
-      el.scrollLeft +
-      (el.querySelector<HTMLElement>("[data-corner]")?.offsetWidth ?? 0);
-    let next: number | null = null;
-    for (const label of el.querySelectorAll<HTMLElement>("[data-week]")) {
-      const left = label.offsetLeft;
-      if (left < edge && left + label.scrollWidth > edge) {
-        next = Number(label.dataset.week);
-        break;
-      }
-    }
-    setCovered(next);
-  }
+    const observer = new ResizeObserver(() => setCovered(coveredWeek(el)));
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
 
   // today's week at the right edge when the grid is wider than the viewport,
   // else the newest one; the week label's sibling is a cell as wide as the column
@@ -173,7 +166,7 @@ export function ActivityCalendarGrid({
     const padding = 3;
     el.scrollLeft =
       cell.offsetLeft + cell.offsetWidth + padding - el.clientWidth;
-    updateCovered();
+    setCovered(coveredWeek(el));
   }, [scrollWeek]);
 
   function onArrow(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -202,7 +195,7 @@ export function ActivityCalendarGrid({
     <div
       ref={scroller}
       className="relative overflow-x-auto"
-      onScroll={updateCovered}
+      onScroll={(e) => setCovered(coveredWeek(e.currentTarget))}
     >
       <div
         data-slot="activity-calendar-grid"
@@ -401,6 +394,20 @@ function ActivityCalendarDay({
 }
 
 type Slot = { day: ActivityDay; index: number } | null;
+
+/** The week whose month label slides under the sticky weekdays. */
+function coveredWeek(el: HTMLElement): number | null {
+  const edge =
+    el.scrollLeft +
+    (el.querySelector<HTMLElement>("[data-corner]")?.offsetWidth ?? 0);
+  for (const label of el.querySelectorAll<HTMLElement>("[data-week]")) {
+    const left = label.offsetLeft;
+    if (left < edge && left + label.scrollWidth > edge) {
+      return Number(label.dataset.week);
+    }
+  }
+  return null;
+}
 
 function toWeeks(days: ActivityDay[]): Slot[][] {
   const first = days[0];
