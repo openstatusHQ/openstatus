@@ -75,7 +75,14 @@ describe("uptimeFreezePipes", () => {
     expect(Object.keys(pipes).sort()).toEqual(
       monitorJobTypes.filter((t) => t !== "udp" && t !== "ssl").sort(),
     );
-    expect(pipes.heartbeat).toBe("heartbeatStatus45d");
+    expect(pipes).toEqual({
+      http: "httpStatus45d",
+      tcp: "tcpStatus45d",
+      dns: "dnsStatus45d",
+      icmp: "icmpStatus45d",
+      grpc: "grpcStatus45d",
+      heartbeat: "heartbeatStatus45d",
+    });
   });
 });
 
