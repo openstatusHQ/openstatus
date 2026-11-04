@@ -1,0 +1,179 @@
+---
+title: "We moved 250M checks a month from Cloud Tasks to Pub/Sub and cut the bill by 90%"
+description: "Why we replaced Google Cloud Tasks with Pub/Sub for our uptime checks, what it saved, and the two production problems we caused by removing a rate limiter we didn't know we relied on."
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2026-11-05"
+image: "/assets/posts/2023-year-review/title.png"
+category: "engineering"
+---
+
+We moved the queue behind openstatus's uptime checks from Google Cloud Tasks to Pub/Sub. Our Google Cloud bill went from about 6.80€ a day to about 0.60€, or roughly 200€ to 20€ a month.
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/gcp-daily-cost.png" alt="Google Cloud daily cost in October 2026: about 6.80€ a day through October 21, then about 0.60€ a day from October 23 after the switch to Pub/Sub." />
+
+The first cutover also lasted 15 minutes before we rolled it back. Days later, we found it had made our latency measurements worse. Both problems had the same cause: **Cloud Tasks was rate limiting us, and we had never thought of it as a rate limiter.**
+
+## Why we were on Cloud Tasks
+
+When we started openstatus, our checkers ran on serverless platforms. We didn't want to miss a check, and a queue that pushes an HTTP request to wake up a function fits that perfectly. We also had Google startup credits, so it cost us nothing.
+
+Three things changed:
+
+- **The credits ran out**, and at about 250M checks a month the queue was no longer cheap.
+- **Our checker became a Go service** running 24/7 on machines. There was nothing left to wake up.
+- **Push had become awkward.** Each task hit a public URL with a `fly-prefer-region` header, and a checker in the wrong region answered with `fly-replay`. We were routing requests to machines that could simply have asked for work.
+
+## The design
+
+Cloud Tasks bills per operation. Pub/Sub bills per byte, and our messages are small: about 650 bytes each.
+
+**Topology decides the bill.** We need every check to run in a specific region, and the obvious design is one topic with a filtered subscription per region. But Pub/Sub also bills you for the messages a filter throws away. Here are our estimates for the options we compared:
+
+| Topology | Estimated throughput cost per month |
+| --- | --- |
+| 1 topic, one filtered subscription per region | ~$212 |
+| 1 topic per region, filtered by periodicity | ~$41 |
+| 1 topic per region, 30s and the rest filtered | ~$17 |
+| **2 topics per region, no filters** | **~$11** |
+
+We went with the last one: `checker-<region>` and `checker-<region>-30s`, 54 topics in total. These numbers don't include egress, which you pay when your subscribers run outside GCP, as ours do on Fly, Koyeb and Railway.
+
+Per-region topics have another benefit. If we have trouble reaching one region, its backlog stays in its own subscription and doesn't affect the others.
+
+**Pub/Sub has no delayed delivery.** A 30-second monitor runs twice per cron tick, and Cloud Tasks handled the second run with `scheduleTime`. Now we publish both runs at once, the second with a `cronTimestamp` 30 seconds later, and the checker sleeps until then.
+
+A sleeping message shouldn't block a check that's ready to run, so the 30s loop can hold 2,000 messages but runs only 200 checks at a time. A message takes a slot only after it wakes up.
+
+**A check that fails is still a success for the queue.** The target being down is a valid result, so we ack it. We nack only if we can't record the result, and we ack and log a message that can never succeed, like bad JSON. After 5 delivery attempts, a message goes to a dead-letter topic.
+
+Delivery is at-least-once and we don't dedupe, so a crash can record a check twice. We accepted that.
+
+## How we shipped it
+
+I used Claude Code extensively. It interviewed me through 17 design decisions, and the plan became four stacked PRs. Each one could deploy on its own and changed nothing until the next was turned on:
+
+1. [#2962](https://github.com/openstatusHQ/openstatus/pull/2962) splits the check logic out of the HTTP handlers.
+2. [#2963](https://github.com/openstatusHQ/openstatus/pull/2963) adds the Pub/Sub consumer behind `PUBSUB_ENABLED`.
+3. [#2964](https://github.com/openstatusHQ/openstatus/pull/2964) adds the publisher behind `CHECKER_TRANSPORT`.
+4. [#2965](https://github.com/openstatusHQ/openstatus/pull/2965) removes the Cloud Tasks path. It stays a draft until we've had 14 days without a rollback.
+
+Before the flip, a gate script checked that every subscription had an open streaming pull, then sent a synthetic check through every topic and waited for its row in Tinybird. Everything passed, and we flipped the flag.
+
+This would have taken us weeks by hand. We confirmed the plan on October 21 and were running on Pub/Sub the next day.
+
+## Problem 1: we hit Tinybird's rate limit and made it worse
+
+Cloud Tasks spread our 5,700 checks a minute evenly across the minute, which meant about 95 writes per second to Tinybird. Its Events API allows **100 appends per second per workspace**, however many rows each request carries. We had been sitting just under the limit without knowing it.
+
+With Pub/Sub, every checker woke up at the same `cronTimestamp`, so the same writes landed in the first seconds of each minute. Tinybird returned 429s, about 1,400 in 90 seconds.
+
+Then our own retry logic made it worse. A failed write meant a nack, a nack meant redelivery, and redelivery ran the whole check again, which produced another write. Nacks climbed from 942 to about 12,000 per minute in 10 minutes, and p99 ack latency reached about 120 seconds.
+
+We rolled back by flipping the flag. Checks kept running throughout and nothing reached the dead-letter topic.
+
+Our gate had missed it because a single synthetic check per topic proves that the wiring works. It says nothing about load.
+
+The fix in [#2974](https://github.com/openstatusHQ/openstatus/pull/2974) is a batcher that implements the existing Tinybird `Client` interface, so the handlers didn't change:
+
+- It keeps one buffer per data source, and flushes after 2 seconds plus up to 1 second of jitter, or at 5 MB.
+- `SendEvent` blocks until its batch is flushed, so an ack still means the row is recorded.
+- It retries 429s and 5xx errors for up to 30 seconds, honoring `Retry-After`. After that, every row in the batch gets the error and its message nacks as before.
+
+That brought us from thousands of appends in a burst to an expected 17 to 50 per second. We flipped again the same day and it held: nacks stayed near zero and nothing was dead-lettered during the one-hour watch.
+
+The cutover also made our scheduler lighter. Our workflows app used to make one Cloud Tasks API call per check, and now it publishes batches of up to 1,000 messages. These charts cover six hours of that day: the short dip at 13:10 is the first cutover and its rollback, and the drop at 14:25 is the flip that stuck.
+
+<Grid cols={2} variant="borderless">
+<div>
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/workflows-cpu.png" alt="CPU utilization of the workflows machine: baseline falls from about 5% to about 1% after the 14:25 flip, with a short dip at 13:10 during the first cutover." className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/workflows-network.png" alt="Network I/O of the workflows machine: baseline received traffic falls from about 75 kB/s to about 10 kB/s and sent traffic from about 150 kB/s to about 65 kB/s after the flip." className="img-fit" />
+
+</div>
+</Grid>
+
+Baseline CPU went from about 5% to about 1%. Inbound traffic fell from about 75 kB/s to about 10 kB/s, and outbound from about 150 kB/s to about 65 kB/s. The absolute numbers are small, but the same work now uses much less of the machine.
+
+The checkers show the switch from push to pull, over the same six hours:
+
+<Grid cols={2} variant="borderless">
+<div>
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/checker-concurrency.png" alt="App concurrency across checker machines: usually under 20 with peaks up to about 100, falling to almost zero after the 14:25 flip, with a short gap at 13:10 during the first cutover." className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/checker-memory.png" alt="Memory utilization across checker machines: steady at about 90 MiB, then varying between about 90 and 190 MiB after the 14:25 flip, well under the limit of about 450 MiB." className="img-fit" />
+
+</div>
+</Grid>
+
+App concurrency counts the requests in flight through Fly's proxy, and it falls to almost zero because nothing pushes checks to these machines anymore. On-demand checks still use HTTP, which accounts for the little that's left.
+
+Memory went the other way. It had been steady at about 90 MiB per machine, and now varies between about 90 and 190 MiB, since each machine holds messages and buffers rows until they're flushed. That's still well under the limit of about 450 MiB. CPU didn't visibly change, staying at about 2 to 4%, so there's no chart for it here.
+
+## Problem 2: we were skewing our own measurements
+
+This one was quieter, and for a monitoring product, worse.
+
+Cloud Tasks had also been throttling how many checks started at once, through a queue limit of 500 tasks per periodicity across all probes. Without it, the same synchronized wake-up meant a machine could start up to 400 checks in the same instant. Their DNS lookups and TLS handshakes competed with each other, and the response times we were recording picked up latency that came from us.
+
+Here's the P50 of one monitor over two weeks. The jump is the flip on October 22, and the drop is the fix on October 27:
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/monitor-latency-p50.png" alt="P50 latency of one monitor from October 15 to 28, broken down by DNS, connect, TLS, TTFB and transfer: about 50 ms until October 22, then mostly 100 to 300 ms with visible growth in DNS, connect and TLS, then back to about 50 ms after October 27." />
+
+The P50 went from about 50 ms to between 100 and 300 ms, and DNS, connect and TLS all grew. These are the numbers our customers read, and it took us five days to ship a fix.
+
+The fix in [#3010](https://github.com/openstatusHQ/openstatus/pull/3010) is small. Each check starts at `cronTimestamp` plus an offset derived from its monitor ID:
+
+```go
+// spread maps a monitor to a fixed delay in [0, window): the same monitor keeps
+// the same offset every tick, so its checks stay one interval apart.
+func spread(monitorID string, window time.Duration) time.Duration {
+	if window <= 0 {
+		return 0
+	}
+	h := fnv.New64a()
+	h.Write([]byte(monitorID))
+
+	return time.Duration(h.Sum64() % uint64(window))
+}
+```
+
+The offset has to be deterministic. With random jitter, the gap between two checks of the same monitor would drift around its interval. Hashing the ID spreads checks over a 2-second window and keeps each monitor exactly one interval apart.
+
+## How I worked with Claude on the rollout
+
+After each merge, I started a Claude session to check the Pub/Sub topics on GCP and the probes on Fly. That's how we caught the Tinybird rate limit, though not right away.
+
+About ten minutes into the first cutover, the Pub/Sub numbers looked fine. Publishes and acks were balanced, and Claude told me the checkers were keeping up. So I asked it to look somewhere else:
+
+> it seems like it's working flawlessly ?
+>
+> can you check the checker log/metrics on fly to see if there are any error
+
+Two minutes later, it came back with about 1,400 `failed to send event to tinybird` errors in 90 seconds, all of them 429s, and the advice to roll back now. I flipped the flag.
+
+The prompts were nothing special, typos included. This is the one from the second flip:
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/claude-reflip-prompt.png" alt="A Claude Code session. The prompt reads: it has been merged and pub sub enabled again, can you check our pubsub is working flawlessly on gcp. Claude reads the plan notes, then queries Pub/Sub metrics and sees only traffic from the first cutover." />
+
+It pulled the metrics from GCP, read the Fly logs, and two minutes in gave me this:
+
+<Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/claude-reflip-report.png" alt="Claude's report: Pub/Sub was re-enabled about 2 minutes ago and looks clean, but it is too early to call it working flawlessly. A table compares the re-flip with the rolled-back cutover: 0 nacks against 942 rising to 63k per 5 minutes, and 0 dead-lettered in both. It then lists two limits: Tinybird responses aren't visible from there, and Koyeb and Railway machine health is unchecked." />
+
+The useful part is the end, where it lists what it couldn't check. Tinybird's responses only reach Axiom, so it used nacks as a stand-in for failed writes. It checked again a few minutes later and once more about 80 minutes in, and I made the call on whether to keep going.
+
+Claude wrote the plan with me, and the plan still missed the load problem. Claude was also as reassured by the Pub/Sub numbers as I was, until I pointed it at the logs. The value was in how fast we could go from "this is broken" to "the fix is deployed": the batcher merged and the flag flipped again on the same day.
+
+## What we'd tell you before you do this
+
+- **Look for the rate limit your queue gives you for free.** A push queue with dispatch limits smooths traffic for everything downstream. A pull consumer with a synchronized start removes that, and each downstream limit you were under on average now has to survive your peak.
+- **Retry the failed step before the whole job.** Re-running a check because its write failed adds load at the worst moment. We now retry the write for 30 seconds before we nack.
+- **Test your go/no-go gate under load.** Ours proved connectivity and we treated that as readiness. We've since added nack rate to our watch list.
+- **Read the billing page before you choose a topology.** The obvious single-topic design would have cost us about 20 times more.
