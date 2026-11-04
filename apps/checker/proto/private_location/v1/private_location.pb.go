@@ -153,6 +153,7 @@ type IngestTCPRequest struct {
 	RequestStatus string                 `protobuf:"bytes,8,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
 	Error         int64                  `protobuf:"varint,9,opt,name=error,proto3" json:"error,omitempty"`
 	Timing        string                 `protobuf:"bytes,10,opt,name=timing,proto3" json:"timing,omitempty"`
+	Attempts      int64                  `protobuf:"varint,11,opt,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -257,6 +258,13 @@ func (x *IngestTCPRequest) GetTiming() string {
 	return ""
 }
 
+func (x *IngestTCPRequest) GetAttempts() int64 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
 type IngestTCPResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -308,6 +316,7 @@ type IngestHTTPRequest struct {
 	Timing        string                 `protobuf:"bytes,11,opt,name=timing,proto3" json:"timing,omitempty"`
 	StatusCode    int64                  `protobuf:"varint,12,opt,name=statusCode,proto3" json:"statusCode,omitempty"`
 	Error         int64                  `protobuf:"varint,13,opt,name=error,proto3" json:"error,omitempty"`
+	Attempts      int64                  `protobuf:"varint,14,opt,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -433,6 +442,13 @@ func (x *IngestHTTPRequest) GetError() int64 {
 	return 0
 }
 
+func (x *IngestHTTPRequest) GetAttempts() int64 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
 type IngestHTTPResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -526,6 +542,7 @@ type IngestDNSRequest struct {
 	Records       map[string]*Records    `protobuf:"bytes,9,rep,name=records,proto3" json:"records,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Timing        string                 `protobuf:"bytes,10,opt,name=timing,proto3" json:"timing,omitempty"`
 	Error         int64                  `protobuf:"varint,11,opt,name=error,proto3" json:"error,omitempty"`
+	Attempts      int64                  `protobuf:"varint,12,opt,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -637,6 +654,13 @@ func (x *IngestDNSRequest) GetError() int64 {
 	return 0
 }
 
+func (x *IngestDNSRequest) GetAttempts() int64 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
 type IngestDNSResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -689,6 +713,7 @@ type IngestICMPRequest struct {
 	RequestStatus   string                 `protobuf:"bytes,12,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
 	Error           int64                  `protobuf:"varint,13,opt,name=error,proto3" json:"error,omitempty"`
 	Timing          string                 `protobuf:"bytes,14,opt,name=timing,proto3" json:"timing,omitempty"`
+	Attempts        int64                  `protobuf:"varint,15,opt,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -821,6 +846,13 @@ func (x *IngestICMPRequest) GetTiming() string {
 	return ""
 }
 
+func (x *IngestICMPRequest) GetAttempts() int64 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
 type IngestICMPResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -872,6 +904,7 @@ type IngestGRPCRequest struct {
 	RequestStatus string                 `protobuf:"bytes,11,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
 	Error         int64                  `protobuf:"varint,12,opt,name=error,proto3" json:"error,omitempty"`
 	Timing        string                 `protobuf:"bytes,13,opt,name=timing,proto3" json:"timing,omitempty"`
+	Attempts      int64                  `protobuf:"varint,14,opt,name=attempts,proto3" json:"attempts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -997,6 +1030,13 @@ func (x *IngestGRPCRequest) GetTiming() string {
 	return ""
 }
 
+func (x *IngestGRPCRequest) GetAttempts() int64 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
 type IngestGRPCResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1045,7 +1085,7 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\x12E\n" +
 	"\ricmp_monitors\x18\x05 \x03(\v2 .private_location.v1.ICMPMonitorR\ficmpMonitors\x12E\n" +
 	"\rgrpc_monitors\x18\x06 \x03(\v2 .private_location.v1.GRPCMonitorR\fgrpcMonitors\x12\x16\n" +
-	"\x06region\x18\x04 \x01(\tR\x06region\"\x9e\x02\n" +
+	"\x06region\x18\x04 \x01(\tR\x06region\"\xba\x02\n" +
 	"\x10IngestTCPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1057,8 +1097,9 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\rrequestStatus\x18\b \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\t \x01(\x03R\x05error\x12\x16\n" +
 	"\x06timing\x18\n" +
-	" \x01(\tR\x06timing\"\x13\n" +
-	"\x11IngestTCPResponse\"\xed\x02\n" +
+	" \x01(\tR\x06timing\x12\x1a\n" +
+	"\battempts\x18\v \x01(\x03R\battempts\"\x13\n" +
+	"\x11IngestTCPResponse\"\x89\x03\n" +
 	"\x11IngestHTTPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1075,10 +1116,11 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\n" +
 	"statusCode\x18\f \x01(\x03R\n" +
 	"statusCode\x12\x14\n" +
-	"\x05error\x18\r \x01(\x03R\x05error\"\x14\n" +
+	"\x05error\x18\r \x01(\x03R\x05error\x12\x1a\n" +
+	"\battempts\x18\x0e \x01(\x03R\battempts\"\x14\n" +
 	"\x12IngestHTTPResponse\"!\n" +
 	"\aRecords\x12\x16\n" +
-	"\x06record\x18\x01 \x03(\tR\x06record\"\xc6\x03\n" +
+	"\x06record\x18\x01 \x03(\tR\x06record\"\xe2\x03\n" +
 	"\x10IngestDNSRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1091,11 +1133,12 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\arecords\x18\t \x03(\v22.private_location.v1.IngestDNSRequest.RecordsEntryR\arecords\x12\x16\n" +
 	"\x06timing\x18\n" +
 	" \x01(\tR\x06timing\x12\x14\n" +
-	"\x05error\x18\v \x01(\x03R\x05error\x1aX\n" +
+	"\x05error\x18\v \x01(\x03R\x05error\x12\x1a\n" +
+	"\battempts\x18\f \x01(\x03R\battempts\x1aX\n" +
 	"\fRecordsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
 	"\x05value\x18\x02 \x01(\v2\x1c.private_location.v1.RecordsR\x05value:\x028\x01\"\x13\n" +
-	"\x11IngestDNSResponse\"\xab\x03\n" +
+	"\x11IngestDNSResponse\"\xc7\x03\n" +
 	"\x11IngestICMPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1115,8 +1158,9 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\amessage\x18\v \x01(\tR\amessage\x12$\n" +
 	"\rrequestStatus\x18\f \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\r \x01(\x03R\x05error\x12\x16\n" +
-	"\x06timing\x18\x0e \x01(\tR\x06timing\"\x14\n" +
-	"\x12IngestICMPResponse\"\xfb\x02\n" +
+	"\x06timing\x18\x0e \x01(\tR\x06timing\x12\x1a\n" +
+	"\battempts\x18\x0f \x01(\x03R\battempts\"\x14\n" +
+	"\x12IngestICMPResponse\"\x97\x03\n" +
 	"\x11IngestGRPCRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
@@ -1131,7 +1175,8 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	" \x01(\tR\amessage\x12$\n" +
 	"\rrequestStatus\x18\v \x01(\tR\rrequestStatus\x12\x14\n" +
 	"\x05error\x18\f \x01(\x03R\x05error\x12\x16\n" +
-	"\x06timing\x18\r \x01(\tR\x06timing\"\x14\n" +
+	"\x06timing\x18\r \x01(\tR\x06timing\x12\x1a\n" +
+	"\battempts\x18\x0e \x01(\x03R\battempts\"\x14\n" +
 	"\x12IngestGRPCResponse2\xd2\x04\n" +
 	"\x16PrivateLocationService\x12Y\n" +
 	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00\x12\\\n" +

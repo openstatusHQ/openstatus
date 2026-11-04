@@ -104,6 +104,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				resp, ingestErr := mm.Client.IngestHTTP(c, &connect.Request[v1.IngestHTTPRequest]{
 					Msg: &v1.IngestHTTPRequest{
 						MonitorId:     monitor.Id,
+						Attempts:      int64(data.Attempts),
 						Id:            data.ID,
 						Url:           monitor.Url,
 						Message:       data.Message,
@@ -163,6 +164,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				resp, ingestErr := mm.Client.IngestTCP(c, &connect.Request[v1.IngestTCPRequest]{
 					Msg: &v1.IngestTCPRequest{
 						MonitorId:     monitor.Id,
+						Attempts:      int64(data.Attempts),
 						Id:            data.ID,
 						Uri:           monitor.Uri,
 						Message:       data.Message,
@@ -215,6 +217,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				resp, ingestErr := mm.Client.IngestDNS(c, &connect.Request[v1.IngestDNSRequest]{
 					Msg: &v1.IngestDNSRequest{
 						MonitorId:     monitor.Id,
+						Attempts:      int64(data.Attempts),
 						Id:            data.ID,
 						Uri:           monitor.Uri,
 						Message:       data.Message,
@@ -265,6 +268,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					resp, ingestErr := mm.Client.IngestICMP(c, &connect.Request[v1.IngestICMPRequest]{
 						Msg: &v1.IngestICMPRequest{
 							MonitorId:       monitor.Id,
+							Attempts:        int64(data.Attempts),
 							Id:              data.ID,
 							Uri:             monitor.Uri,
 							Message:         data.Message,
@@ -320,6 +324,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					resp, ingestErr := mm.Client.IngestGRPC(c, &connect.Request[v1.IngestGRPCRequest]{
 						Msg: &v1.IngestGRPCRequest{
 							MonitorId:     monitor.Id,
+							Attempts:      int64(data.Attempts),
 							Id:            data.ID,
 							Uri:           monitor.Uri,
 							Service:       data.Service,

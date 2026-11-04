@@ -32,6 +32,7 @@ type TCPPrivateRegionData struct {
 	CronTimestamp int64  `json:"cron_timestamp"`
 	Error         int    `json:"error"`
 	Timing        string `json:"timing"`
+	Attempts      int    `json:"attempts"`
 }
 
 // runAssertions performs all configured assertions for TCP and returns their results
@@ -125,6 +126,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 	if err != nil {
 		return nil, fmt.Errorf("TCP job failed after %d retries: %w", retry, err)
 	}
+	resp.Attempts = called
 	return resp, nil
 }
 

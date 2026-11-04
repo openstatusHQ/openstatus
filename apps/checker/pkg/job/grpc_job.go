@@ -28,6 +28,7 @@ type GRPCPrivateRegionData struct {
 	CronTimestamp int64  `json:"cron_timestamp"`
 	Error         int    `json:"error"`
 	Timing        string `json:"timing"`
+	Attempts      int    `json:"attempts"`
 }
 
 func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region string) (*GRPCPrivateRegionData, error) {
@@ -132,6 +133,7 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 		return nil, fmt.Errorf("gRPC job failed after %d retries: %w", retry, err)
 	}
 
+	resp.Attempts = called
 	return resp, nil
 }
 

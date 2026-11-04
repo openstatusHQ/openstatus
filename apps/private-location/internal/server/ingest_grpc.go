@@ -28,7 +28,8 @@ type GRPCData struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 	GRPCCode      int64 `json:"grpcCode"`
 
-	Error uint8 `json:"error"`
+	Error    uint8 `json:"error"`
+	Attempts int   `json:"attempts"`
 }
 
 func (h *privateLocationHandler) IngestGRPC(ctx context.Context, req *connect.Request[private_locationv1.IngestGRPCRequest]) (*connect.Response[private_locationv1.IngestGRPCResponse], error) {
@@ -61,6 +62,7 @@ func (h *privateLocationHandler) IngestGRPC(ctx context.Context, req *connect.Re
 		WorkspaceID:   int64(ic.Monitor.WorkspaceID),
 		Timestamp:     req.Msg.Timestamp,
 		Error:         uint8(req.Msg.Error),
+		Attempts:      attemptCount(req.Msg.Attempts),
 		ErrorMessage:  req.Msg.Message,
 		Region:        strconv.Itoa(ic.Region.ID),
 		MonitorID:     int64(ic.Monitor.ID),

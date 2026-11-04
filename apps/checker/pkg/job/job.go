@@ -25,6 +25,7 @@ type HttpPrivateRegionData struct {
 	Timestamp     int64  `json:"timestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
+	Attempts      int    `json:"attempts"`
 }
 
 type JobRunner interface {

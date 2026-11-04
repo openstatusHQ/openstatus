@@ -45,6 +45,7 @@ message IngestTCPRequest {
     int64 error = 9;
     string timing = 10;
 
+    int64 attempts = 11;
 }
 
 message IngestTCPResponse {
@@ -65,6 +66,7 @@ message IngestHTTPRequest {
     string timing = 11;
     int64 statusCode = 12;
     int64 error = 13;
+    int64 attempts = 14;
 }
 
 message IngestHTTPResponse {
@@ -87,6 +89,7 @@ message IngestDNSRequest {
     map<string, Records>  records = 9;
     string timing = 10;
     int64 error = 11;
+    int64 attempts = 12;
 }
 message IngestDNSResponse {
 
@@ -107,6 +110,7 @@ message IngestICMPRequest {
     string requestStatus = 12;
     int64 error = 13;
     string timing = 14;
+    int64 attempts = 15;
 }
 
 message IngestICMPResponse {
@@ -127,6 +131,7 @@ message IngestGRPCRequest {
     string requestStatus = 11;
     int64 error = 12;
     string timing = 13;
+    int64 attempts = 14;
 }
 
 message IngestGRPCResponse {
