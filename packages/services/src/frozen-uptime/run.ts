@@ -1,10 +1,12 @@
 import { and, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
 import {
   frozenMonitorUptime,
+  type MonitorJobType,
   monitor,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
+import type { OSTinybird } from "@openstatus/tinybird";
 
 import type { DB } from "../context";
 import {
@@ -19,12 +21,31 @@ export type StatusPipeFn = (params: {
   monitorIds: string[];
 }) => Promise<{ data: ComputeCountRow[] }>;
 
-// only these job types have a 45d status pipe; others (udp/ssl) have no
-// counts on the live status page either and are skipped
-export type UptimeFreezePipes = Record<
-  "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat",
-  StatusPipeFn
+// no 45d status pipe, so no counts on the live status page either
+const JOB_TYPES_WITHOUT_STATUS_PIPE = [
+  "udp",
+  "ssl",
+] as const satisfies readonly MonitorJobType[];
+
+// every other job type must have a pipe: a new MonitorJobType fails tsc in
+// uptimeFreezePipes until it is wired up or listed above
+export type UptimeFreezeJobType = Exclude<
+  MonitorJobType,
+  (typeof JOB_TYPES_WITHOUT_STATUS_PIPE)[number]
 >;
+
+export type UptimeFreezePipes = Record<UptimeFreezeJobType, StatusPipeFn>;
+
+export function uptimeFreezePipes(tb: OSTinybird): UptimeFreezePipes {
+  return {
+    http: tb.httpStatus45d,
+    tcp: tb.tcpStatus45d,
+    dns: tb.dnsStatus45d,
+    icmp: tb.icmpStatus45d,
+    grpc: tb.grpcStatus45d,
+    heartbeat: tb.heartbeatStatus45d,
+  };
+}
 
 export type ChunkFailure = {
   jobType: string;
@@ -54,16 +75,10 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 function hasStatusPipe(
-  jobType: string | null | undefined,
-): jobType is keyof UptimeFreezePipes {
-  return (
-    jobType === "http" ||
-    jobType === "tcp" ||
-    jobType === "dns" ||
-    jobType === "icmp" ||
-    jobType === "grpc" ||
-    jobType === "heartbeat"
-  );
+  pipes: UptimeFreezePipes,
+  jobType: string,
+): jobType is UptimeFreezeJobType {
+  return Object.hasOwn(pipes, jobType);
 }
 
 /**
@@ -91,7 +106,7 @@ export async function fetchFreezeCounts(args: {
   let firstChunk = true;
 
   for (const [jobType, ids] of args.monitorIdsByJobType) {
-    if (!hasStatusPipe(jobType)) continue;
+    if (!hasStatusPipe(args.pipes, jobType)) continue;
     const pipe = args.pipes[jobType];
     for (const monitorIds of chunk([...ids], chunkSize)) {
       if (!firstChunk && throttleMs > 0) await sleep(throttleMs);
