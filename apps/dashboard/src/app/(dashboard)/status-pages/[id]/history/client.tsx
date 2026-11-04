@@ -291,8 +291,9 @@ export function Client() {
               Heartbeat monitors receive pings, not checks. With{" "}
               {MODE_LABELS.requests} or {MODE_LABELS.duration}, their uptime is
               the time since the first day with a ping minus incidents from
-              missed or failed pings — a silent month still counts. With{" "}
-              {MODE_LABELS.manual}, only status reports count.
+              missed or failed pings and impact-weighted status reports — a
+              silent month still counts. With {MODE_LABELS.manual}, only status
+              reports count.
             </p>
             <p className="text-muted-foreground">
               Months without recorded checks are shown as{" "}

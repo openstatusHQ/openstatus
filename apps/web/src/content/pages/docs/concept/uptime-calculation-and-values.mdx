@@ -90,6 +90,6 @@ A report that goes `major_outage` → `partial_outage` → `operational` across 
 
 ## Heartbeat monitors
 
-A [heartbeat monitor](/docs/reference/heartbeat-monitor) receives pings instead of running checks, and a missed ping leaves no result to count. Its uptime is therefore time-based in every mode: from the start of the first day with a ping (or the first incident, if earlier) until now, minus the incidents opened by missed pings and reported failures (and, in time per status, impact-weighted status reports). With **Reports only**, only status reports count, as for any other component.
+A [heartbeat monitor](/docs/reference/heartbeat-monitor) receives pings instead of running checks, and a missed ping leaves no result to count. Its uptime is therefore time-based in every mode: from the start of the first day with a ping (or the first incident, if earlier) until now, minus the incidents opened by missed pings and reported failures and impact-weighted status reports. With **Reports only**, only status reports count, as for any other component.
 
 > **Note:** the values you define are attached to a status page. You cannot change them per monitor (for now).
