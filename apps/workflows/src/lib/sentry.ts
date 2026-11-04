@@ -13,14 +13,25 @@ Sentry.init({
   registerEsmLoaderHooks: false,
 });
 
-export function runSentryCron(monitorSlug: string): {
+export type SentryMonitorConfig = NonNullable<
+  Parameters<typeof Sentry.captureCheckIn>[1]
+>;
+
+/**
+ * Passing `monitorConfig` upserts the Sentry monitor from code, so a schedule
+ * defined in this repo does not also need configuring in Sentry.
+ */
+export function runSentryCron(
+  monitorSlug: string,
+  monitorConfig?: SentryMonitorConfig,
+): {
   cronCompleted: () => Promise<void>;
   cronFailed: () => Promise<void>;
 } {
-  const checkInId = Sentry.captureCheckIn({
-    monitorSlug,
-    status: "in_progress",
-  });
+  const checkInId = Sentry.captureCheckIn(
+    { monitorSlug, status: "in_progress" },
+    monitorConfig,
+  );
   return {
     cronCompleted: async () => {
       Sentry.captureCheckIn({ checkInId, monitorSlug, status: "ok" });

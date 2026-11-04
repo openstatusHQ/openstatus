@@ -41,4 +41,9 @@ export {
   timeZoneShortName,
   timeZoneShortNames,
 } from "./timezone";
-export { formatHeartbeatSeconds, heartbeatExpectation } from "./heartbeat";
+export {
+  formatHeartbeatSeconds,
+  HEARTBEAT_REGION,
+  heartbeatExpectation,
+  statusRegions,
+} from "./heartbeat";
