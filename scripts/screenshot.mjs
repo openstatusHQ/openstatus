@@ -7,8 +7,9 @@
 //   node scripts/screenshot.mjs --app status-page /acme
 //
 // Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
+// Output: .screenshots/<branch>[/<label>]/, overridable with --out.
 
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -52,7 +53,26 @@ if (!app || paths.length === 0) {
 
 const base = (flags.base ?? app.base).replace(/\/$/, "");
 const db = flags.db ?? "http://127.0.0.1:8080";
-const out = resolve(flags.out ?? ".screenshots");
+const git = (...a) => {
+  const r = spawnSync("git", a, { cwd: repo, encoding: "utf8" });
+  return r.status === 0 ? r.stdout.trim() : "";
+};
+const commit = git("rev-parse", "--short", "HEAD") || "unknown";
+// detached HEAD reads "HEAD": fall back to the commit
+const head = git("rev-parse", "--abbrev-ref", "HEAD");
+const branchName = head && head !== "HEAD" ? head : commit;
+// one folder per branch (feat/x → feat-x), `--label before` nests a set inside
+const out = resolve(
+  flags.out ??
+    join(
+      repo,
+      ".screenshots",
+      branchName.replace(/[^\w.-]+/g, "-"),
+      typeof flags.label === "string"
+        ? flags.label.replace(/[^\w.-]+/g, "-")
+        : "",
+    ),
+);
 const themes =
   flags.theme === "both" || flags.theme === "dark"
     ? flags.theme === "both"
@@ -377,12 +397,10 @@ function writeGallery() {
     g.mtime = Math.max(g.mtime, s.mtime);
     groups.set(key, g);
   }
-  const git = (...a) =>
-    execFileSync("git", a, { cwd: repo, encoding: "utf8" }).trim();
-  const commit = git("rev-parse", "--short", "HEAD");
   const facts = [
     ["App", flags.app ?? "dashboard"],
-    ["Branch", git("rev-parse", "--abbrev-ref", "HEAD")],
+    ["Branch", branchName],
+    ...(typeof flags.label === "string" ? [["Label", flags.label]] : []),
     ["Commit", commit],
     ["Taken", new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC"],
     [
