@@ -22,7 +22,7 @@ import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-rep
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
-import { scrollToHash, useScrollToHash } from "@/hooks/use-scroll-to-hash";
+import { scrollToHash } from "@/hooks/use-scroll-to-hash";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
 import { GroupView } from "./group-view";
@@ -66,8 +66,6 @@ export function CommandMenu() {
 
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-
-  useScrollToHash();
 
   const data = useCommandMenuData({ open });
 
