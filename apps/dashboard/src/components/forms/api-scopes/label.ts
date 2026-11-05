@@ -22,9 +22,9 @@ export const groupLabels = {
 
 // Only where the label hides what the group covers.
 export const groupHints: Partial<Record<ScopeGroup, string>> = {
-  monitors: "private locations",
-  pages: "components, groups",
-  incidents: "status reports, maintenances",
+  monitors: "incl. tags, private locations",
+  pages: "incl. components, groups",
+  incidents: "incl. status reports, maintenances",
 };
 
 export function sameScopes(
