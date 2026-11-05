@@ -7,7 +7,9 @@ image: "/assets/posts/migration-from-google-cloud-task-to-pubsub/migration-from-
 category: "engineering"
 ---
 
-We recently moved the queue that triggers openstatus's uptime checks from Google Cloud Tasks to Pub/Sub. Our Google Cloud bill went from about 6.80€ a day to about 0.60€, or roughly 200€ to 20€ a month.
+openstatus runs about 250M uptime checks a month across 27 regions. Once a minute, a scheduler queues the checks that are due, each one for a specific region. Until recently, that queue was Google Cloud Tasks, which pushed every check to our checkers over HTTP.
+
+We replaced it with Pub/Sub, and the checkers now pull their own work. Our Google Cloud bill went from about 6.80€ a day to about 0.60€, or roughly 200€ to 20€ a month.
 
 <Image src="/assets/posts/migration-from-google-cloud-task-to-pubsub/gcp-daily-cost.png" alt="Google Cloud daily cost in October 2026" />
 
