@@ -34,6 +34,7 @@ import {
   statusReportsGroup,
   workspacesGroup,
 } from "./groups/entities";
+import { incidentScopeGroups } from "./groups/incident-scope";
 import { monitorScopeGroups } from "./groups/monitor-scope";
 import {
   createGroup,
@@ -142,11 +143,17 @@ export function CommandMenu() {
   const groups: CommandMenuGroup[] = page
     ? page.type === "monitor"
       ? monitorScopeGroups(page)
-      : statusPageScopeGroups({
-          page,
-          statusReports: data.sortedStatusReports,
-          maintenances: data.sortedMaintenances,
-        })
+      : page.type === "incident"
+        ? incidentScopeGroups({
+            page,
+            incidents: data.incidents,
+            statusReports: data.statusReports,
+          })
+        : statusPageScopeGroups({
+            page,
+            statusReports: data.sortedStatusReports,
+            maintenances: data.sortedMaintenances,
+          })
     : [
         incidentsGroup(data.incidents),
         monitorsGroup(data.monitors),

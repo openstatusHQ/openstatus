@@ -94,7 +94,8 @@
   [data-hash-target] {
     animation: hash-target 2s ease-out;
   }
-  [data-slot="section"][data-hash-target] {
+  [data-slot="section"][data-hash-target],
+  [data-slot="detail-section"][data-hash-target] {
     outline-offset: 8px;
     border-radius: var(--radius);
   }

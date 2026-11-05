@@ -19,7 +19,8 @@ export type CommandSheet = {
 
 export type CommandPage =
   | { type: "monitor"; id: number; name: string }
-  | { type: "status-page"; id: number; title: string };
+  | { type: "status-page"; id: number; title: string }
+  | { type: "incident"; id: number; title: string };
 
 export function pageLabel(page: CommandPage): string {
   return page.type === "monitor" ? page.name : page.title;

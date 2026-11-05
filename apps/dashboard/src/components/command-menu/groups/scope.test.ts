@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { MONITOR_TABS } from "@/app/(dashboard)/monitors/[id]/constants";
 import { STATUS_PAGE_TABS } from "@/app/(dashboard)/status-pages/[id]/constants";
 
+import { INCIDENT_ANCHORS, incidentScopeGroups } from "./incident-scope";
 import { MONITOR_EDIT_ANCHORS, monitorScopeGroups } from "./monitor-scope";
 import {
   STATUS_PAGE_EDIT_ANCHORS,
@@ -42,6 +43,66 @@ describe("monitorScopeGroups", () => {
         href: `/monitors/3/edit#${a.id}`,
       })),
     );
+  });
+});
+
+describe("incidentScopeGroups", () => {
+  type Input = Parameters<typeof incidentScopeGroups>[0];
+  const page = { type: "incident" as const, id: 7, title: "API down" };
+  // safe because incidentScopeGroups only reads the fields set in the fixtures
+  const scope = (incident: Record<string, unknown>) =>
+    incidentScopeGroups({
+      page,
+      incidents: [{ id: 7, ...incident }] as unknown as Input["incidents"],
+      statusReports: [
+        { id: 1, pageId: 4, title: "Outage", status: "investigating" },
+        { id: 2, pageId: 4, title: "Old", status: "resolved" },
+      ] as unknown as Input["statusReports"],
+    });
+
+  it("opens the incident and deep-links to its sections", () => {
+    const [group] = scope({ status: "open", statusReport: null });
+    expect(group.heading).toBe("API down");
+    expect(group.items.map((i) => i.action)).toEqual([
+      { type: "navigate", href: "/incidents/7" },
+      ...INCIDENT_ANCHORS.map((a) => ({
+        type: "navigate",
+        href: `/incidents/7#${a.id}`,
+      })),
+    ]);
+  });
+
+  it("drops the postmortem for a canceled incident", () => {
+    const [group] = scope({ status: "canceled", statusReport: null });
+    expect(group.items.map((i) => i.label)).not.toContain("Postmortem");
+  });
+
+  it("offers an update and a link for the linked report", () => {
+    const [, report] = scope({ status: "open", statusReport: { id: 1 } });
+    expect(report.items.map((i) => i.action)).toEqual([
+      { type: "sheet", sheet: { sheet: "status-report-update", reportId: 1 } },
+      { type: "navigate", href: "/status-pages/4/status-reports/1" },
+    ]);
+  });
+
+  it("only links a resolved report", () => {
+    const [, report] = scope({ status: "resolved", statusReport: { id: 2 } });
+    expect(report.items.map((i) => i.action)).toEqual([
+      { type: "navigate", href: "/status-pages/4/status-reports/2" },
+    ]);
+  });
+
+  it("has no report items without a linked report or while loading", () => {
+    expect(scope({ status: "open", statusReport: null })[1].items).toEqual([]);
+    const loading = incidentScopeGroups({
+      page,
+      incidents: undefined,
+      statusReports: undefined,
+    });
+    expect(loading.map((g) => g.items.length)).toEqual([
+      INCIDENT_ANCHORS.length + 1,
+      0,
+    ]);
   });
 });
 
