@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import { MONITOR_TABS } from "@/app/(dashboard)/monitors/[id]/constants";
 import { STATUS_PAGE_TABS } from "@/app/(dashboard)/status-pages/[id]/constants";
 
-import { monitorScopeGroups } from "./monitor-scope";
-import { statusPageScopeGroups } from "./status-page-scope";
+import { MONITOR_EDIT_ANCHORS, monitorScopeGroups } from "./monitor-scope";
+import {
+  STATUS_PAGE_EDIT_ANCHORS,
+  statusPageScopeGroups,
+} from "./status-page-scope";
 
 type ScopeInput = Parameters<typeof statusPageScopeGroups>[0];
 
@@ -23,6 +26,20 @@ describe("monitorScopeGroups", () => {
       MONITOR_TABS.map((t) => ({
         type: "navigate",
         href: `/monitors/3/${t.value}`,
+      })),
+    );
+  });
+
+  it("deep-links to edit page cards", () => {
+    const [, settings] = monitorScopeGroups({
+      type: "monitor",
+      id: 3,
+      name: "API",
+    });
+    expect(settings.items.map((i) => i.action)).toEqual(
+      MONITOR_EDIT_ANCHORS.map((a) => ({
+        type: "navigate",
+        href: `/monitors/3/edit#${a.id}`,
       })),
     );
   });
@@ -52,7 +69,17 @@ describe("statusPageScopeGroups", () => {
       "Status Reports",
       "Maintenances",
       "Pages",
+      "Settings",
     ]);
+  });
+
+  it("deep-links to edit page cards", () => {
+    expect(byHeading.Settings.items.map((i) => i.action)).toEqual(
+      STATUS_PAGE_EDIT_ANCHORS.map((a) => ({
+        type: "navigate",
+        href: `/status-pages/4/edit#${a.id}`,
+      })),
+    );
   });
 
   it("scopes create actions to the page", () => {
@@ -109,6 +136,7 @@ describe("statusPageScopeGroups", () => {
       0,
       0,
       STATUS_PAGE_TABS.length,
+      STATUS_PAGE_EDIT_ANCHORS.length,
     ]);
   });
 });

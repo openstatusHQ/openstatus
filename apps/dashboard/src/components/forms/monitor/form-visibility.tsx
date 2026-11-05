@@ -126,7 +126,7 @@ export function FormVisibility({
                 data-limit="monitor-values-visibility"
                 asChild
               >
-                <NextLink href="/settings/billing">
+                <NextLink href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>

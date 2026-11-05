@@ -82,7 +82,9 @@ export default function Page() {
           </Note>
         ) : null}
         <Button size="sm" asChild>
-          <Link href="/settings/integrations">Install the Slack agent</Link>
+          <Link href="/settings/integrations#slack">
+            Install the Slack agent
+          </Link>
         </Button>
       </Section>
       <Section id="messages">

@@ -38,7 +38,7 @@ function Message({
       <div className="mt-2 flex gap-2">
         {children}
         <Button size="sm" variant="outline" asChild>
-          <Link href="/settings/integrations">Back to integrations</Link>
+          <Link href="/settings/integrations#slack">Back to integrations</Link>
         </Button>
       </div>
     </EmptyStateContainer>

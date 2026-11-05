@@ -235,7 +235,7 @@ export function FormLocale({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <Link href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </Link>

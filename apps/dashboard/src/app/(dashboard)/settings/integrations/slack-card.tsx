@@ -166,7 +166,7 @@ export function SlackIntegrationCard({
             type="button"
             asChild
           >
-            <Link href="/settings/billing">
+            <Link href="/settings/billing#plans">
               <Lock />
               Upgrade
             </Link>

@@ -1,5 +1,15 @@
-import { Dark, Light } from "@openstatus/icons";
-import { AtSign, KeyRound, Palette, Pencil, Plus, Users } from "lucide-react";
+import { Billing, Dark, Light } from "@openstatus/icons";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
+import {
+  AtSign,
+  KeyRound,
+  Palette,
+  PackagePlus,
+  Pencil,
+  Plus,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 import { HELP_LINKS, HELP_SUPPORT } from "@/config/help";
 import { NAV, NAV_MENU_ITEMS } from "@/config/nav";
@@ -118,6 +128,44 @@ const SETTINGS_ANCHORS: CommandMenuItem[] = [
     icon: Palette,
     keywords: ["theme", "dark mode"],
     action: { type: "navigate", href: "/settings/account#appearance" },
+  },
+  {
+    value: "Personal Information",
+    label: "Personal Information",
+    icon: UserRound,
+    keywords: ["profile", "name", "email"],
+    action: {
+      type: "navigate",
+      href: "/settings/account#personal-information",
+    },
+  },
+  {
+    value: "Plans",
+    label: "Plans",
+    icon: Billing,
+    keywords: ["upgrade", "pricing", "subscription"],
+    action: { type: "navigate", href: "/settings/billing#plans" },
+  },
+  {
+    value: "Add-ons",
+    label: "Add-ons",
+    icon: PackagePlus,
+    keywords: ["addon", "extra", "limits"],
+    action: { type: "navigate", href: "/settings/billing#add-ons" },
+  },
+  {
+    value: "Slack Integration",
+    label: "Slack Integration",
+    icon: SlackIcon,
+    keywords: ["slack", "agent"],
+    action: { type: "navigate", href: "/settings/integrations#slack" },
+  },
+  {
+    value: "Connected Apps",
+    label: "Connected Apps",
+    icon: ModelContextProtocolIcon,
+    keywords: ["mcp", "oauth", "claude", "cursor"],
+    action: { type: "navigate", href: "/settings/integrations#connected-apps" },
   },
 ];
 

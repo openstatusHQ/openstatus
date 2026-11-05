@@ -40,7 +40,7 @@ await openstatus.monitor.v1.MonitorService.listMonitors({}, { headers });
 | `OPENSTATUS_API_KEY` | Your openstatus API key | Required for authenticated calls |
 | `OPENSTATUS_API_URL` | Custom API endpoint | `https://api.openstatus.dev/rpc` |
 
-Get your API key from the [openstatus dashboard](https://app.openstatus.dev) under **Settings → General → API Keys**.
+Get your API key from the [openstatus dashboard](https://app.openstatus.dev) under [**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys).
 
 ## Scopes
 
@@ -73,7 +73,7 @@ The dashboard offers **Read only** (`read`), **Read & write** (`write`), and **C
 }
 ```
 
-API keys are managed from the dashboard (**Settings > General > API Keys**); there is no public REST or ConnectRPC endpoint for creating or revoking them. Internally, revocation carries one carve-out: a read-only key is allowed to revoke *itself*, so a leaked key always has a rotation path. Revoking a *different* key from a read-only actor is forbidden.
+API keys are managed from the dashboard ([**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys)); there is no public REST or ConnectRPC endpoint for creating or revoking them. Internally, revocation carries one carve-out: a read-only key is allowed to revoke *itself*, so a leaked key always has a rotation path. Revoking a *different* key from a read-only actor is forbidden.
 
 ## Custom Base URL
 

@@ -156,7 +156,7 @@ Removing a monitor, page, component, group or maintenance window stays a dashboa
 
 ## Using an API key instead
 
-OAuth needs a browser. For CI, a remote box, or a committed config where you'd rather not sign in, pass an API key in the `x-openstatus-key` header instead. Create one in **Settings > General > API Keys** as **Read only**, **Read & write**, or **Custom** with one `read` / `write` choice per resource group (scopes are immutable on a key), then add the header where your agent puts it:
+OAuth needs a browser. For CI, a remote box, or a committed config where you'd rather not sign in, pass an API key in the `x-openstatus-key` header instead. Create one in [**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys) as **Read only**, **Read & write**, or **Custom** with one `read` / `write` choice per resource group (scopes are immutable on a key), then add the header where your agent puts it:
 
 ```bash
 # Claude Code
@@ -208,7 +208,7 @@ When a header is present, the agent skips the OAuth sign-in.
 
 ## Managing the connection
 
-Every OAuth connection is listed in **Settings > Integrations > Connected apps** with the client name, granted access, who connected it, and when it was last used. Revoke it there and the agent's next call fails with `401`; sign in again to reconnect. Members can revoke their own connections; owners and admins can revoke any. Removing a member from the workspace revokes their connections automatically.
+Every OAuth connection is listed in [**Settings > Integrations > Connected apps**](https://app.openstatus.dev/settings/integrations#connected-apps) with the client name, granted access, who connected it, and when it was last used. Revoke it there and the agent's next call fails with `401`; sign in again to reconnect. Members can revoke their own connections; owners and admins can revoke any. Removing a member from the workspace revokes their connections automatically.
 
 ## What you've accomplished
 

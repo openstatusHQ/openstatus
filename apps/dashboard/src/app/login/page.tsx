@@ -8,6 +8,7 @@ import { signIn } from "@/lib/auth";
 
 import { EmailForm } from "./_components/email-form";
 import { LoginButton } from "./_components/login-button";
+import { RedirectHash } from "./_components/redirect-hash";
 import { searchParamsCache } from "./search-params";
 
 const hasWorkOS = Boolean(
@@ -45,6 +46,7 @@ export default async function Page(props: {
 
   return (
     <div className="my-16 grid w-full max-w-lg gap-6">
+      <RedirectHash />
       <div className="flex flex-col gap-1 text-center">
         <h1 className="font-cal text-3xl tracking-tight">Sign In</h1>
         <p className="font-commit-mono text-muted-foreground text-sm text-pretty">

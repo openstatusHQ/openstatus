@@ -58,7 +58,7 @@ const installs = [
     description: (
       <>
         Or set it as an environment variable. Create an API key in your
-        workspace <Link href="/settings/general">settings.</Link>
+        workspace <Link href="/settings/general#api-keys">settings.</Link>
       </>
     ),
     command: {

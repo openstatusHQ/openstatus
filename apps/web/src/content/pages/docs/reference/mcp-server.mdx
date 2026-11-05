@@ -35,9 +35,9 @@ There is nothing to copy. The token is scoped to the workspace you picked at con
 | Access token | `os_oat_` prefix, valid for 1 hour, refreshed automatically by the client |
 | Refresh token | 90 days sliding, rotated on every refresh |
 | Grant | one live grant per client and user; connecting again replaces it |
-| Revoke | **Settings > Integrations > Connected apps**; the next call fails with `401` |
+| Revoke | [**Settings > Integrations > Connected apps**](https://app.openstatus.dev/settings/integrations#connected-apps); the next call fails with `401` |
 
-A connection lives in **Settings > Integrations > Connected apps** with the client name, granted access, who connected it, and when it was last used. Members revoke their own connections, owners and admins revoke any. Removing a member from the workspace revokes their connections too.
+A connection lives in [**Settings > Integrations > Connected apps**](https://app.openstatus.dev/settings/integrations#connected-apps) with the client name, granted access, who connected it, and when it was last used. Members revoke their own connections, owners and admins revoke any. Removing a member from the workspace revokes their connections too.
 
 ### API key (fallback)
 
@@ -47,7 +47,7 @@ Send an openstatus API key in the `x-openstatus-key` header. This is the same ke
 x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Get a key from the dashboard's **Settings > General**, in the **API Keys** card. When both credentials are present, the header wins.
+Get a key from the dashboard's [**Settings > General**](https://app.openstatus.dev/settings/general#api-keys), in the **API Keys** card. When both credentials are present, the header wins.
 
 ### Scopes
 
@@ -360,7 +360,7 @@ Outside production `OAUTH_ISSUER` defaults to `http://localhost:3000` and `DASHB
 
 Errors map by severity:
 
-- **Recoverable** (`NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LIMIT_EXCEEDED`, `PRECONDITION_FAILED`) come back as a tool result with `isError: true`. The model can read the message and retry with corrected input. A `LIMIT_EXCEEDED` message says whether an add-on under **Settings > Billing** or a plan upgrade removes the limit; the create budget (30 resources per credential per hour) is a `PRECONDITION_FAILED`.
+- **Recoverable** (`NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LIMIT_EXCEEDED`, `PRECONDITION_FAILED`) come back as a tool result with `isError: true`. The model can read the message and retry with corrected input. A `LIMIT_EXCEEDED` message says whether an add-on under [**Settings > Billing**](https://app.openstatus.dev/settings/billing#add-ons) or a plan upgrade removes the limit; the create budget (30 resources per credential per hour) is a `PRECONDITION_FAILED`.
 - **Transport-level** (`UNAUTHORIZED`, `FORBIDDEN`, `INTERNAL`, malformed input) come back as a JSON-RPC error.
 
 Error messages are not redacted — the consumer is an LLM that benefits from the detail.

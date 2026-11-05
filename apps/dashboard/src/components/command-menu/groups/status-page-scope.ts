@@ -1,10 +1,31 @@
 import type { RouterOutputs } from "@openstatus/api";
-import { Plus } from "lucide-react";
+import {
+  Clock,
+  Globe,
+  Languages,
+  Link,
+  Lock,
+  Palette,
+  Plus,
+  Settings2,
+  TriangleAlert,
+} from "lucide-react";
 
 import { STATUS_PAGE_TABS } from "@/app/(dashboard)/status-pages/[id]/constants";
 
 import type { CommandMenuGroup, CommandMenuItem, CommandPage } from "../types";
 import { createMaintenanceItem, createStatusReportItem } from "./static";
+
+export const STATUS_PAGE_EDIT_ANCHORS = [
+  { id: "general", label: "General", icon: Settings2 },
+  { id: "custom-domain", label: "Custom Domain", icon: Globe },
+  { id: "links", label: "Links", icon: Link },
+  { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "locales", label: "Locales", icon: Languages },
+  { id: "timezone", label: "Time Zone", icon: Clock },
+  { id: "page-access", label: "Page Access", icon: Lock },
+  { id: "danger-zone", label: "Danger Zone", icon: TriangleAlert },
+];
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
@@ -75,6 +96,18 @@ export function statusPageScopeGroups({
         action: {
           type: "navigate",
           href: `/status-pages/${page.id}/${tab.value}`,
+        },
+      })),
+    },
+    {
+      heading: "Settings",
+      items: STATUS_PAGE_EDIT_ANCHORS.map((anchor) => ({
+        value: `edit-${anchor.id}`,
+        label: anchor.label,
+        icon: anchor.icon,
+        action: {
+          type: "navigate",
+          href: `/status-pages/${page.id}/edit#${anchor.id}`,
         },
       })),
     },
