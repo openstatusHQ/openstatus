@@ -22,6 +22,7 @@ import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-rep
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
+import { useCopyAgentPrompt } from "@/hooks/use-copy-agent-prompt";
 import { scrollToHash } from "@/hooks/use-scroll-to-hash";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
@@ -68,6 +69,10 @@ export function CommandMenu() {
   const { resolvedTheme, setTheme } = useTheme();
 
   const data = useCommandMenuData({ open });
+  const { copyPrompt: copyAgentPrompt } = useCopyAgentPrompt(
+    "ask",
+    "command-menu",
+  );
 
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
 
@@ -161,7 +166,10 @@ export function CommandMenu() {
         createGroup(),
         settingsGroup(),
         workspacesGroup(data.otherWorkspaces, switchWorkspace),
-        helpGroup(),
+        helpGroup(() => {
+          void copyAgentPrompt();
+          setOpen(false);
+        }),
         ...(mounted ? [themeGroup(resolvedTheme, setTheme)] : []),
       ].filter((g): g is CommandMenuGroup => g !== null);
 

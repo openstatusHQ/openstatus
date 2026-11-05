@@ -24,12 +24,29 @@ export const trackRouter = createTRPCRouter({
     .input(z.object({ monitor: stepStatus, page: stepStatus }))
     .mutation(() => ({ ok: true })),
 
+  agentPromptCopied: protectedProcedure
+    .meta({ track: Events.CopyAgentPrompt, trackProps: ["source", "prompt"] })
+    .input(
+      z.object({
+        prompt: z.enum(["setup", "ask"]),
+        source: z.enum([
+          "onboarding",
+          "overview",
+          "help",
+          "command-menu",
+          "agents",
+          "checklist",
+        ]),
+      }),
+    )
+    .mutation(() => ({ ok: true })),
+
   // Anonymous marketing-site event; `.meta({ track })` only runs on
   // protectedProcedure, so this tracks by hand like the play/* routes.
   contentCopied: publicProcedure
     .input(
       z.object({
-        kind: z.enum(["link", "markdown"]),
+        kind: z.enum(["link", "markdown", "prompt"]),
         path: z.string().max(512),
       }),
     )

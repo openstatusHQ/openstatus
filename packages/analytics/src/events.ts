@@ -16,6 +16,10 @@ export const Events = {
     name: "onboarding_completed",
     channel: "onboarding",
   },
+  CopyAgentPrompt: {
+    name: "agent_prompt_copied",
+    channel: "agent",
+  },
   SignInUser: {
     name: "user_signed_in",
     channel: "login",
