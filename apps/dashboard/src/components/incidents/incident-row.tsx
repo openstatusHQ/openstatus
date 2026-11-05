@@ -132,6 +132,7 @@ export function IncidentRow({
         <StatusBars
           level={severityLevels[incident.severity]}
           variant={severity.variant}
+          className={incident.status === "canceled" ? "opacity-50" : undefined}
         />
         <span>{kind ? "Incident" : status.label}</span>
       </EventRowStatus>
