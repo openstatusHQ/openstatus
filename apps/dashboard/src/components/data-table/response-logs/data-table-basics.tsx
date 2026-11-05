@@ -115,16 +115,6 @@ export function DataTableBasicsHTTP({
             </div>
           </TableCell>
         </TableRow>
-        {data.attempts !== undefined ? (
-          <TableRow className="[&>:not(:last-child)]:border-r">
-            <TableHead className="bg-muted/50 text-muted-foreground font-normal">
-              Attempts
-            </TableHead>
-            <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
-              {data.attempts}
-            </TableCell>
-          </TableRow>
-        ) : null}
         {data.id ? (
           <TableRow className="[&>:not(:last-child)]:border-r">
             <TableHead className="bg-muted/50 text-muted-foreground font-normal">
@@ -214,6 +204,16 @@ export function DataTableBasicsHTTP({
             </TableHead>
             <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
               {data?.trigger}
+            </TableCell>
+          </TableRow>
+        ) : null}
+        {data.attempts !== undefined ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+              Attempts
+            </TableHead>
+            <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+              {data.attempts}
             </TableCell>
           </TableRow>
         ) : null}
@@ -361,13 +361,13 @@ export function DataTableBasicsHTTP({
 type BasicsRequestFields = {
   id?: string | null;
   requestStatus?: string | null;
-  attempts?: number;
   cronTimestamp: number;
 };
 
 type BasicsLocationFields = {
   region: string;
   trigger?: "cron" | "api" | "test" | null;
+  attempts?: number;
 };
 
 function BasicsTable({ children }: { children: React.ReactNode }) {
@@ -429,9 +429,6 @@ function BasicsRequestRows({ data }: { data: BasicsRequestFields }) {
           <div className="capitalize">{data?.requestStatus ?? "unknown"}</div>
         </div>
       </BasicsRow>
-      {data.attempts !== undefined ? (
-        <BasicsRow label="Attempts">{data.attempts}</BasicsRow>
-      ) : null}
       {data.id ? <BasicsRow label="ID">{data.id}</BasicsRow> : null}
       <BasicsRow label="Timestamp">
         <TableCellDate
@@ -477,6 +474,9 @@ function BasicsLocationRows({
       </BasicsRow>
       {data.trigger ? (
         <BasicsRow label="Trigger">{data?.trigger}</BasicsRow>
+      ) : null}
+      {data.attempts !== undefined ? (
+        <BasicsRow label="Attempts">{data.attempts}</BasicsRow>
       ) : null}
     </>
   );

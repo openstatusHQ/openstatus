@@ -44,6 +44,7 @@ describe("toPipeParams", () => {
         status: undefined,
         trigger: undefined,
         statusCodes: undefined,
+        attempts: [],
         latencyMin: undefined,
         latencyMax: undefined,
       }),
@@ -57,6 +58,7 @@ describe("toPipeParams", () => {
         status: ["error"],
         trigger: ["cron"],
         statusCodes: [500],
+        attempts: [2, 3],
         latencyMin: 0,
         latencyMax: 100,
       }),
@@ -65,6 +67,7 @@ describe("toPipeParams", () => {
       status: ["error"],
       trigger: ["cron"],
       statusCodes: [500],
+      attempts: [2, 3],
       latencyMin: 0,
       latencyMax: 100,
     });

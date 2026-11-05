@@ -59,6 +59,7 @@ type LogsFilterState = {
   latency?: number[];
   region?: string[];
   trigger?: string[];
+  attempts?: number[];
 };
 
 export function Client({
@@ -177,6 +178,7 @@ function LogsTableInner({
         ? (state.trigger as ("cron" | "api")[])
         : undefined,
       statusCodes: state.statusCode?.length ? state.statusCode : undefined,
+      attempts: state.attempts?.length ? state.attempts : undefined,
       latencyMin: state.latency?.[0],
       latencyMax: state.latency?.[1],
     };

@@ -40,6 +40,7 @@ WHERE
     {% if regions %} AND region IN {{ Array(regions, 'String') }} {% end %}
     {% if status %} AND requestStatus IN {{ Array(status, 'String') }} {% end %}
     {% if trigger %} AND trigger IN {{ Array(trigger, 'String') }} {% end %}
+    {% if attempts %} AND attempts IN {{ Array(attempts, 'Int16') }} {% end %}
     {% if statusCodes %} AND statusCode IN {{ Array(statusCodes, 'Int16') }} {% end %}
     {% if defined(latencyMin) %} AND latency >= toInt64({{ String(latencyMin) }}) {% end %}
     {% if defined(latencyMax) %} AND latency <= toInt64({{ String(latencyMax) }}) {% end %}
