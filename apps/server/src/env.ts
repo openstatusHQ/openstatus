@@ -8,11 +8,7 @@ export const env = createEnv({
     UNKEY_TOKEN: z.string().min(1),
     TINY_BIRD_API_KEY: z.string().min(1),
     TINYBIRD_URL: z.string().default("https://api.tinybird.co"),
-    // .env.example ships it blank; "" must mean unset, not an invalid URL
-    HEARTBEAT_PING_BASE_URL: z.preprocess(
-      (v) => (v === "" ? undefined : v),
-      z.url().optional(),
-    ),
+    HEARTBEAT_PING_BASE_URL: z.url().optional(),
     HEARTBEAT_WORKSPACE_IDS: z.string().optional(),
     TINYBIRD_NOOP: z.stringbool().catch(false),
     UPSTASH_REDIS_REST_URL: z.string().min(1),
