@@ -190,6 +190,18 @@ describe("formatWindow", () => {
     ).toBe("23:33");
   });
 
+  it("keeps both ends when only the formatted text matches", () => {
+    expect(
+      formatWindow(
+        new Date(2026, 9, 17, 23, 33, 10),
+        new Date(2026, 9, 18, 23, 33, 5),
+      ),
+    ).toBe("23:33 – 23:33");
+    expect(formatWindow(new Date(2025, 0, 1), new Date(2026, 0, 1))).toBe(
+      "Jan 1, 2025 – Jan 1, 2026",
+    );
+  });
+
   it("uses dates from a day on", () => {
     expect(formatWindow(new Date(2026, 9, 11), new Date(2026, 9, 15))).toBe(
       "Oct 11 – Oct 15",

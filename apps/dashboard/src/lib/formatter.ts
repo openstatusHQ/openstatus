@@ -3,6 +3,7 @@ import {
   endOfDay,
   format,
   isSameDay,
+  isSameMinute,
   isSameYear,
   startOfDay,
 } from "date-fns";
@@ -170,12 +171,15 @@ export function formatClockOrDay(date: Date, now = new Date()): string {
     : format(date, "MMM d, HH:mm");
 }
 
-/** Under a day "02:00 – 06:00", else "Oct 11 – Oct 15"; the row's date carries the day. */
+/** Under a day "02:00 – 06:00", else "Oct 11 – Oct 15" (with years when they differ); the row's date carries the day. */
 export function formatWindow(from: Date, to: Date): string {
-  const short = to.getTime() - from.getTime() < 24 * 60 * 60 * 1000;
-  const pattern = short ? "HH:mm" : "MMM d";
-  const start = format(from, pattern);
-  const end = format(to, pattern);
   // "23:33 – 23:33" reads like a typo
-  return start === end ? start : `${start} – ${end}`;
+  if (isSameMinute(from, to)) return formatClock(from);
+  const short = to.getTime() - from.getTime() < 24 * 60 * 60 * 1000;
+  const pattern = short
+    ? "HH:mm"
+    : isSameYear(from, to)
+      ? "MMM d"
+      : "MMM d, yyyy";
+  return `${format(from, pattern)} – ${format(to, pattern)}`;
 }
