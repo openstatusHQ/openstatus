@@ -43,6 +43,7 @@ type PingData struct {
 	Timestamp     int64  `json:"timestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
+	Attempts      int    `json:"attempts,omitempty"`
 }
 
 func (h Handler) HTTPCheckerHandler(c *gin.Context) {
@@ -150,6 +151,7 @@ func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerReques
 		}
 
 		data := PingData{
+			Attempts:      called,
 			ID:            req.RequestID,
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
@@ -261,6 +263,7 @@ func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerReques
 
 	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
 		data := PingData{
+			Attempts:      called,
 			ID:            req.RequestID,
 			URL:           req.URL,
 			Method:        req.Method,

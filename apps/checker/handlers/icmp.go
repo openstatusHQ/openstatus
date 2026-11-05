@@ -39,6 +39,8 @@ type ICMPData struct {
 	PacketsSent     uint8 `json:"packetsSent"`
 	PacketsReceived uint8 `json:"packetsReceived"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
@@ -104,7 +106,10 @@ func (h Handler) RunICMPCheck(ctx context.Context, req request.ICMPCheckerReques
 		retry = 3
 	}
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := checker.PingICMP(req.Timeout, req.URI)
 		if err != nil {
 			return struct{}{}, fmt.Errorf("unable to check icmp %s", err)
@@ -135,6 +140,7 @@ func (h Handler) RunICMPCheck(ctx context.Context, req request.ICMPCheckerReques
 		timestamp := time.Now().UTC().UnixMilli()
 
 		data := ICMPData{
+			Attempts:        called,
 			ID:              id.String(),
 			WorkspaceID:     workspaceId,
 			Timestamp:       timestamp,
@@ -214,6 +220,7 @@ func (h Handler) RunICMPCheck(ctx context.Context, req request.ICMPCheckerReques
 			return response, e
 		}
 		data := ICMPData{
+			Attempts:      called,
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,

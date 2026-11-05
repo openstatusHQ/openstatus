@@ -38,6 +38,8 @@ type DNSResponse struct {
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
@@ -173,6 +175,7 @@ func (h Handler) RunDNSCheck(ctx context.Context, req request.DNSCheckerRequest)
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget))
 	data.Latency = latency
+	data.Attempts = called
 	if result != nil {
 		data.Records = checker.FormatDNSRecords(result)
 	}

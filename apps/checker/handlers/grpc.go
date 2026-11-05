@@ -37,6 +37,8 @@ type GRPCData struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 	GRPCCode      int64 `json:"grpcCode"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
@@ -126,7 +128,10 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 	// attempt's result.
 	var lastResult checker.GRPCResult
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := grpcCheck(req)
 		lastResult = res
 		if err != nil {
@@ -159,6 +164,7 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 		}
 
 		data := GRPCData{
+			Attempts:      called,
 			ID:            req.RequestID,
 			WorkspaceID:   workspaceId,
 			Timestamp:     timestamp,
@@ -236,6 +242,7 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 		}
 
 		data := GRPCData{
+			Attempts:      called,
 			ID:            req.RequestID,
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,

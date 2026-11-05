@@ -248,5 +248,6 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 	if err != nil {
 		return nil, err
 	}
+	resp.Attempts = called
 	return resp, nil
 }
