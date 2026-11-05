@@ -20,6 +20,7 @@ import {
   UpdatePageLinksInput,
   UpdatePageLocalesInput,
   UpdatePagePasswordProtectionInput,
+  UpdatePageTimezoneInput,
 } from "./schemas";
 
 export async function updatePageGeneral(args: {
@@ -317,6 +318,43 @@ export async function updatePageLocales(args: {
         locales: input.locales,
         updatedAt: new Date(),
       })
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "page.update",
+      entityType: "page",
+      entityId: existing.id,
+      before: existing,
+      after: updated,
+    });
+  });
+}
+
+export async function updatePageTimezone(args: {
+  ctx: ServiceContext;
+  input: UpdatePageTimezoneInput;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdatePageTimezoneInput.parse(args.input);
+
+  // UTC stays open to every plan, so a page can always be set back to it
+  if (input.defaultTimezone !== "UTC" && !ctx.workspace.limits.timezone) {
+    throw new LimitExceededError("timezone", 0);
+  }
+
+  await withTransaction(ctx, async (tx) => {
+    const existing = await getPageInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+
+    const updated = await tx
+      .update(page)
+      .set({ defaultTimezone: input.defaultTimezone, updatedAt: new Date() })
       .where(eq(page.id, existing.id))
       .returning()
       .get();
