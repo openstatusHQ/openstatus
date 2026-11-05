@@ -143,3 +143,95 @@ describe("updateMaintenanceChanges", () => {
     ]);
   });
 });
+
+describe("with a before snapshot", () => {
+  type PageInput = Parameters<typeof updateStatusPageChanges>[0];
+
+  it("drops the id and shows old → new", () => {
+    expect(
+      updateStatusPageChanges(
+        as<PageInput>({ pageId: 5034, title: "test-slack" }),
+        undefined,
+        {
+          label: "Test Slack · test-slack.openstatus.dev",
+          values: { title: "Test Slack", slug: "test-slack" },
+        },
+      ),
+    ).toEqual([{ field: "title", before: "Test Slack", after: "test-slack" }]);
+  });
+
+  it("skips fields whose value does not change", () => {
+    type Input = Parameters<typeof updateMonitorChanges>[0];
+    expect(
+      updateMonitorChanges(
+        as<Input>({
+          monitorId: 12,
+          active: false,
+          notificationIds: [2, 1],
+          description: "",
+        }),
+        undefined,
+        {
+          label: "API",
+          values: { active: true, notificationIds: [1, 2], description: null },
+        },
+      ),
+    ).toEqual([{ field: "active", before: true, after: false }]);
+  });
+
+  it("compares datetimes by instant", () => {
+    type Input = Parameters<typeof updateMaintenanceChanges>[0];
+    expect(
+      updateMaintenanceChanges(
+        as<Input>({
+          maintenanceId: 5,
+          from: "2026-05-01T14:00:00Z",
+          to: "2026-05-01T16:00:00Z",
+        }),
+        {
+          label: "DB upgrade",
+          values: {
+            from: "2026-05-01T14:00:00.000Z",
+            to: "2026-05-01T15:00:00.000Z",
+          },
+        },
+      ),
+    ).toEqual([
+      {
+        field: "to",
+        before: "2026-05-01T15:00:00.000Z",
+        after: "2026-05-01T16:00:00Z",
+      },
+    ]);
+  });
+
+  it("compares free text literally even when it looks like a date", () => {
+    type Input = Parameters<typeof updateMaintenanceChanges>[0];
+    expect(
+      updateMaintenanceChanges(
+        as<Input>({ maintenanceId: 5, message: "2026-05-01T14:00:00Z" }),
+        {
+          label: "DB upgrade",
+          values: { message: "2026-05-01T14:00:00.000Z" },
+        },
+      ),
+    ).toEqual([
+      {
+        field: "message",
+        before: "2026-05-01T14:00:00.000Z",
+        after: "2026-05-01T14:00:00Z",
+      },
+    ]);
+  });
+
+  it("keeps after-only rows for fields the snapshot lacks", () => {
+    type Input = Parameters<typeof updateMonitorChanges>[0];
+    expect(
+      updateMonitorChanges(
+        as<Input>({ monitorId: 12, body: "{}" }),
+        undefined,
+        { label: "API", values: { active: true } },
+      ),
+    ).toEqual([{ field: "body", after: "{}" }]);
+  });
+});

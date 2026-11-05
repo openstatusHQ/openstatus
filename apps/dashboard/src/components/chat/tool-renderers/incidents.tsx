@@ -1,6 +1,7 @@
 import type {
   AgentToolInput,
   AgentToolOutput,
+  ApprovalBefore,
 } from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
@@ -15,6 +16,7 @@ import {
 } from "@/components/incidents/incident-badge";
 import { entityKinds } from "@/data/entity-refs.client";
 
+import { fieldChanges, idRow } from "./before-diff";
 import type { DetailsTableData } from "./details-table";
 import type { ResultTableData } from "./result-table";
 
@@ -142,20 +144,16 @@ export function declareIncidentChanges(
 
 export function updateIncidentChanges(
   input: AgentToolInput<"update_incident">,
+  before?: ApprovalBefore,
 ): ChangeRow[] {
-  const changes: ChangeRow[] = [{ field: "incidentId", after: input.id }];
-  for (const field of [
-    "title",
-    "severity",
-    "summary",
-    "commanderId",
-    "startedAt",
-  ] as const) {
-    if (input[field] !== undefined) {
-      changes.push({ field, after: input[field] });
-    }
-  }
-  return changes;
+  return [
+    ...idRow("incidentId", input.id, before),
+    ...fieldChanges(
+      input,
+      ["title", "severity", "summary", "commanderId", "startedAt"],
+      before,
+    ),
+  ];
 }
 
 export function resolveIncidentChanges(

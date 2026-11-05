@@ -5,7 +5,8 @@ import {
 import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
-import type { ServiceContext } from "../context";
+import { requireScope } from "../auth";
+import { type ServiceContext, getReadDb } from "../context";
 import {
   addStatusReportUpdate,
   deleteStatusReportUpdate,
@@ -18,11 +19,18 @@ import {
 } from "../status-report";
 import { createStatusReport } from "../status-report/create";
 import {
+  getComponentImpactsForUpdate,
+  getPageComponentIdsForReport,
+  getReportInWorkspace,
+  getReportUpdateInWorkspace,
+} from "../status-report/internal";
+import {
   type ComponentImpacts,
   componentImpactsSchema,
   type StatusReportStatus,
 } from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool, SummaryLine } from "./types";
 
 // Agent surfaces send only the impacts that CHANGED (see system prompt). Carry
@@ -589,6 +597,23 @@ export const updateStatusReportTool: AgentTool<
   inputSchema: UpdateStatusReportInputShape,
   outputSchema: UpdateStatusReportOutput,
   approval: {
+    loadBefore: {
+      idField: "statusReportId",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const db = getReadDb(ctx);
+        const r = await getReportInWorkspace({
+          tx: db,
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(r.title, {
+          title: r.title,
+          status: r.status,
+          pageComponentIds: await getPageComponentIdsForReport(db, r.id),
+        });
+      },
+    },
     summarize: (input) => {
       const lines: SummaryLine[] = [
         { label: "Report ID", value: String(input.statusReportId) },
@@ -767,6 +792,29 @@ export const updateStatusReportUpdateTool: AgentTool<
   inputSchema: UpdateStatusReportUpdateInputShape,
   outputSchema: UpdateStatusReportUpdateOutput,
   approval: {
+    loadBefore: {
+      idField: "id",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const db = getReadDb(ctx);
+        const row = await getReportUpdateInWorkspace({
+          tx: db,
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        const r = await getReportInWorkspace({
+          tx: db,
+          id: row.statusReportId,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(r.title, {
+          status: row.status,
+          message: row.message,
+          date: row.date,
+          componentImpacts: await getComponentImpactsForUpdate(db, row.id),
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Edit Status Report Update #${input.id}`,
       lines: [

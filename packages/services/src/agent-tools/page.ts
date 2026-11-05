@@ -1,7 +1,8 @@
 import { slugSchema } from "@openstatus/db/src/schema/pages/validation";
 import { z } from "zod";
 
-import { withTransaction } from "../context";
+import { requireScope } from "../auth";
+import { getReadDb, withTransaction } from "../context";
 import {
   getPage,
   listPages,
@@ -9,6 +10,8 @@ import {
   updatePageGeneral,
   updatePageLinks,
 } from "../page";
+import { getPageInWorkspace } from "../page/internal";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 import { dashboardUrl, statusPageUrl } from "./urls";
 
@@ -167,6 +170,25 @@ export const updateStatusPageTool: AgentTool<
   inputSchema: UpdateStatusPageInputShape,
   outputSchema: StatusPageOutput,
   approval: {
+    loadBefore: {
+      idField: "pageId",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "pages:read");
+        const page = await getPageInWorkspace({
+          tx: getReadDb(ctx),
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(`${page.title} · ${page.slug}.openstatus.dev`, {
+          title: page.title,
+          slug: page.slug,
+          description: page.description,
+          icon: page.icon,
+          homepageUrl: page.homepageUrl,
+          contactUrl: page.contactUrl,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Status Page #${input.pageId}`,
       lines: [

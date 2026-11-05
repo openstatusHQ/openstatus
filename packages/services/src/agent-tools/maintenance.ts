@@ -1,17 +1,22 @@
 import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
+import { requireScope } from "../auth";
+import { getReadDb } from "../context";
 import {
   type MaintenanceWithRelations,
   addMaintenanceUpdate,
   createMaintenance,
   deleteMaintenanceUpdate,
   getMaintenance,
+  getMaintenanceUpdate,
   listMaintenances,
   notifyMaintenance,
   updateMaintenance,
   updateMaintenanceUpdate,
 } from "../maintenance";
+import { getMaintenanceInWorkspace } from "../maintenance/internal";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 
 const PER_PAGE_DEFAULT = 50;
@@ -393,6 +398,22 @@ export const updateMaintenanceUpdateTool: AgentTool<
   inputSchema: UpdateMaintenanceUpdateInputShape,
   outputSchema: MaintenanceUpdateOutput,
   approval: {
+    loadBefore: {
+      idField: "id",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const update = await getMaintenanceUpdate({ ctx, input: { id } });
+        const m = await getMaintenanceInWorkspace({
+          tx: getReadDb(ctx),
+          id: update.maintenanceId,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(m.title, {
+          message: update.message,
+          date: update.date,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Edit Maintenance Update #${input.id}`,
       lines: [
@@ -502,6 +523,20 @@ export const updateMaintenanceTool: AgentTool<
   inputSchema: UpdateMaintenanceInputShape,
   outputSchema: MaintenanceItemOutput,
   approval: {
+    loadBefore: {
+      idField: "maintenanceId",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const m = await getMaintenance({ ctx, input: { id } });
+        return beforeSnapshot(m.title, {
+          title: m.title,
+          from: m.from,
+          to: m.to,
+          pageComponentIds: m.pageComponentIds,
+          message: m.message,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Maintenance #${input.maintenanceId}`,
       lines: [

@@ -7,6 +7,7 @@ import {
 } from "@openstatus/ui/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import {
   type DynamicToolUIPart,
   type ToolUIPart,
@@ -16,12 +17,14 @@ import {
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
+import { useTRPC } from "@/lib/trpc/client";
 
 import { useChatTool } from "./chat-tool-context";
 import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
+  toolBeforeIdField,
 } from "./tool-renderers";
 
 // SDK tool-part state machine: input-streaming/-available → in-flight;
@@ -66,6 +69,31 @@ function ApprovalCard({
   confirmTool: (id: string) => void;
   cancelTool: (id: string, reason?: string) => void;
 }) {
+  const idField = toolBeforeIdField(toolName);
+  const entityId = idField ? integerField(input, idField) : undefined;
+  const loadsBefore = entityId !== undefined;
+  const trpc = useTRPC();
+  // Fetched fresh for every card (a revert must not reuse the snapshot taken
+  // before the change it reverts), then held still so the diff can't shift
+  // under the user while the card is open.
+  const beforeQuery = useQuery({
+    ...trpc.chatSession.approvalBefore.queryOptions({
+      toolName,
+      ids: idField && entityId !== undefined ? { [idField]: entityId } : {},
+    }),
+    enabled: loadsBefore,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  // Without a snapshot (no loader, error, entity gone) the card falls back
+  // to the proposed values only.
+  const loading =
+    loadsBefore && (beforeQuery.isPending || !beforeQuery.isFetchedAfterMount);
+  const before = loading ? undefined : (beforeQuery.data ?? undefined);
+
   // Scope key handling to the card so batched approvals / popovers don't share a window listener.
   const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -77,14 +105,14 @@ function ApprovalCard({
     if (e.defaultPrevented) return;
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      confirmTool(approvalId);
+      if (!loading) confirmTool(approvalId);
     } else if (e.key === "Escape") {
       e.preventDefault();
       cancelTool(approvalId);
     }
   };
 
-  const draft = renderToolDraft(toolName, input);
+  const draft = loading ? undefined : renderToolDraft(toolName, input, before);
   return (
     <div
       ref={cardRef}
@@ -95,9 +123,22 @@ function ApprovalCard({
       <div className="flex items-center gap-2 p-3 text-sm">
         <ToolStateDot state="approval-requested" />
         <span className="font-commit-mono font-medium">{toolName}</span>
+        {before ? (
+          <span className="text-muted-foreground flex-1 truncate">
+            · {before.label}
+          </span>
+        ) : null}
       </div>
       <div className="border-t p-3">
-        {draft ? (
+        {loading ? (
+          <p className="text-muted-foreground text-sm">
+            Loading current values…
+          </p>
+        ) : draft && draft.length === 0 && before ? (
+          <p className="text-muted-foreground text-sm">
+            No changes: these values are already set.
+          </p>
+        ) : draft ? (
           <ChangesTable changes={draft} />
         ) : (
           <pre className="bg-muted/50 max-h-64 overflow-auto rounded p-2 text-xs">
@@ -120,13 +161,30 @@ function ApprovalCard({
           >
             Cancel
           </Button>
-          <Button size="sm" onClick={() => confirmTool(approvalId)}>
+          <Button
+            size="sm"
+            disabled={loading}
+            onClick={() => confirmTool(approvalId)}
+          >
             Apply
           </Button>
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * The entity id from a tool input. The preview query is a GET, so only this
+ * goes in its URL, never free-text fields that may carry secrets (monitor
+ * headers, bodies).
+ */
+function integerField(input: unknown, field: string): number | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const value = (input as Record<string, unknown>)[field];
+  return typeof value === "number" && Number.isInteger(value)
+    ? value
+    : undefined;
 }
 
 function ToolDisclosure({

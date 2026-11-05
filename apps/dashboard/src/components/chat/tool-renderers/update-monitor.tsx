@@ -1,9 +1,12 @@
 import type {
   AgentToolInput,
   AgentToolOutput,
+  ApprovalBefore,
 } from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
+
+import { fieldChanges, idRow } from "./before-diff";
 
 type Input = AgentToolInput<"update_monitor">;
 type Output = AgentToolOutput<"update_monitor">;
@@ -29,13 +32,12 @@ const fields = [
 export function updateMonitorChanges(
   input: Input,
   applied?: Output,
+  before?: ApprovalBefore,
 ): ChangeRow[] {
-  const changes: ChangeRow[] = [{ field: "monitorId", after: input.monitorId }];
-  for (const field of fields) {
-    if (input[field] !== undefined) {
-      changes.push({ field, after: input[field] });
-    }
-  }
+  const changes: ChangeRow[] = [
+    ...idRow("monitorId", input.monitorId, before),
+    ...fieldChanges(input, fields, before),
+  ];
   if (applied) {
     changes.push({ field: "dashboardUrl", after: applied.dashboardUrl });
   }
