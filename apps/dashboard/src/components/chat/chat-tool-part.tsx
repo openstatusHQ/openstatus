@@ -5,6 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -112,7 +113,8 @@ function ApprovalCard({
     }
   };
 
-  const draft = loading ? undefined : renderToolDraft(toolName, input, before);
+  // While loading, the proposed-only rows give the skeleton its field names.
+  const draft = renderToolDraft(toolName, input, before);
   return (
     <div
       ref={cardRef}
@@ -123,7 +125,9 @@ function ApprovalCard({
       <div className="flex items-center gap-2 p-3 text-sm">
         <ToolStateDot state="approval-requested" />
         <span className="font-commit-mono font-medium">{toolName}</span>
-        {before ? (
+        {loading ? (
+          <Skeleton className="h-4 w-48" />
+        ) : before ? (
           <span className="text-muted-foreground flex-1 truncate">
             · {before.label}
           </span>
@@ -131,9 +135,9 @@ function ApprovalCard({
       </div>
       <div className="border-t p-3">
         {loading ? (
-          <p className="text-muted-foreground text-sm">
-            Loading current values…
-          </p>
+          <ChangesTableSkeleton
+            fields={draft?.map((row) => row.field) ?? [undefined]}
+          />
         ) : draft && draft.length === 0 && before ? (
           <p className="text-muted-foreground text-sm">
             No changes: these values are already set.
@@ -170,6 +174,35 @@ function ApprovalCard({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Mirrors `ChangesTable`'s grid so the card doesn't jump once values land. */
+function ChangesTableSkeleton({ fields }: { fields: (string | undefined)[] }) {
+  return (
+    <div
+      aria-busy
+      aria-label="Loading current values"
+      className="bg-background overflow-hidden rounded-md border text-sm"
+    >
+      {fields.map((field, idx) => (
+        <div
+          key={field ?? idx}
+          className={cn(
+            "grid grid-cols-1 md:grid-cols-4",
+            idx > 0 && "border-t",
+          )}
+        >
+          <div className="bg-muted/40 text-muted-foreground truncate border-r px-3 py-2 font-mono md:col-span-1">
+            {field ?? <Skeleton className="my-0.5 h-4 w-16" />}
+          </div>
+          <div className="grid gap-2 px-3 py-2 md:col-span-3">
+            <Skeleton className="my-0.5 h-4 w-32" />
+            <Skeleton className="my-0.5 h-4 w-40" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
