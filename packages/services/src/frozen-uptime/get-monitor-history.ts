@@ -4,6 +4,7 @@ import {
   type FrozenMonitorUptimeDay,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { monthRange } from "./compute";
@@ -34,6 +35,7 @@ export async function getMonitorUptimeHistory(args: {
   sleep?: (ms: number) => Promise<void>;
 }): Promise<MonitorUptimeHistoryResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorUptimeHistoryInput.parse(args.input);
   if (!ctx.workspace.limits["uptime-history"]) {
     throw new ForbiddenError("Uptime history is not enabled on this plan.");

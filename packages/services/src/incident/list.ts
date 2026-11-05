@@ -87,6 +87,7 @@ export async function listAllIncidents(args: {
   ctx: ServiceContext;
   input?: Pick<ListIncidentsInput, "status" | "closed">;
 }) {
+  requireScope(args.ctx, "incidents:read");
   const rows = await getReadDb(args.ctx).query.incident.findMany({
     where: listWhere(args.ctx, args.input ?? {}),
     orderBy: [desc(incident.declaredAt), desc(incident.id)],
