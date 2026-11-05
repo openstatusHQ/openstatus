@@ -1,5 +1,5 @@
 #!/bin/bash
-# Cloud sessions start from a bare clone: no node_modules, no deno, no sqld,
+# Cloud sessions start from a bare clone: no node_modules, no sqld,
 # and no .claude/skills symlinks. Prepare all of it once; the container state
 # is cached afterwards, so later sessions start with it in place.
 set -euo pipefail
@@ -19,9 +19,9 @@ done
 
 pnpm install
 
-# deno (pnpm verify, migrations, seed), sqld (local libSQL) and agent-browser
-# (screenshots) are not on the image; dev-stack fetches pinned versions from
-# npm into node_modules/.cache and prints their paths.
+# sqld (local libSQL) and agent-browser (screenshots) are not on the image;
+# dev-stack fetches pinned versions from npm into node_modules/.cache and
+# prints their paths.
 node scripts/dev-stack.mjs tools
 
 # Seed the database and compile the dashboard once, so the cached container
