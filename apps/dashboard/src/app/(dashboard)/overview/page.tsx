@@ -379,8 +379,8 @@ export default function Page() {
           <EmptyStateTitle>All clear</EmptyStateTitle>
           <EmptyStateDescription>
             {openIncidents
-              ? "Nothing is unresolved. Failing monitors, open incidents and status reports show up here."
-              : "Incidents could not be loaded. Failing monitors and open status reports still show up here."}
+              ? "Failing monitors, open incidents and reports show up here."
+              : "Incidents could not be loaded. Failing monitors and open reports still show up here."}
           </EmptyStateDescription>
         </EventGroupEmpty>
       </EventGroup>
@@ -428,16 +428,16 @@ export default function Page() {
           <EmptyStateMedia>
             <Clock />
           </EmptyStateMedia>
-          <EmptyStateTitle>No recent activity</EmptyStateTitle>
+          <EmptyStateTitle>Quiet week</EmptyStateTitle>
           <EmptyStateDescription>
             {endedIncidents
-              ? "Resolved incidents and reports and completed maintenances from the last 7 days land here."
-              : "Incidents could not be loaded. Resolved reports and completed maintenances from the last 7 days still show up here."}
+              ? "Nothing ended in the last 7 days."
+              : "Incidents could not be loaded. Resolved reports and completed maintenances still show up here."}
           </EmptyStateDescription>
           {allResolved.length > 0 ? (
             <EmptyStateActions>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowOlder(true)}
               >

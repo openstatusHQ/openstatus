@@ -54,7 +54,8 @@ export function EventRow({ className, ...props }: React.ComponentProps<"li">) {
     <li
       data-slot="event-row"
       className={cn(
-        "group/row relative grid items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg",
+        // min height = avatar row, so rows with and without actions (and an empty group) line up
+        "group/row relative grid min-h-11 items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg",
         // the title link covers the row, so the row shows its focus (the truncated title would clip it)
         "has-[[data-slot=event-row-link]:focus-visible]:ring-ring/50 has-[[data-slot=event-row-link]:focus-visible]:ring-[3px] has-[[data-slot=event-row-link]:focus-visible]:ring-inset",
         // folded: actor and menu sit on the title line, the duration under them
@@ -222,7 +223,8 @@ export function EventRowActions({
     <div
       data-slot="event-row-actions"
       className={cn(
-        "relative z-10 hidden items-center gap-1.5 @3xl:flex",
+        // h-7 buttons overhang into the padding instead of growing the row
+        "relative z-10 -my-0.5 hidden items-center gap-1.5 @3xl:flex",
         "[grid-area:actions]",
         className,
       )}

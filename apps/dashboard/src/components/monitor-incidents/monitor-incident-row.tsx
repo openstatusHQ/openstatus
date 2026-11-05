@@ -2,7 +2,8 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 
-import { StatusDot, type StatusVariant } from "@/components/common/status-dot";
+import { StatusBars } from "@/components/common/status-bars";
+import type { StatusVariant } from "@/components/common/status-dot";
 import {
   EventRow,
   EventRowActions,
@@ -17,6 +18,7 @@ import {
 import { IncidentRowActions } from "@/components/data-table/incidents/data-table-row-actions";
 import { IncidentActionCell } from "@/components/data-table/overview-events/incident-action-cell";
 import { DeclareFromRow } from "@/components/incidents/declare-from-row";
+import { downtimeActivity } from "@/data/incidents.client";
 import {
   type IncidentStatus,
   getIncidentStatus,
@@ -30,11 +32,10 @@ import {
 
 type MonitorIncident = RouterOutputs["monitorIncident"]["list"][number];
 
-const dotVariants = {
+const openVariants = {
   ongoing: "destructive",
   acknowledged: "warning",
-  resolved: "default",
-} as const satisfies Record<IncidentStatus, StatusVariant>;
+} as const satisfies Record<Exclude<IncidentStatus, "resolved">, StatusVariant>;
 
 /**
  * A monitor's recorded downtime. On the monitor's own page the title is the
@@ -63,12 +64,21 @@ export function MonitorIncidentRow({
     resolvedAt && incident.autoResolved ? "auto-resolved" : null,
   ];
   const title = kind ? monitor.name : incident.title || when;
+  const down = (resolvedAt ?? new Date()).getTime() - startedAt.getTime();
+  // bars by time down, same steps as the calendar; open rows keep their status color
+  const { level } = downtimeActivity(down);
+  const variant =
+    status === "resolved"
+      ? level === 3
+        ? "destructive"
+        : "warning"
+      : openVariants[status];
 
   return (
     <EventRow>
       <EventRowDate date={startedAt} />
       <EventRowStatus>
-        <StatusDot variant={dotVariants[status]} />
+        <StatusBars level={level} variant={variant} />
         <span>{kind ? "Downtime" : incidentStatusConfig[status].label}</span>
       </EventRowStatus>
       <EventRowContent>
@@ -98,11 +108,7 @@ export function MonitorIncidentRow({
           </>
         )}
       </EventRowActions>
-      <EventRowDuration>
-        {formatDurationShort(
-          (resolvedAt ?? new Date()).getTime() - startedAt.getTime(),
-        )}
-      </EventRowDuration>
+      <EventRowDuration>{formatDurationShort(down)}</EventRowDuration>
       <EventRowMenu>
         <IncidentRowActions incident={incident} />
       </EventRowMenu>

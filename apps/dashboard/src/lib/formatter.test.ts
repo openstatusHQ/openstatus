@@ -137,6 +137,12 @@ describe("formatDurationShort", () => {
     expect(formatDurationShort(2 * 86_400_000 + 3 * 3_600_000)).toBe("2d 3h");
   });
 
+  it("rounds to whole minutes from a minute up", () => {
+    expect(formatDurationShort(4 * 60_000 + 49_000)).toBe("5m");
+    expect(formatDurationShort(59_000)).toBe("59s");
+    expect(formatDurationShort(3_600_000 - 20_000)).toBe("1h");
+  });
+
   it("clamps negatives to zero", () => {
     expect(formatDurationShort(-5000)).toBe("0s");
   });
@@ -154,11 +160,17 @@ describe("formatEventDate", () => {
     expect(formatEventDate(new Date(2026, 9, 20, 2, 0), now)).toBe("Tue 20");
     expect(formatEventDate(new Date(2026, 9, 25), now)).toBe("Sun 25");
     expect(formatEventDate(new Date(2026, 9, 26), now)).toBe("Oct 26");
+    expect(formatEventDate(new Date(2026, 9, 23), new Date(2026, 9, 1))).toBe(
+      "Oct 23",
+    );
+    expect(formatEventDate(new Date(2026, 9, 6), new Date(2026, 9, 1))).toBe(
+      "Tue 06",
+    );
   });
 
   it("drops the year until it differs", () => {
     expect(formatEventDate(new Date(2026, 9, 14), now)).toBe("Oct 14");
-    expect(formatEventDate(new Date(2025, 11, 1), now)).toBe("Dec 1, 2025");
+    expect(formatEventDate(new Date(2025, 11, 1), now)).toBe("Dec 01, 2025");
   });
 });
 
@@ -167,6 +179,15 @@ describe("formatWindow", () => {
     expect(
       formatWindow(new Date(2026, 9, 17, 22, 0), new Date(2026, 9, 18, 0, 0)),
     ).toBe("22:00 – 00:00");
+  });
+
+  it("collapses a window inside one minute to a single clock", () => {
+    expect(
+      formatWindow(
+        new Date(2026, 9, 17, 23, 33, 5),
+        new Date(2026, 9, 17, 23, 33, 40),
+      ),
+    ).toBe("23:33");
   });
 
   it("uses dates from a day on", () => {

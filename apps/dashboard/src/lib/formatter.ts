@@ -135,14 +135,16 @@ export function formatDateForInput(date: Date): string {
 
 /** "4h", "2h 10m", "2d 3h", "45m", "12s": the two largest units at most. */
 export function formatDurationShort(ms: number): string {
-  const total = Math.max(0, Math.round(ms / 1000));
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  // from a minute up, round to whole minutes so it agrees with the "HH:mm – HH:mm" window beside it
+  const total = seconds < 60 ? seconds : Math.round(seconds / 60) * 60;
   const days = Math.floor(total / 86_400);
   const hours = Math.floor((total % 86_400) / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   if (days > 0) return hours ? `${days}d ${hours}h` : `${days}d`;
   if (hours > 0) return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
   if (minutes > 0) return `${minutes}m`;
-  return `${total}s`;
+  return `${seconds}s`;
 }
 
 export function formatClock(date: Date): string {
@@ -151,13 +153,14 @@ export function formatClock(date: Date): string {
 
 /**
  * Row date, read against `now`: earlier today "22:12", later today "Today",
- * the coming week "Tue 20", otherwise "Oct 14" with the year once it differs.
+ * the coming week "Tue 20", otherwise "Oct 04" with the year once it differs.
  */
 export function formatEventDate(date: Date, now = new Date()): string {
   if (isSameDay(date, now)) return date <= now ? formatClock(date) : "Today";
   const days = differenceInCalendarDays(date, now);
-  if (days > 0 && days < 7) return format(date, "EEE d");
-  return format(date, isSameYear(date, now) ? "MMM d" : "MMM d, yyyy");
+  // zero-padded days keep the mono date column one width
+  if (days > 0 && days < 7) return format(date, "EEE dd");
+  return format(date, isSameYear(date, now) ? "MMM dd" : "MMM dd, yyyy");
 }
 
 /** "14:00" today, else "Oct 14, 14:00": open spans can start or end on another day. */
@@ -171,5 +174,8 @@ export function formatClockOrDay(date: Date, now = new Date()): string {
 export function formatWindow(from: Date, to: Date): string {
   const short = to.getTime() - from.getTime() < 24 * 60 * 60 * 1000;
   const pattern = short ? "HH:mm" : "MMM d";
-  return `${format(from, pattern)} – ${format(to, pattern)}`;
+  const start = format(from, pattern);
+  const end = format(to, pattern);
+  // "23:33 – 23:33" reads like a typo
+  return start === end ? start : `${start} – ${end}`;
 }

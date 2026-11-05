@@ -25,7 +25,7 @@ export function EventGroup({
   );
 }
 
-/** Shown in place of the list while the group has no rows. */
+/** Shown in place of the list while the group has no rows; one row tall, so empty groups stay out of the way. */
 export function EventGroupEmpty({
   children,
   className,
@@ -33,7 +33,13 @@ export function EventGroupEmpty({
 }: React.ComponentProps<"div">) {
   return (
     <div data-slot="event-group-empty" className={className} {...props}>
-      <EmptyStateContainer>{children}</EmptyStateContainer>
+      {/* a one-row list: row min height plus the list's two borders */}
+      <EmptyStateContainer
+        inline
+        className="min-h-11.5 justify-start px-3 py-2.5"
+      >
+        {children}
+      </EmptyStateContainer>
     </div>
   );
 }

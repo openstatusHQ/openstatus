@@ -31,6 +31,7 @@ import {
 import {
   formatClockOrDay,
   formatDurationShort,
+  formatEventDate,
   formatWindow,
 } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
@@ -103,7 +104,7 @@ export function IncidentRow({
         `since ${formatClockOrDay(incident.startedAt)}`,
       ]
     : incident.status === "canceled"
-      ? [kind ? "canceled" : null]
+      ? [endedAt ? `canceled ${formatEventDate(endedAt)}` : "canceled"]
       : [
           endedAt ? formatWindow(incident.startedAt, endedAt) : null,
           // resolved, close waits on the postmortem
