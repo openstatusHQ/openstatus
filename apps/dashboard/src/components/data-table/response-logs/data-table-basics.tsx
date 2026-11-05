@@ -39,6 +39,11 @@ export type HeartbeatPing = NonNullable<
   RouterOutputs["monitor"]["heartbeatPings"]
 >["data"][number];
 
+/** Only a ping has a `kind`; a check's log is discriminated by `type`. */
+export function isHeartbeatPing(row: object): row is HeartbeatPing {
+  return "kind" in row;
+}
+
 export function DataTableBasics({
   data,
   privateLocations,

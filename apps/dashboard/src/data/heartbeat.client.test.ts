@@ -88,6 +88,32 @@ describe("pingDays", () => {
   });
 });
 
+describe("pingDays across a clock shift", () => {
+  it("labels every UTC day once where local midnight does not exist", () => {
+    const tz = process.env.TZ;
+    // clocks jump 00:00 → 01:00 on 2026-09-06 in Santiago
+    process.env.TZ = "America/Santiago";
+    try {
+      const at = new Date("2026-09-20T12:00:00.000Z");
+      const days = pingDays(
+        [{ day: "2026-09-06T00:00:00.000Z", ok: 2, error: 0 }],
+        at,
+      );
+      const labels = days.map((d) => {
+        const date = new Date(d.day);
+        return `${date.getMonth() + 1}-${date.getDate()}`;
+      });
+      expect(new Set(labels).size).toBe(HEARTBEAT_WINDOW_DAYS);
+      expect(labels[0]).toBe("8-22");
+      expect(labels.at(-1)).toBe("9-20");
+      expect(days[labels.indexOf("9-6")]).toMatchObject({ ok: 2 });
+    } finally {
+      if (tz === undefined) delete process.env.TZ;
+      else process.env.TZ = tz;
+    }
+  });
+});
+
 describe("downtimeSince", () => {
   it("clips to the window and runs an open incident until now", () => {
     const incidents = [

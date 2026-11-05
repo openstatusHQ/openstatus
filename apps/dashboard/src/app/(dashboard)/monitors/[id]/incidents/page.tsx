@@ -185,7 +185,7 @@ export default function Page() {
             <EmptyStateTitle>No downtime recorded</EmptyStateTitle>
             <EmptyStateDescription>
               {monitor.jobType === "heartbeat"
-                ? "A missed or failed ping opens a downtime entry here and alerts the channels linked to this monitor. Nothing has been missed so far."
+                ? "A missed or failed ping opens a downtime entry here and alerts the channels linked to this monitor. Nothing has been missed or failed so far."
                 : "A failed check opens a downtime entry here and alerts the channels linked to this monitor. Nothing has failed so far."}
             </EmptyStateDescription>
           </ActivityEmpty>

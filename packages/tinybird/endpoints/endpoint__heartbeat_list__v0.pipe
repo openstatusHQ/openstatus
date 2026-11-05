@@ -20,7 +20,7 @@ WHERE
     monitorId = {{ Int32(monitorId, 1, required=True) }}
     {% if defined(fromDate) %} AND timestamp >= {{ Int64(fromDate) }} {% end %}
     {% if defined(toDate) %} AND timestamp <= {{ Int64(toDate) }} {% end %}
-    {% if kinds %} AND kind IN {{ Array(kinds, 'String') }} {% end %}
+    {% if defined(kinds) %} AND kind IN {{ Array(kinds, 'String') }} {% end %}
     {% if defined(cursor) %}
         {% if String(direction, 'next') == 'prev' %}
             AND timestamp > {{ Int64(cursor) }}

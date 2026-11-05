@@ -70,12 +70,12 @@ export function HeartbeatSection({
   isWindowLoading: boolean;
 }) {
   const now = useNow(TICK_MS);
-  // relative times differ between the server render and the browser
+  // the server has no clock to share: relative times and "late" wait for hydration
   const hydrated = useHydrated();
-  const heartbeat = hydrated ? state : undefined;
-  const health = heartbeat
-    ? getHeartbeatHealth(monitor, heartbeat, now)
+  const health = state
+    ? getHeartbeatHealth(monitor, state, hydrated ? now : new Date(0))
     : undefined;
+  const heartbeat = hydrated ? state : undefined;
   const expectedAt =
     heartbeat && health !== "paused" ? heartbeatExpectedAt(heartbeat) : null;
   const failed = days?.reduce((sum, day) => sum + day.error, 0);
@@ -91,7 +91,7 @@ export function HeartbeatSection({
       label: "STATUS",
       variant: health ? heartbeatHealthConfig[health].variant : "default",
       value: health ? heartbeatHealthConfig[health].label : undefined,
-      isLoading: isLoading || !hydrated,
+      isLoading,
     },
     {
       label: "LAST PING",

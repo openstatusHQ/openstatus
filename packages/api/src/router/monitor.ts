@@ -544,7 +544,10 @@ export const monitorRouter = createTRPCRouter({
         id: z.number(),
         from: z.coerce.date().optional(),
         to: z.coerce.date().optional(),
-        kinds: z.array(z.enum(["success", "fail"])).optional(),
+        kinds: z
+          .array(z.enum(["success", "fail"]))
+          .max(2)
+          .optional(),
         cursor: z.number().int().optional(),
         limit: z.number().int().min(1).max(100).prefault(50),
       }),

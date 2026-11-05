@@ -199,7 +199,7 @@ export function Client() {
         ? HEARTBEAT_WAITING_POLL_MS
         : 2 * HEARTBEAT_POLL_MS,
   });
-  const { data: monitorIncidents } = useQuery({
+  const { data: monitorIncidents, isError: isIncidentsError } = useQuery({
     ...trpc.monitorIncident.list.queryOptions({
       monitorId: Number.parseInt(id),
     }),
@@ -258,7 +258,12 @@ export function Client() {
                   ? downtimeSince(monitorIncidents, pingWindow.from)
                   : undefined
               }
-              isWindowLoading={!waiting && !isPingsError && !isHeartbeatError}
+              isWindowLoading={
+                !waiting &&
+                !isPingsError &&
+                !isHeartbeatError &&
+                !isIncidentsError
+              }
             />
           </>
         ) : (

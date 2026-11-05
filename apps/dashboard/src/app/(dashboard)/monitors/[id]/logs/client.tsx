@@ -34,6 +34,7 @@ import {
   BillingOverlayContainer,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
+import { isHeartbeatPing } from "@/components/data-table/response-logs/data-table-basics";
 import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { exampleLogs } from "@/data/response-logs";
 import { useTRPC } from "@/lib/trpc/client";
@@ -371,7 +372,9 @@ function LogsSheet({
   });
   // a ping row already carries its headers and body: nothing more to fetch
   const ping =
-    selectedRow && "kind" in selectedRow.original ? selectedRow.original : null;
+    selectedRow && isHeartbeatPing(selectedRow.original)
+      ? selectedRow.original
+      : null;
 
   return (
     <Sheet

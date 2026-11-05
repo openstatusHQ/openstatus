@@ -19,6 +19,7 @@ import {
   DataTableBasicsHeartbeat,
   type HeartbeatPing,
   type ResponseLog,
+  isHeartbeatPing,
 } from "./data-table-basics";
 
 export function Sheet({
@@ -40,10 +41,10 @@ export function Sheet({
       <DataTableSheetContent className="sm:max-w-lg">
         <DataTableSheetHeader className="px-2">
           <DataTableSheetTitle>
-            {"kind" in data ? "Ping" : "Response Logs"}
+            {isHeartbeatPing(data) ? "Ping" : "Response Logs"}
           </DataTableSheetTitle>
         </DataTableSheetHeader>
-        {"kind" in data ? (
+        {isHeartbeatPing(data) ? (
           <DataTableBasicsHeartbeat data={data} />
         ) : (
           <DataTableBasics data={data} privateLocations={privateLocations} />
