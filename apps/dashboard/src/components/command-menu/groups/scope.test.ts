@@ -20,11 +20,11 @@ function rows<K extends "statusReports" | "maintenances">(
 }
 
 describe("monitorScopeGroups", () => {
-  it("lists every monitor tab under the monitor name", () => {
+  it("lists the monitor tabs but edit under the monitor name", () => {
     const [group] = monitorScopeGroups({ type: "monitor", id: 3, name: "API" });
     expect(group.heading).toBe("API");
     expect(group.items.map((i) => i.action)).toEqual(
-      MONITOR_TABS.map((t) => ({
+      MONITOR_TABS.filter((t) => t.value !== "edit").map((t) => ({
         type: "navigate",
         href: `/monitors/3/${t.value}`,
       })),
@@ -177,9 +177,9 @@ describe("statusPageScopeGroups", () => {
     ]);
   });
 
-  it("links every page tab", () => {
+  it("links every page tab but edit, which the Settings group covers", () => {
     expect(byHeading.Pages.items.map((i) => i.action)).toEqual(
-      STATUS_PAGE_TABS.map((t) => ({
+      STATUS_PAGE_TABS.filter((t) => t.value !== "edit").map((t) => ({
         type: "navigate",
         href: `/status-pages/4/${t.value}`,
       })),
@@ -196,7 +196,7 @@ describe("statusPageScopeGroups", () => {
       2,
       0,
       0,
-      STATUS_PAGE_TABS.length,
+      STATUS_PAGE_TABS.length - 1,
       STATUS_PAGE_EDIT_ANCHORS.length,
     ]);
   });

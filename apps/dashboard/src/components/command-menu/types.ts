@@ -44,6 +44,8 @@ export type CommandMenuItem = {
 
 export type CommandMenuGroup = {
   heading: string;
+  // React key when the heading is user content and could clash with another.
+  key?: string;
   items: CommandMenuItem[];
   // Cap shown items while the search input is empty (root entity groups).
   idleLimit?: number;

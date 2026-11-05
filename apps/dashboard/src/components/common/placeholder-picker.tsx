@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -11,6 +12,12 @@ import {
   ActionCardHeader,
   ActionCardTitle,
 } from "@/components/content/action-card";
+import {
+  EmptyStateActions,
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   Section,
   SectionDescription,
@@ -24,6 +31,7 @@ type Item = { id: number; name: string; description?: string };
 /**
  * Resolves `_` in shareable links like `/monitors/_/edit#retry-policy` to a
  * real id. One item redirects straight away; the hash is carried over.
+ * `items` is `undefined` while the list loads; `error` shows a retry instead.
  */
 export function PlaceholderPicker({
   id,
@@ -31,34 +39,43 @@ export function PlaceholderPicker({
   description,
   items,
   empty,
+  error,
+  onRetry,
 }: {
   id: string;
   title: string;
   description: string;
-  items: Item[];
+  items: Item[] | undefined;
   empty: React.ReactNode;
+  error?: boolean;
+  onRetry?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // The server never sees the hash, so it's read after mount.
+  // The server never sees the hash, so it's read after mount and kept in
+  // sync for the item links while the picker stays open.
   const [hash, setHash] = useState<string | null>(null);
 
   useEffect(() => {
-    setHash(window.location.hash);
+    const sync = () => setHash(window.location.hash);
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
   }, []);
 
-  const search = searchParams.size ? `?${searchParams}` : "";
+  const query = searchParams.toString();
+  const search = query ? `?${query}` : "";
   const hrefFor = (itemId: number) =>
     `${pathname.replace(/^(\/[^/]+)\/_(?=\/|$)/, `$1/${itemId}`)}${search}${hash ?? ""}`;
 
-  const only = items.length === 1 ? items[0] : undefined;
+  const only = items?.length === 1 ? items[0] : undefined;
   const redirect = only && hash !== null ? hrefFor(only.id) : null;
   useEffect(() => {
     if (redirect) router.replace(redirect);
   }, [redirect, router]);
 
-  if (only) return null;
+  if (only || (!items && !error)) return null;
 
   return (
     <SectionGroup>
@@ -67,7 +84,21 @@ export function PlaceholderPicker({
           <SectionTitle>{title}</SectionTitle>
           <SectionDescription>{description}</SectionDescription>
         </SectionHeader>
-        {items.length === 0 ? (
+        {!items ? (
+          <EmptyStateContainer>
+            <EmptyStateTitle>Couldn&apos;t load the list</EmptyStateTitle>
+            <EmptyStateDescription>
+              Something went wrong while loading. Try again.
+            </EmptyStateDescription>
+            {onRetry ? (
+              <EmptyStateActions>
+                <Button size="sm" variant="outline" onClick={onRetry}>
+                  Retry
+                </Button>
+              </EmptyStateActions>
+            ) : null}
+          </EmptyStateContainer>
+        ) : items.length === 0 ? (
           empty
         ) : (
           <ActionCardGroup>

@@ -9,16 +9,11 @@ import { signIn } from "@/lib/auth";
 import { ssoLookupRateLimit } from "@/lib/rate-limit/sso-lookup";
 import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 
+import { takeRedirectTo } from "./redirect";
+
 const hasWorkOS = Boolean(
   process.env.AUTH_WORKOS_ID && process.env.AUTH_WORKOS_SECRET,
 );
-
-// Same-origin paths only; the Auth.js `redirect` callback is the second line
-// of defense, not the first.
-function sanitizeRedirectTo(raw: FormDataEntryValue | null) {
-  const value = String(raw ?? "");
-  return value.startsWith("/") && !value.startsWith("//") ? value : undefined;
-}
 
 export type EmailFormState = { sent?: boolean; error?: string };
 
@@ -41,7 +36,7 @@ export async function continueWithEmail(
   const email = String(formData.get("email") ?? "").trim();
   if (!email.includes("@")) return { error: EMAIL_ERROR };
 
-  const redirectTo = sanitizeRedirectTo(formData.get("redirectTo"));
+  const redirectTo = await takeRedirectTo(formData);
 
   if (hasWorkOS) {
     const ip = resolveClientIp(await headers()) ?? "unknown";

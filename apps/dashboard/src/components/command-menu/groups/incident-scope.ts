@@ -1,15 +1,10 @@
 import type { RouterOutputs } from "@openstatus/api";
-import {
-  FileText,
-  History,
-  Megaphone,
-  Plus,
-  SlidersHorizontal,
-} from "lucide-react";
+import { FileText, History, Megaphone, SlidersHorizontal } from "lucide-react";
 
 import { NAV } from "@/config/nav";
 
 import type { CommandMenuGroup, CommandMenuItem, CommandPage } from "../types";
+import { addStatusReportUpdateItem, statusReportItem } from "./static";
 
 export const INCIDENT_ANCHORS = [
   { id: "activity", label: "Activity", icon: History },
@@ -43,38 +38,16 @@ export function incidentScopeGroups({
   const reportItems: CommandMenuItem[] = report
     ? [
         ...(report.status !== "resolved"
-          ? [
-              {
-                value: `add-update-${report.id}`,
-                label: `Add Update to ${report.title}`,
-                icon: Plus,
-                keywords: ["update", "status report update", report.title],
-                action: {
-                  type: "sheet" as const,
-                  sheet: {
-                    sheet: "status-report-update" as const,
-                    reportId: report.id,
-                  },
-                },
-              },
-            ]
+          ? [addStatusReportUpdateItem(report)]
           : []),
-        {
-          value: `status-report-${report.id}`,
-          label: report.title,
-          description: report.status,
-          keywords: [report.title, report.status],
-          action: {
-            type: "navigate",
-            href: `/status-pages/${report.pageId}/status-reports/${report.id}`,
-          },
-        },
+        statusReportItem(report),
       ]
     : [];
 
   return [
     {
       heading: page.title,
+      key: "incident",
       items: [
         {
           value: "Open Incident",

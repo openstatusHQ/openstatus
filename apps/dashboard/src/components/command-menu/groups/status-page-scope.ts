@@ -6,7 +6,6 @@ import {
   Link,
   Lock,
   Palette,
-  Plus,
   Settings2,
   TriangleAlert,
 } from "lucide-react";
@@ -14,7 +13,12 @@ import {
 import { STATUS_PAGE_TABS } from "@/app/(dashboard)/status-pages/[id]/constants";
 
 import type { CommandMenuGroup, CommandMenuItem, CommandPage } from "../types";
-import { createMaintenanceItem, createStatusReportItem } from "./static";
+import {
+  addStatusReportUpdateItem,
+  createMaintenanceItem,
+  createStatusReportItem,
+  statusReportItem,
+} from "./static";
 
 export const STATUS_PAGE_EDIT_ANCHORS = [
   { id: "general", label: "General", icon: Settings2 },
@@ -47,32 +51,14 @@ export function statusPageScopeGroups({
   const actionItems: CommandMenuItem[] = [
     createStatusReportItem(page.id),
     createMaintenanceItem(page.id),
-    ...unresolvedReports.map((report) => ({
-      value: `add-update-${report.id}`,
-      label: `Add Update to ${report.title}`,
-      icon: Plus,
-      keywords: ["update", "status report update", report.title],
-      action: {
-        type: "sheet" as const,
-        sheet: { sheet: "status-report-update" as const, reportId: report.id },
-      },
-    })),
+    ...unresolvedReports.map(addStatusReportUpdateItem),
   ];
 
   return [
     { heading: "Actions", items: actionItems },
     {
       heading: "Status Reports",
-      items: pageReports.map((report) => ({
-        value: `status-report-${report.id}`,
-        label: report.title,
-        description: report.status,
-        keywords: [report.title, report.status],
-        action: {
-          type: "navigate",
-          href: `/status-pages/${page.id}/status-reports/${report.id}`,
-        },
-      })),
+      items: pageReports.map(statusReportItem),
     },
     {
       heading: "Maintenances",
@@ -89,15 +75,18 @@ export function statusPageScopeGroups({
     },
     {
       heading: "Pages",
-      items: STATUS_PAGE_TABS.map((tab) => ({
-        value: tab.label,
-        label: tab.label,
-        icon: tab.icon,
-        action: {
-          type: "navigate",
-          href: `/status-pages/${page.id}/${tab.value}`,
-        },
-      })),
+      // The edit tab is the Settings group below, card by card.
+      items: STATUS_PAGE_TABS.filter((tab) => tab.value !== "edit").map(
+        (tab) => ({
+          value: tab.label,
+          label: tab.label,
+          icon: tab.icon,
+          action: {
+            type: "navigate",
+            href: `/status-pages/${page.id}/${tab.value}`,
+          },
+        }),
+      ),
     },
     {
       heading: "Settings",
@@ -105,6 +94,7 @@ export function statusPageScopeGroups({
         value: `edit-${anchor.id}`,
         label: anchor.label,
         icon: anchor.icon,
+        keywords: ["settings"],
         action: {
           type: "navigate",
           href: `/status-pages/${page.id}/edit#${anchor.id}`,

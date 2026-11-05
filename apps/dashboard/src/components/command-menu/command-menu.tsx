@@ -105,8 +105,7 @@ export function CommandMenu() {
   const navigate = (href: string) => {
     router.push(href);
     setOpen(false);
-    const hashIndex = href.indexOf("#");
-    if (hashIndex !== -1) scrollToHash(href.slice(hashIndex + 1));
+    if (href.includes("#")) scrollToHash(href);
   };
 
   const openSheet = (next: CommandSheet) => {
@@ -228,7 +227,7 @@ export function CommandMenu() {
               ) : null}
               {groups.map((group) => (
                 <GroupView
-                  key={group.heading}
+                  key={group.key ?? group.heading}
                   group={group}
                   search={search}
                   onAction={dispatch}

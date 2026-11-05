@@ -13,23 +13,28 @@ import {
   EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
   const trpc = useTRPC();
-  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
-
-  if (!statusPages) return null;
+  const {
+    data: statusPages,
+    isError,
+    refetch,
+  } = useQuery(trpc.page.list.queryOptions());
 
   return (
     <PlaceholderPicker
       id="choose-status-page"
       title="Choose a status page"
       description="This link works for any status page. Pick the one to open."
-      items={statusPages.map((page) => ({
+      error={isError}
+      onRetry={() => void refetch()}
+      items={statusPages?.map((page) => ({
         id: page.id,
         name: page.title,
-        description: page.customDomain || `${page.slug}.openstatus.dev`,
+        description: getPageUrl(page).replace("https://", ""),
       }))}
       empty={
         <EmptyStateContainer>

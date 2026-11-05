@@ -17,16 +17,20 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
   const trpc = useTRPC();
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
-
-  if (!monitors) return null;
+  const {
+    data: monitors,
+    isError,
+    refetch,
+  } = useQuery(trpc.monitor.list.queryOptions());
 
   return (
     <PlaceholderPicker
       id="choose-monitor"
       title="Choose a monitor"
       description="This link works for any monitor. Pick the one to open."
-      items={monitors.map((monitor) => ({
+      error={isError}
+      onRetry={() => void refetch()}
+      items={monitors?.map((monitor) => ({
         id: monitor.id,
         name: monitor.name || "Untitled monitor",
         description: monitor.url || undefined,

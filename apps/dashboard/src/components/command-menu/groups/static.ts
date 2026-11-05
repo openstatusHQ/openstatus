@@ -67,6 +67,36 @@ export function createMaintenanceItem(pageId?: number): CommandMenuItem {
   };
 }
 
+type ReportRef = { id: number; title: string; status: string };
+
+export function addStatusReportUpdateItem(report: ReportRef): CommandMenuItem {
+  return {
+    value: `add-update-${report.id}`,
+    label: `Add Update to ${report.title}`,
+    icon: Plus,
+    keywords: ["update", "status report update", report.title],
+    action: {
+      type: "sheet",
+      sheet: { sheet: "status-report-update", reportId: report.id },
+    },
+  };
+}
+
+export function statusReportItem(
+  report: ReportRef & { pageId: number | null },
+): CommandMenuItem {
+  return {
+    value: `status-report-${report.id}`,
+    label: report.title,
+    description: report.status,
+    keywords: [report.title, report.status],
+    action: {
+      type: "navigate",
+      href: `/status-pages/${report.pageId}/status-reports/${report.id}`,
+    },
+  };
+}
+
 export function createGroup(): CommandMenuGroup {
   return {
     heading: "Create",
