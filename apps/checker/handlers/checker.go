@@ -112,6 +112,13 @@ func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerReques
 		retry = int(req.Retry)
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to generate request id")
+		return result, fmt.Errorf("error while generating uuid: %w", err)
+	}
+	req.RequestID = id.String()
+
 	op := func() (struct{}, error) {
 		called++
 		attemptCtx := log.Ctx(ctx).With().Int("attempt", called).Logger().WithContext(ctx)
@@ -132,11 +139,6 @@ func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerReques
 			return struct{}{}, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 		}
 
-		id, err := uuid.NewV7()
-		if err != nil {
-			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
-		}
-
 		var requestStatus = ""
 		switch req.Status {
 		case "active":
@@ -148,7 +150,7 @@ func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerReques
 		}
 
 		data := PingData{
-			ID:            id.String(),
+			ID:            req.RequestID,
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
 			MonitorID:     req.MonitorID,
@@ -258,14 +260,8 @@ func (h Handler) RunHTTPCheck(ctx context.Context, req request.HttpCheckerReques
 	}
 
 	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
-		id, e := uuid.NewV7()
-		if e != nil {
-			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return result, e
-		}
-
 		data := PingData{
-			ID:            id.String(),
+			ID:            req.RequestID,
 			URL:           req.URL,
 			Method:        req.Method,
 			Region:        h.Region,

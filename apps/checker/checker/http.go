@@ -225,6 +225,9 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 			req.Header.Set(header.Key, header.Value)
 		}
 	}
+	if inputData.RequestID != "" {
+		req.Header.Set(request.RequestIDHeader, inputData.RequestID)
+	}
 
 	// Maybe we should remove the default post to application JSON
 	// Default POST Content-Type
