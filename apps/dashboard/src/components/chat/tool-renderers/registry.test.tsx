@@ -13,6 +13,7 @@ import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
+  toolBeforeIdField,
   toolRenderers,
 } from "./index";
 
@@ -108,6 +109,38 @@ describe("renderToolDraft", () => {
 
   it("returns undefined for read-only tools", () => {
     expect(renderToolDraft("list_monitors", {})).toBeUndefined();
+  });
+
+  it("passes the before snapshot to update renderers", () => {
+    expect(
+      renderToolDraft(
+        "update_incident",
+        { id: 4, severity: "major" },
+        { label: "API down", values: { severity: "minor" } },
+      ),
+    ).toEqual([{ field: "severity", before: "minor", after: "major" }]);
+  });
+});
+
+// Same map as services' approval-before.test.ts, which checks the server
+// side's `loadBefore.idField`; a drift makes the card send no id.
+const BEFORE_ID_FIELDS: Record<string, string> = {
+  update_status_page: "pageId",
+  update_page_component: "componentId",
+  update_component_group: "groupId",
+  update_monitor: "monitorId",
+  update_status_report: "statusReportId",
+  update_status_report_update: "id",
+  update_maintenance: "maintenanceId",
+  update_maintenance_update: "id",
+  update_incident: "id",
+};
+
+describe("toolBeforeIdField", () => {
+  it("matches the server tool's loadBefore id field", () => {
+    for (const name of Object.keys(toolRenderers)) {
+      expect(toolBeforeIdField(name), name).toBe(BEFORE_ID_FIELDS[name]);
+    }
   });
 });
 

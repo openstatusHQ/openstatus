@@ -86,7 +86,7 @@ export function FormAppearance({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="appearance">
           <FormCardHeader>
             <FormCardTitle>Appearance</FormCardTitle>
             <FormCardDescription>

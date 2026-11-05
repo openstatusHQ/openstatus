@@ -24,7 +24,7 @@ export async function createPage(args: {
   input: CreatePageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = CreatePageInput.parse(args.input);
 
   if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
@@ -39,6 +39,9 @@ export async function createPage(args: {
       input.locales?.some((locale) => locale !== "en"))
   ) {
     throw new LimitExceededError("i18n", 0);
+  }
+  if (!ctx.workspace.limits.timezone && input.defaultTimezone !== "UTC") {
+    throw new LimitExceededError("timezone", 0);
   }
 
   return withTransaction(ctx, async (tx) => {
@@ -138,7 +141,7 @@ export async function newPage(args: {
   input: NewPageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = NewPageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

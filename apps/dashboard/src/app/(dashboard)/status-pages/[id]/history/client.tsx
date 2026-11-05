@@ -2,12 +2,14 @@
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
+import { Link } from "@/components/common/link";
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
@@ -38,6 +40,7 @@ import {
 } from "@/components/content/section";
 import { getColumns } from "@/components/data-table/status-page-history/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
   MetricCard,
@@ -59,6 +62,15 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { buildExampleHistory } from "./examples";
 import { searchParamsParsers } from "./search-params";
+
+const UPTIME_DOCS_URL =
+  "https://www.openstatus.dev/docs/concept/uptime-calculation-and-values";
+
+const MODE_LABELS = {
+  requests: configurationLabels.value.requests,
+  duration: configurationLabels.value.duration,
+  manual: configurationLabels.type.manual,
+} as const;
 
 export function Client() {
   const { id } = useParams<{ id: string }>();
@@ -99,13 +111,15 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="history">
         <SectionHeader>
           <SectionHeaderRow>
             <div>
               <SectionTitle>History</SectionTitle>
               <SectionDescription>
-                Long-term uptime, build from your page's components.
+                {isLimited
+                  ? "Example data. Upgrade to see your page's long-term uptime."
+                  : "Long-term uptime, built from your page's components."}
               </SectionDescription>
             </div>
             <Tabs
@@ -123,8 +137,14 @@ export function Client() {
           </SectionHeaderRow>
         </SectionHeader>
       </Section>
-      <Section>
-        <MetricCardGroup className="md:grid-cols-4 lg:grid-cols-4">
+      <Section id="history-metrics">
+        <MetricCardGroup
+          aria-hidden={isLimited}
+          className={cn(
+            "md:grid-cols-4 lg:grid-cols-4",
+            isLimited && "pointer-events-none blur-sm select-none",
+          )}
+        >
           <MetricCard variant="success">
             <MetricCardHeader>
               <MetricCardTitle className="uppercase">
@@ -204,8 +224,8 @@ export function Client() {
                   </EmptyStateMedia>
                   <EmptyStateTitle>No history yet</EmptyStateTitle>
                   <EmptyStateDescription>
-                    The first snapshot freezes on the 10th of next month. Until
-                    then, the current month is served live.
+                    Each month is frozen early in the following month. Until
+                    then, it is served live.
                   </EmptyStateDescription>
                 </DataTableEmpty>
               }
@@ -218,8 +238,9 @@ export function Client() {
               How uptime is calculated
             </HintCollapsibleTitle>
             <HintCollapsibleDescription>
-              Each percentage depends on the page's calculation mode and the
-              component type.
+              {isLimited
+                ? "Each percentage depends on the page's calculation mode and the component type."
+                : `This page uses ${MODE_LABELS[history.mode]}. Each percentage also depends on the component type.`}
             </HintCollapsibleDescription>
           </HintCollapsibleTrigger>
           <HintCollapsibleContent>
@@ -227,12 +248,14 @@ export function Client() {
               The calculation mode is set page-wide in the status page settings
               and applies to every month shown here. What is frozen monthly are
               the raw daily check counts — changing the mode re-renders all
-              months from those immutable counts.
+              months from those immutable counts. See{" "}
+              <Link href={UPTIME_DOCS_URL}>uptime calculation</Link> for the
+              details.
             </p>
             <ul className="space-y-2.5">
               <li>
-                <span className="bg-muted rounded px-1 py-0.5 font-mono">
-                  requests
+                <span className="text-foreground font-medium">
+                  {MODE_LABELS.requests}
                 </span>{" "}
                 <span className="text-muted-foreground">
                   — Monitor components. Uptime is{" "}
@@ -243,8 +266,8 @@ export function Client() {
                 </span>
               </li>
               <li>
-                <span className="bg-muted rounded px-1 py-0.5 font-mono">
-                  duration
+                <span className="text-foreground font-medium">
+                  {MODE_LABELS.duration}
                 </span>{" "}
                 <span className="text-muted-foreground">
                   — Monitor components. Downtime is measured from incident and
@@ -254,8 +277,8 @@ export function Client() {
                 </span>
               </li>
               <li>
-                <span className="bg-muted rounded px-1 py-0.5 font-mono">
-                  manual
+                <span className="text-foreground font-medium">
+                  {MODE_LABELS.manual}
                 </span>{" "}
                 <span className="text-muted-foreground">
                   — No probe data is considered; uptime is derived entirely from
@@ -264,6 +287,14 @@ export function Client() {
                 </span>
               </li>
             </ul>
+            <p className="text-muted-foreground">
+              Heartbeat monitors receive pings, not checks. With{" "}
+              {MODE_LABELS.requests} or {MODE_LABELS.duration}, their uptime is
+              the time since the first day with a ping minus incidents from
+              missed or failed pings and impact-weighted status reports — a
+              silent month still counts. With {MODE_LABELS.manual}, only status
+              reports count.
+            </p>
             <p className="text-muted-foreground">
               Months without recorded checks are shown as{" "}
               <span className="text-foreground font-medium">no data</span> and

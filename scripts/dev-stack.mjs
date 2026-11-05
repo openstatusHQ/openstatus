@@ -247,6 +247,16 @@ function groupMembers(pgid) {
   return r.status === 0 ? r.stdout.trim().split("\n").filter(Boolean) : [];
 }
 
+// Signal 0 probes the group without pgrep, which `up` must not depend on.
+function groupAlive(pgid) {
+  try {
+    process.kill(-pgid, 0);
+    return true;
+  } catch (e) {
+    return e.code === "EPERM";
+  }
+}
+
 const SQLD_GROUP = /\bsqld\b/;
 const DASHBOARD_GROUP = /\b(pnpm|node|next-server)\b/;
 // Any Node app can reuse a stale pid; only the API server runs src/serve.ts.
@@ -347,7 +357,18 @@ async function up() {
     );
     writeState(state);
     const t = Date.now();
-    await waitFor(dashboardUp, "dashboard", 180000);
+    // Next refuses a second dev server per app dir; fail now, not after 180s.
+    await waitFor(
+      async () => {
+        if (!groupAlive(state.dashboard))
+          throw new Error(
+            "dashboard exited; see .screenshots/stack/dashboard.log",
+          );
+        return dashboardUp();
+      },
+      "dashboard",
+      180000,
+    );
     log(`dashboard answering after ${since(t)}`);
   }
 

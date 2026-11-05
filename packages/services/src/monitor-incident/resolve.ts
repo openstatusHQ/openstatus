@@ -18,7 +18,7 @@ export async function resolveMonitorIncident(args: {
   input: ResolveMonitorIncidentInput;
 }): Promise<MonitorIncident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = ResolveMonitorIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

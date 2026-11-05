@@ -1,7 +1,12 @@
 import { sentry } from "@hono/sentry";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Events } from "@openstatus/analytics";
 import { db, desc, eq } from "@openstatus/db";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
+import { ForbiddenError } from "@openstatus/services";
+import { createStatusReportTool } from "@openstatus/services/agent-tools";
 import { resourceMetadataUrl } from "@openstatus/services/oauth";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
 import { Hono } from "hono";
@@ -18,7 +23,9 @@ import {
 
 import { handleError } from "../../libs/errors";
 import { oauthConfigFromEnv } from "../oauth/config";
+import { toServiceCtx } from "./adapter";
 import { mcpRoute } from "./index";
+import { createMcpServer } from "./server";
 
 /**
  * Build a fresh Hono app with the same middleware chain as production.
@@ -121,9 +128,13 @@ describe("MCP transport", () => {
     expect(names).toEqual([
       "add_incident_note",
       "add_maintenance_update",
+      "add_page_component",
       "add_status_report_update",
       "approve_postmortem",
+      "create_component_group",
       "create_maintenance",
+      "create_monitor",
+      "create_status_page",
       "create_status_report",
       "declare_incident",
       "delete_maintenance_update",
@@ -133,6 +144,7 @@ describe("MCP transport", () => {
       "get_content_page",
       "get_doc_page",
       "get_incident",
+      "get_maintenance",
       "get_monitor",
       "get_monitor_status",
       "get_monitor_summary",
@@ -155,8 +167,13 @@ describe("MCP transport", () => {
       "search_content",
       "search_docs",
       "set_incident_status",
+      "update_component_group",
       "update_incident",
+      "update_maintenance",
       "update_maintenance_update",
+      "update_monitor",
+      "update_page_component",
+      "update_status_page",
       "update_status_report",
       "update_status_report_update",
     ]);
@@ -418,5 +435,183 @@ describe("MCP transport — audit stamping", () => {
     // No `createdById` available in dev mode → audit's actorUserId
     // is null. Production custom keys would carry the creator's id.
     expect(createRow?.actorUserId).toBeNull();
+  });
+});
+
+/**
+ * The HTTP route resolves dev keys to `'*'`, so scoped credentials are
+ * exercised against the server the route builds, over an in-memory
+ * transport. `isAgentToolAvailable` only reads `workspace.id`.
+ */
+const scopedWorkspace = {
+  id: SEEDED_WORKSPACE_TEAM_ID,
+  slug: "ws",
+  name: "ws",
+  // `audit-log` on so the audit tools register (scope `read`).
+  limits: { "audit-log": true },
+} as unknown as Workspace;
+
+function scopedCtx(scopes: Scope[]) {
+  return toServiceCtx({
+    workspace: scopedWorkspace,
+    apiKey: { id: "scoped-key", scopes },
+    requestId: "req-scoped",
+  });
+}
+
+async function connectScoped(scopes: Scope[]) {
+  const server = createMcpServer(scopedCtx(scopes));
+  const client = new Client({ name: "probe", version: "test" });
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
+  await Promise.all([
+    server.connect(serverTransport),
+    client.connect(clientTransport),
+  ]);
+  return { client, close: () => client.close() };
+}
+
+const INCIDENT_GROUP_TOOLS = [
+  "add_incident_note",
+  "add_maintenance_update",
+  "add_status_report_update",
+  "approve_postmortem",
+  "create_maintenance",
+  "create_status_report",
+  "declare_incident",
+  "delete_maintenance_update",
+  "delete_status_report_update",
+  "draft_postmortem",
+  "get_incident",
+  "get_maintenance",
+  "get_postmortem",
+  "get_status_report",
+  "list_incidents",
+  "list_maintenances",
+  "list_status_reports",
+  "resolve_incident",
+  "resolve_status_report",
+  "set_incident_status",
+  "update_incident",
+  "update_maintenance",
+  "update_maintenance_update",
+  "update_status_report",
+  "update_status_report_update",
+];
+
+const ANY_TOOLS = [
+  "get_content_page",
+  "get_doc_page",
+  "get_workspace",
+  "search_content",
+  "search_docs",
+];
+
+// Snapshots span every group, so only the `read` umbrella (or above) sees them.
+const AUDIT_TOOLS = ["get_audit_log", "list_audit_logs"];
+
+const OTHER_GROUP_TOOLS = [
+  "get_monitor",
+  "get_monitor_status",
+  "get_monitor_summary",
+  "get_response_log",
+  "list_monitors",
+  "list_response_logs",
+  "list_notifications",
+  "list_page_components",
+  "list_private_locations",
+  "list_status_pages",
+];
+
+describe("MCP transport — group scopes", () => {
+  test("incidents:write lists the incident group plus `any` tools and nothing else", async () => {
+    const { client, close } = await connectScoped(["incidents:write"]);
+    try {
+      const { tools } = await client.listTools();
+      const names = tools.map((t) => t.name).sort();
+      expect(names).toEqual([...INCIDENT_GROUP_TOOLS, ...ANY_TOOLS].sort());
+      for (const name of OTHER_GROUP_TOOLS) expect(names).not.toContain(name);
+    } finally {
+      await close();
+    }
+  });
+
+  test("monitors:read sees `any` tools and no write tool", async () => {
+    const { client, close } = await connectScoped(["monitors:read"]);
+    try {
+      const { tools } = await client.listTools();
+      const names = tools.map((t) => t.name);
+      for (const name of ANY_TOOLS) expect(names).toContain(name);
+      for (const name of ["list_monitors", "get_monitor", "get_monitor_status"])
+        expect(names).toContain(name);
+      expect(names).not.toContain("create_monitor");
+      for (const name of INCIDENT_GROUP_TOOLS)
+        expect(names).not.toContain(name);
+      for (const tool of tools) {
+        expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+      }
+    } finally {
+      await close();
+    }
+  });
+
+  test("audit tools need the read umbrella, not a group scope", async () => {
+    for (const scopes of [
+      ["incidents:write"],
+      ["monitors:read"],
+    ] as Scope[][]) {
+      const { client, close } = await connectScoped(scopes);
+      try {
+        const names = (await client.listTools()).tools.map((t) => t.name);
+        for (const name of AUDIT_TOOLS) expect(names).not.toContain(name);
+      } finally {
+        await close();
+      }
+    }
+    const { client, close } = await connectScoped(["read"]);
+    try {
+      const names = (await client.listTools()).tools.map((t) => t.name);
+      for (const name of AUDIT_TOOLS) expect(names).toContain(name);
+    } finally {
+      await close();
+    }
+  });
+
+  test("monitors:read calling a write tool directly is refused at both layers", async () => {
+    const { client, close } = await connectScoped(["monitors:read"]);
+    try {
+      // Transport layer: the tool was never registered for this key, so the
+      // SDK answers with an error result naming the unknown tool.
+      const result = await client.callTool({
+        name: "create_status_report",
+        arguments: {
+          title: "x",
+          status: "investigating",
+          message: "x",
+          pageId: 1,
+          pageComponentIds: [],
+          notify: false,
+        },
+      });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toMatch(/create_status_report/);
+    } finally {
+      await close();
+    }
+
+    // Service layer: `requireScope` fires before any DB lookup.
+    await expect(
+      createStatusReportTool.run({
+        ctx: scopedCtx(["monitors:read"]),
+        input: {
+          title: "x",
+          status: "investigating",
+          message: "x",
+          pageId: 1,
+          pageComponentIds: [],
+          notify: false,
+        },
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

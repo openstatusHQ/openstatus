@@ -65,6 +65,13 @@ describe("frontmatter", () => {
     expect(out.endsWith("---\n")).toBe(true);
   });
 
+  test("names the time zone the times are in", () => {
+    expect(frontmatter({ ...base, timeZone: "Asia/Tokyo" })).toContain(
+      'time_zone: "Asia/Tokyo"',
+    );
+    expect(frontmatter(base)).not.toContain("time_zone");
+  });
+
   test("includes live state and drops an invalid fetched_at", () => {
     const out = frontmatter({
       ...base,
@@ -143,6 +150,15 @@ describe("number and date formatting", () => {
     expect(formatDayTime(instant)).toBe("Jun 18, 2:05 PM");
     expect(formatLogStamp(instant)).toBe("2026-06-18 14:05");
     expect(formatStamp(instant)).toBe("Jun 18, 2026 14:05 (GMT+0)");
+  });
+
+  test("formats in the page's time zone", () => {
+    // 16:05 UTC is already 01:05 the next day in Tokyo
+    const late = Date.UTC(2026, 5, 18, 16, 5);
+    expect(formatDay(late, "Asia/Tokyo")).toBe("Jun 19, 2026");
+    expect(formatDayTime(late, "Asia/Tokyo")).toBe("Jun 19, 1:05 AM");
+    expect(formatLogStamp(late, "Asia/Tokyo")).toBe("2026-06-19 01:05");
+    expect(formatStamp(late, "Asia/Tokyo")).toBe("Jun 19, 2026 01:05 (GMT+9)");
   });
 
   test("formatDayTime uses 12 for midnight and noon", () => {

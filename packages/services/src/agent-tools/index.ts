@@ -1,5 +1,7 @@
-import type { z } from "zod";
+import { z } from "zod";
 
+import type { ServiceContext } from "../context";
+import { ForbiddenError, NotFoundError } from "../errors";
 import { isFeatureEnabled } from "../features";
 import type { Workspace } from "../types";
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
@@ -21,20 +23,36 @@ import {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
   deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
   listMaintenancesTool,
+  updateMaintenanceTool,
   updateMaintenanceUpdateTool,
 } from "./maintenance";
 import {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "./monitor";
 import { listNotificationsTool } from "./notification";
-import { listStatusPagesTool } from "./page";
-import { listPageComponentsTool } from "./page-component";
+import {
+  createStatusPageTool,
+  listStatusPagesTool,
+  updateStatusPageTool,
+} from "./page";
+import {
+  addPageComponentTool,
+  listPageComponentsTool,
+  updatePageComponentTool,
+} from "./page-component";
+import {
+  createComponentGroupTool,
+  updateComponentGroupTool,
+} from "./page-component-group";
 import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
@@ -46,7 +64,7 @@ import {
   updateStatusReportTool,
   updateStatusReportUpdateTool,
 } from "./status-report";
-import type { AnyAgentTool } from "./types";
+import type { AgentToolRegistry, AnyAgentTool, ApprovalBefore } from "./types";
 import { getWorkspaceTool } from "./workspace";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
@@ -68,20 +86,36 @@ export {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
   deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
   listMaintenancesTool,
+  updateMaintenanceTool,
   updateMaintenanceUpdateTool,
 } from "./maintenance";
 export {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "./monitor";
 export { listNotificationsTool } from "./notification";
-export { listStatusPagesTool } from "./page";
-export { listPageComponentsTool } from "./page-component";
+export {
+  createStatusPageTool,
+  listStatusPagesTool,
+  updateStatusPageTool,
+} from "./page";
+export {
+  addPageComponentTool,
+  listPageComponentsTool,
+  updatePageComponentTool,
+} from "./page-component";
+export {
+  createComponentGroupTool,
+  updateComponentGroupTool,
+} from "./page-component-group";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
 export {
@@ -98,6 +132,7 @@ export type {
   AgentTool,
   AgentToolRegistry,
   AnyAgentTool,
+  ApprovalBefore,
   ApprovalMeta,
   ExtraFlag,
   InferAgentToolInput,
@@ -122,7 +157,13 @@ export {
  */
 export const agentTools = {
   list_status_pages: listStatusPagesTool,
+  create_status_page: createStatusPageTool,
+  update_status_page: updateStatusPageTool,
   list_page_components: listPageComponentsTool,
+  add_page_component: addPageComponentTool,
+  update_page_component: updatePageComponentTool,
+  create_component_group: createComponentGroupTool,
+  update_component_group: updateComponentGroupTool,
   list_status_reports: listStatusReportsTool,
   get_status_report: getStatusReportTool,
   create_status_report: createStatusReportTool,
@@ -142,11 +183,15 @@ export const agentTools = {
   draft_postmortem: draftPostmortemTool,
   approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
+  get_maintenance: getMaintenanceTool,
   create_maintenance: createMaintenanceTool,
+  update_maintenance: updateMaintenanceTool,
   add_maintenance_update: addMaintenanceUpdateTool,
   update_maintenance_update: updateMaintenanceUpdateTool,
   delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_monitors: listMonitorsTool,
+  create_monitor: createMonitorTool,
+  update_monitor: updateMonitorTool,
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,
   get_monitor_summary: getMonitorSummaryTool,
@@ -205,3 +250,41 @@ export type AgentToolInput<N extends AgentToolName> = z.infer<
 export type AgentToolOutput<N extends AgentToolName> = z.infer<
   (typeof agentTools)[N]["outputSchema"]
 >;
+
+export const LoadApprovalBeforeInput = z.object({
+  toolName: z.string(),
+  /** The pending call's integer input fields; the tool's `idField` is one. */
+  ids: z.record(z.string(), z.number().int()),
+});
+export type LoadApprovalBeforeInput = z.infer<typeof LoadApprovalBeforeInput>;
+
+/**
+ * The "before" side of a write tool's approval card. `null` when the tool
+ * has no `loadBefore`, is not offered in this workspace, the id is missing,
+ * or the entity is gone — the card then shows the proposed values only, and
+ * Apply surfaces the real error.
+ */
+export async function loadApprovalBefore(args: {
+  ctx: ServiceContext;
+  input: LoadApprovalBeforeInput;
+}): Promise<ApprovalBefore | null> {
+  const { ctx } = args;
+  const { toolName, ids } = LoadApprovalBeforeInput.parse(args.input);
+  const tool = Object.hasOwn(agentTools, toolName)
+    ? (agentTools as AgentToolRegistry)[toolName]
+    : undefined;
+  const loadBefore = tool?.approval?.loadBefore;
+  if (!tool || !loadBefore || !isAgentToolAvailable(tool, ctx.workspace)) {
+    return null;
+  }
+  const id = ids[loadBefore.idField];
+  if (id === undefined) return null;
+  try {
+    return await loadBefore.load({ ctx, id });
+  } catch (err) {
+    if (err instanceof NotFoundError || err instanceof ForbiddenError) {
+      return null;
+    }
+    throw err;
+  }
+}

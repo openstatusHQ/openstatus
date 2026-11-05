@@ -1,4 +1,4 @@
-import { insertPageSchema } from "@openstatus/db/src/schema";
+import { insertPageSchema, timeZoneSchema } from "@openstatus/db/src/schema";
 import { pageAccessTypes } from "@openstatus/db/src/schema/pages/constants";
 import {
   customDomainSchema,
@@ -37,6 +37,7 @@ export type CreatePageInput = {
   forceTheme?: "light" | "dark" | "system";
   defaultLocale?: (typeof locales)[number];
   locales?: (typeof locales)[number][] | null;
+  defaultTimezone?: string;
   homepageUrl?: string | null;
   contactUrl?: string | null;
   configuration?: Record<string, unknown> | null;
@@ -174,6 +175,12 @@ export const UpdatePageLocalesInput = z
     },
   );
 export type UpdatePageLocalesInput = z.infer<typeof UpdatePageLocalesInput>;
+
+export const UpdatePageTimezoneInput = z.object({
+  id: z.number().int(),
+  defaultTimezone: timeZoneSchema,
+});
+export type UpdatePageTimezoneInput = z.input<typeof UpdatePageTimezoneInput>;
 
 // Match undefined before the read validators can fill in defaults.
 export const UpdatePageConfigurationInput = z.object({

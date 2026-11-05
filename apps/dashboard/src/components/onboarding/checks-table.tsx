@@ -1,6 +1,5 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
 import { Warning, Refresh } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -20,12 +19,12 @@ import {
 import { useState } from "react";
 
 import { getColumns } from "@/components/data-table/response-logs/columns";
+import type { ResponseLog } from "@/components/data-table/response-logs/data-table-basics";
 import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 
 // The `get` shape, so the row also satisfies the Sheet's input.
-export type OnboardingChecksRow =
-  RouterOutputs["tinybird"]["get"]["data"][number];
+export type OnboardingChecksRow = ResponseLog;
 
 const COLUMNS: ColumnDef<OnboardingChecksRow>[] = getColumns([]);
 

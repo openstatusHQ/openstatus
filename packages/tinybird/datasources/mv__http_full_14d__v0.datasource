@@ -19,7 +19,8 @@ SCHEMA >
     `trigger` Nullable(String),
     `id` Nullable(String),
     `requestStatus` Nullable(String),
-    `method` String
+    `method` String,
+    `attempts` Int16 DEFAULT 1
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

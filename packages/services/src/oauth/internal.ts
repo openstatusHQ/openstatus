@@ -196,7 +196,7 @@ export async function revokeGrantAsOwner(
     actor: { type: "user", userId: grant.userId },
     db,
   };
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   await withTransaction(ctx, (tx) =>
     revokeGrantRows(tx, ctx, [grant], reason, now),
   );

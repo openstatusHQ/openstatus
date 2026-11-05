@@ -17,7 +17,7 @@ export async function addIncidentNote(args: {
   input: AddIncidentNoteInput;
 }): Promise<IncidentEvent> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = AddIncidentNoteInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

@@ -23,6 +23,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
+import { requireScope } from "../auth";
 import { batchReads, type DB, type ServiceContext } from "../context";
 import type {
   Page,
@@ -129,9 +130,9 @@ async function enrichReportsBatch(
           statusReportsToPageComponents,
           eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
         )
-        .where(
-          inArray(statusReportsToPageComponents.statusReportId, reportIds),
-        ),
+        .where(inArray(statusReportsToPageComponents.statusReportId, reportIds))
+        // stable order: rows truncate the list to the first few names
+        .orderBy(asc(pageComponent.order), asc(pageComponent.id)),
       db.select().from(pageTable).where(anyPage),
       db.select().from(pageComponent).where(anyPageComponent),
       db
@@ -257,6 +258,7 @@ export async function listStatusReports(args: {
   input: ListStatusReportsInput;
 }): Promise<ListStatusReportsResult> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = ListStatusReportsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -310,6 +312,7 @@ export async function getStatusReport(args: {
   input: GetStatusReportInput;
 }): Promise<StatusReportWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = GetStatusReportInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

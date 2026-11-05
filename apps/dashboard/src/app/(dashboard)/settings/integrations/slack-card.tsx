@@ -79,7 +79,7 @@ export function SlackIntegrationCard({
   };
 
   return (
-    <FormCard>
+    <FormCard id="slack">
       {locked ? <FormCardUpgrade /> : null}
       <FormCardHeader>
         <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export function SlackIntegrationCard({
             type="button"
             asChild
           >
-            <Link href="/settings/billing">
+            <Link href="/settings/billing#plans">
               <Lock />
               Upgrade
             </Link>

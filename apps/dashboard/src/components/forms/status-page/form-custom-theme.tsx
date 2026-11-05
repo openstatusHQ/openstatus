@@ -116,7 +116,7 @@ export function FormCustomTheme({
           if (errored) setMode(errored);
         })}
       >
-        <FormCard>
+        <FormCard id="custom-theme">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Custom Theme</FormCardTitle>
@@ -203,7 +203,7 @@ export function FormCustomTheme({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <Link href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </Link>

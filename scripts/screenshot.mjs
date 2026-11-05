@@ -7,8 +7,9 @@
 //   node scripts/screenshot.mjs --app status-page /acme
 //
 // Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
+// Output: .screenshots/<branch>[/<label>]/, overridable with --out.
 
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -52,7 +53,27 @@ if (!app || paths.length === 0) {
 
 const base = (flags.base ?? app.base).replace(/\/$/, "");
 const db = flags.db ?? "http://127.0.0.1:8080";
-const out = resolve(flags.out ?? ".screenshots");
+const git = (...a) => {
+  const r = spawnSync("git", a, { cwd: repo, encoding: "utf8" });
+  return r.status === 0 ? r.stdout.trim() : "";
+};
+const commit = git("rev-parse", "--short", "HEAD") || "unknown";
+// detached HEAD reads "HEAD": fall back to the commit
+const head = git("rev-parse", "--abbrev-ref", "HEAD");
+const branchName = head && head !== "HEAD" ? head : commit;
+// one folder per branch (feat/x → feat-x), `--label before` nests a set inside
+const out = resolve(
+  flags.out ??
+    join(
+      repo,
+      ".screenshots",
+      branchName.replace(/[^\w.-]+/g, "-"),
+      typeof flags.label === "string"
+        ? // no dots: `--label ..` would climb out of the branch folder
+          flags.label.replace(/[^\w-]+/g, "-")
+        : "",
+    ),
+);
 const themes =
   flags.theme === "both" || flags.theme === "dark"
     ? flags.theme === "both"
@@ -170,7 +191,7 @@ function cookies(token, slug) {
 }
 
 // Three apps, two default ports, and on this machine any of them may sit on
-// :3001. Only the dashboard serves a form at /login; use that to tell them apart.
+// :3001. Only the dashboard titles /login "Sign In"; use that to tell them apart.
 const probe = await fetch(base + (app.probe ?? paths[0])).catch(() => null);
 if (!probe || probe.status === 404 || probe.status >= 500) {
   console.error(
@@ -182,7 +203,14 @@ if (!app.auth) {
   const login = await fetch(`${base}/login`, { redirect: "manual" }).catch(
     () => null,
   );
-  if (login?.status === 200) {
+  // a status page in dev answers /login too when a page has that slug
+  const html =
+    login?.status === 200 ? await login.text().catch(() => null) : "";
+  if (html === null) {
+    console.error(`could not read ${base}/login to identify the app; retry`);
+    process.exit(1);
+  }
+  if (/<title>Sign In \|/.test(html)) {
     console.error(
       `${base} serves the dashboard, not ${flags.app}; pass --base`,
     );
@@ -370,12 +398,10 @@ function writeGallery() {
     g.mtime = Math.max(g.mtime, s.mtime);
     groups.set(key, g);
   }
-  const git = (...a) =>
-    execFileSync("git", a, { cwd: repo, encoding: "utf8" }).trim();
-  const commit = git("rev-parse", "--short", "HEAD");
   const facts = [
     ["App", flags.app ?? "dashboard"],
-    ["Branch", git("rev-parse", "--abbrev-ref", "HEAD")],
+    ["Branch", branchName],
+    ...(typeof flags.label === "string" ? [["Label", flags.label]] : []),
     ["Commit", commit],
     ["Taken", new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC"],
     [

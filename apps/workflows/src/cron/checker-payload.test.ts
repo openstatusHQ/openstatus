@@ -8,7 +8,7 @@ import { z } from "zod";
 import {
   type CheckerPublisher,
   type TaskInput,
-  buildCheckerPayload,
+  buildCronCheckerPayload,
   checkerTopic,
   publishCheckerTasks,
 } from "./checker-payload";
@@ -41,6 +41,11 @@ const monitorRow = (
     followRedirects: true,
     grpcService: null,
     grpcTls: "tls",
+    heartbeatToken: null,
+    heartbeatPeriod: null,
+    heartbeatGrace: null,
+    heartbeatCron: null,
+    heartbeatTz: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
     deletedAt: null,
@@ -58,7 +63,7 @@ const input = (
 
 type Published = {
   topic: string;
-  payload: ReturnType<typeof buildCheckerPayload>;
+  payload: ReturnType<typeof buildCronCheckerPayload>;
   attributes: Record<string, string>;
 };
 
@@ -80,9 +85,9 @@ const recordingPublisher = (failTopics: string[] = []) => {
   return { published, publisher };
 };
 
-describe("buildCheckerPayload", () => {
+describe("buildCronCheckerPayload", () => {
   test("http keeps the request shape the checker binds", () => {
-    const payload = buildCheckerPayload(
+    const payload = buildCronCheckerPayload(
       input({
         row: monitorRow({
           assertions:
@@ -112,7 +117,7 @@ describe("buildCheckerPayload", () => {
   test.each(["tcp", "dns", "icmp"] as const)(
     "%s sends the url as uri",
     (jobType) => {
-      const payload = buildCheckerPayload(
+      const payload = buildCronCheckerPayload(
         input({ row: monitorRow({ jobType, url: "example.com:443" }) }),
       );
 
@@ -126,7 +131,7 @@ describe("buildCheckerPayload", () => {
   );
 
   test("grpc sends headers as a map and defaults tls", () => {
-    const payload = buildCheckerPayload(
+    const payload = buildCronCheckerPayload(
       input({
         row: monitorRow({
           jobType: "grpc",
@@ -168,7 +173,7 @@ describe("publishCheckerTasks", () => {
     expect(published).toEqual([
       {
         topic: "checker-iad",
-        payload: buildCheckerPayload(input({ row, region: "iad" })),
+        payload: buildCronCheckerPayload(input({ row, region: "iad" })),
         attributes: {
           jobType: "tcp",
           periodicity: "5m",

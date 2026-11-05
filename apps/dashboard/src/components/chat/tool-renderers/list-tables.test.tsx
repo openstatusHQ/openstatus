@@ -94,11 +94,24 @@ describe("listPageComponentsTable", () => {
   const table = listPageComponentsTable(
     asOutput({
       items: [
-        { id: 9, name: "API", type: "monitor", pageId: 2, monitorId: 4 },
+        {
+          id: 9,
+          name: "API",
+          type: "monitor",
+          pageId: 2,
+          monitorId: 4,
+          groupId: 1,
+          groupName: "Core",
+        },
         { id: 10, name: "Docs", type: "static", pageId: 2, monitorId: null },
       ],
     }),
   );
+
+  it("shows the group name or a placeholder", () => {
+    expect(text(table.rows[0].cells.group).trim()).toBe("Core");
+    expect(text(table.rows[1].cells.group).trim()).toBe("No group");
+  });
 
   it("links to the page's components", () => {
     expect(hrefOf(table.rows[0].cells.name)).toBe("/status-pages/2/components");

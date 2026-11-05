@@ -26,7 +26,7 @@ export const getWorkspaceTool: AgentTool<
   name: "get_workspace",
   description:
     "The current workspace: name, slug, plan, trial end and usage counts for monitors, status pages, components, notification channels and status reports. Use to answer which-plan or how-many questions. Plan limits and billing identifiers are NOT exposed.",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: GetWorkspaceInput,
   outputSchema: GetWorkspaceOutput,

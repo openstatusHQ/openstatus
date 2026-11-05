@@ -764,6 +764,33 @@ describe("listResponseLogsInfinite", () => {
     });
   });
 
+  test("passes attempts through and reads a row without it as 1", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-http-attempts`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      const [retried, missing] = httpRows(2, 1);
+      const { tb } = makeFakeTb([{ ...retried, attempts: 3 }, missing ?? {}]);
+
+      const result = await listResponseLogsInfinite({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, limit: 50, direction: "next" },
+      });
+
+      expect(result.data.map((log) => log.attempts)).toEqual([3, 1]);
+    });
+  });
+
   test("overfetches by the location count and trims to a whole tick", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createMonitor({

@@ -2,7 +2,7 @@
 
 import { headerAssertion } from "@openstatus/assertions";
 import { MONITOR_METHODS } from "@openstatus/utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
@@ -74,6 +74,10 @@ export default function Page() {
   const router = useRouter();
   const [params] = useQueryStates(searchParamsParsers);
 
+  const { data: heartbeatAvailable } = useQuery(
+    trpc.monitor.heartbeatAvailable.queryOptions(),
+  );
+
   const triggerCheckMutation = useMutation(
     trpc.checker.triggerChecker.mutationOptions({}),
   );
@@ -84,7 +88,7 @@ export default function Page() {
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        if (data.active) {
+        if (data.active && data.jobType !== "heartbeat") {
           triggerCheckMutation.mutate({ id: data.id });
         }
         router.push(`/monitors/${data.id}/edit`);
@@ -94,12 +98,13 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="create-monitor">
         <SectionHeader>
           <SectionTitle>Create Monitor</SectionTitle>
         </SectionHeader>
         <FormGeneral
           defaultValues={buildPrefill(params)}
+          heartbeatAvailable={heartbeatAvailable ?? false}
           onSubmit={async (data) => {
             await createMonitorMutation.mutateAsync({
               name: data.name,
@@ -114,11 +119,13 @@ export default function Page() {
               grpcTls: data.grpcTls,
               saveCheck: data.saveCheck,
               skipCheck: data.skipCheck,
+              heartbeatPeriod: data.heartbeatPeriod,
+              heartbeatGrace: data.heartbeatGrace,
             });
           }}
         />
       </Section>
-      <Section>
+      <Section id="next-steps">
         <EmptyStateContainer>
           <EmptyStateTitle>Create and start customizing</EmptyStateTitle>
           <EmptyStateDescription>

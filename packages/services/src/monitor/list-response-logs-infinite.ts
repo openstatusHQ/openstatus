@@ -1,6 +1,7 @@
 import { db as defaultDb } from "@openstatus/db";
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, defaultTb } from "../context";
 import { ForbiddenError, ValidationError } from "../errors";
 import { getMonitorInWorkspace } from "./internal";
@@ -12,8 +13,12 @@ import { ListResponseLogsInfiniteInput } from "./schemas";
 /** The v2 list pipes cap their own `limit` parameter here. */
 const MAX_FETCH_LIMIT = 1000;
 
+export type ResponseLogInfiniteItem = ResponseLogListItem & {
+  attempts: number;
+};
+
 export type ListResponseLogsInfiniteResult = {
-  data: ResponseLogListItem[];
+  data: ResponseLogInfiniteItem[];
   nextCursor: number | null;
   prevCursor: number | null;
 };
@@ -27,12 +32,13 @@ type BaseRow = {
   latency: number;
   cronTimestamp: number;
   timestamp: number;
+  attempts?: number;
 };
 
 function toListItem(
   log: BaseRow,
   extra: Pick<ResponseLogListItem, "statusCode" | "timing">,
-): ResponseLogListItem {
+): ResponseLogInfiniteItem {
   return {
     id: log.id ?? null,
     monitorId: log.monitorId,
@@ -42,6 +48,7 @@ function toListItem(
     latency: log.latency,
     cronTimestamp: log.cronTimestamp,
     timestamp: log.timestamp,
+    attempts: log.attempts ?? 1,
     ...extra,
   };
 }
@@ -51,6 +58,7 @@ export async function listResponseLogsInfinite(args: {
   input: ListResponseLogsInfiniteInput;
 }): Promise<ListResponseLogsInfiniteResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = ListResponseLogsInfiniteInput.parse(args.input);
   if (!ctx.workspace.limits["response-logs"]) {
     throw new ForbiddenError("Response logs are not enabled on this plan.");
@@ -100,9 +108,9 @@ export async function listResponseLogsInfinite(args: {
     ...toPipeParams(input),
   };
 
-  async function fetchRows(limit: number): Promise<ResponseLogListItem[]> {
+  async function fetchRows(limit: number): Promise<ResponseLogInfiniteItem[]> {
     const params = { ...baseParams, limit };
-    let rows: ResponseLogListItem[];
+    let rows: ResponseLogInfiniteItem[];
     if (jobType === "http") {
       const getter =
         window === "1d"

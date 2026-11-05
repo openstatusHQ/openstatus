@@ -101,6 +101,7 @@ async function seedTeamWorkspace(tx: DrizzleTx) {
       password: "hunter2",
       accessType: "password",
       allowIndex: false,
+      defaultTimezone: "Asia/Tokyo",
       createdAt: OLDEST,
     })
     .returning()
@@ -330,6 +331,8 @@ describe("downgradeWorkspaceToFree", () => {
       expect(kept?.accessType).toBe("public");
       // no-index is paid-only — the survivor must become indexable again.
       expect(kept?.allowIndex).toBe(true);
+      // so is the page time zone
+      expect(kept?.defaultTimezone).toBe("UTC");
 
       await expectAuditRow({
         workspaceId: s.ws.id,
@@ -545,6 +548,24 @@ describe("downgradeWorkspaceToFree", () => {
           keyId: "k-read",
           userId: 1,
           scopes: ["read"],
+        }),
+        db: tx,
+      };
+
+      await expect(downgradeWorkspaceToFree({ ctx })).rejects.toBeInstanceOf(
+        ForbiddenError,
+      );
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const ctx: ServiceContext = {
+        ...makeApiKeyCtx(s.ws, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
         }),
         db: tx,
       };

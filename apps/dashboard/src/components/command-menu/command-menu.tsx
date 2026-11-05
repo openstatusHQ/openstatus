@@ -22,7 +22,7 @@ import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-rep
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
-import { scrollToHash, useScrollToHash } from "@/hooks/use-scroll-to-hash";
+import { scrollToHash } from "@/hooks/use-scroll-to-hash";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
 import { GroupView } from "./group-view";
@@ -34,6 +34,7 @@ import {
   statusReportsGroup,
   workspacesGroup,
 } from "./groups/entities";
+import { incidentScopeGroups } from "./groups/incident-scope";
 import { monitorScopeGroups } from "./groups/monitor-scope";
 import {
   createGroup,
@@ -65,8 +66,6 @@ export function CommandMenu() {
 
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-
-  useScrollToHash();
 
   const data = useCommandMenuData({ open });
 
@@ -106,8 +105,7 @@ export function CommandMenu() {
   const navigate = (href: string) => {
     router.push(href);
     setOpen(false);
-    const hashIndex = href.indexOf("#");
-    if (hashIndex !== -1) scrollToHash(href.slice(hashIndex + 1));
+    if (href.includes("#")) scrollToHash(href);
   };
 
   const openSheet = (next: CommandSheet) => {
@@ -142,11 +140,17 @@ export function CommandMenu() {
   const groups: CommandMenuGroup[] = page
     ? page.type === "monitor"
       ? monitorScopeGroups(page)
-      : statusPageScopeGroups({
-          page,
-          statusReports: data.sortedStatusReports,
-          maintenances: data.sortedMaintenances,
-        })
+      : page.type === "incident"
+        ? incidentScopeGroups({
+            page,
+            incidents: data.incidents,
+            statusReports: data.statusReports,
+          })
+        : statusPageScopeGroups({
+            page,
+            statusReports: data.sortedStatusReports,
+            maintenances: data.sortedMaintenances,
+          })
     : [
         incidentsGroup(data.incidents),
         monitorsGroup(data.monitors),
@@ -223,7 +227,7 @@ export function CommandMenu() {
               ) : null}
               {groups.map((group) => (
                 <GroupView
-                  key={group.heading}
+                  key={group.key ?? group.heading}
                   group={group}
                   search={search}
                   onAction={dispatch}

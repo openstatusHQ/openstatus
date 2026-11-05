@@ -29,6 +29,7 @@ import {
   ChartLineRegions,
   ChartLineRegionsSkeleton,
 } from "../../../../../../../components/chart/chart-line-regions";
+import { useStatusPage } from "../../../../../../../components/status-page/floating-button";
 import { StatusBlankMonitors } from "../../../../../../../components/status-page/status-blank";
 import {
   StatusChartContent,
@@ -57,6 +58,7 @@ export default function Page() {
   const t = useExtracted();
   const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const trpc = useTRPC();
+  const { timezone } = useStatusPage();
   const { id, domain } = useParams<{ id: string; domain: string }>();
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
@@ -85,9 +87,10 @@ export default function Page() {
           hour: "numeric",
           minute: "numeric",
           timeZoneName: "short",
+          timeZone: timezone,
         }),
       }));
-  }, [monitor?.data.latency?.data]);
+  }, [monitor?.data.latency?.data, timezone]);
 
   const regionLatencyData = useMemo(() => {
     if (!monitor?.data.regions?.data) return [];
@@ -102,6 +105,7 @@ export default function Page() {
             hour: "numeric",
             minute: "numeric",
             timeZoneName: "short",
+            timeZone: timezone,
           });
 
           if (!acc[timestamp]) {
@@ -117,7 +121,7 @@ export default function Page() {
       );
 
     return Object.values(grouped);
-  }, [monitor?.data.regions?.data]);
+  }, [monitor?.data.regions?.data, timezone]);
 
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
@@ -130,10 +134,11 @@ export default function Page() {
           hour: "numeric",
           minute: "numeric",
           timeZoneName: "short",
+          timeZone: timezone,
         }),
         ...item,
       }));
-  }, [monitor?.data.uptime?.data]);
+  }, [monitor?.data.uptime?.data, timezone]);
 
   const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {

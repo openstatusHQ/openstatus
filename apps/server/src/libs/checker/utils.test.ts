@@ -52,7 +52,7 @@ test("getCheckerUrl rejects an unsupported job type", () => {
   ).toThrow(OpenStatusApiError);
 });
 
-test("getCheckerPayload builds an ICMP payload without assertions", () => {
+test("getCheckerPayload marks the run as api-triggered", () => {
   const payload = getCheckerPayload(
     buildMonitor({
       jobType: "icmp",
@@ -77,78 +77,14 @@ test("getCheckerPayload builds an ICMP payload without assertions", () => {
   expect("url" in payload).toBe(false);
 });
 
-test("getCheckerPayload builds a gRPC payload with its target configuration", () => {
-  const payload = getCheckerPayload(
-    buildMonitor({
-      jobType: "grpc",
-      url: "api.example.com:443",
-      grpcService: "checkout.v1.CheckoutService",
-      grpcTls: "tls_insecure",
-      headers: [{ key: "authorization", value: "Bearer token" }],
-      assertions:
-        '[{"version":"v1","type":"status","compare":"eq","target":200}]',
-    }),
-    "active",
-  );
+test("getCheckerPayload rejects an unsupported job type as a bad request", () => {
+  let error: unknown;
+  try {
+    getCheckerPayload(buildMonitor({ jobType: "udp" }), "active");
+  } catch (err) {
+    error = err;
+  }
 
-  expect(payload).toMatchObject({
-    uri: "api.example.com:443",
-    service: "checkout.v1.CheckoutService",
-    tls: "tls_insecure",
-    headers: { authorization: "Bearer token" },
-    trigger: "api",
-  });
-  expect("assertions" in payload).toBe(false);
-});
-
-// The column is nullable and only defaults on insert, so a row that predates
-// the default must still dial with verification on.
-test("getCheckerPayload defaults a gRPC monitor with no TLS mode to tls", () => {
-  const payload = getCheckerPayload(
-    buildMonitor({ jobType: "grpc", url: "api.example.com:443" }),
-    "active",
-  );
-
-  expect(payload).toMatchObject({ tls: "tls" });
-});
-
-test("getCheckerPayload builds a DNS payload with assertions", () => {
-  const payload = getCheckerPayload(
-    buildMonitor({
-      jobType: "dns",
-      url: "openstatus.dev",
-      assertions:
-        '[{"version":"v1","type":"dnsRecord","record":"A","compare":"eq","target":"1.2.3.4"}]',
-    }),
-    "active",
-  );
-
-  expect(payload).toMatchObject({ uri: "openstatus.dev", trigger: "api" });
-  expect("assertions" in payload).toBe(true);
-});
-
-test("getCheckerPayload forwards the OTel config when configured", () => {
-  const payload = getCheckerPayload(
-    buildMonitor({
-      jobType: "icmp",
-      url: "1.1.1.1",
-      otelEndpoint: "https://otel.example.com:4318",
-      otelHeaders: [{ key: "Authorization", value: "Basic dGVzdA==" }],
-    }),
-    "active",
-  );
-
-  expect(payload.otelConfig).toEqual({
-    endpoint: "https://otel.example.com:4318",
-    headers: { Authorization: "Basic dGVzdA==" },
-  });
-});
-
-test("getCheckerPayload rejects an unsupported job type", () => {
-  expect(() =>
-    getCheckerPayload(
-      buildMonitor({ jobType: "unknown" as Monitor["jobType"] }),
-      "active",
-    ),
-  ).toThrow(OpenStatusApiError);
+  expect(error).toBeInstanceOf(OpenStatusApiError);
+  expect(error).toMatchObject({ code: "BAD_REQUEST", status: 400 });
 });

@@ -13,6 +13,7 @@ import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { createPageComponentGroup } from "../create";
 import { deletePageComponentGroup } from "../delete";
+import { listPageComponentGroups } from "../list";
 import { updatePageComponentGroup } from "../update";
 
 const TEST_PREFIX = "svc-page-component-group-test";
@@ -238,6 +239,44 @@ describe("deletePageComponentGroup", () => {
           input: { id: created.id },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("listPageComponentGroups", () => {
+  test("rejects a key without pages:read", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-monitors",
+          userId: 1,
+          scopes: ["monitors:read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        listPageComponentGroups({ ctx, input: { pageId: testPageId } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("lists the page's groups, empty ones included, scoped to the workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPageComponentGroup({
+        ctx,
+        input: { pageId: testPageId, name: `${TEST_PREFIX}-empty` },
+      });
+      const rows = await listPageComponentGroups({
+        ctx,
+        input: { pageId: testPageId },
+      });
+      expect(rows.map((g) => g.id)).toContain(created.id);
+      const foreign = await listPageComponentGroups({
+        ctx: { ...freeCtx, db: tx },
+        input: { pageId: testPageId },
+      });
+      expect(foreign).toEqual([]);
     });
   });
 });

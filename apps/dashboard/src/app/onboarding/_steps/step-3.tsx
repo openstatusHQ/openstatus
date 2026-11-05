@@ -80,8 +80,16 @@ export function Step3({
       });
     }
     const filler: Link[] = [
-      { name: "Invite team", href: "/settings/general", icon: Invite },
-      { name: "Notifiers", href: "/notifications", icon: Notification },
+      {
+        name: "Invite team",
+        href: "/settings/general#team-members",
+        icon: Invite,
+      },
+      {
+        name: "Notifiers",
+        href: "/notifications#notifier-channels",
+        icon: Notification,
+      },
       { name: "Overview", href: "/overview", icon: Overview },
       { name: "Billing", href: "/settings/billing", icon: Billing },
     ];
@@ -156,7 +164,7 @@ function NoClickopsCard() {
   const hasKeys = (apiKeys?.length ?? 0) > 0;
 
   return (
-    <FormCard className="shrink-0">
+    <FormCard id="agent-first" className="shrink-0">
       <FormCardHeader>
         <FormCardTitle>Agent-first, no clickops</FormCardTitle>
         <FormCardDescription>

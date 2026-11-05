@@ -51,11 +51,25 @@ import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { HeartbeatOverview } from "./heartbeat-overview";
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
 
 export function Client() {
+  const trpc = useTRPC();
+  const { id } = useParams<{ id: string }>();
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
+  );
+  if (!monitor) return null;
+  if (monitor.jobType === "heartbeat") {
+    return <HeartbeatOverview id={monitor.id} />;
+  }
+  return <CheckOverview />;
+}
+
+function CheckOverview() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const [{ period, regions, percentile, interval }, setSearchParams] =
@@ -160,7 +174,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="overview">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{monitor.name}</SectionTitle>
@@ -189,7 +203,7 @@ export function Client() {
         </div>
         <GlobalUptimeSection metrics={metrics} isLoading={isMetricsLoading} />
       </Section>
-      <Section>
+      <Section id="uptime">
         <SectionHeader>
           <SectionTitle>Uptime</SectionTitle>
           <SectionDescription>
@@ -235,7 +249,7 @@ export function Client() {
           />
         )}
       </Section>
-      <Section>
+      <Section id="latency">
         {/* TODO: based on http, we have Timing Phases instead of Latency */}
         <SectionHeader>
           <SectionTitle>Latency</SectionTitle>
@@ -288,7 +302,7 @@ export function Client() {
           />
         )}
       </Section>
-      <Section>
+      <Section id="regions">
         <SectionHeader>
           <SectionTitle>Regions</SectionTitle>
           <SectionDescription>
@@ -319,7 +333,7 @@ export function Client() {
           />
         )}
       </Section>
-      <Section>
+      <Section id="timeline">
         <SectionHeader>
           <SectionTitle>Timeline</SectionTitle>
           <SectionDescription>

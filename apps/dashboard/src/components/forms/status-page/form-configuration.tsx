@@ -147,7 +147,7 @@ export function FormConfiguration({
     <>
       <Form {...form}>
         <form id="redesign" onSubmit={form.handleSubmit(submitAction)}>
-          <FormCard>
+          <FormCard id="components-configuration">
             <FormCardHeader>
               <FormCardTitle>Components Configuration</FormCardTitle>
               <FormCardDescription>

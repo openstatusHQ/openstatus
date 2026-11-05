@@ -1,23 +1,23 @@
-import type { AgentToolInput } from "@openstatus/services/agent-tools";
+import type {
+  AgentToolInput,
+  ApprovalBefore,
+} from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
 
+import { fieldChanges, idRow } from "./before-diff";
+
 export function updateStatusReportUpdateChanges(
   input: AgentToolInput<"update_status_report_update">,
+  before?: ApprovalBefore,
 ): ChangeRow[] {
   return [
-    { field: "id", after: input.id },
-    ...(input.status ? [{ field: "status", after: input.status }] : []),
-    ...(input.message ? [{ field: "message", after: input.message }] : []),
-    ...(input.date ? [{ field: "date", after: input.date }] : []),
-    ...(input.componentImpacts
-      ? [
-          {
-            field: "componentImpacts",
-            after: input.componentImpacts,
-          },
-        ]
-      : []),
+    ...idRow("id", input.id, before),
+    ...fieldChanges(
+      input,
+      ["status", "message", "date", "componentImpacts"],
+      before,
+    ),
   ];
 }
 

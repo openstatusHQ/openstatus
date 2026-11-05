@@ -1,0 +1,33 @@
+TOKEN "endpoint__heartbeat_list__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+SELECT
+    id,
+    timestamp,
+    monitorId,
+    ip,
+    method,
+    userAgent,
+    headers,
+    body,
+    bodyTruncated,
+    kind
+FROM heartbeat_ping__v0
+WHERE
+    monitorId = {{ Int32(monitorId, 1, required=True) }}
+    {% if defined(fromDate) %} AND timestamp >= {{ Int64(fromDate) }} {% end %}
+    {% if defined(toDate) %} AND timestamp <= {{ Int64(toDate) }} {% end %}
+    {% if defined(cursor) %}
+        {% if String(direction, 'next') == 'prev' %}
+            AND timestamp > {{ Int64(cursor) }}
+        {% else %}
+            AND timestamp < {{ Int64(cursor) }}
+        {% end %}
+    {% end %}
+ORDER BY timestamp {% if String(direction, 'next') == 'prev' %} ASC {% else %} DESC {% end %}
+LIMIT {{ Int32(limit, 50, required=True) }}
+
+TYPE endpoint

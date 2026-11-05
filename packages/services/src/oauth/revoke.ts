@@ -25,7 +25,7 @@ export async function revokeGrant(args: {
   input: RevokeGrantInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = RevokeGrantInput.parse(args.input);
 
   const actorUserId = tryGetActorUserId(ctx.actor);

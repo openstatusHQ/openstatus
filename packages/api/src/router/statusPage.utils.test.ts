@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   currentImpactByComponent,
+  fetchByJobType,
   fillStatusDataFor45Days,
   getEvents,
   getUptime,
@@ -839,6 +840,76 @@ describe("fillStatusDataFor45Days", () => {
 });
 
 describe("getUptime", () => {
+  describe("heartbeat monitors", () => {
+    it("counts a silent day's incident as downtime in requests mode", () => {
+      // pings only on the first and last day: a ping tally would read 100%
+      const data = Array.from({ length: 10 }, (_, i) =>
+        createStatusData(i, i === 0 || i === 9 ? 1 : 0, 0, 0),
+      );
+      const uptime = getUptime({
+        data,
+        events: [createIncident(1, 5, 24)],
+        barType: "absolute",
+        cardType: "requests",
+        heartbeat: true,
+      });
+      expect(uptime).toBe("90%");
+    });
+
+    it("starts at the first ping, not the start of the lookback", () => {
+      const data = Array.from({ length: 45 }, (_, i) =>
+        createStatusData(i, i === 2 ? 1 : 0, 0, 0),
+      );
+      const uptime = getUptime({
+        data,
+        events: [createIncident(1, 1, 24)],
+        barType: "absolute",
+        cardType: "duration",
+        heartbeat: true,
+      });
+      expect(uptime).toBe("66.666%");
+    });
+
+    it("starts at a mid-day incident before any ping, not at midnight", () => {
+      // no pings at all: the 12h incident on day 0 is the only signal
+      const data = Array.from({ length: 3 }, (_, i) => createStatusData(i));
+      const from = new Date(data[0].day);
+      from.setUTCHours(6);
+      const to = new Date(from.getTime() + 12 * 60 * 60 * 1000);
+      const uptime = getUptime({
+        data,
+        events: [
+          {
+            id: 1,
+            name: "Downtime",
+            from,
+            to,
+            type: "incident",
+            status: "error",
+          },
+        ],
+        barType: "absolute",
+        cardType: "requests",
+        heartbeat: true,
+      });
+      // covered 06:00 → 24:00 = 18h, 12h down
+      expect(uptime).toBe("33.333%");
+    });
+
+    it("never pinged and no incident reads 100%", () => {
+      const data = Array.from({ length: 45 }, (_, i) => createStatusData(i));
+      expect(
+        getUptime({
+          data,
+          events: [],
+          barType: "dominant",
+          cardType: "dominant",
+          heartbeat: true,
+        }),
+      ).toBe("100%");
+    });
+  });
+
   describe("manual bar type", () => {
     it("should calculate uptime based on report durations", () => {
       const data = Array.from({ length: 45 }, (_, i) =>
@@ -2261,5 +2332,85 @@ describe("withTinybirdFallback", () => {
     );
     clearTimeout(slowRead);
     expect(result).toEqual({ ok: false, data: null });
+  });
+});
+
+describe("fetchByJobType", () => {
+  const component = (id: number, jobType: string) => ({
+    monitor: { id, jobType },
+  });
+
+  it("queries each job type once, only with its own monitors", async () => {
+    const calls: { type: string; monitorIds: string[] }[] = [];
+    await fetchByJobType(
+      [component(1, "http"), component(2, "tcp"), component(3, "http")],
+      (type) =>
+        async ({ monitorIds }) => {
+          calls.push({ type, monitorIds });
+          return { data: [] };
+        },
+    );
+
+    expect(calls).toEqual([
+      { type: "http", monitorIds: ["1", "3"] },
+      { type: "tcp", monitorIds: ["2"] },
+    ]);
+  });
+
+  it("skips job types the pipes don't cover", async () => {
+    const types: string[] = [];
+    await fetchByJobType([component(1, "udp")], (type) => async () => {
+      types.push(type);
+      return { data: [] };
+    });
+    expect(types).toEqual([]);
+  });
+
+  it("queries heartbeat monitors through their own pipe", async () => {
+    const calls: string[] = [];
+    await fetchByJobType([component(4, "heartbeat")], (type) => async () => {
+      calls.push(type);
+      return { data: [] };
+    });
+    expect(calls).toEqual(["heartbeat"]);
+  });
+
+  it("skips a type whose procedure is null", async () => {
+    const result = await fetchByJobType(
+      [component(1, "http"), component(2, "heartbeat")],
+      (type) =>
+        type === "heartbeat"
+          ? null
+          : async () => ({ data: [{ monitorId: "1" }] }),
+    );
+    expect([...result.keys()]).toEqual(["1"]);
+  });
+
+  it("groups rows from every pipe by monitor id, keeping order", async () => {
+    const rows: Record<string, { monitorId: string; day: string }[]> = {
+      http: [
+        { monitorId: "1", day: "a" },
+        { monitorId: "3", day: "a" },
+        { monitorId: "1", day: "b" },
+      ],
+      dns: [{ monitorId: "2", day: "a" }],
+    };
+    const result = await fetchByJobType(
+      [component(1, "http"), component(2, "dns"), component(3, "http")],
+      (type) => async () => ({ data: rows[type] ?? [] }),
+    );
+
+    expect(result.get("1")?.map((r) => r.day)).toEqual(["a", "b"]);
+    expect(result.get("2")).toEqual([{ monitorId: "2", day: "a" }]);
+    expect(result.get("3")).toHaveLength(1);
+    expect(result.has("4")).toBe(false);
+  });
+
+  it("propagates a pipe failure so withTinybirdFallback can catch it", async () => {
+    await expect(
+      fetchByJobType([component(1, "http")], () => async () => {
+        throw new Error("tinybird down");
+      }),
+    ).rejects.toThrow("tinybird down");
   });
 });

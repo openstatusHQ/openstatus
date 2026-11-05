@@ -38,6 +38,7 @@ import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { exampleLogs } from "@/data/response-logs";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { HeartbeatLogs } from "./heartbeat-logs";
 import {
   createLogsTable,
   RETENTION_DAYS,
@@ -58,6 +59,7 @@ type LogsFilterState = {
   latency?: number[];
   region?: string[];
   trigger?: string[];
+  attempts?: number[];
 };
 
 export function Client({
@@ -83,6 +85,10 @@ export function Client({
     <div className="relative flex h-[calc(100svh-var(--spacing-app-header)-var(--spacing-app-tabs))] w-full flex-col overflow-hidden">
       {workspace.plan === "free" ? (
         <BillingPlaceholder />
+      ) : monitor.jobType === "heartbeat" ? (
+        <div className="overflow-y-auto">
+          <HeartbeatLogs monitorId={monitor.id} />
+        </div>
       ) : (
         <LogsTable
           monitor={monitor}
@@ -172,6 +178,7 @@ function LogsTableInner({
         ? (state.trigger as ("cron" | "api")[])
         : undefined,
       statusCodes: state.statusCode?.length ? state.statusCode : undefined,
+      attempts: state.attempts?.length ? state.attempts : undefined,
       latencyMin: state.latency?.[0],
       latencyMax: state.latency?.[1],
     };
@@ -394,7 +401,7 @@ function BillingPlaceholder() {
           data-limit="response-logs"
           asChild
         >
-          <Link href="/settings/billing">
+          <Link href="/settings/billing#plans">
             <Lock />
             Upgrade
           </Link>

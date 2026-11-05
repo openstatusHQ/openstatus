@@ -12,7 +12,7 @@ When monitoring an endpoint, a check can end up in one of three states:
 - **Degraded** — slow or partially failing.
 - **Down** — no response or full failure.
 
-In the dashboard, two settings on the status page's **Components** page control this:
+In the dashboard, two settings on the status page's [**Components**](https://app.openstatus.dev/status-pages/_/components#components-configuration) page control this:
 
 - **Status source** — where the status comes from:
     - **Monitor checks** (default) — derived directly from your monitoring data.
@@ -87,5 +87,9 @@ How much a report counts against uptime depends on the [component impact](/docs/
 A report that goes `major_outage` → `partial_outage` → `operational` across its updates counts each interval at its own weight.
 
 > **Legacy behavior:** reports without impact levels (created before component impacts existed, or via clients that don't send them) count their full duration as downtime — `uptime = (total duration - status report duration) / total duration`.
+
+## Heartbeat monitors
+
+A [heartbeat monitor](/docs/reference/heartbeat-monitor) receives pings instead of running checks, and a missed ping leaves no result to count. Its uptime is therefore time-based in every mode: from the start of the first day with a ping (or the first incident, if earlier) until now, minus the incidents opened by missed pings and reported failures and impact-weighted status reports. With **Reports only**, only status reports count, as for any other component.
 
 > **Note:** the values you define are attached to a status page. You cannot change them per monitor (for now).

@@ -73,7 +73,7 @@ export async function closeIncident(args: {
   input: CloseIncidentInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = CloseIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

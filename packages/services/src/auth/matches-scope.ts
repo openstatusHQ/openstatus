@@ -1,28 +1,39 @@
-import type { Scope } from "@openstatus/db/src/schema";
+import type { RequiredScope, Scope } from "@openstatus/db/src/schema";
+import { scopeGroup } from "@openstatus/db/src/schema/api-keys/constants";
 
 /**
- * Pure scope matcher. Returns true when `held` (the scopes carried by
- * the actor) satisfies `required` (the scope the verb demands).
+ * Pure scope matcher: does `held` (the credential's scopes) satisfy
+ * `required` (what the verb demands)?
  *
- * Hierarchy:
+ *   '*'          ⊇ everything, including 'admin'
+ *   'any'        ⊆ any non-empty held
+ *   'write'      ⊇ 'read', every '<group>:read' and '<group>:write'
+ *   'read'       ⊇ every '<group>:read'
+ *   '<g>:write'  ⊇ '<g>:read'
  *
- *     '*' ⊇ 'write' ⊇ 'read'
- *
- * Forward-compatible: when per-resource scopes land
- * (`'monitor.write' ⊇ 'monitor.read'`, etc.) extend this matcher in
- * place. The actor-aware wrapper (`require-scope.ts`) is unaffected.
- *
- * Fail-closed: any unrecognized string in `held` matches nothing. A
- * corrupt row, manual SQL edit, or future migration bug results in
- * "no permission," not a permissive default.
+ * Fail-closed: unknown strings in `held` match nothing, and no settable
+ * scope satisfies 'admin'.
  */
-export function matchesScope(held: readonly Scope[], required: Scope): boolean {
+export function matchesScope(
+  held: readonly Scope[],
+  required: RequiredScope,
+): boolean {
   if (held.length === 0) return false;
+  if (required === "any") return true;
 
   for (const h of held) {
     if (h === "*") return true;
+    if (required === "admin" || required === "*") continue;
     if (h === required) return true;
-    if (required === "read" && h === "write") return true;
+    if (h === "write") return true;
+    if (h === "read") {
+      if (required.endsWith(":read")) return true;
+      continue;
+    }
+    const group = scopeGroup(h);
+    if (group && h === `${group}:write` && required === `${group}:read`) {
+      return true;
+    }
   }
   return false;
 }

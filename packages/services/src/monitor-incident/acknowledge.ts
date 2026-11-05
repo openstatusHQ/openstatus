@@ -18,7 +18,7 @@ export async function acknowledgeMonitorIncident(args: {
   input: AcknowledgeMonitorIncidentInput;
 }): Promise<MonitorIncident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = AcknowledgeMonitorIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

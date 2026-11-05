@@ -16,6 +16,29 @@ describe("convertMdxToMarkdown", () => {
     expect(markdown).toContain("Answer.");
   });
 
+  test("turns ShowcaseYouTube into links, unwrapping a Grid of videos", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: { title: "t" },
+      content: [
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=a" title="One" />',
+        "",
+        '<Grid cols={2} variant="borderless">',
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=b" title="Two" />',
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=c" />',
+        "</Grid>",
+      ].join("\n"),
+      slug: "t",
+      href: "/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain("- [One](https://www.youtube.com/watch?v=a)");
+    expect(markdown).toContain("- [Two](https://www.youtube.com/watch?v=b)");
+    expect(markdown).toContain(
+      "- [YouTube video](https://www.youtube.com/watch?v=c)",
+    );
+    expect(markdown).not.toContain("ShowcaseYouTube");
+    expect(markdown).not.toContain("<Grid");
+  });
+
   test("frontmatter carries an absolute url, ISO dates and escaped quotes", () => {
     const markdown = convertMdxToMarkdown({
       metadata: {

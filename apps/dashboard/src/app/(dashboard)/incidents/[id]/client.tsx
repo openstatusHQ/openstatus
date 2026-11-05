@@ -66,7 +66,7 @@ export function Client({ id }: { id: number }) {
 
   const resolved = incident.status === "resolved";
   const timeline = (
-    <DetailSection>
+    <DetailSection id="activity">
       <DetailSectionTitle variant="heading">
         Activity
         {events ? (
@@ -93,7 +93,7 @@ export function Client({ id }: { id: number }) {
     </DetailSection>
   );
   const postmortem = (
-    <DetailSection>
+    <DetailSection id="postmortem">
       <DetailSectionTitle variant="heading">Postmortem</DetailSectionTitle>
       <IncidentPostmortem
         incident={incident}
@@ -154,7 +154,7 @@ export function Client({ id }: { id: number }) {
           {resolved || incident.status === "canceled" ? null : postmortem}
         </DetailMain>
         <DetailAside>
-          <DetailSection>
+          <DetailSection id="properties">
             <DetailSectionTitle>Properties</DetailSectionTitle>
             <IncidentProperties
               incident={incident}
@@ -162,7 +162,7 @@ export function Client({ id }: { id: number }) {
               onStatusChanged={onStatusChanged}
             />
           </DetailSection>
-          <DetailSection>
+          <DetailSection id="communication">
             <DetailSectionTitle>Communication</DetailSectionTitle>
             <IncidentCommunication incident={incident} />
           </DetailSection>

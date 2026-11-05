@@ -44,7 +44,7 @@ export async function acceptInvitation(args: {
   input: AcceptInvitationInput;
 }): Promise<Workspace> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = AcceptInvitationInput.parse(args.input);
 
   const userId = tryGetActorUserId(ctx.actor);

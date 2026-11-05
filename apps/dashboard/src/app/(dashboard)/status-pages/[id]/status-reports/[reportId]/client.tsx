@@ -1,6 +1,9 @@
 "use client";
 
-import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
+import {
+  currentImpactsFromUpdates,
+  peakImpactsFromUpdates,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -69,6 +72,9 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
   );
   const latest = updates[0];
   const currentImpacts = currentImpactsFromUpdates(report.updates);
+  // peak, not current: a resolved report would always read operational
+  const peakImpacts = peakImpactsFromUpdates(report.updates);
+  const resolved = report.status === "resolved";
   const groupOf = toGroupNameLookup(
     page?.pageComponents ?? [],
     page?.pageComponentGroups ?? [],
@@ -152,9 +158,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
                       {component.name}
                     </ComponentListName>
                     <ComponentListActions>
-                      <ComponentImpact
-                        impact={currentImpacts.get(component.id)}
-                      />
+                      <ComponentImpact impact={peakImpacts.get(component.id)} />
                     </ComponentListActions>
                   </ComponentListItem>
                 ))}
@@ -162,9 +166,11 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
             ) : (
               <ComponentListEmpty />
             )}
-            <p className="text-muted-foreground text-sm">
-              Change impact in the composer.
-            </p>
+            {resolved ? null : (
+              <p className="text-muted-foreground text-sm">
+                Peak impact so far. Change the current impact in the composer.
+              </p>
+            )}
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>

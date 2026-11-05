@@ -60,7 +60,7 @@ export default function Page() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   return (
     <SectionGroup>
-      <Section>
+      <Section id="slack-agent">
         <SectionHeader>
           <SectionTitle>Slack Agent</SectionTitle>
           <SectionDescription>
@@ -82,10 +82,12 @@ export default function Page() {
           </Note>
         ) : null}
         <Button size="sm" asChild>
-          <Link href="/settings/integrations">Install the Slack agent</Link>
+          <Link href="/settings/integrations#slack">
+            Install the Slack agent
+          </Link>
         </Button>
       </Section>
-      <Section>
+      <Section id="messages">
         <SectionHeader>
           <SectionTitle>Messages</SectionTitle>
           <SectionDescription>
@@ -108,7 +110,7 @@ export default function Page() {
           ))}
         </ul>
       </Section>
-      <Section>
+      <Section id="commands">
         <SectionHeader>
           <SectionTitle>Commands</SectionTitle>
           <SectionDescription>

@@ -11,7 +11,8 @@ SCHEMA >
     `cronTimestamp` Int64,
     `monitorId` Int16,
     `requestStatus` String,
-    `records` String
+    `records` String,
+    `attempts` Int16 DEFAULT 1
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

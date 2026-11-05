@@ -74,9 +74,14 @@ describe("getActions", () => {
   it("wires handlers by action id", () => {
     const onDelete = () => {};
     const actions = getActions({ delete: onDelete });
-    expect(actions.map((a) => a.id)).toEqual(["view-report", "delete"]);
-    expect(actions[0].onClick).toBeUndefined();
-    expect(actions[1].onClick).toBe(onDelete);
+    expect(actions.map((a) => a.id)).toEqual([
+      "add-update",
+      "resolve",
+      "view-report",
+      "delete",
+    ]);
+    expect(actions[2].onClick).toBeUndefined();
+    expect(actions[3].onClick).toBe(onDelete);
   });
 });
 

@@ -2,6 +2,7 @@ import type {
   AgentToolInput,
   AgentToolName,
   AgentToolOutput,
+  ApprovalBefore,
 } from "@openstatus/services/agent-tools";
 import type { ReactNode } from "react";
 
@@ -10,11 +11,19 @@ import {
   ChangesTable,
 } from "@/components/common/changes-table";
 
+import { addPageComponentChanges } from "./add-page-component";
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
+import {
+  createComponentGroupChanges,
+  updateComponentGroupChanges,
+} from "./component-group";
 import { createMaintenanceChanges } from "./create-maintenance";
+import { createMonitorChanges, formatFirstCheck } from "./create-monitor";
+import { createStatusPageChanges } from "./create-status-page";
 import { createStatusReportChanges } from "./create-status-report";
 import { DetailsTable } from "./details-table";
 import { getAuditLogChanges } from "./get-audit-log";
+import { getMaintenanceDetails } from "./get-maintenance";
 import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
@@ -50,6 +59,10 @@ import {
   deleteStatusReportUpdateChanges,
   updateStatusReportUpdateChanges,
 } from "./status-report-update";
+import { updateMaintenanceChanges } from "./update-maintenance";
+import { updateMonitorChanges } from "./update-monitor";
+import { updatePageComponentChanges } from "./update-page-component";
+import { updateStatusPageChanges } from "./update-status-page";
 import { updateStatusReportChanges } from "./update-status-report";
 
 /**
@@ -58,7 +71,20 @@ import { updateStatusReportChanges } from "./update-status-report";
  * Tools without an entry fall back to the raw JSON disclosure.
  */
 export type ToolRenderer<N extends AgentToolName> = {
-  renderDraft?: (input: AgentToolInput<N>) => ChangeRow[];
+  /**
+   * Rows for the approval card. `before` holds the entity's current values
+   * when the tool loads them (see `beforeIdField`); the rows then show
+   * old → new and drop the id, which the card header names instead.
+   */
+  renderDraft?: (
+    input: AgentToolInput<N>,
+    before?: ApprovalBefore,
+  ) => ChangeRow[];
+  /**
+   * Mirrors the server tool's `approval.loadBefore.idField`: the approval
+   * card fetches the current values by this id before it renders the draft.
+   */
+  beforeIdField?: keyof AgentToolInput<N> & string;
   renderResult?: (params: {
     input: AgentToolInput<N>;
     output: AgentToolOutput<N>;
@@ -108,8 +134,79 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => itemsCountSummary(o.items),
   },
+  get_maintenance: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getMaintenanceDetails(output)} />
+    ),
+    summary: (o) =>
+      `${o.updates.length} update${o.updates.length === 1 ? "" : "s"}`,
+  },
 
   // ── Destructive tools ────────────────────────────────────────
+  create_status_page: {
+    renderDraft: (input) => createStatusPageChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createStatusPageChanges(input, output)} />
+    ),
+    summary: (o) => `${o.slug}.openstatus.dev`,
+  },
+  update_status_page: {
+    renderDraft: (input, before) =>
+      updateStatusPageChanges(input, undefined, before),
+    beforeIdField: "pageId",
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={updateStatusPageChanges(input, output)} />
+    ),
+    summary: (o) => `${o.slug}.openstatus.dev`,
+  },
+  add_page_component: {
+    renderDraft: (input) => addPageComponentChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={addPageComponentChanges(input, output)} />
+    ),
+    summary: (o) => `component #${o.id}`,
+  },
+  update_page_component: {
+    renderDraft: (input, before) =>
+      updatePageComponentChanges(input, undefined, before),
+    beforeIdField: "componentId",
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={updatePageComponentChanges(input, output)} />
+    ),
+    summary: (o) => `component #${o.id}`,
+  },
+  create_component_group: {
+    renderDraft: (input) => createComponentGroupChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createComponentGroupChanges(input, output)} />
+    ),
+    summary: (o) => `group #${o.id}`,
+  },
+  update_component_group: {
+    renderDraft: (input, before) => updateComponentGroupChanges(input, before),
+    beforeIdField: "groupId",
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateComponentGroupChanges(input)} />
+    ),
+    summary: (o) => `group #${o.id}`,
+  },
+  create_monitor: {
+    renderDraft: (input) => createMonitorChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createMonitorChanges(input, output)} />
+    ),
+    summary: (o) =>
+      `ID ${o.monitor.id}${o.firstCheck ? ` · ${formatFirstCheck(o.firstCheck)}` : ""}`,
+  },
+  update_monitor: {
+    renderDraft: (input, before) =>
+      updateMonitorChanges(input, undefined, before),
+    beforeIdField: "monitorId",
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={updateMonitorChanges(input, output)} />
+    ),
+    summary: (o) => `ID ${o.id}${o.active ? "" : " · paused"}`,
+  },
   create_status_report: {
     renderDraft: (input) => createStatusReportChanges(input),
     renderResult: ({ input, output }) => (
@@ -136,7 +233,8 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => `update #${o.statusReportUpdateId}`,
   },
   update_status_report: {
-    renderDraft: (input) => updateStatusReportChanges(input),
+    renderDraft: (input, before) => updateStatusReportChanges(input, before),
+    beforeIdField: "statusReportId",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateStatusReportChanges(input)} />
     ),
@@ -155,7 +253,9 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => `resolved · update #${o.statusReportUpdateId}`,
   },
   update_status_report_update: {
-    renderDraft: (input) => updateStatusReportUpdateChanges(input),
+    renderDraft: (input, before) =>
+      updateStatusReportUpdateChanges(input, before),
+    beforeIdField: "id",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateStatusReportUpdateChanges(input)} />
     ),
@@ -180,6 +280,14 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => `ID ${o.id}`,
   },
+  update_maintenance: {
+    renderDraft: (input, before) => updateMaintenanceChanges(input, before),
+    beforeIdField: "maintenanceId",
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateMaintenanceChanges(input)} />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
   add_maintenance_update: {
     renderDraft: (input) => addMaintenanceUpdateChanges(input),
     renderResult: ({ input, output }) => (
@@ -193,7 +301,9 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => `update #${o.id}`,
   },
   update_maintenance_update: {
-    renderDraft: (input) => updateMaintenanceUpdateChanges(input),
+    renderDraft: (input, before) =>
+      updateMaintenanceUpdateChanges(input, before),
+    beforeIdField: "id",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateMaintenanceUpdateChanges(input)} />
     ),
@@ -226,7 +336,8 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => `ID ${o.id}`,
   },
   update_incident: {
-    renderDraft: (input) => updateIncidentChanges(input),
+    renderDraft: (input, before) => updateIncidentChanges(input, before),
+    beforeIdField: "id",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateIncidentChanges(input)} />
     ),
@@ -386,8 +497,13 @@ function findRenderer(toolName: string) {
 export function renderToolDraft(
   toolName: string,
   input: unknown,
+  before?: ApprovalBefore,
 ): ChangeRow[] | undefined {
-  return findRenderer(toolName)?.renderDraft?.(input as never);
+  return findRenderer(toolName)?.renderDraft?.(input as never, before);
+}
+
+export function toolBeforeIdField(toolName: string): string | undefined {
+  return toolRenderers[toolName as AgentToolName]?.beforeIdField;
 }
 
 export function renderToolResult(

@@ -5,6 +5,7 @@ import {
   incident,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { isDeletable } from "./delete";
@@ -24,16 +25,16 @@ export function toIncidentView<T extends Incident>(
   };
 }
 
-/** Newest declared first. */
-export async function listIncidents(args: {
-  ctx: ServiceContext;
-  input?: ListIncidentsInput;
-}) {
-  const { ctx } = args;
-  const input = ListIncidentsInput.parse(args.input ?? {});
-  const db = getReadDb(ctx);
+const incidentListWith = {
+  commander: { columns: incidentUserColumns },
+  statusReport: { columns: { id: true, title: true, status: true } },
+} as const;
 
-  const where = and(
+function listWhere(
+  ctx: ServiceContext,
+  input: Pick<ListIncidentsInput, "status" | "closed">,
+) {
+  return and(
     eq(incident.workspaceId, ctx.workspace.id),
     input.status?.length ? inArray(incident.status, input.status) : undefined,
     input.closed === undefined
@@ -42,16 +43,28 @@ export async function listIncidents(args: {
         ? isNotNull(incident.closedAt)
         : isNull(incident.closedAt),
   );
-  const items = await db.query.incident.findMany({
-    where,
-    orderBy: [desc(incident.declaredAt), desc(incident.id)],
-    limit: input.limit,
-    offset: input.offset,
-    with: {
-      commander: { columns: incidentUserColumns },
-      statusReport: { columns: { id: true, title: true, status: true } },
-    },
-  });
+}
+
+/** Newest declared first. */
+export async function listIncidents(args: {
+  ctx: ServiceContext;
+  input?: ListIncidentsInput;
+}) {
+  const { ctx } = args;
+  requireScope(ctx, "incidents:read");
+  const input = ListIncidentsInput.parse(args.input ?? {});
+  const db = getReadDb(ctx);
+
+  const where = listWhere(ctx, input);
+  const items = (
+    await db.query.incident.findMany({
+      where,
+      orderBy: [desc(incident.declaredAt), desc(incident.id)],
+      limit: input.limit,
+      offset: input.offset,
+      with: incidentListWith,
+    })
+  ).map(toIncidentView);
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;
@@ -69,11 +82,26 @@ export async function listIncidents(args: {
   return { items, totalSize };
 }
 
+/** Every matching incident in one read, newest declared first; for dashboard calendars and counts. */
+export async function listAllIncidents(args: {
+  ctx: ServiceContext;
+  input?: Pick<ListIncidentsInput, "status" | "closed">;
+}) {
+  requireScope(args.ctx, "incidents:read");
+  const rows = await getReadDb(args.ctx).query.incident.findMany({
+    where: listWhere(args.ctx, args.input ?? {}),
+    orderBy: [desc(incident.declaredAt), desc(incident.id)],
+    with: incidentListWith,
+  });
+  return rows.map(toIncidentView);
+}
+
 export async function getIncident(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = IncidentIdInput.parse(args.input);
   const row = await getReadDb(ctx).query.incident.findFirst({
     where: and(
@@ -96,6 +124,7 @@ export async function getIncidentOrThrow(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
 }) {
+  requireScope(args.ctx, "incidents:read");
   const row = await getIncident(args);
   if (!row) throw new NotFoundError("incident", args.input.id);
   return row;
@@ -107,6 +136,7 @@ export async function getIncidentForStatusReport(args: {
   input: { statusReportId: number };
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   return getReadDb(ctx)
     .select({ id: incident.id, title: incident.title, status: incident.status })
     .from(incident)
@@ -124,6 +154,7 @@ export async function listLinkedStatusReportIds(args: {
   ctx: ServiceContext;
 }): Promise<number[]> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const rows = await getReadDb(ctx)
     .select({ statusReportId: incident.statusReportId })
     .from(incident)
@@ -145,6 +176,7 @@ export async function getIncidentBySlackChannel(args: {
   input: { teamId: string; channelId: string };
 }) {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   return getReadDb(ctx).query.incident.findFirst({
     where: and(
       eq(incident.workspaceId, ctx.workspace.id),

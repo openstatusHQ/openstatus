@@ -12,6 +12,10 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import {
+  AUTH_REDIRECT_COOKIE,
+  AUTH_REDIRECT_COOKIE_OPTIONS,
+} from "@/lib/auth-redirect-cookie";
 import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
@@ -72,13 +76,11 @@ export default auth(async (req) => {
     // Auth.js may not reliably pass callbackUrl to pages.newUser, so we use a
     // cookie as a fallback to ensure invite links work correctly.
     if (encodedSearchParams) {
-      response.cookies.set("auth-redirect", encodedSearchParams, {
-        path: "/",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 10, // 10 minutes
-      });
+      response.cookies.set(
+        AUTH_REDIRECT_COOKIE,
+        encodedSearchParams,
+        AUTH_REDIRECT_COOKIE_OPTIONS,
+      );
     }
     return response;
   }
@@ -101,7 +103,7 @@ export default auth(async (req) => {
           console.log("User authenticated, redirecting to", safe);
         }
         const res = NextResponse.redirect(safe);
-        res.cookies.delete("auth-redirect");
+        res.cookies.delete(AUTH_REDIRECT_COOKIE);
         return res;
       }
     }
@@ -151,9 +153,9 @@ export default auth(async (req) => {
   if (
     req.auth &&
     url.pathname !== "/onboarding" &&
-    req.cookies.has("auth-redirect")
+    req.cookies.has(AUTH_REDIRECT_COOKIE)
   ) {
-    response.cookies.delete("auth-redirect");
+    response.cookies.delete(AUTH_REDIRECT_COOKIE);
   }
 
   return response;

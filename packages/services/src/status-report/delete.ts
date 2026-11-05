@@ -26,7 +26,7 @@ export async function deleteStatusReport(args: {
   input: DeleteStatusReportInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = DeleteStatusReportInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -58,7 +58,7 @@ export async function deleteStatusReportUpdate(args: {
   input: DeleteStatusReportUpdateInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = DeleteStatusReportUpdateInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

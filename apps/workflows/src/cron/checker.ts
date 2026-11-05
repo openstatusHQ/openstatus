@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   lte,
+  ne,
   notInArray,
 } from "@openstatus/db";
 import {
@@ -33,7 +34,7 @@ import {
   type CheckerPublisher,
   type Periodicity,
   type TaskInput,
-  buildCheckerPayload,
+  buildCronCheckerPayload,
   publishCheckerTasks,
 } from "./checker-payload";
 
@@ -139,6 +140,7 @@ export async function sendCheckerTasks(
       and(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
+        ne(monitor.jobType, "heartbeat"),
         notInArray(monitor.id, currentMaintenanceMonitors),
       ),
     )
@@ -320,7 +322,7 @@ const createCronTask = async (
   parent: string,
   client: CloudTasksClient,
 ) => {
-  const payload = buildCheckerPayload({ row, timestamp, status });
+  const payload = buildCronCheckerPayload({ row, timestamp, status });
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {

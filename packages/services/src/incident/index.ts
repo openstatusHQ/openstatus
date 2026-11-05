@@ -40,6 +40,7 @@ export {
   getIncidentBySlackChannel,
   getIncidentForStatusReport,
   getIncidentOrThrow,
+  listAllIncidents,
   listIncidents,
   listLinkedStatusReportIds,
   toIncidentView,

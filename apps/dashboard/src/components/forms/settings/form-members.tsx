@@ -149,7 +149,7 @@ export function FormMembers({
                   size="sm"
                   asChild
                 >
-                  <Link href="/settings/billing">
+                  <Link href="/settings/billing#plans">
                     <Lock />
                     Upgrade
                   </Link>

@@ -14,7 +14,6 @@ import {
   ComponentDayStatus,
   ComponentEventStatus,
   ComponentEventType,
-  OverallStatus,
   PageAccessType,
   PageBarType,
   PageComponentType,
@@ -514,15 +513,4 @@ export function dbSubscriberToProto(
       : undefined,
     componentIds: (subscriber.componentIds ?? []).map(String),
   };
-}
-
-/**
- * Get overall status based on component statuses.
- * This is a placeholder - the actual implementation would look at
- * monitor statuses, active incidents, and maintenance windows.
- */
-export function getOverallStatusValue(): OverallStatus {
-  // Default to operational - in a real implementation this would
-  // aggregate status from monitors and incidents
-  return OverallStatus.OPERATIONAL;
 }

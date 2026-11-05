@@ -34,6 +34,8 @@ type TCPData struct {
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
@@ -99,7 +101,10 @@ func (h Handler) RunTCPCheck(ctx context.Context, req request.TCPCheckerRequest)
 
 	var recordErr error
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
 
 		if err != nil {
@@ -130,6 +135,7 @@ func (h Handler) RunTCPCheck(ctx context.Context, req request.TCPCheckerRequest)
 		}
 
 		data := TCPData{
+			Attempts:      called,
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			Timestamp:     res.TCPStart,
@@ -207,9 +213,11 @@ func (h Handler) RunTCPCheck(ctx context.Context, req request.TCPCheckerRequest)
 			return response, e
 		}
 		data := TCPData{
+			Attempts:      called,
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
+			Timestamp:     time.Now().UTC().UnixMilli(),
 			ErrorMessage:  err.Error(),
 			Region:        h.Region,
 			MonitorID:     monitorId,

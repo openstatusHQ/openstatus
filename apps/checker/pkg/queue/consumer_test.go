@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -102,12 +103,19 @@ func (h *harness) publish(t *testing.T, jobType string, monitorID string, cronTi
 
 func (h *harness) start(t *testing.T, runner queue.Runner, loop queue.Loop, drain time.Duration) (context.CancelFunc, <-chan error) {
 	t.Helper()
+
+	return h.startConsumer(t, runner, loop, drain, 0)
+}
+
+func (h *harness) startConsumer(t *testing.T, runner queue.Runner, loop queue.Loop, drain time.Duration, spread time.Duration) (context.CancelFunc, <-chan error) {
+	t.Helper()
 	loop.Subscription = subscription
 	c := &queue.Consumer{
 		Client: h.client,
 		Runner: runner,
 		Loops:  []queue.Loop{loop},
 		Drain:  drain,
+		Spread: spread,
 		OnEvent: func(_ context.Context, e queue.Event) {
 			h.events <- e
 		},
@@ -193,6 +201,42 @@ func TestConsumer_WaitsForCronTimestamp(t *testing.T) {
 	assert.Equal(t, queue.OutcomeAck, e.Outcome)
 	assert.Positive(t, e.Wait)
 	assert.GreaterOrEqual(t, ranAt.Load(), at.UnixMilli())
+}
+
+func TestConsumer_SpreadsStartPastCronTimestamp(t *testing.T) {
+	h := newHarness(t)
+	const window = time.Second
+	// Millisecond precision, as the message carries it: the start is computed
+	// from the serialized cronTimestamp, not from the sub-millisecond time.
+	at := time.UnixMilli(time.Now().Add(200 * time.Millisecond).UnixMilli())
+	h.publish(t, "http", "1", at)
+	var ranAt atomic.Int64
+	h.startConsumer(t, fakeRunner{run: func(context.Context, string) error {
+		ranAt.Store(time.Now().UnixMilli())
+		return nil
+	}}, queue.Loop{MaxOutstanding: 10}, time.Second, window)
+
+	e := h.next(t)
+
+	assert.Equal(t, queue.OutcomeAck, e.Outcome)
+	assert.GreaterOrEqual(t, ranAt.Load(), at.Add(queue.SpreadForTest("1", window)).UnixMilli())
+}
+
+func TestSpread(t *testing.T) {
+	const window = 2 * time.Second
+	assert.Zero(t, queue.SpreadForTest("1", 0))
+	assert.Equal(t, queue.SpreadForTest("42", window), queue.SpreadForTest("42", window))
+
+	lo, hi := window, time.Duration(0)
+	for i := range 1000 {
+		d := queue.SpreadForTest(strconv.Itoa(i), window)
+		require.GreaterOrEqual(t, d, time.Duration(0))
+		require.Less(t, d, window)
+		lo, hi = min(lo, d), max(hi, d)
+	}
+	// Sequential monitor ids must still cover the whole window.
+	assert.Less(t, lo, window/10)
+	assert.Greater(t, hi, window*9/10)
 }
 
 func TestConsumer_SleepingMessageHoldsNoProbeSlot(t *testing.T) {

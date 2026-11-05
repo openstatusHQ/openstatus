@@ -27,6 +27,7 @@ export type ResponseLogPipeFilters = {
   status?: string[];
   trigger?: string[];
   statusCodes?: number[];
+  attempts?: number[];
   latencyMin?: number;
   latencyMax?: number;
 };
@@ -43,6 +44,7 @@ export function toPipeParams(
   if (filters.status?.length) params.status = filters.status;
   if (filters.trigger?.length) params.trigger = filters.trigger;
   if (filters.statusCodes?.length) params.statusCodes = filters.statusCodes;
+  if (filters.attempts?.length) params.attempts = filters.attempts;
   if (filters.latencyMin !== undefined) params.latencyMin = filters.latencyMin;
   if (filters.latencyMax !== undefined) params.latencyMax = filters.latencyMax;
   return params;

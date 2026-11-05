@@ -4,14 +4,7 @@ import type {
   Region,
   monitorPeriodicitySchema,
 } from "@openstatus/db/src/schema/constants";
-import {
-  type DNSPayloadSchema,
-  type grpcPayloadSchema,
-  type httpPayloadSchema,
-  type icmpPayloadSchema,
-  type tpcPayloadSchema,
-  transformHeaders,
-} from "@openstatus/utils";
+import { type CheckerPayload, buildCheckerPayload } from "@openstatus/utils";
 import { Effect, Result } from "effect";
 import type { z } from "zod";
 
@@ -24,106 +17,18 @@ export type TaskInput = {
   region: Region;
 };
 
-export type CheckerPayload =
-  | z.infer<typeof httpPayloadSchema>
-  | z.infer<typeof tpcPayloadSchema>
-  | z.infer<typeof DNSPayloadSchema>
-  | z.infer<typeof icmpPayloadSchema>
-  | z.infer<typeof grpcPayloadSchema>;
-
 // timestamp needs to be in ms
-export function buildCheckerPayload({
+export function buildCronCheckerPayload({
   row,
   timestamp,
   status,
 }: Omit<TaskInput, "region">): CheckerPayload {
-  const otelConfig = row.otelEndpoint
-    ? {
-        endpoint: row.otelEndpoint,
-        headers: transformHeaders(row.otelHeaders),
-      }
-    : undefined;
-
-  switch (row.jobType) {
-    case "http":
-      return {
-        workspaceId: String(row.workspaceId),
-        monitorId: String(row.id),
-        url: row.url,
-        method: row.method || "GET",
-        cronTimestamp: timestamp,
-        body: row.body,
-        headers: row.headers,
-        status: status,
-        assertions: row.assertions ? JSON.parse(row.assertions) : null,
-        degradedAfter: row.degradedAfter,
-        timeout: row.timeout,
-        trigger: "cron",
-        otelConfig,
-        retry: row.retry || 3,
-        followRedirects:
-          row.followRedirects === null ? true : row.followRedirects,
-      };
-    case "tcp":
-      return {
-        workspaceId: String(row.workspaceId),
-        monitorId: String(row.id),
-        uri: row.url,
-        status: status,
-        assertions: row.assertions ? JSON.parse(row.assertions) : null,
-        cronTimestamp: timestamp,
-        degradedAfter: row.degradedAfter,
-        timeout: row.timeout,
-        trigger: "cron",
-        retry: row.retry || 3,
-        otelConfig,
-      };
-    case "dns":
-      return {
-        workspaceId: String(row.workspaceId),
-        monitorId: String(row.id),
-        uri: row.url,
-        cronTimestamp: timestamp,
-        status: status,
-        assertions: row.assertions ? JSON.parse(row.assertions) : null,
-        degradedAfter: row.degradedAfter,
-        timeout: row.timeout,
-        trigger: "cron",
-        otelConfig,
-        retry: row.retry || 3,
-      };
-    case "icmp":
-      return {
-        workspaceId: String(row.workspaceId),
-        monitorId: String(row.id),
-        uri: row.url,
-        cronTimestamp: timestamp,
-        status: status,
-        degradedAfter: row.degradedAfter,
-        timeout: row.timeout,
-        trigger: "cron",
-        otelConfig,
-        retry: row.retry || 3,
-      };
-    case "grpc":
-      return {
-        workspaceId: String(row.workspaceId),
-        monitorId: String(row.id),
-        uri: row.url,
-        service: row.grpcService ?? undefined,
-        tls: row.grpcTls ?? "tls",
-        headers: transformHeaders(row.headers),
-        cronTimestamp: timestamp,
-        status: status,
-        degradedAfter: row.degradedAfter,
-        timeout: row.timeout,
-        trigger: "cron",
-        otelConfig,
-        retry: row.retry || 3,
-      };
-    default:
-      throw new Error("Invalid jobType");
-  }
+  return buildCheckerPayload({
+    monitor: row,
+    status,
+    trigger: "cron",
+    timestamp,
+  });
 }
 
 export function checkerTopic(region: Region, periodicity: Periodicity) {
@@ -158,7 +63,7 @@ export async function publishCheckerTasks(
           try: () =>
             publisher.publish(
               checkerTopic(input.region, periodicity),
-              Buffer.from(JSON.stringify(buildCheckerPayload(input))),
+              Buffer.from(JSON.stringify(buildCronCheckerPayload(input))),
               {
                 jobType: input.row.jobType,
                 periodicity,

@@ -14,6 +14,14 @@ describe("defaultStatusBlocksLabels UTC suffix", () => {
     expect(labels.formatDateShort(date)).toBe("Jan 15, 2024");
   });
 
+  test("formatDay renders the bar's calendar date without shifting it", () => {
+    expect(labels.formatDay("2026-10-16T00:00:00.000Z")).toBe("Oct 16, 2026");
+  });
+
+  test("formatTimestamp keeps the compact banner shape", () => {
+    expect(labels.formatTimestamp(date)).toBe("Jan 15, 2024 14:30 (UTC)");
+  });
+
   test("formatDateTime appends the UTC suffix", () => {
     expect(labels.formatDateTime(date)).toBe("January 15 at 2:30 PM (UTC)");
   });

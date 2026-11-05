@@ -12,13 +12,10 @@ import { and, db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import {
-  type httpPayloadSchema,
-  type grpcPayloadSchema,
-  type icmpPayloadSchema,
   GRPC_TLS_MODES,
+  buildCheckerPayload,
   headerPairSchema,
   safeUrlSchema,
-  type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
 import { TRPCError } from "@trpc/server";
@@ -578,126 +575,16 @@ export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
 export async function triggerChecker(
   input: z.infer<typeof selectMonitorSchema>,
 ) {
-  let payload:
-    | z.infer<typeof httpPayloadSchema>
-    | z.infer<typeof tpcPayloadSchema>
-    | z.infer<typeof icmpPayloadSchema>
-    | z.infer<typeof grpcPayloadSchema>
-    | null = null;
-
   if (process.env.NODE_ENV !== "production") {
     return;
   }
 
-  const timestamp = Date.now();
-
-  if (input.jobType === "http") {
-    payload = {
-      workspaceId: String(input.workspaceId),
-      monitorId: String(input.id),
-      url: input.url,
-      method: input.method || "GET",
-      cronTimestamp: timestamp,
-      body: input.body,
-      headers: input.headers,
-      status: "active",
-      assertions: input.assertions ? JSON.parse(input.assertions) : null,
-      degradedAfter: input.degradedAfter,
-      timeout: input.timeout,
-      trigger: "cron",
-      otelConfig: input.otelEndpoint
-        ? {
-            endpoint: input.otelEndpoint,
-            headers: transformHeaders(input.otelHeaders),
-          }
-        : undefined,
-      retry: input.retry || 3,
-      followRedirects: input.followRedirects || true,
-    };
-  }
-  if (input.jobType === "tcp") {
-    payload = {
-      workspaceId: String(input.workspaceId),
-      monitorId: String(input.id),
-      uri: input.url,
-      status: "active",
-      assertions: input.assertions ? JSON.parse(input.assertions) : null,
-      cronTimestamp: timestamp,
-      degradedAfter: input.degradedAfter,
-      timeout: input.timeout,
-      trigger: "cron",
-      retry: input.retry || 3,
-      otelConfig: input.otelEndpoint
-        ? {
-            endpoint: input.otelEndpoint,
-            headers: transformHeaders(input.otelHeaders),
-          }
-        : undefined,
-      followRedirects: input.followRedirects || true,
-    };
-  }
-  if (input.jobType === "dns") {
-    payload = {
-      workspaceId: String(input.workspaceId),
-      monitorId: String(input.id),
-      uri: input.url,
-      status: "active",
-      assertions: input.assertions ? JSON.parse(input.assertions) : null,
-      cronTimestamp: timestamp,
-      degradedAfter: input.degradedAfter,
-      timeout: input.timeout,
-      trigger: "cron",
-      retry: input.retry || 3,
-      otelConfig: input.otelEndpoint
-        ? {
-            endpoint: input.otelEndpoint,
-            headers: transformHeaders(input.otelHeaders),
-          }
-        : undefined,
-      followRedirects: input.followRedirects || true,
-    };
-  }
-  if (input.jobType === "icmp") {
-    payload = {
-      workspaceId: String(input.workspaceId),
-      monitorId: String(input.id),
-      uri: input.url,
-      status: "active",
-      cronTimestamp: timestamp,
-      degradedAfter: input.degradedAfter,
-      timeout: input.timeout,
-      trigger: "cron",
-      retry: input.retry || 3,
-      otelConfig: input.otelEndpoint
-        ? {
-            endpoint: input.otelEndpoint,
-            headers: transformHeaders(input.otelHeaders),
-          }
-        : undefined,
-    };
-  }
-  if (input.jobType === "grpc") {
-    payload = {
-      workspaceId: String(input.workspaceId),
-      monitorId: String(input.id),
-      uri: input.url,
-      service: input.grpcService ?? undefined,
-      tls: input.grpcTls ?? "tls",
-      headers: transformHeaders(input.headers),
-      status: "active",
-      cronTimestamp: timestamp,
-      degradedAfter: input.degradedAfter,
-      timeout: input.timeout,
-      trigger: "cron",
-      retry: input.retry || 3,
-      otelConfig: input.otelEndpoint
-        ? {
-            endpoint: input.otelEndpoint,
-            headers: transformHeaders(input.otelHeaders),
-          }
-        : undefined,
-    };
-  }
+  const payload = buildCheckerPayload({
+    monitor: input,
+    status: "active",
+    trigger: "cron",
+    timestamp: Date.now(),
+  });
   const allResult = [];
 
   for (const region of input.regions) {

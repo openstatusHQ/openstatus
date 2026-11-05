@@ -9,6 +9,7 @@ import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { Attribution } from "../components/attribution";
+import { TailwindIndicator } from "../components/tailwind-indicator";
 import { ThemeProvider } from "../components/theme-provider";
 import { WebMcpProvider } from "../components/webmcp-provider";
 import { env } from "../env";
@@ -78,6 +79,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <NuqsAdapter>
               <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
+              <TailwindIndicator />
               <WebMcpProvider />
               <Attribution />
             </NuqsAdapter>
