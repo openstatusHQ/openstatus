@@ -5,6 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
@@ -115,6 +116,10 @@ function ApprovalCard({
 
   // While loading, the proposed-only rows give the skeleton its field names.
   const draft = renderToolDraft(toolName, input, before);
+  // The id row drops once `before` lands (the header names the entity).
+  const skeletonFields = draft
+    ?.filter((row) => row.field !== idField)
+    .map((row) => row.field);
   return (
     <div
       ref={cardRef}
@@ -136,7 +141,7 @@ function ApprovalCard({
       <div className="border-t p-3">
         {loading ? (
           <ChangesTableSkeleton
-            fields={draft?.map((row) => row.field) ?? [undefined]}
+            fields={skeletonFields?.length ? skeletonFields : [undefined]}
           />
         ) : draft && draft.length === 0 && before ? (
           <p className="text-muted-foreground text-sm">
@@ -150,29 +155,30 @@ function ApprovalCard({
           </pre>
         )}
       </div>
-      <div className="bg-muted/30 flex items-center justify-end gap-3 border-t p-3">
-        <span className="text-muted-foreground text-xs">
-          <kbd className="bg-background rounded border px-1 font-mono">Esc</kbd>{" "}
-          to cancel ·{" "}
-          <kbd className="bg-background rounded border px-1 font-mono">⌘ ↵</kbd>{" "}
-          to apply
-        </span>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => cancelTool(approvalId)}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            disabled={loading}
-            onClick={() => confirmTool(approvalId)}
-          >
-            Apply
-          </Button>
-        </div>
+      <div className="bg-muted/30 flex items-center justify-end gap-2 border-t p-3">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => cancelTool(approvalId)}
+        >
+          Cancel
+          <Kbd className="font-mono">Esc</Kbd>
+        </Button>
+        <Button
+          size="sm"
+          disabled={loading}
+          onClick={() => confirmTool(approvalId)}
+        >
+          Apply
+          <KbdGroup>
+            <Kbd className="bg-primary-foreground/20 text-primary-foreground font-mono">
+              ⌘
+            </Kbd>
+            <Kbd className="bg-primary-foreground/20 text-primary-foreground font-mono">
+              ↵
+            </Kbd>
+          </KbdGroup>
+        </Button>
       </div>
     </div>
   );
