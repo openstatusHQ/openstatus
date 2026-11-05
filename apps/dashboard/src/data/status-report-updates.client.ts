@@ -12,23 +12,28 @@ import { toEntityId } from "@/data/entity-refs.client";
 export const impactConfig = {
   operational: {
     label: "Operational",
+    short: "Operational",
     variant: "success",
   },
   degraded_performance: {
     label: "Degraded performance",
+    short: "Degraded",
     variant: "warning",
   },
   partial_outage: {
     label: "Partial outage",
+    short: "Partial outage",
     variant: "warning",
   },
   major_outage: {
     label: "Major outage",
+    short: "Major outage",
     variant: "destructive",
   },
 } as const satisfies Record<
   PageComponentImpact,
-  { label: string; variant: StatusVariant }
+  // `short` fits row status columns and calendar legends
+  { label: string; short: string; variant: StatusVariant }
 >;
 
 export type ComponentImpact = {
@@ -79,8 +84,9 @@ export function impactsEqual(
 // legacy report (created before impact tracking): no impact rows
 export const untriagedImpact = {
   label: "Untriaged",
+  short: "Untriaged",
   variant: "default",
-} as const satisfies { label: string; variant: StatusVariant };
+} as const satisfies { label: string; short: string; variant: StatusVariant };
 
 /** Label + dot variant for an impact; nullish reads as untriaged. */
 export function impactDisplay(impact: PageComponentImpact | null | undefined) {

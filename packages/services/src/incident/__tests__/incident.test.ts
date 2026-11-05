@@ -44,6 +44,7 @@ import {
   getIncidentOrThrow,
   linkIncidentStatusReport,
   listIncidentEvents,
+  listAllIncidents,
   listIncidents,
   setIncidentStatus,
   unbindIncidentSlackChannel,
@@ -836,6 +837,28 @@ describe("reads", () => {
       ).items.map((i) => i.id);
       expect(notClosed).toContain(resolved.id);
       expect(notClosed).not.toContain(closed.id);
+    });
+  });
+
+  test("listAll returns every match past the page limit, workspace-scoped", async () => {
+    await withTestTransaction(async (tx) => {
+      for (let i = 0; i < 101; i++) {
+        await createIncident(workspace.id, { status: "mitigated" }, tx);
+      }
+      const foreign = await createIncident(
+        otherWorkspace.id,
+        { status: "mitigated" },
+        tx,
+      );
+      const items = await listAllIncidents({
+        ctx: as(memberId, tx),
+        input: { status: ["mitigated"] },
+      });
+      expect(items.length).toBeGreaterThanOrEqual(101);
+      expect(items.every((i) => i.status === "mitigated")).toBe(true);
+      expect(items.map((i) => i.id)).not.toContain(foreign.id);
+      expect(new Set(items.map((i) => i.id)).size).toBe(items.length);
+      expect(items[0]?.allowedTransitions).toBeDefined();
     });
   });
 

@@ -18,6 +18,7 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/status-pages/columns";
@@ -26,6 +27,8 @@ import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import { useTRPC } from "@/lib/trpc/client";
+
+import { CreateStatusPageButton } from "./create-status-page-button";
 
 export function Client() {
   const trpc = useTRPC();
@@ -45,12 +48,17 @@ export function Client() {
         </NoteButton>
       </NoteDismissible>
       <Section>
-        <SectionHeader>
-          <SectionTitle>Status Pages</SectionTitle>
-          <SectionDescription>
-            Create and manage your status pages.
-          </SectionDescription>
-        </SectionHeader>
+        <SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>Status Pages</SectionTitle>
+            <SectionDescription>
+              Create and manage your status pages.
+            </SectionDescription>
+          </SectionHeader>
+          <div>
+            <CreateStatusPageButton />
+          </div>
+        </SectionHeaderRow>
         <DataTable
           columns={columns}
           data={statusPages}

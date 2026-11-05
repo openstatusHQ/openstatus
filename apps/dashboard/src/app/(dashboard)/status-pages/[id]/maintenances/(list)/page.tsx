@@ -10,11 +10,34 @@ import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
 import {
+  Activity,
+  ActivityEmpty,
+  ActivityFeed,
+  ActivityHeader,
+  ActivityPeriod,
+  ActivityTitle,
+} from "@/components/content/activity";
+import {
+  ActivityCalendar,
+  ActivityCalendarCell,
+  ActivityCalendarGrid,
+  ActivityCalendarLegend,
+  ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
+} from "@/components/content/activity-calendar";
+import {
   EmptyStateActions,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import {
+  EventGroup,
+  EventGroupCount,
+  EventGroupHeader,
+  EventGroupTitle,
+} from "@/components/content/event-group";
+import { EventList, EventListMore } from "@/components/content/event-list";
 import {
   Section,
   SectionDescription,
@@ -23,12 +46,23 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/maintenances/columns";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
+import { MaintenanceRow } from "@/components/maintenances/maintenance-row";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import {
+  activityPeriod,
+  activityRange,
+  groupByDay,
+  spansOnDay,
+} from "@/data/activity.client";
+import {
+  maintenanceActivity,
+  maintenanceSpan,
+} from "@/data/maintenances.client";
+import { getMaintenanceStatus } from "@/data/overview-events.client";
+import { usePaged } from "@/hooks/use-paged";
+import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -68,6 +102,17 @@ export default function Page() {
     }),
   );
 
+  // regroups when a window starts or ends, in step with each row's status
+  useMaintenanceTick(maintenances ?? []);
+  const now = new Date();
+  const upcoming = (maintenances ?? [])
+    .filter((m) => getMaintenanceStatus(m, now) !== "completed")
+    .sort((a, b) => a.from.getTime() - b.from.getTime());
+  const past = (maintenances ?? [])
+    .filter((m) => getMaintenanceStatus(m, now) === "completed")
+    .sort((a, b) => b.from.getTime() - a.from.getTime());
+  const paged = usePaged(past);
+
   if (!statusPage || !maintenances) return null;
 
   const items = toCheckboxTreeItems(
@@ -90,6 +135,38 @@ export default function Page() {
     });
   };
 
+  // looks ahead as far as the last scheduled window ends, capped
+  const until = upcoming
+    .map((m) => m.to)
+    .reduce<Date | undefined>(
+      (max, to) => (!max || to > max ? to : max),
+      undefined,
+    );
+  const range = activityRange(now, until);
+  const days = groupByDay(range, maintenances, maintenanceSpan, now).map(
+    ({ date, items }) => {
+      if (items.length === 0) return { date };
+      const planned = spansOnDay(date, items.map(maintenanceSpan), now);
+      // dashed only when every window that day is still ahead
+      const scheduled = items.every((m) => m.from > now);
+      return {
+        date,
+        ...maintenanceActivity(planned),
+        upcoming: scheduled,
+        lines: [
+          `${formatDurationShort(planned)} · ${
+            items.length === 1 ? items[0].title : `${items.length} maintenances`
+          }`,
+          ...(scheduled ? ["Upcoming"] : []),
+        ],
+        links: items.map((m) => ({
+          href: `/status-pages/${m.pageId}/maintenances/${m.id}`,
+          title: m.title,
+        })),
+      };
+    },
+  );
+
   return (
     <SectionGroup>
       <Section>
@@ -97,7 +174,8 @@ export default function Page() {
           <SectionHeader>
             <SectionTitle>{statusPage.title}</SectionTitle>
             <SectionDescription>
-              List of all maintenances. Looking for{" "}
+              Scheduled maintenance windows shown on this status page. Looking
+              for{" "}
               <Link href={`/status-pages/${id}/status-reports`}>
                 status reports
               </Link>
@@ -112,39 +190,109 @@ export default function Page() {
               onSubmit={createMaintenance}
             >
               <Button data-section="action" size="sm">
-                Create Maintenance
+                Create maintenance
               </Button>
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable
-          paginationComponent={DataTablePaginationSimple}
-          columns={columns}
-          data={maintenances}
-          emptyState={
-            <DataTableEmpty>
-              <EmptyStateMedia>
-                <Maintenance />
-              </EmptyStateMedia>
-              <EmptyStateTitle>No maintenance scheduled</EmptyStateTitle>
-              <EmptyStateDescription>
-                Announce planned downtime ahead of time. During the window the
-                affected components show as under maintenance instead of
-                triggering alerts.
-              </EmptyStateDescription>
-              <EmptyStateActions>
-                <Button size="sm" onClick={() => setOpenCreate(true)}>
-                  Schedule maintenance
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <NextLink href={`/status-pages/${id}/status-reports`}>
-                    View status reports
-                  </NextLink>
-                </Button>
-              </EmptyStateActions>
-            </DataTableEmpty>
-          }
-        />
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>{activityPeriod(range, now)}</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell scale="planned" level={1} />
+                  {"< 1h"}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell scale="planned" level={2} />
+                  {"< 4h"}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell scale="planned" level={3} />
+                  {"≥ 4h"}
+                </ActivityCalendarLegendItem>
+                {days.some((day) => "upcoming" in day && day.upcoming) ? (
+                  <>
+                    <ActivityCalendarLegendSeparator />
+                    <ActivityCalendarLegendItem>
+                      <ActivityCalendarCell upcoming />
+                      Upcoming
+                    </ActivityCalendarLegendItem>
+                  </>
+                ) : null}
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Scheduled
+                  <EventGroupCount>{upcoming.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {upcoming.map((maintenance) => (
+                  <MaintenanceRow
+                    key={maintenance.id}
+                    maintenance={maintenance}
+                  />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Past
+                  <EventGroupCount>{past.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((maintenance) => (
+                  <MaintenanceRow
+                    key={maintenance.id}
+                    maintenance={maintenance}
+                  />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
+            <EmptyStateMedia>
+              <Maintenance />
+            </EmptyStateMedia>
+            <EmptyStateTitle>No maintenance scheduled</EmptyStateTitle>
+            <EmptyStateDescription>
+              Announce planned downtime ahead of time. During the window the
+              affected components show as under maintenance instead of
+              triggering alerts.
+            </EmptyStateDescription>
+            <EmptyStateActions>
+              <Button size="sm" onClick={() => setOpenCreate(true)}>
+                Schedule maintenance
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <NextLink href={`/status-pages/${id}/status-reports`}>
+                  View status reports
+                </NextLink>
+              </Button>
+            </EmptyStateActions>
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

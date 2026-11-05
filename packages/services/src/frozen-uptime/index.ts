@@ -7,6 +7,7 @@ export {
 } from "./compute";
 export { freezeMonitorMonth } from "./freeze";
 export { getUptimeHistory } from "./get-history";
+export { getMonitorUptimeHistory } from "./get-monitor-history";
 export {
   type ChunkFailure,
   type RunUptimeFreezeResult,
