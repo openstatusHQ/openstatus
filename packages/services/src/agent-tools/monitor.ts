@@ -26,6 +26,7 @@ import {
   updateMonitorTags,
 } from "../monitor";
 import { getMonitorInWorkspace } from "../monitor/internal";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 import { dashboardUrl } from "./urls";
 
@@ -849,6 +850,27 @@ export const updateMonitorTool: AgentTool<
   inputSchema: UpdateMonitorInputShape,
   outputSchema: UpdateMonitorOutput,
   approval: {
+    // headers, body and assertions stay after-only: bodies and header
+    // values can carry secrets.
+    loadBefore: {
+      idField: "monitorId",
+      load: async ({ ctx, id }) => {
+        const m = await getMonitor({ ctx, input: { id } });
+        return beforeSnapshot(m.name, {
+          name: m.name,
+          url: m.url,
+          method: m.method,
+          periodicity: m.periodicity,
+          regions: m.regions,
+          active: m.active ?? false,
+          description: m.description,
+          timeout: m.timeout,
+          degradedAfter: m.degradedAfter ?? null,
+          notificationIds: m.notifications.map((n) => n.id),
+          tagIds: m.tags.map((t) => t.id),
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Monitor #${input.monitorId}`,
       lines: [

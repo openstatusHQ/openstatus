@@ -13,6 +13,7 @@ import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
+  toolLoadsBefore,
   toolRenderers,
 } from "./index";
 
@@ -108,6 +109,24 @@ describe("renderToolDraft", () => {
 
   it("returns undefined for read-only tools", () => {
     expect(renderToolDraft("list_monitors", {})).toBeUndefined();
+  });
+
+  it("passes the before snapshot to update renderers", () => {
+    expect(
+      renderToolDraft(
+        "update_incident",
+        { id: 4, severity: "major" },
+        { label: "API down", values: { severity: "minor" } },
+      ),
+    ).toEqual([{ field: "severity", before: "minor", after: "major" }]);
+  });
+});
+
+describe("toolLoadsBefore", () => {
+  it("is set for every update tool and nothing else", () => {
+    for (const name of Object.keys(toolRenderers)) {
+      expect(toolLoadsBefore(name), name).toBe(name.startsWith("update_"));
+    }
   });
 });
 

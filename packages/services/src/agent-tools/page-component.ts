@@ -1,7 +1,7 @@
 import { pageComponentTypes } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import { withTransaction } from "../context";
+import { getReadDb, withTransaction } from "../context";
 import {
   type PageComponentWithRelations,
   createPageComponent,
@@ -10,6 +10,7 @@ import {
 } from "../page-component";
 import { listPageComponentGroups } from "../page-component-group";
 import { getPageComponentInWorkspace } from "../page-component/internal";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 
 const ListPageComponentsInputShape = z.object({
@@ -274,6 +275,22 @@ export const updatePageComponentTool: AgentTool<
   inputSchema: UpdatePageComponentInputShape,
   outputSchema: UpdatePageComponentOutput,
   approval: {
+    loadBefore: {
+      idField: "componentId",
+      load: async ({ ctx, id }) => {
+        const c = await getPageComponentInWorkspace({
+          tx: getReadDb(ctx),
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(c.name, {
+          name: c.name,
+          description: c.description,
+          order: c.order,
+          groupId: c.groupId,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Page Component #${input.componentId}`,
       lines: [

@@ -5,7 +5,7 @@ import {
 import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
-import type { ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import {
   addStatusReportUpdate,
   deleteStatusReportUpdate,
@@ -17,12 +17,14 @@ import {
   updateStatusReportUpdate,
 } from "../status-report";
 import { createStatusReport } from "../status-report/create";
+import { getReportUpdateInWorkspace } from "../status-report/internal";
 import {
   type ComponentImpacts,
   componentImpactsSchema,
   type StatusReportStatus,
 } from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool, SummaryLine } from "./types";
 
 // Agent surfaces send only the impacts that CHANGED (see system prompt). Carry
@@ -589,6 +591,20 @@ export const updateStatusReportTool: AgentTool<
   inputSchema: UpdateStatusReportInputShape,
   outputSchema: UpdateStatusReportOutput,
   approval: {
+    loadBefore: {
+      idField: "statusReportId",
+      load: async ({ ctx, id }) => {
+        const r = await getStatusReport({
+          ctx,
+          input: { id },
+        });
+        return beforeSnapshot(r.title, {
+          title: r.title,
+          status: r.status,
+          pageComponentIds: r.pageComponentIds,
+        });
+      },
+    },
     summarize: (input) => {
       const lines: SummaryLine[] = [
         { label: "Report ID", value: String(input.statusReportId) },
@@ -767,6 +783,27 @@ export const updateStatusReportUpdateTool: AgentTool<
   inputSchema: UpdateStatusReportUpdateInputShape,
   outputSchema: UpdateStatusReportUpdateOutput,
   approval: {
+    loadBefore: {
+      idField: "id",
+      load: async ({ ctx, id }) => {
+        const row = await getReportUpdateInWorkspace({
+          tx: getReadDb(ctx),
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        const r = await getStatusReport({
+          ctx,
+          input: { id: row.statusReportId },
+        });
+        const update = r.updates.find((u) => u.id === id);
+        return beforeSnapshot(r.title, {
+          status: row.status,
+          message: row.message,
+          date: row.date,
+          componentImpacts: update?.componentImpacts ?? [],
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Edit Status Report Update #${input.id}`,
       lines: [

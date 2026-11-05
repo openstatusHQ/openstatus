@@ -7,6 +7,7 @@ import {
 } from "@openstatus/ui/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import {
   type DynamicToolUIPart,
   type ToolUIPart,
@@ -16,12 +17,14 @@ import {
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
+import { useTRPC } from "@/lib/trpc/client";
 
 import { useChatTool } from "./chat-tool-context";
 import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
+  toolLoadsBefore,
 } from "./tool-renderers";
 
 // SDK tool-part state machine: input-streaming/-available → in-flight;
@@ -84,7 +87,22 @@ function ApprovalCard({
     }
   };
 
-  const draft = renderToolDraft(toolName, input);
+  const loadsBefore = toolLoadsBefore(toolName);
+  const trpc = useTRPC();
+  const beforeQuery = useQuery({
+    ...trpc.chatSession.approvalBefore.queryOptions({
+      toolName,
+      ids: integerFields(input),
+    }),
+    enabled: loadsBefore,
+    retry: false,
+  });
+  // Without a snapshot (no loader, error, entity gone) the card falls back
+  // to the proposed values only.
+  const before = beforeQuery.data ?? undefined;
+  const loading = loadsBefore && beforeQuery.isPending;
+
+  const draft = loading ? undefined : renderToolDraft(toolName, input, before);
   return (
     <div
       ref={cardRef}
@@ -95,9 +113,22 @@ function ApprovalCard({
       <div className="flex items-center gap-2 p-3 text-sm">
         <ToolStateDot state="approval-requested" />
         <span className="font-commit-mono font-medium">{toolName}</span>
+        {before ? (
+          <span className="text-muted-foreground flex-1 truncate">
+            · {before.label}
+          </span>
+        ) : null}
       </div>
       <div className="border-t p-3">
-        {draft ? (
+        {loading ? (
+          <p className="text-muted-foreground text-sm">
+            Loading current values…
+          </p>
+        ) : draft && draft.length === 0 && before ? (
+          <p className="text-muted-foreground text-sm">
+            No changes: these values are already set.
+          </p>
+        ) : draft ? (
           <ChangesTable changes={draft} />
         ) : (
           <pre className="bg-muted/50 max-h-64 overflow-auto rounded p-2 text-xs">
@@ -127,6 +158,20 @@ function ApprovalCard({
       </div>
     </div>
   );
+}
+
+/**
+ * The integer fields of a tool input — entity ids among them. The preview
+ * query is a GET, so only these go in its URL, never free-text fields that
+ * may carry secrets (monitor headers, bodies).
+ */
+function integerFields(input: unknown): Record<string, number> {
+  if (!input || typeof input !== "object") return {};
+  const ids: Record<string, number> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === "number" && Number.isInteger(value)) ids[key] = value;
+  }
+  return ids;
 }
 
 function ToolDisclosure({

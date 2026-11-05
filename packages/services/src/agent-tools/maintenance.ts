@@ -7,11 +7,13 @@ import {
   createMaintenance,
   deleteMaintenanceUpdate,
   getMaintenance,
+  getMaintenanceUpdate,
   listMaintenances,
   notifyMaintenance,
   updateMaintenance,
   updateMaintenanceUpdate,
 } from "../maintenance";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 
 const PER_PAGE_DEFAULT = 50;
@@ -393,6 +395,20 @@ export const updateMaintenanceUpdateTool: AgentTool<
   inputSchema: UpdateMaintenanceUpdateInputShape,
   outputSchema: MaintenanceUpdateOutput,
   approval: {
+    loadBefore: {
+      idField: "id",
+      load: async ({ ctx, id }) => {
+        const update = await getMaintenanceUpdate({ ctx, input: { id } });
+        const m = await getMaintenance({
+          ctx,
+          input: { id: update.maintenanceId },
+        });
+        return beforeSnapshot(m.title, {
+          message: update.message,
+          date: update.date,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Edit Maintenance Update #${input.id}`,
       lines: [
@@ -502,6 +518,19 @@ export const updateMaintenanceTool: AgentTool<
   inputSchema: UpdateMaintenanceInputShape,
   outputSchema: MaintenanceItemOutput,
   approval: {
+    loadBefore: {
+      idField: "maintenanceId",
+      load: async ({ ctx, id }) => {
+        const m = await getMaintenance({ ctx, input: { id } });
+        return beforeSnapshot(m.title, {
+          title: m.title,
+          from: m.from,
+          to: m.to,
+          pageComponentIds: m.pageComponentIds,
+          message: m.message,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Maintenance #${input.maintenanceId}`,
       lines: [

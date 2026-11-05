@@ -9,6 +9,7 @@ import {
   updatePageGeneral,
   updatePageLinks,
 } from "../page";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 import { dashboardUrl, statusPageUrl } from "./urls";
 
@@ -167,6 +168,20 @@ export const updateStatusPageTool: AgentTool<
   inputSchema: UpdateStatusPageInputShape,
   outputSchema: StatusPageOutput,
   approval: {
+    loadBefore: {
+      idField: "pageId",
+      load: async ({ ctx, id }) => {
+        const page = await getPage({ ctx, input: { id } });
+        return beforeSnapshot(`${page.title} · ${page.slug}.openstatus.dev`, {
+          title: page.title,
+          slug: page.slug,
+          description: page.description,
+          icon: page.icon,
+          homepageUrl: page.homepageUrl,
+          contactUrl: page.contactUrl,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Status Page #${input.pageId}`,
       lines: [

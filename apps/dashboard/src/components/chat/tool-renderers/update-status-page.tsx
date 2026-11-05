@@ -1,9 +1,12 @@
 import type {
   AgentToolInput,
   AgentToolOutput,
+  ApprovalBefore,
 } from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
+
+import { fieldChanges, idRow } from "./before-diff";
 
 type Input = AgentToolInput<"update_status_page">;
 type Output = AgentToolOutput<"update_status_page">;
@@ -20,13 +23,12 @@ const fields = [
 export function updateStatusPageChanges(
   input: Input,
   applied?: Output,
+  before?: ApprovalBefore,
 ): ChangeRow[] {
-  const changes: ChangeRow[] = [{ field: "pageId", after: input.pageId }];
-  for (const field of fields) {
-    if (input[field] !== undefined) {
-      changes.push({ field, after: input[field] });
-    }
-  }
+  const changes: ChangeRow[] = [
+    ...idRow("pageId", input.pageId, before),
+    ...fieldChanges(input, fields, before),
+  ];
   if (applied) {
     changes.push(
       { field: "url", after: applied.url },

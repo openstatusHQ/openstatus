@@ -1,9 +1,12 @@
 import { z } from "zod";
 
+import { NotFoundError } from "../errors";
 import {
   createPageComponentGroup,
+  listPageComponentGroups,
   updatePageComponentGroup,
 } from "../page-component-group";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 
 const ComponentGroupOutput = z.object({
@@ -99,6 +102,18 @@ export const updateComponentGroupTool: AgentTool<
   inputSchema: UpdateComponentGroupInputShape,
   outputSchema: ComponentGroupOutput,
   approval: {
+    loadBefore: {
+      idField: "groupId",
+      load: async ({ ctx, id }) => {
+        const groups = await listPageComponentGroups({ ctx, input: {} });
+        const group = groups.find((g) => g.id === id);
+        if (!group) throw new NotFoundError("page_component_group", id);
+        return beforeSnapshot(group.name, {
+          name: group.name,
+          defaultOpen: group.defaultOpen,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update Component Group #${input.groupId}`,
       lines: [

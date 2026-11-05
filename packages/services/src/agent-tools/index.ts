@@ -1,5 +1,7 @@
-import type { z } from "zod";
+import { z } from "zod";
 
+import type { ServiceContext } from "../context";
+import { ForbiddenError, NotFoundError } from "../errors";
 import { isFeatureEnabled } from "../features";
 import type { Workspace } from "../types";
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
@@ -62,7 +64,7 @@ import {
   updateStatusReportTool,
   updateStatusReportUpdateTool,
 } from "./status-report";
-import type { AnyAgentTool } from "./types";
+import type { AgentToolRegistry, AnyAgentTool, ApprovalBefore } from "./types";
 import { getWorkspaceTool } from "./workspace";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
@@ -130,6 +132,7 @@ export type {
   AgentTool,
   AgentToolRegistry,
   AnyAgentTool,
+  ApprovalBefore,
   ApprovalMeta,
   ExtraFlag,
   InferAgentToolInput,
@@ -247,3 +250,41 @@ export type AgentToolInput<N extends AgentToolName> = z.infer<
 export type AgentToolOutput<N extends AgentToolName> = z.infer<
   (typeof agentTools)[N]["outputSchema"]
 >;
+
+export const LoadApprovalBeforeInput = z.object({
+  toolName: z.string(),
+  /** The pending call's integer input fields; the tool's `idField` is one. */
+  ids: z.record(z.string(), z.number().int()),
+});
+export type LoadApprovalBeforeInput = z.infer<typeof LoadApprovalBeforeInput>;
+
+/**
+ * The "before" side of a write tool's approval card. `null` when the tool
+ * has no `loadBefore`, is not offered in this workspace, the id is missing,
+ * or the entity is gone — the card then shows the proposed values only, and
+ * Apply surfaces the real error.
+ */
+export async function loadApprovalBefore(args: {
+  ctx: ServiceContext;
+  input: LoadApprovalBeforeInput;
+}): Promise<ApprovalBefore | null> {
+  const { ctx } = args;
+  const { toolName, ids } = LoadApprovalBeforeInput.parse(args.input);
+  const tool = Object.hasOwn(agentTools, toolName)
+    ? (agentTools as AgentToolRegistry)[toolName]
+    : undefined;
+  const loadBefore = tool?.approval?.loadBefore;
+  if (!tool || !loadBefore || !isAgentToolAvailable(tool, ctx.workspace)) {
+    return null;
+  }
+  const id = ids[loadBefore.idField];
+  if (id === undefined) return null;
+  try {
+    return await loadBefore.load({ ctx, id });
+  } catch (err) {
+    if (err instanceof NotFoundError || err instanceof ForbiddenError) {
+      return null;
+    }
+    throw err;
+  }
+}

@@ -1,9 +1,12 @@
 import type {
   AgentToolInput,
   AgentToolOutput,
+  ApprovalBefore,
 } from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
+
+import { fieldChanges, idRow } from "./before-diff";
 
 export function createComponentGroupChanges(
   input: AgentToolInput<"create_component_group">,
@@ -22,12 +25,10 @@ export function createComponentGroupChanges(
 
 export function updateComponentGroupChanges(
   input: AgentToolInput<"update_component_group">,
+  before?: ApprovalBefore,
 ): ChangeRow[] {
   return [
-    { field: "groupId", after: input.groupId },
-    ...(input.name !== undefined ? [{ field: "name", after: input.name }] : []),
-    ...(input.defaultOpen !== undefined
-      ? [{ field: "defaultOpen", after: input.defaultOpen }]
-      : []),
+    ...idRow("groupId", input.groupId, before),
+    ...fieldChanges(input, ["name", "defaultOpen"], before),
   ];
 }

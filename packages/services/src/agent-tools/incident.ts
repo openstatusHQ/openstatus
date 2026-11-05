@@ -13,12 +13,14 @@ import {
   declareIncident,
   draftPostmortem,
   getIncident,
+  getIncidentOrThrow,
   getPostmortem,
   listIncidentEvents,
   listIncidents,
   setIncidentStatus,
   updateIncident,
 } from "../incident";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool, SummaryLine } from "./types";
 
 const title = z.string().trim().min(1).max(256);
@@ -270,6 +272,19 @@ export const updateIncidentTool: AgentTool<
   inputSchema: UpdateIncidentInput,
   outputSchema: IncidentWriteOutput,
   approval: {
+    loadBefore: {
+      idField: "id",
+      load: async ({ ctx, id }) => {
+        const i = await getIncidentOrThrow({ ctx, input: { id } });
+        return beforeSnapshot(i.title, {
+          title: i.title,
+          severity: i.severity,
+          summary: i.summary,
+          commanderId: i.commanderId,
+          startedAt: i.startedAt,
+        });
+      },
+    },
     summarize: (input) => ({
       title: `Update incident #${input.id}`,
       lines: optionalLines([
