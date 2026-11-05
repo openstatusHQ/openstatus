@@ -210,6 +210,16 @@ export function createLogsTableSchema(options: {
         },
       }),
 
+    attempts: col
+      .number()
+      .label("Attempts")
+      .size(90)
+      .hidden()
+      .notFilterable()
+      .display("custom", {
+        cell: (value) => <TableCellNumber value={value as number | null} />,
+      }),
+
     trigger: col
       .enum(TRIGGERS)
       .label("Trigger")

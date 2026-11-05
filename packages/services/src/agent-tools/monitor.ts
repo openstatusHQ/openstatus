@@ -358,6 +358,7 @@ const ResponseLogListItemSchema = z.object({
   latency: z.number(),
   cronTimestamp: z.number(),
   timestamp: z.number(),
+  attempts: z.number().int(),
   timing: ResponseLogTimingSchema,
 });
 
@@ -421,6 +422,7 @@ export const listResponseLogsTool: AgentTool<
         latency: 0,
         cronTimestamp: ping.timestamp,
         timestamp: ping.timestamp,
+        attempts: 1,
         timing: null,
       }));
       return {
@@ -458,6 +460,7 @@ export const listResponseLogsTool: AgentTool<
         latency: log.latency,
         cronTimestamp: log.cronTimestamp,
         timestamp: log.timestamp,
+        attempts: log.attempts,
         timing: log.timing,
       })),
       limit: input.limit,
@@ -518,6 +521,7 @@ export const getResponseLogTool: AgentTool<
       latency: log.latency,
       cronTimestamp: log.cronTimestamp,
       timestamp: log.timestamp,
+      attempts: log.attempts,
       timing: log.timing,
       url: log.url,
       error: log.error,

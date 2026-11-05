@@ -115,6 +115,16 @@ export function DataTableBasicsHTTP({
             </div>
           </TableCell>
         </TableRow>
+        {data.attempts !== undefined ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+              Attempts
+            </TableHead>
+            <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+              {data.attempts}
+            </TableCell>
+          </TableRow>
+        ) : null}
         {data.id ? (
           <TableRow className="[&>:not(:last-child)]:border-r">
             <TableHead className="bg-muted/50 text-muted-foreground font-normal">
@@ -351,6 +361,7 @@ export function DataTableBasicsHTTP({
 type BasicsRequestFields = {
   id?: string | null;
   requestStatus?: string | null;
+  attempts?: number;
   cronTimestamp: number;
 };
 
@@ -418,6 +429,9 @@ function BasicsRequestRows({ data }: { data: BasicsRequestFields }) {
           <div className="capitalize">{data?.requestStatus ?? "unknown"}</div>
         </div>
       </BasicsRow>
+      {data.attempts !== undefined ? (
+        <BasicsRow label="Attempts">{data.attempts}</BasicsRow>
+      ) : null}
       {data.id ? <BasicsRow label="ID">{data.id}</BasicsRow> : null}
       <BasicsRow label="Timestamp">
         <TableCellDate

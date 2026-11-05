@@ -119,8 +119,8 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 | `get_monitor`         | read | Full configuration for one monitor: URL, regions, periodicity, retry/timeout, notification channels, tags. Does not return latency or status. |
 | `get_monitor_status`  | read | Per-region current health (active / degraded / error). No time window. |
 | `get_monitor_summary` | read | Aggregate success/degraded/error counts, p50–p99 latency, and `lastPingAt` over `1d` (default), `7d`, or `14d`. |
-| `list_response_logs`  | read | Recent per-region HTTP check results — request status, status code, latency — over `1d` (default), `7d`, or `14d`. HTTP monitors only; `limit` ≤ 100. |
-| `get_response_log`    | read | Full detail of one check: URL, timing breakdown (dns/connect/tls/ttfb/transfer), redacted response headers, error message, assertion results. |
+| `list_response_logs`  | read | Recent per-region HTTP check results — request status, status code, latency, attempts — over `1d` (default), `7d`, or `14d`. HTTP monitors only; `limit` ≤ 100. |
+| `get_response_log`    | read | Full detail of one check: URL, attempts, timing breakdown (dns/connect/tls/ttfb/transfer), redacted response headers, error message, assertion results. |
 
 ### Notifications
 
