@@ -75,26 +75,23 @@ export function statusPageScopeGroups({
     },
     {
       heading: "Pages",
-      // The edit tab is the Settings group below, card by card.
-      items: STATUS_PAGE_TABS.filter((tab) => tab.value !== "edit").map(
-        (tab) => ({
-          value: tab.label,
-          label: tab.label,
-          icon: tab.icon,
-          action: {
-            type: "navigate",
-            href: `/status-pages/${page.id}/${tab.value}`,
-          },
-        }),
-      ),
+      items: STATUS_PAGE_TABS.map((tab) => ({
+        value: tab.label,
+        label: tab.label,
+        icon: tab.icon,
+        action: {
+          type: "navigate",
+          href: `/status-pages/${page.id}/${tab.value}`,
+        },
+      })),
     },
     {
-      heading: "Settings",
+      // Not "Settings": the tab group above already has a Settings entry.
+      heading: "Settings Sections",
       items: STATUS_PAGE_EDIT_ANCHORS.map((anchor) => ({
         value: `edit-${anchor.id}`,
         label: anchor.label,
         icon: anchor.icon,
-        keywords: ["settings"],
         action: {
           type: "navigate",
           href: `/status-pages/${page.id}/edit#${anchor.id}`,

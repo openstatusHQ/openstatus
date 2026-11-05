@@ -20,7 +20,8 @@ export function Client() {
   const trpc = useTRPC();
   const {
     data: statusPages,
-    isError,
+    errorUpdateCount,
+    isFetching,
     refetch,
   } = useQuery(trpc.page.list.queryOptions());
 
@@ -29,7 +30,10 @@ export function Client() {
       id="choose-status-page"
       title="Choose a status page"
       description="This link works for any status page. Pick the one to open."
-      error={isError}
+      // A retry after a failed first load resets `isError`; the error count
+      // doesn't, so the error card stays up while the retry runs.
+      error={!statusPages && errorUpdateCount > 0}
+      retrying={isFetching}
       onRetry={() => void refetch()}
       items={statusPages?.map((page) => ({
         id: page.id,

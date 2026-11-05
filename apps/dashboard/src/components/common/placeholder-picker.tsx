@@ -31,7 +31,8 @@ type Item = { id: number; name: string; description?: string };
 /**
  * Resolves `_` in shareable links like `/monitors/_/edit#retry-policy` to a
  * real id. One item redirects straight away; the hash is carried over.
- * `items` is `undefined` while the list loads; `error` shows a retry instead.
+ * `items` is `undefined` while the list loads; `error` shows a retry instead,
+ * which stays up (disabled while `retrying`) until the list arrives.
  */
 export function PlaceholderPicker({
   id,
@@ -40,6 +41,7 @@ export function PlaceholderPicker({
   items,
   empty,
   error,
+  retrying,
   onRetry,
 }: {
   id: string;
@@ -48,6 +50,7 @@ export function PlaceholderPicker({
   items: Item[] | undefined;
   empty: React.ReactNode;
   error?: boolean;
+  retrying?: boolean;
   onRetry?: () => void;
 }) {
   const router = useRouter();
@@ -92,8 +95,13 @@ export function PlaceholderPicker({
             </EmptyStateDescription>
             {onRetry ? (
               <EmptyStateActions>
-                <Button size="sm" variant="outline" onClick={onRetry}>
-                  Retry
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onRetry}
+                  disabled={retrying}
+                >
+                  {retrying ? "Retrying…" : "Retry"}
                 </Button>
               </EmptyStateActions>
             ) : null}

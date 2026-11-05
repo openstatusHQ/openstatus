@@ -19,8 +19,7 @@ export function monitorScopeGroups(
     {
       heading: page.name,
       key: "monitor",
-      // The edit tab is the Settings group below, card by card.
-      items: MONITOR_TABS.filter((tab) => tab.value !== "edit").map((tab) => ({
+      items: MONITOR_TABS.map((tab) => ({
         value: tab.label,
         label: tab.label,
         icon: tab.icon,
@@ -28,12 +27,12 @@ export function monitorScopeGroups(
       })),
     },
     {
-      heading: "Settings",
+      // Not "Settings": the tab group above already has a Settings entry.
+      heading: "Settings Sections",
       items: MONITOR_EDIT_ANCHORS.map((anchor) => ({
         value: `edit-${anchor.id}`,
         label: anchor.label,
         icon: anchor.icon,
-        keywords: ["settings"],
         action: {
           type: "navigate",
           href: `/monitors/${page.id}/edit#${anchor.id}`,

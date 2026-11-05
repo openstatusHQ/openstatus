@@ -19,7 +19,8 @@ export function Client() {
   const trpc = useTRPC();
   const {
     data: monitors,
-    isError,
+    errorUpdateCount,
+    isFetching,
     refetch,
   } = useQuery(trpc.monitor.list.queryOptions());
 
@@ -28,7 +29,10 @@ export function Client() {
       id="choose-monitor"
       title="Choose a monitor"
       description="This link works for any monitor. Pick the one to open."
-      error={isError}
+      // A retry after a failed first load resets `isError`; the error count
+      // doesn't, so the error card stays up while the retry runs.
+      error={!monitors && errorUpdateCount > 0}
+      retrying={isFetching}
       onRetry={() => void refetch()}
       items={monitors?.map((monitor) => ({
         id: monitor.id,

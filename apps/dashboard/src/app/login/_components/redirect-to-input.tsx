@@ -9,12 +9,17 @@ export function RedirectToInput({ redirectTo }: { redirectTo?: string }) {
   const [value, setValue] = useState(redirectTo);
 
   useEffect(() => {
-    const { hash } = window.location;
-    setValue(
-      redirectTo && hash && !redirectTo.includes("#")
-        ? `${redirectTo}${hash}`
-        : redirectTo,
-    );
+    const sync = () => {
+      const { hash } = window.location;
+      setValue(
+        redirectTo && hash && !redirectTo.includes("#")
+          ? `${redirectTo}${hash}`
+          : redirectTo,
+      );
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
   }, [redirectTo]);
 
   if (!value) return null;
