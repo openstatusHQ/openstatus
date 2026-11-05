@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { AgentPromptButton } from "@/components/common/agent-prompt-button";
 import { Code } from "@/components/common/code";
 import { Link as CommonLink } from "@/components/common/link";
 import { CreateApiKeyDialog } from "@/components/forms/api-key/dialog";
@@ -140,6 +141,13 @@ export function Step3({
             SOC2 audit incoming? Ping us to try the Team plan.
           </p>
         </div>
+        <AgentPromptButton
+          source="onboarding"
+          size="default"
+          className="w-full shrink-0"
+        >
+          Copy a prompt for your agent
+        </AgentPromptButton>
         <NoClickopsCard />
       </OnboardingFormColumn>
       <OnboardingResultColumn>

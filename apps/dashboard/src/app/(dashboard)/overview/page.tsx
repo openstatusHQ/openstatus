@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 
+import { AgentPromptButton } from "@/components/common/agent-prompt-button";
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
@@ -314,7 +315,12 @@ export default function Page() {
                 : `${attention} ${attention === 1 ? "event needs" : "events need"} your attention`}
             </SectionDescription>
           </SectionHeader>
-          {pages.length > 0 ? <CreateEventButtonGroup /> : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <AgentPromptButton source="overview">
+              Onboard your agent
+            </AgentPromptButton>
+            {pages.length > 0 ? <CreateEventButtonGroup /> : null}
+          </div>
         </SectionHeaderRow>
       </Section>
       <Activity>

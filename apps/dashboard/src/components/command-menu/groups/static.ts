@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { HELP_LINKS, HELP_SUPPORT } from "@/config/help";
+import { HELP_ASK_AGENT, HELP_LINKS, HELP_SUPPORT } from "@/config/help";
 import { NAV, NAV_MENU_ITEMS } from "@/config/nav";
 import { SETTINGS_TABS } from "@/config/settings";
 
@@ -215,7 +215,7 @@ export function settingsGroup(): CommandMenuGroup {
   };
 }
 
-export function helpGroup(): CommandMenuGroup {
+export function helpGroup(askAgent: () => void): CommandMenuGroup {
   return {
     heading: "Get Help",
     items: [
@@ -225,6 +225,13 @@ export function helpGroup(): CommandMenuGroup {
         icon: HELP_SUPPORT.icon,
         keywords: HELP_SUPPORT.keywords,
         action: { type: "sheet", sheet: { sheet: "support" } },
+      },
+      {
+        value: HELP_ASK_AGENT.label,
+        label: HELP_ASK_AGENT.label,
+        icon: HELP_ASK_AGENT.icon,
+        keywords: HELP_ASK_AGENT.keywords,
+        action: { type: "run", run: askAgent },
       },
       ...HELP_LINKS.map((link) => ({
         value: link.label,

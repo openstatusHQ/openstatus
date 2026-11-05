@@ -7,6 +7,7 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import NextLink from "next/link";
 
+import { AgentPromptButton } from "@/components/common/agent-prompt-button";
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
@@ -270,6 +271,9 @@ export default function Page() {
             .
           </SectionDescription>
         </SectionHeader>
+        <AgentPromptButton source="agents">
+          Copy a prompt for your agent
+        </AgentPromptButton>
         <Code>{ENDPOINT}</Code>
         <Tabs defaultValue={clients[0].value} className="flex flex-col gap-3">
           <TabsList>

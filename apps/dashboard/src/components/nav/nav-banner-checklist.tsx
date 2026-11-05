@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowUpRight, Success, Pending, Close } from "@openstatus/icons";
+import {
+  ArrowUpRight,
+  Check,
+  Close,
+  Copy,
+  Pending,
+  Success,
+} from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,6 +18,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
+import { useCopyAgentPrompt } from "@/hooks/use-copy-agent-prompt";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavBannerChecklist({
@@ -21,6 +29,7 @@ export function NavBannerChecklist({
   const trpc = useTRPC();
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
+  const { copyPrompt, isCopied } = useCopyAgentPrompt("setup", "checklist");
 
   // Hide until the counts land — every item would read as unchecked and the
   // banner would flash "0/5" before correcting itself.
@@ -110,6 +119,16 @@ export function NavBannerChecklist({
           >
             Read the Docs
           </a>
+        </SidebarMenuItem>
+        <SidebarMenuItem className="flex items-center gap-2 text-sm">
+          {isCopied ? (
+            <Check className="text-muted-foreground/50 size-3 shrink-0" />
+          ) : (
+            <Copy className="text-muted-foreground/50 size-3 shrink-0" />
+          )}
+          <button type="button" onClick={copyPrompt}>
+            Copy prompt for your agent
+          </button>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>

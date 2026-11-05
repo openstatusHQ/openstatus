@@ -1,5 +1,9 @@
-import { Api, Docs, Schedule, Support } from "@openstatus/icons";
-import { DiscordIcon, GitHubIcon } from "@openstatus/icons/brand";
+import { Api, Copy, Docs, Schedule, Support } from "@openstatus/icons";
+import {
+  DiscordIcon,
+  GitHubIcon,
+  ModelContextProtocolIcon,
+} from "@openstatus/icons/brand";
 import type * as React from "react";
 
 // Nucleo/lucide icons and the custom brand icons both accept svg props.
@@ -11,6 +15,20 @@ export const HELP_SUPPORT = {
   label: "Support",
   icon: Support as HelpIcon,
   keywords: ["feedback", "help", "contact"],
+};
+
+// Copies the "ask" prompt from config/agent-prompts.
+export const HELP_ASK_AGENT = {
+  label: "Ask your agent",
+  icon: Copy as HelpIcon,
+  keywords: ["ai", "prompt", "llm", "claude", "chatgpt", "cursor", "question"],
+};
+
+// Sidebar menu only; the command menu already lists Agents, CLI and MCP.
+export const HELP_CONNECT_AGENT = {
+  label: "Connect your agent",
+  href: "/agents/mcp",
+  icon: ModelContextProtocolIcon as HelpIcon,
 };
 
 export type HelpLink = {
