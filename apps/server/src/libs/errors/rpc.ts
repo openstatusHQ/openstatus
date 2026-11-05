@@ -131,12 +131,13 @@ export function rpcError(init: RpcErrorInit): ConnectError {
 export const ERROR_CODE_TO_CONNECT: Record<ErrorCode, Code> = {
   BAD_REQUEST: Code.InvalidArgument,
   UNAUTHORIZED: Code.Unauthenticated,
-  PAYMENT_REQUIRED: Code.ResourceExhausted,
+  // Plan gating is 403 on /rpc; ResourceExhausted would read as retryable.
+  PAYMENT_REQUIRED: Code.PermissionDenied,
   FORBIDDEN: Code.PermissionDenied,
   NOT_FOUND: Code.NotFound,
   METHOD_NOT_ALLOWED: Code.Unimplemented,
   CONFLICT: Code.AlreadyExists,
-  UNPROCESSABLE_ENTITY: Code.InvalidArgument,
+  UNPROCESSABLE_ENTITY: Code.FailedPrecondition,
   TOO_MANY_REQUESTS: Code.ResourceExhausted,
   INTERNAL_SERVER_ERROR: Code.Internal,
   SERVICE_UNAVAILABLE: Code.Unavailable,

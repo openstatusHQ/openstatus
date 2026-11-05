@@ -152,10 +152,10 @@ describe("errorInterceptor", () => {
     const cases = [
       ["BAD_REQUEST", Code.InvalidArgument],
       ["UNAUTHORIZED", Code.Unauthenticated],
-      ["PAYMENT_REQUIRED", Code.ResourceExhausted],
+      ["PAYMENT_REQUIRED", Code.PermissionDenied],
       ["FORBIDDEN", Code.PermissionDenied],
       ["CONFLICT", Code.AlreadyExists],
-      ["UNPROCESSABLE_ENTITY", Code.InvalidArgument],
+      ["UNPROCESSABLE_ENTITY", Code.FailedPrecondition],
       ["TOO_MANY_REQUESTS", Code.ResourceExhausted],
       ["INTERNAL_SERVER_ERROR", Code.Internal],
       ["SERVICE_UNAVAILABLE", Code.Unavailable],

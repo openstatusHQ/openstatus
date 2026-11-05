@@ -65,14 +65,23 @@ describe("toConnectError", () => {
     expect(err.cause).toBe(result.error);
   });
 
-  test("NotFoundError → not_found with the entity in metadata", () => {
-    const err = capture(new NotFoundError("monitor", 12)) as ConnectError;
+  test("NotFoundError of a known entity → resource-specific reason with the id", () => {
+    const err = capture(new NotFoundError("maintenance", 12)) as ConnectError;
     expect(err.code).toBe(Code.NotFound);
-    expect(err.rawMessage).toBe("monitor 12 not found");
+    expect(err.rawMessage).toBe("maintenance 12 not found");
+    expect(info(err)).toMatchObject({
+      reason: ErrorReason.MAINTENANCE_NOT_FOUND,
+      metadata: { resource: "maintenance", maintenanceId: "12" },
+    });
+  });
+
+  test("NotFoundError of another entity → generic NOT_FOUND", () => {
+    const err = capture(new NotFoundError("workspace")) as ConnectError;
     expect(info(err)).toMatchObject({
       reason: ErrorReason.NOT_FOUND,
-      metadata: { resource: "monitor" },
+      metadata: { resource: "workspace" },
     });
+    expect(info(err).metadata).not.toHaveProperty("id");
   });
 
   test("LimitExceededError → permission_denied PLAN_LIMIT_REACHED with limit/max/current", () => {
@@ -88,6 +97,17 @@ describe("toConnectError", () => {
       new LimitExceededError("monitors", 5),
     ) as ConnectError;
     expect(info(noCurrent).metadata).not.toHaveProperty("current");
+  });
+
+  test("LimitExceededError with max 0 → PLAN_FEATURE_NOT_AVAILABLE", () => {
+    const err = capture(
+      new LimitExceededError("password-protection", 0),
+    ) as ConnectError;
+    expect(err.code).toBe(Code.PermissionDenied);
+    expect(info(err)).toMatchObject({
+      reason: ErrorReason.PLAN_FEATURE_NOT_AVAILABLE,
+      metadata: { feature: "password-protection" },
+    });
   });
 
   test("ConflictError → failed_precondition with reason CONFLICT", () => {

@@ -65,7 +65,7 @@ Every RPC error carries exactly one `google.rpc.ErrorInfo`:
 
 Depending on the error, more standard details ride along:
 
-- **`google.rpc.RetryInfo`** on `resource_exhausted` and `unavailable`: the delay to wait before retrying, matching the `Retry-After` header.
+- **`google.rpc.RetryInfo`** on `TOO_MANY_REQUESTS` and `SERVICE_UNAVAILABLE`: the delay to wait before retrying, matching the `Retry-After` header.
 - **`google.rpc.BadRequest`** on `invalid_argument` raised by the server: one `fieldViolations` entry per bad field.
 - **`buf.validate.Violations`** on `invalid_argument` raised by the request schema: the [protovalidate](https://buf.build/docs/protovalidate) constraint that failed.
 
@@ -95,7 +95,7 @@ The `google.rpc` schemas are published on the Buf registry. Add `@buf:registry=h
 |---|---|---|---|
 | [`BAD_REQUEST`](#bad-request) | 400 | `invalid_argument` | No, fix the request |
 | [`UNAUTHORIZED`](#unauthorized) | 401 | `unauthenticated` | No, fix the credential |
-| [`PAYMENT_REQUIRED`](#payment-required) | 402 | `resource_exhausted` | No, upgrade the plan |
+| [`PAYMENT_REQUIRED`](#payment-required) | 402 | `permission_denied` | No, upgrade the plan |
 | [`FORBIDDEN`](#forbidden) | 403 | `permission_denied` | No |
 | [`NOT_FOUND`](#not-found) | 404 | `not_found` | No |
 | [`METHOD_NOT_ALLOWED`](#method-not-allowed) | 405 | `unimplemented` | No |
@@ -123,7 +123,7 @@ The credential is valid but may not do this: a read-only key calling a write, a 
 
 ### Not found
 
-The resource does not exist, was deleted, or belongs to another workspace. The reason names the resource type and the metadata carries the id you sent. Cross-workspace access always looks like a missing resource, never like a permission error.
+The resource does not exist, was deleted, or belongs to another workspace. The reason names the resource type, and the metadata carries `resource` plus the id you sent when the server knows it. Cross-workspace access always looks like a missing resource, never like a permission error.
 
 ### Method not allowed
 
@@ -149,6 +149,8 @@ Something failed on our side. The message never includes internals; the `request
 
 The server is shedding load. Treat it exactly like [Too many requests](#too-many-requests): honour `Retry-After` and back off.
 
+`MONITOR_TRIGGER_FAILED` shares this code but carries no `RetryInfo`: no checker region answered the trigger. Retry with your own backoff, and keep in mind each attempt counts against the `synthetic-checks` quota.
+
 ## Reasons
 
 The `reason` values the RPC API can return. Generic reasons share their name with the v1 code and are used when nothing more specific applies.
@@ -157,9 +159,9 @@ The `reason` values the RPC API can return. Generic reasons share their name wit
 |---|---|---|
 | `BAD_REQUEST` | `invalid_argument` | |
 | `UNAUTHORIZED` | `unauthenticated` | |
-| `PAYMENT_REQUIRED` | `resource_exhausted` | |
+| `PAYMENT_REQUIRED` | `permission_denied` | |
 | `FORBIDDEN` | `permission_denied` | |
-| `NOT_FOUND` | `not_found` | `resource` |
+| `NOT_FOUND` | `not_found` | `resource`, `id` |
 | `METHOD_NOT_ALLOWED` | `unimplemented` | |
 | `CONFLICT` | `failed_precondition`, `aborted` | |
 | `UNPROCESSABLE_ENTITY` | `failed_precondition` | |
@@ -201,3 +203,22 @@ The `reason` values the RPC API can return. Generic reasons share their name wit
 | `MONITOR_TRIGGER_FAILED` | `unavailable` | `monitorId` |
 
 Reasons are append-only: new ones may appear in a release, existing ones are never renamed. Treat an unknown reason like its Connect code.
+
+## Migrating from error headers
+
+Before this contract, RPC errors carried their reason in response headers. Those headers are gone, and some reasons were merged or renamed. If your client reads any of the following, switch it to `ErrorInfo`.
+
+- **Headers removed:** `error-domain`, `error-reason` and every `error-<key>` metadata header. Read `reason`, `domain` and `metadata` from the `google.rpc.ErrorInfo` detail instead. Metadata keys are now lowerCamelCase (`monitorId`, not `monitor-id`).
+- **Plan limits moved from `resource_exhausted` to `permission_denied`.** Only an upgrade lifts them, so they no longer look retryable. `resource_exhausted` now only means a rate limit.
+- **CONFLICT moved from `invalid_argument` to `failed_precondition`**, and to `aborted` when a concurrent write won the race.
+
+| Old reason | New reason |
+|---|---|
+| `MONITOR_ID_INVALID` | `INVALID_MONITOR_ID` |
+| `RATE_LIMIT_EXCEEDED`, `NOTIFICATION_LIMIT_REACHED` | `PLAN_LIMIT_REACHED` |
+| `RESPONSE_LOGS_NOT_ENABLED`, `PROVIDER_NOT_ALLOWED` | `PLAN_FEATURE_NOT_AVAILABLE` |
+| `*_ID_REQUIRED`, `MONITOR_REQUIRED`, `INVALID_ID`, `INVALID_ENUM`, `INVALID_COMMANDER`, `CONFLICTING_FIELDS` | `VALIDATION_FAILED` |
+| `PAGE_COMPONENTS_MIXED_PAGES` | `CONFLICT` |
+| `*_CREATE_FAILED`, `*_UPDATE_FAILED`, `MONITOR_PARSE_FAILED`, `MONITOR_INVALID_DATA` | `INTERNAL_SERVER_ERROR` |
+
+Every other reason kept its name.

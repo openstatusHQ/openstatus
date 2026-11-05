@@ -97,7 +97,7 @@ export function rateLimitExceededError(
 ): ConnectError {
   return planLimitReachedError(
     "Upgrade for more checks",
-    "checks",
+    "synthetic-checks",
     limit,
     current,
   );

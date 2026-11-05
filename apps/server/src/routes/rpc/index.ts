@@ -1,11 +1,13 @@
-import { Code } from "@connectrpc/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import {
   universalServerRequestFromFetch,
   universalServerResponseToFetch,
 } from "@connectrpc/connect/protocol";
+import { errorFromJson } from "@connectrpc/connect/protocol-connect";
 import type { Hono } from "hono";
 
 import { connectErrorToJson, rpcError, withErrorInfo } from "@/libs/errors/rpc";
+import { getRequestId } from "@/libs/request-id";
 
 import { routes } from "./router";
 
@@ -31,7 +33,7 @@ export function mountRpcRoutes(
     const url = new URL(c.req.url);
     // Remove the /rpc prefix from the path for matching
     const pathWithoutPrefix = url.pathname.replace(/^\/rpc/, "");
-    const requestId = c.get("requestId" as never) as string | undefined;
+    const requestId = getRequestId(c);
 
     // Find the handler that matches this request
     const handler = routes.handlers.find(
@@ -72,6 +74,45 @@ export function mountRpcRoutes(
     // A raw Response skips Hono's prepared headers, so echo the id ourselves.
     const res = universalServerResponseToFetch(universalResponse);
     if (requestId) res.headers.set("x-request-id", requestId);
-    return res;
+    return withErrorInfoBody(res, requestId);
   });
+}
+
+/**
+ * Connect rejects undecodable bodies and bad protocol headers before any
+ * interceptor runs, so those errors reach the wire without ErrorInfo.
+ */
+async function withErrorInfoBody(
+  res: Response,
+  requestId: string | undefined,
+): Promise<Response> {
+  if (
+    res.status < 400 ||
+    !res.headers.get("content-type")?.startsWith("application/json")
+  ) {
+    return res;
+  }
+  const body = await res
+    .clone()
+    .json()
+    .catch(() => undefined);
+  if (
+    !body ||
+    body.details?.some(
+      (d: { type?: string }) => d.type === "google.rpc.ErrorInfo",
+    )
+  ) {
+    return res;
+  }
+  const err = errorFromJson(
+    body,
+    res.headers,
+    new ConnectError("unparseable", Code.Unknown),
+  );
+  const headers = new Headers(res.headers);
+  headers.delete("content-length");
+  return new Response(
+    JSON.stringify(connectErrorToJson(withErrorInfo(err, requestId))),
+    { status: res.status, headers },
+  );
 }

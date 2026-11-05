@@ -134,6 +134,30 @@ describe("RPC error contract (wire)", () => {
     expect(info(err).reason).toBe("VALIDATION_FAILED");
   });
 
+  test("an undecodable body still carries ErrorInfo with the request id", async () => {
+    const res = await app.request(
+      "/rpc/openstatus.monitor.v1.MonitorService/GetMonitor",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-openstatus-key": "1",
+        },
+        body: '{"id": 1, ',
+      },
+    );
+    expect(res.status).toBe(400);
+    const err = await parseError(res);
+    expect(err.code).toBe(Code.InvalidArgument);
+    expect(info(err)).toMatchObject({
+      reason: "BAD_REQUEST",
+      metadata: {
+        requestId: res.headers.get("x-request-id"),
+        docs: errorDocsUrl("BAD_REQUEST"),
+      },
+    });
+  });
+
   test("every error body carries exactly one ErrorInfo", async () => {
     const responses = await Promise.all([
       rpc("openstatus.monitor.v1.MonitorService/ListMonitors"),

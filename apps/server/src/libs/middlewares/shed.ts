@@ -9,6 +9,7 @@ import {
   rpcError,
   withErrorInfo,
 } from "@/libs/errors/rpc";
+import { getRequestId } from "@/libs/request-id";
 
 /**
  * Same envelope as `handleError`, returned directly instead of thrown so the
@@ -25,7 +26,7 @@ export function shedResponse(
   },
 ) {
   c.header("Retry-After", String(Math.max(1, opts.retryAfterSeconds)));
-  const requestId = (c.get("requestId" as never) as string | undefined) ?? "";
+  const requestId = getRequestId(c) ?? "";
   if (c.req.path.startsWith("/rpc/")) {
     const err = rpcError({
       code: ERROR_CODE_TO_CONNECT[opts.code],

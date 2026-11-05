@@ -201,6 +201,7 @@ describe("code mapping", () => {
       "NOT_FOUND",
       "METHOD_NOT_ALLOWED",
       "CONFLICT",
+      "UNPROCESSABLE_ENTITY",
       "TOO_MANY_REQUESTS",
       "INTERNAL_SERVER_ERROR",
       "SERVICE_UNAVAILABLE",
@@ -317,7 +318,12 @@ describe("docs page stays in sync", () => {
   });
 
   test("the docs page lists no reason the server cannot produce", () => {
-    const documented = [...page.matchAll(/^\| `([A-Z_]+)` \|/gm)].map(
+    // the migration table further down names retired reasons on purpose
+    const reasons = page.slice(
+      page.indexOf("## Reasons"),
+      page.indexOf("## Migrating from error headers"),
+    );
+    const documented = [...reasons.matchAll(/^\| `([A-Z_]+)` \|/gm)].map(
       (m) => m[1],
     );
     for (const reason of documented) {

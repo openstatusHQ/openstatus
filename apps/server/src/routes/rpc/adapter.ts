@@ -12,6 +12,7 @@ import { ZodError } from "zod";
 import { tb } from "@/libs/clients";
 import { ErrorReason, rpcError } from "@/libs/errors/rpc";
 
+import { planFeatureNotAvailableError, planLimitReachedError } from "./errors";
 import type { RpcContext } from "./interceptors";
 
 /**
@@ -39,6 +40,42 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
  * they already are ConnectErrors. Errors it can't classify propagate
  * untouched to `errorInterceptor`, which logs and redacts them.
  */
+/** Service entity → resource-specific reason and the metadata key for its id. */
+const NOT_FOUND_REASONS: Record<string, [ErrorReason, string]> = {
+  monitor: [ErrorReason.MONITOR_NOT_FOUND, "monitorId"],
+  notification: [ErrorReason.NOTIFICATION_NOT_FOUND, "notificationId"],
+  page: [ErrorReason.STATUS_PAGE_NOT_FOUND, "pageId"],
+  page_component: [ErrorReason.PAGE_COMPONENT_NOT_FOUND, "pageComponentId"],
+  page_component_group: [ErrorReason.COMPONENT_GROUP_NOT_FOUND, "groupId"],
+  status_report: [ErrorReason.STATUS_REPORT_NOT_FOUND, "statusReportId"],
+  maintenance: [ErrorReason.MAINTENANCE_NOT_FOUND, "maintenanceId"],
+  private_location: [
+    ErrorReason.PRIVATE_LOCATION_NOT_FOUND,
+    "privateLocationId",
+  ],
+  incident: [ErrorReason.INCIDENT_NOT_FOUND, "incidentId"],
+};
+
+function notFoundError(err: ServiceError) {
+  if (!(err instanceof NotFoundError)) {
+    return rpcError({
+      code: Code.NotFound,
+      reason: ErrorReason.NOT_FOUND,
+      message: err.message,
+    });
+  }
+  const id = err.id === undefined ? undefined : String(err.id);
+  const known = NOT_FOUND_REASONS[err.entity];
+  const metadata: Record<string, string> = { resource: err.entity };
+  if (id !== undefined) metadata[known?.[1] ?? "id"] = id;
+  return rpcError({
+    code: Code.NotFound,
+    reason: known?.[0] ?? ErrorReason.NOT_FOUND,
+    message: err.message,
+    metadata,
+  });
+}
+
 export function toConnectError(err: unknown): never {
   if (err instanceof ConnectError) throw err;
   if (err instanceof ZodError) {
@@ -64,13 +101,7 @@ export function toConnectError(err: unknown): never {
   if (err instanceof ServiceError) {
     switch (err.code) {
       case "NOT_FOUND":
-        throw rpcError({
-          code: Code.NotFound,
-          reason: ErrorReason.NOT_FOUND,
-          message: err.message,
-          metadata:
-            err instanceof NotFoundError ? { resource: err.entity } : undefined,
-        });
+        throw notFoundError(err);
       case "FORBIDDEN":
         throw rpcError({
           code: Code.PermissionDenied,
@@ -98,23 +129,24 @@ export function toConnectError(err: unknown): never {
           message: err.message,
           cause: err.cause,
         });
-      case "LIMIT_EXCEEDED": {
-        // PermissionDenied, same as the handler-level `planLimitReachedError`:
-        // the docs pin plan gating to 403, and ResourceExhausted would tell
-        // clients to retry a quota that only an upgrade lifts.
-        const metadata: Record<string, string> = {};
-        if (err instanceof LimitExceededError) {
-          metadata.limit = err.limit;
-          metadata.max = String(err.max);
-          if (err.current !== undefined) metadata.current = String(err.current);
+      case "LIMIT_EXCEEDED":
+        if (!(err instanceof LimitExceededError)) {
+          throw rpcError({
+            code: Code.PermissionDenied,
+            reason: ErrorReason.PLAN_LIMIT_REACHED,
+            message: err.message,
+          });
         }
-        throw rpcError({
-          code: Code.PermissionDenied,
-          reason: ErrorReason.PLAN_LIMIT_REACHED,
-          message: err.message,
-          metadata,
-        });
-      }
+        // Services gate boolean entitlements as a limit of 0.
+        if (err.max === 0) {
+          throw planFeatureNotAvailableError(err.message, err.limit);
+        }
+        throw planLimitReachedError(
+          err.message,
+          err.limit,
+          err.max,
+          err.current,
+        );
       case "PRECONDITION_FAILED":
         throw rpcError({
           code: Code.FailedPrecondition,
