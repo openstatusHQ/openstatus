@@ -7,6 +7,8 @@ import Link from "next/link";
 
 import {
   Activity,
+  ActivityEmpty,
+  ActivityFeed,
   ActivityHeader,
   ActivityPeriod,
   ActivityTitle,
@@ -21,7 +23,6 @@ import {
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -114,8 +115,67 @@ export function Client() {
             </DeclareIncidentButton>
           </div>
         </SectionHeaderRow>
-        {incidents.length === 0 ? (
-          <EmptyStateContainer>
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>Last 12 months</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                {(["minor", "major", "critical"] as const).map((severity) => (
+                  <ActivityCalendarLegendItem key={severity}>
+                    <ActivityCalendarCell level={severityLevels[severity]} />
+                    {severityConfig[severity].label}
+                  </ActivityCalendarLegendItem>
+                ))}
+                <ActivityCalendarLegendSeparator />
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell hatched />
+                  Canceled
+                </ActivityCalendarLegendItem>
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Active
+                  <EventGroupCount>{active.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {active.map((incident) => (
+                  <IncidentRow key={incident.id} incident={incident} />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Ended
+                  <EventGroupCount>{closed.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((incident) => (
+                  <IncidentRow key={incident.id} incident={incident} />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
             <EmptyStateMedia>
               <Incident />
             </EmptyStateMedia>
@@ -133,74 +193,8 @@ export function Client() {
                 <Link href="/status-pages">Pick a status page</Link>
               </Button>
             </EmptyStateActions>
-          </EmptyStateContainer>
-        ) : (
-          <>
-            <Activity>
-              <ActivityHeader>
-                <ActivityTitle>Activity</ActivityTitle>
-                <ActivityPeriod>Last 12 months</ActivityPeriod>
-              </ActivityHeader>
-              <ActivityCalendar>
-                <ActivityCalendarGrid days={days} today={now} />
-                <ActivityCalendarLegend>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell />
-                    None
-                  </ActivityCalendarLegendItem>
-                  {(["minor", "major", "critical"] as const).map((severity) => (
-                    <ActivityCalendarLegendItem key={severity}>
-                      <ActivityCalendarCell level={severityLevels[severity]} />
-                      {severityConfig[severity].label}
-                    </ActivityCalendarLegendItem>
-                  ))}
-                  <ActivityCalendarLegendSeparator />
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell hatched />
-                    Canceled
-                  </ActivityCalendarLegendItem>
-                </ActivityCalendarLegend>
-              </ActivityCalendar>
-            </Activity>
-            <div className="flex flex-col gap-6">
-              {active.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Active
-                      <EventGroupCount>{active.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {active.map((incident) => (
-                      <IncidentRow key={incident.id} incident={incident} />
-                    ))}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-              {closed.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Ended
-                      <EventGroupCount>{closed.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {paged.visible.map((incident) => (
-                      <IncidentRow key={incident.id} incident={incident} />
-                    ))}
-                    {paged.hasMore ? (
-                      <EventListMore onClick={paged.showMore}>
-                        Show older
-                      </EventListMore>
-                    ) : null}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-            </div>
-          </>
-        )}
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

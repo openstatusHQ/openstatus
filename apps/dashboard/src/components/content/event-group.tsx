@@ -1,6 +1,10 @@
+import { EmptyStateContainer } from "@/components/content/empty-state";
 import { cn } from "@/lib/utils";
 
-/** A titled slice of a list: `Ongoing 2`, with an optional hint on the right. */
+/**
+ * A titled slice of a list: `Ongoing 2`, with an optional hint on the right.
+ * Without rows it shows its `EventGroupEmpty`, or hides when it has none.
+ */
 export function EventGroup({
   className,
   ...props
@@ -8,9 +12,29 @@ export function EventGroup({
   return (
     <section
       data-slot="event-group"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn(
+        "flex flex-col gap-2",
+        "not-has-[[data-slot=event-row]]:not-has-[[data-slot=event-group-empty]]:hidden",
+        "[&:has([data-slot=event-row])>[data-slot=event-group-empty]]:hidden",
+        // a list holding only its "show more" button
+        "[&:not(:has([data-slot=event-row]))>[data-slot=event-list]]:hidden",
+        className,
+      )}
       {...props}
     />
+  );
+}
+
+/** Shown in place of the list while the group has no rows. */
+export function EventGroupEmpty({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div data-slot="event-group-empty" className={className} {...props}>
+      <EmptyStateContainer>{children}</EmptyStateContainer>
+    </div>
   );
 }
 

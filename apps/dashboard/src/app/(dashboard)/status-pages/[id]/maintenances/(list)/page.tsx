@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { Link } from "@/components/common/link";
 import {
   Activity,
+  ActivityEmpty,
+  ActivityFeed,
   ActivityHeader,
   ActivityPeriod,
   ActivityTitle,
@@ -25,7 +27,6 @@ import {
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -194,8 +195,83 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        {maintenances.length === 0 ? (
-          <EmptyStateContainer>
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>{activityPeriod(range, now)}</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell scale="planned" level={1} />
+                  {"< 1h"}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell scale="planned" level={2} />
+                  {"< 4h"}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell scale="planned" level={3} />
+                  {"≥ 4h"}
+                </ActivityCalendarLegendItem>
+                {days.some((day) => "upcoming" in day && day.upcoming) ? (
+                  <>
+                    <ActivityCalendarLegendSeparator />
+                    <ActivityCalendarLegendItem>
+                      <ActivityCalendarCell upcoming />
+                      Upcoming
+                    </ActivityCalendarLegendItem>
+                  </>
+                ) : null}
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Scheduled
+                  <EventGroupCount>{upcoming.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {upcoming.map((maintenance) => (
+                  <MaintenanceRow
+                    key={maintenance.id}
+                    maintenance={maintenance}
+                  />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Past
+                  <EventGroupCount>{past.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((maintenance) => (
+                  <MaintenanceRow
+                    key={maintenance.id}
+                    maintenance={maintenance}
+                  />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
             <EmptyStateMedia>
               <Maintenance />
             </EmptyStateMedia>
@@ -215,90 +291,8 @@ export default function Page() {
                 </NextLink>
               </Button>
             </EmptyStateActions>
-          </EmptyStateContainer>
-        ) : (
-          <>
-            <Activity>
-              <ActivityHeader>
-                <ActivityTitle>Activity</ActivityTitle>
-                <ActivityPeriod>{activityPeriod(range, now)}</ActivityPeriod>
-              </ActivityHeader>
-              <ActivityCalendar>
-                <ActivityCalendarGrid days={days} today={now} />
-                <ActivityCalendarLegend>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell />
-                    None
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell scale="planned" level={1} />
-                    {"< 1h"}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell scale="planned" level={2} />
-                    {"< 4h"}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell scale="planned" level={3} />
-                    {"≥ 4h"}
-                  </ActivityCalendarLegendItem>
-                  {days.some((day) => "upcoming" in day && day.upcoming) ? (
-                    <>
-                      <ActivityCalendarLegendSeparator />
-                      <ActivityCalendarLegendItem>
-                        <ActivityCalendarCell upcoming />
-                        Upcoming
-                      </ActivityCalendarLegendItem>
-                    </>
-                  ) : null}
-                </ActivityCalendarLegend>
-              </ActivityCalendar>
-            </Activity>
-            <div className="flex flex-col gap-6">
-              {upcoming.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Scheduled
-                      <EventGroupCount>{upcoming.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {upcoming.map((maintenance) => (
-                      <MaintenanceRow
-                        key={maintenance.id}
-                        maintenance={maintenance}
-                      />
-                    ))}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-              {past.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Past
-                      <EventGroupCount>{past.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {paged.visible.map((maintenance) => (
-                      <MaintenanceRow
-                        key={maintenance.id}
-                        maintenance={maintenance}
-                      />
-                    ))}
-                    {paged.hasMore ? (
-                      <EventListMore onClick={paged.showMore}>
-                        Show older
-                      </EventListMore>
-                    ) : null}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-            </div>
-          </>
-        )}
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

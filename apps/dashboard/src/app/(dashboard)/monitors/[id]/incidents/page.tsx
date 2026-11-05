@@ -8,6 +8,8 @@ import { useParams } from "next/navigation";
 import { Link } from "@/components/common/link";
 import {
   Activity,
+  ActivityEmpty,
+  ActivityFeed,
   ActivityHeader,
   ActivityPeriod,
   ActivityTitle,
@@ -20,7 +22,6 @@ import {
   ActivityCalendarLegendItem,
 } from "@/components/content/activity-calendar";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -113,8 +114,68 @@ export default function Page() {
             </Link>
           </p>
         </SectionHeaderRow>
-        {monitorIncidents.length === 0 ? (
-          <EmptyStateContainer>
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>Last 12 months</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={1} />
+                  {"< 2m"}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={2} />
+                  {"< 10m"}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={3} />
+                  {"≥ 10m"}
+                </ActivityCalendarLegendItem>
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Ongoing
+                  <EventGroupCount>{ongoing.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {ongoing.map((incident) => (
+                  <MonitorIncidentRow key={incident.id} incident={incident} />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Downtime
+                  <EventGroupCount>{resolved.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((incident) => (
+                  <MonitorIncidentRow key={incident.id} incident={incident} />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
             <EmptyStateMedia variant="success">
               <Success />
             </EmptyStateMedia>
@@ -123,81 +184,8 @@ export default function Page() {
               A failed check opens a downtime entry here and alerts the channels
               linked to this monitor. Nothing has failed so far.
             </EmptyStateDescription>
-          </EmptyStateContainer>
-        ) : (
-          <>
-            <Activity>
-              <ActivityHeader>
-                <ActivityTitle>Activity</ActivityTitle>
-                <ActivityPeriod>Last 12 months</ActivityPeriod>
-              </ActivityHeader>
-              <ActivityCalendar>
-                <ActivityCalendarGrid days={days} today={now} />
-                <ActivityCalendarLegend>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell />
-                    None
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={1} />
-                    {"< 2m"}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={2} />
-                    {"< 10m"}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={3} />
-                    {"≥ 10m"}
-                  </ActivityCalendarLegendItem>
-                </ActivityCalendarLegend>
-              </ActivityCalendar>
-            </Activity>
-            <div className="flex flex-col gap-6">
-              {ongoing.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Ongoing
-                      <EventGroupCount>{ongoing.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {ongoing.map((incident) => (
-                      <MonitorIncidentRow
-                        key={incident.id}
-                        incident={incident}
-                      />
-                    ))}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-              {resolved.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Downtime
-                      <EventGroupCount>{resolved.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {paged.visible.map((incident) => (
-                      <MonitorIncidentRow
-                        key={incident.id}
-                        incident={incident}
-                      />
-                    ))}
-                    {paged.hasMore ? (
-                      <EventListMore onClick={paged.showMore}>
-                        Show older
-                      </EventListMore>
-                    ) : null}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-            </div>
-          </>
-        )}
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

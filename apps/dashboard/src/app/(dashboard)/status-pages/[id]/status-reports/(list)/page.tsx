@@ -12,6 +12,8 @@ import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   Activity,
+  ActivityEmpty,
+  ActivityFeed,
   ActivityHeader,
   ActivityPeriod,
   ActivityTitle,
@@ -26,7 +28,6 @@ import {
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -221,8 +222,73 @@ export default function Page() {
             </FormSheetStatusReport>
           </div>
         </SectionHeaderRow>
-        {statusReports.length === 0 ? (
-          <EmptyStateContainer>
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>Last 12 months</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={1} />
+                  {impactConfig.degraded_performance.short}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={2} />
+                  {impactConfig.partial_outage.short}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={3} />
+                  {impactConfig.major_outage.short}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendSeparator />
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell hatched />
+                  {untriagedImpact.short}
+                </ActivityCalendarLegendItem>
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Ongoing
+                  <EventGroupCount>{ongoing.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {ongoing.map((report) => (
+                  <StatusReportRow key={report.id} report={report} />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Resolved
+                  <EventGroupCount>{resolved.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((report) => (
+                  <StatusReportRow key={report.id} report={report} />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
             <EmptyStateMedia variant="success">
               <Success />
             </EmptyStateMedia>
@@ -247,80 +313,8 @@ export default function Page() {
                 </NextLink>
               </Button>
             </EmptyStateActions>
-          </EmptyStateContainer>
-        ) : (
-          <>
-            <Activity>
-              <ActivityHeader>
-                <ActivityTitle>Activity</ActivityTitle>
-                <ActivityPeriod>Last 12 months</ActivityPeriod>
-              </ActivityHeader>
-              <ActivityCalendar>
-                <ActivityCalendarGrid days={days} today={now} />
-                <ActivityCalendarLegend>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell />
-                    None
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={1} />
-                    {impactConfig.degraded_performance.short}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={2} />
-                    {impactConfig.partial_outage.short}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell level={3} />
-                    {impactConfig.major_outage.short}
-                  </ActivityCalendarLegendItem>
-                  <ActivityCalendarLegendSeparator />
-                  <ActivityCalendarLegendItem>
-                    <ActivityCalendarCell hatched />
-                    {untriagedImpact.short}
-                  </ActivityCalendarLegendItem>
-                </ActivityCalendarLegend>
-              </ActivityCalendar>
-            </Activity>
-            <div className="flex flex-col gap-6">
-              {ongoing.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Ongoing
-                      <EventGroupCount>{ongoing.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {ongoing.map((report) => (
-                      <StatusReportRow key={report.id} report={report} />
-                    ))}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-              {resolved.length > 0 ? (
-                <EventGroup>
-                  <EventGroupHeader>
-                    <EventGroupTitle>
-                      Resolved
-                      <EventGroupCount>{resolved.length}</EventGroupCount>
-                    </EventGroupTitle>
-                  </EventGroupHeader>
-                  <EventList>
-                    {paged.visible.map((report) => (
-                      <StatusReportRow key={report.id} report={report} />
-                    ))}
-                    {paged.hasMore ? (
-                      <EventListMore onClick={paged.showMore}>
-                        Show older
-                      </EventListMore>
-                    ) : null}
-                  </EventList>
-                </EventGroup>
-              ) : null}
-            </div>
-          </>
-        )}
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

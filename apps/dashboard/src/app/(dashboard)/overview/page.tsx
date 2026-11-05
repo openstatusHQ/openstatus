@@ -27,7 +27,6 @@ import {
 } from "@/components/content/activity-calendar";
 import {
   EmptyStateActions,
-  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -35,6 +34,7 @@ import {
 import {
   EventGroup,
   EventGroupCount,
+  EventGroupEmpty,
   EventGroupHeader,
   EventGroupHint,
   EventGroupTitle,
@@ -367,41 +367,36 @@ export default function Page() {
           </EventGroupTitle>
           <EventGroupHint>Stays here until resolved</EventGroupHint>
         </EventGroupHeader>
-        {needsAttention.length > 0 ? (
-          <EventList>
-            {needsAttention.map((event) => (
-              <OverviewEventRow key={eventKey(event)} event={event} />
-            ))}
-          </EventList>
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateMedia variant="success">
-              <Success />
-            </EmptyStateMedia>
-            <EmptyStateTitle>All clear</EmptyStateTitle>
-            <EmptyStateDescription>
-              {openIncidents
-                ? "Nothing is unresolved. Failing monitors, open incidents and status reports show up here."
-                : "Incidents could not be loaded. Failing monitors and open status reports still show up here."}
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        )}
+        <EventList>
+          {needsAttention.map((event) => (
+            <OverviewEventRow key={eventKey(event)} event={event} />
+          ))}
+        </EventList>
+        <EventGroupEmpty>
+          <EmptyStateMedia variant="success">
+            <Success />
+          </EmptyStateMedia>
+          <EmptyStateTitle>All clear</EmptyStateTitle>
+          <EmptyStateDescription>
+            {openIncidents
+              ? "Nothing is unresolved. Failing monitors, open incidents and status reports show up here."
+              : "Incidents could not be loaded. Failing monitors and open status reports still show up here."}
+          </EmptyStateDescription>
+        </EventGroupEmpty>
       </EventGroup>
-      {upcomingMaintenances.length > 0 ? (
-        <EventGroup>
-          <EventGroupHeader>
-            <EventGroupTitle>
-              Scheduled
-              <EventGroupCount>{upcomingMaintenances.length}</EventGroupCount>
-            </EventGroupTitle>
-          </EventGroupHeader>
-          <EventList>
-            {upcomingMaintenances.map((event) => (
-              <OverviewEventRow key={eventKey(event)} event={event} />
-            ))}
-          </EventList>
-        </EventGroup>
-      ) : null}
+      <EventGroup>
+        <EventGroupHeader>
+          <EventGroupTitle>
+            Scheduled
+            <EventGroupCount>{upcomingMaintenances.length}</EventGroupCount>
+          </EventGroupTitle>
+        </EventGroupHeader>
+        <EventList>
+          {upcomingMaintenances.map((event) => (
+            <OverviewEventRow key={eventKey(event)} event={event} />
+          ))}
+        </EventList>
+      </EventGroup>
       <EventGroup>
         <EventGroupHeader>
           <EventGroupTitle>
@@ -414,46 +409,43 @@ export default function Page() {
             {showOlder ? "All time" : "Last 7 days"}
           </EventGroupHint>
         </EventGroupHeader>
-        {recentlyResolved.length > 0 || showOlder ? (
-          <EventList>
-            {[...recentlyResolved, ...(showOlder ? older.visible : [])].map(
-              (event) => (
-                <OverviewEventRow key={eventKey(event)} event={event} />
-              ),
-            )}
-            {!showOlder && allResolved.length > recentlyResolved.length ? (
-              <EventListMore onClick={() => setShowOlder(true)}>
+        <EventList>
+          {[...recentlyResolved, ...(showOlder ? older.visible : [])].map(
+            (event) => (
+              <OverviewEventRow key={eventKey(event)} event={event} />
+            ),
+          )}
+          {!showOlder && allResolved.length > recentlyResolved.length ? (
+            <EventListMore onClick={() => setShowOlder(true)}>
+              Show older
+            </EventListMore>
+          ) : null}
+          {showOlder && older.hasMore ? (
+            <EventListMore onClick={older.showMore}>Show more</EventListMore>
+          ) : null}
+        </EventList>
+        <EventGroupEmpty>
+          <EmptyStateMedia>
+            <Clock />
+          </EmptyStateMedia>
+          <EmptyStateTitle>No recent activity</EmptyStateTitle>
+          <EmptyStateDescription>
+            {endedIncidents
+              ? "Resolved incidents and reports and completed maintenances from the last 7 days land here."
+              : "Incidents could not be loaded. Resolved reports and completed maintenances from the last 7 days still show up here."}
+          </EmptyStateDescription>
+          {allResolved.length > 0 ? (
+            <EmptyStateActions>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowOlder(true)}
+              >
                 Show older
-              </EventListMore>
-            ) : null}
-            {showOlder && older.hasMore ? (
-              <EventListMore onClick={older.showMore}>Show more</EventListMore>
-            ) : null}
-          </EventList>
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateMedia>
-              <Clock />
-            </EmptyStateMedia>
-            <EmptyStateTitle>No recent activity</EmptyStateTitle>
-            <EmptyStateDescription>
-              {endedIncidents
-                ? "Resolved incidents and reports and completed maintenances from the last 7 days land here."
-                : "Incidents could not be loaded. Resolved reports and completed maintenances from the last 7 days still show up here."}
-            </EmptyStateDescription>
-            {allResolved.length > 0 ? (
-              <EmptyStateActions>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowOlder(true)}
-                >
-                  Show older
-                </Button>
-              </EmptyStateActions>
-            ) : null}
-          </EmptyStateContainer>
-        )}
+              </Button>
+            </EmptyStateActions>
+          ) : null}
+        </EventGroupEmpty>
       </EventGroup>
     </SectionGroup>
   );

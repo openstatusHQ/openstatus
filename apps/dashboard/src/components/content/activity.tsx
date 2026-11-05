@@ -1,5 +1,6 @@
 import { cva } from "class-variance-authority";
 
+import { EmptyStateContainer } from "@/components/content/empty-state";
 import { cn } from "@/lib/utils";
 
 /**
@@ -67,6 +68,40 @@ export function Activity({
       className={cn("flex flex-col gap-2", className)}
       {...props}
     />
+  );
+}
+
+/**
+ * Calendar plus event groups. Without any event row, every child but the
+ * `ActivityEmpty` hides; with rows, the `ActivityEmpty` does.
+ */
+export function ActivityFeed({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="activity-feed"
+      className={cn(
+        "flex flex-col gap-4",
+        "[&:not(:has([data-slot=event-row]))>:not([data-slot=activity-empty])]:hidden",
+        "[&:has([data-slot=event-row])>[data-slot=activity-empty]]:hidden",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ActivityEmpty({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div data-slot="activity-empty" className={className} {...props}>
+      <EmptyStateContainer>{children}</EmptyStateContainer>
+    </div>
   );
 }
 
