@@ -9,8 +9,26 @@ SQL >
 
     SELECT
         toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
-        *
+        monitorId,
+        region,
+        timestamp,
+        cronTimestamp,
+        timing,
+        workspaceId,
+        latency,
+        latencyMin,
+        latencyMax,
+        packetsSent,
+        packetsReceived,
+        errorMessage,
+        error,
+        trigger,
+        uri,
+        id,
+        requestStatus,
+        attempts
     FROM icmp_response__v0
 
 TYPE materialized
 DATASOURCE mv__icmp_full_14d__v0
+DEPLOYMENT_METHOD alter

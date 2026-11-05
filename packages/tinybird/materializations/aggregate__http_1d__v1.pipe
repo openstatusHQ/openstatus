@@ -12,10 +12,10 @@ SQL >
         cronTimestamp,
         monitorId,
         requestStatus,
-        timing
+        timing,
+        attempts
     FROM ping_response__v8
 
 TYPE materialized
 DATASOURCE mv__http_1d__v1
-
-
+DEPLOYMENT_METHOD alter

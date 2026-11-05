@@ -24,8 +24,10 @@ SQL >
         trigger,
         uri,
         id,
-        requestStatus
+        requestStatus,
+        attempts
     FROM grpc_response__v0
 
 TYPE materialized
 DATASOURCE mv__grpc_full_14d__v0
+DEPLOYMENT_METHOD alter

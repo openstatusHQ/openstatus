@@ -17,7 +17,8 @@ SELECT
     cronTimestamp,
     monitorId,
     requestStatus,
-    timing
+    timing,
+    attempts
 FROM mv__grpc_full_14d__v0
 WHERE
     monitorId = {{ String(monitorId, '4433', required=True) }}

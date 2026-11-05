@@ -24,10 +24,10 @@ SQL >
         trigger,
         id,
         requestStatus,
-        method
+        method,
+        attempts
     FROM ping_response__v8
 
 TYPE materialized
 DATASOURCE mv__http_full_14d__v0
-
-
+DEPLOYMENT_METHOD alter
