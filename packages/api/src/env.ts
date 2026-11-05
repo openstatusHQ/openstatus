@@ -22,7 +22,11 @@ export const env = createEnv({
     EXTERNAL_REPORT_SALT: z.string().optional(),
     SELF_HOST: z.stringbool().prefault("false"),
     HEARTBEAT_WORKSPACE_IDS: z.string().optional(),
-    HEARTBEAT_PING_BASE_URL: z.url().optional(),
+    // .env.example ships it blank; "" must mean unset, not an invalid URL
+    HEARTBEAT_PING_BASE_URL: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.url().optional(),
+    ),
     NODE_ENV: z.enum(["development", "test", "production"]).optional(),
   },
 
