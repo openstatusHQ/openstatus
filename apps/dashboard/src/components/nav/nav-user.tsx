@@ -140,7 +140,7 @@ export function NavUser() {
               <>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/settings/billing"
+                    href="/settings/billing#plans"
                     onClick={() => setOpenMobile(false)}
                     className="font-commit-mono tracking-tight"
                   >

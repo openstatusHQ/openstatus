@@ -56,7 +56,7 @@ export function Client() {
   if (isTRPCClientError(error)) {
     return (
       <SectionGroup>
-        <Section>
+        <Section id="invitation">
           <SectionHeader>
             <SectionTitle>Invitation</SectionTitle>
             <SectionDescription>
@@ -84,7 +84,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="invitation">
         <SectionHeader>
           <SectionTitle>Invitation</SectionTitle>
           <SectionDescription>
@@ -92,7 +92,7 @@ export function Client() {
             anytime from the sidebar.
           </SectionDescription>
         </SectionHeader>
-        <FormCard>
+        <FormCard id="join-workspace">
           <FormCardHeader>
             <FormCardTitle>Join workspace</FormCardTitle>
             <FormCardDescription>

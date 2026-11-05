@@ -8,7 +8,7 @@ export function Section({
   return (
     <section
       data-slot="section"
-      className={cn("space-y-4", className)}
+      className={cn("scroll-mt-28 space-y-4", className)}
       {...props}
     >
       {children}

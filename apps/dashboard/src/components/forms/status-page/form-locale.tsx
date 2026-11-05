@@ -137,7 +137,7 @@ export function FormLocale({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="locales">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Locales</FormCardTitle>
@@ -235,7 +235,7 @@ export function FormLocale({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <Link href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </Link>

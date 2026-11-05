@@ -16,7 +16,7 @@ This tutorial uses **email** because it's the channel that needs the least setup
 
 ## 1. Create a notification channel
 
-Open **Notifications** in the dashboard sidebar and click **Create Notification Channel**.
+Open [**Notifications**](https://app.openstatus.dev/notifications#notifier-channels) in the dashboard sidebar and click **Create Notification Channel**.
 
 Pick **Email** as the channel type and fill in two fields:
 
@@ -31,11 +31,11 @@ Channels are workspace-scoped, not monitor-scoped. One channel can be attached t
 
 ## 2. Attach the channel to a monitor
 
-Open one of your monitors and go to its **Notifications** tab. Select the channel you just created and save.
+Open one of your monitors' settings and go to its [**Notifications**](https://app.openstatus.dev/monitors/_/edit#notifications) card. Select the channel you just created and save.
 
 That's the wiring done. From now on, when the monitor transitions into a failing state — `down` or `degraded` — your channel will receive a notification. When the monitor recovers, you'll get a recovery notification too.
 
-**Checkpoint:** the monitor's notification tab should now show the channel listed. If it doesn't appear in the dropdown, refresh the page once — newly created channels can take a moment to propagate to the monitor settings.
+**Checkpoint:** the monitor's **Notifications** card should now show the channel listed. If it doesn't appear in the dropdown, refresh the page once — newly created channels can take a moment to propagate to the monitor settings.
 
 ## 3. Trigger a test alert
 

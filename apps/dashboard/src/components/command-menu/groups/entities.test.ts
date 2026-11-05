@@ -50,13 +50,16 @@ describe("incidentsGroup", () => {
     ]),
   );
 
-  it("caps idle items and links to the incident", () => {
+  it("caps idle items and pushes the incident scope page", () => {
     expect(group?.idleLimit).toBe(5);
     expect(group?.items[0]).toMatchObject({
       value: "incident-1",
       label: "API down",
       description: "open · critical",
-      action: { type: "navigate", href: "/incidents/1" },
+      action: {
+        type: "push",
+        page: { type: "incident", id: 1, title: "API down" },
+      },
     });
   });
 

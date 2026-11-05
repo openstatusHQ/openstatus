@@ -72,7 +72,7 @@ export function UpgradeDialog(
             Get an overview within your{" "}
             <Link
               onClick={() => props.onOpenChange?.(false)}
-              href="/settings/billing"
+              href="/settings/billing#plans"
             >
               billing settings
             </Link>

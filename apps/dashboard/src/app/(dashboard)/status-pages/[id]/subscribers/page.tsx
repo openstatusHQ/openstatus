@@ -107,7 +107,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="subscribers">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{page?.title}</SectionTitle>
@@ -158,7 +158,7 @@ export default function Page() {
           </div>
         </SectionHeaderRow>
       </Section>
-      <Section>
+      <Section id="subscribers-table">
         {isLimited ? (
           <BillingOverlayContainer>
             <DataTable

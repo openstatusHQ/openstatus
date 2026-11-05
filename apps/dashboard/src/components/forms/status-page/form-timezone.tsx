@@ -112,7 +112,7 @@ export function FormTimezone({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="timezone">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Time zone</FormCardTitle>
@@ -193,7 +193,7 @@ export function FormTimezone({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <Link href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </Link>

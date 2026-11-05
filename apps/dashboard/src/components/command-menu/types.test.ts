@@ -12,4 +12,10 @@ describe("pageLabel", () => {
       pageLabel({ type: "status-page", id: 2, title: "Acme Status" }),
     ).toBe("Acme Status");
   });
+
+  it("uses the incident title", () => {
+    expect(pageLabel({ type: "incident", id: 3, title: "API down" })).toBe(
+      "API down",
+    );
+  });
 });

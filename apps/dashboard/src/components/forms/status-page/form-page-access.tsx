@@ -148,7 +148,7 @@ export function FormPageAccess({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="page-access">
           <FormCardHeader>
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
@@ -339,7 +339,7 @@ export function FormPageAccess({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <Link href="/settings/billing#plans">
                   <Lock />
                   Upgrade
                 </Link>

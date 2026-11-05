@@ -304,7 +304,7 @@ export function DetailSection({
   return (
     <section
       data-slot="detail-section"
-      className={cn("flex flex-col gap-3", className)}
+      className={cn("flex scroll-mt-28 flex-col gap-3", className)}
       {...props}
     >
       {children}

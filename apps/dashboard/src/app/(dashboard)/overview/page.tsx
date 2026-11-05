@@ -303,7 +303,7 @@ export default function Page() {
           <Link href="/agents">Learn more</Link>
         </NoteButton>
       </NoteDismissible>
-      <Section>
+      <Section id="overview">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>Overview</SectionTitle>

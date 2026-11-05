@@ -98,7 +98,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="create-monitor">
         <SectionHeader>
           <SectionTitle>Create Monitor</SectionTitle>
         </SectionHeader>
@@ -125,7 +125,7 @@ export default function Page() {
           }}
         />
       </Section>
-      <Section>
+      <Section id="next-steps">
         <EmptyStateContainer>
           <EmptyStateTitle>Create and start customizing</EmptyStateTitle>
           <EmptyStateDescription>

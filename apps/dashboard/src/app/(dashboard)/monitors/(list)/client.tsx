@@ -139,7 +139,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="monitors">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>Monitors</SectionTitle>
@@ -203,7 +203,7 @@ export function Client() {
           })}
         </MetricCardGroup>
       </Section>
-      <Section>
+      <Section id="monitors-table">
         <DataTable
           columns={columns}
           data={monitors.map((monitor) => ({

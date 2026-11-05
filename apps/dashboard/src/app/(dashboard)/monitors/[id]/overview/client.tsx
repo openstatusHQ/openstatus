@@ -174,7 +174,7 @@ function CheckOverview() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="overview">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{monitor.name}</SectionTitle>
@@ -203,7 +203,7 @@ function CheckOverview() {
         </div>
         <GlobalUptimeSection metrics={metrics} isLoading={isMetricsLoading} />
       </Section>
-      <Section>
+      <Section id="uptime">
         <SectionHeader>
           <SectionTitle>Uptime</SectionTitle>
           <SectionDescription>
@@ -249,7 +249,7 @@ function CheckOverview() {
           />
         )}
       </Section>
-      <Section>
+      <Section id="latency">
         {/* TODO: based on http, we have Timing Phases instead of Latency */}
         <SectionHeader>
           <SectionTitle>Latency</SectionTitle>
@@ -302,7 +302,7 @@ function CheckOverview() {
           />
         )}
       </Section>
-      <Section>
+      <Section id="regions">
         <SectionHeader>
           <SectionTitle>Regions</SectionTitle>
           <SectionDescription>
@@ -333,7 +333,7 @@ function CheckOverview() {
           />
         )}
       </Section>
-      <Section>
+      <Section id="timeline">
         <SectionHeader>
           <SectionTitle>Timeline</SectionTitle>
           <SectionDescription>

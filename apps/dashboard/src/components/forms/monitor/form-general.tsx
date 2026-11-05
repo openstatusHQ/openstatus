@@ -297,7 +297,7 @@ export function FormGeneral({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="monitor-configuration">
           <FormCardHeader>
             <FormCardTitle>Monitor Configuration</FormCardTitle>
             <FormCardDescription>

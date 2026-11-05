@@ -47,7 +47,7 @@ export function Client() {
           </Link>
         </NoteButton>
       </NoteDismissible>
-      <Section>
+      <Section id="status-pages">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>Status Pages</SectionTitle>

@@ -19,7 +19,7 @@ In this guide, you'll install the openstatus Slack agent so you can manage incid
 
 ### 1. Go to settings
 
-Navigate to **Settings** > **Integrations** in your openstatus dashboard.
+Navigate to [**Settings > Integrations**](https://app.openstatus.dev/settings/integrations#slack) in your openstatus dashboard.
 
 ### 2. Install the Slack integration
 
@@ -108,7 +108,7 @@ Plan downtime so subscribers are informed in advance.
 
 The examples above publish to your status page. An incident is the internal side: a severity, a commander, a timeline and a postmortem, in a Slack channel of its own. For the why and a runbook, see [running incidents in Slack](/guides/slack-incident-management).
 
-<Aside>Incident management is rolling out workspace by workspace. If the commands below answer that it isn't available yet, it is not enabled for your workspace. If you installed the Slack app before incident management, go to **Settings** > **Integrations** and click **Reconnect** to grant the new permissions.</Aside>
+<Aside>Incident management is rolling out workspace by workspace. If the commands below answer that it isn't available yet, it is not enabled for your workspace. If you installed the Slack app before incident management, go to [**Settings > Integrations**](https://app.openstatus.dev/settings/integrations#slack) and click **Reconnect** to grant the new permissions.</Aside>
 
 #### Declare
 
@@ -159,7 +159,7 @@ Once the incident is resolved, the agent drafts a postmortem from the timeline, 
 ### The bot doesn't respond when mentioned
 
 1. **Check the channel** — make sure the bot has been added to it. Run `/openstatus subscriptions` there, or re-run `/openstatus subscribe <status-page-url>` to join it. Private channels can't be self-joined; use `/invite @openstatus`.
-2. **Check permissions** — go to **Settings** > **Integrations** and verify the Slack integration shows as connected.
+2. **Check permissions** — go to [**Settings > Integrations**](https://app.openstatus.dev/settings/integrations#slack) and verify the Slack integration shows as connected.
 3. **Reinstall** — if the integration appears disconnected, click **Add to Slack** again to re-authorise.
 
 ### "Not authorized" or permission errors
@@ -172,7 +172,7 @@ Make sure you have at least one monitor and one status page created in your open
 
 ### No channel was created for an incident
 
-The incident is declared either way. A missing channel means the Slack app lacks the permissions added for incident channels: go to **Settings** > **Integrations** and click **Reconnect**.
+The incident is declared either way. A missing channel means the Slack app lacks the permissions added for incident channels: go to [**Settings > Integrations**](https://app.openstatus.dev/settings/integrations#slack) and click **Reconnect**.
 
 ## What's next
 

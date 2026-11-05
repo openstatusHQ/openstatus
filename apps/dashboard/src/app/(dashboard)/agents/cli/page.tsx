@@ -58,7 +58,7 @@ const installs = [
     description: (
       <>
         Or set it as an environment variable. Create an API key in your
-        workspace <Link href="/settings/general">settings.</Link>
+        workspace <Link href="/settings/general#api-keys">settings.</Link>
       </>
     ),
     command: {
@@ -211,7 +211,7 @@ jobs:
 export default function Page() {
   return (
     <SectionGroup>
-      <Section>
+      <Section id="cli">
         <SectionHeader>
           <SectionTitle>CLI</SectionTitle>
           <SectionDescription>
@@ -274,7 +274,7 @@ export default function Page() {
           ))}
         </Tabs>
       </Section>
-      <Section>
+      <Section id="commands">
         <SectionHeader>
           <SectionTitle>Commands</SectionTitle>
           <SectionDescription>
@@ -300,7 +300,7 @@ export default function Page() {
           ))}
         </ul>
       </Section>
-      <Section>
+      <Section id="skills">
         <SectionHeader>
           <SectionTitle>Skills</SectionTitle>
           <SectionDescription>
@@ -310,7 +310,7 @@ export default function Page() {
         </SectionHeader>
         <Code>npx skills add openstatushq/cli</Code>
       </Section>
-      <Section>
+      <Section id="github-action">
         <SectionHeader>
           <SectionTitle>GitHub Action</SectionTitle>
           <SectionDescription>
@@ -345,7 +345,7 @@ export default function Page() {
           ))}
         </div>
       </Section>
-      <Section>
+      <Section id="templates">
         <SectionHeader>
           <SectionTitle>Templates</SectionTitle>
           <SectionDescription>

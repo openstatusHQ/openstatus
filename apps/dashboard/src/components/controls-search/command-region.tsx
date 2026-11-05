@@ -213,7 +213,7 @@ export function CommandRegion({
               data-limit="max-regions"
               asChild
             >
-              <Link href="/settings/billing">
+              <Link href="/settings/billing#plans">
                 <Lock />
                 Upgrade
               </Link>

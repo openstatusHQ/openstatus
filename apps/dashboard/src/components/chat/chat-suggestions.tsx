@@ -35,7 +35,7 @@ export function ChatSuggestions({ onSelect }: Props) {
 
   return (
     <SectionGroup className="mx-auto max-w-3xl">
-      <Section className="flex w-full flex-col items-center">
+      <Section id="suggestions" className="flex w-full flex-col items-center">
         <SectionHeader className="max-w-2xl text-center">
           <SectionTitle>openstatus assistant</SectionTitle>
           <SectionDescription>
@@ -63,7 +63,7 @@ export function ChatSuggestions({ onSelect }: Props) {
           ))}
         </div>
       </Section>
-      <Section className="flex w-full flex-col items-center">
+      <Section id="connect-mcp" className="flex w-full flex-col items-center">
         <Note size="sm" className="text-muted-foreground w-full max-w-2xl">
           <ModelContextProtocolIcon />
           Prefer your own tools? Connect Claude Code, Cursor or ChatGPT to this

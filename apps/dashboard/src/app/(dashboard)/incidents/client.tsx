@@ -99,7 +99,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="incidents">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>Incidents</SectionTitle>

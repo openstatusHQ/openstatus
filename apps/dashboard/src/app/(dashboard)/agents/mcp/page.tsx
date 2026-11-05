@@ -257,7 +257,7 @@ const tools = [
 export default function Page() {
   return (
     <SectionGroup>
-      <Section>
+      <Section id="mcp-server">
         <SectionHeader>
           <SectionTitle>MCP Server</SectionTitle>
           <SectionDescription>
@@ -303,7 +303,7 @@ export default function Page() {
           ))}
         </Tabs>
       </Section>
-      <Section>
+      <Section id="authentication">
         <SectionHeader>
           <SectionTitle>Authentication</SectionTitle>
           <SectionDescription>
@@ -328,12 +328,12 @@ export default function Page() {
         <p className="text-muted-foreground text-sm">
           For CI, cron jobs or agents running on a server, send an API key in
           the <code>x-openstatus-key</code> header instead. Create one in the{" "}
-          <Link href="/settings/general">general settings</Link>. The key's
-          scopes decide which tools the server exposes: read only, read &amp;
-          write, or a custom set per resource.
+          <Link href="/settings/general#api-keys">general settings</Link>. The
+          key's scopes decide which tools the server exposes: read only, read
+          &amp; write, or a custom set per resource.
         </p>
       </Section>
-      <Section>
+      <Section id="prompts">
         <SectionHeader>
           <SectionTitle>Prompts</SectionTitle>
           <SectionDescription>
@@ -357,7 +357,7 @@ export default function Page() {
           ))}
         </ul>
       </Section>
-      <Section>
+      <Section id="tools">
         <SectionHeader>
           <SectionTitle>Tools</SectionTitle>
           <SectionDescription>

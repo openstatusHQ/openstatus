@@ -47,7 +47,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="account">
         <SectionHeader>
           <SectionTitle>Account</SectionTitle>
         </SectionHeader>
@@ -102,7 +102,7 @@ export default function Page() {
                 You must cancel your subscription before deleting your account.
                 Go to{" "}
                 <a
-                  href="/settings/billing"
+                  href="/settings/billing#usage"
                   className="font-medium underline underline-offset-4"
                 >
                   Billing

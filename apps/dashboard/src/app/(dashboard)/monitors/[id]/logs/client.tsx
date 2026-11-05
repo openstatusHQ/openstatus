@@ -401,7 +401,7 @@ function BillingPlaceholder() {
           data-limit="response-logs"
           asChild
         >
-          <Link href="/settings/billing">
+          <Link href="/settings/billing#plans">
             <Lock />
             Upgrade
           </Link>
