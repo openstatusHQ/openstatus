@@ -78,6 +78,7 @@ const gateFieldsSchema = selectPageSchema.pick({
   allowedIpRanges: true,
   homepageUrl: true,
   contactUrl: true,
+  defaultTimezone: true,
 });
 
 // Password for cookie-less server callers (feeds, `?pw=` links).
@@ -714,6 +715,7 @@ export const statusPageRouter = createTRPCRouter({
           allowedIpRanges: true,
           homepageUrl: true,
           contactUrl: true,
+          defaultTimezone: true,
         },
         with: { workspace: true },
       });

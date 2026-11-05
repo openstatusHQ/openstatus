@@ -387,6 +387,18 @@ describe("generateEventsList", () => {
   });
 });
 
+describe("generateEventsList in the page's time zone", () => {
+  const md = generateEventsList(
+    { ...overview, defaultTimezone: "Asia/Tokyo" } as OverviewPage,
+    BASE,
+  );
+
+  test("states the zone and stamps the log in it", () => {
+    expect(md).toContain('time_zone: "Asia/Tokyo"');
+    expect(md).toMatch(/2026-06-18 19:00 {2}INVESTIGATING {2}report\/1/);
+  });
+});
+
 describe("generateEventsList open-ended maintenance", () => {
   // Regression: `m.to` is nullable; the old `new Date(m.to)` resolved to the
   // epoch and produced a phantom 1970 "COMPLETED" row + a ~56-year duration.
@@ -491,6 +503,14 @@ describe("generateReport", () => {
     expect(md).toContain("### x Monitoring — Jun 18, 12:00 PM");
     expect(md).toContain("Recovering.");
     expect(md).toContain("### x Investigating — Jun 18, 10:00 AM");
+  });
+
+  test("renders update times in the page's time zone", () => {
+    const tokyo = generateReport(report, BASE, {
+      defaultTimezone: "Asia/Tokyo",
+    });
+    expect(tokyo).toContain('time_zone: "Asia/Tokyo"');
+    expect(tokyo).toContain("### x Monitoring — Jun 18, 9:00 PM");
   });
 
   test("each update lists its own impact, operational shown explicitly", () => {
@@ -648,6 +668,13 @@ describe("generateMonitor", () => {
     });
     expect(withUrls).toContain('homepage_url: "https://acme.com"');
     expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
+  });
+
+  test("names no time zone, as the page shows no dates", () => {
+    const tokyo = generateMonitor(monitor, BASE, {
+      defaultTimezone: "Asia/Tokyo",
+    });
+    expect(tokyo).not.toContain("time_zone");
   });
 });
 
