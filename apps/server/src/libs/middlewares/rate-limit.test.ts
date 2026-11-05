@@ -1,9 +1,7 @@
 import { errorDocsUrl } from "@openstatus/error";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
-import { FakeTime } from "@std/testing/time";
 import { type Context, Hono } from "hono";
 import { requestId } from "hono/request-id";
+import { describe, expect, test, vi } from "vitest";
 
 import { createRateLimit, credentialKey } from "./rate-limit";
 
@@ -18,6 +16,7 @@ function build(
     burstPer10s?: number;
     writesPerMinute?: number;
     publicPerMinute?: number;
+    heartbeatPerTokenPerMinute?: number;
   },
   handler: (c: Context<Env>) => Response = (c) => c.text("ok"),
 ) {
@@ -38,6 +37,7 @@ function build(
       burstPer10s: HUGE,
       writesPerMinute: HUGE,
       publicPerMinute: HUGE,
+      heartbeatPerTokenPerMinute: HUGE,
       ...config,
     }),
   );
@@ -228,23 +228,23 @@ describe("rate limit", () => {
 
   test("the 10 s bucket recovers after its window while the minute window keeps counting", async () => {
     const { app } = recovery;
-    const time = new FakeTime();
+    vi.useFakeTimers();
     try {
       const init = { headers: keyHeaders("a") };
       expect((await app.request("/v1/monitor", init)).status).toBe(200);
       expect((await app.request("/v1/monitor", init)).status).toBe(429);
 
-      time.tick(10_001);
+      vi.advanceTimersByTime(10_001);
       expect((await app.request("/v1/monitor", init)).status).toBe(200);
 
       // minute window (limit 2) is now full even though the burst bucket reset
-      time.tick(10_001);
+      vi.advanceTimersByTime(10_001);
       expect((await app.request("/v1/monitor", init)).status).toBe(429);
 
-      time.tick(60_001);
+      vi.advanceTimersByTime(60_001);
       expect((await app.request("/v1/monitor", init)).status).toBe(200);
     } finally {
-      time.restore();
+      vi.useRealTimers();
     }
   });
 
@@ -355,5 +355,21 @@ describe("rate limit", () => {
         })
       ).status,
     ).toBe(401);
+  });
+});
+
+const heartbeat = build({ heartbeatPerTokenPerMinute: 2 });
+
+describe("heartbeat rate limit", () => {
+  test("limits each token on its own", async () => {
+    const { app } = heartbeat;
+    expect((await fire(app, "/heartbeat/token-a", 2)).status).toBe(200);
+    expect((await app.request("/heartbeat/token-a")).status).toBe(429);
+    expect((await app.request("/heartbeat/token-b")).status).toBe(200);
+  });
+
+  test("does not touch other routes", async () => {
+    const { app } = heartbeat;
+    expect((await fire(app, "/v1/monitor", 5)).status).toBe(200);
   });
 });

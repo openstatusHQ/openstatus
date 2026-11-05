@@ -12,6 +12,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { formatDate } from "@/lib/formatter";
 
+import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
@@ -19,6 +20,7 @@ type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 const FLAVOR_LABELS = {
   slack: "Slack",
   discord: "Discord",
+  teams: "Microsoft Teams",
   generic: "Webhook",
 } as const;
 
@@ -138,7 +140,7 @@ export const columns: ColumnDef<Subscriber>[] = [
     cell: ({ row }) => {
       const value = row.getValue("createdAt");
       if (value instanceof Date) return formatDate(value);
-      if (!value) return "-";
+      if (!value) return <TableCellEmpty>Unknown</TableCellEmpty>;
       return value;
     },
     meta: {

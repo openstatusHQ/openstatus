@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  TRIAL_DAYS,
+  type TrialSurface,
+} from "@openstatus/api/src/router/stripe/trial-config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type {
   Addons,
@@ -37,14 +41,25 @@ import { cn } from "@/lib/utils";
 const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+    : "http://localhost:3001";
 
-function getQuantitySuffix(addon: keyof Addons) {
-  const packSize = getAddonPackSize(addon);
-  return packSize > 1 ? `/mo./${packSize}` : "/mo./each";
+function getPeriodSuffix(interval: BillingInterval) {
+  return interval === "yearly" ? "/yr." : "/mo.";
 }
 
-export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
+function getQuantitySuffix(addon: keyof Addons, interval: BillingInterval) {
+  const packSize = getAddonPackSize(addon);
+  const period = getPeriodSuffix(interval);
+  return packSize > 1 ? `${period}/${packSize}` : `${period}/each`;
+}
+
+export function DataTable({
+  restrictTo,
+  surface = "plan_table",
+}: {
+  restrictTo?: WorkspacePlan[];
+  surface?: TrialSurface;
+}) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
@@ -52,6 +67,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const intervalQuery = useQuery(
+    trpc.stripeRouter.getBillingInterval.queryOptions(),
+  );
+  const currentInterval = intervalQuery.data;
+  const canTrial = workspace?.trial.eligible === true;
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({
@@ -62,9 +82,14 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         // already have, so there is no checkout to redirect to — only the
         // refreshed workspace to pick up.
         if (data.type === "updated") {
-          await queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
-          });
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: trpc.workspace.get.queryKey(),
+            }),
+            queryClient.invalidateQueries({
+              queryKey: trpc.stripeRouter.getBillingInterval.queryKey(),
+            }),
+          ]);
           toast.success("Your plan has been updated");
           return;
         }
@@ -82,6 +107,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
       },
     }),
   );
+
+  // Which button is in flight, derived from the running mutation.
+  const pendingPlan: WorkspacePlan | null = checkoutSessionMutation.isPending
+    ? checkoutSessionMutation.variables.plan
+    : customerPortalMutation.isPending
+      ? "free"
+      : null;
 
   if (!workspace) return null;
 
@@ -107,7 +139,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         <TableCaption>
           {isTrialing
             ? "Upgrading ends your trial and charges your card today."
-            : "A list to compare the different features by plan."}
+            : canTrial &&
+                interval === "monthly" &&
+                filteredPlans.some(({ id }) => id === "starter")
+              ? `Starter can be tried free for ${TRIAL_DAYS} days, no credit card needed.`
+              : "A list to compare the different features by plan."}
         </TableCaption>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -115,9 +151,29 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
               Features comparison
             </TableHead>
             {filteredPlans.map(({ id, ...plan }) => {
-              const isCurrentPlan = workspace.plan === id;
-              const price = getPriceConfig(id, currency, interval);
               const isFreePlan = id === "free";
+              const isSamePlan = workspace.plan === id;
+              // Hold the paid plan's button until the interval is known, so it
+              // never flashes "Current Plan" on the wrong tab.
+              const isIntervalLoading =
+                isSamePlan && !isFreePlan && intervalQuery.isPending;
+              // A resolved `null` (no subscription, legacy price) matches on the
+              // plan alone. A failed fetch leaves both intervals selectable:
+              // re-applying the price the customer already pays is a no-op.
+              const isCurrentPlan =
+                isSamePlan &&
+                (isFreePlan ||
+                  (intervalQuery.isSuccess &&
+                    (currentInterval === null ||
+                      currentInterval === interval)));
+              const isIntervalSwitch =
+                isSamePlan &&
+                intervalQuery.isSuccess &&
+                currentInterval !== null &&
+                currentInterval !== interval;
+              const price = getPriceConfig(id, currency, interval);
+              const isTrialOffer =
+                canTrial && id === "starter" && interval === "monthly";
               return (
                 <TableHead
                   key={id}
@@ -132,6 +188,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       <p className="text-muted-foreground text-xs font-normal text-wrap">
                         {plan.description}
                       </p>
+                      {isTrialOffer ? (
+                        <p className="text-xs font-normal text-wrap">
+                          Free for {TRIAL_DAYS} days. No credit card needed.
+                        </p>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       {isFreePlan ? (
@@ -157,6 +218,19 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       onClick={() => {
                         startTransition(async () => {
                           try {
+                            if (isTrialOffer) {
+                              await checkoutSessionMutation.mutateAsync({
+                                trial: true,
+                                plan: "starter",
+                                interval: "monthly",
+                                surface,
+                                currency: currency || "USD",
+                                workspaceSlug: workspace.slug,
+                                successUrl: `${BASE_URL}/settings/billing?trial=true`,
+                                cancelUrl: `${BASE_URL}/settings/billing`,
+                              });
+                              return;
+                            }
                             if (id === "free") {
                               await customerPortalMutation.mutateAsync({
                                 workspaceSlug: workspace.slug,
@@ -181,17 +255,23 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                           }
                         });
                       }}
-                      disabled={isPending || isCurrentPlan}
+                      disabled={isPending || isCurrentPlan || isIntervalLoading}
                     >
-                      {isCurrentPlan
-                        ? isTrialing
-                          ? "On Trial"
-                          : "Current Plan"
-                        : isPending
-                          ? "Choosing..."
-                          : isTrialing && !isFreePlan
-                            ? "Upgrade now"
-                            : "Choose"}
+                      {isIntervalLoading
+                        ? "Loading..."
+                        : isCurrentPlan
+                          ? isTrialing
+                            ? "On Trial"
+                            : "Current Plan"
+                          : pendingPlan === id
+                            ? "Choosing..."
+                            : isIntervalSwitch
+                              ? `Switch to ${interval}`
+                              : isTrialOffer
+                                ? `Start ${TRIAL_DAYS}-day trial`
+                                : isTrialing && !isFreePlan
+                                  ? "Upgrade now"
+                                  : "Choose"}
                     </Button>
                   </div>
                 </TableHead>
@@ -233,6 +313,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                               plan.id,
                               value as keyof typeof plan.addons,
                               currency,
+                              interval,
                             );
                             if (!price) return null;
 
@@ -258,8 +339,9 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                                     {isNumber
                                       ? getQuantitySuffix(
                                           value as keyof typeof plan.addons,
+                                          interval,
                                         )
-                                      : "/mo."}
+                                      : getPeriodSuffix(interval)}
                                   </span>
                                 </span>
                               </div>

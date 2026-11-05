@@ -12,7 +12,7 @@ You want to run openstatus on your own infrastructure instead of using the hoste
 
 ## Solution
 
-openstatus provides a Docker Compose setup that makes self-hosting straightforward. This guide walks you through deploying all necessary services and configuring your self-hosted instance.
+openstatus provides a Docker Compose setup that makes self-hosting straightforward. This guide walks you through deploying all necessary services and configuring your self-hosted instance. On Kubernetes, use the Helm chart instead — see [Running on Kubernetes](#running-on-kubernetes).
 
 > **Only want the status page?** If you already have monitoring elsewhere and just need somewhere to publish incidents, the [lightweight status-page-only setup](/docs/guides/self-host-status-page-only) runs four services instead of the full stack — no Tinybird, no probes, no API server.
 
@@ -357,6 +357,25 @@ Self-hosted deployments need external cron scheduling for background tasks. With
     If you skip this step, your private locations will show "error" status permanently even when actively reporting.
     </Aside>
 
+## Running on Kubernetes
+
+The [Helm chart](https://github.com/openstatusHQ/openstatus/tree/main/charts/openstatus) runs the same services as `docker-compose.github-packages.yaml` and automates the steps that don't need the dashboard:
+
+- Database migrations run before `workflows` starts, like the `db-migrate` container.
+- A post-install Job does Part 2 (steps 4–7): it deploys the Tinybird project and stores the token as both `TINY_BIRD_API_KEY` and `TINYBIRD_TOKEN`.
+- A CronJob calls `/cron/private-location-health` every 5 minutes (Part 4).
+- `AUTH_SECRET` and `CRON_SECRET` are generated on first install and kept on upgrade.
+
+```bash
+git clone https://github.com/openstatushq/openstatus
+cd openstatus
+helm install openstatus ./charts/openstatus -n openstatus --create-namespace \
+  --set urls.dashboard=https://openstatus.example.com \
+  --set urls.server=https://api.openstatus.example.com
+```
+
+The chart creates ClusterIP Services only, so expose the dashboard and status page with your own Ingress or Gateway. Workspace limits (step 9) and the probe (step 10) are still manual; the [chart README](https://github.com/openstatusHQ/openstatus/blob/main/charts/openstatus/README.md) has the commands.
+
 ## Configuring the AI assistant (optional)
 
 openstatus ships an in-dashboard AI assistant. It is **off by default** when self-hosting — the chat endpoint returns `503 "Chat is not configured"` until you point it at a model provider. Configure **one** of the two options below in your `.env.docker` (root) — or `apps/dashboard/.env` for a manual setup — then restart the dashboard.
@@ -470,5 +489,6 @@ Or simply `docker compose up -d db-migrate`, since the step is idempotent.
 ### Learn more
 
 - **[Docker Compose file](https://github.com/openstatusHQ/openstatus/blob/main/docker-compose.yaml)** — review the complete configuration.
+- **[Helm chart](https://github.com/openstatusHQ/openstatus/tree/main/charts/openstatus)** — run the stack on Kubernetes.
 - **[Private location reference](/docs/reference/private-location)** — technical specifications.
 - **[Join our Discord](https://www.openstatus.dev/discord)** — get help from the community.

@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 
   after(async () => {
     try {
-      const analytics = await setupAnalytics({});
+      const analytics = await setupAnalytics({ source: "web" });
       await analytics.track({
         ...Events.CdnChecker,
         url: urlForAnalytics(parsed.url),

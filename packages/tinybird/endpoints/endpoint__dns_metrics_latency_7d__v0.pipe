@@ -23,6 +23,7 @@ WHERE
     {% if defined(toDate) %}
         AND toDateTime(timestamp / 1000) <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
     {% end %}
+    {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
 GROUP BY h
 ORDER BY h DESC
 

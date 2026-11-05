@@ -30,6 +30,8 @@ import type * as React from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { cn } from "@/lib/utils";
+
 interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   align?: DropdownMenuContentProps["align"];
   side?: DropdownMenuContentProps["side"];
@@ -95,6 +97,13 @@ export function QuickActions({
     setValue("");
   };
 
+  // nothing to offer: no trigger, but keep its footprint so row columns stay aligned
+  if (!actions?.some((item) => item.id !== "delete") && !deleteAction) {
+    return children ? null : (
+      <span aria-hidden className={cn("block size-7 shrink-0", className)} />
+    );
+  }
+
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <DropdownMenu>
@@ -107,6 +116,7 @@ export function QuickActions({
               {...props}
             >
               <More />
+              <span className="sr-only">Actions</span>
             </Button>
           )}
         </DropdownMenuTrigger>

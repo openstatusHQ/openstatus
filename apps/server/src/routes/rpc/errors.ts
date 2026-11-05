@@ -17,6 +17,14 @@ export function idRequiredError(resource: string): ConnectError {
   });
 }
 
+export function invalidIdError(label: string, value: string): ConnectError {
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.VALIDATION_FAILED,
+    message: `Invalid ${label}: "${value}"`,
+  });
+}
+
 export function monitorNotFoundError(
   monitorId: string,
   message = "Monitor not found",

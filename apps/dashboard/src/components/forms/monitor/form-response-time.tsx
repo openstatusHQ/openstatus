@@ -81,7 +81,7 @@ export function FormResponseTime({
               Configure your degraded and timeout thresholds.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid gap-4 sm:grid-cols-2">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="degradedAfter"

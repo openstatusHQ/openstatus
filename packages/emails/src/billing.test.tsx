@@ -1,28 +1,40 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
 import "./test-preload.ts";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 import { render } from "react-email";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import type { PlanLoss } from "../emails/_components/plan-loss";
 import CancellationScheduledEmail from "../emails/cancellation-scheduled";
+import MemberAccessEndingEmail, {
+  memberAccessEndingSubject,
+} from "../emails/member-access-ending";
 import MemberRemovedEmail from "../emails/member-removed";
+import OwnershipTransferredEmail from "../emails/ownership-transferred";
 import PlanDowngradedEmail, {
   planDowngradedSubject,
 } from "../emails/plan-downgraded";
 import PlanEndingSoonEmail, {
   planEndingSoonSubject,
 } from "../emails/plan-ending-soon";
-import TrialEndingEmail from "../emails/trial-ending";
+import TrialEndingEmail, { trialEndingSubject } from "../emails/trial-ending";
 import {
   billingRecipients,
   planLossLines,
   reminderScheduledAt,
+  scheduleMemberAccessEnding,
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
+  sendOwnershipTransferred,
   sendPlanDowngraded,
   sendTrialEnding,
 } from "./billing";
@@ -91,6 +103,30 @@ describe("billing templates", () => {
     );
   });
 
+  test("plan-downgraded after a trial says trial and offers upgrade", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      previousPlan: "team",
+      loss,
+      reason: "trial_ended" as const,
+    };
+    const html = await render(<PlanDowngradedEmail {...props} />);
+    expect(html).toContain("TRIAL");
+    expect(html).toContain("team trial ended without a payment method");
+    expect(html).toContain("team trial → free");
+    expect(html).toContain("Upgrade");
+    expect(html).not.toContain("subscription ended");
+    expect(html).not.toContain("Re-subscribe");
+    expect(planDowngradedSubject(props)).toBe(
+      "Your trial ended — 2 status pages deleted",
+    );
+
+    const cancelled = await render(
+      <PlanDowngradedEmail {...props} reason="trial_cancelled" />,
+    );
+    expect(cancelled).toContain("You cancelled your team trial");
+  });
+
   test("plan-ending-soon is dated and in the future tense", async () => {
     const props = { workspaceSlug: "acme-dev", plan: "team", endsAt, loss };
     const html = await render(<PlanEndingSoonEmail {...props} />);
@@ -102,6 +138,33 @@ describe("billing templates", () => {
     expect(planEndingSoonSubject(props)).toBe(
       "Your team plan ends on 25 Sep — resume to keep everything",
     );
+  });
+
+  test("member-access-ending: dated, names owners, trial vs cancellation", async () => {
+    const props = {
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation" as const,
+      owners: ["max@acme.dev", "thibault@acme.dev"],
+    };
+    const html = await render(<MemberAccessEndingEmail {...props} />);
+    expect(html).toContain("HEADS UP");
+    expect(html).toContain("You lose access to Acme on Friday 25 September");
+    expect(html).toContain("team subscription is cancelled");
+    expect(html).toContain("Fri 25 Sep 2026");
+    expect(html).toContain("max@acme.dev, thibault@acme.dev");
+    expect(html).toContain("you are a member of this workspace");
+    expect(memberAccessEndingSubject(props)).toBe(
+      "Your access to Acme on openstatus ends on 25 Sep",
+    );
+
+    const trial = await render(
+      <MemberAccessEndingEmail {...props} reason="trial" owners={[]} />,
+    );
+    expect(trial).toContain("team trial ends without a payment method");
+    expect(trial).toContain("Ask a workspace owner");
+    expect(trial).not.toContain("Ask to keep it");
   });
 
   test("member-removed: one line, who to ask, no CTA", async () => {
@@ -122,6 +185,27 @@ describe("billing templates", () => {
     );
     expect(manual).toContain("A workspace owner removed you");
     expect(manual).not.toContain("Ask for access");
+  });
+
+  test("ownership-transferred: copy per recipient", async () => {
+    const props = {
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "max@acme.dev",
+    };
+    const toNew = await render(
+      <OwnershipTransferredEmail {...props} recipient="new" />,
+    );
+    expect(toNew).toContain("You are now the owner of Acme");
+    expect(toNew).toContain("Transferred by");
+    expect(toNew).toContain("max@acme.dev");
+
+    const toFormer = await render(
+      <OwnershipTransferredEmail {...props} recipient="former" />,
+    );
+    expect(toFormer).toContain("You transferred ownership of Acme");
+    expect(toFormer).toContain("you are a member");
+    expect(toFormer).toContain("web@acme.dev");
   });
 
   test("cancellation-scheduled is raw: no layout, date, losses, resume link", async () => {
@@ -147,11 +231,58 @@ describe("billing templates", () => {
     expect(bare).not.toContain("moves to the free plan");
   });
 
-  test("trial-ending says what gets removed", async () => {
-    const html = await render(<TrialEndingEmail trialEnd={endsAt} />);
-    expect(html).toContain("Fri 25 Sep 2026");
-    expect(html).toContain("all but one status page are");
-    expect(html).not.toContain("max-width:600px");
+  test("trial-ending without a card lists what gets removed", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      plan: "starter",
+      trialEnd: endsAt,
+      hasPaymentMethod: false,
+      loss,
+    };
+    const html = await render(<TrialEndingEmail {...props} />);
+    expect(trialEndingSubject(props)).toBe(
+      "Your trial ends on 25 Sep — add a payment method to keep starter",
+    );
+    expect(html).toContain("ACTION NEEDED");
+    expect(html).toContain("Your trial ends on Friday 25 September");
+    expect(html).toContain("acme-dev");
+    expect(html).toContain("starter → free");
+    expect(html).toContain("Acme API, Acme EU");
+    expect(html).toContain("Add payment method");
+    expect(html).not.toContain("on file, so");
+  });
+
+  test("trial-ending with a card says the plan continues", async () => {
+    const props = {
+      workspaceSlug: "acme-dev",
+      plan: "starter",
+      trialEnd: endsAt,
+      hasPaymentMethod: true,
+      loss,
+    };
+    const html = await render(<TrialEndingEmail {...props} />);
+    expect(trialEndingSubject(props)).toBe(
+      "Your trial ends on 25 Sep — your starter plan continues",
+    );
+    expect(html).toContain("Nothing to do");
+    expect(html).toContain("starter, continues");
+    expect(html).toContain("Manage subscription");
+    expect(html).not.toContain("Acme API, Acme EU");
+    expect(html).not.toContain("Add payment method");
+  });
+
+  test("trial-ending without a card and nothing to trim", async () => {
+    const html = await render(
+      <TrialEndingEmail
+        workspaceSlug="acme-dev"
+        plan="starter"
+        trialEnd={endsAt}
+        hasPaymentMethod={false}
+        loss={nothing}
+      />,
+    );
+    expect(html).toContain("free plan on that day.");
+    expect(html).not.toContain("trimmed");
   });
 
   test("loss lines use singular forms", () => {
@@ -241,27 +372,39 @@ describe("reminderScheduledAt", () => {
 });
 
 describe("send plumbing", () => {
-  let send: Stub, batch: Stub, cancel: Stub, enabled: Stub;
+  let send: MockInstance,
+    batch: MockInstance,
+    cancel: MockInstance,
+    enabled: MockInstance;
   // safe because the verbs only read `data.id` and `error.name`
   const result = (value: unknown) => Promise.resolve(value as never);
   const ok = { data: { id: "email_123" }, error: null };
 
   beforeEach(() => {
-    enabled = stub(delivery, "enabled", () => true);
-    send = stub(resend.emails, "send", () => result(ok));
-    batch = stub(resend.batch, "send", () => result(ok));
-    cancel = stub(resend.emails, "cancel", () => result(ok));
+    enabled = vi.spyOn(delivery, "enabled").mockImplementation(() => true);
+    send = vi.spyOn(resend.emails, "send").mockImplementation(() => result(ok));
+    batch = vi.spyOn(resend.batch, "send").mockImplementation(() => result(ok));
+    cancel = vi
+      .spyOn(resend.emails, "cancel")
+      .mockImplementation(() => result(ok));
   });
 
   afterEach(() => {
-    for (const s of [enabled, send, batch, cancel]) s.restore();
+    for (const s of [enabled, send, batch, cancel]) s.mockRestore();
   });
 
   const email = {
     from: "a <a@openstatus.dev>",
     to: ["b@example.com"],
     subject: "s",
-    react: <TrialEndingEmail trialEnd={endsAt} />,
+    react: (
+      <TrialEndingEmail
+        workspaceSlug="acme-dev"
+        plan="starter"
+        trialEnd={endsAt}
+        hasPaymentMethod={false}
+      />
+    ),
   };
 
   test("sendEmail forwards idempotencyKey and scheduledAt, returns the id", async () => {
@@ -270,44 +413,131 @@ describe("send plumbing", () => {
       { idempotencyKey: "k", scheduledAt: "2026-09-22T00:00:00.000Z" },
     );
     expect(id).toBe("email_123");
-    expect(send.calls[0].args[0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
-    expect(send.calls[0].args[0].replyTo).toBe("r@openstatus.dev");
-    expect(send.calls[0].args[1]).toEqual({ idempotencyKey: "k" });
+    expect(send.mock.calls[0][0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
+    expect(send.mock.calls[0][0].replyTo).toBe("r@openstatus.dev");
+    expect(send.mock.calls[0][1]).toEqual({ idempotencyKey: "k" });
   });
 
   test("sendEmail omits both when not given", async () => {
     await sendEmail(email);
-    expect("scheduledAt" in send.calls[0].args[0]).toBe(false);
-    expect(send.calls[0].args[1]).toBeUndefined();
+    expect("scheduledAt" in send.mock.calls[0][0]).toBe(false);
+    expect(send.mock.calls[0][1]).toBeUndefined();
   });
 
   test("sendEmail does nothing outside production", async () => {
-    enabled.restore();
-    enabled = stub(delivery, "enabled", () => false);
+    enabled.mockRestore();
+    enabled = vi.spyOn(delivery, "enabled").mockImplementation(() => false);
     expect(await sendEmail(email)).toBeUndefined();
-    assertSpyCalls(send, 0);
+    expect(send).toHaveBeenCalledTimes(0);
   });
 
   test("an idempotency conflict or Resend error never throws", async () => {
     for (const name of ["invalid_idempotent_request", "application_error"]) {
-      send.restore();
-      send = stub(resend.emails, "send", () =>
-        result({ data: null, error: { name } }),
-      );
+      send.mockRestore();
+      send = vi
+        .spyOn(resend.emails, "send")
+        .mockImplementation(() => result({ data: null, error: { name } }));
       expect(await sendEmail(email, { idempotencyKey: "k" })).toBeUndefined();
-      assertSpyCalls(send, 1);
+      expect(send).toHaveBeenCalledTimes(1);
     }
   });
 
   test("cancelScheduledEmail wraps emails.cancel and reports success", async () => {
     expect(await cancelScheduledEmail("email_123")).toBe(true);
-    expect(cancel.calls[0].args[0]).toBe("email_123");
+    expect(cancel.mock.calls[0][0]).toBe("email_123");
 
-    cancel.restore();
-    cancel = stub(resend.emails, "cancel", () =>
-      result({ data: null, error: { name: "application_error" } }),
-    );
+    cancel.mockRestore();
+    cancel = vi
+      .spyOn(resend.emails, "cancel")
+      .mockImplementation(() =>
+        result({ data: null, error: { name: "application_error" } }),
+      );
     expect(await cancelScheduledEmail("email_123")).toBe(false);
+  });
+
+  test("scheduleMemberAccessEnding: 3 days ahead, 50 recipients per email", async () => {
+    const now = new Date(endsAt.getTime() - 10 * 86_400_000);
+    const ids = await scheduleMemberAccessEnding({
+      to: Array.from({ length: 60 }, (_, i) => `m${i}@acme.dev`),
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation",
+      owners: ["max@acme.dev"],
+      now,
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls.map((c) => c[0].to.length)).toEqual([50, 10]);
+    expect(send.mock.calls[0][0].scheduledAt).toBe("2026-09-22T00:00:00.000Z");
+    expect(send.mock.calls[1][1]).toEqual({
+      idempotencyKey: "stripe:evt_1:member-access-ending:1",
+    });
+    expect(ids.length).toBe(2);
+  });
+
+  test("scheduleMemberAccessEnding chunks a stable order across redeliveries", async () => {
+    const req = {
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "trial" as const,
+      owners: [],
+    };
+    await scheduleMemberAccessEnding({
+      ...req,
+      to: ["b@acme.dev", "a@acme.dev"],
+    });
+    await scheduleMemberAccessEnding({
+      ...req,
+      to: ["a@acme.dev", "b@acme.dev"],
+    });
+    expect(send.mock.calls[0][0].to).toEqual(send.mock.calls[1][0].to);
+  });
+
+  test("scheduleMemberAccessEnding inside the lead window sends now, no ids", async () => {
+    const ids = await scheduleMemberAccessEnding({
+      to: ["a@acme.dev"],
+      eventId: "evt_1",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "trial",
+      owners: [],
+      now: new Date(endsAt.getTime() - 86_400_000),
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect("scheduledAt" in send.mock.calls[0][0]).toBe(false);
+    expect(ids).toEqual([]);
+
+    const unscheduled = await scheduleMemberAccessEnding({
+      to: ["a@acme.dev"],
+      eventId: "evt_3",
+      workspaceName: "Acme",
+      plan: "team",
+      endsAt,
+      reason: "cancellation",
+      owners: [],
+      schedule: false,
+      now: new Date(endsAt.getTime() - 10 * 86_400_000),
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect("scheduledAt" in send.mock.calls[1][0]).toBe(false);
+    expect(unscheduled).toEqual([]);
+
+    expect(
+      await scheduleMemberAccessEnding({
+        to: [],
+        eventId: "evt_2",
+        workspaceName: "Acme",
+        plan: "team",
+        endsAt,
+        reason: "trial",
+        owners: [],
+      }),
+    ).toEqual([]);
+    expect(send).toHaveBeenCalledTimes(2);
   });
 
   test("sendMemberRemoved chunks at Resend's 100-email batch limit", async () => {
@@ -318,9 +548,9 @@ describe("send plumbing", () => {
       reason: "downgrade",
       owners: [],
     });
-    assertSpyCalls(batch, 3);
-    expect(batch.calls.map((c) => c.args[0].length)).toEqual([100, 100, 50]);
-    expect(batch.calls.map((c) => c.args[1].idempotencyKey)).toEqual([
+    expect(batch).toHaveBeenCalledTimes(3);
+    expect(batch.mock.calls.map((c) => c[0].length)).toEqual([100, 100, 50]);
+    expect(batch.mock.calls.map((c) => c[1].idempotencyKey)).toEqual([
       "stripe:evt_1:member-removed:0",
       "stripe:evt_1:member-removed:1",
       "stripe:evt_1:member-removed:2",
@@ -328,17 +558,19 @@ describe("send plumbing", () => {
   });
 
   test("a batch error is swallowed, not thrown", async () => {
-    batch.restore();
-    batch = stub(resend.batch, "send", () =>
-      result({ data: null, error: { name: "application_error" } }),
-    );
+    batch.mockRestore();
+    batch = vi
+      .spyOn(resend.batch, "send")
+      .mockImplementation(() =>
+        result({ data: null, error: { name: "application_error" } }),
+      );
     await sendMemberRemoved({
       to: ["a@acme.dev"],
       workspaceName: "Acme",
       reason: "downgrade",
       owners: [],
     });
-    assertSpyCalls(batch, 1);
+    expect(batch).toHaveBeenCalledTimes(1);
   });
 
   test("sendPlanDowngraded", async () => {
@@ -349,10 +581,10 @@ describe("send plumbing", () => {
       previousPlan: "team",
       loss,
     });
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
     expect(payload.to).toEqual(["max@acme.dev"]);
     expect(payload.from).toBe(
-      "Thibault from openstatus <thibault@notifications.openstatus.dev>",
+      "Thibault from openstatus <thibault@mail.openstatus.dev>",
     );
     expect(payload.replyTo).toBe("thibault@openstatus.dev");
     expect(payload.subject).toBe(
@@ -369,13 +601,13 @@ describe("send plumbing", () => {
       reason: "downgrade",
       owners: ["max@acme.dev"],
     });
-    const [emails, options] = batch.calls[0].args;
+    const [emails, options] = batch.mock.calls[0];
     expect(emails.map((e: { to: string }) => e.to)).toEqual([
       "a@acme.dev",
       "b@acme.dev",
     ]);
     expect(emails[0].from).toBe(
-      "openstatus <notifications@notifications.openstatus.dev>",
+      "openstatus <notifications@mail.openstatus.dev>",
     );
     expect(emails[0].replyTo).toBe("ping@openstatus.dev");
     expect(emails[0].subject).toBe(
@@ -387,6 +619,42 @@ describe("send plumbing", () => {
     });
   });
 
+  test("sendOwnershipTransferred sends one mail per person, keyed by recipient", async () => {
+    await sendOwnershipTransferred({
+      idempotencyKey: "ownership:1:42",
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "max@acme.dev",
+      to: { new: "web@acme.dev", former: "max@acme.dev" },
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    const [toNew, newOptions] = send.mock.calls[0];
+    const [toFormer, formerOptions] = send.mock.calls[1];
+    expect(toNew.to).toEqual(["web@acme.dev"]);
+    expect(toNew.subject).toBe("You are now the owner of Acme on openstatus");
+    expect(toNew.replyTo).toBe("ping@openstatus.dev");
+    expect(newOptions).toEqual({ idempotencyKey: "ownership:1:42:new" });
+    expect(toFormer.to).toEqual(["max@acme.dev"]);
+    expect(toFormer.subject).toBe(
+      "You transferred ownership of Acme on openstatus",
+    );
+    expect(formerOptions).toEqual({ idempotencyKey: "ownership:1:42:former" });
+  });
+
+  test("sendOwnershipTransferred skips a person without an address", async () => {
+    await sendOwnershipTransferred({
+      idempotencyKey: "ownership:1:43",
+      workspaceName: "Acme",
+      newOwner: "web@acme.dev",
+      formerOwner: "Max",
+      to: { new: "web@acme.dev", former: null },
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    const [toNew] = send.mock.calls[0];
+    expect(toNew.to).toEqual(["web@acme.dev"]);
+    expect(toNew.react.props.formerOwner).toBe("Max");
+  });
+
   test("sendCancellationScheduled is raw, from the root domain", async () => {
     await sendCancellationScheduled({
       to: ["max@acme.dev"],
@@ -395,7 +663,7 @@ describe("send plumbing", () => {
       endsAt,
       loss,
     });
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
     expect(payload.from).toBe(
       "Thibault from openstatus <thibault@openstatus.dev>",
     );
@@ -416,7 +684,9 @@ describe("send plumbing", () => {
       now: new Date("2026-09-01T00:00:00Z"),
     });
     expect(id).toBe("email_123");
-    const [payload, options] = send.calls[0].args;
+    const [payload, options] = send.mock.calls[0];
+    expect(payload.from).toBe("openstatus <notifications@mail.openstatus.dev>");
+    expect(payload.replyTo).toBe("ping@openstatus.dev");
     expect(payload.scheduledAt).toBe("2026-09-22T00:00:00.000Z");
     expect(options).toEqual({
       idempotencyKey: "stripe:evt_2:plan-ending-soon",
@@ -434,17 +704,25 @@ describe("send plumbing", () => {
       now: new Date("2026-09-01T00:00:00Z"),
     });
     expect(id).toBeUndefined();
-    assertSpyCalls(send, 0);
+    expect(send).toHaveBeenCalledTimes(0);
   });
 
   test("sendTrialEnding", async () => {
     await sendTrialEnding({
       to: ["max@acme.dev"],
       eventId: "evt_3",
+      workspaceSlug: "acme-dev",
       trialEnd: endsAt,
+      plan: "starter",
+      hasPaymentMethod: false,
+      loss,
     });
-    const [payload, options] = send.calls[0].args;
-    expect(payload.subject).toBe("Your openstatus trial ends soon");
+    const [payload, options] = send.mock.calls[0];
+    expect(payload.from).toBe("openstatus <notifications@mail.openstatus.dev>");
+    expect(payload.replyTo).toBe("ping@openstatus.dev");
+    expect(payload.subject).toBe(
+      "Your trial ends on 25 Sep — add a payment method to keep starter",
+    );
     expect(options).toEqual({ idempotencyKey: "stripe:evt_3:trial-ending" });
   });
 
@@ -462,8 +740,15 @@ describe("send plumbing", () => {
       reason: "downgrade",
       owners: [],
     });
-    await sendTrialEnding({ to: [], eventId: "e", trialEnd: endsAt });
-    assertSpyCalls(send, 0);
-    assertSpyCalls(batch, 0);
+    await sendTrialEnding({
+      to: [],
+      eventId: "e",
+      workspaceSlug: "a",
+      trialEnd: endsAt,
+      plan: "starter",
+      hasPaymentMethod: false,
+    });
+    expect(send).toHaveBeenCalledTimes(0);
+    expect(batch).toHaveBeenCalledTimes(0);
   });
 });

@@ -293,8 +293,9 @@ export function FormSubscriber({
                     </FormControl>
                     <FormDescription>
                       <span className="mr-0.5">
-                        Slack and Discord URLs receive channel-native messages;
-                        any other URL receives a generic JSON payload.
+                        Slack, Discord, and Microsoft Teams URLs receive
+                        channel-native messages; any other URL receives a
+                        generic JSON payload.
                       </span>
                       {/^https?:\/\//.test(field.value) ? (
                         <Badge variant="outline" className="capitalize">

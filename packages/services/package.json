@@ -13,17 +13,13 @@
       "import": "./src/status-report/index.ts",
       "types": "./src/status-report/index.ts"
     },
-    "./status-report/utils": {
-      "import": "./src/status-report/utils.ts",
-      "types": "./src/status-report/utils.ts"
-    },
     "./maintenance": {
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
     },
-    "./incident": {
-      "import": "./src/incident/index.ts",
-      "types": "./src/incident/index.ts"
+    "./monitor-incident": {
+      "import": "./src/monitor-incident/index.ts",
+      "types": "./src/monitor-incident/index.ts"
     },
     "./monitor": {
       "import": "./src/monitor/index.ts",
@@ -85,6 +81,10 @@
       "import": "./src/import/index.ts",
       "types": "./src/import/index.ts"
     },
+    "./incident": {
+      "import": "./src/incident/index.ts",
+      "types": "./src/incident/index.ts"
+    },
     "./audit": {
       "import": "./src/audit/index.ts",
       "types": "./src/audit/index.ts"
@@ -112,6 +112,10 @@
     "./private-location": {
       "import": "./src/private-location/index.ts",
       "types": "./src/private-location/index.ts"
+    },
+    "./slack-user": {
+      "import": "./src/slack-user/index.ts",
+      "types": "./src/slack-user/index.ts"
     },
     "./page-access": {
       "import": "./src/page-access/index.ts",
@@ -151,11 +155,12 @@
     }
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
+    "check": "tsc --noEmit",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key vitest run",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@date-fns/tz": "catalog:",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/importers": "workspace:*",
@@ -171,9 +176,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
-    "typescript": "catalog:"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

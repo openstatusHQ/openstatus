@@ -24,6 +24,7 @@ type DNSPrivateRegionData struct {
 	CronTimestamp int64               `json:"cronTimestamp"`
 	Timestamp     int64               `json:"timestamp"`
 	Error         uint8               `json:"error"`
+	Attempts      int                 `json:"attempts"`
 }
 
 func ProtoRecordAssertionToComparator(assertion v1.RecordComparator) (request.RecordComparator, error) {
@@ -171,7 +172,12 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 	// backoff.Retry discards the operation result when the context expires, so
 	// without this the pending failure is lost and no outage is ingested.
 	if err != nil && lastFailure != nil && errors.Is(err, errRetryBudgetExpired) {
+		lastFailure.Attempts = called
 		return lastFailure, nil
+	}
+
+	if data != nil {
+		data.Attempts = called
 	}
 
 	return data, err

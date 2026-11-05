@@ -1,12 +1,27 @@
+import { getLogger } from "@logtape/logtape";
 import { createMiddleware } from "hono/factory";
 
 import type { SlackEnv } from "./config";
+
+const logger = getLogger("api-server");
+
+// Slack retries on a 401 and then disables the subscription, so a secret that
+// doesn't match the app looks like "the bot never answers" — make it loud.
+function logInvalidSignature(path: string) {
+  logger.warn(
+    "slack request rejected: invalid signature — does SLACK_SIGNING_SECRET belong to this Slack app?",
+    { path },
+  );
+}
 
 export const verifySlackSignature = createMiddleware<SlackEnv>(
   async (c, next) => {
     const signingSecret = c.get("slackConfig")?.signingSecret;
 
     if (!signingSecret) {
+      logger.error("slack request rejected: signing secret not configured", {
+        path: c.req.path,
+      });
       return c.json({ error: "Slack not configured" }, 503);
     }
 
@@ -19,6 +34,10 @@ export const verifySlackSignature = createMiddleware<SlackEnv>(
 
     const now = Math.floor(Date.now() / 1000);
     if (Math.abs(now - Number(timestamp)) > 300) {
+      logger.warn("slack request rejected: stale timestamp", {
+        path: c.req.path,
+        skewSeconds: now - Number(timestamp),
+      });
       return c.json({ error: "Request too old" }, 401);
     }
 
@@ -43,6 +62,7 @@ export const verifySlackSignature = createMiddleware<SlackEnv>(
       .join("")}`;
 
     if (computed.length !== signature.length) {
+      logInvalidSignature(c.req.path);
       return c.json({ error: "Invalid signature" }, 401);
     }
 
@@ -53,6 +73,7 @@ export const verifySlackSignature = createMiddleware<SlackEnv>(
       mismatch |= a[i] ^ b[i];
     }
     if (mismatch !== 0) {
+      logInvalidSignature(c.req.path);
       return c.json({ error: "Invalid signature" }, 401);
     }
 

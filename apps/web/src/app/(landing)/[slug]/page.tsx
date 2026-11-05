@@ -16,6 +16,8 @@ import {
 } from "../../../lib/metadata/structured-data";
 
 export const dynamicParams = false;
+// Demos derive "today" from `new Date()`; re-render so their dates keep moving.
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,

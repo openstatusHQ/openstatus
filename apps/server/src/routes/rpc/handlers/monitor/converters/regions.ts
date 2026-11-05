@@ -1,5 +1,5 @@
 import { Region } from "@openstatus/proto/monitor/v1";
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import { AVAILABLE_REGIONS, regionDict } from "@openstatus/regions";
 
 /**
  * Mapping from database region strings to proto Region enum.
@@ -120,5 +120,14 @@ export function validateRegions(regions: string[]): string[] {
   const availableSet = new Set(AVAILABLE_REGIONS);
   return regions.filter(
     (r) => !availableSet.has(r as (typeof AVAILABLE_REGIONS)[number]),
+  );
+}
+
+/**
+ * Return the regions that exist but are deprecated (no longer selectable).
+ */
+export function getDeprecatedRegions(regions: string[]): string[] {
+  return regions.filter(
+    (r) => regionDict[r as keyof typeof regionDict]?.deprecated === true,
   );
 }

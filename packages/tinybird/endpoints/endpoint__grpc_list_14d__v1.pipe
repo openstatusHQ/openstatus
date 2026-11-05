@@ -17,7 +17,8 @@ SELECT
     cronTimestamp,
     monitorId,
     requestStatus,
-    timing
+    timing,
+    attempts
 FROM mv__grpc_full_14d__v0
 WHERE
     monitorId = {{ String(monitorId, '4433', required=True) }}
@@ -41,6 +42,7 @@ WHERE
     {% if regions %} AND region IN {{ Array(regions, 'String') }} {% end %}
     {% if status %} AND requestStatus IN {{ Array(status, 'String') }} {% end %}
     {% if trigger %} AND trigger IN {{ Array(trigger, 'String') }} {% end %}
+    {% if attempts %} AND attempts IN {{ Array(attempts, 'Int16') }} {% end %}
     {% if defined(latencyMin) %} AND latency >= toInt64({{ String(latencyMin) }}) {% end %}
     {% if defined(latencyMax) %} AND latency <= toInt64({{ String(latencyMax) }}) {% end %}
 ORDER BY

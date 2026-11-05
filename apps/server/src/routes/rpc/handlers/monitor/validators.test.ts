@@ -1,7 +1,6 @@
 import { ConnectError } from "@connectrpc/connect";
 import { Periodicity, Region } from "@openstatus/proto/monitor/v1";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { MONITOR_DEFAULTS } from "./converters";
 import {
@@ -151,13 +150,24 @@ describe("validateCommonMonitorFields", () => {
     ).not.toThrow();
   });
 
+  test("rejects deprecated regions", () => {
+    expect(() =>
+      validateCommonMonitorFields({ regions: [Region.FLY_BOM] }),
+    ).toThrow(/Deprecated regions: bom/);
+    expect(() =>
+      validateCommonMonitorFields({
+        regions: [Region.FLY_AMS, Region.FLY_BOM],
+      }),
+    ).toThrow(/Deprecated regions: bom/);
+  });
+
   test("drops an unspecified region instead of rejecting it", () => {
     // Documents current behaviour, which is weaker than it looks:
     // `regionsToStrings` filters unmapped enum values to "", so the
-    // "Invalid regions" error below can never fire on the RPC path —
-    // every proto Region that maps to a non-empty string is in
-    // AVAILABLE_REGIONS. An unknown region is silently dropped and the
-    // monitor is created with fewer regions than the caller asked for.
+    // "Invalid regions" error can never fire on the RPC path — every proto
+    // Region maps either to AVAILABLE_REGIONS or to a deprecated region,
+    // which the deprecation check rejects first. An unknown region is
+    // silently dropped and the monitor is created with fewer regions.
     expect(() =>
       validateCommonMonitorFields({ regions: [Region.UNSPECIFIED] }),
     ).not.toThrow();
@@ -180,8 +190,8 @@ describe("validateMonitorPatchBounds", () => {
       name: "a".repeat(256),
       uri: "b".repeat(2048),
       description: "c".repeat(1024),
-      timeout: BigInt(120_000),
-      degradedAt: BigInt(120_000),
+      timeout: BigInt(300_000),
+      degradedAt: BigInt(300_000),
       retry: BigInt(10),
     });
   });
@@ -202,13 +212,13 @@ describe("validateMonitorPatchBounds", () => {
 
   test("rejects a timeout above the proto maximum", () => {
     expect(() =>
-      validateMonitorPatchBounds({ timeout: BigInt(120_001) }),
+      validateMonitorPatchBounds({ timeout: BigInt(300_001) }),
     ).toThrow(ConnectError);
   });
 
   test("rejects a degradedAt outside its range", () => {
     expect(() =>
-      validateMonitorPatchBounds({ degradedAt: BigInt(120_001) }),
+      validateMonitorPatchBounds({ degradedAt: BigInt(300_001) }),
     ).toThrow(ConnectError);
     expect(() =>
       validateMonitorPatchBounds({ degradedAt: BigInt(-1) }),

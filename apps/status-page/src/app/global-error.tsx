@@ -4,8 +4,8 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
-import { Link } from "../components/common/link";
-
+// Rendered in place of the root layout, so nothing from it (NuqsAdapter, tRPC,
+// theme) exists here — plain anchors only, or this page throws too.
 export default function GlobalError({
   error,
   reset,
@@ -31,8 +31,13 @@ export default function GlobalError({
                   <p className="text-muted-foreground text-sm sm:text-base">
                     An unexpected error occurred. This has been reported and
                     we&apos;re working on it.{" "}
-                    <Link href="mailto:ping@openstatus.dev">Contact us</Link> if
-                    it persists.
+                    <a
+                      href="mailto:ping@openstatus.dev"
+                      className="text-foreground font-medium"
+                    >
+                      Contact us
+                    </a>{" "}
+                    if it persists.
                   </p>
                 </div>
                 <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -45,7 +50,7 @@ export default function GlobalError({
                     Try Again
                   </Button>
                   <Button size="lg" asChild>
-                    <Link href="/">Go Home</Link>
+                    <a href="/">Go Home</a>
                   </Button>
                 </div>
               </div>

@@ -1,0 +1,31 @@
+{{- $libsql := include "openstatus.url" (dict "ctx" $ "component" "libsql" "port" 8080) -}}
+{{- $defaults := dict
+  "DATABASE_URL" $libsql
+  "DB_URL" $libsql
+  "WORKFLOWS_URL" (include "openstatus.url" (dict "ctx" $ "component" "workflows" "port" 3000))
+  "OPENSTATUS_API_URL" (include "openstatus.url" (dict "ctx" $ "component" "server" "port" 3000))
+  "CHECKER_URL" (include "openstatus.url" (dict "ctx" $ "component" "checker" "port" 8080))
+  "NODE_ENV" "production"
+  "SELF_HOST" "true"
+  "FLY_REGION" "self-hosted"
+  "NEXT_PUBLIC_URL" .Values.urls.dashboard
+  "DASHBOARD_URL" .Values.urls.dashboard
+  "OAUTH_ISSUER" .Values.urls.server
+  "RESEND_API_KEY" "re_self_hosted_placeholder"
+  "UPSTASH_REDIS_REST_URL" "http://localhost:6379"
+  "UPSTASH_REDIS_REST_TOKEN" "placeholder"
+  "STRIPE_SECRET_KEY" "sk_self_hosted_placeholder"
+-}}
+{{- if .Values.tinybird.enabled -}}
+{{- $_ := set $defaults "TINYBIRD_URL" (include "openstatus.url" (dict "ctx" $ "component" "tinybird-local" "port" 7181)) -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openstatus.fullname" . }}-env
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+data:
+  {{- range $k, $v := merge (deepCopy .Values.env) $defaults }}
+  {{ $k }}: {{ $v | toString | quote }}
+  {{- end }}

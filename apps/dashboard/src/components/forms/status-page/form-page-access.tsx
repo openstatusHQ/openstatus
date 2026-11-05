@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import {
   ApiKey,
   Lock,
@@ -87,6 +88,13 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const ACCESS_TYPE_LIMIT = {
+  public: undefined,
+  password: "password-protection",
+  "email-domain": "email-domain-protection",
+  "ip-restriction": "ip-restriction",
+} satisfies Record<z.infer<typeof accessTypeSchema>, keyof Limits | undefined>;
 
 export function FormPageAccess({
   lockedMap,
@@ -211,14 +219,14 @@ export function FormPageAccess({
             <FormCardSeparator />
           ) : null}
           {watchAccessType === "password" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="password"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -234,14 +242,14 @@ export function FormPageAccess({
             </FormCardContent>
           ) : null}
           {watchAccessType === "email-domain" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="authEmailDomains"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Email Domains</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -258,14 +266,14 @@ export function FormPageAccess({
             </FormCardContent>
           ) : null}
           {watchAccessType === "ip-restriction" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="allowedIpRanges"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Allowed IP Ranges</FormLabel>
                     <FormControl>
                       <Input
@@ -325,7 +333,12 @@ export function FormPageAccess({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
+              <Button
+                data-track="paywall_viewed"
+                data-limit={ACCESS_TYPE_LIMIT[watchAccessType]}
+                type="button"
+                asChild
+              >
                 <Link href="/settings/billing">
                   <Lock />
                   Upgrade

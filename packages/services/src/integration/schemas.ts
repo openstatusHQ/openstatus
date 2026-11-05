@@ -23,3 +23,6 @@ export const InstallSlackAgentInputSchema = z.object({
 export type InstallSlackAgentInput = z.infer<
   typeof InstallSlackAgentInputSchema
 >;
+
+export const UninstallSlackTeamInput = z.object({ teamId: z.string().min(1) });
+export type UninstallSlackTeamInput = z.infer<typeof UninstallSlackTeamInput>;

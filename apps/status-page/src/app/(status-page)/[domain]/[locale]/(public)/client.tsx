@@ -31,6 +31,7 @@ import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { Link } from "../../../../../components/common/link";
+import { StatusBlocksProvider } from "../../../../../components/i18n/status-blocks-provider";
 import { useStatusPage } from "../../../../../components/status-page/floating-button";
 import {
   StatusBanner,
@@ -253,6 +254,14 @@ export function Client() {
                     (maintenance) => maintenance.id === e.id,
                   );
                   if (!maintenance) return null;
+                  // banner shows only the newest update; the block renders a
+                  // single update as the body under the title
+                  const lastUpdate = [
+                    ...(maintenance.maintenanceUpdates ?? []),
+                  ].sort(
+                    (a, b) =>
+                      b.date.getTime() - a.date.getTime() || b.id - a.id,
+                  )[0];
                   return (
                     <StatusBannerTabsContent
                       value={`${e.type}-${e.id}`}
@@ -266,7 +275,12 @@ export function Client() {
                         <StatusBannerContainer status={e.status}>
                           <StatusBannerContent>
                             <StatusEventTimelineMaintenance
-                              maintenance={maintenance}
+                              maintenance={{
+                                ...maintenance,
+                                maintenanceUpdates: lastUpdate
+                                  ? [lastUpdate]
+                                  : [],
+                              }}
                               withDot={false}
                             />
                             {maintenance.maintenancesToPageComponents.length >
@@ -318,7 +332,7 @@ export function Client() {
                 const uptimeRow = uptimeData?.find(
                   (u) => u.pageComponentId === component.id,
                 );
-                const { data, uptime } = uptimeRow ?? {};
+                const { data, uptime, timeZone } = uptimeRow ?? {};
 
                 return (
                   <ComponentCard
@@ -328,6 +342,7 @@ export function Client() {
                     status={component.status}
                     data={data}
                     uptime={uptime}
+                    timeZone={timeZone}
                     showUptime={showUptime}
                     isLoading={isLoading}
                     latency={buildLatency(uptimeRow)}
@@ -346,7 +361,7 @@ export function Client() {
                     const uptimeRow = uptimeData?.find(
                       (u) => u.pageComponentId === component.id,
                     );
-                    const { data, uptime } = uptimeRow ?? {};
+                    const { data, uptime, timeZone } = uptimeRow ?? {};
 
                     return (
                       <ComponentCard
@@ -356,6 +371,7 @@ export function Client() {
                         status={component.status}
                         data={data}
                         uptime={uptime}
+                        timeZone={timeZone}
                         showUptime={showUptime}
                         isLoading={isLoading}
                         latency={buildLatency(uptimeRow)}
@@ -414,6 +430,7 @@ function ComponentCard({
   status,
   data,
   uptime,
+  timeZone,
   showUptime,
   isLoading,
   latency,
@@ -423,6 +440,8 @@ function ComponentCard({
   status: "success" | "degraded" | "error" | "info";
   data?: ComponentCardData;
   uptime?: string;
+  /** The zone the bars' days are grouped in. */
+  timeZone?: string;
   showUptime?: boolean;
   isLoading?: boolean;
   latency?: { label: string; isLoading: boolean; value?: string; href: string };
@@ -468,10 +487,12 @@ function ComponentCard({
           )}
         </StatusComponentHeaderRight>
       </StatusComponentHeader>
-      <StatusComponentBody>
-        {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data ?? []} />}
-        <StatusComponentFooter data={data ?? []} isLoading={isLoading} />
-      </StatusComponentBody>
+      <StatusBlocksProvider timezone={timeZone}>
+        <StatusComponentBody>
+          {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data ?? []} />}
+          <StatusComponentFooter data={data ?? []} isLoading={isLoading} />
+        </StatusComponentBody>
+      </StatusBlocksProvider>
     </StatusComponent>
   );
 }

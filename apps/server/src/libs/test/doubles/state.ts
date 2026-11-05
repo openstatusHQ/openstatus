@@ -1,22 +1,22 @@
 // Shared test-double state, set on globalThis so tests can assert on spies and
 // configure mock data — same interface the old bun `mock.module` preload
 // exposed. Imported (for side effect) by every double module below.
-import { mock } from "@openstatus/test-utils";
+import { vi, type Mock } from "vitest";
 
 type Mut = Record<string, unknown>;
 const g = globalThis as Mut;
 
 if (!g.__subscriptionSpies) {
-  const sendVerification = mock(() => Promise.resolve());
+  const sendVerification = vi.fn(() => Promise.resolve());
   g.__subscriptionSpies = {
-    dispatchStatusReportUpdate: mock(() => Promise.resolve()),
-    dispatchMaintenanceUpdate: mock(() => Promise.resolve()),
+    dispatchStatusReportUpdate: vi.fn(() => Promise.resolve()),
+    dispatchMaintenanceUpdate: vi.fn(() => Promise.resolve()),
     sendVerification,
     getChannel: {
       id: "email",
       sendVerification,
-      sendNotifications: mock(() => Promise.resolve()),
-      validateConfig: mock(() => Promise.resolve({ valid: true })),
+      sendNotifications: vi.fn(() => Promise.resolve()),
+      validateConfig: vi.fn(() => Promise.resolve({ valid: true })),
     },
   };
 }
@@ -33,9 +33,9 @@ if (!g.__tinybirdMockCalls) {
 }
 
 export const subscriptionSpies = g.__subscriptionSpies as {
-  dispatchStatusReportUpdate: ReturnType<typeof mock>;
-  dispatchMaintenanceUpdate: ReturnType<typeof mock>;
-  sendVerification: ReturnType<typeof mock>;
+  dispatchStatusReportUpdate: Mock;
+  dispatchMaintenanceUpdate: Mock;
+  sendVerification: Mock;
   getChannel: Record<string, unknown>;
 };
 export const testRedisStore = g.__testRedisStore as Map<string, string>;

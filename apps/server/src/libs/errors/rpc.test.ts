@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { errorFromJson } from "@connectrpc/connect/protocol-connect";
@@ -7,8 +9,7 @@ import {
   ErrorInfoSchema,
   RetryInfoSchema,
 } from "@openstatus/proto/google/rpc";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   ERROR_CODE_TO_CONNECT,
@@ -290,11 +291,12 @@ function headingSlug(text: string): string {
 }
 
 describe("docs page stays in sync", () => {
-  const page = Deno.readTextFileSync(
+  const page = readFileSync(
     new URL(
       "../../../../web/src/content/pages/docs/reference/api-errors.mdx",
       import.meta.url,
     ),
+    "utf8",
   );
   const headings = page
     .split("\n")

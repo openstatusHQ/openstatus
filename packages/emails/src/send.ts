@@ -31,6 +31,8 @@ export interface SendOptions {
   idempotencyKey?: string;
   /** ISO 8601. Resend schedules at most 30 days out. */
   scheduledAt?: string;
+  /** Throw instead of logging, so a webhook caller fails and gets redelivered. */
+  throwOnError?: boolean;
 }
 
 /** Returns the Resend email id, or undefined when nothing was sent. */
@@ -49,6 +51,11 @@ export const sendEmail = async (
   );
   // Same key, different body: the first send already went out.
   if (error && error.name !== "invalid_idempotent_request") {
+    if (opts.throwOnError) {
+      throw new Error(
+        `Error sending email "${email.subject}": ${error.message}`,
+      );
+    }
     console.error(`Error sending email "${email.subject}":`, error);
   }
   return data?.id;

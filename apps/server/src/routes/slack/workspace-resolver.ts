@@ -1,15 +1,31 @@
-import { and, db, desc, eq } from "@openstatus/db";
+import { and, db, desc, eq, sql } from "@openstatus/db";
 import {
   integration,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import { z } from "zod";
+
+const integrationDataSchema = z.object({ scopes: z.string().optional() });
 
 export interface SlackWorkspace {
   workspace: Workspace;
   botToken: string;
   botUserId: string;
+  /** Comma list Slack granted at install; missing scopes mean "reconnect". */
+  scopes?: string;
+}
+
+function parseScopes(raw: string | null): string {
+  try {
+    return (
+      integrationDataSchema.safeParse(JSON.parse(raw ?? "{}")).data?.scopes ??
+      ""
+    );
+  } catch {
+    return "";
+  }
 }
 
 interface IntegrationCredential {
@@ -24,6 +40,8 @@ export async function resolveWorkspace(
     .select({
       workspaceId: integration.workspaceId,
       credential: integration.credential,
+      // Raw text: the JSON-mode column throws on a malformed legacy row.
+      rawData: sql<string | null>`${integration.data}`,
     })
     .from(integration)
     .where(
@@ -58,5 +76,6 @@ export async function resolveWorkspace(
     workspace: parsed.data,
     botToken: credential.botToken,
     botUserId: credential.botUserId ?? "",
+    scopes: parseScopes(row.rawData),
   };
 }

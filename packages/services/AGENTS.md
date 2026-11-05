@@ -18,8 +18,13 @@ failed. Do not "fix" it by routing it through a verb.
   import from `@openstatus/services/<entity>`.
 - **Signature:** `async function verbEntity(args: { ctx: ServiceContext; input: VerbInput })`.
   `ctx` carries `workspace`, `actor`, and an optional `db`/transaction.
-- **`requireScope(ctx, "write")` is the first line of every write verb** —
-  before `Input.parse(...)`, before `withTransaction`.
+- **`requireScope(ctx, "<group>:write")` is the first line of every write
+  verb** — before `Input.parse(...)`, before `withTransaction`. Exported read
+  verbs (`list*`, `get*`, `search*`, `stream*`, `preview*`) open with
+  `requireScope(ctx, "<group>:read")`, unless they probe or send, which makes
+  them writes whatever the name (`streamMonitorPreview` requires
+  `monitors:write`); admin verbs with `requireScope(ctx, "admin")`. Lint
+  checks the group against the folder.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
@@ -39,6 +44,11 @@ Fail-closed: a failed audit insert rolls the mutation back.
 - **Strip secrets from snapshots** — credentials, bot tokens, raw API keys.
 - Action names are `{entity}.{verb}`; new variants go in the discriminated union
   at `packages/db/src/schema/audit_logs/validation.ts`.
+- An entity type the dashboard can show also gets an `entityKinds` entry in
+  `apps/dashboard/src/data/entity-refs.client.ts`. Its `auditType` resolves the
+  audit row's entity cell; its `fields` resolve diff fields by name. These are
+  separate: list every `*Id`/`*Ids` field, or diffs show raw ids. A new `*Id`/`*Ids` field in an agent-tool schema fails
+  `entity-refs.coverage.test.ts` until it is mapped there or listed as not a ref.
 
 A missing `emitAudit` or `requireScope` is a defect, not a style nit. Both are
 lint-enforced; if a verb genuinely needs neither, the inline disable must carry
@@ -46,9 +56,24 @@ a reason.
 
 ## Scope enforcement
 
-API keys carry `read` / `write` scopes. "Write" means any DB mutation **or**
-side-effecting external call (probe, webhook, notification); everything else is
-read. `requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
+`SCOPES.md` at the repo root lists every scope value and which verbs, routes and tools require which.
+
+Verbs require a group scope, `<group>:read` or `<group>:write`, where the
+group is one of `monitors` (monitor, monitor-tag, private-location,
+monitor-incident, frozen-uptime), `pages` (page, page-component,
+page-component-group, import), `incidents` (status-report, incident,
+maintenance), `notifications` and `subscribers` (page-subscriber). Workspace,
+billing, members, invitations, API keys, OAuth, SSO and integrations require
+`admin`, which only the internal `*` token satisfies. "Write" means any DB
+mutation **or** side-effecting external call (probe, webhook, notification);
+everything else is read. `<g>:write` covers `<g>:read`.
+
+Credentials still hold the legacy umbrellas: `write` covers every group scope,
+`read` covers every `<group>:read`. Never require a
+bare `read` / `write` in a verb — `matchesScope` in `src/auth` is the one
+place that knows what the umbrellas expand to, and lint rejects the literals.
+
+`requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
 `subscriber` actors and active for `apiKey` and `mcp`. MCP tools declare
 `scope` and register through `registerScopedTool`, so read-only keys never see
 write tools.
@@ -64,10 +89,10 @@ request inside their own workspace.
 
 ## Runtime constraints
 
-- **No `node:*` imports.** `apps/workflows` runs this code on Deno, and the
-  package is written to stay Edge-safe so a Next.js route can adopt it without a
-  rewrite — no Edge route imports it today. That is why `deepEqual` is
-  hand-rolled rather than pulled from `node:util`.
+- **No `node:*` imports.** The package is written to stay Edge-safe so a
+  Next.js route can adopt it without a rewrite — no Edge route imports it
+  today. That is why `deepEqual` is hand-rolled rather than pulled from
+  `node:util`.
 - **No logtape here.** It breaks Edge builds; use `console.warn`.
 
 ## Query plans

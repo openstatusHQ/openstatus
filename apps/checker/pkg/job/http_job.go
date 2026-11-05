@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
@@ -74,23 +73,8 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		retry = 3
 	}
 
-	requestClient := &http.Client{
-		Timeout: time.Duration(monitor.Timeout) * time.Millisecond,
-	}
+	requestClient := checker.NewHTTPClient(time.Duration(monitor.Timeout)*time.Millisecond, monitor.FollowRedirects)
 	defer requestClient.CloseIdleConnections()
-
-	if !monitor.FollowRedirects {
-		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-	} else {
-		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 10 {
-				return http.ErrUseLastResponse
-			}
-			return nil
-		}
-	}
 
 	var degradedAfter int64
 	if monitor.DegradedAt != nil {
@@ -129,6 +113,12 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		req.OtelConfig.Headers = headersToMap(otelCfg.GetHeaders())
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("error while generating uuid: %w", err)
+	}
+	req.RequestID = id.String()
+
 	var called int
 	var lastRes checker.Response
 
@@ -148,11 +138,6 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		if err != nil {
 			return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 		}
-		id, err := uuid.NewV7()
-		if err != nil {
-			return nil, fmt.Errorf("error while generating uuid: %w", err)
-		}
-
 		status := statusCode(res.Status)
 		// Only use default 2xx check if no status assertions exist
 		// If status assertions are configured, let them determine success
@@ -218,7 +203,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		}
 
 		data := HttpPrivateRegionData{
-			ID:            id.String(),
+			ID:            req.RequestID,
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
 			Timestamp:     res.Timestamp,
@@ -263,5 +248,6 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 	if err != nil {
 		return nil, err
 	}
+	resp.Attempts = called
 	return resp, nil
 }

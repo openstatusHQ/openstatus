@@ -1,8 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { Workspace } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { toServiceCtx } from "./adapter";
 import { PUBLIC_RESOURCES, readPublicResource } from "./resources";
@@ -16,6 +15,14 @@ afterEach(() => {
 
 function stubFetch(impl: () => Promise<Response>) {
   globalThis.fetch = impl as unknown as typeof fetch;
+}
+
+// Fails on a missing or non-string `text` instead of coercing it to "undefined".
+function textOf(result: { contents: object[] }): string {
+  const first = result.contents[0];
+  const text = first && "text" in first ? first.text : undefined;
+  expect(text).toBeTypeOf("string");
+  return text as string;
 }
 
 describe("public MCP resources", () => {
@@ -45,7 +52,7 @@ describe("public MCP resources", () => {
     stubFetch(() => Promise.reject(new Error("network down")));
     for (const resource of PUBLIC_RESOURCES) {
       const result = await readPublicResource(resource);
-      expect(String(result.contents[0].text).length).toBeGreaterThan(0);
+      expect(textOf(result).length).toBeGreaterThan(0);
     }
   });
 
@@ -55,13 +62,13 @@ describe("public MCP resources", () => {
 
     stubFetch(() => Promise.resolve(new Response("   ")));
     const blank = await readPublicResource(remote);
-    expect(String(blank.contents[0].text).trim().length).toBeGreaterThan(0);
+    expect(textOf(blank).trim().length).toBeGreaterThan(0);
 
     stubFetch(() =>
       Promise.resolve(new Response("not found", { status: 404 })),
     );
     const missing = await readPublicResource(remote);
-    expect(String(missing.contents[0].text).trim().length).toBeGreaterThan(0);
+    expect(textOf(missing).trim().length).toBeGreaterThan(0);
   });
 
   test("serves the fetched document when it resolves", async () => {
@@ -72,7 +79,7 @@ describe("public MCP resources", () => {
 
     stubFetch(() => Promise.resolve(new Response("# MCP server\n\nlive copy")));
     const result = await readPublicResource(remote);
-    expect(result.contents[0].text).toContain("live copy");
+    expect(textOf(result)).toContain("live copy");
   });
 
   test("ships the OpenAPI document without a network call", async () => {
@@ -83,7 +90,7 @@ describe("public MCP resources", () => {
     if (!spec) throw new Error("openapi resource missing");
 
     const result = await readPublicResource(spec);
-    const parsed = JSON.parse(String(result.contents[0].text));
+    const parsed = JSON.parse(textOf(result));
     expect(parsed.openapi).toBe("3.1.0");
     expect(parsed.servers[0].url).toBe("https://api.openstatus.dev");
   });
@@ -155,7 +162,7 @@ describe("public MCP documents over the transport", () => {
     try {
       for (const resource of PUBLIC_RESOURCES) {
         const result = await client.readResource({ uri: resource.uri });
-        expect(String(result.contents[0].text).length).toBeGreaterThan(0);
+        expect(textOf(result).length).toBeGreaterThan(0);
       }
     } finally {
       await close();

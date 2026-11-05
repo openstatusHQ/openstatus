@@ -1,7 +1,11 @@
 import { eq } from "@openstatus/db";
-import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import {
+  frozenMonitorUptime,
+  monitor,
+  monitorJobTypes,
+} from "@openstatus/db/src/schema";
+import type { OSTinybird } from "@openstatus/tinybird";
+import { describe, expect, test } from "vitest";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { withTestTransaction } from "../../../test/helpers";
@@ -11,6 +15,7 @@ import {
   type UptimeFreezePipes,
   fetchFreezeCounts,
   runUptimeFreeze,
+  uptimeFreezePipes,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
@@ -34,6 +39,7 @@ function makePipes(
     dns: overrides.dns ?? fallback,
     icmp: overrides.icmp ?? fallback,
     grpc: overrides.grpc ?? fallback,
+    heartbeat: overrides.heartbeat ?? fallback,
   };
 }
 
@@ -59,6 +65,26 @@ function insertTestMonitor(
     .returning()
     .get();
 }
+
+describe("uptimeFreezePipes", () => {
+  test("covers every monitor job type except udp and ssl", () => {
+    // safe because uptimeFreezePipes only reads pipe getters off the client
+    const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
+    const pipes = uptimeFreezePipes(tb);
+
+    expect(Object.keys(pipes).sort()).toEqual(
+      monitorJobTypes.filter((t) => t !== "udp" && t !== "ssl").sort(),
+    );
+    expect(pipes).toEqual({
+      http: "httpStatus45d",
+      tcp: "tcpStatus45d",
+      dns: "dnsStatus45d",
+      icmp: "icmpStatus45d",
+      grpc: "grpcStatus45d",
+      heartbeat: "heartbeatStatus45d",
+    });
+  });
+});
 
 describe("fetchFreezeCounts", () => {
   test("chunks ids and concatenates rows", async () => {

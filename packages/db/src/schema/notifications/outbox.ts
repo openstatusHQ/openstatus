@@ -7,7 +7,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-import { incidentTable } from "../incidents/incident";
+import { monitorIncidentTable } from "../monitor_incidents/monitor_incident";
 import { monitorStatus } from "../monitors/constants";
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
@@ -52,9 +52,12 @@ export const notificationOutbox = sqliteTable(
     fromStatus: text("from_status", { enum: monitorStatus }).notNull(),
     toStatus: text("to_status", { enum: monitorStatus }).notNull(),
     cronTimestamp: integer("cron_timestamp").notNull(),
-    incidentId: integer("incident_id").references(() => incidentTable.id, {
-      onDelete: "set null",
-    }),
+    incidentId: integer("incident_id").references(
+      () => monitorIncidentTable.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     payload: text("payload", { mode: "json" })
       .$type<NotificationOutboxPayload>()
       .notNull(),
@@ -134,9 +137,9 @@ export const notificationOutboxRelations = relations(
       fields: [notificationOutbox.notificationId],
       references: [notification.id],
     }),
-    incident: one(incidentTable, {
+    incident: one(monitorIncidentTable, {
       fields: [notificationOutbox.incidentId],
-      references: [incidentTable.id],
+      references: [monitorIncidentTable.id],
     }),
   }),
 );

@@ -8,37 +8,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
-import { getActions } from "@/data/status-pages.client";
+import { getActions, getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const pathname = usePathname();
 
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-
-  const deleteStatusPageMutation = useMutation(
-    trpc.page.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.page.list.queryKey(),
-        });
-        if (pathname.includes(`/status-pages/${id}`)) {
-          router.push("/status-pages");
-        }
-      },
-    }),
   );
 
   const actions = getActions({
@@ -58,13 +43,7 @@ export function NavActions() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
-              <a
-                href={`https://${
-                  statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-                }`}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a href={getPageUrl(statusPage)} target="_blank" rel="noreferrer">
                 <Globe className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>
@@ -72,17 +51,8 @@ export function NavActions() {
           <TooltipContent>View Page</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <QuickActions
-        actions={actions}
-        deleteAction={{
-          confirmationValue: statusPage.title ?? "status page",
-          submitAction: async () => {
-            await deleteStatusPageMutation.mutateAsync({
-              id: Number.parseInt(id),
-            });
-          },
-        }}
-      />
+      {/* no delete up here: on a nested page the bar belongs to the parent */}
+      <QuickActions actions={actions} />
     </div>
   );
 }

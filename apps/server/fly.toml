@@ -6,6 +6,10 @@
 app = "openstatus-api"
 primary_region = "ams"
 
+# serve.ts drains in-flight requests on SIGTERM; Fly defaults to SIGINT.
+kill_signal = "SIGTERM"
+kill_timeout = "30s"
+
 
 [build]
   dockerfile = "./Dockerfile"

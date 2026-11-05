@@ -149,6 +149,9 @@ func TestDNSJob_LookupFailureIsReportedWhenRetryBudgetExpires(t *testing.T) {
 	if data.Message == "" {
 		t.Errorf("expected a failure message to forward to the platform")
 	}
+	if data.Attempts < 1 {
+		t.Errorf("expected at least one attempt recorded, got %d", data.Attempts)
+	}
 }
 
 // A cancelled parent is us shutting down, not an outage — it must not be

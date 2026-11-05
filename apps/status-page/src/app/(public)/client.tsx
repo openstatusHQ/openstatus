@@ -1,5 +1,6 @@
 "use client";
 
+import { Sidebar as SidebarIcon } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { StatusBanner } from "@openstatus/ui/components/blocks/status-banner";
 import {
@@ -37,10 +38,18 @@ import {
 } from "../../components/content/section";
 import { recomputeStyles } from "../../components/status-page/floating-button";
 import { StatusComponentStatic } from "../../components/status-page/static/status-component-static";
+import { ThemePromptButton } from "../../components/themes/theme-agent-actions";
+import { useThemeBuilder } from "../../components/themes/theme-builder-provider";
 import { ThemePalettePicker } from "../../components/themes/theme-palette-picker";
+import { ThemePasteDialog } from "../../components/themes/theme-paste-dialog";
 import { ThemeSelect } from "../../components/themes/theme-select";
 import { monitors } from "../../data/monitors";
 import { defaultLocale } from "../../i18n/config";
+import { clearThemeDraft, saveThemeDraft } from "../../lib/theme-draft";
+import {
+  THEME_SKILL_INSTALL_COMMAND,
+  THEME_SKILL_URL,
+} from "../../lib/theme-prompt";
 import { useTRPC } from "../../lib/trpc/client";
 import { searchParamsParsers } from "./search-params";
 
@@ -60,6 +69,7 @@ export function Client() {
   const [{ q, t }, setSearchParams] = useQueryStates(searchParamsParsers);
   const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
   const { toggleSidebar } = useSidebar();
+  const builder = useThemeBuilder();
 
   useEffect(() => {
     setIsMounted(true);
@@ -218,42 +228,63 @@ export function Client() {
         </SectionHeader>
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <p>
-            You can contribute your own theme by creating a new file in the{" "}
-            <code>@openstatus/theme-store</code> package. You&apos;ll only need
-            to override css variables. If you are familiar with shadcn, you'll
-            know the trick (it also allows you to override `--radius`). Make
-            sure your object is satisfying the <code>Theme</code> interface. We
-            provide a theme builder to help you with the process.
+            A theme is a set of CSS variable overrides for light and dark mode
+            in the <code>@openstatus/theme-store</code> package. If you are
+            familiar with shadcn, you know the trick (it also lets you override{" "}
+            <code>--radius</code>). Three ways to get one:
           </p>
-          <Button onClick={toggleSidebar}>Toggle Theme Builder</Button>
+          <ul>
+            <li>
+              <strong>Build it</strong> in the theme builder and copy it as a
+              TypeScript file, JSON or CSS.
+            </li>
+            <li>
+              <strong>Let your agent design it.</strong> Copy the prompt from
+              the builder, or install the{" "}
+              <Link href={THEME_SKILL_URL}>openstatus-theme skill</Link> with{" "}
+              <code>{THEME_SKILL_INSTALL_COMMAND}</code>. Paste the reply into
+              the builder to preview it.
+            </li>
+            <li>
+              <strong>Write it by hand</strong> following the existing themes in
+              the{" "}
+              <Link href="https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store">
+                GitHub directory
+              </Link>
+              .
+            </li>
+          </ul>
+          <div className="flex flex-wrap gap-2">
+            <ThemePromptButton variant="default" />
+            <ThemePasteDialog variant="outline" />
+            <Button variant="outline" onClick={toggleSidebar}>
+              <SidebarIcon className="size-4" />
+              Toggle Sidebar
+            </Button>
+          </div>
           <p>
-            Go to the{" "}
-            <Link href="https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store">
-              GitHub directory
-            </Link>{" "}
-            to see the existing themes and create a new one by forking and
-            creating a pull request.
-          </p>
-          <p>
-            Once you're done, you can test it by adding the following snippet to
-            your status page:
-          </p>
-          <pre>
-            <code>sessionStorage.setItem("community-theme", "true");</code>
-          </pre>
-          <p>
-            Or use the following button to test it on the `status` page slug:
+            Preview the theme from the builder on a full status page (the{" "}
+            <code>status</code> slug). Unchanged themes open the community theme
+            switcher instead:
           </p>
           <Button
             onClick={() => {
               // NOTE: we use it to display the 'floating-theme' component
               sessionStorage.setItem("community-theme", "true");
+              if (builder.isModified) saveThemeDraft(builder.theme);
+              else clearThemeDraft();
               window.location.href = `/status/${defaultLocale}`;
             }}
           >
             Test it
           </Button>
-          {/* TODO: OR go to the status-page config and click on the View and Configure button */}
+          <p>
+            Once you are happy, copy the TypeScript file into{" "}
+            <code>packages/theme-store/src</code>, register it in{" "}
+            <code>index.ts</code> and open a pull request. Or paste the CSS
+            variables into your own status page&apos;s custom theme in the
+            dashboard, no pull request needed.
+          </p>
         </div>
       </Section>
       <Separator />

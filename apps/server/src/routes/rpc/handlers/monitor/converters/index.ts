@@ -51,6 +51,8 @@ export {
   dbMonitorToDnsProto,
   dbMonitorToGrpcProto,
   dbMonitorToIcmpProto,
+  dbMonitorToHeartbeatProto,
+  type HeartbeatLastPing,
 } from "./monitors";
 
 // Regions
@@ -61,4 +63,5 @@ export {
   regionsToStrings,
   regionsToDbString,
   validateRegions,
+  getDeprecatedRegions,
 } from "./regions";

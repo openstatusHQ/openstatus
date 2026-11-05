@@ -5,6 +5,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -25,6 +26,7 @@ export function NavOverview({
     name: string;
     url: string;
     icon: IconType;
+    badge?: string;
   }[];
 }) {
   const pathname = usePathname();
@@ -53,6 +55,11 @@ export function NavOverview({
                 <span>{item.name}</span>
               </Link>
             </SidebarMenuButton>
+            {item.badge ? (
+              <SidebarMenuBadge className="font-commit-mono text-muted-foreground">
+                {item.badge}
+              </SidebarMenuBadge>
+            ) : null}
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

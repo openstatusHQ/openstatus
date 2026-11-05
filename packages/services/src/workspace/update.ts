@@ -1,7 +1,6 @@
 import { and, eq, isNull } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
 import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
-import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -23,7 +22,7 @@ export async function updateWorkspaceName(args: {
   input: UpdateWorkspaceNameInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspaceNameInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -66,7 +65,7 @@ export async function updateWorkspacePlan(args: {
   input: UpdateWorkspacePlanInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspacePlanInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -87,7 +86,9 @@ export async function updateWorkspacePlan(args: {
         ...(input.trialEndsAt !== undefined && {
           trialEndsAt: input.trialEndsAt,
         }),
-        limits: JSON.stringify(input.limits),
+        ...(input.limits !== undefined && {
+          limits: JSON.stringify(input.limits),
+        }),
         updatedAt: new Date(),
       })
       .where(eq(workspace.id, ctx.workspace.id))
@@ -124,7 +125,7 @@ export async function updateWorkspaceStripeId(args: {
   input: UpdateWorkspaceStripeIdInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspaceStripeIdInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -170,7 +171,7 @@ export async function updateWorkspaceLimits(args: {
   input: UpdateWorkspaceLimitsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspaceLimitsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -181,11 +182,12 @@ export async function updateWorkspaceLimits(args: {
       .get();
     if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
 
-    const limits = updateAddonInLimits(
-      limitsSchema.parse(JSON.parse(existing.limits)),
-      input.addon,
-      input.value,
-    );
+    // Only the addon is written. Parsing the whole blob would store every
+    // missing key as its free value, which then overrides the plan on read.
+    const limits = {
+      ...JSON.parse(existing.limits),
+      [input.addon]: limitsSchema.shape[input.addon].parse(input.value),
+    };
 
     const updated = await tx
       .update(workspace)

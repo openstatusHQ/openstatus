@@ -102,12 +102,12 @@ export function FormCustomDomain({
               Use your own domain for your status page.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="domain"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <Label>Domain</Label>
                   <InputGroup>
                     <InputGroupAddon align="inline-start">
@@ -145,7 +145,12 @@ export function FormCustomDomain({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
+              <Button
+                data-track="paywall_viewed"
+                data-limit="custom-domain"
+                type="button"
+                asChild
+              >
                 <Link href="/settings/billing">
                   <Lock />
                   Upgrade

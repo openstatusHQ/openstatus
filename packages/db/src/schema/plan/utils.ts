@@ -86,16 +86,24 @@ export function getAddonMaxQuantity(addon: keyof Addons): number | null {
   return getAddonQuantityConfig(addon)?.maxQuantity ?? null;
 }
 
+// Yearly addon prices in Stripe are the monthly price ×10 — the same "2 months
+// free" as the plans — so they are derived rather than stored per addon.
+export const YEARLY_ADDON_MULTIPLIER = 10;
+
 export function getAddonPriceConfig(
   plan: WorkspacePlan,
   addon: keyof Addons,
   currency?: string,
+  interval: BillingInterval = "monthly",
 ) {
   const addonConfig = allPlans[plan].addons[addon];
   if (!addonConfig) {
     return null;
   }
-  return resolvePriceConfig(addonConfig.price, currency);
+  const price = resolvePriceConfig(addonConfig.price, currency);
+  return interval === "yearly"
+    ? { ...price, value: price.value * YEARLY_ADDON_MULTIPLIER }
+    : price;
 }
 
 export function getPlansForLimit(

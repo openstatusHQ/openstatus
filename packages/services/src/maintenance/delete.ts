@@ -13,7 +13,7 @@ export async function deleteMaintenance(args: {
   input: DeleteMaintenanceInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = DeleteMaintenanceInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

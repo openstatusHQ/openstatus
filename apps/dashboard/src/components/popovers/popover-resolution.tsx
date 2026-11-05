@@ -15,7 +15,7 @@ export function PopoverResolution({
     <Popover>
       <PopoverTrigger
         className={cn(
-          "decoration-muted-foreground/70 hover:decoration-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=open]:decoration-foreground dark:aria-invalid:ring-destructive/40 shrink-0 rounded-md p-0 underline decoration-dotted underline-offset-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
+          "decoration-muted-foreground/70 hover:decoration-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=open]:decoration-foreground dark:aria-invalid:ring-destructive/40 shrink-0 rounded-md p-0 underline decoration-dotted underline-offset-3 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
           className,
         )}
         {...props}

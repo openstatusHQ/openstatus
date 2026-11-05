@@ -11,6 +11,10 @@ export function statusReportIdRequiredError(): ConnectError {
   return idRequiredError("Status report");
 }
 
+export function statusReportUpdateIdRequiredError(): ConnectError {
+  return idRequiredError("Status report update");
+}
+
 export function invalidStatusError(statusValue: number): ConnectError {
   return rpcError({
     code: Code.InvalidArgument,

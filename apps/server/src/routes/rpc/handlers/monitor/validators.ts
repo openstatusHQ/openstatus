@@ -7,6 +7,7 @@ import type { UpdateMonitorConfigInput } from "@openstatus/services/monitor";
 import { ErrorReason, rpcError } from "../../errors";
 import {
   MONITOR_DEFAULTS,
+  getDeprecatedRegions,
   protoOpenTelemetryToService,
   periodicityToString,
   regionsToStrings,
@@ -49,6 +50,15 @@ export function toValidMethod(value: string | undefined): MonitorMethod {
 export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
   if (mon.regions && mon.regions.length > 0) {
     const regionStrings = regionsToStrings(mon.regions);
+    const deprecatedRegions = getDeprecatedRegions(regionStrings);
+    if (deprecatedRegions.length > 0) {
+      throw rpcError({
+        code: Code.InvalidArgument,
+        reason: ErrorReason.INVALID_REGION,
+        message: `Deprecated regions: ${deprecatedRegions.join(", ")}. These regions are no longer available, please choose another region.`,
+        metadata: { regions: deprecatedRegions.join(",") },
+      });
+    }
     const invalidRegions = validateRegions(regionStrings);
     if (invalidRegions.length > 0) {
       throw rpcError({
@@ -73,8 +83,8 @@ const MONITOR_BOUNDS = {
   nameMaxLen: 256,
   uriMaxLen: 2048,
   descriptionMaxLen: 1024,
-  timeoutMaxMs: 120_000,
-  degradedAtMaxMs: 120_000,
+  timeoutMaxMs: 300_000,
+  degradedAtMaxMs: 300_000,
   retryMax: 10,
   regionsMaxItems: 28,
   serviceMaxLen: 512,

@@ -12,6 +12,7 @@ import { assertWithinLimit } from "../limits";
 import type { Page } from "../types";
 import {
   assertAccessTypeAllowed,
+  assertCustomDomainAvailable,
   assertSlugAvailable,
   validateMonitorIdsActive,
 } from "./internal";
@@ -23,9 +24,12 @@ export async function createPage(args: {
   input: CreatePageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = CreatePageInput.parse(args.input);
 
+  if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
+    throw new LimitExceededError("custom-domain", 0);
+  }
   if (input.customTheme && !ctx.workspace.limits["custom-theme"]) {
     throw new LimitExceededError("custom-theme", 0);
   }
@@ -36,6 +40,9 @@ export async function createPage(args: {
   ) {
     throw new LimitExceededError("i18n", 0);
   }
+  if (!ctx.workspace.limits.timezone && input.defaultTimezone !== "UTC") {
+    throw new LimitExceededError("timezone", 0);
+  }
 
   return withTransaction(ctx, async (tx) => {
     await assertWithinLimit({
@@ -44,6 +51,7 @@ export async function createPage(args: {
       limit: "status-pages",
     });
     await assertSlugAvailable({ tx, slug: input.slug });
+    await assertCustomDomainAvailable({ tx, customDomain: input.customDomain });
     assertAccessTypeAllowed(ctx.workspace, {
       accessType: input.accessType ?? "public",
       passwordProtected: input.passwordProtected ?? null,
@@ -133,7 +141,7 @@ export async function newPage(args: {
   input: NewPageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = NewPageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

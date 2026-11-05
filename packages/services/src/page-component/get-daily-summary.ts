@@ -1,10 +1,11 @@
 import { and, asc, eq, inArray } from "@openstatus/db";
-import { incidentTable, pageComponent } from "@openstatus/db/src/schema";
+import { monitorIncidentTable, pageComponent } from "@openstatus/db/src/schema";
 import type {
   PageComponentImpact,
   PageComponentType,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, defaultTb, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { fetchMonitorDailyStats } from "../monitor/get-daily-summary";
@@ -56,6 +57,7 @@ export async function getPageComponentDailySummary(args: {
   input: GetPageComponentDailySummaryInput;
 }): Promise<GetPageComponentDailySummaryResult> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetPageComponentDailySummaryInput.parse(args.input);
   const db = getReadDb(ctx);
   const tb = ctx.tb ?? defaultTb;
@@ -112,8 +114,8 @@ export async function getPageComponentDailySummary(args: {
     monitorIds.length > 0
       ? db
           .select()
-          .from(incidentTable)
-          .where(inArray(incidentTable.monitorId, monitorIds))
+          .from(monitorIncidentTable)
+          .where(inArray(monitorIncidentTable.monitorId, monitorIds))
           .all()
       : Promise.resolve([]),
   ]);

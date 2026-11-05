@@ -2,10 +2,14 @@ import { db, eq } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
+  workspace,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  createNotification,
+  createTestWorkspace,
+  createWorkspace,
+} from "@openstatus/db/src/test/factories";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -445,36 +449,36 @@ describe("NotificationService.ListNotifications", () => {
   });
 
   test("respects offset parameter", async () => {
-    // Get total count first
-    const res1 = await connectRequest(
-      "ListNotifications",
-      {},
-      { "x-openstatus-key": "1" },
-    );
-    const data1 = await res1.json();
-    const totalSize = data1.totalSize;
+    // Isolate in a dedicated workspace so concurrent notification
+    // inserts/deletes on the seeded workspace can't shift the pagination
+    // window mid-test. In dev/test the `x-openstatus-key` header is the
+    // workspace id.
+    const ws = await createWorkspace();
+    const key = String(ws.id);
+    await createNotification(ws.id);
+    await createNotification(ws.id);
 
-    if (totalSize > 1) {
-      // Get first page
-      const res2 = await connectRequest(
+    try {
+      const res1 = await connectRequest(
         "ListNotifications",
         { limit: 1, offset: 0 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
-      const data2 = await res2.json();
-
-      // Get second page
-      const res3 = await connectRequest(
+      const res2 = await connectRequest(
         "ListNotifications",
         { limit: 1, offset: 1 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
-      const data3 = await res3.json();
+      const data1 = await res1.json();
+      const data2 = await res2.json();
 
-      // Should have different notifications
-      if (data2.notifications?.length > 0 && data3.notifications?.length > 0) {
-        expect(data2.notifications[0].id).not.toBe(data3.notifications[0].id);
-      }
+      expect(data1.totalSize).toBe(2);
+      expect(data1.notifications).toHaveLength(1);
+      expect(data2.notifications).toHaveLength(1);
+      expect(data1.notifications[0].id).not.toBe(data2.notifications[0].id);
+    } finally {
+      await db.delete(notification).where(eq(notification.workspaceId, ws.id));
+      await db.delete(workspace).where(eq(workspace.id, ws.id));
     }
   });
 
@@ -863,7 +867,7 @@ describe("NotificationService.SendTestNotification", () => {
     expect(data.message).toContain("pagerduty");
   });
 
-  test("returns error for unsupported SMS provider", async () => {
+  test("returns limit error for deprecated SMS provider", async () => {
     const res = await connectRequest(
       "SendTestNotification",
       {
@@ -877,10 +881,10 @@ describe("NotificationService.SendTestNotification", () => {
       { "x-openstatus-key": "1" },
     );
 
-    // SMS doesn't support test notifications
-    expect(res.status).toBe(400);
+    // sms is off on every plan, so the gate fires before the provider check
+    expect(res.status).toBe(403);
     const data = await res.json();
-    expect(data.message).toContain("not supported");
+    expect(data.message).toContain("sms");
   });
 
   test("returns error when no data provided", async () => {

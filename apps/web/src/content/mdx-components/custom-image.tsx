@@ -3,8 +3,9 @@ import { join } from "node:path";
 
 import Image from "next/image";
 
-import { getImageDimensions } from "../../lib/image-dimensions";
-import { cn } from "../../lib/utils";
+import { getImageDimensions } from "@/lib/image-dimensions";
+import { cn } from "@/lib/utils";
+
 import { ImageZoom, ZoomableImage } from "../image-zoom";
 
 type CustomImageProps = React.ComponentProps<typeof Image> & {

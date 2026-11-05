@@ -28,7 +28,9 @@ Want to contribute a theme?
 
 We only support themes via GitHub contributions to keep a certain version control. You can:
 
-- Configure your [themes.openstatus.dev](https://themes.openstatus.dev/?b=true) and copy the configuration
+- Configure your theme at [themes.openstatus.dev](https://themes.openstatus.dev/?b=true) and copy it as a TypeScript file, JSON or CSS
+- Let your agent design it: **Copy prompt** in the builder hands your agent the current configuration and the JSON shape to reply with; **Paste** applies the reply (JSON, the `.ts` theme file, or `:root { } / .dark { }` CSS) to the preview
+- Preview the builder theme on a full status page with **Test it** on the explorer page
 - Directly test by running it locally
 
 ### 1. Run the project

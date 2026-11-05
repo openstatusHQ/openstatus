@@ -1,4 +1,5 @@
 import * as assertions from "@openstatus/assertions";
+import { headerPairSchema } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -62,9 +63,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   method: monitorMethodsSchema.prefault("GET"),
 });
 
-const headersSchema = z
-  .array(z.object({ key: z.string(), value: z.string() }))
-  .optional();
+const headersSchema = z.array(headerPairSchema).optional();
 
 export const insertMonitorSchema = createInsertSchema(monitor, {
   name: z
@@ -86,8 +85,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
-  timeout: z.coerce.number().gte(0).lte(60000).prefault(45000),
-  degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
+  timeout: z.coerce.number().gte(0).lte(300_000).prefault(45000),
+  degradedAfter: z.coerce.number().gte(0).lte(300_000).nullish(),
 });
 
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;

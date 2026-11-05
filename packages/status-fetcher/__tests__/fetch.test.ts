@@ -1,7 +1,5 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
-import { spy } from "@std/testing/mock";
 import { Cause, Effect, Exit, Option } from "effect";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import {
@@ -16,7 +14,7 @@ const TEST_URL = "https://api.example.com/status";
 type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
 const installMockFetch = (impl: FetchImpl) => {
-  const fn = spy(impl);
+  const fn = vi.fn(impl);
   globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 };
@@ -86,7 +84,7 @@ describe("fetchJson", () => {
     expect(err.kind).toBe("http");
     expect(err.fetcherName).toBe("test");
     expect(err.entryId).toBe("x");
-    expect(fetchMock.calls.length).toBe(1);
+    expect(fetchMock.mock.calls.length).toBe(1);
   });
 
   it("retries up to 3 times on 5xx then fails", async () => {
@@ -99,7 +97,7 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(503);
-    expect(fetchMock.calls.length).toBe(4);
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 
   it("retries up to 3 times on network error then fails", async () => {
@@ -113,7 +111,7 @@ describe("fetchJson", () => {
     const err = expectFailure(exit);
     expect(err.httpStatus).toBeUndefined();
     expect(err.kind).toBe("network");
-    expect(fetchMock.calls.length).toBe(4);
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 
   it("fails with FetchError on schema mismatch without retrying", async () => {
@@ -128,7 +126,7 @@ describe("fetchJson", () => {
     expect(err.cause).toBeInstanceOf(Error);
     expect(err.kind).toBe("schema");
     expect(err.message).toBe(`[FetchError] schema mismatch: ${TEST_URL}`);
-    expect(fetchMock.calls.length).toBe(1);
+    expect(fetchMock.mock.calls.length).toBe(1);
   });
 
   it("classifies a non-JSON 200 body as parse", async () => {
@@ -236,7 +234,7 @@ describe("fetchText", () => {
     const exit = await Effect.runPromiseExit(fetchText({ url: TEST_URL }));
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(500);
-    expect(fetchMock.calls.length).toBe(4);
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 });
 

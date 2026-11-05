@@ -23,6 +23,24 @@ export function monitorIdRequiredError(): ConnectError {
   return idRequiredError("Monitor");
 }
 
+export function monitorIdInvalidError(monitorId: string): ConnectError {
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.INVALID_MONITOR_ID,
+    message: `Invalid monitor id: "${monitorId}"`,
+    metadata: { monitorId },
+  });
+}
+
+export function monitorTriggerFailedError(monitorId: string): ConnectError {
+  return rpcError({
+    code: Code.Unavailable,
+    reason: ErrorReason.MONITOR_TRIGGER_FAILED,
+    message: "Failed to trigger the monitor in any region",
+    metadata: { monitorId },
+  });
+}
+
 export function monitorTypeMismatchError(
   monitorId: string,
   expectedType: string,

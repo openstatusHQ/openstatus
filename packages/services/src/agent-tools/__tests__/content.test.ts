@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, spy } from "@std/testing/mock";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { ServiceContext } from "../../context";
 import { getContentPageTool, searchContentTool } from "../content";
@@ -15,7 +13,7 @@ afterEach(() => {
 });
 
 function mockFetch(response: Response) {
-  const fn = spy(async () => response);
+  const fn = vi.fn(async () => response);
   globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 }
@@ -43,8 +41,8 @@ describe("search_content", () => {
       ctx,
       input: searchContentTool.inputSchema.parse({ query: "pricing" }),
     });
-    assertSpyCalls(fn, 1);
-    const url = String((fn.calls[0] as { args: unknown[] }).args[0]);
+    expect(fn).toHaveBeenCalledTimes(1);
+    const url = String((fn.mock.calls[0] as unknown[] | undefined)?.[0]);
     expect(url).toContain("/api/search?p=all&q=pricing");
   });
 
@@ -54,7 +52,7 @@ describe("search_content", () => {
       ctx,
       input: { query: "pricing", type: "compare" },
     });
-    const url = String((fn.calls[0] as { args: unknown[] }).args[0]);
+    const url = String((fn.mock.calls[0] as unknown[] | undefined)?.[0]);
     expect(url).toContain("/api/search?p=compare&q=pricing");
   });
 
@@ -140,7 +138,7 @@ describe("get_content_page", () => {
     expect(result.markdown).toBe("# Pricing\n\nPlans.");
     expect(result.truncated).toBe(false);
     expect(result.url).toBe("https://www.openstatus.dev/pricing");
-    const url = String((fn.calls[0] as { args: unknown[] }).args[0]);
+    const url = String((fn.mock.calls[0] as unknown[] | undefined)?.[0]);
     expect(url).toBe("https://www.openstatus.dev/api/markdown/pricing");
   });
 
@@ -198,6 +196,6 @@ describe("get_content_page", () => {
         true,
       );
     }
-    assertSpyCalls(fn, 0);
+    expect(fn).toHaveBeenCalledTimes(0);
   });
 });

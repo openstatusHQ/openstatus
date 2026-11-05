@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { app } from "@/index";
 import { concurrencyGuard } from "@/libs/middlewares/concurrency";
@@ -8,7 +7,7 @@ import { limits } from "@/libs/middlewares/limits";
 /**
  * Wiring test: the guards must be mounted in the real app, after the wide
  * event and before every route. Limits are lowered on the in-isolate
- * `limits` object, never via `Deno.env`, which is shared by parallel workers.
+ * `limits` object, never via `process.env`, which every test in the file shares.
  */
 const original = { ...limits };
 const tick = () => new Promise((r) => setTimeout(r, 0));

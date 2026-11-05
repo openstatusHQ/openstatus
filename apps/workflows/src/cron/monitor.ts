@@ -29,8 +29,7 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const PAUSE_FROM =
-  "Thibault from openstatus <thibault@notifications.openstatus.dev>";
+const PAUSE_FROM = "Thibault from openstatus <thibault@mail.openstatus.dev>";
 const PAUSE_REPLY_TO = "thibault@openstatus.dev";
 
 // Check if GCP is properly configured (not empty and not placeholder values)

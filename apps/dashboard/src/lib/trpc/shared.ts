@@ -4,6 +4,8 @@ import type { HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import superjson from "superjson";
 
+import { isExpectedNotFound } from "./error";
+
 /**
  * tRPC logger link that reports failed queries to Sentry directly instead of
  * letting captureConsoleIntegration scrape tRPC's styled console.error format
@@ -19,6 +21,9 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
       (opts.direction === "down" && opts.result instanceof Error),
     logger: (opts) => {
       if (opts.direction === "down" && opts.result instanceof Error) {
+        if (isExpectedNotFound(opts.result, opts.context.expectNotFound)) {
+          return;
+        }
         Sentry.captureException(opts.result, {
           extra: { path: opts.path },
         });
@@ -51,7 +56,8 @@ const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
   // Note: dashboard has its own tRPC API routes
   if (process.env.VERCEL_URL) return "https://app.openstatus.dev"; // Vercel
-  return "http://localhost:3000"; // Local dev and Docker (internal calls)
+  // Dev runs on 3001 (`PORT` in the dev script), Docker on 3000.
+  return `http://localhost:${process.env.PORT || 3000}`; // Local dev and Docker (internal calls)
 };
 
 // The whole tRPC surface is served from a single Node.js endpoint — there is

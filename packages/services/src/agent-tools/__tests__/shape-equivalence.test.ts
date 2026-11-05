@@ -1,6 +1,5 @@
 import { createMonitor } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import { createWorkspaceFixture, makeUserCtx } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
@@ -109,8 +108,8 @@ describe("agent-tool shape equivalence", () => {
       input: {
         monitorId,
         timeRange: "1d",
+        status: ["error"],
         limit: 10,
-        offset: 0,
       },
     });
     const parsed = tool.outputSchema.safeParse(result);
@@ -181,6 +180,7 @@ describe("approval metadata contract", () => {
         from: new Date().toISOString(),
         to: new Date(Date.now() + 60000).toISOString(),
         pageComponentIds: [],
+        content: "c",
       };
       const summary = t.approval.summarize(placeholder);
       expect(summary.title.length, `${t.name} title empty`).toBeGreaterThan(0);

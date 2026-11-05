@@ -1,34 +1,72 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
-import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import {
+  type PageComponentImpact,
+  pageComponentImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { Settings, Delete } from "@openstatus/icons";
 
+import type { StatusVariant } from "@/components/common/status-dot";
 import type { FormValues as StatusReportUpdateFormValues } from "@/components/forms/status-report-update/form";
+import { toEntityId } from "@/data/entity-refs.client";
 
 export const impactConfig = {
   operational: {
     label: "Operational",
-    color:
-      "text-success/80 data-[state=selected]:bg-success/10 data-[state=selected]:text-success",
+    short: "Operational",
+    variant: "success",
   },
   degraded_performance: {
     label: "Degraded performance",
-    color:
-      "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
+    short: "Degraded",
+    variant: "warning",
   },
   partial_outage: {
     label: "Partial outage",
-    color:
-      "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
+    short: "Partial outage",
+    variant: "warning",
   },
   major_outage: {
     label: "Major outage",
-    color:
-      "text-destructive/80 data-[state=selected]:bg-destructive/10 data-[state=selected]:text-destructive",
+    short: "Major outage",
+    variant: "destructive",
   },
 } as const satisfies Record<
   PageComponentImpact,
-  { label: string; color: string }
+  // `short` fits row status columns and calendar legends
+  { label: string; short: string; variant: StatusVariant }
 >;
+
+export type ComponentImpact = {
+  pageComponentId: number;
+  impact: PageComponentImpact;
+};
+
+export function isPageComponentImpact(
+  value: unknown,
+): value is PageComponentImpact {
+  return (
+    typeof value === "string" &&
+    (pageComponentImpact as readonly string[]).includes(value)
+  );
+}
+
+export function isComponentImpactList(
+  value: unknown,
+): value is ComponentImpact[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item: unknown) =>
+        typeof item === "object" &&
+        item !== null &&
+        "pageComponentId" in item &&
+        "impact" in item &&
+        typeof item.pageComponentId === "number" &&
+        toEntityId(item.pageComponentId) !== undefined &&
+        isPageComponentImpact(item.impact),
+    )
+  );
+}
 
 /** Set equality regardless of order — used to skip no-op impact writes. */
 export function impactsEqual(
@@ -46,8 +84,14 @@ export function impactsEqual(
 // legacy report (created before impact tracking): no impact rows
 export const untriagedImpact = {
   label: "Untriaged",
-  color: "text-muted-foreground/80",
-} as const;
+  short: "Untriaged",
+  variant: "default",
+} as const satisfies { label: string; short: string; variant: StatusVariant };
+
+/** Label + dot variant for an impact; nullish reads as untriaged. */
+export function impactDisplay(impact: PageComponentImpact | null | undefined) {
+  return impact ? impactConfig[impact] : untriagedImpact;
+}
 
 export const actions = [
   {
@@ -88,6 +132,13 @@ export const colors = {
     "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
 } as const satisfies Record<StatusReportStatus, string>;
 
+export const statusVariants = {
+  resolved: "success",
+  investigating: "destructive",
+  monitoring: "info",
+  identified: "warning",
+} as const satisfies Record<StatusReportStatus, StatusVariant>;
+
 /**
  * Get the next status in the progression:
  * investigating → identified → monitoring → resolved
@@ -106,24 +157,6 @@ export function getNextStatus(currentStatus: string): StatusReportStatus {
   return (
     statusProgression[currentStatus as StatusReportStatus] ?? "investigating"
   );
-}
-
-export function defaultComponentImpacts({
-  components,
-  currentImpacts,
-  nextStatus,
-}: {
-  components: { id: number }[];
-  currentImpacts: Map<number, PageComponentImpact>;
-  nextStatus: StatusReportStatus;
-}): NonNullable<StatusReportUpdateFormValues["componentImpacts"]> {
-  return components.map((c) => ({
-    pageComponentId: c.id,
-    impact:
-      nextStatus === "resolved"
-        ? "operational"
-        : (currentImpacts.get(c.id) ?? "operational"),
-  }));
 }
 
 // a legacy report stays legacy unless the operator actively sets a

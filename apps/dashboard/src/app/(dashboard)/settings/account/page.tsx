@@ -60,12 +60,12 @@ export default function Page() {
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>
-            <form className="grid gap-4">
-              <div className="grid gap-1.5">
+            <form className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-1.5 sm:col-span-2">
                 <Label>Name</Label>
                 <Input defaultValue={user?.name ?? undefined} />
               </div>
-              <div className="grid gap-1.5">
+              <div className="grid gap-1.5 sm:col-span-2">
                 <Label>Email</Label>
                 <Input defaultValue={user?.email ?? undefined} />
               </div>

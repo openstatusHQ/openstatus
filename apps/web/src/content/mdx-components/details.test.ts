@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, test } from "vitest";
 
 import { Details } from "./details";
 

@@ -32,6 +32,7 @@ type DBStatusReport = {
   pageId: number | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+  incidentId?: number | null;
 };
 
 type DBStatusReportUpdate = {
@@ -181,6 +182,7 @@ export function dbReportToProtoSummary(
     pageComponentIds,
     createdAt: report.createdAt?.toISOString() ?? "",
     updatedAt: report.updatedAt?.toISOString() ?? "",
+    incidentId: optionalId(report.incidentId),
   };
 }
 
@@ -201,5 +203,10 @@ export function dbReportToProto(
     updates: updates.map(dbUpdateToProto),
     createdAt: report.createdAt?.toISOString() ?? "",
     updatedAt: report.updatedAt?.toISOString() ?? "",
+    incidentId: optionalId(report.incidentId),
   };
+}
+
+function optionalId(id: number | null | undefined): string | undefined {
+  return id == null ? undefined : String(id);
 }

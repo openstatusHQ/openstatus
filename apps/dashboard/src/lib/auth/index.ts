@@ -1,11 +1,15 @@
-import { Events, setupAnalytics } from "@openstatus/analytics";
+import {
+  Events,
+  readAttributionCookie,
+  setupAnalytics,
+} from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { type User, user } from "@openstatus/db/src/schema";
-import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { cache } from "react";
 
 import { adapter } from "./adapter";
@@ -46,9 +50,14 @@ async function syncUser(
 }
 
 // Runs from the `signIn` event, not `createUser`: only `signIn` carries the
-// account, and the trial must know the provider to skip SSO signups. It also
-// fires after the account row is linked, so nothing races the adapter.
-async function onNewUser(newUser: Partial<User>, provider?: string) {
+// account, and it fires after the account row is linked, so nothing races the
+// adapter. Scheduled with `after()` so the mail does not hold the sign-in
+// redirect. Headers are read up front, before the response.
+async function onNewUser(
+  newUser: Partial<User>,
+  provider: string | undefined,
+  requestHeaders: Headers,
+) {
   if (!newUser.id || !newUser.email) {
     throw new Error("User id & email is required");
   }
@@ -56,32 +65,11 @@ async function onNewUser(newUser: Partial<User>, provider?: string) {
   // this means the user has already been created with clerk
   if (newUser.tenantId) return;
 
-  const requestHeaders = await headers();
-  const currency = getCurrency({
-    continent: requestHeaders.get("x-vercel-ip-continent") || "NA",
-    country: requestHeaders.get("x-vercel-ip-country") || "US",
-  });
-
-  // Imported lazily to keep Stripe out of the proxy bundle, which also loads this module.
-  const { maybeStartSignupTrial } =
-    await import("@openstatus/api/src/router/stripe/trial");
-  const trial = await maybeStartSignupTrial({
-    userId: newUser.id,
-    email: newUser.email,
-    provider,
-    currency,
-  }).catch((error: Error) => {
-    console.error("signup trial failed", { userId: newUser.id, error });
-    return { started: false, reason: "stripe_error" } as const;
-  });
-
   await sendEmail({
     from: "Thibault from openstatus <thibault@openstatus.dev>",
     subject: "Welcome to openstatus.",
     to: [newUser.email],
-    react: WelcomeEmail({
-      trialEndsAt: trial.started ? trial.trialEndsAt : undefined,
-    }),
+    react: WelcomeEmail(),
   });
 
   const analytics = await setupAnalytics({
@@ -89,14 +77,14 @@ async function onNewUser(newUser: Partial<User>, provider?: string) {
     email: newUser.email,
     location: requestHeaders.get("x-forwarded-for") ?? undefined,
     userAgent: requestHeaders.get("user-agent") ?? undefined,
+    source: "dashboard",
   });
 
-  await analytics.track(Events.CreateUser);
-  if (trial.started) {
-    await analytics.track({ ...Events.StartTrial, currency });
-  } else if (trial.reason !== "disabled") {
-    await analytics.track({ ...Events.SkipTrial, reason: trial.reason });
-  }
+  await analytics.track({
+    ...Events.CreateUser,
+    provider,
+    ...readAttributionCookie(requestHeaders.get("cookie")),
+  });
 }
 
 const {
@@ -113,10 +101,7 @@ const {
     GoogleProvider,
     ...(process.env.AUTH_OIDC_ISSUER ? [OIDCProvider] : []),
     ...(hasWorkOS ? [WorkOSProvider] : []),
-    ...(process.env.NODE_ENV === "development" ||
-    process.env.SELF_HOST === "true"
-      ? [ResendProvider]
-      : []),
+    ResendProvider,
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
@@ -185,7 +170,6 @@ const {
         return authorizeSsoSignIn(readWorkOSProfile(params.profile));
       }
 
-      // REMINDER: only used in dev mode
       if (params.account?.provider === "resend") {
         if (Number.isNaN(Number(params.user.id))) return true;
         await db
@@ -214,9 +198,13 @@ const {
       }
 
       if (params.isNewUser) {
-        await onNewUser(
-          { ...params.user, id: Number(params.user.id) },
-          params.account?.provider,
+        const newUser = { ...params.user, id: Number(params.user.id) };
+        const provider = params.account?.provider;
+        const requestHeaders = new Headers(await headers());
+        after(() =>
+          onNewUser(newUser, provider, requestHeaders).catch((error) => {
+            console.error("onNewUser failed", { userId: newUser.id, error });
+          }),
         );
         return;
       }
@@ -227,13 +215,19 @@ const {
         email: params.user.email,
         location: (await headers()).get("x-forwarded-for") ?? undefined,
         userAgent: (await headers()).get("user-agent") ?? undefined,
+        source: "dashboard",
       });
 
-      await analytics.track(Events.SignInUser);
+      await analytics.track({
+        ...Events.SignInUser,
+        provider: params.account?.provider,
+      });
     },
   },
   pages: {
     signIn: "/login",
+    // Expired or reused magic links surface as `?error=Verification` here.
+    error: "/login",
     newUser: "/onboarding",
   },
   // basePath: "/api/auth", // default is `/api/auth`

@@ -1,6 +1,7 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import { parseZodErrorIssues } from "@openstatus/error";
 import {
+  ConcurrentUpdateError,
   LimitExceededError,
   NotFoundError,
   type ServiceContext,
@@ -52,6 +53,14 @@ export function toConnectError(err: unknown): never {
       cause: err,
     });
   }
+  // A lost race is retryable; other conflicts need the caller to change state.
+  if (err instanceof ConcurrentUpdateError) {
+    throw rpcError({
+      code: Code.Aborted,
+      reason: ErrorReason.CONFLICT,
+      message: err.message,
+    });
+  }
   if (err instanceof ServiceError) {
     switch (err.code) {
       case "NOT_FOUND":
@@ -75,11 +84,10 @@ export function toConnectError(err: unknown): never {
           message: err.message,
         });
       case "CONFLICT":
-        // Services raise ConflictError for cross-entity mismatches too (a
-        // maintenance spanning two pages), and the RPC contract pins those to
-        // 400, so this stays InvalidArgument rather than AlreadyExists.
+        // Covers cross-entity mismatches too (a maintenance spanning two pages),
+        // so FailedPrecondition (400) rather than AlreadyExists (409).
         throw rpcError({
-          code: Code.InvalidArgument,
+          code: Code.FailedPrecondition,
           reason: ErrorReason.CONFLICT,
           message: err.message,
         });

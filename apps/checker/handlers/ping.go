@@ -68,10 +68,10 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		}
 	}
 
-	//  We need a new client for each request to avoid connection reuse.
-	requestClient := &http.Client{
-		Timeout: 45 * time.Second,
-	}
+	requestClient := checker.NewHTTPClient(45*time.Second, true)
+	// Keep Go's default policy here: a redirect loop is an error, not the last
+	// 3xx response.
+	requestClient.CheckRedirect = nil
 
 	defer requestClient.CloseIdleConnections()
 

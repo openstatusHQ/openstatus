@@ -17,8 +17,10 @@ SQL >
         cronTimestamp,
         monitorId,
         requestStatus,
-        id
+        id,
+        attempts
     FROM icmp_response__v0
 
 TYPE materialized
 DATASOURCE mv__icmp_7d__v0
+DEPLOYMENT_METHOD alter

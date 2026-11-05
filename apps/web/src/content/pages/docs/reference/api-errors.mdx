@@ -131,7 +131,7 @@ The HTTP method is wrong for the route. Connect procedures are `POST`, and only 
 
 ### Conflict
 
-The write collides with existing data: a status page slug that is already taken (`SLUG_ALREADY_EXISTS`), a subscriber that already exists. Change the input rather than retrying.
+The write collides with existing data: a status page slug that is already taken (`SLUG_ALREADY_EXISTS`), a subscriber that already exists. Change the input rather than retrying. On `/rpc`, `aborted` with reason `CONFLICT` is the one exception: another write changed the resource first, so re-read it and retry.
 
 ### Unprocessable entity
 
@@ -161,7 +161,7 @@ The `reason` values the RPC API can return. Generic reasons share their name wit
 | `FORBIDDEN` | `permission_denied` | |
 | `NOT_FOUND` | `not_found` | `resource` |
 | `METHOD_NOT_ALLOWED` | `unimplemented` | |
-| `CONFLICT` | `invalid_argument` | |
+| `CONFLICT` | `failed_precondition`, `aborted` | |
 | `UNPROCESSABLE_ENTITY` | `failed_precondition` | |
 | `TOO_MANY_REQUESTS` | `resource_exhausted` | plus `RetryInfo` |
 | `INTERNAL_SERVER_ERROR` | `internal` | |
@@ -196,6 +196,8 @@ The `reason` values the RPC API can return. Generic reasons share their name wit
 | `STATUS_REPORT_NOT_FOUND` | `not_found` | `statusReportId` |
 | `MAINTENANCE_NOT_FOUND` | `not_found` | `maintenanceId` |
 | `PRIVATE_LOCATION_NOT_FOUND` | `not_found` | `privateLocationId` |
+| `INCIDENT_NOT_FOUND` | `not_found` | `incidentId` |
 | `TEST_NOTIFICATION_FAILED` | `internal` | |
+| `MONITOR_TRIGGER_FAILED` | `unavailable` | `monitorId` |
 
 Reasons are append-only: new ones may appear in a release, existing ones are never renamed. Treat an unknown reason like its Connect code.

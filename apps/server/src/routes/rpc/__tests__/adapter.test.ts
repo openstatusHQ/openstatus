@@ -4,6 +4,7 @@ import {
   ErrorInfoSchema,
 } from "@openstatus/proto/google/rpc";
 import {
+  ConcurrentUpdateError,
   ConflictError,
   ForbiddenError,
   InternalServiceError,
@@ -13,8 +14,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from "@openstatus/services";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import { ErrorReason } from "@/libs/errors/rpc";
@@ -90,9 +90,17 @@ describe("toConnectError", () => {
     expect(info(noCurrent).metadata).not.toHaveProperty("current");
   });
 
-  test("ConflictError → invalid_argument with reason CONFLICT (RPC contract pins 400)", () => {
+  test("ConflictError → failed_precondition with reason CONFLICT", () => {
     const err = capture(new ConflictError("mixed pages")) as ConnectError;
-    expect(err.code).toBe(Code.InvalidArgument);
+    expect(err.code).toBe(Code.FailedPrecondition);
+    expect(info(err).reason).toBe(ErrorReason.CONFLICT);
+  });
+
+  test("ConcurrentUpdateError → aborted with reason CONFLICT", () => {
+    const err = capture(
+      new ConcurrentUpdateError("changed concurrently"),
+    ) as ConnectError;
+    expect(err.code).toBe(Code.Aborted);
     expect(info(err).reason).toBe(ErrorReason.CONFLICT);
   });
 

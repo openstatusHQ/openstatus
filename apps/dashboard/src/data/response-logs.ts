@@ -10,6 +10,7 @@ export const exampleLogs: ResponseLog[] = Array.from({ length: 30 }).map(
   (_, i) => ({
     id: i.toString(),
     type: "http",
+    attempts: 1,
     url: "https://api.openstatus.dev",
     method: "GET",
     statusCode: 200,

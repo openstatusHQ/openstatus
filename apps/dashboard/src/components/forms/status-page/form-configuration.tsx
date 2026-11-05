@@ -157,7 +157,7 @@ export function FormConfiguration({
             <FormCardSeparator />
             <FormCardContent
               className={cn(
-                "grid gap-4 sm:grid-cols-2",
+                "grid gap-4 sm:grid-cols-3",
                 !hasMonitorComponents && "pointer-events-none opacity-50",
               )}
             >
@@ -166,25 +166,21 @@ export function FormConfiguration({
                 name="configuration.type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bar Type</FormLabel>
+                    <FormLabel>Status source</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "absolute"}
                       disabled={!hasMonitorComponents}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full capitalize">
-                          <SelectValue placeholder="Select a type" />
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a source" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {["absolute", "manual"].map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                            className="capitalize"
-                          >
-                            {type}
+                        {(["absolute", "manual"] as const).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {configurationLabels.type[type]}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -198,7 +194,7 @@ export function FormConfiguration({
                 name="configuration.value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Card Value</FormLabel>
+                    <FormLabel>Card shows</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "duration"}
@@ -208,18 +204,20 @@ export function FormConfiguration({
                       }
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full capitalize">
-                          <SelectValue placeholder="Select a type" />
+                        <SelectTrigger className="w-full">
+                          {watchConfigurationType === "manual" ? (
+                            <span className="text-muted-foreground">
+                              Not available for reports only
+                            </span>
+                          ) : (
+                            <SelectValue placeholder="Select a value" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {["duration", "requests"].map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                            className="capitalize"
-                          >
-                            {type}
+                        {(["duration", "requests"] as const).map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {configurationLabels.value[value]}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -232,16 +230,17 @@ export function FormConfiguration({
                 {hasMonitorComponents ? (
                   <ul className="list-inside list-disc">
                     <li>
-                      <span>Bar Type </span>
+                      <span>Status source </span>
                       <span className="font-medium">
-                        {watchConfigurationType}
+                        {configurationLabels.type[watchConfigurationType]}
                       </span>
                       : <span>{message.type[watchConfigurationType]}</span>
                     </li>
                     <li>
-                      <span>Card Value </span>
+                      <span>Card shows </span>
                       <span className="font-medium">
-                        {watchConfigurationValue}
+                        {configurationLabels.value[watchConfigurationValue] ??
+                          configurationLabels.value.manual}
                       </span>
                       :{" "}
                       <span>
@@ -259,7 +258,7 @@ export function FormConfiguration({
               </Note>
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="configuration.uptime"
@@ -341,7 +340,7 @@ export function FormConfiguration({
                 </ul>
               </Note>
             </FormCardContent>
-            <FormCardFooter>
+            <FormCardFooter className="flex-wrap">
               <FormCardFooterInfo>
                 Learn more about{" "}
                 <Link
@@ -386,19 +385,31 @@ export function FormConfiguration({
   );
 }
 
-// TODO:
-const message = {
+// UI labels only - the stored enum values stay `absolute`/`manual` and
+// `duration`/`requests`/`manual` (DB, API and URL params).
+export const configurationLabels = {
   type: {
-    manual:
-      "only shares the duration of reports and maintenances you are setting up - nothing else.",
-    absolute:
-      "shares the status of your endpoint for the duration of the different statuses.",
+    absolute: "Monitor checks",
+    manual: "Reports only",
   },
   value: {
-    duration: "shares the duration of the different statuses.",
-    requests:
-      "shares the number of requests received (success, degraded, error).",
-    default: "shares only the worse status of the day",
+    duration: "Time per status",
+    requests: "Number of checks",
+    manual: "Worst status of the day",
+  },
+} as const;
+
+const message = {
+  type: {
+    absolute: "bars show your monitor's real results for each day.",
+    manual:
+      "bars only change when you post a status report or maintenance. Monitor results are hidden.",
+  },
+  value: {
+    duration:
+      "cards show how long the monitor was operational, degraded or down.",
+    requests: "cards show how many checks succeeded, degraded or failed.",
+    default: "cards show only the worst status of the day.",
   },
   uptime: {
     true: "shares the uptime percentage and current status of your endpoint.",

@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { Effect } from "effect";
+import { describe, expect, it } from "vitest";
 
 import { detectProvider } from "../src/detect";
 import { installMockFetch } from "./helpers";
@@ -70,7 +69,7 @@ describe("detectProvider", () => {
     expect(result.currentProviderValidated).toBe(false);
     expect(result.matches.map((m) => m.provider)).toEqual(["instatus"]);
     expect(result.hostnameSuggestions).toEqual([]);
-    expect(fetchMock.calls.length).toBe(3);
+    expect(fetchMock.mock.calls.length).toBe(3);
   });
 
   it("derives probe endpoints from urls with query or trailing slash", async () => {
@@ -96,7 +95,7 @@ describe("detectProvider", () => {
     );
     expect(result.currentProviderValidated).toBe(true);
     expect(result.matches).toEqual([]);
-    expect(fetchMock.calls.length).toBe(3);
+    expect(fetchMock.mock.calls.length).toBe(3);
   });
 
   it("accepts pair label drift: short-circuits even when the page is served by the api-identical peer", async () => {
@@ -115,7 +114,7 @@ describe("detectProvider", () => {
     );
     expect(result.currentProviderValidated).toBe(true);
     expect(result.matches).toEqual([]);
-    expect(fetchMock.calls.length).toBe(3);
+    expect(fetchMock.mock.calls.length).toBe(3);
   });
 
   it("tiebreaks the ambiguous pair to atlassian via html marker", async () => {
@@ -242,7 +241,7 @@ describe("detectProvider", () => {
       "hostname tiebreak: atlassian-statuspage",
     );
     // 3 probes at the old base, the html fetch, 3 probes at the new base
-    expect(fetchMock.calls.length).toBe(7);
+    expect(fetchMock.mock.calls.length).toBe(7);
   });
 
   it("probes the new origin root when the redirect lands on a subpath", async () => {
@@ -274,7 +273,7 @@ describe("detectProvider", () => {
       detectProvider({ statusPageUrl: PAGE_URL, currentProvider: "unknown" }),
     );
     expect(result.movedTo).toBeUndefined();
-    expect(fetchMock.calls.length).toBe(4);
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 
   it("suggests instatus from an html marker when nothing validates", async () => {

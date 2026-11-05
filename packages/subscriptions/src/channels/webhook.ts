@@ -6,10 +6,16 @@ import { WEBHOOK_PAYLOAD_VERSION } from "../payload";
 import type { PageUpdate, Subscription } from "../types";
 import { postWebhookWithRetry } from "./retry";
 
-export type WebhookFlavor = "slack" | "discord" | "generic";
+export type WebhookFlavor = "slack" | "discord" | "teams" | "generic";
 
 const SLACK_PREFIX = "https://hooks.slack.com/services/";
 const DISCORD_PREFIX = "https://discord.com/api/webhooks/";
+// Teams hosts vary by tenant and region, so match by hostname suffix.
+const TEAMS_HOST_SUFFIXES = [
+  ".logic.azure.com",
+  ".powerplatform.com",
+  ".webhook.office.com",
+] as const;
 const TIMEOUT_MS = 5000; // 5 seconds
 
 /**
@@ -19,7 +25,18 @@ const TIMEOUT_MS = 5000; // 5 seconds
 export function detectWebhookFlavor(url: string): WebhookFlavor {
   if (url.startsWith(SLACK_PREFIX)) return "slack";
   if (url.startsWith(DISCORD_PREFIX)) return "discord";
+  if (isTeamsWebhookUrl(url)) return "teams";
   return "generic";
+}
+
+function isTeamsWebhookUrl(url: string): boolean {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return TEAMS_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
 }
 
 function redactWebhookUrl(url: string): string {
@@ -258,8 +275,118 @@ function buildDiscordPayload(
   };
 }
 
+type TeamsContainerStyle = "attention" | "warning" | "good" | "accent";
+type TeamsTextColor = "Default" | "Accent" | "Good" | "Warning" | "Attention";
+
+function teamsStyleForStatus(color: StatusColor): {
+  containerStyle: TeamsContainerStyle;
+  textColor: TeamsTextColor;
+} {
+  switch (color) {
+    case "red":
+      return { containerStyle: "attention", textColor: "Attention" };
+    case "yellow":
+      return { containerStyle: "warning", textColor: "Warning" };
+    case "green":
+      return { containerStyle: "good", textColor: "Good" };
+    case "blue":
+      return { containerStyle: "accent", textColor: "Accent" };
+  }
+}
+
 /**
- * Generic JSON webhook payload, sent to any non-Slack/Discord URL.
+ * Microsoft Teams webhook payload (Workflows / legacy Office). Wraps an
+ * Adaptive Card 1.5 in the `application/vnd.microsoft.card.adaptive`
+ * envelope, mirroring the ms-teams monitor-alert provider's wire format.
+ */
+function buildTeamsPayload(
+  pageUpdate: PageUpdate,
+  subscription: Subscription,
+  links: ManagementLinks,
+) {
+  const color = statusColor(pageUpdate.status);
+  const { containerStyle, textColor } = teamsStyleForStatus(color);
+  const eventUrl = resolveEventUrl(pageUpdate, subscription);
+  const pageOrigin = resolveStatusPageOrigin(subscription);
+
+  const body: Record<string, unknown>[] = [
+    {
+      type: "Container",
+      style: containerStyle,
+      items: [
+        {
+          type: "TextBlock",
+          text: pageUpdate.title,
+          weight: "Bolder",
+          size: "Large",
+          color: textColor,
+          wrap: true,
+        },
+      ],
+    },
+    {
+      type: "FactSet",
+      facts: [
+        { title: "Status", value: statusLabel(pageUpdate.status) },
+        { title: "Page", value: `[${subscription.pageName}](${pageOrigin})` },
+        { title: "Timestamp", value: pageUpdate.date },
+      ],
+    },
+  ];
+
+  if (pageUpdate.message) {
+    body.push({
+      type: "TextBlock",
+      text: pageUpdate.message,
+      wrap: true,
+      spacing: "Medium",
+    });
+  }
+
+  if (pageUpdate.pageComponents.length > 0) {
+    body.push({
+      type: "TextBlock",
+      text: `**Affected:** ${pageUpdate.pageComponents.join(", ")}`,
+      wrap: true,
+    });
+  }
+
+  if (links.manageUrl && links.unsubscribeUrl) {
+    body.push({
+      type: "TextBlock",
+      text: `[Manage](${links.manageUrl}) · [Unsubscribe](${links.unsubscribeUrl})`,
+      wrap: true,
+      isSubtle: true,
+      spacing: "Medium",
+    });
+  }
+
+  return {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          type: "AdaptiveCard",
+          $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
+          version: "1.5",
+          body,
+          actions: [
+            {
+              type: "Action.OpenUrl",
+              title: "View details",
+              url: eventUrl,
+            },
+          ],
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * Generic JSON webhook payload, sent to any non-Slack/Discord/Teams URL.
  * Shape is pinned by `webhookPayloadSchema` in `../payload`.
  */
 export function buildGenericPayload(
@@ -352,6 +479,8 @@ function buildNotificationPayload(
       return buildSlackPayload(pageUpdate, subscription, links);
     case "discord":
       return buildDiscordPayload(pageUpdate, subscription, links);
+    case "teams":
+      return buildTeamsPayload(pageUpdate, subscription, links);
     case "generic":
       return buildGenericPayload(pageUpdate, subscription, links);
   }
@@ -449,6 +578,45 @@ export function buildTestPayload(flavor: WebhookFlavor) {
             description: "Your openstatus webhook is configured correctly.",
             color: COLOR_DECIMALS.green,
             timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+    case "teams":
+      return {
+        type: "message",
+        attachments: [
+          {
+            contentType: "application/vnd.microsoft.card.adaptive",
+            contentUrl: null,
+            content: {
+              type: "AdaptiveCard",
+              $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
+              version: "1.5",
+              body: [
+                {
+                  type: "Container",
+                  style: "good",
+                  items: [
+                    {
+                      type: "TextBlock",
+                      text: "Test Notification",
+                      weight: "Bolder",
+                      size: "Large",
+                      color: "Good",
+                      wrap: true,
+                    },
+                    {
+                      type: "TextBlock",
+                      text: "Your openstatus webhook is configured correctly.",
+                      spacing: "None",
+                      isSubtle: true,
+                      wrap: true,
+                    },
+                  ],
+                },
+              ],
+              actions: [],
+            },
           },
         ],
       };

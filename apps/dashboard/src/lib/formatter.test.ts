@@ -1,0 +1,232 @@
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  formatAxisTick,
+  formatDateForInput,
+  formatDateRange,
+  formatDistanceToNowShort,
+  formatDurationShort,
+  formatEventDate,
+  formatMilliseconds,
+  formatNumber,
+  formatPercentage,
+  formatWindow,
+} from "./formatter";
+
+describe("formatMilliseconds", () => {
+  it("keeps milliseconds up to one second", () => {
+    expect(formatMilliseconds(250)).toBe("250 ms");
+    expect(formatMilliseconds(1000)).toBe("1,000 ms");
+  });
+
+  it("switches to seconds above one second", () => {
+    expect(formatMilliseconds(1500)).toBe("1.5 sec");
+    expect(formatMilliseconds(12_345)).toBe("12.35 sec");
+  });
+});
+
+describe("formatPercentage", () => {
+  it("uses two fraction digits by default", () => {
+    expect(formatPercentage(0.99951)).toBe("99.95%");
+    expect(formatPercentage(1)).toBe("100.00%");
+  });
+
+  it("honours a custom precision", () => {
+    expect(formatPercentage(0.5, 0)).toBe("50%");
+  });
+
+  it("treats NaN as full uptime", () => {
+    expect(formatPercentage(Number.NaN)).toBe("100%");
+  });
+});
+
+describe("formatNumber", () => {
+  it("groups thousands", () => {
+    expect(formatNumber(1234567)).toBe("1,234,567");
+  });
+});
+
+describe("formatDateRange", () => {
+  it("returns 'All time' without bounds", () => {
+    expect(formatDateRange()).toBe("All time");
+  });
+
+  it("describes open-ended ranges", () => {
+    const date = new Date(2024, 0, 15, 9, 5);
+    expect(formatDateRange(date)).toMatch(/^Since January 15/);
+    expect(formatDateRange(undefined, date)).toMatch(/^Until January 15/);
+  });
+
+  it("shows only the end time for a same-day range", () => {
+    const range = formatDateRange(
+      new Date(2024, 0, 15, 9, 5),
+      new Date(2024, 0, 15, 17, 30),
+    );
+    expect(range).toMatch(/^January 15.* - 5:30\sPM$/);
+  });
+
+  it("shows only dates for whole-day ranges", () => {
+    expect(
+      formatDateRange(
+        new Date(2024, 0, 1),
+        new Date(2024, 0, 31, 23, 59, 59, 999),
+      ),
+    ).toBe("January 1, 2024 - January 31, 2024");
+  });
+
+  it("shows date and time for partial-day ranges", () => {
+    const range = formatDateRange(
+      new Date(2024, 0, 1, 8, 0),
+      new Date(2024, 0, 3, 18, 0),
+    );
+    expect(range).toMatch(/^January 1.*8:00\sAM - January 3.*6:00\sPM$/);
+  });
+});
+
+describe("formatDistanceToNowShort", () => {
+  const now = new Date("2024-06-01T12:00:00Z");
+
+  for (const [secondsAgo, expected] of [
+    [0, "0s ago"],
+    [59, "59s ago"],
+    [60, "1m ago"],
+    [59 * 60, "59m ago"],
+    [60 * 60, "1h ago"],
+    [23 * 60 * 60, "23h ago"],
+    [24 * 60 * 60, "1d ago"],
+    [10 * 24 * 60 * 60, "10d ago"],
+  ] as const) {
+    it(`${secondsAgo}s -> ${expected}`, () => {
+      vi.useFakeTimers({ now });
+      try {
+        const date = new Date(now.getTime() - secondsAgo * 1000);
+        expect(formatDistanceToNowShort(date)).toBe(expected);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  }
+
+  it("clamps future dates to 0s", () => {
+    vi.useFakeTimers({ now });
+    try {
+      expect(formatDistanceToNowShort(new Date(now.getTime() + 60_000))).toBe(
+        "0s ago",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("formatDateForInput", () => {
+  it("formats a local datetime-local value with zero padding", () => {
+    expect(formatDateForInput(new Date(2024, 2, 5, 7, 4))).toBe(
+      "2024-03-05T07:04",
+    );
+  });
+});
+
+describe("formatDurationShort", () => {
+  it("keeps the two largest units", () => {
+    expect(formatDurationShort(12_000)).toBe("12s");
+    expect(formatDurationShort(45 * 60_000)).toBe("45m");
+    expect(formatDurationShort(4 * 3_600_000)).toBe("4h");
+    expect(formatDurationShort(2 * 3_600_000 + 10 * 60_000)).toBe("2h 10m");
+    expect(formatDurationShort(2 * 86_400_000)).toBe("2d");
+    expect(formatDurationShort(2 * 86_400_000 + 3 * 3_600_000)).toBe("2d 3h");
+  });
+
+  it("rounds to whole minutes from a minute up", () => {
+    expect(formatDurationShort(4 * 60_000 + 49_000)).toBe("5m");
+    expect(formatDurationShort(59_000)).toBe("59s");
+    expect(formatDurationShort(3_600_000 - 20_000)).toBe("1h");
+  });
+
+  it("clamps negatives to zero", () => {
+    expect(formatDurationShort(-5000)).toBe("0s");
+  });
+});
+
+describe("formatEventDate", () => {
+  const now = new Date(2026, 9, 19, 23, 0);
+
+  it("shows the clock for earlier today and Today for later", () => {
+    expect(formatEventDate(new Date(2026, 9, 19, 22, 12), now)).toBe("22:12");
+    expect(formatEventDate(new Date(2026, 9, 19, 23, 30), now)).toBe("Today");
+  });
+
+  it("names the weekday for the coming week", () => {
+    expect(formatEventDate(new Date(2026, 9, 20, 2, 0), now)).toBe("Tue 20");
+    expect(formatEventDate(new Date(2026, 9, 25), now)).toBe("Sun 25");
+    expect(formatEventDate(new Date(2026, 9, 26), now)).toBe("Oct 26");
+    expect(formatEventDate(new Date(2026, 9, 23), new Date(2026, 9, 1))).toBe(
+      "Oct 23",
+    );
+    expect(formatEventDate(new Date(2026, 9, 6), new Date(2026, 9, 1))).toBe(
+      "Tue 06",
+    );
+  });
+
+  it("drops the year until it differs", () => {
+    expect(formatEventDate(new Date(2026, 9, 14), now)).toBe("Oct 14");
+    expect(formatEventDate(new Date(2025, 11, 1), now)).toBe("Dec 01, 2025");
+  });
+});
+
+describe("formatWindow", () => {
+  it("uses clocks under a day, including across midnight", () => {
+    expect(
+      formatWindow(new Date(2026, 9, 17, 22, 0), new Date(2026, 9, 18, 0, 0)),
+    ).toBe("22:00 – 00:00");
+  });
+
+  it("collapses a window inside one minute to a single clock", () => {
+    expect(
+      formatWindow(
+        new Date(2026, 9, 17, 23, 33, 5),
+        new Date(2026, 9, 17, 23, 33, 40),
+      ),
+    ).toBe("23:33");
+  });
+
+  it("keeps both ends when only the formatted text matches", () => {
+    expect(
+      formatWindow(
+        new Date(2026, 9, 17, 23, 33, 10),
+        new Date(2026, 9, 18, 23, 33, 5),
+      ),
+    ).toBe("23:33 – 23:33");
+    expect(formatWindow(new Date(2025, 0, 1), new Date(2026, 0, 1))).toBe(
+      "Jan 1, 2025 – Jan 1, 2026",
+    );
+  });
+
+  it("uses dates from a day on", () => {
+    expect(formatWindow(new Date(2026, 9, 11), new Date(2026, 9, 15))).toBe(
+      "Oct 11 – Oct 15",
+    );
+  });
+});
+
+describe("formatAxisTick", () => {
+  // local-time constructors so the midnight branch is independent of TZ
+  const midnight = new Date(2026, 9, 23, 0, 0);
+  const afternoon = new Date(2026, 9, 22, 14, 30);
+  const evenHour = new Date(2026, 9, 22, 16, 0);
+
+  it("shows only the time on 1d, with the date at midnight", () => {
+    expect(formatAxisTick(afternoon, "1d", 30)).toBe("2:30 PM");
+    expect(formatAxisTick(midnight, "1d", 30)).toBe("Oct 23");
+  });
+
+  it("shows short date and hour for multi-day sub-daily buckets", () => {
+    expect(formatAxisTick(evenHour, "7d", 240)).toBe("Oct 22, 4 PM");
+    expect(formatAxisTick(afternoon, "7d", 30)).toBe("Oct 22, 2:30 PM");
+  });
+
+  it("shows only the date for daily buckets", () => {
+    expect(formatAxisTick(midnight, "30d", 1440)).toBe("Oct 23");
+    expect(formatAxisTick(afternoon, "90d", 1440)).toBe("Oct 22");
+  });
+});

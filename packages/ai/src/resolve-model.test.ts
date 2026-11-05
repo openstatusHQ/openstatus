@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { resolveChatModel } from "./resolve-model";
 
@@ -25,14 +24,14 @@ describe("resolveChatModel", () => {
   test("gateway path: free plan resolves the cheaper model string", () => {
     process.env.AI_GATEWAY_API_KEY = "gw-key";
     expect(resolveChatModel({ plan: "free" })).toBe(
-      "anthropic/claude-haiku-4.5",
+      "anthropic/claude-haiku-5.5",
     );
   });
 
   test("gateway path: paid plan resolves the stronger model string", () => {
     process.env.AI_GATEWAY_API_KEY = "gw-key";
     expect(resolveChatModel({ plan: "team" })).toBe(
-      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-sonnet-5.5",
     );
   });
 

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   type AgentSystemPromptOptions,
@@ -49,7 +48,22 @@ describe("buildAgentSystemPrompt", () => {
       ...base,
       canNotifySubscribers: true,
     });
-    expect(prompt).toContain("Should I notify subscribers?");
+    expect(prompt).toContain("Should I notify subscribers? yes/no");
+    expect(prompt).toContain("only if the user hasn't already said");
+  });
+
+  test("dashboard surface makes the approval card the only confirmation", () => {
+    const prompt = buildAgentSystemPrompt({ ...base, surface: "dashboard" });
+    expect(prompt).toContain("The card is how you ask.");
+    expect(prompt).toContain('NEVER end your turn with "Should I apply it?"');
+    expect(prompt).not.toContain("Draft → Ask → Confirm");
+    expect(prompt).not.toContain("Show the draft to the user");
+  });
+
+  test("asks for a status page slug only when the user gave none", () => {
+    const prompt = buildAgentSystemPrompt(base);
+    expect(prompt).toContain("ask for a slug only if the user didn't give one");
+    expect(prompt).not.toContain("confirm the slug with the user");
   });
 
   test("forces notify false and drops the question when the plan does not", () => {

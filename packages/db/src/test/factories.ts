@@ -7,11 +7,15 @@
 // rolled-back `withTestTransaction`); omit it to commit to the shared db.
 import { db as defaultDb } from "../db";
 import {
+  incident,
+  incidentEvent,
+  incidentPostmortem,
   monitor,
   notification,
   notificationsToMonitors,
   page,
   pageComponent,
+  slackUser,
   user,
   usersToWorkspaces,
   workspace,
@@ -27,6 +31,10 @@ type UserInsert = typeof user.$inferInsert;
 type PageInsert = typeof page.$inferInsert;
 type PageComponentInsert = typeof pageComponent.$inferInsert;
 type NotificationInsert = typeof notification.$inferInsert;
+type IncidentInsert = typeof incident.$inferInsert;
+type IncidentEventInsert = typeof incidentEvent.$inferInsert;
+type SlackUserInsert = typeof slackUser.$inferInsert;
+type IncidentPostmortemInsert = typeof incidentPostmortem.$inferInsert;
 
 const unique = () => crypto.randomUUID().slice(0, 8);
 
@@ -39,17 +47,30 @@ const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 25;
 
+const MAX_CAUSE_DEPTH = 10;
+
+// Drizzle wraps driver errors in DrizzleQueryError ("Failed query: ...") with
+// the LibsqlError on `cause`, so walk the chain rather than checking the top.
 function isBusyError(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  if ("code" in err && typeof (err as { code: unknown }).code === "string") {
-    if (RETRYABLE_CODES.has((err as { code: string }).code)) return true;
-  }
-  if (
-    "message" in err &&
-    typeof (err as { message: unknown }).message === "string"
-  ) {
-    if (RETRYABLE_MESSAGE.test((err as { message: string }).message))
+  let current: unknown = err;
+  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+    if (typeof current !== "object" || current === null) return false;
+    if (
+      "code" in current &&
+      typeof current.code === "string" &&
+      RETRYABLE_CODES.has(current.code)
+    ) {
       return true;
+    }
+    if (
+      "message" in current &&
+      typeof current.message === "string" &&
+      RETRYABLE_MESSAGE.test(current.message)
+    ) {
+      return true;
+    }
+    if (!("cause" in current) || current.cause === current) return false;
+    current = current.cause;
   }
   return false;
 }
@@ -136,7 +157,7 @@ export async function createUser(
 export async function addUserToWorkspace(
   userId: number,
   workspaceId: number,
-  role: "owner" | "member" = "owner",
+  role: "owner" | "admin" | "member" = "owner",
   db: Db = defaultDb,
 ) {
   const [row] = await withBusyRetry(() =>
@@ -226,6 +247,92 @@ export async function linkNotificationToMonitor(
     db
       .insert(notificationsToMonitors)
       .values({ notificationId, monitorId })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createIncident(
+  workspaceId: number,
+  overrides: Partial<IncidentInsert> = {},
+  db: Db = defaultDb,
+) {
+  const now = new Date();
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(incident)
+      .values({
+        workspaceId,
+        title: `test-incident-${unique()}`,
+        severity: "major",
+        declaredAt: now,
+        startedAt: now,
+        ...overrides,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createIncidentEvent(
+  incidentId: number,
+  overrides: Partial<IncidentEventInsert> = {},
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(incidentEvent)
+      .values({
+        incidentId,
+        type: "note",
+        message: "test note",
+        createdAt: new Date(),
+        ...overrides,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createIncidentPostmortem(
+  incidentId: number,
+  overrides: Partial<IncidentPostmortemInsert> = {},
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(incidentPostmortem)
+      .values({
+        incidentId,
+        content: "## Summary\n\nTest postmortem.",
+        draftedBy: "user",
+        ...overrides,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+export async function createSlackUser(
+  workspaceId: number,
+  userId: number,
+  overrides: Partial<SlackUserInsert> = {},
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(slackUser)
+      .values({
+        workspaceId,
+        userId,
+        slackTeamId: `T${unique()}`,
+        slackUserId: `U${unique()}`,
+        ...overrides,
+      })
       .returning(),
   );
   if (!row) throw new Error("factory insert returned no row");

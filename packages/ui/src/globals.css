@@ -50,6 +50,15 @@
   --color-warning: var(--warning);
   --color-info: var(--info);
 
+  --color-activity-0: var(--activity-0);
+  --color-activity-1: var(--activity-1);
+  --color-activity-2: var(--activity-2);
+  --color-activity-3: var(--activity-3);
+  --color-activity-planned-1: var(--activity-planned-1);
+  --color-activity-planned-2: var(--activity-planned-2);
+  --color-activity-planned-3: var(--activity-planned-3);
+  --color-activity-hatch: var(--activity-hatch);
+
   @keyframes shimmer {
     0% {
       background-position: 200% 50%;
@@ -97,6 +106,16 @@
   --success: oklch(0.72 0.19 150);
   --warning: oklch(0.77 0.16 70);
   --info: oklch(0.62 0.19 260);
+
+  /* activity calendar: lightness is severity, hue only failure vs planned */
+  --activity-0: var(--muted);
+  --activity-1: color-mix(in oklab, var(--warning) 50%, var(--muted));
+  --activity-2: var(--warning);
+  --activity-3: var(--destructive);
+  --activity-planned-1: color-mix(in oklab, var(--info) 30%, var(--muted));
+  --activity-planned-2: color-mix(in oklab, var(--info) 65%, var(--muted));
+  --activity-planned-3: var(--info);
+  --activity-hatch: var(--muted-foreground);
 
   --rainbow-1: oklch(0.64 0.21 25);
   --rainbow-2: oklch(0.70 0.19 48);
@@ -153,6 +172,10 @@
   --success: oklch(0.72 0.19 150);
   --warning: oklch(0.77 0.16 70);
   --info: oklch(0.62 0.19 260);
+
+  --activity-1: color-mix(in oklab, var(--warning) 30%, var(--muted));
+  --activity-2: color-mix(in oklab, var(--warning) 60%, var(--muted));
+  --activity-planned-1: color-mix(in oklab, var(--info) 35%, var(--muted));
 
   --rainbow-1: oklch(0.64 0.21 25);
   --rainbow-2: oklch(0.70 0.19 48);

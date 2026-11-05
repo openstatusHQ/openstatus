@@ -1,11 +1,10 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { blacklistDates } from "./blacklist";
 import { classNames, statusDetails } from "./config";
@@ -24,7 +23,9 @@ type ReportWithUpdates = StatusReport & {
   statusReportUpdates?: StatusReportUpdate[];
 };
 
-function createIncident(overrides: Partial<Incident> = {}): Incident {
+function createIncident(
+  overrides: Partial<MonitorIncident> = {},
+): MonitorIncident {
   return {
     id: 1,
     title: "",
@@ -55,6 +56,8 @@ function createMaintenance(overrides: Partial<Maintenance> = {}): Maintenance {
     to: new Date("2024-01-01T01:00:00.000Z"),
     workspaceId: 1,
     pageId: null,
+    createdBy: null,
+    updatedBy: null,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
     updatedAt: new Date("2024-01-01T00:00:00.000Z"),
     ...overrides,
@@ -70,6 +73,8 @@ function createStatusReportUpdate(
     date: new Date("2024-01-01T00:00:00.000Z"),
     message: "Looking into it",
     statusReportId: 1,
+    createdBy: null,
+    updatedBy: null,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
     updatedAt: new Date("2024-01-01T00:00:00.000Z"),
     ...overrides,
@@ -85,6 +90,8 @@ function createStatusReport(
     title: "Status report",
     workspaceId: 1,
     pageId: null,
+    createdBy: null,
+    updatedBy: null,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
     updatedAt: new Date("2024-01-01T00:00:00.000Z"),
     ...overrides,

@@ -172,12 +172,12 @@ export function FormGeneral({
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
-          <FormCardContent className="grid gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input placeholder="My Status Page" {...field} />
@@ -193,7 +193,7 @@ export function FormGeneral({
               control={form.control}
               name="slug"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Slug</FormLabel>
                   <InputGroup>
                     <FormControl>
@@ -215,7 +215,7 @@ export function FormGeneral({
               control={form.control}
               name="icon"
               render={() => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Icon</FormLabel>
                   <FormControl>
                     <div className="flex items-center space-x-2">
@@ -275,7 +275,7 @@ export function FormGeneral({
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-full">
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea {...field} />

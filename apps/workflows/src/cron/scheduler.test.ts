@@ -1,5 +1,5 @@
-import { describe, expect, test } from "@openstatus/test-utils";
 import { Cron, Result } from "effect";
+import { describe, expect, test } from "vitest";
 
 import { SCHEDULED_TASKS } from "./scheduler";
 

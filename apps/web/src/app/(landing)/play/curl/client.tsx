@@ -13,7 +13,10 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import Link from "next/link";
 import { Fragment, useState } from "react";
+
+import { APP_URL } from "@/lib/metadata/shared-metadata";
 
 type Values = {
   url: string;
@@ -54,7 +57,7 @@ export function Form() {
           >
             <SelectTrigger
               id="method"
-              className="h-auto! w-full rounded-none p-4 text-base"
+              className="h-auto! w-full rounded-none px-3 py-2 text-base"
             >
               <SelectValue />
             </SelectTrigger>
@@ -63,7 +66,7 @@ export function Form() {
                 <SelectItem
                   key={method}
                   value={method}
-                  className="rounded-none px-2 py-3"
+                  className="rounded-none px-3 py-2"
                 >
                   {method}
                 </SelectItem>
@@ -79,7 +82,7 @@ export function Form() {
             name="url"
             id="url"
             placeholder="https://openstatus.dev"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
             value={value.url}
             onChange={(e) => setValue((v) => ({ ...v, url: e.target.value }))}
           />
@@ -90,7 +93,7 @@ export function Form() {
             <Button
               type="button"
               variant="outline"
-              className="col-span-2 h-auto! rounded-none p-4 text-base"
+              className="col-span-2 h-auto! rounded-none px-3 py-2 text-base"
               onClick={() =>
                 setValue((v) => ({
                   ...v,
@@ -105,7 +108,7 @@ export function Form() {
               <Fragment key={index}>
                 <Input
                   placeholder="Key"
-                  className="col-span-2 h-auto! rounded-none p-4 text-base md:text-base"
+                  className="col-span-2 h-auto! rounded-none px-3 py-2 text-base md:text-base"
                   value={header.key}
                   onChange={(e) =>
                     setValue((v) => ({
@@ -118,7 +121,7 @@ export function Form() {
                 />
                 <Input
                   placeholder="Value"
-                  className="col-span-2 h-auto! rounded-none p-4 text-base md:text-base"
+                  className="col-span-2 h-auto! rounded-none px-3 py-2 text-base md:text-base"
                   value={header.value}
                   onChange={(e) =>
                     setValue((v) => ({
@@ -132,7 +135,7 @@ export function Form() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-full w-full rounded-none p-4 text-base"
+                  className="h-full w-full rounded-none px-3 py-2 text-base"
                   onClick={() =>
                     setValue((v) => ({
                       ...v,
@@ -155,7 +158,7 @@ export function Form() {
             name="body"
             placeholder=""
             rows={6}
-            className="resize-none rounded-none p-4 text-base md:text-base"
+            className="resize-none rounded-none px-3 py-2 text-base md:text-base"
             value={value.body}
             onChange={(e) => setValue((v) => ({ ...v, body: e.target.value }))}
           />
@@ -225,7 +228,7 @@ export function Form() {
             name="headers"
             placeholder=""
             rows={3}
-            className="resize-none rounded-none p-4 text-base md:text-base"
+            className="resize-none rounded-none px-3 py-2 text-base md:text-base"
             value={generateCurlCommand(value)}
             readOnly
           />
@@ -234,13 +237,50 @@ export function Form() {
           <Button
             type="button"
             onClick={() => copy(generateCurlCommand(value), {})}
-            className="h-full w-full rounded-none p-4 text-base"
+            className="h-full w-full rounded-none px-3 py-2 text-base"
           >
             {isCopied ? "Copied" : "Copy to Clipboard"}
           </Button>
         </div>
+        <NextSteps url={value.url} method={value.method} />
       </div>
     </form>
+  );
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// The command is a one-off from the reader's machine. Both links carry the
+// URL and method only; headers and body stay in the command.
+function NextSteps({ url, method }: { url: string; method: string }) {
+  if (!isHttpUrl(url)) return null;
+
+  const checker = new URLSearchParams({ url, method });
+  const monitor = new URLSearchParams({ url, method, ref: "curl" });
+
+  return (
+    <p className="text-muted-foreground col-span-5 my-0! text-sm">
+      Same URL, different place:{" "}
+      <Link href={`/play/checker?${checker.toString()}`}>
+        run it from 28 regions
+      </Link>{" "}
+      or{" "}
+      <a
+        href={`${APP_URL}/monitors/create?${monitor.toString()}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        monitor this endpoint
+      </a>{" "}
+      and get alerted when it fails.
+    </p>
   );
 }
 

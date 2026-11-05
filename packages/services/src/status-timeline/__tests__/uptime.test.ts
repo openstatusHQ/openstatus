@@ -1,11 +1,11 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import type { Event } from "../events";
 import {
   type UptimeWindow,
   durationDowntimeMs,
   floorPct,
+  heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
   requestsTally,
 } from "../uptime";
@@ -207,5 +207,30 @@ describe("reportsOnlyDowntimeMs", () => {
         window,
       ),
     ).toBe(2 * HOUR);
+  });
+});
+
+describe("heartbeatCoverageStart", () => {
+  const day = (offset: number, ok: number) => ({
+    day: new Date(base + offset * DAY).toISOString(),
+    ok,
+    degraded: 0,
+    error: 0,
+  });
+
+  test("starts at the first day with a ping, ignoring silent days", () => {
+    expect(heartbeatCoverageStart([day(0, 0), day(2, 1), day(5, 3)], [])).toBe(
+      base + 2 * DAY,
+    );
+  });
+
+  test("an incident before the first ping starts coverage earlier", () => {
+    expect(
+      heartbeatCoverageStart([day(4, 1)], [incident(base + DAY + HOUR, null)]),
+    ).toBe(base + DAY + HOUR);
+  });
+
+  test("no pings and no incidents is untracked", () => {
+    expect(heartbeatCoverageStart([day(0, 0)], [])).toBe(null);
   });
 });

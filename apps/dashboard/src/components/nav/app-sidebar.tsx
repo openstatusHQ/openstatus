@@ -58,13 +58,24 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const overview = [
+    ...data.overview.slice(0, 3),
+    {
+      name: NAV.incidents.label,
+      url: NAV.incidents.href,
+      icon: NAV.incidents.icon,
+      badge: "New",
+    },
+    ...data.overview.slice(3),
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavOverview items={data.overview} />
+        <NavOverview items={overview} />
         <NavStatusPages />
         <NavMonitors />
         <div className="mt-auto px-2">

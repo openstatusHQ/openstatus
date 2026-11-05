@@ -5,6 +5,7 @@ import {
   type CustomTheme,
   THEMES,
   THEME_KEYS,
+  type Theme,
   type ThemeDefinition,
   generateThemeStyles,
   hasCustomTheme,
@@ -34,10 +35,12 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
+import { resolveTimeZone } from "@openstatus/utils";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { clearThemeDraft } from "../../lib/theme-draft";
 import { ThemeSelect } from "../themes/theme-select";
 
 export const IS_DEV = process.env.NODE_ENV === "development";
@@ -57,6 +60,16 @@ export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
 export const NUMBER_OF_DAYS = [30, 45] as const;
 export type NumberOfDays = (typeof NUMBER_OF_DAYS)[number];
 
+// mirrors `configurationLabels` in the dashboard's form-configuration.tsx
+const LABELS = {
+  type: { absolute: "Monitor checks", manual: "Reports only" },
+  value: {
+    duration: "Time per status",
+    requests: "Number of checks",
+    manual: "Worst status of the day",
+  },
+} as const;
+
 interface StatusPageContextType {
   cardType: CardType;
   setCardType: (cardType: CardType) => void;
@@ -68,6 +81,11 @@ interface StatusPageContextType {
   setNumberOfDays: (numberOfDays: NumberOfDays) => void;
   communityTheme: CommunityTheme;
   setCommunityTheme: (communityTheme: CommunityTheme) => void;
+  /** Unregistered theme previewed from the explorer's builder. */
+  draftTheme: Theme | null;
+  setDraftTheme: (draftTheme: Theme | null) => void;
+  /** IANA zone the page's days and timestamps are rendered in. */
+  timezone: string;
 }
 
 const StatusPageContext = createContext<StatusPageContextType | null>(null);
@@ -88,6 +106,7 @@ export function StatusPageProvider({
   defaultNumberOfDays = 45,
   defaultCommunityTheme = "default",
   customTheme,
+  timezone: pageTimezone = "UTC",
 }: {
   children: React.ReactNode;
   defaultCardType?: CardType;
@@ -96,15 +115,27 @@ export function StatusPageProvider({
   defaultNumberOfDays?: NumberOfDays;
   defaultCommunityTheme?: CommunityTheme;
   customTheme?: CustomTheme | null;
+  timezone?: string;
 }) {
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
   const [numberOfDays, setNumberOfDays] =
     useState<NumberOfDays>(defaultNumberOfDays);
-  const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
+  const [communityTheme, setCommunityThemeState] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
+  const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+  // the server vetted the zone against Node; an older browser may still not
+  // know it and would throw on every formatter
+  const timezone = useMemo(() => resolveTimeZone(pageTimezone), [pageTimezone]);
+
+  // a draft shadows the community theme, so picking one discards the draft
+  function setCommunityTheme(theme: CommunityTheme) {
+    clearThemeDraft();
+    setDraftTheme(null);
+    setCommunityThemeState(theme);
+  }
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -112,17 +143,22 @@ export function StatusPageProvider({
   }, []);
 
   useEffect(() => {
-    if (isMounted) {
-      // keep the page's custom vars applied — without them this rewrite
-      // clobbers the server-rendered overrides on hydration
-      recomputeStyles(
-        communityTheme,
-        hasCustomTheme(customTheme)
-          ? sanitizeCustomTheme(customTheme)
-          : undefined,
-      );
+    if (!isMounted) return;
+    if (draftTheme) {
+      // an unregistered id falls back to the default theme as base, which is
+      // what the draft would render over once registered
+      recomputeStyles(draftTheme.id, draftTheme);
+      return;
     }
-  }, [communityTheme, isMounted, customTheme]);
+    // keep the page's custom vars applied — without them this rewrite
+    // clobbers the server-rendered overrides on hydration
+    recomputeStyles(
+      communityTheme,
+      hasCustomTheme(customTheme)
+        ? sanitizeCustomTheme(customTheme)
+        : undefined,
+    );
+  }, [communityTheme, isMounted, customTheme, draftTheme]);
 
   return (
     <StatusPageContext.Provider
@@ -137,6 +173,9 @@ export function StatusPageProvider({
         setNumberOfDays,
         communityTheme,
         setCommunityTheme,
+        draftTheme,
+        setDraftTheme,
+        timezone,
       }}
     >
       {children}
@@ -217,7 +256,7 @@ export function FloatingButton({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="bar-type">Bar Type</Label>
+                <Label htmlFor="bar-type">Status source</Label>
                 <Select
                   value={barType}
                   onValueChange={(v) => {
@@ -229,39 +268,46 @@ export function FloatingButton({
                     }
                   }}
                 >
-                  <SelectTrigger id="bar-type" className="w-full capitalize">
+                  <SelectTrigger id="bar-type" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {BAR_TYPE.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
+                      <SelectItem key={v} value={v}>
+                        {LABELS.type[v]}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="card-type">Card Type</Label>
+                <Label htmlFor="card-type">Card shows</Label>
                 <Select
                   value={cardType}
                   onValueChange={(v) => setCardType(v as CardType)}
                   disabled={barType !== "absolute"}
                 >
-                  <SelectTrigger id="card-type" className="w-full capitalize">
-                    <SelectValue />
+                  <SelectTrigger id="card-type" className="w-full">
+                    {barType === "manual" ? (
+                      <span className="text-muted-foreground truncate">
+                        Not available for reports only
+                      </span>
+                    ) : (
+                      <SelectValue />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
-                    {CARD_TYPE.map((v) => (
-                      <SelectItem
-                        key={v}
-                        value={v}
-                        className="capitalize"
-                        disabled={["dominant", "manual"].includes(v)}
-                      >
-                        {v}
+                    {(["duration", "requests"] as const).map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {LABELS.value[v]}
                       </SelectItem>
                     ))}
+                    {/* stored configs may pair an absolute source with a manual value */}
+                    {cardType === "manual" ? (
+                      <SelectItem value="manual" disabled>
+                        {LABELS.value.manual}
+                      </SelectItem>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>
@@ -386,8 +432,9 @@ export function FloatingButton({
   );
 }
 
+/** Unregistered ids (builder drafts) fall back to the default theme as base. */
 export function recomputeStyles(
-  newTheme: CommunityTheme,
+  newTheme: string,
   overrides?: Partial<ThemeDefinition>,
 ) {
   try {

@@ -62,6 +62,26 @@ export async function assertSlugAvailable(args: {
   }
 }
 
+/** Assert no other page, in any workspace, already serves this custom domain. */
+export async function assertCustomDomainAvailable(args: {
+  tx: DB;
+  customDomain: string | null | undefined;
+  excludePageId?: number;
+}): Promise<void> {
+  const { tx, customDomain, excludePageId } = args;
+  if (!customDomain) return;
+  const rows = await tx
+    .select({ id: page.id })
+    .from(page)
+    .where(sql`lower(${page.customDomain}) = ${customDomain.toLowerCase()}`)
+    .all();
+  if (rows.some((r) => r.id !== excludePageId)) {
+    throw new ConflictError(
+      "This domain is already used by another status page.",
+    );
+  }
+}
+
 /** Validate monitor ids against the workspace's active (non-soft-deleted) set. */
 export async function validateMonitorIdsActive(args: {
   tx: DB;

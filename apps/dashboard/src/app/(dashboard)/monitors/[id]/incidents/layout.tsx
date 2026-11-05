@@ -21,7 +21,7 @@ export default async function Layout({
   const monitorId = Number.parseInt(id);
   if (Number.isNaN(monitorId)) notFound();
   await queryClient.prefetchQuery(
-    trpc.incident.list.queryOptions({ monitorId }),
+    trpc.monitorIncident.list.queryOptions({ monitorId }),
   );
   const defaultOpen = await getSidebarDefaultOpen(RIGHT_SIDEBAR_COOKIE, false);
 

@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import { monitor, page, pageComponent } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, expect, test } from "vitest";
 
 import { app } from "@/index";
 

@@ -1,10 +1,12 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, test } from "@std/testing/bdd";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import {
   consume,
+  draftKey,
   findByThread,
   get,
+  listCreated,
+  recordCreated,
   replace,
   store,
 } from "./confirmation-store";
@@ -16,7 +18,7 @@ const redisStore = (globalThis as Record<string, unknown>)
 function makePendingInput(): Omit<PendingAction, "id" | "createdAt"> {
   return {
     workspaceId: 1,
-    botToken: "xoxb-test-token",
+    teamId: "T_KNOWN",
     channelId: "C123",
     threadTs: "1234567890.123456",
     messageTs: "1234567890.654321",
@@ -50,7 +52,7 @@ describe("confirmation-store", () => {
       const id = await store(input);
 
       const actionKey = `slack:action:${id}`;
-      const threadKey = `slack:thread:${input.threadTs}`;
+      const threadKey = `slack:thread:${input.threadTs}:create_status_report`;
 
       expect(redisStore.has(actionKey)).toBe(true);
       expect(redisStore.has(threadKey)).toBe(true);
@@ -58,6 +60,8 @@ describe("confirmation-store", () => {
       const stored = JSON.parse(redisStore.get(actionKey) as string);
       expect(stored.id).toBe(id);
       expect(stored.workspaceId).toBe(1);
+      // The click resolves its bot token from this, so it has to round-trip.
+      expect(stored.teamId).toBe("T_KNOWN");
       expect(stored.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.get(threadKey)).toBe(id);
@@ -75,7 +79,9 @@ describe("confirmation-store", () => {
       expect(result?.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.has(`slack:action:${id}`)).toBe(true);
-      expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(true);
+      expect(
+        redisStore.has(`slack:thread:${input.threadTs}:create_status_report`),
+      ).toBe(true);
     });
 
     test("returns undefined for unknown id", async () => {
@@ -102,7 +108,9 @@ describe("confirmation-store", () => {
       expect(result?.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.has(`slack:action:${id}`)).toBe(false);
-      expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(false);
+      expect(
+        redisStore.has(`slack:thread:${input.threadTs}:create_status_report`),
+      ).toBe(false);
     });
 
     test("returns undefined for unknown id", async () => {
@@ -123,22 +131,72 @@ describe("confirmation-store", () => {
       const input = makePendingInput();
       const id = await store(input);
 
-      const result = await findByThread(input.threadTs);
+      const result = await findByThread(input.threadTs, input.payload);
       expect(result).toBeDefined();
       expect(result?.id).toBe(id);
     });
 
     test("returns undefined for unknown thread", async () => {
-      const result = await findByThread("unknown.thread");
+      const result = await findByThread(
+        "unknown.thread",
+        makePendingInput().payload,
+      );
       expect(result).toBeUndefined();
     });
 
     test("cleans up orphaned thread index", async () => {
-      redisStore.set("slack:thread:orphan.ts", "missing-id");
+      redisStore.set(
+        "slack:thread:orphan.ts:create_status_report",
+        "missing-id",
+      );
 
-      const result = await findByThread("orphan.ts");
+      const result = await findByThread(
+        "orphan.ts",
+        makePendingInput().payload,
+      );
       expect(result).toBeUndefined();
-      expect(redisStore.has("slack:thread:orphan.ts")).toBe(false);
+      expect(
+        redisStore.has("slack:thread:orphan.ts:create_status_report"),
+      ).toBe(false);
+    });
+
+    test("keeps separate drafts in one thread apart", async () => {
+      const input = makePendingInput();
+      const rename = {
+        toolName: "update_status_report",
+        input: { statusReportId: 7, title: "Elevated API error rate" },
+      };
+      const update = {
+        toolName: "add_status_report_update",
+        input: { statusReportId: 7, status: "investigating", message: "500s" },
+      };
+      const renameId = await store({ ...input, payload: rename });
+      const updateId = await store({ ...input, payload: update });
+
+      expect((await findByThread(input.threadTs, rename))?.id).toBe(renameId);
+      expect((await findByThread(input.threadTs, update))?.id).toBe(updateId);
+
+      // Approving one card leaves the other clickable.
+      await consume(renameId);
+      expect(await findByThread(input.threadTs, rename)).toBeUndefined();
+      expect((await findByThread(input.threadTs, update))?.id).toBe(updateId);
+    });
+
+    test("narrows the draft to the report it acts on", () => {
+      expect(
+        draftKey({
+          toolName: "add_status_report_update",
+          input: { statusReportId: 1 },
+        }),
+      ).not.toBe(
+        draftKey({
+          toolName: "add_status_report_update",
+          input: { statusReportId: 2 },
+        }),
+      );
+      expect(draftKey({ toolName: "create_maintenance", input: {} })).toBe(
+        "create_maintenance",
+      );
     });
   });
 
@@ -176,7 +234,7 @@ describe("confirmation-store", () => {
       const raw = JSON.stringify({
         id: "test",
         workspaceId: 1,
-        botToken: "tok",
+        teamId: "T_KNOWN",
         channelId: "C1",
         threadTs: "1.1",
         messageTs: "1.2",
@@ -198,5 +256,34 @@ describe("confirmation-store", () => {
       const result = await consume(id);
       expect(result?.payload.toolName).toBe("create_maintenance");
     });
+  });
+});
+
+describe("created records", () => {
+  beforeEach(() => {
+    redisStore.clear();
+  });
+
+  test("records per thread, newest last, without duplicates", async () => {
+    await recordCreated("9.1", { kind: "status_report", id: 12, label: "API" });
+    await recordCreated("9.1", { kind: "incident", id: 7, label: "API down" });
+    await recordCreated("9.1", { kind: "status_report", id: 12, label: "API" });
+
+    expect(await listCreated("9.1")).toEqual([
+      { kind: "incident", id: 7, label: "API down" },
+      { kind: "status_report", id: 12, label: "API" },
+    ]);
+    expect(await listCreated("9.2")).toEqual([]);
+  });
+
+  test("ignores a corrupted entry", async () => {
+    redisStore.set(
+      "slack:created-list:9.3",
+      JSON.stringify([
+        JSON.stringify({ kind: "nope" }),
+        JSON.stringify({ kind: "incident", id: 7 }),
+      ]),
+    );
+    expect(await listCreated("9.3")).toEqual([{ kind: "incident", id: 7 }]);
   });
 });

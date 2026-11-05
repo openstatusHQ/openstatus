@@ -1,7 +1,6 @@
 import { and, desc, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   clearAuditLog,
@@ -25,6 +24,7 @@ beforeAll(async () => {
   ctx = makeSlackCtx(team.workspace, {
     teamId: TEAM_ID,
     slackUserId: SLACK_USER_ID,
+    userId: team.userId,
   });
 });
 
@@ -237,6 +237,22 @@ describe("installSlackAgent", () => {
       };
       await expect(
         installSlackAgent({ ctx: readOnlyCtx, input: baseInput }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(ctx.workspace, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        installSlackAgent({ ctx: writeKeyCtx, input: baseInput }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });

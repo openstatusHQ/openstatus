@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { notFoundMarkdown } from "../../../../content/agent-recovery";
 import { convertMdxToMarkdown } from "../../../../content/convert";
+import { generateOssFriendsMarkdown } from "../../../../content/oss-friends";
 import {
   generateStatusDetailMarkdown,
   generateStatusIndexMarkdown,
@@ -43,6 +44,18 @@ export async function GET(
           "Cache-Control":
             "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
           "X-Content-Source": "status",
+        },
+      });
+    }
+
+    if (pathname === "/oss-friends") {
+      return new NextResponse(await generateOssFriendsMarkdown(), {
+        status: 200,
+        headers: {
+          ...MARKDOWN_HEADERS,
+          "Cache-Control":
+            "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
+          "X-Content-Source": "oss-friends",
         },
       });
     }

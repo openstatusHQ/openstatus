@@ -22,6 +22,7 @@ import {
   Close,
   Globe,
   Network,
+  Schedule,
   Server,
   Speed,
 } from "@openstatus/icons";
@@ -65,9 +66,10 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
+import { headerPairSchema } from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -83,7 +85,10 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-const TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+import { heartbeatGraceSchema, heartbeatPeriodSchema } from "./form-heartbeat";
+import { HeartbeatDurationInput } from "./heartbeat-duration-input";
+
+const TYPES = ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const;
 const GRPC_TLS_LABELS = {
   tls: "TLS (verify certificate)",
   tls_insecure: "TLS (skip verification)",
@@ -92,45 +97,70 @@ const GRPC_TLS_LABELS = {
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
-const schema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  type: z.enum(TYPES),
-  method: z.enum(monitorMethods),
-  url: z.string().min(1, "URL is required"),
-  headers: z.array(
-    z.object({
-      key: z.string(),
-      value: z.string(),
-    }),
-  ),
-  active: z.boolean().prefault(true),
-  assertions: z.array(
-    z.discriminatedUnion("type", [
-      statusAssertion,
-      headerAssertion,
-      textBodyAssertion,
-      jsonBodyAssertion,
-      recordAssertion,
-    ]),
-  ),
-  body: z.string().optional(),
-  grpcService: z.string().optional(),
-  grpcTls: z.enum(grpcTlsModes).prefault("tls"),
-  skipCheck: z.boolean().prefault(false),
-  saveCheck: z.boolean().prefault(false),
-});
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    type: z.enum(TYPES),
+    method: z.enum(monitorMethods),
+    url: z.string(),
+    headers: z.array(headerPairSchema),
+    active: z.boolean().prefault(true),
+    assertions: z.array(
+      z.discriminatedUnion("type", [
+        statusAssertion,
+        headerAssertion,
+        textBodyAssertion,
+        jsonBodyAssertion,
+        recordAssertion,
+      ]),
+    ),
+    body: z.string().optional(),
+    grpcService: z.string().optional(),
+    grpcTls: z.enum(grpcTlsModes).prefault("tls"),
+    skipCheck: z.boolean().prefault(false),
+    saveCheck: z.boolean().prefault(false),
+    heartbeatPeriod: z.number().optional(),
+    heartbeatGrace: z.number().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.type !== "heartbeat") {
+      if (values.url.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["url"],
+          message: "URL is required",
+        });
+      }
+      return;
+    }
+    for (const [key, rule] of [
+      ["heartbeatPeriod", heartbeatPeriodSchema],
+      ["heartbeatGrace", heartbeatGraceSchema],
+    ] as const) {
+      const result = rule.safeParse(values[key]);
+      if (!result.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: result.error.issues[0]?.message ?? "Invalid value",
+        });
+      }
+    }
+  });
 
 type FormValues = z.input<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
   disabled,
+  heartbeatAvailable,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
+  heartbeatAvailable?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
@@ -148,14 +178,38 @@ export function FormGeneral({
       grpcTls: "tls",
       skipCheck: false,
       saveCheck: false,
+      heartbeatPeriod: 3_600,
+      heartbeatGrace: 300,
     },
   });
+  // Stable row ids so removing a row remounts the shifted controllers.
+  const {
+    fields: headerFields,
+    append: appendHeader,
+    remove: removeHeader,
+  } = useFieldArray({ control: form.control, name: "headers" });
+  const {
+    fields: assertionFields,
+    append: appendAssertion,
+    remove: removeAssertion,
+  } = useFieldArray({ control: form.control, name: "assertions" });
   const [isPending, startTransition] = useTransition();
   const watchType = form.watch("type");
   const watchMethod = form.watch("method");
   // Each type has its own reference page; only http and dns support assertions.
   const referenceUrl = `https://www.openstatus.dev/docs/reference/${watchType ?? "http"}-monitor/`;
   const hasAssertions = watchType === "http" || watchType === "dns";
+  const isHeartbeat = watchType === "heartbeat";
+  const typeOptions = [
+    { value: "http", icon: Globe, label: "HTTP" },
+    { value: "tcp", icon: Network, label: "TCP" },
+    { value: "dns", icon: Server, label: "DNS" },
+    { value: "icmp", icon: Speed, label: "ICMP" },
+    { value: "grpc", icon: Api, label: "gRPC" },
+    ...(heartbeatAvailable || defaultValues?.type === "heartbeat"
+      ? [{ value: "heartbeat", icon: Schedule, label: "Heartbeat" }]
+      : []),
+  ];
 
   useEffect(() => {
     // NOTE: reset form when type changes
@@ -299,16 +353,15 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-5"
+                      className={cn(
+                        "grid grid-cols-2 gap-4",
+                        typeOptions.length > 5
+                          ? "sm:grid-cols-3 lg:grid-cols-6"
+                          : "sm:grid-cols-5",
+                      )}
                       disabled={!!defaultValues?.type}
                     >
-                      {[
-                        { value: "http", icon: Globe, label: "HTTP" },
-                        { value: "tcp", icon: Network, label: "TCP" },
-                        { value: "dns", icon: Server, label: "DNS" },
-                        { value: "icmp", icon: Speed, label: "ICMP" },
-                        { value: "grpc", icon: Api, label: "gRPC" },
-                      ].map((type) => {
+                      {typeOptions.map((type) => {
                         return (
                           <Tooltip key={type.value}>
                             <TooltipTrigger asChild>
@@ -343,11 +396,7 @@ export function FormGeneral({
                           </Tooltip>
                         );
                       })}
-                      <div
-                        className={cn(
-                          "text-muted-foreground col-span-1 self-end text-xs sm:place-self-end",
-                        )}
-                      >
+                      <div className="text-muted-foreground col-span-full text-xs">
                         Missing a type?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
                       </div>
@@ -358,7 +407,9 @@ export function FormGeneral({
               )}
             />
           </FormCardContent>
-          {watchType ? <FormCardSeparator /> : null}
+          {watchType && !(isHeartbeat && defaultValues?.type) ? (
+            <FormCardSeparator />
+          ) : null}
           {watchType === "http" && (
             <>
               <FormCardContent className="grid grid-cols-4 gap-4">
@@ -410,74 +461,56 @@ export function FormGeneral({
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="headers"
-                  render={({ field }) => (
-                    <FormItem className="col-span-full">
-                      <FormLabel>Request Headers</FormLabel>
-                      {field.value.map((header, index) => (
-                        <div key={index} className="grid gap-2 sm:grid-cols-5">
-                          <Input
-                            placeholder="Key"
-                            className="col-span-2"
-                            value={header.key}
-                            onChange={(e) => {
-                              const newHeaders = [...field.value];
-                              newHeaders[index] = {
-                                ...newHeaders[index],
-                                key: e.target.value,
-                              };
-                              field.onChange(newHeaders);
-                            }}
-                          />
-                          <Input
-                            placeholder="Value"
-                            className="col-span-2"
-                            value={header.value}
-                            onChange={(e) => {
-                              const newHeaders = [...field.value];
-                              newHeaders[index] = {
-                                ...newHeaders[index],
-                                value: e.target.value,
-                              };
-                              field.onChange(newHeaders);
-                            }}
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => {
-                              const newHeaders = field.value.filter(
-                                (_, i) => i !== index,
-                              );
-                              field.onChange(newHeaders);
-                            }}
-                          >
-                            <Close />
-                          </Button>
-                        </div>
-                      ))}
-                      <div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => {
-                            field.onChange([
-                              ...field.value,
-                              { key: "", value: "" },
-                            ]);
-                          }}
-                        >
-                          <Add />
-                          Add Header
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormItem className="col-span-full">
+                  <FormLabel>Request Headers</FormLabel>
+                  {headerFields.map((row, index) => (
+                    <div key={row.id} className="grid gap-2 sm:grid-cols-5">
+                      <FormField
+                        control={form.control}
+                        name={`headers.${index}.key`}
+                        render={({ field }) => (
+                          <FormItem className="col-span-2">
+                            <FormControl>
+                              <Input placeholder="Key" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`headers.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem className="col-span-2">
+                            <FormControl>
+                              <Input placeholder="Value" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        type="button"
+                        aria-label="Remove header"
+                        onClick={() => removeHeader(index)}
+                      >
+                        <Close />
+                      </Button>
+                    </div>
+                  ))}
+                  <div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => appendHeader({ key: "", value: "" })}
+                    >
+                      <Add />
+                      Add Header
+                    </Button>
+                  </div>
+                </FormItem>
                 {["POST", "PUT", "PATCH", "DELETE"].includes(watchMethod) && (
                   <FormField
                     control={form.control}
@@ -497,215 +530,188 @@ export function FormGeneral({
               </FormCardContent>
               <FormCardSeparator />
               <FormCardContent>
-                <FormField
-                  control={form.control}
-                  name="assertions"
-                  render={({ field }) => (
-                    <FormItem className="col-span-full">
-                      <FormLabel>Assertions</FormLabel>
-                      <FormDescription>
-                        Validate the response to ensure your service is working
-                        as expected. <br />
-                        Add body, header, or status assertions.
-                      </FormDescription>
-                      {field.value.map((assertion, index) => (
-                        <div key={index} className="grid gap-2 sm:grid-cols-6">
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.type`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                  disabled={true}
-                                >
-                                  <SelectTrigger
-                                    aria-invalid={
-                                      !!form.formState.errors.assertions?.[
-                                        index
-                                      ]?.type
-                                    }
-                                    className="w-full"
-                                  >
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {HTTP_ASSERTION_TYPES.map((type) => (
-                                      <SelectItem key={type} value={type}>
-                                        {type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.compare`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <SelectTrigger className="w-full min-w-16">
-                                    <span className="truncate">
-                                      <SelectValue placeholder="Select compare" />
-                                    </span>
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {assertion.type === "status"
-                                      ? Object.entries(
-                                          numberCompareDictionary,
-                                        ).map(([key, value]) => (
-                                          <SelectItem key={key} value={key}>
-                                            {value}
-                                          </SelectItem>
-                                        ))
-                                      : Object.entries(
-                                          stringCompareDictionary,
-                                        ).map(([key, value]) => (
-                                          <SelectItem key={key} value={key}>
-                                            {value}
-                                          </SelectItem>
-                                        ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          {assertion.type === "header" && (
-                            <FormField
-                              control={form.control}
-                              name={`assertions.${index}.key`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <Input
-                                    placeholder="Header key"
-                                    className="w-full"
-                                    {...field}
-                                    value={field.value as string}
-                                  />
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                <FormItem className="col-span-full">
+                  <FormLabel>Assertions</FormLabel>
+                  <FormDescription>
+                    Validate the response to ensure your service is working as
+                    expected. <br />
+                    Add body, header, or status assertions.
+                  </FormDescription>
+                  {assertionFields.map((assertion, index) => (
+                    <div
+                      key={assertion.id}
+                      className="grid gap-2 sm:grid-cols-6"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.type`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              disabled={true}
+                            >
+                              <SelectTrigger
+                                aria-invalid={
+                                  !!form.formState.errors.assertions?.[index]
+                                    ?.type
+                                }
+                                className="w-full"
+                              >
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {HTTP_ASSERTION_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.compare`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger className="w-full min-w-16">
+                                <span className="truncate">
+                                  <SelectValue placeholder="Select compare" />
+                                </span>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {assertion.type === "status"
+                                  ? Object.entries(numberCompareDictionary).map(
+                                      ([key, value]) => (
+                                        <SelectItem key={key} value={key}>
+                                          {value}
+                                        </SelectItem>
+                                      ),
+                                    )
+                                  : Object.entries(stringCompareDictionary).map(
+                                      ([key, value]) => (
+                                        <SelectItem key={key} value={key}>
+                                          {value}
+                                        </SelectItem>
+                                      ),
+                                    )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {assertion.type === "header" && (
+                        <FormField
+                          control={form.control}
+                          name={`assertions.${index}.key`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Input
+                                placeholder="Header key"
+                                className="w-full"
+                                {...field}
+                                value={field.value as string}
+                              />
+                              <FormMessage />
+                            </FormItem>
                           )}
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.target`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <Input
-                                  placeholder="Target value"
-                                  className="w-full"
-                                  type={
-                                    assertion.type === "status"
-                                      ? "number"
-                                      : "text"
-                                  }
-                                  {...field}
-                                  value={field.value?.toString() || ""}
-                                  onChange={(e) => {
-                                    const value =
-                                      assertion.type === "status"
-                                        ? Number.parseInt(e.target.value) || 0
-                                        : e.target.value;
-                                    field.onChange(value);
-                                  }}
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            type="button"
-                            onClick={() => {
-                              const newAssertions = field.value.filter(
-                                (_, i) => i !== index,
-                              );
-                              field.onChange(newAssertions);
-                            }}
-                          >
-                            <Close />
-                          </Button>
-                        </div>
-                      ))}
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => {
-                            const currentAssertions =
-                              form.getValues("assertions");
-                            field.onChange([
-                              ...currentAssertions,
-                              {
-                                type: "status",
-                                version: "v1",
-                                compare: "eq",
-                                target: 200,
-                              },
-                            ]);
-                          }}
-                        >
-                          <Add />
-                          Add Status Assertion
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => {
-                            const currentAssertions =
-                              form.getValues("assertions");
-                            field.onChange([
-                              ...currentAssertions,
-                              {
-                                type: "header",
-                                version: "v1",
-                                compare: "eq",
-                                key: "",
-                                target: "",
-                              },
-                            ]);
-                          }}
-                        >
-                          <Add />
-                          Add Header Assertion
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => {
-                            const currentAssertions =
-                              form.getValues("assertions");
-                            field.onChange([
-                              ...currentAssertions,
-                              {
-                                type: "textBody",
-                                version: "v1",
-                                compare: "eq",
-                                target: "",
-                              },
-                            ]);
-                          }}
-                        >
-                          <Add />
-                          Add Body Assertion
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        />
+                      )}
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.target`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Input
+                              placeholder="Target value"
+                              className="w-full"
+                              type={
+                                assertion.type === "status" ? "number" : "text"
+                              }
+                              {...field}
+                              value={field.value?.toString() || ""}
+                              onChange={(e) => {
+                                const value =
+                                  assertion.type === "status"
+                                    ? Number.parseInt(e.target.value) || 0
+                                    : e.target.value;
+                                field.onChange(value);
+                              }}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        type="button"
+                        onClick={() => removeAssertion(index)}
+                      >
+                        <Close />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() =>
+                        appendAssertion({
+                          type: "status",
+                          version: "v1",
+                          compare: "eq",
+                          target: 200,
+                        })
+                      }
+                    >
+                      <Add />
+                      Add Status Assertion
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() =>
+                        appendAssertion({
+                          type: "header",
+                          version: "v1",
+                          compare: "eq",
+                          key: "",
+                          target: "",
+                        })
+                      }
+                    >
+                      <Add />
+                      Add Header Assertion
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() =>
+                        appendAssertion({
+                          type: "textBody",
+                          version: "v1",
+                          compare: "eq",
+                          target: "",
+                        })
+                      }
+                    >
+                      <Add />
+                      Add Body Assertion
+                    </Button>
+                  </div>
+                </FormItem>
               </FormCardContent>
             </>
           )}
@@ -750,6 +756,50 @@ export function FormGeneral({
                   </li>
                 </ul>
               </div>
+            </FormCardContent>
+          )}
+          {isHeartbeat && !defaultValues?.type && (
+            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="heartbeatPeriod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expected every</FormLabel>
+                    <FormControl>
+                      <HeartbeatDurationInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>The schedule of your job.</FormDescription>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="heartbeatGrace"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grace period</FormLabel>
+                    <FormControl>
+                      <HeartbeatDurationInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Extra time before a late ping counts as missed.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <p className="text-muted-foreground col-span-full text-sm">
+                Your job pings a unique URL when it finishes. You get it right
+                after creating the monitor. Alerts start after the first ping.
+              </p>
             </FormCardContent>
           )}
           {watchType === "icmp" && (
@@ -863,76 +913,60 @@ export function FormGeneral({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="headers"
-                render={({ field }) => (
-                  <FormItem className="col-span-full">
-                    <FormLabel>Metadata</FormLabel>
-                    {field.value.map((header, index) => (
-                      <div key={index} className="grid gap-2 sm:grid-cols-5">
-                        <Input
-                          placeholder="Key"
-                          className="col-span-2"
-                          value={header.key}
-                          onChange={(e) => {
-                            const newHeaders = [...field.value];
-                            newHeaders[index] = {
-                              ...newHeaders[index],
-                              key: e.target.value,
-                            };
-                            field.onChange(newHeaders);
-                          }}
-                        />
-                        <Input
-                          placeholder="Value"
-                          className="col-span-2"
-                          value={header.value}
-                          onChange={(e) => {
-                            const newHeaders = [...field.value];
-                            newHeaders[index] = {
-                              ...newHeaders[index],
-                              value: e.target.value,
-                            };
-                            field.onChange(newHeaders);
-                          }}
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => {
-                            field.onChange(
-                              field.value.filter((_, i) => i !== index),
-                            );
-                          }}
-                        >
-                          <Close />
-                        </Button>
-                      </div>
-                    ))}
-                    <div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                        onClick={() => {
-                          field.onChange([
-                            ...field.value,
-                            { key: "", value: "" },
-                          ]);
-                        }}
-                      >
-                        <Add />
-                        Add Metadata
-                      </Button>
-                    </div>
-                    <FormDescription>
-                      Sent with the health check request, commonly for
-                      authentication.
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
+              <FormItem className="col-span-full">
+                <FormLabel>Metadata</FormLabel>
+                {headerFields.map((row, index) => (
+                  <div key={row.id} className="grid gap-2 sm:grid-cols-5">
+                    <FormField
+                      control={form.control}
+                      name={`headers.${index}.key`}
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormControl>
+                            <Input placeholder="Key" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`headers.${index}.value`}
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormControl>
+                            <Input placeholder="Value" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      type="button"
+                      aria-label="Remove header"
+                      onClick={() => removeHeader(index)}
+                    >
+                      <Close />
+                    </Button>
+                  </div>
+                ))}
+                <div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    onClick={() => appendHeader({ key: "", value: "" })}
+                  >
+                    <Add />
+                    Add Metadata
+                  </Button>
+                </div>
+                <FormDescription>
+                  Sent with the health check request, commonly for
+                  authentication.
+                </FormDescription>
+              </FormItem>
             </FormCardContent>
           )}
           {watchType === "dns" && (
@@ -957,182 +991,165 @@ export function FormGeneral({
               </FormCardContent>
               <FormCardSeparator />
               <FormCardContent>
-                <FormField
-                  control={form.control}
-                  name="assertions"
-                  render={({ field }) => (
-                    <FormItem className="col-span-full">
-                      <FormLabel>Assertions</FormLabel>
-                      <FormDescription>
-                        Validate the response to ensure your service is working
-                        as expected. <br />
-                        Add DNS record assertions.
-                      </FormDescription>
-                      {field.value.map((assertion, index) => (
-                        <div key={index} className="grid gap-2 sm:grid-cols-6">
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.type`}
-                            defaultValue={"dnsRecord"}
-                            render={({ field }) => (
-                              <FormItem className="hidden">
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                  disabled
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                </Select>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.key`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <Select
-                                  value={field.value as string}
-                                  onValueChange={field.onChange}
-                                >
-                                  <SelectTrigger
-                                    aria-invalid={
-                                      !!form.formState.errors.assertions?.[
-                                        index
-                                      ]?.type
-                                    }
-                                    className="w-full"
-                                  >
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {DNS_ASSERTION_TYPES.map((type) => (
-                                      <SelectItem key={type} value={type}>
-                                        {type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.compare`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <SelectTrigger className="w-full min-w-16">
-                                    <span className="truncate">
-                                      <SelectValue placeholder="Select compare" />
-                                    </span>
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {Object.entries(
-                                      recordCompareDictionary,
-                                    ).map(([key, value]) => (
-                                      <SelectItem key={key} value={key}>
-                                        {value}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          {assertion.type === "header" && (
-                            <FormField
-                              control={form.control}
-                              name={`assertions.${index}.key`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <Input
-                                    placeholder="Header key"
-                                    className="w-full"
-                                    {...field}
-                                    value={field.value as string}
-                                  />
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                <FormItem className="col-span-full">
+                  <FormLabel>Assertions</FormLabel>
+                  <FormDescription>
+                    Validate the response to ensure your service is working as
+                    expected. <br />
+                    Add DNS record assertions.
+                  </FormDescription>
+                  {assertionFields.map((assertion, index) => (
+                    <div
+                      key={assertion.id}
+                      className="grid gap-2 sm:grid-cols-6"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.type`}
+                        defaultValue={"dnsRecord"}
+                        render={({ field }) => (
+                          <FormItem className="hidden">
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              disabled
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.key`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              value={field.value as string}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger
+                                aria-invalid={
+                                  !!form.formState.errors.assertions?.[index]
+                                    ?.type
+                                }
+                                className="w-full"
+                              >
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {DNS_ASSERTION_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.compare`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger className="w-full min-w-16">
+                                <span className="truncate">
+                                  <SelectValue placeholder="Select compare" />
+                                </span>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(recordCompareDictionary).map(
+                                  ([key, value]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {value}
+                                    </SelectItem>
+                                  ),
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {assertion.type === "header" && (
+                        <FormField
+                          control={form.control}
+                          name={`assertions.${index}.key`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Input
+                                placeholder="Header key"
+                                className="w-full"
+                                {...field}
+                                value={field.value as string}
+                              />
+                              <FormMessage />
+                            </FormItem>
                           )}
-                          <FormField
-                            control={form.control}
-                            name={`assertions.${index}.target`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <Input
-                                  placeholder="Target value"
-                                  className="w-full"
-                                  type={
-                                    assertion.type === "status"
-                                      ? "number"
-                                      : "text"
-                                  }
-                                  {...field}
-                                  value={field.value?.toString() || ""}
-                                  onChange={(e) => {
-                                    const value =
-                                      assertion.type === "status"
-                                        ? Number.parseInt(e.target.value) || 0
-                                        : e.target.value;
-                                    field.onChange(value);
-                                  }}
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            type="button"
-                            onClick={() => {
-                              const newAssertions = field.value.filter(
-                                (_, i) => i !== index,
-                              );
-                              field.onChange(newAssertions);
-                            }}
-                          >
-                            <Close />
-                          </Button>
-                        </div>
-                      ))}
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => {
-                            const currentAssertions =
-                              form.getValues("assertions");
-                            field.onChange([
-                              ...currentAssertions,
-                              {
-                                type: "dnsRecord",
-                                version: "v1",
-                                compare: "eq",
-                                key: "A",
-                                target: "",
-                              },
-                            ]);
-                          }}
-                        >
-                          <Add />
-                          Add DNS Record Assertion
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        />
+                      )}
+                      <FormField
+                        control={form.control}
+                        name={`assertions.${index}.target`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Input
+                              placeholder="Target value"
+                              className="w-full"
+                              type={
+                                assertion.type === "status" ? "number" : "text"
+                              }
+                              {...field}
+                              value={field.value?.toString() || ""}
+                              onChange={(e) => {
+                                const value =
+                                  assertion.type === "status"
+                                    ? Number.parseInt(e.target.value) || 0
+                                    : e.target.value;
+                                field.onChange(value);
+                              }}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        type="button"
+                        onClick={() => removeAssertion(index)}
+                      >
+                        <Close />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() =>
+                        appendAssertion({
+                          type: "dnsRecord",
+                          version: "v1",
+                          compare: "eq",
+                          key: "A",
+                          target: "",
+                        })
+                      }
+                    >
+                      <Add />
+                      Add DNS Record Assertion
+                    </Button>
+                  </div>
+                </FormItem>
               </FormCardContent>
             </>
           )}
@@ -1155,7 +1172,10 @@ export function FormGeneral({
                   </Link>
                 </>
               )}
-              . We test your endpoint before saving the monitor.
+              .
+              {isHeartbeat
+                ? " openstatus never calls your job: it waits for its pings."
+                : " We test your endpoint before saving the monitor."}
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending || disabled}>
               {isPending ? "Submitting..." : "Submit"}

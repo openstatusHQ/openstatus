@@ -13,6 +13,7 @@ import {
   FormFollowRedirect,
 } from "./form-follow-redirect";
 import { FormGeneral } from "./form-general";
+import { FormHeartbeat } from "./form-heartbeat";
 import { FormNotifiers } from "./form-notifiers";
 import { FormOtel } from "./form-otel";
 import { FormResponseTime } from "./form-response-time";
@@ -67,6 +68,24 @@ export function FormMonitorUpdate() {
       onSuccess: () => refetch(),
     }),
   );
+  const isHeartbeat = monitor?.jobType === "heartbeat";
+  const { data: heartbeat, refetch: refetchHeartbeat } = useQuery({
+    ...trpc.monitor.heartbeat.queryOptions({ id: Number.parseInt(id) }),
+    enabled: isHeartbeat,
+  });
+  const updateHeartbeatMutation = useMutation(
+    trpc.monitor.updateHeartbeat.mutationOptions({
+      onSuccess: () => {
+        refetch();
+        refetchHeartbeat();
+      },
+    }),
+  );
+  const regenerateHeartbeatTokenMutation = useMutation(
+    trpc.monitor.regenerateHeartbeatToken.mutationOptions({
+      onSuccess: () => refetchHeartbeat(),
+    }),
+  );
   const updateFollowRedirectsMutation = useMutation(
     trpc.monitor.updateFollowRedirects.mutationOptions({
       onSuccess: () => refetch(),
@@ -119,7 +138,13 @@ export function FormMonitorUpdate() {
     <FormCardGroup>
       <FormGeneral
         defaultValues={{
-          type: monitor.jobType as "http" | "tcp" | "dns" | "icmp" | "grpc",
+          type: monitor.jobType as
+            | "http"
+            | "tcp"
+            | "dns"
+            | "icmp"
+            | "grpc"
+            | "heartbeat",
           url: monitor.url,
           name: monitor.name,
           method: monitor.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
@@ -153,19 +178,42 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormResponseTime
-        defaultValues={{
-          timeout: monitor.timeout,
-          degradedAfter: monitor.degradedAfter ?? undefined,
-        }}
-        onSubmit={async (values) => {
-          await updateResponseTimeMutation.mutateAsync({
-            id: Number.parseInt(id),
-            timeout: values.timeout,
-            degradedAfter: values.degradedAfter ?? undefined,
-          });
-        }}
-      />
+      {isHeartbeat && heartbeat ? (
+        <FormHeartbeat
+          defaultValues={{
+            heartbeatPeriod: heartbeat.period ?? 3_600,
+            heartbeatGrace: heartbeat.grace ?? 300,
+          }}
+          pingUrl={heartbeat.pingUrl}
+          onSubmit={async (values) => {
+            await updateHeartbeatMutation.mutateAsync({
+              id: Number.parseInt(id),
+              heartbeatPeriod: values.heartbeatPeriod,
+              heartbeatGrace: values.heartbeatGrace,
+            });
+          }}
+          onRegenerateToken={async () => {
+            await regenerateHeartbeatTokenMutation.mutateAsync({
+              id: Number.parseInt(id),
+            });
+          }}
+        />
+      ) : null}
+      {isHeartbeat ? null : (
+        <FormResponseTime
+          defaultValues={{
+            timeout: monitor.timeout,
+            degradedAfter: monitor.degradedAfter ?? undefined,
+          }}
+          onSubmit={async (values) => {
+            await updateResponseTimeMutation.mutateAsync({
+              id: Number.parseInt(id),
+              timeout: values.timeout,
+              degradedAfter: values.degradedAfter ?? undefined,
+            });
+          }}
+        />
+      )}
       <FormTags
         defaultValues={{
           tags: monitor.tags,
@@ -177,22 +225,24 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormSchedulingRegions
-        privateLocations={privateLocations}
-        defaultValues={{
-          regions: monitor.regions,
-          periodicity: monitor.periodicity,
-          privateLocations: monitor.privateLocations.map(({ id }) => id),
-        }}
-        onSubmit={async (values) => {
-          await updateSchedulingRegionsMutation.mutateAsync({
-            id: Number.parseInt(id),
-            regions: values.regions,
-            periodicity: values.periodicity,
-            privateLocations: values.privateLocations,
-          });
-        }}
-      />
+      {isHeartbeat ? null : (
+        <FormSchedulingRegions
+          privateLocations={privateLocations}
+          defaultValues={{
+            regions: monitor.regions,
+            periodicity: monitor.periodicity,
+            privateLocations: monitor.privateLocations.map(({ id }) => id),
+          }}
+          onSubmit={async (values) => {
+            await updateSchedulingRegionsMutation.mutateAsync({
+              id: Number.parseInt(id),
+              regions: values.regions,
+              periodicity: values.periodicity,
+              privateLocations: values.privateLocations,
+            });
+          }}
+        />
+      )}
       <FormNotifiers
         notifiers={notifications}
         defaultValues={{
@@ -205,53 +255,59 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormRetry
-        defaultValues={{
-          retry: monitor.retry ?? RETRY_DEFAULT,
-        }}
-        onSubmit={async (values) =>
-          await updateRetryMutation.mutateAsync({
-            id: Number.parseInt(id),
-            retry: values.retry ?? RETRY_DEFAULT,
-          })
-        }
-      />
-      <FormFollowRedirect
-        defaultValues={{
-          followRedirects: monitor.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
-        }}
-        onSubmit={async (values) =>
-          await updateFollowRedirectsMutation.mutateAsync({
-            id: Number.parseInt(id),
-            followRedirects: values.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
-          })
-        }
-      />
-      <FormOtel
-        locked={workspace.limits.otel === false}
-        defaultValues={{
-          endpoint: monitor.otelEndpoint ?? "",
-          headers: monitor.otelHeaders ?? [],
-        }}
-        onSubmit={async (values) => {
-          await updateOtelMutation.mutateAsync({
-            id: Number.parseInt(id),
-            otelEndpoint: values.endpoint,
-            otelHeaders: values.headers,
-          });
-        }}
-      />
-      <FormVisibility
-        defaultValues={{
-          visibility: monitor.public ?? false,
-        }}
-        onSubmit={async (values) => {
-          await updatePublicMutation.mutateAsync({
-            id: Number.parseInt(id),
-            public: values.visibility,
-          });
-        }}
-      />
+      {isHeartbeat ? null : (
+        <>
+          <FormRetry
+            defaultValues={{
+              retry: monitor.retry ?? RETRY_DEFAULT,
+            }}
+            onSubmit={async (values) =>
+              await updateRetryMutation.mutateAsync({
+                id: Number.parseInt(id),
+                retry: values.retry ?? RETRY_DEFAULT,
+              })
+            }
+          />
+          <FormFollowRedirect
+            defaultValues={{
+              followRedirects:
+                monitor.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
+            }}
+            onSubmit={async (values) =>
+              await updateFollowRedirectsMutation.mutateAsync({
+                id: Number.parseInt(id),
+                followRedirects:
+                  values.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
+              })
+            }
+          />
+          <FormOtel
+            locked={workspace.limits.otel === false}
+            defaultValues={{
+              endpoint: monitor.otelEndpoint ?? "",
+              headers: monitor.otelHeaders ?? [],
+            }}
+            onSubmit={async (values) => {
+              await updateOtelMutation.mutateAsync({
+                id: Number.parseInt(id),
+                otelEndpoint: values.endpoint,
+                otelHeaders: values.headers,
+              });
+            }}
+          />
+          <FormVisibility
+            defaultValues={{
+              visibility: monitor.public ?? false,
+            }}
+            onSubmit={async (values) => {
+              await updatePublicMutation.mutateAsync({
+                id: Number.parseInt(id),
+                public: values.visibility,
+              });
+            }}
+          />
+        </>
+      )}
       <FormDangerZone
         title={monitor.name}
         onSubmit={async () => {

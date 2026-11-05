@@ -121,7 +121,11 @@ export function FormVisibility({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
+              <Button
+                data-track="paywall_viewed"
+                data-limit="monitor-values-visibility"
+                asChild
+              >
                 <NextLink href="/settings/billing">
                   <Lock className="size-4" />
                   Upgrade

@@ -1,7 +1,6 @@
 import { eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -121,6 +120,25 @@ describe("createApiKey", () => {
       await expect(
         createApiKey({
           ctx: readOnlyCtx,
+          input: { name: `${TEST_PREFIX}-rejects-read` },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createApiKey({
+          ctx: writeKeyCtx,
           input: { name: `${TEST_PREFIX}-rejects-read` },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);

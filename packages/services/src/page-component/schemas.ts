@@ -62,7 +62,8 @@ export const CreatePageComponentInput = z
     monitorId: z.number().int().nullish(),
     name: z.string().trim().min(1).optional(),
     description: z.string().nullish(),
-    order: z.number().int().default(0),
+    // Omitted = append after the page's last component.
+    order: z.number().int().optional(),
     groupId: z.number().int().nullish(),
   })
   .refine(
@@ -77,8 +78,6 @@ export const CreatePageComponentInput = z
     path: ["name"],
     message: "Static components require a name.",
   });
-// `z.input`, not `z.infer` — the output type marks defaulted fields required,
-// which would force callers to pass what the schema already defaults.
 export type CreatePageComponentInput = z.input<typeof CreatePageComponentInput>;
 
 /** Partial patch — `undefined` leaves a field as-is, `null` clears it. */

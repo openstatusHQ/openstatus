@@ -1,7 +1,8 @@
-import type { Scope } from "@openstatus/db/src/schema";
+import type { RequiredScope } from "@openstatus/db/src/schema";
 import type { ZodType, z } from "zod";
 
 import type { ServiceContext } from "../context";
+import type { Feature } from "../features";
 
 /**
  * Framework-agnostic tool descriptor shared by every adapter (MCP, AI SDK, Slack).
@@ -14,11 +15,14 @@ import type { ServiceContext } from "../context";
 export type AgentTool<TInput = unknown, TOutput = unknown> = {
   name: string;
   description: string;
-  scope: Scope;
+  scope: RequiredScope;
   destructive: boolean;
   inputSchema: ZodType<TInput>;
   outputSchema: ZodType<TOutput>;
   run(args: { ctx: ServiceContext; input: TInput }): Promise<TOutput>;
+
+  /** Hidden from every surface unless this feature is on for the workspace. */
+  feature?: Feature;
 
   /**
    * Optional HITL metadata consumed by surfaces that orchestrate approval
@@ -67,6 +71,18 @@ export type SummaryLine = {
   ref?: SummaryLineRef;
 };
 
+/**
+ * Current state of the entity a write tool targets: the "before" side of an
+ * approval diff. `values` is keyed by input field name, already in the
+ * input's shape (dates as ISO strings, relations as id arrays). It may hold
+ * fields the input does not send; surfaces diff only the sent ones.
+ */
+export type ApprovalBefore = {
+  /** Human name of the entity, e.g. "Test Slack · test-slack.openstatus.dev". */
+  label: string;
+  values: Record<string, unknown>;
+};
+
 export type ApprovalMeta<TInput> = {
   /**
    * Tuple — capped at one flag. Multi-flag UX deserves a modal, not 2^N
@@ -88,6 +104,21 @@ export type ApprovalMeta<TInput> = {
     ctx: ServiceContext;
     input: TInput;
   }) => Promise<TInput>;
+  /**
+   * Optional read of the targeted entity's current values, so a surface can
+   * show old → new on the approval card instead of trusting the model's
+   * recollection. Keyed by the entity id alone, so a surface can ask for it
+   * without sending the rest of the input (which may carry secrets).
+   * Read-only; must not mutate.
+   */
+  loadBefore?: {
+    /** Input field holding the target entity's id. */
+    idField: keyof TInput & string;
+    load: (args: {
+      ctx: ServiceContext;
+      id: number;
+    }) => Promise<ApprovalBefore>;
+  };
   /** Surface-rendered confirmation summary. */
   summarize: (input: TInput) => { title: string; lines: SummaryLine[] };
   /**

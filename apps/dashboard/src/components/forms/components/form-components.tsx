@@ -11,8 +11,8 @@ import {
   Linked,
   Unlinked,
   Plug,
-  Add,
   Delete,
+  Info,
 } from "@openstatus/icons";
 import {
   AlertDialog,
@@ -67,6 +67,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { Link } from "@/components/common/link";
+import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
+import { Note } from "@/components/common/note";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -82,7 +84,6 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { STATUS } from "@/components/nav/nav-monitors";
 import {
   Sortable,
   SortableContent,
@@ -290,6 +291,14 @@ export function FormComponents({
   const watchComponents = form.watch("components");
   const watchGroups = form.watch("groups");
   const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
+  const linkedMonitorIds = new Set(
+    [...watchComponents, ...watchGroups.flatMap((g) => g.components)].map(
+      (c) => c.monitorId,
+    ),
+  );
+  const hasInactiveMonitors = monitors.some(
+    (m) => !m.active && linkedMonitorIds.has(m.id),
+  );
   const [data, setData] = useState<(PageComponent | ComponentGroup)[]>(
     getSortedItems(
       allPageComponents,
@@ -506,9 +515,8 @@ export function FormComponents({
                 Manage your page components
               </FormCardDescription>
             </FormCardHeader>
-            <FormCardContent className="flex flex-row gap-2">
+            <FormCardContent className="flex flex-col gap-2 sm:flex-row">
               <Button variant="outline" type="button" onClick={handleAddGroup}>
-                <Add />
                 Add Component Group
               </Button>
               <FormField
@@ -520,7 +528,6 @@ export function FormComponents({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="w-full">
-                          <Add />
                           Add Component
                         </Button>
                       </DropdownMenuTrigger>
@@ -632,7 +639,15 @@ export function FormComponents({
               />
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent>
+            <FormCardContent className="grid gap-4">
+              {hasInactiveMonitors ? (
+                <Note color="warning">
+                  <Info />
+                  You have inactive monitors linked. They don't collect data, so
+                  activate them, use static components, or set the status source
+                  to Reports only.
+                </Note>
+              ) : null}
               <Sortable
                 value={data}
                 onValueChange={onValueChange}
@@ -738,15 +753,15 @@ function ComponentRow({
       className={cn("rounded-md", className)}
       {...props}
     >
-      <div className="grid min-h-9 grid-cols-4 gap-2">
-        <div className="flex flex-row items-center gap-1 self-center">
-          <SortableItemHandle>
-            <DragHandle
-              size={16}
-              aria-hidden="true"
-              className="text-muted-foreground"
-            />
-          </SortableItemHandle>
+      <div className="grid min-h-9 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[auto_repeat(4,minmax(0,1fr))]">
+        <SortableItemHandle className="row-span-2 self-center sm:row-span-1">
+          <DragHandle
+            size={16}
+            aria-hidden="true"
+            className="text-muted-foreground"
+          />
+        </SortableItemHandle>
+        <div className="flex items-center self-center">
           {fieldNamePrefix ? (
             <FormField
               key={`${component.id}-name-${fieldNamePrefix}`}
@@ -807,13 +822,13 @@ function ComponentRow({
             <Link
               href={`/monitors/${component.monitorId}/overview`}
               onClick={(e) => e.stopPropagation()}
-              className="flex w-full items-center gap-2 truncate py-1.5 text-sm"
+              className="flex w-full min-w-0 items-center gap-2 py-1.5 text-sm"
             >
               <Linked className="size-4 shrink-0" />{" "}
               <span className="truncate">{component.monitor.name}</span>
             </Link>
           ) : (
-            <span className="text-muted-foreground flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground flex min-w-0 items-center gap-2 text-sm">
               <Unlinked className="size-4 shrink-0" />{" "}
               <span className="truncate">Static Component</span>
             </span>
@@ -843,16 +858,12 @@ function ComponentRow({
               </div>
             ) : null}
             {component.monitor && component.type === "monitor" ? (
-              <div
-                className={cn(
-                  "size-2 rounded-full",
-                  STATUS[
-                    component.monitor.active
-                      ? component.monitor.status
-                      : "inactive"
-                  ],
-                )}
-              />
+              <TooltipProvider delayDuration={0}>
+                <MonitorStatusDot
+                  monitor={component.monitor}
+                  label={component.monitor.active ? "Active" : "Inactive"}
+                />
+              </TooltipProvider>
             ) : null}
           </div>
           <AlertDialog>
@@ -998,15 +1009,15 @@ function ComponentGroupRow({
 
   return (
     <SortableItem value={group.id} className="bg-muted rounded-md border">
-      <div className="grid grid-cols-4 gap-2 px-2 pt-2">
-        <div className="flex flex-row items-center gap-1 self-center">
-          <SortableItemHandle>
-            <DragHandle
-              size={16}
-              aria-hidden="true"
-              className="text-muted-foreground"
-            />
-          </SortableItemHandle>
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 px-2 pt-2 sm:grid-cols-[auto_repeat(4,minmax(0,1fr))]">
+        <SortableItemHandle className="row-span-2 self-center sm:row-span-1">
+          <DragHandle
+            size={16}
+            aria-hidden="true"
+            className="text-muted-foreground"
+          />
+        </SortableItemHandle>
+        <div className="flex items-center self-center">
           <FormField
             key={`${group.id}-name-${groupIndex}`}
             control={form.control}
@@ -1031,13 +1042,12 @@ function ComponentGroupRow({
           control={form.control}
           name={`groups.${groupIndex}.components` as const}
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem className="flex min-w-0 flex-col">
               <FormLabel className="sr-only">Components</FormLabel>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <Add />
-                    Add Component
+                  <Button variant="outline" className="w-full min-w-0">
+                    <span className="truncate">Add Component</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
@@ -1153,7 +1163,7 @@ function ComponentGroupRow({
           control={form.control}
           name={`groups.${groupIndex}.defaultOpen` as const}
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2 self-center">
+            <FormItem className="flex min-w-0 items-center gap-2 self-center">
               <FormControl>
                 <Checkbox
                   className="bg-background"
@@ -1161,8 +1171,8 @@ function ComponentGroupRow({
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel className="text-muted-foreground !mt-0 text-sm font-normal">
-                Open by default
+              <FormLabel className="text-muted-foreground !mt-0 min-w-0 text-sm font-normal">
+                <span className="truncate">Open by default</span>
               </FormLabel>
             </FormItem>
           )}

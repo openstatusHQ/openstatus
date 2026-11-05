@@ -18,6 +18,7 @@ SQL >
     WHERE
         monitorId = {{ String(monitorId, '4433', required=True) }}
         AND servingStatus IS NOT NULL
+        {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
     GROUP BY h
     ORDER BY h DESC
 

@@ -2,7 +2,10 @@ import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
-import { maintenance } from "@openstatus/db/src/schema/maintenances";
+import {
+  maintenance,
+  maintenanceUpdate,
+} from "@openstatus/db/src/schema/maintenances";
 import {
   maintenancesToPageComponents,
   pageComponent,
@@ -54,6 +57,7 @@ const postRoute = createRoute({
 export function registerPostMaintenance(api: typeof maintenancesApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
+    const actorUserId = c.get("apiKey").createdById ?? null;
     const input = c.req.valid("json");
     const limits = c.get("workspace").limits;
 
@@ -104,8 +108,23 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         .values({
           ...input,
           workspaceId,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
         })
         .returning()
+        .get();
+
+      // the message is the first timeline update; the column is a mirror
+      const initialUpdate = await tx
+        .insert(maintenanceUpdate)
+        .values({
+          maintenanceId: newMaintenance.id,
+          message: input.message,
+          date: new Date(),
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
+        })
+        .returning({ id: maintenanceUpdate.id })
         .get();
 
       if (monitorIds?.length && newMaintenance.pageId) {
@@ -135,11 +154,11 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         }
       }
 
-      return newMaintenance;
+      return { ...newMaintenance, initialUpdateId: initialUpdate.id };
     });
 
     if (limits["status-subscribers"] && _newMaintenance.pageId) {
-      await dispatchMaintenanceUpdate(_newMaintenance.id);
+      await dispatchMaintenanceUpdate(_newMaintenance.initialUpdateId);
     }
 
     const data = MaintenanceSchema.parse({

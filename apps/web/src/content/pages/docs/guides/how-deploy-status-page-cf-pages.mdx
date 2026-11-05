@@ -1,9 +1,9 @@
 ---
 category: Guides
-title: How to Deploy a Status Page to Cloudflare Pages
-description: Learn how to use openstatus monitoring data to deploy a status page on Cloudflare Pages.
+title: How to Deploy a Status Page to Cloudflare Workers
+description: Learn how to use openstatus monitoring data to deploy a status page on Cloudflare Workers.
 sidebar:
-  label: Host your status page on Cloudflare Pages
+  label: Host your status page on Cloudflare Workers
 ---
 
 ## Problem
@@ -12,7 +12,7 @@ You need a fast, reliable, and automated status page, but you don't want to mana
 
 ## Solution
 
-Deploy a custom status page to Cloudflare's global edge network using openstatus as the data source. This guide shows you how to use our Astro-based template to create a status page that automatically reflects your monitoring data.
+Deploy a custom status page to Cloudflare's global edge network using openstatus as the data source. This guide shows you how to use our Astro-based template to create a status page that automatically reflects your openstatus status page.
 
 The code for the template is available on [GitHub](https://github.com/openstatusHQ/astro-status-page).
 
@@ -24,19 +24,23 @@ The code for the template is available on [GitHub](https://github.com/openstatus
 ## Prerequisites
 
 - A Cloudflare account
-- An [openstatus account](https://www.openstatus.dev) with at least one monitor configured.
+- An [openstatus account](https://www.openstatus.dev) with at least one status page configured.
 
 ## Step-by-step guide
 
 ### 1. Get your openstatus API key
 
-First, you need an API key to fetch your monitoring data.
+First, you need an API key to fetch your status page data.
 
 1. Navigate to your openstatus dashboard.
 2. Go to **Settings** > **General** and find the **API Keys** card.
 3. Click **Create** and copy the key.
 
-### 2. Set up the Astro project
+### 2. Find your status page ID
+
+The template renders one of your openstatus status pages. Open the status page in the openstatus dashboard and copy the ID from the URL (`/status-pages/[ID]`).
+
+### 3. Set up the Astro project
 
 Clone our status page template and install the dependencies.
 
@@ -46,33 +50,38 @@ cd astro-status-page
 pnpm install
 ```
 
-### 3. Customize the status page
+### 4. Run it locally
 
-You need to specify which monitors to display on your page.
+The template reads two secrets: `API_KEY` and `STATUS_PAGE_ID`. For local development, put them in a `.dev.vars` file.
 
-1. Open the `src/pages/index.astro` file.
-2. Find the following line of code:
-    ```javascript
-    const monitorIds = [1]
+1. Copy `.dev.vars.example` to `.dev.vars`.
+2. Fill in both values:
+    ```bash
+    API_KEY=your_openstatus_api_key
+    STATUS_PAGE_ID=your_status_page_id
     ```
-3. Replace the `1` with the ID of the monitor you want to display. You can find the monitor ID in the URL when you view a monitor in the openstatus dashboard (`/monitors/[ID]`). You can also add multiple IDs: `[1, 2, 5]`.
+3. Start the dev server:
+    ```bash
+    pnpm dev
+    ```
 
-### 4. Configure your Cloudflare environment variable
+### 5. Set your secrets on Cloudflare
 
-Before deploying, you must provide your openstatus API key to Cloudflare.
+Before deploying, provide both secrets to your Worker:
 
-1. Go to your Cloudflare dashboard and click on **Workers & Pages**.
-2. Select your site and go to the **Settings** tab.
-3. Navigate to **Environment variables** and add a new variable:
-    - **Variable name** — `API_KEY`.
-    - **Value** — paste your openstatus API key here.
+```bash
+npx wrangler secret put API_KEY
+npx wrangler secret put STATUS_PAGE_ID
+```
 
-### 5. Deploy to Cloudflare Pages
+Wrangler prompts you for each value.
+
+### 6. Deploy to Cloudflare Workers
 
 Now you can deploy your status page.
 
 ```bash
-pnpm run pages:deploy
+pnpm run deploy
 ```
 
-After the command completes, your status page will be live on Cloudflare Pages.
+After the command completes, your status page will be live on Cloudflare Workers. To upload a preview version without promoting it, run `pnpm run deploy:preview`.

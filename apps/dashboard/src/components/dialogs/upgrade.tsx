@@ -1,3 +1,4 @@
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
@@ -47,6 +48,8 @@ export function UpgradeDialog(
   };
 
   const restrictTo = getRestrictTo();
+  const canTrial =
+    workspace?.trial.eligible === true && restrictTo.includes("starter");
 
   const addon =
     props.limit && Object.prototype.hasOwnProperty.call(planAddons, props.limit)
@@ -57,10 +60,16 @@ export function UpgradeDialog(
     <Dialog {...props}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upgrade Workspace</DialogTitle>
+          <DialogTitle>
+            {canTrial
+              ? `Try Starter free for ${TRIAL_DAYS} days`
+              : "Upgrade Workspace"}
+          </DialogTitle>
           <DialogDescription>
-            Upgrade your workspace to support more monitors, status pages,
-            regions, and much more. Get an overview within your{" "}
+            {canTrial
+              ? "No credit card needed. Start the trial from the Starter column, or pick another plan. "
+              : "Upgrade your workspace to support more monitors, status pages, regions, and much more. "}
+            Get an overview within your{" "}
             <Link
               onClick={() => props.onOpenChange?.(false)}
               href="/settings/billing"
@@ -97,7 +106,7 @@ export function UpgradeDialog(
             </NoteButton>
           </Note>
         ) : (
-          <DataTable restrictTo={restrictTo} />
+          <DataTable restrictTo={restrictTo} surface="upgrade_dialog" />
         )}
       </DialogContent>
     </Dialog>

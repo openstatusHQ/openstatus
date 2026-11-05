@@ -159,7 +159,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
 
     if (noWait) {
       // The promises keep running after the response; an uncaught rejection
-      // here would crash the Deno process, so swallow and log failures.
+      // here would crash the process, so swallow and log failures.
       for (const result of allResult) {
         result.catch((error: unknown) => {
           logger.warn("Checker request failed", {

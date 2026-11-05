@@ -1,4 +1,4 @@
-import type { Incident, StatusReport } from "@openstatus/db/src/schema";
+import type { MonitorIncident, StatusReport } from "@openstatus/db/src/schema";
 
 // DO NOT CHANGE!
 export enum Status {
@@ -33,7 +33,7 @@ export type TrackerData = {
   ok: number;
   count: number;
   date: Date;
-  incidents: Incident[];
+  incidents: MonitorIncident[];
   statusReports: StatusReport[];
   status: Status;
   variant: StatusVariant;

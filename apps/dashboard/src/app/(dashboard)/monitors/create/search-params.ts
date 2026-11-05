@@ -4,6 +4,7 @@ import { createSearchParamsCache, parseAsString } from "nuqs/server";
 export const searchParamsParsers = {
   url: parseAsString,
   name: parseAsString,
+  method: parseAsString,
   assertionHeaderKey: parseAsString,
   assertionHeaderCompare: parseAsString,
   assertionHeaderValue: parseAsString,

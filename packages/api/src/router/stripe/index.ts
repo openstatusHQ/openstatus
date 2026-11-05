@@ -1,6 +1,9 @@
-import { Events } from "@openstatus/analytics";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import { workspacePlans } from "@openstatus/db/src/schema";
-import type { AddonQuantityKey } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  AddonQuantityKey,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 import {
   addons,
   billingIntervals,
@@ -19,18 +22,28 @@ import {
   updateWorkspaceStripeId,
 } from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
+import type Stripe from "stripe";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import {
   buildFromSubscriptionOrThrow,
+  canAutomateTax,
   getCurrentPeriodEnd,
   getCurrentSubscription,
   hasPaymentMethod,
   stripe,
+  syncedLimits,
   trialEndsAtOf,
 } from "./shared";
 import {
+  TRIAL_SKIP_MESSAGE,
+  type TrialSkipReason,
+  checkTrialEligibility,
+  trialCheckoutParams,
+} from "./trial";
+import {
+  buildPlanChangeItems,
   getPlanFromPriceId,
   getPriceIdForFeature,
   getPriceIdForPlan,
@@ -66,6 +79,23 @@ async function resolveWorkspaceCtx(opts: {
   return { ctx, email: access.email };
 }
 
+// The tracking middleware only fires on success, and a refused trial throws.
+async function trackSkipTrial(ctx: ServiceContext, reason: TrialSkipReason) {
+  const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;
+  try {
+    const analytics = await setupAnalytics({
+      userId: userId ? `usr_${userId}` : undefined,
+      workspaceId: String(ctx.workspace.id),
+      workspaceName: ctx.workspace.name || ctx.workspace.slug,
+      plan: ctx.workspace.plan,
+      source: "dashboard",
+    });
+    await analytics.track({ ...Events.SkipTrial, reason });
+  } catch (err) {
+    console.error("Failed to track trial_skipped:", err);
+  }
+}
+
 async function ensureStripeCustomer(ctx: ServiceContext, email: string | null) {
   if (ctx.workspace.stripeId) return ctx.workspace.stripeId;
 
@@ -98,13 +128,47 @@ async function createPaymentMethodSetupSession(args: {
     mode: "setup",
     payment_method_types: ["card"],
     customer: args.customer,
+    // The address lets Stripe Tax place the customer once the trial converts.
+    billing_address_collection: "required",
+    customer_update: { name: "auto", address: "auto" },
     setup_intent_data: { metadata: { subscriptionId: args.subscriptionId } },
     success_url: args.successUrl,
     cancel_url: args.cancelUrl,
   });
 }
 
+const checkoutSessionInput = z.object({
+  currency: z.string(),
+  workspaceSlug: z.string(),
+  plan: z.enum(workspacePlans),
+  interval: z.enum(billingIntervals).default("monthly"),
+  successUrl: z.string().optional(),
+  cancelUrl: z.string().optional(),
+  trial: z.boolean().default(false),
+  surface: z.enum(["billing", "plan_table", "upgrade_dialog"]).optional(),
+  // Stripe caps a metadata value at 500 characters.
+  intent: z.string().trim().max(500).optional(),
+});
+
 export const stripeRouter = createTRPCRouter({
+  // The workspace only stores the plan, not the interval it is billed on, so
+  // the plan table asks Stripe to tell "Pro monthly" apart from "Pro yearly".
+  getBillingInterval: protectedProcedure.query(
+    async ({ ctx }): Promise<BillingInterval | null> => {
+      const stripeId = ctx.workspace.stripeId;
+      if (!stripeId) return null;
+
+      const { current } = await getCurrentSubscription(stripeId);
+      const planItem = current?.items.data.find((item) =>
+        getPlanFromPriceId(item.price.id),
+      );
+      const interval = planItem?.price.recurring?.interval;
+      if (interval === "year") return "yearly";
+      if (interval === "month") return "monthly";
+      return null;
+    },
+  ),
+
   getUserCustomerPortal: protectedProcedure
     .input(
       z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),
@@ -125,20 +189,52 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   getCheckoutSession: protectedProcedure
-    .input(
-      z.object({
-        currency: z.string(),
-        workspaceSlug: z.string(),
-        plan: z.enum(workspacePlans),
-        interval: z.enum(billingIntervals).default("monthly"),
-        successUrl: z.string().optional(),
-        cancelUrl: z.string().optional(),
-      }),
-    )
+    .meta({
+      track: Events.StartCheckout,
+      // Only the final branch opens a Stripe checkout; the setup-session and
+      // in-place plan change paths are not checkouts. Re-parse the raw input so
+      // the defaulted `interval` is tracked too.
+      trackResult: ({ input, data }) => {
+        if ((data as { type?: string } | undefined)?.type !== "checkout") {
+          return null;
+        }
+        const parsed = checkoutSessionInput.safeParse(input);
+        if (!parsed.success) return {};
+        const { plan, interval, currency, trial, surface } = parsed.data;
+        return { plan, interval, currency, trial, surface };
+      },
+    })
+    .input(checkoutSessionInput)
     .mutation(async (opts) => {
       const resolved = await resolveWorkspaceCtx(opts);
       if (!resolved) return;
       const result = resolved.ctx.workspace;
+
+      // Checked before the customer exists, so a refused trial leaves no
+      // Stripe customer behind.
+      if (opts.input.trial) {
+        if (
+          opts.input.plan !== "starter" ||
+          opts.input.interval !== "monthly"
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "The trial is only available on Starter monthly.",
+          });
+        }
+        const eligibility = await checkTrialEligibility({
+          ctx: resolved.ctx,
+          email: resolved.email,
+        });
+        if (!eligibility.eligible) {
+          await trackSkipTrial(resolved.ctx, eligibility.reason);
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: TRIAL_SKIP_MESSAGE[eligibility.reason],
+          });
+        }
+      }
+
       const stripeId = await ensureStripeCustomer(resolved.ctx, resolved.email);
 
       const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
@@ -193,36 +289,39 @@ export const stripeRouter = createTRPCRouter({
           });
         }
 
-        // Stripe rejects mixed billing intervals on one subscription and every
-        // addon price is monthly, so a yearly plan cannot hold the addon items.
-        const hasAddons = current.items.data.some(
-          (item) => item.id !== planItem.id,
-        );
-
-        if (opts.input.interval === "yearly" && hasAddons) {
+        let items: Stripe.SubscriptionUpdateParams.Item[];
+        try {
+          items = buildPlanChangeItems({
+            subscription: current,
+            planItemId: planItem.id,
+            planPriceId: priceId,
+            interval: opts.input.interval,
+          });
+        } catch {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message:
-              "Add-ons are billed monthly. Remove them before switching to a yearly plan, or contact us.",
+              "Your subscription has an add-on that cannot be moved to this billing interval. Contact us and we will switch it for you.",
           });
         }
 
-        // Classify before mutating Stripe. An item on a price neither table
-        // knows throws, and throwing *after* the update would leave the
-        // customer re-priced and billed while the workspace kept the old plan
-        // — a split the webhook cannot repair either, since it throws on the
-        // same item.
+        // Classify before mutating Stripe: throwing *after* the update would
+        // leave the customer re-priced and billed while the workspace kept the
+        // old plan. Custom-deal prices were already refused above.
         buildFromSubscriptionOrThrow(current);
 
-        // Only the plan item is listed, so Stripe leaves every other item
-        // untouched and the addons survive the plan change. Clearing
+        // Every existing item is listed by id, so Stripe re-prices it in place
+        // instead of dropping it, and the addons survive the change. Clearing
         // `cancel_at_period_end` resumes a subscription the customer had
         // scheduled to cancel — choosing a paid plan says they mean to keep
         // paying.
         const updated = await stripe.subscriptions.update(current.id, {
-          items: [{ id: planItem.id, price: priceId }],
+          items,
           proration_behavior: "create_prorations",
           cancel_at_period_end: false,
+          ...((await canAutomateTax(stripeId)) && {
+            automatic_tax: { enabled: true },
+          }),
           ...(isTrialing && {
             trial_end: "now",
             payment_behavior: "error_if_incomplete",
@@ -250,7 +349,7 @@ export const stripeRouter = createTRPCRouter({
             endsAt: getCurrentPeriodEnd(updated),
             paidUntil: getCurrentPeriodEnd(updated),
             trialEndsAt: trialEndsAtOf(updated),
-            limits: built.limits,
+            limits: syncedLimits(updated, built),
             reason: "plan_changed",
           },
         });
@@ -266,6 +365,8 @@ export const stripeRouter = createTRPCRouter({
           name: "auto",
           address: "auto",
         },
+        billing_address_collection: "required",
+        automatic_tax: { enabled: true },
         line_items: [
           {
             price: priceId,
@@ -276,8 +377,16 @@ export const stripeRouter = createTRPCRouter({
           enabled: true,
         },
         mode: "subscription",
-        success_url: opts.input.successUrl || `${billingUrl}?success=true`,
+        allow_promotion_codes: true,
+        success_url:
+          opts.input.successUrl ||
+          `${billingUrl}?${opts.input.trial ? "trial" : "success"}=true`,
         cancel_url: opts.input.cancelUrl || billingUrl,
+        ...(opts.input.trial &&
+          trialCheckoutParams({
+            surface: opts.input.surface,
+            intent: opts.input.intent || undefined,
+          })),
       });
 
       return { type: "checkout" as const, session };
@@ -362,30 +471,26 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      const priceId = getPriceIdForFeature(opts.input.feature);
-
-      if (!priceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid feature",
-        });
-      }
-
       const items = await stripe.subscriptionItems.list({
         subscription: current.id,
         limit: 100,
       });
 
-      // Stripe rejects mixed billing intervals on one subscription and every
-      // addon price is monthly, so a yearly plan cannot hold one.
+      // Stripe rejects mixed billing intervals on one subscription, so the
+      // addon is billed on the same interval as the plan.
       const planItem = items.data.find((item) =>
         getPlanFromPriceId(item.price.id),
       );
-      if (planItem?.price.recurring?.interval === "year") {
+      const isYearly = planItem?.price.recurring?.interval === "year";
+      const priceId = getPriceIdForFeature(
+        opts.input.feature,
+        isYearly ? "yearly" : "monthly",
+      );
+
+      if (!priceId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message:
-            "Add-ons are billed monthly. Contact us to add them to a yearly plan.",
+          message: "Invalid feature",
         });
       }
 

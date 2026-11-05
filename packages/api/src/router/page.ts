@@ -3,6 +3,7 @@ import { locales } from "@openstatus/locales";
 import { LimitExceededError, NotFoundError } from "@openstatus/services";
 import { getUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
+  assertCustomDomainAvailable,
   createPage,
   type CreatePageInput,
   // `CreatePageInput` re-exports the drizzle insert schema so routers
@@ -27,6 +28,8 @@ import {
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
+  updatePageTimezone,
+  UpdatePageTimezoneInput,
 } from "@openstatus/services/page";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -230,6 +233,14 @@ export const pageRouter = createTRPCRouter({
         // doesn't lowercase, so a case-only re-save must not re-add either
         if (newDomain.toLowerCase() === oldDomain.toLowerCase()) return;
 
+        // Before touching Vercel: a conflict after the add/remove below
+        // would leave Vercel out of sync with the row.
+        await assertCustomDomainAvailable({
+          tx: ctx.db,
+          customDomain: newDomain,
+          excludePageId: input.id,
+        });
+
         if (newDomain) {
           await addDomainToVercel(newDomain);
         }
@@ -356,6 +367,20 @@ export const pageRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageLocales({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateTimezone: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(UpdatePageTimezoneInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageTimezone({
           ctx: toServiceCtx(ctx),
           input,
         });

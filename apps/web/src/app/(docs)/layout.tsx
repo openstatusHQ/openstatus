@@ -10,7 +10,7 @@ export default function DocsLayout({
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 font-sans">
       <DocsHeader />
-      <div className="flex flex-1 gap-8 px-4 py-4">
+      <div className="flex flex-1 gap-8 px-3 py-3">
         <DocsSidebar className="hidden w-56 shrink-0 lg:block" />
         <main className="min-w-0 flex-1">
           <DocsMobileNav className="lg:hidden" />

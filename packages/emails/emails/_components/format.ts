@@ -36,6 +36,29 @@ export function formatDateTime(input: Date | string | number): string {
   return `${p("day")} ${p("month")}, ${p("hour")}:${p("minute")} UTC`;
 }
 
+/** "12 Oct, 22:00 - 13 Oct, 01:00 UTC"; same-day windows show time only. */
+export function formatDateTimeRange(
+  from: Date | string | number,
+  to: Date | string | number,
+): string {
+  const start = new Date(from);
+  const end = new Date(to);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return `${String(from)} - ${String(to)}`;
+  }
+  const s = parts(time, start);
+  const e = parts(time, end);
+  const sameDay =
+    start.getUTCFullYear() === end.getUTCFullYear() &&
+    s("day") === e("day") &&
+    s("month") === e("month");
+  const startLabel = `${s("day")} ${s("month")}, ${s("hour")}:${s("minute")}`;
+  const endLabel = sameDay
+    ? `${e("hour")}:${e("minute")}`
+    : `${e("day")} ${e("month")}, ${e("hour")}:${e("minute")}`;
+  return `${startLabel} - ${endLabel} UTC`;
+}
+
 /** "Fri 25 Sep 2026" — day-only dates carry no timezone suffix. */
 export function formatDay(input: Date | string | number): string {
   const date = new Date(input);

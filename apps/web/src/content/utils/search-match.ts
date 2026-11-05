@@ -330,6 +330,11 @@ export function findCorrection(term: string, vocab: string[]): string | null {
   return best;
 }
 
+// The text is in the DOM but invisible, so a hit on it would highlight nothing.
+export function stripSrOnly(input: string) {
+  return input.replace(/<SrOnly\b[^>]*>[\s\S]*?<\/SrOnly>/g, "");
+}
+
 export function sanitizeContent(input: string) {
   return stripTags(input)
     .replace(/^#{1,6}\s+/gm, "") // strip markdown heading symbols, keep text

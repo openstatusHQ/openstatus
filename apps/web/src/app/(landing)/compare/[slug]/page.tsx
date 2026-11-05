@@ -2,19 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CustomMDX } from "../../../../content/mdx";
+import { sections } from "../../../../content/sections";
 import { getComparePages } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { getPageMetadata } from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBlogPosting,
-  getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDHowTo,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 import { ContentPagination } from "../../content-pagination";
@@ -69,11 +67,10 @@ export default async function Blog({
     getJsonLDOrganization(),
     getJsonLDWebPage(post),
     getJsonLDBlogPosting(post, "compare"),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Compare", url: `${BASE_URL}/compare` },
-      { name: post.metadata.title, url: `${BASE_URL}/compare/${slug}` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.compare, {
+      label: post.metadata.title,
+      path: post.href,
+    }),
     getJsonLDHowTo(post),
     getJsonLDFAQPage(post),
   ]);

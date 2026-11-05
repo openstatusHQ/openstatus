@@ -22,7 +22,7 @@ docker compose ps
 #    port — seed refuses non-localhost databases by design)
 docker run --rm --network host \
   -e DATABASE_URL=http://localhost:8080 \
-  --entrypoint deno openstatus/db-migrate:latest task seed
+  --entrypoint npm openstatus/db-migrate:latest run seed
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -122,7 +122,7 @@ After migrations complete, seed the database with sample data:
 # databases by design, so it cannot run over the compose-internal network
 docker run --rm --network host \
   -e DATABASE_URL=http://localhost:8080 \
-  --entrypoint deno openstatus/db-migrate:latest task seed
+  --entrypoint npm openstatus/db-migrate:latest run seed
 ```
 
 This creates:

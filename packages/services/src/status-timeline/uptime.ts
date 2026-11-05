@@ -3,10 +3,9 @@ import {
   impactUptimeWeight,
 } from "@openstatus/db/src/schema";
 
+import { type DayWindow, dayWindow } from "./day-window";
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
 import type { Event, StatusData } from "./events";
-
-export const MS_PER_DAY = 86_400_000;
 
 export type CheckCounts = { ok: number; degraded: number; error: number };
 
@@ -22,16 +21,14 @@ export type CoverageSegment = { start: number; end: number };
  * base. `clampEndMs` cuts the in-progress day to elapsed time.
  */
 export function dayCoverage(
-  dayStartsMs: number[],
+  days: DayWindow[],
   clampEndMs?: number,
 ): { segments: CoverageSegment[]; totalMs: number } {
   let totalMs = 0;
   const segments: CoverageSegment[] = [];
-  for (const start of dayStartsMs) {
+  for (const { start, end: dayEnd } of days) {
     const end =
-      clampEndMs === undefined
-        ? start + MS_PER_DAY
-        : Math.min(start + MS_PER_DAY, clampEndMs);
+      clampEndMs === undefined ? dayEnd : Math.min(dayEnd, clampEndMs);
     if (end <= start) continue;
     totalMs += end - start;
     segments.push({ start, end });
@@ -61,6 +58,30 @@ export function clipToCoverage(
 // lift a genuinely-below value onto the next thousandth.
 export function floorPct(ratio: number): number {
   return Math.floor(ratio * 100_000 + 1e-8) / 1_000;
+}
+
+/**
+ * When a heartbeat started being tracked: the start of its first day with a
+ * ping (counts are daily) or its first incident, whichever is earlier. A missed
+ * ping writes no row, so heartbeat uptime is incident time over this span.
+ */
+export function heartbeatCoverageStart(
+  days: Array<CheckCounts & { day: string }>,
+  events: Event[],
+  timeZone = "UTC",
+): number | null {
+  let start: number | null = null;
+  for (const d of days) {
+    if (d.ok + d.degraded + d.error === 0) continue;
+    const dayStart = dayWindow(d.day, timeZone).start;
+    if (start === null || dayStart < start) start = dayStart;
+  }
+  for (const e of events) {
+    if (e.type !== "incident") continue;
+    const from = e.from.getTime();
+    if (start === null || from < start) start = from;
+  }
+  return start;
 }
 
 export function requestsTally(counts: CheckCounts[]): {
@@ -160,12 +181,12 @@ export function reportsOnlyDowntimeMs(
 export function probeDowntimeIntervals(
   data: StatusData[],
   window: UptimeWindow,
+  timeZone = "UTC",
 ): WeightedInterval[] {
   const intervals: WeightedInterval[] = [];
 
   for (const item of data) {
-    const dayStart = new Date(item.day).getTime();
-    const dayEnd = dayStart + MS_PER_DAY;
+    const { start: dayStart, end: dayEnd } = dayWindow(item.day, timeZone);
 
     // Clamp to window
     const start = Math.max(dayStart, window.start);

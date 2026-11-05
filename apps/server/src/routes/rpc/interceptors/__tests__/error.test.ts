@@ -1,7 +1,7 @@
 import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
 import { errorDocsUrl } from "@openstatus/error";
 import { ErrorInfoSchema } from "@openstatus/proto/google/rpc";
-import { describe, expect, test } from "@openstatus/test-utils";
+import { describe, expect, test } from "vitest";
 
 import { OpenStatusApiError } from "@/libs/errors";
 import { ErrorReason, rpcError } from "@/libs/errors/rpc";

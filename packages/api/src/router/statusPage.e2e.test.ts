@@ -1,14 +1,13 @@
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
-  incidentTable,
+  monitorIncidentTable,
   monitor,
   page,
   pageComponent,
   pageSubscriber,
   workspace,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 /**
  * End-to-end integration tests for the full unsubscribe flow.
@@ -1263,7 +1262,7 @@ describe("statusPage.get gates incidents by barType (calendar manual mode)", () 
     const component = result?.pageComponents.find(
       (c) => c.monitorId === barTypeMonitorId,
     );
-    return component?.monitor?.incidents ?? [];
+    return component?.monitor?.monitorIncidents ?? [];
   }
 
   beforeAll(async () => {
@@ -1304,7 +1303,7 @@ describe("statusPage.get gates incidents by barType (calendar manual mode)", () 
     barTypeMonitorId = testMonitor.id;
 
     const testIncident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: barTypeMonitorId,
         workspaceId: 1,
@@ -1335,8 +1334,8 @@ describe("statusPage.get gates incidents by barType (calendar manual mode)", () 
       .delete(pageComponent)
       .where(eq(pageComponent.id, barTypeComponentId));
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, barTypeIncidentId));
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, barTypeIncidentId));
     await db.delete(monitor).where(eq(monitor.id, barTypeMonitorId));
     await db.delete(page).where(eq(page.id, barTypePageId));
   });

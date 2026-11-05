@@ -1,5 +1,5 @@
-import { spy } from "@std/testing/mock";
 import { Cause, Effect, Exit, Option } from "effect";
+import { vi } from "vitest";
 
 import type { FetchError } from "../src/fetch";
 import type {
@@ -13,7 +13,7 @@ import type {
 type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
 export const installMockFetch = (impl: FetchImpl) => {
-  const fn = spy(impl);
+  const fn = vi.fn(impl);
   globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 };

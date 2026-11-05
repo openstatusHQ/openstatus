@@ -35,6 +35,8 @@ export const CreateStatusReportInput = z.object({
   pageComponentIds: z.array(z.number().int()).default([]),
   /** Per-component impact set by the initial update. Absent ⇒ legacy report. */
   componentImpacts: componentImpactsSchema.optional(),
+  /** Incident this report communicates; linked in the same transaction. */
+  incidentId: z.number().int().optional(),
 });
 export type CreateStatusReportInput = z.infer<typeof CreateStatusReportInput>;
 

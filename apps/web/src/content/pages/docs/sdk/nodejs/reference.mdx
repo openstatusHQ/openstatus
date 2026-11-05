@@ -56,6 +56,23 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `MONITORING` | Fix deployed, monitoring |
 | `RESOLVED` | Issue fully resolved |
 
+### IncidentSeverity
+
+| Value | Description |
+|-------|-------------|
+| `CRITICAL` | Core functionality is down for most users |
+| `MAJOR` | Significant impact on part of the product |
+| `MINOR` | Limited impact or a degraded experience |
+
+### IncidentStatus
+
+| Value | Description |
+|-------|-------------|
+| `OPEN` | The team is working on it |
+| `MITIGATED` | Impact is contained, the fix is not final |
+| `RESOLVED` | The incident is over |
+| `CANCELED` | A false alarm; closes the incident |
+
 ### OverallStatus
 
 | Value | Description |
@@ -80,7 +97,7 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `PAGERDUTY` | PagerDuty |
 | `OPSGENIE` | Opsgenie |
 | `SLACK` | Slack webhook |
-| `SMS` | SMS notification |
+| `SMS` | Deprecated, use `WHATSAPP`. Kept for existing channels |
 | `TELEGRAM` | Telegram bot |
 | `WEBHOOK` | Custom webhook |
 | `WHATSAPP` | WhatsApp |
@@ -175,7 +192,7 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 
 ## Regions
 
-Monitor from 28 global locations across multiple providers.
+Monitor from 27 global locations across multiple providers.
 
 ```typescript
 import { Region } from "@openstatus/sdk-node";
@@ -183,13 +200,12 @@ import { Region } from "@openstatus/sdk-node";
 regions: [Region.FLY_AMS, Region.FLY_IAD, Region.KOYEB_FRA];
 ```
 
-### Fly.io Regions (18)
+### Fly.io Regions (17)
 
 | Enum Value | Location |
 |------------|----------|
 | `FLY_AMS` | Amsterdam |
 | `FLY_ARN` | Stockholm |
-| `FLY_BOM` | Mumbai |
 | `FLY_CDG` | Paris |
 | `FLY_DFW` | Dallas |
 | `FLY_EWR` | Newark |

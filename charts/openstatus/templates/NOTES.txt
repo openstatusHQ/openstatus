@@ -1,0 +1,7 @@
+openstatus is starting. Dashboard: {{ .Values.urls.dashboard }}
+
+Sign-in magic links are printed in the dashboard log:
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "openstatus.component" (dict "ctx" $ "component" "dashboard") }} | grep "Magic Link"
+
+Then follow the self-hosting guide from step 9 (workspace limits):
+  https://www.openstatus.dev/docs/guides/self-hosting-openstatus

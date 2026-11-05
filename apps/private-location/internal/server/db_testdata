@@ -157,8 +157,8 @@ CREATE TABLE `invitation` (
 	`accepted_at` integer
 );
 
-DROP TABLE IF EXISTS "incident";
-CREATE TABLE "incident" (
+DROP TABLE IF EXISTS "monitor_incident";
+CREATE TABLE "monitor_incident" (
     `id` integer PRIMARY KEY NOT NULL,
 	`title` text DEFAULT '' NOT NULL,
 	`summary` text DEFAULT '' NOT NULL,
@@ -446,7 +446,7 @@ INSERT INTO "notification" ("id", "name", "provider", "data", "workspace_id", "c
 INSERT INTO "notifications_to_monitors" ("monitor_id", "notification_id", "created_at") VALUES
 ('1', '1', '1760358329');
 
-INSERT INTO "incident" ("id", "title", "summary", "status", "monitor_id", "workspace_id", "started_at", "acknowledged_at", "acknowledged_by", "resolved_at", "resolved_by", "created_at", "updated_at", "auto_resolved", "incident_screenshot_url", "recovery_screenshot_url") VALUES
+INSERT INTO "monitor_incident" ("id", "title", "summary", "status", "monitor_id", "workspace_id", "started_at", "acknowledged_at", "acknowledged_by", "resolved_at", "resolved_by", "created_at", "updated_at", "auto_resolved", "incident_screenshot_url", "recovery_screenshot_url") VALUES
 ('1', '', '', 'triage', '1', '1', '1760358329', NULL, NULL, NULL, NULL, '1760358329', '1760358329', '0', NULL, NULL),
 ('2', '', '', 'triage', '1', '1', '1760358330', NULL, NULL, NULL, NULL, '1760358329', '1760358329', '0', NULL, NULL);
 

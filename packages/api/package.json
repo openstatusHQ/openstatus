@@ -11,12 +11,13 @@
     "./src/*": "./src/*.ts"
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
-    "env": "deno run -A env.ts"
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "env": "node env.ts"
   },
   "dependencies": {
     "@libsql/client": "catalog:",
+    "@openstatus/ai": "workspace:*",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
@@ -42,6 +43,7 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@slack/web-api": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
@@ -49,6 +51,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "@unkey/api": "catalog:",
     "@vercel/blob": "catalog:",
+    "ai": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "isomorphic-dompurify": "catalog:",
@@ -63,11 +66,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

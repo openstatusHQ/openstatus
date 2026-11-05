@@ -1,6 +1,12 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, spy } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { createChecklyClient } from "./client";
 import {
@@ -23,7 +29,7 @@ function jsonResponse(body: unknown, status = 200) {
 // Returns each body in order; repeats the last one once exhausted.
 function mockFetchSequence(bodies: unknown[], status = 200) {
   let call = 0;
-  globalThis.fetch = spy(() => {
+  globalThis.fetch = vi.fn(() => {
     const body = bodies[Math.min(call, bodies.length - 1)];
     call++;
     return Promise.resolve(jsonResponse(body, status));
@@ -82,9 +88,9 @@ describe("ChecklyClient", () => {
   test("sends both auth headers and correct path", async () => {
     mockFetchSequence([MOCK_CHECKS]);
     await client.getChecks();
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    assertSpyCalls(fetchMock, 1);
-    const [url, options] = fetchMock.calls[0].args as [string, RequestInit];
+    const fetchMock = globalThis.fetch as unknown as Mock;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("https://api.checklyhq.com/v1/checks");
     const headers = options.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer test-api-key");
@@ -103,9 +109,9 @@ describe("ChecklyClient", () => {
     ]);
     const pages = await client.getStatusPages();
     expect(pages).toHaveLength(2);
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    assertSpyCalls(fetchMock, 2);
-    const secondUrl = fetchMock.calls[1].args[0] as string;
+    const fetchMock = globalThis.fetch as unknown as Mock;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const secondUrl = fetchMock.mock.calls[1][0] as string;
     expect(secondUrl).toContain("nextId=cursor-2");
   });
 
@@ -117,8 +123,8 @@ describe("ChecklyClient", () => {
     mockFetchSequence([fullPage, []]);
     const checks = await client.getChecks();
     expect(checks).toHaveLength(100);
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    assertSpyCalls(fetchMock, 2);
-    expect(fetchMock.calls[1].args[0] as string).toContain("page=2");
+    const fetchMock = globalThis.fetch as unknown as Mock;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0] as string).toContain("page=2");
   });
 });

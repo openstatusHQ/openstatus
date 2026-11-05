@@ -2,6 +2,7 @@ import {
   Agent,
   Chat,
   type IconType,
+  Incident,
   Monitor,
   Notification,
   Overview,
@@ -27,6 +28,12 @@ export const NAV = {
     href: "/overview",
     icon: Overview,
     keywords: ["home", "dashboard"],
+  },
+  incidents: {
+    label: "Incidents",
+    href: "/incidents",
+    icon: Incident,
+    keywords: ["declare", "outage", "postmortem", "commander"],
   },
   monitors: {
     label: "Monitors",

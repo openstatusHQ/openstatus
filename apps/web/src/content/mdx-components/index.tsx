@@ -1,21 +1,27 @@
 import { Suspense } from "react";
 
 import { LatencyChartTable } from "../latency-chart-table";
+import { Actions } from "./actions";
 import { Aside } from "./aside";
 import { ButtonLink } from "./button-link";
 import { Card, CardGrid, LinkCard } from "./card";
 import { Code } from "./code";
 import { CustomImage } from "./custom-image";
 import { CustomLink } from "./custom-link";
-import { CustomerLogos } from "./customer-logos";
+import { Demo } from "./demo";
 import { Details } from "./details";
+import { Eyebrow } from "./eyebrow";
 import { Grid } from "./grid";
 import { createHeading } from "./heading";
+import { LogoCloud } from "./logo-cloud";
 import { Pre } from "./pre";
 import { PricingTabs } from "./pricing-tabs";
+import { Quote } from "./quote";
+import { SrOnly } from "./sr-only";
 import { MDXStatusPageExample } from "./status-page-example";
 import { Subtle } from "./subtle";
 import { Table } from "./table";
+import { Timeline } from "./timeline";
 import { ShowcaseYouTube } from "./youtube";
 
 export { slugify } from "./heading";
@@ -34,7 +40,11 @@ export const components = {
   pre: Pre,
   table: Table,
   Grid,
-  CustomerLogos,
+  LogoCloud,
+  Actions,
+  SrOnly,
+  Quote,
+  Demo,
   Aside,
   Card,
   CardGrid,
@@ -46,5 +56,7 @@ export const components = {
   StatusPageExample: MDXStatusPageExample,
   PricingTabs,
   Subtle,
+  Eyebrow,
+  Timeline,
   Suspense: Suspense,
 };

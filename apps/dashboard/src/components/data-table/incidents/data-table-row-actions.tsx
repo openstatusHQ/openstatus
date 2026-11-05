@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
@@ -14,21 +13,17 @@ import {
   type IncidentConfirmType,
 } from "./dialog-confirm";
 
-type Incident = RouterOutputs["incident"]["list"][number];
-
-export function DataTableRowActions({ row }: { row: Row<Incident> }) {
-  return <IncidentRowActions incident={row.original} />;
-}
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
 export function IncidentRowActions({ incident }: { incident: Incident }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const deleteIncidentMutation = useMutation(
-    trpc.incident.delete.mutationOptions({
+    trpc.monitorIncident.delete.mutationOptions({
       onSuccess: () =>
         // no-input prefix key — matches every incident.list query (overview, monitor detail)
         queryClient.invalidateQueries({
-          queryKey: trpc.incident.list.queryKey(),
+          queryKey: trpc.monitorIncident.list.queryKey(),
         }),
     }),
   );
@@ -47,7 +42,7 @@ export function IncidentRowActions({ incident }: { incident: Incident }) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          confirmationValue: incident.title || "incident",
+          confirmationValue: incident.title || "downtime",
           submitAction: async () => {
             await deleteIncidentMutation.mutateAsync({
               id: incident.id,

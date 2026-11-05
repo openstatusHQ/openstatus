@@ -1,4 +1,4 @@
-import type { Scope } from "@openstatus/db/src/schema";
+import type { RequiredScope } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
 import { ForbiddenError } from "../errors";
@@ -18,11 +18,14 @@ import { matchesScope } from "./matches-scope";
  *
  * Member-role enforcement for `user` actors is a separate project.
  *
- * Place this as the first line of a write verb, before `withTransaction`.
- * A failed check shouldn't open a tx just to roll it back, and the
- * check has no DB dependency.
+ * Place this as the first line of a verb, before `withTransaction`.
+ * Write verbs require `<group>:write`, read verbs `<group>:read`, admin
+ * verbs `admin` (which only the super-admin token satisfies).
  */
-export function requireScope(ctx: ServiceContext, required: Scope): void {
+export function requireScope(
+  ctx: ServiceContext,
+  required: RequiredScope,
+): void {
   const { actor } = ctx;
 
   if (actor.type !== "apiKey" && actor.type !== "mcp") {

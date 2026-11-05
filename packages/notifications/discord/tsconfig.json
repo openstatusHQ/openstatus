@@ -3,5 +3,14 @@
   "include": ["src", "*.ts"],
   "compilerOptions": {
     "resolveJsonModule": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ]
 }

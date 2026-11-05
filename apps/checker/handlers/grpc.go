@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -36,6 +37,8 @@ type GRPCData struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 	GRPCCode      int64 `json:"grpcCode"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
@@ -45,29 +48,15 @@ func grpcCheck(req request.GRPCCheckerRequest) (checker.GRPCResult, error) {
 		req.URI,
 		req.Service,
 		checker.ParseGRPCTLSMode(req.TLS),
-		req.Headers,
+		request.WithRequestID(req.Headers, req.RequestID),
 	)
 }
 
 func (h Handler) GRPCHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "grpc_response__v0"
 
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
+	if !h.acceptCron(c) {
 		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
 	}
 
 	var req request.GRPCCheckerRequest
@@ -78,39 +67,45 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		return
 	}
 
-	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+	setCheckerEvent(c, req.URI, req.WorkspaceID, req.MonitorID, cronTrigger(req.Trigger), "grpc")
+
+	response, err := h.RunGRPCCheck(ctx, req)
+	if respondInvalid(c, err) {
+		return
+	}
+
+	returnData := c.Query("data")
+	if returnData == "true" {
+		c.JSON(http.StatusOK, response)
 
 		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
+// RunGRPCCheck probes and records one cron gRPC check. A nil error means the
+// result was recorded, whether the monitor passed or not.
+func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerRequest) (checker.GRPCResponse, error) {
+	dataSourceName := "grpc_response__v0"
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
+	var response checker.GRPCResponse
+
+	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	if err != nil {
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
-		return
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
-	var trigger = "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
-	}
+	trigger := cronTrigger(req.Trigger)
 
-	e, f := c.Get("event")
-	if f {
-		t := e.(map[string]any)
-		t["checker"] = map[string]string{
-			"uri":          req.URI,
-			"workspace_id": req.WorkspaceID,
-			"monitor_id":   req.MonitorID,
-			"trigger":      trigger,
-			"type":         "grpc",
-		}
-		c.Set("event", t)
-	}
-
-	var response checker.GRPCResponse
+	var recordErr error
 
 	var retry int
 	if req.Retry != 0 {
@@ -119,6 +114,13 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		retry = 3
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to generate request id")
+		return response, fmt.Errorf("error while generating uuid: %w", err)
+	}
+	req.RequestID = id.String()
+
 	// CheckGRPC hands back what it learned alongside its error: whatever phases
 	// completed, plus the gRPC status code. That is what separates a DNS failure
 	// from a connect or TLS one, and a timeout from a refused connection. op()
@@ -126,7 +128,10 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 	// attempt's result.
 	var lastResult checker.GRPCResult
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := grpcCheck(req)
 		lastResult = res
 		if err != nil {
@@ -138,11 +143,6 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
 			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
-		}
-
-		id, err := uuid.NewV7()
-		if err != nil {
-			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		timestamp := time.Now().UTC().UnixMilli()
@@ -164,7 +164,8 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		}
 
 		data := GRPCData{
-			ID:            id.String(),
+			Attempts:      called,
+			ID:            req.RequestID,
 			WorkspaceID:   workspaceId,
 			Timestamp:     timestamp,
 			Error:         errorFlag,
@@ -226,17 +227,13 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 
 		return struct{}{}, nil
 	}
 
-	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
-		id, e := uuid.NewV7()
-		if e != nil {
-			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return
-		}
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
 		// A marshal failure leaves the column empty rather than dropping the row:
 		// the rest of the failure record is still worth ingesting.
 		timingAsString, timingErr := json.Marshal(lastResult.Timing)
@@ -245,7 +242,8 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		}
 
 		data := GRPCData{
-			ID:            id.String(),
+			Attempts:      called,
+			ID:            req.RequestID,
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
 			Timestamp:     time.Now().UTC().UnixMilli(),
@@ -262,6 +260,7 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -286,14 +285,7 @@ func (h Handler) GRPCHandler(c *gin.Context) {
 		otelOS.RecordGRPCMetrics(ctx, req, response, h.Region)
 	}
 
-	returnData := c.Query("data")
-	if returnData == "true" {
-		c.JSON(http.StatusOK, response)
-
-		return
-	}
-
-	c.JSON(http.StatusOK, nil)
+	return response, recordErr
 }
 
 func (h Handler) GRPCHandlerRegion(c *gin.Context) {
@@ -331,6 +323,8 @@ func (h Handler) GRPCHandlerRegion(c *gin.Context) {
 
 		return
 	}
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
 
 	var response checker.GRPCResponse
 

@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { Link } from "../../components/common/link";
+import { ThemeBuilderProvider } from "../../components/themes/theme-builder-provider";
 import { ThemeProvider } from "../../components/themes/theme-provider";
 import {
   SidebarTrigger,
@@ -71,18 +72,20 @@ export default async function Layout({
               } as React.CSSProperties
             }
           >
-            <SidebarInset className="relative">
-              <SidebarTrigger className="absolute top-2 right-2" />
-              <main className="mx-auto">{children}</main>
-              <footer className="text-muted-foreground flex items-center justify-center gap-4 p-4 text-center font-mono text-sm">
-                <p>
-                  powered by{" "}
-                  <Link href="https://openstatus.dev">openstatus</Link>
-                </p>
-              </footer>
-            </SidebarInset>
             <Suspense>
-              <ThemeSidebar />
+              <ThemeBuilderProvider>
+                <SidebarInset className="relative">
+                  <SidebarTrigger className="absolute top-2 right-2" />
+                  <main className="mx-auto">{children}</main>
+                  <footer className="text-muted-foreground flex items-center justify-center gap-4 p-4 text-center font-mono text-sm">
+                    <p>
+                      powered by{" "}
+                      <Link href="https://openstatus.dev">openstatus</Link>
+                    </p>
+                  </footer>
+                </SidebarInset>
+                <ThemeSidebar />
+              </ThemeBuilderProvider>
             </Suspense>
           </SidebarProvider>
           <Toaster richColors expand />

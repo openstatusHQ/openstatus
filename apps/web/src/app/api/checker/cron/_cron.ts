@@ -1,5 +1,14 @@
 import { CloudTasksClient, type protos } from "@google-cloud/tasks";
-import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
+import {
+  and,
+  db,
+  eq,
+  gte,
+  isNotNull,
+  lte,
+  ne,
+  notInArray,
+} from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   maintenance,
@@ -85,6 +94,7 @@ export const cron = async ({
       and(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
+        ne(monitor.jobType, "heartbeat"),
         notInArray(monitor.id, currentMaintenanceMonitors),
       ),
     )
@@ -262,6 +272,9 @@ const createCronTask = async ({
     scheduleTime: {
       seconds: timestamp / 1000,
     },
+    // The checker answers only after its whole retry loop, which a 5m timeout
+    // can stretch well past Cloud Tasks' 10m default; 30m is the max allowed.
+    dispatchDeadline: { seconds: 30 * 60 },
   };
 
   const request = { parent: parent, task: newTask };

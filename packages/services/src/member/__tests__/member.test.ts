@@ -4,8 +4,7 @@ import {
   addUserToWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -102,6 +101,25 @@ describe("deleteMember", () => {
       await expect(
         deleteMember({
           ctx: readOnlyCtx,
+          input: { userId: 999_999_999 },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: OWNER_USER_ID,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        deleteMember({
+          ctx: writeKeyCtx,
           input: { userId: 999_999_999 },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);

@@ -15,15 +15,16 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
       label:
-        org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
       workdir: /app/
       run:
+      - npm install -g corepack@0.36.0
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
+      - pnpm install --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
       cache:
       - target: /root/.local/share/pnpm/store
       bind:
@@ -81,6 +82,8 @@ effective: |
         source: packages/utils/package.json
       - target: packages/tsconfig/package.json
         source: packages/tsconfig/package.json
+      - target: packages/test-utils/package.json
+        source: packages/test-utils/package.json
       - target: packages/tinybird/package.json
         source: packages/tinybird/package.json
       - target: packages/upstash/package.json
@@ -93,12 +96,12 @@ effective: |
         source: packages/status-fetcher/package.json
     build:
       fromImage:
-        path: denoland/deno
-        digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+        path: node
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
       label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.7
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
         org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -119,41 +122,49 @@ effective: |
         - /app/packages
         target: /app/packages
       run:
-      - mkdir -p /tmp/sc
-      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-      - mkdir -p /app/data
+      - ./node_modules/.bin/tsdown
+      - mkdir -p /tmp/sc /app/data
+      - node scripts/sidecar-package.mjs /tmp/sc/package.json
+      - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
   fromImage:
-    host: registry.access.redhat.com
-    port: 443
-    path: hi/curl
-    digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    path: node
+    digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
   label:
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.vendor: OpenStatus
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+    org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
   user:
     user: '1000'
     group: '1000'
   workdir: /app/
+  env:
+    NODE_ENV: production
   copy:
   - fromBuilder: build
     paths:
-    - /app/apps/workflows/app
-    target: /app/apps/workflows/
+    - /app/apps/workflows/dist
+    target: /app/apps/workflows/dist
+    chmod: '555'
+  - fromBuilder: build
+    paths:
+    - /tmp/sc/node_modules
+    target: /app/apps/workflows/node_modules
     chmod: '555'
   - fromBuilder: build
     paths:
     - /app/data
     target: /app/data
+  root:
+    run:
+    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
   entrypoint:
-  - /app/apps/workflows/app
+  - node
+  - /app/apps/workflows/dist/serve.mjs
   expose:
   - port: 3000
   healthcheck:
@@ -166,15 +177,11 @@ images:
   docker.io:
     library:
       node:
-        24-slim:
-          digest: sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-    denoland:
-      deno:
-        2.9.7:
-          digest: sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+        26.8.1-slim:
+          digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
 resources:
   dofigen.yml:
-    hash: bb33793c4b91222bc9d01de4911a4150c33290039ddf20f78f594ac96d3677e1
+    hash: 31d39f4cb1231466bc802222e029bfad8f7447f8e35013f5a222c3cf5499c10b
     content: |
       ignore:
         - node_modules
@@ -190,7 +197,7 @@ resources:
         - /packages/tracker
       builders:
         install:
-          fromImage: node:24-slim
+          fromImage: node:26.8.1-slim
           workdir: /app/
           labels:
             org.opencontainers.image.stage: install
@@ -222,22 +229,25 @@ resources:
             - packages/subscriptions/package.json
             - packages/utils/package.json
             - packages/tsconfig/package.json
+            - packages/test-utils/package.json
             - packages/tinybird/package.json
             - packages/upstash/package.json
             - packages/theme-store/package.json
             - packages/locales/package.json
             - packages/status-fetcher/package.json
 
-          # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
+          # Install dependencies scoped to the workflows subgraph (dev included: the build stage needs tsdown)
           run:
+            # Node 25+ no longer bundles corepack
+            - npm install -g corepack@0.36.0
             - corepack enable pnpm
-            - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
+            - pnpm install --frozen-lockfile --filter=@openstatus/workflows... --loglevel debug
           cache:
             - /root/.local/share/pnpm/store
 
-        # Stage 4: Build application (compile to binary with Deno)
+        # Stage 4: Bundle the app with tsdown into dist/
         build:
-          fromImage: denoland/deno:2.9.7
+          fromImage: node:26.8.1-slim
           workdir: /app/apps/workflows
           labels:
             org.opencontainers.image.stage: build
@@ -254,21 +264,22 @@ resources:
               target: /app/packages
           env:
             NODE_ENV: production
-          # Bundle the app to self-contained JS, EXTERNALISING the 3 packages that can't be inlined:
-          # @libsql/client + libsql (native .node loader) and @google-cloud/tasks (google-proto-files reads
-          # files via CJS __dirname). They ship as a minimal side-car node_modules (deno install, ~46MB,
-          # platform-aware so Fly amd64 works) instead of embedding all node_modules. Binary ~146MB vs ~360MB.
+          # Everything is inlined except the 3 packages that can't be (see tsdown.config.ts). They ship as
+          # a minimal side-car node_modules, installed by npm on the build platform so Fly amd64 gets the
+          # right libsql native binary, at the exact versions pnpm resolved.
           run:
-            - mkdir -p /tmp/sc
-            - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-            - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-            - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-            - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-            - mkdir -p /app/data
+            - ./node_modules/.bin/tsdown
+            - mkdir -p /tmp/sc /app/data
+            - node scripts/sidecar-package.mjs /tmp/sc/package.json
+            - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
 
-      # Runtime: distroless glibc base that already ships curl + CA certs (Deno's HTTPS works on it; no apt needed).
-      # Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
-      fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+      # Runtime stage: Node plus curl (healthcheck) and the system CA store, which libsql's native
+      # TLS reads — Node's own fetch bundles its CAs, the addon does not.
+      fromImage: node:26.8.1-slim
+      root:
+        run:
+          # One chained command: dofigen emits a heredoc RUN, which doesn't stop on a failed line
+          - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
       workdir: /app/
 
       # Metadata labels
@@ -279,11 +290,18 @@ resources:
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
 
-      # Copy the self-contained compiled binary (native addon embedded by deno compile)
+      env:
+        NODE_ENV: production
+
+      # The bundle resolves its externals from the side-car node_modules one level up from dist/
       copy:
         - fromBuilder: build
-          source: /app/apps/workflows/app
-          target: /app/apps/workflows/
+          source: /app/apps/workflows/dist
+          target: /app/apps/workflows/dist
+          chmod: "555"
+        - fromBuilder: build
+          source: /tmp/sc/node_modules
+          target: /app/apps/workflows/node_modules
           chmod: "555"
         - fromBuilder: build
           source: /app/data
@@ -292,7 +310,6 @@ resources:
       user: "1000:1000"
       expose: "3000"
 
-      # Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
       healthcheck:
         interval: 1m
         timeout: 10s
@@ -300,4 +317,4 @@ resources:
         retries: 3
         cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
-      entrypoint: /app/apps/workflows/app
+      entrypoint: ["node", "/app/apps/workflows/dist/serve.mjs"]

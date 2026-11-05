@@ -111,13 +111,13 @@ export function Calculation() {
       <TabsList className="h-auto w-full rounded-none">
         <TabsTrigger
           value="percentage"
-          className="h-auto w-full truncate rounded-none p-4"
+          className="h-auto w-full truncate rounded-none px-3 py-2"
         >
           Uptime Percentage
         </TabsTrigger>
         <TabsTrigger
           value="duration"
-          className="h-auto w-full truncate rounded-none p-4"
+          className="h-auto w-full truncate rounded-none px-3 py-2"
         >
           Downtime Duration
         </TabsTrigger>
@@ -130,7 +130,7 @@ export function Calculation() {
             onChange={(e) => setUptimePercentage(Number(e.target.value))}
             type="number"
             placeholder="99.99"
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
           />
           <div className="flex flex-wrap gap-2">
             {ninesBadges.map((badge) => (
@@ -173,7 +173,7 @@ export function Calculation() {
             value={downtimeDuration}
             placeholder="11h 30m 10s"
             onChange={(e) => setDowntimeDuration(e.target.value)}
-            className="h-auto! rounded-none p-4 text-base md:text-base"
+            className="h-auto! rounded-none px-3 py-2 text-base md:text-base"
           />
           <div className="flex flex-wrap gap-2">
             {durationBadges.map((badge) => (

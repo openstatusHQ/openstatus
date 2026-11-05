@@ -12,7 +12,7 @@ func TestTCPJob_Success(t *testing.T) {
 
 	monitor := &v1.TCPMonitor{
 		Uri:     "openstatus.dev:80",
-		Timeout: 1,
+		Timeout: 10_000,
 		Retry:   1,
 	}
 	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor, "test-region")

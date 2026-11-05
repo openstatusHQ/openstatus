@@ -14,6 +14,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "declaration": true,
+    "noEmit": false,
     "declarationMap": false
   }
 }

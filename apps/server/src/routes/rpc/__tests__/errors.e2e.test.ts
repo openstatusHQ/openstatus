@@ -2,8 +2,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { errorFromJson } from "@connectrpc/connect/protocol-connect";
 import { errorDocsUrl } from "@openstatus/error";
 import { ErrorInfoSchema } from "@openstatus/proto/google/rpc";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { app } from "../../../index";
 

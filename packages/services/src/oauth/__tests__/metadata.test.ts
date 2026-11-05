@@ -1,5 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { apiKeySettableScopes } from "@openstatus/db/src/schema/api-keys/constants";
+import { describe, expect, test } from "vitest";
 
 import {
   authorizationServerMetadata,
@@ -29,7 +29,8 @@ describe("oauth metadata", () => {
     ]);
     expect(doc.code_challenge_methods_supported).toEqual(["S256"]);
     expect(doc.token_endpoint_auth_methods_supported).toEqual(["none"]);
-    expect(doc.scopes_supported).toEqual(["read", "write"]);
+    expect(doc.scopes_supported).toEqual([...apiKeySettableScopes]);
+    expect(doc.scopes_supported).toHaveLength(12);
   });
 
   test("protected resource document names the MCP resource and the issuer", () => {

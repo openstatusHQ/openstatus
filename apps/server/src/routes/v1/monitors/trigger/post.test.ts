@@ -1,11 +1,11 @@
 import { createMonitor } from "@openstatus/db/src/test/factories";
-import { afterEach, expect, mock, test } from "@openstatus/test-utils";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { app } from "@/index";
 
 import { TriggerSchema } from "./schema";
 
-const mockFetch = mock();
+const mockFetch = vi.fn();
 
 global.fetch = mockFetch as unknown as typeof fetch;
 

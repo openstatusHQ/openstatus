@@ -22,3 +22,4 @@ export * from "./linkedin";
 export * from "./bluesky";
 export * from "./youtube";
 export * from "./openstatus";
+export * from "./ntfy";

@@ -1,8 +1,7 @@
 import crypto from "node:crypto";
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 
 import type { SlackConfig } from "./config";
 import { createSlackRoute } from "./index";
@@ -19,7 +18,7 @@ function signRequest(body: string, timestamp: number): string {
 }
 
 function makeInstallToken(workspaceId: number): string {
-  const payload = JSON.stringify({ workspaceId, ts: Date.now() });
+  const payload = JSON.stringify({ workspaceId, userId: 1, ts: Date.now() });
   const sig = crypto
     .createHmac("sha256", SIGNING_SECRET)
     .update(payload)

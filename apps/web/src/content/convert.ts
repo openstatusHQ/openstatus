@@ -1,5 +1,9 @@
+import { customers, getCustomer } from "../data/customers";
+import { canonicalUrl, frontmatter } from "./frontmatter";
 import type { MDXData } from "./utils";
-import { formatDate } from "./utils";
+
+// Agents parse these dates; the human form stays on the HTML page.
+const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 
 /**
  * Converts MDX content to clean markdown format for AI tools
@@ -9,26 +13,20 @@ export function convertMdxToMarkdown(data: MDXData): string {
   let output = "";
 
   // Step 0: Generate YAML frontmatter from metadata
-  const { metadata, content } = data;
+  const { metadata, content, href } = data;
 
-  output += "---\n";
-  output += `title: "${metadata.title}"\n`;
-  if (metadata.publishedAt) {
-    output += `date: ${formatDate(metadata.publishedAt)}\n`;
-  }
-  if (metadata.author) {
-    output += `author: "${metadata.author}"\n`;
-  }
-  if (metadata.description) {
-    output += `description: "${metadata.description}"\n`;
-  }
-  if (metadata.category) {
-    output += `category: "${metadata.category}"\n`;
-  }
-  if (metadata.image) {
-    output += `image: "${metadata.image}"\n`;
-  }
-  output += "---\n\n";
+  // Same fallbacks as `getPageMetadata`, so the twin carries the <title>
+  // and meta description the HTML page advertises.
+  output += frontmatter({
+    title: metadata.seo?.title ?? metadata.title,
+    url: canonicalUrl(metadata.seo?.canonical ?? href),
+    date: metadata.publishedAt ? isoDate(metadata.publishedAt) : undefined,
+    updated: metadata.updatedAt ? isoDate(metadata.updatedAt) : undefined,
+    author: metadata.author,
+    description: metadata.seo?.description ?? metadata.description,
+    category: metadata.category,
+    image: metadata.image ? canonicalUrl(metadata.image) : undefined,
+  });
 
   // Step 1: Strip import statements (confirmed: always at top of file)
   let markdown = content.replace(/^import\s+.*$/gm, "");
@@ -101,16 +99,15 @@ export function convertMdxToMarkdown(data: MDXData): string {
     },
   );
 
-  // Step 8: Convert <ShowcaseYouTube entries={[...]}> to a list of links
-  markdown = markdown.replace(/<ShowcaseYouTube\b[\s\S]*?\/>/g, (match) => {
-    const items: string[] = [];
-    for (const entry of match.matchAll(/\{[^{}]*href:[^{}]*\}/g)) {
-      const href = entry[0].match(/href:\s*['"]([^'"]+)['"]/)?.[1];
-      const title = entry[0].match(/title:\s*['"]([^'"]+)['"]/)?.[1];
-      if (href) items.push(`- [${title ?? "YouTube video"}](${href})`);
-    }
-    return items.join("\n");
-  });
+  // Step 8: Convert <ShowcaseYouTube href="…" title="…" /> to a link list item
+  markdown = markdown.replace(
+    /<ShowcaseYouTube\b([^>]*?)\/>/g,
+    (_match, attrs: string) => {
+      const href = attrs.match(/href=["']([^"']+)["']/)?.[1];
+      const title = attrs.match(/title=["']([^"']+)["']/)?.[1];
+      return href ? `- [${title ?? "YouTube video"}](${href})` : "";
+    },
+  );
 
   // Step 9: Convert card components (unwrap grid, then serialize each card)
   markdown = markdown.replace(
@@ -133,30 +130,70 @@ export function convertMdxToMarkdown(data: MDXData): string {
     return description ? `- ${link} — ${description}` : `- ${link}`;
   });
 
-  // Step 10: Extract text from <Grid> containers (remove Grid wrapper, keep content)
+  // Step 9b: LogoCloud and Quote take their copy from `data/customers.ts`.
+  markdown = markdown.replace(/<LogoCloud\b([^>]*?)\/>/g, (_match, attrs) => {
+    const limit =
+      Number(attrs.match(/limit=\{(\d+)\}/)?.[1]) || customers.length;
+    return customers
+      .slice(0, limit)
+      .map((c) => `[${c.name}](${c.story ?? c.href})`)
+      .join(", ");
+  });
   markdown = markdown.replace(
-    /<Grid[^>]*>([\s\S]*?)<\/Grid>/g,
-    (_match, content) => {
-      return content;
+    /<Quote\s+customer="([^"]*)"[^>]*\/>/g,
+    (_match, name) => {
+      const customer = getCustomer(name);
+      const { quote } = customer;
+      if (!quote) return "";
+      const link = customer.story
+        ? `[Read the story](${customer.story})`
+        : `[${customer.name}](${customer.href})`;
+      return `> “${quote.text}”\n>\n> — ${quote.name}, ${quote.role} · ${link}`;
     },
   );
+
+  // Step 10: Unwrap layout-only wrappers. Their children are real copy
+  // (CTA links, pricing caveats, quote attributions), only the styling goes.
+  markdown = markdown.replace(
+    /<Actions\b[^>]*>([\s\S]*?)<\/Actions>/g,
+    (_match, content: string) =>
+      content
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join("\n\n"),
+  );
+  // Eyebrow is a visual label with no meaning out of context, so it goes.
+  markdown = markdown.replace(/<Eyebrow\b[^>]*>[\s\S]*?<\/Eyebrow>/g, "");
+  // SrOnly is a demo's text alternative: hidden on the page, plain copy here.
+  // One pass skips wrappers nested inside a match, so repeat until stable.
+  const wrapper = /<(Grid|Subtle|p|SrOnly|Timeline)\b[^>]*>([\s\S]*?)<\/\1>/g;
+  while (wrapper.test(markdown)) {
+    markdown = markdown.replace(wrapper, (_match, _tag, content) => content);
+  }
+
+  // A break becomes a newline so `Before<br />After` keeps its word boundary.
+  markdown = markdown.replace(/<br\s*\/?>|<\/br>/g, "\n");
 
   // Step 11: Strip generic HTML containers but extract their text
   // This handles div, span, section, article
   markdown = markdown.replace(
     /<(div|span|section|article)(?:\s+[^>]*)?>[\s\S]*?<\/\1>/g,
     (match) => {
-      // Extract text content (remove all tags)
-      return match.replace(/<[^>]*>/g, " ").trim();
+      // Extract text content (remove all tags); blank lines keep adjacent
+      // containers from merging into one paragraph.
+      return `\n\n${match.replace(/<[^>]*>/g, " ").trim()}\n\n`;
     },
   );
 
-  // Step 12: Strip remaining unknown JSX components
-  // Handle paired tags
-  markdown = markdown.replace(/<[A-Z]\w*[^>]*>[\s\S]*?<\/[A-Z]\w*>/g, "");
-  // Handle self-closing tags
-  markdown = markdown.replace(/<[A-Z]\w*\s*\/>/g, "");
+  // Step 12: Strip remaining unknown JSX components. Self-closing tags go
+  // first: a `<Demo type="x" />` left for the paired rule reads as an opening
+  // tag and swallows everything up to the next closing tag of any component.
+  markdown = markdown.replace(/<[A-Z]\w*(?:\s[^>]*?)?\/>/g, "");
+  markdown = markdown.replace(/<([A-Z]\w*)\b[^>]*>[\s\S]*?<\/\1>/g, "");
 
+  // A tag removed mid-cell leaves a line holding one space; empty it so it collapses.
+  markdown = markdown.replace(/^[ \t]+$/gm, "");
   // Clean up: Remove excessive blank lines (more than 2 consecutive)
   markdown = markdown.replace(/\n{3,}/g, "\n\n");
 

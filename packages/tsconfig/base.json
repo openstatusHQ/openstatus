@@ -2,6 +2,8 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Default",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
     "composite": false,
     "declaration": true,
     "declarationMap": true,
@@ -9,14 +11,17 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
+    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "noEmit": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
     "skipLibCheck": true,
     "strict": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["node"]
   },
   "exclude": ["node_modules"]
 }

@@ -22,7 +22,7 @@ export async function updatePrivateLocation(args: {
   input: UpdatePrivateLocationInput;
 }): Promise<PrivateLocation> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdatePrivateLocationInput.parse(args.input);
 
   // The pivot table has no UNIQUE (private_location_id, monitor_id)

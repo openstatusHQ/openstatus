@@ -1,8 +1,7 @@
 import type { ServiceContext } from "@openstatus/services";
 import { agentTools } from "@openstatus/services/agent-tools";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import {
@@ -14,6 +13,7 @@ import {
   getRegistryTool,
   isSlackToolDraft,
 } from "./registry-runner";
+import { buildSystemPrompt } from "./system-prompt";
 
 const fakeCtx = {
   workspace: { id: 1 },
@@ -248,7 +248,7 @@ describe("executeRegistryAction", () => {
         summarize: () => ({ title: "fake", lines: [] }),
       },
     });
-    expect(
+    await expect(
       executeRegistryAction({
         tool: t,
         ctx: fakeCtx,
@@ -264,7 +264,7 @@ describe("executeRegistryAction", () => {
         throw new Error("kaboom");
       },
     });
-    expect(
+    await expect(
       executeRegistryAction({
         tool: t,
         ctx: fakeCtx,
@@ -346,7 +346,10 @@ describe("buildTool draft split", () => {
   async function runExecute(t: AnyAgentTool) {
     const built = buildTool(t, fakeCtx);
     if (!built.execute) throw new Error("expected an execute fn");
-    return built.execute({ value: 7 }, { toolCallId: "t", messages: [] });
+    return built.execute(
+      { value: 7 },
+      { toolCallId: "t", messages: [], context: {} },
+    );
   }
 
   test("persists raw input but enriches a separate displayInput", async () => {
@@ -368,5 +371,17 @@ describe("buildTool draft split", () => {
     if (!isSlackToolDraft(result)) throw new Error("expected a draft");
     expect(result.input).toEqual({ value: 7 });
     expect(result.displayInput).toEqual({ value: 7 });
+  });
+});
+
+describe("buildSystemPrompt coverage", () => {
+  // buildSlackTools hands the model every registry tool; a tool the prompt
+  // never mentions is one the model won't reach for (or will misuse).
+  test("mentions every tool the Slack agent is given", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    const missing = Object.keys(agentTools).filter(
+      (name) => !new RegExp(`\\b${name}\\b`).test(prompt),
+    );
+    expect(missing).toEqual([]);
   });
 });

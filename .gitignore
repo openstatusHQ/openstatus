@@ -82,9 +82,17 @@ plan.md
 
 *.tsbuildinfo
 
-.claude/skills/**
-.agents/skills/**
+# Skills live in .agents/skills; .claude/skills holds personal symlinks to them and stays untracked.
+# Most are personal installs (skills-lock.json); the ones re-included below ship with the repo,
+# see .agents/skills/README.md.
+.agents/skills/*
+.claude/skills/
+!.agents/skills/README.md
+!.agents/skills/screenshot/
+!.agents/skills/grill-me/
+!.agents/skills/codebase-design/
 skills-lock.json
+.screenshots/
 
 .mcp.json
 

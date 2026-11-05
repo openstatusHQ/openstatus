@@ -12,9 +12,10 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import { headerPairSchema } from "@openstatus/utils";
 import NextLink from "next/link";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -34,9 +35,7 @@ import {
 
 const schema = z.object({
   endpoint: z.url("Please enter a valid URL"),
-  headers: z
-    .array(z.object({ key: z.string(), value: z.string() }))
-    .prefault([]),
+  headers: z.array(headerPairSchema).prefault([]),
 });
 
 type FormValues = z.input<typeof schema>;
@@ -55,6 +54,12 @@ export function FormOtel({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { endpoint: "", headers: [] },
   });
+  // Stable row ids so removing a row remounts the shifted controllers.
+  const {
+    fields: headerFields,
+    append: appendHeader,
+    remove: removeHeader,
+  } = useFieldArray({ control: form.control, name: "headers" });
   const [isPending, startTransition] = useTransition();
 
   function submitAction(values: FormValues) {
@@ -86,12 +91,12 @@ export function FormOtel({
               Configure your OpenTelemetry Exporter.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid grid-cols-4 gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="endpoint"
               render={({ field }) => (
-                <FormItem className="col-span-full">
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Endpoint</FormLabel>
                   <FormControl>
                     <Input
@@ -104,78 +109,66 @@ export function FormOtel({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="headers"
-              disabled={locked}
-              render={({ field }) => (
-                <FormItem className="col-span-full">
-                  <FormLabel>Request Headers</FormLabel>
-                  {field.value?.map((header, index) => (
-                    <div key={index} className="grid gap-2 sm:grid-cols-5">
-                      <Input
-                        placeholder="Key"
-                        className="col-span-2"
-                        value={header.key}
-                        disabled={locked}
-                        onChange={(e) => {
-                          const newHeaders = [...(field.value ?? [])];
-                          newHeaders[index] = {
-                            ...newHeaders[index],
-                            key: e.target.value,
-                          };
-                          field.onChange(newHeaders);
-                        }}
-                      />
-                      <Input
-                        placeholder="Value"
-                        className="col-span-2"
-                        value={header.value}
-                        disabled={locked}
-                        onChange={(e) => {
-                          const newHeaders = [...(field.value ?? [])];
-                          newHeaders[index] = {
-                            ...newHeaders[index],
-                            value: e.target.value,
-                          };
-                          field.onChange(newHeaders);
-                        }}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          const newHeaders = field.value?.filter(
-                            (_, i) => i !== index,
-                          );
-                          field.onChange(newHeaders);
-                        }}
-                      >
-                        <Close />
-                      </Button>
-                    </div>
-                  ))}
-                  <div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      type="button"
-                      disabled={locked}
-                      onClick={() => {
-                        field.onChange([
-                          ...(field.value ?? []),
-                          { key: "", value: "" },
-                        ]);
-                      }}
-                    >
-                      <Add />
-                      Add Header
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem className="col-span-full">
+              <FormLabel>Request Headers</FormLabel>
+              {headerFields.map((row, index) => (
+                <div key={row.id} className="grid gap-2 sm:grid-cols-5">
+                  <FormField
+                    control={form.control}
+                    name={`headers.${index}.key`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input
+                            placeholder="Key"
+                            {...field}
+                            disabled={locked}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`headers.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input
+                            placeholder="Value"
+                            {...field}
+                            disabled={locked}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    type="button"
+                    aria-label="Remove header"
+                    disabled={locked}
+                    onClick={() => removeHeader(index)}
+                  >
+                    <Close />
+                  </Button>
+                </div>
+              ))}
+              <div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  disabled={locked}
+                  onClick={() => appendHeader({ key: "", value: "" })}
+                >
+                  <Add />
+                  Add Header
+                </Button>
+              </div>
+            </FormItem>
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
@@ -190,7 +183,7 @@ export function FormOtel({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
+              <Button data-track="paywall_viewed" data-limit="otel" asChild>
                 <NextLink href="/settings/billing">
                   <Lock className="size-4" />
                   Upgrade

@@ -77,6 +77,8 @@ A certificate that fails verification is reported as `certificate verification f
 
 Metadata sent with the health check request. gRPC metadata is carried as HTTP/2 headers, so this is where an authorization token goes when your health endpoint sits behind an authenticating proxy.
 
+Scheduled checks also send `x-openstatus-request-id`, a unique ID that stays the same across every retry of a check. It matches the ID of the check's response log, so you can find a request from your server logs in openstatus. Custom metadata with the same name is ignored. On-demand test requests don't send it.
+
 **Common example:**
 ```
 authorization: Bearer <your_token>
@@ -128,7 +130,7 @@ The latency above which a `SERVING` response is recorded as degraded rather than
 **Type:** Integer (optional)
 **Default:** `3`
 
-How many times a check is retried before reporting a definitive error. Only connection failures are retried: once the server has answered — including `NOT_SERVING` or `UNIMPLEMENTED` — the result is recorded immediately, because asking again cannot change it.
+The total number of attempts made for each check, including the first one. `0` is treated as the default (`3`); there is no setting that disables retries, so `1` means a single attempt. Only connection failures trigger another attempt: once the server has answered — including `NOT_SERVING` or `UNIMPLEMENTED` — the result is recorded immediately, because asking again cannot change it.
 
 ### OpenTelemetry
 

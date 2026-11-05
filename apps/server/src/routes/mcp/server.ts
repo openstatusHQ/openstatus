@@ -5,12 +5,14 @@ import packageJson from "../../../package.json" with { type: "json" };
 import { registerPublicResources } from "./resources";
 import { registerAuditTools } from "./tools/audit";
 import { registerContentTools } from "./tools/content";
+import { registerIncidentTools } from "./tools/incident";
 import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
 import { registerNotificationTools } from "./tools/notification";
 import { registerPageTools } from "./tools/page";
 import { registerPrivateLocationTools } from "./tools/private-location";
 import { registerStatusReportTools } from "./tools/status-report";
+import { registerWorkspaceTools } from "./tools/workspace";
 
 /**
  * Build a fresh `McpServer` for this request. Each tool registration
@@ -31,10 +33,12 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerPublicResources(server);
   registerPageTools(server, ctx);
   registerStatusReportTools(server, ctx);
+  registerIncidentTools(server, ctx);
   registerMaintenanceTools(server, ctx);
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);
   registerPrivateLocationTools(server, ctx);
+  registerWorkspaceTools(server, ctx);
   registerAuditTools(server, ctx);
   registerContentTools(server, ctx);
   return server;

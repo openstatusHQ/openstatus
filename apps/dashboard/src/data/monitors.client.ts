@@ -1,3 +1,4 @@
+import type { monitorStatus } from "@openstatus/db/src/schema/monitors/constants";
 import {
   Api,
   Settings,
@@ -5,6 +6,9 @@ import {
   Duplicate,
   Globe,
   Network,
+  Pause,
+  Play,
+  Schedule,
   Speed,
   Server,
   Terminal,
@@ -37,6 +41,11 @@ export const monitorTypes = [
     label: "gRPC",
     icon: Api,
   },
+  {
+    id: "heartbeat",
+    label: "Heartbeat",
+    icon: Schedule,
+  },
 ] as const;
 
 export const actions = [
@@ -64,6 +73,19 @@ export const actions = [
     icon: Duplicate,
     variant: "default" as const,
   },
+  // mutually exclusive: callers keep the one matching `monitor.active`
+  {
+    id: "pause",
+    label: "Pause",
+    icon: Pause,
+    variant: "default" as const,
+  },
+  {
+    id: "resume",
+    label: "Resume",
+    icon: Play,
+    variant: "default" as const,
+  },
   // {
   //   id: "export",
   //   label: "Export Code",
@@ -88,3 +110,22 @@ export const getActions = (
     onClick: props[action.id as keyof typeof props],
   }));
 };
+
+type MonitorStatus = (typeof monitorStatus)[number];
+
+export const monitorHealthConfig = {
+  inactive: { label: "Inactive" },
+  active: { label: "Normal" },
+  degraded: { label: "Degraded" },
+  error: { label: "Failing" },
+} as const satisfies Record<MonitorStatus | "inactive", { label: string }>;
+
+export type MonitorHealth = keyof typeof monitorHealthConfig;
+
+/** A paused monitor reads as inactive whatever its last check said. */
+export function getMonitorHealth(monitor: {
+  active: boolean | null;
+  status: MonitorStatus;
+}): MonitorHealth {
+  return monitor.active ? monitor.status : "inactive";
+}

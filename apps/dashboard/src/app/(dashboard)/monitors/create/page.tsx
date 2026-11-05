@@ -1,7 +1,8 @@
 "use client";
 
 import { headerAssertion } from "@openstatus/assertions";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { MONITOR_METHODS } from "@openstatus/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
@@ -34,6 +35,7 @@ function safeHostname(url: string) {
 function buildPrefill(params: {
   url: string | null;
   name: string | null;
+  method: string | null;
   assertionHeaderKey: string | null;
   assertionHeaderCompare: string | null;
   assertionHeaderValue: string | null;
@@ -48,11 +50,15 @@ function buildPrefill(params: {
     target: params.assertionHeaderValue,
   });
 
+  const method = MONITOR_METHODS.find(
+    (m) => m === params.method?.toUpperCase(),
+  );
+
   return {
     active: true,
     name: params.name ?? safeHostname(params.url),
     type: "http",
-    method: "GET",
+    method: method ?? "GET",
     url: params.url,
     headers: [],
     body: "",
@@ -68,6 +74,10 @@ export default function Page() {
   const router = useRouter();
   const [params] = useQueryStates(searchParamsParsers);
 
+  const { data: heartbeatAvailable } = useQuery(
+    trpc.monitor.heartbeatAvailable.queryOptions(),
+  );
+
   const triggerCheckMutation = useMutation(
     trpc.checker.triggerChecker.mutationOptions({}),
   );
@@ -78,7 +88,7 @@ export default function Page() {
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        if (data.active) {
+        if (data.active && data.jobType !== "heartbeat") {
           triggerCheckMutation.mutate({ id: data.id });
         }
         router.push(`/monitors/${data.id}/edit`);
@@ -94,6 +104,7 @@ export default function Page() {
         </SectionHeader>
         <FormGeneral
           defaultValues={buildPrefill(params)}
+          heartbeatAvailable={heartbeatAvailable ?? false}
           onSubmit={async (data) => {
             await createMonitorMutation.mutateAsync({
               name: data.name,
@@ -108,6 +119,8 @@ export default function Page() {
               grpcTls: data.grpcTls,
               saveCheck: data.saveCheck,
               skipCheck: data.skipCheck,
+              heartbeatPeriod: data.heartbeatPeriod,
+              heartbeatGrace: data.heartbeatGrace,
             });
           }}
         />

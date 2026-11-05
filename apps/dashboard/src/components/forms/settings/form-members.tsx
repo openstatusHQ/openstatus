@@ -104,13 +104,13 @@ export function FormMembers({
             </Tabs>
           </FormCardContent>
           <FormCardSeparator />
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               disabled={locked}
               name="email"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Add member</FormLabel>
                   <FormControl>
                     <Input
@@ -142,7 +142,13 @@ export function FormMembers({
                   </Link>
                   .
                 </FormCardFooterInfo>
-                <Button type="button" size="sm" asChild>
+                <Button
+                  data-track="paywall_viewed"
+                  data-limit="members"
+                  type="button"
+                  size="sm"
+                  asChild
+                >
                   <Link href="/settings/billing">
                     <Lock />
                     Upgrade

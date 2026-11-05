@@ -22,9 +22,15 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Slider } from "@openstatus/ui/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import { formatDistanceToNow } from "date-fns";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -33,6 +39,10 @@ import { z } from "zod";
 import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
+import {
+  TableCellMetadata,
+  getMetadataEntries,
+} from "@/components/data-table/table-cell-metadata";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   FormCard,
@@ -49,7 +59,13 @@ import { useTRPC } from "@/lib/trpc/client";
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
 const PERIODICITY = monitorPeriodicity.filter((p) => p !== "other");
-const DEFAULT_PRIVATE_LOCATIONS = [] satisfies { id: number; name: string }[];
+const DEFAULT_PRIVATE_LOCATIONS = [] satisfies {
+  id: number;
+  name: string;
+  status: "active" | "error";
+  lastSeenAt?: Date | null;
+  metadata?: Record<string, string> | null;
+}[];
 
 const schema = z.object({
   regions: z.array(z.string()),
@@ -67,7 +83,13 @@ export function FormSchedulingRegions({
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  privateLocations: { id: number; name: string }[];
+  privateLocations: {
+    id: number;
+    name: string;
+    status: "active" | "error";
+    lastSeenAt?: Date | null;
+    metadata?: Record<string, string> | null;
+  }[];
 }) {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
@@ -176,7 +198,12 @@ export function FormSchedulingRegions({
               <Note color="error">
                 <Error />
                 The periodicity you are selecting is not allowed for your plan.
-                <NoteButton type="button" onClick={() => setOpenDialog(true)}>
+                <NoteButton
+                  data-track="paywall_viewed"
+                  data-limit="periodicity"
+                  type="button"
+                  onClick={() => setOpenDialog(true)}
+                >
                   Upgrade your plan
                 </NoteButton>
               </Note>
@@ -402,6 +429,7 @@ export function FormSchedulingRegions({
                               >
                                 <FormControl>
                                   <Checkbox
+                                    id={`private-location-${item.id}`}
                                     checked={
                                       field.value?.includes(item.id) || false
                                     }
@@ -419,8 +447,21 @@ export function FormSchedulingRegions({
                                     }}
                                   />
                                 </FormControl>
-                                <FormLabel className="w-full truncate font-mono text-sm font-normal">
-                                  {item.name}
+                                <FormLabel
+                                  htmlFor={`private-location-${item.id}`}
+                                  className="w-full truncate font-mono text-sm font-normal"
+                                >
+                                  <span className="text-nowrap">
+                                    {item.name}
+                                  </span>
+                                  <PrivateLocationStatusDot
+                                    status={item.status}
+                                    lastSeenAt={item.lastSeenAt}
+                                  />
+                                  {getMetadataEntries(item.metadata).length >
+                                  0 ? (
+                                    <TableCellMetadata value={item.metadata} />
+                                  ) : null}
                                   <Globe className="size-3" />
                                 </FormLabel>
                               </FormItem>
@@ -469,5 +510,43 @@ export function FormSchedulingRegions({
       </form>
       <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
     </Form>
+  );
+}
+
+function PrivateLocationStatusDot({
+  status,
+  lastSeenAt,
+}: {
+  status: "active" | "error";
+  lastSeenAt?: Date | null;
+}) {
+  const lastSeen = lastSeenAt
+    ? `last seen ${formatDistanceToNow(lastSeenAt, { addSuffix: true })}`
+    : null;
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        {/* span, not button: a button inside the <label> is invalid HTML */}
+        <span
+          tabIndex={0}
+          role="img"
+          aria-label={lastSeen ? `${status} · ${lastSeen}` : status}
+          className="focus-visible:ring-ring/50 relative inline-flex shrink-0 rounded-full outline-none focus-visible:ring-[3px]"
+        >
+          <span
+            className={cn(
+              "relative inline-flex size-2 rounded-full",
+              status === "active" ? "bg-success" : "bg-destructive",
+            )}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="font-sans">
+        <span className="capitalize">{status}</span>
+        {lastSeen ? (
+          <span className="text-primary-foreground/70"> · {lastSeen}</span>
+        ) : null}
+      </TooltipContent>
+    </Tooltip>
   );
 }

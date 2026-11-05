@@ -1,4 +1,17 @@
+import {
+  fieldRefKind,
+  toEntityId,
+  toEntityIds,
+} from "@/data/entity-refs.client";
+import {
+  type ComponentImpact,
+  impactDisplay,
+  isComponentImpactList,
+} from "@/data/status-report-updates.client";
 import { cn } from "@/lib/utils";
+
+import { EntityRef, EntityRefList } from "./entity-ref/entity-ref";
+import { StatusBadge } from "./status-badge";
 
 /**
  * Field-level diff row used by the audit-log "CHANGES" view and the
@@ -33,12 +46,20 @@ export function ChangesTable({ changes }: { changes: ChangeRow[] }) {
           <div className="bg-muted/40 text-muted-foreground truncate border-r px-3 py-2 font-mono md:col-span-1">
             {change.field}
           </div>
-          <div className="grid truncate md:col-span-3">
+          <div className="grid min-w-0 md:col-span-3">
             {"before" in change ? (
-              <DiffLine kind="removed" value={change.before} />
+              <DiffLine
+                kind="removed"
+                field={change.field}
+                value={change.before}
+              />
             ) : null}
             {"after" in change ? (
-              <DiffLine kind="added" value={change.after} />
+              <DiffLine
+                kind="added"
+                field={change.field}
+                value={change.after}
+              />
             ) : null}
           </div>
         </div>
@@ -49,9 +70,11 @@ export function ChangesTable({ changes }: { changes: ChangeRow[] }) {
 
 function DiffLine({
   kind,
+  field,
   value,
 }: {
   kind: "added" | "removed";
+  field: string;
   value: unknown;
 }) {
   const sign = kind === "added" ? "+" : "-";
@@ -63,10 +86,46 @@ function DiffLine({
       <span className="text-muted-foreground group-data-[kind=added]:text-success group-data-[kind=removed]:text-destructive select-none">
         {sign}
       </span>
-      <span className="group-data-[kind=added]:text-foreground group-data-[kind=removed]:text-muted-foreground break-all whitespace-pre-wrap group-data-[kind=removed]:line-through">
-        {formatValue(value)}
+      {/* Refs and badges are inline boxes; the removed strikethrough has to be set on them. */}
+      <span className="group-data-[kind=added]:text-foreground group-data-[kind=removed]:text-muted-foreground min-w-0 break-all whitespace-pre-wrap group-data-[kind=removed]:line-through group-data-[kind=removed]:[&_[data-slot=badge]]:line-through group-data-[kind=removed]:[&_[data-slot=entity-ref]]:[text-decoration-line:underline_line-through]">
+        <DiffValue field={field} value={value} />
       </span>
     </div>
+  );
+}
+
+function DiffValue({ field, value }: { field: string; value: unknown }) {
+  const kind = fieldRefKind(field);
+  if (kind === "componentImpacts") {
+    if (isComponentImpactList(value) && value.length > 0) {
+      return <ImpactList impacts={value} />;
+    }
+  } else if (kind) {
+    // Strings stay text: a diff value of "4" is not a reference.
+    const id = typeof value === "number" ? toEntityId(value) : undefined;
+    if (id) return <EntityRef kind={kind} id={id} />;
+    const ids = toEntityIds(value);
+    if (ids) return <EntityRefList kind={kind} refs={ids} />;
+  }
+  return formatValue(value);
+}
+
+function ImpactList({ impacts }: { impacts: ComponentImpact[] }) {
+  return (
+    <span className="flex flex-col gap-1">
+      {impacts.map(({ pageComponentId, impact }) => {
+        const display = impactDisplay(impact);
+        return (
+          <span key={pageComponentId} className="flex items-center gap-2">
+            <EntityRef kind="pageComponent" id={pageComponentId} />
+            <span className="text-muted-foreground">→</span>
+            <StatusBadge plain variant={display.variant} className="font-mono">
+              {display.label}
+            </StatusBadge>
+          </span>
+        );
+      })}
+    </span>
   );
 }
 

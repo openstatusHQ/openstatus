@@ -1,8 +1,7 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { convertMdxToMarkdown } from "./convert";
-import { getHomePage } from "./utils";
+import { getHomePage, getProductPages } from "./utils";
 
 describe("convertMdxToMarkdown", () => {
   test("serializes Details regardless of the props that follow summary", () => {
@@ -17,6 +16,68 @@ describe("convertMdxToMarkdown", () => {
     expect(markdown).toContain("Answer.");
   });
 
+  test("turns ShowcaseYouTube into links, unwrapping a Grid of videos", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: { title: "t" },
+      content: [
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=a" title="One" />',
+        "",
+        '<Grid cols={2} variant="borderless">',
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=b" title="Two" />',
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=c" />',
+        "</Grid>",
+      ].join("\n"),
+      slug: "t",
+      href: "/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain("- [One](https://www.youtube.com/watch?v=a)");
+    expect(markdown).toContain("- [Two](https://www.youtube.com/watch?v=b)");
+    expect(markdown).toContain(
+      "- [YouTube video](https://www.youtube.com/watch?v=c)",
+    );
+    expect(markdown).not.toContain("ShowcaseYouTube");
+    expect(markdown).not.toContain("<Grid");
+  });
+
+  test("frontmatter carries an absolute url, ISO dates and escaped quotes", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: {
+        title: 'Say "hi"',
+        publishedAt: new Date("2026-01-02"),
+        updatedAt: new Date("2026-03-04"),
+        description: "d",
+      },
+      content: "Body",
+      slug: "t",
+      href: "/blog/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain('title: "Say \\"hi\\""');
+    expect(markdown).toContain('url: "https://www.openstatus.dev/blog/t"');
+    expect(markdown).toContain('date: "2026-01-02"');
+    expect(markdown).toContain('updated: "2026-03-04"');
+  });
+
+  test("frontmatter prefers the seo overrides, like <title> and <meta>", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: {
+        title: "Page title",
+        description: "Page description",
+        seo: { title: "SEO title", description: "SEO description" },
+      },
+      content: "Body",
+      slug: "t",
+      href: "/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain('title: "SEO title"');
+    expect(markdown).toContain('description: "SEO description"');
+  });
+
+  test("the home page resolves to the site root, not /home", () => {
+    const markdown = convertMdxToMarkdown(getHomePage());
+    expect(markdown).toContain('url: "https://www.openstatus.dev/"');
+    expect(markdown).not.toContain("openstatus.dev/home");
+  });
+
   test("the home page keeps every FAQ entry in its markdown representation", () => {
     const home = getHomePage();
     const markdown = convertMdxToMarkdown(home);
@@ -24,4 +85,90 @@ describe("convertMdxToMarkdown", () => {
       expect(markdown).toContain(`<summary>${entry.question}</summary>`);
     }
   });
+
+  test("unwraps Subtle and Actions instead of dropping their copy", () => {
+    const markdown = convert(
+      '<Actions source="x">\n  <ButtonLink href="/a">A</ButtonLink>\n</Actions>\n\n<p>\n<Subtle>Paid plans from $30/mo.</Subtle>\n</p>',
+    );
+    expect(markdown).toContain("[A](/a)");
+    expect(markdown).toContain("Paid plans from $30/mo.");
+    expect(markdown).not.toContain("<");
+  });
+
+  test("a self-closing component with props does not swallow what follows", () => {
+    const markdown = convert(
+      '<Demo type="monitor" />\n\n## Kept\n\n<Eyebrow>09:41</Eyebrow>',
+    );
+    expect(markdown).toContain("## Kept");
+    expect(markdown).not.toContain("Demo");
+  });
+
+  test("keeps SrOnly copy and drops the tag", () => {
+    const markdown = convert(
+      '<Demo type="alert" />\n\n<SrOnly>\n\nThe alert as it lands in Slack.\n\n</SrOnly>',
+    );
+    expect(markdown).toContain("The alert as it lands in Slack.");
+    expect(markdown).not.toContain("<");
+  });
+
+  test("renders LogoCloud and Quote from the customers data", () => {
+    const markdown = convert('<LogoCloud />\n\n<Quote customer="twenty" />');
+    expect(markdown).toContain("[Cal.com](https://status.cal.com)");
+    expect(markdown).toContain("[Twenty](/customers/twenty)");
+    expect(markdown).toContain(
+      "> “Open-source CRM needs an open-source status page.",
+    );
+    expect(markdown).toContain("Félix Malfait, Co-founder @twentycrm");
+  });
+
+  test("the main pages leave no JSX behind", () => {
+    for (const page of [getHomePage(), ...getProductPages()]) {
+      const markdown = convertMdxToMarkdown(page);
+      expect(markdown).not.toMatch(/<\/?(?!(details|summary)>)[A-Za-z]/);
+    }
+  });
+
+  test("a demo removed after a list leaves one blank line, not two", () => {
+    const markdown = convert(
+      '<div>\n\n- item\n\n\n<Demo type="audit" />\n\n<SrOnly>\n\nText\n\n</SrOnly>\n\n</div>',
+    );
+    expect(markdown).toContain("- item\n\nText");
+  });
+
+  test("drops br and the blank lines around it", () => {
+    const markdown = convert("a\n\n<br></br>\n\n<br />\n\nb");
+    expect(markdown).toContain("a\n\nb");
+  });
+
+  test("an inline br keeps the word boundary", () => {
+    expect(convert("Before<br />After")).toContain("Before\nAfter");
+  });
+
+  test("the main pages have no runs of blank lines", () => {
+    for (const page of [getHomePage(), ...getProductPages()]) {
+      expect(convertMdxToMarkdown(page)).not.toMatch(/\n[ \t]*\n[ \t]*\n/);
+    }
+  });
+
+  test("drops Eyebrow labels", () => {
+    const markdown = convert("<Eyebrow>09:41</Eyebrow>\n\n## Kept");
+    expect(markdown).toContain("## Kept");
+    expect(markdown).not.toContain("09:41");
+  });
+
+  test("every section heading of the main pages survives conversion", () => {
+    for (const page of [getHomePage(), ...getProductPages()]) {
+      const count = (text: string) => text.match(/^## /gm)?.length ?? 0;
+      expect(count(convertMdxToMarkdown(page))).toBe(count(page.content));
+    }
+  });
 });
+
+function convert(content: string) {
+  return convertMdxToMarkdown({
+    metadata: { title: "t" },
+    content,
+    slug: "t",
+    href: "/t",
+  } as Parameters<typeof convertMdxToMarkdown>[0]);
+}

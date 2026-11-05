@@ -67,6 +67,10 @@ export const docsNav: DocsNavSection[] = [
         slug: "concept/latency-vs-response-time",
         label: "Understanding Latency vs Response Time",
       },
+      {
+        slug: "concept/response-logs-and-retention",
+        label: "Response Logs and Data Retention",
+      },
     ],
   },
   {
@@ -212,6 +216,10 @@ export const docsNav: DocsNavSection[] = [
             label: "Maintenance Service",
           },
           {
+            slug: "sdk/nodejs/incident-service",
+            label: "Incident Service",
+          },
+          {
             slug: "sdk/nodejs/notification-service",
             label: "Notification Service",
           },
@@ -250,6 +258,10 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/mcp-server", label: "MCP Server" },
       { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },
       { slug: "reference/grpc-monitor", label: "gRPC Monitor Reference" },
+      {
+        slug: "reference/heartbeat-monitor",
+        label: "Heartbeat Monitor Reference",
+      },
       { slug: "reference/http-monitor", label: "HTTP Monitor Reference" },
       { slug: "reference/icmp-monitor", label: "ICMP Monitor Reference" },
       { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
@@ -258,6 +270,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Notification Channels Reference",
       },
       { slug: "reference/incident", label: "Incident Reference" },
+      {
+        slug: "reference/incident-management",
+        label: "Incident Management Reference",
+      },
       { slug: "reference/location", label: "Location Reference" },
       {
         slug: "reference/private-location",
@@ -269,6 +285,10 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/maintenance", label: "Maintenance Reference" },
       { slug: "reference/subscriber", label: "Subscriber Reference" },
       { slug: "reference/terraform", label: "Terraform Provider Reference" },
+      {
+        slug: "reference/workspace-members",
+        label: "Workspace Members Reference",
+      },
     ],
   },
   {
@@ -326,6 +346,9 @@ export function sectionForParentSlug(
   return docsNav.find((s) => sectionParentSlug(s) === parentSlug);
 }
 
+export const DOCS_DESCRIPTION =
+  "Infra as code for uptime monitoring, status pages and incident response. Let your agents update them. Learn how to monitor your endpoints, create your status page, run incidents from Slack, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.";
+
 // Parent/section landing slugs (concept, tutorial, …) for static generation.
 export function getParentSlugs(): string[] {
   return docsNav.map(sectionParentSlug).filter((s): s is string => Boolean(s));
@@ -348,8 +371,7 @@ export function docsNavTree(): DocsNavNode {
   return {
     label: "openstatus documentation",
     href: "/docs",
-    description:
-      "Infra as code for uptime monitoring and status pages. Let your agents update them. Learn how to monitor your endpoints, create your status page, configure notifications, and drive it all from the CLI, Terraform, API, or MCP.",
+    description: DOCS_DESCRIPTION,
     children: docsNav.map((section) => {
       const parent = sectionParentSlug(section);
       return {
@@ -439,6 +461,12 @@ export function findDocsNode(
   href: string,
 ): DocsNavNode | undefined {
   return findDocsTrail(node, href)?.at(-1);
+}
+
+// <title> of a container page; the root hub is the docs entry and keeps its
+// plain label. HTML and markdown both read this.
+export function docsHubTitle(node: Pick<DocsNavNode, "label" | "href">) {
+  return node.href === "/docs" ? node.label : `${node.label} — openstatus docs`;
 }
 
 // Map a slug back to its section label (the value a doc's `category` must hold).

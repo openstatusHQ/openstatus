@@ -1,86 +1,41 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui/components/ui/table";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { Invite } from "@openstatus/icons";
+import { useQuery } from "@tanstack/react-query";
 
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { formatDate } from "@/lib/formatter";
+import { DataTable as DataTableBase } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
+
+import { columns } from "./columns";
 
 export function DataTable() {
   const trpc = useTRPC();
-  const { data: invitations, refetch } = useQuery(
-    trpc.invitation.list.queryOptions(),
-  );
-  const deleteInvitationMutation = useMutation(
-    trpc.invitation.delete.mutationOptions({
-      onSuccess: () => refetch(),
-    }),
-  );
+  const { data: invitations } = useQuery(trpc.invitation.list.queryOptions());
 
   if (!invitations) return null;
 
-  if (invitations.length === 0) {
-    return (
-      <EmptyStateContainer>
-        <EmptyStateTitle>No pending invitations</EmptyStateTitle>
-        <EmptyStateDescription>
-          Only active invitations are shown here.
-        </EmptyStateDescription>
-      </EmptyStateContainer>
-    );
-  }
-
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Created At</TableHead>
-          <TableHead>Expires At</TableHead>
-          <TableHead>Accepted At</TableHead>
-          <TableHead>
-            <span className="sr-only">Actions</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {invitations.map((item) => (
-          <TableRow key={item.id}>
-            <TableCell>{item.email}</TableCell>
-            <TableCell>{item.role}</TableCell>
-            <TableCell>
-              {item.createdAt ? formatDate(item.createdAt) : "-"}
-            </TableCell>
-            <TableCell>{formatDate(item.expiresAt)}</TableCell>
-            <TableCell>
-              {item.acceptedAt ? formatDate(item.acceptedAt) : "-"}
-            </TableCell>
-            <TableCell>
-              <div className="flex justify-end">
-                <QuickActions
-                  deleteAction={{
-                    confirmationValue: item.email ?? "invitation",
-                    submitAction: async () =>
-                      deleteInvitationMutation.mutateAsync({ id: item.id }),
-                  }}
-                />
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <DataTableBase
+      columns={columns}
+      data={invitations}
+      paginationComponent={DataTablePaginationSimple}
+      emptyState={
+        <DataTableEmpty>
+          <EmptyStateMedia>
+            <Invite />
+          </EmptyStateMedia>
+          <EmptyStateTitle>No pending invitations</EmptyStateTitle>
+          <EmptyStateDescription>
+            Invite a member below. Accepted and expired invitations drop off
+            this list.
+          </EmptyStateDescription>
+        </DataTableEmpty>
+      }
+    />
   );
 }

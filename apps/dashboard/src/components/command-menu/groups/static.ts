@@ -2,21 +2,38 @@ import { Dark, Light } from "@openstatus/icons";
 import { AtSign, KeyRound, Palette, Pencil, Plus, Users } from "lucide-react";
 
 import { HELP_LINKS, HELP_SUPPORT } from "@/config/help";
-import { NAV_MENU_ITEMS } from "@/config/nav";
+import { NAV, NAV_MENU_ITEMS } from "@/config/nav";
 import { SETTINGS_TABS } from "@/config/settings";
 
 import type { CommandMenuGroup, CommandMenuItem } from "../types";
 
+// Unlike the sidebar, Incidents sits right below Overview: the palette is for
+// reaching the urgent thing fast.
 export function navigationGroup(): CommandMenuGroup {
+  const items = [
+    ...NAV_MENU_ITEMS.slice(0, 1),
+    NAV.incidents,
+    ...NAV_MENU_ITEMS.slice(1),
+  ];
   return {
     heading: "Navigation",
-    items: NAV_MENU_ITEMS.map((item) => ({
+    items: items.map((item) => ({
       value: item.label,
       label: item.label,
       icon: item.icon,
       keywords: item.keywords,
       action: { type: "navigate", href: item.href },
     })),
+  };
+}
+
+export function declareIncidentItem(): CommandMenuItem {
+  return {
+    value: "Declare Incident",
+    label: "Declare Incident",
+    icon: Plus,
+    keywords: ["new incident", "outage", "commander", "severity"],
+    action: { type: "sheet", sheet: { sheet: "declare-incident" } },
   };
 }
 
@@ -44,6 +61,7 @@ export function createGroup(): CommandMenuGroup {
   return {
     heading: "Create",
     items: [
+      declareIncidentItem(),
       {
         value: "Create Monitor",
         label: "Create Monitor",

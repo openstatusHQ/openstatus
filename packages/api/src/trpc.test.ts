@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
 import { NextRequest } from "next/server.js";
+import { expect, test } from "vitest";
 
 import type { ResolveActiveWorkspaceResult } from "./auth/resolve-active-workspace";
 import {

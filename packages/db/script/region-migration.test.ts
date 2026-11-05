@@ -1,9 +1,8 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, test } from "@std/testing/bdd";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { z } from "zod";
 
 import type { monitorRegionSchema } from "../src/schema/constants";
-import { updateRegion } from "./region-migration";
+import { applyRegionRemaps, updateRegion } from "./region-migration";
 
 // Import the types we need
 
@@ -48,6 +47,37 @@ describe("updateRegion", () => {
       // Since hkg exists, it should be removed (newRegionIndex !== -1)
       expect(regions).toEqual(["ams", "fra", "lax"]);
       expect(regions).toHaveLength(3);
+    });
+  });
+
+  describe("bom deprecation", () => {
+    test("should replace bom with sin", () => {
+      const regions: z.infer<typeof monitorRegionSchema>[] = ["ams", "bom"];
+      updateRegion("bom", "sin", regions);
+
+      expect(regions).toEqual(["ams", "sin"]);
+    });
+
+    test("should replace every bom when it is listed twice", () => {
+      const regions: z.infer<typeof monitorRegionSchema>[] = [
+        "bom",
+        "ams",
+        "bom",
+      ];
+      applyRegionRemaps(regions);
+
+      expect(regions).toEqual(["sin", "ams"]);
+    });
+
+    test("should drop bom when sin is already selected", () => {
+      const regions: z.infer<typeof monitorRegionSchema>[] = [
+        "bom",
+        "sin",
+        "fra",
+      ];
+      updateRegion("bom", "sin", regions);
+
+      expect(regions).toEqual(["sin", "fra"]);
     });
   });
 
@@ -161,38 +191,14 @@ describe("updateRegion", () => {
           "yul",
           "yyz",
         ] as z.infer<typeof monitorRegionSchema>[];
-        // Asia Pacific
-        updateRegion("hkg", "sin", newRegions);
-
-        // North America
-        updateRegion("atl", "dfw", newRegions);
-        updateRegion("mia", "dfw", newRegions);
-        updateRegion("gdl", "dfw", newRegions);
-        updateRegion("qro", "dfw", newRegions);
-        updateRegion("bos", "ewr", newRegions);
-        updateRegion("phx", "lax", newRegions);
-        updateRegion("sea", "sjc", newRegions);
-        updateRegion("yul", "yyz", newRegions);
-
-        // Europe
-        updateRegion("waw", "ams", newRegions);
-        updateRegion("mad", "cdg", newRegions);
-        updateRegion("otp", "fra", newRegions);
-
-        // South America
-        updateRegion("bog", "gru", newRegions);
-        updateRegion("gig", "gru", newRegions);
-        updateRegion("scl", "gru", newRegions);
-        updateRegion("eze", "gru", newRegions);
+        applyRegionRemaps(newRegions);
 
         // Should be the same reference (mutated)
 
         expect(newRegions).toEqual([
           "ams",
           "arn",
-          "bom",
           "cdg",
-          "den",
           "dfw",
           "ewr",
           "fra",

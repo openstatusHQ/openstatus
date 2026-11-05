@@ -27,7 +27,8 @@ const FREQUENCY_MAP: Record<number, string> = {
   3600: "1h",
 };
 
-const REGION_MAP: Record<string, string> = {
+// Imports write regions unvalidated, so every target must be non-deprecated.
+export const REGION_MAP: Record<string, string> = {
   us: "iad",
   eu: "fra",
   as: "sin",
@@ -108,6 +109,7 @@ export function mapMonitor(monitor: BetterstackMonitor, workspaceId: number) {
     headers,
     body: attrs.request_body,
     method: mapMethod(attrs.http_method),
+    followRedirects: attrs.follow_redirects,
     timeout: attrs.request_timeout * 1000,
   };
 }

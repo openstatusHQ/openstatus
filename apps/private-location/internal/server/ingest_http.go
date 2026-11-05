@@ -32,6 +32,7 @@ type PingData struct {
 	Timestamp     int64  `json:"timestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
+	Attempts      int    `json:"attempts"`
 }
 
 func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Request[private_locationv1.IngestHTTPRequest]) (*connect.Response[private_locationv1.IngestHTTPResponse], error) {
@@ -78,6 +79,7 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 		Assertions:    ic.Monitor.Assertions.String,
 		Message:       req.Msg.Message,
 		Error:         uint8(req.Msg.Error),
+		Attempts:      attemptCount(req.Msg.Attempts),
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceHTTP, ic.Region.ID)

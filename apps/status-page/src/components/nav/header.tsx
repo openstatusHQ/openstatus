@@ -1,6 +1,5 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
 import { Menu, Chat } from "@openstatus/icons";
 import { StatusPageGetInTouchIcon } from "@openstatus/ui/components/blocks/status-page-get-in-touch";
 import {
@@ -23,22 +22,15 @@ import {
 } from "@openstatus/ui/components/ui/sheet";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useExtracted } from "next-intl";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
 import { useTRPC } from "../../lib/trpc/client";
 import { Link } from "../common/link";
-import {
-  type StatusUpdateType,
-  StatusUpdates,
-} from "../status-page/status-updates";
-
-type Page = RouterOutputs["statusPage"]["get"];
+import { StatusUpdates } from "../status-page/status-updates";
 
 function useNav() {
   const t = useExtracted();
@@ -67,21 +59,6 @@ function useNav() {
   ];
 }
 
-function getStatusUpdateTypes(page: Page): StatusUpdateType[] {
-  if (!page) return [];
-
-  // NOTE: rss or json are not supported because of authentication
-  if (page?.accessType === "email-domain") {
-    return ["email"] as const;
-  }
-
-  if (page?.workspacePlan === "free") {
-    return ["slack", "rss", "json"] as const;
-  }
-
-  return ["email", "slack", "rss", "json"] as const;
-}
-
 export function Header({
   className,
   ...props
@@ -94,28 +71,8 @@ export function Header({
   });
   const prefix = usePathnamePrefix();
 
-  const sendPageSubscriptionMutation = useMutation(
-    trpc.emailRouter.sendPageSubscriptionVerification.mutationOptions({}),
-  );
-
   const subscribeMutation = useMutation(
-    trpc.statusPage.subscribe.mutationOptions({
-      onSuccess: (data) => {
-        if (!data?.id || !data?.token) return;
-        sendPageSubscriptionMutation.mutate(
-          { id: data.id, token: data.token },
-          {
-            onError: (error) => {
-              if (isTRPCClientError(error)) {
-                toast.error(error.message);
-              } else {
-                toast.error(t("Failed to subscribe"));
-              }
-            },
-          },
-        );
-      },
-    }),
+    trpc.statusPage.subscribe.mutationOptions({}),
   );
 
   return (
@@ -158,7 +115,6 @@ export function Header({
             </StatusPageGetInTouchIcon>
           ) : null}
           <StatusUpdates
-            types={getStatusUpdateTypes(page)}
             onSubscribe={async (values) => {
               await subscribeMutation.mutateAsync({ slug: domain, ...values });
             }}

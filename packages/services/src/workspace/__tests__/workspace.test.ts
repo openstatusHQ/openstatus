@@ -9,8 +9,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -252,6 +251,25 @@ describe("updateWorkspaceName", () => {
     });
   });
 
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updateWorkspaceName({
+          ctx: writeKeyCtx,
+          input: { name: "blocked" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("renames the workspace and emits an audit row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
@@ -464,6 +482,36 @@ describe("updateWorkspacePlan", () => {
       });
       const ctx = {
         ...makeApiKeyCtx(ws, { keyId: "k-read", userId: 1, scopes: ["read"] }),
+        db: tx,
+      };
+
+      await expect(
+        updateWorkspacePlan({
+          ctx,
+          input: {
+            plan: "starter",
+            subscriptionId: null,
+            paidUntil: null,
+            endsAt: null,
+            limits: getLimits("starter"),
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = await insertPlanWorkspace(tx, {
+        plan: "team",
+        slug: "svc-plan-readonly",
+      });
+      const ctx = {
+        ...makeApiKeyCtx(ws, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
         db: tx,
       };
 

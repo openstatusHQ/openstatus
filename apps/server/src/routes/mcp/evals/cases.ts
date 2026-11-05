@@ -24,6 +24,8 @@ export type EvalCase = {
    * pageId straight into create_status_report).
    */
   forbiddenArgs?: string[];
+  /** If set, each listed arg must deep-equal the given value. */
+  argEquals?: Record<string, unknown>;
 };
 
 export const cases: EvalCase[] = [
@@ -49,6 +51,21 @@ export const cases: EvalCase[] = [
     id: "select.list_maintenances",
     prompt: "What maintenance windows do we have scheduled?",
     expectedTool: "list_maintenances",
+  },
+
+  // Managed incidents: internal, distinct from status reports
+  {
+    id: "select.declare_incident",
+    prompt:
+      "Declare an incident: checkout is failing for everyone, critical severity.",
+    expectedTool: "declare_incident",
+    requiredArgs: ["title", "severity"],
+  },
+  {
+    id: "prereq.note_lists_incidents_first",
+    prompt:
+      "Add a note to the checkout incident that we rolled back the deploy.",
+    expectedTool: "list_incidents",
   },
 
   // Prereq compliance: must call list_status_pages first when creating
@@ -154,5 +171,71 @@ export const cases: EvalCase[] = [
     id: "select.list_private_locations",
     prompt: "Is our on-prem checker agent still reporting in?",
     expectedTool: "list_private_locations",
+  },
+  {
+    id: "select.get_workspace",
+    prompt: "What plan are we on, and how many monitors do we have?",
+    expectedTool: "get_workspace",
+  },
+
+  // Setup tools
+  {
+    id: "prereq.create_monitor_lists_monitors_first",
+    prompt: "Monitor https://api.acme.com for me.",
+    expectedTool: "list_monitors",
+  },
+  {
+    id: "select.create_monitor",
+    prompt:
+      'Create a monitor named "Acme API" for https://api.acme.com. I already checked, there is none for that URL.',
+    expectedTool: "create_monitor",
+    requiredArgs: ["name", "url", "jobType"],
+  },
+  {
+    id: "select.add_page_component",
+    prompt: "Put monitor 12 on the status page 3.",
+    expectedTool: "add_page_component",
+    requiredArgs: ["pageId", "monitorId"],
+  },
+  {
+    id: "select.create_status_page",
+    prompt: 'Create a status page called "Acme Status" with the slug acme.',
+    expectedTool: "create_status_page",
+    requiredArgs: ["title", "slug"],
+  },
+
+  // Update tools read first; the eval stops after one step.
+  {
+    id: "prereq.update_monitor_gets_monitor_first",
+    prompt: "Pause monitor 12.",
+    expectedTool: "get_monitor",
+  },
+  {
+    id: "select.update_monitor_pause",
+    prompt: "Monitor 12 is active. Pause it now, I already looked it up.",
+    expectedTool: "update_monitor",
+    requiredArgs: ["monitorId", "active"],
+    argEquals: { active: false },
+  },
+  {
+    id: "prereq.update_status_page_lists_pages_first",
+    prompt: 'Rename status page 3 to "Acme".',
+    expectedTool: "list_status_pages",
+  },
+  {
+    id: "prereq.update_page_component_lists_components_first",
+    prompt: "Move component 9 into group 2.",
+    expectedTool: "list_page_components",
+  },
+  {
+    id: "select.create_component_group",
+    prompt: 'Create a group called "Core" on page 3.',
+    expectedTool: "create_component_group",
+    requiredArgs: ["pageId", "name"],
+  },
+  {
+    id: "prereq.update_maintenance_gets_maintenance_first",
+    prompt: "Push maintenance 5 to end at 16:00 UTC today.",
+    expectedTool: "get_maintenance",
   },
 ];

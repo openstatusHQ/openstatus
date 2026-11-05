@@ -8,8 +8,7 @@ import {
   type StatusCodeAssertion,
   StringComparator,
 } from "@openstatus/proto/monitor/v1";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import {
