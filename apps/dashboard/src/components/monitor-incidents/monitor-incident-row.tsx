@@ -24,6 +24,7 @@ import {
   getIncidentStatus,
   incidentStatusConfig,
 } from "@/data/overview-events.client";
+import { useHydrated } from "@/hooks/use-hydrated";
 import {
   formatClockOrDay,
   formatDurationShort,
@@ -63,7 +64,9 @@ export function MonitorIncidentRow({
       : null,
     resolvedAt && incident.autoResolved ? "auto-resolved" : null,
   ];
-  const title = kind ? monitor.name : incident.title || when;
+  // `when` is local time, which differs between the server render and the browser
+  const hydrated = useHydrated();
+  const title = kind ? monitor.name : incident.title || (hydrated ? when : "");
   const down = (resolvedAt ?? new Date()).getTime() - startedAt.getTime();
   // bars by time down, same steps as the calendar; open rows keep their status color
   const { level } = downtimeActivity(down);
@@ -84,7 +87,7 @@ export function MonitorIncidentRow({
       <EventRowContent>
         <EventRowTitle
           href={kind ? `/monitors/${monitor.id}/incidents` : undefined}
-          empty="No name"
+          empty={hydrated ? "No name" : ""}
         >
           {title}
         </EventRowTitle>
