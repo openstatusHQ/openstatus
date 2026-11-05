@@ -33,6 +33,8 @@ type JobType = RouterOutputs["monitor"]["get"]["jobType"];
 
 export const REQUEST_STATUS = ["success", "degraded", "error"] as const;
 export const TRIGGERS = ["cron", "api"] as const;
+/** The checker's max tries is the monitor's retry setting, capped at 10. */
+export const ATTEMPTS = Array.from({ length: 10 }, (_, i) => i + 1);
 
 const STATUS_SWATCH: Record<string, string> = {
   success: "bg-success",
@@ -215,7 +217,9 @@ export function createLogsTableSchema(options: {
       .label("Attempts")
       .size(90)
       .hidden()
-      .notFilterable()
+      .filterable("checkbox", {
+        options: ATTEMPTS.map((value) => ({ label: String(value), value })),
+      })
       .display("custom", {
         cell: (value) => <TableCellNumber value={value as number | null} />,
       }),

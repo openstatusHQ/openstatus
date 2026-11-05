@@ -243,6 +243,8 @@ const responseLogFilterShape = {
   regions: z.array(z.string().max(64)).max(128).optional(),
   status: z.array(z.string().max(16)).max(3).optional(),
   trigger: z.array(z.string().max(16)).max(2).optional(),
+  // `Array(attempts, 'Int16')` in the pipes.
+  attempts: z.array(z.int().min(0).max(32_767)).max(32).optional(),
   latencyMin: z.int().optional(),
   latencyMax: z.int().optional(),
 };

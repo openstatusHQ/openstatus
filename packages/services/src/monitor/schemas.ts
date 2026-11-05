@@ -317,6 +317,7 @@ export const ResponseLogFilters = z.object({
   // The pipes cast this list to `Int16`, matching the column: a value outside
   // that range makes Tinybird fail the query rather than match nothing.
   statusCodes: z.array(z.number().int().min(0).max(32_767)).max(100).optional(),
+  attempts: z.array(z.number().int().min(0).max(32_767)).max(32).optional(),
   latencyMin: z.number().int().min(0).optional(),
   latencyMax: z.number().int().min(0).optional(),
 });
