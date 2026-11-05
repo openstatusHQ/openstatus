@@ -337,7 +337,7 @@ export async function updatePageTimezone(args: {
   input: UpdatePageTimezoneInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageTimezoneInput.parse(args.input);
 
   // UTC stays open to every plan, so a page can always be set back to it
