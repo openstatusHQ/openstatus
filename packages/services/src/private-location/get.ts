@@ -1,6 +1,7 @@
 import { and, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import { GetPrivateLocationInput } from "./schemas";
@@ -15,6 +16,7 @@ export async function getPrivateLocation(args: {
   ctx: ServiceContext;
   input: GetPrivateLocationInput;
 }) {
+  requireScope(args.ctx, "monitors:read");
   const input = GetPrivateLocationInput.parse(args.input);
   const db = getReadDb(args.ctx);
 

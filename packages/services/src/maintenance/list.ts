@@ -18,6 +18,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type { Maintenance, MaintenanceUpdate, PageComponent } from "../types";
 import { getMaintenanceInWorkspace } from "./internal";
@@ -151,6 +152,7 @@ export async function listMaintenances(args: {
   input: ListMaintenancesInput;
 }): Promise<ListMaintenancesResult> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = ListMaintenancesInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -197,6 +199,7 @@ export async function getMaintenance(args: {
   input: GetMaintenanceInput;
 }): Promise<MaintenanceWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = GetMaintenanceInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
   const record = await getMaintenanceInWorkspace({

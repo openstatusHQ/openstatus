@@ -51,7 +51,7 @@ export const listNotificationsTool: AgentTool<
   name: "list_notifications",
   description:
     "List notification channels (email/Slack/Discord/PagerDuty/Webhook/etc.) configured in this workspace, with the monitors each one is wired to. Read-only — channel credentials/data are NOT exposed. Use to advise whether alerts will fire for a given monitor.",
-  scope: "read",
+  scope: "notifications:read",
   destructive: false,
   inputSchema: ListNotificationsInputShape,
   outputSchema: ListNotificationsOutput,

@@ -17,7 +17,7 @@ export async function addMaintenanceUpdate(args: {
   input: AddMaintenanceUpdateInput;
 }): Promise<MaintenanceUpdate> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = AddMaintenanceUpdateInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
 

@@ -18,7 +18,7 @@ export async function deleteMaintenanceUpdate(args: {
   input: DeleteMaintenanceUpdateInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = DeleteMaintenanceUpdateInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
 

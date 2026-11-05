@@ -4,82 +4,133 @@ import { describe, expect, test } from "vitest";
 
 import type { Variables } from "@/types";
 
-import { requireWriteScope } from "./require-scope";
+import { requireGroupScope, requireScopeChecked } from "./require-scope";
 
 /**
- * Spin up a minimal Hono app, pre-populate `apiKey` (simulating
- * `authMiddleware` having already run), mount `requireWriteScope`,
- * and exercise it with a real `app.request`. Closer to the production
- * shape than calling the middleware function directly with a mock
- * context.
+ * Mirrors the V1 router: `apiKey` is pre-populated (as `authMiddleware`
+ * would), the middleware is mounted on `/<resource>/*` before the
+ * sub-router is attached, and requests go through a real `app.request`.
  */
 function makeApp(scopes: Scope[] | undefined): Hono<{ Variables: Variables }> {
   const app = new Hono<{ Variables: Variables }>();
   app.use("*", async (c, next) => {
     if (scopes !== undefined) {
-      c.set("apiKey", {
-        id: "test-key",
-        createdById: 1,
-        scopes,
-      });
+      c.set("apiKey", { id: "test-key", createdById: 1, scopes });
     }
     await next();
   });
-  app.use("*", requireWriteScope());
-  app.get("/r", (c) => c.text("ok-get"));
-  app.post("/r", (c) => c.text("ok-post"));
-  app.put("/r", (c) => c.text("ok-put"));
-  app.delete("/r", (c) => c.text("ok-delete"));
+  app.use("/monitor/*", requireGroupScope("monitors"));
+  app.use("/page/*", requireGroupScope("pages"));
+  app.use("/page_subscriber/*", requireGroupScope("subscribers"));
+  app.use("/whoami/*", requireGroupScope("any"));
+  app.use("/*", requireScopeChecked());
+
+  const crud = () => {
+    const sub = new Hono<{ Variables: Variables }>();
+    sub.get("/", (c) => c.text("ok-list"));
+    sub.get("/:id", (c) => c.text("ok-get"));
+    sub.post("/", (c) => c.text("ok-post"));
+    sub.put("/:id", (c) => c.text("ok-put"));
+    sub.delete("/:id", (c) => c.text("ok-delete"));
+    return sub;
+  };
+  app.route("/monitor", crud());
+  app.route("/page", crud());
+  app.route("/page_subscriber", crud());
+  const whoami = new Hono<{ Variables: Variables }>();
+  whoami.get("/", (c) => c.text("ok-whoami"));
+  app.route("/whoami", whoami);
+  // Mounted without a `requireGroupScope` line, as a forgotten route would be.
+  app.route("/unmapped", crud());
   return app;
 }
 
-describe("requireWriteScope", () => {
-  test("GET passes for read-only key", async () => {
-    const res = await makeApp(["read"]).request("/r", { method: "GET" });
-    expect(res.status).toBe(200);
+async function status(
+  scopes: Scope[] | undefined,
+  method: string,
+  path: string,
+): Promise<number> {
+  const res = await makeApp(scopes).request(path, { method });
+  return res.status;
+}
+
+describe("requireGroupScope", () => {
+  test("legacy read key passes GET and HEAD, including the sub-router root", async () => {
+    expect(await status(["read"], "GET", "/monitor")).toBe(200);
+    expect(await status(["read"], "GET", "/monitor/1")).toBe(200);
+    expect(await status(["read"], "HEAD", "/monitor/1")).toBe(200);
+    expect(await status(["read"], "GET", "/page")).toBe(200);
   });
 
-  test("HEAD passes for read-only key", async () => {
-    const res = await makeApp(["read"]).request("/r", { method: "HEAD" });
-    expect(res.status).toBe(200);
+  test("legacy read key is refused every mutating method", async () => {
+    expect(await status(["read"], "POST", "/monitor")).toBe(403);
+    expect(await status(["read"], "PUT", "/monitor/1")).toBe(403);
+    expect(await status(["read"], "DELETE", "/monitor/1")).toBe(403);
   });
 
-  test("POST returns 403 for read-only key", async () => {
-    const res = await makeApp(["read"]).request("/r", { method: "POST" });
+  test("legacy write key passes everything, subscribers included", async () => {
+    expect(await status(["write"], "POST", "/monitor")).toBe(200);
+    expect(await status(["write"], "DELETE", "/page/1")).toBe(200);
+    expect(await status(["write"], "GET", "/page_subscriber")).toBe(200);
+    expect(await status(["write"], "POST", "/page_subscriber")).toBe(200);
+    expect(await status(["write"], "GET", "/whoami")).toBe(200);
+  });
+
+  test("group write key covers its own group's reads and writes only", async () => {
+    expect(await status(["monitors:write"], "GET", "/monitor/1")).toBe(200);
+    expect(await status(["monitors:write"], "POST", "/monitor")).toBe(200);
+    expect(await status(["monitors:write"], "GET", "/page")).toBe(403);
+    expect(await status(["pages:write"], "POST", "/monitor")).toBe(403);
+    expect(await status(["pages:write"], "POST", "/page")).toBe(200);
+  });
+
+  test("group read key cannot write its own group", async () => {
+    expect(await status(["monitors:read"], "GET", "/monitor")).toBe(200);
+    expect(await status(["monitors:read"], "POST", "/monitor")).toBe(403);
+  });
+
+  test("subscribers:read reaches subscriber reads only; legacy read does too", async () => {
+    expect(await status(["read"], "GET", "/page_subscriber")).toBe(200);
+    expect(await status(["subscribers:read"], "GET", "/page_subscriber")).toBe(
+      200,
+    );
+    expect(await status(["subscribers:read"], "POST", "/page_subscriber")).toBe(
+      403,
+    );
+    expect(await status(["subscribers:read"], "GET", "/monitor")).toBe(403);
+  });
+
+  test("'any' accepts every non-empty key and refuses an empty one", async () => {
+    expect(await status(["monitors:read"], "GET", "/whoami")).toBe(200);
+    expect(await status(["subscribers:read"], "GET", "/whoami")).toBe(200);
+    expect(await status([], "GET", "/whoami")).toBe(403);
+  });
+
+  test("super-admin '*' key passes everything", async () => {
+    expect(await status(["*"], "POST", "/monitor")).toBe(200);
+    expect(await status(["*"], "GET", "/page_subscriber")).toBe(200);
+  });
+
+  test("empty scopes fail closed on reads and writes", async () => {
+    expect(await status([], "GET", "/monitor")).toBe(403);
+    expect(await status([], "POST", "/monitor")).toBe(403);
+  });
+
+  test("403 names the scope the request needed", async () => {
+    const res = await makeApp(["read"]).request("/monitor", {
+      method: "POST",
+    });
     expect(res.status).toBe(403);
-  });
-
-  test("PUT returns 403 for read-only key", async () => {
-    const res = await makeApp(["read"]).request("/r", { method: "PUT" });
-    expect(res.status).toBe(403);
-  });
-
-  test("DELETE returns 403 for read-only key", async () => {
-    const res = await makeApp(["read"]).request("/r", { method: "DELETE" });
-    expect(res.status).toBe(403);
-  });
-
-  test("POST passes for write key", async () => {
-    const res = await makeApp(["write"]).request("/r", { method: "POST" });
-    expect(res.status).toBe(200);
-  });
-
-  test("POST passes for super-admin '*' key", async () => {
-    const res = await makeApp(["*"]).request("/r", { method: "POST" });
-    expect(res.status).toBe(200);
-  });
-
-  test("POST returns 403 for empty scopes (fail-closed)", async () => {
-    const res = await makeApp([]).request("/r", { method: "POST" });
-    expect(res.status).toBe(403);
+    expect(await res.text()).toContain("monitors:write");
   });
 
   test("missing apiKey defers to upstream (no 403, would be 401 in prod)", async () => {
-    // `requireWriteScope` is not the auth gate — when `apiKey` isn't
-    // set, it must let the request flow on so `authMiddleware` (in
-    // prod) can return its own 401 instead of this layer returning a
-    // confusing 403.
-    const res = await makeApp(undefined).request("/r", { method: "POST" });
-    expect(res.status).toBe(200);
+    expect(await status(undefined, "POST", "/monitor")).toBe(200);
+  });
+
+  test("a route without a group gate rejects every key", async () => {
+    expect(await status(["write"], "POST", "/unmapped")).toBe(403);
+    expect(await status(["read"], "GET", "/unmapped")).toBe(403);
+    expect(await status(["*"], "DELETE", "/unmapped/1")).toBe(403);
   });
 });

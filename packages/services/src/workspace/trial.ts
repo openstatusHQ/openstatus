@@ -72,7 +72,7 @@ export async function markWorkspaceTrialed(args: {
   ctx: ServiceContext;
 }): Promise<boolean> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const db = ctx.db ?? defaultDb;
 
   const rows = await db

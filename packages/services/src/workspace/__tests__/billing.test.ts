@@ -196,6 +196,23 @@ describe("updateWorkspaceStripeId", () => {
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws } = await createTestWorkspace({ plan: "free" }, tx);
+      const ctx = {
+        ...makeApiKeyCtx(selectWorkspaceSchema.parse(ws), {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updateWorkspaceStripeId({ ctx, input: { stripeId: "cus_x" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
 });
 
 describe("updateWorkspaceLimits", () => {
@@ -353,6 +370,26 @@ describe("updateWorkspaceLimits", () => {
           keyId: "k-read",
           userId: 1,
           scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updateWorkspaceLimits({
+          ctx,
+          input: { addon: "white-label", value: true },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const { workspace: ws } = await createTestWorkspace({ plan: "free" }, tx);
+      const ctx = {
+        ...makeApiKeyCtx(selectWorkspaceSchema.parse(ws), {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
         }),
         db: tx,
       };

@@ -1,3 +1,4 @@
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import type { MaintenanceUpdate } from "../types";
 import { getMaintenanceUpdateInWorkspace } from "./internal";
@@ -8,6 +9,7 @@ export async function getMaintenanceUpdate(args: {
   input: GetMaintenanceUpdateInput;
 }): Promise<MaintenanceUpdate> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = GetMaintenanceUpdateInput.parse(args.input);
   return getMaintenanceUpdateInWorkspace({
     tx: getReadDb(ctx),

@@ -14,7 +14,7 @@ export async function createSsoPortalLink(args: {
   input: CreateSsoPortalLinkInput;
 }): Promise<{ link: string }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = CreateSsoPortalLinkInput.parse(args.input);
 
   await requireOwner(getReadDb(ctx), ctx);

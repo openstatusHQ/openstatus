@@ -26,7 +26,7 @@ export async function syncMonitorTags(args: {
   input: SyncMonitorTagsInput;
 }): Promise<MonitorTag[]> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const { tags } = SyncMonitorTagsInput.parse(args.input);
   const workspaceId = ctx.workspace.id;
 

@@ -113,6 +113,12 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		req.OtelConfig.Headers = headersToMap(otelCfg.GetHeaders())
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("error while generating uuid: %w", err)
+	}
+	req.RequestID = id.String()
+
 	var called int
 	var lastRes checker.Response
 
@@ -132,11 +138,6 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		if err != nil {
 			return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 		}
-		id, err := uuid.NewV7()
-		if err != nil {
-			return nil, fmt.Errorf("error while generating uuid: %w", err)
-		}
-
 		status := statusCode(res.Status)
 		// Only use default 2xx check if no status assertions exist
 		// If status assertions are configured, let them determine success
@@ -202,7 +203,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		}
 
 		data := HttpPrivateRegionData{
-			ID:            id.String(),
+			ID:            req.RequestID,
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
 			Timestamp:     res.Timestamp,
@@ -247,5 +248,6 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 	if err != nil {
 		return nil, err
 	}
+	resp.Attempts = called
 	return resp, nil
 }

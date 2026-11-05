@@ -10,11 +10,19 @@ import {
   ChangesTable,
 } from "@/components/common/changes-table";
 
+import { addPageComponentChanges } from "./add-page-component";
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
+import {
+  createComponentGroupChanges,
+  updateComponentGroupChanges,
+} from "./component-group";
 import { createMaintenanceChanges } from "./create-maintenance";
+import { createMonitorChanges, formatFirstCheck } from "./create-monitor";
+import { createStatusPageChanges } from "./create-status-page";
 import { createStatusReportChanges } from "./create-status-report";
 import { DetailsTable } from "./details-table";
 import { getAuditLogChanges } from "./get-audit-log";
+import { getMaintenanceDetails } from "./get-maintenance";
 import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
@@ -50,6 +58,10 @@ import {
   deleteStatusReportUpdateChanges,
   updateStatusReportUpdateChanges,
 } from "./status-report-update";
+import { updateMaintenanceChanges } from "./update-maintenance";
+import { updateMonitorChanges } from "./update-monitor";
+import { updatePageComponentChanges } from "./update-page-component";
+import { updateStatusPageChanges } from "./update-status-page";
 import { updateStatusReportChanges } from "./update-status-report";
 
 /**
@@ -108,8 +120,72 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => itemsCountSummary(o.items),
   },
+  get_maintenance: {
+    renderResult: ({ output }) => (
+      <DetailsTable {...getMaintenanceDetails(output)} />
+    ),
+    summary: (o) =>
+      `${o.updates.length} update${o.updates.length === 1 ? "" : "s"}`,
+  },
 
   // ── Destructive tools ────────────────────────────────────────
+  create_status_page: {
+    renderDraft: (input) => createStatusPageChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createStatusPageChanges(input, output)} />
+    ),
+    summary: (o) => `${o.slug}.openstatus.dev`,
+  },
+  update_status_page: {
+    renderDraft: (input) => updateStatusPageChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={updateStatusPageChanges(input, output)} />
+    ),
+    summary: (o) => `${o.slug}.openstatus.dev`,
+  },
+  add_page_component: {
+    renderDraft: (input) => addPageComponentChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={addPageComponentChanges(input, output)} />
+    ),
+    summary: (o) => `component #${o.id}`,
+  },
+  update_page_component: {
+    renderDraft: (input) => updatePageComponentChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={updatePageComponentChanges(input, output)} />
+    ),
+    summary: (o) => `component #${o.id}`,
+  },
+  create_component_group: {
+    renderDraft: (input) => createComponentGroupChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createComponentGroupChanges(input, output)} />
+    ),
+    summary: (o) => `group #${o.id}`,
+  },
+  update_component_group: {
+    renderDraft: (input) => updateComponentGroupChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateComponentGroupChanges(input)} />
+    ),
+    summary: (o) => `group #${o.id}`,
+  },
+  create_monitor: {
+    renderDraft: (input) => createMonitorChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={createMonitorChanges(input, output)} />
+    ),
+    summary: (o) =>
+      `ID ${o.monitor.id}${o.firstCheck ? ` · ${formatFirstCheck(o.firstCheck)}` : ""}`,
+  },
+  update_monitor: {
+    renderDraft: (input) => updateMonitorChanges(input),
+    renderResult: ({ input, output }) => (
+      <ChangesTable changes={updateMonitorChanges(input, output)} />
+    ),
+    summary: (o) => `ID ${o.id}${o.active ? "" : " · paused"}`,
+  },
   create_status_report: {
     renderDraft: (input) => createStatusReportChanges(input),
     renderResult: ({ input, output }) => (
@@ -177,6 +253,13 @@ export const toolRenderers: ToolRendererRegistry = {
           notified: output.notified,
         })}
       />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
+  update_maintenance: {
+    renderDraft: (input) => updateMaintenanceChanges(input),
+    renderResult: ({ input }) => (
+      <ChangesTable changes={updateMaintenanceChanges(input)} />
     ),
     summary: (o) => `ID ${o.id}`,
   },

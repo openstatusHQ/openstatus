@@ -59,7 +59,7 @@ export const searchContentTool: AgentTool<
   name: "search_content",
   description:
     "Search every public openstatus.dev page — marketing/product pages (pricing, features), blog, comparisons, use cases, customer stories, tooling, plus docs/guides/changelog. Broader than search_docs; prefer search_docs for pure how-to questions. Narrow with `type`. Returns scored results with title, type, snippet, url, and a path usable with get_content_page.",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: SearchContentInput,
   outputSchema: SearchContentOutput,
@@ -138,7 +138,7 @@ export const getContentPageTool: AgentTool<
   name: "get_content_page",
   description:
     "Fetch the full markdown content of any public openstatus.dev page by path (as returned by search_content), e.g. pricing, blog/…, compare/…, use-case/…. Superset of get_doc_page.",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: GetContentPageInput,
   outputSchema: GetContentPageOutput,

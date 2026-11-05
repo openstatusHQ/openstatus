@@ -71,7 +71,7 @@ export async function downgradeWorkspaceToFree(args: {
   trimmed: DowngradeTrim;
 }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = DowngradeWorkspaceInput.parse(args.input ?? {});
   const reason = input.reason ?? "subscription_deleted";
   const workspaceId = ctx.workspace.id;
@@ -241,7 +241,7 @@ export async function previewWorkspaceDowngrade(args: {
   ctx: ServiceContext;
 }): Promise<DowngradePreview> {
   const { ctx } = args;
-  requireScope(ctx, "read");
+  requireScope(ctx, "admin");
   const db = ctx.db ?? defaultDb;
   const workspaceId = ctx.workspace.id;
 

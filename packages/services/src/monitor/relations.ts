@@ -34,7 +34,7 @@ export async function updateMonitorSchedulingRegions(args: {
   input: UpdateMonitorSchedulingRegionsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorSchedulingRegionsInput.parse(args.input);
   assertSchedulingWithinPlan(ctx.workspace.limits, input);
 
@@ -98,7 +98,7 @@ export async function updateMonitorTags(args: {
   input: UpdateMonitorTagsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorTagsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -152,7 +152,7 @@ export async function updateMonitorNotifiers(args: {
   input: UpdateMonitorNotifiersInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorNotifiersInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

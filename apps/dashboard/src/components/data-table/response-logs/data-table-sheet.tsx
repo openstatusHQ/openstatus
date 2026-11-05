@@ -1,6 +1,5 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -15,9 +14,7 @@ import {
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
 
-import { DataTableBasics } from "./data-table-basics";
-
-type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+import { DataTableBasics, type ResponseLog } from "./data-table-basics";
 
 export function Sheet({
   data,

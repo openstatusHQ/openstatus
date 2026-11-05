@@ -125,6 +125,25 @@ describe("createApiKey", () => {
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createApiKey({
+          ctx: writeKeyCtx,
+          input: { name: `${TEST_PREFIX}-rejects-read` },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
 });
 
 describe("listApiKeys", () => {

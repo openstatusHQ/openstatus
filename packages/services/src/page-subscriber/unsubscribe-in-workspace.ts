@@ -25,7 +25,7 @@ export async function unsubscribePageSubscriber(args: {
   input: UnsubscribePageSubscriberInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "subscribers:write");
   const input = UnsubscribePageSubscriberInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

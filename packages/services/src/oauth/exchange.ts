@@ -56,7 +56,7 @@ export async function exchangeCode(args: {
     actor: { type: "user", userId: code.userId },
     db,
   };
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
 
   if (code.consumedAt) {
     if (code.grantId !== null) {

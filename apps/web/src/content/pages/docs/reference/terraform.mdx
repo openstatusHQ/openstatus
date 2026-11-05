@@ -44,6 +44,8 @@ provider "openstatus" {
 | `api_token` | `string` | Yes      | Your openstatus API token. Can also be set via the `OPENSTATUS_API_TOKEN` environment variable. |
 | `base_url`  | `string` | No       | Base URL for the openstatus API. Defaults to `https://api.openstatus.dev/rpc`. |
 
+The token is an API key from **Settings > General > API Keys**. The provider manages monitors, private locations, notification channels, status pages, components and component groups, so the key needs `monitors:write`, `pages:write` and `notifications:write` (**Custom** in the key form), or **Read & write** (`write`). It does not touch subscribers or status reports.
+
 ## Resources
 
 <Aside>

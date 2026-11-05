@@ -143,7 +143,7 @@ describe("oauth router", () => {
       id,
       approved: true,
       workspaceId,
-      scope: "read",
+      scope: ["read"],
     });
     const url = new URL(redirectUrl);
     expect(url.searchParams.get("state")).toBe("st");

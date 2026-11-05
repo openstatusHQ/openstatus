@@ -39,7 +39,7 @@ export async function transferOwnership(args: {
   input: TransferOwnershipInput;
 }): Promise<TransferOwnershipResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = TransferOwnershipInput.parse(args.input);
 
   if (ctx.actor.type !== "user") {

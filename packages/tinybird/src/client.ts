@@ -145,8 +145,11 @@ const icmpUptimeShape = z.object({
 
 // Row shapes shared by the v1 (offset) and v2 (cursor) list pipes of each job
 // type — one object per type so the two generations cannot drift apart.
+export const attemptsSchema = z.int().prefault(1);
+
 const httpListRowShape = {
   type: z.literal("http").prefault("http"),
+  attempts: attemptsSchema,
   id: z.string().nullable(),
   latency: z.int(),
   statusCode: z.int().nullable(),
@@ -161,6 +164,7 @@ const httpListRowShape = {
 
 const tcpListRowShape = {
   type: z.literal("tcp").prefault("tcp"),
+  attempts: attemptsSchema,
   id: z.string().nullable(),
   latency: z.int(),
   monitorId: z.coerce.string(),
@@ -173,6 +177,7 @@ const tcpListRowShape = {
 
 const icmpListRowShape = {
   type: z.literal("icmp").prefault("icmp"),
+  attempts: attemptsSchema,
   id: z.string().nullable(),
   latency: z.int(),
   latencyMin: z.int().prefault(0),
@@ -189,6 +194,7 @@ const icmpListRowShape = {
 
 const dnsListRowShape = {
   type: z.literal("dns").prefault("dns"),
+  attempts: attemptsSchema,
   id: z.coerce.string().nullable(),
   uri: z.string(),
   latency: z.int(),
@@ -213,6 +219,7 @@ const dnsListRowShape = {
 
 const grpcListRowShape = {
   type: z.literal("grpc").prefault("grpc"),
+  attempts: attemptsSchema,
   id: z.string().nullable(),
   latency: z.int(),
   servingStatus: z.string().nullable(),
@@ -236,6 +243,8 @@ const responseLogFilterShape = {
   regions: z.array(z.string().max(64)).max(128).optional(),
   status: z.array(z.string().max(16)).max(3).optional(),
   trigger: z.array(z.string().max(16)).max(2).optional(),
+  // `Array(attempts, 'Int16')` in the pipes.
+  attempts: z.array(z.int().min(0).max(32_767)).max(32).optional(),
   latencyMin: z.int().optional(),
   latencyMax: z.int().optional(),
 };
@@ -918,6 +927,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("http").prefault("http"),
+        attempts: attemptsSchema,
         latency: z.int(),
         statusCode: z.int().nullable(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
@@ -1581,6 +1591,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("tcp").prefault("tcp"),
+        attempts: attemptsSchema,
         id: z.string().nullable(),
         uri: z.string(),
         latency: z.int(),
@@ -1718,6 +1729,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("icmp").prefault("icmp"),
+        attempts: attemptsSchema,
         id: z.string().nullable(),
         uri: z.string(),
         latency: z.int(),
@@ -2183,6 +2195,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("grpc").prefault("grpc"),
+        attempts: attemptsSchema,
         id: z.string().nullable(),
         uri: z.string(),
         latency: z.int(),
@@ -2991,6 +3004,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("dns").prefault("dns"),
+        attempts: attemptsSchema,
         id: z.coerce.string().nullable(),
         uri: z.string(),
         latency: z.int(),

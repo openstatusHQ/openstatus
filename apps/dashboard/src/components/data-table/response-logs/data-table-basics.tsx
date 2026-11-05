@@ -26,7 +26,14 @@ import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 
-type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+type StoredResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+
+// On-demand checks (onboarding, test runs) have no stored attempt count.
+type WithOptionalAttempts<T> = T extends { attempts: number }
+  ? Omit<T, "attempts"> & { attempts?: number }
+  : never;
+
+export type ResponseLog = WithOptionalAttempts<StoredResponseLog>;
 
 export function DataTableBasics({
   data,
@@ -200,6 +207,16 @@ export function DataTableBasicsHTTP({
             </TableCell>
           </TableRow>
         ) : null}
+        {data.attempts !== undefined ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+              Attempts
+            </TableHead>
+            <TableCell className="max-w-full overflow-x-auto font-mono whitespace-normal">
+              {data.attempts}
+            </TableCell>
+          </TableRow>
+        ) : null}
         {data.headers ? (
           <>
             <TableRow>
@@ -350,6 +367,7 @@ type BasicsRequestFields = {
 type BasicsLocationFields = {
   region: string;
   trigger?: "cron" | "api" | "test" | null;
+  attempts?: number;
 };
 
 function BasicsTable({ children }: { children: React.ReactNode }) {
@@ -456,6 +474,9 @@ function BasicsLocationRows({
       </BasicsRow>
       {data.trigger ? (
         <BasicsRow label="Trigger">{data?.trigger}</BasicsRow>
+      ) : null}
+      {data.attempts !== undefined ? (
+        <BasicsRow label="Attempts">{data.attempts}</BasicsRow>
       ) : null}
     </>
   );
