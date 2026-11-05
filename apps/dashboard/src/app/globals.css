@@ -88,3 +88,23 @@
     border-radius: calc(var(--radius) * 99999999);
   }
 }
+
+@layer utilities {
+  /* Set by `useScrollToHash` on the element a `#id` link scrolled to. */
+  [data-hash-target] {
+    animation: hash-target 2s ease-out;
+  }
+  [data-slot="section"][data-hash-target] {
+    outline-offset: 8px;
+    border-radius: var(--radius);
+  }
+  @keyframes hash-target {
+    0%,
+    60% {
+      outline: 3px solid var(--ring);
+    }
+    100% {
+      outline: 3px solid transparent;
+    }
+  }
+}

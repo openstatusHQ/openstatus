@@ -75,7 +75,7 @@ export function FormVisibility({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="visibility">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Visibility</FormCardTitle>

@@ -34,7 +34,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="integrations">
         <SectionHeader>
           <SectionTitle>Integrations</SectionTitle>
           <SectionDescription>

@@ -137,7 +137,7 @@ export function FormLocale({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="locales">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Locales</FormCardTitle>

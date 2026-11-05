@@ -148,7 +148,7 @@ export function FormPageAccess({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="page-access">
           <FormCardHeader>
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>

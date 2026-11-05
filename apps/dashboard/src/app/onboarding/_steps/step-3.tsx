@@ -156,7 +156,7 @@ function NoClickopsCard() {
   const hasKeys = (apiKeys?.length ?? 0) > 0;
 
   return (
-    <FormCard className="shrink-0">
+    <FormCard id="agent-first" className="shrink-0">
       <FormCardHeader>
         <FormCardTitle>Agent-first, no clickops</FormCardTitle>
         <FormCardDescription>

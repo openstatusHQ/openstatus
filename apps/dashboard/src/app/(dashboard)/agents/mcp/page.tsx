@@ -257,7 +257,7 @@ const tools = [
 export default function Page() {
   return (
     <SectionGroup>
-      <Section>
+      <Section id="mcp-server">
         <SectionHeader>
           <SectionTitle>MCP Server</SectionTitle>
           <SectionDescription>
@@ -303,7 +303,7 @@ export default function Page() {
           ))}
         </Tabs>
       </Section>
-      <Section>
+      <Section id="authentication">
         <SectionHeader>
           <SectionTitle>Authentication</SectionTitle>
           <SectionDescription>
@@ -333,7 +333,7 @@ export default function Page() {
           write, or a custom set per resource.
         </p>
       </Section>
-      <Section>
+      <Section id="prompts">
         <SectionHeader>
           <SectionTitle>Prompts</SectionTitle>
           <SectionDescription>
@@ -357,7 +357,7 @@ export default function Page() {
           ))}
         </ul>
       </Section>
-      <Section>
+      <Section id="tools">
         <SectionHeader>
           <SectionTitle>Tools</SectionTitle>
           <SectionDescription>

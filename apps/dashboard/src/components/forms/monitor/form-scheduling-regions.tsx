@@ -144,7 +144,7 @@ export function FormSchedulingRegions({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="scheduling-regions">
           <FormCardHeader>
             <FormCardTitle>Scheduling & Regions</FormCardTitle>
             <FormCardDescription>

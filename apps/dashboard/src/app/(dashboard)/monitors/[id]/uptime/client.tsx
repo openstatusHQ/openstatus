@@ -134,7 +134,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="uptime">
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>

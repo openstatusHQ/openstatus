@@ -162,7 +162,7 @@ export function FormHeartbeat({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="heartbeat">
           <FormCardHeader>
             <FormCardTitle>Heartbeat</FormCardTitle>
             <FormCardDescription>

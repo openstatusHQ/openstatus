@@ -79,7 +79,7 @@ export function FormRetry({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="retry-policy">
           <FormCardHeader>
             <FormCardTitle>Retry Policy</FormCardTitle>
             <FormCardDescription>

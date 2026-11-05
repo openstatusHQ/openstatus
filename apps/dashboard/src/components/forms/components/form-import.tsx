@@ -188,7 +188,7 @@ export function FormImport({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="import">
           <FormCardHeader>
             <FormCardTitle>Import</FormCardTitle>
             <FormCardDescription>

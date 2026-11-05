@@ -47,7 +47,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="account">
         <SectionHeader>
           <SectionTitle>Account</SectionTitle>
         </SectionHeader>

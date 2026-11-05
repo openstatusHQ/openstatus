@@ -89,7 +89,7 @@ export default function Page() {
   if (!isOwner) {
     return (
       <SectionGroup>
-        <Section>
+        <Section id="sso">
           <SectionHeader>
             <SectionTitle>Single Sign-On</SectionTitle>
             <SectionDescription>
@@ -122,7 +122,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="sso">
         <SectionHeader>
           <SectionTitle>Single Sign-On</SectionTitle>
           <SectionDescription>
@@ -133,7 +133,7 @@ export default function Page() {
 
         {!allowed ? (
           <FormCardGroup>
-            <FormCard>
+            <FormCard id="sso-add-on">
               <FormCardHeader>
                 <FormCardTitle>Available as an add-on</FormCardTitle>
                 <FormCardDescription>
@@ -161,7 +161,7 @@ export default function Page() {
           </FormCardGroup>
         ) : (
           <FormCardGroup>
-            <FormCard>
+            <FormCard id="enable-sso">
               <FormCardHeader>
                 <FormCardTitle>
                   <span className="flex items-center gap-2">
@@ -200,7 +200,7 @@ export default function Page() {
               </FormCardFooter>
             </FormCard>
 
-            <FormCard>
+            <FormCard id="verify-domain">
               <FormCardHeader>
                 <FormCardTitle>
                   <span className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function Page() {
               </FormCardFooter>
             </FormCard>
 
-            <FormCard>
+            <FormCard id="identity-provider">
               <FormCardHeader>
                 <FormCardTitle>
                   <span className="flex items-center gap-2">

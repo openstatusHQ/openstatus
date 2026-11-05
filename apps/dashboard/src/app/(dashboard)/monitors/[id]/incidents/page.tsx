@@ -91,7 +91,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="incidents">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{monitor.name}</SectionTitle>

@@ -116,7 +116,7 @@ export function HeartbeatLogs({ monitorId }: { monitorId: number }) {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="pings">
         <SectionHeader>
           <SectionTitle>Pings</SectionTitle>
           <SectionDescription>

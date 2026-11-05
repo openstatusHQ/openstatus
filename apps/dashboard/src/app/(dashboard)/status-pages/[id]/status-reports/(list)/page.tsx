@@ -188,7 +188,7 @@ export default function Page() {
           </NextLink>
         </NoteButton>
       </NoteDismissible>
-      <Section>
+      <Section id="status-reports">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{page.title}</SectionTitle>

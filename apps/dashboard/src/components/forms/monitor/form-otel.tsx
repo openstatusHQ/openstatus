@@ -83,7 +83,7 @@ export function FormOtel({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="opentelemetry">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>OpenTelemetry</FormCardTitle>

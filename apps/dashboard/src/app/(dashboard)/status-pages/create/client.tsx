@@ -40,7 +40,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="create-status-page">
         <SectionHeader>
           <SectionTitle>Create Status Page</SectionTitle>
         </SectionHeader>
@@ -56,7 +56,7 @@ export function Client() {
           }}
         />
       </Section>
-      <Section>
+      <Section id="next-steps">
         <EmptyStateContainer>
           <EmptyStateTitle>Create and start customizing</EmptyStateTitle>
           <EmptyStateDescription>

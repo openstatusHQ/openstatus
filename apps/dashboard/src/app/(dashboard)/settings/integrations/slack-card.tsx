@@ -79,7 +79,7 @@ export function SlackIntegrationCard({
   };
 
   return (
-    <FormCard>
+    <FormCard id="slack">
       {locked ? <FormCardUpgrade /> : null}
       <FormCardHeader>
         <div className="flex items-center gap-2">

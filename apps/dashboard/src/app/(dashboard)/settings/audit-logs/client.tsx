@@ -122,7 +122,7 @@ export function Client() {
           days.
         </SectionDescription>
       </SectionHeader>
-      <Section>
+      <Section id="audit-logs-table">
         {isLimited ? (
           <BillingOverlayContainer>
             <DataTable

@@ -169,7 +169,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="maintenances">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{statusPage.title}</SectionTitle>

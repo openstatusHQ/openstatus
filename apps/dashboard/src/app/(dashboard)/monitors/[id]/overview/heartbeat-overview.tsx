@@ -100,7 +100,7 @@ export function HeartbeatOverview({ id }: { id: number }) {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="overview">
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>
@@ -149,7 +149,7 @@ export function HeartbeatOverview({ id }: { id: number }) {
         </MetricCardGroup>
       </Section>
       {waiting && heartbeat.pingUrl ? (
-        <Section>
+        <Section id="waiting-for-ping">
           <EmptyStateContainer>
             <EmptyStateTitle>Waiting for first ping</EmptyStateTitle>
             <EmptyStateDescription>
@@ -160,7 +160,7 @@ export function HeartbeatOverview({ id }: { id: number }) {
           <HeartbeatPingUrl pingUrl={heartbeat.pingUrl} />
         </Section>
       ) : (
-        <Section>
+        <Section id="pings">
           <SectionHeader>
             <SectionTitle>Pings</SectionTitle>
             <SectionDescription>
@@ -170,7 +170,7 @@ export function HeartbeatOverview({ id }: { id: number }) {
           <PingBars days={days ?? []} />
         </Section>
       )}
-      <Section>
+      <Section id="timeline">
         <SectionHeader>
           <SectionTitle>Timeline</SectionTitle>
           <SectionDescription>

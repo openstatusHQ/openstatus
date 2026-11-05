@@ -72,7 +72,7 @@ export function FormFollowRedirect({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="follow-redirects">
           <FormCardHeader>
             <FormCardTitle>Follow Redirects</FormCardTitle>
             <FormCardDescription>

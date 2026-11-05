@@ -116,7 +116,7 @@ export function FormCustomTheme({
           if (errored) setMode(errored);
         })}
       >
-        <FormCard>
+        <FormCard id="custom-theme">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Custom Theme</FormCardTitle>

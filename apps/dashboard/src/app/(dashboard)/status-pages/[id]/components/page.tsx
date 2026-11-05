@@ -24,7 +24,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="components-header">
         <SectionHeader>
           <SectionTitle>{statusPage.title}</SectionTitle>
           <SectionDescription>

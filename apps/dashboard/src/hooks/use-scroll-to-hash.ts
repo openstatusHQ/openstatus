@@ -3,6 +3,18 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
+// Reflow between remove/set restarts the animation on repeat selection.
+function highlight(el: HTMLElement) {
+  el.removeAttribute("data-hash-target");
+  void el.offsetWidth;
+  el.setAttribute("data-hash-target", "");
+  el.addEventListener(
+    "animationend",
+    () => el.removeAttribute("data-hash-target"),
+    { once: true },
+  );
+}
+
 // Settings pages render `null` until tRPC data resolves, so native hash scroll
 // fires before the anchor exists. Retry via rAF until the element mounts.
 function scrollWhenReady(id: string) {
@@ -11,6 +23,7 @@ function scrollWhenReady(id: string) {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView();
+      highlight(el);
       return;
     }
     if (performance.now() - start < 2000) {
