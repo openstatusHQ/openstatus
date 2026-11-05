@@ -14,7 +14,12 @@ import {
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
 
-import { DataTableBasics, type ResponseLog } from "./data-table-basics";
+import {
+  DataTableBasics,
+  DataTableBasicsHeartbeat,
+  type HeartbeatPing,
+  type ResponseLog,
+} from "./data-table-basics";
 
 export function Sheet({
   data,
@@ -22,7 +27,7 @@ export function Sheet({
   onClose,
   showCopyUrl = true,
 }: {
-  data: ResponseLog | null;
+  data: ResponseLog | HeartbeatPing | null;
   privateLocations?: PrivateLocation[];
   onClose: () => void;
   showCopyUrl?: boolean;
@@ -34,9 +39,15 @@ export function Sheet({
     <DataTableSheet defaultOpen onOpenChange={(open) => !open && onClose()}>
       <DataTableSheetContent className="sm:max-w-lg">
         <DataTableSheetHeader className="px-2">
-          <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
+          <DataTableSheetTitle>
+            {"kind" in data ? "Ping" : "Response Logs"}
+          </DataTableSheetTitle>
         </DataTableSheetHeader>
-        <DataTableBasics data={data} privateLocations={privateLocations} />
+        {"kind" in data ? (
+          <DataTableBasicsHeartbeat data={data} />
+        ) : (
+          <DataTableBasics data={data} privateLocations={privateLocations} />
+        )}
         {showCopyUrl ? (
           <>
             <Separator />

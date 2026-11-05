@@ -172,6 +172,7 @@ export const ListHeartbeatPingsInput = z.object({
   monitorId: z.number().int(),
   fromTimestamp: z.number().int().optional(),
   toTimestamp: z.number().int().optional(),
+  kinds: z.array(z.enum(["success", "fail"])).optional(),
   /** `timestamp` of the last row of the previous page, exclusive. */
   cursor: z.number().int().optional(),
   limit: z.number().int().min(1).max(100).default(50),

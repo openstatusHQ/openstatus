@@ -29,10 +29,16 @@ export default async function Layout({
   if (Number.isNaN(monitorId)) notFound();
   const queryClient = getQueryClient();
 
-  await Promise.all([
+  const [monitor] = await Promise.all([
     fetchQueryOrNotFound(trpc.monitor.get.queryOptions({ id: monitorId })),
     queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
   ]);
+  // the overview picks "waiting for first ping" or the ping chart from this
+  if (monitor.jobType === "heartbeat") {
+    await queryClient.prefetchQuery(
+      trpc.monitor.heartbeat.queryOptions({ id: monitorId }),
+    );
+  }
 
   return (
     <HydrateClient>

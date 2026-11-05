@@ -35,6 +35,10 @@ type WithOptionalAttempts<T> = T extends { attempts: number }
 
 export type ResponseLog = WithOptionalAttempts<StoredResponseLog>;
 
+export type HeartbeatPing = NonNullable<
+  RouterOutputs["monitor"]["heartbeatPings"]
+>["data"][number];
+
 export function DataTableBasics({
   data,
   privateLocations,
@@ -361,6 +365,8 @@ export function DataTableBasicsHTTP({
 type BasicsRequestFields = {
   id?: string | null;
   requestStatus?: string | null;
+  /** Shown instead of the status when the two differ, e.g. a ping's "failed". */
+  resultLabel?: string;
   cronTimestamp: number;
 };
 
@@ -426,7 +432,9 @@ function BasicsRequestRows({ data }: { data: BasicsRequestFields }) {
               "bg-success": data?.requestStatus === "success",
             })}
           />
-          <div className="capitalize">{data?.requestStatus ?? "unknown"}</div>
+          <div className="capitalize">
+            {data.resultLabel ?? data?.requestStatus ?? "unknown"}
+          </div>
         </div>
       </BasicsRow>
       {data.id ? <BasicsRow label="ID">{data.id}</BasicsRow> : null}
@@ -523,6 +531,58 @@ export function DataTableBasicsTCP({
       </BasicsRow>
       <BasicsLocationRows data={data} privateLocations={privateLocations} />
       <BasicsErrorMessageRows errorMessage={data?.errorMessage} />
+    </BasicsTable>
+  );
+}
+
+export function DataTableBasicsHeartbeat({ data }: { data: HeartbeatPing }) {
+  const headers = Object.entries(data.headers);
+
+  return (
+    <BasicsTable>
+      <BasicsRequestRows
+        data={{
+          id: data.id,
+          requestStatus: data.kind === "fail" ? "error" : "success",
+          resultLabel: data.kind === "fail" ? "failed" : "success",
+          cronTimestamp: data.timestamp,
+        }}
+      />
+      <BasicsRow label="Method">{data.method}</BasicsRow>
+      <BasicsRow label="IP">
+        {data.ip ?? <span className="text-muted-foreground">Unknown</span>}
+      </BasicsRow>
+      <BasicsRow label="User agent">
+        {data.userAgent ?? <span className="text-muted-foreground">None</span>}
+      </BasicsRow>
+      {headers.length > 0 ? (
+        <>
+          <TableRow>
+            <TableHead colSpan={2}>Headers</TableHead>
+          </TableRow>
+          {headers.map(([name, value]) => (
+            <BasicsRow key={name} label={name}>
+              {value}
+            </BasicsRow>
+          ))}
+        </>
+      ) : null}
+      {data.body ? (
+        <>
+          <TableRow>
+            <TableHead colSpan={2}>
+              {data.bodyTruncated ? "Body (truncated at 10 KB)" : "Body"}
+            </TableHead>
+          </TableRow>
+          <TableRow>
+            <TableCell colSpan={2} className="p-0">
+              <pre className="bg-muted/50 max-w-full overflow-x-auto rounded-none p-2 font-mono text-sm whitespace-pre-wrap">
+                {data.body}
+              </pre>
+            </TableCell>
+          </TableRow>
+        </>
+      ) : null}
     </BasicsTable>
   );
 }

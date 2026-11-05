@@ -542,6 +542,9 @@ export const monitorRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+        kinds: z.array(z.enum(["success", "fail"])).optional(),
         cursor: z.number().int().optional(),
         limit: z.number().int().min(1).max(100).prefault(50),
       }),
@@ -552,6 +555,9 @@ export const monitorRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: {
             monitorId: input.id,
+            fromTimestamp: input.from?.getTime(),
+            toTimestamp: input.to?.getTime(),
+            kinds: input.kinds,
             cursor: input.cursor,
             limit: input.limit,
           },

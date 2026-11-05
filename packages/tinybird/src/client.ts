@@ -1534,6 +1534,7 @@ export class OSTinybird {
         monitorId: z.string(),
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
+        kinds: z.enum(["success", "fail"]).array().optional(),
         cursor: z.int().optional(),
         direction: z.enum(["next", "prev"]).optional(),
         limit: z.int().min(1).max(100),

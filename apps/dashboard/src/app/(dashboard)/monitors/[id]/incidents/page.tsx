@@ -108,7 +108,10 @@ export default function Page() {
             </SectionDescription>
           </SectionHeader>
           <p className="text-muted-foreground text-xs">
-            Recorded automatically when checks fail ·{" "}
+            {monitor.jobType === "heartbeat"
+              ? "Recorded automatically when a ping is missed or fails"
+              : "Recorded automatically when checks fail"}{" "}
+            ·{" "}
             <Link href="/status-pages" className="text-xs">
               Tell users via a status report
             </Link>
@@ -181,8 +184,9 @@ export default function Page() {
             </EmptyStateMedia>
             <EmptyStateTitle>No downtime recorded</EmptyStateTitle>
             <EmptyStateDescription>
-              A failed check opens a downtime entry here and alerts the channels
-              linked to this monitor. Nothing has failed so far.
+              {monitor.jobType === "heartbeat"
+                ? "A missed or failed ping opens a downtime entry here and alerts the channels linked to this monitor. Nothing has been missed so far."
+                : "A failed check opens a downtime entry here and alerts the channels linked to this monitor. Nothing has failed so far."}
             </EmptyStateDescription>
           </ActivityEmpty>
         </ActivityFeed>
