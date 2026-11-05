@@ -19,6 +19,7 @@ import {
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
+import { useModifierKey } from "@/lib/keyboard";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { useChatTool } from "./chat-tool-context";
@@ -71,6 +72,7 @@ function ApprovalCard({
   confirmTool: (id: string) => void;
   cancelTool: (id: string, reason?: string) => void;
 }) {
+  const modifier = useModifierKey();
   const idField = toolBeforeIdField(toolName);
   const entityId = idField ? integerField(input, idField) : undefined;
   const loadsBefore = entityId !== undefined;
@@ -172,7 +174,7 @@ function ApprovalCard({
           Apply
           <KbdGroup>
             <Kbd className="bg-primary-foreground/20 text-primary-foreground font-mono">
-              ⌘
+              {modifier}
             </Kbd>
             <Kbd className="bg-primary-foreground/20 text-primary-foreground font-mono">
               ↵

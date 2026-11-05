@@ -232,6 +232,16 @@ function groupMembers(pgid) {
   return r.status === 0 ? r.stdout.trim().split("\n").filter(Boolean) : [];
 }
 
+// Signal 0 probes the group without pgrep, which `up` must not depend on.
+function groupAlive(pgid) {
+  try {
+    process.kill(-pgid, 0);
+    return true;
+  } catch (e) {
+    return e.code === "EPERM";
+  }
+}
+
 const SQLD_GROUP = /\bsqld\b/;
 const DASHBOARD_GROUP = /\b(pnpm|node|next-server)\b/;
 const ours = (pid, expected) =>
@@ -333,7 +343,7 @@ async function up() {
     // Next refuses a second dev server per app dir; fail now, not after 180s.
     await waitFor(
       async () => {
-        if (groupMembers(state.dashboard).length === 0)
+        if (!groupAlive(state.dashboard))
           throw new Error(
             "dashboard exited; see .screenshots/stack/dashboard.log",
           );
