@@ -29,7 +29,7 @@ export const trackRouter = createTRPCRouter({
   contentCopied: publicProcedure
     .input(
       z.object({
-        kind: z.enum(["link", "markdown"]),
+        kind: z.enum(["link", "markdown", "prompt"]),
         path: z.string().max(512),
       }),
     )
