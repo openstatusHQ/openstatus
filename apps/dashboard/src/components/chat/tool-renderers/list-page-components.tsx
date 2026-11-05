@@ -12,7 +12,7 @@ type Output = AgentToolOutput<"list_page_components">;
 
 export function listPageComponentsTable(
   output: Output,
-): ResultTableData<"name" | "type" | "page" | "monitor" | "id"> {
+): ResultTableData<"name" | "type" | "page" | "monitor" | "group" | "id"> {
   const items = output?.items ?? [];
   return {
     empty: "No page components.",
@@ -21,6 +21,7 @@ export function listPageComponentsTable(
       { key: "type", header: "Type" },
       { key: "page", header: "Page" },
       { key: "monitor", header: "Monitor" },
+      { key: "group", header: "Group" },
       { key: "id", header: "ID" },
     ],
     rows: items.map((c) => ({
@@ -45,6 +46,7 @@ export function listPageComponentsTable(
           ) : (
             <TableCellText value={null} empty="No monitor" />
           ),
+        group: <TableCellText value={c.groupName ?? null} empty="No group" />,
         id: <TableCellNumber value={c.id} />,
       },
     })),

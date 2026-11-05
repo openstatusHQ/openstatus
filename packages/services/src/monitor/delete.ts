@@ -24,7 +24,7 @@ export async function deleteMonitor(args: {
   input: DeleteMonitorInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -83,7 +83,7 @@ export async function deleteMonitors(args: {
   input: DeleteMonitorsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

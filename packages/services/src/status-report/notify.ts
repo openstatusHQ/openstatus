@@ -25,7 +25,7 @@ export async function notifyStatusReport(args: {
   input: NotifyStatusReportInput;
 }): Promise<boolean> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = NotifyStatusReportInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

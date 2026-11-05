@@ -24,7 +24,7 @@ export async function createPage(args: {
   input: CreatePageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = CreatePageInput.parse(args.input);
 
   if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
@@ -138,7 +138,7 @@ export async function newPage(args: {
   input: NewPageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = NewPageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

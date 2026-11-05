@@ -105,7 +105,7 @@ export async function updateMonitorHeartbeat(args: {
   input: UpdateMonitorHeartbeatInput;
 }): Promise<Monitor> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorHeartbeatInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -149,7 +149,7 @@ export async function regenerateHeartbeatToken(args: {
   input: RegenerateHeartbeatTokenInput;
 }): Promise<Monitor> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = RegenerateHeartbeatTokenInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -184,6 +184,7 @@ export async function getHeartbeatState(args: {
   input: GetMonitorInput;
 }): Promise<HeartbeatState> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -294,6 +295,7 @@ export async function listHeartbeatPings(args: {
   input: ListHeartbeatPingsInput;
 }): Promise<{ data: HeartbeatPingLog[]; nextCursor: number | null }> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = ListHeartbeatPingsInput.parse(args.input);
   // pings are the heartbeat's response logs, behind the same entitlement
   if (!ctx.workspace.limits["response-logs"]) {

@@ -16,7 +16,7 @@ export async function enableSso(args: {
   ctx: ServiceContext;
 }): Promise<{ organizationId: string }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
 
   if (!ctx.workspace.limits.sso) {
     throw new PreconditionFailedError(

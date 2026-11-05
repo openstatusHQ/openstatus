@@ -25,7 +25,7 @@ export async function createPrivateLocation(args: {
   input: CreatePrivateLocationInput;
 }): Promise<PrivateLocation> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = CreatePrivateLocationInput.parse(args.input);
 
   // Callers that can't mint their own credential (the public API) omit it.

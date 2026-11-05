@@ -57,6 +57,11 @@ export {
   streamMonitorPreview,
 } from "./stream-monitor-preview";
 export {
+  firstRegion,
+  RunMonitorCheckInput,
+  runMonitorCheck,
+} from "./run-check";
+export {
   getHeartbeatState,
   type HeartbeatState,
   heartbeatDeadline,
@@ -96,6 +101,7 @@ export {
   ListMonitorsInput,
   ListResponseLogsInfiniteInput,
   ListResponseLogsInput,
+  monitorAssertionSchema,
   monitorJobTypes,
   ListHeartbeatPingsInput,
   RegenerateHeartbeatTokenInput,

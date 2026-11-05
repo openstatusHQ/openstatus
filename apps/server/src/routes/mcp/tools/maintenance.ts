@@ -7,7 +7,9 @@ import {
   addMaintenanceUpdateTool,
   createMaintenanceTool,
   deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
   listMaintenancesTool,
+  updateMaintenanceTool,
   updateMaintenanceUpdateTool,
 } from "@openstatus/services/agent-tools";
 
@@ -19,7 +21,9 @@ export function registerMaintenanceTools(
 ): Map<string, RegisteredTool> {
   return registerRegistryTools(server, ctx, [
     listMaintenancesTool,
+    getMaintenanceTool,
     createMaintenanceTool,
+    updateMaintenanceTool,
     addMaintenanceUpdateTool,
     updateMaintenanceUpdateTool,
     deleteMaintenanceUpdateTool,

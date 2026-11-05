@@ -34,7 +34,7 @@ export const entityKinds = {
   pageComponent: {
     label: "Component",
     icon: Components,
-    fields: ["pageComponentId", "pageComponentIds"],
+    fields: ["pageComponentId", "pageComponentIds", "componentId"],
     auditType: "page_component",
     href: (component: { pageId: number }) =>
       `/status-pages/${component.pageId}/components`,

@@ -15,6 +15,7 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type { MonitorIncident, Monitor } from "../types";
 import { getMonitorIncidentInWorkspace } from "./internal";
@@ -94,6 +95,7 @@ export async function listMonitorIncidents(args: {
   input: ListMonitorIncidentsInput;
 }): Promise<ListMonitorIncidentsResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = ListMonitorIncidentsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -140,6 +142,7 @@ export async function getMonitorIncident(args: {
   input: GetMonitorIncidentInput;
 }): Promise<MonitorIncidentWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorIncidentInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
   const record = await getMonitorIncidentInWorkspace({

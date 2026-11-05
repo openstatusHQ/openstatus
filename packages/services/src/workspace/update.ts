@@ -23,7 +23,7 @@ export async function updateWorkspaceName(args: {
   input: UpdateWorkspaceNameInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspaceNameInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -66,7 +66,7 @@ export async function updateWorkspacePlan(args: {
   input: UpdateWorkspacePlanInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspacePlanInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -126,7 +126,7 @@ export async function updateWorkspaceStripeId(args: {
   input: UpdateWorkspaceStripeIdInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspaceStripeIdInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -172,7 +172,7 @@ export async function updateWorkspaceLimits(args: {
   input: UpdateWorkspaceLimitsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = UpdateWorkspaceLimitsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

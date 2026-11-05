@@ -142,6 +142,33 @@ export default defineConfig({
       },
     },
     {
+      // Verbs require a group scope; "read"/"write" are what credentials hold.
+      files: ["packages/services/src/**/*.ts", "apps/server/src/**/*.ts"],
+      excludeFiles: [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "packages/services/src/auth/**",
+      ],
+      rules: {
+        "openstatus/services-no-legacy-scope": "error",
+      },
+    },
+    {
+      // Shape-triggered: an exported list/get/search/stream/preview verb in
+      // one of the five scope groups must check `<group>:read`.
+      files: [
+        "packages/services/src/{monitor,monitor-tag,private-location,monitor-incident,frozen-uptime}/*.ts",
+        "packages/services/src/{page,page-component,page-component-group,import}/*.ts",
+        "packages/services/src/{status-report,incident,maintenance}/*.ts",
+        "packages/services/src/notification/*.ts",
+        "packages/services/src/page-subscriber/*.ts",
+      ],
+      excludeFiles: ["**/__tests__/**", "**/*.test.ts", "**/internal.ts"],
+      rules: {
+        "openstatus/services-read-verbs-require-scope": "error",
+      },
+    },
+    {
       files: ["apps/dashboard/src/**/*.tsx", "apps/dashboard/src/**/*.ts"],
       rules: {
         "openstatus/no-db-barrel-in-client": "error",

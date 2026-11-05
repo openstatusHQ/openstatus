@@ -5,6 +5,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { HEARTBEAT_REGION } from "@openstatus/utils";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, defaultTb } from "../context";
 import { ValidationError } from "../errors";
 import { getMonitorInWorkspace } from "./internal";
@@ -88,6 +89,7 @@ export async function getMonitorSummary(args: {
   input: GetMonitorSummaryInput;
 }): Promise<GetMonitorSummaryResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorSummaryInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

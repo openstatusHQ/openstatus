@@ -1,3 +1,4 @@
+import type { Scope } from "@openstatus/db/src/schema";
 import { describe, expect, test } from "vitest";
 
 import type { Actor, ServiceContext } from "../../context";
@@ -102,5 +103,58 @@ describe("requireScope", () => {
     });
     expect(() => requireScope(ctx, "read")).toThrow(ForbiddenError);
     expect(() => requireScope(ctx, "write")).toThrow(ForbiddenError);
+  });
+});
+
+describe("requireScope group scopes", () => {
+  function keyCtx(scopes: Scope[]) {
+    return makeCtx({ type: "apiKey", keyId: "k1", scopes });
+  }
+
+  test("<group>:write covers the same group's read, not another group", () => {
+    const ctx = keyCtx(["monitors:write"]);
+    expect(() => requireScope(ctx, "monitors:write")).not.toThrow();
+    expect(() => requireScope(ctx, "monitors:read")).not.toThrow();
+    expect(() => requireScope(ctx, "pages:read")).toThrow(ForbiddenError);
+    expect(() => requireScope(ctx, "pages:write")).toThrow(ForbiddenError);
+  });
+
+  test("<group>:read does not cover its own write", () => {
+    const ctx = keyCtx(["incidents:read"]);
+    expect(() => requireScope(ctx, "incidents:read")).not.toThrow();
+    expect(() => requireScope(ctx, "incidents:write")).toThrow(ForbiddenError);
+  });
+
+  test("legacy write covers every group, legacy read every read", () => {
+    const write = keyCtx(["write"]);
+    expect(() => requireScope(write, "subscribers:write")).not.toThrow();
+    expect(() => requireScope(write, "subscribers:read")).not.toThrow();
+    const read = keyCtx(["read"]);
+    expect(() => requireScope(read, "monitors:read")).not.toThrow();
+    expect(() => requireScope(read, "subscribers:read")).not.toThrow();
+    expect(() => requireScope(read, "monitors:write")).toThrow(ForbiddenError);
+  });
+
+  test("admin is satisfied only by '*'", () => {
+    expect(() => requireScope(keyCtx(["*"]), "admin")).not.toThrow();
+    expect(() => requireScope(keyCtx(["write"]), "admin")).toThrow(
+      ForbiddenError,
+    );
+    expect(() =>
+      requireScope(keyCtx(["monitors:write", "pages:write"]), "admin"),
+    ).toThrow(ForbiddenError);
+  });
+
+  test("any passes any non-empty credential and fails closed on none", () => {
+    expect(() =>
+      requireScope(keyCtx(["subscribers:read"]), "any"),
+    ).not.toThrow();
+    expect(() => requireScope(keyCtx([]), "any")).toThrow(ForbiddenError);
+  });
+
+  test("mcp actor follows the same group rules", () => {
+    const ctx = makeCtx({ type: "mcp", keyId: "k1", scopes: ["pages:write"] });
+    expect(() => requireScope(ctx, "pages:read")).not.toThrow();
+    expect(() => requireScope(ctx, "incidents:read")).toThrow(ForbiddenError);
   });
 });

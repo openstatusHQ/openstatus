@@ -1,38 +1,19 @@
 /**
  * MCP tool-selection eval. Standalone Node script — `pnpm eval:mcp`.
  *
- * Runs each case in `cases.ts` against Claude Opus 5 (via the AI
+ * Runs each case in `cases.ts` against the model below (via the AI
  * Gateway), asserting the model picks the expected tool and includes
  * the required args. Fails the run if fewer than `PASS_THRESHOLD` of
  * `cases.length` succeed.
  *
- * Not in default CI — every run bills Opus tokens.
- *
- * --------------------------------------------------------------------
- * TODO: deduplicate tool catalogue.
- *
- * The `tools` map below MIRRORS the server registrations in:
- *   - apps/server/src/routes/mcp/tools/page.ts
- *   - apps/server/src/routes/mcp/tools/status-report.ts
- *   - apps/server/src/routes/mcp/tools/maintenance.ts
- *   - apps/server/src/routes/mcp/tools/incident.ts
- *   - packages/services/src/agent-tools/workspace.ts (get_workspace)
- *
- * When you edit a description, input shape, or required field in any
- * of those files, edit it here too — drift is silent because evals
- * are not in CI.
- *
- * The clean fix is to import each `register*Tools` factory, run them
- * against a stub `McpServer` + stub ctx (handlers never execute), and
- * convert each `RegisteredTool.description` + `inputSchema` into the
- * AI SDK `tool()` shape. Attempted in an earlier revision; deferred
- * because the SDK's Zod-shape conversion path needs more care than a
- * few lines.
- * --------------------------------------------------------------------
+ * Not in default CI — every run bills tokens. Importing the registry
+ * opens the db client, so the server `.env` must be loaded.
  */
 
+import { isDeepStrictEqual } from "node:util";
+
+import { agentToolList } from "@openstatus/services/agent-tools";
 import { gateway, generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
 
 import { type EvalCase, cases } from "./cases";
 
@@ -40,174 +21,22 @@ import { type EvalCase, cases } from "./cases";
 // `gateway(...)` instead of a bare string makes the routing path
 // explicit and gives a clearer error if the gateway is unconfigured.
 const MODEL = gateway("anthropic/claude-sonnet-5");
-// Lenient bar (10/12) accommodates model non-determinism even at
+// Lenient bar accommodates model non-determinism even at
 // `temperature: 0` — a single flaky tool selection shouldn't tank
-// the run. Tighten if descriptions stabilize and runs trend toward
-// 12/12.
-const PASS_THRESHOLD = 10;
+// the run. Tighten if descriptions stabilize.
+const PASS_THRESHOLD = Math.ceil(cases.length * 0.8);
 
-const statusEnum = z.enum([
-  "investigating",
-  "identified",
-  "monitoring",
-  "resolved",
-]);
-
-const tools = {
-  get_workspace: tool({
-    description:
-      "The current workspace: name, slug, plan, trial end and usage counts for monitors, status pages, components, notification channels and status reports. Use to answer which-plan or how-many questions. Plan limits and billing identifiers are NOT exposed.",
-    inputSchema: z.object({}),
-    execute: async () => ({
-      id: 1,
-      slug: "acme",
-      name: "Acme",
-      plan: "team",
-      trialEndsAt: null,
-      usage: {
-        monitors: 0,
-        statusPages: 0,
-        pageComponents: 0,
-        notificationChannels: 0,
-        statusReports: 0,
-      },
+// The real catalogue, with `run` stubbed: only the selection is under test.
+const tools = Object.fromEntries(
+  agentToolList.map((t) => [
+    t.name,
+    tool({
+      description: t.description,
+      inputSchema: t.inputSchema,
+      execute: async () => ({ ok: true }),
     }),
-  }),
-  list_status_pages: tool({
-    description:
-      "List status pages in this workspace with their slug and ids. Use to discover the pageId required by create_status_report and create_maintenance.",
-    inputSchema: z.object({}),
-    execute: async () => ({ items: [] }),
-  }),
-  list_status_reports: tool({
-    description:
-      "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns the most recent update per report so the LLM can see the current public message without a follow-up call. Paginated via `page` (1-indexed) and `perPage`; response carries `pagination` with `totalSize` and `totalPages`.",
-    inputSchema: z.object({
-      filter: z.enum(["active", "all"]).default("active"),
-      pageId: z.number().int().optional(),
-      page: z.number().int().min(1).default(1).optional(),
-      perPage: z.number().int().min(1).max(200).default(50).optional(),
-    }),
-    execute: async () => ({
-      items: [],
-      pagination: { page: 1, perPage: 50, totalSize: 0, totalPages: 1 },
-    }),
-  }),
-  list_maintenances: tool({
-    description:
-      "List maintenance windows in this workspace, newest first. Paginated via `page` (1-indexed) and `perPage`; response carries `pagination` with `totalSize` and `totalPages`.",
-    inputSchema: z.object({
-      pageId: z.number().int().optional(),
-      page: z.number().int().min(1).default(1).optional(),
-      perPage: z.number().int().min(1).max(200).default(50).optional(),
-    }),
-    execute: async () => ({
-      items: [],
-      pagination: { page: 1, perPage: 50, totalSize: 0, totalPages: 1 },
-    }),
-  }),
-  create_status_report: tool({
-    description:
-      "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. MANDATORY workflow before calling: 1) Draft the title/status/message/components. 2) Show the draft to the user. 3) Ask explicitly: 'Should I notify subscribers?'. 4) Call only after both content and notify are confirmed. Subscriber notifications dispatch as part of this call only — there is NO separate notify tool. pageId MUST come from list_status_pages.",
-    inputSchema: z.object({
-      title: z.string(),
-      status: statusEnum,
-      message: z.string(),
-      pageId: z.number().int(),
-      pageComponentIds: z.array(z.number().int()).optional(),
-      date: z.string().optional(),
-      notify: z.boolean(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-  add_status_report_update: tool({
-    description:
-      "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. Use resolve_status_report instead if the new status would be 'resolved'. MANDATORY workflow: draft, show to user, ask about subscriber notification, then call. There is NO separate notify tool — if notify is false, this update never reaches subscribers.",
-    inputSchema: z.object({
-      statusReportId: z.number().int(),
-      status: statusEnum,
-      message: z.string(),
-      date: z.string().optional(),
-      notify: z.boolean(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-  update_status_report: tool({
-    description:
-      "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Does NOT and CANNOT notify subscribers — the schema rejects status: 'resolved' (use resolve_status_report). MANDATORY: draft, show, confirm before calling.",
-    inputSchema: z.object({
-      statusReportId: z.number().int(),
-      title: z.string().optional(),
-      // Mirrors the production refine that rejects "resolved".
-      status: statusEnum
-        .refine((s) => s !== "resolved", {
-          error:
-            "update_status_report cannot set status to 'resolved' — use resolve_status_report instead.",
-        })
-        .optional(),
-      pageComponentIds: z.array(z.number().int()).optional(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-  resolve_status_report: tool({
-    description:
-      "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. MANDATORY: draft the resolution message, show to user, ask about subscriber notification, then call.",
-    inputSchema: z.object({
-      statusReportId: z.number().int(),
-      message: z.string(),
-      date: z.string().optional(),
-      notify: z.boolean(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-  create_maintenance: tool({
-    description:
-      "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. pageId MUST come from list_status_pages. Times are ISO 8601. MANDATORY: draft title/message/window, show to user, ask about subscriber notification, then call.",
-    inputSchema: z.object({
-      title: z.string(),
-      message: z.string(),
-      from: z.string(),
-      to: z.string(),
-      pageId: z.number().int(),
-      pageComponentIds: z.array(z.number().int()).optional(),
-      notify: z.boolean(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-  list_incidents: tool({
-    description:
-      "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones.",
-    inputSchema: z.object({
-      status: z
-        .array(z.enum(["open", "mitigated", "resolved", "canceled"]))
-        .optional(),
-      limit: z.number().int().min(1).max(100).default(20),
-    }),
-    execute: async () => ({ items: [] }),
-  }),
-  declare_incident: tool({
-    description:
-      "Declare a managed incident: the team's internal record of an outage, with a timeline and a commander. Internal only — nothing is published; use create_status_report for public communication.",
-    inputSchema: z.object({
-      title: z.string(),
-      severity: z.enum(["critical", "major", "minor"]),
-      summary: z.string().optional(),
-      commanderId: z.number().int().optional(),
-      startedAt: z.string().optional(),
-      statusReportId: z.number().int().optional(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-  add_incident_note: tool({
-    description:
-      "Append a note to a managed incident's timeline. Internal and append-only.",
-    inputSchema: z.object({
-      id: z.number().int(),
-      message: z.string(),
-    }),
-    execute: async () => ({ ok: true }),
-  }),
-};
+  ]),
+);
 
 const SYSTEM_PROMPT = `You are the openstatus assistant. Pick the right tool for each user request and call it with sensible parameters. NEVER guess a pageId — call list_status_pages first when you don't know it.`;
 
@@ -270,6 +99,19 @@ async function runCase(c: EvalCase): Promise<CaseResult> {
             case: c,
             pass: false,
             reason: `passed forbidden arg: ${key}`,
+            chosenTool: firstCall.toolName,
+            args,
+          };
+        }
+      }
+    }
+    if (c.argEquals) {
+      for (const [key, value] of Object.entries(c.argEquals)) {
+        if (!(key in args) || !isDeepStrictEqual(args[key], value)) {
+          return {
+            case: c,
+            pass: false,
+            reason: `arg ${key}: expected ${JSON.stringify(value)}, got ${JSON.stringify(args[key])}`,
             chosenTool: firstCall.toolName,
             args,
           };

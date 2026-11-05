@@ -6,6 +6,8 @@ description: Complete reference for the openstatus CLI — manage status pages, 
 
 Manage status pages, monitors, and incidents from the terminal.
 
+Commands that take `--access-token` authenticate with an API key from **Settings > General > API Keys**. A **Read & write** key runs every command; a **Read only** key runs the `list` and `info` commands and `terraform generate`. Per-group scopes work too: `status-report` and `maintenance` reads need `incidents:read` and their writes `incidents:write`; `monitors trigger` needs `monitors:write`. See the [scope reference](/docs/sdk/nodejs/authentication#scopes).
+
 Usage:
 
 ```bash

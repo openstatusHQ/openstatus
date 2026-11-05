@@ -13,7 +13,7 @@ export async function deletePage(args: {
   input: DeletePageInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = DeletePageInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

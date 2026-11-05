@@ -1409,3 +1409,37 @@ describe("componentImpacts", () => {
     });
   });
 });
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-pages",
+          userId: 1,
+          scopes: ["pages:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createStatusReport({
+          ctx,
+          input: {
+            title: `${TEST_PREFIX}-other-group`,
+            status: "investigating",
+            message: "blocked",
+            date: new Date(),
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listStatusReports({
+          ctx,
+          input: { limit: 100, offset: 0, statuses: [], order: "desc" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});

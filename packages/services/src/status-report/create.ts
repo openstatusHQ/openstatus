@@ -34,7 +34,7 @@ export async function createStatusReport(args: {
   input: CreateStatusReportInput;
 }): Promise<CreateStatusReportResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = CreateStatusReportInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
 

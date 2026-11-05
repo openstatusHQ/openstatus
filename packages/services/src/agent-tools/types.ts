@@ -1,4 +1,4 @@
-import type { Scope } from "@openstatus/db/src/schema";
+import type { RequiredScope } from "@openstatus/db/src/schema";
 import type { ZodType, z } from "zod";
 
 import type { ServiceContext } from "../context";
@@ -15,7 +15,7 @@ import type { Feature } from "../features";
 export type AgentTool<TInput = unknown, TOutput = unknown> = {
   name: string;
   description: string;
-  scope: Scope;
+  scope: RequiredScope;
   destructive: boolean;
   inputSchema: ZodType<TInput>;
   outputSchema: ZodType<TOutput>;

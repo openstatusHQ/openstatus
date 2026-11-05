@@ -103,6 +103,15 @@ function readOnlyCtx(): ServiceContext {
   });
 }
 
+/** An owner-linked write key: admin verbs refuse it regardless of scope. */
+function writeKeyCtx(): ServiceContext {
+  return makeApiKeyCtx(scaleCtx.workspace, {
+    keyId: "k",
+    userId: SCALE_OWNER_ID,
+    scopes: ["write"],
+  });
+}
+
 describe("enableSso", () => {
   test("owner enables SSO on scale, org persisted, audit row written", async () => {
     await withTestTransaction(async (tx) => {
@@ -164,6 +173,14 @@ describe("enableSso", () => {
     await withTestTransaction(async (tx) => {
       await expect(
         enableSso({ ctx: { ...readOnlyCtx(), db: tx, workos: fakeWorkOS() } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        enableSso({ ctx: { ...writeKeyCtx(), db: tx, workos: fakeWorkOS() } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });

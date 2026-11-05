@@ -1504,3 +1504,80 @@ describe("monitor count quota", () => {
     });
   });
 });
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-pages",
+          userId: 1,
+          scopes: ["pages:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createMonitor({
+          ctx,
+          input: {
+            name: `${TEST_PREFIX}-other-group`,
+            jobType: "http",
+            url: "https://example.com",
+            method: "GET",
+            headers: [],
+            assertions: [],
+            active: false,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listMonitors({ ctx, input: { limit: 100, offset: 0, order: "desc" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("monitors:read and legacy read list, monitors:write creates", async () => {
+    await withTestTransaction(async (tx) => {
+      for (const scopes of [["monitors:read"], ["read"]] as const) {
+        const ctx = {
+          ...makeApiKeyCtx(teamCtx.workspace, {
+            keyId: "k-read",
+            userId: 1,
+            scopes: [...scopes],
+          }),
+          db: tx,
+        };
+        await expect(
+          listMonitors({
+            ctx,
+            input: { limit: 100, offset: 0, order: "desc" },
+          }),
+        ).resolves.toBeDefined();
+      }
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-monitors",
+          userId: 1,
+          scopes: ["monitors:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        listMonitors({ ctx, input: { limit: 100, offset: 0, order: "desc" } }),
+      ).resolves.toBeDefined();
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-group-write`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      expect(row.id).toBeGreaterThan(0);
+    });
+  });
+});
