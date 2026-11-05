@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
+import { requireScope } from "../auth";
+import { getReadDb } from "../context";
 import {
   type MaintenanceWithRelations,
   addMaintenanceUpdate,
@@ -13,6 +15,7 @@ import {
   updateMaintenance,
   updateMaintenanceUpdate,
 } from "../maintenance";
+import { getMaintenanceInWorkspace } from "../maintenance/internal";
 import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 
@@ -398,10 +401,12 @@ export const updateMaintenanceUpdateTool: AgentTool<
     loadBefore: {
       idField: "id",
       load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
         const update = await getMaintenanceUpdate({ ctx, input: { id } });
-        const m = await getMaintenance({
-          ctx,
-          input: { id: update.maintenanceId },
+        const m = await getMaintenanceInWorkspace({
+          tx: getReadDb(ctx),
+          id: update.maintenanceId,
+          workspaceId: ctx.workspace.id,
         });
         return beforeSnapshot(m.title, {
           message: update.message,
@@ -521,6 +526,7 @@ export const updateMaintenanceTool: AgentTool<
     loadBefore: {
       idField: "maintenanceId",
       load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
         const m = await getMaintenance({ ctx, input: { id } });
         return beforeSnapshot(m.title, {
           title: m.title,

@@ -5,6 +5,7 @@ import {
 import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import {
   addStatusReportUpdate,
@@ -17,7 +18,12 @@ import {
   updateStatusReportUpdate,
 } from "../status-report";
 import { createStatusReport } from "../status-report/create";
-import { getReportUpdateInWorkspace } from "../status-report/internal";
+import {
+  getComponentImpactsForUpdate,
+  getPageComponentIdsForReport,
+  getReportInWorkspace,
+  getReportUpdateInWorkspace,
+} from "../status-report/internal";
 import {
   type ComponentImpacts,
   componentImpactsSchema,
@@ -594,14 +600,17 @@ export const updateStatusReportTool: AgentTool<
     loadBefore: {
       idField: "statusReportId",
       load: async ({ ctx, id }) => {
-        const r = await getStatusReport({
-          ctx,
-          input: { id },
+        requireScope(ctx, "incidents:read");
+        const db = getReadDb(ctx);
+        const r = await getReportInWorkspace({
+          tx: db,
+          id,
+          workspaceId: ctx.workspace.id,
         });
         return beforeSnapshot(r.title, {
           title: r.title,
           status: r.status,
-          pageComponentIds: r.pageComponentIds,
+          pageComponentIds: await getPageComponentIdsForReport(db, r.id),
         });
       },
     },
@@ -786,21 +795,23 @@ export const updateStatusReportUpdateTool: AgentTool<
     loadBefore: {
       idField: "id",
       load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const db = getReadDb(ctx);
         const row = await getReportUpdateInWorkspace({
-          tx: getReadDb(ctx),
+          tx: db,
           id,
           workspaceId: ctx.workspace.id,
         });
-        const r = await getStatusReport({
-          ctx,
-          input: { id: row.statusReportId },
+        const r = await getReportInWorkspace({
+          tx: db,
+          id: row.statusReportId,
+          workspaceId: ctx.workspace.id,
         });
-        const update = r.updates.find((u) => u.id === id);
         return beforeSnapshot(r.title, {
           status: row.status,
           message: row.message,
           date: row.date,
-          componentImpacts: update?.componentImpacts ?? [],
+          componentImpacts: await getComponentImpactsForUpdate(db, row.id),
         });
       },
     },

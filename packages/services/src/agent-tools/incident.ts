@@ -5,6 +5,7 @@ import {
 import { z } from "zod";
 
 import { attributedUserSchema, toAttributedUser } from "../attribution";
+import { requireScope } from "../auth";
 import { tryGetActorUserId } from "../context";
 import { NotFoundError } from "../errors";
 import {
@@ -275,6 +276,7 @@ export const updateIncidentTool: AgentTool<
     loadBefore: {
       idField: "id",
       load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
         const i = await getIncidentOrThrow({ ctx, input: { id } });
         return beforeSnapshot(i.title, {
           title: i.title,

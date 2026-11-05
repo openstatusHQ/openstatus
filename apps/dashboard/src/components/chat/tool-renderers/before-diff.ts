@@ -18,7 +18,7 @@ export function fieldChanges<T extends object>(
     if (after === undefined) continue;
     if (before && field in before.values) {
       const previous = before.values[field];
-      if (sameValue(previous, after)) continue;
+      if (sameValue(previous, after, DATE_FIELDS.has(field))) continue;
       rows.push({ field, before: previous, after });
     } else {
       rows.push({ field, after });
@@ -39,13 +39,16 @@ export function idRow(
   return before ? [] : [{ field, after: id }];
 }
 
-const ISO_DATETIME = /^\d{4}-\d{2}-\d{2}T/;
+/** Input fields that hold ISO datetimes, across the update tools. */
+const DATE_FIELDS = new Set(["from", "to", "date", "startedAt"]);
 
-// "" and null both mean "cleared"; id sets are order-insensitive; ISO
-// datetimes compare by instant ("…:00Z" and "…:00.000Z" are the same).
-function normalize(value: unknown): unknown {
+// "" and null both mean "cleared"; id sets are order-insensitive; date
+// fields compare by instant ("…:00Z" and "…:00.000Z" are the same). Free
+// text never does, so an edited message that happens to look like a date
+// still shows.
+function normalize(value: unknown, isDate = false): unknown {
   if (value === undefined || value === null || value === "") return null;
-  if (typeof value === "string" && ISO_DATETIME.test(value)) {
+  if (isDate && typeof value === "string") {
     const time = Date.parse(value);
     return Number.isNaN(time) ? value : new Date(time).toISOString();
   }
@@ -64,6 +67,9 @@ function normalize(value: unknown): unknown {
   return value;
 }
 
-export function sameValue(a: unknown, b: unknown): boolean {
-  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+export function sameValue(a: unknown, b: unknown, isDate = false): boolean {
+  return (
+    JSON.stringify(normalize(a, isDate)) ===
+    JSON.stringify(normalize(b, isDate))
+  );
 }

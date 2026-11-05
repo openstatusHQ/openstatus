@@ -24,7 +24,7 @@ import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
-  toolLoadsBefore,
+  toolBeforeIdField,
 } from "./tool-renderers";
 
 // SDK tool-part state machine: input-streaming/-available → in-flight;
@@ -69,6 +69,31 @@ function ApprovalCard({
   confirmTool: (id: string) => void;
   cancelTool: (id: string, reason?: string) => void;
 }) {
+  const idField = toolBeforeIdField(toolName);
+  const entityId = idField ? integerField(input, idField) : undefined;
+  const loadsBefore = entityId !== undefined;
+  const trpc = useTRPC();
+  // Fetched fresh for every card (a revert must not reuse the snapshot taken
+  // before the change it reverts), then held still so the diff can't shift
+  // under the user while the card is open.
+  const beforeQuery = useQuery({
+    ...trpc.chatSession.approvalBefore.queryOptions({
+      toolName,
+      ids: idField && entityId !== undefined ? { [idField]: entityId } : {},
+    }),
+    enabled: loadsBefore,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  // Without a snapshot (no loader, error, entity gone) the card falls back
+  // to the proposed values only.
+  const loading =
+    loadsBefore && (beforeQuery.isPending || !beforeQuery.isFetchedAfterMount);
+  const before = loading ? undefined : (beforeQuery.data ?? undefined);
+
   // Scope key handling to the card so batched approvals / popovers don't share a window listener.
   const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -80,27 +105,12 @@ function ApprovalCard({
     if (e.defaultPrevented) return;
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      confirmTool(approvalId);
+      if (!loading) confirmTool(approvalId);
     } else if (e.key === "Escape") {
       e.preventDefault();
       cancelTool(approvalId);
     }
   };
-
-  const loadsBefore = toolLoadsBefore(toolName);
-  const trpc = useTRPC();
-  const beforeQuery = useQuery({
-    ...trpc.chatSession.approvalBefore.queryOptions({
-      toolName,
-      ids: integerFields(input),
-    }),
-    enabled: loadsBefore,
-    retry: false,
-  });
-  // Without a snapshot (no loader, error, entity gone) the card falls back
-  // to the proposed values only.
-  const before = beforeQuery.data ?? undefined;
-  const loading = loadsBefore && beforeQuery.isPending;
 
   const draft = loading ? undefined : renderToolDraft(toolName, input, before);
   return (
@@ -151,7 +161,11 @@ function ApprovalCard({
           >
             Cancel
           </Button>
-          <Button size="sm" onClick={() => confirmTool(approvalId)}>
+          <Button
+            size="sm"
+            disabled={loading}
+            onClick={() => confirmTool(approvalId)}
+          >
             Apply
           </Button>
         </div>
@@ -161,17 +175,16 @@ function ApprovalCard({
 }
 
 /**
- * The integer fields of a tool input — entity ids among them. The preview
- * query is a GET, so only these go in its URL, never free-text fields that
- * may carry secrets (monitor headers, bodies).
+ * The entity id from a tool input. The preview query is a GET, so only this
+ * goes in its URL, never free-text fields that may carry secrets (monitor
+ * headers, bodies).
  */
-function integerFields(input: unknown): Record<string, number> {
-  if (!input || typeof input !== "object") return {};
-  const ids: Record<string, number> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === "number" && Number.isInteger(value)) ids[key] = value;
-  }
-  return ids;
+function integerField(input: unknown, field: string): number | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const value = (input as Record<string, unknown>)[field];
+  return typeof value === "number" && Number.isInteger(value)
+    ? value
+    : undefined;
 }
 
 function ToolDisclosure({

@@ -3,6 +3,7 @@ import { monitorStatusSchema } from "@openstatus/db/src/schema";
 import { HEARTBEAT_REGION, headerPairSchema } from "@openstatus/utils";
 import { z } from "zod";
 
+import { requireScope } from "../auth";
 import { withTransaction } from "../context";
 import { ValidationError } from "../errors";
 import {
@@ -855,6 +856,7 @@ export const updateMonitorTool: AgentTool<
     loadBefore: {
       idField: "monitorId",
       load: async ({ ctx, id }) => {
+        requireScope(ctx, "monitors:read");
         const m = await getMonitor({ ctx, input: { id } });
         return beforeSnapshot(m.name, {
           name: m.name,

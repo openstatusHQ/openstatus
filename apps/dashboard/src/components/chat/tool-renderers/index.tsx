@@ -73,7 +73,7 @@ import { updateStatusReportChanges } from "./update-status-report";
 export type ToolRenderer<N extends AgentToolName> = {
   /**
    * Rows for the approval card. `before` holds the entity's current values
-   * when the tool loads them (see `loadsBefore`); the rows then show
+   * when the tool loads them (see `beforeIdField`); the rows then show
    * old → new and drop the id, which the card header names instead.
    */
   renderDraft?: (
@@ -81,10 +81,10 @@ export type ToolRenderer<N extends AgentToolName> = {
     before?: ApprovalBefore,
   ) => ChangeRow[];
   /**
-   * The server's tool has `approval.loadBefore`: the approval card fetches
-   * the current values before it renders the draft.
+   * Mirrors the server tool's `approval.loadBefore.idField`: the approval
+   * card fetches the current values by this id before it renders the draft.
    */
-  loadsBefore?: true;
+  beforeIdField?: keyof AgentToolInput<N> & string;
   renderResult?: (params: {
     input: AgentToolInput<N>;
     output: AgentToolOutput<N>;
@@ -153,7 +153,7 @@ export const toolRenderers: ToolRendererRegistry = {
   update_status_page: {
     renderDraft: (input, before) =>
       updateStatusPageChanges(input, undefined, before),
-    loadsBefore: true,
+    beforeIdField: "pageId",
     renderResult: ({ input, output }) => (
       <ChangesTable changes={updateStatusPageChanges(input, output)} />
     ),
@@ -169,7 +169,7 @@ export const toolRenderers: ToolRendererRegistry = {
   update_page_component: {
     renderDraft: (input, before) =>
       updatePageComponentChanges(input, undefined, before),
-    loadsBefore: true,
+    beforeIdField: "componentId",
     renderResult: ({ input, output }) => (
       <ChangesTable changes={updatePageComponentChanges(input, output)} />
     ),
@@ -184,7 +184,7 @@ export const toolRenderers: ToolRendererRegistry = {
   },
   update_component_group: {
     renderDraft: (input, before) => updateComponentGroupChanges(input, before),
-    loadsBefore: true,
+    beforeIdField: "groupId",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateComponentGroupChanges(input)} />
     ),
@@ -201,7 +201,7 @@ export const toolRenderers: ToolRendererRegistry = {
   update_monitor: {
     renderDraft: (input, before) =>
       updateMonitorChanges(input, undefined, before),
-    loadsBefore: true,
+    beforeIdField: "monitorId",
     renderResult: ({ input, output }) => (
       <ChangesTable changes={updateMonitorChanges(input, output)} />
     ),
@@ -234,7 +234,7 @@ export const toolRenderers: ToolRendererRegistry = {
   },
   update_status_report: {
     renderDraft: (input, before) => updateStatusReportChanges(input, before),
-    loadsBefore: true,
+    beforeIdField: "statusReportId",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateStatusReportChanges(input)} />
     ),
@@ -255,7 +255,7 @@ export const toolRenderers: ToolRendererRegistry = {
   update_status_report_update: {
     renderDraft: (input, before) =>
       updateStatusReportUpdateChanges(input, before),
-    loadsBefore: true,
+    beforeIdField: "id",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateStatusReportUpdateChanges(input)} />
     ),
@@ -282,7 +282,7 @@ export const toolRenderers: ToolRendererRegistry = {
   },
   update_maintenance: {
     renderDraft: (input, before) => updateMaintenanceChanges(input, before),
-    loadsBefore: true,
+    beforeIdField: "maintenanceId",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateMaintenanceChanges(input)} />
     ),
@@ -303,7 +303,7 @@ export const toolRenderers: ToolRendererRegistry = {
   update_maintenance_update: {
     renderDraft: (input, before) =>
       updateMaintenanceUpdateChanges(input, before),
-    loadsBefore: true,
+    beforeIdField: "id",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateMaintenanceUpdateChanges(input)} />
     ),
@@ -337,7 +337,7 @@ export const toolRenderers: ToolRendererRegistry = {
   },
   update_incident: {
     renderDraft: (input, before) => updateIncidentChanges(input, before),
-    loadsBefore: true,
+    beforeIdField: "id",
     renderResult: ({ input }) => (
       <ChangesTable changes={updateIncidentChanges(input)} />
     ),
@@ -502,8 +502,8 @@ export function renderToolDraft(
   return findRenderer(toolName)?.renderDraft?.(input as never, before);
 }
 
-export function toolLoadsBefore(toolName: string): boolean {
-  return toolRenderers[toolName as AgentToolName]?.loadsBefore === true;
+export function toolBeforeIdField(toolName: string): string | undefined {
+  return toolRenderers[toolName as AgentToolName]?.beforeIdField;
 }
 
 export function renderToolResult(

@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-import { NotFoundError } from "../errors";
+import { requireScope } from "../auth";
+import { getReadDb } from "../context";
 import {
   createPageComponentGroup,
-  listPageComponentGroups,
   updatePageComponentGroup,
 } from "../page-component-group";
+import { getGroupInWorkspace } from "../page-component-group/internal";
 import { beforeSnapshot } from "./approval-before";
 import type { AgentTool } from "./types";
 
@@ -105,9 +106,12 @@ export const updateComponentGroupTool: AgentTool<
     loadBefore: {
       idField: "groupId",
       load: async ({ ctx, id }) => {
-        const groups = await listPageComponentGroups({ ctx, input: {} });
-        const group = groups.find((g) => g.id === id);
-        if (!group) throw new NotFoundError("page_component_group", id);
+        requireScope(ctx, "pages:read");
+        const group = await getGroupInWorkspace({
+          tx: getReadDb(ctx),
+          id,
+          workspaceId: ctx.workspace.id,
+        });
         return beforeSnapshot(group.name, {
           name: group.name,
           defaultOpen: group.defaultOpen,

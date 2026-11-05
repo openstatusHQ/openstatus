@@ -205,6 +205,25 @@ describe("with a before snapshot", () => {
     ]);
   });
 
+  it("compares free text literally even when it looks like a date", () => {
+    type Input = Parameters<typeof updateMaintenanceChanges>[0];
+    expect(
+      updateMaintenanceChanges(
+        as<Input>({ maintenanceId: 5, message: "2026-05-01T14:00:00Z" }),
+        {
+          label: "DB upgrade",
+          values: { message: "2026-05-01T14:00:00.000Z" },
+        },
+      ),
+    ).toEqual([
+      {
+        field: "message",
+        before: "2026-05-01T14:00:00.000Z",
+        after: "2026-05-01T14:00:00Z",
+      },
+    ]);
+  });
+
   it("keeps after-only rows for fields the snapshot lacks", () => {
     type Input = Parameters<typeof updateMonitorChanges>[0];
     expect(

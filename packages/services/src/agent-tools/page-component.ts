@@ -1,6 +1,7 @@
 import { pageComponentTypes } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
+import { requireScope } from "../auth";
 import { getReadDb, withTransaction } from "../context";
 import {
   type PageComponentWithRelations,
@@ -164,6 +165,32 @@ type Position = { order?: number; groupOrder?: number };
  * positions. Grouped components sort by `groupOrder` and share their group's
  * `order`; top-level, a group is one slot positioned by its lowest `order`.
  */
+/**
+ * The index `order` means for this component today, read the way
+ * `computePositions` writes it: its place among group siblings when grouped,
+ * its slot among top-level items otherwise. The stored `order` column is a
+ * page slot, not that index.
+ */
+function currentPosition(
+  target: { id: number; groupId: number | null },
+  components: PageComponentWithRelations[],
+): number {
+  if (target.groupId !== null) {
+    return components
+      .filter((c) => c.groupId === target.groupId)
+      .sort((a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0) || a.id - b.id)
+      .findIndex((c) => c.id === target.id);
+  }
+  const slots = new Map<string, number>();
+  for (const c of components) {
+    const key = c.groupId === null ? `c${c.id}` : `g${c.groupId}`;
+    slots.set(key, Math.min(slots.get(key) ?? Infinity, c.order ?? 0));
+  }
+  return [...slots.entries()]
+    .sort((a, b) => a[1] - b[1])
+    .findIndex(([key]) => key === `c${target.id}`);
+}
+
 function computePositions(
   target: { id: number; order: number | null; groupOrder: number | null },
   groupId: number | null,
@@ -278,15 +305,20 @@ export const updatePageComponentTool: AgentTool<
     loadBefore: {
       idField: "componentId",
       load: async ({ ctx, id }) => {
+        requireScope(ctx, "pages:read");
         const c = await getPageComponentInWorkspace({
           tx: getReadDb(ctx),
           id,
           workspaceId: ctx.workspace.id,
         });
+        const components = await listPageComponents({
+          ctx,
+          input: { pageId: c.pageId, order: "asc" },
+        });
         return beforeSnapshot(c.name, {
           name: c.name,
           description: c.description,
-          order: c.order,
+          order: currentPosition(c, components),
           groupId: c.groupId,
         });
       },

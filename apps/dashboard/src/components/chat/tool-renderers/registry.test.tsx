@@ -13,7 +13,7 @@ import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
-  toolLoadsBefore,
+  toolBeforeIdField,
   toolRenderers,
 } from "./index";
 
@@ -122,10 +122,24 @@ describe("renderToolDraft", () => {
   });
 });
 
-describe("toolLoadsBefore", () => {
-  it("is set for every update tool and nothing else", () => {
+// Same map as services' approval-before.test.ts, which checks the server
+// side's `loadBefore.idField`; a drift makes the card send no id.
+const BEFORE_ID_FIELDS: Record<string, string> = {
+  update_status_page: "pageId",
+  update_page_component: "componentId",
+  update_component_group: "groupId",
+  update_monitor: "monitorId",
+  update_status_report: "statusReportId",
+  update_status_report_update: "id",
+  update_maintenance: "maintenanceId",
+  update_maintenance_update: "id",
+  update_incident: "id",
+};
+
+describe("toolBeforeIdField", () => {
+  it("matches the server tool's loadBefore id field", () => {
     for (const name of Object.keys(toolRenderers)) {
-      expect(toolLoadsBefore(name), name).toBe(name.startsWith("update_"));
+      expect(toolBeforeIdField(name), name).toBe(BEFORE_ID_FIELDS[name]);
     }
   });
 });
