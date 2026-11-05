@@ -1,7 +1,6 @@
 import { and, eq, isNull } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
 import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
-import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -183,11 +182,12 @@ export async function updateWorkspaceLimits(args: {
       .get();
     if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
 
-    const limits = updateAddonInLimits(
-      limitsSchema.parse(JSON.parse(existing.limits)),
-      input.addon,
-      input.value,
-    );
+    // Only the addon is written. Parsing the whole blob would store every
+    // missing key as its free value, which then overrides the plan on read.
+    const limits = {
+      ...JSON.parse(existing.limits),
+      [input.addon]: limitsSchema.shape[input.addon].parse(input.value),
+    };
 
     const updated = await tx
       .update(workspace)
