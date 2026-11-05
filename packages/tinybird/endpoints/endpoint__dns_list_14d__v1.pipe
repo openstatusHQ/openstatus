@@ -15,7 +15,8 @@ SELECT
     cronTimestamp,
     monitorId,
     requestStatus,
-    records
+    records,
+    attempts
 FROM mv__dns_14d__v0
 WHERE
     monitorId = {{ String(monitorId, '7417', required=True) }}

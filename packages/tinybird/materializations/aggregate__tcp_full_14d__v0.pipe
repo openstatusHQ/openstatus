@@ -19,10 +19,10 @@ SQL >
         trigger,
         uri,
         id,
-        requestStatus
+        requestStatus,
+        attempts
     FROM tcp_response__v0
 
 TYPE materialized
 DATASOURCE mv__tcp_full_14d__v0
-
-
+DEPLOYMENT_METHOD alter

@@ -30,7 +30,8 @@ type ICMPData struct {
 	PacketsSent     uint8 `json:"packetsSent"`
 	PacketsReceived uint8 `json:"packetsReceived"`
 
-	Error uint8 `json:"error"`
+	Error    uint8 `json:"error"`
+	Attempts int   `json:"attempts"`
 }
 
 func (h *privateLocationHandler) IngestICMP(ctx context.Context, req *connect.Request[private_locationv1.IngestICMPRequest]) (*connect.Response[private_locationv1.IngestICMPResponse], error) {
@@ -63,6 +64,7 @@ func (h *privateLocationHandler) IngestICMP(ctx context.Context, req *connect.Re
 		WorkspaceID:     int64(ic.Monitor.WorkspaceID),
 		Timestamp:       req.Msg.Timestamp,
 		Error:           uint8(req.Msg.Error),
+		Attempts:        attemptCount(req.Msg.Attempts),
 		Region:          strconv.Itoa(ic.Region.ID),
 		MonitorID:       int64(ic.Monitor.ID),
 		Timing:          req.Msg.Timing,

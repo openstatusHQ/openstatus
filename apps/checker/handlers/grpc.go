@@ -37,6 +37,8 @@ type GRPCData struct {
 	CronTimestamp int64 `json:"cronTimestamp"`
 	GRPCCode      int64 `json:"grpcCode"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
@@ -46,7 +48,7 @@ func grpcCheck(req request.GRPCCheckerRequest) (checker.GRPCResult, error) {
 		req.URI,
 		req.Service,
 		checker.ParseGRPCTLSMode(req.TLS),
-		req.Headers,
+		request.WithRequestID(req.Headers, req.RequestID),
 	)
 }
 
@@ -112,6 +114,13 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 		retry = 3
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to generate request id")
+		return response, fmt.Errorf("error while generating uuid: %w", err)
+	}
+	req.RequestID = id.String()
+
 	// CheckGRPC hands back what it learned alongside its error: whatever phases
 	// completed, plus the gRPC status code. That is what separates a DNS failure
 	// from a connect or TLS one, and a timeout from a refused connection. op()
@@ -119,7 +128,10 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 	// attempt's result.
 	var lastResult checker.GRPCResult
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := grpcCheck(req)
 		lastResult = res
 		if err != nil {
@@ -131,11 +143,6 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 		timingAsString, err := json.Marshal(res.Timing)
 		if err != nil {
 			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
-		}
-
-		id, err := uuid.NewV7()
-		if err != nil {
-			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		timestamp := time.Now().UTC().UnixMilli()
@@ -157,7 +164,8 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 		}
 
 		data := GRPCData{
-			ID:            id.String(),
+			Attempts:      called,
+			ID:            req.RequestID,
 			WorkspaceID:   workspaceId,
 			Timestamp:     timestamp,
 			Error:         errorFlag,
@@ -226,11 +234,6 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 	}
 
 	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
-		id, e := uuid.NewV7()
-		if e != nil {
-			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return response, e
-		}
 		// A marshal failure leaves the column empty rather than dropping the row:
 		// the rest of the failure record is still worth ingesting.
 		timingAsString, timingErr := json.Marshal(lastResult.Timing)
@@ -239,7 +242,8 @@ func (h Handler) RunGRPCCheck(ctx context.Context, req request.GRPCCheckerReques
 		}
 
 		data := GRPCData{
-			ID:            id.String(),
+			Attempts:      called,
+			ID:            req.RequestID,
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
 			Timestamp:     time.Now().UTC().UnixMilli(),

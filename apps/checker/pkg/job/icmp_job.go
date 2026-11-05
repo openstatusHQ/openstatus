@@ -29,6 +29,7 @@ type ICMPPrivateRegionData struct {
 	CronTimestamp   int64  `json:"cron_timestamp"`
 	Error           int    `json:"error"`
 	Timing          string `json:"timing"`
+	Attempts        int    `json:"attempts"`
 }
 
 func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region string) (*ICMPPrivateRegionData, error) {
@@ -120,6 +121,7 @@ func (jobRunner) ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region st
 	if err != nil {
 		return nil, fmt.Errorf("ICMP job failed after %d retries: %w", retry, err)
 	}
+	resp.Attempts = called
 	return resp, nil
 }
 

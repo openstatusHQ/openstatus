@@ -12,6 +12,7 @@ import {
 import { GetResponseLogInput } from "./schemas";
 
 export type ResponseLogDetail = ResponseLogListItem & {
+  attempts: number;
   url: string;
   error: boolean;
   message: string | null;
@@ -62,6 +63,7 @@ export async function getResponseLog(args: {
     latency: log.latency,
     cronTimestamp: log.cronTimestamp,
     timestamp: log.timestamp,
+    attempts: log.attempts,
     timing: log.timing
       ? {
           dns: log.timing.dns,

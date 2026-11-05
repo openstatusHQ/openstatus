@@ -10,10 +10,19 @@ import (
 // dbTimeout bounds how long a single query waits for a pooled connection and runs.
 const dbTimeout = 5 * time.Second
 
+// attemptCount reads a missing value as one try: agents older than the field send 0.
+func attemptCount(attempts int64) int {
+	if attempts < 1 {
+		return 1
+	}
+
+	return int(attempts)
+}
+
 // ingestContext holds common data needed for ingestion
 type ingestContext struct {
-	Monitor  database.Monitor
-	Region   database.PrivateLocation
+	Monitor database.Monitor
+	Region  database.PrivateLocation
 }
 
 // getIngestContext retrieves monitor and private location data for ingestion

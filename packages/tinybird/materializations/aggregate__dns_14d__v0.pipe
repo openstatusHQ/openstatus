@@ -12,8 +12,10 @@ SQL >
         cronTimestamp,
         monitorId,
         requestStatus,
-        records
+        records,
+        attempts
     FROM dns_response__v0
 
 TYPE materialized
 DATASOURCE mv__dns_14d__v0
+DEPLOYMENT_METHOD alter

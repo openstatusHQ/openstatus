@@ -1,6 +1,5 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { Clock, ApiTrigger } from "@openstatus/icons";
 import {
@@ -19,8 +18,7 @@ import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 
 import { TableCellEmpty } from "../table-cell-empty";
-
-type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+import type { ResponseLog } from "./data-table-basics";
 
 // export const columns: ColumnDef<ResponseLog>[] =
 export function getColumns(
