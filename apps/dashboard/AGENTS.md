@@ -36,6 +36,15 @@ the browser bundle. Import the specific sub-path instead
 (`@openstatus/db/src/schema/page_components/constants`), or split the pure-zod
 part into a sibling file. `import type` from the barrel is fine; types erase.
 
+## Anchor ids on cards and sections
+
+Every `FormCard` and `Section` on a page carries an `id`, the kebab-cased
+title (`<FormCard id="retry-policy">`), unique on its page. Cross-links,
+⌘K entries and docs point at them (`/settings/general#api-keys`).
+`useScrollToHash` scrolls once the element mounts and marks it
+`data-hash-target`, which shows a short ring (`app/globals.css`). Both
+components already carry `scroll-mt-28`; sheet bodies need no id.
+
 ## Chat tool renderers
 
 Reuse the dashboard's own primitives — `TableCell*`, `ResultTable`,
