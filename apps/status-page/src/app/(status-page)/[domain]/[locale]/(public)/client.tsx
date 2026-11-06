@@ -88,6 +88,7 @@ export function Client() {
 
   const componentsVisible =
     !embed.mode || embed.sections.includes("components");
+  const bannerVisible = !embed.mode || embed.sections.includes("banner");
 
   const hasCustomConfig = pageInitial?.configuration
     ? pageInitial.configuration.type !== barType ||
@@ -95,14 +96,14 @@ export function Client() {
     : false;
 
   // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs.
-  // Also skip when `components` section is hidden in embed mode — this query only matters there.
   const { data: pageWithCustomConfiguration } = useQuery({
     ...trpc.statusPage.get.queryOptions({
       slug: domain,
       cardType,
       barType,
     }),
-    enabled: !!domain && hasCustomConfig && componentsVisible,
+    enabled:
+      !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
   });
 
   // NOTE: we can prefetch that to avoid loading state
@@ -154,24 +155,24 @@ export function Client() {
     };
   };
 
+  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
+  const page = pageWithCustomConfiguration ?? pageInitial;
+
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
   const events = useMemo(() => {
     let hasIncident = false;
     return (
-      pageInitial?.openEvents.filter((e) => {
+      page?.openEvents.filter((e) => {
         if (e.type !== "incident") return true;
         if (hasIncident) return false;
         hasIncident = true;
         return true;
       }) ?? []
     );
-  }, [pageInitial]);
+  }, [page]);
 
-  if (!pageInitial) return null;
-
-  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
-  const page = pageWithCustomConfiguration ?? pageInitial;
+  if (!page) return null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -182,7 +183,9 @@ export function Client() {
         </StatusHeader>
         {events.length > 0 ? (
           <StatusContent className="group-data-[hide-banner=true]/embed:hidden">
+            {/* key remounts the tabs: defaultValue only applies on mount */}
             <StatusBannerTabs
+              key={events.map((e) => `${e.type}-${e.id}`).join()}
               defaultValue={`${events[0].type}-${events[0].id}`}
             >
               <StatusBannerTabsList>
