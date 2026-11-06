@@ -180,7 +180,7 @@ export function Caption({
 
 // Drawn in viewport space so it rides the camera, but shrunk as the camera
 // zooms so it never dwarfs the UI.
-function Cursor({
+export function Cursor({
   x,
   y,
   zoom,

@@ -34,8 +34,9 @@ export type Timeline = {
   name: string;
   // "terminal" recordings (scripts/record-terminal.mjs) keep their screens in
   // terminal.json, and their viewport counts character cells, not pixels;
-  // "slack" ones (scripts/record-slack.mjs) keep their events in slack.json.
-  kind?: "page" | "terminal" | "slack";
+  // "slack" ones (scripts/record-slack.mjs) keep their events in slack.json;
+  // "agent" ones (scripts/record-agent.mjs) keep theirs in agent.json.
+  kind?: "page" | "terminal" | "slack" | "agent";
   meta?: TutorialMeta;
   theme: "light" | "dark";
   fps: number;

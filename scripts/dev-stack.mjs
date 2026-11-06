@@ -3,9 +3,11 @@
 // the env files, a seeded libSQL on :8080 and the dashboard on :3001.
 // --api adds the API server (apps/server) on :3000, for the CLI and API casts;
 // --fake-slack (implies --api) loads scripts/slack/fake.mjs into it, so the
-// Slack app runs without Slack, Redis or a model, for scripts/record-slack.mjs.
+// Slack app runs without Slack, Redis or a model, for scripts/record-slack.mjs;
+// --fake-tinybird (implies --api) points it at the monitoring rows
+// scripts/record-agent.mjs serves while it records.
 //
-//   node scripts/dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--warm /incidents/1 ...]
+//   node scripts/dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--fake-tinybird] [--warm /incidents/1 ...]
 //   node scripts/dev-stack.mjs down
 //   node scripts/dev-stack.mjs status
 //   node scripts/dev-stack.mjs tools      # only fetch sqld, agent-browser
@@ -57,7 +59,7 @@ for (let i = 0; i < args.length; i++) {
 }
 if (!["up", "down", "status", "tools"].includes(command)) {
   console.error(
-    "usage: dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--warm <path> ...] [--port 3001] [--db-port 8080] | down | status | tools",
+    "usage: dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--fake-tinybird] [--warm <path> ...] [--port 3001] [--db-port 8080] | down | status | tools",
   );
   process.exit(2);
 }
@@ -372,7 +374,8 @@ async function up() {
     log(`dashboard answering after ${since(t)}`);
   }
 
-  if (flags.api || flags["fake-slack"]) {
+  const withApi = flags.api || flags["fake-slack"] || flags["fake-tinybird"];
+  if (withApi) {
     const fakeSlack = Boolean(flags["fake-slack"]);
     if (await apiUp()) {
       log(
@@ -402,7 +405,11 @@ async function up() {
           env: {
             ...env,
             NODE_ENV: "development",
-            TINYBIRD_NOOP: "true",
+            TINYBIRD_NOOP: flags["fake-tinybird"] ? "false" : "true",
+            ...(flags["fake-tinybird"] && {
+              TINYBIRD_URL: "http://127.0.0.1:3098",
+              TINY_BIRD_API_KEY: "fake",
+            }),
             FLY_REGION: "ams",
             // Validated at import by @openstatus/emails; nothing here mails.
             RESEND_API_KEY: "re_local",
@@ -440,7 +447,7 @@ async function up() {
   }
   writeState(state);
   log(
-    `ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}${flags.api || flags["fake-slack"] ? `, API ${apiUrl}` : ""}`,
+    `ready in ${since(started)}: dashboard ${base}, sqld ${dbUrl}${withApi ? `, API ${apiUrl}` : ""}`,
   );
 }
 

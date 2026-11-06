@@ -7,6 +7,8 @@ import {
   useVideoConfig,
 } from "remotion";
 
+import { AgentScene } from "./agent";
+import type { AgentData } from "./agent-data";
 import { palette } from "./brand";
 import "./fonts";
 import type { Segment } from "./pacing";
@@ -29,9 +31,10 @@ export type VideoProps = {
   // Folder under .recordings, e.g. "create-monitor".
   recording: string;
   timeline: Timeline | null;
-  // terminal.json and slack.json, for those recordings.
+  // terminal.json, slack.json and agent.json, for those recordings.
   terminal: TerminalData | null;
   slack: SlackData | null;
+  agent: AgentData | null;
   // Timelines of the dashboard clips cut into a Slack recording, by folder.
   clips: Record<string, Timeline>;
 };
@@ -100,6 +103,7 @@ export function Video({
   timeline,
   terminal,
   slack,
+  agent,
   clips,
 }: VideoProps) {
   const { fps } = useVideoConfig();
@@ -115,6 +119,8 @@ export function Video({
   const main = (segments: Segment[]) =>
     timeline.kind === "slack" && slack ? (
       <SlackScene timeline={timeline} slack={slack} segments={segments} />
+    ) : timeline.kind === "agent" && agent ? (
+      <AgentScene timeline={timeline} agent={agent} segments={segments} />
     ) : timeline.kind === "terminal" && terminal ? (
       <TerminalScene
         timeline={timeline}

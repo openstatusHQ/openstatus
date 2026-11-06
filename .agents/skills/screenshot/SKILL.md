@@ -233,6 +233,22 @@ its tag and pass it with `--cli`: `git clone --branch v1.4.0
 https://github.com/openstatusHQ/cli && cd cli && go build -o openstatus
 ./cmd/openstatus` (Go 1.26; `GOTOOLCHAIN=auto` fetches it).
 
+### Agent videos
+
+`node scripts/record-agent.mjs <session>` plays `scripts/agent/sessions/<session>.mjs`
+against the real `/mcp` endpoint, on a stack started with
+`node scripts/dev-stack.mjs up --api --fake-tinybird`. The conversation is
+scripted (`say`, `reply`); every `tool(name, input)` is a real JSON-RPC call,
+so a wrong name or argument fails the recording, and the approval step follows
+the server's `destructiveHint`. Build reply text from `tool` results, never
+hand-typed numbers. There is no local Tinybird, so the session's `tinybird`
+export supplies the monitoring pipes' rows while it records. The recorder
+refuses a database or API that is not the seeded stack, which `--db` must point
+at when `:8080` holds anything else. It writes
+`.recordings/remotion/agent-<session>/{timeline.json,agent.json}`, drawn in a
+Claude Desktop-style client by `scripts/videos`, from the app's own light theme
+tokens. Its fonts are proprietary, so text uses the app's fallback stack.
+
 ### Slack videos
 
 `node scripts/record-slack.mjs <thread>` plays `scripts/slack/threads/<thread>.mjs`

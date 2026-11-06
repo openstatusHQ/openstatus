@@ -9,8 +9,8 @@ const remotionDir = join(recordings, "remotion");
 const names = existsSync(remotionDir)
   ? readdirSync(remotionDir).filter((name) =>
       // The same rule as thumbnailsFrom in src/recordings.ts.
-      ["thumbnail.png", "terminal.json", "slack.json"].some((file) =>
-        existsSync(join(remotionDir, name, file)),
+      ["thumbnail.png", "terminal.json", "slack.json", "agent.json"].some(
+        (file) => existsSync(join(remotionDir, name, file)),
       ),
     )
   : [];

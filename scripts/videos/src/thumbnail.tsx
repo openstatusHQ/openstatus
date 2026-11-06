@@ -1,5 +1,7 @@
 import { AbsoluteFill, Img, staticFile, useVideoConfig } from "remotion";
 
+import { AgentWindow } from "./agent";
+import type { AgentData } from "./agent-data";
 import { Mark, palette } from "./brand";
 import { fonts } from "./fonts";
 import { panFor } from "./pan";
@@ -25,6 +27,7 @@ export type ThumbnailProps = {
   timeline: Timeline | null;
   terminal: TerminalData | null;
   slack: SlackData | null;
+  agent: AgentData | null;
 };
 
 export function Thumbnail({
@@ -32,6 +35,7 @@ export function Thumbnail({
   timeline,
   terminal,
   slack,
+  agent,
 }: ThumbnailProps) {
   const { width, height } = useVideoConfig();
   if (!timeline) return null;
@@ -99,7 +103,13 @@ export function Thumbnail({
           {copy.thumbSubtitle ?? copy.subtitle}
         </div>
       </div>
-      {slack ? (
+      {agent ? (
+        <AgentWindow
+          data={agent}
+          t={timeline.thumbnail?.t ?? timeline.duration}
+          style={{ position: "absolute", left: WINDOW_X, top: WINDOW_Y }}
+        />
+      ) : slack ? (
         <SlackWindow
           data={slack}
           t={timeline.thumbnail?.t ?? timeline.duration}

@@ -1,5 +1,6 @@
 import { Composition, Still, getStaticFiles, staticFile } from "remotion";
 
+import type { AgentData } from "./agent-data";
 import { recordingsFrom, thumbnailsFrom } from "./recordings";
 import type { SlackData } from "./slack-data";
 import type { TerminalData } from "./terminal-data";
@@ -10,7 +11,7 @@ import { Video, totalFrames, type VideoProps } from "./video";
 const json = async <T,>(path: string) =>
   (await (await fetch(staticFile(path))).json()) as T;
 
-// A recording's timeline, plus what terminal and Slack recordings draw from.
+// A recording's timeline, plus what drawn recordings draw from.
 async function load(recording: string) {
   const timeline = await json<Timeline>(`${recording}/timeline.json`);
   const terminal =
@@ -21,7 +22,11 @@ async function load(recording: string) {
     timeline.kind === "slack"
       ? await json<SlackData>(`${recording}/slack.json`)
       : null;
-  return { timeline, terminal, slack };
+  const agent =
+    timeline.kind === "agent"
+      ? await json<AgentData>(`${recording}/agent.json`)
+      : null;
+  return { timeline, terminal, slack, agent };
 }
 
 // The dashboard clips cut into a recording; only its video plays them.
@@ -41,7 +46,7 @@ async function loadClips(recording: string, timeline: Timeline) {
 
 // One composition per recording (node scripts/record.mjs <id> --remotion, or
 // node scripts/record-terminal.mjs <id>), and a <id>-thumbnail still for
-// each that has a thumbnail.png, a terminal.json or a slack.json.
+// each that has a thumbnail.png, or a terminal.json, slack.json or agent.json.
 export function RemotionRoot() {
   const files = getStaticFiles();
   return (
@@ -61,6 +66,7 @@ export function RemotionRoot() {
               timeline: null,
               terminal: null,
               slack: null,
+              agent: null,
               clips: {},
             } satisfies VideoProps
           }
@@ -92,6 +98,7 @@ export function RemotionRoot() {
               timeline: null,
               terminal: null,
               slack: null,
+              agent: null,
             } satisfies ThumbnailProps
           }
           calculateMetadata={async ({ props }) => ({
