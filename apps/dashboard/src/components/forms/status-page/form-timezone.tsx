@@ -74,17 +74,20 @@ export function FormTimezone({
 }) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  // Built on first open, not on mount: the search keywords take ~100 ms.
   const zones = useMemo(
     () =>
-      // some engines list UTC themselves, others do not
-      [...new Set(["UTC", ...Intl.supportedValuesOf("timeZone")])].map(
-        (zone) => ({
-          zone,
-          label: zoneLabel(zone),
-          keywords: timeZoneSearchKeywords(zone),
-        }),
-      ),
-    [],
+      open
+        ? // some engines list UTC themselves, others do not
+          [...new Set(["UTC", ...Intl.supportedValuesOf("timeZone")])].map(
+            (zone) => ({
+              zone,
+              label: zoneLabel(zone),
+              keywords: timeZoneSearchKeywords(zone),
+            }),
+          )
+        : [],
+    [open],
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),

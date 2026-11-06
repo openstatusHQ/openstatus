@@ -18,10 +18,17 @@ const rank = (search: string, now = new Date("2026-11-05T12:00:00Z")) =>
 
 describe("timeZoneSearchKeywords", () => {
   it("names both halves of the year", () => {
-    expect(timeZoneSearchKeywords("America/Los_Angeles")).toEqual([
-      "PST",
-      "PDT",
-    ]);
+    expect(timeZoneSearchKeywords("America/Los_Angeles")).toEqual(
+      expect.arrayContaining(["PST", "PDT"]),
+    );
+  });
+
+  it("adds regional abbreviations other English locales use", () => {
+    expect(timeZoneSearchKeywords("Europe/Berlin")).toEqual(
+      expect.arrayContaining(["CET", "CEST"]),
+    );
+    expect(timeZoneSearchKeywords("Asia/Kolkata")).toContain("IST");
+    expect(timeZoneSearchKeywords("Australia/Sydney")).toContain("AEST");
   });
 
   it("names a zone without DST once", () => {
@@ -33,6 +40,11 @@ describe("timeZoneSearchScore", () => {
   it("puts zones with that short name first", () => {
     expect(rank("PST")[0]).toBe("America/Los_Angeles");
     expect(rank("PST")).not.toContain("Pacific/Easter");
+  });
+
+  it("finds European zones by CET", () => {
+    expect(rank("CET")).toContain("Europe/Berlin");
+    expect(rank("CET")).not.toContain("America/Los_Angeles");
   });
 
   it("finds a zone by its summer name in winter", () => {
