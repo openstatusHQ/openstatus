@@ -15,7 +15,7 @@ import { Mark, palette } from "./brand";
 import { fonts } from "./fonts";
 import { CaptionLook } from "./scene";
 import { updateOf, type Timeline } from "./timeline";
-import { IRIS, updateSections } from "./update-layout";
+import { FEED, IRIS, isTall, updateSections } from "./update-layout";
 
 // An update opens and ends on ink whatever the recording's theme, so a loop
 // in a feed cuts from black to black.
@@ -89,7 +89,7 @@ function Words({
         flexWrap: "wrap",
         justifyContent: "center",
         columnGap: size * 0.24,
-        maxWidth: 1560,
+        maxWidth: useMeasure(),
         fontFamily: fonts.display,
         fontSize: size,
         letterSpacing: "-0.035em",
@@ -152,19 +152,41 @@ function Card({ children }: { children: ReactNode }) {
   );
 }
 
-// Long feature names step down so they stay on two lines.
-const titleSize = (title: string) =>
-  title.length <= 16 ? 156 : title.length <= 28 ? 124 : 98;
+// The widest a card's copy runs.
+function useMeasure() {
+  const frame = useVideoConfig();
+  return isTall(frame) ? frame.width - 160 : 1560;
+}
+
+// Long feature names step down so they stay on two lines (three in 9:16),
+// and further if the longest word would not fit a line: Cal Sans runs about
+// 0.55em a letter.
+function useTitleSize(title: string) {
+  const measure = useMeasure();
+  const step = title.length <= 16 ? 156 : title.length <= 28 ? 124 : 98;
+  const longest = Math.max(...title.split(" ").map((word) => word.length));
+  return Math.min(step, measure / (longest * 0.55));
+}
 
 function Hook({ title, tagline }: { title: string; tagline: string }) {
+  const tall = isTall(useVideoConfig());
   return (
     <Card>
       <Sticker delay={0} tilt={-6}>
         New
       </Sticker>
-      <Words text={title} delay={0.12} size={titleSize(title)} />
+      <Words text={title} delay={0.12} size={useTitleSize(title)} />
       <Rise delay={0.55}>
-        <div style={{ fontFamily: fonts.sans, fontSize: 38, color: DIM }}>
+        <div
+          style={{
+            maxWidth: useMeasure(),
+            fontFamily: fonts.sans,
+            fontSize: tall ? 44 : 38,
+            lineHeight: tall ? 1.3 : undefined,
+            textWrap: "balance",
+            color: DIM,
+          }}
+        >
           {tagline}
         </div>
       </Rise>
@@ -181,12 +203,19 @@ function End({
   link: string;
   delay: number;
 }) {
+  const url = `openstatus.dev/${link}`;
+  // Commit Mono advances 0.6em a character, so a long link shrinks to fit.
+  const size = Math.min(34, (useMeasure() - 50) / (url.length * 0.6));
   return (
     <Card>
       <Sticker delay={delay} tilt={5}>
         Out now
       </Sticker>
-      <Words text={title} delay={delay + 0.1} size={titleSize(title) * 0.72} />
+      <Words
+        text={title}
+        delay={delay + 0.1}
+        size={useTitleSize(title) * 0.72}
+      />
       <Rise delay={delay + 0.45}>
         <div
           style={{
@@ -195,12 +224,12 @@ function End({
             gap: 16,
             marginTop: 8,
             fontFamily: fonts.mono,
-            fontSize: 34,
+            fontSize: size,
             color: PAPER,
           }}
         >
           <Mark size={34} color={PAPER} />
-          openstatus.dev/{link}
+          {url}
         </div>
       </Rise>
     </Card>
@@ -210,7 +239,10 @@ function End({
 // What the video is about, for whoever lands in the middle of a loop.
 function Tag({ title, frames }: { title: string; frames: number }) {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const config = useVideoConfig();
+  const { fps } = config;
+  // In 9:16 it is a headline: larger, centred, under the feed's own header.
+  const tall = isTall(config);
   const pop = usePop(IRIS);
   const out = interpolate(frame, [frames - IRIS * fps, frames], [1, 0], {
     extrapolateLeft: "clamp",
@@ -220,40 +252,49 @@ function Tag({ title, frames }: { title: string; frames: number }) {
     <div
       style={{
         position: "absolute",
-        left: 32,
-        top: 22,
+        left: tall ? 0 : 32,
+        right: tall ? 0 : undefined,
+        top: tall ? FEED.top : 22,
         display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "8px 18px 8px 8px",
-        borderRadius: 9999,
-        backgroundColor: INK,
-        color: PAPER,
-        fontFamily: fonts.sans,
-        fontWeight: 500,
-        fontSize: 22,
-        boxShadow: "0 8px 24px -8px rgb(0 0 0 / 0.35)",
-        opacity: Math.min(1, pop * 3) * out,
-        transformOrigin: "0 50%",
-        transform: `scale(${pop})`,
+        justifyContent: "center",
       }}
     >
-      <span
+      <div
         style={{
-          fontFamily: fonts.mono,
-          fontWeight: 700,
-          fontSize: 16,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          padding: "5px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "8px 18px 8px 8px",
           borderRadius: 9999,
-          color: INK,
-          backgroundColor: status.success,
+          backgroundColor: INK,
+          color: PAPER,
+          fontFamily: fonts.sans,
+          fontWeight: 500,
+          fontSize: 22,
+          whiteSpace: "nowrap",
+          boxShadow: "0 8px 24px -8px rgb(0 0 0 / 0.35)",
+          opacity: Math.min(1, pop * 3) * out,
+          transformOrigin: tall ? "50% 0" : "0 50%",
+          transform: `scale(${pop * (tall ? 1.6 : 1)})`,
         }}
       >
-        New
-      </span>
-      {title}
+        <span
+          style={{
+            fontFamily: fonts.mono,
+            fontWeight: 700,
+            fontSize: 16,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            padding: "5px 12px",
+            borderRadius: 9999,
+            color: INK,
+            backgroundColor: status.success,
+          }}
+        >
+          New
+        </span>
+        {title}
+      </div>
     </div>
   );
 }
@@ -276,11 +317,12 @@ function Confetti({ frames }: { frames: number }) {
         const left = i % 2 === 0;
         const angle = ((52 + r("angle") * 34) * Math.PI) / 180;
         const speed = 1500 + r("speed") * 1900;
+        // Tuned on 1920×1080; another frame is crossed in the same time.
         return {
           x: left ? -20 : width + 20,
           y: height + 20,
-          vx: Math.cos(angle) * speed * (left ? 1 : -1),
-          vy: -Math.sin(angle) * speed,
+          vx: Math.cos(angle) * speed * (left ? 1 : -1) * (width / 1920),
+          vy: -Math.sin(angle) * speed * (height / 1080),
           delay: r("delay") * 0.18,
           size: 12 + r("size") * 14,
           round: r("shape") < 0.25,
@@ -304,7 +346,10 @@ function Confetti({ frames }: { frames: number }) {
         // Velocity decays under drag; gravity pulls towards terminal speed.
         const glide = (1 - Math.exp(-DRAG * age)) / DRAG;
         const x = p.x + p.vx * glide;
-        const y = p.y + p.vy * glide + (GRAVITY * (age - glide)) / DRAG;
+        const y =
+          p.y +
+          p.vy * glide +
+          (GRAVITY * (height / 1080) * (age - glide)) / DRAG;
         if (y > height + 60) return null;
         return (
           <div

@@ -6,6 +6,8 @@ import {
   cursorAt,
   travelSpans,
   type Project,
+  type Shot,
+  type Tall,
 } from "./camera";
 import type { Timeline, TimelineEvent } from "./timeline";
 
@@ -84,6 +86,42 @@ describe("a look", () => {
     expect(cameraAt(shots, 4, scene).zoom).toBeGreaterThan(2);
     expect(cameraAt(shots, 6, scene).zoom).toBe(cameraAt(shots, 4, scene).zoom);
     expect(cameraAt(shots, 4, scene).x).toBeCloseTo(960);
+  });
+});
+
+describe("a 9:16 scene", () => {
+  const frame = { width: 1080, height: 1920 };
+  // A 1440×900 window fitted to the width.
+  const tall: Tall = { rows: [650, 1270], keep: [570, 1150] };
+  const at = (y: number, zoom: number) => {
+    const shots: Shot[] = [{ t: 0, x: 540, y, zoom }];
+    const camera = cameraAt(shots, 0, frame, tall);
+    const onScreen = (sceneY: number) =>
+      (sceneY - camera.y) * zoom + frame.height / 2;
+    return { camera, target: onScreen(y), top: onScreen(tall.rows[0]) };
+  };
+
+  test("moves in further than 16:9 by its reach", () => {
+    const clicked = timeline([
+      { type: "click", t: 3, at: [100, 100], box: [80, 90, 40, 20] },
+    ]);
+    const [, near] = buildShots(clicked, frame, project, scale);
+    const [, nearer] = buildShots(clicked, frame, project, scale, 1.5);
+    expect(nearer.zoom).toBeCloseTo(near.zoom * 1.5);
+  });
+
+  test("keeps the window in the middle while it is shorter than the frame", () => {
+    expect(at(900, 2).camera.y).toBe(960);
+  });
+
+  test("fills the frame with the window once it is taller", () => {
+    expect(at(800, 4).top).toBeCloseTo(0);
+  });
+
+  test("gives that up to keep the target between title and caption", () => {
+    expect(at(660, 4).target).toBeCloseTo(570);
+    expect(at(1260, 4).target).toBeCloseTo(1150);
+    expect(at(700, 2).target).toBeCloseTo(570);
   });
 });
 

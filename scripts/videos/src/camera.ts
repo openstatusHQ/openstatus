@@ -5,6 +5,12 @@ import { eventsOf, type Rect, type Timeline } from "./timeline";
 // Camera position in scene pixels; zoom 1 shows the whole scene.
 export type Shot = { t: number; x: number; y: number; zoom: number };
 export type Bounds = { width: number; height: number };
+// A 9:16 scene: the heights its window spans, and the band of the frame the
+// camera's target stays in, clear of what the feed draws over the frame.
+export type Tall = {
+  rows: [top: number, bottom: number];
+  keep: [top: number, bottom: number];
+};
 // Maps a point of the recorded viewport into the scene.
 export type Project = (x: number, y: number) => [number, number];
 
@@ -24,6 +30,8 @@ export function buildShots(
   scene: Bounds,
   project: Project,
   scale: number,
+  // How much further than its usual limits the camera may move in.
+  reach = 1,
 ): Shot[] {
   const overview = (t: number) => ({
     t,
@@ -37,7 +45,7 @@ export function buildShots(
     const zoom = Math.max(
       1,
       Math.min(
-        max,
+        max * reach,
         (0.7 * scene.width) / (w * scale),
         (0.7 * scene.height) / (h * scale),
       ),
@@ -86,7 +94,12 @@ function clamp(v: number, lo: number, hi: number) {
 
 // The camera holds each shot, then glides into the next one so it arrives
 // exactly when that event happens. Times are recording (source) seconds.
-export function cameraAt(shots: Shot[], t: number, scene: Bounds): Shot {
+export function cameraAt(
+  shots: Shot[],
+  t: number,
+  scene: Bounds,
+  tall?: Tall,
+): Shot {
   let i = 0;
   while (i + 1 < shots.length && shots[i + 1].t <= t) i++;
   const from = shots[i];
@@ -110,10 +123,27 @@ export function cameraAt(shots: Shot[], t: number, scene: Bounds): Shot {
 
   const halfW = scene.width / (2 * shot.zoom);
   const halfH = scene.height / (2 * shot.zoom);
+  let y = shot.y;
+  if (tall) {
+    const [top, bottom] = tall.rows;
+    const mid = scene.height / 2;
+    // The window keeps to the middle of the frame until it outgrows it, then
+    // fills it: the stage shows as two even bands or not at all…
+    y =
+      2 * halfH >= bottom - top
+        ? (top + bottom) / 2
+        : clamp(y, top + halfH, bottom - halfH);
+    // …unless that leaves the target outside its band.
+    y = clamp(
+      y,
+      shot.y - (tall.keep[1] - mid) / shot.zoom,
+      shot.y - (tall.keep[0] - mid) / shot.zoom,
+    );
+  }
   return {
     ...shot,
     x: clamp(shot.x, halfW, scene.width - halfW),
-    y: clamp(shot.y, halfH, scene.height - halfH),
+    y: clamp(y, halfH, scene.height - halfH),
   };
 }
 

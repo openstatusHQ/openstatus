@@ -239,6 +239,16 @@ captions that pop in, the title pinned in a corner, and an "Out now" end card
 with confetti and the link. Keep the story to one outcome and two or three
 `step()` captions of a few words each.
 
+Every update has two compositions from the one recording: `<name>` at 16:9
+(1920×1080) and `<name>-vertical` at 9:16 (1080×1920) for Shorts, Reels and
+TikTok. `pnpm --filter @openstatus/videos render <name>-vertical
+../../.recordings/final/<name>-vertical.mp4` exports it. The vertical cut fits
+the window to the frame's width and moves the camera in further, draws an
+agent session as the thread alone, centres the title above the window, and
+keeps captions clear of what a feed draws over the bottom of the frame
+(`FEED` in `src/update-layout.ts`). Terminal and Slack recordings are only
+fitted to the width, so they come out small.
+
 Two steps exist for stories that are read more than clicked:
 
 - `look(locator, ms)` rests the cursor on an element; the camera moves in on

@@ -18,13 +18,17 @@ import { stepAt } from "./camera";
 import { sourceTime, type Segment } from "./pacing";
 import { Caption, CAPTION_FADE, Cursor } from "./scene";
 import type { Timeline } from "./timeline";
+import { FEED, isTall } from "./update-layout";
 
 // The Claude Desktop window at about 1.35× its real size, so text survives
 // being watched at 1080p.
 export const AGENT_WIDTH = 1600;
 export const AGENT_HEIGHT = 1000;
+// In 9:16 the window is the thread alone, narrow enough to be drawn larger.
+const AGENT_TALL_WIDTH = 820;
 const SIDEBAR = 348;
 const COLUMN = 900;
+const GUTTER = 30;
 
 // Claude Desktop's light theme tokens. Its typefaces are proprietary, so these
 // are the stacks the app itself falls back to.
@@ -192,7 +196,15 @@ function Button({
   );
 }
 
-function Approval({ item, t }: { item: ToolItem; t: number }) {
+function Approval({
+  item,
+  t,
+  column,
+}: {
+  item: ToolItem;
+  t: number;
+  column: number;
+}) {
   const click = item.clickAt ?? Infinity;
   const glide = ease(
     interpolate(
@@ -225,7 +237,7 @@ function Approval({ item, t }: { item: ToolItem; t: number }) {
       </Button>
       {t >= click - GLIDE - 0.2 && (
         <Cursor
-          x={interpolate(glide, [0, 1], [430, 800])}
+          x={interpolate(glide, [0, 1], [column - 470, column - 100])}
           y={interpolate(glide, [0, 1], [-46, 22])}
           zoom={0.45}
           pressed={pressed && t < click + PRESS}
@@ -236,7 +248,15 @@ function Approval({ item, t }: { item: ToolItem; t: number }) {
 }
 
 // What the app asks before a write; the section stays folded above it.
-function ApprovalCard({ item, t }: { item: ToolItem; t: number }) {
+function ApprovalCard({
+  item,
+  t,
+  column,
+}: {
+  item: ToolItem;
+  t: number;
+  column: number;
+}) {
   return (
     <div
       style={{
@@ -258,7 +278,7 @@ function ApprovalCard({ item, t }: { item: ToolItem; t: number }) {
         from openstatus
       </div>
       <Json label="Request" text={JSON.stringify(item.input, null, 2)} />
-      <Approval item={item} t={t} />
+      <Approval item={item} t={t} column={column} />
     </div>
   );
 }
@@ -291,7 +311,15 @@ function ToolStep({ item, t }: { item: ToolItem; t: number }) {
   );
 }
 
-function Activity({ item, t }: { item: ActivityItem; t: number }) {
+function Activity({
+  item,
+  t,
+  column,
+}: {
+  item: ActivityItem;
+  t: number;
+  column: number;
+}) {
   const revealAt = item.revealAt;
   const open =
     revealAt === null
@@ -370,7 +398,7 @@ function Activity({ item, t }: { item: ActivityItem; t: number }) {
           </div>
         </div>
       </div>
-      {asking && <ApprovalCard item={asking} t={t} />}
+      {asking && <ApprovalCard item={asking} t={t} column={column} />}
     </>
   );
 }
@@ -468,6 +496,21 @@ function Composer({
   );
 }
 
+function Lights() {
+  return ["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+    <div
+      key={c}
+      style={{
+        width: 14,
+        height: 14,
+        flexShrink: 0,
+        borderRadius: 9999,
+        backgroundColor: c,
+      }}
+    />
+  ));
+}
+
 function Sidebar({ data }: { data: AgentData }) {
   const { client, title } = data;
   const item: CSSProperties = {
@@ -502,17 +545,7 @@ function Sidebar({ data }: { data: AgentData }) {
           padding: "0 8px",
         }}
       >
-        {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-          <div
-            key={c}
-            style={{
-              width: 14,
-              height: 14,
-              borderRadius: 9999,
-              backgroundColor: c,
-            }}
-          />
-        ))}
+        <Lights />
         <div style={{ flex: 1 }} />
         <div style={{ display: "flex", color: ui.text500 }}>
           <Icon d={icons.sidebar} />
@@ -628,19 +661,26 @@ export function AgentWindow({
   data,
   t,
   style,
+  width = AGENT_WIDTH,
+  height = AGENT_HEIGHT,
+  sidebar = true,
 }: {
   data: AgentData;
   t: number;
   style?: CSSProperties;
+  width?: number;
+  height?: number;
+  sidebar?: boolean;
 }) {
   const colors = palette.light;
   const state = agentStateAt(data, t);
+  const column = Math.min(COLUMN, width - (sidebar ? SIDEBAR : 0) - 2 * GUTTER);
   return (
     <div
       style={{
         display: "flex",
-        width: AGENT_WIDTH,
-        height: AGENT_HEIGHT,
+        width,
+        height,
         borderRadius: 14,
         overflow: "hidden",
         backgroundColor: ui.bg100,
@@ -648,7 +688,7 @@ export function AgentWindow({
         ...style,
       }}
     >
-      <Sidebar data={data} />
+      {sidebar && <Sidebar data={data} />}
       <div
         style={{
           flex: 1,
@@ -670,6 +710,11 @@ export function AgentWindow({
             color: ui.text100,
           }}
         >
+          {!sidebar && (
+            <div style={{ display: "flex", gap: 9, marginRight: 14 }}>
+              <Lights />
+            </div>
+          )}
           {data.title}
           <div style={{ display: "flex", color: ui.text500 }}>
             <Icon d={icons.chevron} size={18} />
@@ -703,7 +748,7 @@ export function AgentWindow({
             style={{
               flexShrink: 0,
               minHeight: "100%",
-              width: COLUMN,
+              width: column,
               margin: "0 auto",
               padding: "18px 0 20px",
               display: "flex",
@@ -717,7 +762,7 @@ export function AgentWindow({
                   key={item.id}
                   style={{
                     alignSelf: "flex-end",
-                    maxWidth: 680,
+                    maxWidth: Math.min(680, column - 100),
                     margin: "10px 0",
                     padding: "13px 20px",
                     borderRadius: 18,
@@ -744,13 +789,13 @@ export function AgentWindow({
                   <Inline text={item.text} />
                 </div>
               ) : (
-                <Activity key={item.id} item={item} t={t} />
+                <Activity key={item.id} item={item} t={t} column={column} />
               ),
             )}
             {state.thinking && <Thinking t={t} />}
           </div>
         </div>
-        <div style={{ width: COLUMN, flexShrink: 0, margin: "0 auto" }}>
+        <div style={{ width: column, flexShrink: 0, margin: "0 auto" }}>
           <Composer text={state.compose} model={data.client.model} t={t} />
           <div
             style={{
@@ -781,23 +826,32 @@ export function AgentScene({
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
   const t = sourceTime(segments, frame / fps);
-  const scale = Math.min(
-    (width * 0.9) / AGENT_WIDTH,
-    (height * 0.84) / AGENT_HEIGHT,
-  );
+  // In 9:16 the window fills what the title above and the caption below
+  // leave of the frame.
+  const tall = isTall({ width, height });
+  const top = FEED.top + 110;
+  const scale = tall
+    ? (width * 0.94) / AGENT_TALL_WIDTH
+    : Math.min((width * 0.9) / AGENT_WIDTH, (height * 0.84) / AGENT_HEIGHT);
+  const size = tall
+    ? {
+        width: AGENT_TALL_WIDTH,
+        height: (height - FEED.bottom - 140 - top) / scale,
+      }
+    : { width: AGENT_WIDTH, height: AGENT_HEIGHT };
   const step = stepAt(timeline, t);
   return (
     <AbsoluteFill style={{ backgroundColor: palette.light.stage }}>
       <div
         style={{
           position: "absolute",
-          left: (width - AGENT_WIDTH * scale) / 2,
-          top: (height - AGENT_HEIGHT * scale) / 2 - 24,
+          left: (width - size.width * scale) / 2,
+          top: tall ? top : (height - size.height * scale) / 2 - 24,
           transform: `scale(${scale})`,
           transformOrigin: "0 0",
         }}
       >
-        <AgentWindow data={agent} t={t} />
+        <AgentWindow data={agent} t={t} {...size} sidebar={!tall} />
       </div>
       {step && (
         <Caption

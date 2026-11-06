@@ -7,6 +7,12 @@ export const END = 2.8;
 // a circle that takes this long.
 export const IRIS = 0.55;
 
+// A 9:16 cut plays in a feed that draws its own interface over the top and
+// bottom of the frame; copy stays between them.
+export const FEED = { top: 240, bottom: 420 };
+export const isTall = (frame: { width: number; height: number }) =>
+  frame.height > frame.width;
+
 // Section lengths in whole frames, as `sections` in video.tsx gives a
 // tutorial's.
 export function updateSections(

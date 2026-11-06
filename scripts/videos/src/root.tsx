@@ -1,11 +1,20 @@
-import { Composition, Still, getStaticFiles, staticFile } from "remotion";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Composition,
+  Still,
+  cancelRender,
+  continueRender,
+  delayRender,
+  getStaticFiles,
+  staticFile,
+} from "remotion";
 
 import type { AgentData } from "./agent-data";
 import { recordingsFrom, thumbnailsFrom } from "./recordings";
 import type { SlackData } from "./slack-data";
 import type { TerminalData } from "./terminal-data";
 import { Thumbnail, type ThumbnailProps } from "./thumbnail";
-import type { Timeline } from "./timeline";
+import { isUpdate, type Timeline } from "./timeline";
 import { Video, totalFrames, type VideoProps } from "./video";
 
 const json = async <T,>(path: string) =>
@@ -44,47 +53,79 @@ async function loadClips(recording: string, timeline: Timeline) {
   ) as Record<string, Timeline>;
 }
 
+// The recordings cut as product updates. Which ones is inside each timeline,
+// so the composition list waits for them.
+function useUpdates(recordings: string[]) {
+  const [updates, setUpdates] = useState<string[]>([]);
+  const [handle] = useState(() => delayRender("update timelines"));
+  useEffect(() => {
+    Promise.all(
+      recordings.map(async (recording) =>
+        isUpdate(await json<Timeline>(`${recording}/timeline.json`))
+          ? [recording]
+          : [],
+      ),
+    )
+      .then((found) => {
+        setUpdates(found.flat());
+        continueRender(handle);
+      })
+      .catch((err) => cancelRender(err));
+  }, [recordings, handle]);
+  return updates;
+}
+
+function video(recording: string, id: string, width: number, height: number) {
+  return (
+    <Composition
+      key={id}
+      id={id}
+      component={Video}
+      width={width}
+      height={height}
+      fps={30}
+      durationInFrames={1}
+      defaultProps={
+        {
+          recording,
+          timeline: null,
+          terminal: null,
+          slack: null,
+          agent: null,
+          clips: {},
+        } satisfies VideoProps
+      }
+      calculateMetadata={async ({ props }) => {
+        const loaded = await load(props.recording);
+        const clips = await loadClips(props.recording, loaded.timeline);
+        return {
+          fps: loaded.timeline.fps,
+          durationInFrames: totalFrames(
+            loaded.timeline,
+            clips,
+            loaded.timeline.fps,
+          ),
+          props: { ...props, ...loaded, clips },
+        };
+      }}
+    />
+  );
+}
+
 // One composition per recording (node scripts/record.mjs <id> --remotion, or
-// node scripts/record-terminal.mjs <id>), and a <id>-thumbnail still for
-// each that has a thumbnail.png, or a terminal.json, slack.json or agent.json.
+// node scripts/record-terminal.mjs <id>), a 9:16 <id>-vertical for each
+// product update, and a <id>-thumbnail still for each that has a
+// thumbnail.png, or a terminal.json, slack.json or agent.json.
 export function RemotionRoot() {
-  const files = getStaticFiles();
+  const [files] = useState(getStaticFiles);
+  const recordings = useMemo(() => recordingsFrom(files), [files]);
+  const updates = useUpdates(recordings);
   return (
     <>
-      {recordingsFrom(files).map((recording) => (
-        <Composition
-          key={recording}
-          id={recording}
-          component={Video}
-          width={1920}
-          height={1080}
-          fps={30}
-          durationInFrames={1}
-          defaultProps={
-            {
-              recording,
-              timeline: null,
-              terminal: null,
-              slack: null,
-              agent: null,
-              clips: {},
-            } satisfies VideoProps
-          }
-          calculateMetadata={async ({ props }) => {
-            const loaded = await load(props.recording);
-            const clips = await loadClips(props.recording, loaded.timeline);
-            return {
-              fps: loaded.timeline.fps,
-              durationInFrames: totalFrames(
-                loaded.timeline,
-                clips,
-                loaded.timeline.fps,
-              ),
-              props: { ...props, ...loaded, clips },
-            };
-          }}
-        />
-      ))}
+      {recordings.map((recording) => video(recording, recording, 1920, 1080))}
+      {updates.map((recording) =>
+        video(recording, `${recording}-vertical`, 1080, 1920),
+      )}
       {thumbnailsFrom(files).map((recording) => (
         <Still
           key={`${recording}-thumbnail`}
