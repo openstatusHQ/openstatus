@@ -1,5 +1,3 @@
-import { POPULAR_STATUS } from "./popular-status";
-
 // Services worth surfacing in "Having issues now" on /status: well-known
 // tech, AI, cloud and developer platforms. The directory tracks thousands of
 // status pages, and a partial outage at a regional shop or a game is noise
@@ -149,7 +147,4 @@ const NOTABLE_SLUGS = [
   "calendly",
 ] as const;
 
-export const NOTABLE_STATUS_SLUGS: ReadonlySet<string> = new Set([
-  ...POPULAR_STATUS.map((e) => e.service),
-  ...NOTABLE_SLUGS,
-]);
+export const NOTABLE_STATUS_SLUGS: ReadonlySet<string> = new Set(NOTABLE_SLUGS);
