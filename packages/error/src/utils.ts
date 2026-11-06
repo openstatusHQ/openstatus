@@ -77,3 +77,8 @@ export function redactError<TError extends Error | unknown>(err: TError) {
   if (!(err instanceof Error)) return err;
   console.error(`Type of Error: ${err.constructor}`);
 }
+
+/** Anchor is the heading slug on the API errors page: lowercase, `_` becomes `-`. */
+export function errorDocsUrl(code: ErrorCode): string {
+  return `https://www.openstatus.dev/docs/reference/api-errors#${code.toLowerCase().replace(/_/g, "-")}`;
+}

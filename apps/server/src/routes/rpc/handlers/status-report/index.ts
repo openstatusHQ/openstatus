@@ -1,4 +1,4 @@
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import { Code, type ServiceImpl } from "@connectrpc/connect";
 import type {
   ComponentImpact,
   StatusReportService,
@@ -17,6 +17,7 @@ import {
 } from "@openstatus/services/status-report";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
+import { ErrorReason, invalidIdError, rpcError } from "../../errors";
 import { getRpcContext } from "../../interceptors";
 import { parseDate as parseRpcDate, parseId as parseRpcId } from "../../parse";
 import {
@@ -37,11 +38,7 @@ function parseDate(dateString: string): Date {
 }
 
 function parseId(value: string, label: string): number {
-  return parseRpcId(
-    value,
-    () =>
-      new ConnectError(`Invalid ${label}: "${value}"`, Code.InvalidArgument),
-  );
+  return parseRpcId(value, () => invalidIdError(label, value));
 }
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
@@ -296,10 +293,12 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         });
         const update = full.updates.find((u) => u.id === id);
         if (!update) {
-          throw new ConnectError(
-            `Status report update ${id} was deleted concurrently`,
-            Code.NotFound,
-          );
+          throw rpcError({
+            code: Code.NotFound,
+            reason: ErrorReason.NOT_FOUND,
+            message: `Status report update ${id} was deleted concurrently`,
+            metadata: { resource: "status_report_update" },
+          });
         }
         return { statusReportUpdate: dbUpdateToProto(update) };
       } catch (err) {

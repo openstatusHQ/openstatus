@@ -1,4 +1,4 @@
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import type { ServiceImpl } from "@connectrpc/connect";
 import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import {
   addMaintenanceUpdate,
@@ -13,6 +13,7 @@ import {
 } from "@openstatus/services/maintenance";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
+import { invalidIdError } from "../../errors";
 import { getRpcContext } from "../../interceptors";
 import { parseDate as parseRpcDate, parseId as parseRpcId } from "../../parse";
 import {
@@ -31,11 +32,7 @@ function parseDate(dateString: string): Date {
 }
 
 function parseId(value: string, label: string): number {
-  return parseRpcId(
-    value,
-    () =>
-      new ConnectError(`Invalid ${label}: "${value}"`, Code.InvalidArgument),
-  );
+  return parseRpcId(value, () => invalidIdError(label, value));
 }
 
 function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {

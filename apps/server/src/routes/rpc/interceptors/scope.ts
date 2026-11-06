@@ -1,7 +1,9 @@
 import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
-import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
+import { Code, type Interceptor } from "@connectrpc/connect";
 import type { RequiredScope, ScopeGroup } from "@openstatus/db/src/schema";
 import { matchesScope } from "@openstatus/services/auth";
+
+import { ErrorReason, rpcError } from "@/libs/errors/rpc";
 
 import { RPC_CONTEXT_KEY } from "./context";
 
@@ -61,13 +63,19 @@ export function scopeInterceptor(): Interceptor {
 
     const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
     if (!rpcCtx) {
-      throw new ConnectError("Missing credentials", Code.Unauthenticated);
+      throw rpcError({
+        code: Code.Unauthenticated,
+        reason: ErrorReason.MISSING_CREDENTIALS,
+        message: "Missing credentials",
+      });
     }
     if (!matchesScope(rpcCtx.apiKey.scopes ?? [], required)) {
-      throw new ConnectError(
-        `API key lacks required scope: ${required}`,
-        Code.PermissionDenied,
-      );
+      throw rpcError({
+        code: Code.PermissionDenied,
+        reason: ErrorReason.FORBIDDEN,
+        message: `API key lacks required scope: ${required}`,
+        metadata: { requiredScope: required },
+      });
     }
     return next(req);
   };

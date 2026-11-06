@@ -1,5 +1,5 @@
 import { create } from "@bufbuild/protobuf";
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code } from "@connectrpc/connect";
 import type { NotificationProvider as DBNotificationProvider } from "@openstatus/db/src/schema";
 import type {
   Notification,
@@ -13,6 +13,8 @@ import {
   NotificationSummarySchema,
   OpsgenieRegion,
 } from "@openstatus/proto/notification/v1";
+
+import { ErrorReason, rpcError } from "../../errors";
 
 type DBNotification = {
   id: number;
@@ -128,10 +130,14 @@ export function protoProviderToDb(
   };
   const mapped = mapping[provider];
   if (!mapped) {
-    throw new ConnectError(
-      `Unknown or unspecified notification provider: ${NotificationProvider[provider] ?? provider}`,
-      Code.InvalidArgument,
-    );
+    throw rpcError({
+      code: Code.InvalidArgument,
+      reason: ErrorReason.PROVIDER_NOT_SUPPORTED,
+      message: `Unknown or unspecified notification provider: ${NotificationProvider[provider] ?? provider}`,
+      metadata: {
+        provider: String(NotificationProvider[provider] ?? provider),
+      },
+    });
   }
   return mapped;
 }

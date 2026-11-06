@@ -31,6 +31,37 @@ try {
 | `resource_exhausted` | Rate limited (HTTP `429`); wait for the `Retry-After` header, see [API rate limits](/docs/reference/api-rate-limits) |
 | `unavailable` | The server is shedding load (HTTP `503`); retry with backoff |
 
+The full list, including the HTTP status each code maps to, is in the [API errors reference](/docs/reference/api-errors).
+
+## Structured Details
+
+Every error carries a `google.rpc.ErrorInfo` detail with a stable `reason`, the `requestId` to quote to support, and the ids of the resources involved. Switch on `reason` when the code alone is too coarse:
+
+```typescript
+import { Code, ConnectError } from "@connectrpc/connect";
+import { ErrorInfoSchema } from "@buf/googleapis_googleapis.bufbuild_es/google/rpc/error_details_pb";
+
+try {
+  await client.monitor.v1.MonitorService.getMonitor({ id });
+} catch (error) {
+  if (error instanceof ConnectError) {
+    const [info] = error.findDetails(ErrorInfoSchema);
+    if (info?.reason === "MONITOR_NOT_FOUND") {
+      console.warn(`monitor ${info.metadata.monitorId} is gone`);
+    } else if (info?.reason === "PLAN_LIMIT_REACHED") {
+      console.warn(`limit ${info.metadata.limit}: ${info.metadata.current}/${info.metadata.max}`);
+    }
+    console.error(`request id: ${info?.metadata.requestId}`);
+  }
+}
+```
+
+`invalid_argument` errors add a `google.rpc.BadRequest` (or `buf.validate.Violations`) detail naming each bad field, and `resource_exhausted` and `unavailable` add a `google.rpc.RetryInfo` with the delay to wait. The [reasons table](/docs/reference/api-errors#reasons) lists every value and its metadata keys.
+
+<Aside type="note">
+`ErrorInfoSchema` comes from the Buf registry: add `@buf:registry=https://buf.build/gen/npm/v1/` to your `.npmrc` and install `@buf/googleapis_googleapis.bufbuild_es`.
+</Aside>
+
 ## Retry Strategy
 
 ConnectRPC does not retry by default. For transient failures (`resource_exhausted`, `unavailable`, `deadline_exceeded`), implement your own retry logic. The response headers, including `Retry-After`, are available on `error.metadata`; keep the delay at or above that value when it is present:

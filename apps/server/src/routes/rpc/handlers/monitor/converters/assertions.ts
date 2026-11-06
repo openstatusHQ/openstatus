@@ -1,4 +1,4 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import {
   type Assertion,
@@ -20,6 +20,7 @@ import type {
 } from "@openstatus/proto/monitor/v1";
 import type { z } from "zod";
 
+import { ErrorReason, rpcError } from "../../../errors";
 import {
   compareToNumberComparator,
   compareToRecordComparator,
@@ -178,10 +179,14 @@ export type MonitorAssertionInput =
 function toDnsRecordKey(record: string): DnsRecord {
   const match = dnsRecords.find((r) => r === record);
   if (!match) {
-    throw new ConnectError(
-      `Invalid DNS record type: ${record}`,
-      Code.InvalidArgument,
-    );
+    throw rpcError({
+      code: Code.InvalidArgument,
+      reason: ErrorReason.VALIDATION_FAILED,
+      message: `Invalid DNS record type: ${record}`,
+      fieldViolations: [
+        { field: "record", description: `Invalid DNS record type: ${record}` },
+      ],
+    });
   }
   return match;
 }

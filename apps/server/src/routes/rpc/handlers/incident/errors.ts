@@ -1,86 +1,49 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code, type ConnectError } from "@connectrpc/connect";
 
-export const ErrorReason = {
-  INCIDENT_NOT_FOUND: "INCIDENT_NOT_FOUND",
-  INVALID_ID: "INVALID_ID",
-  INVALID_COMMANDER: "INVALID_COMMANDER",
-  CONFLICTING_FIELDS: "CONFLICTING_FIELDS",
-  INVALID_DATE_FORMAT: "INVALID_DATE_FORMAT",
-  INVALID_ENUM: "INVALID_ENUM",
-} as const;
-
-export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason];
-
-const DOMAIN = "openstatus.dev";
-
-function createError(
-  message: string,
-  code: Code,
-  reason: ErrorReason,
-  metadata?: Record<string, string>,
-): ConnectError {
-  const headers = new Headers({
-    "error-domain": DOMAIN,
-    "error-reason": reason,
-  });
-  if (metadata) {
-    for (const [key, value] of Object.entries(metadata)) {
-      headers.set(`error-${key}`, value);
-    }
-  }
-  return new ConnectError(message, code, headers);
-}
+import { ErrorReason, rpcError } from "../../errors";
 
 export function incidentNotFoundError(incidentId: string): ConnectError {
-  return createError(
-    "Incident not found",
-    Code.NotFound,
-    ErrorReason.INCIDENT_NOT_FOUND,
-    { "incident-id": incidentId },
-  );
-}
-
-export function invalidIdError(field: string, value: string): ConnectError {
-  return createError(
-    `Invalid ${field}: "${value}"`,
-    Code.InvalidArgument,
-    ErrorReason.INVALID_ID,
-    { field },
-  );
+  return rpcError({
+    code: Code.NotFound,
+    reason: ErrorReason.INCIDENT_NOT_FOUND,
+    message: "Incident not found",
+    metadata: { incidentId },
+  });
 }
 
 export function invalidCommanderError(email: string): ConnectError {
-  return createError(
-    `No workspace member with email "${email}"`,
-    Code.InvalidArgument,
-    ErrorReason.INVALID_COMMANDER,
-  );
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.VALIDATION_FAILED,
+    message: `No workspace member with email "${email}"`,
+  });
 }
 
 export function conflictingFieldsError(
   value: string,
   clear: string,
 ): ConnectError {
-  return createError(
-    `Set either ${value} or ${clear}, not both`,
-    Code.InvalidArgument,
-    ErrorReason.CONFLICTING_FIELDS,
-  );
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.VALIDATION_FAILED,
+    message: `Set either ${value} or ${clear}, not both`,
+  });
 }
 
 export function invalidDateFormatError(value: string): ConnectError {
-  return createError(
-    `Invalid date format: "${value}". Expected RFC 3339.`,
-    Code.InvalidArgument,
-    ErrorReason.INVALID_DATE_FORMAT,
-  );
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.INVALID_DATE_FORMAT,
+    message: `Invalid date format: "${value}". Expected RFC 3339.`,
+    metadata: { value },
+  });
 }
 
 export function invalidEnumError(field: string): ConnectError {
-  return createError(
-    `Invalid ${field}`,
-    Code.InvalidArgument,
-    ErrorReason.INVALID_ENUM,
-    { field },
-  );
+  return rpcError({
+    code: Code.InvalidArgument,
+    reason: ErrorReason.VALIDATION_FAILED,
+    message: `Invalid ${field}`,
+    fieldViolations: [{ field, description: `Invalid ${field}` }],
+  });
 }

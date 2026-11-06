@@ -1,4 +1,4 @@
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import { Code, type ServiceImpl } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
@@ -48,6 +48,7 @@ import {
   getCheckerUrl,
 } from "../../../../libs/checker";
 import { toConnectError, toServiceCtx } from "../../adapter";
+import { ErrorReason, rpcError } from "../../errors";
 import { type RpcContext, getRpcContext } from "../../interceptors";
 import { parseId } from "../../parse";
 import {
@@ -172,10 +173,11 @@ async function lastPingsByMonitor(
 
 function assertHeartbeatAllowed(workspaceId: number) {
   if (!isHeartbeatAllowed(workspaceId, env.HEARTBEAT_WORKSPACE_IDS)) {
-    throw new ConnectError(
-      "Heartbeat monitors are not available yet",
-      Code.PermissionDenied,
-    );
+    throw rpcError({
+      code: Code.PermissionDenied,
+      reason: ErrorReason.FORBIDDEN,
+      message: "Heartbeat monitors are not available yet",
+    });
   }
 }
 

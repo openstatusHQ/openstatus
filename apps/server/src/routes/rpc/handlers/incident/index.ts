@@ -36,6 +36,7 @@ import { env } from "@/env";
 import { runInBackground } from "@/libs/background";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
+import { invalidIdError } from "../../errors";
 import { getRpcContext } from "../../interceptors";
 import { parseDate as parseRpcDate, parseId as parseRpcId } from "../../parse";
 import {
@@ -51,7 +52,6 @@ import {
   incidentNotFoundError,
   invalidCommanderError,
   invalidDateFormatError,
-  invalidIdError,
 } from "./errors";
 
 const DASHBOARD_URL = resolveDashboardUrl({

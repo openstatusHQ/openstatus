@@ -23,9 +23,8 @@ import {
 } from "./errors";
 import { checkPrivateLocationsEnabled } from "./limits";
 
-// Map the service's generic NotFoundError to a ConnectError carrying the
-// documented error-reason header for this entity, then defer everything else
-// to the shared mapper.
+// Map the service's generic NotFoundError to this entity's documented reason,
+// then defer everything else to the shared mapper.
 function toPrivateLocationConnectError(err: unknown, id: string): never {
   if (err instanceof NotFoundError && err.entity === "private_location") {
     throw privateLocationNotFoundError(id);

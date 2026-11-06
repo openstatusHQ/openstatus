@@ -44,6 +44,14 @@ async function connectRequest(
   });
 }
 
+/** `ErrorInfo.reason` from a Connect JSON error body. */
+async function errorReason(res: Response): Promise<string | undefined> {
+  const body = await res.json();
+  return body.details?.find(
+    (d: { type: string }) => d.type === "google.rpc.ErrorInfo",
+  )?.debug?.reason;
+}
+
 const TEST_PREFIX = "rpc-monitor-test";
 let FREE_PLAN_KEY: string;
 let testHttpMonitorId: number;
@@ -2084,7 +2092,7 @@ describe("MonitorService.TriggerMonitor", () => {
       );
 
       expect(res.status).toBe(503);
-      expect(res.headers.get("error-reason")).toBe("MONITOR_TRIGGER_FAILED");
+      expect(await errorReason(res)).toBe("MONITOR_TRIGGER_FAILED");
     } finally {
       globalThis.fetch = realFetch;
       await db.delete(monitorRun).where(eq(monitorRun.monitorId, mon.id));
@@ -2211,7 +2219,7 @@ describe("MonitorService - strict id parsing", () => {
         { "x-openstatus-key": "1" },
       );
       expect(get.status).toBe(400);
-      expect(get.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+      expect(await errorReason(get)).toBe("INVALID_MONITOR_ID");
 
       const update = await connectRequest(
         "UpdateHTTPMonitor",
@@ -2229,7 +2237,7 @@ describe("MonitorService - strict id parsing", () => {
       { "x-openstatus-key": "1" },
     );
     expect(res.status).toBe(400);
-    expect(res.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+    expect(await errorReason(res)).toBe("INVALID_MONITOR_ID");
   });
 
   test("still accepts a plain decimal id", async () => {

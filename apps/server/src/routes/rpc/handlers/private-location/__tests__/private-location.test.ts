@@ -26,6 +26,14 @@ async function connectRequest(
   );
 }
 
+/** `ErrorInfo.reason` from a Connect JSON error body. */
+async function errorReason(res: Response): Promise<string | undefined> {
+  const body = await res.json();
+  return body.details?.find(
+    (d: { type: string }) => d.type === "google.rpc.ErrorInfo",
+  )?.debug?.reason;
+}
+
 const TEST_PREFIX = "rpc-private-location-test";
 
 // Scoped to a dedicated workspace so parallel suites mutating the shared seed
@@ -312,7 +320,16 @@ describe("PrivateLocationService.GetPrivateLocation", () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.headers.get("error-reason")).toBe("PRIVATE_LOCATION_NOT_FOUND");
+    const body = await res.json();
+    expect(body.code).toBe("not_found");
+    const info = body.details.find(
+      (d: { type: string }) => d.type === "google.rpc.ErrorInfo",
+    );
+    expect(info.debug).toMatchObject({
+      reason: "PRIVATE_LOCATION_NOT_FOUND",
+      domain: "openstatus.dev",
+      metadata: { privateLocationId: "99999999" },
+    });
   });
 
   test("returns 404 for a location in another workspace", async () => {
@@ -761,7 +778,7 @@ describe("PrivateLocationService - strict id parsing", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(res.headers.get("error-reason")).toBe("INVALID_MONITOR_ID");
+    expect(await errorReason(res)).toBe("INVALID_MONITOR_ID");
 
     const created = await db
       .select()
@@ -782,6 +799,6 @@ describe("PrivateLocationService - strict id parsing", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(res.headers.get("error-reason")).toBe("INVALID_MONITOR_ID");
+    expect(await errorReason(res)).toBe("INVALID_MONITOR_ID");
   });
 });
