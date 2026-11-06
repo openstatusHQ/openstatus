@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
 import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { heartbeatSnippets } from "@/components/forms/monitor/form-heartbeat";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -72,9 +73,13 @@ export function NavActions() {
     enabled: monitor?.jobType === "heartbeat",
   });
 
-  // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+  // the request an http monitor sends, or the ping a heartbeat expects; hidden for the rest
   const curlCommand =
-    monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
+    monitor?.jobType === "http"
+      ? buildCurlCommand(monitor)
+      : heartbeat?.pingUrl
+        ? heartbeatSnippets(heartbeat.pingUrl).curl
+        : null;
 
   function setActive(active: boolean) {
     const promise = updateMonitorsMutation.mutateAsync({

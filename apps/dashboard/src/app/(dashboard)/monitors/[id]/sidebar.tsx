@@ -1,5 +1,6 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
 import { deserialize } from "@openstatus/assertions";
 import { Logs } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
@@ -9,9 +10,47 @@ import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import {
+  type HeartbeatHealth,
+  getHeartbeatHealth,
+  heartbeatHealthConfig,
+} from "@/data/heartbeat.client";
 import { monitorTypes } from "@/data/monitors.client";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { useNow } from "@/hooks/use-now";
 import { formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+
+type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
+
+const healthText = {
+  default: undefined,
+  success: "text-success",
+  warning: "text-warning",
+  destructive: "text-destructive",
+} satisfies Record<
+  (typeof heartbeatHealthConfig)[HeartbeatHealth]["variant"],
+  string | undefined
+>;
+
+// own component: the clock re-renders this word, not the sidebar
+function HeartbeatStatus({ monitor }: { monitor: Monitor }) {
+  const trpc = useTRPC();
+  const { data: heartbeat } = useQuery(
+    trpc.monitor.heartbeat.queryOptions({ id: monitor.id }),
+  );
+  const now = useNow(10_000);
+  // the server has no clock to share: "late" only shows once hydrated
+  const hydrated = useHydrated();
+  if (!heartbeat) return "—";
+  const health = getHeartbeatHealth(
+    monitor,
+    heartbeat,
+    hydrated ? now : new Date(0),
+  );
+  const { label, variant } = heartbeatHealthConfig[health];
+  return <span className={healthText[variant]}>{label}</span>;
+}
 
 export function Sidebar() {
   const router = useRouter();
@@ -40,7 +79,9 @@ export function Sidebar() {
             },
             {
               label: "Status",
-              value: (
+              value: isHeartbeat ? (
+                <HeartbeatStatus monitor={monitor} />
+              ) : (
                 <span
                   className={
                     monitor.status === "error"
