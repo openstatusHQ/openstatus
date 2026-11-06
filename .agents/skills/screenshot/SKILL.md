@@ -22,8 +22,12 @@ node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=
 node scripts/screenshot.mjs --app status-page /acme
 ```
 
-It prints the PNG paths and writes `.screenshots/index.html`, a gallery of
-every shot in the output directory. Read the PNGs with the Read tool and
+Shots land in `.screenshots/<branch>/`, the current branch with `/` turned
+into `-` (`feat/dashboard-activity-lists` gives
+`.screenshots/feat-dashboard-activity-lists/`; a detached HEAD uses the short
+commit). `--label before` / `--label after` nest a set one level deeper, for
+comparisons. It prints the PNG paths and writes `index.html` in that folder,
+a gallery of every shot in it. Read the PNGs with the Read tool and
 judge against `DESIGN.md`. Files are `<name>.desktop.png` and
 `<name>.mobile.png`, where the name is the path with every run of non-word
 characters turned into `-` (`/incidents/1` gives `incidents-1`). Light only by
@@ -40,7 +44,7 @@ node scripts/screenshot.mjs --app dashboard /incidents/1 --user max@openstatus.d
 node scripts/dev-stack.mjs down      # when finished; stops only what `up` started
 ```
 
-`up` fetches pinned deno, sqld and agent-browser from npm when they are not
+`up` fetches pinned sqld and agent-browser from npm when they are not
 on PATH (the official download hosts are blocked in the sandbox; npm is
 not), creates the two `.env` files from their examples, starts sqld on
 :8080, migrates, seeds once (`--reseed` wipes and reseeds), starts the
@@ -74,7 +78,7 @@ it and the script sets it itself when unset. No `agent-browser install`.
    throwaway seeded one; pass `--db http://127.0.0.1:8099` and point the
    dashboard at it with `DATABASE_URL`.
 3. Auth, dashboard only. The seed (`pnpm --filter @openstatus/db seed`,
-   through `devbox run --` because of the deno pin) creates two maintainers
+   which runs on node) creates two maintainers
    with sessions that expire in 2099: `max@openstatus.dev` (token
    `seed-session-max`, owner of workspace 1 `love-openstatus`) and
    `thibault@openstatus.dev` (token `seed-session-thibault`, admin of 1).
@@ -99,7 +103,8 @@ it and the script sets it itself when unset. No `agent-browser install`.
 | `--selector` | page | CSS selector; every visible match is shot on its own |
 | `--device` | `both` | `desktop` or `mobile` (390×844, 3×, iPhone 14 user agent) |
 | `--theme` | `light` | `dark` or `both` |
-| `--out` | `.screenshots` | gitignored |
+| `--label` | | subfolder inside the branch folder, e.g. `before`, `after` |
+| `--out` | `.screenshots/<branch>[/<label>]` | gitignored; overrides branch and label |
 | `--width` | `1400` | desktop viewport width, 2× device scale |
 | `--full-page` | off | full-page capture when no selector |
 | `--aspect` | off | `16:9` frames the shot at that exact ratio: a selector match centered on the page background with at least 48 px around it, or a page shot with a viewport of that ratio (width rounded up to a multiple of 16). Not with `--full-page` |
@@ -127,7 +132,7 @@ agent-browser wait --fn "document.fonts.status === 'loaded'"
 agent-browser eval "document.head.insertAdjacentHTML('beforeend','<style>[data-slot=tailwind-indicator],nextjs-portal{display:none!important}</style>')"
 agent-browser snapshot -i                     # refs for the interactive elements
 agent-browser click @e12                      # e.g. the severity select
-agent-browser screenshot .screenshots/incidents-1-severity-dark.png
+agent-browser screenshot .screenshots/<branch>/incidents-1-severity-dark.png
 agent-browser close                           # sessions outlive the shell
 ```
 
@@ -177,7 +182,7 @@ re-seed to reset.
   state the script cannot reach (an open picker, a dialog), size the
   agent-browser viewport to 16:9 or crop to it, and check the PNG's
   dimensions before committing it to `apps/web/public/assets/`.
-- Shoot before and after, desktop and mobile, and compare. Add dark when
+- Shoot before and after (`--label before`, `--label after`), desktop and mobile, and compare. Add dark when
   the change touches color.
 - Do not post, edit or delete on the fixtures unless the screenshot needs
   that state; say so when you do.
@@ -191,11 +196,11 @@ re-seed to reset.
 The PNGs are gitignored, so where the user sees them depends on where the
 session runs.
 
-- **Local machine (terminal or desktop app):** leave them in `.screenshots/`
+- **Local machine (terminal or desktop app):** leave them in `.screenshots/<branch>/`
   and name the files in the final message. The user opens them directly.
 - **Cloud session:** nothing leaves the sandbox except git, so the files
   vanish with the VM. Publish the generated gallery with the Artifact tool:
-  `file_path` `.screenshots/index.html`, `root` `.screenshots`, and every PNG
+  `file_path` `.screenshots/<branch>[/<label>]/index.html`, `root` that same folder, and every PNG
   it shows passed in `files` under its own name (`{"incidents-1.desktop.png":
   "incidents-1.desktop.png", ...}`). The gallery is written as a page fragment
   (title, style, body) for exactly that. Put the link in the final message.

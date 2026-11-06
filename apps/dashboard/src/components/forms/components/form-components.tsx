@@ -508,7 +508,7 @@ export function FormComponents({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-          <FormCard>
+          <FormCard id="components">
             <FormCardHeader>
               <FormCardTitle>Components</FormCardTitle>
               <FormCardDescription>

@@ -111,7 +111,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="history">
         <SectionHeader>
           <SectionHeaderRow>
             <div>
@@ -137,7 +137,7 @@ export function Client() {
           </SectionHeaderRow>
         </SectionHeader>
       </Section>
-      <Section>
+      <Section id="history-metrics">
         <MetricCardGroup
           aria-hidden={isLimited}
           className={cn(

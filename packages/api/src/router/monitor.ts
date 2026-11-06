@@ -7,6 +7,7 @@ import {
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { NotFoundError } from "@openstatus/services";
+import { getMonitorUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
   type CreateMonitorInput,
   type UpdateMonitorGeneralInput,
@@ -26,7 +27,6 @@ import {
   regenerateHeartbeatToken,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
-  updateMonitorHeartbeat,
   updateMonitorNotifiers,
   updateMonitorOtel,
   updateMonitorPublic,
@@ -92,6 +92,8 @@ const updateGeneralTRPCInput = z.object({
   saveCheck: z.boolean().prefault(false),
   grpcService: z.string().optional(),
   grpcTls: z.enum(grpcTlsModes).optional(),
+  heartbeatPeriod: z.number().int().optional(),
+  heartbeatGrace: z.number().int().optional(),
 });
 
 export const monitorRouter = createTRPCRouter({
@@ -174,6 +176,19 @@ export const monitorRouter = createTRPCRouter({
         return await getMonitor({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  getUptimeHistory: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getMonitorUptimeHistory({
+          ctx: toServiceCtx(ctx),
+          input: { monitorId: input.id },
         });
       } catch (err) {
         toTRPCError(err);
@@ -382,6 +397,8 @@ export const monitorRouter = createTRPCRouter({
           active: input.active,
           grpcService: input.grpcService,
           grpcTls: input.grpcTls,
+          heartbeatPeriod: input.heartbeatPeriod,
+          heartbeatGrace: input.heartbeatGrace,
         };
         await updateMonitorGeneral({
           ctx: toServiceCtx(ctx),
@@ -528,6 +545,12 @@ export const monitorRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+        kinds: z
+          .array(z.enum(["success", "fail"]))
+          .max(2)
+          .optional(),
         cursor: z.number().int().optional(),
         limit: z.number().int().min(1).max(100).prefault(50),
       }),
@@ -538,27 +561,13 @@ export const monitorRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: {
             monitorId: input.id,
+            fromTimestamp: input.from?.getTime(),
+            toTimestamp: input.to?.getTime(),
+            kinds: input.kinds,
             cursor: input.cursor,
             limit: input.limit,
           },
         });
-      } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  updateHeartbeat: protectedProcedure
-    .meta({ track: Events.UpdateMonitor })
-    .input(
-      z.object({
-        id: z.number(),
-        heartbeatPeriod: z.number().int(),
-        heartbeatGrace: z.number().int(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await updateMonitorHeartbeat({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

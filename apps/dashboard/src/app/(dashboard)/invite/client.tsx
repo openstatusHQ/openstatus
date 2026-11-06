@@ -3,11 +3,11 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-import { Link } from "@/components/common/link";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -56,7 +56,7 @@ export function Client() {
   if (isTRPCClientError(error)) {
     return (
       <SectionGroup>
-        <Section>
+        <Section id="invitation">
           <SectionHeader>
             <SectionTitle>Invitation</SectionTitle>
             <SectionDescription>
@@ -84,7 +84,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="invitation">
         <SectionHeader>
           <SectionTitle>Invitation</SectionTitle>
           <SectionDescription>
@@ -92,7 +92,7 @@ export function Client() {
             anytime from the sidebar.
           </SectionDescription>
         </SectionHeader>
-        <FormCard>
+        <FormCard id="join-workspace">
           <FormCardHeader>
             <FormCardTitle>Join workspace</FormCardTitle>
             <FormCardDescription>

@@ -31,6 +31,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { formatDistanceToNow } from "date-fns";
+import NextLink from "next/link";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -144,7 +145,7 @@ export function FormSchedulingRegions({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="scheduling-regions">
           <FormCardHeader>
             <FormCardTitle>Scheduling & Regions</FormCardTitle>
             <FormCardDescription>
@@ -372,7 +373,9 @@ export function FormSchedulingRegions({
                 <Globe />
                 Monitor your endpoints from private locations.
                 <NoteButton variant="outline" asChild>
-                  <Link href="/settings/private-locations">Learn more</Link>
+                  <NextLink href="/settings/private-locations">
+                    Learn more
+                  </NextLink>
                 </NoteButton>
               </Note>
             ) : (

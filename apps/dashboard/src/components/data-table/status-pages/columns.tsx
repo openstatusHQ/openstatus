@@ -3,8 +3,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { Link } from "@/components/common/link";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { TableCellText } from "@/components/data-table/table-cell-text";
 
 import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -74,11 +74,7 @@ export const columns: ColumnDef<StatusPage>[] = [
       const value = row.getValue("domain");
       if (typeof value !== "string")
         return <TableCellEmpty>No domain</TableCellEmpty>;
-      return (
-        <Link href={"#"} className="font-mono">
-          {value}
-        </Link>
-      );
+      return <TableCellText value={value} className="font-mono" />;
     },
     enableSorting: false,
     enableHiding: false,

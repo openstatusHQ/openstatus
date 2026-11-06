@@ -2,50 +2,36 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { useRef } from "react";
+import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
-import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
+import { MaintenanceEditSheet } from "@/components/maintenances/maintenance-edit-sheet";
 import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
-export function DataTableRowActions({ row }: { row: Row<Maintenance> }) {
-  return <MaintenanceRowActions maintenance={row.original} />;
-}
-
+/** Row menu; owns the edit sheet unless the row passes `onEdit` to open its own. */
 export function MaintenanceRowActions({
   maintenance,
+  onEdit,
 }: {
   maintenance: Maintenance;
+  onEdit?: () => void;
 }) {
   const trpc = useTRPC();
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const actions = getActions({
-    edit: () => buttonRef.current?.click(),
-  });
-  const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: maintenance.pageId ?? 0 }),
-  );
   const queryClient = useQueryClient();
-  // no-input prefix key — matches every maintenance.list query (overview, page detail)
-  const invalidateList = () =>
-    queryClient.invalidateQueries({
-      queryKey: trpc.maintenance.list.queryKey(),
-    });
-  const updateMaintenanceMutation = useMutation(
-    trpc.maintenance.update.mutationOptions({
-      onSuccess: invalidateList,
-    }),
-  );
-
+  const [editOpen, setEditOpen] = useState(false);
+  const actions = getActions({
+    edit: onEdit ?? (() => setEditOpen(true)),
+  });
   const deleteMaintenanceMutation = useMutation(
     trpc.maintenance.delete.mutationOptions({
-      onSuccess: invalidateList,
+      // no-input prefix key — matches every maintenance.list query (overview, page detail)
+      onSuccess: () =>
+        queryClient.invalidateQueries({
+          queryKey: trpc.maintenance.list.queryKey(),
+        }),
     }),
   );
 
@@ -62,31 +48,13 @@ export function MaintenanceRowActions({
           },
         }}
       />
-      <FormSheetMaintenance
-        items={toCheckboxTreeItems(
-          statusPage?.pageComponents ?? [],
-          statusPage?.pageComponentGroups ?? [],
-        )}
-        defaultValues={{
-          title: maintenance.title,
-          startDate: maintenance.from,
-          endDate: maintenance.to,
-          pageComponents: maintenance.pageComponents?.map((c) => c.id) ?? [],
-        }}
-        onSubmit={async (values) => {
-          await updateMaintenanceMutation.mutateAsync({
-            id: maintenance.id,
-            title: values.title,
-            startDate: values.startDate,
-            endDate: values.endDate,
-            pageComponents: values.pageComponents,
-          });
-        }}
-      >
-        <button ref={buttonRef} type="button" className="sr-only">
-          Open sheet
-        </button>
-      </FormSheetMaintenance>
+      {onEdit ? null : (
+        <MaintenanceEditSheet
+          maintenance={maintenance}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
     </>
   );
 }

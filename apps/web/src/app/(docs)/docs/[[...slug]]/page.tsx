@@ -15,6 +15,7 @@ import {
   gitLastModified,
   validateDocsNav,
 } from "../../../../content/docs";
+import { DocsAskAi } from "../../../../content/docs-ask-ai";
 import { DocsFeedback } from "../../../../content/docs-feedback";
 import { DocsSubNav } from "../../../../content/docs-sub-nav";
 import { TableOfContents } from "../../../../content/docs-toc";
@@ -234,6 +235,7 @@ export default async function DocsPage({
         <div className="sticky top-4 max-h-[calc(100vh-2rem)] space-y-2 overflow-y-auto">
           <TableOfContents items={toc} />
           <DocsFeedback />
+          <DocsAskAi title={doc.metadata.title} />
         </div>
       </aside>
     </div>

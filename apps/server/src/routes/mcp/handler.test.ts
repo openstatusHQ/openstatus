@@ -524,6 +524,17 @@ const OTHER_GROUP_TOOLS = [
 ];
 
 describe("MCP transport — group scopes", () => {
+  test("sends write-confirmation instructions on initialize", async () => {
+    const { client, close } = await connectScoped(["incidents:write"]);
+    try {
+      const instructions = client.getInstructions();
+      expect(instructions).toContain("Confirm every write before calling it");
+      expect(instructions).toContain("resolve_status_report");
+    } finally {
+      await close();
+    }
+  });
+
   test("incidents:write lists the incident group plus `any` tools and nothing else", async () => {
     const { client, close } = await connectScoped(["incidents:write"]);
     try {

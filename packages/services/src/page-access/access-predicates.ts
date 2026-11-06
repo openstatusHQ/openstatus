@@ -45,9 +45,11 @@ export function isEmailDomainAuthorized(
   authEmail: string | null | undefined,
   authEmailDomains: string[] | null | undefined,
 ): boolean {
-  // DNS domains are case-insensitive — normalise both sides before matching.
-  const domain = authEmail?.split("@")[1]?.toLowerCase();
-  const allowed = (authEmailDomains ?? []).map((d) => d.toLowerCase());
+  // DNS domains are case-insensitive and whitespace-insensitive — normalise both sides before matching.
+  const domain = authEmail?.trim().split("@")[1]?.trim().toLowerCase();
+  const allowed = (authEmailDomains ?? [])
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
   return !!(domain && allowed.includes(domain));
 }
 

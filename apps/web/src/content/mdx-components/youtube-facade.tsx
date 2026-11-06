@@ -10,13 +10,24 @@ import { useState } from "react";
 export function YouTubeFacade({
   embedUrl,
   thumbnailUrl,
+  fallbackThumbnailUrl,
   title,
 }: {
   embedUrl: string;
+  /** Preferred thumbnail (maxresdefault, 1280x720). */
   thumbnailUrl: string;
+  /** Used when the preferred one is missing (hqdefault always exists). */
+  fallbackThumbnailUrl?: string;
   title: string;
 }) {
   const [playing, setPlaying] = useState(false);
+  const [src, setSrc] = useState(thumbnailUrl);
+
+  const showFallback = () => {
+    if (fallbackThumbnailUrl && src !== fallbackThumbnailUrl) {
+      setSrc(fallbackThumbnailUrl);
+    }
+  };
 
   if (playing) {
     return (
@@ -39,8 +50,14 @@ export function YouTubeFacade({
     >
       {/* plain <img>: remote thumbnail, avoids a next/image remotePatterns change */}
       <img
-        src={thumbnailUrl}
+        src={src}
         alt={title}
+        // YouTube answers a missing maxresdefault with a 120x90 placeholder
+        // (sometimes with a 404, sometimes not), so check the size too.
+        onError={showFallback}
+        onLoad={(e) => {
+          if (e.currentTarget.naturalWidth <= 120) showFallback();
+        }}
         loading="lazy"
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"

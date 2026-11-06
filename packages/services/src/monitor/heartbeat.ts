@@ -315,6 +315,7 @@ export async function listHeartbeatPings(args: {
     monitorId: String(existing.id),
     fromDate: input.fromTimestamp,
     toDate: input.toTimestamp,
+    kinds: input.kinds?.length ? input.kinds : undefined,
     cursor: input.cursor,
     limit: input.limit,
   });

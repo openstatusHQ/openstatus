@@ -28,12 +28,12 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { timeZoneShortName } from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -117,7 +117,7 @@ export function FormTimezone({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="timezone">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Time zone</FormCardTitle>
@@ -198,7 +198,7 @@ export function FormTimezone({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <Link href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </Link>

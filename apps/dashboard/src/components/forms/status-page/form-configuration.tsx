@@ -28,6 +28,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
 import { useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
@@ -147,7 +148,7 @@ export function FormConfiguration({
     <>
       <Form {...form}>
         <form id="redesign" onSubmit={form.handleSubmit(submitAction)}>
-          <FormCard>
+          <FormCard id="components-configuration">
             <FormCardHeader>
               <FormCardTitle>Components Configuration</FormCardTitle>
               <FormCardDescription>
@@ -354,7 +355,7 @@ export function FormConfiguration({
               </FormCardFooterInfo>
               <div className="flex items-center gap-2">
                 <Button type="button" variant="ghost" asChild>
-                  <Link
+                  <NextLink
                     href={configLink}
                     rel="noreferrer"
                     target="_blank"
@@ -362,7 +363,7 @@ export function FormConfiguration({
                   >
                     View and configure status page{" "}
                     <ArrowUpRight className="h-4 w-4" />
-                  </Link>
+                  </NextLink>
                 </Button>
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Submitting..." : "Submit"}

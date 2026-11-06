@@ -68,7 +68,7 @@ describe("updateIncidentChanges", () => {
         asFixture<Input>({ id: 3, severity: "minor", commanderId: null }),
       ),
     ).toEqual([
-      { field: "incidentId", after: 3 },
+      { field: "id", after: 3 },
       { field: "severity", after: "minor" },
       { field: "commanderId", after: null },
     ]);

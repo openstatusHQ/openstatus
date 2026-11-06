@@ -128,7 +128,7 @@ export function FormTags({
         id="monitor-tags-form"
         {...props}
       >
-        <FormCard>
+        <FormCard id="tags">
           <FormCardHeader>
             <FormCardTitle>Tags</FormCardTitle>
             <FormCardDescription>

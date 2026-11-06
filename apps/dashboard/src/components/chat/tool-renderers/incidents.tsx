@@ -147,7 +147,7 @@ export function updateIncidentChanges(
   before?: ApprovalBefore,
 ): ChangeRow[] {
   return [
-    ...idRow("incidentId", input.id, before),
+    ...idRow("id", input.id, before),
     ...fieldChanges(
       input,
       ["title", "severity", "summary", "commanderId", "startedAt"],

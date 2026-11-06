@@ -130,9 +130,9 @@ async function enrichReportsBatch(
           statusReportsToPageComponents,
           eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
         )
-        .where(
-          inArray(statusReportsToPageComponents.statusReportId, reportIds),
-        ),
+        .where(inArray(statusReportsToPageComponents.statusReportId, reportIds))
+        // stable order: rows truncate the list to the first few names
+        .orderBy(asc(pageComponent.order), asc(pageComponent.id)),
       db.select().from(pageTable).where(anyPage),
       db.select().from(pageComponent).where(anyPageComponent),
       db

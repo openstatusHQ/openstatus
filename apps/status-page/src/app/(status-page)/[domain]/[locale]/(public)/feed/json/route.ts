@@ -1,3 +1,4 @@
+import { isEmailDomainAuthorized } from "@openstatus/services/page-access";
 import { notFound, unauthorized } from "next/navigation";
 
 import { auth } from "../../../../../../../lib/auth";
@@ -33,10 +34,9 @@ export async function GET(
     if (_page.accessType === "email-domain") {
       const session = await auth();
       const user = session?.user;
-      const allowedDomains = _page.authEmailDomains ?? [];
-      if (!user || !user.email) return unauthorized();
-      if (!allowedDomains.includes(user.email.split("@")[1]))
+      if (!isEmailDomainAuthorized(user?.email, _page.authEmailDomains)) {
         return unauthorized();
+      }
     }
 
     const page = await queryClient.fetchQuery(

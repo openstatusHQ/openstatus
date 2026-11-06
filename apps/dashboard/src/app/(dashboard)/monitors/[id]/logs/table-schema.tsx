@@ -21,6 +21,7 @@ import {
 import { addDays, addHours, endOfDay, startOfDay } from "date-fns";
 
 import { HoverCardTiming } from "@/components/common/hover-card-timing";
+import type { HeartbeatPing } from "@/components/data-table/response-logs/data-table-basics";
 import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
@@ -28,10 +29,13 @@ import { cn } from "@/lib/utils";
 
 export type ResponseLog =
   RouterOutputs["tinybird"]["listInfinite"]["data"][number];
+/** A row of the logs table: a check's response, or a heartbeat's ping. */
+export type LogRow = ResponseLog | HeartbeatPing;
 
 type JobType = RouterOutputs["monitor"]["get"]["jobType"];
 
 export const REQUEST_STATUS = ["success", "degraded", "error"] as const;
+export const PING_KINDS = ["success", "fail"] as const;
 export const TRIGGERS = ["cron", "api"] as const;
 /** The checker's max tries is the monitor's retry setting, capped at 10. */
 export const ATTEMPTS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -40,6 +44,7 @@ const STATUS_SWATCH: Record<string, string> = {
   success: "bg-success",
   degraded: "bg-warning",
   error: "bg-destructive",
+  fail: "bg-destructive",
 };
 
 /** The same square the table cell draws, so the filter row reads as its legend. */
@@ -47,6 +52,59 @@ function StatusSwatch({ value }: { value: string }) {
   const swatch = STATUS_SWATCH[value];
   if (!swatch) return null;
   return <div className={cn(swatch, "size-2.5 shrink-0 rounded-[2px]")} />;
+}
+
+/** The leading swatch column: a check's request status, or a ping's kind. */
+function resultColumn<const T extends readonly [string, ...string[]]>(
+  values: T,
+  labels?: Record<T[number], string>,
+) {
+  return col
+    .enum(values)
+    .label("Result")
+    .hideHeader()
+    .size(28)
+    .defaultOpen()
+    .filterable("checkbox", {
+      options: values.map((value: T[number]) => ({
+        label: labels?.[value] ?? value,
+        value,
+      })),
+      // A closed set. A window without one of them must still offer the box,
+      // or the filter reads as broken rather than empty.
+      keepEmptyOptions: true,
+      component: ({ label, value }) => (
+        <span className="flex items-center gap-2 truncate font-normal">
+          <StatusSwatch value={String(value)} />
+          {label}
+        </span>
+      ),
+    })
+    .display("custom", {
+      cell: (value) => {
+        const swatch = STATUS_SWATCH[String(value)];
+        if (!swatch) return <TableCellEmpty>Unknown</TableCellEmpty>;
+        return (
+          <div className="flex justify-center">
+            <div className={cn(swatch, "size-2.5 rounded-[2px]")} />
+          </div>
+        );
+      },
+    });
+}
+
+/**
+ * `col.presets.timestamp()` but without `.sortable()`: the cursor pages on the
+ * pipe's own DESC order, so a header sort would only reorder the rows already
+ * fetched.
+ */
+function timestampColumn() {
+  return col
+    .timestamp()
+    .label("Timestamp")
+    .display("timestamp")
+    .size(200)
+    .filterable("timerange", { presets: createTimestampPresets() });
 }
 
 /**
@@ -129,45 +187,8 @@ export function createLogsTableSchema(options: {
   ];
 
   return createTableSchema({
-    requestStatus: col
-      .enum(REQUEST_STATUS)
-      .label("Result")
-      .hideHeader()
-      .size(28)
-      .defaultOpen()
-      .filterable("checkbox", {
-        options: REQUEST_STATUS.map((value) => ({ label: value, value })),
-        // A closed set of three. A window with no degraded rows must still
-        // offer the box, or the filter reads as broken rather than empty.
-        keepEmptyOptions: true,
-        component: ({ label, value }) => (
-          <span className="flex items-center gap-2 truncate font-normal">
-            <StatusSwatch value={String(value)} />
-            {label}
-          </span>
-        ),
-      })
-      .display("custom", {
-        cell: (value) => {
-          const swatch = STATUS_SWATCH[String(value)];
-          if (!swatch) return <TableCellEmpty>Unknown</TableCellEmpty>;
-          return (
-            <div className="flex justify-center">
-              <div className={cn(swatch, "size-2.5 rounded-[2px]")} />
-            </div>
-          );
-        },
-      }),
-
-    // `col.presets.timestamp()` but without `.sortable()`: the cursor pages on
-    // the pipe's own DESC order, so a header sort would only reorder the rows
-    // already fetched.
-    timestamp: col
-      .timestamp()
-      .label("Timestamp")
-      .display("timestamp")
-      .size(200)
-      .filterable("timerange", { presets: createTimestampPresets() }),
+    requestStatus: resultColumn(REQUEST_STATUS),
+    timestamp: timestampColumn(),
 
     ...(hasStatusCode
       ? { statusCode: col.presets.httpStatus().label("Status").size(90) }
@@ -258,16 +279,46 @@ export function createLogsTableSchema(options: {
   });
 }
 
+/** A ping is pushed to us, so it has no region, latency or status code: only who sent what. */
+export function createPingsTableSchema() {
+  const text = (label: string, size: number) =>
+    // only the pipe filters; a text search would cover the fetched rows alone
+    col
+      .string()
+      .label(label)
+      .size(size)
+      .notFilterable()
+      .display("custom", {
+        cell: (value) =>
+          value ? (
+            <span className="font-mono">{String(value)}</span>
+          ) : (
+            <TableCellEmpty />
+          ),
+      });
+
+  return createTableSchema({
+    kind: resultColumn(PING_KINDS, { success: "success", fail: "failed" }),
+    timestamp: timestampColumn(),
+    method: text("Method", 90),
+    ip: text("IP", 160),
+    userAgent: text("User agent", 320),
+  });
+}
+
 export function createLogsTable(options: {
   regions: string[];
   privateLocations: PrivateLocation[];
   jobType?: JobType;
 }) {
-  const schema = createLogsTableSchema(options);
+  const schema =
+    options.jobType === "heartbeat"
+      ? createPingsTableSchema()
+      : createLogsTableSchema(options);
   return {
     schema,
-    columns: generateColumns<ResponseLog>(schema.definition),
-    filterFields: generateFilterFields<ResponseLog>(schema.definition),
+    columns: generateColumns<LogRow>(schema.definition),
+    filterFields: generateFilterFields<LogRow>(schema.definition),
     filterSchema: generateFilterSchema(schema.definition),
   };
 }

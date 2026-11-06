@@ -222,7 +222,7 @@ export function Client() {
         onOpenChange={setAskIntent}
         trial={startedTrial}
       />
-      <Section>
+      <Section id="billing">
         <SectionHeader>
           <SectionTitle>Billing</SectionTitle>
           <SectionDescription>
@@ -231,7 +231,7 @@ export function Client() {
         </SectionHeader>
         <FormCardGroup>
           {workspace?.trial.eligible ? (
-            <FormCard>
+            <FormCard id="start-trial">
               <FormCardHeader>
                 <FormCardTitle>
                   Try Starter free for {TRIAL_DAYS} days
@@ -273,7 +273,7 @@ export function Client() {
             </FormCard>
           ) : null}
           {workspace.trialEndsAt && trialDaysLeft ? (
-            <FormCard>
+            <FormCard id="trial">
               <FormCardHeader>
                 <FormCardTitle>Starter trial</FormCardTitle>
                 <FormCardDescription>
@@ -307,7 +307,7 @@ export function Client() {
               </FormCardFooter>
             </FormCard>
           ) : null}
-          <FormCard>
+          <FormCard id="usage">
             <FormCardHeader>
               <FormCardTitle>Usage</FormCardTitle>
               <FormCardDescription>
@@ -344,7 +344,7 @@ export function Client() {
               </div>
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent>
+            <FormCardContent id="add-ons" className="scroll-mt-28">
               <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
                 <FormCardTitle>Add-ons</FormCardTitle>
                 <FormCardDescription>
@@ -440,7 +440,7 @@ export function Client() {
               </Button>
             </FormCardFooter>
           </FormCard>
-          <FormCard>
+          <FormCard id="plans">
             <FormCardHeader>
               <FormCardTitle>Plans</FormCardTitle>
               <FormCardDescription>

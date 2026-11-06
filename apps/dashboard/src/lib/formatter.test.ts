@@ -5,9 +5,12 @@ import {
   formatDateForInput,
   formatDateRange,
   formatDistanceToNowShort,
+  formatDurationShort,
+  formatEventDate,
   formatMilliseconds,
   formatNumber,
   formatPercentage,
+  formatWindow,
 } from "./formatter";
 
 describe("formatMilliseconds", () => {
@@ -120,6 +123,88 @@ describe("formatDateForInput", () => {
   it("formats a local datetime-local value with zero padding", () => {
     expect(formatDateForInput(new Date(2024, 2, 5, 7, 4))).toBe(
       "2024-03-05T07:04",
+    );
+  });
+});
+
+describe("formatDurationShort", () => {
+  it("keeps the two largest units", () => {
+    expect(formatDurationShort(12_000)).toBe("12s");
+    expect(formatDurationShort(45 * 60_000)).toBe("45m");
+    expect(formatDurationShort(4 * 3_600_000)).toBe("4h");
+    expect(formatDurationShort(2 * 3_600_000 + 10 * 60_000)).toBe("2h 10m");
+    expect(formatDurationShort(2 * 86_400_000)).toBe("2d");
+    expect(formatDurationShort(2 * 86_400_000 + 3 * 3_600_000)).toBe("2d 3h");
+  });
+
+  it("rounds to whole minutes from a minute up", () => {
+    expect(formatDurationShort(4 * 60_000 + 49_000)).toBe("5m");
+    expect(formatDurationShort(59_000)).toBe("59s");
+    expect(formatDurationShort(3_600_000 - 20_000)).toBe("1h");
+  });
+
+  it("clamps negatives to zero", () => {
+    expect(formatDurationShort(-5000)).toBe("0s");
+  });
+});
+
+describe("formatEventDate", () => {
+  const now = new Date(2026, 9, 19, 23, 0);
+
+  it("shows the clock for earlier today and Today for later", () => {
+    expect(formatEventDate(new Date(2026, 9, 19, 22, 12), now)).toBe("22:12");
+    expect(formatEventDate(new Date(2026, 9, 19, 23, 30), now)).toBe("Today");
+  });
+
+  it("names the weekday for the coming week", () => {
+    expect(formatEventDate(new Date(2026, 9, 20, 2, 0), now)).toBe("Tue 20");
+    expect(formatEventDate(new Date(2026, 9, 25), now)).toBe("Sun 25");
+    expect(formatEventDate(new Date(2026, 9, 26), now)).toBe("Oct 26");
+    expect(formatEventDate(new Date(2026, 9, 23), new Date(2026, 9, 1))).toBe(
+      "Oct 23",
+    );
+    expect(formatEventDate(new Date(2026, 9, 6), new Date(2026, 9, 1))).toBe(
+      "Tue 06",
+    );
+  });
+
+  it("drops the year until it differs", () => {
+    expect(formatEventDate(new Date(2026, 9, 14), now)).toBe("Oct 14");
+    expect(formatEventDate(new Date(2025, 11, 1), now)).toBe("Dec 01, 2025");
+  });
+});
+
+describe("formatWindow", () => {
+  it("uses clocks under a day, including across midnight", () => {
+    expect(
+      formatWindow(new Date(2026, 9, 17, 22, 0), new Date(2026, 9, 18, 0, 0)),
+    ).toBe("22:00 – 00:00");
+  });
+
+  it("collapses a window inside one minute to a single clock", () => {
+    expect(
+      formatWindow(
+        new Date(2026, 9, 17, 23, 33, 5),
+        new Date(2026, 9, 17, 23, 33, 40),
+      ),
+    ).toBe("23:33");
+  });
+
+  it("keeps both ends when only the formatted text matches", () => {
+    expect(
+      formatWindow(
+        new Date(2026, 9, 17, 23, 33, 10),
+        new Date(2026, 9, 18, 23, 33, 5),
+      ),
+    ).toBe("23:33 – 23:33");
+    expect(formatWindow(new Date(2025, 0, 1), new Date(2026, 0, 1))).toBe(
+      "Jan 1, 2025 – Jan 1, 2026",
+    );
+  });
+
+  it("uses dates from a day on", () => {
+    expect(formatWindow(new Date(2026, 9, 11), new Date(2026, 9, 15))).toBe(
+      "Oct 11 – Oct 15",
     );
   });
 });

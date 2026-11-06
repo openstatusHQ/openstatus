@@ -17,7 +17,7 @@ export function UserAvatar({
   return (
     <Avatar className={cn("size-5 text-[10px]", className)} {...props}>
       {src ? <AvatarImage src={src} alt={name ?? ""} /> : null}
-      <AvatarFallback className="bg-foreground text-background font-sans font-medium uppercase">
+      <AvatarFallback className="bg-muted text-muted-foreground font-sans font-medium uppercase">
         {Array.from(name ?? "")[0] ?? "?"}
       </AvatarFallback>
     </Avatar>

@@ -82,7 +82,7 @@ export function Client() {
           Create and manage your private locations.
         </SectionDescription>
       </SectionHeader>
-      <Section>
+      <Section id="private-locations-table">
         {workspace.limits["private-locations"] === false ? (
           <BillingOverlayContainer>
             <DataTable

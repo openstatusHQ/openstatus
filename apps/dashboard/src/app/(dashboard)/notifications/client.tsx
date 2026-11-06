@@ -70,7 +70,7 @@ export function Client() {
           Define your notifications to receive alerts when downtime occurs.
         </SectionDescription>
       </SectionHeader>
-      <Section>
+      <Section id="notifiers">
         <DataTable
           paginationComponent={DataTablePaginationSimple}
           columns={columns}

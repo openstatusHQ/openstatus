@@ -27,6 +27,7 @@ import {
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -148,7 +149,7 @@ export function FormPageAccess({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="page-access">
           <FormCardHeader>
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
@@ -339,10 +340,10 @@ export function FormPageAccess({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing">
+                <NextLink href="/settings/billing#plans">
                   <Lock />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>

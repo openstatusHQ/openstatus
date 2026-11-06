@@ -1,7 +1,17 @@
-import { Dark, Light } from "@openstatus/icons";
-import { AtSign, KeyRound, Palette, Pencil, Plus, Users } from "lucide-react";
+import { Billing, Dark, Light } from "@openstatus/icons";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
+import {
+  AtSign,
+  KeyRound,
+  Palette,
+  PackagePlus,
+  Pencil,
+  Plus,
+  UserRound,
+  Users,
+} from "lucide-react";
 
-import { HELP_LINKS, HELP_SUPPORT } from "@/config/help";
+import { HELP_ASK_AGENT, HELP_LINKS, HELP_SUPPORT } from "@/config/help";
 import { NAV, NAV_MENU_ITEMS } from "@/config/nav";
 import { SETTINGS_TABS } from "@/config/settings";
 
@@ -54,6 +64,36 @@ export function createMaintenanceItem(pageId?: number): CommandMenuItem {
     icon: Plus,
     keywords: ["downtime", "window", "schedule"],
     action: { type: "sheet", sheet: { sheet: "maintenance", pageId } },
+  };
+}
+
+type ReportRef = { id: number; title: string; status: string };
+
+export function addStatusReportUpdateItem(report: ReportRef): CommandMenuItem {
+  return {
+    value: `add-update-${report.id}`,
+    label: `Add Update to ${report.title}`,
+    icon: Plus,
+    keywords: ["update", "status report update", report.title],
+    action: {
+      type: "sheet",
+      sheet: { sheet: "status-report-update", reportId: report.id },
+    },
+  };
+}
+
+export function statusReportItem(
+  report: ReportRef & { pageId: number | null },
+): CommandMenuItem {
+  return {
+    value: `status-report-${report.id}`,
+    label: report.title,
+    description: report.status,
+    keywords: [report.title, report.status],
+    action: {
+      type: "navigate",
+      href: `/status-pages/${report.pageId}/status-reports/${report.id}`,
+    },
   };
 }
 
@@ -119,6 +159,44 @@ const SETTINGS_ANCHORS: CommandMenuItem[] = [
     keywords: ["theme", "dark mode"],
     action: { type: "navigate", href: "/settings/account#appearance" },
   },
+  {
+    value: "Personal Information",
+    label: "Personal Information",
+    icon: UserRound,
+    keywords: ["profile", "name", "email"],
+    action: {
+      type: "navigate",
+      href: "/settings/account#personal-information",
+    },
+  },
+  {
+    value: "Plans",
+    label: "Plans",
+    icon: Billing,
+    keywords: ["upgrade", "pricing", "subscription"],
+    action: { type: "navigate", href: "/settings/billing#plans" },
+  },
+  {
+    value: "Add-ons",
+    label: "Add-ons",
+    icon: PackagePlus,
+    keywords: ["addon", "extra", "limits"],
+    action: { type: "navigate", href: "/settings/billing#add-ons" },
+  },
+  {
+    value: "Slack Integration",
+    label: "Slack Integration",
+    icon: SlackIcon,
+    keywords: ["slack", "agent"],
+    action: { type: "navigate", href: "/settings/integrations#slack" },
+  },
+  {
+    value: "Connected Apps",
+    label: "Connected Apps",
+    icon: ModelContextProtocolIcon,
+    keywords: ["mcp", "oauth", "claude", "cursor"],
+    action: { type: "navigate", href: "/settings/integrations#connected-apps" },
+  },
 ];
 
 export function settingsGroup(): CommandMenuGroup {
@@ -137,7 +215,7 @@ export function settingsGroup(): CommandMenuGroup {
   };
 }
 
-export function helpGroup(): CommandMenuGroup {
+export function helpGroup(askAgent: () => void): CommandMenuGroup {
   return {
     heading: "Get Help",
     items: [
@@ -147,6 +225,13 @@ export function helpGroup(): CommandMenuGroup {
         icon: HELP_SUPPORT.icon,
         keywords: HELP_SUPPORT.keywords,
         action: { type: "sheet", sheet: { sheet: "support" } },
+      },
+      {
+        value: HELP_ASK_AGENT.label,
+        label: HELP_ASK_AGENT.label,
+        icon: HELP_ASK_AGENT.icon,
+        keywords: HELP_ASK_AGENT.keywords,
+        action: { type: "run", run: askAgent },
       },
       ...HELP_LINKS.map((link) => ({
         value: link.label,

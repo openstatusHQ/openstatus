@@ -376,6 +376,128 @@ describe("type switching", () => {
   });
 });
 
+describe("updateMonitorGeneral (heartbeat)", () => {
+  test("saves period and grace and re-anchors the deadline", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const lastPing = new Date("2026-01-01T00:00:00.000Z");
+      await setLastPing(tx, row.id, lastPing);
+
+      const updated = await updateMonitorGeneral({
+        ctx: { ...ctx, db: tx },
+        input: {
+          id: row.id,
+          name: "renamed",
+          jobType: "heartbeat",
+          url: "",
+          method: "GET",
+          active: true,
+          heartbeatPeriod: 2 * HOUR,
+          heartbeatGrace: 600,
+        },
+      });
+
+      expect(updated.name).toBe("renamed");
+      expect(updated.heartbeatPeriod).toBe(2 * HOUR);
+      expect(updated.heartbeatGrace).toBe(600);
+      const state = await readState(tx, row.id);
+      expect(state?.nextDueAt?.getTime()).toBe(
+        lastPing.getTime() + (2 * HOUR + 600) * 1000,
+      );
+    });
+  });
+
+  test("omitting period and grace leaves them untouched", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const updated = await updateMonitorGeneral({
+        ctx: { ...ctx, db: tx },
+        input: {
+          id: row.id,
+          name: row.name,
+          jobType: "heartbeat",
+          url: "",
+          method: "GET",
+          active: false,
+        },
+      });
+      expect(updated.active).toBe(false);
+      expect(updated.heartbeatPeriod).toBe(HOUR);
+      expect(updated.heartbeatGrace).toBe(FIVE_MIN);
+    });
+  });
+
+  test("rejects period and grace on a non-heartbeat monitor", async () => {
+    await withTestTransaction(async (tx) => {
+      const http = await createMonitor({
+        ctx: { ...ctx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-http`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      await expect(
+        updateMonitorGeneral({
+          ctx: { ...ctx, db: tx },
+          input: {
+            id: http.id,
+            name: http.name,
+            jobType: "http",
+            url: "https://example.com",
+            method: "GET",
+            heartbeatPeriod: HOUR,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      await expect(
+        updateMonitorGeneral({
+          ctx: { ...ctx, db: tx },
+          input: {
+            id: http.id,
+            name: http.name,
+            jobType: "http",
+            url: "https://example.com",
+            method: "GET",
+            heartbeatGrace: FIVE_MIN,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  test("resuming with a new period anchors on now, not the stale ping", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx, { active: false });
+      await setLastPing(tx, row.id, new Date("2026-01-01T00:00:00.000Z"));
+
+      const before = Date.now();
+      await updateMonitorGeneral({
+        ctx: { ...ctx, db: tx },
+        input: {
+          id: row.id,
+          name: row.name,
+          jobType: "heartbeat",
+          url: "",
+          method: "GET",
+          active: true,
+          heartbeatPeriod: 2 * HOUR,
+          heartbeatGrace: 600,
+        },
+      });
+
+      const state = await readState(tx, row.id);
+      const expected = before + (2 * HOUR + 600) * 1000;
+      expect(state?.nextDueAt?.getTime()).toBeGreaterThanOrEqual(expected);
+      expect(state?.nextDueAt?.getTime()).toBeLessThan(expected + 10_000);
+    });
+  });
+});
+
 describe("resume", () => {
   test("pausing and resuming restarts the deadline from now", async () => {
     await withTestTransaction(async (tx) => {

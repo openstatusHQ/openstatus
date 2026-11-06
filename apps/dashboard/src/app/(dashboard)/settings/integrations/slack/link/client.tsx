@@ -2,9 +2,9 @@
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useQueryStates } from "nuqs";
 
-import { Link } from "@/components/common/link";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -38,7 +38,7 @@ function Message({
       <div className="mt-2 flex gap-2">
         {children}
         <Button size="sm" variant="outline" asChild>
-          <Link href="/settings/integrations">Back to integrations</Link>
+          <Link href="/settings/integrations#slack">Back to integrations</Link>
         </Button>
       </div>
     </EmptyStateContainer>
@@ -134,7 +134,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="slack">
         <SectionHeader>
           <SectionTitle>Slack</SectionTitle>
           <SectionDescription>

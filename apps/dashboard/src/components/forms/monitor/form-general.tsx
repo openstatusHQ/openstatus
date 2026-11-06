@@ -66,7 +66,11 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { headerPairSchema } from "@openstatus/utils";
+import {
+  HEARTBEAT_GRACE_RANGE,
+  HEARTBEAT_PERIOD_RANGE,
+  headerPairSchema,
+} from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -85,7 +89,6 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-import { heartbeatGraceSchema, heartbeatPeriodSchema } from "./form-heartbeat";
 import { HeartbeatDurationInput } from "./heartbeat-duration-input";
 
 const TYPES = ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const;
@@ -96,6 +99,17 @@ const GRPC_TLS_LABELS = {
 } as const;
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
+
+const heartbeatPeriodSchema = z
+  .number({ error: "Period is required" })
+  .int()
+  .min(HEARTBEAT_PERIOD_RANGE.min, "At least 1 minute")
+  .max(HEARTBEAT_PERIOD_RANGE.max, "At most 30 days");
+const heartbeatGraceSchema = z
+  .number({ error: "Grace period is required" })
+  .int()
+  .min(HEARTBEAT_GRACE_RANGE.min, "At least 1 minute")
+  .max(HEARTBEAT_GRACE_RANGE.max, "At most 7 days");
 
 const schema = z
   .object({
@@ -223,7 +237,6 @@ export function FormGeneral({
   }, [watchType, defaultValues, form]);
 
   function submitAction(values: FormValues) {
-    console.log("submitAction", values);
     if (isPending || disabled) return;
 
     // Validate assertions based on type
@@ -297,7 +310,7 @@ export function FormGeneral({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="monitor-configuration">
           <FormCardHeader>
             <FormCardTitle>Monitor Configuration</FormCardTitle>
             <FormCardDescription>
@@ -407,9 +420,7 @@ export function FormGeneral({
               )}
             />
           </FormCardContent>
-          {watchType && !(isHeartbeat && defaultValues?.type) ? (
-            <FormCardSeparator />
-          ) : null}
+          {watchType ? <FormCardSeparator /> : null}
           {watchType === "http" && (
             <>
               <FormCardContent className="grid grid-cols-4 gap-4">
@@ -758,7 +769,7 @@ export function FormGeneral({
               </div>
             </FormCardContent>
           )}
-          {isHeartbeat && !defaultValues?.type && (
+          {watchType === "heartbeat" && (
             <FormCardContent className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -796,10 +807,12 @@ export function FormGeneral({
                   </FormItem>
                 )}
               />
-              <p className="text-muted-foreground col-span-full text-sm">
-                Your job pings a unique URL when it finishes. You get it right
-                after creating the monitor. Alerts start after the first ping.
-              </p>
+              {defaultValues?.type ? null : (
+                <div className="text-muted-foreground col-span-full text-sm">
+                  Your job pings a unique URL when it finishes. You get it right
+                  after creating the monitor. Alerts start after the first ping.
+                </div>
+              )}
             </FormCardContent>
           )}
           {watchType === "icmp" && (

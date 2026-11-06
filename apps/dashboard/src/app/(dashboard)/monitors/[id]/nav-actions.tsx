@@ -13,13 +13,14 @@ import {
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
 import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { heartbeatSnippets } from "@/components/forms/monitor/form-heartbeat";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -38,23 +39,9 @@ export function NavActions() {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const router = useRouter();
-  const pathname = usePathname();
 
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-
-  const deleteMonitorMutation = useMutation(
-    trpc.monitor.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.monitor.list.queryKey(),
-        });
-        if (pathname.includes(`/monitors/${id}`)) {
-          router.push("/monitors");
-        }
-      },
-    }),
   );
 
   const cloneMonitorMutation = useMutation(
@@ -86,9 +73,13 @@ export function NavActions() {
     enabled: monitor?.jobType === "heartbeat",
   });
 
-  // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+  // the request an http monitor sends, or the ping a heartbeat expects; hidden for the rest
   const curlCommand =
-    monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
+    monitor?.jobType === "http"
+      ? buildCurlCommand(monitor)
+      : heartbeat?.pingUrl
+        ? heartbeatSnippets(heartbeat.pingUrl).curl
+        : null;
 
   function setActive(active: boolean) {
     const promise = updateMonitorsMutation.mutateAsync({
@@ -291,17 +282,8 @@ export function NavActions() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <QuickActions
-        actions={actions}
-        deleteAction={{
-          confirmationValue: monitor.name ?? "monitor",
-          submitAction: async () => {
-            await deleteMonitorMutation.mutateAsync({
-              id: Number.parseInt(id),
-            });
-          },
-        }}
-      />
+      {/* no delete up here: on a nested page the bar belongs to the parent */}
+      <QuickActions actions={actions} />
       <DataTableSheetTest
         data={test}
         monitor={monitor}

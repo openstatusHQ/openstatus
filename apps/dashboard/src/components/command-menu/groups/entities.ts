@@ -23,7 +23,10 @@ export function incidentsGroup(
       keywords: [i.title, i.status, i.severity, i.commander?.name].filter(
         Boolean,
       ) as string[],
-      action: { type: "navigate", href: `/incidents/${i.id}` },
+      action: {
+        type: "push",
+        page: { type: "incident", id: i.id, title: i.title },
+      },
     })),
   };
 }
