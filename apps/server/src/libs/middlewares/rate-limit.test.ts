@@ -153,6 +153,18 @@ describe("rate limit", () => {
     expect((await app.request("/public/status/acme", ip2)).status).toBe(200);
   });
 
+  test("the anonymous /mcp/status endpoint is metered per IP like /public", async () => {
+    const { app } = pub;
+    const ip1 = { method: "POST", headers: { "fly-client-ip": "203.0.113.9" } };
+    const ip2 = {
+      method: "POST",
+      headers: { "fly-client-ip": "203.0.113.10" },
+    };
+    expect((await fire(app, "/mcp/status", 2, ip1)).status).toBe(200);
+    expect((await app.request("/mcp/status", ip1)).status).toBe(429);
+    expect((await app.request("/mcp/status", ip2)).status).toBe(200);
+  });
+
   test("x-forwarded-for keys on the proxy-appended last entry, not the client-supplied first", async () => {
     const { app } = pub;
     // the trusted proxy appends 203.0.113.3; everything before it is attacker input

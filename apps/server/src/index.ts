@@ -33,6 +33,7 @@ import { shouldSample } from "./libs/sampling";
 import { pingRoute } from "./routes/health";
 import { heartbeatRoute } from "./routes/heartbeat";
 import { mcpRoute } from "./routes/mcp";
+import { publicStatusMcpRoute } from "./routes/mcp/public";
 import { createOAuthRoutes } from "./routes/oauth";
 import { oauthConfigFromEnv } from "./routes/oauth/config";
 import { openapiRoute } from "./routes/openapi";
@@ -275,6 +276,8 @@ app.route("/slack", slackRoute);
  * `@openstatus/services` verbs; mutations write `metadata.transport:
  * "mcp"` to the audit log via the shared `emitAudit` plumbing.
  */
+// Registered before `/mcp` so its auth middleware never sees this path.
+app.route("/mcp/status", publicStatusMcpRoute);
 app.route("/mcp", mcpRoute);
 
 /**

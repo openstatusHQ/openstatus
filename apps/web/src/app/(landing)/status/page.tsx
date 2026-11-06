@@ -18,6 +18,7 @@ import {
 } from "../content-box";
 import { searchParamsCache } from "./search-params";
 import {
+  AgentHint,
   IssueList,
   LetterNav,
   PopularGrid,
@@ -171,6 +172,8 @@ export default async function Page(props: PageProps) {
         q={query}
         letter={letter}
       />
+
+      <AgentHint markdownPath="/status.md" />
 
       <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">

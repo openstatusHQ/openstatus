@@ -242,7 +242,7 @@ export function renderIndexMarkdown(args: {
 
   let md = "# Is it down? Live status of external services\n\n";
   md += `${args.description}\n\n`;
-  md += `Tracking ${args.services.length.toLocaleString("en-US")} services. To check one, fetch /status/{slug}.md (for example /status/github.md); a single component is /status/{slug}/{component}.md.\n\n`;
+  md += `Tracking ${args.services.length.toLocaleString("en-US")} services. To check one, fetch /status/{slug}.md (for example /status/github.md); a single component is /status/{slug}/{component}.md. MCP clients can connect to https://api.openstatus.dev/mcp/status (no login).\n\n`;
 
   md += `## Having issues now (${issues.length})\n\n`;
   if (issues.length === 0) {

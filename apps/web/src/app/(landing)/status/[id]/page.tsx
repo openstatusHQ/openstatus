@@ -25,7 +25,7 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
-import { RelatedServices, StatusSection } from "../service-blocks";
+import { AgentHint, RelatedServices, StatusSection } from "../service-blocks";
 import { ServiceDetail } from "./service-detail";
 
 export const dynamic = "force-dynamic";
@@ -151,15 +151,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         </StatusSection>
       ) : null}
 
-      <p className="not-prose text-muted-foreground m-0 text-sm">
-        For agents: this page as Markdown at{" "}
-        <a
-          className="text-foreground underline underline-offset-4"
-          href={`/status/${service.slug}.md`}
-        >
-          /status/{service.slug}.md
-        </a>
-      </p>
+      <AgentHint markdownPath={`/status/${service.slug}.md`} />
 
       <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">

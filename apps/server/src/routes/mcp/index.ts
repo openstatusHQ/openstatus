@@ -11,6 +11,7 @@ import { authMiddleware } from "../../libs/middlewares/auth";
 import type { Variables } from "../../types";
 import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
+import { rpcCalls } from "./analytics";
 import { createMcpServer } from "./server";
 
 const logger = getLogger("api-server");
@@ -43,28 +44,6 @@ mcpRoute.onError((err, c) => {
  * learns OAuth is on offer, and never sees a tool.
  */
 mcpRoute.use("*", authMiddleware);
-
-/**
- * The JSON-RPC calls carried by a request body, as OpenPanel event properties.
- * A batch arrives as an array and every entry is its own call; `params.name` is
- * the tool for `tools/call`, `params.uri` the document for `resources/read`.
- */
-function rpcCalls(body: unknown): Record<string, unknown>[] {
-  const entries = Array.isArray(body) ? body : [body];
-  const calls: Record<string, unknown>[] = [];
-  for (const entry of entries) {
-    if (typeof entry !== "object" || entry === null) continue;
-    const { method, params } = entry as { method?: unknown; params?: unknown };
-    if (typeof method !== "string") continue;
-    const { name, uri } = (params ?? {}) as { name?: unknown; uri?: unknown };
-    calls.push({
-      method,
-      ...(typeof name === "string" ? { tool: name } : {}),
-      ...(typeof uri === "string" ? { uri } : {}),
-    });
-  }
-  return calls;
-}
 
 /**
  * Fire-and-forget OpenPanel event for every JSON-RPC call that reaches the

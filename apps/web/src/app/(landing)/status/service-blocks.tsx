@@ -270,3 +270,22 @@ export function RelatedServices({
     </div>
   );
 }
+
+export const PUBLIC_STATUS_MCP_URL = "https://api.openstatus.dev/mcp/status";
+
+export function AgentHint({ markdownPath }: { markdownPath: string }) {
+  return (
+    <p className="not-prose text-muted-foreground m-0 text-sm">
+      For agents: this page as Markdown at{" "}
+      <a
+        className="text-foreground underline underline-offset-4"
+        href={markdownPath}
+      >
+        {markdownPath}
+      </a>
+      , or connect the MCP server{" "}
+      <code className="text-foreground">{PUBLIC_STATUS_MCP_URL}</code> (no
+      login).
+    </p>
+  );
+}

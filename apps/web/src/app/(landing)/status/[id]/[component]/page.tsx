@@ -19,6 +19,7 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../../content-box";
+import { AgentHint } from "../../service-blocks";
 import { getCheckerHref, getComponentFullName, getHost } from "../../utils";
 import { ComponentDetail } from "./component-detail";
 
@@ -119,6 +120,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           />
         </Suspense>
       </HydrateClient>
+
+      <AgentHint
+        markdownPath={`/status/${service.slug}/${component.slug}.md`}
+      />
 
       <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
