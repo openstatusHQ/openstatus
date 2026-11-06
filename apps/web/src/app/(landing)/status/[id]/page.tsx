@@ -21,12 +21,15 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
-import { getCheckerHref, getHost } from "../utils";
-import { ServiceDetail } from "./service-detail";
+import { prefetchPopularStatus } from "../prefetch";
+import { PopularStatus } from "../sections";
+import { AgentHint } from "../service-blocks";
+import { ServiceDetail } from "./client";
 
 export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
+const RELATED_COUNT = 6;
 
 type RouteParams = { id: string };
 
@@ -105,32 +108,11 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       slug: service.slug,
       days: HISTORY_DAYS,
     }),
+    prefetchPopularStatus(),
   ]);
 
-  const checkerHref = getCheckerHref(service.url);
-
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-3 py-2 text-sm">
-        {checkerHref ? (
-          <CustomLink
-            href={checkerHref}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            Is {service.name} down for you? Test {getHost(service.url)} from 28
-            regions →
-          </CustomLink>
-        ) : (
-          <CustomLink
-            href={`${APP_URL}?ref=status-service-top`}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            Catch downtime before your users do: free uptime monitoring from 28
-            regions →
-          </CustomLink>
-        )}
-      </ContentBoxContainer>
-
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
       <HydrateClient>
         <Suspense
           fallback={
@@ -143,9 +125,20 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         >
           <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
         </Suspense>
+        <Suspense fallback={null}>
+          <PopularStatus
+            id="related"
+            title="People also check"
+            aside={null}
+            exclude={{ service: service.slug }}
+            limit={8}
+          />
+        </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
+      <AgentHint markdownPath={`/status/${service.slug}.md`} />
+
+      <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>

@@ -6,13 +6,14 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@openstatus/ui/components/ui/input-group";
-import { useQueryState } from "nuqs";
+import { useQueryStates } from "nuqs";
 import { useEffect, useRef } from "react";
 
-import { qParser } from "./search-params";
+import { pageParser, qParser } from "./search-params";
 
 export function ServiceSearch() {
-  const [q, setQ] = useQueryState("q", qParser);
+  const [{ q }, setParams] = useQueryStates({ q: qParser, page: pageParser });
+  const setQ = (value: string) => setParams({ q: value, page: null });
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export function ServiceSearch() {
   }, []);
 
   return (
-    <div className="not-prose my-0!">
+    <form action="/status" role="search" className="not-prose my-0!">
       <InputGroup className="h-10! rounded-none ps-1 pe-2 text-base md:text-base">
         <InputGroupAddon align="inline-start">
           <SearchIcon />
@@ -44,7 +45,8 @@ export function ServiceSearch() {
         <InputGroupInput
           ref={inputRef}
           type="search"
-          placeholder="Search services…"
+          name="q"
+          placeholder="Search all services, e.g. Anthropic, GitHub, Stripe"
           aria-label="Search services"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -62,6 +64,6 @@ export function ServiceSearch() {
           </kbd>
         </InputGroupAddon>
       </InputGroup>
-    </div>
+    </form>
   );
 }

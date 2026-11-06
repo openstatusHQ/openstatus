@@ -7,12 +7,15 @@ import {
 import { afterEach, describe, expect, test } from "vitest";
 
 import { NotFoundError } from "../../errors";
+import { listExternalServicesBySlugs } from "../../external-service";
+import { listExternalComponentsByRefs } from "../../external-service-component";
 import {
   getComponentReportWindows,
   getServiceReportCountries,
   getServiceReportDaily,
   getServiceReportWindows,
 } from "../read";
+import { getComponentReportWindowsByIds } from "../read";
 import { recordExternalServiceReport } from "../record";
 
 const TEST_PREFIX = "svc-extreport-test";
@@ -365,5 +368,89 @@ describe("report aggregation reads", () => {
       { country: "US", total: 2 },
       { country: "FR", total: 1 },
     ]);
+  });
+});
+
+describe("batch reads for the popular status blocks", () => {
+  test("listExternalServicesBySlugs returns live services only", async () => {
+    await seedService({ slug: `${TEST_PREFIX}-batch-a` });
+    await seedService({ slug: `${TEST_PREFIX}-batch-b` });
+    await seedService({
+      slug: `${TEST_PREFIX}-batch-gone`,
+      deletedAt: new Date(),
+    });
+    const rows = await listExternalServicesBySlugs({
+      slugs: [
+        `${TEST_PREFIX}-batch-b`,
+        `${TEST_PREFIX}-batch-gone`,
+        `${TEST_PREFIX}-batch-a`,
+        `${TEST_PREFIX}-batch-missing`,
+      ],
+    });
+    expect(rows.map((r) => r.slug).sort()).toEqual([
+      `${TEST_PREFIX}-batch-a`,
+      `${TEST_PREFIX}-batch-b`,
+    ]);
+    expect(await listExternalServicesBySlugs({ slugs: [] })).toEqual([]);
+  });
+
+  test("listExternalComponentsByRefs resolves exact pairs in input order", async () => {
+    const a = await seedService({ slug: `${TEST_PREFIX}-refs-a` });
+    const b = await seedService({ slug: `${TEST_PREFIX}-refs-b` });
+    await seedComponent(a.id, "api");
+    await seedComponent(a.id, "web");
+    await seedComponent(b.id, "api");
+
+    const rows = await listExternalComponentsByRefs({
+      refs: [
+        { service: `${TEST_PREFIX}-refs-b`, component: "api" },
+        { service: `${TEST_PREFIX}-refs-a`, component: "web" },
+        // b has no "web": the cross pair must not match a's row
+        { service: `${TEST_PREFIX}-refs-b`, component: "web" },
+        { service: `${TEST_PREFIX}-refs-missing`, component: "api" },
+      ],
+    });
+    expect(rows.map((r) => `${r.service.slug}/${r.component.slug}`)).toEqual([
+      `${TEST_PREFIX}-refs-b/api`,
+      `${TEST_PREFIX}-refs-a/web`,
+    ]);
+  });
+
+  test("getComponentReportWindowsByIds counts distinct reporters per component in the window", async () => {
+    const svc = await seedService({ slug: `${TEST_PREFIX}-cwin` });
+    const api = await seedComponent(svc.id, "api");
+    const web = await seedComponent(svc.id, "web");
+    const now = Date.now();
+    await insertReports([
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "h1",
+        createdAt: new Date(now - 60_000),
+      },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "h1",
+        createdAt: new Date(now - 30_000),
+      },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "h2",
+        createdAt: new Date(now - 30_000),
+      },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: web.id,
+        reporterHash: "h3",
+        createdAt: new Date(now - 60 * 60_000),
+      },
+    ]);
+    const rows = await getComponentReportWindowsByIds({
+      componentIds: [api.id, web.id],
+      since: new Date(now - 15 * 60_000),
+    });
+    expect(rows).toEqual([{ componentId: api.id, reporters: 2, total: 3 }]);
   });
 });

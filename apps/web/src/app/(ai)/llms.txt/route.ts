@@ -16,6 +16,7 @@ import {
   getUseCasePages,
   isIndexable,
 } from "../../../content/utils";
+import { POPULAR_STATUS_SLUGS } from "../../../data/popular-status";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;
@@ -42,6 +43,21 @@ function renderSection(title: string, items: Item[]): string {
     )
     .join("\n");
   return `## ${title}\n\n${lines}\n`;
+}
+
+// Static on purpose: llms.txt is revalidated hourly and must not hit the DB.
+function renderExternalStatus(): string {
+  return [
+    "## External status",
+    "",
+    "Live status of 3,000+ third-party services (cloud, AI, SaaS), read from their official status pages every few minutes and combined with user reports.",
+    "",
+    `- [Is it down? All services](${BASE}/status.md): services with issues right now, popular services, then the full list`,
+    `- One service: ${BASE}/status/{slug}.md (answer, affected components, last 45 days, recent incidents)`,
+    `- One component: ${BASE}/status/{slug}/{component}.md`,
+    `- Popular: ${POPULAR_STATUS_SLUGS.map((slug) => `${BASE}/status/${slug}.md`).join(", ")}`,
+    "",
+  ].join("\n");
 }
 
 export function GET() {
@@ -80,6 +96,7 @@ export function GET() {
       "Playground",
       getToolsPages().map((p) => toItem(p, true)),
     ),
+    renderExternalStatus(),
     renderSection(
       "Pages",
       getUnrelatedPages()

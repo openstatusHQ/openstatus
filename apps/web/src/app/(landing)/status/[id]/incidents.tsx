@@ -1,36 +1,89 @@
 "use client";
 
-import { Grid } from "../../../../content/mdx-components/grid";
-import { api } from "../../../../trpc/rq-client";
-import {
-  ContentBoxDescription,
-  ContentBoxLink,
-  ContentBoxTitle,
-} from "../../content-box";
+import { cn } from "@openstatus/ui/lib/utils";
 
-function impactClass(impact: string | undefined): string {
+import { api } from "../../../../trpc/rq-client";
+import { StatusSection } from "../service-blocks";
+import { formatDuration } from "../utils";
+
+function impactText(impact: string | undefined): string {
   switch (impact) {
     case "critical":
-      return "bg-destructive/20 text-destructive border-destructive/30";
     case "major":
-      return "bg-destructive/15 text-destructive border-destructive/20";
+      return "text-destructive";
     case "minor":
-      return "bg-warning/15 text-warning border-warning/30";
+      return "text-warning";
     case "maintenance":
-      return "bg-info/15 text-info border-info/30";
+      return "text-info";
     default:
-      return "bg-muted text-muted-foreground border-muted-foreground/20";
+      return "text-muted-foreground";
   }
 }
 
-function formatTimestamp(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const ms = Date.parse(value);
-  if (Number.isNaN(ms)) return null;
-  return new Date(ms).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
+// Year included: recent incidents can span New Year.
+function shortDate(value: string): string {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
   });
+}
+
+type IncidentRow = {
+  id: string;
+  name: string;
+  impact?: string;
+  shortlink?: string;
+  startedAt?: string;
+  createdAt: string;
+  resolvedAt?: string | null;
+};
+
+export function IncidentRows({
+  incidents,
+  statusPageUrl,
+}: {
+  incidents: IncidentRow[];
+  statusPageUrl: string;
+}) {
+  return (
+    <div className="border-border bg-border [&>*]:bg-background grid grid-cols-1 gap-px border bg-clip-padding">
+      {incidents.map((inc) => {
+        const started = inc.startedAt ?? inc.createdAt;
+        const duration = inc.resolvedAt
+          ? formatDuration(Date.parse(inc.resolvedAt) - Date.parse(started))
+          : "ongoing";
+        return (
+          <a
+            key={inc.id}
+            href={inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:bg-muted! grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-x-4 px-3 py-2 no-underline! transition-colors duration-150 motion-reduce:transition-none sm:grid-cols-[4.5rem_minmax(0,1fr)_6rem_5rem]"
+          >
+            <span className="text-muted-foreground text-sm tabular-nums">
+              {shortDate(started)}
+            </span>
+            <span className="text-foreground truncate">{inc.name}</span>
+            <span
+              className={cn("hidden text-xs sm:inline", impactText(inc.impact))}
+            >
+              {inc.impact && inc.impact !== "none" ? inc.impact : "incident"}
+            </span>
+            <span
+              className={cn(
+                "text-right text-xs tabular-nums",
+                inc.resolvedAt ? "text-muted-foreground" : "text-warning",
+              )}
+            >
+              {duration}
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  );
 }
 
 export type IncidentsProps = {
@@ -39,29 +92,6 @@ export type IncidentsProps = {
   statusPageUrl: string;
 };
 
-function UpstreamFallback({
-  serviceName,
-  statusPageUrl,
-}: {
-  serviceName: string;
-  statusPageUrl: string;
-}) {
-  return (
-    <p className="text-muted-foreground">
-      Recent {serviceName} incident history isn't available here. Check the{" "}
-      <a
-        className="underline"
-        href={statusPageUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        official {serviceName} status page
-      </a>{" "}
-      for the latest {serviceName} incidents.
-    </p>
-  );
-}
-
 export function Incidents({
   slug,
   serviceName,
@@ -69,53 +99,36 @@ export function Incidents({
 }: IncidentsProps) {
   const [data] = api.externalService.incidents.useSuspenseQuery({ slug });
 
-  if (!data.supported) {
-    return (
-      <UpstreamFallback
-        serviceName={serviceName}
-        statusPageUrl={statusPageUrl}
-      />
-    );
-  }
-
-  if (data.incidents.length === 0) {
-    return (
-      <p className="text-muted-foreground">
-        No {serviceName} incidents reported in the recent period.
-      </p>
-    );
-  }
-
   return (
-    <Grid cols={1} className="not-prose">
-      {data.incidents.map((inc) => {
-        const started = formatTimestamp(inc.startedAt ?? inc.createdAt);
-        const resolved = formatTimestamp(inc.resolvedAt ?? null);
-        const link = inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`;
-        return (
-          <ContentBoxLink
-            key={inc.id}
-            href={link}
-            className="flex flex-col gap-1"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <ContentBoxTitle className="m-0!">{inc.name}</ContentBoxTitle>
-              <span
-                className={`inline-flex items-center rounded-none border px-2.5 py-0.5 text-xs font-medium ${impactClass(inc.impact)}`}
-              >
-                {inc.impact === "none"
-                  ? "incident"
-                  : (inc.impact ?? "incident")}
-              </span>
-            </div>
-            <ContentBoxDescription className="m-0! text-sm">
-              {started ? <>Started {started}</> : null}
-              {started && resolved ? " · " : null}
-              {resolved ? <>Resolved {resolved}</> : null}
-            </ContentBoxDescription>
-          </ContentBoxLink>
-        );
-      })}
-    </Grid>
+    <StatusSection
+      id="incidents"
+      title="Recent incidents"
+      aside={
+        <a
+          className="text-foreground underline underline-offset-4"
+          href={statusPageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Full history ↗
+        </a>
+      }
+    >
+      {!data.supported ? (
+        <p className="text-muted-foreground m-0">
+          {serviceName}&apos;s incident history isn&apos;t available here. Check
+          the official status page for past incidents.
+        </p>
+      ) : data.incidents.length === 0 ? (
+        <p className="text-muted-foreground m-0">
+          No {serviceName} incidents reported recently.
+        </p>
+      ) : (
+        <IncidentRows
+          incidents={data.incidents}
+          statusPageUrl={statusPageUrl}
+        />
+      )}
+    </StatusSection>
   );
 }
