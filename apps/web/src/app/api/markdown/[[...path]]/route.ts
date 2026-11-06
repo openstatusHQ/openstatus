@@ -4,6 +4,7 @@ import { notFoundMarkdown } from "../../../../content/agent-recovery";
 import { convertMdxToMarkdown } from "../../../../content/convert";
 import { generateOssFriendsMarkdown } from "../../../../content/oss-friends";
 import {
+  generateStatusComponentMarkdown,
   generateStatusDetailMarkdown,
   generateStatusIndexMarkdown,
 } from "../../../../content/status-markdown";
@@ -119,6 +120,11 @@ async function resolveStatusMarkdown(
     const slug = pathSegments[1];
     if (!slug) return null;
     return generateStatusDetailMarkdown(slug);
+  }
+  if (pathSegments.length === 3) {
+    const [, slug, component] = pathSegments;
+    if (!slug || !component) return null;
+    return generateStatusComponentMarkdown(slug, component);
   }
   return null;
 }

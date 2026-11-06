@@ -9,6 +9,7 @@ import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
+  markdownAlternate,
   ogMetadata,
   twitterMetadata,
 } from "../../../../../lib/metadata/shared-metadata";
@@ -50,7 +51,10 @@ export async function generateMetadata(args: {
     ...defaultMetadata,
     title,
     description,
-    alternates: { canonical: canonicalUrl },
+    alternates: {
+      canonical: canonicalUrl,
+      ...markdownAlternate(`/status/${service.slug}/${component.slug}`),
+    },
     robots: { index: indexable, follow: true },
     openGraph: {
       ...ogMetadata,
