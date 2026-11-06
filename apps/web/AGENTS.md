@@ -88,6 +88,12 @@ For any visible change, shoot it before reporting it done:
 `node scripts/screenshot.mjs --app web /pricing` (the `screenshot` skill has the
 flags). Judge against the root `DESIGN.md`.
 
+Images that ship in content (`image:` heroes and inline images under
+`public/assets/`) are 16:9: the changelog, blog, guide and use-case pages
+render the hero in an `aspect-video` frame with `object-contain`, so any
+other ratio letterboxes. Shoot them with `--aspect 16:9 --device desktop`
+and check the PNG's size before committing.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
