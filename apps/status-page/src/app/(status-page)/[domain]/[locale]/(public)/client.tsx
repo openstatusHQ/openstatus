@@ -96,17 +96,15 @@ export function Client() {
     : false;
 
   // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs.
-  // Fetch whenever the banner or the components need the refetched page.
-  const { data: pageWithCustomConfiguration, isSuccess: isCustomPageSuccess } =
-    useQuery({
-      ...trpc.statusPage.get.queryOptions({
-        slug: domain,
-        cardType,
-        barType,
-      }),
-      enabled:
-        !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
-    });
+  const { data: pageWithCustomConfiguration } = useQuery({
+    ...trpc.statusPage.get.queryOptions({
+      slug: domain,
+      cardType,
+      barType,
+    }),
+    enabled:
+      !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
+  });
 
   // NOTE: we can prefetch that to avoid loading state
   // NOTE: using skipToken instead of enabled:false to prevent tRPC from including this in a batch request with undefined input
@@ -157,29 +155,24 @@ export function Client() {
     };
   };
 
+  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
+  const page = pageWithCustomConfiguration ?? pageInitial;
+
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
-  // Banner events follow the refetched page once it succeeds.
-  const bannerEventsSource =
-    hasCustomConfig && isCustomPageSuccess && pageWithCustomConfiguration
-      ? pageWithCustomConfiguration
-      : pageInitial;
   const events = useMemo(() => {
     let hasIncident = false;
     return (
-      bannerEventsSource?.openEvents.filter((e) => {
+      page?.openEvents.filter((e) => {
         if (e.type !== "incident") return true;
         if (hasIncident) return false;
         hasIncident = true;
         return true;
       }) ?? []
     );
-  }, [bannerEventsSource]);
+  }, [page]);
 
-  if (!pageInitial) return null;
-
-  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
-  const page = pageWithCustomConfiguration ?? pageInitial;
+  if (!page) return null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -190,7 +183,9 @@ export function Client() {
         </StatusHeader>
         {events.length > 0 ? (
           <StatusContent className="group-data-[hide-banner=true]/embed:hidden">
+            {/* key remounts the tabs: defaultValue only applies on mount */}
             <StatusBannerTabs
+              key={events.map((e) => `${e.type}-${e.id}`).join()}
               defaultValue={`${events[0].type}-${events[0].id}`}
             >
               <StatusBannerTabsList>
