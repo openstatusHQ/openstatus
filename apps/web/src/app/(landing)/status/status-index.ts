@@ -30,6 +30,19 @@ export function hasIssue(s: IndexService): boolean {
 
 const issueRank = problemRank;
 
+// A service users are reporting down counts whatever it is; otherwise only
+// the curated tech, AI and cloud names make the "Having issues now" list.
+export function isNotableIssue(
+  s: IndexService,
+  notableSlugs: ReadonlySet<string>,
+): boolean {
+  return (
+    s.escalated ||
+    notableSlugs.has(s.slug) ||
+    s.aliases.some((alias) => notableSlugs.has(alias))
+  );
+}
+
 export function buildStatusIndex<T extends IndexService>(args: {
   services: T[];
   q: string;

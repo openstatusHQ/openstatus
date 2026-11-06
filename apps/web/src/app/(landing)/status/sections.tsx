@@ -2,6 +2,7 @@
 
 import { useQueryStates } from "nuqs";
 
+import { NOTABLE_STATUS_SLUGS } from "../../../data/notable-status";
 import {
   POPULAR_STATUS,
   type PopularStatusEntry,
@@ -21,7 +22,7 @@ import {
   StatusSection,
 } from "./service-blocks";
 import { ServiceSearch } from "./service-search";
-import { buildStatusIndex } from "./status-index";
+import { buildStatusIndex, isNotableIssue } from "./status-index";
 import { getComponentFullName } from "./utils";
 
 // Composable, data-connected blocks for the status pages. Each one reads its
@@ -58,7 +59,10 @@ export function StatusHeader() {
   );
 }
 
-/** Services reporting a problem right now, worst first. Reads the grid. */
+/**
+ * Notable services reporting a problem right now, worst first. Reads the grid.
+ * The long tail of the directory stays out; see NOTABLE_STATUS_SLUGS.
+ */
 export function IssuesNow({ limit = 10 }: { limit?: number }) {
   const [services] = api.externalService.grid.useSuspenseQuery();
   const { issues } = buildStatusIndex({
@@ -67,18 +71,20 @@ export function IssuesNow({ limit = 10 }: { limit?: number }) {
     page: 1,
     popularSlugs: [],
   });
-  if (issues.length === 0) return null;
+  const notable = issues.filter((s) => isNotableIssue(s, NOTABLE_STATUS_SLUGS));
+  if (notable.length === 0) return null;
+  const more = notable.length - limit;
   return (
     <StatusSection
       id="issues"
       title="Having issues now"
-      count={formatCount(issues.length)}
+      count={formatCount(notable.length)}
       aside="Worst first"
     >
-      <IssueList services={issues.slice(0, limit)} />
-      {issues.length > limit ? (
+      <IssueList services={notable.slice(0, limit)} />
+      {more > 0 ? (
         <p className="text-muted-foreground m-0 text-sm">
-          and {formatCount(issues.length - limit)} more with smaller issues
+          and {formatCount(more)} more
         </p>
       ) : null}
     </StatusSection>
