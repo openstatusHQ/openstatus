@@ -313,7 +313,7 @@ async function summarizeServices(services: ServiceRow[], limitRead = false) {
       .filter((r) => r != null)
       .sort((a, b) => b.last_fetched_at - a.last_fetched_at)[0];
     const reporters = reportersByServiceId.get(s.id) ?? 0;
-    // Older than 30 minutes is not "now": show unknown, not a past outage.
+    // Older than STALE_THRESHOLD_MS (2h) is not "now": show unknown, not a past outage.
     const fresh = snap != null && isFresh(snap.last_fetched_at);
     const effective = computeEffectiveStatus({
       providerIndicator: fresh ? snap.indicator : "",
@@ -368,7 +368,7 @@ export const externalServiceRouter = createTRPCRouter({
     }),
 
   // Components by service and component slug, in the order asked; missing
-  // ones are skipped. A reading older than 30 minutes shows as unknown.
+  // ones are skipped. A reading older than 2 hours shows as unknown.
   componentSummaries: publicProcedure
     .input(
       z.object({
@@ -604,7 +604,7 @@ export const externalServiceRouter = createTRPCRouter({
           components: components.map((c) => {
             const effective = computeEffectiveStatus({
               // The list keeps components seen in the last 24h; only a
-              // reading under 30 minutes old counts as their status now.
+              // reading under 2 hours old counts as their status now.
               providerIndicator: isFresh(c.lastFetchedAt ?? 0)
                 ? c.indicator
                 : "",

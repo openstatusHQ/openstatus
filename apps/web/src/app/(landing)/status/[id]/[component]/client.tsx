@@ -135,7 +135,7 @@ export function ComponentDetail({
   const { service, component, history, incidents, overlayIncidents } = data;
 
   const fullName = getComponentFullName(service.name, component.name);
-  // `component.stale` is the 24h hide-from-index window; "live" is 30 minutes.
+  // `component.stale` is the 24h hide-from-index window; "live" is STALE_THRESHOLD_MS (2h).
   const hasLiveData = isFresh(component.lastFetchedAt);
   const stale = component.lastFetchedAt > 0 && isStale(component.lastFetchedAt);
   const answer = getStatusAnswer({
