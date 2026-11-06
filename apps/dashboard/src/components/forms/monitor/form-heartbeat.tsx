@@ -6,6 +6,7 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
+import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
 import {
   FormCard,
@@ -25,13 +26,13 @@ export function heartbeatSnippets(pingUrl: string) {
   };
 }
 
-export function HeartbeatPingUrl({ pingUrl }: { pingUrl: string }) {
+function HeartbeatPingUrl({ pingUrl }: { pingUrl: string }) {
   const { copy, isCopied } = useCopyToClipboard();
   const snippets = heartbeatSnippets(pingUrl);
 
   return (
-    <div className="grid gap-3">
-      <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-1.5">
         <span className="text-sm font-medium">Ping URL</span>
         <Button
           type="button"
@@ -55,16 +56,16 @@ export function HeartbeatPingUrl({ pingUrl }: { pingUrl: string }) {
           ping. A POST body (up to 10 KB) is kept with the ping for debugging.
         </p>
       </div>
-      <div className="grid gap-1.5">
+      <div className="grid grid-cols-1 gap-1.5">
         <span className="text-sm font-medium">Examples</span>
-        {Object.entries(snippets).map(([label, snippet]) => (
-          <div key={label} className="grid gap-1">
-            <span className="text-muted-foreground text-xs">{label}</span>
-            <pre className="bg-muted overflow-x-auto rounded-md p-2 font-mono text-xs">
-              {snippet}
-            </pre>
-          </div>
-        ))}
+        <ul className="flex flex-col gap-2">
+          {Object.entries(snippets).map(([label, snippet]) => (
+            <li key={label} className="flex flex-col gap-0.5">
+              <p className="text-muted-foreground text-xs">{label}</p>
+              <Code>{snippet}</Code>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

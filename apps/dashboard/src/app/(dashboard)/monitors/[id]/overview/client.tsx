@@ -1,7 +1,8 @@
 "use client";
 
-import { Pause, Schedule, Trend } from "@openstatus/icons";
+import { Check, Copy, Pause, Schedule, Trend } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
@@ -15,6 +16,7 @@ import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phas
 import { ChartBarPings } from "@/components/chart/chart-bar-pings";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
 import { ChartEmpty } from "@/components/chart/chart-empty";
+import { Link } from "@/components/common/link";
 import {
   EmptyStateActions,
   EmptyStateContainer,
@@ -40,7 +42,6 @@ import {
   RegionsDataTable,
   RegionsLegend,
 } from "@/components/data-table/response-logs/regions/data-table";
-import { HeartbeatPingUrl } from "@/components/forms/monitor/form-heartbeat";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { HeartbeatSection } from "@/components/metric/heartbeat/section";
 import { PopoverQuantile } from "@/components/popovers/popover-quantile";
@@ -71,6 +72,7 @@ const HEARTBEAT_WAITING_POLL_MS = 5_000;
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
+  const { copy, isCopied } = useCopyToClipboard();
   const [{ period, regions, percentile, interval }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery({
@@ -291,13 +293,30 @@ export function Client() {
               </EmptyStateMedia>
               <EmptyStateTitle>Waiting for first ping</EmptyStateTitle>
               <EmptyStateDescription>
-                Add the request below to the end of your job. Alerts start after
-                the first ping, and this page updates when it arrives.
+                Call the heartbeat URL at the end of your job. Alerts start
+                after the first ping, and this page updates when it arrives.
               </EmptyStateDescription>
+              {heartbeat.pingUrl ? (
+                <EmptyStateActions>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      copy(heartbeat.pingUrl ?? "", {
+                        successMessage: "Copied heartbeat URL to clipboard",
+                      })
+                    }
+                  >
+                    {isCopied ? <Check /> : <Copy />}
+                    Copy Heartbeat URL
+                  </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href={`/monitors/${id}/edit#heartbeat`}>
+                      View examples
+                    </Link>
+                  </Button>
+                </EmptyStateActions>
+              ) : null}
             </EmptyStateContainer>
-            {heartbeat.pingUrl ? (
-              <HeartbeatPingUrl pingUrl={heartbeat.pingUrl} />
-            ) : null}
           </Section>
         ) : (
           <Section id="pings">
