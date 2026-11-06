@@ -85,8 +85,8 @@ export function statusLabel(s: {
   }
 }
 
-// Natural-language answer to "Is <name> down?"; the web pages, their
-// markdown twins and the MCP tools all read the same sentence.
+// Natural-language answer to "Is <name> down?"; the web pages and their
+// markdown twins read the same sentence.
 export function getStatusAnswer(args: {
   name: string;
   indicator: string;

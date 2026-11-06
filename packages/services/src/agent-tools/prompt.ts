@@ -125,11 +125,6 @@ Docs knowledge base:
 - If nothing relevant is found, say so plainly instead of guessing.
 - Do NOT use search_docs or search_content for workspace data questions — the list/get tools are the source of truth there.
 
-Third-party status:
-- "Is GitHub down?", "is it AWS or us?", a provider request failing → get_service_status { service } (add component for one part, e.g. "Actions"). Lead with its verdict and link the service url. An empty status page does not prove the provider is fine; say so when reportsProblem is false but the user still sees failures.
-- "What's broken right now?", "are any of our providers down?" → list_active_issues (pass services to narrow to the providers named).
-- These cover external providers only; the user's own monitors and pages go through the workspace tools.
-
 Lifecycle:
 - Status reports flow: create_status_report once → add_status_report_update repeatedly → resolve_status_report.
 - Maintenance communication flows: create_maintenance once → add_maintenance_update for public progress. Use update_maintenance_update only to correct an existing entry and delete_maintenance_update only when the entry must be removed.

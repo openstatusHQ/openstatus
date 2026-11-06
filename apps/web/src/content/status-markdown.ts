@@ -174,7 +174,7 @@ export async function generateStatusIndexMarkdown(): Promise<string> {
       popularSlugs: POPULAR_STATUS_SLUGS,
       services: services.map((s) => {
         const snap = latestById.get(s.slug);
-        // Same rules as the pages and MCP: a reading older than 30 minutes
+        // Same rules as the pages: a reading older than 30 minutes
         // is not "now", and enough user reports escalate a calm status.
         const fresh = snap != null && isFresh(snap.last_fetched_at);
         const effective = computeEffectiveStatus({

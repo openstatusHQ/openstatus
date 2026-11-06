@@ -10,7 +10,6 @@ import {
   listExternalIncidentsByComponent,
   listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
-  listOpenExternalIncidents,
   pruneStaleRawPayloads,
   upsertExternalIncidentsForService,
 } from "../index";
@@ -663,60 +662,5 @@ describe("listExternalIncidentsByServiceId since-window", () => {
       externalServiceId: serviceId,
     });
     expect(all.length).toBe(3);
-  });
-});
-
-describe("listOpenExternalIncidents", () => {
-  function open(id: string, startedAt: string, resolvedAt: Date | null = null) {
-    return {
-      providerIncidentId: id,
-      name: id,
-      status: resolvedAt ? "resolved" : "investigating",
-      impact: "minor",
-      startedAt: new Date(startedAt),
-      createdAt: new Date("2026-06-01T00:00:00.000Z"),
-      resolvedAt,
-      affectedComponentIds: [],
-      raw: { id },
-    } satisfies UpsertExternalIncidentInput;
-  }
-
-  test("only open incidents, newest start first, no implicit cap", async () => {
-    const a = await seedService({ slug: `${TEST_PREFIX}-open-a` });
-    const b = await seedService({ slug: `${TEST_PREFIX}-open-b` });
-    const now = new Date("2026-06-15T00:00:00.000Z");
-    await upsertExternalIncidentsForService({
-      externalServiceId: a,
-      now,
-      incidents: [
-        open("a-older", "2026-06-02T00:00:00.000Z"),
-        open("a-newer", "2026-06-10T00:00:00.000Z"),
-        open("a-done", "2026-06-12T00:00:00.000Z", now),
-      ],
-    });
-    await upsertExternalIncidentsForService({
-      externalServiceId: b,
-      now,
-      incidents: [open("b-open", "2026-06-05T00:00:00.000Z")],
-    });
-
-    // Same createdAt for all: the order must come from startedAt.
-    const rows = await listOpenExternalIncidents({ externalServiceIds: [a] });
-    expect(rows.map((r) => r.providerIncidentId)).toEqual([
-      "a-newer",
-      "a-older",
-    ]);
-
-    const both = await listOpenExternalIncidents({
-      externalServiceIds: [a, b],
-    });
-    expect(both.map((r) => r.providerIncidentId).sort()).toEqual([
-      "a-newer",
-      "a-older",
-      "b-open",
-    ]);
-    expect(await listOpenExternalIncidents({ externalServiceIds: [] })).toEqual(
-      [],
-    );
   });
 });

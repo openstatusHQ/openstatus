@@ -145,10 +145,6 @@
       "import": "./src/external-service-report/index.ts",
       "types": "./src/external-service-report/index.ts"
     },
-    "./external-service-status": {
-      "import": "./src/external-service-status/index.ts",
-      "types": "./src/external-service-status/index.ts"
-    },
     "./external-service-status/effective": {
       "import": "./src/external-service-status/effective.ts",
       "types": "./src/external-service-status/effective.ts"

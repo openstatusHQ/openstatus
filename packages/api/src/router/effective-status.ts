@@ -1,4 +1,4 @@
-// Lives in services so the MCP tools share it; kept here for existing imports.
+// Lives in services so the web app can share it; kept here for existing imports.
 // The `/effective` entry is DB-free, so client components can import it.
 export {
   type EffectiveStatus,

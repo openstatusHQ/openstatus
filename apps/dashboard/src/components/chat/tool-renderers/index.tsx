@@ -22,11 +22,6 @@ import { createMonitorChanges, formatFirstCheck } from "./create-monitor";
 import { createStatusPageChanges } from "./create-status-page";
 import { createStatusReportChanges } from "./create-status-report";
 import { DetailsTable } from "./details-table";
-import {
-  getServiceStatusDetails,
-  listActiveIssuesTable,
-  statusText,
-} from "./external-status";
 import { getAuditLogChanges } from "./get-audit-log";
 import { getMaintenanceDetails } from "./get-maintenance";
 import { getMonitorDetails } from "./get-monitor";
@@ -472,22 +467,6 @@ export const toolRenderers: ToolRendererRegistry = {
   get_content_page: {
     summary: (o) =>
       o.error ? o.error : `read ${o.url}${o.truncated ? " (truncated)" : ""}`,
-  },
-  // ── Third-party status ───────────────────────────────────────
-  get_service_status: {
-    renderResult: ({ output }) => (
-      <DetailsTable {...getServiceStatusDetails(output)} />
-    ),
-    summary: (o) =>
-      o.found && o.service
-        ? `${o.service.name}: ${statusText(o.status)}`
-        : "not found",
-  },
-  list_active_issues: {
-    renderResult: ({ output }) => (
-      <ResultTable {...listActiveIssuesTable(output)} />
-    ),
-    summary: (o) => `${o.total} service${o.total === 1 ? "" : "s"} with issues`,
   },
 };
 

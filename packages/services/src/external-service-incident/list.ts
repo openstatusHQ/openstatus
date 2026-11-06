@@ -4,7 +4,6 @@ import {
   desc,
   eq,
   gte,
-  inArray,
   isNull,
   or,
   sql,
@@ -100,44 +99,6 @@ export async function listExternalIncidentsByServiceId(args: {
   );
 
   return rows;
-}
-
-// Every incident still open, optionally limited to some services. Uses the
-// `resolved_at` index. No default cap: the open set is small, and a cap would
-// silently drop services from "what is broken right now".
-export async function listOpenExternalIncidents(args: {
-  ctx?: GlobalReadContext;
-  externalServiceIds?: number[];
-  limit?: number;
-}): Promise<ExternalIncidentListItem[]> {
-  const { ctx, externalServiceIds } = args;
-  if (externalServiceIds && externalServiceIds.length === 0) return [];
-  const db = ctx?.db ?? defaultDb;
-  return retryRead(() =>
-    db
-      .select(INCIDENT_COLUMNS)
-      .from(externalServiceIncident)
-      .where(
-        and(
-          isNull(externalServiceIncident.resolvedAt),
-          externalServiceIds
-            ? inArray(
-                externalServiceIncident.externalServiceId,
-                externalServiceIds,
-              )
-            : undefined,
-        ),
-      )
-      .orderBy(
-        desc(
-          sql`COALESCE(${externalServiceIncident.startedAt}, ${externalServiceIncident.createdAt})`,
-        ),
-        desc(externalServiceIncident.createdAt),
-      )
-      // SQLite reads LIMIT -1 as no limit.
-      .limit(args.limit ?? -1)
-      .all(),
-  );
 }
 
 // Incidents whose Atlassian `components[]` array tagged this component (matched
