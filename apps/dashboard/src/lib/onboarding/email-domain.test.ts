@@ -15,6 +15,15 @@ describe("getCompanyDomainFromEmail", () => {
     );
   });
 
+  it("handles whitespace around email and domain", () => {
+    expect(getCompanyDomainFromEmail("  max@openstatus.dev  ")).toBe(
+      "openstatus.dev",
+    );
+    expect(getCompanyDomainFromEmail("  Max@OpenStatus.DEV  ")).toBe(
+      "openstatus.dev",
+    );
+  });
+
   it("ignores generic providers regardless of case", () => {
     expect(getCompanyDomainFromEmail("max@gmail.com")).toBeNull();
     expect(getCompanyDomainFromEmail("max@ProtonMail.com")).toBeNull();
