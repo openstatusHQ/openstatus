@@ -95,11 +95,14 @@ For any visible change, shoot it before reporting it done:
 `node scripts/screenshot.mjs --app web /pricing` (the `screenshot` skill has the
 flags). Judge against the root `DESIGN.md`.
 
-Images that ship in content (`image:` heroes and inline images under
-`public/assets/`) are 16:9: the changelog, blog, guide and use-case pages
-render the hero in an `aspect-video` frame with `object-contain`, so any
-other ratio letterboxes. Shoot them with `--aspect 16:9 --device desktop`
-and check the PNG's size before committing.
+Images that ship in content are 16:9. `image:` heroes on changelog, blog,
+guide and use-case pages render in an `aspect-video` frame with
+`object-contain`, so any other ratio letterboxes; inline `<Image>`s in a
+`figure` are cropped to 16:9 with `object-cover`, so any other ratio loses
+its edges. Shoot them with `--aspect 16:9 --device desktop` and check the
+PNG's size before committing. The one exception is an inline image that is
+wide or tall on purpose (a flow diagram, a terminal strip): give it
+`className="img-fit"` and its real `width`/`height`, and it shows whole.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

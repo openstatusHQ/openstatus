@@ -95,7 +95,9 @@ const ASPECT_PAD = 48;
 const aspect = (() => {
   if (flags.aspect === undefined) return null;
   const m = /^(\d+):(\d+)$/.exec(String(flags.aspect));
-  if (!m || Number(m[1]) === 0 || Number(m[2]) === 0) {
+  const [w, h] = m ? [Number(m[1]), Number(m[2])] : [];
+  // 9999:1 is already absurd; the bound also keeps `\d+` from reaching Infinity
+  if (!m || !(w > 0 && w <= 9999) || !(h > 0 && h <= 9999)) {
     console.error(`--aspect must look like 16:9, got ${flags.aspect}`);
     process.exit(2);
   }
@@ -103,7 +105,19 @@ const aspect = (() => {
     console.error("--aspect and --full-page cannot be combined");
     process.exit(2);
   }
-  return { w: Number(m[1]), h: Number(m[2]) };
+  // A ratio frames a selector match on any device, but a whole phone screen
+  // cannot be 16:9: page shots are desktop only.
+  if (
+    !flags.selector &&
+    flags.device !== undefined &&
+    flags.device !== "desktop"
+  ) {
+    console.error(
+      "--aspect without --selector shoots the desktop viewport only; pass --device desktop",
+    );
+    process.exit(2);
+  }
+  return { w, h };
 })();
 // Pure, because it is also stringified into the page by `isolate`.
 function frame(w, h, ratio, pad) {
@@ -134,7 +148,9 @@ const DEVICES = {
 const devices =
   flags.device === "desktop" || flags.device === "mobile"
     ? [flags.device]
-    : ["desktop", "mobile"];
+    : aspect && !flags.selector
+      ? ["desktop"]
+      : ["desktop", "mobile"];
 const wantsAuth = app.auth || Boolean(flags.token || flags.state);
 mkdirSync(out, { recursive: true });
 
