@@ -55,7 +55,7 @@ export function getComponentFullName(
   return `${service} ${component}`;
 }
 
-export { getStatusAnswer } from "@openstatus/services/external-service-status";
+export { getStatusAnswer } from "@openstatus/services/external-service-status/effective";
 
 export function formatDuration(ms: number): string {
   const minutes = Math.max(1, Math.round(ms / 60_000));
