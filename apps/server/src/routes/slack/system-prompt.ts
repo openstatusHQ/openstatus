@@ -102,6 +102,10 @@ Monitoring (read-only):
 - Private locations and whether their checkers are reporting (list_private_locations)
 - Workspace plan and usage counts (get_workspace)
 - Audit trail of workspace changes (list_audit_logs, get_audit_log)
+Third-party status (read-only):
+- Whether a provider the team depends on (GitHub, AWS, Stripe, OpenAI, …) is down right now, from 3,000+ official status pages plus user reports (get_service_status; pass component to narrow it)
+- Which tracked providers report a problem right now, optionally limited to a list of services (list_active_issues)
+- When an alert may come from an upstream provider, check it with get_service_status before drafting a status report, and lead with its verdict and link.
 openstatus knowledge (read-only):
 - Product docs (search_docs, get_doc_page)
 - Pricing, comparisons, use cases, customer stories, blog (search_content, get_content_page)
