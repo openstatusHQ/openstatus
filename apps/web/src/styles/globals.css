@@ -169,7 +169,7 @@
 }
 
 .prose pre:not(:where(.not-prose, .not-prose *)) {
-  @apply relative bg-muted overflow-x-auto border border-border px-3 py-2 text-sm rounded-none;
+  @apply relative bg-muted overflow-x-auto border border-border px-3 py-2 text-sm rounded-none my-4;
 }
 
 .prose code:not(:where(.not-prose, .not-prose *)) {
@@ -284,11 +284,16 @@
 
 .prose ul:not(:where(.not-prose, .not-prose *)) {
   list-style-type: "–  ";
-  @apply list-outside pl-5 marker:text-muted-foreground;
+  @apply list-outside pl-5 marker:text-muted-foreground my-4;
 }
 
 .prose ol:not(:where(.not-prose, .not-prose *)) {
-  @apply list-outside pl-5 list-decimal marker:text-muted-foreground;
+  @apply list-outside pl-5 list-decimal marker:text-muted-foreground my-4;
+}
+
+/* Nested lists stay tight to their parent item. */
+.prose li :is(ul, ol):not(:where(.not-prose, .not-prose *)) {
+  @apply my-1;
 }
 
 .prose li:not(:where(.not-prose, .not-prose *)) {
