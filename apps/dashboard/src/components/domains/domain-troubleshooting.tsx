@@ -14,9 +14,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import Link from "next/link";
 import { useState } from "react";
-
-import { Link } from "@/components/common/link";
 
 import { InlineSnippet } from "./domain-configuration";
 

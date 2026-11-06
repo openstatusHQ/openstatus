@@ -16,6 +16,7 @@ import {
 } from "@openstatus/ui/components/ui/input-group";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import type React from "react";
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -151,10 +152,10 @@ export function FormCustomDomain({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing#plans">
+                <NextLink href="/settings/billing#plans">
                   <Lock />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <div className="flex items-center gap-2">

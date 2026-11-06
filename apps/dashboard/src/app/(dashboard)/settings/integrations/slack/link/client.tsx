@@ -2,9 +2,9 @@
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useQueryStates } from "nuqs";
 
-import { Link } from "@/components/common/link";
 import {
   EmptyStateContainer,
   EmptyStateDescription,

@@ -23,6 +23,7 @@ import {
   useInfiniteQuery,
   useQuery,
 } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo } from "react";
@@ -433,10 +434,10 @@ function BillingPlaceholder() {
           data-limit="response-logs"
           asChild
         >
-          <Link href="/settings/billing#plans">
+          <NextLink href="/settings/billing#plans">
             <Lock />
             Upgrade
-          </Link>
+          </NextLink>
         </BillingOverlayButton>
         <BillingOverlayDescription>
           Access response headers, timing phases and more for each request.{" "}

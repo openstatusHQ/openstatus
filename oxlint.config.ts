@@ -172,6 +172,7 @@ export default defineConfig({
       files: ["apps/dashboard/src/**/*.tsx", "apps/dashboard/src/**/*.ts"],
       rules: {
         "openstatus/no-db-barrel-in-client": "error",
+        "openstatus/no-text-link-as-child": "error",
       },
     },
   ],

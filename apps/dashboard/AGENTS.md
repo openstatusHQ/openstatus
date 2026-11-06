@@ -36,6 +36,15 @@ the browser bundle. Import the specific sub-path instead
 (`@openstatus/db/src/schema/page_components/constants`), or split the pure-zod
 part into a sibling file. `import type` from the barrel is fine; types erase.
 
+## Links
+
+`@/components/common/link` is the inline text link: dashed hover underline,
+and a new tab for `http` hrefs. A link styled as a control (`<Button asChild>`,
+`<DropdownMenuItem asChild>`, ...) uses `next/link` instead, because `asChild`
+merges the text link's classes into the control. Alias it as `NextLink` when the
+file also has text links, and pass `target`/`rel` yourself for external hrefs.
+`openstatus/no-text-link-as-child` enforces this.
+
 ## Anchor ids on cards and sections
 
 Every `FormCard` and `Section` on a page carries an `id`, the kebab-cased

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -235,10 +236,10 @@ export function FormLocale({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing#plans">
+                <NextLink href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>
