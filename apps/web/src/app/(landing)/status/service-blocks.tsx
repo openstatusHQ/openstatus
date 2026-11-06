@@ -248,3 +248,23 @@ export function StatusPagination({
     </nav>
   );
 }
+
+export function RelatedServices({
+  services,
+}: {
+  services: { slug: string; name: string }[];
+}) {
+  return (
+    <div className={cn(TILE_GRID, "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
+      {services.map((s) => (
+        <Link
+          key={s.slug}
+          href={`/status/${s.slug}`}
+          className={cn(TILE_LINK, "text-foreground truncate px-3 py-2")}
+        >
+          {s.name}
+        </Link>
+      ))}
+    </div>
+  );
+}

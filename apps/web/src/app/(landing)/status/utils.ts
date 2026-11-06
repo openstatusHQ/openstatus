@@ -83,3 +83,33 @@ export function getStatusAnswer(args: {
       return `The current status of ${name} is unknown. Check the official ${name} status page below.`;
   }
 }
+
+export function formatDuration(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours < 24) return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours ? `${days}d ${restHours}h` : `${days}d`;
+}
+
+const ISSUE_INDICATORS = new Set(["minor", "major", "critical"]);
+
+// History rows come one per (day, slug alias); a day counts once.
+export function summarizeHistory(
+  rows: { day: string; worstIndicator: string }[],
+): { tracked: number; issueDays: number } {
+  const byDay = new Map<string, boolean>();
+  for (const r of rows) {
+    const key = r.day.slice(0, 10);
+    byDay.set(
+      key,
+      (byDay.get(key) ?? false) || ISSUE_INDICATORS.has(r.worstIndicator),
+    );
+  }
+  let issueDays = 0;
+  for (const issue of byDay.values()) if (issue) issueDays++;
+  return { tracked: byDay.size, issueDays };
+}

@@ -21,6 +21,7 @@ type PillStyle = {
   className: string;
   dot: string;
   text: string;
+  box: string;
 };
 
 const MAINTENANCE: PillStyle = {
@@ -28,6 +29,7 @@ const MAINTENANCE: PillStyle = {
   className: "bg-info/15 text-info border-info/30",
   dot: "bg-info",
   text: "text-info",
+  box: "border-info/30 bg-info/5",
 };
 
 const INDICATOR_PILLS: Record<string, PillStyle> = {
@@ -36,24 +38,28 @@ const INDICATOR_PILLS: Record<string, PillStyle> = {
     className: "bg-success/15 text-success border-success/30",
     dot: "bg-success",
     text: "text-success",
+    box: "border-success/30 bg-success/5",
   },
   minor: {
     label: "Minor Issue",
     className: "bg-warning/15 text-warning border-warning/30",
     dot: "bg-warning",
     text: "text-warning",
+    box: "border-warning/40 bg-warning/5",
   },
   major: {
     label: "Partial Outage",
     className: "bg-destructive/15 text-destructive border-destructive/30",
     dot: "bg-destructive",
     text: "text-destructive",
+    box: "border-destructive/30 bg-destructive/5",
   },
   critical: {
     label: "Major Outage",
     className: "bg-destructive/20 text-destructive border-destructive/40",
     dot: "bg-destructive",
     text: "text-destructive",
+    box: "border-destructive/30 bg-destructive/5",
   },
 };
 
@@ -62,6 +68,7 @@ const UNKNOWN_PILL: PillStyle = {
   className: "bg-muted text-muted-foreground border-muted-foreground/20",
   dot: "bg-muted-foreground/40",
   text: "text-muted-foreground",
+  box: "border-border bg-muted/30",
 };
 
 export function getPillStyle(args: {

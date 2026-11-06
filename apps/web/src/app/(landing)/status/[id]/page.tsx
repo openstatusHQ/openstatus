@@ -5,8 +5,12 @@ import { Suspense } from "react";
 
 import { ButtonLink } from "../../../../content/mdx-components/button-link";
 import { CustomLink } from "../../../../content/mdx-components/custom-link";
+import { POPULAR_STATUS_SLUGS } from "../../../../data/popular-status";
 import { getServiceEscalation } from "../../../../lib/external-report-escalation";
-import { cachedGetExternalServiceBySlug } from "../../../../lib/external-service-cache";
+import {
+  cachedGetExternalServiceBySlug,
+  cachedListExternalServices,
+} from "../../../../lib/external-service-cache";
 import {
   APP_URL,
   BASE_URL,
@@ -21,12 +25,28 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
-import { getCheckerHref, getHost } from "../utils";
+import { RelatedServices, StatusSection } from "../service-blocks";
 import { ServiceDetail } from "./service-detail";
 
 export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
+const RELATED_COUNT = 6;
+
+async function getRelatedServices(slug: string) {
+  try {
+    const all = await cachedListExternalServices();
+    const bySlug = new Map(all.map((s) => [s.slug, s]));
+    return POPULAR_STATUS_SLUGS.filter((s) => s !== slug)
+      .slice(0, RELATED_COUNT)
+      .flatMap((s) => {
+        const row = bySlug.get(s);
+        return row ? [{ slug: row.slug, name: row.name }] : [];
+      });
+  } catch {
+    return [];
+  }
+}
 
 type RouteParams = { id: string };
 
@@ -107,30 +127,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     }),
   ]);
 
-  const checkerHref = getCheckerHref(service.url);
+  const related = await getRelatedServices(service.slug);
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-3 py-2 text-sm">
-        {checkerHref ? (
-          <CustomLink
-            href={checkerHref}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            Is {service.name} down for you? Test {getHost(service.url)} from 28
-            regions →
-          </CustomLink>
-        ) : (
-          <CustomLink
-            href={`${APP_URL}?ref=status-service-top`}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            Catch downtime before your users do: free uptime monitoring from 28
-            regions →
-          </CustomLink>
-        )}
-      </ContentBoxContainer>
-
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
       <HydrateClient>
         <Suspense
           fallback={
@@ -145,7 +145,23 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
+      {related.length > 0 ? (
+        <StatusSection id="related" title="People also check">
+          <RelatedServices services={related} />
+        </StatusSection>
+      ) : null}
+
+      <p className="not-prose text-muted-foreground m-0 text-sm">
+        For agents: this page as Markdown at{" "}
+        <a
+          className="text-foreground underline underline-offset-4"
+          href={`/status/${service.slug}.md`}
+        >
+          /status/{service.slug}.md
+        </a>
+      </p>
+
+      <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>

@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 
-import { getCheckerHref, getComponentFullName, getHost } from "./utils";
+import {
+  formatDuration,
+  getCheckerHref,
+  getComponentFullName,
+  getHost,
+  summarizeHistory,
+} from "./utils";
 
 describe("getComponentFullName", () => {
   test("does not repeat the provider already in the component name", () => {
@@ -72,5 +78,30 @@ describe("getCheckerHref", () => {
     expect(getCheckerHref("ftp://files.example.com")).toBeNull();
     expect(getCheckerHref("javascript:alert(1)")).toBeNull();
     expect(getCheckerHref("not a url")).toBeNull();
+  });
+});
+
+describe("formatDuration", () => {
+  test("minutes, hours and days", () => {
+    expect(formatDuration(47 * 60_000)).toBe("47m");
+    expect(formatDuration(72 * 60_000)).toBe("1h 12m");
+    expect(formatDuration(120 * 60_000)).toBe("2h");
+    expect(formatDuration(26 * 3_600_000)).toBe("1d 2h");
+  });
+
+  test("never reads zero", () => {
+    expect(formatDuration(5_000)).toBe("1m");
+  });
+});
+
+describe("summarizeHistory", () => {
+  test("counts each day once, worst alias wins", () => {
+    expect(
+      summarizeHistory([
+        { day: "2026-11-01 00:00:00", worstIndicator: "none" },
+        { day: "2026-11-01 00:00:00", worstIndicator: "minor" },
+        { day: "2026-11-02 00:00:00", worstIndicator: "none" },
+      ]),
+    ).toEqual({ tracked: 2, issueDays: 1 });
   });
 });

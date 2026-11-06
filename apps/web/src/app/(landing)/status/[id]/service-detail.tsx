@@ -1,5 +1,7 @@
 "use client";
 
+import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Suspense } from "react";
 
 import { JsonLd } from "../../../../lib/metadata/json-ld";
@@ -12,8 +14,17 @@ import {
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 import { api } from "../../../../trpc/rq-client";
-import { ExternalServicePill } from "../external-service-pill";
-import { formatRelative, getStatusAnswer, isStale } from "../utils";
+import { getPillStyle } from "../external-service-pill";
+import { StatusSection } from "../service-blocks";
+import {
+  formatRelative,
+  getCheckerHref,
+  getHost,
+  getStatusAnswer,
+  isStale,
+  summarizeHistory,
+} from "../utils";
+import { AffectedNow } from "./affected-now";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
 import { ReportIssue } from "./report-issue";
@@ -42,23 +53,34 @@ function jsonLd(args: {
   ]);
 }
 
+const GENERIC_MESSAGES = new Set([
+  "",
+  "all systems operational",
+  "status unavailable",
+]);
+
 export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
   const [data] = api.externalService.detail.useSuspenseQuery({ slug, days });
-  const { service, latest, history, effective, overlayIncidents } = data;
+  const { service, latest, history, effective, overlayIncidents, reports } =
+    data;
 
-  const indicator = effective.indicator;
-  const status = effective.status;
-  const escalated = effective.escalated;
-  const statusMessage = latest?.statusMessage || undefined;
   const fetchedAt = latest?.lastFetchedAt ?? 0;
   const stale = fetchedAt > 0 && isStale(fetchedAt);
   const hasLiveData = fetchedAt > 0 && !stale;
   const answer = getStatusAnswer({
     name: service.name,
-    indicator,
-    status,
+    indicator: effective.indicator,
+    status: effective.status,
     hasLiveData,
   });
+  const pill = getPillStyle({
+    indicator: hasLiveData ? effective.indicator : "",
+    status: effective.status,
+  });
+  const message = latest?.statusMessage ?? "";
+  const showMessage = !GENERIC_MESSAGES.has(message.trim().toLowerCase());
+  const checkerHref = getCheckerHref(service.url);
+  const summary = summarizeHistory(history);
 
   const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
   const ld = jsonLd({
@@ -69,45 +91,56 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
   });
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
+    <div className="flex flex-col gap-10">
       <JsonLd graph={ld} />
-      <h1>Is {service.name} down?</h1>
-      <p>
-        {answer} Below you'll find the live {service.name} status, uptime over
-        the last {days} days, and recent {service.name} incidents.
-      </p>
-      <div className="not-prose flex flex-wrap items-center gap-6">
-        <ExternalServicePill
-          indicator={indicator}
-          status={status}
-          statusMessage={statusMessage}
-          escalated={escalated}
-        />
-        {fetchedAt > 0 ? (
-          <span className="text-muted-foreground text-sm">
-            Last updated {formatRelative(fetchedAt)}
-            {stale ? (
-              <span className="text-warning ml-1 inline-flex px-2 py-0.5 text-xs">
-                (stale)
-              </span>
-            ) : null}
-          </span>
-        ) : (
-          <span className="text-muted-foreground text-sm">
-            No data yet. Tracking begins after the first poll.
-          </span>
-        )}
-        <a
-          className="text-sm underline"
-          href={service.statusPageUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Upstream status page
-        </a>
-      </div>
 
-      <div className="not-prose mt-6">
+      <div className="flex flex-col gap-3">
+        <h1 className="m-0!">Is {service.name} down?</h1>
+        <div
+          className={cn("not-prose flex flex-col gap-2 border p-3", pill.box)}
+        >
+          <p className="text-foreground m-0 flex items-start gap-2 font-semibold">
+            <span
+              aria-hidden="true"
+              className={cn("mt-[0.45em] size-2.5 shrink-0", pill.dot)}
+            />
+            {answer}
+          </p>
+          {showMessage ? (
+            <p className="text-foreground/80 m-0">
+              {service.name} says: {message}
+            </p>
+          ) : null}
+          <p className="text-muted-foreground m-0 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <span>
+              {fetchedAt > 0
+                ? `Checked ${formatRelative(fetchedAt)}`
+                : "Not checked yet"}
+              {stale ? <span className="text-warning"> (stale)</span> : null}
+            </span>
+            <span className="tabular-nums">
+              {reports.reporters}{" "}
+              {reports.reporters === 1 ? "user report" : "user reports"} in{" "}
+              {REPORT_WINDOW_MINUTES} min
+            </span>
+            <a
+              className="text-foreground underline underline-offset-4"
+              href={service.statusPageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Official status page ↗
+            </a>
+            {checkerHref ? (
+              <a
+                className="text-foreground underline underline-offset-4"
+                href={checkerHref}
+              >
+                Test {getHost(service.url)} from 28 regions →
+              </a>
+            ) : null}
+          </p>
+        </div>
         <ReportIssue
           slug={service.slug}
           name={service.name}
@@ -117,19 +150,33 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
       </div>
 
       <Suspense fallback={null}>
+        <AffectedNow
+          slug={service.slug}
+          serviceName={service.name}
+          statusPageUrl={service.statusPageUrl}
+          days={days}
+        />
+      </Suspense>
+
+      <StatusSection
+        id="history"
+        title={`Last ${days} days`}
+        aside={
+          summary.tracked > 0
+            ? `${summary.tracked - summary.issueDays} of ${summary.tracked} tracked days without issues`
+            : "No history yet"
+        }
+      >
+        <HistoryBars daily={history} days={days} incidents={overlayIncidents} />
+      </StatusSection>
+
+      <Suspense fallback={null}>
         <UserReports
           slug={service.slug}
           serviceName={service.name}
           days={days}
         />
       </Suspense>
-
-      <h2>
-        {service.name} uptime over the last {days} days
-      </h2>
-      <div className="not-prose">
-        <HistoryBars daily={history} days={days} incidents={overlayIncidents} />
-      </div>
 
       <Suspense fallback={null}>
         <ServiceComponents
@@ -139,10 +186,9 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
         />
       </Suspense>
 
-      <h2>{service.name} recent incidents</h2>
       <Suspense
         fallback={
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground m-0!">
             Loading recent {service.name} incidents…
           </p>
         }
@@ -153,6 +199,6 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
           statusPageUrl={service.statusPageUrl}
         />
       </Suspense>
-    </section>
+    </div>
   );
 }
