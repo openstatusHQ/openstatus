@@ -22,7 +22,7 @@ faq:
   - question: "What should I monitor with heartbeats?"
     answer: "Anything scheduled whose silent failure costs you: database backups, billing and invoicing runs, data syncs and ETL pipelines, certificate renewals, cleanup and retention jobs, report generation, and long-running queue workers that should report in at a steady pace."
   - question: "Can heartbeat monitors appear on a status page?"
-    answer: "Yes. In openstatus a heartbeat monitor can be added to a status page like any other monitor. The bar shows the days on which pings were received, and uptime is computed from incidents opened by missed pings and reported failures. Ping details stay private to your workspace."
+    answer: "Yes. In openstatus a heartbeat monitor can be added to a status page like any other monitor. The bar shows the days on which pings were received. With the default Monitor checks setting, uptime comes from the incidents opened by missed pings and reported failures; a page set to Reports only uses your status reports instead. Ping details stay private to your workspace."
 ---
 
 Most monitoring answers one question: "is this thing responding?" You call an endpoint, it answers, you check the answer. That works for APIs and websites. It does nothing for the jobs that never answer anyone - the nightly backup, the hourly billing run, the sync that keeps two databases in step.
@@ -41,6 +41,8 @@ The direction is flipped compared to an [uptime monitor](/guides/what-is-uptime-
 4. Each ping pushes the deadline forward to `last ping + period + grace`.
 5. If the deadline passes without a ping, the monitor goes down and alerts you. The next ping recovers it.
 
+The clock starts with the first ping: a new monitor stays quiet until it has heard from the job once, so you can create it before the job is deployed. That also means a job that never runs at all won't alert - send one ping by hand once it's live to arm the monitor.
+
 ```
  ✓ ping      ✓ ping      ✓ ping                 ✗ alert
  ├─ period ──┼─ period ──┼─ period ──┼─ grace ──┤
@@ -57,7 +59,6 @@ The obvious alternative is "just alert when the job throws". That catches one cl
 - **The host is gone.** The VM was replaced, the container was rescheduled, the old box was decommissioned with the job still on it.
 - **The scheduler is down** or paused - a stuck Kubernetes `CronJob`, a disabled CI schedule, a queue consumer that crashed and didn't restart.
 - **The job hangs** forever on a lock or a network call and never reaches the line that would have logged an error.
-- **The job exits 0 but did nothing** because an upstream input was empty.
 
 None of these produce an error. All of them produce silence. A heartbeat monitor turns silence into an alert.
 
@@ -116,8 +117,11 @@ A few habits that make pings reliable:
 Waiting out the grace period works, but if your job knows it failed, it can say so right away. With openstatus, add `/fail` to the ping URL:
 
 ```bash
-/path/to/job.sh 2> /tmp/job.err \
-  || curl -fsS -m 10 --retry 3 --data-binary @/tmp/job.err https://api.openstatus.dev/heartbeat/<token>/fail
+if /path/to/job.sh 2> /tmp/job.err; then
+  curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
+else
+  curl -fsS -m 10 --retry 3 --data-binary @/tmp/job.err https://api.openstatus.dev/heartbeat/<token>/fail
+fi
 ```
 
 The monitor goes down within a minute instead of an hour later, and the error output you POST lands in the monitor's **Logs** tab next to the failed ping - no SSH-ing into the box to find out what happened. A job that keeps failing alerts once and stays down until it succeeds again, so a broken job doesn't spam your channel every run.
@@ -142,6 +146,8 @@ A useful test: for each scheduled job, ask "if this stopped running today, when 
 **One grace period for everything.** A 5-minute grace on a job that sometimes takes 40 minutes is an alert-fatigue generator. Size each one to its job.
 
 **Sharing one ping URL across jobs.** If two jobs ping the same monitor, one can keep it green while the other is dead. One job, one monitor.
+
+**Treating exit 0 as success.** A job that finds an empty input, processes nothing and exits cleanly still sends its ping, and the monitor stays green. A heartbeat only knows what the job tells it - if "did nothing" is a failure, have the job check its output and report `/fail`.
 
 **Leaking the ping URL.** The token in the URL is the only credential. Treat it like a secret: keep it in your secret store, not in a public repo. If it leaks, regenerate it.
 
@@ -205,13 +211,15 @@ Anything scheduled whose silent failure costs you: database backups, billing and
 
 <Details summary="Can heartbeat monitors appear on a status page?">
 
-Yes. In openstatus a heartbeat monitor can be added to a status page like any other monitor. The bar shows the days on which pings were received, and uptime is computed from incidents opened by missed pings and reported failures. Ping details stay private to your workspace.
+Yes. In openstatus a heartbeat monitor can be added to a status page like any other monitor. The bar shows the days on which pings were received. With the default Monitor checks setting, uptime comes from the incidents opened by missed pings and reported failures; a page set to Reports only uses your status reports instead. Ping details stay private to your workspace.
 
 </Details>
 
 ---
 
-**openstatus heartbeat monitors watch your cron jobs, backups and workers alongside your HTTP, TCP and DNS checks** - same alerts, same incidents, same status page. The [heartbeat monitor reference](/docs/reference/heartbeat-monitor) covers every option, from ping responses to what gets stored.
+**openstatus heartbeat monitors watch your cron jobs, backups and workers alongside your HTTP, TCP and DNS checks** - same alerts, same incidents, same status page. The [heartbeat monitor reference](/docs/reference/heartbeat-monitor) covers every option, from ping responses to what gets stored, and [uptime calculation](/docs/concept/uptime-calculation-and-values) explains how they count on a status page.
+
+Heartbeat monitors are rolling out gradually. If you can't create one in your workspace yet, email [ping@openstatus.dev](mailto:ping@openstatus.dev) to have it enabled.
 
 <ButtonLink href="https://app.openstatus.dev/monitors/create">Try openstatus free</ButtonLink>
 
