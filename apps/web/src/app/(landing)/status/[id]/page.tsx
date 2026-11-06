@@ -6,9 +6,7 @@ import { Suspense } from "react";
 import { ButtonLink } from "../../../../content/mdx-components/button-link";
 import { CustomLink } from "../../../../content/mdx-components/custom-link";
 import { getServiceEscalation } from "../../../../lib/external-report-escalation";
-import {
-  cachedGetExternalServiceBySlug,
-} from "../../../../lib/external-service-cache";
+import { cachedGetExternalServiceBySlug } from "../../../../lib/external-service-cache";
 import {
   APP_URL,
   BASE_URL,
@@ -32,7 +30,6 @@ export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
 const RELATED_COUNT = 6;
-
 
 type RouteParams = { id: string };
 

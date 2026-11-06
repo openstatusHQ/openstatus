@@ -3,6 +3,10 @@
 import { useQueryStates } from "nuqs";
 
 import { api } from "../../../trpc/rq-client";
+import {
+  POPULAR_COMPONENTS_INPUT,
+  POPULAR_SERVICES_INPUT,
+} from "./query-inputs";
 import { letterParser, pageParser, qParser } from "./search-params";
 import {
   IssueList,
@@ -12,10 +16,6 @@ import {
   StatusPagination,
   StatusSection,
 } from "./service-blocks";
-import {
-  POPULAR_COMPONENTS_INPUT,
-  POPULAR_SERVICES_INPUT,
-} from "./query-inputs";
 import { ServiceSearch } from "./service-search";
 import { buildStatusIndex } from "./status-index";
 import { getComponentFullName } from "./utils";
@@ -44,13 +44,13 @@ export function StatusHeader() {
       <h1 className="m-0!">Is it down?</h1>
       <p className="m-0!">
         Live status for {formatCount(total)} services. We read their official
-        status pages every few minutes and add what users report. Open a
-        service to see what is broken and since when.
+        status pages every few minutes and add what users report. Open a service
+        to see what is broken and since when.
       </p>
       <ServiceSearch />
       <p className="not-prose text-muted-foreground m-0 text-sm tabular-nums">
-        {formatCount(total)} services · {formatCount(issues.length)} with
-        issues right now
+        {formatCount(total)} services · {formatCount(issues.length)} with issues
+        right now
       </p>
     </div>
   );

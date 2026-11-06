@@ -1,5 +1,4 @@
 import "server-only";
-
 import type { RouterOutputs } from "@openstatus/api";
 
 import { api, getQueryClient } from "../../../trpc/rq-server";
