@@ -67,9 +67,9 @@ export const sections = {
   status: {
     label: "External Status",
     path: "/status",
-    title: "External Status",
+    title: "Is it down? Live status of 3,000+ services",
     description:
-      "Check whether the external providers you depend on are working properly.",
+      "Is it down or just you? Live status, outages and incident history for 3,000+ cloud, AI and SaaS services, from their official status pages and user reports.",
   },
   "oss-friends": {
     label: "OSS Friends",
