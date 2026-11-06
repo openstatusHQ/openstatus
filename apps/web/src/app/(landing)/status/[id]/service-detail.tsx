@@ -1,7 +1,5 @@
 "use client";
 
-import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
-import { cn } from "@openstatus/ui/lib/utils";
 import { Suspense } from "react";
 
 import { JsonLd } from "../../../../lib/metadata/json-ld";
@@ -14,10 +12,8 @@ import {
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 import { api } from "../../../../trpc/rq-client";
-import { getPillStyle } from "../external-service-pill";
 import { StatusSection } from "../service-blocks";
 import {
-  formatRelative,
   getCheckerHref,
   getHost,
   getStatusAnswer,
@@ -25,6 +21,7 @@ import {
   summarizeHistory,
 } from "../utils";
 import { AffectedNow } from "./affected-now";
+import { AnswerBox, AnswerLink } from "./answer-box";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
 import { ReportIssue } from "./report-issue";
@@ -73,10 +70,6 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
     status: effective.status,
     hasLiveData,
   });
-  const pill = getPillStyle({
-    indicator: hasLiveData ? effective.indicator : "",
-    status: effective.status,
-  });
   const message = latest?.statusMessage ?? "";
   const showMessage = !GENERIC_MESSAGES.has(message.trim().toLowerCase());
   const checkerHref = getCheckerHref(service.url);
@@ -96,51 +89,27 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
 
       <div className="flex flex-col gap-3">
         <h1 className="m-0!">Is {service.name} down?</h1>
-        <div
-          className={cn("not-prose flex flex-col gap-2 border p-3", pill.box)}
-        >
-          <p className="text-foreground m-0 flex items-start gap-2 font-semibold">
-            <span
-              aria-hidden="true"
-              className={cn("mt-[0.45em] size-2.5 shrink-0", pill.dot)}
-            />
-            {answer}
-          </p>
-          {showMessage ? (
-            <p className="text-foreground/80 m-0">
-              {service.name} says: {message}
-            </p>
-          ) : null}
-          <p className="text-muted-foreground m-0 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <span>
-              {fetchedAt > 0
-                ? `Checked ${formatRelative(fetchedAt)}`
-                : "Not checked yet"}
-              {stale ? <span className="text-warning"> (stale)</span> : null}
-            </span>
-            <span className="tabular-nums">
-              {reports.reporters}{" "}
-              {reports.reporters === 1 ? "user report" : "user reports"} in{" "}
-              {REPORT_WINDOW_MINUTES} min
-            </span>
-            <a
-              className="text-foreground underline underline-offset-4"
-              href={service.statusPageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Official status page ↗
-            </a>
-            {checkerHref ? (
-              <a
-                className="text-foreground underline underline-offset-4"
-                href={checkerHref}
-              >
-                Test {getHost(service.url)} from 28 regions →
-              </a>
-            ) : null}
-          </p>
-        </div>
+        <AnswerBox
+          answer={answer}
+          indicator={hasLiveData ? effective.indicator : ""}
+          status={effective.status}
+          message={showMessage ? `${service.name} says: ${message}` : undefined}
+          checkedAt={fetchedAt}
+          stale={stale}
+          reporters={reports.reporters}
+          links={
+            <>
+              <AnswerLink href={service.statusPageUrl} external>
+                Official status page ↗
+              </AnswerLink>
+              {checkerHref ? (
+                <AnswerLink href={checkerHref}>
+                  Test {getHost(service.url)} from 28 regions →
+                </AnswerLink>
+              ) : null}
+            </>
+          }
+        />
         <ReportIssue
           slug={service.slug}
           name={service.name}

@@ -15,8 +15,10 @@ export type ServiceItem = {
   escalated: boolean;
 };
 
-const TILE_GRID =
-  "border-border bg-border grid gap-px border bg-clip-padding [&>*]:bg-background";
+// Cells draw their own right/bottom edge, so a short last row leaves blank
+// space instead of a filled block.
+export const TILE_GRID =
+  "border-border grid border-t border-l [&>*]:border-border [&>*]:border-r [&>*]:border-b";
 const TILE_LINK =
   "hover:bg-muted! no-underline! transition-colors duration-150 motion-reduce:transition-none";
 

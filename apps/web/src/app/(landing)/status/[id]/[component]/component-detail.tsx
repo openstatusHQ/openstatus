@@ -1,8 +1,8 @@
 "use client";
 
-import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
+import { cn } from "@openstatus/ui/lib/utils";
+import Link from "next/link";
 
-import { Grid } from "../../../../../content/mdx-components/grid";
 import { JsonLd } from "../../../../../lib/metadata/json-ld";
 import { BASE_URL } from "../../../../../lib/metadata/shared-metadata";
 import {
@@ -12,15 +12,16 @@ import {
   getJsonLDWebPage,
 } from "../../../../../lib/metadata/structured-data";
 import { api } from "../../../../../trpc/rq-client";
-import {
-  ContentBoxDescription,
-  ContentBoxLink,
-  ContentBoxTitle,
-} from "../../../content-box";
-import { ExternalServicePill } from "../../external-service-pill";
-import { formatRelative, getComponentFullName } from "../../utils";
+import { ServiceStatusLabel } from "../../external-service-pill";
+import { StatusSection, TILE_GRID } from "../../service-blocks";
+import { getComponentFullName, summarizeHistory } from "../../utils";
+import { AnswerBox, AnswerLink } from "../answer-box";
 import { HistoryBars } from "../history-bars";
+import { IncidentRows } from "../incidents";
 import { ReportIssue } from "../report-issue";
+
+const SIBLINGS_SHOWN = 12;
+const SEVERITY: Record<string, number> = { minor: 1, major: 2, critical: 3 };
 
 function answerFor(args: {
   fullName: string;
@@ -47,31 +48,6 @@ function answerFor(args: {
     default:
       return `The current status of ${fullName} is unknown. Check the official status page below.`;
   }
-}
-
-function impactClass(impact: string | undefined): string {
-  switch (impact) {
-    case "critical":
-      return "bg-destructive/20 text-destructive border-destructive/30";
-    case "major":
-      return "bg-destructive/15 text-destructive border-destructive/20";
-    case "minor":
-      return "bg-warning/15 text-warning border-warning/30";
-    case "maintenance":
-      return "bg-info/15 text-info border-info/30";
-    default:
-      return "bg-muted text-muted-foreground border-muted-foreground/20";
-  }
-}
-
-function formatTimestamp(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const ms = Date.parse(value);
-  if (Number.isNaN(ms)) return null;
-  return new Date(ms).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 function jsonLd(args: {
@@ -110,30 +86,56 @@ function OtherComponents({
   serviceName: string;
   currentSlug: string;
 }) {
-  // days:1 keeps history minimal; this sibling nav only uses slug/name.
-  const { data } = api.externalService.components.useQuery({
+  // days:1 keeps history minimal; this sibling list only needs name and status.
+  const [data] = api.externalService.components.useSuspenseQuery({
     slug: serviceSlug,
     days: 1,
   });
-  const others =
-    data?.components.filter((c) => c.slug !== currentSlug).slice(0, 12) ?? [];
+  const others = data.components
+    .filter((c) => c.slug !== currentSlug)
+    .sort(
+      (a, b) =>
+        (SEVERITY[b.indicator] ?? 0) - (SEVERITY[a.indicator] ?? 0) ||
+        a.position - b.position,
+    );
   if (others.length === 0) return null;
 
   return (
-    <>
-      <h2>Other {serviceName} components</h2>
-      <div className="not-prose flex flex-wrap gap-2">
-        {others.map((c) => (
-          <a
+    <StatusSection
+      id="siblings"
+      title={`Other ${serviceName} components`}
+      count={String(others.length)}
+      aside={
+        <Link
+          href={`/status/${serviceSlug}#components`}
+          className="text-foreground underline underline-offset-4"
+        >
+          All of {serviceName} →
+        </Link>
+      }
+    >
+      <div
+        className={cn(TILE_GRID, "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}
+      >
+        {others.slice(0, SIBLINGS_SHOWN).map((c) => (
+          <Link
             key={c.slug}
             href={`/status/${serviceSlug}/${c.slug}`}
-            className="hover:bg-muted inline-flex rounded-none border px-2.5 py-0.5 text-sm"
+            className={cn(
+              "hover:bg-muted! flex items-center justify-between gap-3 px-3 py-2 no-underline!",
+              "transition-colors duration-150 motion-reduce:transition-none",
+            )}
           >
-            {c.name}
-          </a>
+            <span className="text-foreground truncate">{c.name}</span>
+            <ServiceStatusLabel
+              indicator={c.indicator}
+              status={c.status}
+              quietWhenOk
+            />
+          </Link>
         ))}
       </div>
-    </>
+    </StatusSection>
   );
 }
 
@@ -141,10 +143,12 @@ export function ComponentDetail({
   serviceSlug,
   componentSlug,
   days,
+  checker,
 }: {
   serviceSlug: string;
   componentSlug: string;
   days: number;
+  checker?: { href: string; host: string } | null;
 }) {
   const [data] = api.externalService.component.useSuspenseQuery({
     serviceSlug,
@@ -162,6 +166,7 @@ export function ComponentDetail({
     status: component.status,
     stale: component.stale,
   });
+  const summary = summarizeHistory(history);
 
   const serviceUrl = `${BASE_URL}/status/${service.slug}`;
   const componentUrl = `${serviceUrl}/${component.slug}`;
@@ -175,113 +180,87 @@ export function ComponentDetail({
   });
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
+    <div className="flex flex-col gap-10">
       <JsonLd graph={ld} />
 
-      <h1>Is {fullName} down?</h1>
-      <p className="text-muted-foreground text-sm">
-        Part of <a href={`/status/${service.slug}`}>{service.name} status</a>
-      </p>
-      <p>
-        {answer} Below you'll find the live {component.name} status, uptime over
-        the last {days} days, and recent incidents affecting {component.name}.
-      </p>
-
-      <div className="not-prose flex flex-wrap items-center gap-6">
-        <ExternalServicePill
-          indicator={component.indicator}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h1 className="mb-1!">Is {fullName} down?</h1>
+          <p className="text-muted-foreground m-0! text-sm">
+            Part of{" "}
+            <Link href={`/status/${service.slug}`}>{service.name} status</Link>
+            {component.groupName ? <> · {component.groupName}</> : null}
+          </p>
+        </div>
+        <AnswerBox
+          answer={answer}
+          indicator={component.stale ? "" : component.indicator}
           status={component.status}
-          statusMessage={component.description ?? undefined}
-          escalated={component.escalated}
+          message={component.description ?? undefined}
+          checkedAt={component.lastFetchedAt}
+          stale={component.stale}
+          reporters={component.reporters}
+          links={
+            <>
+              <AnswerLink href={`/status/${service.slug}`}>
+                All of {service.name} →
+              </AnswerLink>
+              <AnswerLink href={service.statusPageUrl} external>
+                Official status page ↗
+              </AnswerLink>
+              {checker ? (
+                <AnswerLink href={checker.href}>
+                  Test {checker.host} from 28 regions →
+                </AnswerLink>
+              ) : null}
+            </>
+          }
         />
-        {component.lastFetchedAt > 0 ? (
-          <span className="text-muted-foreground text-sm">
-            Last updated {formatRelative(component.lastFetchedAt)}
-            {component.stale ? (
-              <span className="text-warning ml-1 inline-flex px-2 py-0.5 text-xs">
-                (stale)
-              </span>
-            ) : null}
-          </span>
-        ) : null}
-        <a
-          className="text-sm underline"
-          href={service.statusPageUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Upstream status page
-        </a>
-      </div>
-
-      <div className="not-prose mt-6 flex flex-col gap-2">
         <ReportIssue
           slug={service.slug}
           name={fullName}
           componentSlug={component.slug}
         />
-        {component.reporters > 0 ? (
-          <p className="text-muted-foreground text-sm">
-            {component.reporters} user{" "}
-            {component.reporters === 1 ? "report" : "reports"} for{" "}
-            {component.name} in the last {REPORT_WINDOW_MINUTES} minutes.
-          </p>
-        ) : null}
       </div>
 
-      {component.description ? <p>{component.description}</p> : null}
-
-      <h2>
-        {component.name} uptime over the last {days} days
-      </h2>
-      <div className="not-prose">
+      <StatusSection
+        id="history"
+        title={`Last ${days} days`}
+        aside={
+          summary.tracked > 0
+            ? `${summary.tracked - summary.issueDays} of ${summary.tracked} tracked days without issues`
+            : "No history yet"
+        }
+      >
         <HistoryBars daily={history} days={days} incidents={overlayIncidents} />
-      </div>
+      </StatusSection>
 
-      <h2>{component.name} recent incidents</h2>
-      {incidents.length === 0 ? (
-        <p className="text-muted-foreground">
-          No incidents affecting {component.name} in the recent period.
-        </p>
-      ) : (
-        <Grid cols={1} className="not-prose">
-          {incidents.map((inc) => {
-            const started = formatTimestamp(inc.startedAt ?? inc.createdAt);
-            const resolved = formatTimestamp(inc.resolvedAt ?? null);
-            const link =
-              inc.shortlink ?? `${service.statusPageUrl}/incidents/${inc.id}`;
-            return (
-              <ContentBoxLink
-                key={inc.id}
-                href={link}
-                className="flex flex-col gap-1"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <ContentBoxTitle className="m-0!">{inc.name}</ContentBoxTitle>
-                  <span
-                    className={`inline-flex items-center rounded-none border px-2.5 py-0.5 text-xs font-medium ${impactClass(inc.impact)}`}
-                  >
-                    {inc.impact === "none"
-                      ? "incident"
-                      : (inc.impact ?? "incident")}
-                  </span>
-                </div>
-                <ContentBoxDescription className="m-0! text-sm">
-                  {started ? <>Started {started}</> : null}
-                  {started && resolved ? " · " : null}
-                  {resolved ? <>Resolved {resolved}</> : null}
-                </ContentBoxDescription>
-              </ContentBoxLink>
-            );
-          })}
-        </Grid>
-      )}
+      <StatusSection
+        id="incidents"
+        title={`Incidents affecting ${component.name}`}
+        aside={
+          <AnswerLink href={service.statusPageUrl} external>
+            Full history ↗
+          </AnswerLink>
+        }
+      >
+        {incidents.length === 0 ? (
+          <p className="text-muted-foreground m-0">
+            No incidents affecting {component.name} recently.
+          </p>
+        ) : (
+          <IncidentRows
+            incidents={incidents}
+            statusPageUrl={service.statusPageUrl}
+          />
+        )}
+      </StatusSection>
 
       <OtherComponents
         serviceSlug={service.slug}
         serviceName={service.name}
         currentSlug={component.slug}
       />
-    </section>
+    </div>
   );
 }

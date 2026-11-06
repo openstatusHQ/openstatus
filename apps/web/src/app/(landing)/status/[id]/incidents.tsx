@@ -28,6 +28,62 @@ function shortDate(value: string): string {
   });
 }
 
+type IncidentRow = {
+  id: string;
+  name: string;
+  impact?: string;
+  shortlink?: string;
+  startedAt?: string;
+  createdAt: string;
+  resolvedAt?: string | null;
+};
+
+export function IncidentRows({
+  incidents,
+  statusPageUrl,
+}: {
+  incidents: IncidentRow[];
+  statusPageUrl: string;
+}) {
+  return (
+    <div className="border-border bg-border [&>*]:bg-background grid grid-cols-1 gap-px border bg-clip-padding">
+      {incidents.map((inc) => {
+        const started = inc.startedAt ?? inc.createdAt;
+        const duration = inc.resolvedAt
+          ? formatDuration(Date.parse(inc.resolvedAt) - Date.parse(started))
+          : "ongoing";
+        return (
+          <a
+            key={inc.id}
+            href={inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:bg-muted! grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-x-4 px-3 py-2 no-underline! transition-colors duration-150 motion-reduce:transition-none sm:grid-cols-[4.5rem_minmax(0,1fr)_6rem_5rem]"
+          >
+            <span className="text-muted-foreground text-sm tabular-nums">
+              {shortDate(started)}
+            </span>
+            <span className="text-foreground truncate">{inc.name}</span>
+            <span
+              className={cn("hidden text-xs sm:inline", impactText(inc.impact))}
+            >
+              {inc.impact && inc.impact !== "none" ? inc.impact : "incident"}
+            </span>
+            <span
+              className={cn(
+                "text-right text-xs tabular-nums",
+                inc.resolvedAt ? "text-muted-foreground" : "text-warning",
+              )}
+            >
+              {duration}
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 export type IncidentsProps = {
   slug: string;
   serviceName: string;
@@ -66,46 +122,10 @@ export function Incidents({
           No {serviceName} incidents reported recently.
         </p>
       ) : (
-        <div className="border-border bg-border [&>*]:bg-background grid grid-cols-1 gap-px border bg-clip-padding">
-          {data.incidents.map((inc) => {
-            const started = inc.startedAt ?? inc.createdAt;
-            const duration = inc.resolvedAt
-              ? formatDuration(Date.parse(inc.resolvedAt) - Date.parse(started))
-              : "ongoing";
-            return (
-              <a
-                key={inc.id}
-                href={inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:bg-muted! grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-x-4 px-3 py-2 no-underline! transition-colors duration-150 motion-reduce:transition-none sm:grid-cols-[4.5rem_minmax(0,1fr)_6rem_5rem]"
-              >
-                <span className="text-muted-foreground text-sm tabular-nums">
-                  {shortDate(started)}
-                </span>
-                <span className="text-foreground truncate">{inc.name}</span>
-                <span
-                  className={cn(
-                    "hidden text-xs sm:inline",
-                    impactText(inc.impact),
-                  )}
-                >
-                  {inc.impact && inc.impact !== "none"
-                    ? inc.impact
-                    : "incident"}
-                </span>
-                <span
-                  className={cn(
-                    "text-right text-xs tabular-nums",
-                    inc.resolvedAt ? "text-muted-foreground" : "text-warning",
-                  )}
-                >
-                  {duration}
-                </span>
-              </a>
-            );
-          })}
-        </div>
+        <IncidentRows
+          incidents={data.incidents}
+          statusPageUrl={statusPageUrl}
+        />
       )}
     </StatusSection>
   );
