@@ -6,6 +6,7 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import React, { useEffect } from "react";
@@ -16,7 +17,6 @@ import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phas
 import { ChartBarPings } from "@/components/chart/chart-bar-pings";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
 import { ChartEmpty } from "@/components/chart/chart-empty";
-import { Link } from "@/components/common/link";
 import {
   EmptyStateActions,
   EmptyStateContainer,
