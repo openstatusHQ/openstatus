@@ -7,6 +7,7 @@ import type { Workspace } from "../types";
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
 import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
+import { getServiceStatusTool, listActiveIssuesTool } from "./external-status";
 import {
   addIncidentNoteTool,
   approvePostmortemTool,
@@ -70,6 +71,12 @@ import { getWorkspaceTool } from "./workspace";
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
 export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
+export {
+  getServiceStatusTool,
+  listActiveIssuesTool,
+  runGetServiceStatus,
+  runListActiveIssues,
+} from "./external-status";
 export {
   addIncidentNoteTool,
   approvePostmortemTool,
@@ -207,6 +214,8 @@ export const agentTools = {
   get_doc_page: getDocPageTool,
   search_content: searchContentTool,
   get_content_page: getContentPageTool,
+  get_service_status: getServiceStatusTool,
+  list_active_issues: listActiveIssuesTool,
 } satisfies Record<string, AnyAgentTool>;
 
 // Multi-flag confirmation UX should be a modal, not 2^N buttons. Fail

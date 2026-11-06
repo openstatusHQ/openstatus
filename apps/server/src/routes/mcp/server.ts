@@ -6,6 +6,7 @@ import packageJson from "../../../package.json" with { type: "json" };
 import { registerPublicResources } from "./resources";
 import { registerAuditTools } from "./tools/audit";
 import { registerContentTools } from "./tools/content";
+import { registerExternalStatusTools } from "./tools/external-status";
 import { registerIncidentTools } from "./tools/incident";
 import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
@@ -49,5 +50,6 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerWorkspaceTools(server, ctx);
   registerAuditTools(server, ctx);
   registerContentTools(server, ctx);
+  registerExternalStatusTools(server, ctx);
   return server;
 }

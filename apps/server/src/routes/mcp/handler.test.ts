@@ -150,8 +150,10 @@ describe("MCP transport", () => {
       "get_monitor_summary",
       "get_postmortem",
       "get_response_log",
+      "get_service_status",
       "get_status_report",
       "get_workspace",
+      "list_active_issues",
       "list_audit_logs",
       "list_incidents",
       "list_maintenances",
@@ -502,7 +504,9 @@ const INCIDENT_GROUP_TOOLS = [
 const ANY_TOOLS = [
   "get_content_page",
   "get_doc_page",
+  "get_service_status",
   "get_workspace",
+  "list_active_issues",
   "search_content",
   "search_docs",
 ];
