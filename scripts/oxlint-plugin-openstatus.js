@@ -352,6 +352,41 @@ function jsxName(name) {
   return null;
 }
 
+/** JSX elements an expression can evaluate to, through `?:`, `&&`, `||` and `??`. */
+function expressionElements(expr) {
+  if (!expr) return [];
+  switch (expr.type) {
+    case "JSXElement":
+      return [expr];
+    case "ConditionalExpression":
+      return [
+        ...expressionElements(expr.consequent),
+        ...expressionElements(expr.alternate),
+      ];
+    case "LogicalExpression":
+      return [
+        ...expressionElements(expr.left),
+        ...expressionElements(expr.right),
+      ];
+    case "ParenthesizedExpression":
+      return expressionElements(expr.expression);
+    default:
+      return [];
+  }
+}
+
+/** The elements a Slot host could end up rendering from its children. */
+function slotCandidates(children) {
+  const elements = [];
+  for (const child of children) {
+    if (child.type === "JSXElement") elements.push(child);
+    if (child.type === "JSXExpressionContainer") {
+      elements.push(...expressionElements(child.expression));
+    }
+  }
+  return elements;
+}
+
 /**
  * `@/components/common/link` is the inline text link: it adds a dashed hover
  * underline. Under `asChild`, Radix's Slot merges those classes into the host
@@ -398,13 +433,13 @@ const noTextLinkAsChild = {
             ),
         );
         if (!asChild) return;
-        // Slot only ever takes the single element child.
-        for (const child of node.children) {
-          if (child.type !== "JSXElement") continue;
-          const name = jsxName(child.openingElement.name);
+        // Slot renders its single element child, which may be picked by a
+        // conditional: `{external ? <Link .../> : <Link .../>}`.
+        for (const element of slotCandidates(node.children)) {
+          const name = jsxName(element.openingElement.name);
           if (!textLinkNames.has(name)) continue;
           context.report({
-            node: child,
+            node: element,
             messageId: "textLink",
             data: { parent: jsxName(opening.name) ?? "element" },
           });

@@ -75,7 +75,7 @@ export function FormHeartbeat({
   pingUrl,
   onRegenerateToken,
 }: {
-  pingUrl: string;
+  pingUrl: string | null;
   onRegenerateToken: () => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -87,7 +87,9 @@ export function FormHeartbeat({
         const promise = onRegenerateToken();
         toast.promise(promise, {
           loading: "Regenerating...",
-          success: "New ping URL ready. Update your job to use it.",
+          success: pingUrl
+            ? "New ping URL ready. Update your job to use it."
+            : "Ping URL ready. Add it to your job.",
           error: "Failed to regenerate the ping URL",
         });
         await promise;
@@ -105,12 +107,17 @@ export function FormHeartbeat({
           The unique URL your job calls when it finishes.
         </FormCardDescription>
       </FormCardHeader>
-      <FormCardContent>
-        <HeartbeatPingUrl pingUrl={pingUrl} />
-      </FormCardContent>
+      {pingUrl ? (
+        <FormCardContent>
+          <HeartbeatPingUrl pingUrl={pingUrl} />
+        </FormCardContent>
+      ) : null}
       <FormCardFooter>
         <FormCardFooterInfo>
-          Regenerating invalidates the current URL. Learn more about{" "}
+          {pingUrl
+            ? "Regenerating invalidates the current URL."
+            : "This monitor has no ping URL yet."}{" "}
+          Learn more about{" "}
           <Link
             href="https://www.openstatus.dev/docs/reference/heartbeat-monitor/"
             rel="noreferrer"
@@ -127,7 +134,13 @@ export function FormHeartbeat({
           disabled={isPending}
         >
           <Refresh size={16} />
-          {isPending ? "Regenerating..." : "Regenerate"}
+          {pingUrl
+            ? isPending
+              ? "Regenerating..."
+              : "Regenerate"
+            : isPending
+              ? "Generating..."
+              : "Generate"}
         </Button>
       </FormCardFooter>
     </FormCard>

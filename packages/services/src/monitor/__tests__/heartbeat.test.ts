@@ -454,6 +454,46 @@ describe("updateMonitorGeneral (heartbeat)", () => {
           },
         }),
       ).rejects.toBeInstanceOf(ValidationError);
+      await expect(
+        updateMonitorGeneral({
+          ctx: { ...ctx, db: tx },
+          input: {
+            id: http.id,
+            name: http.name,
+            jobType: "http",
+            url: "https://example.com",
+            method: "GET",
+            heartbeatGrace: FIVE_MIN,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  test("resuming with a new period anchors on now, not the stale ping", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx, { active: false });
+      await setLastPing(tx, row.id, new Date("2026-01-01T00:00:00.000Z"));
+
+      const before = Date.now();
+      await updateMonitorGeneral({
+        ctx: { ...ctx, db: tx },
+        input: {
+          id: row.id,
+          name: row.name,
+          jobType: "heartbeat",
+          url: "",
+          method: "GET",
+          active: true,
+          heartbeatPeriod: 2 * HOUR,
+          heartbeatGrace: 600,
+        },
+      });
+
+      const state = await readState(tx, row.id);
+      const expected = before + (2 * HOUR + 600) * 1000;
+      expect(state?.nextDueAt?.getTime()).toBeGreaterThanOrEqual(expected);
+      expect(state?.nextDueAt?.getTime()).toBeLessThan(expected + 10_000);
     });
   });
 });

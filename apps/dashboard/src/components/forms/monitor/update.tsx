@@ -175,7 +175,7 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      {isHeartbeat && heartbeat?.pingUrl ? (
+      {isHeartbeat && heartbeat ? (
         <FormHeartbeat
           pingUrl={heartbeat.pingUrl}
           onRegenerateToken={async () => {
