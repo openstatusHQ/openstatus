@@ -315,12 +315,14 @@ export default function Page() {
                 : `${attention} ${attention === 1 ? "event needs" : "events need"} your attention`}
             </SectionDescription>
           </SectionHeader>
-          <div className="flex flex-wrap items-center gap-2">
+          {/* one action slot: creating events needs a page; until then, point at the agent */}
+          {pages.length > 0 ? (
+            <CreateEventButtonGroup />
+          ) : (
             <AgentPromptButton source="overview">
               Onboard your agent
             </AgentPromptButton>
-            {pages.length > 0 ? <CreateEventButtonGroup /> : null}
-          </div>
+          )}
         </SectionHeaderRow>
       </Section>
       <Activity>
