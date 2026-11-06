@@ -1,16 +1,4 @@
-import { isHeartbeatAllowed } from "@openstatus/utils";
-import { z } from "zod";
-
 import { env } from "../env";
-
-// tests skip env validation, so the flag can still be a raw string here
-const selfHost = z.stringbool().catch(false);
-
-/** `*` opens heartbeats to every workspace; self-hosted instances always have them. */
-export function isHeartbeatEnabled(workspaceId: number): boolean {
-  if (selfHost.parse(String(env.SELF_HOST))) return true;
-  return isHeartbeatAllowed(workspaceId, env.HEARTBEAT_WORKSPACE_IDS);
-}
 
 export function heartbeatPingUrl(token: string): string {
   const base =

@@ -167,14 +167,12 @@ type FormValues = z.input<typeof schema>;
 export function FormGeneral({
   defaultValues,
   disabled,
-  heartbeatAvailable,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
-  heartbeatAvailable?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
@@ -220,9 +218,7 @@ export function FormGeneral({
     { value: "dns", icon: Server, label: "DNS" },
     { value: "icmp", icon: Speed, label: "ICMP" },
     { value: "grpc", icon: Api, label: "gRPC" },
-    ...(heartbeatAvailable || defaultValues?.type === "heartbeat"
-      ? [{ value: "heartbeat", icon: Schedule, label: "Heartbeat" }]
-      : []),
+    { value: "heartbeat", icon: Schedule, label: "Heartbeat" },
   ];
 
   useEffect(() => {
@@ -366,12 +362,7 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className={cn(
-                        "grid grid-cols-2 gap-4",
-                        typeOptions.length > 5
-                          ? "sm:grid-cols-3 lg:grid-cols-6"
-                          : "sm:grid-cols-5",
-                      )}
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6"
                       disabled={!!defaultValues?.type}
                     >
                       {typeOptions.map((type) => {

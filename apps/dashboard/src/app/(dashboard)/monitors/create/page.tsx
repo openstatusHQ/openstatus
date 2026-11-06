@@ -2,7 +2,7 @@
 
 import { headerAssertion } from "@openstatus/assertions";
 import { MONITOR_METHODS } from "@openstatus/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
@@ -74,10 +74,6 @@ export default function Page() {
   const router = useRouter();
   const [params] = useQueryStates(searchParamsParsers);
 
-  const { data: heartbeatAvailable } = useQuery(
-    trpc.monitor.heartbeatAvailable.queryOptions(),
-  );
-
   const triggerCheckMutation = useMutation(
     trpc.checker.triggerChecker.mutationOptions({}),
   );
@@ -104,7 +100,6 @@ export default function Page() {
         </SectionHeader>
         <FormGeneral
           defaultValues={buildPrefill(params)}
-          heartbeatAvailable={heartbeatAvailable ?? false}
           onSubmit={async (data) => {
             await createMonitorMutation.mutateAsync({
               name: data.name,
