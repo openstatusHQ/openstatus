@@ -97,18 +97,16 @@ export function Client() {
 
   // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs.
   // Fetch whenever the banner or the components need the refetched page.
-  const {
-    data: pageWithCustomConfiguration,
-    isSuccess: isCustomPageSuccess,
-  } = useQuery({
-    ...trpc.statusPage.get.queryOptions({
-      slug: domain,
-      cardType,
-      barType,
-    }),
-    enabled:
-      !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
-  });
+  const { data: pageWithCustomConfiguration, isSuccess: isCustomPageSuccess } =
+    useQuery({
+      ...trpc.statusPage.get.queryOptions({
+        slug: domain,
+        cardType,
+        barType,
+      }),
+      enabled:
+        !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
+    });
 
   // NOTE: we can prefetch that to avoid loading state
   // NOTE: using skipToken instead of enabled:false to prevent tRPC from including this in a batch request with undefined input
@@ -163,9 +161,9 @@ export function Client() {
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
   // Banner events follow the refetched page once it succeeds.
   const bannerEventsSource =
-      hasCustomConfig && isCustomPageSuccess && pageWithCustomConfiguration
-        ? pageWithCustomConfiguration
-        : pageInitial;
+    hasCustomConfig && isCustomPageSuccess && pageWithCustomConfiguration
+      ? pageWithCustomConfiguration
+      : pageInitial;
   const events = useMemo(() => {
     let hasIncident = false;
     return (
