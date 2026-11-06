@@ -1,13 +1,17 @@
 import { FetchError } from "@openstatus/status-fetcher";
 import type { DetectionResult } from "@openstatus/status-fetcher";
+import { Effect } from "effect";
 import { describe, expect, test } from "vitest";
 
 import {
   PROBE_TTL_MS,
+  UpsertTimeoutError,
   clearProbeStamp,
   decideDetectionAction,
   isBlocked,
   isSuspicious,
+  isTransientDbError,
+  runUpsert,
   shouldProbe,
 } from "./external-status-detect";
 
@@ -70,6 +74,88 @@ describe("isSuspicious", () => {
     expect(isSuspicious(fetchError({ kind: "network" }))).toBe(false);
     expect(isSuspicious(fetchError({ kind: "timeout" }))).toBe(false);
     expect(isSuspicious(fetchError({}))).toBe(false);
+  });
+});
+
+describe("isTransientDbError", () => {
+  const upsertError = (cause: Error) => new FetchError({ url: URL, cause });
+
+  test("busy, locked and Turso 5xx upsert failures are transient", () => {
+    expect(
+      isTransientDbError(upsertError(new Error("database is locked"))),
+    ).toBe(true);
+    expect(
+      isTransientDbError(
+        upsertError(new Error("Server returned HTTP status 502")),
+      ),
+    ).toBe(true);
+  });
+
+  test("a stalled Turso connection is transient", () => {
+    const stalled = new Error("Failed query: select ...", {
+      cause: new TypeError("fetch failed", {
+        cause: new Error('HTTP/2: "headers timeout after 300000"'),
+      }),
+    });
+    expect(isTransientDbError(upsertError(stalled))).toBe(true);
+  });
+
+  test("permanent upsert failures are not", () => {
+    expect(
+      isTransientDbError(
+        upsertError(new Error("UNIQUE constraint failed: slug")),
+      ),
+    ).toBe(false);
+  });
+
+  test("upstream fetch failures are not", () => {
+    expect(
+      isTransientDbError(fetchError({ kind: "http", httpStatus: 503 })),
+    ).toBe(false);
+    expect(
+      isTransientDbError(
+        new FetchError({
+          url: URL,
+          kind: "network",
+          cause: new TypeError("fetch failed"),
+        }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("runUpsert", () => {
+  const target = {
+    entry: { id: "toggl", status_page_url: URL },
+    fetcher: { name: "atlassian" },
+  } as unknown as Parameters<typeof runUpsert>[0];
+
+  test("returns the upsert result", async () => {
+    const value = await Effect.runPromise(
+      runUpsert(target, () => Promise.resolve(42)),
+    );
+    expect(value).toBe(42);
+  });
+
+  test("a stalled upsert fails as a transient error instead of hanging", async () => {
+    const err = await Effect.runPromise(
+      runUpsert(target, () => new Promise(() => {}), "10 millis").pipe(
+        Effect.flip,
+      ),
+    );
+    expect(err).toBeInstanceOf(FetchError);
+    expect(err.cause).toBeInstanceOf(UpsertTimeoutError);
+    expect(isTransientDbError(err)).toBe(true);
+  });
+
+  test("a permanent upsert failure stays reportable", async () => {
+    const err = await Effect.runPromise(
+      runUpsert(target, () =>
+        Promise.reject(new Error("UNIQUE constraint failed: slug")),
+      ).pipe(Effect.flip),
+    );
+    expect(err.message).toBe(`[atlassian (toggl)] fetch failed: ${URL}`);
+    expect(isTransientDbError(err)).toBe(false);
   });
 });
 

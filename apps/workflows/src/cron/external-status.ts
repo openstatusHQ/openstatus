@@ -11,12 +11,9 @@ import {
   type UpsertExternalIncidentInput,
   upsertExternalIncidentsForService,
 } from "@openstatus/services/external-service-incident";
-import {
-  FetchError,
-  detectProvider,
-  fetchers,
-} from "@openstatus/status-fetcher";
+import { detectProvider, fetchers } from "@openstatus/status-fetcher";
 import type {
+  FetchError,
   NormalizedComponent,
   NormalizedIncident,
   StatusFetcher,
@@ -40,6 +37,8 @@ import {
   decideDetectionAction,
   isBlocked,
   isSuspicious,
+  isTransientDbError,
+  runUpsert,
   shouldProbe,
 } from "./external-status-detect";
 
@@ -211,22 +210,14 @@ function runIncidentPhase(
       }
       return fetcher.fetchIncidents(entry).pipe(
         Effect.flatMap((incidents) =>
-          Effect.tryPromise({
-            try: () =>
-              upsertExternalIncidentsForService({
-                ctx: { db },
-                externalServiceId: row.id,
-                incidents: incidents.map(toUpsertInput),
-                now: tickStartedAt,
-              }),
-            catch: (e) =>
-              new FetchError({
-                url: entry.status_page_url,
-                fetcherName: fetcher.name,
-                entryId: entry.id,
-                cause: e instanceof Error ? e : new Error(String(e)),
-              }),
-          }).pipe(
+          runUpsert({ entry, fetcher }, () =>
+            upsertExternalIncidentsForService({
+              ctx: { db },
+              externalServiceId: row.id,
+              incidents: incidents.map(toUpsertInput),
+              now: tickStartedAt,
+            }),
+          ).pipe(
             Effect.map((result): IncidentPhaseOutcome => ({
               kind: "ok",
               slug: entry.id,
@@ -236,12 +227,14 @@ function runIncidentPhase(
         ),
         Effect.catch((err: FetchError) =>
           Effect.sync<IncidentPhaseOutcome>(() => {
-            reportFetchFailure({
-              phase: "incidents",
-              slug: entry.id,
-              error: err,
-              level: isBlocked(err) ? "warning" : undefined,
-            });
+            if (!isTransientDbError(err)) {
+              reportFetchFailure({
+                phase: "incidents",
+                slug: entry.id,
+                error: err,
+                level: isBlocked(err) ? "warning" : undefined,
+              });
+            }
             return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),
@@ -267,22 +260,14 @@ function runComponentPhase(
       }
       return fetcher.fetchComponents(entry).pipe(
         Effect.flatMap((components) =>
-          Effect.tryPromise({
-            try: () =>
-              upsertExternalComponentsForService({
-                ctx: { db },
-                externalServiceId: row.id,
-                components: components.map(toComponentUpsertInput),
-                now: tickStartedAt,
-              }),
-            catch: (e) =>
-              new FetchError({
-                url: entry.status_page_url,
-                fetcherName: fetcher.name,
-                entryId: entry.id,
-                cause: e instanceof Error ? e : new Error(String(e)),
-              }),
-          }).pipe(
+          runUpsert({ entry, fetcher }, () =>
+            upsertExternalComponentsForService({
+              ctx: { db },
+              externalServiceId: row.id,
+              components: components.map(toComponentUpsertInput),
+              now: tickStartedAt,
+            }),
+          ).pipe(
             Effect.map((result): ComponentPhaseOutcome => {
               // History rows key on our PK, so the upstream→PK map from the
               // upsert turns each normalized component into a snapshot.
@@ -307,12 +292,14 @@ function runComponentPhase(
         ),
         Effect.catch((err: FetchError) =>
           Effect.sync<ComponentPhaseOutcome>(() => {
-            reportFetchFailure({
-              phase: "components",
-              slug: entry.id,
-              error: err,
-              level: isBlocked(err) ? "warning" : undefined,
-            });
+            if (!isTransientDbError(err)) {
+              reportFetchFailure({
+                phase: "components",
+                slug: entry.id,
+                error: err,
+                level: isBlocked(err) ? "warning" : undefined,
+              });
+            }
             return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),
