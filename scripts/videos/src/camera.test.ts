@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 
-import { buildShots, cameraAt, cursorAt, type Project } from "./camera";
+import {
+  buildShots,
+  cameraAt,
+  cursorAt,
+  travelSpans,
+  type Project,
+} from "./camera";
 import type { Timeline, TimelineEvent } from "./timeline";
 
 const scene = { width: 1920, height: 1080 };
@@ -78,5 +84,21 @@ describe("a look", () => {
     expect(cameraAt(shots, 4, scene).zoom).toBeGreaterThan(2);
     expect(cameraAt(shots, 6, scene).zoom).toBe(cameraAt(shots, 4, scene).zoom);
     expect(cameraAt(shots, 4, scene).x).toBeCloseTo(960);
+  });
+});
+
+describe("travelSpans", () => {
+  test("ends on each shot and never starts before the one before it", () => {
+    const spans = travelSpans(
+      timeline([
+        { type: "click", t: 3, at: [0, 0], box: [0, 0, 10, 10] },
+        { type: "click", t: 3.5, at: [0, 0], box: [0, 0, 10, 10] },
+      ]),
+    );
+    expect(spans).toEqual([
+      [2.1, 3],
+      [3, 3.5],
+      [7.9, 8.8],
+    ]);
   });
 });

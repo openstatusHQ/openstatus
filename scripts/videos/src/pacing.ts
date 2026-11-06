@@ -1,3 +1,4 @@
+import { travelSpans } from "./camera";
 import { isUpdate, type Timeline } from "./timeline";
 
 // A stretch of source time played at one rate.
@@ -18,6 +19,9 @@ export type Pace = {
   holdEnd: number;
   // What the viewer follows plays at this rate.
   rate: number;
+  // A look, once the camera has arrived and until it leaves, plays at this
+  // rate: the viewer is waiting, not following.
+  holdRate: number;
   // Keystrokes are recorded at a readable 70ms each (at --speed 1); played
   // back faster they still read, and long messages stop dominating the video.
   typeRate: number;
@@ -33,18 +37,20 @@ export const paces = {
     maxRate: 4,
     holdEnd: 1.5,
     rate: 1,
+    holdRate: 1,
     typeRate: 1.6,
   },
   // Product updates: seen muted in a feed, so nothing waits.
   update: {
     lead: 0.2,
-    tail: 0.35,
+    tail: 0.3,
     settle: 0.6,
     minIdle: 0.5,
     beat: 0.35,
     maxRate: 8,
-    holdEnd: 1.2,
+    holdEnd: 0.9,
     rate: 1.25,
+    holdRate: 2,
     typeRate: 3.2,
   },
 } satisfies Record<string, Pace>;
@@ -110,29 +116,44 @@ export function buildSegments(
   }
   if (cursor < timeline.duration)
     segments.push({ from: cursor, to: timeline.duration, rate: pace.rate });
-  return speedUpTyping(segments, timeline, pace);
+  return retime(segments, timeline, pace);
 }
 
-// Cut followed segments at typing boundaries and play the typing faster.
-function speedUpTyping(
-  segments: Segment[],
-  timeline: Timeline,
-  pace: Pace,
-): Segment[] {
-  const typing = timeline.events.flatMap((e) =>
-    e.type === "type" ? [[e.t, e.t1] as const] : [],
+type Span = readonly [number, number];
+const within = (spans: Span[], t: number) =>
+  spans.some(([a, b]) => t > a && t < b);
+
+// Cut followed segments where typing and holds begin and end: typing plays
+// faster, and so does a hold, but never the camera's way to the next shot.
+function retime(segments: Segment[], timeline: Timeline, pace: Pace) {
+  const typing = timeline.events.flatMap((e): Span[] =>
+    e.type === "type" ? [[e.t, e.t1]] : [],
   );
+  const looks =
+    pace.holdRate === pace.rate
+      ? []
+      : timeline.events.flatMap((e): Span[] =>
+          e.type === "look" ? [[e.t, e.t1]] : [],
+        );
+  const travel: Span[] = looks.length ? travelSpans(timeline) : [];
+  const cuts = [...typing, ...looks, ...travel].flat();
   return segments.flatMap((s) => {
     if (s.rate !== pace.rate) return [s];
-    const cuts = typing
-      .flatMap(([a, b]) => [a, b])
-      .filter((t) => t > s.from && t < s.to);
-    const edges = [s.from, ...cuts, s.to];
-    return edges.slice(1).map((to, i) => {
+    const edges = [
+      s.from,
+      ...cuts.filter((t) => t > s.from && t < s.to).sort((a, b) => a - b),
+      s.to,
+    ];
+    return edges.slice(1).flatMap((to, i) => {
       const from = edges[i];
+      if (to === from) return [];
       const mid = (from + to) / 2;
-      const typed = typing.some(([a, b]) => mid > a && mid < b);
-      return { from, to, rate: typed ? pace.typeRate : pace.rate };
+      const rate = within(typing, mid)
+        ? pace.typeRate
+        : within(looks, mid) && !within(travel, mid)
+          ? pace.holdRate
+          : pace.rate;
+      return [{ from, to, rate }];
     });
   });
 }

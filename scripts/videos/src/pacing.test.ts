@@ -161,3 +161,31 @@ describe("a look", () => {
     expect(held?.rate).toBe(1);
   });
 });
+
+describe("holds in the update pace", () => {
+  // The camera reaches the first look at 4 and leaves for the second at 7.1.
+  const read = timeline(20, [
+    { type: "look", t: 4, t1: 7.5, box: [0, 0, 10, 10] },
+    { type: "look", t: 8, t1: 10, box: [500, 500, 10, 10] },
+  ]);
+  const rateAt = (t: number) =>
+    buildSegments(read, paces.update).find((s) => s.from <= t && s.to > t)
+      ?.rate;
+
+  test("play faster once the camera has arrived", () => {
+    expect(rateAt(5)).toBe(paces.update.holdRate);
+    expect(rateAt(9)).toBe(paces.update.holdRate);
+  });
+
+  test("leave the camera's way to the next shot at the followed rate", () => {
+    expect(rateAt(7.3)).toBe(paces.update.rate);
+  });
+
+  test("do not exist in a tutorial", () => {
+    const rates = buildSegments(read).map((s) => s.rate);
+    expect(rates.every((r) => r === 1 || r > 1.5)).toBe(true);
+    expect(buildSegments(read).find((s) => s.from <= 5 && s.to > 5)?.rate).toBe(
+      1,
+    );
+  });
+});

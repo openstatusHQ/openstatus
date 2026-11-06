@@ -45,23 +45,39 @@ export function buildShots(
     return { t, x: cx, y: cy, zoom };
   };
 
-  const shots: Shot[] = [overview(0)];
+  return targets(timeline).map(({ t, box, max }) =>
+    box ? focus(t, box, max) : overview(t),
+  );
+}
+
+// What the camera goes to and when: an element to move in on, or (no box)
+// the whole scene.
+function targets(timeline: Timeline) {
+  const all: { t: number; box?: Rect; max: number }[] = [{ t: 0, max: 1 }];
   for (const e of timeline.events) {
-    if (e.type === "click") shots.push(focus(e.t, e.box, CLICK_ZOOM));
-    if (e.type === "type") shots.push(focus(e.t, e.box, TYPE_ZOOM));
-    if (e.type === "look") shots.push(focus(e.t, e.box, LOOK_ZOOM));
+    if (e.type === "click") all.push({ t: e.t, box: e.box, max: CLICK_ZOOM });
+    if (e.type === "type") all.push({ t: e.t, box: e.box, max: TYPE_ZOOM });
+    if (e.type === "look") all.push({ t: e.t, box: e.box, max: LOOK_ZOOM });
     // A new page reads best in full before the next zoom, and a scroll
     // reads best from far enough out to see the page move.
-    if (e.type === "nav") shots.push(overview(e.t + 0.3));
-    if (e.type === "scroll") shots.push(overview(e.t + 0.1));
+    if (e.type === "nav") all.push({ t: e.t + 0.3, max: 1 });
+    if (e.type === "scroll") all.push({ t: e.t + 0.1, max: 1 });
   }
-  shots.push(overview(Math.max(0, timeline.duration - 1.2)));
+  all.push({ t: Math.max(0, timeline.duration - 1.2), max: 1 });
 
-  shots.sort((a, b) => a.t - b.t);
-  return shots.filter((s, i) => {
-    const next = shots[i + 1];
+  all.sort((a, b) => a.t - b.t);
+  return all.filter((s, i) => {
+    const next = all[i + 1];
     return !next || next.t - s.t >= MIN_GAP;
   });
+}
+
+// The stretches of the recording the camera spends on its way to a shot.
+export function travelSpans(timeline: Timeline): [number, number][] {
+  const times = targets(timeline).map((s) => s.t);
+  return times
+    .slice(1)
+    .map((t, i): [number, number] => [Math.max(times[i], t - TRAVEL), t]);
 }
 
 function clamp(v: number, lo: number, hi: number) {
