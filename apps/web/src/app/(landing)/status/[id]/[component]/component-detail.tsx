@@ -14,7 +14,11 @@ import {
 import { api } from "../../../../../trpc/rq-client";
 import { ServiceStatusLabel } from "../../external-service-pill";
 import { StatusSection, TILE_GRID } from "../../service-blocks";
-import { getComponentFullName, summarizeHistory } from "../../utils";
+import {
+  getComponentFullName,
+  getStatusAnswer,
+  summarizeHistory,
+} from "../../utils";
 import { AnswerBox, AnswerLink } from "../answer-box";
 import { HistoryBars } from "../history-bars";
 import { IncidentRows } from "../incidents";
@@ -22,33 +26,6 @@ import { ReportIssue } from "../report-issue";
 
 const SIBLINGS_SHOWN = 12;
 const SEVERITY: Record<string, number> = { minor: 1, major: 2, critical: 3 };
-
-function answerFor(args: {
-  fullName: string;
-  indicator: string;
-  status: string;
-  stale: boolean;
-}): string {
-  const { fullName, indicator, status, stale } = args;
-  if (stale) {
-    return `We don't have live data for ${fullName} right now. Check the official status page below.`;
-  }
-  if (status === "under_maintenance") {
-    return `${fullName} is currently undergoing scheduled maintenance.`;
-  }
-  switch (indicator) {
-    case "none":
-      return `No, ${fullName} is not down. It is operational.`;
-    case "minor":
-      return `${fullName} is up, but currently experiencing a minor issue.`;
-    case "major":
-      return `Yes, ${fullName} is experiencing a partial outage right now.`;
-    case "critical":
-      return `Yes, ${fullName} is down. A major outage is currently affecting it.`;
-    default:
-      return `The current status of ${fullName} is unknown. Check the official status page below.`;
-  }
-}
 
 function jsonLd(args: {
   serviceName: string;
@@ -160,11 +137,11 @@ export function ComponentDetail({
   const { service, component, history, incidents, overlayIncidents } = data;
 
   const fullName = getComponentFullName(service.name, component.name);
-  const answer = answerFor({
-    fullName,
+  const answer = getStatusAnswer({
+    name: fullName,
     indicator: component.indicator,
     status: component.status,
-    stale: component.stale,
+    hasLiveData: !component.stale && component.lastFetchedAt > 0,
   });
   const summary = summarizeHistory(history);
 

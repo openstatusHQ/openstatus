@@ -145,6 +145,10 @@
       "import": "./src/external-service-report/index.ts",
       "types": "./src/external-service-report/index.ts"
     },
+    "./external-service-status": {
+      "import": "./src/external-service-status/index.ts",
+      "types": "./src/external-service-status/index.ts"
+    },
     "./test/helpers": {
       "import": "./test/helpers.ts",
       "types": "./test/helpers.ts"
