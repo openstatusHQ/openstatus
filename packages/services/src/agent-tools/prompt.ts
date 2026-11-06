@@ -158,3 +158,66 @@ Tool result handling:
 - If a tool returns an error or denied result (e.g. the user denied a destructive call with "Cancelled by user."), acknowledge the outcome plainly. NEVER claim success when the tool didn't run. Example replies: "Cancelled — nothing was created. Let me know if you want to adjust and try again." or "The status report couldn't be created (<reason>). Want me to retry with different inputs?"
 - After a denied/errored call, do not re-issue the same tool unless the user explicitly asks.`;
 }
+
+const PUBLIC_WRITE_TOOLS = [
+  "create_status_report",
+  "add_status_report_update",
+  "update_status_report",
+  "resolve_status_report",
+  "update_status_report_update",
+  "delete_status_report_update",
+  "create_maintenance",
+  "update_maintenance",
+  "add_maintenance_update",
+  "update_maintenance_update",
+  "delete_maintenance_update",
+  "create_status_page",
+  "update_status_page",
+  "add_page_component",
+  "update_page_component",
+  "create_component_group",
+  "update_component_group",
+];
+
+const INTERNAL_WRITE_TOOLS = [
+  "declare_incident",
+  "update_incident",
+  "resolve_incident",
+  "set_incident_status",
+  "draft_postmortem",
+  "approve_postmortem",
+  "create_monitor",
+  "update_monitor",
+];
+
+const NOTIFY_TOOLS = [
+  "create_status_report",
+  "add_status_report_update",
+  "resolve_status_report",
+  "create_maintenance",
+  "add_maintenance_update",
+];
+
+/**
+ * MCP `instructions` sent on initialize. External clients may skip their own
+ * approval prompt, so the confirmation rule has to live with the model.
+ */
+export function buildMcpServerInstructions(opts: {
+  canNotifySubscribers: boolean;
+}): string {
+  const notifyRule = opts.canNotifySubscribers
+    ? `- Notify tools (${NOTIFY_TOOLS.join(", ")}): ask "Notify subscribers? yes/no" for every such call, as part of its confirmation. An answer covers that one call only — never reuse an earlier answer, even within the same report. Notifications dispatch only on that call and cannot be sent or recalled later.`
+    : `- This workspace plan does not support subscriber notifications. Always pass \`notify: false\` and do not ask about notifications.`;
+
+  return `openstatus manages status pages, status reports, maintenance windows, incidents and monitors. Status pages are public: anything written to them is visible to customers and audit-logged.
+
+Confirm every write before calling it. Do not count on the client showing its own approval prompt — it may not.
+- Public writes (${PUBLIC_WRITE_TOOLS.join(", ")}): before calling, show the user exactly what will be published — the status page, status, the full message text as it will appear, affected components and their impact — and ask them to confirm.
+- Internal writes (${INTERNAL_WRITE_TOOLS.join(", ")}): before calling, summarize the change in one or two lines and ask them to confirm.
+${notifyRule}
+- Call the tool only after the user explicitly approves that specific change in their latest message. A request to make a change ("post an update", "resolve it") is not approval of wording you drafted — show the draft first.
+- Each write needs its own confirmation. Approval of one call never carries over to the next. If the user changes the draft, show the revised version and confirm again.
+- add_incident_note is the exception: it is internal-only and runs without confirmation.
+
+Never guess ids: read them from list_status_pages, list_status_reports, list_maintenances, list_incidents, list_page_components or list_monitors first.`;
+}

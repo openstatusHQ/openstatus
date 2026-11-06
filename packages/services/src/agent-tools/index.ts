@@ -143,6 +143,7 @@ export type {
 export {
   type AgentSystemPromptOptions,
   buildAgentSystemPrompt,
+  buildMcpServerInstructions,
 } from "./prompt";
 
 /**
