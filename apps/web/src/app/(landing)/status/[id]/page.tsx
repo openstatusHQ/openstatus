@@ -21,8 +21,8 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
-import { prefetchPopularServices } from "../prefetch";
-import { PopularServices } from "../sections";
+import { prefetchPopularStatus } from "../prefetch";
+import { PopularStatus } from "../sections";
 import { AgentHint } from "../service-blocks";
 import { ServiceDetail } from "./client";
 
@@ -108,7 +108,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       slug: service.slug,
       days: HISTORY_DAYS,
     }),
-    prefetchPopularServices(),
+    prefetchPopularStatus(),
   ]);
 
   return (
@@ -126,11 +126,11 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
         </Suspense>
         <Suspense fallback={null}>
-          <PopularServices
+          <PopularStatus
             id="related"
             title="People also check"
             aside={null}
-            exclude={service.slug}
+            exclude={{ service: service.slug }}
             limit={8}
           />
         </Suspense>

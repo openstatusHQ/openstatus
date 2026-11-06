@@ -2,6 +2,10 @@
 
 import { useQueryStates } from "nuqs";
 
+import {
+  POPULAR_STATUS,
+  type PopularStatusEntry,
+} from "../../../data/popular-status";
 import { api } from "../../../trpc/rq-client";
 import {
   POPULAR_COMPONENTS_INPUT,
@@ -24,7 +28,6 @@ import { getComponentFullName } from "./utils";
 // own tRPC query, so a page only prefetches what it renders (see the
 // `prefetch*` helpers in ./prefetch.ts) and drops the block in.
 
-type ComponentRef = { service: string; component: string };
 
 function formatCount(n: number): string {
   return n.toLocaleString("en-US");
@@ -83,15 +86,28 @@ export function IssuesNow({ limit = 10 }: { limit?: number }) {
   );
 }
 
-/** Pinned services with their live status. Reads `serviceSummaries`. */
-export function PopularServices({
+type PopularTile = {
+  slug: string;
+  href?: string;
+  name: string;
+  indicator: string;
+  status: string;
+  escalated: boolean;
+};
+
+/**
+ * The pinned status pages, services and components mixed in the order of
+ * POPULAR_STATUS. Reads `serviceSummaries` and `componentSummaries`.
+ * `exclude` drops the page being viewed.
+ */
+export function PopularStatus({
   exclude,
   limit,
   id = "popular",
   title = "Popular",
   aside = "Most checked",
 }: {
-  exclude?: string;
+  exclude?: PopularStatusEntry;
   limit?: number;
   id?: string;
   title?: string;
@@ -100,52 +116,51 @@ export function PopularServices({
   const [services] = api.externalService.serviceSummaries.useSuspenseQuery(
     POPULAR_SERVICES_INPUT,
   );
-  const shown = services
-    .filter((s) => s.slug !== exclude)
-    .slice(0, limit ?? services.length);
-  if (shown.length === 0) return null;
-  return (
-    <StatusSection id={id} title={title} aside={aside}>
-      <PopularGrid services={shown} />
-    </StatusSection>
-  );
-}
-
-/** Pinned component pages with their live status. Reads `componentSummaries`. */
-export function PopularComponents({
-  exclude,
-  limit,
-  id = "popular-components",
-  title = "Popular components",
-  aside = "One part of a service",
-}: {
-  exclude?: ComponentRef;
-  limit?: number;
-  id?: string;
-  title?: string;
-  aside?: React.ReactNode;
-}) {
   const [components] = api.externalService.componentSummaries.useSuspenseQuery(
     POPULAR_COMPONENTS_INPUT,
   );
-  const shown = components
-    .filter(
-      (c) =>
-        !(
-          exclude &&
-          c.serviceSlug === exclude.service &&
-          c.slug === exclude.component
-        ),
-    )
-    .slice(0, limit ?? components.length)
-    .map((c) => ({
-      slug: `${c.serviceSlug}/${c.slug}`,
-      href: `/status/${c.serviceSlug}/${c.slug}`,
-      name: getComponentFullName(c.serviceName, c.name),
-      indicator: c.indicator,
-      status: c.status,
-      escalated: false,
-    }));
+  const serviceBySlug = new Map(services.map((s) => [s.slug, s]));
+  const componentByKey = new Map(
+    components.map((c) => [`${c.serviceSlug}/${c.slug}`, c]),
+  );
+
+  const shown = POPULAR_STATUS.flatMap((entry): PopularTile[] => {
+    const component = "component" in entry ? entry.component : undefined;
+    if (
+      exclude &&
+      exclude.service === entry.service &&
+      exclude.component === component
+    ) {
+      return [];
+    }
+    if (component) {
+      const c = componentByKey.get(`${entry.service}/${component}`);
+      return c
+        ? [
+            {
+              slug: `${c.serviceSlug}/${c.slug}`,
+              href: `/status/${c.serviceSlug}/${c.slug}`,
+              name: getComponentFullName(c.serviceName, c.name),
+              indicator: c.indicator,
+              status: c.status,
+              escalated: false,
+            },
+          ]
+        : [];
+    }
+    const s = serviceBySlug.get(entry.service);
+    return s
+      ? [
+          {
+            slug: s.slug,
+            name: s.name,
+            indicator: s.indicator,
+            status: s.status,
+            escalated: s.escalated,
+          },
+        ]
+      : [];
+  }).slice(0, limit);
   if (shown.length === 0) return null;
   return (
     <StatusSection id={id} title={title} aside={aside}>

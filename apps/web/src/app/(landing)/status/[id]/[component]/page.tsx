@@ -19,11 +19,8 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../../content-box";
-import {
-  prefetchPopularComponents,
-  prefetchPopularServices,
-} from "../../prefetch";
-import { PopularComponents, PopularServices } from "../../sections";
+import { prefetchPopularStatus } from "../../prefetch";
+import { PopularStatus } from "../../sections";
 import { AgentHint } from "../../service-blocks";
 import { getCheckerHref, getComponentFullName, getHost } from "../../utils";
 import { ComponentDetail } from "./client";
@@ -98,8 +95,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     }),
     // Sibling list is rendered on the server so its links are crawlable.
     api.externalService.components.prefetch({ slug: service.slug, days: 1 }),
-    prefetchPopularComponents(),
-    prefetchPopularServices(),
+    prefetchPopularStatus(),
   ]);
 
   const checkerHref = getCheckerHref(service.url);
@@ -127,15 +123,11 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           />
         </Suspense>
         <Suspense fallback={null}>
-          <PopularComponents
-            exclude={{ service: service.slug, component: component.slug }}
-            limit={4}
-          />
-          <PopularServices
+          <PopularStatus
             id="related"
             title="People also check"
             aside={null}
-            exclude={service.slug}
+            exclude={{ service: service.slug, component: component.slug }}
             limit={8}
           />
         </Suspense>

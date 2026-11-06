@@ -2,8 +2,7 @@
 
 import {
   IssuesNow,
-  PopularComponents,
-  PopularServices,
+  PopularStatus,
   ServiceDirectory,
   StatusHeader,
   useIsStatusLanding,
@@ -17,8 +16,7 @@ export function Client() {
       {landing ? (
         <>
           <IssuesNow />
-          <PopularServices />
-          <PopularComponents />
+          <PopularStatus />
         </>
       ) : null}
       <ServiceDirectory />

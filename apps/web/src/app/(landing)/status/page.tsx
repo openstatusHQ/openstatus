@@ -20,8 +20,7 @@ import {
 import { Client } from "./client";
 import {
   getPrefetchedGrid,
-  prefetchPopularComponents,
-  prefetchPopularServices,
+  prefetchPopularStatus,
 } from "./prefetch";
 import { searchParamsCache } from "./search-params";
 import { AgentHint, StatusSkeleton } from "./service-blocks";
@@ -71,8 +70,7 @@ export default async function Page(props: PageProps) {
   const letter = query === "" ? params.letter : null;
   const [services] = await Promise.all([
     getPrefetchedGrid(),
-    prefetchPopularServices(),
-    prefetchPopularComponents(),
+    prefetchPopularStatus(),
   ]);
   const index = buildStatusIndex({
     services,

@@ -27,12 +27,10 @@ export async function getPrefetchedGrid(): Promise<
   return data ?? [];
 }
 
-export function prefetchPopularServices() {
-  return api.externalService.serviceSummaries.prefetch(POPULAR_SERVICES_INPUT);
-}
-
-export function prefetchPopularComponents() {
-  return api.externalService.componentSummaries.prefetch(
-    POPULAR_COMPONENTS_INPUT,
-  );
+/** Data for <PopularStatus />: the pinned services and components. */
+export function prefetchPopularStatus() {
+  return Promise.all([
+    api.externalService.serviceSummaries.prefetch(POPULAR_SERVICES_INPUT),
+    api.externalService.componentSummaries.prefetch(POPULAR_COMPONENTS_INPUT),
+  ]);
 }
