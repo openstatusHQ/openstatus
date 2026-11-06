@@ -270,52 +270,133 @@ function incidentAffectsComponent(
   );
 }
 
-export const externalServiceRouter = createTRPCRouter({
-  grid: publicProcedure.output(z.array(gridItemSchema)).query(async () => {
-    const [services, latestRows] = await Promise.all([
-      listExternalServices({}),
-      safeData(tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
-    ]);
+type ServiceRow = Awaited<ReturnType<typeof listExternalServices>>[number];
 
-    const reportRows = await safeRows(
+// Effective status per service, shared by the full grid and the small
+// summaries the popular blocks read. `slugs` limits the snapshot read.
+async function summarizeServices(services: ServiceRow[], slugs?: string[]) {
+  if (services.length === 0) return [];
+  const [latestRows, reportRows] = await Promise.all([
+    safeData(
+      tb.externalStatusLatest(slugs ? { ids: slugs } : {}),
+      "externalStatusLatest (summaries)",
+    ),
+    safeRows(
       getServiceReportWindows({
         serviceIds: services.map((s) => s.id),
         since: new Date(Date.now() - REPORT_WINDOW_MS),
       }),
-      "getServiceReportWindows (grid)",
-    );
+      "getServiceReportWindows (summaries)",
+    ),
+  ]);
 
-    const byId = new Map<string, (typeof latestRows)[number]>();
-    for (const row of latestRows) byId.set(row.id, row);
-    const reportersByServiceId = new Map<number, number>();
-    for (const row of reportRows) {
-      reportersByServiceId.set(row.externalServiceId, row.reporters);
-    }
+  const byId = new Map<string, (typeof latestRows)[number]>();
+  for (const row of latestRows) byId.set(row.id, row);
+  const reportersByServiceId = new Map<number, number>();
+  for (const row of reportRows) {
+    reportersByServiceId.set(row.externalServiceId, row.reporters);
+  }
 
-    return services.map((s) => {
-      const snap = byId.get(s.slug);
-      const reporters = reportersByServiceId.get(s.id) ?? 0;
-      // Older than 30 minutes is not "now": show unknown, not a past outage.
-      const fresh = snap != null && isFresh(snap.last_fetched_at);
-      const effective = computeEffectiveStatus({
-        providerIndicator: fresh ? snap.indicator : "",
-        providerStatus: fresh ? snap.status : "",
-        reporters,
-        threshold: REPORT_THRESHOLD,
-      });
-      return {
-        slug: s.slug,
-        name: s.name,
-        url: s.url,
-        aliases: Array.isArray(s.aliases) ? s.aliases : [],
-        indicator: effective.indicator,
-        status: effective.status,
-        statusMessage: fresh ? snap.status_message : "Status unavailable",
-        escalated: effective.escalated,
-        reporters,
-      };
+  return services.map((s) => {
+    const snap = byId.get(s.slug);
+    const reporters = reportersByServiceId.get(s.id) ?? 0;
+    // Older than 30 minutes is not "now": show unknown, not a past outage.
+    const fresh = snap != null && isFresh(snap.last_fetched_at);
+    const effective = computeEffectiveStatus({
+      providerIndicator: fresh ? snap.indicator : "",
+      providerStatus: fresh ? snap.status : "",
+      reporters,
+      threshold: REPORT_THRESHOLD,
     });
+    return {
+      slug: s.slug,
+      name: s.name,
+      url: s.url,
+      aliases: Array.isArray(s.aliases) ? s.aliases : [],
+      indicator: effective.indicator,
+      status: effective.status,
+      statusMessage: fresh ? snap.status_message : "Status unavailable",
+      escalated: effective.escalated,
+      reporters,
+    };
+  });
+}
+
+const componentSummarySchema = z.object({
+  serviceSlug: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  serviceName: z.string(),
+  indicator: z.string(),
+  status: z.string(),
+});
+
+export const externalServiceRouter = createTRPCRouter({
+  grid: publicProcedure.output(z.array(gridItemSchema)).query(async () => {
+    const services = await listExternalServices({});
+    return summarizeServices(services);
   }),
+
+  // A handful of services by slug, in the order asked; unknown slugs are
+  // skipped. Cheap enough for any page, unlike the full grid.
+  serviceSummaries: publicProcedure
+    .input(z.object({ slugs: z.array(z.string()).max(50) }))
+    .output(z.array(gridItemSchema))
+    .query(async ({ input }) => {
+      if (input.slugs.length === 0) return [];
+      const all = await listExternalServices({});
+      const bySlug = new Map(all.map((s) => [s.slug, s]));
+      const picked = input.slugs.flatMap((slug) => {
+        const s = bySlug.get(slug);
+        return s ? [s] : [];
+      });
+      return summarizeServices(
+        picked,
+        picked.map((s) => s.slug),
+      );
+    }),
+
+  // Components by service and component slug, in the order asked; missing
+  // ones are skipped. A reading older than 30 minutes shows as unknown.
+  componentSummaries: publicProcedure
+    .input(
+      z.object({
+        refs: z
+          .array(z.object({ service: z.string(), component: z.string() }))
+          .max(20),
+      }),
+    )
+    .output(z.array(componentSummarySchema))
+    .query(async ({ input }) => {
+      const rows = await Promise.all(
+        input.refs.map((ref) =>
+          getExternalComponentBySlug({
+            serviceSlug: ref.service,
+            componentSlug: ref.component,
+          }).catch((err) => {
+            console.warn("[external-service componentSummaries]", err);
+            return null;
+          }),
+        ),
+      );
+      return rows.flatMap((row) => {
+        if (!row?.service || !row.component || row.service.deletedAt != null) {
+          return [];
+        }
+        const { service, component } = row;
+        const fresh = isFresh(component.lastFetchedAt ?? 0);
+        return [
+          {
+            serviceSlug: service.slug,
+            slug: component.slug,
+            name: component.name,
+            serviceName: service.name,
+            indicator: fresh ? component.indicator : "",
+            status: fresh ? component.status : "",
+          },
+        ];
+      });
+    }),
 
   detail: publicProcedure
     .input(

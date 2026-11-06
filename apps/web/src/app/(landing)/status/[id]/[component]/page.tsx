@@ -19,9 +19,14 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../../content-box";
+import {
+  prefetchPopularComponents,
+  prefetchPopularServices,
+} from "../../prefetch";
+import { PopularComponents, PopularServices } from "../../sections";
 import { AgentHint } from "../../service-blocks";
 import { getCheckerHref, getComponentFullName, getHost } from "../../utils";
-import { ComponentDetail } from "./component-detail";
+import { ComponentDetail } from "./client";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +98,8 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     }),
     // Sibling list is rendered on the server so its links are crawlable.
     api.externalService.components.prefetch({ slug: service.slug, days: 1 }),
+    prefetchPopularComponents(),
+    prefetchPopularServices(),
   ]);
 
   const checkerHref = getCheckerHref(service.url);
@@ -117,6 +124,19 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
             componentSlug={component.slug}
             days={HISTORY_DAYS}
             checker={checker}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <PopularComponents
+            exclude={{ service: service.slug, component: component.slug }}
+            limit={4}
+          />
+          <PopularServices
+            id="related"
+            title="People also check"
+            aside={null}
+            exclude={service.slug}
+            limit={8}
           />
         </Suspense>
       </HydrateClient>

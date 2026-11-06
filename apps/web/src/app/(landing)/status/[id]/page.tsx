@@ -5,11 +5,9 @@ import { Suspense } from "react";
 
 import { ButtonLink } from "../../../../content/mdx-components/button-link";
 import { CustomLink } from "../../../../content/mdx-components/custom-link";
-import { POPULAR_STATUS_SLUGS } from "../../../../data/popular-status";
 import { getServiceEscalation } from "../../../../lib/external-report-escalation";
 import {
   cachedGetExternalServiceBySlug,
-  cachedListExternalServices,
 } from "../../../../lib/external-service-cache";
 import {
   APP_URL,
@@ -25,31 +23,16 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
-import { AgentHint, RelatedServices, StatusSection } from "../service-blocks";
-import { ServiceDetail } from "./service-detail";
+import { prefetchPopularServices } from "../prefetch";
+import { PopularServices } from "../sections";
+import { AgentHint } from "../service-blocks";
+import { ServiceDetail } from "./client";
 
 export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
 const RELATED_COUNT = 6;
 
-async function getRelatedServices(slug: string) {
-  try {
-    const all = await cachedListExternalServices();
-    const bySlug = new Map(all.map((s) => [s.slug, s]));
-    // Drop unknown slugs before counting, so a stale entry never shortens the row.
-    return POPULAR_STATUS_SLUGS.filter((s) => s !== slug)
-      .flatMap((s) => {
-        const row = bySlug.get(s);
-        return row && row.deletedAt == null
-          ? [{ slug: row.slug, name: row.name }]
-          : [];
-      })
-      .slice(0, RELATED_COUNT);
-  } catch {
-    return [];
-  }
-}
 
 type RouteParams = { id: string };
 
@@ -128,9 +111,8 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       slug: service.slug,
       days: HISTORY_DAYS,
     }),
+    prefetchPopularServices(),
   ]);
-
-  const related = await getRelatedServices(service.slug);
 
   return (
     <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
@@ -146,13 +128,16 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         >
           <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
         </Suspense>
+        <Suspense fallback={null}>
+          <PopularServices
+            id="related"
+            title="People also check"
+            aside={null}
+            exclude={service.slug}
+            limit={8}
+          />
+        </Suspense>
       </HydrateClient>
-
-      {related.length > 0 ? (
-        <StatusSection id="related" title="People also check">
-          <RelatedServices services={related} />
-        </StatusSection>
-      ) : null}
 
       <AgentHint markdownPath={`/status/${service.slug}.md`} />
 

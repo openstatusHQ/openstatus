@@ -9,21 +9,23 @@ import { STATUS_LETTERS } from "./status-index";
 
 const baseQParser = parseAsString.withDefault("");
 const basePageParser = parseAsInteger.withDefault(1);
+const baseLetterParser = parseAsStringLiteral(STATUS_LETTERS);
 
 export const searchParamsCache = createSearchParamsCache({
   q: baseQParser,
   page: basePageParser,
-  letter: parseAsStringLiteral(STATUS_LETTERS),
+  letter: baseLetterParser,
 });
 
-// Not shallow: the list is filtered and paginated on the server.
+// Shallow: the hydrated grid is filtered in the browser as you type. Page
+// and letter changes are links, so crawlers get a URL per page.
 export const qParser = baseQParser.withOptions({
   throttleMs: 300,
-  shallow: false,
   clearOnDefault: true,
 });
 
 export const pageParser = basePageParser.withOptions({
-  shallow: false,
   clearOnDefault: true,
 });
+
+export const letterParser = baseLetterParser;

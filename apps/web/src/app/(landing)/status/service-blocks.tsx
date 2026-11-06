@@ -85,13 +85,20 @@ export function IssueList({ services }: { services: ServiceItem[] }) {
   );
 }
 
-export function PopularGrid({ services }: { services: ServiceItem[] }) {
+export function PopularGrid({
+  services,
+}: {
+  services: (Pick<
+    ServiceItem,
+    "slug" | "name" | "indicator" | "status" | "escalated"
+  > & { href?: string })[];
+}) {
   return (
     <div className={cn(TILE_GRID, "grid-cols-2 sm:grid-cols-4")}>
       {services.map((s) => (
         <Link
-          key={s.slug}
-          href={`/status/${s.slug}`}
+          key={s.href ?? s.slug}
+          href={s.href ?? `/status/${s.slug}`}
           className={cn(TILE_LINK, "flex flex-col gap-1 p-3")}
         >
           <span className="text-foreground truncate font-medium">{s.name}</span>
@@ -251,21 +258,17 @@ export function StatusPagination({
   );
 }
 
-export function RelatedServices({
-  services,
-}: {
-  services: { slug: string; name: string }[];
-}) {
+/** Placeholder while a status block's data streams in. */
+export function StatusSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className={cn(TILE_GRID, "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
-      {services.map((s) => (
-        <Link
-          key={s.slug}
-          href={`/status/${s.slug}`}
-          className={cn(TILE_LINK, "text-foreground truncate px-3 py-2")}
-        >
-          {s.name}
-        </Link>
+    <div className="not-prose flex flex-col gap-3" aria-busy="true">
+      <div className="bg-muted h-8 w-48 animate-pulse motion-reduce:animate-none" />
+      {Array.from({ length: rows }, (_, i) => (
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
+          key={i}
+          className="bg-muted/60 h-16 w-full animate-pulse motion-reduce:animate-none"
+        />
       ))}
     </div>
   );
