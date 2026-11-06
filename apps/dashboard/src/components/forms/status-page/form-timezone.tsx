@@ -45,6 +45,10 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
+import {
+  timeZoneSearchKeywords,
+  timeZoneSearchScore,
+} from "@/components/forms/status-page/timezone-search";
 
 const schema = z.object({
   defaultTimezone: z.string().min(1),
@@ -77,6 +81,7 @@ export function FormTimezone({
         (zone) => ({
           zone,
           label: zoneLabel(zone),
+          keywords: timeZoneSearchKeywords(zone),
         }),
       ),
     [],
@@ -145,16 +150,16 @@ export function FormTimezone({
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-                      <Command>
+                      <Command filter={timeZoneSearchScore}>
                         <CommandInput placeholder="Search time zone..." />
                         <CommandList>
                           <CommandEmpty>No time zone found.</CommandEmpty>
                           <CommandGroup>
-                            {zones.map(({ zone, label }) => (
+                            {zones.map(({ zone, label, keywords }) => (
                               <CommandItem
                                 key={zone}
                                 value={zone}
-                                keywords={[label]}
+                                keywords={keywords}
                                 onSelect={() => {
                                   field.onChange(zone);
                                   setOpen(false);
