@@ -9,6 +9,8 @@ export type TimelineEvent =
   | { type: "type"; t: number; t1: number; box: Rect; text: string }
   | { type: "step"; t: number; label: string }
   | { type: "scroll"; t: number; t1: number; dy: number }
+  // The viewer rests on an element to read it.
+  | { type: "look"; t: number; t1: number; box: Rect }
   // A command running in a terminal recording.
   | { type: "output"; t: number; t1: number }
   | { type: "nav"; t: number; url: string };
@@ -30,6 +32,18 @@ export type TutorialMeta = {
   requires?: string[];
 };
 
+// The `meta` of a product update (scripts/updates): a short cut of one
+// feature, in place of a tutorial's intro and outro.
+export type UpdateMeta = {
+  format: "update";
+  title: string;
+  tagline: string;
+  // Where the end card sends the viewer, after "openstatus.dev/".
+  link?: string;
+  viewport?: { width: number; height: number };
+  requires?: string[];
+};
+
 export type Timeline = {
   name: string;
   // "terminal" recordings (scripts/record-terminal.mjs) keep their screens in
@@ -37,13 +51,12 @@ export type Timeline = {
   // "slack" ones (scripts/record-slack.mjs) keep their events in slack.json;
   // "agent" ones (scripts/record-agent.mjs) keep theirs in agent.json.
   kind?: "page" | "terminal" | "slack" | "agent";
-  meta?: TutorialMeta;
+  meta?: TutorialMeta | UpdateMeta;
   theme: "light" | "dark";
   fps: number;
   viewport: { width: number; height: number };
   scale: number;
   duration: number;
-  // The element thumbnail.png should keep in frame, if the tutorial named one.
   // The element thumbnail.png should keep in frame, if the tutorial named
   // one; for drawn recordings (slack), the moment to draw.
   thumbnail?: { focus: Rect | null; t?: number };
@@ -61,3 +74,8 @@ export const eventsOf = <T extends TimelineEvent["type"]>(
   timeline.events.filter(
     (e): e is Extract<TimelineEvent, { type: T }> => e.type === type,
   );
+
+export const updateOf = (timeline: Timeline): UpdateMeta | null =>
+  timeline.meta && "format" in timeline.meta ? timeline.meta : null;
+
+export const isUpdate = (timeline: Timeline) => updateOf(timeline) !== null;

@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
 
-import { TYPE_RATE, buildSegments, pacedDuration, sourceTime } from "./pacing";
+import {
+  TYPE_RATE,
+  buildSegments,
+  paceOf,
+  pacedDuration,
+  paces,
+  sourceTime,
+} from "./pacing";
 import type { Timeline, TimelineEvent } from "./timeline";
 
 const timeline = (duration: number, events: TimelineEvent[]): Timeline => ({
@@ -111,5 +118,46 @@ describe("typing", () => {
   test("leaves sped-up idle stretches alone", () => {
     const rates = buildSegments(idle).map((s) => s.rate);
     expect(rates).not.toContain(TYPE_RATE);
+  });
+});
+
+describe("the update pace", () => {
+  const typed = timeline(20, [
+    { type: "click", t: 1, at: [0, 0], box: [0, 0, 10, 10] },
+    { type: "type", t: 10, t1: 14, box: [0, 0, 10, 10], text: "hello" },
+  ]);
+
+  test("is what a product update's recording plays at", () => {
+    const meta = { format: "update" as const, title: "t", tagline: "s" };
+    expect(paceOf({ ...typed, meta })).toBe(paces.update);
+    expect(paceOf(typed)).toBe(paces.tutorial);
+  });
+
+  test("covers the recording and never plays below its own rate", () => {
+    const segments = buildSegments(typed, paces.update);
+    expect(segments[0].from).toBe(0);
+    expect(segments.at(-1)?.to).toBe(20);
+    for (let i = 1; i < segments.length; i++)
+      expect(segments[i].from).toBeCloseTo(segments[i - 1].to);
+    expect(Math.min(...segments.map((s) => s.rate))).toBe(paces.update.rate);
+    expect(Math.max(...segments.map((s) => s.rate))).toBeLessThanOrEqual(
+      paces.update.maxRate,
+    );
+  });
+
+  test("is shorter than the tutorial cut of the same recording", () => {
+    expect(pacedDuration(buildSegments(typed, paces.update))).toBeLessThan(
+      pacedDuration(buildSegments(typed)) * 0.7,
+    );
+  });
+});
+
+describe("a look", () => {
+  test("is followed for as long as it rests", () => {
+    const read = timeline(20, [
+      { type: "look", t: 8, t1: 11, box: [0, 0, 10, 10] },
+    ]);
+    const held = buildSegments(read).find((s) => s.from <= 8 && s.to >= 11);
+    expect(held?.rate).toBe(1);
   });
 });

@@ -122,12 +122,35 @@ const who = await mcp("tools/call", { name: "get_workspace", arguments: {} });
 if (who.structuredContent?.slug !== "love-openstatus")
   fail(`refusing ${api}: its workspace 1 is not the seeded one`);
 
-// The monitoring pipes' only source here; dev-stack points the API at it.
+// What the API reaches for that has no local instance; dev-stack points it
+// here. Tinybird: the monitoring pipes' only source. Upstash Redis: only the
+// counter behind the MCP create budget (one EVAL per create).
 const pipes = session.tinybird ?? {};
-const tinybird = createServer((req, res) => {
+const counters = new Map();
+const tinybird = createServer(async (req, res) => {
+  res.setHeader("content-type", "application/json");
+  if (req.url?.startsWith("/redis")) {
+    let body = "";
+    for await (const chunk of req) body += chunk;
+    // One command, or a list of them on /pipeline.
+    const parsed = JSON.parse(body || "[]");
+    const run = ([command, , numKeys, ...rest]) => {
+      if (String(command).toUpperCase() !== "EVAL")
+        return { error: `fake redis: ${command} is not implemented` };
+      return {
+        result: rest.slice(0, Number(numKeys)).map((key) => {
+          counters.set(key, (counters.get(key) ?? 0) + 1);
+          return counters.get(key);
+        }),
+      };
+    };
+    res.end(
+      JSON.stringify(Array.isArray(parsed[0]) ? parsed.map(run) : run(parsed)),
+    );
+    return;
+  }
   const pipe = req.url?.match(/\/v0\/pipes\/([\w-]+)\.json/)?.[1];
   const data = pipes[pipe] ?? [];
-  res.setHeader("content-type", "application/json");
   res.end(
     JSON.stringify({
       meta: [],
@@ -141,7 +164,7 @@ await new Promise((done, failed) => {
   tinybird.once("error", failed);
   tinybird.listen(tinybirdPort, "127.0.0.1", done);
 }).catch((e) =>
-  fail(`port ${tinybirdPort} for the Tinybird fake: ${e.message}`),
+  fail(`port ${tinybirdPort} for the Tinybird and Redis fake: ${e.message}`),
 );
 
 // Video time in ms: fixed beats, never a call's real latency, so a retake

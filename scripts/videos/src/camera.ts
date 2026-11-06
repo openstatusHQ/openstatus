@@ -10,6 +10,7 @@ export type Project = (x: number, y: number) => [number, number];
 
 const CLICK_ZOOM = 1.8;
 const TYPE_ZOOM = 2.2;
+const LOOK_ZOOM = 2.4;
 // Longest glide between two shots; shorter when the shots are closer.
 const TRAVEL = 0.9;
 // Shots closer than this collapse into the later one, so the camera does not
@@ -48,6 +49,7 @@ export function buildShots(
   for (const e of timeline.events) {
     if (e.type === "click") shots.push(focus(e.t, e.box, CLICK_ZOOM));
     if (e.type === "type") shots.push(focus(e.t, e.box, TYPE_ZOOM));
+    if (e.type === "look") shots.push(focus(e.t, e.box, LOOK_ZOOM));
     // A new page reads best in full before the next zoom, and a scroll
     // reads best from far enough out to see the page move.
     if (e.type === "nav") shots.push(overview(e.t + 0.3));

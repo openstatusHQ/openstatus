@@ -8,12 +8,21 @@
 //   node scripts/record.mjs --list
 //
 // Tutorials live in scripts/tutorials/<name>.mjs: a `meta` export and a
-// default function of steps. Needs the seeded stack from
+// default function of steps. Product updates live in scripts/updates/<name>.mjs
+// and are recorded the same way; their `meta.format` is "update", which
+// scripts/videos cuts short and fast. Needs the seeded stack from
 // `node scripts/dev-stack.mjs up`; writes .recordings/<name>[.dark].mp4.
 // --remotion captures at 2x without the in-page cursor and writes
 // .recordings/remotion/<name>/{video.mp4,timeline.json,thumbnail.png} for
 // scripts/videos.
 // Tutorials reset their own rows, so only a local database is accepted.
+//
+// A step file can end on another app: `await cut("statusPage", { app:
+// "status-page" })` records its export `statusPage` against the public status
+// page and, with --remotion, the video cuts to it where the call was made;
+// a `viewport` there gives the clip its own window size.
+//   node scripts/record.mjs status-page-timezone --remotion \
+//     --status-page http://localhost:3004
 //
 // Other recorders cut to the dashboard through this one (record-slack.mjs
 // --dashboard): they pass a module path instead of a tutorial name, the
@@ -27,6 +36,7 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -36,6 +46,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tutorialsDir = join(repo, "scripts", "tutorials");
+const updatesDir = join(repo, "scripts", "updates");
 
 const BOOLEAN_FLAGS = new Set(["remotion", "no-cursor", "list"]);
 const args = process.argv.slice(2);
@@ -56,11 +67,15 @@ const fail = (message) => {
   process.exit(2);
 };
 
-const available = readdirSync(tutorialsDir, { withFileTypes: true })
-  .filter((f) => f.isFile())
-  .map((f) => f.name)
-  .filter((f) => f.endsWith(".mjs"))
-  .map((f) => f.slice(0, -4));
+const scriptsIn = (dir) =>
+  existsSync(dir)
+    ? readdirSync(dir, { withFileTypes: true })
+        .filter((f) => f.isFile() && f.name.endsWith(".mjs"))
+        .map((f) => f.name.slice(0, -4))
+    : [];
+const tutorials = scriptsIn(tutorialsDir);
+const updates = scriptsIn(updatesDir);
+const available = [...tutorials, ...updates];
 // A path to a module (ends in .mjs) instead of a tutorial name.
 const external =
   names.length === 1 && names[0].endsWith(".mjs") && existsSync(names[0])
@@ -72,11 +87,11 @@ if (
   (!external && !available.includes(names[0]))
 ) {
   console.error(
-    `usage: record.mjs <tutorial | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--base url] [--width 1440 --height 900] [--speed 1] [--export steps --name out --clock ISO]\ntutorials: ${available.join(", ")}`,
+    `usage: record.mjs <tutorial | update | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--app dashboard|status-page] [--base url] [--status-page url] [--width 1440 --height 900] [--speed 1] [--export steps --name out --clock ISO]\ntutorials: ${tutorials.join(", ")}\nupdates: ${updates.join(", ")}`,
   );
   process.exit(flags.list ? 0 : 2);
 }
-for (const key of ["export", "name", "clock"])
+for (const key of ["export", "name", "clock", "app", "status-page"])
   if (flags[key] === true) fail(`--${key} needs a value`);
 const name = flags.name ?? basename(names[0], ".mjs");
 if (!/^[\w-]+$/.test(name))
@@ -84,7 +99,16 @@ if (!/^[\w-]+$/.test(name))
 const clock = flags.clock !== undefined ? new Date(flags.clock) : null;
 if (clock && Number.isNaN(clock.getTime()))
   fail(`--clock must be an ISO date, got ${flags.clock}`);
-const base = (flags.base ?? "http://localhost:3001").replace(/\/$/, "");
+// What is recorded: where it runs by default, and a path that only it answers
+// with a 200 (apps/web is often on the dashboard's port).
+const APPS = {
+  dashboard: { base: "http://localhost:3001", probe: "/login" },
+  "status-page": { base: "http://localhost:3000", probe: null },
+};
+const app = flags.app ?? "dashboard";
+if (!APPS[app])
+  fail(`--app must be one of ${Object.keys(APPS).join(", ")}, got ${app}`);
+const base = (flags.base ?? APPS[app].base).replace(/\/$/, "");
 const db = flags.db ?? "http://127.0.0.1:8080";
 if (!["localhost", "127.0.0.1"].includes(new URL(db).hostname))
   fail(`refusing non-local database ${db}: tutorials delete their own rows`);
@@ -133,11 +157,15 @@ async function sql(statements) {
 
 // Loaded before the browser starts, so a broken tutorial or a missing service
 // fails in a second instead of half-way through a recording.
+const modulePath =
+  external ??
+  join(
+    tutorials.includes(names[0]) ? tutorialsDir : updatesDir,
+    `${names[0]}.mjs`,
+  );
 let tutorial;
 try {
-  tutorial = await import(
-    pathToFileURL(external ?? join(tutorialsDir, `${names[0]}.mjs`)).href
-  );
+  tutorial = await import(pathToFileURL(modulePath).href);
 } catch (e) {
   fail(`tutorial ${names[0]} does not load: ${e.message}`);
 }
@@ -163,10 +191,12 @@ if (tutorial.meta.requires?.includes("checker")) {
     );
 }
 
-const probe = await fetch(`${base}/login`).catch(() => null);
-if (probe?.status !== 200) {
+const probe = await fetch(`${base}${APPS[app].probe ?? ""}`).catch(() => null);
+if (!probe || (APPS[app].probe && probe.status !== 200)) {
   console.error(
-    `no dashboard at ${base} (${probe?.status ?? "unreachable"}); run node scripts/dev-stack.mjs up`,
+    app === "dashboard"
+      ? `no dashboard at ${base} (${probe?.status ?? "unreachable"}); run node scripts/dev-stack.mjs up`
+      : `no status page at ${base}; start apps/status-page against the seeded database and pass its URL`,
   );
   process.exit(1);
 }
@@ -174,7 +204,9 @@ if (probe?.status !== 200) {
 const hideDevChrome = () => {
   const mount = () => {
     const style = document.createElement("style");
-    style.textContent = `nextjs-portal, [data-slot=tailwind-indicator] { display: none !important; }`;
+    // Next's overlay, the dashboard's breakpoint badge and the status page's
+    // dev-only settings button (it has no slot to select it by).
+    style.textContent = `nextjs-portal, [data-slot=tailwind-indicator], div.fixed.right-4.bottom-4.z-50 { display: none !important; }`;
     document.head.appendChild(style);
   };
   if (document.head) mount();
@@ -294,7 +326,13 @@ await cdp.send("Page.startScreencast", {
 
 const now = () => Date.now() / 1000;
 const events = [];
-const log = (event) => events.push(event);
+const log = (event) => {
+  if (rec.cutAt) throw new Error("a cut ends the recording: nothing after it");
+  events.push(event);
+};
+// Clips recorded by cut(), waiting to move next to this recording.
+const clipsTmp = join(out, `.clips-${process.pid}`);
+const inserts = [];
 page.on("framenavigated", (frame) => {
   if (frame === page.mainFrame())
     log({ type: "nav", t: now(), url: frame.url() });
@@ -419,6 +457,14 @@ const rec = {
     log({ type: "type", t, t1: now(), box: rect(box), text });
     await wait(300);
   },
+  // Rest on an element so the viewer can read it: the camera moves in on it
+  // and holds, and a hover card it opens stays open.
+  async look(locator, ms = 1600) {
+    const box = await moveTo(locator);
+    const t = now();
+    await wait(ms);
+    log({ type: "look", t, t1: now(), box: rect(box) });
+  },
   // Fail the run unless the app confirms the action, e.g. a "Saved" toast.
   async expect(text) {
     await page.getByText(text, { exact: true }).first().waitFor();
@@ -445,6 +491,44 @@ const rec = {
       focus: box && rect(box),
     };
   },
+  // End on another app: record this file's export `clip` there, and have the
+  // video cut to it at this moment. Only --remotion keeps the clip.
+  async cut(clip, { app: clipApp = "status-page", viewport } = {}) {
+    if (!remotion) return;
+    if (typeof tutorial[clip] !== "function")
+      throw new Error(`cut: ${names[0]} has no function export ${clip}`);
+    await settle();
+    rec.cutAt = now();
+    const clipBase = flags[clipApp];
+    const run = spawnSync(
+      process.execPath,
+      [
+        fileURLToPath(import.meta.url),
+        modulePath,
+        "--export",
+        clip,
+        "--name",
+        clip,
+        "--app",
+        clipApp,
+        ...(typeof clipBase === "string" ? ["--base", clipBase] : []),
+        "--db",
+        db,
+        "--width",
+        String(viewport?.width ?? width),
+        "--height",
+        String(viewport?.height ?? height),
+        "--speed",
+        String(speed),
+        "--remotion",
+        "--out",
+        clipsTmp,
+      ],
+      { stdio: ["ignore", "ignore", "inherit"] },
+    );
+    if (run.status !== 0) throw new Error(`clip ${clip} failed`);
+    inserts.push({ t: rec.cutAt, clip });
+  },
   // Open the first page and mark where the video starts; everything before
   // (login, first load, cleanup) is cut. The label is the opening caption.
   async start(path, label) {
@@ -470,9 +554,12 @@ let shot = false;
 try {
   await steps(rec);
   // Hold on the result: the last action's outcome (a posted update, a saved
-  // form) lands after its confirmation toast, and the video ends here.
-  await rec.settle();
-  await rec.wait(2000);
+  // form) lands after its confirmation toast, and the video ends here. After
+  // a cut the clip is the ending, and holds on its own result.
+  if (!rec.cutAt) {
+    await rec.settle();
+    await rec.wait(2000);
+  }
   if (remotion && !rec.thumb) await rec.thumbnail();
 } catch (e) {
   failed = e;
@@ -482,12 +569,13 @@ try {
     .catch(() => false);
 }
 await cdp.send("Page.stopScreencast").catch(() => {});
-const endAt = now();
+const endAt = rec.cutAt ?? now();
 await context.close();
 await browser.close();
 
 if (failed) {
   rmSync(tmp, { recursive: true, force: true });
+  rmSync(clipsTmp, { recursive: true, force: true });
   console.error(`tutorial ${name} failed, no video written: ${failed.message}`);
   if (shot) console.error(`last frame: ${failureShot}`);
   process.exit(1);
@@ -497,7 +585,9 @@ if (failed) {
 // The frame showing at start() opens the video; earlier ones are cut.
 const startAt = rec.startAt ?? frames[0]?.t ?? endAt;
 const opening = frames.findLastIndex((f) => f.t <= startAt);
-const shown = frames.slice(Math.max(opening, 0));
+const shown = frames
+  .slice(Math.max(opening, 0))
+  .filter((f, i) => i === 0 || f.t < endAt);
 const lines = shown.flatMap((f, i) => {
   const next = shown[i + 1]?.t ?? endAt;
   return [
@@ -522,8 +612,12 @@ const ffmpeg = spawnSync("ffmpeg", [
   "0",
   "-i",
   list,
+  // -r rather than the fps filter: the ffmpeg Remotion ships has no fps
+  // filter, and it is the only one on a machine that never installed ffmpeg.
   "-vf",
-  `fps=${fps},format=yuv420p`,
+  "format=yuv420p",
+  "-r",
+  String(fps),
   "-c:v",
   "libx264",
   "-crf",
@@ -551,6 +645,9 @@ if (remotion) {
     scale,
     duration: endAt - startAt,
     thumbnail: { focus: rec.thumb?.focus ?? null },
+    ...(inserts.length && {
+      inserts: inserts.map((i) => ({ ...i, t: i.t - startAt })),
+    }),
     events: events
       .filter((e) => e.t >= startAt)
       .map((e) => ({
@@ -561,5 +658,10 @@ if (remotion) {
   };
   writeFileSync(join(dir, "timeline.json"), JSON.stringify(timeline, null, 2));
   writeFileSync(join(dir, "thumbnail.png"), rec.thumb.png);
+  for (const { clip } of inserts) {
+    rmSync(join(dir, clip), { recursive: true, force: true });
+    renameSync(join(clipsTmp, "remotion", clip), join(dir, clip));
+  }
+  rmSync(clipsTmp, { recursive: true, force: true });
 }
 console.log(file);

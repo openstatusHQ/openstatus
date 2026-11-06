@@ -4,8 +4,8 @@
 // --api adds the API server (apps/server) on :3000, for the CLI and API casts;
 // --fake-slack (implies --api) loads scripts/slack/fake.mjs into it, so the
 // Slack app runs without Slack, Redis or a model, for scripts/record-slack.mjs;
-// --fake-tinybird (implies --api) points it at the monitoring rows
-// scripts/record-agent.mjs serves while it records.
+// --fake-tinybird (implies --api) points it at the monitoring rows and the
+// Redis counter scripts/record-agent.mjs serves while it records.
 //
 //   node scripts/dev-stack.mjs up [--reseed] [--api] [--fake-slack] [--fake-tinybird] [--warm /incidents/1 ...]
 //   node scripts/dev-stack.mjs down
@@ -409,6 +409,9 @@ async function up() {
             ...(flags["fake-tinybird"] && {
               TINYBIRD_URL: "http://127.0.0.1:3098",
               TINY_BIRD_API_KEY: "fake",
+              // The MCP create budget counts in Redis; the recorder answers it.
+              UPSTASH_REDIS_REST_URL: "http://127.0.0.1:3098/redis",
+              UPSTASH_REDIS_REST_TOKEN: "fake",
             }),
             FLY_REGION: "ams",
             // Validated at import by @openstatus/emails; nothing here mails.

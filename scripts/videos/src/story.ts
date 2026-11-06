@@ -1,5 +1,8 @@
-import { buildSegments, pacedDuration, type Segment } from "./pacing";
+import { buildSegments, paceOf, pacedDuration, type Segment } from "./pacing";
 import type { Timeline } from "./timeline";
+
+// Sections of a video, and the parts of a body, overlap by this much.
+export const FADE = 0.6;
 
 // What a video's body plays, in order: a recording through its own pacing.
 // Most recordings are one part; a Slack recording with dashboard clips cut
@@ -27,7 +30,9 @@ export function partsOf(
   timeline: Timeline,
   clips: Record<string, Timeline>,
 ): Part[] {
-  const segments = buildSegments(timeline);
+  // Clips cut into a recording keep its pace.
+  const pace = paceOf(timeline);
+  const segments = buildSegments(timeline, pace);
   const parts: Part[] = [];
   let from = 0;
   for (const insert of timeline.inserts ?? []) {
@@ -41,7 +46,7 @@ export function partsOf(
       kind: "clip",
       clip: insert.clip,
       timeline: clip,
-      segments: buildSegments(clip),
+      segments: buildSegments(clip, pace),
     });
     from = insert.t;
   }

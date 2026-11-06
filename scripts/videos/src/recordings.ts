@@ -1,4 +1,4 @@
-import type { Timeline, TutorialMeta } from "./timeline";
+import { updateOf, type Timeline, type TutorialMeta } from "./timeline";
 
 // Recording folders under .recordings/remotion, from the public dir listing:
 // every folder that holds a timeline.json, by name. Series order (meta.order)
@@ -25,7 +25,18 @@ export function thumbnailsFrom(files: { name: string }[]): string[] {
 // The words around a video. Recordings made before tutorials exported `meta`
 // still render, titled after their file name.
 export function copyOf(timeline: Timeline): TutorialMeta {
-  if (timeline.meta) return timeline.meta;
+  const update = updateOf(timeline);
+  if (update)
+    return {
+      order: 0,
+      label: "New",
+      thumbEyebrow: "New",
+      title: update.title,
+      subtitle: update.tagline,
+      outroTitle: update.title,
+      outroSubtitle: update.tagline,
+    };
+  if (timeline.meta && !("format" in timeline.meta)) return timeline.meta;
   const title = timeline.name.replace(/-/g, " ");
   return {
     order: 0,

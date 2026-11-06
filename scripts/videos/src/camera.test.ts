@@ -67,3 +67,16 @@ describe("cursorAt", () => {
     expect(x).toBeLessThan(100);
   });
 });
+
+describe("a look", () => {
+  const read = timeline([
+    { type: "look", t: 4, t1: 6, box: [900, 500, 120, 16] },
+  ]);
+  const shots = buildShots(read, scene, project, scale);
+
+  test("moves in on what is read and holds there", () => {
+    expect(cameraAt(shots, 4, scene).zoom).toBeGreaterThan(2);
+    expect(cameraAt(shots, 6, scene).zoom).toBe(cameraAt(shots, 4, scene).zoom);
+    expect(cameraAt(shots, 4, scene).x).toBeCloseTo(960);
+  });
+});

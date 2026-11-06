@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import {
   AbsoluteFill,
+  Easing,
   OffthreadVideo,
   Sequence,
   interpolate,
@@ -19,6 +20,9 @@ import { eventsOf, type Timeline } from "./timeline";
 const WINDOW_HEIGHT = 0.84;
 const RIPPLE = 0.5;
 export const CAPTION_FADE = 0.25;
+// Product updates draw their captions larger and pop them in.
+export const CaptionLook = createContext<"tutorial" | "update">("tutorial");
+const pop = Easing.out(Easing.back(2.4));
 
 // Where the recorded viewport sits in the frame, and how to map into it.
 function layout(timeline: Timeline, width: number, height: number) {
@@ -147,25 +151,29 @@ export function Caption({
   theme: Timeline["theme"];
 }) {
   const colors = palette[theme];
+  const update = useContext(CaptionLook) === "update";
+  const k = pop(opacity);
   return (
     <div
       style={{
         position: "absolute",
         left: 0,
         right: 0,
-        bottom: 44,
+        bottom: update ? 50 : 44,
         display: "flex",
         justifyContent: "center",
         opacity,
-        transform: `translateY(${(1 - opacity) * 8}px)`,
+        transform: update
+          ? `translateY(${(1 - opacity) * 18}px) scale(${0.7 + 0.3 * k}) rotate(${(1 - k) * -4}deg)`
+          : `translateY(${(1 - opacity) * 8}px)`,
       }}
     >
       <div
         style={{
           fontFamily: fonts.sans,
           fontWeight: 500,
-          fontSize: 26,
-          padding: "12px 22px",
+          fontSize: update ? 36 : 26,
+          padding: update ? "16px 32px" : "12px 22px",
           borderRadius: 9999,
           color: colors.background,
           backgroundColor: colors.foreground,

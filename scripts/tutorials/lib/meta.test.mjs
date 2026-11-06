@@ -14,6 +14,9 @@ const castsDir = join(dir, "..", "casts");
 const casts = readdirSync(castsDir).filter((f) => f.endsWith(".mjs"));
 const threadsDir = join(dir, "..", "slack", "threads");
 const threads = readdirSync(threadsDir).filter((f) => f.endsWith(".mjs"));
+// Agent sessions (scripts/record-agent.mjs) are tutorials or product updates.
+const sessionsDir = join(dir, "..", "agent", "sessions");
+const sessions = readdirSync(sessionsDir).filter((f) => f.endsWith(".mjs"));
 
 const valid = {
   order: 1,
@@ -72,6 +75,64 @@ describe("validateMeta", () => {
     expect(validateMeta({ ...valid, requires: {} }, "t")).toEqual([
       "t: meta.requires must be an array",
     ]);
+  });
+});
+
+describe("validateMeta for a product update", () => {
+  const update = { format: "update", title: "SAML SSO", tagline: "Sign in." };
+
+  test("needs only a title and a tagline", () => {
+    expect(validateMeta(update, "u")).toEqual([]);
+    expect(validateMeta({ format: "update", title: "SAML SSO" }, "u")).toEqual([
+      "u: meta.tagline must be a non-empty string",
+    ]);
+  });
+
+  test("keeps the title short enough to read in a feed", () => {
+    const title = "A feature name that goes on for far too long";
+    expect(validateMeta({ ...update, title }, "u")).toEqual([
+      `u: meta.title is ${title.length} characters, an update's title fits in 40`,
+    ]);
+  });
+
+  test("takes the link as a path, not a URL", () => {
+    expect(
+      validateMeta({ ...update, link: "changelog/saml-sso" }, "u"),
+    ).toEqual([]);
+    expect(
+      validateMeta({ ...update, link: "https://openstatus.dev" }, "u"),
+    ).toEqual([
+      'u: meta.link is a path after openstatus.dev/, e.g. "changelog/saml-sso"',
+    ]);
+  });
+
+  test("rejects any other format", () => {
+    expect(validateMeta({ ...valid, format: "short" }, "t")).toEqual([
+      't: meta.format can only be "update"',
+    ]);
+  });
+});
+
+describe("product updates", () => {
+  const updatesDir = join(dir, "..", "updates");
+  const updates = readdirSync(updatesDir).filter((f) => f.endsWith(".mjs"));
+
+  test("every update exports an update meta and steps", async () => {
+    for (const file of updates) {
+      const update = await import(join(updatesDir, file));
+      expect(update.meta.format).toBe("update");
+      expect(validateMeta(update.meta, file)).toEqual([]);
+      expect(update.default).toBeTypeOf("function");
+    }
+  });
+});
+
+describe("agent sessions", () => {
+  test("every session exports a valid meta", async () => {
+    for (const file of sessions) {
+      const { meta } = await import(join(sessionsDir, file));
+      expect(validateMeta(meta, file)).toEqual([]);
+    }
   });
 });
 

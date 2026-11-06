@@ -69,6 +69,19 @@ describe("copyOf", () => {
     expect(copyOf({ ...timeline, meta })).toBe(meta);
   });
 
+  test("turns a product update's meta into thumbnail copy", () => {
+    const meta = {
+      format: "update" as const,
+      title: "SAML SSO",
+      tagline: "Sign in with your identity provider.",
+    };
+    expect(copyOf({ ...timeline, meta })).toMatchObject({
+      thumbEyebrow: "New",
+      title: "SAML SSO",
+      subtitle: "Sign in with your identity provider.",
+    });
+  });
+
   test("falls back to a title from the file name", () => {
     expect(copyOf(timeline).title).toBe("Post status report");
   });

@@ -214,6 +214,43 @@ their own rows.
   `--browser-executable` pointing at the Playwright headless shell under
   `/opt/pw-browsers`; Remotion cannot download its own there.
 
+### Product updates
+
+A product update is the short cut for a new feature: about 15 to 25 seconds,
+made to loop muted in a feed. It is recorded like any other video; what makes
+it an update is its `meta`:
+
+```js
+export const meta = {
+  format: "update",
+  title: "Maintenance updates", // the feature, 40 characters at most
+  tagline: "Post progress while the work runs.",
+  link: "changelog/maintenance-updates", // after openstatus.dev/, optional
+};
+```
+
+Dashboard updates live in `scripts/updates/<name>.mjs` and record with
+`node scripts/record.mjs <name> --remotion`; a terminal cast, Slack thread or
+agent session becomes an update the same way, by exporting this `meta` from
+its own folder. `scripts/videos` then cuts it differently from a tutorial: a
+"New" hook card instead of the intro, the recording opening through a circle,
+everything played faster (`paces.update` in `src/pacing.ts`), larger `step()`
+captions that pop in, the title pinned in a corner, and an "Out now" end card
+with confetti and the link. Keep the story to one outcome and two or three
+`step()` captions of a few words each.
+
+Two steps exist for stories that are read more than clicked:
+
+- `look(locator, ms)` rests the cursor on an element; the camera moves in on
+  it and holds, and a hover card it opens stays open.
+- `cut("<export>", { app: "status-page", viewport })` ends the dashboard part
+  and records the file's export of that name against the public status page;
+  with `--remotion` the video cuts to it there. The status page has to run
+  against the same seeded database (`PORT=3004 DATABASE_URL=… pnpm --filter
+  @openstatus/status-page dev`), and `--status-page http://localhost:3004`
+  tells the recorder where. `--app status-page --export <export>` records
+  that half on its own. `scripts/updates/status-page-timezone.mjs` uses both.
+
 ### Terminal videos (CLI, API)
 
 `node scripts/record-terminal.mjs <cast>` records `scripts/casts/<cast>.mjs`
@@ -242,7 +279,9 @@ scripted (`say`, `reply`); every `tool(name, input)` is a real JSON-RPC call,
 so a wrong name or argument fails the recording, and the approval step follows
 the server's `destructiveHint`. Build reply text from `tool` results, never
 hand-typed numbers. There is no local Tinybird, so the session's `tinybird`
-export supplies the monitoring pipes' rows while it records. The recorder
+export supplies the monitoring pipes' rows while it records; it also answers
+the Redis counter behind the MCP create budget, which `create_monitor`,
+`create_status_page` and `add_page_component` hit. The recorder
 refuses a database or API that is not the seeded stack, which `--db` must point
 at when `:8080` holds anything else. It writes
 `.recordings/remotion/agent-<session>/{timeline.json,agent.json}`, drawn in a

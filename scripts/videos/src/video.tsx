@@ -1,31 +1,21 @@
 import { useMemo } from "react";
-import {
-  AbsoluteFill,
-  Sequence,
-  interpolate,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
+import { AbsoluteFill, Sequence, useVideoConfig } from "remotion";
 
-import { AgentScene } from "./agent";
 import type { AgentData } from "./agent-data";
+import { Body, Fade } from "./body";
 import { palette } from "./brand";
 import "./fonts";
-import type { Segment } from "./pacing";
 import { copyOf } from "./recordings";
-import { Scene } from "./scene";
-import { SlackScene } from "./slack";
 import type { SlackData } from "./slack-data";
-import { layoutParts, partsOf } from "./story";
-import { TerminalScene } from "./terminal";
+import { FADE, layoutParts, partsOf } from "./story";
 import type { TerminalData } from "./terminal-data";
-import type { Timeline } from "./timeline";
+import { isUpdate, type Timeline } from "./timeline";
 import { Intro, Outro } from "./titles";
+import { Update } from "./update";
+import { updateSections } from "./update-layout";
 
 export const INTRO = 2.6;
 export const OUTRO = 3.4;
-// Intro → body and body → outro overlap by this much.
-export const FADE = 0.6;
 
 export type VideoProps = {
   // Folder under .recordings, e.g. "create-monitor".
@@ -69,67 +59,30 @@ export const totalFrames = (
   timeline: Timeline,
   clips: Record<string, Timeline>,
   fps: number,
-) => sections(timeline, clips, fps).total;
+) =>
+  (isUpdate(timeline) ? updateSections : sections)(timeline, clips, fps).total;
 
-function Fade({
-  frames,
-  inAt,
-  outAt,
-  children,
-}: {
-  frames: number;
-  inAt?: boolean;
-  outAt?: boolean;
-  children: React.ReactNode;
-}) {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const fade = FADE * fps;
-  const opacity = Math.min(
-    inAt
-      ? interpolate(frame, [0, fade], [0, 1], { extrapolateRight: "clamp" })
-      : 1,
-    outAt
-      ? interpolate(frame, [frames - fade, frames], [1, 0], {
-          extrapolateLeft: "clamp",
-        })
-      : 1,
+export function Video({ timeline, clips, ...rest }: VideoProps) {
+  if (!timeline) return null;
+  return isUpdate(timeline) ? (
+    <Update timeline={timeline} clips={clips} {...rest} />
+  ) : (
+    <Tutorial timeline={timeline} clips={clips} {...rest} />
   );
-  return <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;
 }
 
-export function Video({
-  recording,
+function Tutorial({
   timeline,
-  terminal,
-  slack,
-  agent,
   clips,
-}: VideoProps) {
+  ...rest
+}: VideoProps & { timeline: Timeline }) {
   const { fps } = useVideoConfig();
-  const layout = useMemo(
-    () => (timeline ? sections(timeline, clips, fps) : null),
+  const { intro, body, outro, bodyStart, outroStart, parts } = useMemo(
+    () => sections(timeline, clips, fps),
     [timeline, clips, fps],
   );
-  if (!timeline || !layout) return null;
-
   const theme = timeline.theme;
   const tutorial = copyOf(timeline);
-  const { intro, body, outro, bodyStart, outroStart, parts } = layout;
-  const main = (segments: Segment[]) =>
-    timeline.kind === "slack" && slack ? (
-      <SlackScene timeline={timeline} slack={slack} segments={segments} />
-    ) : timeline.kind === "agent" && agent ? (
-      <AgentScene timeline={timeline} agent={agent} segments={segments} />
-    ) : timeline.kind === "terminal" && terminal ? (
-      <TerminalScene
-        timeline={timeline}
-        terminal={terminal}
-        segments={segments}
-      />
-    ) : (
-      <Scene recording={recording} timeline={timeline} segments={segments} />
-    );
 
   return (
     <AbsoluteFill style={{ backgroundColor: palette[theme].background }}>
@@ -144,22 +97,7 @@ export function Video({
       </Sequence>
       <Sequence from={bodyStart} durationInFrames={body}>
         <Fade frames={body} inAt outAt>
-          {/* Parts cross-fade into each other; most bodies are one part. */}
-          {parts.map(({ part, from, frames }, i) => (
-            <Sequence key={i} from={from} durationInFrames={frames}>
-              <Fade frames={frames} inAt={i > 0} outAt={i < parts.length - 1}>
-                {part.kind === "main" ? (
-                  main(part.segments)
-                ) : (
-                  <Scene
-                    recording={`${recording}/${part.clip}`}
-                    timeline={part.timeline}
-                    segments={part.segments}
-                  />
-                )}
-              </Fade>
-            </Sequence>
-          ))}
+          <Body timeline={timeline} parts={parts} {...rest} />
         </Fade>
       </Sequence>
       <Sequence from={outroStart} durationInFrames={outro}>
