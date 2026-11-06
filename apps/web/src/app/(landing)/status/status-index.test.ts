@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { buildStatusIndex } from "./status-index";
+import { buildStatusIndex, isNotableIssue } from "./status-index";
 
 function svc(
   slug: string,
@@ -114,5 +114,23 @@ describe("buildStatusIndex", () => {
       popularSlugs: [],
     });
     expect(r.items.map((s) => s.slug)).toEqual(["1password", ".dk"]);
+  });
+});
+
+describe("isNotableIssue", () => {
+  const notable = new Set(["github", "openai"]);
+
+  test("keeps curated slugs and their aliases", () => {
+    expect(isNotableIssue(svc("github"), notable)).toBe(true);
+    expect(
+      isNotableIssue(svc("open-ai", { aliases: ["openai"] }), notable),
+    ).toBe(true);
+  });
+
+  test("drops the long tail unless users escalated it", () => {
+    expect(isNotableIssue(svc("bandzone"), notable)).toBe(false);
+    expect(isNotableIssue(svc("bandzone", { escalated: true }), notable)).toBe(
+      true,
+    );
   });
 });
