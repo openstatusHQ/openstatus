@@ -142,7 +142,7 @@ export function PopularStatus({
               name: getComponentFullName(c.serviceName, c.name),
               indicator: c.indicator,
               status: c.status,
-              escalated: false,
+              escalated: c.escalated,
             },
           ]
         : [];

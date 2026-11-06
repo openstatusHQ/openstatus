@@ -1,9 +1,11 @@
 import {
   getExternalServiceBySlug,
   listExternalServices,
+  listExternalServicesBySlugs,
 } from "@openstatus/services/external-service";
 import {
   getExternalComponentBySlug,
+  listExternalComponentsByRefs,
   listExternalComponentsBySlug,
 } from "@openstatus/services/external-service-component";
 import {
@@ -14,6 +16,7 @@ import {
 } from "@openstatus/services/external-service-incident";
 import {
   getComponentReportWindows,
+  getComponentReportWindowsByIds,
   getServiceReportCountries,
   getServiceReportDaily,
   getServiceReportWindows,
@@ -272,13 +275,19 @@ function incidentAffectsComponent(
 
 type ServiceRow = Awaited<ReturnType<typeof listExternalServices>>[number];
 
+function aliasesOf(s: ServiceRow): string[] {
+  return Array.isArray(s.aliases) ? s.aliases : [];
+}
+
 // Effective status per service, shared by the full grid and the small
-// summaries the popular blocks read. `slugs` limits the snapshot read.
-async function summarizeServices(services: ServiceRow[], slugs?: string[]) {
+// summaries the popular blocks read. `limitRead` reads snapshots only for
+// these services (canonical slug plus aliases) instead of all of them.
+async function summarizeServices(services: ServiceRow[], limitRead = false) {
   if (services.length === 0) return [];
+  const ids = services.flatMap((s) => [s.slug, ...aliasesOf(s)]);
   const [latestRows, reportRows] = await Promise.all([
     safeData(
-      tb.externalStatusLatest(slugs ? { ids: slugs } : {}),
+      tb.externalStatusLatest(limitRead ? { ids } : {}),
       "externalStatusLatest (summaries)",
     ),
     safeRows(
@@ -298,7 +307,11 @@ async function summarizeServices(services: ServiceRow[], slugs?: string[]) {
   }
 
   return services.map((s) => {
-    const snap = byId.get(s.slug);
+    // A renamed service keeps older snapshots under an alias: take the newest.
+    const snap = [s.slug, ...aliasesOf(s)]
+      .map((id) => byId.get(id))
+      .filter((r) => r != null)
+      .sort((a, b) => b.last_fetched_at - a.last_fetched_at)[0];
     const reporters = reportersByServiceId.get(s.id) ?? 0;
     // Older than 30 minutes is not "now": show unknown, not a past outage.
     const fresh = snap != null && isFresh(snap.last_fetched_at);
@@ -312,7 +325,7 @@ async function summarizeServices(services: ServiceRow[], slugs?: string[]) {
       slug: s.slug,
       name: s.name,
       url: s.url,
-      aliases: Array.isArray(s.aliases) ? s.aliases : [],
+      aliases: aliasesOf(s),
       indicator: effective.indicator,
       status: effective.status,
       statusMessage: fresh ? snap.status_message : "Status unavailable",
@@ -329,6 +342,7 @@ const componentSummarySchema = z.object({
   serviceName: z.string(),
   indicator: z.string(),
   status: z.string(),
+  escalated: z.boolean(),
 });
 
 export const externalServiceRouter = createTRPCRouter({
@@ -344,16 +358,13 @@ export const externalServiceRouter = createTRPCRouter({
     .output(z.array(gridItemSchema))
     .query(async ({ input }) => {
       if (input.slugs.length === 0) return [];
-      const all = await listExternalServices({});
-      const bySlug = new Map(all.map((s) => [s.slug, s]));
+      const rows = await listExternalServicesBySlugs({ slugs: input.slugs });
+      const bySlug = new Map(rows.map((s) => [s.slug, s]));
       const picked = input.slugs.flatMap((slug) => {
         const s = bySlug.get(slug);
         return s ? [s] : [];
       });
-      return summarizeServices(
-        picked,
-        picked.map((s) => s.slug),
-      );
+      return summarizeServices(picked, true);
     }),
 
   // Components by service and component slug, in the order asked; missing
@@ -368,33 +379,39 @@ export const externalServiceRouter = createTRPCRouter({
     )
     .output(z.array(componentSummarySchema))
     .query(async ({ input }) => {
-      const rows = await Promise.all(
-        input.refs.map((ref) =>
-          getExternalComponentBySlug({
-            serviceSlug: ref.service,
-            componentSlug: ref.component,
-          }).catch((err) => {
-            console.warn("[external-service componentSummaries]", err);
-            return null;
-          }),
-        ),
+      const resolved = await listExternalComponentsByRefs({
+        refs: input.refs,
+      }).catch((err) => {
+        console.warn("[external-service componentSummaries]", err);
+        return [];
+      });
+      const reportRows = await safeRows(
+        getComponentReportWindowsByIds({
+          componentIds: resolved.map((r) => r.component.id),
+          since: new Date(Date.now() - REPORT_WINDOW_MS),
+        }),
+        "getComponentReportWindowsByIds (componentSummaries)",
       );
-      return rows.flatMap((row) => {
-        if (!row?.service || !row.component || row.service.deletedAt != null) {
-          return [];
-        }
-        const { service, component } = row;
+      const reportersById = new Map(
+        reportRows.map((r) => [r.componentId, r.reporters]),
+      );
+      return resolved.map(({ service, component }) => {
         const fresh = isFresh(component.lastFetchedAt ?? 0);
-        return [
-          {
-            serviceSlug: service.slug,
-            slug: component.slug,
-            name: component.name,
-            serviceName: service.name,
-            indicator: fresh ? component.indicator : "",
-            status: fresh ? component.status : "",
-          },
-        ];
+        const effective = computeEffectiveStatus({
+          providerIndicator: fresh ? component.indicator : "",
+          providerStatus: fresh ? component.status : "",
+          reporters: reportersById.get(component.id) ?? 0,
+          threshold: REPORT_THRESHOLD,
+        });
+        return {
+          serviceSlug: service.slug,
+          slug: component.slug,
+          name: component.name,
+          serviceName: service.name,
+          indicator: effective.indicator,
+          status: effective.status,
+          escalated: effective.escalated,
+        };
       });
     }),
 

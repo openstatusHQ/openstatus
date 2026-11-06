@@ -65,9 +65,11 @@ export default async function Page(props: PageProps) {
   const params = await searchParamsCache.parse(props.searchParams);
   const query = params.q.trim();
   const letter = query === "" ? params.letter : null;
+  // Popular only renders on the bare index, so only prefetch it there.
+  const landing = query === "" && letter === null && params.page <= 1;
   const [services] = await Promise.all([
     getPrefetchedGrid(),
-    prefetchPopularStatus(),
+    landing ? prefetchPopularStatus() : null,
   ]);
   const index = buildStatusIndex({
     services,

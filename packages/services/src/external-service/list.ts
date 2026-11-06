@@ -1,4 +1,4 @@
-import { asc, db as defaultDb, eq, or, sql } from "@openstatus/db";
+import { and, asc, db as defaultDb, eq, inArray, or, sql } from "@openstatus/db";
 import {
   type ExternalService,
   apiConfigSchema,
@@ -62,6 +62,25 @@ export async function listExternalServices(args: {
     input?.includeDeleted ? query.all() : query.where(liveOnlyClause()).all(),
   );
 
+  return validateRows(rows);
+}
+
+// Live services whose canonical slug is in `slugs`, in no particular order.
+// One indexed query instead of reading the whole catalog.
+export async function listExternalServicesBySlugs(args: {
+  ctx?: GlobalReadContext;
+  slugs: string[];
+}): Promise<ExternalServiceRow[]> {
+  const { ctx, slugs } = args;
+  if (slugs.length === 0) return [];
+  const db = ctx?.db ?? defaultDb;
+  const rows = await retryRead(() =>
+    db
+      .select()
+      .from(externalService)
+      .where(and(inArray(externalService.slug, slugs), liveOnlyClause()))
+      .all(),
+  );
   return validateRows(rows);
 }
 

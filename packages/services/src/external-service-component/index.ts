@@ -5,12 +5,15 @@ export {
   upsertExternalComponentsForService,
 } from "./upsert";
 export {
+  type ComponentByRef,
+  type ComponentRef,
   type ExternalComponentDetail,
   type ExternalComponentListItem,
   type GetComponentBySlugResult,
   type ListComponentsBySlugResult,
   COMPONENT_SUPPORTED_API_CONFIG_TYPES,
   getExternalComponentBySlug,
+  listExternalComponentsByRefs,
   listExternalComponentsByServiceId,
   listExternalComponentsBySlug,
   supportsComponents,

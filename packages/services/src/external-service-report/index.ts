@@ -9,6 +9,7 @@ export {
   type DailyReport,
   type ServiceReportWindow,
   getComponentReportWindows,
+  getComponentReportWindowsByIds,
   getServiceReportCountries,
   getServiceReportDaily,
   getServiceReportWindows,

@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import {
   IssuesNow,
   PopularStatus,
@@ -16,7 +18,10 @@ export function Client() {
       {landing ? (
         <>
           <IssuesNow />
-          <PopularStatus />
+          {/* Prefetched only on the bare index; elsewhere it loads on its own. */}
+          <Suspense fallback={null}>
+            <PopularStatus />
+          </Suspense>
         </>
       ) : null}
       <ServiceDirectory />
