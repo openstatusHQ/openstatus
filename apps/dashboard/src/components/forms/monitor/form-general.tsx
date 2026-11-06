@@ -97,36 +97,32 @@ const GRPC_TLS_LABELS = {
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
-const baseSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  type: z.enum(TYPES),
-  method: z.enum(monitorMethods),
-  url: z.string(),
-  headers: z.array(headerPairSchema),
-  active: z.boolean().prefault(true),
-  assertions: z.array(
-    z.discriminatedUnion("type", [
-      statusAssertion,
-      headerAssertion,
-      textBodyAssertion,
-      jsonBodyAssertion,
-      recordAssertion,
-    ]),
-  ),
-  body: z.string().optional(),
-  grpcService: z.string().optional(),
-  grpcTls: z.enum(grpcTlsModes).prefault("tls"),
-  skipCheck: z.boolean().prefault(false),
-  saveCheck: z.boolean().prefault(false),
-  heartbeatPeriod: z.number().optional(),
-  heartbeatGrace: z.number().optional(),
-});
-
-// Period/grace are only rendered (and so only validated) on create: an
-// existing heartbeat monitor edits them in the separate FormHeartbeat card, and
-// its defaults don't carry them, so validating here would silently block submit.
-function createSchema({ validateHeartbeat }: { validateHeartbeat: boolean }) {
-  return baseSchema.superRefine((values, ctx) => {
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    type: z.enum(TYPES),
+    method: z.enum(monitorMethods),
+    url: z.string(),
+    headers: z.array(headerPairSchema),
+    active: z.boolean().prefault(true),
+    assertions: z.array(
+      z.discriminatedUnion("type", [
+        statusAssertion,
+        headerAssertion,
+        textBodyAssertion,
+        jsonBodyAssertion,
+        recordAssertion,
+      ]),
+    ),
+    body: z.string().optional(),
+    grpcService: z.string().optional(),
+    grpcTls: z.enum(grpcTlsModes).prefault("tls"),
+    skipCheck: z.boolean().prefault(false),
+    saveCheck: z.boolean().prefault(false),
+    heartbeatPeriod: z.number().optional(),
+    heartbeatGrace: z.number().optional(),
+  })
+  .superRefine((values, ctx) => {
     if (values.type !== "heartbeat") {
       if (values.url.length === 0) {
         ctx.addIssue({
@@ -137,7 +133,6 @@ function createSchema({ validateHeartbeat }: { validateHeartbeat: boolean }) {
       }
       return;
     }
-    if (!validateHeartbeat) return;
     for (const [key, rule] of [
       ["heartbeatPeriod", heartbeatPeriodSchema],
       ["heartbeatGrace", heartbeatGraceSchema],
@@ -152,9 +147,8 @@ function createSchema({ validateHeartbeat }: { validateHeartbeat: boolean }) {
       }
     }
   });
-}
 
-type FormValues = z.input<typeof baseSchema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
@@ -170,9 +164,7 @@ export function FormGeneral({
 }) {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
-    resolver: zodResolver(
-      createSchema({ validateHeartbeat: !defaultValues?.type }),
-    ),
+    resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       active: true,
       name: "",
@@ -414,9 +406,7 @@ export function FormGeneral({
               )}
             />
           </FormCardContent>
-          {watchType && !(isHeartbeat && defaultValues?.type) ? (
-            <FormCardSeparator />
-          ) : null}
+          {watchType ? <FormCardSeparator /> : null}
           {watchType === "http" && (
             <>
               <FormCardContent className="grid grid-cols-4 gap-4">
@@ -765,7 +755,7 @@ export function FormGeneral({
               </div>
             </FormCardContent>
           )}
-          {isHeartbeat && !defaultValues?.type && (
+          {isHeartbeat && (
             <FormCardContent className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -803,10 +793,12 @@ export function FormGeneral({
                   </FormItem>
                 )}
               />
-              <p className="text-muted-foreground col-span-full text-sm">
-                Your job pings a unique URL when it finishes. You get it right
-                after creating the monitor. Alerts start after the first ping.
-              </p>
+              {defaultValues?.type ? null : (
+                <p className="text-muted-foreground col-span-full text-sm">
+                  Your job pings a unique URL when it finishes. You get it right
+                  after creating the monitor. Alerts start after the first ping.
+                </p>
+              )}
             </FormCardContent>
           )}
           {watchType === "icmp" && (

@@ -73,14 +73,6 @@ export function FormMonitorUpdate() {
     ...trpc.monitor.heartbeat.queryOptions({ id: Number.parseInt(id) }),
     enabled: isHeartbeat,
   });
-  const updateHeartbeatMutation = useMutation(
-    trpc.monitor.updateHeartbeat.mutationOptions({
-      onSuccess: () => {
-        refetch();
-        refetchHeartbeat();
-      },
-    }),
-  );
   const regenerateHeartbeatTokenMutation = useMutation(
     trpc.monitor.regenerateHeartbeatToken.mutationOptions({
       onSuccess: () => refetchHeartbeat(),
@@ -159,6 +151,8 @@ export function FormMonitorUpdate() {
           grpcTls: monitor.grpcTls ?? "tls",
           skipCheck: false,
           saveCheck: false,
+          heartbeatPeriod: monitor.heartbeatPeriod ?? 3_600,
+          heartbeatGrace: monitor.heartbeatGrace ?? 300,
         }}
         onSubmit={async (values) => {
           await updateGeneralMutation.mutateAsync({
@@ -175,23 +169,15 @@ export function FormMonitorUpdate() {
             skipCheck: values.skipCheck,
             saveCheck: values.saveCheck,
             active: values.active,
+            heartbeatPeriod: values.heartbeatPeriod,
+            heartbeatGrace: values.heartbeatGrace,
           });
+          if (isHeartbeat) refetchHeartbeat();
         }}
       />
-      {isHeartbeat && heartbeat ? (
+      {isHeartbeat && heartbeat?.pingUrl ? (
         <FormHeartbeat
-          defaultValues={{
-            heartbeatPeriod: heartbeat.period ?? 3_600,
-            heartbeatGrace: heartbeat.grace ?? 300,
-          }}
           pingUrl={heartbeat.pingUrl}
-          onSubmit={async (values) => {
-            await updateHeartbeatMutation.mutateAsync({
-              id: Number.parseInt(id),
-              heartbeatPeriod: values.heartbeatPeriod,
-              heartbeatGrace: values.heartbeatGrace,
-            });
-          }}
           onRegenerateToken={async () => {
             await regenerateHeartbeatTokenMutation.mutateAsync({
               id: Number.parseInt(id),

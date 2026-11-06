@@ -93,6 +93,8 @@ const updateGeneralTRPCInput = z.object({
   saveCheck: z.boolean().prefault(false),
   grpcService: z.string().optional(),
   grpcTls: z.enum(grpcTlsModes).optional(),
+  heartbeatPeriod: z.number().int().optional(),
+  heartbeatGrace: z.number().int().optional(),
 });
 
 export const monitorRouter = createTRPCRouter({
@@ -401,6 +403,20 @@ export const monitorRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: serviceInput,
         });
+        if (
+          input.jobType === "heartbeat" &&
+          input.heartbeatPeriod !== undefined &&
+          input.heartbeatGrace !== undefined
+        ) {
+          await updateMonitorHeartbeat({
+            ctx: toServiceCtx(ctx),
+            input: {
+              id: input.id,
+              heartbeatPeriod: input.heartbeatPeriod,
+              heartbeatGrace: input.heartbeatGrace,
+            },
+          });
+        }
       } catch (err) {
         toTRPCError(err);
       }
@@ -565,23 +581,6 @@ export const monitorRouter = createTRPCRouter({
             limit: input.limit,
           },
         });
-      } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  updateHeartbeat: protectedProcedure
-    .meta({ track: Events.UpdateMonitor })
-    .input(
-      z.object({
-        id: z.number(),
-        heartbeatPeriod: z.number().int(),
-        heartbeatGrace: z.number().int(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await updateMonitorHeartbeat({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
