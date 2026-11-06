@@ -97,32 +97,36 @@ const GRPC_TLS_LABELS = {
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
-const schema = z
-  .object({
-    name: z.string().trim().min(1, "Name is required"),
-    type: z.enum(TYPES),
-    method: z.enum(monitorMethods),
-    url: z.string(),
-    headers: z.array(headerPairSchema),
-    active: z.boolean().prefault(true),
-    assertions: z.array(
-      z.discriminatedUnion("type", [
-        statusAssertion,
-        headerAssertion,
-        textBodyAssertion,
-        jsonBodyAssertion,
-        recordAssertion,
-      ]),
-    ),
-    body: z.string().optional(),
-    grpcService: z.string().optional(),
-    grpcTls: z.enum(grpcTlsModes).prefault("tls"),
-    skipCheck: z.boolean().prefault(false),
-    saveCheck: z.boolean().prefault(false),
-    heartbeatPeriod: z.number().optional(),
-    heartbeatGrace: z.number().optional(),
-  })
-  .superRefine((values, ctx) => {
+const baseSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  type: z.enum(TYPES),
+  method: z.enum(monitorMethods),
+  url: z.string(),
+  headers: z.array(headerPairSchema),
+  active: z.boolean().prefault(true),
+  assertions: z.array(
+    z.discriminatedUnion("type", [
+      statusAssertion,
+      headerAssertion,
+      textBodyAssertion,
+      jsonBodyAssertion,
+      recordAssertion,
+    ]),
+  ),
+  body: z.string().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).prefault("tls"),
+  skipCheck: z.boolean().prefault(false),
+  saveCheck: z.boolean().prefault(false),
+  heartbeatPeriod: z.number().optional(),
+  heartbeatGrace: z.number().optional(),
+});
+
+// Period/grace are only rendered (and so only validated) on create: an
+// existing heartbeat monitor edits them in the separate FormHeartbeat card, and
+// its defaults don't carry them, so validating here would silently block submit.
+function createSchema({ validateHeartbeat }: { validateHeartbeat: boolean }) {
+  return baseSchema.superRefine((values, ctx) => {
     if (values.type !== "heartbeat") {
       if (values.url.length === 0) {
         ctx.addIssue({
@@ -133,6 +137,7 @@ const schema = z
       }
       return;
     }
+    if (!validateHeartbeat) return;
     for (const [key, rule] of [
       ["heartbeatPeriod", heartbeatPeriodSchema],
       ["heartbeatGrace", heartbeatGraceSchema],
@@ -147,8 +152,9 @@ const schema = z
       }
     }
   });
+}
 
-type FormValues = z.input<typeof schema>;
+type FormValues = z.input<typeof baseSchema>;
 
 export function FormGeneral({
   defaultValues,
@@ -164,7 +170,9 @@ export function FormGeneral({
 }) {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(
+      createSchema({ validateHeartbeat: !defaultValues?.type }),
+    ),
     defaultValues: defaultValues ?? {
       active: true,
       name: "",
@@ -223,7 +231,6 @@ export function FormGeneral({
   }, [watchType, defaultValues, form]);
 
   function submitAction(values: FormValues) {
-    console.log("submitAction", values);
     if (isPending || disabled) return;
 
     // Validate assertions based on type
