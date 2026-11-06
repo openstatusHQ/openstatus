@@ -1,8 +1,11 @@
 import {
   createSearchParamsCache,
   parseAsInteger,
+  parseAsStringLiteral,
   parseAsString,
 } from "nuqs/server";
+
+import { STATUS_LETTERS } from "./status-index";
 
 const baseQParser = parseAsString.withDefault("");
 const basePageParser = parseAsInteger.withDefault(1);
@@ -10,6 +13,7 @@ const basePageParser = parseAsInteger.withDefault(1);
 export const searchParamsCache = createSearchParamsCache({
   q: baseQParser,
   page: basePageParser,
+  letter: parseAsStringLiteral(STATUS_LETTERS),
 });
 
 // Not shallow: the list is filtered and paginated on the server.

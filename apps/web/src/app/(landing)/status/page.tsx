@@ -17,10 +17,17 @@ import {
   ContentBoxTitle,
 } from "../content-box";
 import { searchParamsCache } from "./search-params";
-import { ServiceCardGrid } from "./service-card-grid";
+import {
+  IssueList,
+  LetterNav,
+  PopularGrid,
+  ServiceList,
+  StatusPagination,
+  StatusSection,
+} from "./service-blocks";
 import { ServiceSearch } from "./service-search";
+import { statusHref } from "./status-href";
 import { buildStatusIndex } from "./status-index";
-import { StatusPagination } from "./status-pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -31,21 +38,29 @@ type PageProps = {
 };
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
-  const { q, page } = await searchParamsCache.parse(props.searchParams);
+  const { q, page, letter } = await searchParamsCache.parse(props.searchParams);
   const hasQuery = q.trim() !== "";
   const metadata = getListingMetadata({
     ...sections.status,
     ogImage: `${BASE_URL}/api/og/external-service`,
   });
+  const browsing = !hasQuery && (page > 1 || letter !== null);
+  const label = letter === "0" ? "#" : letter?.toUpperCase();
 
   return {
     ...metadata,
-    ...(page > 1 && !hasQuery
+    ...(browsing
       ? {
-          title: `${sections.status.title} (page ${page})`,
+          title: [
+            sections.status.title,
+            label ? `services starting with ${label}` : null,
+            page > 1 ? `page ${page}` : null,
+          ]
+            .filter(Boolean)
+            .join(", "),
           alternates: {
             ...metadata.alternates,
-            canonical: `/status?page=${page}`,
+            canonical: statusHref({ letter, page }),
           },
         }
       : {}),
@@ -58,21 +73,23 @@ function formatCount(n: number): string {
 }
 
 export default async function Page(props: PageProps) {
-  const { q, page } = await searchParamsCache.parse(props.searchParams);
-  const query = q.trim();
+  const params = await searchParamsCache.parse(props.searchParams);
+  const query = params.q.trim();
+  const letter = query === "" ? params.letter : null;
   const services = await api.externalService.grid();
   const index = buildStatusIndex({
     services,
     q: query,
-    page,
+    page: params.page,
+    letter: letter ?? undefined,
     popularSlugs: POPULAR_STATUS_SLUGS,
   });
-  const firstPage = index.page === 1 && query === "";
+  const landing = index.page === 1 && query === "" && letter === null;
   const rangeEnd = index.start + index.items.length;
 
   return (
-    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-4">
-      <ContentBoxContainer className="not-prose mb-2 px-3 py-2 text-sm">
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
+      <ContentBoxContainer className="not-prose px-3 py-2 text-sm">
         <CustomLink
           href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"
@@ -82,73 +99,80 @@ export default async function Page(props: PageProps) {
         </CustomLink>
       </ContentBoxContainer>
 
-      <div>
-        <h1 className="mb-2!">Is it down?</h1>
-        <p className="my-0!">
+      <div className="flex flex-col gap-3">
+        <h1 className="m-0!">Is it down?</h1>
+        <p className="m-0!">
           Live status for {formatCount(index.total)} services. We read their
           official status pages every few minutes and add what users report.
           Open a service to see what is broken and since when.
         </p>
+        <ServiceSearch />
+        <p className="not-prose text-muted-foreground m-0 text-sm tabular-nums">
+          {formatCount(index.total)} services ·{" "}
+          {formatCount(index.issues.length)} with issues right now
+        </p>
       </div>
 
-      <ServiceSearch />
+      {landing && index.issues.length > 0 ? (
+        <StatusSection
+          id="issues"
+          title="Having issues now"
+          count={formatCount(index.issues.length)}
+          aside="Worst first"
+        >
+          <IssueList services={index.issues.slice(0, ISSUES_SHOWN)} />
+          {index.issues.length > ISSUES_SHOWN ? (
+            <p className="text-muted-foreground m-0 text-sm">
+              and {formatCount(index.issues.length - ISSUES_SHOWN)} more with
+              smaller issues
+            </p>
+          ) : null}
+        </StatusSection>
+      ) : null}
+
+      {landing && index.popular.length > 0 ? (
+        <StatusSection id="popular" title="Popular" aside="Most checked">
+          <PopularGrid services={index.popular} />
+        </StatusSection>
+      ) : null}
 
       {query !== "" ? (
-        <>
-          <p
-            className="not-prose text-muted-foreground my-0! text-xs"
-            role="status"
-          >
-            {index.matches === 0
-              ? `No services match “${query}”.`
-              : `${formatCount(index.matches)} ${index.matches === 1 ? "service matches" : "services match"} “${query}”`}
-          </p>
-          <ServiceCardGrid services={index.items} />
-        </>
-      ) : null}
-
-      {firstPage && index.issues.length > 0 ? (
-        <>
-          <h2 className="mb-0!">Having issues now</h2>
-          <p className="not-prose text-muted-foreground my-0! text-xs">
-            {index.issues.length > ISSUES_SHOWN
-              ? `Worst first. Showing ${ISSUES_SHOWN} of ${index.issues.length}.`
-              : "Worst first."}
-          </p>
-          <ServiceCardGrid services={index.issues.slice(0, ISSUES_SHOWN)} />
-        </>
-      ) : null}
-
-      {firstPage && index.popular.length > 0 ? (
-        <>
-          <h2 className="mb-0!">Popular</h2>
-          <ServiceCardGrid services={index.popular} />
-        </>
-      ) : null}
-
-      {query === "" ? (
-        <>
-          <h2 id="all" className="mb-0!">
-            All services
-          </h2>
-          <p
-            className="not-prose text-muted-foreground my-0! text-xs"
-            role="status"
-          >
-            Showing {formatCount(index.start + 1)}–{formatCount(rangeEnd)} of{" "}
-            {formatCount(index.total)}, A–Z
-          </p>
-          <ServiceCardGrid services={index.items} />
-        </>
-      ) : null}
+        <StatusSection
+          id="all"
+          title={`Results for “${query}”`}
+          count={formatCount(index.matches)}
+        >
+          {index.matches === 0 ? (
+            <p className="text-muted-foreground m-0">
+              No service matches “{query}”. Try a shorter name.
+            </p>
+          ) : (
+            <ServiceList services={index.items} />
+          )}
+        </StatusSection>
+      ) : (
+        <StatusSection
+          id="all"
+          title="All services"
+          aside={
+            index.matches > 0
+              ? `${formatCount(index.start + 1)}–${formatCount(rangeEnd)} of ${formatCount(index.matches)}`
+              : undefined
+          }
+        >
+          <LetterNav active={letter} />
+          <ServiceList services={index.items} />
+        </StatusSection>
+      )}
 
       <StatusPagination
         page={index.page}
         pageCount={index.pageCount}
         q={query}
+        letter={letter}
       />
 
-      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
+      <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>

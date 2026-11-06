@@ -104,4 +104,15 @@ describe("buildStatusIndex", () => {
       "maint",
     ]);
   });
+
+  test("filters by first letter, digits and symbols under 0", () => {
+    const r = buildStatusIndex({
+      services: [svc("alpha"), svc("beta"), svc("1password"), svc(".dk")],
+      q: "",
+      page: 1,
+      letter: "0",
+      popularSlugs: [],
+    });
+    expect(r.items.map((s) => s.slug)).toEqual(["1password", ".dk"]);
+  });
 });
