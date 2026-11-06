@@ -119,15 +119,22 @@ describe("settingsGroup", () => {
 
 describe("helpGroup", () => {
   it("opens the support sheet first", () => {
-    const [support] = helpGroup().items;
+    const [support] = helpGroup(() => {}).items;
     expect(support.action).toEqual({
       type: "sheet",
       sheet: { sheet: "support" },
     });
   });
 
+  it("copies the agent prompt second", () => {
+    let calls = 0;
+    const [, ask] = helpGroup(() => calls++).items;
+    if (ask.action.type === "run") ask.action.run();
+    expect(calls).toBe(1);
+  });
+
   it("opens help links externally", () => {
-    const links = helpGroup().items.slice(1);
+    const links = helpGroup(() => {}).items.slice(2);
     expect(links.map((i) => i.action)).toEqual(
       HELP_LINKS.map((l) => ({ type: "external", href: l.href })),
     );

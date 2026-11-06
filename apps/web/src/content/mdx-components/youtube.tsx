@@ -34,7 +34,8 @@ export function ShowcaseYouTube({
       {id ? (
         <YouTubeFacade
           embedUrl={toEmbedUrl(href)}
-          thumbnailUrl={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+          thumbnailUrl={`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`}
+          fallbackThumbnailUrl={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
           title={title}
         />
       ) : (
