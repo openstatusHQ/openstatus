@@ -55,7 +55,6 @@ function renderExternalStatus(): string {
     `- [Is it down? All services](${BASE}/status.md): services with issues right now, popular services, then the full list`,
     `- One service: ${BASE}/status/{slug}.md (answer, affected components, last 45 days, recent incidents)`,
     `- One component: ${BASE}/status/{slug}/{component}.md`,
-    "- MCP, no login: https://api.openstatus.dev/mcp/status (tools: get_service_status, list_active_issues)",
     `- Popular: ${POPULAR_STATUS_SLUGS.map((slug) => `${BASE}/status/${slug}.md`).join(", ")}`,
     "",
   ].join("\n");

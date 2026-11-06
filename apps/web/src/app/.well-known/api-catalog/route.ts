@@ -55,24 +55,6 @@ const linkset = {
         },
       ],
     },
-    {
-      anchor: "https://api.openstatus.dev/mcp/status",
-      "service-desc": [
-        {
-          href: "https://www.openstatus.dev/.well-known/mcp/status/server-card.json",
-          type: "application/json",
-          title:
-            "Openstatus external status MCP server card (SEP-1649), no login",
-        },
-      ],
-      "service-doc": [
-        {
-          href: "https://www.openstatus.dev/status",
-          type: "text/html",
-          title: "Is it down? Live status of 3,000+ services",
-        },
-      ],
-    },
   ],
 };
 

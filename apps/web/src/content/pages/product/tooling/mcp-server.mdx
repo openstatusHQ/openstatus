@@ -30,10 +30,6 @@ https://api.openstatus.dev/mcp
 
 Add the URL as a custom connector in Claude, ChatGPT, or Cursor, or run `claude mcp add --transport http openstatus https://api.openstatus.dev/mcp` for Claude Code. The client opens a consent screen, you pick a workspace and an access level, and the openstatus tools appear in the picker. The server is stateless Streamable HTTP and scales horizontally.
 
-## No-login status checks
-
-Your agent can also ask whether a provider is down before it blames your code. `https://api.openstatus.dev/mcp/status` needs no account and serves `get_service_status` and `list_active_issues` for the 3,000+ services on [openstatus.dev/status](/status); the signed-in server above includes the same two tools.
-
 ## What you can do
 
 The server exposes **46 workspace tools** plus six public tools (content and external status), grouped by entity:
@@ -49,7 +45,7 @@ The server exposes **46 workspace tools** plus six public tools (content and ext
 - **Workspace** — `get_workspace`
 - **Audit log** *(workspaces on the audit-log plan only)* — `list_audit_logs` · `get_audit_log`
 - **Content** *(public openstatus.dev pages)* — `search_docs` · `get_doc_page` · `search_content` · `get_content_page`
-- **External status** *(third-party services, also on the no-login endpoint)* — `get_service_status` · `list_active_issues`
+- **External status** *(third-party services)* — `get_service_status` · `list_active_issues`
 
 The four **publishing** tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) require `notify: true | false` — the assistant must explicitly choose whether to notify subscribers, so an LLM cannot quietly fan out an alert. `update_status_report` is metadata-only and cannot notify.
 

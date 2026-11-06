@@ -14,20 +14,6 @@ https://api.openstatus.dev/mcp
 
 The transport is **Streamable HTTP** (stateless). The server speaks JSON-RPC 2.0 over a single endpoint that accepts `GET`, `POST`, and `DELETE`.
 
-## Public status endpoint
-
-```
-https://api.openstatus.dev/mcp/status
-```
-
-A second, anonymous endpoint answers "is it down?" for the 3,000+ third-party services on [openstatus.dev/status](/status), without sign-in or an API key. It serves only the two read-only [external status](#external-status) tools, no workspace data, and is metered per IP (see [Rate limits](#rate-limits)). Its server card lives at `https://www.openstatus.dev/.well-known/mcp/status/server-card.json`.
-
-```bash
-claude mcp add --transport http --scope user openstatus-status https://api.openstatus.dev/mcp/status
-```
-
-In Claude.ai, Claude Desktop, ChatGPT or Cursor, add the same URL as a custom connector; there is no consent screen. The signed-in endpoint above carries the same two tools, so you only need this one when you have no openstatus account or want status checks without workspace access.
-
 ## Authentication
 
 The MCP server accepts two credentials. OAuth is the default for interactive clients; the API key header stays for CI and headless agents.
@@ -200,7 +186,7 @@ Public openstatus.dev content — no workspace data, available on any credential
 
 ### External status
 
-Live status of third-party services from [openstatus.dev/status](/status), read from their official status pages every few minutes and combined with user reports. No workspace data, so any credential and any scope sees them; they are also the only tools on the [public status endpoint](#public-status-endpoint).
+Live status of third-party services from [openstatus.dev/status](/status), read from their official status pages every few minutes and combined with user reports. No workspace data, so any credential and any scope sees them.
 
 | Tool                 | Scope | Purpose |
 |----------------------|------|---------|
@@ -407,4 +393,4 @@ Connecting and revoking an app are audited too, as `oauth_grant.create` and `oau
 
 ## Rate limits
 
-MCP requests share the per-token limits of the HTTP API. A rejected request gets a plain `429` with a `Retry-After` header rather than a JSON-RPC error; see [API rate limits](/docs/reference/api-rate-limits). The public status endpoint has no token, so it is limited per client IP instead, with the same budget as the other public routes.
+MCP requests share the per-token limits of the HTTP API. A rejected request gets a plain `429` with a `Retry-After` header rather than a JSON-RPC error; see [API rate limits](/docs/reference/api-rate-limits).

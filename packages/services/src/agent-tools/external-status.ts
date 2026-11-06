@@ -80,7 +80,6 @@ const GetServiceStatusOutput = z.object({
 type GetServiceStatusIn = z.infer<typeof GetServiceStatusInput>;
 type GetServiceStatusOut = z.infer<typeof GetServiceStatusOutput>;
 
-// Ctx-free, so the anonymous MCP endpoint (no workspace) can call it too.
 export function runGetServiceStatus(
   input: GetServiceStatusIn,
 ): Promise<GetServiceStatusOut> {

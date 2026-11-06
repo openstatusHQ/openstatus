@@ -19,14 +19,10 @@ function isHeartbeat(path: string): boolean {
   return path.startsWith("/heartbeat/");
 }
 
-// The anonymous status MCP endpoint is metered per IP like the other public routes.
 function isPublic(path: string): boolean {
   return (
     path === "/public" ||
     path.startsWith("/public/") ||
-    // The route is non-strict, so "/mcp/status/" reaches it too.
-    path === "/mcp/status" ||
-    path === "/mcp/status/" ||
     isHeartbeat(path)
   );
 }
