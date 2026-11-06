@@ -67,9 +67,9 @@ describe("labels", () => {
 
 describe("isFresh", () => {
   const now = 1_000_000_000_000;
-  test("live under 30 minutes, not after", () => {
-    expect(isFresh(now - 29 * 60_000, now)).toBe(true);
-    expect(isFresh(now - 31 * 60_000, now)).toBe(false);
+  test("live under 2 hours, not after", () => {
+    expect(isFresh(now - 119 * 60_000, now)).toBe(true);
+    expect(isFresh(now - 121 * 60_000, now)).toBe(false);
     expect(isFresh(0, now)).toBe(false);
   });
   test("a far-future timestamp is invalid, a little skew is fine", () => {

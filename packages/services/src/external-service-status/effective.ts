@@ -1,7 +1,9 @@
 export const REPORT_THRESHOLD = 7;
 export const REPORT_WINDOW_MS = 15 * 60 * 1000;
 export const REPORT_WINDOW_MINUTES = REPORT_WINDOW_MS / 60_000;
-export const STALE_THRESHOLD_MS = 30 * 60 * 1000;
+// The cron does not tick on a steady schedule (gaps of 10-40+ minutes), and a
+// snapshot is only published once the whole tick finishes, so allow ~2h.
+export const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000;
 
 export type EffectiveStatus = {
   indicator: string;
@@ -48,7 +50,7 @@ export function problemRank(s: { indicator: string; status: string }): number {
 // A minute of clock skew between the fetcher and this machine is tolerated.
 const FUTURE_SKEW_MS = 60_000;
 
-// A reading counts as live only when it exists and is under 30 minutes old.
+// A reading counts as live only when it exists and is under STALE_THRESHOLD_MS (2h) old.
 // A timestamp further in the future than the skew is invalid, not fresh.
 export function isFresh(checkedAtMs: number, now = Date.now()): boolean {
   return (

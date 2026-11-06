@@ -100,11 +100,11 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
           links={
             <>
               <AnswerLink href={service.statusPageUrl} external>
-                Official status page ↗
+                Official status page
               </AnswerLink>
               {checkerHref ? (
                 <AnswerLink href={checkerHref}>
-                  Test {getHost(service.url)} from 28 regions →
+                  Test {getHost(service.url)} from 28 regions
                 </AnswerLink>
               ) : null}
             </>

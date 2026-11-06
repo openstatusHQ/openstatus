@@ -215,10 +215,10 @@ export function StatusPagination({
           rel="prev"
           className={cn(TILE_LINK, "px-3 py-2")}
         >
-          ← Previous
+          Previous
         </Link>
       ) : (
-        <span className="text-muted-foreground px-3 py-2">← Previous</span>
+        <span className="text-muted-foreground px-3 py-2">Previous</span>
       )}
       <span className="flex flex-wrap items-center justify-center gap-1 px-2 py-1 tabular-nums">
         {pageWindow(page, pageCount).map((p, i) =>
@@ -249,10 +249,10 @@ export function StatusPagination({
           rel="next"
           className={cn(TILE_LINK, "px-3 py-2")}
         >
-          Next →
+          Next
         </Link>
       ) : (
-        <span className="text-muted-foreground px-3 py-2">Next →</span>
+        <span className="text-muted-foreground px-3 py-2">Next</span>
       )}
     </nav>
   );

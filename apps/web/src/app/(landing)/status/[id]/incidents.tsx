@@ -110,7 +110,7 @@ export function Incidents({
           target="_blank"
           rel="noopener noreferrer"
         >
-          Full history ↗
+          Full history
         </a>
       }
     >

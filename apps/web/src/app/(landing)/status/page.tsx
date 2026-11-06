@@ -91,7 +91,7 @@ export default async function Page(props: PageProps) {
           className="font-medium underline-offset-4 hover:underline"
         >
           Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
+          OpenStatus
         </CustomLink>
       </ContentBoxContainer>
 
