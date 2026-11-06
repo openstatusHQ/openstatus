@@ -85,7 +85,7 @@ function OtherComponents({
           href={`/status/${serviceSlug}#components`}
           className="text-foreground underline underline-offset-4"
         >
-          All of {serviceName} →
+          All of {serviceName}
         </Link>
       }
     >
@@ -181,14 +181,14 @@ export function ComponentDetail({
           links={
             <>
               <AnswerLink href={`/status/${service.slug}`}>
-                All of {service.name} →
+                All of {service.name}
               </AnswerLink>
               <AnswerLink href={service.statusPageUrl} external>
-                Official status page ↗
+                Official status page
               </AnswerLink>
               {checker ? (
                 <AnswerLink href={checker.href}>
-                  Test {checker.host} from 28 regions →
+                  Test {checker.host} from 28 regions
                 </AnswerLink>
               ) : null}
             </>
@@ -218,7 +218,7 @@ export function ComponentDetail({
         title={`Incidents affecting ${component.name}`}
         aside={
           <AnswerLink href={service.statusPageUrl} external>
-            Full history ↗
+            Full history
           </AnswerLink>
         }
       >
