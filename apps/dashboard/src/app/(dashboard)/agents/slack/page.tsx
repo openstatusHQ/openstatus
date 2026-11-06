@@ -3,6 +3,7 @@
 import { Info } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
@@ -82,9 +83,9 @@ export default function Page() {
           </Note>
         ) : null}
         <Button size="sm" asChild>
-          <Link href="/settings/integrations#slack">
+          <NextLink href="/settings/integrations#slack">
             Install the Slack agent
-          </Link>
+          </NextLink>
         </Button>
       </Section>
       <Section id="messages">

@@ -3,11 +3,11 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-import { Link } from "@/components/common/link";
 import {
   EmptyStateContainer,
   EmptyStateDescription,

@@ -147,6 +147,9 @@ export const UpdateMonitorGeneralInput = z.object({
   // caller that omits them (e.g. an HTTP monitor) never clears the column.
   grpcService: z.string().optional(),
   grpcTls: z.enum(grpcTlsModes).optional(),
+  // Heartbeat-only fields, same contract as the gRPC ones above.
+  heartbeatPeriod: heartbeatPeriod.optional(),
+  heartbeatGrace: heartbeatGrace.optional(),
 });
 export type UpdateMonitorGeneralInput = z.infer<
   typeof UpdateMonitorGeneralInput

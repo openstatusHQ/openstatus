@@ -19,10 +19,10 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
-import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
   BillingOverlayButton,

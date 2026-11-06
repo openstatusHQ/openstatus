@@ -165,6 +165,13 @@ export async function updateMonitorGeneral(args: {
         "A monitor cannot be switched to or from the heartbeat type",
       );
     }
+    const touchesHeartbeat =
+      input.heartbeatPeriod !== undefined || input.heartbeatGrace !== undefined;
+    if (touchesHeartbeat && existing.jobType !== "heartbeat") {
+      throw new ValidationError(
+        `Monitor ${existing.id} is not a heartbeat monitor`,
+      );
+    }
 
     const updated = await tx
       .update(monitor)
@@ -181,6 +188,12 @@ export async function updateMonitorGeneral(args: {
           ? { grpcService: input.grpcService }
           : {}),
         ...(input.grpcTls !== undefined ? { grpcTls: input.grpcTls } : {}),
+        ...(input.heartbeatPeriod !== undefined
+          ? { heartbeatPeriod: input.heartbeatPeriod }
+          : {}),
+        ...(input.heartbeatGrace !== undefined
+          ? { heartbeatGrace: input.heartbeatGrace }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))
@@ -189,6 +202,8 @@ export async function updateMonitorGeneral(args: {
 
     if (!existing.active && updated.active) {
       await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+    } else if (heartbeatConfigChanged(existing, updated)) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
     }
 
     await emitAudit(tx, ctx, {

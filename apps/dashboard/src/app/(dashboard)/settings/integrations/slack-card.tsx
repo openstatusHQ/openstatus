@@ -4,6 +4,7 @@ import { Lock } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -166,10 +167,10 @@ export function SlackIntegrationCard({
             type="button"
             asChild
           >
-            <Link href="/settings/billing#plans">
+            <NextLink href="/settings/billing#plans">
               <Lock />
               Upgrade
-            </Link>
+            </NextLink>
           </Button>
         ) : isConnected ? (
           <Button

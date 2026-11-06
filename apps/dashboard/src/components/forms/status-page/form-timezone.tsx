@@ -28,12 +28,12 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { timeZoneShortName } from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,

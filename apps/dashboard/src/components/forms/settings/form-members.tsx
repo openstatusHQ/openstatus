@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -149,10 +150,10 @@ export function FormMembers({
                   size="sm"
                   asChild
                 >
-                  <Link href="/settings/billing#plans">
+                  <NextLink href="/settings/billing#plans">
                     <Lock />
                     Upgrade
-                  </Link>
+                  </NextLink>
                 </Button>
               </>
             ) : (
