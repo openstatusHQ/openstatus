@@ -18,10 +18,7 @@ import {
   ContentBoxTitle,
 } from "../content-box";
 import { Client } from "./client";
-import {
-  getPrefetchedGrid,
-  prefetchPopularStatus,
-} from "./prefetch";
+import { getPrefetchedGrid, prefetchPopularStatus } from "./prefetch";
 import { searchParamsCache } from "./search-params";
 import { AgentHint, StatusSkeleton } from "./service-blocks";
 import { statusHref } from "./status-href";

@@ -28,7 +28,6 @@ import { getComponentFullName } from "./utils";
 // own tRPC query, so a page only prefetches what it renders (see the
 // `prefetch*` helpers in ./prefetch.ts) and drops the block in.
 
-
 function formatCount(n: number): string {
   return n.toLocaleString("en-US");
 }
