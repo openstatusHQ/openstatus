@@ -1,0 +1,172 @@
+import { Easing } from "remotion";
+
+import { eventsOf, type Rect, type Timeline } from "./timeline";
+
+// Camera position in scene pixels; zoom 1 shows the whole scene.
+export type Shot = { t: number; x: number; y: number; zoom: number };
+export type Bounds = { width: number; height: number };
+// A 9:16 scene: the heights its window spans, and the band of the frame the
+// camera's target stays in, clear of what the feed draws over the frame.
+export type Tall = {
+  rows: [top: number, bottom: number];
+  keep: [top: number, bottom: number];
+};
+// Maps a point of the recorded viewport into the scene.
+export type Project = (x: number, y: number) => [number, number];
+
+const CLICK_ZOOM = 1.8;
+const TYPE_ZOOM = 2.2;
+const LOOK_ZOOM = 2.4;
+// Longest glide between two shots; shorter when the shots are closer.
+const TRAVEL = 0.9;
+// Shots closer than this collapse into the later one, so the camera does not
+// twitch between a click and the typing that follows it.
+const MIN_GAP = 0.35;
+
+const ease = Easing.bezier(0.65, 0, 0.35, 1);
+
+export function buildShots(
+  timeline: Timeline,
+  scene: Bounds,
+  project: Project,
+  scale: number,
+  // How much further than its usual limits the camera may move in.
+  reach = 1,
+): Shot[] {
+  const overview = (t: number) => ({
+    t,
+    x: scene.width / 2,
+    y: scene.height / 2,
+    zoom: 1,
+  });
+  // Zoom in, but never so far that the target no longer fits the frame.
+  const focus = (t: number, [x, y, w, h]: Rect, max: number): Shot => {
+    const [cx, cy] = project(x + w / 2, y + h / 2);
+    const zoom = Math.max(
+      1,
+      Math.min(
+        max * reach,
+        (0.7 * scene.width) / (w * scale),
+        (0.7 * scene.height) / (h * scale),
+      ),
+    );
+    return { t, x: cx, y: cy, zoom };
+  };
+
+  return targets(timeline).map(({ t, box, max }) =>
+    box ? focus(t, box, max) : overview(t),
+  );
+}
+
+// What the camera goes to and when: an element to move in on, or (no box)
+// the whole scene.
+function targets(timeline: Timeline) {
+  const all: { t: number; box?: Rect; max: number }[] = [{ t: 0, max: 1 }];
+  for (const e of timeline.events) {
+    if (e.type === "click") all.push({ t: e.t, box: e.box, max: CLICK_ZOOM });
+    if (e.type === "type") all.push({ t: e.t, box: e.box, max: TYPE_ZOOM });
+    if (e.type === "look") all.push({ t: e.t, box: e.box, max: LOOK_ZOOM });
+    // A new page reads best in full before the next zoom, and a scroll
+    // reads best from far enough out to see the page move.
+    if (e.type === "nav") all.push({ t: e.t + 0.3, max: 1 });
+    if (e.type === "scroll") all.push({ t: e.t + 0.1, max: 1 });
+  }
+  all.push({ t: Math.max(0, timeline.duration - 1.2), max: 1 });
+
+  all.sort((a, b) => a.t - b.t);
+  return all.filter((s, i) => {
+    const next = all[i + 1];
+    return !next || next.t - s.t >= MIN_GAP;
+  });
+}
+
+// The stretches of the recording the camera spends on its way to a shot.
+export function travelSpans(timeline: Timeline): [number, number][] {
+  const times = targets(timeline).map((s) => s.t);
+  return times
+    .slice(1)
+    .map((t, i): [number, number] => [Math.max(times[i], t - TRAVEL), t]);
+}
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+// The camera holds each shot, then glides into the next one so it arrives
+// exactly when that event happens. Times are recording (source) seconds.
+export function cameraAt(
+  shots: Shot[],
+  t: number,
+  scene: Bounds,
+  tall?: Tall,
+): Shot {
+  let i = 0;
+  while (i + 1 < shots.length && shots[i + 1].t <= t) i++;
+  const from = shots[i];
+  const to = shots[i + 1];
+
+  let shot = from;
+  if (to) {
+    const travel = Math.min(TRAVEL, to.t - from.t);
+    const p = clamp((t - (to.t - travel)) / travel, 0, 1);
+    if (p > 0) {
+      const k = ease(p);
+      shot = {
+        t,
+        x: from.x + (to.x - from.x) * k,
+        y: from.y + (to.y - from.y) * k,
+        // Geometric, so zooming in and out feel equally fast.
+        zoom: from.zoom * (to.zoom / from.zoom) ** k,
+      };
+    }
+  }
+
+  const halfW = scene.width / (2 * shot.zoom);
+  const halfH = scene.height / (2 * shot.zoom);
+  let y = shot.y;
+  if (tall) {
+    const [top, bottom] = tall.rows;
+    const mid = scene.height / 2;
+    // The window keeps to the middle of the frame until it outgrows it, then
+    // fills it: the stage shows as two even bands or not at all…
+    y =
+      2 * halfH >= bottom - top
+        ? (top + bottom) / 2
+        : clamp(y, top + halfH, bottom - halfH);
+    // …unless that leaves the target outside its band.
+    y = clamp(
+      y,
+      shot.y - (tall.keep[1] - mid) / shot.zoom,
+      shot.y - (tall.keep[0] - mid) / shot.zoom,
+    );
+  }
+  return {
+    ...shot,
+    x: clamp(shot.x, halfW, scene.width - halfW),
+    y: clamp(y, halfH, scene.height - halfH),
+  };
+}
+
+export function cursorAt(timeline: Timeline, t: number): [number, number] {
+  const moves = eventsOf(timeline, "move");
+  if (moves.length === 0)
+    return [timeline.viewport.width / 2, timeline.viewport.height / 2];
+  if (t <= moves[0].t) return moves[0].from;
+  for (const m of moves) {
+    if (t < m.t) break;
+    if (t <= m.t1) {
+      const k = ease(clamp((t - m.t) / Math.max(m.t1 - m.t, 1e-3), 0, 1));
+      return [
+        m.from[0] + (m.to[0] - m.from[0]) * k,
+        m.from[1] + (m.to[1] - m.from[1]) * k,
+      ];
+    }
+  }
+  return moves.filter((m) => m.t1 <= t).at(-1)?.to ?? moves[0].from;
+}
+
+export function stepAt(timeline: Timeline, t: number) {
+  return eventsOf(timeline, "step")
+    .filter((s) => s.t <= t)
+    .at(-1);
+}

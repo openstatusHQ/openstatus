@@ -126,7 +126,7 @@ docker run --rm --network host \
 ```
 
 This creates:
-- 3 workspaces (`love-openstatus`, `test2`, `test3`)
+- 3 workspaces (`love-openstatus` "Acme Inc.", `test2`, `test3`)
 - Sample monitors and 2 status pages (slugs `status` and `acme`)
 - Test user account: `ping@openstatus.dev`
 - Sample incidents, status reports, and maintenance windows
