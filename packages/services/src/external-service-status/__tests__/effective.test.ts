@@ -80,7 +80,9 @@ describe("isFresh", () => {
 
 describe("problemRank", () => {
   test("maintenance ranks below outages even with a severe indicator", () => {
-    expect(problemRank({ indicator: "critical", status: "under_maintenance" })).toBe(0.5);
+    expect(
+      problemRank({ indicator: "critical", status: "under_maintenance" }),
+    ).toBe(0.5);
     expect(problemRank({ indicator: "minor", status: "" })).toBe(1);
     expect(problemRank({ indicator: "none", status: "" })).toBe(0);
   });

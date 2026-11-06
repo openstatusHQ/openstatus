@@ -201,7 +201,9 @@ export function renderServiceMarkdown(args: {
     ).length;
     const ok = args.components.length - affected.length - unknown;
     const parts = [
-      affected.length > 0 ? `${affected.length} with issues (listed above)` : null,
+      affected.length > 0
+        ? `${affected.length} with issues (listed above)`
+        : null,
       ok > 0 ? `${ok} operational` : null,
       unknown > 0 ? `${unknown} without live data` : null,
     ].filter(Boolean);
