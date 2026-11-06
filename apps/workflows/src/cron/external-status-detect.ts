@@ -1,13 +1,19 @@
+import { getLogger } from "@logtape/logtape";
 import {
   isRetryableDbError,
   isTransientServerError,
 } from "@openstatus/services";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
+import { FetchError } from "@openstatus/status-fetcher";
 import type {
   DetectionResult,
-  FetchError,
+  StatusFetcher,
+  StatusPageEntry,
   StatusPageProvider,
 } from "@openstatus/status-fetcher";
+import { type Duration, Effect } from "effect";
+
+const logger = getLogger(["workflow", "external-status"]);
 
 export const PROBE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -45,6 +51,8 @@ export function isBlocked(err: FetchError): boolean {
   );
 }
 
+export class UpsertTimeoutError extends Error {}
+
 const MAX_CAUSE_DEPTH = 10;
 
 // undici surfaces every connection-level failure (reset, headers timeout) as
@@ -67,9 +75,48 @@ function hasFetchFailedCause(err: FetchError): boolean {
 export function isTransientDbError(err: FetchError): boolean {
   if (err.kind !== undefined) return false;
   return (
+    err.cause instanceof UpsertTimeoutError ||
     isRetryableDbError(err) ||
     isTransientServerError(err) ||
     hasFetchFailedCause(err)
+  );
+}
+
+const UPSERT_TIMEOUT: Duration.Input = "30 seconds";
+
+// undici only gives up on a stalled Turso request after 5 minutes, which would
+// hold up the whole tick. The timeout stops the wait, not the request: a late
+// write is harmless because the next tick recomputes the diff.
+export function runUpsert<T>(
+  target: { entry: StatusPageEntry; fetcher: StatusFetcher },
+  upsert: () => Promise<T>,
+  timeout: Duration.Input = UPSERT_TIMEOUT,
+): Effect.Effect<T, FetchError> {
+  const { entry, fetcher } = target;
+  const wrap = (cause: Error) =>
+    new FetchError({
+      url: entry.status_page_url,
+      fetcherName: fetcher.name,
+      entryId: entry.id,
+      cause,
+    });
+  return Effect.tryPromise({
+    try: upsert,
+    catch: (e) => wrap(e instanceof Error ? e : new Error(String(e))),
+  }).pipe(
+    Effect.timeoutOrElse({
+      duration: timeout,
+      orElse: () => {
+        logger.warn("external-status upsert timed out for slug={slug}", {
+          slug: entry.id,
+        });
+        return Effect.fail(
+          wrap(
+            new UpsertTimeoutError(`upsert timeout after ${String(timeout)}`),
+          ),
+        );
+      },
+    }),
   );
 }
 
