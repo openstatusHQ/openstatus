@@ -409,7 +409,10 @@ function BasicsRow({
 }) {
   return (
     <TableRow className="[&>:not(:last-child)]:border-r">
-      <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+      <TableHead
+        className="bg-muted/50 text-muted-foreground truncate font-normal"
+        title={label}
+      >
         {label}
       </TableHead>
       <TableCell
