@@ -46,7 +46,7 @@ export function ServiceSearch() {
           ref={inputRef}
           type="search"
           name="q"
-          placeholder="Search 3,000+ services, e.g. Anthropic, GitHub, Stripe"
+          placeholder="Search all services, e.g. Anthropic, GitHub, Stripe"
           aria-label="Search services"
           value={q}
           onChange={(e) => setQ(e.target.value)}
