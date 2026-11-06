@@ -10,6 +10,7 @@ export {
   listExternalIncidentsByComponent,
   listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
+  listOpenExternalIncidents,
   supportsIncidents,
 } from "./list";
 export { type PruneRawPayloadsResult, pruneStaleRawPayloads } from "./prune";

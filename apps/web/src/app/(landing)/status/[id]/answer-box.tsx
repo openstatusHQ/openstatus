@@ -1,5 +1,6 @@
 import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
 import { cn } from "@openstatus/ui/lib/utils";
+import Link from "next/link";
 import type React from "react";
 
 import { getPillStyle } from "../external-service-pill";
@@ -64,13 +65,23 @@ export function AnswerLink({
   external?: boolean;
   children: React.ReactNode;
 }) {
+  const className = "text-foreground underline underline-offset-4";
+  if (external) {
+    return (
+      <a
+        className={className}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {children}
+      </a>
+    );
+  }
+  // Internal pages (other status pages, the checker) navigate client-side.
   return (
-    <a
-      className="text-foreground underline underline-offset-4"
-      href={href}
-      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-    >
+    <Link className={className} href={href}>
       {children}
-    </a>
+    </Link>
   );
 }

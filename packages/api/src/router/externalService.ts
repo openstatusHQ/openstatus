@@ -31,6 +31,7 @@ import {
   REPORT_THRESHOLD,
   REPORT_WINDOW_MS,
   computeEffectiveStatus,
+  isFresh,
 } from "./effective-status";
 
 const DEFAULT_HISTORY_DAYS = 45;
@@ -190,6 +191,9 @@ const componentItemSchema = z.object({
   position: z.number(),
   indicator: z.string(),
   status: z.string(),
+  // Unix ms of the last upstream read; 0 when unknown.
+  lastFetchedAt: z.number(),
+  escalated: z.boolean(),
   history: z.array(historyRowSchema),
   incidents: z.array(incidentSchema),
 });
@@ -291,9 +295,11 @@ export const externalServiceRouter = createTRPCRouter({
     return services.map((s) => {
       const snap = byId.get(s.slug);
       const reporters = reportersByServiceId.get(s.id) ?? 0;
+      // Older than 30 minutes is not "now": show unknown, not a past outage.
+      const fresh = snap != null && isFresh(snap.last_fetched_at);
       const effective = computeEffectiveStatus({
-        providerIndicator: snap?.indicator ?? "",
-        providerStatus: snap?.status ?? "",
+        providerIndicator: fresh ? snap.indicator : "",
+        providerStatus: fresh ? snap.status : "",
         reporters,
         threshold: REPORT_THRESHOLD,
       });
@@ -304,7 +310,7 @@ export const externalServiceRouter = createTRPCRouter({
         aliases: Array.isArray(s.aliases) ? s.aliases : [],
         indicator: effective.indicator,
         status: effective.status,
-        statusMessage: snap?.status_message ?? "Status unavailable",
+        statusMessage: fresh ? snap.status_message : "Status unavailable",
         escalated: effective.escalated,
         reporters,
       };
@@ -461,7 +467,7 @@ export const externalServiceRouter = createTRPCRouter({
 
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const componentIds = components.map((c) => String(c.id));
-        const [historyRows, serviceIncidents] = await Promise.all([
+        const [historyRows, serviceIncidents, reportRows] = await Promise.all([
           safeData(
             tb.externalStatusComponentHistory({
               component_ids: componentIds,
@@ -476,7 +482,17 @@ export const externalServiceRouter = createTRPCRouter({
             }),
             "listExternalIncidentsByServiceId (components)",
           ),
+          safeRows(
+            getComponentReportWindows({
+              serviceId: service.id,
+              since: new Date(Date.now() - REPORT_WINDOW_MS),
+            }),
+            "getComponentReportWindows (components)",
+          ),
         ]);
+        const reportersById = new Map(
+          reportRows.map((r) => [r.componentId, r.reporters]),
+        );
 
         const historyByComponent = new Map<string, typeof historyRows>();
         for (const row of historyRows) {
@@ -487,15 +503,24 @@ export const externalServiceRouter = createTRPCRouter({
 
         return {
           supported: true,
-          components: components.map((c) => ({
+          components: components.map((c) => {
+            const effective = computeEffectiveStatus({
+              providerIndicator: c.indicator,
+              providerStatus: c.status,
+              reporters: reportersById.get(c.id) ?? 0,
+              threshold: REPORT_THRESHOLD,
+            });
+            return {
             id: c.id,
             slug: c.slug,
             name: c.name,
             description: c.description,
             groupName: c.groupName,
             position: c.position,
-            indicator: c.indicator,
-            status: c.status,
+            indicator: effective.indicator,
+            status: effective.status,
+            lastFetchedAt: c.lastFetchedAt ?? 0,
+            escalated: effective.escalated,
             history: (historyByComponent.get(String(c.id)) ?? []).map(
               toHistoryRow,
             ),
@@ -504,7 +529,8 @@ export const externalServiceRouter = createTRPCRouter({
                 incidentAffectsComponent(inc, c.upstreamComponentId),
               )
               .map(toIncidentDTO),
-          })),
+            };
+          }),
         };
       } catch (err) {
         console.warn(

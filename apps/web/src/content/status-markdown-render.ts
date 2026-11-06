@@ -22,7 +22,11 @@ export type MdComponent = MdStatus & {
   groupName: string | null;
 };
 
-export type MdHistoryDay = { day: string; worstIndicator: string };
+export type MdHistoryDay = {
+  day: string;
+  worstIndicator: string;
+  hadMaintenance?: number;
+};
 
 export function statusLabel(s: MdStatus): string {
   if (s.status === "under_maintenance") return "maintenance";
@@ -59,9 +63,18 @@ function day(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+// Catalog names and provider text are data: escape what Markdown would read
+// as emphasis, links, code, HTML or a heading, so they cannot reshape the doc.
+export function mdText(value: string): string {
+  return value
+    .replace(/[\\`*_[\]<>#|]/g, (c) => `\\${c}`)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // Pipes would break the row; newlines would end it.
 function cell(value: string): string {
-  return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+  return mdText(value);
 }
 
 function incidentDuration(i: MdIncident): string {
@@ -86,21 +99,28 @@ export function renderHistory(rows: MdHistoryDay[], days: number): string {
   if (tracked === 0) return `## Last ${days} days\n\nNo history yet.\n\n`;
   let md = `## Last ${days} days\n\n`;
   md += `${tracked - issueDays} of ${tracked} tracked days without issues.\n\n`;
-  const worstByDay = new Map<string, string>();
+  const worstByDay = new Map<string, { indicator: string; maintenance: boolean }>();
   for (const r of rows) {
     const key = r.day.slice(0, 10);
     const prev = worstByDay.get(key);
-    if (!prev || (SEVERITY[r.worstIndicator] ?? 0) > (SEVERITY[prev] ?? 0)) {
-      worstByDay.set(key, r.worstIndicator);
-    }
+    const maintenance = (prev?.maintenance ?? false) || Boolean(r.hadMaintenance);
+    const indicator =
+      !prev || (SEVERITY[r.worstIndicator] ?? 0) > (SEVERITY[prev.indicator] ?? 0)
+        ? r.worstIndicator
+        : prev.indicator;
+    worstByDay.set(key, { indicator, maintenance });
   }
   const bad = [...worstByDay.entries()]
-    .filter(([, ind]) => (SEVERITY[ind] ?? 0) > 0)
+    .filter(([, d]) => (SEVERITY[d.indicator] ?? 0) > 0 || d.maintenance)
     .sort(([a], [b]) => b.localeCompare(a));
   if (bad.length > 0) {
     md += "| Day | Worst status |\n| --- | --- |\n";
-    for (const [d, ind] of bad) {
-      md += `| ${d} | ${statusLabel({ indicator: ind, status: "" })} |\n`;
+    for (const [d, { indicator, maintenance }] of bad) {
+      const label =
+        (SEVERITY[indicator] ?? 0) > 0
+          ? statusLabel({ indicator, status: "" })
+          : "maintenance";
+      md += `| ${d} | ${label}${maintenance && label !== "maintenance" ? " (with maintenance)" : ""} |\n`;
     }
     md += "\n";
   }
@@ -133,17 +153,17 @@ export function renderServiceMarkdown(args: {
     hasLiveData,
   });
 
-  let md = `# Is ${args.name} down?\n\n`;
-  md += `**Answer:** ${answer}\n\n`;
+  let md = `# Is ${mdText(args.name)} down?\n\n`;
+  md += `**Answer:** ${mdText(answer)}\n\n`;
   md += `- Status: ${hasLiveData ? statusLabel(args.effective) : "unknown"}${args.effective.escalated ? " (raised by user reports)" : ""}\n`;
   md += `- Checked: ${formatIso(args.checkedAt)}${args.stale && args.checkedAt > 0 ? " (stale)" : ""}\n`;
   md += `- User reports in the last ${args.windowMinutes} minutes: ${args.reporters}\n`;
   if (args.providerMessage) {
-    md += `- ${args.name} says: ${args.providerMessage}\n`;
+    md += `- ${mdText(args.name)} says: ${mdText(args.providerMessage)}\n`;
   }
   md += `- Official status page: ${args.statusPageUrl}\n`;
   md += `- Website: ${args.url}\n`;
-  if (args.description) md += `- About: ${args.description}\n`;
+  if (args.description) md += `- About: ${mdText(args.description)}\n`;
   md += "\n";
 
   const affected = (args.components ?? []).filter(isProblem).sort(worstFirst);
@@ -190,13 +210,14 @@ export function renderComponentMarkdown(args: {
   component: MdComponent & { description: string | null };
   checkedAt: number;
   stale: boolean;
+  escalated?: boolean;
   reporters: number;
   windowMinutes: number;
   incidents: MdIncident[];
   history: MdHistoryDay[];
   historyDays: number;
 }): string {
-  const live = args.checkedAt > 0 && !args.stale;
+  const live = (args.checkedAt > 0 && !args.stale) || Boolean(args.escalated);
   const answer = getStatusAnswer({
     name: args.fullName,
     indicator: args.component.indicator,
@@ -204,21 +225,21 @@ export function renderComponentMarkdown(args: {
     hasLiveData: live,
   });
 
-  let md = `# Is ${args.fullName} down?\n\n`;
-  md += `**Answer:** ${answer}\n\n`;
-  md += `- Status: ${live ? statusLabel(args.component) : "unknown"}\n`;
+  let md = `# Is ${mdText(args.fullName)} down?\n\n`;
+  md += `**Answer:** ${mdText(answer)}\n\n`;
+  md += `- Status: ${live ? statusLabel(args.component) : "unknown"}${args.escalated ? " (raised by user reports)" : ""}\n`;
   md += `- Checked: ${formatIso(args.checkedAt)}${args.stale && args.checkedAt > 0 ? " (stale)" : ""}\n`;
   md += `- User reports in the last ${args.windowMinutes} minutes: ${args.reporters}\n`;
-  md += `- Part of: [${args.serviceName}](/status/${args.serviceSlug}.md)${args.component.groupName ? ` / ${args.component.groupName}` : ""}\n`;
+  md += `- Part of: [${mdText(args.serviceName)}](/status/${args.serviceSlug}.md)${args.component.groupName ? ` / ${mdText(args.component.groupName)}` : ""}\n`;
   md += `- Official status page: ${args.statusPageUrl}\n`;
   if (args.component.description) {
-    md += `- About: ${args.component.description}\n`;
+    md += `- About: ${mdText(args.component.description)}\n`;
   }
   md += "\n";
 
   md += renderHistory(args.history, args.historyDays);
 
-  md += `## Incidents affecting ${args.component.name}\n\n`;
+  md += `## Incidents affecting ${mdText(args.component.name)}\n\n`;
   md +=
     args.incidents.length > 0
       ? renderIncidentTable(args.incidents)
@@ -259,13 +280,13 @@ export function renderIndexMarkdown(args: {
   for (const slug of args.popularSlugs) {
     const s = bySlug.get(slug);
     if (!s) continue;
-    md += `- [${s.name}](/status/${s.slug}.md): ${s.hasData ? statusLabel(s) : "unknown"}\n`;
+    md += `- [${mdText(s.name)}](/status/${s.slug}.md): ${s.hasData ? statusLabel(s) : "unknown"}\n`;
   }
   md += "\n";
 
   md += "## All services\n\n";
   for (const s of args.services) {
-    md += `- [${s.name}](/status/${s.slug}.md): ${s.hasData ? statusLabel(s) : "unknown"}\n`;
+    md += `- [${mdText(s.name)}](/status/${s.slug}.md): ${s.hasData ? statusLabel(s) : "unknown"}\n`;
   }
   md += "\n";
   return md;

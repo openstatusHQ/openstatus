@@ -1,4 +1,6 @@
-export const STALE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+import { STALE_THRESHOLD_MS } from "@openstatus/services/external-service-status/effective";
+
+export { STALE_THRESHOLD_MS };
 
 export function formatRelative(updatedAtMs: number): string {
   const diff = Date.now() - updatedAtMs;
@@ -55,7 +57,12 @@ export function getComponentFullName(
   return `${service} ${component}`;
 }
 
-export { getStatusAnswer } from "@openstatus/services/external-service-status/effective";
+export {
+  getStatusAnswer,
+  isFresh,
+  isProblem,
+  problemRank,
+} from "@openstatus/services/external-service-status/effective";
 
 export function formatDuration(ms: number): string {
   const minutes = Math.max(1, Math.round(ms / 60_000));
@@ -70,16 +77,19 @@ export function formatDuration(ms: number): string {
 
 const ISSUE_INDICATORS = new Set(["minor", "major", "critical"]);
 
-// History rows come one per (day, slug alias); a day counts once.
+// History rows come one per (day, slug alias); a day counts once. A
+// maintenance-only day counts as affected, like the bars that label it.
 export function summarizeHistory(
-  rows: { day: string; worstIndicator: string }[],
+  rows: { day: string; worstIndicator: string; hadMaintenance?: number }[],
 ): { tracked: number; issueDays: number } {
   const byDay = new Map<string, boolean>();
   for (const r of rows) {
     const key = r.day.slice(0, 10);
     byDay.set(
       key,
-      (byDay.get(key) ?? false) || ISSUE_INDICATORS.has(r.worstIndicator),
+      (byDay.get(key) ?? false) ||
+        ISSUE_INDICATORS.has(r.worstIndicator) ||
+        Boolean(r.hadMaintenance),
     );
   }
   let issueDays = 0;

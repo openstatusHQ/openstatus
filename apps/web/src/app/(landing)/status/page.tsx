@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { ButtonLink } from "../../../content/mdx-components/button-link";
 import { CustomLink } from "../../../content/mdx-components/custom-link";
@@ -85,6 +86,11 @@ export default async function Page(props: PageProps) {
     letter: letter ?? undefined,
     popularSlugs: POPULAR_STATUS_SLUGS,
   });
+  // ?page=999 or ?page=0: send to the page actually shown, so the title and
+  // canonical never name a page that does not exist.
+  if (index.page !== params.page) {
+    redirect(statusHref({ q: query, letter, page: index.page }));
+  }
   const landing = index.page === 1 && query === "" && letter === null;
   const rangeEnd = index.start + index.items.length;
 
@@ -162,7 +168,14 @@ export default async function Page(props: PageProps) {
           }
         >
           <LetterNav active={letter} />
-          <ServiceList services={index.items} />
+          {index.matches === 0 ? (
+            <p className="text-muted-foreground m-0">
+              No tracked service starts with{" "}
+              {letter === "0" ? "a digit or symbol" : letter?.toUpperCase()}.
+            </p>
+          ) : (
+            <ServiceList services={index.items} />
+          )}
         </StatusSection>
       )}
 

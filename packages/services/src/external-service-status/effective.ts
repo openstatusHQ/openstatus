@@ -38,6 +38,18 @@ export function isProblem(s: { indicator: string; status: string }): boolean {
   return severityOf(s.indicator) > 0 || s.status === "under_maintenance";
 }
 
+// Sort key for "worst first": outages, then maintenance, then calm.
+export function problemRank(s: { indicator: string; status: string }): number {
+  const severity = severityOf(s.indicator);
+  if (severity > 0) return severity;
+  return s.status === "under_maintenance" ? 0.5 : 0;
+}
+
+// A reading counts as live only when it exists and is under 30 minutes old.
+export function isFresh(checkedAtMs: number, now = Date.now()): boolean {
+  return checkedAtMs > 0 && now - checkedAtMs <= STALE_THRESHOLD_MS;
+}
+
 export type StatusLabel =
   | "operational"
   | "minor_issue"

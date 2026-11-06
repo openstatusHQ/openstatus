@@ -37,12 +37,15 @@ async function getRelatedServices(slug: string) {
   try {
     const all = await cachedListExternalServices();
     const bySlug = new Map(all.map((s) => [s.slug, s]));
+    // Drop unknown slugs before counting, so a stale entry never shortens the row.
     return POPULAR_STATUS_SLUGS.filter((s) => s !== slug)
-      .slice(0, RELATED_COUNT)
       .flatMap((s) => {
         const row = bySlug.get(s);
-        return row ? [{ slug: row.slug, name: row.name }] : [];
-      });
+        return row && row.deletedAt == null
+          ? [{ slug: row.slug, name: row.name }]
+          : [];
+      })
+      .slice(0, RELATED_COUNT);
   } catch {
     return [];
   }

@@ -20,10 +20,12 @@ function impactText(impact: string | undefined): string {
   }
 }
 
+// Year included: recent incidents can span New Year.
 function shortDate(value: string): string {
   return new Date(value).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
+    year: "numeric",
     timeZone: "UTC",
   });
 }

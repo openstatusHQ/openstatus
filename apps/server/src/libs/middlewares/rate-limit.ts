@@ -24,7 +24,9 @@ function isPublic(path: string): boolean {
   return (
     path === "/public" ||
     path.startsWith("/public/") ||
+    // The route is non-strict, so "/mcp/status/" reaches it too.
     path === "/mcp/status" ||
+    path === "/mcp/status/" ||
     isHeartbeat(path)
   );
 }

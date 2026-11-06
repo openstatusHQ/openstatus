@@ -57,6 +57,8 @@ describe("labels", () => {
         status: "major_outage",
         hasLiveData: false,
       }),
-    ).toMatch(/don't have live data/);
+    ).toBe(
+      "We don't have live data for Acme right now. Check the official Acme status page.",
+    );
   });
 });

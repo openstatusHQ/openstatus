@@ -17,6 +17,9 @@ import { StatusSection, TILE_GRID } from "../../service-blocks";
 import {
   getComponentFullName,
   getStatusAnswer,
+  isFresh,
+  isStale,
+  problemRank,
   summarizeHistory,
 } from "../../utils";
 import { AnswerBox, AnswerLink } from "../answer-box";
@@ -25,7 +28,6 @@ import { IncidentRows } from "../incidents";
 import { ReportIssue } from "../report-issue";
 
 const SIBLINGS_SHOWN = 12;
-const SEVERITY: Record<string, number> = { minor: 1, major: 2, critical: 3 };
 
 function jsonLd(args: {
   serviceName: string;
@@ -71,9 +73,7 @@ function OtherComponents({
   const others = data.components
     .filter((c) => c.slug !== currentSlug)
     .sort(
-      (a, b) =>
-        (SEVERITY[b.indicator] ?? 0) - (SEVERITY[a.indicator] ?? 0) ||
-        a.position - b.position,
+      (a, b) => problemRank(b) - problemRank(a) || a.position - b.position,
     );
   if (others.length === 0) return null;
 
@@ -137,11 +137,14 @@ export function ComponentDetail({
   const { service, component, history, incidents, overlayIncidents } = data;
 
   const fullName = getComponentFullName(service.name, component.name);
+  // `component.stale` is the 24h hide-from-index window; "live" is 30 minutes.
+  const hasLiveData = isFresh(component.lastFetchedAt);
+  const stale = component.lastFetchedAt > 0 && isStale(component.lastFetchedAt);
   const answer = getStatusAnswer({
     name: fullName,
     indicator: component.indicator,
     status: component.status,
-    hasLiveData: !component.stale && component.lastFetchedAt > 0,
+    hasLiveData,
   });
   const summary = summarizeHistory(history);
 
@@ -171,11 +174,11 @@ export function ComponentDetail({
         </div>
         <AnswerBox
           answer={answer}
-          indicator={component.stale ? "" : component.indicator}
-          status={component.status}
+          indicator={hasLiveData ? component.indicator : ""}
+          status={hasLiveData ? component.status : ""}
           message={component.description ?? undefined}
           checkedAt={component.lastFetchedAt}
-          stale={component.stale}
+          stale={stale}
           reporters={component.reporters}
           links={
             <>

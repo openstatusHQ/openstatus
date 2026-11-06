@@ -6,4 +6,5 @@ export {
   REPORT_WINDOW_MINUTES,
   REPORT_WINDOW_MS,
   computeEffectiveStatus,
+  isFresh,
 } from "@openstatus/services/external-service-status/effective";

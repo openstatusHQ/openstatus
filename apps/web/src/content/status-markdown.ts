@@ -2,8 +2,9 @@ import {
   REPORT_THRESHOLD,
   REPORT_WINDOW_MINUTES,
   REPORT_WINDOW_MS,
-} from "@openstatus/api/src/router/effective-status";
-import { computeEffectiveStatus } from "@openstatus/api/src/router/effective-status";
+  computeEffectiveStatus,
+  isFresh,
+} from "@openstatus/services/external-service-status/effective";
 import { listExternalComponentsBySlug } from "@openstatus/services/external-service-component";
 import {
   type ExternalIncidentListItem,
@@ -45,7 +46,6 @@ type LatestRow = {
 };
 
 const HISTORY_DAYS = 45;
-const STALE_MS = 30 * 60 * 1000;
 const REPORT_COUNTRIES_LIMIT = 5;
 
 function countryCount(n: number): string {
@@ -137,10 +137,24 @@ function toMdIncident(
 }
 
 export async function generateStatusIndexMarkdown(): Promise<string> {
-  const services = await cachedListExternalServices();
-  const latestRes = await safePipeData(
-    tb.externalStatusLatest({}),
-    "externalStatusLatest (markdown index)",
+  const services = (await cachedListExternalServices()).filter(
+    (s) => s.deletedAt == null,
+  );
+  const [latestRes, windowRes] = await Promise.all([
+    safePipeData(
+      tb.externalStatusLatest({}),
+      "externalStatusLatest (markdown index)",
+    ),
+    getServiceReportWindows({
+      serviceIds: services.map((s) => s.id),
+      since: new Date(Date.now() - REPORT_WINDOW_MS),
+    }).catch((err) => {
+      console.warn("[status markdown] index report windows failed:", err);
+      return [];
+    }),
+  ]);
+  const reportersById = new Map(
+    windowRes.map((w) => [w.externalServiceId, w.reporters]),
   );
   const latestRows: LatestRow[] = Array.isArray(latestRes.data)
     ? latestRes.data
@@ -158,19 +172,26 @@ export async function generateStatusIndexMarkdown(): Promise<string> {
     renderIndexMarkdown({
       description: sections.status.description,
       popularSlugs: POPULAR_STATUS_SLUGS,
-      services: services
-        .filter((s) => s.deletedAt == null)
-        .map((s) => {
-          const snap = latestById.get(s.slug);
-          return {
-            slug: s.slug,
-            name: s.name,
-            indicator: snap?.indicator ?? "",
-            status: snap?.status ?? "",
-            statusMessage: snap?.status_message ?? null,
-            hasData: snap != null,
-          };
-        }),
+      services: services.map((s) => {
+        const snap = latestById.get(s.slug);
+        // Same rules as the pages and MCP: a reading older than 30 minutes
+        // is not "now", and enough user reports escalate a calm status.
+        const fresh = snap != null && isFresh(snap.last_fetched_at);
+        const effective = computeEffectiveStatus({
+          providerIndicator: fresh ? snap.indicator : "",
+          providerStatus: fresh ? snap.status : "",
+          reporters: reportersById.get(s.id) ?? 0,
+          threshold: REPORT_THRESHOLD,
+        });
+        return {
+          slug: s.slug,
+          name: s.name,
+          indicator: effective.indicator,
+          status: effective.status,
+          statusMessage: fresh ? snap.status_message : null,
+          hasData: fresh || effective.escalated,
+        };
+      }),
     })
   );
 }
@@ -223,6 +244,7 @@ export async function generateStatusDetailMarkdown(
   const history = (Array.isArray(historyData) ? historyData : []).map((r) => ({
     day: r.day,
     worstIndicator: r.worst_indicator,
+    hadMaintenance: r.had_maintenance,
   }));
   const reporters = settled(windowRes, [])[0]?.reporters ?? 0;
   const recent = settled(recentRes, {
@@ -259,7 +281,7 @@ export async function generateStatusDetailMarkdown(
     description: service.description,
     effective,
     checkedAt,
-    stale: checkedAt > 0 && Date.now() - checkedAt > STALE_MS,
+    stale: checkedAt > 0 && !isFresh(checkedAt),
     providerMessage: GENERIC_MESSAGES.has(message.toLowerCase())
       ? null
       : message,
@@ -269,7 +291,14 @@ export async function generateStatusDetailMarkdown(
     recentIncidents: recent.supported
       ? recent.incidents.map((i) => toMdIncident(i, service.statusPageUrl))
       : null,
-    components: comps.supported ? comps.components : null,
+    // A component reading older than 30 minutes is not "affected right now".
+    components: comps.supported
+      ? comps.components.map((c) =>
+          isFresh(c.lastFetchedAt ?? 0)
+            ? c
+            : { ...c, indicator: "", status: "" },
+        )
+      : null,
     history,
     historyDays: HISTORY_DAYS,
   });
@@ -326,11 +355,20 @@ export async function generateStatusComponentMarkdown(
   const history = (Array.isArray(historyData) ? historyData : []).map((r) => ({
     day: r.day,
     worstIndicator: r.worst_indicator,
+    hadMaintenance: r.had_maintenance,
   }));
   const reporters =
     settled(windowRes, []).find((r) => r.componentId === component.id)
       ?.reporters ?? 0;
   const fullName = getComponentFullName(service.name, component.name);
+  const checkedAt = component.lastFetchedAt ?? 0;
+  const fresh = isFresh(checkedAt);
+  const effective = computeEffectiveStatus({
+    providerIndicator: fresh ? component.indicator : "",
+    providerStatus: fresh ? component.status : "",
+    reporters,
+    threshold: REPORT_THRESHOLD,
+  });
 
   let md = frontmatter({
     title: `Is ${fullName} down? ${fullName} status`,
@@ -342,9 +380,14 @@ export async function generateStatusComponentMarkdown(
     serviceSlug: service.slug,
     statusPageUrl: service.statusPageUrl,
     fullName,
-    component,
-    checkedAt: component.lastFetchedAt ?? 0,
-    stale: component.stale,
+    component: {
+      ...component,
+      indicator: effective.indicator,
+      status: effective.status,
+    },
+    escalated: effective.escalated,
+    checkedAt,
+    stale: checkedAt > 0 && !fresh,
     reporters,
     windowMinutes: REPORT_WINDOW_MINUTES,
     incidents: settled(incidentsRes, []).map((i) =>

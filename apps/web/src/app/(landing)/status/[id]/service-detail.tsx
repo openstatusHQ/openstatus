@@ -92,7 +92,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
         <AnswerBox
           answer={answer}
           indicator={hasLiveData ? effective.indicator : ""}
-          status={effective.status}
+          status={hasLiveData ? effective.status : ""}
           message={showMessage ? `${service.name} says: ${message}` : undefined}
           checkedAt={fetchedAt}
           stale={stale}

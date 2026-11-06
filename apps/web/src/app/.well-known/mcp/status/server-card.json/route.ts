@@ -25,11 +25,50 @@ const card = {
       name: "get_service_status",
       description:
         "Whether a third-party service, or one of its components, is down right now: verdict, affected components, open and recent incidents, user reports.",
+      // Mirrors the tool's zod input in @openstatus/services/agent-tools.
+      inputSchema: {
+        type: "object",
+        properties: {
+          service: {
+            type: "string",
+            minLength: 1,
+            description: "Service name, slug or alias, e.g. GitHub, aws, Anthropic",
+          },
+          component: {
+            type: "string",
+            minLength: 1,
+            description:
+              "Optional component of that service, e.g. Actions, us-east-1",
+          },
+        },
+        required: ["service"],
+        additionalProperties: false,
+      },
     },
     {
       name: "list_active_issues",
       description:
         "Third-party services reporting a problem right now, worst first, optionally narrowed to a list of providers.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          services: {
+            type: "array",
+            items: { type: "string", minLength: 1 },
+            maxItems: 50,
+            description:
+              "Only these services (names, slugs or aliases). Omit for every tracked service.",
+          },
+          minImpact: {
+            type: "string",
+            enum: ["minor_issue", "partial_outage", "major_outage"],
+            description: "Minimum impact to include; default minor_issue",
+          },
+          includeMaintenance: { type: "boolean", default: false },
+          limit: { type: "integer", minimum: 1, maximum: 50, default: 20 },
+        },
+        additionalProperties: false,
+      },
     },
   ],
 };

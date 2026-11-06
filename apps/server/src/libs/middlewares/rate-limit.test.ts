@@ -162,6 +162,8 @@ describe("rate limit", () => {
     };
     expect((await fire(app, "/mcp/status", 2, ip1)).status).toBe(200);
     expect((await app.request("/mcp/status", ip1)).status).toBe(429);
+    // The trailing-slash form shares the public bucket instead of escaping it.
+    expect((await app.request("/mcp/status/", ip1)).status).toBe(429);
     expect((await app.request("/mcp/status", ip2)).status).toBe(200);
   });
 

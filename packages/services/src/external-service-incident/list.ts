@@ -4,6 +4,7 @@ import {
   desc,
   eq,
   gte,
+  inArray,
   isNull,
   or,
   sql,
@@ -99,6 +100,37 @@ export async function listExternalIncidentsByServiceId(args: {
   );
 
   return rows;
+}
+
+// Every incident still open, optionally limited to some services. Uses the
+// `resolved_at` index; the open set stays small (a few dozen at most).
+export async function listOpenExternalIncidents(args: {
+  ctx?: GlobalReadContext;
+  externalServiceIds?: number[];
+  limit?: number;
+}): Promise<ExternalIncidentListItem[]> {
+  const { ctx, externalServiceIds } = args;
+  if (externalServiceIds && externalServiceIds.length === 0) return [];
+  const db = ctx?.db ?? defaultDb;
+  return retryRead(() =>
+    db
+      .select(INCIDENT_COLUMNS)
+      .from(externalServiceIncident)
+      .where(
+        and(
+          isNull(externalServiceIncident.resolvedAt),
+          externalServiceIds
+            ? inArray(
+                externalServiceIncident.externalServiceId,
+                externalServiceIds,
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(externalServiceIncident.createdAt))
+      .limit(args.limit ?? OVERLAY_LIMIT)
+      .all(),
+  );
 }
 
 // Incidents whose Atlassian `components[]` array tagged this component (matched

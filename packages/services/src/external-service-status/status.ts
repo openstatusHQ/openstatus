@@ -13,8 +13,12 @@ import {
   listExternalIncidentsByComponent,
   listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
+  listOpenExternalIncidents,
 } from "../external-service-incident";
-import { getServiceReportWindows } from "../external-service-report";
+import {
+  getComponentReportWindows,
+  getServiceReportWindows,
+} from "../external-service-report";
 import {
   REPORT_THRESHOLD,
   REPORT_WINDOW_MS,
@@ -22,6 +26,7 @@ import {
   type StatusLabel,
   computeEffectiveStatus,
   getStatusAnswer,
+  isFresh,
   isProblem,
   severityOf,
   statusLabel,
@@ -268,40 +273,78 @@ export async function getExternalServiceStatus(args: {
         service: serviceOut,
       };
     }
-    const incidents = await settle(
-      listExternalIncidentsByComponent({
-        externalServiceId: service.id,
-        upstreamComponentId: component.upstreamComponentId,
-        limit: RECENT_INCIDENTS,
-      }),
-      [],
-      "listExternalIncidentsByComponent",
-    );
+    const [incidents, componentWindows] = await Promise.all([
+      settle(
+        listExternalIncidentsByComponent({
+          externalServiceId: service.id,
+          upstreamComponentId: component.upstreamComponentId,
+          limit: RECENT_INCIDENTS,
+        }),
+        [],
+        "listExternalIncidentsByComponent",
+      ),
+      settle(
+        getComponentReportWindows({ serviceId: service.id, since }),
+        [],
+        "getComponentReportWindows",
+      ),
+    ]);
+    const componentReporters =
+      componentWindows.find((w) => w.componentId === component.id)
+        ?.reporters ?? 0;
     const checkedAt = component.lastFetchedAt ?? 0;
-    const stale = checkedAt > 0 && Date.now() - checkedAt > STALE_THRESHOLD_MS;
-    const live = checkedAt > 0 && !stale;
+    const stale = checkedAt > 0 && !isFresh(checkedAt);
+    const live = isFresh(checkedAt);
+    const componentEffective = computeEffectiveStatus({
+      providerIndicator: live ? component.indicator : "",
+      providerStatus: live ? component.status : "",
+      reporters: componentReporters,
+      threshold: REPORT_THRESHOLD,
+    });
+    // Open incidents tagged with this component, or service-wide ones
+    // (no components listed), count as evidence like on the service.
+    const componentActive = [
+      ...incidents.filter((i) => i.resolvedAt == null),
+      ...open.filter(
+        (i) =>
+          i.resolvedAt == null &&
+          i.affectedComponentIds.length === 0 &&
+          !incidents.some((c) => c.id === i.id),
+      ),
+    ].map((i) => toIncident(i, service.statusPageUrl));
     const name = component.name
       .toLowerCase()
       .startsWith(service.name.toLowerCase())
       ? component.name
       : `${service.name} ${component.name}`;
-    const problem = live && isProblem(component);
+    const statusProblem =
+      (live || componentEffective.escalated) && isProblem(componentEffective);
+    const problem = statusProblem || componentActive.length > 0;
     const answer = getStatusAnswer({
       name,
-      indicator: component.indicator,
-      status: component.status,
-      hasLiveData: live,
+      indicator: componentEffective.indicator,
+      status: componentEffective.status,
+      hasLiveData: live || componentEffective.escalated,
     });
+    const verdict =
+      componentActive.length > 0 && !statusProblem
+        ? `${service.name} reports an open incident affecting ${name}: "${componentActive[0].title}".`
+        : problem
+          ? answer
+          : `${answer} ${LAG_NOTE}`;
     return {
       found: true,
-      verdict: problem ? answer : `${answer} ${LAG_NOTE}`,
+      verdict,
       reportsProblem: problem,
-      status: live ? statusLabel(component) : "unknown",
-      escalatedByUserReports: false,
+      status:
+        live || componentEffective.escalated
+          ? statusLabel(componentEffective)
+          : "unknown",
+      escalatedByUserReports: componentEffective.escalated,
       checkedAt: checkedAt ? new Date(checkedAt).toISOString() : null,
       stale,
       providerMessage: null,
-      userReportsLast15Minutes: reporters,
+      userReportsLast15Minutes: componentReporters,
       service: serviceOut,
       component: {
         name: component.name,
@@ -310,9 +353,7 @@ export async function getExternalServiceStatus(args: {
       },
       affectedComponents: [],
       affectedComponentCount: 0,
-      activeIncidents: incidents
-        .filter((i) => i.resolvedAt == null)
-        .map((i) => toIncident(i, service.statusPageUrl)),
+      activeIncidents: componentActive,
       recentIncidents: incidents.map((i) =>
         toIncident(i, service.statusPageUrl),
       ),
@@ -378,6 +419,7 @@ export type ActiveIssue = {
   status: StatusLabel;
   escalatedByUserReports: boolean;
   providerMessage: string | null;
+  openIncident: string | null;
   url: string;
 };
 
@@ -387,6 +429,10 @@ const MIN_SEVERITY: Record<string, number> = {
   major_outage: 3,
 };
 
+function aliasesOf(r: ExternalServiceRow): string[] {
+  return Array.isArray(r.aliases) ? r.aliases : [];
+}
+
 /** Every tracked service with a problem right now, worst first. */
 export async function listActiveExternalIssues(args: {
   services?: string[];
@@ -395,26 +441,26 @@ export async function listActiveExternalIssues(args: {
   limit?: number;
 }): Promise<{ total: number; issues: ActiveIssue[]; unknown: string[] }> {
   const rows = (await cachedServices()).filter((r) => r.deletedAt == null);
+  const filtered = args.services != null && args.services.length > 0;
   let pool = rows;
   const unknown: string[] = [];
-  if (args.services && args.services.length > 0) {
+  if (filtered) {
+    const candidates = rows.map((r) => ({ ...r, aliases: aliasesOf(r) }));
     const picked = new Map<number, ExternalServiceRow>();
-    for (const q of args.services) {
-      const { match } = resolveByName(
-        rows.map((r) => ({
-          ...r,
-          aliases: Array.isArray(r.aliases) ? r.aliases : [],
-        })),
-        q,
-      );
+    for (const q of args.services ?? []) {
+      const { match } = resolveByName(candidates, q);
       if (match) picked.set(match.id, match);
       else unknown.push(q);
     }
     pool = [...picked.values()];
+    // `latestFor([])` means every service, so stop before asking.
+    if (pool.length === 0) return { total: 0, issues: [], unknown };
   }
 
-  const [latestRows, windows] = await Promise.all([
-    latestFor(args.services?.length ? pool.map((r) => r.slug) : []),
+  const [latestRows, windows, openIncidents] = await Promise.all([
+    latestFor(
+      filtered ? pool.flatMap((r) => [r.slug, ...aliasesOf(r)]) : [],
+    ),
     settle(
       getServiceReportWindows({
         serviceIds: pool.map((r) => r.id),
@@ -423,16 +469,34 @@ export async function listActiveExternalIssues(args: {
       [],
       "getServiceReportWindows",
     ),
+    settle(
+      listOpenExternalIncidents({
+        externalServiceIds: filtered ? pool.map((r) => r.id) : undefined,
+      }),
+      [],
+      "listOpenExternalIncidents",
+    ),
   ]);
-  const latestById = new Map(latestRows.map((r) => [r.id, r]));
+  const latestBySlug = new Map(latestRows.map((r) => [r.id, r]));
   const reportersById = new Map(
     windows.map((w) => [w.externalServiceId, w.reporters]),
   );
+  // Newest first, so the first one seen per service is its latest.
+  const incidentById = new Map<number, string>();
+  for (const i of openIncidents) {
+    if (!incidentById.has(i.externalServiceId)) {
+      incidentById.set(i.externalServiceId, i.name);
+    }
+  }
   const minSeverity = args.minImpact ? MIN_SEVERITY[args.minImpact] : 1;
 
   const issues = pool
     .flatMap((s) => {
-      const snap = latestById.get(s.slug);
+      // A renamed service keeps old snapshots under an alias: take the newest.
+      const snap = [s.slug, ...aliasesOf(s)]
+        .map((slug) => latestBySlug.get(slug))
+        .filter((r): r is LatestRow => r != null)
+        .sort((a, b) => b.last_fetched_at - a.last_fetched_at)[0];
       const fresh =
         snap != null && Date.now() - snap.last_fetched_at <= STALE_THRESHOLD_MS;
       const effective = computeEffectiveStatus({
@@ -441,15 +505,21 @@ export async function listActiveExternalIssues(args: {
         reporters: reportersById.get(s.id) ?? 0,
         threshold: REPORT_THRESHOLD,
       });
+      const openIncident = incidentById.get(s.id) ?? null;
       const maintenance = effective.status === "under_maintenance";
+      // An open incident counts as at least a minor issue, even when the
+      // snapshot is calm, stale or missing.
+      const severity = maintenance
+        ? 0
+        : Math.max(severityOf(effective.indicator), openIncident ? 1 : 0);
       const keep =
         (maintenance && args.includeMaintenance) ||
-        (!maintenance && severityOf(effective.indicator) >= minSeverity);
+        (!maintenance && severity >= minSeverity);
       if (!keep) return [];
-      const message = snap?.status_message?.trim() ?? "";
+      const message = fresh ? snap.status_message.trim() : "";
       return [
         {
-          severity: maintenance ? 0 : severityOf(effective.indicator),
+          severity,
           issue: {
             name: s.name,
             slug: s.slug,
@@ -458,6 +528,7 @@ export async function listActiveExternalIssues(args: {
             providerMessage: GENERIC_MESSAGES.has(message.toLowerCase())
               ? null
               : message,
+            openIncident,
             url: pageUrl(s.slug),
           },
         },

@@ -128,6 +128,10 @@ const ListActiveIssuesOutput = z.object({
       status: STATUS,
       escalatedByUserReports: z.boolean(),
       providerMessage: z.string().nullable(),
+      openIncident: z
+        .string()
+        .nullable()
+        .describe("Title of the newest open incident, if any"),
       url: z.string(),
     }),
   ),

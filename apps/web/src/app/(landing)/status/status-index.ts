@@ -1,3 +1,8 @@
+import {
+  isProblem,
+  problemRank,
+} from "@openstatus/services/external-service-status/effective";
+
 import { filterServices } from "./filter-services";
 
 export const STATUS_PAGE_SIZE = 60;
@@ -10,8 +15,6 @@ export function letterOf(name: string): string {
   return first >= "a" && first <= "z" ? first : "0";
 }
 
-const SEVERITY: Record<string, number> = { minor: 1, major: 2, critical: 3 };
-
 type IndexService = {
   slug: string;
   name: string;
@@ -22,17 +25,10 @@ type IndexService = {
 };
 
 export function hasIssue(s: IndexService): boolean {
-  return (
-    (SEVERITY[s.indicator] ?? 0) > 0 ||
-    s.status === "under_maintenance" ||
-    s.escalated
-  );
+  return isProblem(s) || s.escalated;
 }
 
-function issueRank(s: IndexService): number {
-  if (s.status === "under_maintenance") return 0;
-  return SEVERITY[s.indicator] ?? 0;
-}
+const issueRank = problemRank;
 
 export function buildStatusIndex<T extends IndexService>(args: {
   services: T[];

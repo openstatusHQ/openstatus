@@ -6,11 +6,10 @@ import Link from "next/link";
 import { api } from "../../../../trpc/rq-client";
 import { ServiceStatusLabel } from "../external-service-pill";
 import { StatusSection } from "../service-blocks";
-import { formatRelative } from "../utils";
+import { formatRelative, isFresh, isProblem, problemRank } from "../utils";
 
 const ROW =
   "hover:bg-muted! grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 px-3 py-2 no-underline! transition-colors duration-150 motion-reduce:transition-none";
-const SEVERITY: Record<string, number> = { minor: 1, major: 2, critical: 3 };
 const AFFECTED_SHOWN = 8;
 
 export function AffectedNow({
@@ -30,16 +29,11 @@ export function AffectedNow({
   });
   const [incidents] = api.externalService.incidents.useSuspenseQuery({ slug });
 
+  // Only fresh readings count as "right now"; the list keeps components
+  // seen in the last 24h, so an old outage could otherwise linger here.
   const affected = components.components
-    .filter(
-      (c) =>
-        (SEVERITY[c.indicator] ?? 0) > 0 || c.status === "under_maintenance",
-    )
-    .sort(
-      (a, b) =>
-        (SEVERITY[b.indicator] ?? 0) - (SEVERITY[a.indicator] ?? 0) ||
-        a.position - b.position,
-    );
+    .filter((c) => isFresh(c.lastFetchedAt) && isProblem(c))
+    .sort((a, b) => problemRank(b) - problemRank(a) || a.position - b.position);
   const active = incidents.incidents.filter((i) => !i.resolvedAt);
 
   if (affected.length === 0 && active.length === 0) return null;

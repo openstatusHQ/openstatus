@@ -4,10 +4,11 @@ export function normalize(value: string): string {
   return value.trim().toLowerCase();
 }
 
+// Linear on purpose: the input is untrusted (MCP callers), so no regex that
+// backtracks on long runs of "-".
 export function slugify(value: string): string {
-  return normalize(value)
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  const parts = normalize(value).split(/[^a-z0-9]+/);
+  return parts.filter((p) => p.length > 0).join("-");
 }
 
 /**
@@ -21,7 +22,8 @@ export function resolveByName<T extends Named>(
 ): { match: T | null; suggestions: T[] } {
   const q = normalize(query);
   const qSlug = slugify(query);
-  if (!q) return { match: null, suggestions: [] };
+  // "!!!" has no letters or digits; an empty slug would prefix-match everything.
+  if (!q || !qSlug) return { match: null, suggestions: [] };
 
   const exact = rows.find(
     (r) =>
