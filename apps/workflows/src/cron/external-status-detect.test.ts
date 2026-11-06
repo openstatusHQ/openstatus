@@ -8,6 +8,7 @@ import {
   decideDetectionAction,
   isBlocked,
   isSuspicious,
+  isTransientDbError,
   shouldProbe,
 } from "./external-status-detect";
 
@@ -70,6 +71,53 @@ describe("isSuspicious", () => {
     expect(isSuspicious(fetchError({ kind: "network" }))).toBe(false);
     expect(isSuspicious(fetchError({ kind: "timeout" }))).toBe(false);
     expect(isSuspicious(fetchError({}))).toBe(false);
+  });
+});
+
+describe("isTransientDbError", () => {
+  const upsertError = (cause: Error) => new FetchError({ url: URL, cause });
+
+  test("busy, locked and Turso 5xx upsert failures are transient", () => {
+    expect(
+      isTransientDbError(upsertError(new Error("database is locked"))),
+    ).toBe(true);
+    expect(
+      isTransientDbError(
+        upsertError(new Error("Server returned HTTP status 502")),
+      ),
+    ).toBe(true);
+  });
+
+  test("a stalled Turso connection is transient", () => {
+    const stalled = new Error("Failed query: select ...", {
+      cause: new TypeError("fetch failed", {
+        cause: new Error('HTTP/2: "headers timeout after 300000"'),
+      }),
+    });
+    expect(isTransientDbError(upsertError(stalled))).toBe(true);
+  });
+
+  test("permanent upsert failures are not", () => {
+    expect(
+      isTransientDbError(
+        upsertError(new Error("UNIQUE constraint failed: slug")),
+      ),
+    ).toBe(false);
+  });
+
+  test("upstream fetch failures are not", () => {
+    expect(
+      isTransientDbError(fetchError({ kind: "http", httpStatus: 503 })),
+    ).toBe(false);
+    expect(
+      isTransientDbError(
+        new FetchError({
+          url: URL,
+          kind: "network",
+          cause: new TypeError("fetch failed"),
+        }),
+      ),
+    ).toBe(false);
   });
 });
 

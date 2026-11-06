@@ -40,6 +40,7 @@ import {
   decideDetectionAction,
   isBlocked,
   isSuspicious,
+  isTransientDbError,
   shouldProbe,
 } from "./external-status-detect";
 
@@ -236,12 +237,14 @@ function runIncidentPhase(
         ),
         Effect.catch((err: FetchError) =>
           Effect.sync<IncidentPhaseOutcome>(() => {
-            reportFetchFailure({
-              phase: "incidents",
-              slug: entry.id,
-              error: err,
-              level: isBlocked(err) ? "warning" : undefined,
-            });
+            if (!isTransientDbError(err)) {
+              reportFetchFailure({
+                phase: "incidents",
+                slug: entry.id,
+                error: err,
+                level: isBlocked(err) ? "warning" : undefined,
+              });
+            }
             return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),
@@ -307,12 +310,14 @@ function runComponentPhase(
         ),
         Effect.catch((err: FetchError) =>
           Effect.sync<ComponentPhaseOutcome>(() => {
-            reportFetchFailure({
-              phase: "components",
-              slug: entry.id,
-              error: err,
-              level: isBlocked(err) ? "warning" : undefined,
-            });
+            if (!isTransientDbError(err)) {
+              reportFetchFailure({
+                phase: "components",
+                slug: entry.id,
+                error: err,
+                level: isBlocked(err) ? "warning" : undefined,
+              });
+            }
             return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),

@@ -1,3 +1,7 @@
+import {
+  isRetryableDbError,
+  isTransientServerError,
+} from "@openstatus/services";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
 import type {
   DetectionResult,
@@ -38,6 +42,34 @@ export function isBlocked(err: FetchError): boolean {
     err.kind === "http" &&
     err.httpStatus !== undefined &&
     BLOCKED_STATUSES.has(err.httpStatus)
+  );
+}
+
+const MAX_CAUSE_DEPTH = 10;
+
+// undici surfaces every connection-level failure (reset, headers timeout) as
+// `TypeError: fetch failed`, with the specific error as its cause.
+function hasFetchFailedCause(err: FetchError): boolean {
+  let current = err.cause;
+  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+    if (!(current instanceof Error)) return false;
+    if (current instanceof TypeError && current.message === "fetch failed") {
+      return true;
+    }
+    current = current.cause;
+  }
+  return false;
+}
+
+// Upsert failures are wrapped in an untyped FetchError, unlike upstream failures
+// which always carry a `kind`. Busy/locked, Turso 5xx and dropped connections
+// clear on their own, and the next tick re-applies the same diff-based upsert.
+export function isTransientDbError(err: FetchError): boolean {
+  if (err.kind !== undefined) return false;
+  return (
+    isRetryableDbError(err) ||
+    isTransientServerError(err) ||
+    hasFetchFailedCause(err)
   );
 }
 
