@@ -27,7 +27,6 @@ import {
   regenerateHeartbeatToken,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
-  updateMonitorHeartbeat,
   updateMonitorNotifiers,
   updateMonitorOtel,
   updateMonitorPublic,
@@ -398,25 +397,13 @@ export const monitorRouter = createTRPCRouter({
           active: input.active,
           grpcService: input.grpcService,
           grpcTls: input.grpcTls,
+          heartbeatPeriod: input.heartbeatPeriod,
+          heartbeatGrace: input.heartbeatGrace,
         };
         await updateMonitorGeneral({
           ctx: toServiceCtx(ctx),
           input: serviceInput,
         });
-        if (
-          input.jobType === "heartbeat" &&
-          input.heartbeatPeriod !== undefined &&
-          input.heartbeatGrace !== undefined
-        ) {
-          await updateMonitorHeartbeat({
-            ctx: toServiceCtx(ctx),
-            input: {
-              id: input.id,
-              heartbeatPeriod: input.heartbeatPeriod,
-              heartbeatGrace: input.heartbeatGrace,
-            },
-          });
-        }
       } catch (err) {
         toTRPCError(err);
       }

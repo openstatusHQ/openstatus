@@ -3,13 +3,8 @@
 import { Check, Copy, Refresh } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import {
-  HEARTBEAT_GRACE_RANGE,
-  HEARTBEAT_PERIOD_RANGE,
-} from "@openstatus/utils";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Link } from "@/components/common/link";
 import {
@@ -21,17 +16,6 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-
-export const heartbeatPeriodSchema = z
-  .number({ error: "Period is required" })
-  .int()
-  .min(HEARTBEAT_PERIOD_RANGE.min, "At least 1 minute")
-  .max(HEARTBEAT_PERIOD_RANGE.max, "At most 30 days");
-export const heartbeatGraceSchema = z
-  .number({ error: "Grace period is required" })
-  .int()
-  .min(HEARTBEAT_GRACE_RANGE.min, "At least 1 minute")
-  .max(HEARTBEAT_GRACE_RANGE.max, "At most 7 days");
 
 export function heartbeatSnippets(pingUrl: string) {
   return {

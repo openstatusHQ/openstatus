@@ -92,6 +92,7 @@ export function FormMonitorUpdate() {
           queryKey: trpc.monitor.list.queryKey(),
         });
         refetch();
+        if (isHeartbeat) refetchHeartbeat();
       },
       onError: (err) => {
         // TODO: open dialog
@@ -151,8 +152,8 @@ export function FormMonitorUpdate() {
           grpcTls: monitor.grpcTls ?? "tls",
           skipCheck: false,
           saveCheck: false,
-          heartbeatPeriod: monitor.heartbeatPeriod ?? 3_600,
-          heartbeatGrace: monitor.heartbeatGrace ?? 300,
+          heartbeatPeriod: monitor.heartbeatPeriod ?? undefined,
+          heartbeatGrace: monitor.heartbeatGrace ?? undefined,
         }}
         onSubmit={async (values) => {
           await updateGeneralMutation.mutateAsync({
@@ -172,7 +173,6 @@ export function FormMonitorUpdate() {
             heartbeatPeriod: values.heartbeatPeriod,
             heartbeatGrace: values.heartbeatGrace,
           });
-          if (isHeartbeat) refetchHeartbeat();
         }}
       />
       {isHeartbeat && heartbeat?.pingUrl ? (
