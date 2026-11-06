@@ -511,24 +511,24 @@ export const externalServiceRouter = createTRPCRouter({
               threshold: REPORT_THRESHOLD,
             });
             return {
-            id: c.id,
-            slug: c.slug,
-            name: c.name,
-            description: c.description,
-            groupName: c.groupName,
-            position: c.position,
-            indicator: effective.indicator,
-            status: effective.status,
-            lastFetchedAt: c.lastFetchedAt ?? 0,
-            escalated: effective.escalated,
-            history: (historyByComponent.get(String(c.id)) ?? []).map(
-              toHistoryRow,
-            ),
-            incidents: serviceIncidents
-              .filter((inc) =>
-                incidentAffectsComponent(inc, c.upstreamComponentId),
-              )
-              .map(toIncidentDTO),
+              id: c.id,
+              slug: c.slug,
+              name: c.name,
+              description: c.description,
+              groupName: c.groupName,
+              position: c.position,
+              indicator: effective.indicator,
+              status: effective.status,
+              lastFetchedAt: c.lastFetchedAt ?? 0,
+              escalated: effective.escalated,
+              history: (historyByComponent.get(String(c.id)) ?? []).map(
+                toHistoryRow,
+              ),
+              incidents: serviceIncidents
+                .filter((inc) =>
+                  incidentAffectsComponent(inc, c.upstreamComponentId),
+                )
+                .map(toIncidentDTO),
             };
           }),
         };

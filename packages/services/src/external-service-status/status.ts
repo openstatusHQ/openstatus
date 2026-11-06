@@ -290,8 +290,8 @@ export async function getExternalServiceStatus(args: {
       ),
     ]);
     const componentReporters =
-      componentWindows.find((w) => w.componentId === component.id)
-        ?.reporters ?? 0;
+      componentWindows.find((w) => w.componentId === component.id)?.reporters ??
+      0;
     const checkedAt = component.lastFetchedAt ?? 0;
     const stale = checkedAt > 0 && !isFresh(checkedAt);
     const live = isFresh(checkedAt);
@@ -458,9 +458,7 @@ export async function listActiveExternalIssues(args: {
   }
 
   const [latestRows, windows, openIncidents] = await Promise.all([
-    latestFor(
-      filtered ? pool.flatMap((r) => [r.slug, ...aliasesOf(r)]) : [],
-    ),
+    latestFor(filtered ? pool.flatMap((r) => [r.slug, ...aliasesOf(r)]) : []),
     settle(
       getServiceReportWindows({
         serviceIds: pool.map((r) => r.id),

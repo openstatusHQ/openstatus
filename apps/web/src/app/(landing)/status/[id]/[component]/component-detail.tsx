@@ -72,9 +72,7 @@ function OtherComponents({
   });
   const others = data.components
     .filter((c) => c.slug !== currentSlug)
-    .sort(
-      (a, b) => problemRank(b) - problemRank(a) || a.position - b.position,
-    );
+    .sort((a, b) => problemRank(b) - problemRank(a) || a.position - b.position);
   if (others.length === 0) return null;
 
   return (

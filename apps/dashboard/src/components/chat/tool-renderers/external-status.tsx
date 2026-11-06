@@ -47,7 +47,10 @@ export function getServiceStatusDetails(
                 {
                   label: "Component",
                   value: (
-                    <TableCellLink href={component.url} value={component.name} />
+                    <TableCellLink
+                      href={component.url}
+                      value={component.name}
+                    />
                   ),
                 },
               ]

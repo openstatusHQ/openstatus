@@ -99,13 +99,18 @@ export function renderHistory(rows: MdHistoryDay[], days: number): string {
   if (tracked === 0) return `## Last ${days} days\n\nNo history yet.\n\n`;
   let md = `## Last ${days} days\n\n`;
   md += `${tracked - issueDays} of ${tracked} tracked days without issues.\n\n`;
-  const worstByDay = new Map<string, { indicator: string; maintenance: boolean }>();
+  const worstByDay = new Map<
+    string,
+    { indicator: string; maintenance: boolean }
+  >();
   for (const r of rows) {
     const key = r.day.slice(0, 10);
     const prev = worstByDay.get(key);
-    const maintenance = (prev?.maintenance ?? false) || Boolean(r.hadMaintenance);
+    const maintenance =
+      (prev?.maintenance ?? false) || Boolean(r.hadMaintenance);
     const indicator =
-      !prev || (SEVERITY[r.worstIndicator] ?? 0) > (SEVERITY[prev.indicator] ?? 0)
+      !prev ||
+      (SEVERITY[r.worstIndicator] ?? 0) > (SEVERITY[prev.indicator] ?? 0)
         ? r.worstIndicator
         : prev.indicator;
     worstByDay.set(key, { indicator, maintenance });

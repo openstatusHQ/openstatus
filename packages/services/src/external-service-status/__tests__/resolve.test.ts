@@ -53,6 +53,9 @@ describe("resolveByName", () => {
   test("nothing for an empty or unknown query", () => {
     expect(resolveByName(rows, "  ")).toEqual({ match: null, suggestions: [] });
     expect(resolveByName(rows, "zzz").suggestions).toEqual([]);
-    expect(resolveByName(rows, "!!!")).toEqual({ match: null, suggestions: [] });
+    expect(resolveByName(rows, "!!!")).toEqual({
+      match: null,
+      suggestions: [],
+    });
   });
 });

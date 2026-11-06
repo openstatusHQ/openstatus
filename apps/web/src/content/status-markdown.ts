@@ -1,10 +1,3 @@
-import {
-  REPORT_THRESHOLD,
-  REPORT_WINDOW_MINUTES,
-  REPORT_WINDOW_MS,
-  computeEffectiveStatus,
-  isFresh,
-} from "@openstatus/services/external-service-status/effective";
 import { listExternalComponentsBySlug } from "@openstatus/services/external-service-component";
 import {
   type ExternalIncidentListItem,
@@ -18,6 +11,13 @@ import {
   getServiceReportDaily,
   getServiceReportWindows,
 } from "@openstatus/services/external-service-report";
+import {
+  REPORT_THRESHOLD,
+  REPORT_WINDOW_MINUTES,
+  REPORT_WINDOW_MS,
+  computeEffectiveStatus,
+  isFresh,
+} from "@openstatus/services/external-service-status/effective";
 import { safePipeData } from "@openstatus/tinybird";
 
 import { getComponentFullName } from "../app/(landing)/status/utils";

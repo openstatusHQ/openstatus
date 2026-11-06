@@ -487,8 +487,7 @@ export const toolRenderers: ToolRendererRegistry = {
     renderResult: ({ output }) => (
       <ResultTable {...listActiveIssuesTable(output)} />
     ),
-    summary: (o) =>
-      `${o.total} service${o.total === 1 ? "" : "s"} with issues`,
+    summary: (o) => `${o.total} service${o.total === 1 ? "" : "s"} with issues`,
   },
 };
 

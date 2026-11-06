@@ -32,7 +32,8 @@ const card = {
           service: {
             type: "string",
             minLength: 1,
-            description: "Service name, slug or alias, e.g. GitHub, aws, Anthropic",
+            description:
+              "Service name, slug or alias, e.g. GitHub, aws, Anthropic",
           },
           component: {
             type: "string",

@@ -43,7 +43,12 @@ vi.mock("../../external-service-incident", () => ({
 
 const { listActiveExternalIssues } = await import("../status");
 
-function service(id: number, slug: string, name: string, aliases: string[] = []) {
+function service(
+  id: number,
+  slug: string,
+  name: string,
+  aliases: string[] = [],
+) {
   return { id, slug, name, aliases, deletedAt: null };
 }
 
