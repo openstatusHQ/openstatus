@@ -96,9 +96,21 @@ const aspect = (() => {
   if (flags.aspect === undefined) return null;
   const m = /^(\d+):(\d+)$/.exec(String(flags.aspect));
   const [w, h] = m ? [Number(m[1]), Number(m[2])] : [];
-  // 9999:1 is already absurd; the bound also keeps `\d+` from reaching Infinity
-  if (!m || !(w > 0 && w <= 9999) || !(h > 0 && h <= 9999)) {
-    console.error(`--aspect must look like 16:9, got ${flags.aspect}`);
+  // Between 1:4 and 4:1: wider or taller frames are not images anyone
+  // publishes, and the bound keeps the viewport (width × ratio) sane. The
+  // frame width is rounded up to a multiple of the reduced first term, so
+  // that term is capped at 2000 (and a long digit string never reaches
+  // Infinity).
+  if (
+    !m ||
+    !(w > 0 && w <= 2000) ||
+    !(h > 0 && h <= 2000) ||
+    w / h > 4 ||
+    h / w > 4
+  ) {
+    console.error(
+      `--aspect must look like 16:9, between 1:4 and 4:1, got ${flags.aspect}`,
+    );
     process.exit(2);
   }
   if (flags["full-page"]) {
@@ -117,7 +129,9 @@ const aspect = (() => {
     );
     process.exit(2);
   }
-  return { w, h };
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  const g = gcd(w, h);
+  return { w: w / g, h: h / g };
 })();
 // Pure, because it is also stringified into the page by `isolate`.
 function frame(w, h, ratio, pad) {

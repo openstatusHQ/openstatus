@@ -75,9 +75,11 @@ export function FormTimezone({
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   // Built on first open, not on mount: the search keywords take ~100 ms.
+  const [opened, setOpened] = useState(false);
+  if (open && !opened) setOpened(true);
   const zones = useMemo(
     () =>
-      open
+      opened
         ? // some engines list UTC themselves, others do not
           [...new Set(["UTC", ...Intl.supportedValuesOf("timeZone")])].map(
             (zone) => ({
@@ -87,7 +89,7 @@ export function FormTimezone({
             }),
           )
         : [],
-    [open],
+    [opened],
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),

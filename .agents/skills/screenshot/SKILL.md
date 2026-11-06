@@ -107,7 +107,7 @@ it and the script sets it itself when unset. No `agent-browser install`.
 | `--out` | `.screenshots/<branch>[/<label>]` | gitignored; overrides branch and label |
 | `--width` | `1400` | desktop viewport width, 2× device scale |
 | `--full-page` | off | full-page capture when no selector |
-| `--aspect` | off | `16:9` frames the shot at that exact ratio: a selector match centered on the page background with at least 48 px around it, or a page shot with a viewport of that ratio (width rounded up to a multiple of 16; desktop only, so it defaults to `--device desktop` and refuses `mobile`/`both`). Not with `--full-page` |
+| `--aspect` | off | `16:9` (any ratio between 1:4 and 4:1, terms up to 2000) frames the shot at that exact ratio: a selector match centered on the page background with at least 48 px around it, or a page shot with a viewport of that ratio (width rounded up to a multiple of 16; desktop only, so it defaults to `--device desktop` and refuses `mobile`/`both`). Not with `--full-page` |
 | `--base` | per app | override the dev server URL |
 | `--db` | `http://127.0.0.1:8080` | sqld HTTP endpoint for the session lookup |
 | `--user` | | pick the session of this email |
