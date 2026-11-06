@@ -76,12 +76,25 @@ beforeEach(() => {
 });
 
 describe("listActiveExternalIssues", () => {
-  test("an open incident counts even when the snapshot is calm or stale", async () => {
+  test("an open incident counts when the snapshot is calm", async () => {
     mocks.latest = [snapshot("github", "none"), snapshot("calm", "none")];
     mocks.open = [{ externalServiceId: 1, name: "Actions delayed" }];
     const res = await listActiveExternalIssues({});
     expect(res.issues.map((i) => [i.slug, i.openIncident])).toEqual([
       ["github", "Actions delayed"],
+    ]);
+  });
+
+  test("an open incident counts when the snapshot is stale or missing", async () => {
+    mocks.latest = [snapshot("github", "none", 2 * 60 * 60 * 1000)];
+    mocks.open = [
+      { externalServiceId: 1, name: "Actions delayed" },
+      { externalServiceId: 2, name: "API errors" },
+    ];
+    const res = await listActiveExternalIssues({});
+    expect(res.issues.map((i) => [i.slug, i.status, i.openIncident])).toEqual([
+      ["acme", "unknown", "API errors"],
+      ["github", "unknown", "Actions delayed"],
     ]);
   });
 

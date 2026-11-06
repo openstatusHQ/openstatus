@@ -3,7 +3,9 @@ import { describe, expect, test } from "vitest";
 import {
   computeEffectiveStatus,
   getStatusAnswer,
+  isFresh,
   isProblem,
+  problemRank,
   statusLabel,
 } from "../effective";
 
@@ -60,5 +62,26 @@ describe("labels", () => {
     ).toBe(
       "We don't have live data for Acme right now. Check the official Acme status page.",
     );
+  });
+});
+
+describe("isFresh", () => {
+  const now = 1_000_000_000_000;
+  test("live under 30 minutes, not after", () => {
+    expect(isFresh(now - 29 * 60_000, now)).toBe(true);
+    expect(isFresh(now - 31 * 60_000, now)).toBe(false);
+    expect(isFresh(0, now)).toBe(false);
+  });
+  test("a far-future timestamp is invalid, a little skew is fine", () => {
+    expect(isFresh(now + 30_000, now)).toBe(true);
+    expect(isFresh(now + 10 * 60_000, now)).toBe(false);
+  });
+});
+
+describe("problemRank", () => {
+  test("maintenance ranks below outages even with a severe indicator", () => {
+    expect(problemRank({ indicator: "critical", status: "under_maintenance" })).toBe(0.5);
+    expect(problemRank({ indicator: "minor", status: "" })).toBe(1);
+    expect(problemRank({ indicator: "none", status: "" })).toBe(0);
   });
 });

@@ -505,8 +505,12 @@ export const externalServiceRouter = createTRPCRouter({
           supported: true,
           components: components.map((c) => {
             const effective = computeEffectiveStatus({
-              providerIndicator: c.indicator,
-              providerStatus: c.status,
+              // The list keeps components seen in the last 24h; only a
+              // reading under 30 minutes old counts as their status now.
+              providerIndicator: isFresh(c.lastFetchedAt ?? 0)
+                ? c.indicator
+                : "",
+              providerStatus: isFresh(c.lastFetchedAt ?? 0) ? c.status : "",
               reporters: reportersById.get(c.id) ?? 0,
               threshold: REPORT_THRESHOLD,
             });

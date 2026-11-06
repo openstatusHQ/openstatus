@@ -40,14 +40,22 @@ export function isProblem(s: { indicator: string; status: string }): boolean {
 
 // Sort key for "worst first": outages, then maintenance, then calm.
 export function problemRank(s: { indicator: string; status: string }): number {
-  const severity = severityOf(s.indicator);
-  if (severity > 0) return severity;
-  return s.status === "under_maintenance" ? 0.5 : 0;
+  // Maintenance wins over the indicator, as in statusLabel and getStatusAnswer.
+  if (s.status === "under_maintenance") return 0.5;
+  return severityOf(s.indicator);
 }
 
+// A minute of clock skew between the fetcher and this machine is tolerated.
+const FUTURE_SKEW_MS = 60_000;
+
 // A reading counts as live only when it exists and is under 30 minutes old.
+// A timestamp further in the future than the skew is invalid, not fresh.
 export function isFresh(checkedAtMs: number, now = Date.now()): boolean {
-  return checkedAtMs > 0 && now - checkedAtMs <= STALE_THRESHOLD_MS;
+  return (
+    checkedAtMs > 0 &&
+    checkedAtMs <= now + FUTURE_SKEW_MS &&
+    now - checkedAtMs <= STALE_THRESHOLD_MS
+  );
 }
 
 export type StatusLabel =

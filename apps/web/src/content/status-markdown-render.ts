@@ -67,7 +67,7 @@ function day(d: Date): string {
 // as emphasis, links, code, HTML or a heading, so they cannot reshape the doc.
 export function mdText(value: string): string {
   return value
-    .replace(/[\\`*_[\]<>#|]/g, (c) => `\\${c}`)
+    .replace(/[\\`*_[\]<>#|~]/g, (c) => `\\${c}`)
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -195,12 +195,21 @@ export function renderServiceMarkdown(args: {
   }
 
   if (args.components && args.components.length > 0) {
-    const ok = args.components.length - affected.length;
+    // Components without a live reading are unknown, never "operational".
+    const unknown = args.components.filter(
+      (c) => statusLabel(c) === "unknown",
+    ).length;
+    const ok = args.components.length - affected.length - unknown;
+    const parts = [
+      affected.length > 0 ? `${affected.length} with issues (listed above)` : null,
+      ok > 0 ? `${ok} operational` : null,
+      unknown > 0 ? `${unknown} without live data` : null,
+    ].filter(Boolean);
     md += `## Components (${args.components.length})\n\n`;
     md +=
-      affected.length === 0
+      affected.length === 0 && unknown === 0
         ? "All components operational.\n\n"
-        : `${affected.length} with issues (listed above), ${ok} operational.\n\n`;
+        : `${parts.join(", ")}.\n\n`;
     md += `Each component has its own page: /status/${args.slug}/{component}.md, for example /status/${args.slug}/${args.components[0].slug}.md\n\n`;
   }
 

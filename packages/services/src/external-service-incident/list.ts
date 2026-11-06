@@ -103,7 +103,8 @@ export async function listExternalIncidentsByServiceId(args: {
 }
 
 // Every incident still open, optionally limited to some services. Uses the
-// `resolved_at` index; the open set stays small (a few dozen at most).
+// `resolved_at` index. No default cap: the open set is small, and a cap would
+// silently drop services from "what is broken right now".
 export async function listOpenExternalIncidents(args: {
   ctx?: GlobalReadContext;
   externalServiceIds?: number[];
@@ -127,8 +128,14 @@ export async function listOpenExternalIncidents(args: {
             : undefined,
         ),
       )
-      .orderBy(desc(externalServiceIncident.createdAt))
-      .limit(args.limit ?? OVERLAY_LIMIT)
+      .orderBy(
+        desc(
+          sql`COALESCE(${externalServiceIncident.startedAt}, ${externalServiceIncident.createdAt})`,
+        ),
+        desc(externalServiceIncident.createdAt),
+      )
+      // SQLite reads LIMIT -1 as no limit.
+      .limit(args.limit ?? -1)
       .all(),
   );
 }

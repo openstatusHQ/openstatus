@@ -99,7 +99,10 @@ export function listActiveIssuesTable(
 ): ResultTableData<"name" | "status" | "message"> {
   const issues = output?.issues ?? [];
   return {
-    empty: "No tracked service reports a problem right now.",
+    empty:
+      output.unknown.length > 0
+        ? `No active issues. Not tracked: ${output.unknown.join(", ")}.`
+        : "No tracked service reports a problem right now.",
     columns: [
       { key: "name", header: "Service" },
       { key: "status", header: "Status" },
@@ -112,7 +115,14 @@ export function listActiveIssuesTable(
         status: <TableCellText value={statusText(i.status)} />,
         message: (
           <TableCellText
-            value={i.providerMessage ?? "—"}
+            value={
+              [
+                i.openIncident ? `Open incident: ${i.openIncident}` : null,
+                i.providerMessage,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "—"
+            }
             className="text-muted-foreground"
           />
         ),

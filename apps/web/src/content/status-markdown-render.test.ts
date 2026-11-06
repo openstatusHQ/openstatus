@@ -76,6 +76,27 @@ describe("renderServiceMarkdown", () => {
     expect(md).toContain("1 with issues (listed above), 1 operational.");
   });
 
+  test("components without a live reading are not called operational", () => {
+    const md = renderServiceMarkdown({
+      ...service,
+      components: service.components?.map((c) => ({
+        ...c,
+        indicator: "",
+        status: "",
+      })),
+    });
+    expect(md).toContain("2 without live data.");
+    expect(md).not.toContain("All components operational.");
+  });
+
+  test("escapes markdown in catalog text, strikethrough included", () => {
+    const md = renderServiceMarkdown({
+      ...service,
+      providerMessage: "~~fixed~~ *maybe*",
+    });
+    expect(md).toContain("\\~\\~fixed\\~\\~ \\*maybe\\*");
+  });
+
   test("incident durations: resolved and ongoing", () => {
     const md = renderServiceMarkdown(service);
     expect(md).toContain("| minor | ongoing |");
