@@ -12,10 +12,6 @@ A heartbeat monitor watches jobs that run on their own schedule: cron jobs, queu
 - Scheduled scripts on a server, in Kubernetes `CronJob`s or in CI.
 - Background workers that should report in at a steady pace.
 
-<Aside>
-Heartbeat monitors are being rolled out gradually. If you cannot create one in your workspace yet, contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev) to have it enabled.
-</Aside>
-
 ## How it works
 
 1. Create a heartbeat monitor and set how often your job runs (**period**) and how late a ping may be (**grace period**).

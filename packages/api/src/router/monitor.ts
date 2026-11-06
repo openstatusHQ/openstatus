@@ -40,7 +40,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
-import { heartbeatPingUrl, isHeartbeatEnabled } from "../lib/heartbeat";
+import { heartbeatPingUrl } from "../lib/heartbeat";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { tb } from "../tb";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -428,15 +428,6 @@ export const monitorRouter = createTRPCRouter({
     .input(newMonitorTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        if (
-          input.jobType === "heartbeat" &&
-          !isHeartbeatEnabled(ctx.workspace.id)
-        ) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Heartbeat monitors are not available yet",
-          });
-        }
         if (!isSelfHost && !input.skipCheck) {
           if (input.jobType === "http") {
             await testHttp({
@@ -494,10 +485,6 @@ export const monitorRouter = createTRPCRouter({
         toTRPCError(err);
       }
     }),
-
-  heartbeatAvailable: protectedProcedure.query(({ ctx }) =>
-    isHeartbeatEnabled(ctx.workspace.id),
-  ),
 
   heartbeat: protectedProcedure
     .input(z.object({ id: z.number() }))

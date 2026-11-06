@@ -1,4 +1,4 @@
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
@@ -39,7 +39,6 @@ import {
   triggerMonitorRun,
   updateMonitorConfig,
 } from "@openstatus/services/monitor";
-import { isHeartbeatAllowed } from "@openstatus/utils";
 
 import { env } from "../../../../env";
 import {
@@ -168,15 +167,6 @@ async function lastPingsByMonitor(
     }
   }
   return map;
-}
-
-function assertHeartbeatAllowed(workspaceId: number) {
-  if (!isHeartbeatAllowed(workspaceId, env.HEARTBEAT_WORKSPACE_IDS)) {
-    throw new ConnectError(
-      "Heartbeat monitors are not available yet",
-      Code.PermissionDenied,
-    );
-  }
 }
 
 /** Apply a built patch through the service and shape the proto response. */
@@ -357,7 +347,6 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     if (!req.monitor) {
       throw monitorRequiredError();
     }
-    assertHeartbeatAllowed(rpcCtx.workspace.id);
 
     const mon = req.monitor;
     try {

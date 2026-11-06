@@ -70,15 +70,17 @@ describe("MonitorService heartbeat", () => {
     expect(res.status).toBe(400);
   });
 
-  test("is gated to allowlisted workspaces", async () => {
+  test("is available to every workspace", async () => {
     const res = await connectRequest(
       "CreateHeartbeatMonitor",
       {
-        monitor: { name: "rpc-heartbeat-gated", period: "3600", grace: "300" },
+        monitor: { name: "rpc-heartbeat-other", period: "3600", grace: "300" },
       },
       OTHER_KEY,
     );
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    created.push(Number(data.monitor.id));
   });
 
   test("get and list return it with the last ping", async () => {
