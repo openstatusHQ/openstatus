@@ -121,7 +121,10 @@ export async function getComponentReportWindowsByIds(args: {
       .from(externalServiceReport)
       .where(
         and(
-          inArray(externalServiceReport.externalServiceComponentId, componentIds),
+          inArray(
+            externalServiceReport.externalServiceComponentId,
+            componentIds,
+          ),
           gte(externalServiceReport.createdAt, since),
         ),
       )
@@ -131,7 +134,13 @@ export async function getComponentReportWindowsByIds(args: {
   return rows.flatMap((r) =>
     r.componentId == null
       ? []
-      : [{ componentId: r.componentId, reporters: r.reporters, total: r.total }],
+      : [
+          {
+            componentId: r.componentId,
+            reporters: r.reporters,
+            total: r.total,
+          },
+        ],
   );
 }
 

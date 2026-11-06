@@ -309,9 +309,7 @@ export async function listExternalComponentsByRefs(args: {
   });
   if (matched.length === 0) return [];
 
-  const { byId } = await fetchLatestByIds(
-    matched.map((m) => String(m.row.id)),
-  );
+  const { byId } = await fetchLatestByIds(matched.map((m) => String(m.row.id)));
   return matched.map(({ service, row }) => ({
     service,
     component: { ...row, lastFetchedAt: byId.get(String(row.id)) ?? null },

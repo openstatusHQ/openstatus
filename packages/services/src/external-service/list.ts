@@ -1,4 +1,12 @@
-import { and, asc, db as defaultDb, eq, inArray, or, sql } from "@openstatus/db";
+import {
+  and,
+  asc,
+  db as defaultDb,
+  eq,
+  inArray,
+  or,
+  sql,
+} from "@openstatus/db";
 import {
   type ExternalService,
   apiConfigSchema,

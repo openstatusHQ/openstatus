@@ -7,14 +7,14 @@ import {
 import { afterEach, describe, expect, test } from "vitest";
 
 import { NotFoundError } from "../../errors";
+import { listExternalServicesBySlugs } from "../../external-service";
+import { listExternalComponentsByRefs } from "../../external-service-component";
 import {
   getComponentReportWindows,
   getServiceReportCountries,
   getServiceReportDaily,
   getServiceReportWindows,
 } from "../read";
-import { listExternalServicesBySlugs } from "../../external-service";
-import { listExternalComponentsByRefs } from "../../external-service-component";
 import { getComponentReportWindowsByIds } from "../read";
 import { recordExternalServiceReport } from "../record";
 
@@ -422,10 +422,30 @@ describe("batch reads for the popular status blocks", () => {
     const web = await seedComponent(svc.id, "web");
     const now = Date.now();
     await insertReports([
-      { externalServiceId: svc.id, externalServiceComponentId: api.id, reporterHash: "h1", createdAt: new Date(now - 60_000) },
-      { externalServiceId: svc.id, externalServiceComponentId: api.id, reporterHash: "h1", createdAt: new Date(now - 30_000) },
-      { externalServiceId: svc.id, externalServiceComponentId: api.id, reporterHash: "h2", createdAt: new Date(now - 30_000) },
-      { externalServiceId: svc.id, externalServiceComponentId: web.id, reporterHash: "h3", createdAt: new Date(now - 60 * 60_000) },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "h1",
+        createdAt: new Date(now - 60_000),
+      },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "h1",
+        createdAt: new Date(now - 30_000),
+      },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "h2",
+        createdAt: new Date(now - 30_000),
+      },
+      {
+        externalServiceId: svc.id,
+        externalServiceComponentId: web.id,
+        reporterHash: "h3",
+        createdAt: new Date(now - 60 * 60_000),
+      },
     ]);
     const rows = await getComponentReportWindowsByIds({
       componentIds: [api.id, web.id],
