@@ -1,11 +1,14 @@
 import { FetchError } from "@openstatus/status-fetcher";
 import type { DetectionResult } from "@openstatus/status-fetcher";
-import { Effect } from "effect";
+import { Effect, Semaphore } from "effect";
 import { describe, expect, test } from "vitest";
 
 import {
   PROBE_TTL_MS,
+  TICK_CLAIM_TTL_MS,
+  UPSERT_CONCURRENCY,
   UpsertTimeoutError,
+  claimTick,
   clearProbeStamp,
   decideDetectionAction,
   isBlocked,
@@ -139,9 +142,12 @@ describe("runUpsert", () => {
 
   test("a stalled upsert fails as a transient error instead of hanging", async () => {
     const err = await Effect.runPromise(
-      runUpsert(target, () => new Promise(() => {}), "10 millis").pipe(
-        Effect.flip,
-      ),
+      runUpsert(
+        target,
+        () => new Promise(() => {}),
+        "10 millis",
+        Semaphore.makeUnsafe(1),
+      ).pipe(Effect.flip),
     );
     expect(err).toBeInstanceOf(FetchError);
     expect(err.cause).toBeInstanceOf(UpsertTimeoutError);
@@ -156,6 +162,107 @@ describe("runUpsert", () => {
     );
     expect(err.message).toBe(`[atlassian (toggl)] fetch failed: ${URL}`);
     expect(isTransientDbError(err)).toBe(false);
+  });
+
+  test("never runs more than UPSERT_CONCURRENCY upserts at once", async () => {
+    let running = 0;
+    let peak = 0;
+    await Effect.runPromise(
+      Effect.all(
+        Array.from({ length: UPSERT_CONCURRENCY * 4 }, () =>
+          runUpsert(target, async () => {
+            running++;
+            peak = Math.max(peak, running);
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            running--;
+          }),
+        ),
+        { concurrency: "unbounded" },
+      ),
+    );
+    expect(peak).toBe(UPSERT_CONCURRENCY);
+  });
+
+  test("an upsert that times out waiting for a permit is never sent", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+    await Effect.runPromise(permits.take(1));
+    let started = false;
+
+    const err = await Effect.runPromise(
+      runUpsert(
+        target,
+        async () => {
+          started = true;
+        },
+        "10 millis",
+        permits,
+      ).pipe(Effect.flip),
+    );
+
+    expect(err.cause).toBeInstanceOf(UpsertTimeoutError);
+    expect(started).toBe(false);
+    // The abandoned wait must not have consumed the permit once it is released.
+    await Effect.runPromise(permits.release(1));
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(true);
+  });
+
+  test("a timed-out upsert keeps its permit until the request settles", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+    let settle = () => {};
+    const stalled = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+
+    await Effect.runPromise(
+      runUpsert(target, () => stalled, "10 millis", permits).pipe(Effect.flip),
+    );
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(false);
+
+    settle();
+    await stalled;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(true);
+  });
+
+  test("a rejected upsert releases its permit", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+
+    await Effect.runPromise(
+      runUpsert(
+        target,
+        () => Promise.reject(new Error("boom")),
+        "1 second",
+        permits,
+      ).pipe(Effect.flip),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(true);
+  });
+});
+
+describe("claimTick", () => {
+  test("refuses a second tick until the first releases", () => {
+    const release = claimTick(1_000);
+    expect(release).not.toBeNull();
+    expect(claimTick(2_000)).toBeNull();
+
+    release?.();
+    const next = claimTick(3_000);
+    expect(next).not.toBeNull();
+    next?.();
+  });
+
+  test("a stuck tick stops blocking after the TTL, and its late release is ignored", () => {
+    const stuck = claimTick(0);
+    expect(claimTick(TICK_CLAIM_TTL_MS - 1)).toBeNull();
+
+    const replacement = claimTick(TICK_CLAIM_TTL_MS);
+    expect(replacement).not.toBeNull();
+
+    stuck?.();
+    expect(claimTick(TICK_CLAIM_TTL_MS + 1)).toBeNull();
+    replacement?.();
   });
 });
 

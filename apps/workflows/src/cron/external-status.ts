@@ -21,7 +21,7 @@ import type {
   StatusResult,
 } from "@openstatus/status-fetcher";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Effect } from "effect";
+import { Effect, Semaphore } from "effect";
 import type { Context } from "hono";
 
 import { env } from "../env";
@@ -33,6 +33,8 @@ import {
   runSentryCron,
 } from "../lib/sentry";
 import {
+  TICK_CONCURRENCY,
+  claimTick,
   clearProbeStamp,
   decideDetectionAction,
   isBlocked,
@@ -49,10 +51,6 @@ const tb = new OSTinybird({
   baseUrl: env().TINYBIRD_URL,
   noop: env().TINYBIRD_NOOP,
 });
-
-// 10 per phase × 3 phases = peak 30 concurrent HTTP requests upstream; keeps
-// Atlassian/Incident.io CDNs comfortable while still parallelising heavily.
-const PHASE_CONCURRENCY = 10;
 
 function toStatusPageEntry(row: ExternalServiceRow): StatusPageEntry {
   return {
@@ -155,14 +153,15 @@ type ComponentPhaseOutcome =
   | { kind: "skip"; slug: string }
   | { kind: "fail"; slug: string; reason: string };
 
-type Triplet = {
+export type Triplet = {
   row: ExternalServiceRow;
   entry: StatusPageEntry;
   fetcher: StatusFetcher | null;
 };
 
-function runStatusPhase(
+export function runStatusPhase(
   triplets: Triplet[],
+  permits: Semaphore.Semaphore,
   fetchedAt: number,
 ): Effect.Effect<StatusPhaseOutcome[]> {
   return Effect.forEach(
@@ -175,6 +174,7 @@ function runStatusPhase(
         });
       }
       return fetcher.fetch(entry).pipe(
+        Semaphore.withPermit(permits),
         Effect.map((result): StatusPhaseOutcome => ({
           kind: "ok",
           snapshot: buildSnapshot({ entry, result, fetchedAt }),
@@ -191,12 +191,13 @@ function runStatusPhase(
         ),
       );
     },
-    { concurrency: PHASE_CONCURRENCY },
+    { concurrency: TICK_CONCURRENCY },
   );
 }
 
-function runIncidentPhase(
+export function runIncidentPhase(
   triplets: Triplet[],
+  permits: Semaphore.Semaphore,
   tickStartedAt: Date,
 ): Effect.Effect<IncidentPhaseOutcome[]> {
   return Effect.forEach(
@@ -209,6 +210,7 @@ function runIncidentPhase(
         });
       }
       return fetcher.fetchIncidents(entry).pipe(
+        Semaphore.withPermit(permits),
         Effect.flatMap((incidents) =>
           runUpsert({ entry, fetcher }, () =>
             upsertExternalIncidentsForService({
@@ -240,12 +242,13 @@ function runIncidentPhase(
         ),
       );
     },
-    { concurrency: PHASE_CONCURRENCY },
+    { concurrency: TICK_CONCURRENCY },
   );
 }
 
 function runComponentPhase(
   triplets: Triplet[],
+  permits: Semaphore.Semaphore,
   tickStartedAt: Date,
   fetchedAt: number,
 ): Effect.Effect<ComponentPhaseOutcome[]> {
@@ -259,6 +262,7 @@ function runComponentPhase(
         });
       }
       return fetcher.fetchComponents(entry).pipe(
+        Semaphore.withPermit(permits),
         Effect.flatMap((components) =>
           runUpsert({ entry, fetcher }, () =>
             upsertExternalComponentsForService({
@@ -305,7 +309,7 @@ function runComponentPhase(
         ),
       );
     },
-    { concurrency: PHASE_CONCURRENCY },
+    { concurrency: TICK_CONCURRENCY },
   );
 }
 
@@ -644,15 +648,21 @@ export async function runExternalStatusTick(): Promise<{
   // upstream endpoint and store, so a failed status fetch must not suppress a
   // service's components (or vice versa). A tick can therefore persist
   // component history for a service whose status snapshot failed that tick.
+  const permits = Semaphore.makeUnsafe(TICK_CONCURRENCY);
   const [statusOutcomes, incidentOutcomes, componentOutcomes] =
     await Effect.runPromise(
       Effect.all(
         [
-          runStatusPhase(triplets, tickStartedAt.getTime()),
-          runIncidentPhase(triplets, tickStartedAt),
-          runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
+          runStatusPhase(triplets, permits, tickStartedAt.getTime()),
+          runIncidentPhase(triplets, permits, tickStartedAt),
+          runComponentPhase(
+            triplets,
+            permits,
+            tickStartedAt,
+            tickStartedAt.getTime(),
+          ),
         ],
-        { concurrency: 50 },
+        { concurrency: "unbounded" },
       ),
     );
 
@@ -685,6 +695,12 @@ export async function runExternalStatusTick(): Promise<{
 }
 
 export async function handleExternalStatusCron(c: Context) {
+  const releaseTick = claimTick(Date.now());
+  if (!releaseTick) {
+    logger.warn("external-status tick skipped: previous tick still running");
+    return c.json({ success: true, skipped: true }, 200);
+  }
+
   const { cronCompleted, cronFailed } = runSentryCron("external-status");
 
   // Background chain: must not capture `c` or anything derived from it
@@ -735,6 +751,7 @@ export async function handleExternalStatusCron(c: Context) {
           void cronFailed();
         }),
       ),
+      Effect.ensuring(Effect.sync(releaseTick)),
     ),
   );
 

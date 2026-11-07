@@ -3,7 +3,7 @@ import {
   externalService,
   externalServiceIncident,
 } from "@openstatus/db/src/schema";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   type UpsertExternalIncidentInput,
@@ -395,6 +395,119 @@ describe("upsertExternalIncidentsForService", () => {
       incidents: [],
     });
     expect(res.upserted).toBe(0);
+  });
+
+  describe("write lock", () => {
+    const incident: UpsertExternalIncidentInput = {
+      providerIncidentId: "inc-lock",
+      name: "Outage",
+      status: "investigating",
+      createdAt: new Date("2024-06-01T12:00:00.000Z"),
+      resolvedAt: null,
+      raw: {},
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test("an idle upsert sends no write and opens no transaction", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-idle-lock` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [incident],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [incident],
+      });
+
+      expect(res.upserted).toBe(0);
+      expect(batch).not.toHaveBeenCalled();
+      expect(transaction).not.toHaveBeenCalled();
+    });
+
+    test("inserts and updates go out in one batch", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-one-batch` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [incident],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [
+          { ...incident, status: "resolved" },
+          { ...incident, providerIncidentId: "inc-lock-2" },
+        ],
+      });
+
+      expect(res.upserted).toBe(2);
+      expect(batch).toHaveBeenCalledTimes(1);
+      expect(transaction).not.toHaveBeenCalled();
+      const rows = await db
+        .select({ status: externalServiceIncident.status })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows.map((r) => r.status).sort()).toEqual([
+        "investigating",
+        "resolved",
+      ]);
+    });
+
+    test("concurrent first sights of an incident store one row", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-race` });
+      const upsert = () =>
+        upsertExternalIncidentsForService({
+          externalServiceId: serviceId,
+          incidents: [incident],
+        });
+
+      const results = await Promise.all([upsert(), upsert(), upsert()]);
+
+      const rows = await db
+        .select({ id: externalServiceIncident.id })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows).toHaveLength(1);
+      // Only writes that happened count, whichever callers lost the race.
+      expect(results.reduce((total, r) => total + r.upserted, 0)).toBe(1);
+    });
+
+    test("an older tick does not replace what a newer tick wrote", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-stale` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:00:00.000Z"),
+        incidents: [incident],
+      });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T13:00:00.000Z"),
+        incidents: [{ ...incident, status: "resolved" }],
+      });
+
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:30:00.000Z"),
+        incidents: [{ ...incident, status: "monitoring" }],
+      });
+
+      expect(res.upserted).toBe(0);
+      const rows = await db
+        .select({ status: externalServiceIncident.status })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows[0]?.status).toBe("resolved");
+    });
   });
 });
 
