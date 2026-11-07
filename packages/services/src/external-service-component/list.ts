@@ -42,6 +42,7 @@ const TB_BATCH_SIZE = 100;
 // must stay in sync with fetchers that implement `fetchComponents` in @openstatus/status-fetcher
 export const COMPONENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
   "atlassian",
+  "betterstack",
   "incidentio",
 ]);
 
