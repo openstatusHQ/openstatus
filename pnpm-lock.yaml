@@ -1035,6 +1035,94 @@ importers:
         specifier: 'catalog:'
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1)(msw@2.15.0(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
+  apps/external-status:
+    dependencies:
+      '@hono/node-server':
+        specifier: 'catalog:'
+        version: 2.1.4(hono@4.13.8)
+      '@libsql/client':
+        specifier: 'catalog:'
+        version: 0.17.4
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.3.6
+      '@logtape/otel':
+        specifier: 'catalog:'
+        version: 2.3.6(@logtape/logtape@2.3.6)
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@openstatus/health':
+        specifier: 'catalog:'
+        version: 0.1.4
+      '@openstatus/health-fly':
+        specifier: 'catalog:'
+        version: 0.1.4(@openstatus/health@0.1.4)
+      '@openstatus/health-hono':
+        specifier: 'catalog:'
+        version: 0.1.4(@openstatus/health@0.1.4)(hono@4.13.8)
+      '@openstatus/health-tinybird':
+        specifier: 'catalog:'
+        version: 0.1.4(@openstatus/health@0.1.4)
+      '@openstatus/health-turso':
+        specifier: 'catalog:'
+        version: 0.1.4(@libsql/client@0.17.4)(@openstatus/health@0.1.4)
+      '@openstatus/services':
+        specifier: workspace:*
+        version: link:../../packages/services
+      '@openstatus/status-fetcher':
+        specifier: workspace:*
+        version: link:../../packages/status-fetcher
+      '@openstatus/tinybird':
+        specifier: workspace:*
+        version: link:../../packages/tinybird
+      '@opentelemetry/exporter-logs-otlp-http':
+        specifier: 'catalog:'
+        version: 0.208.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources':
+        specifier: 'catalog:'
+        version: 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-logs':
+        specifier: 'catalog:'
+        version: 0.208.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions':
+        specifier: 'catalog:'
+        version: 1.43.0
+      '@sentry/node':
+        specifier: 'catalog:'
+        version: 10.75.1(@opentelemetry/core@2.11.0(@opentelemetry/api@1.9.1))(supports-color@8.1.1)
+      effect:
+        specifier: 'catalog:'
+        version: 4.0.0-rc.117
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.8
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
+    devDependencies:
+      '@openstatus/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@oxc-node/core':
+        specifier: 'catalog:'
+        version: 0.1.5
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.2
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.0(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@7.0.2)
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1)(msw@2.15.0(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+
   apps/screenshot-service:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1932,9 +2020,6 @@ importers:
       '@openstatus/services':
         specifier: workspace:*
         version: link:../../packages/services
-      '@openstatus/status-fetcher':
-        specifier: workspace:*
-        version: link:../../packages/status-fetcher
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -2306,7 +2391,7 @@ importers:
         version: 7.0.2
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1)(msw@2.15.0(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2))
+        version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1)(msw@2.15.0(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/emails:
     dependencies:
@@ -6021,6 +6106,7 @@ packages:
   '@opentelemetry/sdk-trace-base@2.2.0':
     resolution: {integrity: sha512-xWQgL0Bmctsalg6PaXExmzdedSp3gyKV8mQBwK/j9VGdCDu2fmXIb2gAehBKbkXCpJ4HPkgv3QfoJWRT4dHWbw==}
     engines: {node: ^18.19.0 || >=20.6.0}
+    deprecated: Use @opentelemetry/sdk-trace package
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
 

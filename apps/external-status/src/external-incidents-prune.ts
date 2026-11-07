@@ -4,9 +4,9 @@ import { pruneStaleRawPayloads } from "@openstatus/services/external-service-inc
 import { Effect } from "effect";
 import type { Context } from "hono";
 
-import { reportBackgroundError, runSentryCron } from "../lib/sentry";
+import { reportBackgroundError, runSentryCron } from "./lib/sentry";
 
-const logger = getLogger(["workflow", "external-incidents-prune"]);
+const logger = getLogger(["external-status", "incidents-prune"]);
 
 export async function runExternalIncidentsPruneTick(): Promise<{
   purged: number;

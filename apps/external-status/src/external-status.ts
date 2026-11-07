@@ -24,14 +24,7 @@ import { OSTinybird } from "@openstatus/tinybird";
 import { Effect, Semaphore } from "effect";
 import type { Context } from "hono";
 
-import { env } from "../env";
-import {
-  reportBackgroundError,
-  reportDetectionStory,
-  reportDetectionWriteFailure,
-  reportFetchFailure,
-  runSentryCron,
-} from "../lib/sentry";
+import { env } from "./env";
 import {
   TICK_CONCURRENCY,
   claimTick,
@@ -43,8 +36,15 @@ import {
   runUpsert,
   shouldProbe,
 } from "./external-status-detect";
+import {
+  reportBackgroundError,
+  reportDetectionStory,
+  reportDetectionWriteFailure,
+  reportFetchFailure,
+  runSentryCron,
+} from "./lib/sentry";
 
-const logger = getLogger(["workflow", "external-status"]);
+const logger = getLogger(["external-status"]);
 
 const tb = new OSTinybird({
   token: env().TINY_BIRD_API_KEY,
@@ -705,8 +705,7 @@ export async function handleExternalStatusCron(c: Context) {
 
   // Background chain: must not capture `c` or anything derived from it
   // (e.g. via getSentry(c)). The handler returns 200 before this resolves, and
-  // a captured per-request Sentry hub stays pinned across retries — see
-  // apps/workflows/plan.md.
+  // a captured per-request Sentry hub stays pinned across retries.
   void Effect.runPromise(
     Effect.tryPromise({
       try: () => runExternalStatusTick(),

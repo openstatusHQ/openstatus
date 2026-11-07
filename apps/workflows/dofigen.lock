@@ -5,6 +5,7 @@ effective: |
   - /apps/screenshot-service
   - /apps/server
   - /apps/web
+  - /apps/external-status
   - /apps/dashboard
   - /apps/status-page
   - /packages/analytics
@@ -12,14 +13,46 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
+    build:
+      fromImage:
+        path: node
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+      label:
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - ./node_modules/.bin/tsdown
+      - mkdir -p /tmp/sc /app/data
+      - node scripts/sidecar-package.mjs /tmp/sc/package.json
+      - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
     install:
       fromImage:
         path: node
         digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
       label:
         org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - npm install -g corepack@0.36.0
@@ -92,51 +125,17 @@ effective: |
         source: packages/theme-store/package.json
       - target: packages/locales/package.json
         source: packages/locales/package.json
-      - target: packages/status-fetcher/package.json
-        source: packages/status-fetcher/package.json
-    build:
-      fromImage:
-        path: node
-        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
-      label:
-        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - ./node_modules/.bin/tsdown
-      - mkdir -p /tmp/sc /app/data
-      - node scripts/sidecar-package.mjs /tmp/sc/package.json
-      - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
   fromImage:
     path: node
     digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
   label:
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     io.dofigen.version: 2.8.0
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
   user:
     user: '1000'
@@ -181,7 +180,7 @@ images:
           digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
 resources:
   dofigen.yml:
-    hash: 31d39f4cb1231466bc802222e029bfad8f7447f8e35013f5a222c3cf5499c10b
+    hash: 7b5a5c9d2e2f284efa3678bf65e6d1a755607be780a668d27de53d8d511f539c
     content: |
       ignore:
         - node_modules
@@ -189,6 +188,7 @@ resources:
         - /apps/screenshot-service
         - /apps/server
         - /apps/web
+        - /apps/external-status
         - /apps/dashboard
         - /apps/status-page
         - /packages/analytics
@@ -234,7 +234,6 @@ resources:
             - packages/upstash/package.json
             - packages/theme-store/package.json
             - packages/locales/package.json
-            - packages/status-fetcher/package.json
 
           # Install dependencies scoped to the workflows subgraph (dev included: the build stage needs tsdown)
           run:

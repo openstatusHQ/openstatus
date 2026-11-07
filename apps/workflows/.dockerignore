@@ -6,6 +6,7 @@ node_modules
 /apps/screenshot-service
 /apps/server
 /apps/web
+/apps/external-status
 /apps/dashboard
 /apps/status-page
 /packages/analytics

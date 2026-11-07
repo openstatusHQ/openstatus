@@ -1,0 +1,36 @@
+name: Fly Deploy External Status
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-external-status.yml"
+      - "apps/external-status/**"
+      - "packages/assertions/**"
+      - "packages/db/**"
+      - "packages/emails/**"
+      - "packages/importers/**"
+      - "packages/locales/**"
+      - "packages/notifications/base/**"
+      - "packages/regions/**"
+      - "packages/services/**"
+      - "packages/status-fetcher/**"
+      - "packages/subscriptions/**"
+      - "packages/theme-store/**"
+      - "packages/tinybird/**"
+      - "packages/tsconfig/**"
+      - "packages/utils/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+jobs:
+  deploy-external-status:
+    name: Deploy External Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --config apps/external-status/fly.toml
+          --dockerfile apps/external-status/Dockerfile --remote-only --wait-timeout=500
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

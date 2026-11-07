@@ -92,7 +92,7 @@ async function reportAlreadyLimited(key: string): Promise<boolean> {
 // Logging here uses `console.*`, not `@logtape/logtape`: this router runs on the
 // Next.js Edge runtime and `@openstatus/api` (like the edge-safe `services`
 // package) deliberately takes no logtape dependency. The logtape-based logger is
-// for Node contexts such as the `apps/workflows` cron. Matches every sibling router.
+// for Node contexts such as the `apps/external-status` cron. Matches every sibling router.
 async function safeRows<T>(promise: Promise<T[]>, label: string): Promise<T[]> {
   try {
     return await promise;
