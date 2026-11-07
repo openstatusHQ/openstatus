@@ -12,8 +12,10 @@ Two cron endpoints, both guarded by `Authorization: $CRON_SECRET`:
 
 ```sh
 pnpm install
-pnpm dev
+CRON_SECRET=dev pnpm dev
 ```
+
+`CRON_SECRET` is required; the server refuses to start without it.
 
 open <http://localhost:3000>
 

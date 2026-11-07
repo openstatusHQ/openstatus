@@ -1,9 +1,10 @@
 app = 'openstatus-external-status'
 primary_region = 'ams'
 
-# serve.ts only handles SIGTERM; Fly defaults to SIGINT.
+# serve.ts only handles SIGTERM; Fly defaults to SIGINT. The timeout covers
+# draining an in-flight tick (DRAIN_GRACE_MS in src/serve.ts) plus the flush.
 kill_signal = "SIGTERM"
-kill_timeout = "30s"
+kill_timeout = "90s"
 
 [build]
   dockerfile = "./Dockerfile"

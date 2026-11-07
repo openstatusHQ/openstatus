@@ -5,7 +5,7 @@ export const env = () =>
     .object({
       NODE_ENV: z.string().prefault("development"),
       PORT: z.coerce.number().prefault(3000),
-      CRON_SECRET: z.string().prefault(""),
+      CRON_SECRET: z.string().min(1),
       DATABASE_URL: z.string().prefault("http://localhost:8080"),
       DATABASE_AUTH_TOKEN: z.string().prefault(""),
       TINY_BIRD_API_KEY: z.string().prefault(""),

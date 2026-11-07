@@ -20,8 +20,11 @@ on:
       - "packages/tinybird/**"
       - "packages/tsconfig/**"
       - "packages/utils/**"
+      - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+permissions:
+  contents: read
 jobs:
   deploy-external-status:
     name: Deploy External Status
@@ -29,7 +32,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # 1.6
       - run: flyctl deploy --config apps/external-status/fly.toml
           --dockerfile apps/external-status/Dockerfile --remote-only --wait-timeout=500
         env:
