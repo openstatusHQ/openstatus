@@ -5,7 +5,6 @@ import {
   getConsoleSink,
   getLogger,
   jsonLinesFormatter,
-  withContext,
 } from "@logtape/logtape";
 import { getOpenTelemetrySink } from "@logtape/otel";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
@@ -22,7 +21,6 @@ import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
 
 import "./lib/sentry";
-import { cronRouter } from "./cron";
 import { env } from "./env";
 import { pingRoute } from "./health";
 
@@ -71,22 +69,6 @@ export const app = new Hono<{ Variables: { requestId: string } }>({
 
 app.use("*", requestId());
 
-app.use("*", async (c, next) => {
-  const startTime = Date.now();
-  await withContext({ request_id: c.get("requestId") }, async () => {
-    await next();
-    // Only cron triggers are worth a line; health checks would drown them.
-    if (c.req.path.startsWith("/cron")) {
-      logger.info("request", {
-        method: c.req.method,
-        path: c.req.path,
-        status_code: c.res.status,
-        duration_ms: Date.now() - startTime,
-      });
-    }
-  });
-});
-
 app.onError((err, c) => {
   logger.error("Unhandled request error", {
     error_name: err.name,
@@ -104,8 +86,6 @@ app.onError((err, c) => {
 app.get("/", (c) => c.text("external-status", 200));
 
 app.route("/", pingRoute);
-
-app.route("/cron", cronRouter);
 
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });

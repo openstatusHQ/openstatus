@@ -22,7 +22,6 @@ import type {
 } from "@openstatus/status-fetcher";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Effect, Semaphore } from "effect";
-import type { Context } from "hono";
 
 import { env } from "./env";
 import {
@@ -36,13 +35,10 @@ import {
   runUpsert,
   shouldProbe,
 } from "./external-status-detect";
-import { runInBackground } from "./lib/background";
 import {
-  reportBackgroundError,
   reportDetectionStory,
   reportDetectionWriteFailure,
   reportFetchFailure,
-  runSentryCron,
 } from "./lib/sentry";
 
 const logger = getLogger(["external-status"]);
@@ -695,69 +691,38 @@ export async function runExternalStatusTick(): Promise<{
   };
 }
 
-export async function handleExternalStatusCron(c: Context) {
+// The scheduler awaits this; the claim also covers a run it abandoned on timeout.
+export async function runExternalStatusCron(): Promise<void> {
   const releaseTick = claimTick(Date.now());
   if (!releaseTick) {
     logger.warn("external-status tick skipped: previous tick still running");
-    return c.json({ success: true, skipped: true }, 200);
+    return;
   }
-
-  const { cronCompleted, cronFailed } = runSentryCron("external-status");
-
-  // Background chain: must not capture `c` or anything derived from it
-  // (e.g. via getSentry(c)). The handler returns 200 before this resolves, and
-  // a captured per-request Sentry hub stays pinned across retries.
-  runInBackground(
-    "external-status",
-    Effect.runPromise(
-      Effect.tryPromise({
-        try: () => runExternalStatusTick(),
-        catch: (e) =>
-          new Error(
-            `external-status tick failed: ${e instanceof Error ? e.message : String(e)}`,
-          ),
-      }).pipe(
-        Effect.tap((res) =>
-          Effect.sync(() => {
-            logger.info(
-              "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped), detect={detProbed} probed ({detApplied} applied, {detCfg} config-fixed, {detSuggested} suggested, {detFailed} failed)",
-              {
-                detProbed: res.detect.probed,
-                detApplied: res.detect.applied,
-                detCfg: res.detect.configFixed,
-                detSuggested: res.detect.suggested,
-                detFailed: res.detect.failed,
-                statusOk: res.status.successCount,
-                statusTotal: res.status.total,
-                statusFail: res.status.failureCount,
-                statusSkip: res.status.skippedCount,
-                incOk: res.incidents.successCount,
-                incTotal: res.incidents.total,
-                incFail: res.incidents.failureCount,
-                incSkip: res.incidents.skippedCount,
-                compOk: res.components.successCount,
-                compTotal: res.components.total,
-                compFail: res.components.failureCount,
-                compSkip: res.components.skippedCount,
-              },
-            );
-            void cronCompleted();
-          }),
-        ),
-        Effect.catch((e) =>
-          Effect.sync(() => {
-            logger.error("external-status tick errored: {message}", {
-              message: e.message,
-            });
-            void reportBackgroundError(e.message);
-            void cronFailed();
-          }),
-        ),
-        Effect.ensuring(Effect.sync(releaseTick)),
-      ),
-    ),
-    () => void cronFailed(),
-  );
-
-  return c.json({ success: true }, 200);
+  try {
+    const res = await runExternalStatusTick();
+    logger.info(
+      "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped), detect={detProbed} probed ({detApplied} applied, {detCfg} config-fixed, {detSuggested} suggested, {detFailed} failed)",
+      {
+        detProbed: res.detect.probed,
+        detApplied: res.detect.applied,
+        detCfg: res.detect.configFixed,
+        detSuggested: res.detect.suggested,
+        detFailed: res.detect.failed,
+        statusOk: res.status.successCount,
+        statusTotal: res.status.total,
+        statusFail: res.status.failureCount,
+        statusSkip: res.status.skippedCount,
+        incOk: res.incidents.successCount,
+        incTotal: res.incidents.total,
+        incFail: res.incidents.failureCount,
+        incSkip: res.incidents.skippedCount,
+        compOk: res.components.successCount,
+        compTotal: res.components.total,
+        compFail: res.components.failureCount,
+        compSkip: res.components.skippedCount,
+      },
+    );
+  } finally {
+    releaseTick();
+  }
 }

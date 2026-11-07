@@ -4,7 +4,11 @@ import * as Sentry from "@sentry/node";
 
 import { env } from "./env";
 import { app } from "./index";
-import { drainBackground } from "./lib/background";
+import {
+  drainScheduledTasks,
+  startScheduler,
+  stopScheduler,
+} from "./scheduler";
 
 const { NODE_ENV, PORT } = env();
 
@@ -16,6 +20,7 @@ const logger = getLogger(["external-status"]);
 logger.info("Starting server", { port: PORT, environment: NODE_ENV });
 
 const server = serve({ fetch: app.fetch, port: PORT });
+startScheduler();
 
 process.once("SIGTERM", () => {
   void (async () => {
@@ -23,7 +28,8 @@ process.once("SIGTERM", () => {
     const httpClosed = new Promise<void>((resolve) =>
       server.close(() => resolve()),
     );
-    await drainBackground(DRAIN_GRACE_MS);
+    await stopScheduler();
+    await drainScheduledTasks(DRAIN_GRACE_MS);
     await httpClosed;
     await Sentry.flush(2_000);
     await dispose();

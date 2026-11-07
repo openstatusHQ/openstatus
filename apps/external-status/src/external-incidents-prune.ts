@@ -1,11 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { db } from "@openstatus/db";
 import { pruneStaleRawPayloads } from "@openstatus/services/external-service-incident";
-import { Effect } from "effect";
-import type { Context } from "hono";
-
-import { runInBackground } from "./lib/background";
-import { reportBackgroundError, runSentryCron } from "./lib/sentry";
 
 const logger = getLogger(["external-status", "incidents-prune"]);
 
@@ -15,45 +10,9 @@ export async function runExternalIncidentsPruneTick(): Promise<{
   return pruneStaleRawPayloads({ ctx: { db } });
 }
 
-export async function handleExternalIncidentsPruneCron(c: Context) {
-  const { cronCompleted, cronFailed } = runSentryCron(
-    "external-incidents-prune",
-  );
-
-  runInBackground(
-    "external-incidents-prune",
-    Effect.runPromise(
-      Effect.tryPromise({
-        try: () => runExternalIncidentsPruneTick(),
-        catch: (e) =>
-          new Error(
-            `external-incidents-prune tick failed: ${e instanceof Error ? e.message : String(e)}`,
-          ),
-      }).pipe(
-        Effect.tap((res) =>
-          Effect.sync(() => {
-            logger.info(
-              "external-incidents-prune tick complete: purged={purged}",
-              {
-                purged: res.purged,
-              },
-            );
-            void cronCompleted();
-          }),
-        ),
-        Effect.catch((e) =>
-          Effect.sync(() => {
-            logger.error("external-incidents-prune tick errored: {message}", {
-              message: e.message,
-            });
-            void reportBackgroundError(e.message);
-            void cronFailed();
-          }),
-        ),
-      ),
-    ),
-    () => void cronFailed(),
-  );
-
-  return c.json({ success: true }, 200);
+export async function runExternalIncidentsPruneCron(): Promise<void> {
+  const res = await runExternalIncidentsPruneTick();
+  logger.info("external-incidents-prune tick complete: purged={purged}", {
+    purged: res.purged,
+  });
 }

@@ -3,19 +3,19 @@
 Polls the status pages of third-party services, stores their incidents and
 components in Turso and publishes status snapshots to Tinybird.
 
-Two cron endpoints, both guarded by `Authorization: $CRON_SECRET`:
+Two jobs, scheduled in-process with Effect's cron scheduler (`src/scheduler.ts`):
 
-- `GET /cron/external-status` — fetch status, incidents and components for every external service
-- `GET /cron/external-incidents-prune` — drop raw payloads of long-resolved incidents
+- `external-status`, every 10 minutes — fetch status, incidents and components for every external service
+- `external-incidents-prune`, daily — drop raw payloads of long-resolved incidents
+
+Both also run once at startup. The only HTTP route is `/ping`, for health checks.
 
 ## Development
 
 ```sh
 pnpm install
-CRON_SECRET=dev pnpm dev
+pnpm dev
 ```
-
-`CRON_SECRET` is required; the server refuses to start without it.
 
 open <http://localhost:3000>
 
@@ -27,8 +27,8 @@ From root
 flyctl deploy --config apps/external-status/fly.toml --dockerfile apps/external-status/Dockerfile
 ```
 
-Secrets: `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `TINY_BIRD_API_KEY`, `CRON_SECRET`,
-`SENTRY_DSN`, `AXIOM_TOKEN`, `AXIOM_DATASET`.
+Secrets: `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `TINY_BIRD_API_KEY`, `SENTRY_DSN`,
+`AXIOM_TOKEN`, `AXIOM_DATASET`.
 
 ## Docker
 

@@ -8,8 +8,9 @@ must pass — Vitest strips types without checking them.
   addon) and ship as a side-car `node_modules` in the image. A new dependency
   that cannot be bundled joins that list and the `externals` in
   `apps/external-status/scripts/sidecar-package.mjs`.
-- Each cron handler returns 200 and runs its tick in the background, so the
-  Fly machine must never auto-stop (`auto_stop_machines = "off"`). The tick
-  claim in `src/external-status-detect.ts` is per process, not global.
+- Jobs run on the in-process scheduler in `src/scheduler.ts`, not an HTTP
+  trigger. Nothing wakes the machine, so it must never auto-stop, and it stays
+  at one machine so each tick runs once. The tick claim in
+  `src/external-status-detect.ts` is per process, not global.
 - Writes go through `@openstatus/services` (`external-service*`), never inline
   Drizzle.
