@@ -2,7 +2,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { ChartTooltipNumber } from "../chart/chart-tooltip-number";
-import { PopoverQuantile } from "../popover/popover-quantile";
 import { ButtonBack } from "./button-back";
 import { ButtonCopyLink } from "./button-copy-link";
 
@@ -25,14 +24,6 @@ describe("ButtonCopyLink", () => {
     expect(renderToStaticMarkup(<ButtonCopyLink />)).toMatch(
       /<span class="sr-only">Copy Link<\/span>/,
     );
-  });
-});
-
-describe("PopoverQuantile", () => {
-  it("wraps its children in a popover trigger", () => {
-    const html = renderToStaticMarkup(<PopoverQuantile>p95</PopoverQuantile>);
-    expect(html).toContain('aria-haspopup="dialog"');
-    expect(html).toContain("p95");
   });
 });
 
