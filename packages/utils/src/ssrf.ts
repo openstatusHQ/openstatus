@@ -131,20 +131,60 @@ function isSafeRedirect(from: URL, to: URL): boolean {
   );
 }
 
+export interface SafeFetchOptions {
+  /**
+   * Overall deadline for the whole attempt, covering URL validation and every
+   * redirect hop. Builds an internal AbortSignal.timeout and combines it with
+   * any `init.signal` via `AbortSignal.any`, so whichever fires first ends the
+   * attempt. The timeout does not reset on each hop.
+   */
+  timeoutMs?: number;
+}
+
+function combineSignals(
+  a?: AbortSignal,
+  b?: AbortSignal,
+): AbortSignal | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return AbortSignal.any([a, b]);
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  // Use the native method so any abort reason the caller set — Error, string,
+  // object, or null — is rethrown unchanged, matching standard AbortSignal
+  // semantics.
+  signal?.throwIfAborted();
+}
+
 /**
  * `fetch` for customer-supplied URLs. Follows only 307/308 (the redirects that
  * keep method and body) to the same host and port, never downgrading https,
  * re-checking every hop; any other 3xx comes back as a non-ok response.
  * `init.body` must be replayable.
+ *
+ * `options.timeoutMs` sets a single deadline for the whole attempt: URL
+ * validation, the initial request, and every redirect hop share one budget.
+ * The deadline is combined with any `init.signal` the caller already passes.
  */
 export async function safeFetch(
   url: string,
   init?: Omit<RequestInit, "redirect">,
+  options?: SafeFetchOptions,
 ): Promise<Response> {
+  const deadline =
+    options?.timeoutMs !== undefined
+      ? AbortSignal.timeout(options.timeoutMs)
+      : undefined;
+  const signal = combineSignals(deadline, init?.signal ?? undefined);
+  const effectiveInit = signal ? { ...init, signal } : init;
+
   let target = url;
   for (let hop = 0; ; hop++) {
+    throwIfAborted(signal);
     await assertSafeUrl(target);
-    const res = await fetch(target, { ...init, redirect: "manual" });
+    throwIfAborted(signal);
+    const res = await fetch(target, { ...effectiveInit, redirect: "manual" });
 
     const location = res.headers.get("location");
     if ((res.status !== 307 && res.status !== 308) || !location) return res;
