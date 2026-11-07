@@ -102,6 +102,8 @@ async function seedTeamWorkspace(tx: DrizzleTx) {
       accessType: "password",
       allowIndex: false,
       defaultTimezone: "Asia/Tokyo",
+      defaultLocale: "fr",
+      locales: ["en", "fr"],
       createdAt: OLDEST,
     })
     .returning()
@@ -333,6 +335,9 @@ describe("downgradeWorkspaceToFree", () => {
       expect(kept?.allowIndex).toBe(true);
       // so is the page time zone
       expect(kept?.defaultTimezone).toBe("UTC");
+      // and translations: back to English only
+      expect(kept?.defaultLocale).toBe("en");
+      expect(kept?.locales).toBeNull();
 
       await expectAuditRow({
         workspaceId: s.ws.id,
