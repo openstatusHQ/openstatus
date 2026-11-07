@@ -60,21 +60,18 @@ export async function fetchMonitorDailyStats(args: {
       .filter((jobType) => idsByJobType[jobType].length > 0)
       .map((jobType) => {
         const monitorIds = idsByJobType[jobType];
-        const pipe =
-          jobType === "http"
-            ? args.tb.httpStatus45d
-            : jobType === "tcp"
-              ? args.tb.tcpStatus45d
-              : jobType === "dns"
-                ? args.tb.dnsStatus45d
-                : jobType === "icmp"
-                  ? args.tb.icmpStatus45d
-                  : jobType === "grpc"
-                    ? args.tb.grpcStatus45d
-                    : args.tb.heartbeatStatus45d;
-        return pipe({ monitorIds });
+        return status45d(args.tb, jobType)({ monitorIds });
       }),
   );
 
   return results.flatMap((result) => result.data);
+}
+
+function status45d(tb: OSTinybird, jobType: SupportedJobType) {
+  if (jobType === "http") return tb.httpStatus45d;
+  if (jobType === "tcp") return tb.tcpStatus45d;
+  if (jobType === "dns") return tb.dnsStatus45d;
+  if (jobType === "icmp") return tb.icmpStatus45d;
+  if (jobType === "grpc") return tb.grpcStatus45d;
+  return tb.heartbeatStatus45d;
 }
