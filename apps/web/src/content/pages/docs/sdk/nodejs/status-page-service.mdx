@@ -290,7 +290,7 @@ Request parameters:
 
 Each component returns gap-filled `buckets` (one per day in the window, oldest first) and `events`:
 
-- **`buckets[]`** — `day` (the calendar day in the page's time zone, as UTC midnight in RFC 3339), the `bigint` counts `count` / `ok` / `degraded` / `error`, a resolved `status` (`ComponentDayStatus`: operational / degraded / down / maintenance / empty), and an optional `impact` (`PageComponentImpact`) for the worst status-report impact that day. Monitor-backed components carry real counts; static components have empty buckets.
+- **`buckets[]`** — `day` (the calendar day in the page's time zone, or UTC if Tinybird can't load it, as UTC midnight in RFC 3339), the `bigint` counts `count` / `ok` / `degraded` / `error`, a resolved `status` (`ComponentDayStatus`: operational / degraded / down / maintenance / empty), and an optional `impact` (`PageComponentImpact`) for the worst status-report impact that day. Monitor-backed components carry real counts; static components have empty buckets.
 - **`events[]`** — `id`, `name`, `type` (`ComponentEventType`: maintenance / incident / report), a projected `status` (`ComponentEventStatus`), `from` / `to` (RFC 3339; `to` absent while ongoing), and an optional `impact` for report events.
 
 <Aside type="note">Like every RPC, this requires an API key. The slug path additionally requires the page to be published with public access — it is not anonymous.</Aside>

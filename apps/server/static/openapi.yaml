@@ -4270,7 +4270,7 @@ components:
         day:
           type: string
           title: day
-          description: Day in RFC 3339 format (UTC midnight).
+          description: Calendar day in the page's time zone (UTC if Tinybird can't load it), written as UTC midnight in RFC 3339.
         count:
           type:
             - integer

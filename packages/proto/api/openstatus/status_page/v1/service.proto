@@ -771,7 +771,7 @@ enum ComponentEventStatus {
 
 // ComponentDayBucket is one day of status data for a component.
 message ComponentDayBucket {
-  // Calendar day in the page's time zone, written as UTC midnight in RFC 3339.
+  // Calendar day in the page's time zone (UTC if Tinybird can't load it), written as UTC midnight in RFC 3339.
   string day = 1;
   // Total checks that day.
   int64 count = 2;

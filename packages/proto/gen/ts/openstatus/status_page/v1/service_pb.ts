@@ -1589,7 +1589,7 @@ export const GetPageComponentDailySummaryRequestSchema: GenMessage<GetPageCompon
  */
 export type ComponentDayBucket = Message<"openstatus.status_page.v1.ComponentDayBucket"> & {
   /**
-   * Calendar day in the page's time zone, written as UTC midnight in RFC 3339.
+   * Calendar day in the page's time zone (UTC if Tinybird can't load it), written as UTC midnight in RFC 3339.
    *
    * @generated from field: string day = 1;
    */
