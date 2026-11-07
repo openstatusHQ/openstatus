@@ -97,21 +97,10 @@ export function isTransientDbError(err: FetchError): boolean {
   );
 }
 
+// Upstream requests across all phases of a tick, shared through one semaphore.
+// Also bounds each phase's services in flight, so a backlog behind the upsert
+// permits cannot grow until it reaches the upsert timeout.
 export const TICK_CONCURRENCY = 50;
-
-// `Effect.forEach` concurrency only bounds its own items, so phases running side
-// by side share permits to stay under one limit.
-export function forEachWithPermit<T, A, E>(
-  items: readonly T[],
-  permits: Semaphore.Semaphore,
-  run: (item: T) => Effect.Effect<A, E>,
-): Effect.Effect<A[], E> {
-  return Effect.forEach(
-    items,
-    (item) => run(item).pipe(Semaphore.withPermit(permits)),
-    { concurrency: "unbounded" },
-  );
-}
 
 const UPSERT_TIMEOUT: Duration.Input = "30 seconds";
 
@@ -121,6 +110,24 @@ export const UPSERT_CONCURRENCY = 3;
 
 const upsertPermits = Semaphore.makeUnsafe(UPSERT_CONCURRENCY);
 
+// The request cannot be cancelled, so its permit outlives a timed-out caller:
+// releasing early would let stalled requests exceed UPSERT_CONCURRENCY.
+function startWithPermit<T>(
+  permits: Semaphore.Semaphore,
+  upsert: () => Promise<T>,
+): Effect.Effect<Promise<T>> {
+  return Effect.uninterruptibleMask((restore) =>
+    restore(permits.take(1)).pipe(
+      Effect.map(() => {
+        const running = Promise.resolve().then(upsert);
+        const release = () => void Effect.runFork(permits.release(1));
+        void running.then(release, release);
+        return running;
+      }),
+    ),
+  );
+}
+
 // undici only gives up on a stalled Turso request after 5 minutes, which would
 // hold up the whole tick. The timeout stops the wait, not the request: a late
 // write is harmless because the next tick recomputes the diff. It also covers the
@@ -129,6 +136,7 @@ export function runUpsert<T>(
   target: { entry: StatusPageEntry; fetcher: StatusFetcher },
   upsert: () => Promise<T>,
   timeout: Duration.Input = UPSERT_TIMEOUT,
+  permits: Semaphore.Semaphore = upsertPermits,
 ): Effect.Effect<T, FetchError> {
   const { entry, fetcher } = target;
   const wrap = (cause: Error) =>
@@ -138,11 +146,13 @@ export function runUpsert<T>(
       entryId: entry.id,
       cause,
     });
-  return Effect.tryPromise({
-    try: upsert,
-    catch: (e) => wrap(e instanceof Error ? e : new Error(String(e))),
-  }).pipe(
-    Semaphore.withPermit(upsertPermits),
+  return startWithPermit(permits, upsert).pipe(
+    Effect.flatMap((running) =>
+      Effect.tryPromise({
+        try: () => running,
+        catch: (e) => wrap(e instanceof Error ? e : new Error(String(e))),
+      }),
+    ),
     Effect.timeoutOrElse({
       duration: timeout,
       orElse: () => {

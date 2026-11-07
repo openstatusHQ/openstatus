@@ -1,4 +1,4 @@
-import { db as defaultDb, eq } from "@openstatus/db";
+import { and, db as defaultDb, eq, lte } from "@openstatus/db";
 import { externalServiceComponent } from "@openstatus/db/src/schema";
 
 import type { DrizzleClient } from "../context";
@@ -88,7 +88,7 @@ export async function upsertExternalComponentsForService(args: {
   // cron-driven catalogue with no workspace scope or audit log (ADR-0006/0007).
   // An interactive transaction would hold Turso's single write lock across every
   // HTTP round trip on each tick, even when nothing changed. A stale read is safe:
-  // a lost insert race hits the conflict target, and the next tick re-diffs.
+  // a lost insert race is skipped, and the next tick re-diffs and re-assigns slugs.
   const existing = await retryRead(() =>
     db
       .select({
@@ -169,7 +169,13 @@ export async function upsertExternalComponentsForService(args: {
         status: row.status,
         updatedAt: now,
       })
-      .where(eq(externalServiceComponent.id, id)),
+      // An overlapping older tick must not replace what a newer one wrote.
+      .where(
+        and(
+          eq(externalServiceComponent.id, id),
+          lte(externalServiceComponent.updatedAt, now),
+        ),
+      ),
   );
 
   if (inserts.length > 0) {
@@ -182,12 +188,7 @@ export async function upsertExternalComponentsForService(args: {
           updatedAt: now,
         })),
       )
-      .onConflictDoNothing({
-        target: [
-          externalServiceComponent.externalServiceId,
-          externalServiceComponent.upstreamComponentId,
-        ],
-      })
+      .onConflictDoNothing()
       .returning({
         id: externalServiceComponent.id,
         upstreamComponentId: externalServiceComponent.upstreamComponentId,
@@ -196,6 +197,32 @@ export async function upsertExternalComponentsForService(args: {
       db.batch([insertQuery, ...updateQueries]),
     );
     for (const row of insertedRows) upserted.push(row);
+
+    // `DO NOTHING` returns no row for a lost race, but the cron's TB publish
+    // still needs the winner's id.
+    if (insertedRows.length < inserts.length) {
+      const inserted = new Set(insertedRows.map((r) => r.upstreamComponentId));
+      const raced = new Set(
+        inserts
+          .map((r) => r.upstreamComponentId)
+          .filter((id) => !inserted.has(id)),
+      );
+      const rows = await retryRead(() =>
+        db
+          .select({
+            id: externalServiceComponent.id,
+            upstreamComponentId: externalServiceComponent.upstreamComponentId,
+          })
+          .from(externalServiceComponent)
+          .where(
+            eq(externalServiceComponent.externalServiceId, externalServiceId),
+          )
+          .all(),
+      );
+      for (const row of rows) {
+        if (raced.has(row.upstreamComponentId)) upserted.push(row);
+      }
+    }
     return { upserted };
   }
 

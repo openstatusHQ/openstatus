@@ -149,7 +149,7 @@ describe("upsertExternalComponentsForService", () => {
           components: [component],
         });
 
-      await Promise.all([upsert(), upsert(), upsert()]);
+      const results = await Promise.all([upsert(), upsert(), upsert()]);
 
       const rows = await db
         .select({ id: externalServiceComponent.id })
@@ -157,6 +157,59 @@ describe("upsertExternalComponentsForService", () => {
         .where(eq(externalServiceComponent.externalServiceId, serviceId))
         .all();
       expect(rows).toHaveLength(1);
+      for (const result of results) {
+        expect(result.upserted).toEqual([
+          { id: rows[0]?.id, upstreamComponentId: "cmp-lock" },
+        ]);
+      }
+    });
+
+    test("a slug race between different components heals on the next upsert", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-slug-race` });
+      const second = { ...component, upstreamComponentId: "cmp-lock-2" };
+      const upsert = (input: typeof component) =>
+        upsertExternalComponentsForService({
+          externalServiceId: serviceId,
+          components: [input],
+        });
+
+      await Promise.all([upsert(component), upsert(second)]);
+      await upsert(component);
+      await upsert(second);
+
+      const rows = await db
+        .select({ slug: externalServiceComponent.slug })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows.map((r) => r.slug).sort()).toEqual(["fra1", "fra1-2"]);
+    });
+
+    test("an older tick does not replace what a newer tick wrote", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-stale` });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:00:00.000Z"),
+        components: [component],
+      });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T13:00:00.000Z"),
+        components: [{ ...component, status: "major_outage" }],
+      });
+
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:30:00.000Z"),
+        components: [{ ...component, status: "degraded" }],
+      });
+
+      const rows = await db
+        .select({ status: externalServiceComponent.status })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows[0]?.status).toBe("major_outage");
     });
   });
 

@@ -1,4 +1,4 @@
-import { db as defaultDb, eq } from "@openstatus/db";
+import { and, db as defaultDb, eq, lte } from "@openstatus/db";
 import { externalServiceIncident } from "@openstatus/db/src/schema";
 
 import type { DrizzleClient } from "../context";
@@ -203,13 +203,22 @@ export async function upsertExternalIncidentsForService(args: {
         rawPayloadPurgedAt: null,
         updatedAt: now,
       })
-      .where(eq(externalServiceIncident.id, id)),
+      // An overlapping older tick must not replace what a newer one wrote.
+      .where(
+        and(
+          eq(externalServiceIncident.id, id),
+          lte(externalServiceIncident.updatedAt, now),
+        ),
+      ),
   );
 
   const [firstWrite, ...restWrites] = [...insertQueries, ...updateQueries];
-  if (firstWrite) {
-    await withBusyRetry(() => db.batch([firstWrite, ...restWrites]));
-  }
+  if (!firstWrite) return { upserted: 0 };
 
-  return { upserted: inserts.length + updates.length };
+  const results = await withBusyRetry(() =>
+    db.batch([firstWrite, ...restWrites]),
+  );
+  return {
+    upserted: results.reduce((total, r) => total + r.rowsAffected, 0),
+  };
 }

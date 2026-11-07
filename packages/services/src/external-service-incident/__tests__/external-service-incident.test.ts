@@ -469,7 +469,7 @@ describe("upsertExternalIncidentsForService", () => {
           incidents: [incident],
         });
 
-      await Promise.all([upsert(), upsert(), upsert()]);
+      const results = await Promise.all([upsert(), upsert(), upsert()]);
 
       const rows = await db
         .select({ id: externalServiceIncident.id })
@@ -477,6 +477,36 @@ describe("upsertExternalIncidentsForService", () => {
         .where(eq(externalServiceIncident.externalServiceId, serviceId))
         .all();
       expect(rows).toHaveLength(1);
+      // Only writes that happened count, whichever callers lost the race.
+      expect(results.reduce((total, r) => total + r.upserted, 0)).toBe(1);
+    });
+
+    test("an older tick does not replace what a newer tick wrote", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-stale` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:00:00.000Z"),
+        incidents: [incident],
+      });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T13:00:00.000Z"),
+        incidents: [{ ...incident, status: "resolved" }],
+      });
+
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:30:00.000Z"),
+        incidents: [{ ...incident, status: "monitoring" }],
+      });
+
+      expect(res.upserted).toBe(0);
+      const rows = await db
+        .select({ status: externalServiceIncident.status })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows[0]?.status).toBe("resolved");
     });
   });
 });

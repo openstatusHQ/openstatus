@@ -37,7 +37,6 @@ import {
   claimTick,
   clearProbeStamp,
   decideDetectionAction,
-  forEachWithPermit,
   isBlocked,
   isSuspicious,
   isTransientDbError,
@@ -154,21 +153,20 @@ type ComponentPhaseOutcome =
   | { kind: "skip"; slug: string }
   | { kind: "fail"; slug: string; reason: string };
 
-type Triplet = {
+export type Triplet = {
   row: ExternalServiceRow;
   entry: StatusPageEntry;
   fetcher: StatusFetcher | null;
 };
 
-function runStatusPhase(
+export function runStatusPhase(
   triplets: Triplet[],
   permits: Semaphore.Semaphore,
   fetchedAt: number,
 ): Effect.Effect<StatusPhaseOutcome[]> {
-  return forEachWithPermit(
+  return Effect.forEach(
     triplets,
-    permits,
-    ({ entry, fetcher }): Effect.Effect<StatusPhaseOutcome> => {
+    ({ entry, fetcher }) => {
       if (!fetcher) {
         return Effect.succeed<StatusPhaseOutcome>({
           kind: "no-fetcher",
@@ -176,6 +174,7 @@ function runStatusPhase(
         });
       }
       return fetcher.fetch(entry).pipe(
+        Semaphore.withPermit(permits),
         Effect.map((result): StatusPhaseOutcome => ({
           kind: "ok",
           snapshot: buildSnapshot({ entry, result, fetchedAt }),
@@ -192,18 +191,18 @@ function runStatusPhase(
         ),
       );
     },
+    { concurrency: TICK_CONCURRENCY },
   );
 }
 
-function runIncidentPhase(
+export function runIncidentPhase(
   triplets: Triplet[],
   permits: Semaphore.Semaphore,
   tickStartedAt: Date,
 ): Effect.Effect<IncidentPhaseOutcome[]> {
-  return forEachWithPermit(
+  return Effect.forEach(
     triplets,
-    permits,
-    ({ row, entry, fetcher }): Effect.Effect<IncidentPhaseOutcome> => {
+    ({ row, entry, fetcher }) => {
       if (!fetcher || !fetcher.fetchIncidents) {
         return Effect.succeed<IncidentPhaseOutcome>({
           kind: "skip",
@@ -211,6 +210,7 @@ function runIncidentPhase(
         });
       }
       return fetcher.fetchIncidents(entry).pipe(
+        Semaphore.withPermit(permits),
         Effect.flatMap((incidents) =>
           runUpsert({ entry, fetcher }, () =>
             upsertExternalIncidentsForService({
@@ -242,6 +242,7 @@ function runIncidentPhase(
         ),
       );
     },
+    { concurrency: TICK_CONCURRENCY },
   );
 }
 
@@ -251,10 +252,9 @@ function runComponentPhase(
   tickStartedAt: Date,
   fetchedAt: number,
 ): Effect.Effect<ComponentPhaseOutcome[]> {
-  return forEachWithPermit(
+  return Effect.forEach(
     triplets,
-    permits,
-    ({ row, entry, fetcher }): Effect.Effect<ComponentPhaseOutcome> => {
+    ({ row, entry, fetcher }) => {
       if (!fetcher || !fetcher.fetchComponents) {
         return Effect.succeed<ComponentPhaseOutcome>({
           kind: "skip",
@@ -262,6 +262,7 @@ function runComponentPhase(
         });
       }
       return fetcher.fetchComponents(entry).pipe(
+        Semaphore.withPermit(permits),
         Effect.flatMap((components) =>
           runUpsert({ entry, fetcher }, () =>
             upsertExternalComponentsForService({
@@ -308,6 +309,7 @@ function runComponentPhase(
         ),
       );
     },
+    { concurrency: TICK_CONCURRENCY },
   );
 }
 
