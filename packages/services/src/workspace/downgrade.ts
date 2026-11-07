@@ -18,6 +18,7 @@ import { deleteNotification } from "../notification";
 import {
   deletePage,
   updatePageCustomDomain,
+  updatePageLocales,
   updatePagePasswordProtection,
   updatePageTimezone,
 } from "../page";
@@ -130,6 +131,8 @@ export async function downgradeWorkspaceToFree(args: {
         title: page.title,
         customDomain: page.customDomain,
         defaultTimezone: page.defaultTimezone,
+        defaultLocale: page.defaultLocale,
+        locales: page.locales,
       })
       .from(page)
       .where(eq(page.workspaceId, workspaceId))
@@ -172,6 +175,12 @@ export async function downgradeWorkspaceToFree(args: {
         await updatePageTimezone({
           ctx: txCtx,
           input: { id: keptPage.id, defaultTimezone: "UTC" },
+        });
+      }
+      if (keptPage.defaultLocale !== "en" || keptPage.locales !== null) {
+        await updatePageLocales({
+          ctx: txCtx,
+          input: { id: keptPage.id, defaultLocale: "en", locales: null },
         });
       }
     }

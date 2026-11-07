@@ -300,7 +300,9 @@ export async function updatePageLocales(args: {
   requireScope(ctx, "pages:write");
   const input = UpdatePageLocalesInput.parse(args.input);
 
-  if (!ctx.workspace.limits.i18n) {
+  // English only stays open to every plan, so a page can always be set back to it
+  const englishOnly = input.defaultLocale === "en" && input.locales === null;
+  if (!englishOnly && !ctx.workspace.limits.i18n) {
     throw new LimitExceededError("i18n", 0);
   }
 
