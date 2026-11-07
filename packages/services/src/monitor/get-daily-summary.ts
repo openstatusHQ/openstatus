@@ -12,15 +12,16 @@ type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat";
  * pipes, grouped by jobType. Ids that are missing / soft-deleted / of an
  * unsupported jobType are skipped — callers want empty data for those, not a
  * throw. The pipe rows already match `StatusData` (day ISO, monitorId string).
+ * Returns the zone the days are grouped in alongside the rows.
  */
 export async function fetchMonitorDailyStats(args: {
   db: DB;
   tb: OSTinybird;
   monitorIds: number[];
   workspaceId: number;
-}): Promise<StatusData[]> {
+}): Promise<{ timeZone: string; rows: StatusData[] }> {
   const ids = Array.from(new Set(args.monitorIds));
-  if (ids.length === 0) return [];
+  if (ids.length === 0) return { timeZone: "UTC", rows: [] };
 
   const rows = await args.db
     .select({ id: monitor.id, jobType: monitor.jobType })
@@ -64,7 +65,7 @@ export async function fetchMonitorDailyStats(args: {
       }),
   );
 
-  return results.flatMap((result) => result.data);
+  return { timeZone: "UTC", rows: results.flatMap((result) => result.data) };
 }
 
 function status45d(tb: OSTinybird, jobType: SupportedJobType) {

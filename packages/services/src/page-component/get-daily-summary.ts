@@ -120,8 +120,8 @@ export async function getPageComponentDailySummary(args: {
       : Promise.resolve([]),
   ]);
 
-  const statsByMonitor = new Map<string, typeof monitorStats>();
-  for (const stat of monitorStats) {
+  const statsByMonitor = new Map<string, typeof monitorStats.rows>();
+  for (const stat of monitorStats.rows) {
     const arr = statsByMonitor.get(stat.monitorId);
     if (arr) arr.push(stat);
     else statsByMonitor.set(stat.monitorId, [stat]);
