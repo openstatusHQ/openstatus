@@ -1,11 +1,27 @@
+import { getLogger } from "@logtape/logtape";
+import * as Sentry from "@sentry/node";
+
+const logger = getLogger(["external-status"]);
+
 const inFlight = new Set<Promise<unknown>>();
 
 // Cron handlers answer 200 before their tick settles; SIGTERM waits on these.
-export function runInBackground(task: Promise<unknown>): void {
+// `onDefect` sees what escaped the caller's own handling, e.g. a throw in Effect.tap.
+export function runInBackground(
+  name: string,
+  task: Promise<unknown>,
+  onDefect?: () => void,
+): void {
   const tracked = task.finally(() => inFlight.delete(tracked));
   inFlight.add(tracked);
-  // The caller owns error handling; this copy must not become an unhandled rejection.
-  tracked.catch(() => {});
+  tracked.catch((error: unknown) => {
+    logger.error("background task {name} crashed: {message}", {
+      name,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    Sentry.captureException(error, { tags: { background_task: name } });
+    onDefect?.();
+  });
 }
 
 export async function drainBackground(graceMs: number): Promise<void> {

@@ -21,6 +21,7 @@ export async function handleExternalIncidentsPruneCron(c: Context) {
   );
 
   runInBackground(
+    "external-incidents-prune",
     Effect.runPromise(
       Effect.tryPromise({
         try: () => runExternalIncidentsPruneTick(),
@@ -51,6 +52,7 @@ export async function handleExternalIncidentsPruneCron(c: Context) {
         ),
       ),
     ),
+    () => void cronFailed(),
   );
 
   return c.json({ success: true }, 200);

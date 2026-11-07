@@ -708,6 +708,7 @@ export async function handleExternalStatusCron(c: Context) {
   // (e.g. via getSentry(c)). The handler returns 200 before this resolves, and
   // a captured per-request Sentry hub stays pinned across retries.
   runInBackground(
+    "external-status",
     Effect.runPromise(
       Effect.tryPromise({
         try: () => runExternalStatusTick(),
@@ -755,6 +756,7 @@ export async function handleExternalStatusCron(c: Context) {
         Effect.ensuring(Effect.sync(releaseTick)),
       ),
     ),
+    () => void cronFailed(),
   );
 
   return c.json({ success: true }, 200);
