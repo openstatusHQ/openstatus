@@ -38,7 +38,6 @@
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/services": "workspace:*",
-    "@openstatus/status-fetcher": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",

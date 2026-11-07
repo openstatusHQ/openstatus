@@ -23,7 +23,7 @@ export async function handleUptimeFreezeCron(c: Context) {
   const { cronCompleted, cronFailed } = runSentryCron("uptime-freeze");
 
   // Background chain: must not capture `c` or anything derived from it —
-  // the handler returns 200 before this resolves (see external-status.ts)
+  // the handler returns 200 before this resolves (see the /checker route in ./index.ts)
   void runUptimeFreeze({
     pipes,
     onChunkFailure: ({ jobType, error }) => {

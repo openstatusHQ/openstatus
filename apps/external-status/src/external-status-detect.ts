@@ -13,7 +13,7 @@ import type {
 } from "@openstatus/status-fetcher";
 import { type Duration, Effect, Semaphore } from "effect";
 
-const logger = getLogger(["workflow", "external-status"]);
+const logger = getLogger(["external-status"]);
 
 export const PROBE_TTL_MS = 24 * 60 * 60 * 1000;
 

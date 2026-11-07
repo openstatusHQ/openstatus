@@ -4,6 +4,7 @@ ignore:
   - /apps/screenshot-service
   - /apps/server
   - /apps/web
+  - /apps/external-status
   - /apps/dashboard
   - /apps/status-page
   - /packages/analytics
@@ -49,7 +50,6 @@ builders:
       - packages/upstash/package.json
       - packages/theme-store/package.json
       - packages/locales/package.json
-      - packages/status-fetcher/package.json
 
     # Install dependencies scoped to the workflows subgraph (dev included: the build stage needs tsdown)
     run:

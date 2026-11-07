@@ -42,7 +42,6 @@ RUN \
     --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
     --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
     --mount=type=bind,target=packages/locales/package.json,source=packages/locales/package.json \
-    --mount=type=bind,target=packages/status-fetcher/package.json,source=packages/status-fetcher/package.json \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 npm install -g corepack@0.36.0

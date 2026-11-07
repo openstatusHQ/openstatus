@@ -84,6 +84,7 @@ boundaries with external SDKs or at registry-style dispatch. When you need one:
 - `apps/server/AGENTS.md` — Hono API, API-key scopes
 - `apps/status-page/AGENTS.md` — public surfaces and gated content
 - `apps/workflows/AGENTS.md` — bundling constraints, native side-car
+- `apps/external-status/AGENTS.md` — third-party status-page polling crons
 - `apps/checker/AGENTS.md` — Go probing tier
 - `apps/web/AGENTS.md` — marketing site, `.well-known`, search, content pages
 
