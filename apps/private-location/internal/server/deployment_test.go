@@ -26,12 +26,13 @@ func TestDeploymentSetsTinybirdToken(t *testing.T) {
 	service, ok := compose.Services["private-location"]
 	require.True(t, ok, "private-location service must exist in coolify-deployment.yaml")
 
-	var hasToken bool
+	var tokenEntry string
 	for _, entry := range service.Environment {
 		if strings.HasPrefix(entry, "TINYBIRD_TOKEN=") {
-			hasToken = true
+			tokenEntry = entry
 			break
 		}
 	}
-	require.True(t, hasToken, "private-location must set TINYBIRD_TOKEN")
+	require.NotEmpty(t, tokenEntry, "private-location must set TINYBIRD_TOKEN")
+	require.Equal(t, "TINYBIRD_TOKEN=${TINYBIRD_TOKEN:-${TINY_BIRD_API_KEY:-}}", tokenEntry)
 }

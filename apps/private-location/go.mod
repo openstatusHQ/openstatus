@@ -12,7 +12,6 @@ require (
 	github.com/libsql/sqlite-antlr4-parser v0.0.0-20240327125255-dbf53b6cbf06
 	github.com/stretchr/testify v1.11.1
 	github.com/tursodatabase/go-libsql v0.0.0-20260424063416-3051e37e6e04
-	gopkg.in/yaml.v3 v3.0.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.14.0
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.15.0
@@ -20,6 +19,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.39.0
 	go.opentelemetry.io/otel/sdk/log v0.15.0
 	google.golang.org/protobuf v1.36.10
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
