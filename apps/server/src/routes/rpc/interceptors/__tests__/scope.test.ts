@@ -116,6 +116,18 @@ describe("requiredScopeFor", () => {
     );
   });
 
+  test("heartbeat pings are reads, token rotation is a write", () => {
+    expect(
+      requiredScopeFor(MONITOR, {
+        name: "ListMonitorHeartbeatPings",
+        idempotency: NO_SIDE_EFFECTS,
+      }),
+    ).toBe("monitors:read");
+    expect(
+      requiredScopeFor(MONITOR, { name: "RegenerateHeartbeatToken" }),
+    ).toBe("monitors:write");
+  });
+
   test("subscriber methods on StatusPageService belong to subscribers", () => {
     expect(requiredScopeFor(PAGE, { name: "ListSubscribers" })).toBe(
       "subscribers:read",

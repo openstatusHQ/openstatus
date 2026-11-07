@@ -71,4 +71,41 @@ message HeartbeatMonitor {
 
   // What the last ping reported, unspecified until the first one. Read-only.
   HeartbeatPingKind last_ping_kind = 11 [(gnostic.openapi.v3.property) = {read_only: true}];
+
+  // Time the next ping is due (last ping + period + grace) in ISO 8601.
+  // Unset until the first ping and while the monitor is paused. Read-only.
+  optional string next_due_at = 12 [(gnostic.openapi.v3.property) = {read_only: true}];
+}
+
+// HeartbeatPing is one request your job sent to the ping URL.
+message HeartbeatPing {
+  // Ping ID.
+  string id = 1;
+
+  // Monitor ID.
+  string monitor_id = 2;
+
+  // Time the ping arrived in Unix milliseconds.
+  int64 timestamp = 3;
+
+  // Whether the ping reported success or failure.
+  HeartbeatPingKind kind = 4;
+
+  // HTTP method of the ping request.
+  string method = 5;
+
+  // Client IP address, when known.
+  optional string ip = 6;
+
+  // User-Agent header, cut at 256 characters.
+  optional string user_agent = 7;
+
+  // Request headers, with sensitive values redacted.
+  map<string, string> headers = 8;
+
+  // Request body, cut at 10 KB, with secrets redacted.
+  optional string body = 9;
+
+  // Whether the body was cut at 10 KB.
+  bool body_truncated = 10;
 }

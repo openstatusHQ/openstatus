@@ -111,6 +111,21 @@ service MonitorService {
   rpc GetMonitorHTTPResponseLog(GetMonitorHTTPResponseLogRequest) returns (GetMonitorHTTPResponseLogResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+
+  // ListMonitorHeartbeatPings returns the pings a heartbeat monitor received, newest first.
+  rpc ListMonitorHeartbeatPings(ListMonitorHeartbeatPingsRequest) returns (ListMonitorHeartbeatPingsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns the pings a heartbeat monitor received, newest first, with their method, headers and body. Pings older than the plan's data retention are not returned. Requires the response logs feature on the workspace plan. Page through results by passing next_cursor back as cursor."
+    };
+  }
+
+  // RegenerateHeartbeatToken replaces the ping URL of a heartbeat monitor.
+  rpc RegenerateHeartbeatToken(RegenerateHeartbeatTokenRequest) returns (RegenerateHeartbeatTokenResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Generates a new ping URL for a heartbeat monitor. The previous ping URL stops working immediately, so update your jobs with the returned ping_url."
+    };
+  }
 }
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -569,4 +584,57 @@ message GetMonitorHTTPResponseLogRequest {
 message GetMonitorHTTPResponseLogResponse {
   // Response log details.
   HTTPResponseLogDetail log = 1;
+}
+
+// ListMonitorHeartbeatPingsRequest is the request to list the pings of a heartbeat monitor.
+message ListMonitorHeartbeatPingsRequest {
+  // Monitor ID to list pings for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Start of the window as Unix milliseconds, clamped to the plan's data retention.
+  optional int64 from_timestamp = 2;
+
+  // End of the window as Unix milliseconds.
+  optional int64 to_timestamp = 3;
+
+  // Only return pings of these kinds. Empty returns every kind.
+  repeated HeartbeatPingKind kinds = 4 [(buf.validate.field).repeated = {
+    max_items: 2
+    items: {
+      enum: {
+        defined_only: true
+        not_in: [0]
+      }
+    }
+  }];
+
+  // Cursor from a previous response's next_cursor.
+  optional string cursor = 5 [(buf.validate.field).string.max_len = 64];
+
+  // Maximum number of pings to return (1-100, defaults to 50).
+  optional int32 limit = 6 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+}
+
+// ListMonitorHeartbeatPingsResponse is the response containing heartbeat pings.
+message ListMonitorHeartbeatPingsResponse {
+  // Pings, newest first.
+  repeated HeartbeatPing pings = 1;
+
+  // Cursor for the next page, unset on the last page.
+  optional string next_cursor = 2;
+}
+
+// RegenerateHeartbeatTokenRequest is the request to replace a heartbeat monitor's ping URL.
+message RegenerateHeartbeatTokenRequest {
+  // Monitor ID to regenerate the ping URL for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// RegenerateHeartbeatTokenResponse is the response containing the monitor with its new ping URL.
+message RegenerateHeartbeatTokenResponse {
+  // The monitor with its new ping URL.
+  HeartbeatMonitor monitor = 1;
 }

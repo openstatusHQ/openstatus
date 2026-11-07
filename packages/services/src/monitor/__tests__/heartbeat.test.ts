@@ -6,7 +6,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
-import { OSTinybird } from "@openstatus/tinybird";
+import { type HeartbeatPing, OSTinybird } from "@openstatus/tinybird";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -907,6 +907,103 @@ describe("heartbeat reads", () => {
           input: { monitorId: http.id },
         }),
       ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+});
+
+type HeartbeatListParams = Parameters<OSTinybird["heartbeatList"]>[0];
+
+class RecordingTinybird extends OSTinybird {
+  readonly calls: HeartbeatListParams[] = [];
+
+  constructor(private readonly rows: HeartbeatPing[] = []) {
+    super({ token: "", noop: true });
+  }
+
+  override get heartbeatList(): OSTinybird["heartbeatList"] {
+    const pipe = super.heartbeatList;
+    return async (params) => {
+      this.calls.push(params);
+      return { ...(await pipe(params)), data: this.rows };
+    };
+  }
+}
+
+describe("heartbeat ping retention", () => {
+  const DAY = 86_400_000;
+
+  function ctxWithRetention(
+    tx: DrizzleTx,
+    tb: OSTinybird,
+    retention: "14 days" | "24 months",
+  ): ServiceContext {
+    return {
+      ...ctx,
+      db: tx,
+      tb,
+      workspace: {
+        ...ctx.workspace,
+        limits: {
+          ...ctx.workspace.limits,
+          "response-logs": true,
+          "data-retention": retention,
+        },
+      },
+    };
+  }
+
+  test("clamps from to the plan retention", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const tb = new RecordingTinybird();
+      const before = Date.now();
+      await listHeartbeatPings({
+        ctx: ctxWithRetention(tx, tb, "14 days"),
+        input: { monitorId: row.id, fromTimestamp: before - 60 * DAY },
+      });
+      await listHeartbeatPings({
+        ctx: ctxWithRetention(tx, tb, "14 days"),
+        input: { monitorId: row.id },
+      });
+
+      const [explicit, unset] = tb.calls.map((call) => call.fromDate ?? 0);
+      for (const from of [explicit, unset]) {
+        expect(from).toBeGreaterThanOrEqual(before - 14 * DAY - 1_000);
+        expect(from).toBeLessThanOrEqual(Date.now() - 14 * DAY);
+      }
+    });
+  });
+
+  test("keeps a from inside the retention window", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const tb = new RecordingTinybird();
+      const from = Date.now() - 60 * DAY;
+      await listHeartbeatPings({
+        ctx: ctxWithRetention(tx, tb, "24 months"),
+        input: { monitorId: row.id, fromTimestamp: from },
+      });
+      expect(tb.calls[0]?.fromDate).toBe(from);
+    });
+  });
+
+  test("returns an empty page past the cutoff without querying", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const tb = new RecordingTinybird();
+      const old = Date.now() - 30 * DAY;
+      const byTo = await listHeartbeatPings({
+        ctx: ctxWithRetention(tx, tb, "14 days"),
+        input: { monitorId: row.id, toTimestamp: old },
+      });
+      const byCursor = await listHeartbeatPings({
+        ctx: ctxWithRetention(tx, tb, "14 days"),
+        input: { monitorId: row.id, cursor: old },
+      });
+
+      expect(byTo).toEqual({ data: [], nextCursor: null });
+      expect(byCursor).toEqual({ data: [], nextCursor: null });
+      expect(tb.calls).toEqual([]);
     });
   });
 });
