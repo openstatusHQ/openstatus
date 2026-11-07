@@ -1,15 +1,17 @@
 import { FetchError } from "@openstatus/status-fetcher";
 import type { DetectionResult } from "@openstatus/status-fetcher";
-import { Effect } from "effect";
+import { Effect, Semaphore } from "effect";
 import { describe, expect, test } from "vitest";
 
 import {
   PROBE_TTL_MS,
   TICK_CLAIM_TTL_MS,
+  TICK_CONCURRENCY,
   UPSERT_CONCURRENCY,
   UpsertTimeoutError,
   claimTick,
   clearProbeStamp,
+  forEachWithPermit,
   decideDetectionAction,
   isBlocked,
   isSuspicious,
@@ -202,6 +204,45 @@ describe("runUpsert", () => {
       true,
     );
     expect(started).toBe(false);
+  });
+});
+
+describe("forEachWithPermit", () => {
+  test("phases sharing permits stay under one limit and keep item order", async () => {
+    const permits = Semaphore.makeUnsafe(TICK_CONCURRENCY);
+    const items = Array.from({ length: TICK_CONCURRENCY * 2 }, (_, i) => i);
+    let running = 0;
+    let peak = 0;
+    const phase = forEachWithPermit(items, permits, (item) =>
+      Effect.promise(async () => {
+        running++;
+        peak = Math.max(peak, running);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        running--;
+        return item;
+      }),
+    );
+
+    const results = await Effect.runPromise(
+      Effect.all([phase, phase, phase], { concurrency: "unbounded" }),
+    );
+
+    expect(peak).toBe(TICK_CONCURRENCY);
+    for (const result of results) expect(result).toEqual(items);
+  });
+
+  test("a failed item releases its permit", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+    await Effect.runPromise(
+      forEachWithPermit([1], permits, () => Effect.fail("boom")).pipe(
+        Effect.flip,
+      ),
+    );
+
+    const [value] = await Effect.runPromise(
+      forEachWithPermit([1], permits, (item) => Effect.succeed(item)),
+    );
+    expect(value).toBe(1);
   });
 });
 

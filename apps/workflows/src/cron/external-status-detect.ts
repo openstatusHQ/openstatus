@@ -97,9 +97,25 @@ export function isTransientDbError(err: FetchError): boolean {
   );
 }
 
+export const TICK_CONCURRENCY = 50;
+
+// `Effect.forEach` concurrency only bounds its own items, so phases running side
+// by side share permits to stay under one limit.
+export function forEachWithPermit<T, A, E>(
+  items: readonly T[],
+  permits: Semaphore.Semaphore,
+  run: (item: T) => Effect.Effect<A, E>,
+): Effect.Effect<A[], E> {
+  return Effect.forEach(
+    items,
+    (item) => run(item).pipe(Semaphore.withPermit(permits)),
+    { concurrency: "unbounded" },
+  );
+}
+
 const UPSERT_TIMEOUT: Duration.Input = "30 seconds";
 
-// Lower than the fetch concurrency: upstream pages can take parallel requests,
+// Lower than the tick limit: upstream pages can take parallel requests,
 // but every write in Turso queues on one lock, shared with the checker ingest.
 export const UPSERT_CONCURRENCY = 3;
 

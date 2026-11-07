@@ -21,7 +21,7 @@ import type {
   StatusResult,
 } from "@openstatus/status-fetcher";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Effect } from "effect";
+import { Effect, Semaphore } from "effect";
 import type { Context } from "hono";
 
 import { env } from "../env";
@@ -33,9 +33,11 @@ import {
   runSentryCron,
 } from "../lib/sentry";
 import {
+  TICK_CONCURRENCY,
   claimTick,
   clearProbeStamp,
   decideDetectionAction,
+  forEachWithPermit,
   isBlocked,
   isSuspicious,
   isTransientDbError,
@@ -50,10 +52,6 @@ const tb = new OSTinybird({
   baseUrl: env().TINYBIRD_URL,
   noop: env().TINYBIRD_NOOP,
 });
-
-// 10 per phase × 3 phases = peak 30 concurrent HTTP requests upstream; keeps
-// Atlassian/Incident.io CDNs comfortable while still parallelising heavily.
-const PHASE_CONCURRENCY = 10;
 
 function toStatusPageEntry(row: ExternalServiceRow): StatusPageEntry {
   return {
@@ -164,11 +162,13 @@ type Triplet = {
 
 function runStatusPhase(
   triplets: Triplet[],
+  permits: Semaphore.Semaphore,
   fetchedAt: number,
 ): Effect.Effect<StatusPhaseOutcome[]> {
-  return Effect.forEach(
+  return forEachWithPermit(
     triplets,
-    ({ entry, fetcher }) => {
+    permits,
+    ({ entry, fetcher }): Effect.Effect<StatusPhaseOutcome> => {
       if (!fetcher) {
         return Effect.succeed<StatusPhaseOutcome>({
           kind: "no-fetcher",
@@ -192,17 +192,18 @@ function runStatusPhase(
         ),
       );
     },
-    { concurrency: PHASE_CONCURRENCY },
   );
 }
 
 function runIncidentPhase(
   triplets: Triplet[],
+  permits: Semaphore.Semaphore,
   tickStartedAt: Date,
 ): Effect.Effect<IncidentPhaseOutcome[]> {
-  return Effect.forEach(
+  return forEachWithPermit(
     triplets,
-    ({ row, entry, fetcher }) => {
+    permits,
+    ({ row, entry, fetcher }): Effect.Effect<IncidentPhaseOutcome> => {
       if (!fetcher || !fetcher.fetchIncidents) {
         return Effect.succeed<IncidentPhaseOutcome>({
           kind: "skip",
@@ -241,18 +242,19 @@ function runIncidentPhase(
         ),
       );
     },
-    { concurrency: PHASE_CONCURRENCY },
   );
 }
 
 function runComponentPhase(
   triplets: Triplet[],
+  permits: Semaphore.Semaphore,
   tickStartedAt: Date,
   fetchedAt: number,
 ): Effect.Effect<ComponentPhaseOutcome[]> {
-  return Effect.forEach(
+  return forEachWithPermit(
     triplets,
-    ({ row, entry, fetcher }) => {
+    permits,
+    ({ row, entry, fetcher }): Effect.Effect<ComponentPhaseOutcome> => {
       if (!fetcher || !fetcher.fetchComponents) {
         return Effect.succeed<ComponentPhaseOutcome>({
           kind: "skip",
@@ -306,7 +308,6 @@ function runComponentPhase(
         ),
       );
     },
-    { concurrency: PHASE_CONCURRENCY },
   );
 }
 
@@ -645,15 +646,21 @@ export async function runExternalStatusTick(): Promise<{
   // upstream endpoint and store, so a failed status fetch must not suppress a
   // service's components (or vice versa). A tick can therefore persist
   // component history for a service whose status snapshot failed that tick.
+  const permits = Semaphore.makeUnsafe(TICK_CONCURRENCY);
   const [statusOutcomes, incidentOutcomes, componentOutcomes] =
     await Effect.runPromise(
       Effect.all(
         [
-          runStatusPhase(triplets, tickStartedAt.getTime()),
-          runIncidentPhase(triplets, tickStartedAt),
-          runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
+          runStatusPhase(triplets, permits, tickStartedAt.getTime()),
+          runIncidentPhase(triplets, permits, tickStartedAt),
+          runComponentPhase(
+            triplets,
+            permits,
+            tickStartedAt,
+            tickStartedAt.getTime(),
+          ),
         ],
-        { concurrency: 50 },
+        { concurrency: "unbounded" },
       ),
     );
 
