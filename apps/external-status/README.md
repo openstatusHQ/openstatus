@@ -25,7 +25,7 @@ open <http://localhost:3000>
 From root
 
 ```bash
-flyctl deploy --config apps/external-status/fly.toml --dockerfile apps/external-status/Dockerfile
+flyctl deploy --config apps/external-status/fly.toml --dockerfile apps/external-status/Dockerfile --ha=false
 ```
 
 Secrets: `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `TINY_BIRD_API_KEY`, `SENTRY_DSN`,
