@@ -45,6 +45,10 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
+import {
+  timeZoneSearchKeywords,
+  timeZoneSearchScore,
+} from "@/components/forms/status-page/timezone-search";
 
 const schema = z.object({
   defaultTimezone: z.string().min(1),
@@ -70,16 +74,22 @@ export function FormTimezone({
 }) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  // Built on first open, not on mount: the search keywords take ~100 ms.
+  const [opened, setOpened] = useState(false);
+  if (open && !opened) setOpened(true);
   const zones = useMemo(
     () =>
-      // some engines list UTC themselves, others do not
-      [...new Set(["UTC", ...Intl.supportedValuesOf("timeZone")])].map(
-        (zone) => ({
-          zone,
-          label: zoneLabel(zone),
-        }),
-      ),
-    [],
+      opened
+        ? // some engines list UTC themselves, others do not
+          [...new Set(["UTC", ...Intl.supportedValuesOf("timeZone")])].map(
+            (zone) => ({
+              zone,
+              label: zoneLabel(zone),
+              keywords: timeZoneSearchKeywords(zone),
+            }),
+          )
+        : [],
+    [opened],
   );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -145,16 +155,16 @@ export function FormTimezone({
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-                      <Command>
+                      <Command filter={timeZoneSearchScore}>
                         <CommandInput placeholder="Search time zone..." />
                         <CommandList>
                           <CommandEmpty>No time zone found.</CommandEmpty>
                           <CommandGroup>
-                            {zones.map(({ zone, label }) => (
+                            {zones.map(({ zone, label, keywords }) => (
                               <CommandItem
                                 key={zone}
                                 value={zone}
-                                keywords={[label]}
+                                keywords={keywords}
                                 onSelect={() => {
                                   field.onChange(zone);
                                   setOpen(false);

@@ -18,6 +18,7 @@ a CLI that drives Chrome over CDP. Two ways in:
 ```sh
 node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
 node scripts/screenshot.mjs --app web /pricing --full-page
+node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]" --aspect 16:9 --device desktop
 node scripts/screenshot.mjs --app status-page /acme
 ```
 
@@ -109,6 +110,7 @@ it and the script sets it itself when unset. No `agent-browser install`.
 | `--out` | `.screenshots/<branch>[/<label>]` | gitignored; overrides branch and label |
 | `--width` | `1400` | desktop viewport width, 2× device scale |
 | `--full-page` | off | full-page capture when no selector |
+| `--aspect` | off | `16:9` (any ratio between 1:4 and 4:1, terms up to 2000) frames the shot at that exact ratio: a selector match centered on the page background with at least 48 px around it, or a page shot with a viewport of that ratio (width rounded up to a multiple of the reduced ratio's first term, 16 for 16:9; desktop only, so it defaults to `--device desktop` and refuses `mobile`/`both`). Not with `--full-page` |
 | `--base` | per app | override the dev server URL |
 | `--db` | `http://127.0.0.1:8080` | sqld HTTP endpoint for the session lookup |
 | `--user` | | pick the session of this email |
@@ -333,6 +335,14 @@ the Slack parts and the clips.
 ## Rules
 
 - Shoot the element, not the viewport, unless layout is the question.
+- A screenshot that ships on the marketing site (`apps/web`: changelog,
+  blog, guides, use cases) is 16:9: an `image:` hero letterboxes at any
+  other ratio and an inline image is cropped to it (an inline image that is
+  wide on purpose opts out with `className="img-fit"`, see
+  `apps/web/AGENTS.md`). Shoot it with `--aspect 16:9 --device desktop`; for a
+  state the script cannot reach (an open picker, a dialog), size the
+  agent-browser viewport to 16:9 or crop to it, and check the PNG's
+  dimensions before committing it to `apps/web/public/assets/`.
 - Shoot before and after (`--label before`, `--label after`), desktop and mobile, and compare. Add dark when
   the change touches color.
 - Do not post, edit or delete on the fixtures unless the screenshot needs

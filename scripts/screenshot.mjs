@@ -4,6 +4,7 @@
 //
 //   node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]"
 //   node scripts/screenshot.mjs --app web /pricing --full-page
+//   node scripts/screenshot.mjs --app dashboard /incidents/1 --selector "[data-slot=timeline]" --aspect 16:9
 //   node scripts/screenshot.mjs --app status-page /acme
 //
 // Flags, auth order and fixtures: .agents/skills/screenshot/SKILL.md.
@@ -46,7 +47,7 @@ for (let i = 0; i < args.length; i++) {
 const app = APPS[flags.app ?? "dashboard"];
 if (!app || paths.length === 0) {
   console.error(
-    "usage: screenshot.mjs --app dashboard|web|status-page <path> [...] [--selector css] [--device both|desktop|mobile] [--theme light|dark|both]",
+    "usage: screenshot.mjs --app dashboard|web|status-page <path> [...] [--selector css] [--aspect 16:9] [--device both|desktop|mobile] [--theme light|dark|both]",
   );
   process.exit(2);
 }
@@ -85,15 +86,85 @@ if (!Number.isFinite(width) || width <= 0) {
   console.error(`--width must be a positive number, got ${flags.width}`);
   process.exit(2);
 }
+// Images on the marketing site sit in 16:9 frames (`aspect-video`), so
+// `--aspect 16:9` shoots exactly that: a selector match is centered on the
+// page background with at least `ASPECT_PAD` px around it, a page shot gets a
+// viewport of that ratio. The frame width is rounded up to a multiple of the
+// ratio's width so the height comes out whole and the ratio exact.
+const ASPECT_PAD = 48;
+const aspect = (() => {
+  if (flags.aspect === undefined) return null;
+  const m = /^(\d+):(\d+)$/.exec(String(flags.aspect));
+  const [w, h] = m ? [Number(m[1]), Number(m[2])] : [];
+  // Between 1:4 and 4:1: wider or taller frames are not images anyone
+  // publishes, and the bound keeps the viewport (width × ratio) sane. The
+  // frame width is rounded up to a multiple of the reduced first term, so
+  // that term is capped at 2000 (and a long digit string never reaches
+  // Infinity).
+  if (
+    !m ||
+    !(w > 0 && w <= 2000) ||
+    !(h > 0 && h <= 2000) ||
+    w / h > 4 ||
+    h / w > 4
+  ) {
+    console.error(
+      `--aspect must look like 16:9, between 1:4 and 4:1, got ${flags.aspect}`,
+    );
+    process.exit(2);
+  }
+  if (flags["full-page"]) {
+    console.error("--aspect and --full-page cannot be combined");
+    process.exit(2);
+  }
+  // A ratio frames a selector match on any device, but a whole phone screen
+  // cannot be 16:9: page shots are desktop only.
+  if (
+    !flags.selector &&
+    flags.device !== undefined &&
+    flags.device !== "desktop"
+  ) {
+    console.error(
+      "--aspect without --selector shoots the desktop viewport only; pass --device desktop",
+    );
+    process.exit(2);
+  }
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  const g = gcd(w, h);
+  return { w: w / g, h: h / g };
+})();
+// Pure, because it is also stringified into the page by `isolate`.
+function frame(w, h, ratio, pad) {
+  if (!ratio) return { w, h, x: 0, y: 0 };
+  const wide = Math.max(
+    w + 2 * pad,
+    Math.ceil(((h + 2 * pad) * ratio.w) / ratio.h),
+  );
+  const fw = Math.ceil(wide / ratio.w) * ratio.w;
+  const fh = (fw / ratio.w) * ratio.h;
+  return {
+    w: fw,
+    h: fh,
+    x: Math.floor((fw - w) / 2),
+    y: Math.floor((fh - h) / 2),
+  };
+}
+
 // `emulate` sets the mobile user agent; the viewport line pins size and scale.
 const DEVICES = {
-  desktop: { width, height: 1000, scale: 2 },
+  desktop: (() => {
+    // frame() of a zero-height box: the width rounded up to the ratio
+    const f = frame(width, 0, aspect, 0);
+    return { width: f.w, height: aspect ? f.h : 1000, scale: 2 };
+  })(),
   mobile: { width: 390, height: 844, scale: 3, emulate: "iPhone 14" },
 };
 const devices =
   flags.device === "desktop" || flags.device === "mobile"
     ? [flags.device]
-    : ["desktop", "mobile"];
+    : aspect && !flags.selector
+      ? ["desktop"]
+      : ["desktop", "mobile"];
 const wantsAuth = app.auth || Boolean(flags.token || flags.state);
 mkdirSync(out, { recursive: true });
 
@@ -261,26 +332,36 @@ const HIDE_DEV_CHROME = `(() => {
   return "ok";
 })()`;
 
-// agent-browser shoots viewports, not elements. Pin the k-th match to the
-// viewport's top-left at its own size, hide everything else, and let the
-// caller size the viewport to it.
+// agent-browser shoots viewports, not elements. Pin the k-th match at
+// (x, y) at its own size, hide everything else, and let the caller size the
+// viewport to it. `frame` turns the element's size into that offset and the
+// viewport size; without --aspect it is the element itself at the top-left.
 const isolate = (selector, k) => `(() => {
   const els = [...document.querySelectorAll(${JSON.stringify(selector)})].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden");
   const el = els[${k}];
   if (!el) return JSON.stringify({ count: els.length });
   const r = el.getBoundingClientRect();
   const w = Math.ceil(r.width), h = Math.ceil(r.height);
+  const f = (${frame.toString()})(w, h, ${JSON.stringify(aspect)}, ${ASPECT_PAD});
+  const bg = getComputedStyle(document.body).backgroundColor;
+  // Descendants that set visibility:visible themselves (status dots, icon
+  // buttons) escape the hidden body; a backdrop under the target covers them.
+  const backdrop = document.createElement("div");
+  backdrop.id = "__shot-backdrop";
+  document.body.appendChild(backdrop);
   const st = document.createElement("style");
   st.id = "__shot";
-  st.textContent = "html{background:" + getComputedStyle(document.body).backgroundColor + "!important}"
+  st.textContent = "html{background:" + bg + "!important}"
+    + "#__shot-backdrop{visibility:visible!important;position:fixed!important;inset:0!important;background:" + bg + "!important;z-index:2147483646!important}"
     + "body{visibility:hidden!important;overflow:hidden!important}"
-    + "[data-shot-target]{visibility:visible!important;position:fixed!important;top:0!important;left:0!important;margin:0!important;width:" + w + "px!important;height:" + h + "px!important;z-index:2147483647!important}";
+    + "[data-shot-target]{visibility:visible!important;position:fixed!important;top:" + f.y + "px!important;left:" + f.x + "px!important;margin:0!important;width:" + w + "px!important;height:" + h + "px!important;z-index:2147483647!important}";
   el.setAttribute("data-shot-target", "");
   document.head.appendChild(st);
-  return JSON.stringify({ count: els.length, w, h });
+  return JSON.stringify({ count: els.length, w: f.w, h: f.h });
 })()`;
 const RESTORE = `(() => {
   document.getElementById("__shot")?.remove();
+  document.getElementById("__shot-backdrop")?.remove();
   document.querySelector("[data-shot-target]")?.removeAttribute("data-shot-target");
   return "ok";
 })()`;
