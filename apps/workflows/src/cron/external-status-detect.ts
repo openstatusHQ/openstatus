@@ -11,7 +11,7 @@ import type {
   StatusPageEntry,
   StatusPageProvider,
 } from "@openstatus/status-fetcher";
-import { type Duration, Effect } from "effect";
+import { type Duration, Effect, Semaphore } from "effect";
 
 const logger = getLogger(["workflow", "external-status"]);
 
@@ -37,6 +37,21 @@ export function clearProbeStamp(
   map: Map<string, number> = lastProbeAt,
 ): void {
   map.delete(slug);
+}
+
+// A tick that never settles must not stop external-status until the next restart.
+export const TICK_CLAIM_TTL_MS = 15 * 60 * 1000;
+
+let activeTick: { startedAt: number } | null = null;
+
+// Returns the release function, or null while another tick runs on this machine.
+export function claimTick(now: number): (() => void) | null {
+  if (activeTick && now - activeTick.startedAt < TICK_CLAIM_TTL_MS) return null;
+  const tick = { startedAt: now };
+  activeTick = tick;
+  return () => {
+    if (activeTick === tick) activeTick = null;
+  };
 }
 
 const BLOCKED_STATUSES = new Set([401, 403, 429]);
@@ -84,9 +99,16 @@ export function isTransientDbError(err: FetchError): boolean {
 
 const UPSERT_TIMEOUT: Duration.Input = "30 seconds";
 
+// Lower than the fetch concurrency: upstream pages can take parallel requests,
+// but every write in Turso queues on one lock, shared with the checker ingest.
+export const UPSERT_CONCURRENCY = 3;
+
+const upsertPermits = Semaphore.makeUnsafe(UPSERT_CONCURRENCY);
+
 // undici only gives up on a stalled Turso request after 5 minutes, which would
 // hold up the whole tick. The timeout stops the wait, not the request: a late
-// write is harmless because the next tick recomputes the diff.
+// write is harmless because the next tick recomputes the diff. It also covers the
+// permit wait, so a backlog during a stall is dropped instead of sent to Turso.
 export function runUpsert<T>(
   target: { entry: StatusPageEntry; fetcher: StatusFetcher },
   upsert: () => Promise<T>,
@@ -104,6 +126,7 @@ export function runUpsert<T>(
     try: upsert,
     catch: (e) => wrap(e instanceof Error ? e : new Error(String(e))),
   }).pipe(
+    Semaphore.withPermit(upsertPermits),
     Effect.timeoutOrElse({
       duration: timeout,
       orElse: () => {

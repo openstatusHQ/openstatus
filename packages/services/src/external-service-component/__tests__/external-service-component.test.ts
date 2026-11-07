@@ -4,7 +4,7 @@ import {
   externalService,
   externalServiceComponent,
 } from "@openstatus/db/src/schema";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   getExternalComponentBySlug,
@@ -58,6 +58,108 @@ async function seedService(opts: {
 }
 
 describe("upsertExternalComponentsForService", () => {
+  describe("write lock", () => {
+    const component = {
+      upstreamComponentId: "cmp-lock",
+      name: "fra1",
+      position: 1,
+      indicator: "none",
+      status: "operational",
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test("an idle upsert sends no write but still returns every id", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-idle-lock` });
+      const first = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const second = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      expect(second.upserted).toEqual(first.upserted);
+      expect(batch).not.toHaveBeenCalled();
+      expect(transaction).not.toHaveBeenCalled();
+    });
+
+    test("inserts and updates go out in one batch and return both ids", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-one-batch` });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const res = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [
+          { ...component, status: "major_outage" },
+          { ...component, upstreamComponentId: "cmp-lock-2", name: "iad1" },
+        ],
+      });
+
+      expect(res.upserted.map((c) => c.upstreamComponentId).sort()).toEqual([
+        "cmp-lock",
+        "cmp-lock-2",
+      ]);
+      expect(batch).toHaveBeenCalledTimes(1);
+      expect(transaction).not.toHaveBeenCalled();
+      const rows = await db
+        .select({ status: externalServiceComponent.status })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows.map((r) => r.status).sort()).toEqual([
+        "major_outage",
+        "operational",
+      ]);
+    });
+
+    test("updates alone go out in one batch", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-updates` });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const res = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [{ ...component, status: "major_outage" }],
+      });
+
+      expect(res.upserted).toHaveLength(1);
+      expect(batch).toHaveBeenCalledTimes(1);
+    });
+
+    test("concurrent first sights of a component store one row", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-race` });
+      const upsert = () =>
+        upsertExternalComponentsForService({
+          externalServiceId: serviceId,
+          components: [component],
+        });
+
+      await Promise.all([upsert(), upsert(), upsert()]);
+
+      const rows = await db
+        .select({ id: externalServiceComponent.id })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows).toHaveLength(1);
+    });
+  });
+
   test("inserts components and is idempotent on second call (update path)", async () => {
     const serviceId = await seedService({ slug: `${TEST_PREFIX}-upsert` });
     const baseDate = new Date("2024-06-01T12:00:00.000Z");

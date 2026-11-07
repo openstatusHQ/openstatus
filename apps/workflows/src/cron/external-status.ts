@@ -33,6 +33,7 @@ import {
   runSentryCron,
 } from "../lib/sentry";
 import {
+  claimTick,
   clearProbeStamp,
   decideDetectionAction,
   isBlocked,
@@ -685,6 +686,12 @@ export async function runExternalStatusTick(): Promise<{
 }
 
 export async function handleExternalStatusCron(c: Context) {
+  const releaseTick = claimTick(Date.now());
+  if (!releaseTick) {
+    logger.warn("external-status tick skipped: previous tick still running");
+    return c.json({ success: true, skipped: true }, 200);
+  }
+
   const { cronCompleted, cronFailed } = runSentryCron("external-status");
 
   // Background chain: must not capture `c` or anything derived from it
@@ -735,6 +742,7 @@ export async function handleExternalStatusCron(c: Context) {
           void cronFailed();
         }),
       ),
+      Effect.ensuring(Effect.sync(releaseTick)),
     ),
   );
 

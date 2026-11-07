@@ -5,7 +5,10 @@ import { describe, expect, test } from "vitest";
 
 import {
   PROBE_TTL_MS,
+  TICK_CLAIM_TTL_MS,
+  UPSERT_CONCURRENCY,
   UpsertTimeoutError,
+  claimTick,
   clearProbeStamp,
   decideDetectionAction,
   isBlocked,
@@ -156,6 +159,74 @@ describe("runUpsert", () => {
     );
     expect(err.message).toBe(`[atlassian (toggl)] fetch failed: ${URL}`);
     expect(isTransientDbError(err)).toBe(false);
+  });
+
+  test("never runs more than UPSERT_CONCURRENCY upserts at once", async () => {
+    let running = 0;
+    let peak = 0;
+    await Effect.runPromise(
+      Effect.all(
+        Array.from({ length: UPSERT_CONCURRENCY * 4 }, () =>
+          runUpsert(target, async () => {
+            running++;
+            peak = Math.max(peak, running);
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            running--;
+          }),
+        ),
+        { concurrency: "unbounded" },
+      ),
+    );
+    expect(peak).toBe(UPSERT_CONCURRENCY);
+  });
+
+  test("an upsert that times out waiting for a permit is never sent", async () => {
+    const stalled = Array.from({ length: UPSERT_CONCURRENCY }, () =>
+      runUpsert(target, () => new Promise(() => {}), "50 millis").pipe(
+        Effect.flip,
+      ),
+    );
+    let started = false;
+    const queued = runUpsert(
+      target,
+      async () => {
+        started = true;
+      },
+      "10 millis",
+    ).pipe(Effect.flip);
+
+    const errors = await Effect.runPromise(
+      Effect.all([...stalled, queued], { concurrency: "unbounded" }),
+    );
+    expect(errors.every((e) => e.cause instanceof UpsertTimeoutError)).toBe(
+      true,
+    );
+    expect(started).toBe(false);
+  });
+});
+
+describe("claimTick", () => {
+  test("refuses a second tick until the first releases", () => {
+    const release = claimTick(1_000);
+    expect(release).not.toBeNull();
+    expect(claimTick(2_000)).toBeNull();
+
+    release?.();
+    const next = claimTick(3_000);
+    expect(next).not.toBeNull();
+    next?.();
+  });
+
+  test("a stuck tick stops blocking after the TTL, and its late release is ignored", () => {
+    const stuck = claimTick(0);
+    expect(claimTick(TICK_CLAIM_TTL_MS - 1)).toBeNull();
+
+    const replacement = claimTick(TICK_CLAIM_TTL_MS);
+    expect(replacement).not.toBeNull();
+
+    stuck?.();
+    expect(claimTick(TICK_CLAIM_TTL_MS + 1)).toBeNull();
+    replacement?.();
   });
 });
 
