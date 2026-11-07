@@ -732,6 +732,32 @@ describe("updatePageLocales", () => {
       ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
+
+  test("lets a plan without i18n go back to English only", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("free-en") },
+      });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultLocale: "fr", locales: ["en", "fr"] })
+        .where(eq(pageTable.id, p.id));
+      await updatePageLocales({
+        ctx,
+        input: { id: p.id, defaultLocale: "en", locales: null },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultLocale).toBe("en");
+      expect(row?.locales).toBeNull();
+    });
+  });
 });
 
 describe("updatePageTimezone", () => {
