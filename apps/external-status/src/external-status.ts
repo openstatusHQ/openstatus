@@ -694,9 +694,11 @@ export async function runExternalStatusTick(): Promise<{
 // The scheduler awaits this; the claim also covers a run it abandoned on timeout.
 export async function runExternalStatusCron(): Promise<void> {
   const releaseTick = claimTick(Date.now());
+  // Thrown, not returned, so the scheduler reports a failure instead of a run that did no work.
   if (!releaseTick) {
-    logger.warn("external-status tick skipped: previous tick still running");
-    return;
+    throw new Error(
+      "external-status tick skipped: previous tick still running",
+    );
   }
   try {
     const res = await runExternalStatusTick();

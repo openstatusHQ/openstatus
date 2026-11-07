@@ -1,40 +1,39 @@
+# fly.toml app configuration file generated for openstatus-external-status on 2026-11-07T13:59:22+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'openstatus-external-status'
 primary_region = 'ams'
-
-# serve.ts only handles SIGTERM; Fly defaults to SIGINT. The timeout covers
-# draining an in-flight tick (DRAIN_GRACE_MS in src/serve.ts) plus the flush.
-kill_signal = "SIGTERM"
-kill_timeout = "90s"
+kill_signal = 'SIGTERM'
+kill_timeout = '1m30s'
 
 [build]
-  dockerfile = "./Dockerfile"
+  dockerfile = './Dockerfile'
 
-[[vm]]
-  cpu_kind = "shared"
-  cpus = 2
-  memory_mb = 1024
+[deploy]
+  strategy = 'rolling'
 
-# Ticks are scheduled in-process (src/scheduler.ts) and no request ever wakes the
-# machine, so it must never stop or suspend. One machine, so each tick runs once.
+[env]
+  NODE_ENV = 'production'
+  PORT = '3000'
+
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = "off"
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
-  max_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
-[deploy]
-  strategy = "rolling"
+  [[http_service.checks]]
+    interval = '1m0s'
+    timeout = '10s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/ping'
 
-[[http_service.checks]]
-  grace_period = "30s"
-  interval = "1m"
-  method = "GET"
-  timeout = "10s"
-  path = "/ping"
-
-[env]
-  NODE_ENV = "production"
-  PORT = "3000"
+[[vm]]
+  memory = '1gb'
+  cpus = 2
+  memory_mb = 1024

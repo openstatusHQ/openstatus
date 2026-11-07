@@ -9,8 +9,9 @@ must pass — Vitest strips types without checking them.
   that cannot be bundled joins that list and the `externals` in
   `apps/external-status/scripts/sidecar-package.mjs`.
 - Jobs run on the in-process scheduler in `src/scheduler.ts`, not an HTTP
-  trigger. Nothing wakes the machine, so it must never auto-stop, and it stays
-  at one machine so each tick runs once. The tick claim in
+  trigger. Nothing wakes the machine, so it must never auto-stop. It stays at
+  one machine in steady state, but a rolling deploy briefly overlaps two, so
+  jobs must tolerate a duplicate run. The tick claim in
   `src/external-status-detect.ts` is per process, not global.
 - Writes go through `@openstatus/services` (`external-service*`), never inline
   Drizzle.

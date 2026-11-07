@@ -8,7 +8,8 @@ Two jobs, scheduled in-process with Effect's cron scheduler (`src/scheduler.ts`)
 - `external-status`, every 10 minutes — fetch status, incidents and components for every external service
 - `external-incidents-prune`, daily — drop raw payloads of long-resolved incidents
 
-Both also run once at startup. The only HTTP route is `/ping`, for health checks.
+Both also run once at startup. The HTTP routes are `/ping` for health checks and
+`/`, which returns the service name.
 
 ## Development
 

@@ -9,6 +9,9 @@ describe("heartbeatPingUrl", () => {
     expect(heartbeatPingUrl(URL, true)).toBe(URL);
     expect(heartbeatPingUrl(URL, false)).toBe(`${URL}/fail`);
     expect(heartbeatPingUrl(`${URL}/`, false)).toBe(`${URL}/fail`);
+    expect(heartbeatPingUrl(`${URL}?src=fly`, false)).toBe(
+      `${URL}/fail?src=fly`,
+    );
   });
 });
 

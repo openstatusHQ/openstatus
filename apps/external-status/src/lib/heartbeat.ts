@@ -6,8 +6,21 @@ const PING_TIMEOUT_MS = 5_000;
 
 // OpenStatus heartbeat monitors take `<url>` for a success and `<url>/fail` for a failure.
 export function heartbeatPingUrl(url: string, ok: boolean): string {
-  const base = url.replace(/\/+$/, "");
-  return ok ? base : `${base}/fail`;
+  const target = new URL(url);
+  target.pathname = target.pathname.replace(/\/+$/, "");
+  if (!ok) target.pathname += "/fail";
+  return target.toString();
+}
+
+// Undici reports the real network failure (ECONNREFUSED, ENOTFOUND, …) on `cause`.
+function describeError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  const cause = error.cause;
+  const code =
+    cause && typeof cause === "object" && "code" in cause
+      ? String(cause.code)
+      : undefined;
+  return code ? `${error.name} ${code}` : error.name;
 }
 
 // Never throws: a heartbeat outage must not fail the job it reports on.
@@ -27,7 +40,7 @@ export async function pingHeartbeat(
     }
   } catch (error) {
     logger.warn("heartbeat ping failed: {message}", {
-      message: error instanceof Error ? error.name : String(error),
+      message: describeError(error),
     });
   }
 }
