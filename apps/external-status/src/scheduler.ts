@@ -2,9 +2,11 @@ import { getLogger } from "@logtape/logtape";
 import * as Sentry from "@sentry/node";
 import { Cause, Effect, Fiber, Schedule } from "effect";
 
+import { env } from "./env";
 import { runExternalIncidentsPruneCron } from "./external-incidents-prune";
 import { runExternalStatusCron } from "./external-status";
 import { TICK_CLAIM_TTL_MS } from "./external-status-detect";
+import { pingHeartbeat } from "./lib/heartbeat";
 import { runSentryCron } from "./lib/sentry";
 
 const logger = getLogger(["external-status"]);
@@ -15,7 +17,11 @@ type ScheduledTask = {
   run: () => Promise<unknown>;
   // Abandons a hung run so the next tick still starts; the run keeps going detached.
   timeoutMs?: number;
+  // Reports every outcome to an OpenStatus heartbeat monitor.
+  heartbeatUrl?: string;
 };
+
+const { OPENSTATUS_HEARTBEAT_URL } = env();
 
 // The app runs on a single Fly machine, so each task fires once per schedule.
 // A rolling deploy can briefly overlap two machines; both tasks tolerate that.
@@ -25,6 +31,7 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     expression: "*/10 * * * *",
     run: runExternalStatusCron,
     timeoutMs: TICK_CLAIM_TTL_MS,
+    heartbeatUrl: OPENSTATUS_HEARTBEAT_URL,
   },
   {
     name: "external-incidents-prune",
@@ -74,8 +81,14 @@ function scheduleTask(task: ScheduledTask): RunningTask {
       checkinMargin: 5,
       maxRuntime: Math.max(1, Math.ceil((task.timeoutMs ?? 60_000) / 60_000)),
     });
+    const heartbeat = (ok: boolean) =>
+      task.heartbeatUrl ? pingHeartbeat(task.heartbeatUrl, ok) : undefined;
     return bounded.pipe(
-      Effect.tap(() => Effect.promise(() => checkIn.cronCompleted())),
+      Effect.tap(() =>
+        Effect.promise(async () => {
+          await Promise.all([checkIn.cronCompleted(), heartbeat(true)]);
+        }),
+      ),
       Effect.catch((error) =>
         Effect.promise(async () => {
           logger.error("Scheduled task {task} failed: {message}", {
@@ -83,7 +96,7 @@ function scheduleTask(task: ScheduledTask): RunningTask {
             message: error.message,
           });
           Sentry.captureException(error, { tags: { cron: task.name } });
-          await checkIn.cronFailed();
+          await Promise.all([checkIn.cronFailed(), heartbeat(false)]);
         }),
       ),
     );

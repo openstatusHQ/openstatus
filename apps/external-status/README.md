@@ -30,6 +30,10 @@ flyctl deploy --config apps/external-status/fly.toml --dockerfile apps/external-
 Secrets: `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `TINY_BIRD_API_KEY`, `SENTRY_DSN`,
 `AXIOM_TOKEN`, `AXIOM_DATASET`.
 
+Optional: `OPENSTATUS_HEARTBEAT_URL`, the ping URL of an OpenStatus heartbeat
+monitor (`https://api.openstatus.dev/heartbeat/<token>`). Every external-status
+tick pings it on success and `<url>/fail` on failure or timeout.
+
 ## Docker
 
 The Dockerfile is generated with [Dofigen](https://github.com/lenra-io/dofigen).

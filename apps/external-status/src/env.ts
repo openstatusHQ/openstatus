@@ -13,5 +13,10 @@ export const env = () =>
       SENTRY_DSN: z.string().prefault(""),
       AXIOM_TOKEN: z.string().prefault(""),
       AXIOM_DATASET: z.string().prefault(""),
+      // OpenStatus heartbeat monitor pinged after every external-status tick.
+      OPENSTATUS_HEARTBEAT_URL: z
+        .union([z.url(), z.literal("")])
+        .optional()
+        .transform((url) => url || undefined),
     })
     .parse(process.env);
