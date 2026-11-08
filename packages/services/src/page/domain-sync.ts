@@ -1,5 +1,6 @@
 import { and, db as defaultDb, ne, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
+import { z } from "zod";
 
 import type { DB, ServiceContext } from "../context";
 import {
@@ -24,8 +25,17 @@ export function vercelConfigFromEnv(): VercelDomainConfig | null {
   const projectId = process.env.PROJECT_ID_VERCEL;
   const teamId = process.env.TEAM_ID_VERCEL;
   const token = process.env.VERCEL_AUTH_BEARER_TOKEN;
-  if (!projectId || !teamId || !token) return null;
-  return { projectId, teamId, token };
+  if (projectId && teamId && token) return { projectId, teamId, token };
+  // Without this a deploy missing the secrets is indistinguishable from self-host.
+  if (
+    process.env.NODE_ENV === "production" &&
+    !z.stringbool().catch(false).parse(process.env.SELF_HOST)
+  ) {
+    console.error(
+      "Vercel domain sync is off: set PROJECT_ID_VERCEL, TEAM_ID_VERCEL and VERCEL_AUTH_BEARER_TOKEN.",
+    );
+  }
+  return null;
 }
 
 export function resolveVercelConfig(
@@ -249,11 +259,12 @@ function toDomainError(domain: string, code?: string): ServiceError {
   }
 }
 
+const OWN_APEXES = ["openstatus.dev", "stpg.dev", "vercel.app"];
+
 function isOwnDomain(d: ProjectDomain) {
   const name = d.name.toLowerCase();
   return (
-    name === "openstatus.dev" ||
-    name.endsWith(".openstatus.dev") ||
+    OWN_APEXES.some((apex) => name === apex || name.endsWith(`.${apex}`)) ||
     !!d.redirect ||
     !!d.gitBranch
   );
@@ -269,9 +280,7 @@ export async function reconcileProjectDomains(args: {
   config: VercelDomainConfig;
   apply?: boolean;
 }): Promise<{ orphans: string[]; missing: string[]; detached: string[] }> {
-  const attached = (await listProjectDomains(args.config))
-    .filter((d) => !isOwnDomain(d))
-    .map((d) => d.name.toLowerCase());
+  const domains = await listProjectDomains(args.config);
 
   const rows = await args.db
     .selectDistinct({ domain: sql<string>`lower(${page.customDomain})` })
@@ -279,9 +288,21 @@ export async function reconcileProjectDomains(args: {
     .where(ne(page.customDomain, ""))
     .all();
   const held = new Set(rows.map((r) => r.domain));
-  const attachedSet = new Set(attached);
+  const attachedSet = new Set(domains.map((d) => d.name.toLowerCase()));
+  // A held apex redirecting to www is served by that target, which no row can hold.
+  const redirectTargets = new Set(
+    domains.flatMap((d) =>
+      d.redirect && held.has(d.name.toLowerCase())
+        ? [d.redirect.toLowerCase()]
+        : [],
+    ),
+  );
 
-  const orphans = attached.filter((d) => !held.has(d)).sort();
+  const orphans = domains
+    .filter((d) => !isOwnDomain(d))
+    .map((d) => d.name.toLowerCase())
+    .filter((d) => !held.has(d) && !redirectTargets.has(d))
+    .sort();
   const missing = [...held].filter((d) => !attachedSet.has(d)).sort();
 
   const detached: string[] = [];

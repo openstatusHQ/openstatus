@@ -14,6 +14,7 @@ import {
   ValidationError,
 } from "../errors";
 import type { Workspace } from "../types";
+import { findDomainHolder } from "./domain-sync";
 
 /** Load a page by id, scoped to the workspace. Throws on miss. */
 export async function getPageInWorkspace(args: {
@@ -70,12 +71,7 @@ export async function assertCustomDomainAvailable(args: {
 }): Promise<void> {
   const { tx, customDomain, excludePageId } = args;
   if (!customDomain) return;
-  const rows = await tx
-    .select({ id: page.id })
-    .from(page)
-    .where(sql`lower(${page.customDomain}) = ${customDomain.toLowerCase()}`)
-    .all();
-  if (rows.some((r) => r.id !== excludePageId)) {
+  if (await findDomainHolder({ db: tx, domain: customDomain, excludePageId })) {
     throw new ConflictError(
       "This domain is already used by another status page.",
     );

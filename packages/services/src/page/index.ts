@@ -34,7 +34,10 @@ export {
   type PageListItem,
   type PageWithRelations,
 } from "./list";
-export { setPageCustomDomain } from "./set-custom-domain";
+export {
+  assertCustomDomainSettable,
+  setPageCustomDomain,
+} from "./set-custom-domain";
 export {
   updatePageAppearance,
   updatePageConfiguration,

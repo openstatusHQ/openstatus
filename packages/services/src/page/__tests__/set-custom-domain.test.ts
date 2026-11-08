@@ -13,7 +13,6 @@ import type { DB, ServiceContext } from "../../context";
 import {
   ConflictError,
   ForbiddenError,
-  InternalServiceError,
   LimitExceededError,
   ValidationError,
 } from "../../errors";
@@ -104,20 +103,17 @@ describe("setPageCustomDomain", () => {
     });
   });
 
-  test("clearing against a 500 leaves the row unchanged", async () => {
+  test("clearing against a 500 still writes the row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
-      const old = domain();
-      const id = await pageWithDomain(tx, teamCtx, old);
+      const id = await pageWithDomain(tx, teamCtx, domain());
       mockVercel(status(500));
-      await expect(
-        setPageCustomDomain({ ctx, input: { id, customDomain: "" } }),
-      ).rejects.toBeInstanceOf(InternalServiceError);
-      expect(await storedDomain(tx, id)).toBe(old);
+      await setPageCustomDomain({ ctx, input: { id, customDomain: "" } });
+      expect(await storedDomain(tx, id)).toBe("");
     });
   });
 
-  test("a swap whose detach fails is retryable", async () => {
+  test("a swap whose detach fails still moves the domain", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const old = domain();
@@ -125,20 +121,43 @@ describe("setPageCustomDomain", () => {
       const id = await pageWithDomain(tx, teamCtx, old);
 
       mockVercel(({ method }) => (method === "DELETE" ? status(500)() : ok()));
+      await setPageCustomDomain({ ctx, input: { id, customDomain: next } });
+      expect(calls.map((c) => c.method)).toEqual(["POST", "DELETE"]);
+      expect(calls[1].url.pathname).toContain(encodeURIComponent(old));
+      expect(await storedDomain(tx, id)).toBe(next);
+    });
+  });
+
+  test("a failed write keeps the previous domain attached", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const old = domain();
+      const next = domain();
+      const id = await pageWithDomain(tx, teamCtx, old);
+
+      // Another page claims `next` between the availability check and the write.
+      let fetches = 0;
+      globalThis.fetch = async () => {
+        fetches++;
+        await pageWithDomain(tx, freeCtx, next);
+        return ok();
+      };
       await expect(
         setPageCustomDomain({ ctx, input: { id, customDomain: next } }),
-      ).rejects.toBeInstanceOf(InternalServiceError);
+      ).rejects.toBeInstanceOf(ConflictError);
+      expect(fetches).toBe(1);
       expect(await storedDomain(tx, id)).toBe(old);
+    });
+  });
 
-      // retry: attach reports "already attached", GET confirms, detach succeeds
-      mockVercel(({ method }) =>
-        method === "POST" ? status(409)() : Response.json({ name: next }),
-      );
-      await setPageCustomDomain({ ctx, input: { id, customDomain: next } });
-      expect(calls.map((c) => c.method)).toEqual(["POST", "GET", "DELETE"]);
-      expect(calls[1].url.pathname).toContain(encodeURIComponent(next));
-      expect(calls[2].url.pathname).toContain(encodeURIComponent(old));
-      expect(await storedDomain(tx, id)).toBe(next);
+  test("an unchanged save survives a Vercel failure", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const current = domain();
+      const id = await pageWithDomain(tx, teamCtx, current);
+      mockVercel(status(500));
+      await setPageCustomDomain({ ctx, input: { id, customDomain: current } });
+      expect(await storedDomain(tx, id)).toBe(current);
     });
   });
 
@@ -270,7 +289,7 @@ describe("deletePage domain release", () => {
     return id;
   }
 
-  test("detaches the domain, then deletes the row", async () => {
+  test("deletes the row and detaches the domain", async () => {
     const id = await committedPage(domain());
     mockVercel(ok);
     await deletePage({ ctx: teamCtx, input: { id } });
@@ -278,14 +297,11 @@ describe("deletePage domain release", () => {
     expect(await storedDomain(db, id)).toBeUndefined();
   });
 
-  test("a Vercel 500 keeps the row and surfaces the error", async () => {
-    const current = domain();
-    const id = await committedPage(current);
+  test("a Vercel 500 still deletes the row", async () => {
+    const id = await committedPage(domain());
     mockVercel(status(500));
-    await expect(
-      deletePage({ ctx: teamCtx, input: { id } }),
-    ).rejects.toBeInstanceOf(InternalServiceError);
-    expect(await storedDomain(db, id)).toBe(current);
+    await deletePage({ ctx: teamCtx, input: { id } });
+    expect(await storedDomain(db, id)).toBeUndefined();
   });
 
   test("skips Vercel inside a caller's transaction", async () => {

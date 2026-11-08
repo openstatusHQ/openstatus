@@ -32,6 +32,7 @@ import {
   withTransaction,
 } from "@openstatus/services";
 import {
+  assertCustomDomainSettable,
   createPage,
   deletePage,
   detachDomainIfUnused,
@@ -599,6 +600,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         customTheme = validateProtoCustomTheme(req.customTheme);
       }
 
+      // Before the insert, so a predictable rejection never creates a page.
+      await assertCustomDomainSettable({ ctx: sCtx, domain: customDomain });
+
       // `published` relies on DB default (false). The service's
       // CreatePageInput type doesn't surface the column, and its behavior
       // matches the legacy `published: false` write on create.
@@ -891,13 +895,16 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         customThemeForUpdate = validateProtoCustomTheme(req.customTheme);
       }
 
-      // Outside the transaction below: Vercel calls must not hold the libSQL
-      // writer. First, so an attach failure aborts before any other write; a
-      // later section failure leaves the domain change applied.
-      if (customDomainForUpdate !== undefined) {
-        await setPageCustomDomain({
+      // Reject before any section commits; the domain itself moves after them.
+      if (
+        customDomainForUpdate &&
+        customDomainForUpdate.toLowerCase() !==
+          existing.customDomain.toLowerCase()
+      ) {
+        await assertCustomDomainSettable({
           ctx: sCtx,
-          input: { id: pageId, customDomain: customDomainForUpdate },
+          domain: customDomainForUpdate,
+          excludePageId: pageId,
         });
       }
 
@@ -1020,6 +1027,15 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           });
         }
       });
+
+      // After commit: Vercel calls must not hold the libSQL writer, and a
+      // failed section must not move a live domain.
+      if (customDomainForUpdate !== undefined) {
+        await setPageCustomDomain({
+          ctx: sCtx,
+          input: { id: pageId, customDomain: customDomainForUpdate },
+        });
+      }
 
       const updated = await getPage({ ctx: sCtx, input: { id: pageId } });
       return { statusPage: dbPageToProto(serviceToConverterPage(updated)) };

@@ -165,6 +165,9 @@ describe("reconcileProjectDomains", () => {
                 { name: held.toUpperCase() },
                 { name: "openstatus.dev" },
                 { name: "acme.openstatus.dev" },
+                { name: "stpg.dev" },
+                { name: "www.stpg.dev" },
+                { name: "openstatus-web.vercel.app" },
                 { name: "preview.example.com", gitBranch: "main" },
               ],
               pagination: { next: 123 },
@@ -187,6 +190,36 @@ describe("reconcileProjectDomains", () => {
       const deletes = calls.filter((c) => c.method === "DELETE");
       expect(deletes).toHaveLength(1);
       expect(deletes[0].url.pathname).toContain(encodeURIComponent(orphan));
+    });
+  });
+
+  test("a held domain redirecting to www is neither missing nor an orphan", async () => {
+    await withTestTransaction(async (tx) => {
+      const apex = `${crypto.randomUUID()}.example.com`;
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId,
+          title: "Redirect",
+          slug: `svc-domain-sync-${crypto.randomUUID()}`,
+          description: "",
+          customDomain: apex,
+        })
+        .run();
+
+      mockVercel(() =>
+        Response.json({
+          domains: [
+            { name: apex, redirect: `www.${apex}` },
+            { name: `www.${apex}` },
+          ],
+          pagination: { next: null },
+        }),
+      );
+
+      const report = await reconcileProjectDomains({ db: tx, config });
+      expect(report.missing).not.toContain(apex);
+      expect(report.orphans).not.toContain(`www.${apex}`);
     });
   });
 });
