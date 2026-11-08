@@ -1,15 +1,14 @@
+import {
+  type DayCounts,
+  tallyDay,
+} from "@openstatus/services/status-timeline/tally";
 import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
 
 import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
 import { formatNumber } from "@/lib/formatter";
 
-export type CheckCounts = {
-  day: string;
-  ok: number;
-  degraded: number;
-  error: number;
-};
+export type CheckCounts = DayCounts & { day: string };
 
 export type UptimeYear = {
   year: number;
@@ -29,10 +28,11 @@ export function formatUptime(ratio: number, digits = 2): string {
 
 /** Muted without failures, else by failed share of the day's checks: < 1%, ≤ 5%, > 5%. */
 function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
-  const total = counts ? counts.ok + counts.degraded + counts.error : 0;
+  const tally = counts ? tallyDay(counts) : null;
   // a day without checks is no data, never downtime
-  if (!counts || total === 0) return { hatched: true, lines: ["No checks"] };
-  const { degraded, error } = counts;
+  if (!tally || tally.total === 0)
+    return { hatched: true, lines: ["No checks"] };
+  const { total, degraded, error } = tally;
   const failed = error / total;
   return {
     // degraded counts as up, like the uptime math
@@ -60,7 +60,7 @@ export function utcToday(now = new Date()) {
  */
 export function uptimeYears(counts: CheckCounts[], now = new Date()) {
   // frozen months are zero-filled: the record starts at the first checked day
-  const since = counts.find((c) => c.ok + c.degraded + c.error > 0)?.day;
+  const since = counts.find((c) => tallyDay(c).total > 0)?.day;
   if (!since) return [];
   const byDay = new Map(counts.map((c) => [c.day, c]));
   const first = Number(since.slice(0, 4));
@@ -78,9 +78,10 @@ export function uptimeYears(counts: CheckCounts[], now = new Date()) {
       if (key < since) return { date, blank: true };
       const c = byDay.get(key);
       if (c) {
-        up += c.ok + c.degraded;
-        total += c.ok + c.degraded + c.error;
-        if (c.error > 0) failedDays++;
+        const tally = tallyDay(c);
+        up += tally.up;
+        total += tally.total;
+        if (tally.error > 0) failedDays++;
       }
       return { date, ...dayMark(c) };
     });

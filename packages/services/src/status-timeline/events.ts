@@ -15,6 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type DayWindow, dayWindow, todayIn } from "./day-window";
+import { type DayCounts, tallyDay } from "./tally";
 
 export type MonitorComponentWithNonNullMonitor =
   PageComponentWithMonitorRelation & {
@@ -42,6 +43,7 @@ export type StatusData = {
   degraded: number;
   error: number;
   monitorId: string;
+  quorum?: DayCounts["quorum"];
 };
 
 export function fillStatusDataFor45Days(
@@ -450,11 +452,7 @@ export function getWorstVariant<T extends keyof typeof STATUS_PRIORITY>(
 export function getHighestPriorityStatus(
   item: StatusData,
 ): keyof typeof STATUS_PRIORITY {
-  if (item.error > 0) return "error";
-  if (item.degraded > 0) return "degraded";
-  if (item.ok > 0) return "success";
-
-  return "empty";
+  return tallyDay(item).status;
 }
 
 // worst report impact for one day; null = legacy event (no impact rows)

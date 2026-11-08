@@ -8,6 +8,7 @@ import {
 import {
   clipToCoverage,
   type CoverageSegment,
+  type DayTally,
   type DayWindow,
   downtimeIntervals,
   type Event,
@@ -19,7 +20,6 @@ import {
   dayWindow,
   durationDowntimeMs,
   floorPct,
-  getHighestPriorityStatus,
   getWorstVariant,
   heartbeatCoverageStart,
   isDateWithinEvent,
@@ -28,6 +28,7 @@ import {
   reportEventDayStatus,
   reportsOnlyDowntimeMs,
   requestsTally,
+  tallyDay,
 } from "@openstatus/services/status-timeline";
 
 export * from "@openstatus/services/status-timeline";
@@ -278,7 +279,7 @@ export function setDataByType({
   }
 
   function createStatusSegments(
-    dayData: StatusData,
+    dayData: DayTally,
   ): Array<{ status: "success" | "degraded" | "error"; count: number }> {
     return [
       { status: "success" as const, count: dayData.ok },
@@ -326,7 +327,7 @@ export function setDataByType({
     return [{ status: eventStatus ?? "empty", value: "" }];
   }
 
-  function createRequestEntries(dayData: StatusData): Array<{
+  function createRequestEntries(dayData: DayTally): Array<{
     status: "success" | "degraded" | "error" | "info";
     count: number;
   }> {
@@ -338,7 +339,7 @@ export function setDataByType({
     ];
   }
 
-  function createDurationEntries(dayData: StatusData): Array<{
+  function createDurationEntries(dayData: DayTally): Array<{
     status: "success" | "degraded" | "error" | "info";
     count: number;
   }> {
@@ -443,8 +444,8 @@ export function setDataByType({
     // TODO: transform into a new Map<type, number>();
     let barData: UptimeData["bar"];
 
-    const total = dayData.ok + dayData.degraded + dayData.error;
-    const dataStatus = getHighestPriorityStatus(dayData);
+    const counts = tallyDay(dayData);
+    const { total, status: dataStatus } = counts;
 
     switch (barType) {
       case "absolute":
@@ -476,7 +477,7 @@ export function setDataByType({
             barData = createOperationalBarData();
           } else {
             // Multiple segments for absolute view - show proportional distribution of status data
-            const statusSegments = createStatusSegments(dayData);
+            const statusSegments = createStatusSegments(counts);
             barData = segmentsToBarData(statusSegments, total);
           }
         }
@@ -519,7 +520,7 @@ export function setDataByType({
         if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
-          const requestEntries = createRequestEntries(dayData);
+          const requestEntries = createRequestEntries(counts);
           cardData = entriesToRequestCardData(requestEntries);
         }
         break;
@@ -528,7 +529,7 @@ export function setDataByType({
         if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
-          const entries = createDurationEntries(dayData);
+          const entries = createDurationEntries(counts);
           const durationMap = new Map<string, number>();
 
           cardData = entries
@@ -614,7 +615,7 @@ export function setDataByType({
         if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
-          const defaultEntries = createRequestEntries(dayData);
+          const defaultEntries = createRequestEntries(counts);
           cardData = entriesToRequestCardData(defaultEntries);
         }
         break;

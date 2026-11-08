@@ -1,6 +1,7 @@
 import { and, eq, gte, inArray } from "@openstatus/db";
 import {
   frozenMonitorUptime,
+  type FrozenMonitorUptimeDay,
   pageConfigurationSchema,
 } from "@openstatus/db/src/schema";
 
@@ -17,6 +18,7 @@ import {
   heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
   requestsTally,
+  tallyDay,
 } from "../status-timeline";
 import { type ComputeCountRow, monthRange } from "./compute";
 import {
@@ -36,8 +38,6 @@ type HistoryWindowKey = "6" | "12" | "24";
 function windowKey(w: (typeof WINDOWS)[number]): HistoryWindowKey {
   return String(w) as HistoryWindowKey;
 }
-
-type DayCount = { day: string; ok: number; degraded: number; error: number };
 
 // native-unit numerators kept alongside the percentage so rolling windows
 // stay additive (checks for requests mode, milliseconds for event math);
@@ -87,7 +87,7 @@ function monthKeys(now: Date): string[] {
   });
 }
 
-function requestsMonth(days: DayCount[] | null): MonthValue {
+function requestsMonth(days: FrozenMonitorUptimeDay[] | null): MonthValue {
   if (!days) return null;
   const { up, total } = requestsTally(days);
   if (total === 0) return null;
@@ -95,15 +95,13 @@ function requestsMonth(days: DayCount[] | null): MonthValue {
 }
 
 function durationMonth(
-  days: DayCount[] | null,
+  days: FrozenMonitorUptimeDay[] | null,
   events: Event[],
   nowMs: number,
 ): MonthValue {
   // denominator = days with checks, matching getUptime's data.length; frozen
   // months are zero-filled so counting all days would inflate sparse months
-  const withChecks = (days ?? []).filter(
-    (d) => d.ok + d.degraded + d.error > 0,
-  );
+  const withChecks = (days ?? []).filter((d) => tallyDay(d).total > 0);
   if (withChecks.length === 0) return null;
   // downtime is clipped to the checked days (a paused stretch can't exceed
   // the denominator) and the in-progress day is clamped to elapsed time so
@@ -283,13 +281,18 @@ export async function getUptimeHistory(args: {
     frozenRows.map((r) => [`${r.monitorId}:${r.month.slice(0, 7)}`, r.days]),
   );
 
-  const liveByMonitorMonth = new Map<string, Map<string, DayCount>>();
+  const liveByMonitorMonth = new Map<
+    string,
+    Map<string, FrozenMonitorUptimeDay>
+  >();
   for (const row of liveCounts) {
     const day = row.day.slice(0, 10);
     const key = day.slice(0, 7);
     if (key !== currentKey && key !== previousKey) continue;
     const mapKey = `${row.monitorId}:${key}`;
-    const byDay = liveByMonitorMonth.get(mapKey) ?? new Map<string, DayCount>();
+    const byDay =
+      liveByMonitorMonth.get(mapKey) ??
+      new Map<string, FrozenMonitorUptimeDay>();
     const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
     acc.ok += row.ok;
     acc.degraded += row.degraded;
@@ -298,7 +301,10 @@ export async function getUptimeHistory(args: {
     liveByMonitorMonth.set(mapKey, byDay);
   }
 
-  function countsFor(monitorId: number, key: string): DayCount[] | null {
+  function countsFor(
+    monitorId: number,
+    key: string,
+  ): FrozenMonitorUptimeDay[] | null {
     const frozen = frozenByKey.get(`${monitorId}:${key}`);
     if (frozen && key !== currentKey) return frozen;
     // Unfrozen months need full retention coverage, just like the freeze job.
@@ -356,7 +362,7 @@ export async function getUptimeHistory(args: {
         } else {
           // manual mode still keys "did the monitor run" off counts: a
           // zero-check month has no meaningful uptime in any mode
-          value = days?.some((d) => d.ok + d.degraded + d.error > 0)
+          value = days?.some((d) => tallyDay(d).total > 0)
             ? eventOnlyMonth(events, key, nowMs)
             : null;
         }

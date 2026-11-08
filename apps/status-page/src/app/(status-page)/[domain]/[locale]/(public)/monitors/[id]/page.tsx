@@ -1,6 +1,7 @@
 "use client";
 
 import { Trend } from "@openstatus/icons";
+import { tallyDay } from "@openstatus/services/status-timeline/tally";
 import {
   Status,
   StatusContent,
@@ -155,20 +156,18 @@ export default function Page() {
 
       const uptimeStats = uptimeData.reduce(
         (acc, item) => {
-          return {
-            total: acc.total + item.success + item.degraded + item.error,
-            success: acc.success + item.success,
-            degraded: acc.degraded + item.degraded,
-            error: acc.error + item.error,
-          };
+          const bucket = tallyDay({
+            ok: item.success,
+            degraded: item.degraded,
+            error: item.error,
+          });
+          return { total: acc.total + bucket.total, up: acc.up + bucket.up };
         },
-        { total: 0, success: 0, degraded: 0, error: 0 },
+        { total: 0, up: 0 },
       );
 
       const uptimePercentage =
-        uptimeStats.total > 0
-          ? (uptimeStats.success + uptimeStats.degraded) / uptimeStats.total
-          : 0;
+        uptimeStats.total > 0 ? uptimeStats.up / uptimeStats.total : 0;
 
       const regionAverages = regionLatencyData.reduce(
         (acc, item) => {

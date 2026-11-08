@@ -6,8 +6,9 @@ import {
 import { type DayWindow, dayWindow } from "./day-window";
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
 import type { Event, StatusData } from "./events";
+import { type DayCounts, tallyDay } from "./tally";
 
-export type CheckCounts = { ok: number; degraded: number; error: number };
+export type CheckCounts = DayCounts;
 
 /** Downtime is clamped to [start, end]; `now` closes still-open events. */
 export type UptimeWindow = { start: number; end: number; now: number };
@@ -72,7 +73,7 @@ export function heartbeatCoverageStart(
 ): number | null {
   let start: number | null = null;
   for (const d of days) {
-    if (d.ok + d.degraded + d.error === 0) continue;
+    if (tallyDay(d).total === 0) continue;
     const dayStart = dayWindow(d.day, timeZone).start;
     if (start === null || dayStart < start) start = dayStart;
   }
@@ -91,8 +92,9 @@ export function requestsTally(counts: CheckCounts[]): {
   let up = 0;
   let total = 0;
   for (const c of counts) {
-    up += c.ok + c.degraded;
-    total += c.ok + c.degraded + c.error;
+    const day = tallyDay(c);
+    up += day.up;
+    total += day.total;
   }
   return { up, total };
 }
@@ -193,12 +195,12 @@ export function probeDowntimeIntervals(
     const end = Math.min(dayEnd, window.end);
     if (end <= start) continue;
 
-    const totalChecks = item.ok + item.degraded + item.error;
-    if (totalChecks === 0) continue;
+    const { error, total } = tallyDay(item);
+    if (total === 0) continue;
 
     // Calculate error ratio as the weight
     // degraded counts as "up" (like in requestsTally), only errors count as down
-    const errorRatio = item.error / totalChecks;
+    const errorRatio = error / total;
     if (errorRatio === 0) continue;
 
     intervals.push({

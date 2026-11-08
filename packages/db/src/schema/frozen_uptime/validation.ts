@@ -3,11 +3,27 @@ import { z } from "zod";
 
 import { frozenMonitorUptime } from "./frozen_monitor_uptime";
 
+export const frozenMonitorUptimeQuorumSchema = z.object({
+  // configured regions at freeze time: the denominator of the run rule
+  regionCount: z.number().int().positive(),
+  buckets: z
+    .object({
+      errorRegions: z.number().int().nonnegative(),
+      notOkRegions: z.number().int().nonnegative(),
+      runs: z.number().int().nonnegative(),
+    })
+    .array(),
+});
+export type FrozenMonitorUptimeQuorum = z.infer<
+  typeof frozenMonitorUptimeQuorumSchema
+>;
+
 export const frozenMonitorUptimeDaySchema = z.object({
   day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "day must be YYYY-MM-DD"), // UTC
   ok: z.number().int().nonnegative(),
   degraded: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
+  quorum: frozenMonitorUptimeQuorumSchema.optional(),
 });
 export type FrozenMonitorUptimeDay = z.infer<
   typeof frozenMonitorUptimeDaySchema
