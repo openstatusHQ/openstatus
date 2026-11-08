@@ -6,6 +6,7 @@ import {
   eventsForMonth,
   getColumnVisibility,
   historyBreakdown,
+  historyRows,
   monthKeyToFullLabel,
   monthKeyToLabel,
   parseWindow,
@@ -171,5 +172,51 @@ describe("historyBreakdown", () => {
 describe("windowLabel", () => {
   it("names the window", () => {
     expect(windowLabel(6)).toBe("Last 6 months");
+  });
+});
+
+describe("historyRows", () => {
+  const value = (percentage: number) => ({
+    percentage,
+    ok: 1,
+    degraded: 0,
+    error: 0,
+  });
+  const base = {
+    component: { id: 1, name: "API", type: "monitor" as const, monitorId: 1 },
+    events: [],
+  };
+  const monitorRow = {
+    ...base,
+    unit: "requests" as const,
+    months: { "2026-11": value(99) },
+    rolling: { "6": value(99), "12": value(99), "24": value(99) },
+    runs: {
+      months: { "2026-11": value(100) },
+      rolling: { "6": value(100), "12": null, "24": null },
+    },
+  };
+  const staticRow = {
+    ...base,
+    unit: "time" as const,
+    months: { "2026-11": value(50) },
+    rolling: { "6": value(50), "12": null, "24": null },
+    runs: null,
+  };
+
+  it("keeps requests by default and drops the runs block", () => {
+    const [row] = historyRows([monitorRow], "requests");
+    expect(row.unit).toBe("requests");
+    expect(row.months["2026-11"]?.percentage).toBe(99);
+    expect(row).not.toHaveProperty("runs");
+  });
+
+  it("swaps in runs where a row has them", () => {
+    const [monitor, other] = historyRows([monitorRow, staticRow], "runs");
+    expect(monitor.unit).toBe("runs");
+    expect(monitor.months["2026-11"]?.percentage).toBe(100);
+    expect(monitor.rolling["12"]).toBe(null);
+    expect(other.unit).toBe("time");
+    expect(other.months["2026-11"]?.percentage).toBe(50);
   });
 });

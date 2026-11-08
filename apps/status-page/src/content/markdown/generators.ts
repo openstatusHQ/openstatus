@@ -1,8 +1,4 @@
 import type { RouterOutputs } from "@openstatus/api";
-import {
-  shownTotal,
-  tallyBuckets,
-} from "@openstatus/services/status-timeline/tally";
 
 import { flattenComponents, worstComponent } from "../status-vocab";
 import {
@@ -54,10 +50,6 @@ type PageFields = {
   contactUrl?: string | null;
   defaultTimezone?: string;
 };
-
-function countLabel(count: number, unit: string): string {
-  return `${count} ${count === 1 ? unit : `${unit}s`}`;
-}
 
 function avg(values: number[]): number | null {
   if (values.length === 0) return null;
@@ -662,10 +654,19 @@ export function generateMonitor(
 
   // Uptime over the hardcoded 7-day window.
   const uptimeData = monitor.data.uptime?.data ?? [];
-  const checksPerRun = monitor.data.uptime?.checksPerRun ?? null;
-  const totals = tallyBuckets(uptimeData, checksPerRun);
+  const totals = uptimeData.reduce(
+    (acc, d) => ({
+      success: acc.success + d.success,
+      degraded: acc.degraded + d.degraded,
+      error: acc.error + d.error,
+    }),
+    { success: 0, degraded: 0, error: 0 },
+  );
+  const totalChecks = totals.success + totals.degraded + totals.error;
   const uptime =
-    totals.total > 0 ? formatPercent(totals.up / totals.total) : "N/A";
+    totalChecks > 0
+      ? formatPercent((totals.success + totals.degraded) / totalChecks)
+      : "N/A";
 
   // Per-region p75 (mean across the window).
   const regionData = monitor.data.regions?.data ?? [];
@@ -699,10 +700,7 @@ export function generateMonitor(
             ? `${byRegion.size} regions · fastest: ${fastest}`
             : "—",
         ],
-        [
-          "Uptime (last 7 days)",
-          `${uptime} · ${countLabel(shownTotal(uptimeData, checksPerRun), checksPerRun !== null ? "run" : "request")}`,
-        ],
+        ["Uptime (last 7 days)", `${uptime} · ${totalChecks} checks`],
       ],
     ),
   );

@@ -1,7 +1,6 @@
 import { and, asc, eq, isNull } from "@openstatus/db";
 import {
   frozenMonitorUptime,
-  type FrozenMonitorUptimeDay,
   frozenMonitorUptimeDaySchema,
 } from "@openstatus/db/src/schema";
 
@@ -9,23 +8,21 @@ import { requireScope } from "../auth";
 import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { monthRange } from "./compute";
-import { fetchLiveDays } from "./live";
 import {
-  checksPerRun,
+  fetchFreezeCounts,
   FREEZE_CUTOFF_MS,
-  privateLocationCounts,
   type UptimeFreezePipes,
   uptimeFreezePipes,
 } from "./run";
 import { GetMonitorUptimeHistoryInput } from "./schemas";
 
+type DayCount = { day: string; ok: number; degraded: number; error: number };
+
 type MonitorUptimeHistoryResult = {
   /** UTC days oldest → newest; frozen months are zero-filled, live ones sparse */
-  days: FrozenMonitorUptimeDay[];
+  days: DayCount[];
   /** live counts failed to load, so the current month may be missing */
   partial: boolean;
-  /** pass to `tallyDay`: runs when set, requests when null */
-  checksPerRun: number | null;
 };
 
 /**
@@ -58,7 +55,7 @@ export async function getMonitorUptimeHistory(args: {
   });
   if (!_monitor) throw new NotFoundError("monitor", input.monitorId);
 
-  const [frozenRows, live, privateCounts] = await Promise.all([
+  const [frozenRows, live] = await Promise.all([
     db
       .select({
         month: frozenMonitorUptime.month,
@@ -72,36 +69,41 @@ export async function getMonitorUptimeHistory(args: {
         ),
       )
       .orderBy(asc(frozenMonitorUptime.month)),
-    fetchLiveDays({
-      monitors: [_monitor],
+    fetchFreezeCounts({
+      monitorIdsByJobType: new Map([
+        [_monitor.jobType, new Set([String(_monitor.id)])],
+      ]),
       pipes: args.pipes ?? uptimeFreezePipes(ctx.tb ?? defaultTb),
-      withRuns: true,
+      throttleMs: 0,
       sleep: args.sleep,
     }),
-    privateLocationCounts(db, [_monitor.id]),
   ]);
 
-  const byDay = new Map<string, FrozenMonitorUptimeDay>();
+  const byDay = new Map<string, DayCount>();
   const frozenMonths = new Set<string>();
   for (const row of frozenRows) {
     frozenMonths.add(row.month.slice(0, 7));
     for (const d of frozenMonitorUptimeDaySchema.array().parse(row.days)) {
-      byDay.set(d.day, d);
+      byDay.set(d.day, { day: d.day, ...d.requests });
     }
   }
 
   // only unfrozen months still inside the pipes' 45d lookback: an older
   // month would come back with its first days missing
-  for (const d of live.days.get(String(_monitor.id))?.values() ?? []) {
-    const month = d.day.slice(0, 7);
+  for (const row of live.counts) {
+    const day = row.day.slice(0, 10);
+    const month = day.slice(0, 7);
     if (frozenMonths.has(month)) continue;
     if (nowMs - monthRange(`${month}-01`).start >= FREEZE_CUTOFF_MS) continue;
-    byDay.set(d.day, d);
+    const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
+    acc.ok += row.ok;
+    acc.degraded += row.degraded;
+    acc.error += row.error;
+    byDay.set(day, acc);
   }
 
   return {
     days: [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1)),
     partial: live.failedMonitorIds.size > 0,
-    checksPerRun: checksPerRun(_monitor, privateCounts.get(_monitor.id) ?? 0),
   };
 }

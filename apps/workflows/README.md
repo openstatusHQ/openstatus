@@ -18,7 +18,7 @@ open <http://localhost:3000>
 
 ## Backfill run verdicts into frozen uptime months
 
-Frozen months older than the run views' 47-day window hold per-region
+Frozen months older than the runs materialization's 47-day window hold per-region
 `requests` only. This adds each day's `runs`, recomputed from raw Tinybird
 data, to days that lack them; `requests` and days that already have `runs` are
 never changed, so a re-run is a no-op.

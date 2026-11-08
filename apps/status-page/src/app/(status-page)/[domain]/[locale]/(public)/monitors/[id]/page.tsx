@@ -2,12 +2,6 @@
 
 import { Trend } from "@openstatus/icons";
 import {
-  shownCounts,
-  shownTotal,
-  tallyBuckets,
-  tallyDay,
-} from "@openstatus/services/status-timeline/tally";
-import {
   Status,
   StatusContent,
   StatusDescription,
@@ -129,33 +123,24 @@ export default function Page() {
     return Object.values(grouped);
   }, [monitor?.data.regions?.data, timezone]);
 
-  const checksPerRun = monitor?.data.uptime?.checksPerRun ?? null;
-
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
     return monitor.data.uptime.data
       .sort((a, b) => a.interval.getTime() - b.interval.getTime())
-      .map((item) => {
-        const shown = shownCounts(tallyDay(item, checksPerRun));
-        return {
-          timestamp: item.interval.toLocaleString("default", {
-            day: "numeric",
-            month: "short",
-            hour: "numeric",
-            minute: "numeric",
-            timeZoneName: "short",
-            timeZone: timezone,
-          }),
-          interval: item.interval,
-          counts: item,
-          success: shown.ok,
-          degraded: shown.degraded,
-          error: shown.error,
-        };
-      });
-  }, [monitor?.data.uptime?.data, checksPerRun, timezone]);
+      .map((item) => ({
+        timestamp: item.interval.toLocaleString("default", {
+          day: "numeric",
+          month: "short",
+          hour: "numeric",
+          minute: "numeric",
+          timeZoneName: "short",
+          timeZone: timezone,
+        }),
+        ...item,
+      }));
+  }, [monitor?.data.uptime?.data, timezone]);
 
-  const { shownCount, shownLabel, uptimePercentage, slowestRegion, p75Range } =
+  const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {
       const p75Range = globalLatencyData.reduce(
         (acc, item) => ({
@@ -168,13 +153,22 @@ export default function Page() {
         },
       );
 
-      const uptimeStats = tallyBuckets(
-        uptimeData.map((item) => item.counts),
-        checksPerRun,
+      const uptimeStats = uptimeData.reduce(
+        (acc, item) => {
+          return {
+            total: acc.total + item.success + item.degraded + item.error,
+            success: acc.success + item.success,
+            degraded: acc.degraded + item.degraded,
+            error: acc.error + item.error,
+          };
+        },
+        { total: 0, success: 0, degraded: 0, error: 0 },
       );
 
       const uptimePercentage =
-        uptimeStats.total > 0 ? uptimeStats.up / uptimeStats.total : 0;
+        uptimeStats.total > 0
+          ? (uptimeStats.success + uptimeStats.degraded) / uptimeStats.total
+          : 0;
 
       const regionAverages = regionLatencyData.reduce(
         (acc, item) => {
@@ -199,14 +193,8 @@ export default function Page() {
         }))
         .sort((a, b) => b.avgLatency - a.avgLatency)[0];
 
-      const shownCount = shownTotal(
-        uptimeData.map((item) => item.counts),
-        checksPerRun,
-      );
-
       return {
-        shownCount,
-        shownLabel: formatNumber(shownCount, {
+        totalChecks: formatNumber(uptimeStats.total, {
           notation: "compact",
           compactDisplay: "short",
         }).replace("K", "k"),
@@ -219,7 +207,7 @@ export default function Page() {
             ? formatMillisecondsRange(p75Range.min, p75Range.max)
             : "N/A",
       };
-    }, [uptimeData, checksPerRun, regionLatencyData, globalLatencyData]);
+    }, [uptimeData, regionLatencyData, globalLatencyData]);
 
   if (!isLoading && !monitor) {
     return (
@@ -293,14 +281,7 @@ export default function Page() {
                 <StatusMonitorTabsTriggerValue>
                   {uptimePercentage}{" "}
                   <Badge variant="outline" className="py-px text-[10px]">
-                    {shownLabel}{" "}
-                    {checksPerRun !== null
-                      ? t("{count, plural, one {run} other {runs}}", {
-                          count: shownCount,
-                        })
-                      : t("{count, plural, one {request} other {requests}}", {
-                          count: shownCount,
-                        })}
+                    {totalChecks} {t("checks")}
                   </Badge>
                 </StatusMonitorTabsTriggerValue>
               )}

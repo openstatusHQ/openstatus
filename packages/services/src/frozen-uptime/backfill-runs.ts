@@ -10,8 +10,8 @@ import type { OSTinybird } from "@openstatus/tinybird";
 
 import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
-import type { Counts } from "../status-timeline/tally";
 import { monthRange } from "./compute";
+import type { Counts } from "./quorum";
 import { quorumRegionCount, runsByMonitorDay } from "./quorum";
 import {
   type ChunkFailure,

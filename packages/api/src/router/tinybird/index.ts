@@ -239,7 +239,8 @@ export function getGlobalMetricsProcedure(type: Type) {
 export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {
   switch (period) {
     case "7d":
-      if (type === "dns") return tb.dnsUptime7d;
+      // no 7d DNS uptime pipe; the 30d MV is filtered down by the client window
+      if (type === "dns") return tb.dnsUptime30d;
       if (type === "http") return tb.httpUptimeWeekly;
       if (type === "tcp") return tb.tcpUptimeWeekly;
       if (type === "icmp") return tb.icmpUptimeWeekly;
@@ -415,9 +416,8 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      // `type` here is the job type, not the pipe's counts type
-      const { type, period, ...params } = opts.input;
-      return await getUptimeProcedure(period, type)(params);
+      const procedure = getUptimeProcedure(opts.input.period, opts.input.type);
+      return await procedure(opts.input);
     }),
 
   auditLog: protectedProcedure

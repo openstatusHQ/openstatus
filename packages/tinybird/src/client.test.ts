@@ -10,10 +10,8 @@ import {
   OSTinybird,
   runsBackfillParameters,
   runsBackfillShape,
-  status15mCountsParameters,
   status15mParameters,
   status15mShape,
-  uptime7dParameters,
 } from "./client";
 
 describe("attemptsSchema", () => {
@@ -292,54 +290,11 @@ const status45dGetters = [
   "grpcStatus45d",
 ] as const;
 
-const uptime7dGetters = [
-  "httpUptimeWeekly",
-  "tcpUptimeWeekly",
-  "dnsUptime7d",
-  "icmpUptimeWeekly",
-  "grpcUptimeWeekly",
-] as const;
-
-describe("counts type parameters", () => {
-  test("a requests call keeps exactly its old params", () => {
-    expect(status15mCountsParameters.parse({ monitorIds: ["1"] })).toEqual({
-      monitorIds: ["1"],
-      timezone: "UTC",
-    });
-    const window = { monitorId: "1", interval: 240, fromDate: "2026-11-01" };
-    expect(uptime7dParameters.parse(window)).toEqual(window);
-  });
-
+describe("countsParameters", () => {
   test("rejects an unknown type", () => {
     const schema = z.object(countsParameters);
     expect(schema.safeParse({ type: "http" }).success).toBe(false);
-    expect(
-      uptime7dParameters.safeParse({ monitorId: "1", type: "http" }).success,
-    ).toBe(false);
-  });
-
-  test("a runs call carries no region counts", () => {
-    expect(
-      uptime7dParameters.parse({
-        monitorId: "1",
-        type: "runs",
-        regionCount: 6,
-      }),
-    ).toEqual({ monitorId: "1", type: "runs" });
-  });
-
-  test("15m pipes forward a zone alongside runs", () => {
-    expect(
-      status15mCountsParameters.parse({
-        monitorIds: ["1", "2"],
-        timezone: "Asia/Kolkata",
-        type: "runs",
-      }),
-    ).toEqual({
-      monitorIds: ["1", "2"],
-      timezone: "Asia/Kolkata",
-      type: "runs",
-    });
+    expect(schema.parse({})).toEqual({});
   });
 });
 
@@ -390,22 +345,6 @@ describe("runs-capable count pipes", () => {
         data: [],
       });
       expect(await tb[name]({ monitorIds: ["1"], type: "runs" })).toEqual({
-        meta: [],
-        data: [],
-      });
-    });
-  }
-
-  for (const name of uptime7dGetters) {
-    test(`${name} resolves for both types`, async () => {
-      const window = {
-        monitorId: "1",
-        interval: 240,
-        fromDate: "2026-11-01T00:00:00.000Z",
-        toDate: "2026-11-08T23:59:59.999Z",
-      };
-      expect(await tb[name](window)).toEqual({ meta: [], data: [] });
-      expect(await tb[name]({ ...window, type: "runs" })).toEqual({
         meta: [],
         data: [],
       });

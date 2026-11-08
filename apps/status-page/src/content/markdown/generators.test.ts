@@ -626,11 +626,8 @@ describe("generateMonitor", () => {
       },
       uptime: {
         data: [
-          { interval: new Date(), requests: { ok: 90, degraded: 5, error: 5 } },
-          {
-            interval: new Date(),
-            requests: { ok: 100, degraded: 0, error: 0 },
-          },
+          { interval: new Date(), success: 90, degraded: 5, error: 5 },
+          { interval: new Date(), success: 100, degraded: 0, error: 0 },
         ],
       },
     },
@@ -640,118 +637,7 @@ describe("generateMonitor", () => {
   test("KPI table", () => {
     expect(md).toContain("| Global latency (p75) | 200ms – 300ms |");
     expect(md).toContain("| Region latency | 2 regions · fastest: iad |");
-    expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 requests |");
-  });
-
-  test("a single request or run is singular", () => {
-    const one = (checksPerRun: number | null) =>
-      generateMonitor(
-        {
-          ...monitor,
-          data: {
-            ...monitor.data,
-            uptime: {
-              checksPerRun,
-              data: [
-                {
-                  interval: new Date(),
-                  requests: { ok: checksPerRun ?? 1, degraded: 0, error: 0 },
-                },
-              ],
-            },
-          },
-        } as unknown as MonitorDetail,
-        BASE,
-      );
-    expect(one(null)).toContain(
-      "| Uptime (last 7 days) | 100.000% · 1 request |",
-    );
-    expect(one(6)).toContain("| Uptime (last 7 days) | 100.000% · 1 run |");
-  });
-
-  test("uptime counts runs when the buckets carry them", () => {
-    const runs = generateMonitor(
-      {
-        ...monitor,
-        data: {
-          ...monitor.data,
-          uptime: {
-            checksPerRun: 6,
-            data: [
-              {
-                interval: new Date(),
-                requests: { ok: 120, degraded: 0, error: 24 },
-                runs: { ok: 24, degraded: 0, error: 0 },
-              },
-              {
-                interval: new Date(),
-                requests: { ok: 132, degraded: 0, error: 12 },
-                runs: { ok: 20, degraded: 0, error: 4 },
-              },
-            ],
-          },
-        },
-      } as unknown as MonitorDetail,
-      BASE,
-    );
-    expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 runs |");
-  });
-
-  test("a bucket without runs is converted to runs, not mixed in", () => {
-    const converted = generateMonitor(
-      {
-        ...monitor,
-        data: {
-          ...monitor.data,
-          uptime: {
-            checksPerRun: 6,
-            data: [
-              {
-                interval: new Date(),
-                requests: { ok: 120, degraded: 0, error: 24 },
-                runs: { ok: 20, degraded: 0, error: 4 },
-              },
-              {
-                interval: new Date(),
-                requests: { ok: 141, degraded: 0, error: 3 },
-              },
-            ],
-          },
-        },
-      } as unknown as MonitorDetail,
-      BASE,
-    );
-    expect(converted).toContain("| Uptime (last 7 days) | 90.625% · 49 runs |");
-  });
-
-  test("the runs total is the sum of the chart's rounded buckets", () => {
-    const converted = generateMonitor(
-      {
-        ...monitor,
-        data: {
-          ...monitor.data,
-          uptime: {
-            checksPerRun: 6,
-            data: [
-              {
-                interval: new Date(),
-                requests: { ok: 1437, degraded: 0, error: 3 },
-              },
-              {
-                interval: new Date(),
-                requests: { ok: 1440, degraded: 0, error: 0 },
-              },
-              {
-                interval: new Date(),
-                requests: { ok: 1434, degraded: 2, error: 4 },
-              },
-            ],
-          },
-        },
-      } as unknown as MonitorDetail,
-      BASE,
-    );
-    expect(converted).toContain("· 721 runs |");
+    expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 checks |");
   });
 
   test("percentile table", () => {

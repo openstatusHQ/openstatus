@@ -49,9 +49,6 @@ export const countsParameters = {
   type: z.enum(["requests", "runs"]).optional(),
 };
 
-export const status15mCountsParameters =
-  status15mParameters.extend(countsParameters);
-
 /**
  * Same columns as the 45d pipes. `day` is the local calendar date re-keyed as
  * UTC midnight, the convention day-keyed consumers already read — a Berlin
@@ -136,7 +133,7 @@ const icmpMetricsLatencyShape = z.object({
   p99Latency: z.int(),
 });
 
-const uptimeParameters = z.object({
+const icmpUptimeParameters = z.object({
   monitorId: z.string(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
@@ -144,9 +141,7 @@ const uptimeParameters = z.object({
   interval: z.int().optional(),
 });
 
-export const uptime7dParameters = uptimeParameters.extend(countsParameters);
-
-const uptimeShape = z.object({
+const icmpUptimeShape = z.object({
   interval: z.coerce.date(),
   success: z.int(),
   degraded: z.int(),
@@ -916,9 +911,18 @@ export class OSTinybird {
   public get httpStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_15m__v0",
-      parameters: status15mCountsParameters,
+      parameters: status15mParameters,
       data: status15mShape(z.string()),
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpRunsBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_backfill__v0",
+      parameters: runsBackfillParameters,
+      data: runsBackfillShape,
+      opts: { cache: "no-store" },
     });
   }
 
@@ -941,15 +945,6 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get httpRunsBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__http_runs_backfill__v0",
-      parameters: runsBackfillParameters,
-      data: runsBackfillShape,
-      opts: { cache: "no-store" },
     });
   }
 
@@ -1504,7 +1499,7 @@ export class OSTinybird {
   public get tcpStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_15m__v0",
-      parameters: status15mCountsParameters,
+      parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -1987,7 +1982,7 @@ export class OSTinybird {
   public get icmpStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_status_15m__v0",
-      parameters: status15mCountsParameters,
+      parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -2028,24 +2023,24 @@ export class OSTinybird {
   public get icmpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_7d__v0",
-      parameters: uptime7dParameters,
-      data: uptimeShape,
+      parameters: icmpUptimeParameters,
+      data: icmpUptimeShape,
     });
   }
 
   public get icmpUptime30d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_30d__v0",
-      parameters: uptimeParameters,
-      data: uptimeShape,
+      parameters: icmpUptimeParameters,
+      data: icmpUptimeShape,
     });
   }
 
   public get icmpUptime90d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_90d__v0",
-      parameters: uptimeParameters,
-      data: uptimeShape,
+      parameters: icmpUptimeParameters,
+      data: icmpUptimeShape,
     });
   }
 
@@ -2486,7 +2481,7 @@ export class OSTinybird {
   public get grpcStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_status_15m__v0",
-      parameters: status15mCountsParameters,
+      parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -2527,7 +2522,7 @@ export class OSTinybird {
   public get grpcUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_uptime_7d__v0",
-      parameters: uptime7dParameters,
+      parameters: grpcUptimeParameters,
       data: grpcUptimeShape,
     });
   }
@@ -2733,7 +2728,13 @@ export class OSTinybird {
   public get httpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_uptime_7d__v1",
-      parameters: uptime7dParameters,
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+        interval: z.int().optional(),
+      }),
       data: z.object({
         interval: z.coerce.date(),
         success: z.int(),
@@ -2765,7 +2766,13 @@ export class OSTinybird {
   public get tcpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_uptime_7d__v1",
-      parameters: uptime7dParameters,
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+        interval: z.int().optional(),
+      }),
       data: z.object({
         interval: z.coerce.date(),
         success: z.int(),
@@ -3194,14 +3201,6 @@ export class OSTinybird {
         lastTimestamp: z.int().nullable(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get dnsUptime7d() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__dns_uptime_7d__v0",
-      parameters: uptime7dParameters,
-      data: uptimeShape,
     });
   }
 
@@ -3808,7 +3807,7 @@ export class OSTinybird {
   public get dnsStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_15m__v0",
-      parameters: status15mCountsParameters,
+      parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });

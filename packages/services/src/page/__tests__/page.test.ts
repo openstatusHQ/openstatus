@@ -715,53 +715,6 @@ describe("updatePageConfiguration", () => {
   });
 });
 
-describe("updatePageConfiguration runs value", () => {
-  test("stores runs and keeps the other settings", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const p = await createPage({
-        ctx,
-        input: {
-          workspaceId: ctx.workspace.id,
-          title: "Runs",
-          slug: uniqueSlug("runs"),
-          description: "",
-          customDomain: "",
-          configuration: { type: "absolute", value: "requests", days: 30 },
-        },
-      });
-
-      await updatePageConfiguration({
-        ctx,
-        input: UpdatePageConfigurationInput.parse({
-          id: p.id,
-          configuration: { value: "runs" },
-        }),
-      });
-
-      const row = await tx
-        .select()
-        .from(pageTable)
-        .where(eq(pageTable.id, p.id))
-        .get();
-      expect(row?.configuration).toEqual({
-        type: "absolute",
-        value: "runs",
-        days: 30,
-      });
-    });
-  });
-
-  test("rejects an unknown value", () => {
-    expect(() =>
-      UpdatePageConfigurationInput.parse({
-        id: 1,
-        configuration: { value: "checks" },
-      }),
-    ).toThrow();
-  });
-});
-
 describe("updatePageLocales", () => {
   test("rejects when plan lacks i18n", async () => {
     await withTestTransaction(async (tx) => {

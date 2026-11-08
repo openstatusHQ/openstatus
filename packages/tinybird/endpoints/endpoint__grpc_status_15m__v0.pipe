@@ -2,31 +2,6 @@ NODE endpoint
 SQL >
 
 %
-{% if String(type, 'requests') == 'runs' %}
-WITH {{ String(timezone, 'UTC') }} AS tz
-SELECT
-    day,
-    monitorId,
-    count() AS count,
-    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
-    countIf(e * 2 >= n) AS error,
-    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded
-FROM (
-    SELECT
-        toDate(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), tz)) AS day,
-        monitorId,
-        cronTimestamp,
-        countMerge(count) AS n,
-        countMerge(error) AS e,
-        countMerge(degraded) AS d
-    FROM mv__grpc_runs_45d__v0
-    WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
-        AND fromUnixTimestamp64Milli(cronTimestamp) >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL 45 DAY
-    GROUP BY day, monitorId, cronTimestamp
-)
-GROUP BY day, monitorId
-ORDER BY day DESC
-{% else %}
 WITH {{ String(timezone, 'UTC') }} AS tz
 SELECT
     -- calendar date of the local day; the client re-keys it as UTC midnight like the 45d pipes
@@ -44,6 +19,5 @@ WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
     AND time >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL 45 DAY
 GROUP BY day, monitorId
 ORDER BY day DESC
-{% end %}
 
 TYPE endpoint

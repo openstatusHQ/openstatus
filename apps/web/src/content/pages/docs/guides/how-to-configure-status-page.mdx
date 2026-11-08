@@ -52,11 +52,11 @@ These settings only apply to **monitor components** — the fields are disabled 
 - **Monitor checks** — bars show your monitor's real results for each day.
 - **Reports only** — bars only change when you post a status report or maintenance. Monitor results are hidden.
 
-**Card shows** — only configurable if the status source is **Monitor checks**. Choose between **Time per status**, which shows how long the monitor was operational, degraded, down or in maintenance, **Number of requests**, which shows how many requests succeeded, degraded or failed in each region, or **Number of runs**, which counts each run once and marks it down when at least half of the cloud regions that reported in it fail. Number of runs applies to HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions or a single private location; other monitors (several private locations only, heartbeat, UDP, SSL) keep counting each region's result. With **Reports only**, the card shows only the worst status of the day.
+**Card shows** — only configurable if the status source is **Monitor checks**. Choose between **Time per status**, which shows how long the monitor was operational, degraded, down or in maintenance, or **Number of checks**, which shows how many checks succeeded, degraded or failed. With **Reports only**, the card shows only the worst status of the day.
 
 #### Uptime and history
 
-**Show uptime** — with **Monitor checks**, uptime is calculated from the **time per status** (incidents and impact-weighted status reports; for monitors that run only from private locations, also failed probes), the **number of requests** or the **number of runs**, depending on what you've chosen for **Card shows**. With **Reports only**, it's calculated only from the duration of your status reports. See [Uptime calculation and shared values](/docs/concept/uptime-calculation-and-values) for details.
+**Show uptime** — with **Monitor checks**, uptime is calculated from either the **time per status** _or_ the **number of checks**, depending on what you've chosen for **Card shows** (including incidents). With **Reports only**, it's calculated only from the duration of your status reports.
 
 **History** — the number of days of history rendered on the bars. Choose between **30** or **45** days (defaults to **45**).
 
@@ -69,11 +69,11 @@ Example of **Monitor checks** with **Time per status** and **showing uptime**
     alt="monitor checks with time per status and showing uptime"
 />
 
-Example of **Monitor checks** with **Number of requests** and **hiding uptime**
+Example of **Monitor checks** with **Number of checks** and **hiding uptime**
 
 <Image
     src="/docs/tutorial/configure-status-page/status-page-beta-4.png"
-    alt="monitor checks with number of requests and hiding uptime"
+    alt="monitor checks with number of checks and hiding uptime"
 />
 
 Example of **Reports only** and **hiding uptime**

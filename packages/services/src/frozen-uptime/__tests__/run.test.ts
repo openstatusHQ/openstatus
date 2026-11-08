@@ -19,8 +19,6 @@ import {
   fetchFreezeCounts,
   runUptimeFreeze,
   uptimeFreezePipes,
-  checksPerRun,
-  privateLocationCounts,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
@@ -117,50 +115,6 @@ async function attachPrivateLocations(
   }
   return ids;
 }
-
-describe("checksPerRun", () => {
-  test("counts unique cloud regions plus attached private locations", () => {
-    expect(checksPerRun({ jobType: "http", regions: "ams,ams,fra" }, 0)).toBe(
-      2,
-    );
-    expect(checksPerRun({ jobType: "http", regions: "ams,fra" }, 2)).toBe(4);
-  });
-
-  test("a single private location makes one check per run", () => {
-    expect(checksPerRun({ jobType: "tcp", regions: "" }, 1)).toBe(1);
-  });
-
-  test("several private locations alone, or no locations, count requests", () => {
-    expect(checksPerRun({ jobType: "http", regions: "" }, 2)).toBeNull();
-    expect(checksPerRun({ jobType: "http", regions: "" }, 0)).toBeNull();
-  });
-
-  test.each(["heartbeat", "udp", "ssl"])("%s counts requests", (jobType) => {
-    expect(checksPerRun({ jobType, regions: "ams" }, 1)).toBeNull();
-  });
-});
-
-describe("privateLocationCounts", () => {
-  test("counts attached locations per monitor, skipping detached ones", async () => {
-    await withTestTransaction(async (tx) => {
-      const a = await insertTestMonitor(tx, { regions: "ams" });
-      const b = await insertTestMonitor(tx, { regions: "" });
-      const c = await insertTestMonitor(tx, { regions: "ams" });
-      await attachPrivateLocations(tx, a.id, 2);
-      const [detached] = await attachPrivateLocations(tx, b.id, 2);
-      await tx
-        .update(privateLocationToMonitors)
-        .set({ deletedAt: new Date() })
-        .where(eq(privateLocationToMonitors.privateLocationId, detached));
-
-      const counts = await privateLocationCounts(tx, [a.id, b.id, c.id]);
-
-      expect(counts.get(a.id)).toBe(2);
-      expect(counts.get(b.id)).toBe(1);
-      expect(counts.has(c.id)).toBe(false);
-    });
-  });
-});
 
 describe("fetchFreezeCounts", () => {
   test("chunks ids and concatenates rows", async () => {

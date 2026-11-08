@@ -92,6 +92,7 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
       rolling: Object.fromEntries(
         WINDOWS.map((w) => [w, sumValues(monthValues.slice(-Number(w)))]),
       ) as HistoryRow["rolling"],
+      runs: null,
       events: [],
     };
   });
@@ -101,6 +102,7 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
       w,
       {
         uptime: average(rows.map((row) => row.rolling[w]?.percentage ?? null)),
+        runsUptime: null,
         reports: Number(w) / 3,
       },
     ]),

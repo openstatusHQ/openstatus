@@ -145,13 +145,12 @@ export async function getPageComponentDailySummary(args: {
 
     const buckets: ComponentDayBucket[] = filled.map((bucket) => {
       const { status, impact } = resolveDayStatus(bucket, events);
-      const { ok, degraded, error } = bucket.requests;
       return {
         day: bucket.day,
-        count: ok + degraded + error,
-        ok,
-        degraded,
-        error,
+        count: bucket.count,
+        ok: bucket.ok,
+        degraded: bucket.degraded,
+        error: bucket.error,
         status,
         impact,
       };

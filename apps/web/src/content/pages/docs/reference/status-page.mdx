@@ -170,7 +170,7 @@ the [**Components**](https://app.openstatus.dev/status-pages/_/components#compon
 | Field | Values | Default | Description |
 |---|---|---|---|
 | `type` | `absolute`, `manual` | `absolute` | **Status source** in the dashboard. `absolute` (**Monitor checks**) draws each day proportionally from monitor results; `manual` (**Reports only**) uses only status reports and maintenances and shows the most significant status of the day. |
-| `value` | `duration`, `requests`, `runs`, `manual` | `requests` | **Card shows** in the dashboard: `duration` (**Time per status**), `requests` (**Number of requests**, one per region per run) or `runs` (**Number of runs**, one per run, down when at least half of the cloud regions that reported in it fail; applies to HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions or a single private location, other monitors keep one per region per run). What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
+| `value` | `duration`, `requests`, `manual` | `requests` | **Card shows** in the dashboard: `duration` (**Time per status**) or `requests` (**Number of checks**). What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
 | `uptime` | boolean | `true` | Whether the uptime percentage is shown at all. |
 | `days` | `30`, `45` | `45` | Number of days of history rendered on the bars. |
 

@@ -1,6 +1,6 @@
 import { uniqueRegions } from "@openstatus/utils";
 
-import type { Counts } from "../status-timeline/tally";
+export type Counts = { ok: number; degraded: number; error: number };
 
 // mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
 // private-only monitors get none: private checks carry no shared run key

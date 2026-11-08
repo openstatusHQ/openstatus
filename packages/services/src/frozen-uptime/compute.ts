@@ -1,6 +1,6 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
-import type { Counts } from "../status-timeline/tally";
+import type { Counts } from "./quorum";
 
 export type ComputeCountRow = {
   monitorId: string;

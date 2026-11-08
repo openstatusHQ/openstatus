@@ -6,9 +6,8 @@ import {
 import { type DayWindow, dayWindow } from "./day-window";
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
 import type { Event, StatusData } from "./events";
-import { type DayCounts, tallyDay } from "./tally";
 
-export type CheckCounts = DayCounts;
+export type CheckCounts = { ok: number; degraded: number; error: number };
 
 /** Downtime is clamped to [start, end]; `now` closes still-open events. */
 export type UptimeWindow = { start: number; end: number; now: number };
@@ -73,7 +72,7 @@ export function heartbeatCoverageStart(
 ): number | null {
   let start: number | null = null;
   for (const d of days) {
-    if (tallyDay(d, null).total === 0) continue;
+    if (d.ok + d.degraded + d.error === 0) continue;
     const dayStart = dayWindow(d.day, timeZone).start;
     if (start === null || dayStart < start) start = dayStart;
   }
@@ -83,6 +82,19 @@ export function heartbeatCoverageStart(
     if (start === null || from < start) start = from;
   }
   return start;
+}
+
+export function requestsTally(counts: CheckCounts[]): {
+  up: number;
+  total: number;
+} {
+  let up = 0;
+  let total = 0;
+  for (const c of counts) {
+    up += c.ok + c.degraded;
+    total += c.ok + c.degraded + c.error;
+  }
+  return { up, total };
 }
 
 export function clampInterval(
@@ -181,13 +193,12 @@ export function probeDowntimeIntervals(
     const end = Math.min(dayEnd, window.end);
     if (end <= start) continue;
 
-    // only private-only monitors reach here, and they have no quorum population
-    const { error, total } = tallyDay(item, null);
-    if (total === 0) continue;
+    const totalChecks = item.ok + item.degraded + item.error;
+    if (totalChecks === 0) continue;
 
     // Calculate error ratio as the weight
-    // degraded counts as "up" (like in tallyBuckets), only errors count as down
-    const errorRatio = error / total;
+    // degraded counts as "up" (like in requestsTally), only errors count as down
+    const errorRatio = item.error / totalChecks;
     if (errorRatio === 0) continue;
 
     intervals.push({

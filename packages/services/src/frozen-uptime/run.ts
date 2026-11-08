@@ -1,17 +1,8 @@
-import {
-  and,
-  countDistinct,
-  db as defaultDb,
-  eq,
-  inArray,
-  isNull,
-} from "@openstatus/db";
+import { and, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   type MonitorJobType,
   monitor,
-  privateLocation,
-  privateLocationToMonitors,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
@@ -89,51 +80,6 @@ const RUNS_JOB_TYPES = {
 
 export function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
   return Object.hasOwn(RUNS_JOB_TYPES, jobType);
-}
-
-/**
- * Checks one run makes, cloud and private: the divisor that turns a day's
- * `requests` into runs. Null keeps the monitor counting per request.
- */
-export function checksPerRun(
-  monitor: { jobType: string; regions: string },
-  privateLocationCount: number,
-): number | null {
-  if (!hasRuns(monitor.jobType)) return null;
-  const cloud = quorumRegionCount(monitor.regions);
-  if (cloud !== null) return cloud + privateLocationCount;
-  // several private checks of one run share no run key to group them by
-  return privateLocationCount === 1 ? 1 : null;
-}
-
-/** monitorId → attached private locations, as the private checker loads them. */
-export async function privateLocationCounts(
-  db: DB,
-  monitorIds: number[],
-): Promise<Map<number, number>> {
-  if (monitorIds.length === 0) return new Map();
-  const rows = await db
-    .select({
-      monitorId: privateLocationToMonitors.monitorId,
-      count: countDistinct(privateLocationToMonitors.privateLocationId),
-    })
-    .from(privateLocationToMonitors)
-    .innerJoin(
-      privateLocation,
-      eq(privateLocation.id, privateLocationToMonitors.privateLocationId),
-    )
-    .where(
-      and(
-        inArray(privateLocationToMonitors.monitorId, monitorIds),
-        isNull(privateLocationToMonitors.deletedAt),
-      ),
-    )
-    .groupBy(privateLocationToMonitors.monitorId);
-  const out = new Map<number, number>();
-  for (const row of rows) {
-    if (row.monitorId !== null) out.set(row.monitorId, row.count);
-  }
-  return out;
 }
 
 export type FreezePipeKind = "counts" | "runs";

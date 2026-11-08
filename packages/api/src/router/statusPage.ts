@@ -17,19 +17,6 @@ import {
   statusReport,
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
-import {
-  attachRuns,
-  checksPerRun,
-  fetchIntervalRuns,
-  fetchLiveRuns,
-  hasRuns,
-  type IntervalRuns,
-  privateLocationCounts,
-  type RunsByDay,
-  toIntervalCounts,
-  type UptimeQuorumJobType,
-  type UptimeRunsPipes,
-} from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
   constantTimeEqual,
@@ -53,7 +40,6 @@ import {
   visitorFromCtx,
 } from "../lib/page-access";
 import { sendSubscriberVerification } from "../lib/subscriber-verification";
-import { tb } from "../tb";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -66,7 +52,6 @@ import {
   getWorstVariant,
   isMonitorComponent,
   setDataByType,
-  toStatusData,
   withTinybirdFallback,
 } from "./statusPage.utils";
 import {
@@ -120,14 +105,6 @@ export function sortStatusReportsByLatestUpdate<
   );
 }
 
-function toStatusDays(
-  rows: Map<string, Parameters<typeof toStatusData>[0][]>,
-): Map<string, StatusData[]> {
-  return new Map(
-    [...rows].map(([monitorId, days]) => [monitorId, days.map(toStatusData)]),
-  );
-}
-
 // Status rows grouped into `timeZone` days, with the zone they ended up in.
 async function fetchStatusDays(
   monitors: Parameters<typeof fetchByJobType>[0],
@@ -135,8 +112,8 @@ async function fetchStatusDays(
 ) {
   const readUtc = async () => ({
     timeZone: "UTC",
-    rows: toStatusDays(
-      await fetchByJobType(monitors, (type) => getStatusProcedure("45d", type)),
+    rows: await fetchByJobType(monitors, (type) =>
+      getStatusProcedure("45d", type),
     ),
   });
   // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
@@ -151,7 +128,7 @@ async function fetchStatusDays(
             timezone: timeZone,
           }),
     );
-    return { timeZone, rows: toStatusDays(rows) };
+    return { timeZone, rows };
   } catch (err) {
     // ClickHouse's tz database can reject a zone Node accepts: keep real bars
     // in UTC days; other errors still drop the page to manual mode
@@ -164,79 +141,6 @@ async function fetchStatusDays(
   }
 }
 
-function checksPerRunOf(
-  monitor: { id: number; jobType: string; regions: string[] },
-  privateCounts: Map<number, number>,
-) {
-  return checksPerRun(
-    { jobType: monitor.jobType, regions: monitor.regions.join(",") },
-    privateCounts.get(monitor.id) ?? 0,
-  );
-}
-
-// the same day pipes fetchStatusDays reads, so runs land on the same day keys
-function runsDayPipes(timeZone: string): UptimeRunsPipes {
-  const pipeFor = (type: UptimeQuorumJobType): UptimeRunsPipes[typeof type] =>
-    timeZone === "UTC"
-      ? getStatusProcedure("45d", type)
-      : (params) =>
-          getStatusInTimeZoneProcedure(type)({ ...params, timezone: timeZone });
-  return {
-    http: pipeFor("http"),
-    tcp: pipeFor("tcp"),
-    dns: pipeFor("dns"),
-    icmp: pipeFor("icmp"),
-    grpc: pipeFor("grpc"),
-  };
-}
-
-// Run verdicts per `timeZone` day. Its own budget: a slow or failed read only
-// leaves per-region counts, never manual mode.
-async function fetchRunsDays(
-  monitors: { monitor: { id: number; jobType: string; regions: string[] } }[],
-  timeZone: string,
-): Promise<RunsByDay> {
-  const result = await withTinybirdFallback(
-    () =>
-      fetchLiveRuns({
-        monitors: monitors.map(({ monitor }) => ({
-          id: monitor.id,
-          jobType: monitor.jobType,
-          regions: monitor.regions.join(","),
-        })),
-        pipes: runsDayPipes(timeZone),
-        attempts: 1,
-      }),
-    undefined,
-    "using per-region counts",
-  );
-  return result.data ?? new Map();
-}
-
-// Run verdicts per uptime interval, with the same budget rule as fetchRunsDays.
-async function fetchRunsIntervals(
-  monitor: { id: number; jobType: string; regions: string[] },
-  window: { interval: number; fromDate: string; toDate: string },
-): Promise<IntervalRuns | null> {
-  const { jobType } = monitor;
-  if (!hasRuns(jobType)) return null;
-  const result = await withTinybirdFallback(
-    () =>
-      fetchIntervalRuns({
-        monitor: {
-          id: monitor.id,
-          jobType,
-          regions: monitor.regions.join(","),
-        },
-        pipe: getUptimeProcedure("7d", jobType),
-        ...window,
-      }),
-    undefined,
-    "using per-region counts",
-  );
-  return result.data;
-}
-
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -245,7 +149,7 @@ export const statusPageRouter = createTRPCRouter({
         pw: queryPasswordSchema,
         // NOTE: override the defaults we are getting from the page configuration
         cardType: z
-          .enum(["requests", "runs", "duration", "dominant", "manual"])
+          .enum(["requests", "duration", "dominant", "manual"])
           .nullish(),
         barType: z.enum(["absolute", "dominant", "manual"]).nullish(),
       }),
@@ -881,7 +785,7 @@ export const statusPageRouter = createTRPCRouter({
         pw: queryPasswordSchema,
         pageComponentIds: z.string().array(),
         cardType: z
-          .enum(["requests", "runs", "duration", "dominant", "manual"])
+          .enum(["requests", "duration", "dominant", "manual"])
           .prefault("requests"),
         barType: z
           .enum(["absolute", "dominant", "manual"])
@@ -945,31 +849,19 @@ export const statusPageRouter = createTRPCRouter({
         .catch("UTC")
         .parse(_page.defaultTimezone);
 
-      // only the runs card type counts runs; every other card type keeps per-region counts
-      const countsRuns = input.cardType === "runs";
-
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
       // whole page to manual mode so bars still render from DB events.
-      const [tinybird, runs] = await Promise.all([
-        withTinybirdFallback(() =>
-          input.barType === "manual"
-            ? Promise.resolve(null)
-            : fetchStatusDays(monitors, pageTimeZone),
-        ),
-        input.barType === "manual" || !countsRuns
-          ? null
-          : fetchRunsDays(monitors, pageTimeZone),
-      ]);
+      const tinybird = await withTinybirdFallback(() =>
+        input.barType === "manual"
+          ? Promise.resolve(null)
+          : fetchStatusDays(monitors, pageTimeZone),
+      );
 
       const tinybirdUnhealthy = !tinybird.ok;
       const timeZone = tinybird.data?.timeZone ?? pageTimeZone;
-      // runs days are keyed in the page zone: drop them if counts fell back to UTC
-      const statusDataByMonitorId = tinybird.data
-        ? runs && timeZone === pageTimeZone
-          ? attachRuns(tinybird.data.rows, runs)
-          : tinybird.data.rows
-        : new Map<string, never[]>();
+      const statusDataByMonitorId =
+        tinybird.data?.rows ?? new Map<string, never[]>();
 
       const parsedConfiguration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -980,12 +872,24 @@ export const statusPageRouter = createTRPCRouter({
 
       // No public regions alone doesn't make a monitor private-only: it may
       // have no locations at all, so confirm an active private assignment.
-      const privateCounts = await privateLocationCounts(
-        opts.ctx.db,
-        monitors
-          .filter((c) => countsRuns || c.monitor.regions.length === 0)
-          .map((c) => c.monitor.id),
-      );
+      const noRegionMonitorIds = monitors
+        .filter((c) => c.monitor.regions.length === 0)
+        .map((c) => c.monitor.id);
+      const privateOnlyMonitorIds = new Set<number>();
+      if (noRegionMonitorIds.length > 0) {
+        const rows = await opts.ctx.db.query.privateLocationToMonitors.findMany(
+          {
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, noRegionMonitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: { monitorId: true },
+          },
+        );
+        for (const row of rows) {
+          if (row.monitorId !== null) privateOnlyMonitorIds.add(row.monitorId);
+        }
+      }
 
       return pageComponents.map((c) => {
         const events = getEvents({
@@ -1032,16 +936,11 @@ export const statusPageRouter = createTRPCRouter({
         const effectiveBarType = forceManual ? "manual" : input.barType;
         const effectiveCardType = forceManual ? "manual" : input.cardType;
 
-        const checksPerRun =
-          countsRuns && c.monitor
-            ? checksPerRunOf(c.monitor, privateCounts)
-            : null;
         const processedData = setDataByType({
           events,
           data: filledData,
           cardType: effectiveCardType,
           barType: effectiveBarType,
-          checksPerRun,
           timeZone,
         });
         const uptime = getUptime({
@@ -1049,12 +948,9 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
-          checksPerRun,
           timeZone,
           privateLocationOnly:
-            c.monitor != null &&
-            c.monitor.regions.length === 0 &&
-            (privateCounts.get(c.monitor.id) ?? 0) > 0,
+            c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
           heartbeat: c.monitor?.jobType === "heartbeat",
         });
 
@@ -1094,7 +990,6 @@ export const statusPageRouter = createTRPCRouter({
       data,
       cardType: "requests",
       barType: "dominant",
-      checksPerRun: null,
     });
     return {
       data: processedData,
@@ -1320,12 +1215,6 @@ export const statusPageRouter = createTRPCRouter({
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
-      const configuration = pageConfigurationSchema.safeParse(
-        _page.configuration ?? {},
-      );
-      const countsRuns =
-        configuration.success && configuration.data.value === "runs";
-
       const proceduresByType = {
         http: {
           latency: getMetricsLatencyProcedure("7d", "http"),
@@ -1340,8 +1229,7 @@ export const statusPageRouter = createTRPCRouter({
         dns: {
           latency: getMetricsLatencyProcedure("7d", "dns"),
           regions: getMetricsRegionsProcedure("7d", "dns"),
-          // the 7d pipe buckets on cronTimestamp to line up with the quorum intervals
-          uptime: getUptimeProcedure(countsRuns ? "7d" : "30d", "dns"),
+          uptime: getUptimeProcedure("7d", "dns"),
         },
         icmp: {
           latency: getMetricsLatencyProcedure("7d", "icmp"),
@@ -1366,54 +1254,35 @@ export const statusPageRouter = createTRPCRouter({
       const fromDate = startOfDay(subDays(new Date(), 7)).toISOString();
       const toDate = endOfDay(new Date()).toISOString();
 
-      const interval = 240;
-
       // Slow/erroring Tinybird → empty chart data so the page still renders.
-      const [[metrics, runs], privateCounts] = await Promise.all([
-        !procedures
-          ? Promise.resolve([{ ok: false as const, data: null }, null] as const)
-          : Promise.all([
-              withTinybirdFallback(() =>
-                Promise.all([
-                  procedures.latency({
-                    monitorId: _monitor.id.toString(),
-                    fromDate,
-                    toDate,
-                  }),
-                  procedures.regions({
-                    monitorId: _monitor.id.toString(),
-                    fromDate,
-                    toDate,
-                  }),
-                  procedures.uptime({
-                    monitorId: _monitor.id.toString(),
-                    interval,
-                    fromDate,
-                    toDate,
-                  }),
-                ]),
-              ),
-              countsRuns
-                ? fetchRunsIntervals(_monitor, { interval, fromDate, toDate })
-                : null,
+      const metrics = !procedures
+        ? { ok: false as const, data: null }
+        : await withTinybirdFallback(() =>
+            Promise.all([
+              procedures.latency({
+                monitorId: _monitor.id.toString(),
+                fromDate,
+                toDate,
+              }),
+              procedures.regions({
+                monitorId: _monitor.id.toString(),
+                fromDate,
+                toDate,
+              }),
+              procedures.uptime({
+                monitorId: _monitor.id.toString(),
+                interval: 240,
+                fromDate,
+                toDate,
+              }),
             ]),
-        countsRuns
-          ? privateLocationCounts(opts.ctx.db, [_monitor.id])
-          : new Map<number, number>(),
-      ]);
+          );
 
-      const [latency, regions, counts] = metrics.data ?? [
+      const [latency, regions, uptime] = metrics.data ?? [
         { data: [] },
         { data: [] },
         { data: [] },
       ];
-      const uptime = {
-        ...counts,
-        data: toIntervalCounts(counts.data, runs),
-        checksPerRun: countsRuns
-          ? checksPerRunOf(_monitor, privateCounts)
-          : null,
-      };
 
       return {
         ...selectPublicMonitorSchema.parse(_monitor),

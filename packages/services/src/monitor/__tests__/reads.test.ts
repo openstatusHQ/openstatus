@@ -369,12 +369,7 @@ describe("fetchMonitorDailyStats", () => {
 
       expect(queried.http).toEqual([String(httpMon.id)]);
       expect(queried.tcp).toEqual([String(tcpMon.id)]);
-      const statusDay = (monitorId: number) => ({
-        day: today,
-        monitorId: String(monitorId),
-        requests: { ok: 9, degraded: 1, error: 0 },
-      });
-      expect(stats).toEqual([statusDay(httpMon.id), statusDay(tcpMon.id)]);
+      expect(stats).toEqual([bucket(httpMon.id), bucket(tcpMon.id)]);
     });
   });
 });

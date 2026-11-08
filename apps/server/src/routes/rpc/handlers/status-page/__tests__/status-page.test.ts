@@ -3304,38 +3304,6 @@ describe("StatusPageService.GetStatusPageOverview", () => {
     }
   });
 
-  test("maps a runs configuration", async () => {
-    const createdPage = await db
-      .insert(page)
-      .values({
-        workspaceId: 1,
-        title: `${TEST_PREFIX}-overview-runs-config`,
-        slug: `${TEST_PREFIX}-overview-runs-config-slug`,
-        description: "",
-        customDomain: "",
-        published: true,
-        accessType: "public",
-        configuration: { value: "runs", type: "absolute" },
-      })
-      .returning()
-      .get();
-
-    try {
-      const res = await connectRequest(
-        "GetStatusPageOverview",
-        { id: String(createdPage.id) },
-        { "x-openstatus-key": "1" },
-      );
-
-      expect(res.status).toBe(200);
-
-      const data = await res.json();
-      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_RUNS");
-    } finally {
-      await db.delete(page).where(eq(page.id, createdPage.id));
-    }
-  });
-
   test("falls back to default configuration for invalid stored values", async () => {
     const createdPage = await db
       .insert(page)

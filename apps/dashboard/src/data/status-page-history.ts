@@ -30,11 +30,26 @@ export type MonthCell = {
 };
 
 // wire types inferred from the endpoint so server shape changes surface here
-export type HistoryRow =
-  RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
+type HistoryWireRow = RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
+export type HistoryUnit = HistoryWireRow["unit"] | "runs";
+export type HistoryRow = Omit<HistoryWireRow, "unit" | "runs"> & {
+  unit: HistoryUnit;
+};
 export type HistoryEvent = HistoryRow["events"][number];
 export type HistoryValue = NonNullable<HistoryRow["months"][string]>;
-export type HistoryUnit = HistoryRow["unit"];
+
+export const HISTORY_METRICS = ["requests", "runs"] as const;
+export type HistoryMetric = (typeof HISTORY_METRICS)[number];
+
+/** Rows as `metric` counts them; rows without runs keep their own unit. */
+export function historyRows(
+  rows: HistoryWireRow[],
+  metric: HistoryMetric,
+): HistoryRow[] {
+  return rows.map(({ runs, ...row }) =>
+    metric === "runs" && runs ? { ...row, unit: "runs", ...runs } : row,
+  );
+}
 
 export type BreakdownRow = {
   key: "ok" | "degraded" | "error";

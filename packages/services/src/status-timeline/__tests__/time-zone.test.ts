@@ -10,7 +10,6 @@ import {
   resolveDayStatus,
   type StatusData,
 } from "../events";
-import type { Counts } from "../tally";
 import { probeDowntimeIntervals } from "../uptime";
 
 const at = (iso: string) => new Date(iso);
@@ -27,11 +26,15 @@ function incident(from: string, to: string): Event {
   };
 }
 
-function bucket(date: string, counts: Partial<Counts> = {}): StatusData {
+function bucket(date: string, overrides: Partial<StatusData> = {}): StatusData {
   return {
     day: `${date}T00:00:00.000Z`,
-    requests: { ok: 1, degraded: 0, error: 0, ...counts },
+    count: 1,
+    ok: 1,
+    degraded: 0,
+    error: 0,
     monitorId: "1",
+    ...overrides,
   };
 }
 
@@ -66,7 +69,7 @@ describe("fillStatusDataFor45Days in a time zone", () => {
       45,
       "Asia/Tokyo",
     );
-    expect(filled.at(-1)?.requests.error).toBe(3);
+    expect(filled.at(-1)?.error).toBe(3);
   });
 
   test("lines the synthetic days up with the zone's dates", () => {
@@ -77,7 +80,7 @@ describe("fillStatusDataFor45Days in a time zone", () => {
     });
     expect(filled.at(-1)).toMatchObject({
       day: "2026-10-16T00:00:00.000Z",
-      requests: { error: 1 },
+      error: 1,
     });
   });
 });

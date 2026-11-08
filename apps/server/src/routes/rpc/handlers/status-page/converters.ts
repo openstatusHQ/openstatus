@@ -174,8 +174,6 @@ function metricTypeToProto(
       return PageMetricType.REQUESTS;
     case "manual":
       return PageMetricType.MANUAL;
-    case "runs":
-      return PageMetricType.RUNS;
     default:
       return PageMetricType.UNSPECIFIED;
   }

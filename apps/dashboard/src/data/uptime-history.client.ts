@@ -1,15 +1,15 @@
-import {
-  type DayCounts,
-  shownCounts,
-  tallyDay,
-} from "@openstatus/services/status-timeline/tally";
 import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
 
 import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
 import { formatNumber } from "@/lib/formatter";
 
-export type CheckCounts = DayCounts & { day: string };
+export type CheckCounts = {
+  day: string;
+  ok: number;
+  degraded: number;
+  error: number;
+};
 
 export type UptimeYear = {
   year: number;
@@ -27,38 +27,23 @@ export function formatUptime(ratio: number, digits = 2): string {
   return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
 }
 
-/** Run counts when the monitor has a `checksPerRun`, else region results. */
-function countUnit(count: number, checksPerRun: number | null) {
-  if (checksPerRun !== null) return count === 1 ? "run" : "runs";
-  return count === 1 ? "check" : "checks";
-}
-
-/** Muted without failures, else by failed share of the day's runs: < 1%, ≤ 5%, > 5%. */
-function dayMark(
-  counts: CheckCounts | undefined,
-  checksPerRun: number | null,
-): Partial<ActivityDay> {
-  const tally = counts ? tallyDay(counts, checksPerRun) : null;
-  const shown = tally ? shownCounts(tally) : null;
-  const shownTotal = shown ? shown.ok + shown.degraded + shown.error : 0;
-  // a day without a shown check is no data, never downtime
-  if (!tally || !shown || shownTotal === 0)
-    return { hatched: true, lines: ["No checks"] };
-  const { total } = tally;
-  const failed = tally.error / total;
+/** Muted without failures, else by failed share of the day's checks: < 1%, ≤ 5%, > 5%. */
+function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
+  const total = counts ? counts.ok + counts.degraded + counts.error : 0;
+  // a day without checks is no data, never downtime
+  if (!counts || total === 0) return { hatched: true, lines: ["No checks"] };
+  const { degraded, error } = counts;
+  const failed = error / total;
   return {
     // degraded counts as up, like the uptime math
     scale: "failure",
-    level:
-      tally.status !== "error" ? 0 : failed < 0.01 ? 1 : failed <= 0.05 ? 2 : 3,
+    level: error === 0 ? 0 : failed < 0.01 ? 1 : failed <= 0.05 ? 2 : 3,
     lines: [
-      `${formatUptime((total - tally.error) / total)} uptime`,
+      `${formatUptime((total - error) / total)} uptime`,
       [
-        `${formatNumber(shownTotal)} ${countUnit(shownTotal, checksPerRun)}`,
-        ...(shown.error > 0 ? [`${formatNumber(shown.error)} failed`] : []),
-        ...(shown.degraded > 0
-          ? [`${formatNumber(shown.degraded)} degraded`]
-          : []),
+        `${formatNumber(total)} checks`,
+        ...(error > 0 ? [`${formatNumber(error)} failed`] : []),
+        ...(degraded > 0 ? [`${formatNumber(degraded)} degraded`] : []),
       ].join(" · "),
     ],
   };
@@ -73,13 +58,9 @@ export function utcToday(now = new Date()) {
  * One calendar per year, newest first, from the oldest recorded day's year;
  * days before the first check are blank, days after today (UTC) are left empty.
  */
-export function uptimeYears(
-  counts: CheckCounts[],
-  checksPerRun: number | null,
-  now = new Date(),
-) {
+export function uptimeYears(counts: CheckCounts[], now = new Date()) {
   // frozen months are zero-filled: the record starts at the first checked day
-  const since = counts.find((c) => tallyDay(c, checksPerRun).total > 0)?.day;
+  const since = counts.find((c) => c.ok + c.degraded + c.error > 0)?.day;
   if (!since) return [];
   const byDay = new Map(counts.map((c) => [c.day, c]));
   const first = Number(since.slice(0, 4));
@@ -97,12 +78,11 @@ export function uptimeYears(
       if (key < since) return { date, blank: true };
       const c = byDay.get(key);
       if (c) {
-        const tally = tallyDay(c, checksPerRun);
-        up += tally.up;
-        total += tally.total;
-        if (tally.status === "error") failedDays++;
+        up += c.ok + c.degraded;
+        total += c.ok + c.degraded + c.error;
+        if (c.error > 0) failedDays++;
       }
-      return { date, ...dayMark(c, checksPerRun) };
+      return { date, ...dayMark(c) };
     });
     years.push({
       year,
@@ -127,9 +107,6 @@ export function exampleUptimeCounts(now = new Date()): CheckCounts[] {
     const r = random();
     const error = r > 0.97 ? Math.ceil(random() * 90) : r > 0.9 ? 1 : 0;
     const degraded = random() > 0.85 ? Math.ceil(random() * 12) : 0;
-    return {
-      day: dayKey(date),
-      requests: { ok: 1440 - error - degraded, degraded, error },
-    };
+    return { day: dayKey(date), ok: 1440 - error - degraded, degraded, error };
   });
 }

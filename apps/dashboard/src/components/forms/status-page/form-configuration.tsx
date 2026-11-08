@@ -58,7 +58,7 @@ const schema = z.object({
 const configurationSchema = z
   .object({
     type: z.enum(["manual", "absolute"]),
-    value: z.enum(["duration", "requests", "runs", "manual"]).nullish(),
+    value: z.enum(["duration", "requests", "manual"]).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
     days: z
@@ -103,8 +103,7 @@ export function FormConfiguration({
     | "absolute";
   const watchConfigurationValue = form.watch("configuration.value") as
     | "duration"
-    | "requests"
-    | "runs";
+    | "requests";
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
@@ -217,13 +216,11 @@ export function FormConfiguration({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(["duration", "requests", "runs"] as const).map(
-                          (value) => (
-                            <SelectItem key={value} value={value}>
-                              {configurationLabels.value[value]}
-                            </SelectItem>
-                          ),
-                        )}
+                        {(["duration", "requests"] as const).map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {configurationLabels.value[value]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -390,7 +387,7 @@ export function FormConfiguration({
 }
 
 // UI labels only - the stored enum values stay `absolute`/`manual` and
-// `duration`/`requests`/`runs`/`manual` (DB, API and URL params).
+// `duration`/`requests`/`manual` (DB, API and URL params).
 export const configurationLabels = {
   type: {
     absolute: "Monitor checks",
@@ -398,8 +395,7 @@ export const configurationLabels = {
   },
   value: {
     duration: "Time per status",
-    requests: "Number of requests",
-    runs: "Number of runs",
+    requests: "Number of checks",
     manual: "Worst status of the day",
   },
 } as const;
@@ -413,9 +409,7 @@ const message = {
   value: {
     duration:
       "cards show how long the monitor was operational, degraded or down.",
-    requests:
-      "cards show how many requests succeeded, degraded or failed, counted per region.",
-    runs: "cards show how many runs succeeded, degraded or failed. For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run counts as down when at least half of the cloud regions that reported in it fail; a monitor with a single private location counts each check as a run; other monitors count each region's result.",
+    requests: "cards show how many checks succeeded, degraded or failed.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {
@@ -428,7 +422,7 @@ const message = {
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
-  value: parseAsStringLiteral(["duration", "requests", "runs", "manual"]),
+  value: parseAsStringLiteral(["duration", "requests", "manual"]),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
   days: parseAsStringLiteral(["30", "45"]),

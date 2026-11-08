@@ -19,6 +19,7 @@ import {
   dayWindow,
   durationDowntimeMs,
   floorPct,
+  getHighestPriorityStatus,
   getWorstVariant,
   heartbeatCoverageStart,
   isDateWithinEvent,
@@ -26,9 +27,7 @@ import {
   reportEventDayImpact,
   reportEventDayStatus,
   reportsOnlyDowntimeMs,
-  shownCounts,
-  tallyBuckets,
-  tallyDay,
+  requestsTally,
 } from "@openstatus/services/status-timeline";
 
 export * from "@openstatus/services/status-timeline";
@@ -49,7 +48,6 @@ export type TinybirdResult<T> =
 export async function withTinybirdFallback<T>(
   fetch: () => Promise<T>,
   timeoutMs = TINYBIRD_FALLBACK_TIMEOUT_MS,
-  fallback = "using manual mode",
 ): Promise<TinybirdResult<T>> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -64,7 +62,7 @@ export async function withTinybirdFallback<T>(
     ]);
     return { ok: true, data };
   } catch (err) {
-    console.error(`[status-page] tinybird unhealthy, ${fallback}:`, err);
+    console.error("[status-page] tinybird unhealthy, using manual mode:", err);
     return { ok: false, data: null };
   } finally {
     clearTimeout(timer);
@@ -171,22 +169,17 @@ function getTotalEventsDurationMs(events: Event[], day: DayWindow): number {
   return Math.min(total, end - startOfDay);
 }
 
-type ShownCounts = ReturnType<typeof shownCounts>;
-
 export function setDataByType({
   events,
   data,
   cardType,
   barType,
-  checksPerRun,
   timeZone = "UTC",
 }: {
   events: Event[];
   data: StatusData[];
-  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
-  /** the monitor's quorum region count: counts are runs; null counts region checks */
-  checksPerRun: number | null;
   /** IANA zone whose calendar days the bars stand for */
   timeZone?: string;
 }): UptimeData[] {
@@ -285,7 +278,7 @@ export function setDataByType({
   }
 
   function createStatusSegments(
-    dayData: ShownCounts,
+    dayData: StatusData,
   ): Array<{ status: "success" | "degraded" | "error"; count: number }> {
     return [
       { status: "success" as const, count: dayData.ok },
@@ -333,7 +326,7 @@ export function setDataByType({
     return [{ status: eventStatus ?? "empty", value: "" }];
   }
 
-  function createRequestEntries(dayData: ShownCounts): Array<{
+  function createRequestEntries(dayData: StatusData): Array<{
     status: "success" | "degraded" | "error" | "info";
     count: number;
   }> {
@@ -345,7 +338,7 @@ export function setDataByType({
     ];
   }
 
-  function createDurationEntries(dayData: ShownCounts): Array<{
+  function createDurationEntries(dayData: StatusData): Array<{
     status: "success" | "degraded" | "error" | "info";
     count: number;
   }> {
@@ -357,19 +350,17 @@ export function setDataByType({
     ];
   }
 
-  // a run across all regions counts once; per-region counts stay requests
   function entriesToRequestCardData(
     entries: Array<{
       status: "success" | "degraded" | "error" | "info";
       count: number;
     }>,
-    unit: "run" | "req",
   ): UptimeData["card"] {
     return entries
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
-        value: `${formatNumber(entry.count)} ${entry.count === 1 ? unit : `${unit}s`}`,
+        value: `${formatNumber(entry.count)} reqs`,
       }));
   }
 
@@ -420,8 +411,6 @@ export function setDataByType({
     };
   }
 
-  const countUnit = checksPerRun === null ? "req" : "run";
-
   return data.map((dayData) => {
     const day = dayWindow(dayData.day, timeZone);
     const dayMs = day.end - day.start;
@@ -454,10 +443,8 @@ export function setDataByType({
     // TODO: transform into a new Map<type, number>();
     let barData: UptimeData["bar"];
 
-    const tally = tallyDay(dayData, checksPerRun);
-    const { status: dataStatus } = tally;
-    const counts = shownCounts(tally);
-    const shownTotal = counts.ok + counts.degraded + counts.error;
+    const total = dayData.ok + dayData.degraded + dayData.error;
+    const dataStatus = getHighestPriorityStatus(dayData);
 
     switch (barType) {
       case "absolute":
@@ -480,7 +467,7 @@ export function setDataByType({
             // Multiple segments: show proportional distribution
             barData = createProportionalBarData(eventSegments, dayMs);
           }
-        } else if (shownTotal === 0) {
+        } else if (total === 0) {
           // Empty day - no data available
           barData = createEmptyBarData();
         } else {
@@ -489,8 +476,8 @@ export function setDataByType({
             barData = createOperationalBarData();
           } else {
             // Multiple segments for absolute view - show proportional distribution of status data
-            const statusSegments = createStatusSegments(counts);
-            barData = segmentsToBarData(statusSegments, shownTotal);
+            const statusSegments = createStatusSegments(dayData);
+            barData = segmentsToBarData(statusSegments, total);
           }
         }
         break;
@@ -529,20 +516,19 @@ export function setDataByType({
 
     switch (cardType) {
       case "requests":
-      case "runs":
-        if (shownTotal === 0) {
+        if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
-          const requestEntries = createRequestEntries(counts);
-          cardData = entriesToRequestCardData(requestEntries, countUnit);
+          const requestEntries = createRequestEntries(dayData);
+          cardData = entriesToRequestCardData(requestEntries);
         }
         break;
 
       case "duration":
-        if (shownTotal === 0) {
+        if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
-          const entries = createDurationEntries(counts);
+          const entries = createDurationEntries(dayData);
           const durationMap = new Map<string, number>();
 
           cardData = entries
@@ -569,7 +555,7 @@ export function setDataByType({
                   maintenances,
                 );
                 const statusMinutes = Math.round(
-                  (entry.count / shownTotal) * totalMinutes,
+                  (entry.count / total) * totalMinutes,
                 );
                 if (statusMinutes === 0) return null;
                 durationMap.set(entry.status, statusMinutes);
@@ -625,11 +611,11 @@ export function setDataByType({
       }
       default:
         // Default to requests behavior
-        if (shownTotal === 0) {
+        if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
-          const defaultEntries = createRequestEntries(counts);
-          cardData = entriesToRequestCardData(defaultEntries, countUnit);
+          const defaultEntries = createRequestEntries(dayData);
+          cardData = entriesToRequestCardData(defaultEntries);
         }
         break;
     }
@@ -682,7 +668,6 @@ export function getUptime({
   events,
   barType,
   cardType,
-  checksPerRun,
   privateLocationOnly = false,
   heartbeat = false,
   timeZone = "UTC",
@@ -690,9 +675,7 @@ export function getUptime({
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
-  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
-  /** the monitor's quorum region count: counts are runs; null counts region checks */
-  checksPerRun: number | null;
+  cardType: "requests" | "duration" | "dominant" | "manual";
   /** no public regions and ≥1 private location: include probe errors in duration uptime */
   privateLocationOnly?: boolean;
   /** pings are not checks: uptime is incident time since the first signal */
@@ -752,7 +735,7 @@ export function getUptime({
     return `${floorPct((total - duration) / total)}%`;
   }
 
-  const { up, total } = tallyBuckets(data, checksPerRun);
+  const { up, total } = requestsTally(data);
   if (total === 0) return "100%";
   return `${floorPct(up / total)}%`;
 }

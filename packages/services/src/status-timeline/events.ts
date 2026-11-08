@@ -15,7 +15,6 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type DayWindow, dayWindow, todayIn } from "./day-window";
-import { type DayCounts, tallyCounts } from "./tally";
 
 export type MonitorComponentWithNonNullMonitor =
   PageComponentWithMonitorRelation & {
@@ -36,19 +35,14 @@ export function isMonitorComponent(
   );
 }
 
-export type StatusData = DayCounts & { day: string; monitorId: string };
-
-/** A 45d status pipe row as `StatusData`: its counts are region checks. */
-export function toStatusData(row: {
+export type StatusData = {
   day: string;
-  monitorId: string;
+  count: number;
   ok: number;
   degraded: number;
   error: number;
-}): StatusData {
-  const { day, monitorId, ok, degraded, error } = row;
-  return { day, monitorId, requests: { ok, degraded, error } };
-}
+  monitorId: string;
+};
 
 export function fillStatusDataFor45Days(
   data: Array<StatusData>,
@@ -56,8 +50,8 @@ export function fillStatusDataFor45Days(
   lookbackPeriod = 45,
   timeZone = "UTC",
 ): Array<StatusData> {
-  const result: StatusData[] = [];
-  const dataByDay = new Map<string, StatusData>();
+  const result = [];
+  const dataByDay = new Map();
 
   // Index existing data by day
   data.forEach((item) => {
@@ -74,9 +68,9 @@ export function fillStatusDataFor45Days(
     const dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
     const isoString = date.toISOString();
 
-    const existingData = dataByDay.get(dayKey);
-    if (existingData) {
+    if (dataByDay.has(dayKey)) {
       // Use existing data but ensure the day is properly formatted
+      const existingData = dataByDay.get(dayKey);
       result.push({
         ...existingData,
         day: isoString,
@@ -85,7 +79,10 @@ export function fillStatusDataFor45Days(
       // Fill missing day with default values
       result.push({
         day: isoString,
-        requests: { ok: 0, degraded: 0, error: 0 },
+        count: 0,
+        ok: 0,
+        degraded: 0,
+        error: 0,
         monitorId,
       });
     }
@@ -116,11 +113,10 @@ export function fillStatusDataFor45DaysNoop({
     date.setUTCDate(date.getUTCDate() - i);
     return {
       day: date.toISOString(),
-      requests: {
-        ok: issueDays.includes(i) ? 0 : 1,
-        degraded: degradedDays.includes(i) ? 1 : 0,
-        error: errorDays.includes(i) ? 1 : 0,
-      },
+      count: 1,
+      ok: issueDays.includes(i) ? 0 : 1,
+      degraded: degradedDays.includes(i) ? 1 : 0,
+      error: errorDays.includes(i) ? 1 : 0,
       monitorId: "1",
     };
   });
@@ -454,7 +450,11 @@ export function getWorstVariant<T extends keyof typeof STATUS_PRIORITY>(
 export function getHighestPriorityStatus(
   item: StatusData,
 ): keyof typeof STATUS_PRIORITY {
-  return tallyCounts(item.runs ?? item.requests).status;
+  if (item.error > 0) return "error";
+  if (item.degraded > 0) return "degraded";
+  if (item.ok > 0) return "success";
+
+  return "empty";
 }
 
 // worst report impact for one day; null = legacy event (no impact rows)

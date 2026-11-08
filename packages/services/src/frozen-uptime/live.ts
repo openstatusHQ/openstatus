@@ -1,127 +1,20 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
-import type { Counts, DayCounts } from "../status-timeline/tally";
-import { quorumRegionCount, type RunsByDay } from "./quorum";
 import {
   fetchFreezeCounts,
   fetchRunsByDay,
-  hasRuns,
   type UptimeFreezePipes,
-  type UptimeRunsPipes,
 } from "./run";
-
-type LiveMonitor = { id: number; jobType: string; regions: string };
-
-/**
- * Per-day run verdicts for the monitors with cloud regions, in the
- * days the pipes group by. Never throws: a monitor whose read failed is left
- * out, so its days keep only `requests`.
- */
-export async function fetchLiveRuns(args: {
-  monitors: LiveMonitor[];
-  pipes: UptimeRunsPipes;
-  attempts?: number;
-  sleep?: (ms: number) => Promise<void>;
-}): Promise<RunsByDay> {
-  const { runs } = await fetchRunsByDay({ ...args, throttleMs: 0 });
-  return runs;
-}
-
-/** Attach each day's run verdicts to the rows of the same day key. */
-export function attachRuns<Row extends { monitorId: string; day: string }>(
-  rowsByMonitorId: Map<string, Row[]>,
-  runs: RunsByDay,
-): Map<string, (Row & { runs?: Counts })[]> {
-  const out = new Map<string, (Row & { runs?: Counts })[]>();
-  for (const [monitorId, rows] of rowsByMonitorId) {
-    const byDay = runs.get(monitorId);
-    out.set(
-      monitorId,
-      rows.map((row) => {
-        const dayRuns = byDay?.get(
-          new Date(row.day).toISOString().slice(0, 10),
-        );
-        return dayRuns ? { ...row, runs: dayRuns } : row;
-      }),
-    );
-  }
-  return out;
-}
-
-type IntervalRow = {
-  interval: Date;
-  success: number;
-  degraded: number;
-  error: number;
-};
-
-/** An uptime interval pipe; `type: "runs"` returns run verdicts per bucket. */
-export type IntervalPipeFn = (params: {
-  monitorId: string;
-  interval: number;
-  fromDate?: string;
-  toDate?: string;
-  type: "runs";
-}) => Promise<{ data: IntervalRow[] }>;
-
-/** interval start (ISO) → that bucket's run verdicts, for one monitor. */
-export type IntervalRuns = Map<string, Counts>;
-
-/**
- * Run verdicts per `interval`-minute bucket for one monitor. Null when the
- * monitor has no cloud regions; a failed read rejects.
- */
-export async function fetchIntervalRuns(args: {
-  monitor: LiveMonitor;
-  pipe: IntervalPipeFn;
-  interval: number;
-  fromDate?: string;
-  toDate?: string;
-}): Promise<IntervalRuns | null> {
-  const { monitor, pipe, ...window } = args;
-  if (!hasRuns(monitor.jobType) || quorumRegionCount(monitor.regions) === null)
-    return null;
-  const { data } = await pipe({
-    monitorId: String(monitor.id),
-    ...window,
-    type: "runs",
-  });
-  const out: IntervalRuns = new Map();
-  for (const { interval, success, degraded, error } of data) {
-    if (success + degraded + error > 0) {
-      out.set(interval.toISOString(), { ok: success, degraded, error });
-    }
-  }
-  return out;
-}
-
-export type IntervalCounts = DayCounts & { interval: Date };
-
-/** Uptime interval rows as `requests`, with the run verdicts of the same interval. */
-export function toIntervalCounts(
-  rows: IntervalRow[],
-  runs: IntervalRuns | null,
-): IntervalCounts[] {
-  return rows.map(({ interval, success, degraded, error }) => {
-    const intervalRuns = runs?.get(interval.toISOString());
-    return {
-      interval,
-      requests: { ok: success, degraded, error },
-      ...(intervalRuns ? { runs: intervalRuns } : {}),
-    };
-  });
-}
 
 /**
  * Live per-day counts from the 45d pipes, keyed monitorId → day, with `runs`
- * under `withRuns` where the monitor has run verdicts. Never throws: a monitor
- * whose counts failed lands in `failedMonitorIds`; a failed runs read only
- * leaves its days without `runs`.
+ * where the monitor has run verdicts. Never throws: a monitor whose counts
+ * failed lands in `failedMonitorIds`; a failed runs read only leaves its days
+ * without `runs`.
  */
 export async function fetchLiveDays(args: {
-  monitors: LiveMonitor[];
+  monitors: { id: number; jobType: string; regions: string }[];
   pipes: UptimeFreezePipes;
-  withRuns?: boolean;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{
   days: Map<string, Map<string, FrozenMonitorUptimeDay>>;
@@ -141,13 +34,12 @@ export async function fetchLiveDays(args: {
       throttleMs: 0,
       sleep: args.sleep,
     }),
-    args.withRuns
-      ? fetchLiveRuns({
-          monitors: args.monitors,
-          pipes: args.pipes,
-          sleep: args.sleep,
-        })
-      : Promise.resolve<RunsByDay>(new Map()),
+    fetchRunsByDay({
+      monitors: args.monitors,
+      pipes: args.pipes,
+      throttleMs: 0,
+      sleep: args.sleep,
+    }),
   ]);
 
   const days = new Map<string, Map<string, FrozenMonitorUptimeDay>>();
@@ -165,7 +57,7 @@ export async function fetchLiveDays(args: {
     days.set(row.monitorId, byDay);
   }
 
-  for (const [monitorId, monitorRuns] of runs) {
+  for (const [monitorId, monitorRuns] of runs.runs) {
     const byDay = days.get(monitorId);
     if (!byDay) continue;
     for (const [day, dayRuns] of monitorRuns) {
@@ -174,8 +66,5 @@ export async function fetchLiveDays(args: {
     }
   }
 
-  return {
-    days,
-    failedMonitorIds: counts.failedMonitorIds,
-  };
+  return { days, failedMonitorIds: counts.failedMonitorIds };
 }
