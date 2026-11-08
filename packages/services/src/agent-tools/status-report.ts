@@ -5,22 +5,32 @@ import {
 import { z } from "zod";
 
 import { attributedUserSchema, toAgentUser } from "../attribution";
-import type { ServiceContext } from "../context";
+import { requireScope } from "../auth";
+import { type ServiceContext, getReadDb } from "../context";
 import {
   addStatusReportUpdate,
+  deleteStatusReportUpdate,
   getStatusReport,
   listStatusReports,
   notifyStatusReport,
   resolveStatusReport,
   updateStatusReport,
+  updateStatusReportUpdate,
 } from "../status-report";
 import { createStatusReport } from "../status-report/create";
+import {
+  getComponentImpactsForUpdate,
+  getPageComponentIdsForReport,
+  getReportInWorkspace,
+  getReportUpdateInWorkspace,
+} from "../status-report/internal";
 import {
   type ComponentImpacts,
   componentImpactsSchema,
   type StatusReportStatus,
 } from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
+import { beforeSnapshot } from "./approval-before";
 import type { AgentTool, SummaryLine } from "./types";
 
 // Agent surfaces send only the impacts that CHANGED (see system prompt). Carry
@@ -75,6 +85,9 @@ const ACTIVE_STATUSES = statusReportStatusSchema.options.filter(
   (s) => s !== "resolved",
 );
 
+// keeps list output bounded for long-running incidents
+const LIST_UPDATES_LIMIT = 10;
+
 const ListStatusReportsInputShape = z.object({
   filter: z
     .enum(["active", "all"])
@@ -117,12 +130,21 @@ const ListStatusReportsOutput = z.object({
       updatedBy: attributedUserSchema.nullable(),
       latestUpdate: z
         .object({
+          id: z.number().int(),
           message: z.string(),
           status: statusReportStatusSchema,
           date: z.string().nullable(),
           createdBy: attributedUserSchema.nullable(),
         })
         .nullable(),
+      updates: z.array(
+        z.object({
+          id: z.number().int(),
+          status: statusReportStatusSchema,
+          message: z.string(),
+          date: z.string().nullable(),
+        }),
+      ),
     }),
   ),
   pagination: z.object({
@@ -139,8 +161,8 @@ export const listStatusReportsTool: AgentTool<
 > = {
   name: "list_status_reports",
   description:
-    "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns the most recent update per report so the current public message is visible without a follow-up call. Paginated via `page` (1-indexed) and `perPage`.",
-  scope: "read",
+    "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns each report's timeline newest-first under `updates`, capped at the 10 most recent entries (ids feed update_status_report_update / delete_status_report_update; call get_status_report for the full timeline), plus `latestUpdate` with its author. Paginated via `page` (1-indexed) and `perPage`.",
+  scope: "incidents:read",
   destructive: false,
   inputSchema: ListStatusReportsInputShape,
   outputSchema: ListStatusReportsOutput,
@@ -170,12 +192,19 @@ export const listStatusReportsTool: AgentTool<
           updatedBy: toAgentUser(r.updatedByUser),
           latestUpdate: latestUpdate
             ? {
+                id: latestUpdate.id,
                 message: latestUpdate.message,
                 status: latestUpdate.status,
                 date: latestUpdate.date?.toISOString() ?? null,
                 createdBy: toAgentUser(latestUpdate.createdByUser),
               }
             : null,
+          updates: r.updates.slice(0, LIST_UPDATES_LIMIT).map((u) => ({
+            id: u.id,
+            status: u.status,
+            message: u.message,
+            date: u.date?.toISOString() ?? null,
+          })),
         };
       }),
       pagination: {
@@ -184,6 +213,70 @@ export const listStatusReportsTool: AgentTool<
         totalSize: result.totalSize,
         totalPages: Math.max(1, Math.ceil(result.totalSize / perPage)),
       },
+    };
+  },
+};
+
+const GetStatusReportInput = z.object({
+  id: z
+    .number()
+    .int()
+    .describe("Status report id from list_status_reports — never guess."),
+});
+
+const GetStatusReportOutput = z.object({
+  id: z.number().int(),
+  title: z.string(),
+  status: statusReportStatusSchema,
+  pageId: z.number().int().nullable(),
+  pageComponentIds: z.array(z.number().int()),
+  createdAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+  createdBy: attributedUserSchema.nullable(),
+  updatedBy: attributedUserSchema.nullable(),
+  updates: z.array(
+    z.object({
+      id: z.number().int(),
+      status: statusReportStatusSchema,
+      message: z.string(),
+      date: z.string().nullable(),
+      createdBy: attributedUserSchema.nullable(),
+      componentImpacts: componentImpactsSchema,
+    }),
+  ),
+});
+
+export const getStatusReportTool: AgentTool<
+  z.infer<typeof GetStatusReportInput>,
+  z.infer<typeof GetStatusReportOutput>
+> = {
+  name: "get_status_report",
+  description:
+    "Get one status report with its FULL timeline newest-first under `updates` (no cap — list_status_reports stops at the 10 most recent). Use it to find the id of an older entry for update_status_report_update / delete_status_report_update.",
+  scope: "incidents:read",
+  destructive: false,
+  inputSchema: GetStatusReportInput,
+  outputSchema: GetStatusReportOutput,
+  async run({ ctx, input }) {
+    const r = await getStatusReport({ ctx, input: { id: input.id } });
+    return {
+      id: r.id,
+      title: r.title,
+      status: r.status,
+      pageId: r.pageId,
+      pageComponentIds: r.pageComponentIds,
+      createdAt: r.createdAt?.toISOString() ?? null,
+      updatedAt: r.updatedAt?.toISOString() ?? null,
+      createdBy: toAgentUser(r.createdByUser),
+      updatedBy: toAgentUser(r.updatedByUser),
+      updates: r.updates.map((u) => ({
+        id: u.id,
+        status: u.status,
+        message: u.message,
+        date: u.date?.toISOString() ?? null,
+        createdBy: toAgentUser(u.createdByUser),
+        componentImpacts: u.componentImpacts,
+      })),
     };
   },
 };
@@ -245,7 +338,7 @@ export const createStatusReportTool: AgentTool<
   name: "create_status_report",
   description:
     "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: CreateStatusReportInputShape,
   outputSchema: CreateStatusReportOutput,
@@ -313,11 +406,10 @@ export const createStatusReportTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyStatusReport({
+        notified = await notifyStatusReport({
           ctx,
           input: { statusReportUpdateId: result.initialUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyStatusReport failed after create_status_report",
@@ -381,7 +473,7 @@ export const addStatusReportUpdateTool: AgentTool<
   name: "add_status_report_update",
   description:
     "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved'). Subscriber notifications dispatch as part of this call only — no retroactive notify. The update persists even if the notify dispatch fails; `notified` reports the actual outcome.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: AddStatusReportUpdateInputShape,
   outputSchema: AddStatusReportUpdateOutput,
@@ -440,11 +532,10 @@ export const addStatusReportUpdateTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyStatusReport({
+        notified = await notifyStatusReport({
           ctx,
           input: { statusReportUpdateId: result.statusReportUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyStatusReport failed after add_status_report_update",
@@ -501,11 +592,28 @@ export const updateStatusReportTool: AgentTool<
   name: "update_status_report",
   description:
     "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Does NOT and CANNOT notify subscribers — there is no notify path on this tool because metadata edits do not create a new update entry to dispatch. Audit-logged.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateStatusReportInputShape,
   outputSchema: UpdateStatusReportOutput,
   approval: {
+    loadBefore: {
+      idField: "statusReportId",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const db = getReadDb(ctx);
+        const r = await getReportInWorkspace({
+          tx: db,
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(r.title, {
+          title: r.title,
+          status: r.status,
+          pageComponentIds: await getPageComponentIdsForReport(db, r.id),
+        });
+      },
+    },
     summarize: (input) => {
       const lines: SummaryLine[] = [
         { label: "Report ID", value: String(input.statusReportId) },
@@ -592,7 +700,7 @@ export const resolveStatusReportTool: AgentTool<
   name: "resolve_status_report",
   description:
     "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report flips to resolved even if the notify dispatch fails; `notified` reports the actual outcome.",
-  scope: "write",
+  scope: "incidents:write",
   destructive: true,
   inputSchema: ResolveStatusReportInputShape,
   outputSchema: ResolveStatusReportOutput,
@@ -620,11 +728,10 @@ export const resolveStatusReportTool: AgentTool<
     let notified = false;
     if (input.notify) {
       try {
-        await notifyStatusReport({
+        notified = await notifyStatusReport({
           ctx,
           input: { statusReportUpdateId: result.statusReportUpdate.id },
         });
-        notified = true;
       } catch (err) {
         console.warn(
           "notifyStatusReport failed after resolve_status_report",
@@ -641,5 +748,152 @@ export const resolveStatusReportTool: AgentTool<
         pageId: result.statusReport.pageId,
       },
     };
+  },
+};
+
+const UpdateStatusReportUpdateInputShape = z.object({
+  id: z
+    .number()
+    .int()
+    .describe(
+      "Status report update id from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result — never guess.",
+    ),
+  status: statusReportStatusSchema
+    .optional()
+    .describe(
+      "New status for this entry. 'resolved' is allowed: on the latest entry it resolves the report without notifying subscribers (use resolve_status_report to publish a new resolution update).",
+    ),
+  message: z.string().min(1).optional().describe("New public message."),
+  date: z.iso.datetime().optional().describe("New date for this entry."),
+  componentImpacts: componentImpactsSchema
+    .optional()
+    .describe(
+      "Replace this entry's full impact set (empty array clears it). Omit to leave impacts untouched. Component ids MUST come from list_page_components.",
+    ),
+});
+
+const UpdateStatusReportUpdateOutput = z.object({
+  id: z.number().int(),
+  statusReportId: z.number().int(),
+  status: statusReportStatusSchema,
+  message: z.string(),
+  date: z.string(),
+});
+
+export const updateStatusReportUpdateTool: AgentTool<
+  z.infer<typeof UpdateStatusReportUpdateInputShape>,
+  z.infer<typeof UpdateStatusReportUpdateOutput>
+> = {
+  name: "update_status_report_update",
+  description:
+    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status, including to 'resolved'. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
+  scope: "incidents:write",
+  destructive: true,
+  inputSchema: UpdateStatusReportUpdateInputShape,
+  outputSchema: UpdateStatusReportUpdateOutput,
+  approval: {
+    loadBefore: {
+      idField: "id",
+      load: async ({ ctx, id }) => {
+        requireScope(ctx, "incidents:read");
+        const db = getReadDb(ctx);
+        const row = await getReportUpdateInWorkspace({
+          tx: db,
+          id,
+          workspaceId: ctx.workspace.id,
+        });
+        const r = await getReportInWorkspace({
+          tx: db,
+          id: row.statusReportId,
+          workspaceId: ctx.workspace.id,
+        });
+        return beforeSnapshot(r.title, {
+          status: row.status,
+          message: row.message,
+          date: row.date,
+          componentImpacts: await getComponentImpactsForUpdate(db, row.id),
+        });
+      },
+    },
+    summarize: (input) => ({
+      title: `Edit Status Report Update #${input.id}`,
+      lines: [
+        ...(input.status ? [{ label: "Status", value: input.status }] : []),
+        ...(input.date ? [{ label: "Date", value: input.date }] : []),
+        ...(input.componentImpacts
+          ? [
+              {
+                label: "Impacts",
+                value: input.componentImpacts.length
+                  ? formatComponentImpacts(input.componentImpacts).join(", ")
+                  : "cleared",
+                ref: {
+                  kind: "componentImpacts" as const,
+                  impacts: input.componentImpacts,
+                },
+              },
+            ]
+          : []),
+        ...(input.message ? [{ label: "Message", value: input.message }] : []),
+      ],
+    }),
+    verb: "updated",
+  },
+  async run({ ctx, input }) {
+    const update = await updateStatusReportUpdate({
+      ctx,
+      input: {
+        id: input.id,
+        status: input.status,
+        message: input.message,
+        date: input.date ? new Date(input.date) : undefined,
+        componentImpacts: input.componentImpacts,
+      },
+    });
+    return {
+      id: update.id,
+      statusReportId: update.statusReportId,
+      status: update.status,
+      message: update.message,
+      date: update.date.toISOString(),
+    };
+  },
+};
+
+const DeleteStatusReportUpdateInputShape = z.object({
+  id: z
+    .number()
+    .int()
+    .describe(
+      "Status report update id from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result — never guess.",
+    ),
+});
+
+const DeleteStatusReportUpdateOutput = z.object({
+  id: z.number().int(),
+  success: z.boolean(),
+});
+
+export const deleteStatusReportUpdateTool: AgentTool<
+  z.infer<typeof DeleteStatusReportUpdateInputShape>,
+  z.infer<typeof DeleteStatusReportUpdateOutput>
+> = {
+  name: "delete_status_report_update",
+  description:
+    "Delete a status report timeline entry. PUBLIC, AUDIT-LOGGED, AND IRREVERSIBLE. The report's status is re-derived from the remaining entries. A report must retain at least one update — to remove the only entry, delete the report from the dashboard instead. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
+  scope: "incidents:write",
+  destructive: true,
+  inputSchema: DeleteStatusReportUpdateInputShape,
+  outputSchema: DeleteStatusReportUpdateOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Delete Status Report Update #${input.id}`,
+      lines: [{ label: "Update ID", value: String(input.id) }],
+    }),
+    verb: "deleted",
+  },
+  async run({ ctx, input }) {
+    await deleteStatusReportUpdate({ ctx, input });
+    return { id: input.id, success: true };
   },
 };

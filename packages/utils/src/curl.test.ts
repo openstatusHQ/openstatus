@@ -1,7 +1,41 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { spawn } from "node:child_process";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+
+import { describe, expect, it } from "vitest";
 
 import { buildCurlCommand } from "./curl";
+
+async function serve(onBody: (body: Buffer) => Buffer | string) {
+  const server = createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => res.end(onBody(Buffer.concat(chunks))));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  return {
+    port: (server.address() as AddressInfo).port,
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+  };
+}
+
+// Async on purpose: the server above runs in this process, so a sync spawn
+// would block the request it is waiting on.
+function sh(command: string) {
+  return new Promise<{ code: number | null; stdout: Uint8Array }>(
+    (resolve, reject) => {
+      const child = spawn("sh", ["-c", command], {
+        env: { ...process.env, NO_PROXY: "*" },
+      });
+      const chunks: Buffer[] = [];
+      child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+      child.on("error", reject);
+      child.on("close", (code) =>
+        resolve({ code, stdout: new Uint8Array(Buffer.concat(chunks)) }),
+      );
+    },
+  );
+}
 
 describe("buildCurlCommand", () => {
   it("renders a plain GET without an explicit method", () => {
@@ -31,10 +65,7 @@ describe("buildCurlCommand", () => {
   });
 
   it("sends decoded binary POST bytes without shell or text conversion", async () => {
-    const server = Deno.serve(
-      { hostname: "127.0.0.1", port: 0 },
-      async (request) => new Response(await request.arrayBuffer()),
-    );
+    const server = await serve((body) => body);
     try {
       for (const { body, bytes } of [
         {
@@ -48,31 +79,26 @@ describe("buildCurlCommand", () => {
         },
       ]) {
         const command = buildCurlCommand({
-          url: `http://127.0.0.1:${server.addr.port}/upload`,
+          url: `http://127.0.0.1:${server.port}/upload`,
           method: "POST",
           body,
           headers: [{ key: "Content-Type", value: "application/octet-stream" }],
           timeout: 5000,
         });
-        const result = await new Deno.Command("sh", {
-          args: ["-c", command],
-          env: { NO_PROXY: "*" },
-          stdout: "piped",
-          stderr: "piped",
-        }).output();
+        const result = await sh(command);
         expect(result.code).toBe(0);
         expect(result.stdout).toEqual(new Uint8Array(bytes));
       }
     } finally {
-      await server.shutdown();
+      await server.close();
     }
   });
 
   it("rejects malformed binary bodies before sending a request", async () => {
     let requests = 0;
-    const server = Deno.serve({ hostname: "127.0.0.1", port: 0 }, () => {
+    const server = await serve(() => {
       requests++;
-      return new Response("received");
+      return "received";
     });
     try {
       for (const body of [
@@ -84,23 +110,18 @@ describe("buildCurlCommand", () => {
         "data:application/octet-stream;base64,aGVsbG8=\u2028",
       ]) {
         const command = buildCurlCommand({
-          url: `http://127.0.0.1:${server.addr.port}/upload`,
+          url: `http://127.0.0.1:${server.port}/upload`,
           method: "POST",
           body,
           headers: [{ key: "Content-Type", value: "application/octet-stream" }],
           timeout: 5000,
         });
-        const result = await new Deno.Command("sh", {
-          args: ["-c", command],
-          env: { NO_PROXY: "*" },
-          stdout: "piped",
-          stderr: "piped",
-        }).output();
+        const result = await sh(command);
         expect(requests).toBe(0);
         expect(result.code).not.toBe(0);
       }
     } finally {
-      await server.shutdown();
+      await server.close();
     }
   });
 

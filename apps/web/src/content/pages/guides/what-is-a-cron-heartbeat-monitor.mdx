@@ -1,0 +1,226 @@
+---
+title: "What Is a Cron / Heartbeat Monitor?"
+description: "A heartbeat monitor (also called a cron monitor or dead man's switch) alerts you when a scheduled job stops checking in. Here's how it works, how it differs from uptime monitoring, and how to pick a period and grace period that don't page you for nothing."
+author: "openstatus"
+publishedAt: "2026-11-06"
+category: "fundamentals"
+faq:
+  - question: "What is a heartbeat monitor?"
+    answer: "A heartbeat monitor watches a job that runs on its own schedule - a cron job, a backup, a queue worker, an ETL pipeline. Instead of the monitor calling your service, your job sends a request to a unique ping URL every time it runs. If a ping does not arrive within the expected window, the monitor goes down and alerts you."
+  - question: "What is the difference between a cron monitor and a heartbeat monitor?"
+    answer: "In practice they are the same thing. 'Cron monitor' describes the most common use case - watching cron jobs - while 'heartbeat monitor' describes the mechanism: the job emits a regular signal and silence means trouble. You'll also see the term 'dead man's switch' for the same idea."
+  - question: "How is a heartbeat monitor different from an uptime monitor?"
+    answer: "An uptime monitor is active: it calls your endpoint on a schedule and checks the response. A heartbeat monitor is passive: it waits for your job to call it. Uptime monitors work for anything that answers requests, like APIs and websites. Heartbeat monitors work for things that don't, like scheduled scripts, workers behind a firewall, and batch jobs."
+  - question: "Why can't I just alert on errors from my cron job?"
+    answer: "Because the worst cron failures don't produce errors. A job that never starts - a crontab wiped by a deploy, a server that was replaced, a Kubernetes CronJob stuck on a bad image, a scheduler that is down - logs nothing at all. Error alerting only catches jobs that run and fail. A heartbeat monitor catches the absence of a run."
+  - question: "What is a grace period?"
+    answer: "The grace period is extra time after the expected interval before a late ping counts as missed. It absorbs normal variation: start-up delay, a job that runs a bit longer than usual, clock drift. Set it to cover your job's realistic runtime plus a margin, so a slow-but-successful run doesn't page anyone."
+  - question: "Should I ping at the start or the end of a job?"
+    answer: "At the end, after the work succeeded. A ping at the start only proves the job launched; it says nothing about whether the backup was written or the import finished. Pinging on success means the heartbeat represents what you actually care about: the job completed."
+  - question: "How do I report that a job failed?"
+    answer: "With openstatus, add /fail to the ping URL. The monitor goes down within a minute instead of waiting for the grace period to run out, and the alert says the job reported a failure. You can POST the job's error output with the fail ping to keep it in the monitor's logs."
+  - question: "What should I monitor with heartbeats?"
+    answer: "Anything scheduled whose silent failure costs you: database backups, billing and invoicing runs, data syncs and ETL pipelines, certificate renewals, cleanup and retention jobs, report generation, and long-running queue workers that should report in at a steady pace."
+  - question: "Can heartbeat monitors appear on a status page?"
+    answer: "Yes. In openstatus a heartbeat monitor can be added to a status page like any other monitor. The bar shows the days on which pings were received. With the default Monitor checks setting, uptime comes from the incidents opened by missed pings and reported failures; a page set to Reports only uses your status reports instead. Ping details stay private to your workspace."
+---
+
+Most monitoring answers one question: "is this thing responding?" You call an endpoint, it answers, you check the answer. That works for APIs and websites. It does nothing for the jobs that never answer anyone - the nightly backup, the hourly billing run, the sync that keeps two databases in step.
+
+Those jobs have a nastier failure mode than an outage: they just stop. No error, no log line, no alert. You find out three weeks later when someone needs the backup.
+
+A heartbeat monitor - also called a cron monitor or a dead man's switch - is built for exactly that. Here's how it works and how to set one up so it pages you for real problems and nothing else.
+
+## How a Heartbeat Monitor Works
+
+The direction is flipped compared to an [uptime monitor](/guides/what-is-uptime-monitoring). The monitor never calls your job. Your job calls the monitor.
+
+1. You create a heartbeat monitor and tell it how often your job runs (the **period**) and how late it may be (the **grace period**).
+2. The monitor gives you a unique **ping URL**.
+3. At the end of each successful run, your job sends a request to that URL.
+4. Each ping pushes the deadline forward to `last ping + period + grace`.
+5. If the deadline passes without a ping, the monitor goes down and alerts you. The next ping recovers it.
+
+The clock starts with the first ping: a new monitor stays quiet until it has heard from the job once, so you can create it before the job is deployed. That also means a job that never runs at all won't alert - send one ping by hand once it's live to arm the monitor.
+
+```
+ ✓ ping      ✓ ping      ✓ ping                 ✗ alert
+ ├─ period ──┼─ period ──┼─ period ──┼─ grace ──┤
+                                     expected   deadline
+```
+
+The signal is the *absence* of a ping. That is the whole trick: it catches failures that produce no output at all.
+
+## Why Error Alerting Isn't Enough
+
+The obvious alternative is "just alert when the job throws". That catches one class of failure - the job ran and broke. It misses every case where the job never ran:
+
+- **The crontab was overwritten** by a config management run or a server rebuild.
+- **The host is gone.** The VM was replaced, the container was rescheduled, the old box was decommissioned with the job still on it.
+- **The scheduler is down** or paused - a stuck Kubernetes `CronJob`, a disabled CI schedule, a queue consumer that crashed and didn't restart.
+- **The job hangs** forever on a lock or a network call and never reaches the line that would have logged an error.
+
+None of these produce an error. All of them produce silence. A heartbeat monitor turns silence into an alert.
+
+## Heartbeat vs Uptime Monitoring
+
+|                    | Uptime monitor                      | Heartbeat monitor                          |
+|--------------------|-------------------------------------|--------------------------------------------|
+| Direction          | Monitor calls your service          | Your job calls the monitor                 |
+| Watches            | APIs, websites, TCP/DNS endpoints   | Cron jobs, backups, workers, pipelines     |
+| Detects            | Errors, timeouts, slow responses    | Missed runs, hangs, reported failures      |
+| Needs public access | Yes (or a private location)        | No - only outbound HTTPS from the job      |
+| Signal of failure  | A bad response                      | No response at all                         |
+
+They're complements, not alternatives. Your API gets an uptime monitor; the job that sends invoices through that API gets a heartbeat. Because a heartbeat only needs an outbound request, it also works for jobs behind a firewall or on a laptop-sized box in a closet, where no external check could ever reach.
+
+## Choosing a Period and Grace Period
+
+These two numbers decide whether the monitor is useful or noisy.
+
+**Period** is how often the job is supposed to run. An hourly cron job has a period of 1 hour. A nightly backup has a period of 1 day.
+
+**Grace** is how much lateness you tolerate before alerting. It should cover:
+
+- How long the job takes on a bad day, not an average one
+- Start-up delay - scheduler jitter, cold containers, queue wait
+- A small margin on top
+
+Rules of thumb:
+
+| Job                      | Typical runtime | Period  | Grace     |
+|--------------------------|-----------------|---------|-----------|
+| Cache warm-up            | 30 seconds      | 5 min   | 2-5 min   |
+| Hourly data sync         | 5-15 min        | 1 hour  | 20-30 min |
+| Nightly database backup  | 20-60 min       | 1 day   | 1-2 hours |
+| Weekly report            | A few minutes   | 7 days  | 2-6 hours |
+
+Too short a grace and you'll get paged every time the job runs slow, which trains everyone to ignore the alert. Too long and you lose the point - a nightly backup with a 3-day grace tells you it's broken after you needed it.
+
+## Where to Put the Ping
+
+**Ping at the end, on success.** A ping at the start proves the job launched, nothing more. The backup could have failed halfway. Pinging after the work completes means the heartbeat represents what you actually care about.
+
+```bash
+# crontab: ping only when the job succeeds
+0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
+```
+
+A few habits that make pings reliable:
+
+- **Set a timeout** (`-m 10`). A monitoring call should never be the thing that hangs your job.
+- **Retry** (`--retry 3`). A single dropped request shouldn't open an incident.
+- **Use `&&`, not `;`.** With `;` the ping fires even when the job failed, and the monitor reports green while nothing worked.
+
+## Reporting Failures Explicitly
+
+Waiting out the grace period works, but if your job knows it failed, it can say so right away. With openstatus, add `/fail` to the ping URL:
+
+```bash
+if /path/to/job.sh 2> /tmp/job.err; then
+  curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
+else
+  curl -fsS -m 10 --retry 3 --data-binary @/tmp/job.err https://api.openstatus.dev/heartbeat/<token>/fail
+fi
+```
+
+The monitor goes down within a minute instead of an hour later, and the error output you POST lands in the monitor's **Logs** tab next to the failed ping - no SSH-ing into the box to find out what happened. A job that keeps failing alerts once and stays down until it succeeds again, so a broken job doesn't spam your channel every run.
+
+## What to Monitor With Heartbeats
+
+Start with the jobs whose silent failure would hurt most:
+
+- **Backups and database dumps.** The classic. A backup you haven't verified is a hope, not a backup.
+- **Billing and invoicing runs.** Missed runs mean missed revenue or angry customers.
+- **Data syncs and ETL pipelines.** Stale data in a dashboard is a quiet, expensive bug.
+- **Certificate and token renewals.** These fail once a quarter and take production down when they do.
+- **Cleanup and retention jobs.** Disks fill up slowly, then all at once.
+- **Long-running queue workers.** Have them ping on a steady cadence so you know they're alive and consuming.
+
+A useful test: for each scheduled job, ask "if this stopped running today, when would we find out?" If the answer is "when a customer complains" or "no idea", it needs a heartbeat.
+
+## Common Mistakes
+
+**Pinging at the start of the job.** You'll get a green monitor for a job that crashes every night after launch.
+
+**One grace period for everything.** A 5-minute grace on a job that sometimes takes 40 minutes is an alert-fatigue generator. Size each one to its job.
+
+**Sharing one ping URL across jobs.** If two jobs ping the same monitor, one can keep it green while the other is dead. One job, one monitor.
+
+**Treating exit 0 as success.** A job that finds an empty input, processes nothing and exits cleanly still sends its ping, and the monitor stays green. A heartbeat only knows what the job tells it - if "did nothing" is a failure, have the job check its output and report `/fail`.
+
+**Leaking the ping URL.** The token in the URL is the only credential. Treat it like a secret: keep it in your secret store, not in a public repo. If it leaks, regenerate it.
+
+**Monitoring the job but not the alerts.** A heartbeat that alerts a channel nobody reads is just a log. Route it somewhere with an owner, same as any other [incident](/guides/what-is-incident-management).
+
+## The Bottom Line
+
+Uptime monitoring tells you when something stops answering. Heartbeat monitoring tells you when something stops *happening*. Scheduled jobs fail by going quiet, so they need a monitor that treats quiet as the alarm.
+
+Ping at the end, on success. Size the grace period to the job's worst realistic runtime. Report failures explicitly when the job knows it failed. And give every job that matters its own heartbeat - the ones you forget about are exactly the ones that will stop.
+
+## Frequently asked questions
+
+<Details summary="What is a heartbeat monitor?">
+
+A heartbeat monitor watches a job that runs on its own schedule - a cron job, a backup, a queue worker, an ETL pipeline. Instead of the monitor calling your service, your job sends a request to a unique ping URL every time it runs. If a ping does not arrive within the expected window, the monitor goes down and alerts you.
+
+</Details>
+
+<Details summary="What is the difference between a cron monitor and a heartbeat monitor?">
+
+In practice they are the same thing. 'Cron monitor' describes the most common use case - watching cron jobs - while 'heartbeat monitor' describes the mechanism: the job emits a regular signal and silence means trouble. You'll also see the term 'dead man's switch' for the same idea.
+
+</Details>
+
+<Details summary="How is a heartbeat monitor different from an uptime monitor?">
+
+An uptime monitor is active: it calls your endpoint on a schedule and checks the response. A heartbeat monitor is passive: it waits for your job to call it. Uptime monitors work for anything that answers requests, like APIs and websites. Heartbeat monitors work for things that don't, like scheduled scripts, workers behind a firewall, and batch jobs.
+
+</Details>
+
+<Details summary="Why can't I just alert on errors from my cron job?">
+
+Because the worst cron failures don't produce errors. A job that never starts - a crontab wiped by a deploy, a server that was replaced, a Kubernetes CronJob stuck on a bad image, a scheduler that is down - logs nothing at all. Error alerting only catches jobs that run and fail. A heartbeat monitor catches the absence of a run.
+
+</Details>
+
+<Details summary="What is a grace period?">
+
+The grace period is extra time after the expected interval before a late ping counts as missed. It absorbs normal variation: start-up delay, a job that runs a bit longer than usual, clock drift. Set it to cover your job's realistic runtime plus a margin, so a slow-but-successful run doesn't page anyone.
+
+</Details>
+
+<Details summary="Should I ping at the start or the end of a job?">
+
+At the end, after the work succeeded. A ping at the start only proves the job launched; it says nothing about whether the backup was written or the import finished. Pinging on success means the heartbeat represents what you actually care about: the job completed.
+
+</Details>
+
+<Details summary="How do I report that a job failed?">
+
+With openstatus, add /fail to the ping URL. The monitor goes down within a minute instead of waiting for the grace period to run out, and the alert says the job reported a failure. You can POST the job's error output with the fail ping to keep it in the monitor's logs.
+
+</Details>
+
+<Details summary="What should I monitor with heartbeats?">
+
+Anything scheduled whose silent failure costs you: database backups, billing and invoicing runs, data syncs and ETL pipelines, certificate renewals, cleanup and retention jobs, report generation, and long-running queue workers that should report in at a steady pace.
+
+</Details>
+
+<Details summary="Can heartbeat monitors appear on a status page?">
+
+Yes. In openstatus a heartbeat monitor can be added to a status page like any other monitor. The bar shows the days on which pings were received. With the default Monitor checks setting, uptime comes from the incidents opened by missed pings and reported failures; a page set to Reports only uses your status reports instead. Ping details stay private to your workspace.
+
+</Details>
+
+---
+
+**openstatus heartbeat monitors watch your cron jobs, backups and workers alongside your HTTP, TCP and DNS checks** - same alerts, same incidents, same status page. The [heartbeat monitor reference](/docs/reference/heartbeat-monitor) covers every option, from ping responses to what gets stored, and [uptime calculation](/docs/concept/uptime-calculation-and-values) explains how they count on a status page.
+
+<ButtonLink href="https://app.openstatus.dev/monitors/create">Try openstatus free</ButtonLink>
+
+---
+
+Start free. No credit card required.

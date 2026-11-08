@@ -164,7 +164,7 @@ export function FormGeneral({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="general">
           <FormCardHeader>
             <FormCardTitle>General</FormCardTitle>
             <FormCardDescription>

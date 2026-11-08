@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it as test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import type { PageUpdate, Subscription } from "../types";
 import { buildReplyMessage, buildRootMessage } from "./slack-blocks";
@@ -73,6 +72,21 @@ describe("buildRootMessage", () => {
       "Scheduled 2026-01-01T10:00:00.000Z - 2026-01-02T10:00:00.000Z",
     );
     expect(contextText(maintenance)).not.toContain("Updated");
+  });
+
+  test("maintenance root pins the scheduled start, not the update date", () => {
+    const root = buildRootMessage(
+      makeUpdate({
+        status: "maintenance",
+        date: "2026-01-01T12:30:00.000Z",
+        startsAt: "2026-01-02T00:00:00.000Z",
+        endsAt: "2026-01-02T02:00:00.000Z",
+      }),
+      makeSub(),
+    );
+    const text = JSON.stringify(root.attachments[0]?.blocks);
+    expect(text).toContain("Scheduled 2026-01-02T00:00:00.000Z");
+    expect(text).not.toContain("2026-01-01T12:30:00.000Z");
   });
 
   test("uses the custom domain origin when present", () => {

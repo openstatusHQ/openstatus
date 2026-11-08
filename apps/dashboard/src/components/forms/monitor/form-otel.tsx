@@ -83,7 +83,7 @@ export function FormOtel({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="opentelemetry">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>OpenTelemetry</FormCardTitle>
@@ -183,8 +183,8 @@ export function FormOtel({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
-                <NextLink href="/settings/billing">
+              <Button data-track="paywall_viewed" data-limit="otel" asChild>
+                <NextLink href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>

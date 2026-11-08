@@ -1,15 +1,15 @@
 "use client";
 
-import { Check } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@openstatus/ui/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { SelectTrigger } from "@radix-ui/react-select";
 import {
   parseAsNumberLiteral,
   parseAsStringLiteral,
@@ -17,7 +17,12 @@ import {
 } from "nuqs";
 import { useEffect } from "react";
 
-import { INTERVALS, PERIODS, periodToMinInterval } from "@/data/metrics.client";
+import {
+  INTERVALS,
+  PERIODS,
+  periodToMaxInterval,
+  periodToMinInterval,
+} from "@/data/metrics.client";
 
 const MAPPING = {
   5: "5 minutes",
@@ -38,38 +43,45 @@ export function DropdownInterval() {
   const [period] = useQueryState("period", parsePeriod);
 
   const min = periodToMinInterval[period];
-  const options = INTERVALS.filter((item) => item >= min);
+  const max = periodToMaxInterval[period];
+  const options = INTERVALS.filter((item) => item >= min && item <= max);
+  const selected = Math.min(
+    Math.max(interval, min),
+    max,
+  ) as (typeof INTERVALS)[number];
 
-  // snap a now-too-fine selection up to the period's floor so the dropdown,
-  // URL, and charts agree (e.g. 5min carried over into the 90d view)
+  // snap an out-of-range selection into the period's bounds so the dropdown,
+  // URL, and charts agree (e.g. 5min carried into 90d, or 1d carried into 1d)
   useEffect(() => {
-    if (interval < min) setInterval(min);
-  }, [interval, min, setInterval]);
-
-  const selected = Math.max(interval, min) as (typeof INTERVALS)[number];
+    if (interval !== selected) setInterval(selected);
+  }, [interval, selected, setInterval]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          {MAPPING[selected]}
+    <Select
+      value={String(selected)}
+      onValueChange={(value) =>
+        setInterval(Number(value) as (typeof INTERVALS)[number])
+      }
+    >
+      <SelectTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+        >
+          <SelectValue />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
-            Resolution
-          </DropdownMenuLabel>
+      </SelectTrigger>
+      <SelectContent position="item-aligned">
+        <SelectGroup>
+          <SelectLabel>Resolution</SelectLabel>
           {options.map((item) => (
-            <DropdownMenuItem key={item} onSelect={() => setInterval(item)}>
+            <SelectItem key={item} value={String(item)}>
               {MAPPING[item]}
-              {selected === item ? (
-                <Check className="ml-auto shrink-0" />
-              ) : null}
-            </DropdownMenuItem>
+            </SelectItem>
           ))}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }

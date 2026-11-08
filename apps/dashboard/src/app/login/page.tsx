@@ -8,6 +8,8 @@ import { signIn } from "@/lib/auth";
 
 import { EmailForm } from "./_components/email-form";
 import { LoginButton } from "./_components/login-button";
+import { takeRedirectTo } from "./_components/redirect";
+import { RedirectToInput } from "./_components/redirect-to-input";
 import { searchParamsCache } from "./search-params";
 
 const hasWorkOS = Boolean(
@@ -59,32 +61,41 @@ export default async function Page(props: {
       <div className="grid gap-3 p-4">
         <EmailForm redirectTo={redirectTo ?? undefined} sso={hasWorkOS}>
           <form
-            action={async () => {
+            action={async (formData: FormData) => {
               "use server";
-              await signIn("github", { redirectTo: redirectTo ?? undefined });
+              await signIn("github", {
+                redirectTo: await takeRedirectTo(formData),
+              });
             }}
           >
+            <RedirectToInput redirectTo={redirectTo ?? undefined} />
             <LoginButton type="submit" provider="github" variant="default">
               <GitHubIcon className="h-4 w-4" /> Continue with GitHub
             </LoginButton>
           </form>
           <form
-            action={async () => {
+            action={async (formData: FormData) => {
               "use server";
-              await signIn("google", { redirectTo: redirectTo ?? undefined });
+              await signIn("google", {
+                redirectTo: await takeRedirectTo(formData),
+              });
             }}
           >
+            <RedirectToInput redirectTo={redirectTo ?? undefined} />
             <LoginButton type="submit" provider="google" variant="default">
               <GoogleIcon className="h-4 w-4" /> Continue with Google
             </LoginButton>
           </form>
           {process.env.AUTH_OIDC_ISSUER ? (
             <form
-              action={async () => {
+              action={async (formData: FormData) => {
                 "use server";
-                await signIn("oidc", { redirectTo: redirectTo ?? undefined });
+                await signIn("oidc", {
+                  redirectTo: await takeRedirectTo(formData),
+                });
               }}
             >
+              <RedirectToInput redirectTo={redirectTo ?? undefined} />
               <LoginButton type="submit" provider="oidc">
                 Continue with {process.env.AUTH_OIDC_NAME ?? "SSO"}
               </LoginButton>

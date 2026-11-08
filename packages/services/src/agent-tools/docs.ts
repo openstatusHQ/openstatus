@@ -40,7 +40,7 @@ export const searchDocsTool: AgentTool<
   name: "search_docs",
   description:
     "Search the public openstatus documentation, guides, or changelog. Returns scored results with title, snippet, url, and a path usable with get_doc_page.",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: SearchDocsInput,
   outputSchema: SearchDocsOutput,
@@ -113,7 +113,7 @@ export const getDocPageTool: AgentTool<
   name: "get_doc_page",
   description:
     "Fetch the full markdown content of a documentation, guide, or changelog page by path (as returned by search_docs).",
-  scope: "read",
+  scope: "any",
   destructive: false,
   inputSchema: GetDocPageInput,
   outputSchema: GetDocPageOutput,

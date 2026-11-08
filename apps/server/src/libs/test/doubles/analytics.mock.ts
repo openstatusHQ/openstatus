@@ -2,25 +2,27 @@
 // real Events/parseInputToProps but replaces setupAnalytics with a spy (exposed
 // on globalThis.__analyticsSpies) so tests assert tracking without OpenPanel.
 export {
+  type Analytics,
   type EventProps,
   Events,
+  type IdentifyProps,
   parseInputToProps,
 } from "@openstatus/analytics-real";
 
-import { mock } from "@openstatus/test-utils";
+import { vi, type Mock } from "vitest";
 
 const g = globalThis as Record<string, unknown>;
 if (!g.__analyticsSpies) {
-  const track = mock(() => Promise.resolve());
+  const track = vi.fn(() => Promise.resolve());
   g.__analyticsSpies = {
     track,
-    setupAnalytics: mock((_props: unknown) => Promise.resolve({ track })),
+    setupAnalytics: vi.fn((_props: unknown) => Promise.resolve({ track })),
   };
 }
 
 const spies = g.__analyticsSpies as {
-  track: ReturnType<typeof mock>;
-  setupAnalytics: ReturnType<typeof mock>;
+  track: Mock;
+  setupAnalytics: Mock;
 };
 
 export const setupAnalytics = (props: unknown) => spies.setupAnalytics(props);

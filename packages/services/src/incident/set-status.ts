@@ -13,7 +13,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ConflictError } from "../errors";
+import { ConcurrentUpdateError } from "../errors";
 import {
   appendIncidentEvent,
   assertTransition,
@@ -48,7 +48,7 @@ export async function setIncidentStatus(args: {
   input: SetIncidentStatusInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = SetIncidentStatusInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -87,7 +87,9 @@ export async function setIncidentStatus(args: {
       .returning()
       .get();
     if (!updated) {
-      throw new ConflictError(`Incident #${existing.id} changed concurrently`);
+      throw new ConcurrentUpdateError(
+        `Incident #${existing.id} changed concurrently`,
+      );
     }
 
     await emitAudit(tx, ctx, {

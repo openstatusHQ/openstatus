@@ -1,6 +1,5 @@
 import type { Page } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import type { ResolvedRoute } from "../resolve-route";
 import { type ComposeInput, composePageAction } from "./compose-page-action";

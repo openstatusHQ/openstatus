@@ -23,6 +23,7 @@ import {
   useInfiniteQuery,
   useQuery,
 } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo } from "react";
@@ -34,14 +35,16 @@ import {
   BillingOverlayContainer,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
+import { isHeartbeatPing } from "@/components/data-table/response-logs/data-table-basics";
 import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { exampleLogs } from "@/data/response-logs";
 import { useTRPC } from "@/lib/trpc/client";
 
 import {
   createLogsTable,
+  type LogRow,
+  PING_KINDS,
   RETENTION_DAYS,
-  type ResponseLog,
 } from "./table-schema";
 
 const TABLE_ID = "response-logs";
@@ -53,11 +56,13 @@ type Monitor = RouterOutputs["monitor"]["get"];
 /** The shape the generated filter schema keeps in the URL. */
 type LogsFilterState = {
   requestStatus?: string[];
+  kind?: string[];
   timestamp?: Date[];
   statusCode?: number[];
   latency?: number[];
   region?: string[];
   trigger?: string[];
+  attempts?: number[];
 };
 
 export function Client({
@@ -144,6 +149,7 @@ function LogsTableInner({
   const trpc = useTRPC();
   const state = useFilterState<LogsFilterState>();
   const [selected, setSelected] = useQueryState("selected", parseAsString);
+  const isHeartbeat = monitor.jobType === "heartbeat";
 
   // The table re-runs every filter over the fetched rows, so the range sent to
   // the pipes has to be the one `filterFn` will apply — a single date means
@@ -172,21 +178,42 @@ function LogsTableInner({
         ? (state.trigger as ("cron" | "api")[])
         : undefined,
       statusCodes: state.statusCode?.length ? state.statusCode : undefined,
+      attempts: state.attempts?.length ? state.attempts : undefined,
       latencyMin: state.latency?.[0],
       latencyMax: state.latency?.[1],
     };
   }, [state, monitor.id, filterDefs]);
 
-  const { data, isFetching, isLoading, hasNextPage, fetchNextPage, refetch } =
-    useInfiniteQuery(
-      trpc.tinybird.listInfinite.infiniteQueryOptions(
-        { ...filters, limit: PAGE_SIZE },
-        {
-          getNextPageParam: (page) => page.nextCursor ?? undefined,
-          getPreviousPageParam: (page) => page.prevCursor ?? undefined,
-        },
-      ),
-    );
+  const checks = useInfiniteQuery(
+    trpc.tinybird.listInfinite.infiniteQueryOptions(
+      { ...filters, limit: PAGE_SIZE },
+      {
+        enabled: !isHeartbeat,
+        getNextPageParam: (page) => page.nextCursor ?? undefined,
+        getPreviousPageParam: (page) => page.prevCursor ?? undefined,
+      },
+    ),
+  );
+  // a heartbeat's log is the pings it received: own pipe, same table
+  const pings = useInfiniteQuery(
+    trpc.monitor.heartbeatPings.infiniteQueryOptions(
+      {
+        id: monitor.id,
+        from: filters.from,
+        to: filters.to,
+        kinds: state.kind?.length
+          ? PING_KINDS.filter((kind) => state.kind?.includes(kind))
+          : undefined,
+        limit: PAGE_SIZE,
+      },
+      {
+        enabled: isHeartbeat,
+        getNextPageParam: (page) => page?.nextCursor ?? undefined,
+      },
+    ),
+  );
+  const { isFetching, isLoading, hasNextPage, fetchNextPage, refetch } =
+    isHeartbeat ? pings : checks;
 
   // Hold the previous counts while the next request is in flight. Without it
   // every filter change empties `facets`, and the checkbox filters — which
@@ -195,13 +222,18 @@ function LogsTableInner({
   // which is the one time there is nothing to hold on to.
   const { data: facets, isPending: isFacetsPending } = useQuery({
     ...trpc.tinybird.listFacets.queryOptions(filters),
+    // pings have no facet pipe: their filters list the declared options, uncounted
+    enabled: !isHeartbeat,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
 
-  const rows = useMemo(
-    () => data?.pages.flatMap((page) => page.data) ?? [],
-    [data],
+  const rows = useMemo<LogRow[]>(
+    () =>
+      isHeartbeat
+        ? (pings.data?.pages.flatMap((page) => page?.data ?? []) ?? [])
+        : (checks.data?.pages.flatMap((page) => page.data) ?? []),
+    [isHeartbeat, pings.data, checks.data],
   );
 
   // `.hidden()` columns from the schema, plus the one that carries no value for
@@ -262,25 +294,26 @@ function LogsTableInner({
         data={rows}
         filterFields={filterFields}
         defaultColumnVisibility={columnVisibility}
-        getRowId={(row: ResponseLog, index: number) => row.id ?? String(index)}
+        getRowId={(row: LogRow, index: number) => row.id ?? String(index)}
         defaultRowSelection={selected ? { [selected]: true } : {}}
         getFacetedUniqueValues={
           getFacetedUniqueValues as React.ComponentProps<
-            typeof DataTableInfinite<ResponseLog, unknown>
+            typeof DataTableInfinite<LogRow, unknown>
           >["getFacetedUniqueValues"]
         }
         getFacetedMinMaxValues={
           getFacetedMinMaxValues as React.ComponentProps<
-            typeof DataTableInfinite<ResponseLog, unknown>
+            typeof DataTableInfinite<LogRow, unknown>
           >["getFacetedMinMaxValues"]
         }
-        totalRows={facets?.totalRowCount}
-        filterRows={facets?.filterRowCount}
+        // without facets the only known count is what has been fetched
+        totalRows={isHeartbeat ? rows.length : facets?.totalRowCount}
+        filterRows={isHeartbeat ? rows.length : facets?.filterRowCount}
         totalRowsFetched={rows.length}
         controlsDefaultOpen={controlsDefaultOpen}
         isFetching={isFetching}
         isLoading={isLoading}
-        isFacetsLoading={isFacetsPending}
+        isFacetsLoading={!isHeartbeat && isFacetsPending}
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
         refetch={refetch}
@@ -318,7 +351,7 @@ function LogsSheet({
   onSelect: (value: string | null) => void;
 }) {
   const trpc = useTRPC();
-  const { table, rowSelection } = useDataTable<ResponseLog, unknown>();
+  const { table, rowSelection } = useDataTable<LogRow, unknown>();
   const selectedRow = table.getSelectedRowModel().rows[0];
   // The row model only holds fetched rows, so a bookmarked log from a later
   // page would resolve to null and wipe `selected` from the URL. The selection
@@ -336,12 +369,19 @@ function LogsSheet({
       id: selectedId ?? "",
       monitorId: String(monitor.id),
     }),
-    enabled: Boolean(selectedId),
+    enabled: Boolean(selectedId) && monitor.jobType !== "heartbeat",
   });
+  // a ping row already carries its headers and body: nothing more to fetch
+  const ping =
+    selectedRow && isHeartbeatPing(selectedRow.original)
+      ? selectedRow.original
+      : null;
 
   return (
     <Sheet
-      data={log?.data?.length ? log.data[0] : null}
+      data={ping ?? (log?.data?.length ? log.data[0] : null)}
+      // a ping resolves from the fetched rows only, so its link is not shareable
+      showCopyUrl={monitor.jobType !== "heartbeat"}
       privateLocations={monitor.privateLocations ?? []}
       onClose={() => {
         table.resetRowSelection();
@@ -369,7 +409,7 @@ function BillingPlaceholder() {
       <DataTableStoreProvider adapter={adapter}>
         <DataTableInfinite
           columns={columns}
-          data={exampleLogs as unknown as ResponseLog[]}
+          data={exampleLogs as unknown as LogRow[]}
           filterFields={filterFields}
           totalRowsFetched={exampleLogs.length}
           hasNextPage={false}
@@ -389,11 +429,15 @@ function BillingPlaceholder() {
         />
       </DataTableStoreProvider>
       <BillingOverlay>
-        <BillingOverlayButton asChild>
-          <Link href="/settings/billing">
+        <BillingOverlayButton
+          data-track="paywall_viewed"
+          data-limit="response-logs"
+          asChild
+        >
+          <NextLink href="/settings/billing#plans">
             <Lock />
             Upgrade
-          </Link>
+          </NextLink>
         </BillingOverlayButton>
         <BillingOverlayDescription>
           Access response headers, timing phases and more for each request.{" "}

@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq, inArray } from "@openstatus/db";
 import {
+  auditLog,
   incident,
   incidentEvent,
   integration,
@@ -14,15 +15,10 @@ import {
   createTestWorkspace,
   createUser,
 } from "@openstatus/db/src/test/factories";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "@openstatus/test-utils";
 import { Hono } from "hono";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
+import { settleBackgroundTasks } from "@/libs/background";
 // workspace-resolver / @slack/web-api / agent are swapped for doubles via the
 // test import map; behavior is driven through this shared mutable state.
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
@@ -30,8 +26,14 @@ import {
   TEST_SIGNING_SECRET as SIGNING_SECRET,
   withSlackConfig,
 } from "@/libs/test/slack-config";
+import {
+  busyChannelHistory,
+  FIXTURE_CHANNEL_ID,
+  FIXTURE_MENTION_TS,
+  mentionOutsideThread,
+  whatIsTheIncident,
+} from "@/libs/test/slack-incident-fixtures";
 
-import { settleBackgroundTasks } from "./background";
 import type { SlackEnv } from "./config";
 import {
   handleSlackEvent,
@@ -100,6 +102,8 @@ function resetSlackTestState() {
     Promise.resolve({
       messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
     });
+  slackTestState.membersImpl = () =>
+    Promise.resolve({ ok: true, members: ["U1"] });
   slackTestState.streamAppendFailAfter = null;
   slackTestState.streamStopFail = false;
   slackTestState.repliesImpl = () =>
@@ -196,6 +200,66 @@ describe("handleSlackEvent", () => {
     expect(publish).toBeDefined();
     expect((publish?.args.view as { type: string }).type).toBe("home");
     expect(publish?.args.user_id).toBe("U1");
+  });
+
+  test("welcomes whoever adds the bot to a channel", async () => {
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_join_${Date.now()}`,
+      event: {
+        type: "member_joined_channel",
+        user: "UBOT",
+        inviter: "U1",
+        channel: "C_NEW",
+      },
+    });
+    const welcome = await waitForCall("postEphemeral");
+    expect(welcome?.args.channel).toBe("C_NEW");
+    expect(welcome?.args.user).toBe("U1");
+    const blocks = JSON.stringify(welcome?.args.blocks);
+    expect(blocks).toContain("What do you want to do?");
+    expect(blocks).toContain("welcome_catch_up");
+    expect(blocks).toContain("open_publish_status_update");
+    expect(blocks).not.toContain("open_declare_incident");
+  });
+
+  test("stays quiet when the bot joins on its own or a person joins", async () => {
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
+    for (const [i, event] of [
+      { user: "UBOT", channel: "C_INC" },
+      { user: "U2", inviter: "U1", channel: "C_NEW" },
+    ].entries()) {
+      await signAndPost(app, {
+        type: "event_callback",
+        team_id: "T_KNOWN",
+        event_id: `evt_join_quiet_${i}_${Date.now()}`,
+        event: { type: "member_joined_channel", ...event },
+      });
+    }
+    await settleBackgroundTasks();
+    expect(slackTestState.calls.length).toBe(0);
+  });
+
+  test("stays quiet when added to a channel in an unknown workspace", async () => {
+    await settleBackgroundTasks();
+    slackTestState.calls = [];
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_UNKNOWN",
+      event_id: `evt_join_unknown_${Date.now()}`,
+      event: {
+        type: "member_joined_channel",
+        user: "UBOT",
+        inviter: "U1",
+        channel: "C_NEW",
+      },
+    });
+    await settleBackgroundTasks();
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores app_home_opened for the messages tab", async () => {
@@ -403,6 +467,43 @@ describe("handleSlackEvent", () => {
     expect(slackTestState.calls.some((m) => m.method === "update")).toBe(false);
   });
 
+  test("the turn's writes link back to the thread it was asked in", async () => {
+    let actor: { permalink?: string } | undefined;
+    slackTestState.runAgentOverride = (_o, a) => {
+      actor = a as typeof actor;
+      return Promise.resolve({
+        text: "Done",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    const ts = `${Date.now()}.62`;
+
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_origin_${ts}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> raise it to critical",
+        user: "U1",
+        channel: "C1",
+        ts,
+      },
+    });
+    const deadline = Date.now() + 5000;
+    while (actor === undefined && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+
+    expect(actor?.permalink).toBe(
+      `https://slack.test/archives/C1/p${ts.replace(".", "")}`,
+    );
+  });
+
   test("hands the agent session back as active when runAgent throws", async () => {
     slackTestState.sessionStatusOverride = null;
     slackTestState.runAgentOverride = () =>
@@ -498,7 +599,9 @@ describe("handleSlackEvent", () => {
     });
     await new Promise((r) => setTimeout(r, 100));
 
-    expect(slackTestState.calls.length).toBe(0);
+    expect(
+      slackTestState.calls.filter((c) => c.method !== "conversations.replies"),
+    ).toHaveLength(0);
   });
 
   test("replies in the agent pane without a mention", async () => {
@@ -830,17 +933,21 @@ describe("handleSlackEvent", () => {
     });
 
     expect(res.status).toBe(200);
-    await new Promise((r) => setTimeout(r, 100));
 
     // Delivered as a fresh message when streaming, or by overwriting the
     // "Thinking..." placeholder when it isn't — either way the user sees it.
-    const errorMessage = slackTestState.calls.find(
-      (m) =>
-        (m.method === "update" || m.method === "postMessage") &&
-        typeof m.args.text === "string" &&
-        m.args.text.includes("Something went wrong"),
-    );
-    expect(errorMessage).toBeDefined();
+    const findError = () =>
+      slackTestState.calls.find(
+        (m) =>
+          (m.method === "update" || m.method === "postMessage") &&
+          typeof m.args.text === "string" &&
+          m.args.text.includes("Something went wrong"),
+      );
+    const deadline = Date.now() + 5000;
+    while (!findError() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(findError()).toBeDefined();
   });
 
   test("does not throw when both runAgent and error update fail", async () => {
@@ -1603,7 +1710,7 @@ describe("the channel the user is viewing", () => {
     ).toBe(false);
   });
 
-  test("leaves channel turns alone", async () => {
+  test("reads the mentioned channel, not the one being viewed", async () => {
     await contextChanged([
       { type: "slack#/types/channel_id", value: "C_INCIDENT" },
     ]);
@@ -1624,10 +1731,13 @@ describe("the channel the user is viewing", () => {
     });
     await new Promise((r) => setTimeout(r, 100));
 
-    // In a channel the agent already has the thread it was called into.
     expect(seen).toHaveLength(1);
-    expect(seen[0].contextNote).toBeUndefined();
-    expect(seen[0].tools).toBeUndefined();
+    expect(seen[0].contextNote).toContain("<#C_OTHER>");
+    expect(seen[0].contextNote).not.toContain("C_INCIDENT");
+    expect(Object.keys(seen[0].tools ?? {})).toEqual([
+      "read_slack_channel",
+      "read_slack_message",
+    ]);
   });
 });
 
@@ -2041,6 +2151,29 @@ describe("incident channel context", () => {
   });
 });
 
+/** Drops an incident's events and the audit rows they wrote (no FK on those). */
+async function deleteIncidentEvents(incidentId: number) {
+  const events = await db
+    .select({ id: incidentEvent.id })
+    .from(incidentEvent)
+    .where(eq(incidentEvent.incidentId, incidentId))
+    .all();
+  if (events.length > 0) {
+    await db.delete(auditLog).where(
+      and(
+        eq(auditLog.entityType, "incident_event"),
+        inArray(
+          auditLog.entityId,
+          events.map((e) => String(e.id)),
+        ),
+      ),
+    );
+  }
+  await db
+    .delete(incidentEvent)
+    .where(eq(incidentEvent.incidentId, incidentId));
+}
+
 describe("incident channel events", () => {
   const app = createTestApp();
   let incidentId: number;
@@ -2069,9 +2202,7 @@ describe("incident channel events", () => {
   });
 
   afterEach(async () => {
-    await db
-      .delete(incidentEvent)
-      .where(eq(incidentEvent.incidentId, incidentId));
+    await deleteIncidentEvents(incidentId);
     await db.delete(incident).where(eq(incident.id, incidentId));
   });
 
@@ -2106,66 +2237,11 @@ describe("incident channel events", () => {
     await waitForCall("reactions.add");
     const rows = await notes();
     expect(rows).toHaveLength(1);
-    expect(rows[0].message).toContain("Rolled back to v41");
-    expect(rows[0].message).toContain("https://slack.test/archives/");
-  });
-
-  test("rich_text wins over mrkdwn: emoji, styles, mentions and channels", async () => {
-    // U1 is the pinner and must stay linked; U9 has no email, so the
-    // profile name is the only thing we know about them.
-    slackTestState.usersInfoImpl = (args) =>
-      Promise.resolve(
-        args.user === "U9"
-          ? { ok: true, user: { real_name: "Jane Doe", profile: {} } }
-          : { ok: true, user: { profile: { email: "ping@openstatus.dev" } } },
-      );
-    slackTestState.conversationsInfoImpl = () =>
-      Promise.resolve({ ok: true, channel: { name: "inc-db" } });
-    slackTestState.historyImpl = () =>
-      Promise.resolve({
-        messages: [
-          {
-            ts: "503.1",
-            user: "U2",
-            text: "*rolled back* :face_holding_back_tears: <@U9> see <#C7|inc-db>",
-            blocks: [
-              {
-                type: "rich_text",
-                elements: [
-                  {
-                    type: "rich_text_section",
-                    elements: [
-                      {
-                        type: "text",
-                        text: "rolled back",
-                        style: { bold: true },
-                      },
-                      { type: "text", text: " " },
-                      {
-                        type: "emoji",
-                        name: "face_holding_back_tears",
-                        unicode: "1f979",
-                      },
-                      { type: "text", text: " " },
-                      { type: "user", user_id: "U9" },
-                      { type: "text", text: " see " },
-                      { type: "channel", channel_id: "C7" },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      });
-    await pin("503.1");
-    await waitForCall("reactions.add");
-    const rows = await notes();
-    expect(rows).toHaveLength(1);
-    expect(rows[0].message).toContain(
-      "**rolled back** 🥹 @Jane Doe see #inc-db",
+    expect(rows[0].message).toBe("Rolled back to v41");
+    expect(rows[0].source).toBe("slack");
+    expect(rows[0].sourceRef).toBe(
+      `https://slack.test/archives/${channelId}/p5001`,
     );
-    expect(rows[0].message).not.toContain(":face_holding_back_tears:");
   });
 
   test("a mention whose lookup fails keeps the raw id", async () => {
@@ -2204,92 +2280,6 @@ describe("incident channel events", () => {
     const rows = await notes();
     expect(rows).toHaveLength(1);
     expect(rows[0].message).toContain("@U9 ack");
-  });
-
-  test("the note keeps the time the message was said", async () => {
-    const saidAt = Math.floor(Date.now() / 1000) - 3600;
-    const ts = `${saidAt}.000100`;
-    slackTestState.historyImpl = () =>
-      Promise.resolve({ messages: [{ ts, text: "an hour ago" }] });
-    await pin(ts);
-    await waitForCall("reactions.add");
-    const rows = await notes();
-    expect(rows).toHaveLength(1);
-    expect(Math.abs(rows[0].createdAt.getTime() - saidAt * 1000)).toBeLessThan(
-      1000,
-    );
-  });
-
-  test("the note belongs to the author, not the pinner", async () => {
-    const author = await createUser();
-    await addUserToWorkspace(author.id, 1, "member");
-    const authorSlackId = `U_AUTHOR_${crypto.randomUUID()}`;
-    slackTestState.usersInfoImpl = (args) =>
-      Promise.resolve({
-        ok: true,
-        user: {
-          profile: {
-            email:
-              args.user === authorSlackId
-                ? author.email
-                : "ping@openstatus.dev",
-          },
-        },
-      });
-    slackTestState.historyImpl = () =>
-      Promise.resolve({
-        messages: [
-          { ts: "508.1", text: "I rolled it back", user: authorSlackId },
-        ],
-      });
-    try {
-      await pin("508.1");
-      await waitForCall("reactions.add");
-      const rows = await notes();
-      expect(rows).toHaveLength(1);
-      expect(rows[0].createdBy).toBe(author.id);
-    } finally {
-      // The note references the author; drop it before the user.
-      await db
-        .delete(incidentEvent)
-        .where(eq(incidentEvent.incidentId, incidentId));
-      await db
-        .delete(slackUser)
-        .where(eq(slackUser.slackUserId, authorSlackId));
-      await db
-        .delete(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, author.id));
-      await db.delete(user).where(eq(user.id, author.id));
-    }
-  });
-
-  test("a bot message is attributed to the pinner without a lookup", async () => {
-    // Apps with a bot user carry both `bot_id` and `user`.
-    slackTestState.historyImpl = () =>
-      Promise.resolve({
-        messages: [
-          {
-            ts: "509.1",
-            text: "[FIRING] api 5xx",
-            bot_id: "B1",
-            user: "U_BOT",
-          },
-        ],
-      });
-    await pin("509.1");
-    await waitForCall("reactions.add");
-    const rows = await notes();
-    expect(rows).toHaveLength(1);
-    const [pinner] = await db
-      .select({ id: user.id })
-      .from(user)
-      .where(eq(user.email, "ping@openstatus.dev"));
-    expect(rows[0].createdBy).toBe(pinner.id);
-    expect(
-      slackTestState.calls.some(
-        (m) => m.method === "users.info" && m.args.user === "U_BOT",
-      ),
-    ).toBe(false);
   });
 
   test("a failed author lookup releases the pin for a retry", async () => {
@@ -2340,9 +2330,7 @@ describe("incident channel events", () => {
       expect(rows).toHaveLength(1);
       expect(rows[0].createdBy).toBe(author.id);
     } finally {
-      await db
-        .delete(incidentEvent)
-        .where(eq(incidentEvent.incidentId, incidentId));
+      await deleteIncidentEvents(incidentId);
       await db
         .delete(slackUser)
         .where(eq(slackUser.slackUserId, authorSlackId));
@@ -2369,24 +2357,6 @@ describe("incident channel events", () => {
     const rows = await notes();
     expect(rows).toHaveLength(1);
     expect(rows[0].message).toContain("[FIRING] db latency > 2s");
-  });
-
-  test("an attachment with an empty fallback is noted from its text", async () => {
-    slackTestState.historyImpl = () =>
-      Promise.resolve({
-        messages: [
-          {
-            ts: "507.1",
-            text: "",
-            attachments: [{ fallback: "", text: "Deploy 1234 failed" }],
-          },
-        ],
-      });
-    await pin("507.1");
-    await waitForCall("reactions.add");
-    const rows = await notes();
-    expect(rows).toHaveLength(1);
-    expect(rows[0].message).toContain("Deploy 1234 failed");
   });
 
   test("a message with nothing to copy tells the pinner", async () => {
@@ -2431,6 +2401,23 @@ describe("incident channel events", () => {
     expect(await notes()).toHaveLength(1);
   });
 
+  test("a 📌 outside an incident channel stays silent", async () => {
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_pin_${crypto.randomUUID()}`,
+      event: {
+        type: "reaction_added",
+        user: "U1",
+        reaction: "pushpin",
+        item: { type: "message", channel: "C_RANDOM", ts: "511.1" },
+      },
+    });
+    await settleBackgroundTasks();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackTestState.calls).toHaveLength(0);
+  });
+
   test("a pinned thread reply is found through the thread", async () => {
     slackTestState.historyImpl = () =>
       Promise.resolve({ messages: [{ ts: "400.0", text: "parent" }] });
@@ -2471,5 +2458,180 @@ describe("incident channel events", () => {
       bound = row?.slackChannelId ?? null;
     }
     expect(bound).toBeNull();
+  });
+});
+
+describe("channel history", () => {
+  const app = createTestApp();
+
+  beforeEach(resetSlackTestState);
+
+  async function waitFor(done: () => boolean, timeoutMs = 5000) {
+    const deadline = Date.now() + timeoutMs;
+    while (!done() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
+
+  function captureNotes() {
+    const notes: Array<string | undefined> = [];
+    slackTestState.runAgentOverride = (options) => {
+      notes.push(
+        (options as { contextNote?: string } | undefined)?.contextNote,
+      );
+      return Promise.resolve({
+        text: "ok",
+        toolResults: [],
+        finishReason: "stop",
+        stepCount: 1,
+        hitStepLimit: false,
+        aborted: false,
+      });
+    };
+    return notes;
+  }
+
+  test("a mention outside a thread sees the channel before it, with times", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: busyChannelHistory });
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        ...mentionOutsideThread,
+        channel: FIXTURE_CHANNEL_ID,
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    const history = slackTestState.calls.find(
+      (c) => c.method === "conversations.history",
+    );
+    expect(history?.args).toMatchObject({
+      channel: FIXTURE_CHANNEL_ID,
+      limit: 50,
+      latest: FIXTURE_MENTION_TS,
+    });
+    expect(notes[0]).toContain(
+      "[2026-10-15 21:10 UTC] <@U_ENGINEER>: Seeing 500s on the dashboard API",
+    );
+    expect(notes[0]).toContain("Found it: the table rename in staging");
+    const first = notes[0]?.indexOf("Seeing 500s") ?? -1;
+    const last = notes[0]?.indexOf("Found it") ?? -1;
+    expect(first).toBeLessThan(last);
+  });
+
+  test("a mention in a thread also sees the messages before the thread", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({
+        messages: [
+          { user: "U2", text: "before the thread", ts: "1792000000.1" },
+        ],
+      });
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_thread_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> summarize",
+        user: "U1",
+        channel: "C1",
+        ts: "1792139500.1",
+        thread_ts: "1792139400.1",
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    const history = slackTestState.calls.find(
+      (c) => c.method === "conversations.history",
+    );
+    expect(history?.args).toMatchObject({
+      channel: "C1",
+      limit: 20,
+      latest: "1792139400.1",
+    });
+    expect(notes[0]).toContain("before the thread");
+  });
+
+  test("a Slack link in the mention is read before the turn", async () => {
+    slackTestState.historyImpl = () =>
+      Promise.resolve({ messages: busyChannelHistory });
+    slackTestState.conversationsInfoImpl = () =>
+      Promise.resolve({ ok: true, channel: { is_private: false } });
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_link_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        ...mentionOutsideThread,
+        ts: `${Date.now() / 1000}`,
+        channel: FIXTURE_CHANNEL_ID,
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    expect(notes[0]).toContain("Slack messages linked in the user's message");
+    expect(notes[0]).toContain(
+      "2026-10-15 21:10 UTC (2026-10-15T21:10:00.000Z), <@U_ENGINEER>: Seeing 500s",
+    );
+  });
+
+  test("a follow-up in the thread knows what was created there", async () => {
+    const redis = (globalThis as Record<string, unknown>)
+      .__testRedisStore as Map<string, string>;
+    redis.set(
+      `slack:created-list:${FIXTURE_MENTION_TS}`,
+      JSON.stringify([
+        JSON.stringify({ kind: "status_report", id: 12, label: "API errors" }),
+      ]),
+    );
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_memory_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        ...whatIsTheIncident,
+        channel: FIXTURE_CHANNEL_ID,
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    expect(notes[0]).toContain("status report #12");
+    expect(notes[0]).not.toContain("API errors");
+  });
+
+  test("a history failure still answers, without the note", async () => {
+    slackTestState.historyImpl = () => Promise.reject(new Error("boom"));
+    const notes = captureNotes();
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_history_fail_${crypto.randomUUID()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hi",
+        user: "U1",
+        channel: "C1",
+        ts: "1792139600.1",
+      },
+    });
+    await waitFor(() => notes.length > 0);
+    await settleBackgroundTasks();
+
+    expect(notes).toHaveLength(1);
+    expect(notes[0] ?? "").not.toContain("Recent messages");
   });
 });

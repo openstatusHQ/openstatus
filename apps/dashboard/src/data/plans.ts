@@ -60,6 +60,14 @@ export const config: Record<
         value: "custom-theme",
         label: "Custom Theme",
       },
+      {
+        value: "i18n",
+        label: "Translations",
+      },
+      {
+        value: "timezone",
+        label: "Time zone",
+      },
     ],
   },
   "status-page-audience": {

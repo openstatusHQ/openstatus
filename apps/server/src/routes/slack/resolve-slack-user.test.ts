@@ -10,8 +10,7 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import { WebClient } from "@slack/web-api";
-import { expect } from "@std/expect";
-import { beforeAll, beforeEach, describe, test } from "@std/testing/bdd";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 
 // @slack/web-api is the import-mapped double; `users.info` is driven by
 // slackTestState.usersInfoImpl.

@@ -7,14 +7,17 @@
   "author": "",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports ."
+    "check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "jsonpath-plus": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

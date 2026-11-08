@@ -14,7 +14,7 @@ import { env } from "@/env";
 // openstatus monitor all poll it. `deadlineMs` stays under Fly's 5s timeout.
 export const pingRoute = healthRoute<{ Variables: RequestIdVariables }>({
   path: "/ping",
-  deadlineMs: 4_000,
+  deadlineMs: 15_000,
   probes: [
     tursoProbe({ client: db.$client }),
     tinybirdProbe({

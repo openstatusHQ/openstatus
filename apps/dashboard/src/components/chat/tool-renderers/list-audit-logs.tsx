@@ -1,13 +1,30 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { auditEntityKind, toEntityId } from "@/data/entity-refs.client";
 import { cn } from "@/lib/utils";
 
 import type { ResultTableData } from "./result-table";
 
 type Output = AgentToolOutput<"list_audit_logs">;
+
+function AuditLogEntity({ type, id }: { type: string; id: string }) {
+  const kind = auditEntityKind(type);
+  const entityId = toEntityId(id);
+  return (
+    <span className="text-muted-foreground font-mono">
+      {type}#
+      {kind && entityId ? (
+        <EntityRef kind={kind} id={entityId} className="text-foreground" />
+      ) : (
+        id
+      )}
+    </span>
+  );
+}
 
 function getActionBadgeColor(action: string) {
   if (action.endsWith(".create"))
@@ -44,12 +61,7 @@ export function listAuditLogsTable(
             {item.action}
           </Badge>
         ),
-        entity: (
-          <TableCellText
-            value={`${item.entityType}#${item.entityId}`}
-            className="text-muted-foreground font-mono"
-          />
-        ),
+        entity: <AuditLogEntity type={item.entityType} id={item.entityId} />,
         actor: (
           <TableCellText
             value={item.actor}

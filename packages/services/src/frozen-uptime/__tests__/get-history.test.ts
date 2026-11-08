@@ -10,8 +10,7 @@ import {
   statusReportUpdateToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -80,12 +79,26 @@ function fullMonth(
 
 function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
   const pipe = () => Promise.resolve({ data: rows });
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
+  return {
+    http: pipe,
+    tcp: pipe,
+    dns: pipe,
+    icmp: pipe,
+    grpc: pipe,
+    heartbeat: pipe,
+  };
 }
 
 function failingPipes(): UptimeFreezePipes {
   const pipe = () => Promise.reject(new Error("tinybird down"));
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
+  return {
+    http: pipe,
+    tcp: pipe,
+    dns: pipe,
+    icmp: pipe,
+    grpc: pipe,
+    heartbeat: pipe,
+  };
 }
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
@@ -110,7 +123,10 @@ async function insertPage(
     .get();
 }
 
-async function insertMonitor(tx: Tx) {
+async function insertMonitor(
+  tx: Tx,
+  overrides: Partial<typeof monitor.$inferInsert> = {},
+) {
   return tx
     .insert(monitor)
     .values({
@@ -122,6 +138,7 @@ async function insertMonitor(tx: Tx) {
       periodicity: "10m",
       regions: "ams",
       jobType: "http",
+      ...overrides,
     })
     .returning()
     .get();
@@ -789,6 +806,73 @@ describe("getUptimeHistory", () => {
       expect(res.rows[0].months[key(1)]).toBe(90);
     });
   });
+
+  test.each([
+    { mode: "requests", incidentCounts: true },
+    { mode: "duration", incidentCounts: true },
+    { mode: "manual", incidentCounts: false },
+  ] as const)(
+    "heartbeat ($mode): silent months count from the first ping",
+    async ({ mode, incidentCounts }) => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...userCtx, db: tx };
+        const testMonitor = await insertMonitor(tx, {
+          jobType: "heartbeat",
+          url: "",
+          regions: "",
+          heartbeatPeriod: 86_400,
+        });
+        const testPage = await insertPage(tx, {
+          configuration: { value: mode },
+        });
+        await insertComponent(tx, {
+          pageId: testPage.id,
+          monitorId: testMonitor.id,
+        });
+
+        // one ping on the 1st of key(3), then silence: nothing frozen after it
+        const days = fullMonth(key(3), {});
+        days[0] = { ...days[0], ok: 1 };
+        await insertFrozen(tx, {
+          monitorId: testMonitor.id,
+          month: `${key(3)}-01`,
+          days,
+        });
+
+        const base = monthStart(key(2)).getTime() + 3 * MS_PER_DAY;
+        await tx.insert(monitorIncidentTable).values({
+          workspaceId: teamWorkspaceId,
+          monitorId: testMonitor.id,
+          startedAt: new Date(base),
+          createdAt: new Date(base),
+          resolvedAt: new Date(base + 2 * MS_PER_DAY),
+        });
+
+        const res = await getUptimeHistory({
+          ctx,
+          input: { pageId: testPage.id },
+          pipes: makePipes([]),
+          now,
+          sleep: noSleep,
+        });
+
+        expect(res.mode).toBe(mode);
+        const row = res.rows[0];
+        const key2Ms =
+          monthEnd(key(2)).getTime() - monthStart(key(2)).getTime();
+        expect(row.months[key(4)]).toBe(null);
+        expect(row.months[key(3)]).toBe(100);
+        // Reports only ignores incidents, like for any other component
+        expect(row.months[key(2)]).toBe(
+          incidentCounts
+            ? Math.floor(((key2Ms - 2 * MS_PER_DAY) / key2Ms) * 100_000) / 1_000
+            : 100,
+        );
+        expect(row.months[key(1)]).toBe(100);
+        expect(row.months[key(0)]).toBe(100);
+      });
+    },
+  );
 
   test("static component: event-derived, months before creation are null", async () => {
     await withTestTransaction(async (tx) => {

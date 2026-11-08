@@ -8,11 +8,11 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 
+import { runInBackground } from "@/libs/background";
 import { redis } from "@/libs/clients";
 
 import { type AgentEvents, runAgent } from "./agent";
 import { greetOnce, setAssistantStatus, setSessionStatus } from "./assistant";
-import { runInBackground } from "./background";
 import {
   type Block,
   buildAnswerMessage,
@@ -24,15 +24,24 @@ import {
 } from "./blocks";
 import {
   channelContextTooling,
+  channelHistoryNote,
+  channelHistoryTooling,
   contextChannelId,
   contextUserId,
+  fetchChannelHistory,
   forgetContext,
   recallContext,
   rememberContext,
 } from "./channel-context";
 import type { SlackConfig, SlackEnv } from "./config";
 import { makeRefResolvers } from "./confirmation-card";
-import { draftKey, findByThread, replace, store } from "./confirmation-store";
+import {
+  draftKey,
+  findByThread,
+  listCreated,
+  replace,
+  store,
+} from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
 import { homeIncidents, publishHomeView, publishLinkAccountView } from "./home";
 import { handleChannelGone, handlePinReaction } from "./incident-events";
@@ -57,12 +66,16 @@ import {
   slackAgentAllowed,
 } from "./require-slack-member";
 import { abortTurn, broadcastStop, endTurn, startTurn } from "./running-turns";
+import { permalinkFor } from "./service-adapter";
+import { linkedMessagesNote, slackLinkTools } from "./slack-links";
+import { createdNote } from "./thread-memory";
 import {
   buildThreadTitle,
   isThreadTitled,
   markThreadTitled,
   renameThread,
 } from "./thread-title";
+import { buildWelcomeBlocks, CATCH_UP_REQUEST, WELCOME_TEXT } from "./welcome";
 import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -95,6 +108,8 @@ const slackEventSchema = z.object({
       subtype: z.string().optional(),
       text: z.string().optional(),
       user: z.string().optional(),
+      // `member_joined_channel`: absent when the member joined on their own.
+      inviter: z.string().optional(),
       channel: z.string().optional(),
       channel_type: z.string().optional(),
       ts: z.string().optional(),
@@ -194,6 +209,9 @@ export function looksLikeUncardedDraft(text: string): boolean {
   if (!PERMISSION_QUESTION.test(text)) return false;
   return (text.match(PROSE_DRAFT_FIELDS) ?? []).length >= 2;
 }
+
+const HISTORY_BEFORE_MENTION = 50;
+const HISTORY_BEFORE_THREAD = 20;
 
 // Bounds the Slack calls (and the agent's context) on very long threads.
 const MAX_THREAD_PAGES = 5;
@@ -324,6 +342,73 @@ async function sendLinkCard(args: {
   logger.info("slack link card sent", { teamId, slackUserId });
 }
 
+/**
+ * The welcome card's "Catch up": a visible message in the channel, then a turn
+ * in its thread as if the clicker had mentioned the agent there. The channel
+ * is only read because someone asked.
+ */
+export async function catchUpChannel(args: {
+  teamId: string;
+  channelId: string;
+  slackUserId: string;
+  config: SlackConfig;
+}): Promise<void> {
+  const { teamId, channelId, slackUserId, config } = args;
+  const resolved = await resolveWorkspace(teamId);
+  if (!resolved) return;
+  const slack = new WebClient(resolved.botToken);
+  // The welcome card is already gone: say why nothing happens.
+  if (!slackAgentAllowed(resolved.workspace)) {
+    await slack.chat.postEphemeral({
+      channel: channelId,
+      user: slackUserId,
+      ...planRequiredMessage(config),
+    });
+    return;
+  }
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId,
+    slackUserId,
+    slack,
+  });
+  if (!actor) {
+    await sendLinkCard({
+      config,
+      workspaceId: resolved.workspace.id,
+      teamId,
+      slackUserId,
+      post: (message) =>
+        slack.chat.postEphemeral({
+          channel: channelId,
+          user: slackUserId,
+          ...message,
+        }),
+    });
+    return;
+  }
+  const root = await slack.chat.postMessage({
+    channel: channelId,
+    text: `:eyes: Catching up on <#${channelId}> for <@${slackUserId}>.`,
+  });
+  if (!root.ts) return;
+  await processEvent(
+    {
+      type: "event_callback",
+      team_id: teamId,
+      event: {
+        type: "app_mention",
+        user: slackUserId,
+        channel: channelId,
+        channel_type: "channel",
+        ts: root.ts,
+        text: `<@${resolved.botUserId}> ${CATCH_UP_REQUEST}`,
+      },
+    },
+    config,
+  );
+}
+
 async function processEvent(body: SlackEvent, config: SlackConfig) {
   const event = body.event;
   if (!event) return;
@@ -370,6 +455,25 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       channel: event.channel,
       slackUserId: event.user,
     });
+    return;
+  }
+
+  // The bot also joins channels on its own (incident channels, `subscribe`);
+  // those carry no inviter, so only a person adding it gets the welcome.
+  if (event.type === "member_joined_channel") {
+    const teamId = body.team_id;
+    const { channel, inviter } = event;
+    if (!teamId || !channel || !inviter) return;
+    const resolved = await resolveWorkspace(teamId);
+    if (!resolved || event.user !== resolved.botUserId) return;
+    if (inviter === resolved.botUserId) return;
+    await new WebClient(resolved.botToken).chat.postEphemeral({
+      channel,
+      user: inviter,
+      text: WELCOME_TEXT,
+      blocks: buildWelcomeBlocks(resolved.botUserId),
+    });
+    logger.info("slack welcome sent", { teamId, channel });
     return;
   }
 
@@ -721,6 +825,8 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       return;
     }
 
+    // the thread root: events the turn writes link back to where it was asked
+    const permalink = permalinkFor(slack, event.channel, threadTs);
     let thread: ThreadMessage[] = [];
     if (prefetchedThread) {
       thread = prefetchedThread;
@@ -738,6 +844,32 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         : undefined;
     const context = contextChannel
       ? channelContextTooling({ slack, channelId: contextChannel })
+      : undefined;
+    const history = isAgentThread
+      ? undefined
+      : await fetchChannelHistory(slack, event.channel, {
+          limit: event.thread_ts
+            ? HISTORY_BEFORE_THREAD
+            : HISTORY_BEFORE_MENTION,
+          before: threadTs,
+        }).catch((error) => {
+          logger.info("slack channel history unavailable", {
+            error,
+            channel: event.channel,
+          });
+          return [];
+        });
+    const channelTools = isAgentThread
+      ? context?.tools
+      : channelHistoryTooling({ slack, channelId: event.channel });
+    const linksNote = await linkedMessagesNote({
+      slack,
+      text: event.text,
+      requesterId: event.user,
+    });
+    const memoryNote = createdNote(await listCreated(threadTs).catch(() => []));
+    const linkTools = event.user
+      ? slackLinkTools({ slack, requesterId: event.user })
       : undefined;
     const incidentNote = await boundIncidentNote({
       workspace: resolved.workspace,
@@ -759,14 +891,21 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       thread,
       botUserId,
       event.text,
-      actor,
+      { ...actor, permalink: await permalink },
       {
         events: reply.progress,
         signal: turn.signal,
-        tools: context?.tools,
+        tools: { ...channelTools, ...linkTools },
         contextNote:
-          [context?.contextNote, incidentNote].filter(Boolean).join("\n\n") ||
-          undefined,
+          [
+            context?.contextNote,
+            history && channelHistoryNote(event.channel, history),
+            linksNote,
+            memoryNote,
+            incidentNote,
+          ]
+            .filter(Boolean)
+            .join("\n\n") || undefined,
       },
     );
 

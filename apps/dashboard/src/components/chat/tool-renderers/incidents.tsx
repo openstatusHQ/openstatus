@@ -1,19 +1,28 @@
 import type {
   AgentToolInput,
   AgentToolOutput,
+  ApprovalBefore,
 } from "@openstatus/services/agent-tools";
 
 import type { ChangeRow } from "@/components/common/changes-table";
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import {
+  IncidentSeverityBadge,
+  IncidentStatusBadge,
+} from "@/components/incidents/incident-badge";
+import { entityKinds } from "@/data/entity-refs.client";
 
+import { fieldChanges, idRow } from "./before-diff";
 import type { DetailsTableData } from "./details-table";
 import type { ResultTableData } from "./result-table";
 
 export function listIncidentsTable(
   output: AgentToolOutput<"list_incidents">,
-): ResultTableData<"title" | "severity" | "status" | "commander" | "id"> {
+): ResultTableData<"title" | "severity" | "status" | "id"> {
   const items = output?.items ?? [];
   return {
     empty: "No incidents.",
@@ -21,18 +30,19 @@ export function listIncidentsTable(
       { key: "title", header: "Title" },
       { key: "severity", header: "Severity" },
       { key: "status", header: "Status" },
-      { key: "commander", header: "Commander" },
       { key: "id", header: "ID" },
     ],
     rows: items.map((i) => ({
       id: i.id,
       cells: {
-        title: <TableCellText value={i.title} />,
-        severity: <TableCellText value={i.severity} />,
-        status: (
-          <TableCellText value={i.closed ? `${i.status} · closed` : i.status} />
+        title: (
+          <TableCellLink
+            href={entityKinds.incident.href({ id: i.id })}
+            value={i.title}
+          />
         ),
-        commander: <TableCellText value={i.commander?.name ?? null} />,
+        severity: <IncidentSeverityBadge severity={i.severity} />,
+        status: <IncidentStatusBadge status={i.status} closed={i.closed} />,
         id: <TableCellNumber value={i.id} />,
       },
     })),
@@ -47,15 +57,36 @@ export function getIncidentDetails(
       {
         rows: [
           { label: "ID", value: <TableCellNumber value={output.id} /> },
-          { label: "Title", value: <TableCellText value={output.title} /> },
+          {
+            label: "Title",
+            value: (
+              <TableCellLink
+                href={entityKinds.incident.href({ id: output.id })}
+                value={output.title}
+              />
+            ),
+          },
           {
             label: "Severity",
-            value: <TableCellText value={output.severity} />,
+            value: <IncidentSeverityBadge severity={output.severity} />,
           },
-          { label: "Status", value: <TableCellText value={output.status} /> },
+          {
+            label: "Status",
+            value: (
+              <IncidentStatusBadge
+                status={output.status}
+                closed={output.closed}
+              />
+            ),
+          },
           {
             label: "Commander",
-            value: <TableCellText value={output.commander?.name ?? null} />,
+            value: (
+              <TableCellText
+                value={output.commander?.name ?? null}
+                empty="Unassigned"
+              />
+            ),
           },
           {
             label: "Summary",
@@ -67,7 +98,13 @@ export function getIncidentDetails(
           },
           {
             label: "Status report",
-            value: <TableCellText value={output.statusReport?.title ?? null} />,
+            value: output.statusReport ? (
+              <EntityRef kind="statusReport" id={output.statusReport.id}>
+                {output.statusReport.title}
+              </EntityRef>
+            ) : (
+              <TableCellText value={null} />
+            ),
           },
         ],
       },
@@ -107,20 +144,16 @@ export function declareIncidentChanges(
 
 export function updateIncidentChanges(
   input: AgentToolInput<"update_incident">,
+  before?: ApprovalBefore,
 ): ChangeRow[] {
-  const changes: ChangeRow[] = [{ field: "incidentId", after: input.id }];
-  for (const field of [
-    "title",
-    "severity",
-    "summary",
-    "commanderId",
-    "startedAt",
-  ] as const) {
-    if (input[field] !== undefined) {
-      changes.push({ field, after: input[field] });
-    }
-  }
-  return changes;
+  return [
+    ...idRow("id", input.id, before),
+    ...fieldChanges(
+      input,
+      ["title", "severity", "summary", "commanderId", "startedAt"],
+      before,
+    ),
+  ];
 }
 
 export function resolveIncidentChanges(

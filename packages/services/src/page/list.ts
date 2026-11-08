@@ -12,6 +12,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
 
+import { requireScope } from "../auth";
 import {
   type DB,
   type ServiceContext,
@@ -41,6 +42,7 @@ export async function listPages(args: {
   input: ListPagesInput;
 }): Promise<PageListItem[]> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = ListPagesInput.parse(args.input);
   const db = getReadDb(ctx);
 
@@ -84,6 +86,7 @@ export async function getPage(args: {
   input: GetPageInput;
 }): Promise<PageWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetPageInput.parse(args.input);
   const db = getReadDb(ctx);
 
@@ -144,6 +147,7 @@ export async function getPageCustomDomain(args: {
   input: GetPageInput;
 }): Promise<string> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetPageInput.parse(args.input);
   const db = getReadDb(ctx);
 
@@ -163,6 +167,7 @@ export async function assertCustomDomainInWorkspace(args: {
   input: { domain: string };
 }): Promise<void> {
   const { ctx, input } = args;
+  requireScope(ctx, "pages:read");
   const row = await getReadDb(ctx)
     .select({ id: page.id })
     .from(page)
@@ -200,6 +205,7 @@ export async function getSlugAvailable(args: {
   input: GetSlugAvailableInput;
 }): Promise<boolean> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetSlugAvailableInput.parse(args.input);
   const db = getReadDb(ctx);
 

@@ -126,8 +126,25 @@ export async function upsertSelfSignupSubscriber(args: {
     if (existing) {
       // Pending row — merge components, refresh expiry.
       const currentIds = existing.components.map((c) => c.pageComponentId);
-      const mergedIds = [...new Set([...currentIds, ...componentIds])];
+      // Empty scope means the entire page, so it absorbs component scopes.
+      const mergedIds =
+        currentIds.length === 0 || componentIds.length === 0
+          ? []
+          : [...new Set([...currentIds, ...componentIds])];
       const newIds = mergedIds.filter((id) => !currentIds.includes(id));
+      const scopeChanged =
+        mergedIds.length !== currentIds.length || newIds.length > 0;
+      // A link issued for the previous scope must not authorize wider coverage.
+      const token = scopeChanged ? crypto.randomUUID() : existing.token;
+
+      if (currentIds.length > 0 && mergedIds.length === 0) {
+        await tx
+          .delete(pageSubscriberToPageComponent)
+          .where(
+            eq(pageSubscriberToPageComponent.pageSubscriberId, existing.id),
+          )
+          .run();
+      }
 
       if (newIds.length > 0) {
         await tx
@@ -146,7 +163,7 @@ export async function upsertSelfSignupSubscriber(args: {
       const beforeRow = selectPageSubscriberSchema.parse(existing);
       const updatedRow = await tx
         .update(pageSubscriber)
-        .set({ expiresAt: newExpiresAt, updatedAt: new Date() })
+        .set({ token, expiresAt: newExpiresAt, updatedAt: new Date() })
         .where(eq(pageSubscriber.id, existing.id))
         .returning()
         .get();
@@ -169,7 +186,7 @@ export async function upsertSelfSignupSubscriber(args: {
         entityId: existing.id,
         before: beforeSnap,
         after: afterSnap,
-        ...(newIds.length > 0 ? { metadata: { componentIds: mergedIds } } : {}),
+        ...(scopeChanged ? { metadata: { componentIds: mergedIds } } : {}),
       });
 
       return {
@@ -180,7 +197,7 @@ export async function upsertSelfSignupSubscriber(args: {
         customDomain: pageData.customDomain,
         channelType: existing.channelType,
         email: existing.email ?? emailLower,
-        token: existing.token,
+        token,
         acceptedAt: null,
         componentIds: mergedIds,
       };

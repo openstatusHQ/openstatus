@@ -1,54 +1,200 @@
 "use client";
 
+import { Incident } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 import {
-  EmptyStateContainer,
+  Activity,
+  ActivityEmpty,
+  ActivityFeed,
+  ActivityHeader,
+  ActivityPeriod,
+  ActivityTitle,
+} from "@/components/content/activity";
+import {
+  ActivityCalendar,
+  ActivityCalendarCell,
+  ActivityCalendarGrid,
+  ActivityCalendarLegend,
+  ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
+} from "@/components/content/activity-calendar";
+import {
+  EmptyStateActions,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import {
+  EventGroup,
+  EventGroupCount,
+  EventGroupHeader,
+  EventGroupTitle,
+} from "@/components/content/event-group";
+import { EventList, EventListMore } from "@/components/content/event-list";
 import {
   Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/managed-incidents/columns";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
+import { IncidentRow } from "@/components/incidents/incident-row";
+import {
+  activityDayLines,
+  activityRange,
+  groupByDay,
+  strongestMark,
+} from "@/data/activity.client";
+import {
+  incidentActivity,
+  incidentSpan,
+  severityConfig,
+  severityLevels,
+} from "@/data/managed-incidents.client";
+import { usePaged } from "@/hooks/use-paged";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
   const trpc = useTRPC();
   const { data: incidents } = useQuery(trpc.incident.list.queryOptions());
 
+  const byStart = <T extends { startedAt: Date }>(a: T, b: T) =>
+    b.startedAt.getTime() - a.startedAt.getTime();
+  const active = (incidents ?? [])
+    .filter((i) => i.status === "open" || i.status === "mitigated")
+    .sort(byStart);
+  const closed = (incidents ?? [])
+    .filter((i) => i.status === "resolved" || i.status === "canceled")
+    .sort(byStart);
+  const paged = usePaged(closed);
+
+  if (!incidents) return null;
+
+  const now = new Date();
+  const range = activityRange(now);
+  const grouped = groupByDay(range, incidents, incidentSpan, now);
+  const days = grouped.map(({ date, items }) => {
+    const marks = items.map((i) => ({
+      ...incidentActivity(i),
+      title: i.title,
+    }));
+    const lead = strongestMark(marks);
+    return {
+      date,
+      ...lead,
+      lines: lead
+        ? activityDayLines(
+            `${lead.label} · ${lead.title}`,
+            marks.filter((m) => m !== lead).map((m) => m.label),
+          )
+        : undefined,
+      links: items.map((i) => ({ href: `/incidents/${i.id}`, title: i.title })),
+    };
+  });
+
   return (
     <SectionGroup>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Incidents</SectionTitle>
-          <SectionDescription>
-            Declare and track the incidents your team is responding to.
-          </SectionDescription>
-        </SectionHeader>
-        {!incidents ? null : incidents.length === 0 ? (
-          <EmptyStateContainer>
+      <Section id="incidents">
+        <SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>Incidents</SectionTitle>
+            <SectionDescription>
+              What your team is responding to.
+            </SectionDescription>
+          </SectionHeader>
+          <div>
+            <DeclareIncidentButton>
+              <Button data-section="action" size="sm">
+                Declare incident
+              </Button>
+            </DeclareIncidentButton>
+          </div>
+        </SectionHeaderRow>
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>Last 12 months</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                {(["minor", "major", "critical"] as const).map((severity) => (
+                  <ActivityCalendarLegendItem key={severity}>
+                    <ActivityCalendarCell level={severityLevels[severity]} />
+                    {severityConfig[severity].label}
+                  </ActivityCalendarLegendItem>
+                ))}
+                <ActivityCalendarLegendSeparator />
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell hatched />
+                  Canceled
+                </ActivityCalendarLegendItem>
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Active
+                  <EventGroupCount>{active.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {active.map((incident) => (
+                  <IncidentRow key={incident.id} incident={incident} />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Ended
+                  <EventGroupCount>{closed.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((incident) => (
+                  <IncidentRow key={incident.id} incident={incident} />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
+            <EmptyStateMedia>
+              <Incident />
+            </EmptyStateMedia>
             <EmptyStateTitle>No incidents declared</EmptyStateTitle>
             <EmptyStateDescription>
-              Declared incidents keep the timeline your team builds while
-              responding. Nothing here is public: use a status report to tell
+              A declared incident keeps the timeline your team builds while
+              responding. Nothing here is public: a status report is what tells
               your users.
             </EmptyStateDescription>
-          </EmptyStateContainer>
-        ) : (
-          // incident.list already sorts open first, then newest declared.
-          <DataTable
-            columns={columns}
-            data={incidents}
-            paginationComponent={DataTablePaginationSimple}
-          />
-        )}
+            <EmptyStateActions>
+              <DeclareIncidentButton>
+                <Button size="sm">Declare incident</Button>
+              </DeclareIncidentButton>
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/status-pages">Pick a status page</Link>
+              </Button>
+            </EmptyStateActions>
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

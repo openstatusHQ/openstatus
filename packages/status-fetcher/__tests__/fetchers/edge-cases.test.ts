@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { Exit } from "effect";
+import { describe, expect, it } from "vitest";
 
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";

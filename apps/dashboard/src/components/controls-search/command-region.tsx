@@ -19,10 +19,10 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
-import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
   BillingOverlayButton,
@@ -61,7 +61,11 @@ export function CommandRegion({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+        >
           {selectedRegions.length === regions.length
             ? "All Regions"
             : `${selectedRegions.length} Regions`}
@@ -204,8 +208,12 @@ export function CommandRegion({
         </Command>
         {limited ? (
           <BillingOverlay className="to-70%">
-            <BillingOverlayButton asChild>
-              <Link href="/settings/billing">
+            <BillingOverlayButton
+              data-track="paywall_viewed"
+              data-limit="max-regions"
+              asChild
+            >
+              <Link href="/settings/billing#plans">
                 <Lock />
                 Upgrade
               </Link>

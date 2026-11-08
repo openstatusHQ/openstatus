@@ -1,6 +1,8 @@
 package checker
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -31,14 +33,26 @@ type TCPResponse struct {
 	Error        uint8             `json:"error,omitempty"`
 }
 
-func PingTCP(timeout int, url string) (TCPResponseTiming, error) {
+// tcpDefaultTimeout is the dial timeout in milliseconds when none is given.
+const tcpDefaultTimeout = 45_000
+
+// PingTCP dials url and reports how long the connection took. timeoutMs is in
+// milliseconds, like every monitor timeout; the dial also stops when ctx ends.
+func PingTCP(ctx context.Context, timeoutMs int64, url string) (TCPResponseTiming, error) {
+	if timeoutMs <= 0 {
+		timeoutMs = tcpDefaultTimeout
+	}
+
+	dialer := net.Dialer{Timeout: time.Duration(timeoutMs) * time.Millisecond}
+
 	start := time.Now().UTC().UnixMilli()
-	conn, err := net.DialTimeout("tcp", url, time.Duration(timeout)*time.Second)
+	conn, err := dialer.DialContext(ctx, "tcp", url)
 	stop := time.Now().UTC().UnixMilli()
 
 	if err != nil {
-		if e := err.(*net.OpError).Timeout(); e {
-			return TCPResponseTiming{}, fmt.Errorf("timeout after %d ms", timeout*1000)
+		var netErr net.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			return TCPResponseTiming{}, fmt.Errorf("timeout after %d ms", timeoutMs)
 		}
 		if strings.Contains(err.Error(), "connection refused") {
 			return TCPResponseTiming{}, fmt.Errorf("connection refused")

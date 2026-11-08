@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  TRIAL_DAYS,
+  type TrialSurface,
+} from "@openstatus/api/src/router/stripe/trial-config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type {
   Addons,
@@ -49,7 +53,13 @@ function getQuantitySuffix(addon: keyof Addons, interval: BillingInterval) {
   return packSize > 1 ? `${period}/${packSize}` : `${period}/each`;
 }
 
-export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
+export function DataTable({
+  restrictTo,
+  surface = "plan_table",
+}: {
+  restrictTo?: WorkspacePlan[];
+  surface?: TrialSurface;
+}) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
@@ -61,6 +71,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
     trpc.stripeRouter.getBillingInterval.queryOptions(),
   );
   const currentInterval = intervalQuery.data;
+  const canTrial = workspace?.trial.eligible === true;
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.getCheckoutSession.mutationOptions({
@@ -97,6 +108,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
     }),
   );
 
+  // Which button is in flight, derived from the running mutation.
+  const pendingPlan: WorkspacePlan | null = checkoutSessionMutation.isPending
+    ? checkoutSessionMutation.variables.plan
+    : customerPortalMutation.isPending
+      ? "free"
+      : null;
+
   if (!workspace) return null;
 
   const isTrialing = workspace.trialDaysLeft !== null;
@@ -105,7 +123,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <Tabs
         value={interval}
         onValueChange={(v) => setInterval(v as BillingInterval)}
@@ -117,15 +135,19 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      <Table className="relative table-fixed">
+      <Table className="relative">
         <TableCaption>
           {isTrialing
             ? "Upgrading ends your trial and charges your card today."
-            : "A list to compare the different features by plan."}
+            : canTrial &&
+                interval === "monthly" &&
+                filteredPlans.some(({ id }) => id === "starter")
+              ? `Starter can be tried free for ${TRIAL_DAYS} days, no credit card needed.`
+              : "A list to compare the different features by plan."}
         </TableCaption>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="p-2 align-bottom">
+            <TableHead className="min-w-40 p-2 align-bottom">
               Features comparison
             </TableHead>
             {filteredPlans.map(({ id, ...plan }) => {
@@ -150,11 +172,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                 currentInterval !== null &&
                 currentInterval !== interval;
               const price = getPriceConfig(id, currency, interval);
+              const isTrialOffer =
+                canTrial && id === "starter" && interval === "monthly";
               return (
                 <TableHead
                   key={id}
                   className={cn(
-                    "text-foreground h-auto p-2 align-bottom",
+                    "text-foreground h-auto min-w-40 p-2 align-bottom",
                     id === "starter" ? "bg-muted/30" : "",
                   )}
                 >
@@ -164,6 +188,11 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       <p className="text-muted-foreground text-xs font-normal text-wrap">
                         {plan.description}
                       </p>
+                      {isTrialOffer ? (
+                        <p className="text-xs font-normal text-wrap">
+                          Free for {TRIAL_DAYS} days. No credit card needed.
+                        </p>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       {isFreePlan ? (
@@ -189,6 +218,19 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       onClick={() => {
                         startTransition(async () => {
                           try {
+                            if (isTrialOffer) {
+                              await checkoutSessionMutation.mutateAsync({
+                                trial: true,
+                                plan: "starter",
+                                interval: "monthly",
+                                surface,
+                                currency: currency || "USD",
+                                workspaceSlug: workspace.slug,
+                                successUrl: `${BASE_URL}/settings/billing?trial=true`,
+                                cancelUrl: `${BASE_URL}/settings/billing`,
+                              });
+                              return;
+                            }
                             if (id === "free") {
                               await customerPortalMutation.mutateAsync({
                                 workspaceSlug: workspace.slug,
@@ -221,13 +263,15 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                           ? isTrialing
                             ? "On Trial"
                             : "Current Plan"
-                          : isPending
+                          : pendingPlan === id
                             ? "Choosing..."
                             : isIntervalSwitch
                               ? `Switch to ${interval}`
-                              : isTrialing && !isFreePlan
-                                ? "Upgrade now"
-                                : "Choose"}
+                              : isTrialOffer
+                                ? `Start ${TRIAL_DAYS}-day trial`
+                                : isTrialing && !isFreePlan
+                                  ? "Upgrade now"
+                                  : "Choose"}
                     </Button>
                   </div>
                 </TableHead>

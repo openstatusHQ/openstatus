@@ -78,8 +78,8 @@ Both credentials carry a scope. **Read-only** credentials only see `list_*` and 
 - `get_monitor` — full configuration: URL, regions, periodicity, retries, notification channels, tags.
 - `get_monitor_status` — per-region current health (active / degraded / error).
 - `get_monitor_summary` — success/degraded/error counts and p50–p99 latency over `1d`, `7d`, or `14d`.
-- `list_response_logs` — recent per-region check results (status code, latency) over `1d`, `7d`, or `14d`. HTTP monitors only.
-- `get_response_log` — one check in full: timing breakdown, redacted headers, error, assertion results.
+- `list_response_logs` — recent per-region check results (status code, latency, attempts) over `1d`, `7d`, or `14d`. HTTP monitors only.
+- `get_response_log` — one check in full: attempts, timing breakdown, redacted headers, error, assertion results.
 
 ### Workspace (read-only)
 

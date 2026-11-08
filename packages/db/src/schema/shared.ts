@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { selectMaintenanceSchema } from "./maintenances";
+import {
+  selectMaintenanceSchema,
+  selectMaintenanceUpdateSchema,
+} from "./maintenances";
 import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorIncidentSchema } from "./monitor_incidents/validation";
 import { selectMonitorSchema } from "./monitors";
@@ -25,6 +28,10 @@ const selectPublicMonitorBaseSchema = selectMonitorSchema.omit({
   method: true,
   otelEndpoint: true,
   otelHeaders: true,
+  // authenticates pings: whoever holds it can keep a down heartbeat green
+  heartbeatToken: true,
+  heartbeatCron: true,
+  heartbeatTz: true,
 });
 
 export const selectPublicMonitorSchema =
@@ -62,6 +69,9 @@ export const selectStatusReportPageSchema = selectStatusReportSchema
 export const selectMaintenancePageSchema = selectMaintenanceSchema
   .omit(authorColumns)
   .extend({
+    maintenanceUpdates: z
+      .array(selectMaintenanceUpdateSchema.omit(authorColumns))
+      .prefault([]),
     maintenancesToPageComponents: z
       .array(
         z.object({
@@ -227,6 +237,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
       .nullable()
       .prefault("free")
       .transform((val) => val ?? "free"),
+    statusUpdateTypes: z.array(z.enum(["email", "slack", "rss", "json"])),
     whiteLabel: z.boolean().prefault(false),
   })
   .omit({ password: true });

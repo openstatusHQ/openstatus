@@ -438,11 +438,8 @@ export function StatusEventTimelineImpact({
  *
  * Displays a chronological timeline of incident updates, sorted from newest to
  * oldest. Each update shows the status (investigating → identified → monitoring → resolved),
- * timestamp, message, and time elapsed between updates.
- *
- * **Automatic Duration Calculation**:
- * - First update (most recent): Shows total time from start to resolution (if resolved)
- * - Other updates: Shows time elapsed since the previous update
+ * absolute timestamp and message. A resolved report also shows the time from
+ * its first update to resolution on the latest update.
  *
  * @param updates - Array of report updates to display
  * @param withDot - Whether to show colored status dots (default: true)
@@ -474,7 +471,7 @@ export function StatusEventTimelineImpact({
  *     }
  *   ]}
  * />
- * // Displays timeline with: "Resolved (in 1 hour)" → "Monitoring (15 minutes earlier)" → etc.
+ * // Displays timeline with: "Resolved · January 15 at 12:00 PM (UTC) (1 hour)" → "Monitoring · …" → etc.
  * ```
  *
  * @see StatusEventTimelineReportUpdate - For individual update rendering
@@ -492,13 +489,20 @@ export function StatusEventTimelineReport({
   maxUpdates?: number;
   renderMessage?: (message: string) => React.ReactNode;
 }) {
-  const labels = useStatusBlocksLabels();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;
+  const latest = sortedUpdates[0];
+  const firstUpdate = sortedUpdates[sortedUpdates.length - 1];
+  const distance =
+    sortedUpdates.length > 1 && latest.status === "resolved"
+      ? formatDistanceStrict(firstUpdate.date, latest.date)
+      : undefined;
+  const resolvedDuration =
+    distance && distance !== "0 seconds" ? `(${distance})` : undefined;
 
   return (
     <div
@@ -507,37 +511,18 @@ export function StatusEventTimelineReport({
       {...props}
     >
       {/* NOTE: make sure they are sorted by date */}
-      {displayedUpdates.map((update, index) => {
-        const updateDate = new Date(update.date);
-        let durationText: string | undefined;
-
-        if (index === 0) {
-          const startedAt = new Date(
-            sortedUpdates[sortedUpdates.length - 1].date,
-          );
-          const duration = formatDistanceStrict(startedAt, updateDate);
-
-          if (duration !== "0 seconds" && update.status === "resolved") {
-            durationText = labels.durationIn(duration);
-          }
-        } else {
-          const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
-          const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
-          durationText = labels.durationEarlier(timeFromLast);
-        }
-
-        return (
-          <StatusEventTimelineReportUpdate
-            key={index}
-            report={update}
-            duration={durationText}
-            withSeparator={index !== displayedUpdates.length - 1}
-            withDot={withDot}
-            isLast={index === displayedUpdates.length - 1}
-            renderMessage={renderMessage}
-          />
-        );
-      })}
+      {/* NOTE: no duration on the other updates: without a shared anchor it reads as "x ago". */}
+      {displayedUpdates.map((update, index) => (
+        <StatusEventTimelineReportUpdate
+          key={index}
+          report={update}
+          duration={index === 0 ? resolvedDuration : undefined}
+          withSeparator={index !== displayedUpdates.length - 1}
+          withDot={withDot}
+          isLast={index === displayedUpdates.length - 1}
+          renderMessage={renderMessage}
+        />
+      ))}
     </div>
   );
 }
@@ -648,15 +633,23 @@ export function StatusEventTimelineReportUpdate({
 
 interface StatusMaintenanceUpdate {
   title: string;
-  message: string;
+  /** Fallback body when no `maintenanceUpdates` are given. */
+  message?: string;
   from: Date;
   to: Date;
+  maintenanceUpdates?: {
+    id: number;
+    date: Date;
+    message: string;
+  }[];
 }
 
 /**
  * StatusEventTimelineMaintenance - Timeline entry for maintenance windows
  *
- * Displays a maintenance window with title, date range, duration, and message.
+ * Displays a maintenance window with title, date range and duration. The
+ * oldest update is the announcement and later ones follow as dated notes;
+ * `message` is only used when no updates are given.
  * Uses a blue dot indicator to distinguish from incident updates.
  *
  * The date range is formatted and split to allow individual StatusTimestamp
@@ -697,53 +690,89 @@ export function StatusEventTimelineMaintenance({
     maintenance.from,
     maintenance.to,
   );
+  // chronological: the oldest update is the announcement, notes follow it;
+  // dates have second precision, so the id breaks ties
+  const [announcement, ...updates] = [
+    ...(maintenance.maintenanceUpdates ?? []),
+  ].sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id);
+  const body = announcement?.message ?? maintenance.message ?? "";
+  const renderBody = (message: string) =>
+    message.trim() === "" ? (
+      <span className="text-muted-foreground/70">-</span>
+    ) : renderMessage ? (
+      renderMessage(message)
+    ) : (
+      message
+    );
+
   return (
     <div
       data-slot="status-event-timeline-maintenance"
       data-variant="maintenance"
       className="group"
     >
-      <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-4">
+      <div className="flex flex-row gap-4">
+        {withDot ? (
+          <div className="flex flex-col">
+            <div className="flex h-5 flex-col items-center justify-center">
+              <StatusEventTimelineDot />
+            </div>
+            {updates.length > 0 ? <StatusEventTimelineSeparator /> : null}
+          </div>
+        ) : null}
+        <div className={cn(updates.length > 0 ? "mb-2" : "mb-0")}>
+          <StatusEventTimelineTitle>
+            <span>{maintenance.title}</span>{" "}
+            <span className="text-muted-foreground/70">·</span>{" "}
+            <span className="text-muted-foreground font-mono text-xs">
+              <StatusTimestamp date={maintenance.from} variant="rich" asChild>
+                <span>{from}</span>
+              </StatusTimestamp>
+              {" - "}
+              <StatusTimestamp date={maintenance.to} variant="rich" asChild>
+                <span>{to}</span>
+              </StatusTimestamp>
+            </span>{" "}
+            {duration ? (
+              <span className="text-muted-foreground/70 font-mono text-xs">
+                {labels.durationFor(duration)}
+              </span>
+            ) : null}
+          </StatusEventTimelineTitle>
+          <StatusEventTimelineMessage>
+            {renderBody(body)}
+          </StatusEventTimelineMessage>
+        </div>
+      </div>
+      {updates.map((update, index) => (
+        <div
+          key={`${update.date.getTime()}-${index}`}
+          className="flex flex-row gap-4"
+        >
           {withDot ? (
             <div className="flex flex-col">
               <div className="flex h-5 flex-col items-center justify-center">
                 <StatusEventTimelineDot />
               </div>
+              {index !== updates.length - 1 ? (
+                <StatusEventTimelineSeparator />
+              ) : null}
             </div>
           ) : null}
-          {/* NOTE: is always last, no need for className="mb-2" */}
-          <div>
+          <div className={cn(index === updates.length - 1 ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
-              <span>{maintenance.title}</span>{" "}
-              <span className="text-muted-foreground/70">·</span>{" "}
               <span className="text-muted-foreground font-mono text-xs">
-                <StatusTimestamp date={maintenance.from} variant="rich" asChild>
-                  <span>{from}</span>
+                <StatusTimestamp date={update.date} variant="rich" asChild>
+                  <span>{labels.formatDateTime(update.date)}</span>
                 </StatusTimestamp>
-                {" - "}
-                <StatusTimestamp date={maintenance.to} variant="rich" asChild>
-                  <span>{to}</span>
-                </StatusTimestamp>
-              </span>{" "}
-              {duration ? (
-                <span className="text-muted-foreground/70 font-mono text-xs">
-                  {labels.durationFor(duration)}
-                </span>
-              ) : null}
+              </span>
             </StatusEventTimelineTitle>
             <StatusEventTimelineMessage>
-              {maintenance.message.trim() === "" ? (
-                <span className="text-muted-foreground/70">-</span>
-              ) : renderMessage ? (
-                renderMessage(maintenance.message)
-              ) : (
-                maintenance.message
-              )}
+              {renderBody(update.message)}
             </StatusEventTimelineMessage>
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

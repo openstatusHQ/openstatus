@@ -1,3 +1,4 @@
+import { isEmailDomainAuthorized } from "@openstatus/services/page-access";
 import { notFound, unauthorized } from "next/navigation";
 
 import { auth } from "../../../../../../../lib/auth";
@@ -33,10 +34,9 @@ export async function GET(
     if (_page.accessType === "email-domain") {
       const session = await auth();
       const user = session?.user;
-      const allowedDomains = _page.authEmailDomains ?? [];
-      if (!user || !user.email) return unauthorized();
-      if (!allowedDomains.includes(user.email.split("@")[1]))
+      if (!isEmailDomainAuthorized(user?.email, _page.authEmailDomains)) {
         return unauthorized();
+      }
     }
 
     const page = await queryClient.fetchQuery(
@@ -74,22 +74,34 @@ export async function GET(
         id: group.id,
         name: group.name,
       })),
-      maintenances: page.maintenances.map((maintenance) => ({
-        id: maintenance.id,
-        name: maintenance.title,
-        message: maintenance.message,
-        from: maintenance.from,
-        to: maintenance.to,
-        updatedAt: maintenance.updatedAt,
-        // @deprecated Use components instead - returning monitor IDs for backwards compatibility
-        monitors: maintenance.maintenancesToPageComponents
-          .map((item) => item.pageComponent.monitorId)
-          .filter((id): id is number => id !== null),
-        // New field - references page component IDs
-        pageComponents: maintenance.maintenancesToPageComponents.map(
-          (item) => item.pageComponentId,
-        ),
-      })),
+      maintenances: page.maintenances.map((maintenance) => {
+        const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
+          (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,
+        );
+        return {
+          id: maintenance.id,
+          name: maintenance.title,
+          // @deprecated Use maintenanceUpdates instead - returning the newest update's message for backwards compatibility
+          message: updates[0]?.message ?? maintenance.message,
+          maintenanceUpdates: updates.map((update) => ({
+            id: update.id,
+            message: update.message,
+            date: update.date,
+            updatedAt: update.updatedAt,
+          })),
+          from: maintenance.from,
+          to: maintenance.to,
+          updatedAt: maintenance.updatedAt,
+          // @deprecated Use components instead - returning monitor IDs for backwards compatibility
+          monitors: maintenance.maintenancesToPageComponents
+            .map((item) => item.pageComponent.monitorId)
+            .filter((id): id is number => id !== null),
+          // New field - references page component IDs
+          pageComponents: maintenance.maintenancesToPageComponents.map(
+            (item) => item.pageComponentId,
+          ),
+        };
+      }),
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
         title: report.title,

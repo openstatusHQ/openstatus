@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   selectWindow,
@@ -45,6 +44,7 @@ describe("toPipeParams", () => {
         status: undefined,
         trigger: undefined,
         statusCodes: undefined,
+        attempts: [],
         latencyMin: undefined,
         latencyMax: undefined,
       }),
@@ -58,6 +58,7 @@ describe("toPipeParams", () => {
         status: ["error"],
         trigger: ["cron"],
         statusCodes: [500],
+        attempts: [2, 3],
         latencyMin: 0,
         latencyMax: 100,
       }),
@@ -66,6 +67,7 @@ describe("toPipeParams", () => {
       status: ["error"],
       trigger: ["cron"],
       statusCodes: [500],
+      attempts: [2, 3],
       latencyMin: 0,
       latencyMax: 100,
     });

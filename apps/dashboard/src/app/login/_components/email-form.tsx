@@ -14,6 +14,7 @@ import {
 
 import { type EmailFormState, continueWithEmail } from "./actions";
 import { LoginButton, STORAGE_KEY } from "./login-button";
+import { RedirectToInput } from "./redirect-to-input";
 
 const initialState: EmailFormState = {};
 
@@ -57,7 +58,7 @@ export function EmailForm({
 
   if (state.sent) {
     return (
-      <EmptyStateContainer className="py-8">
+      <EmptyStateContainer>
         <Email className="text-muted-foreground size-5" />
         <EmptyStateTitle>Check your inbox</EmptyStateTitle>
         <EmptyStateDescription className="text-pretty">
@@ -69,9 +70,7 @@ export function EmailForm({
 
   const form = (
     <form action={formAction} className="grid w-full gap-2">
-      {redirectTo ? (
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-      ) : null}
+      <RedirectToInput redirectTo={redirectTo} />
       <Input
         name="email"
         type="email"

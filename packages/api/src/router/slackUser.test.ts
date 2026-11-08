@@ -6,9 +6,8 @@ import {
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
 import { signSlackLinkToken } from "@openstatus/services/slack-user";
-import { expect } from "@std/expect";
-import { beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { beforeAll, expect, test } from "vitest";
 
 import { lambdaRouter } from "../lambda";
 import { createInnerTRPCContext } from "../trpc";

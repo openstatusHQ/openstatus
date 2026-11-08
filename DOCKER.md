@@ -22,7 +22,7 @@ docker compose ps
 #    port — seed refuses non-localhost databases by design)
 docker run --rm --network host \
   -e DATABASE_URL=http://localhost:8080 \
-  --entrypoint deno openstatus/db-migrate:latest task seed
+  --entrypoint npm openstatus/db-migrate:latest run seed
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -122,11 +122,11 @@ After migrations complete, seed the database with sample data:
 # databases by design, so it cannot run over the compose-internal network
 docker run --rm --network host \
   -e DATABASE_URL=http://localhost:8080 \
-  --entrypoint deno openstatus/db-migrate:latest task seed
+  --entrypoint npm openstatus/db-migrate:latest run seed
 ```
 
 This creates:
-- 3 workspaces (`love-openstatus`, `test2`, `test3`)
+- 3 workspaces (`love-openstatus` "Acme Inc.", `test2`, `test3`)
 - Sample monitors and 2 status pages (slugs `status` and `acme`)
 - Test user account: `ping@openstatus.dev`
 - Sample incidents, status reports, and maintenance windows

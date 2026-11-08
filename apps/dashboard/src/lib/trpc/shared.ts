@@ -4,6 +4,8 @@ import type { HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import superjson from "superjson";
 
+import { isExpectedNotFound } from "./error";
+
 /**
  * tRPC logger link that reports failed queries to Sentry directly instead of
  * letting captureConsoleIntegration scrape tRPC's styled console.error format
@@ -19,6 +21,9 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
       (opts.direction === "down" && opts.result instanceof Error),
     logger: (opts) => {
       if (opts.direction === "down" && opts.result instanceof Error) {
+        if (isExpectedNotFound(opts.result, opts.context.expectNotFound)) {
+          return;
+        }
         Sentry.captureException(opts.result, {
           extra: { path: opts.path },
         });

@@ -102,6 +102,48 @@ export async function getComponentReportWindows(args: {
   );
 }
 
+// Report windows for specific components across services, one query.
+export async function getComponentReportWindowsByIds(args: {
+  ctx?: GlobalReadContext;
+  componentIds: number[];
+  since: Date;
+}): Promise<ComponentReportWindow[]> {
+  const { ctx, componentIds, since } = args;
+  if (componentIds.length === 0) return [];
+  const db = ctx?.db ?? defaultDb;
+  const rows = await retryRead(() =>
+    db
+      .select({
+        componentId: externalServiceReport.externalServiceComponentId,
+        reporters: distinctReporters,
+        total: totalReports,
+      })
+      .from(externalServiceReport)
+      .where(
+        and(
+          inArray(
+            externalServiceReport.externalServiceComponentId,
+            componentIds,
+          ),
+          gte(externalServiceReport.createdAt, since),
+        ),
+      )
+      .groupBy(externalServiceReport.externalServiceComponentId)
+      .all(),
+  );
+  return rows.flatMap((r) =>
+    r.componentId == null
+      ? []
+      : [
+          {
+            componentId: r.componentId,
+            reporters: r.reporters,
+            total: r.total,
+          },
+        ],
+  );
+}
+
 export async function getServiceReportDaily(args: {
   ctx?: GlobalReadContext;
   serviceId: number;

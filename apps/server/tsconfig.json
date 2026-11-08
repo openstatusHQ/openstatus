@@ -8,15 +8,14 @@
     "moduleResolution": "bundler",
     "jsxImportSource": "react",
     "allowJs": true,
-    "types": [],
     "paths": {
       "@/*": ["./src/*"],
-      "@modelcontextprotocol/sdk/server/mcp.js": [
-        "./node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp.d.ts"
+      "@openstatus/analytics-real": ["../../packages/analytics/src/index.ts"],
+      "@openstatus/emails-real": ["../../packages/emails/src/index.ts"],
+      "@openstatus/subscriptions-real": [
+        "../../packages/subscriptions/src/index.ts"
       ],
-      "@modelcontextprotocol/sdk/types.js": [
-        "./node_modules/@modelcontextprotocol/sdk/dist/esm/types.d.ts"
-      ]
+      "@openstatus/tinybird-real": ["../../packages/tinybird/src/index.ts"]
     }
   }
 }

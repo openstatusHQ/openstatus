@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   isEmailDomainAuthorized,
@@ -128,6 +127,14 @@ describe("isEmailDomainAuthorized", () => {
   test("matching is case-insensitive on both sides", () => {
     expect(isEmailDomainAuthorized("Dev@ACME.com", ["acme.com"])).toBe(true);
     expect(isEmailDomainAuthorized("dev@acme.com", ["ACME.COM"])).toBe(true);
+  });
+
+  test("matching is whitespace-insensitive on both sides", () => {
+    expect(isEmailDomainAuthorized(" dev@acme.com ", ["acme.com"])).toBe(true);
+    expect(isEmailDomainAuthorized("dev@acme.com", [" acme.com "])).toBe(true);
+    expect(isEmailDomainAuthorized("  dev@ACME.COM  ", ["  acme.com  "])).toBe(
+      true,
+    );
   });
 
   test("a subdomain of an allowed domain is not allowed", () => {

@@ -5,7 +5,7 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError } from "../errors";
+import { ConcurrentUpdateError, ConflictError } from "../errors";
 import { getIncidentInWorkspace } from "./internal";
 import { IncidentIdInput } from "./schemas";
 
@@ -19,7 +19,7 @@ export async function deleteIncident(args: {
   input: IncidentIdInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = IncidentIdInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -52,7 +52,9 @@ export async function deleteIncident(args: {
       .returning()
       .get();
     if (!deleted) {
-      throw new ConflictError(`Incident #${existing.id} changed concurrently`);
+      throw new ConcurrentUpdateError(
+        `Incident #${existing.id} changed concurrently`,
+      );
     }
     await emitAudit(tx, ctx, {
       action: "incident.delete",

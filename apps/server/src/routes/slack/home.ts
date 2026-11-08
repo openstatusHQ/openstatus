@@ -83,7 +83,7 @@ function incidentBlocks(openIncidents: HomeIncident[]): KnownBlock[] {
 export async function homeIncidents(
   ctx: ServiceContext,
 ): Promise<HomeIncident[]> {
-  const rows = await listIncidents({
+  const { items: rows } = await listIncidents({
     ctx,
     input: { status: ["open", "mitigated"], limit: 10 },
   });

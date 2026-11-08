@@ -55,7 +55,7 @@ export async function deleteAccount(args: {
   input?: DeleteAccountInput;
 }): Promise<{ customDomains: string[] }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   if (args.input !== undefined) DeleteAccountInput.parse(args.input);
 
   // `userId` is derived from `ctx.actor`, not input — account deletion

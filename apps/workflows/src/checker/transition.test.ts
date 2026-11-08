@@ -12,13 +12,7 @@ import {
   createTestWorkspace,
   linkNotificationToMonitor,
 } from "@openstatus/db/src/test/factories";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  test,
-} from "@openstatus/test-utils";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { drainOutbox } from "./outbox";
 import { applyStatusTransition, isStaleCheck } from "./transition";

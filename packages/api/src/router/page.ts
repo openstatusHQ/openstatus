@@ -26,8 +26,9 @@ import {
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
+  updatePageTimezone,
+  UpdatePageTimezoneInput,
 } from "@openstatus/services/page";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
@@ -281,6 +282,20 @@ export const pageRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageLocales({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateTimezone: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(UpdatePageTimezoneInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageTimezone({
           ctx: toServiceCtx(ctx),
           input,
         });

@@ -40,6 +40,8 @@ export async function generateMetadata({
   const { slug } = await params;
   const page = getToolsPage("checker-slug");
 
+  // No markdown twin: the `.md` of this URL resolves to the tool's template
+  // page, not to this result, so the alternate is dropped on purpose.
   const metadata = {
     ...getPageMetadata(page, "play"),
     alternates: { canonical: `${BASE_URL}/play/checker/${slug}` },

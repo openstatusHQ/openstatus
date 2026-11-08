@@ -19,7 +19,8 @@ export type CommandSheet = {
 
 export type CommandPage =
   | { type: "monitor"; id: number; name: string }
-  | { type: "status-page"; id: number; title: string };
+  | { type: "status-page"; id: number; title: string }
+  | { type: "incident"; id: number; title: string };
 
 export function pageLabel(page: CommandPage): string {
   return page.type === "monitor" ? page.name : page.title;
@@ -43,6 +44,8 @@ export type CommandMenuItem = {
 
 export type CommandMenuGroup = {
   heading: string;
+  // React key when the heading is user content and could clash with another.
+  key?: string;
   items: CommandMenuItem[];
   // Cap shown items while the search input is empty (root entity groups).
   idleLimit?: number;

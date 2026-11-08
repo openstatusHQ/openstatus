@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import {
   ApiKey,
   Lock,
@@ -26,6 +27,7 @@ import {
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -88,6 +90,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const ACCESS_TYPE_LIMIT = {
+  public: undefined,
+  password: "password-protection",
+  "email-domain": "email-domain-protection",
+  "ip-restriction": "ip-restriction",
+} satisfies Record<z.infer<typeof accessTypeSchema>, keyof Limits | undefined>;
+
 export function FormPageAccess({
   lockedMap,
   allowIndexLocked,
@@ -140,7 +149,7 @@ export function FormPageAccess({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="page-access">
           <FormCardHeader>
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
@@ -325,11 +334,16 @@ export function FormPageAccess({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
-                <Link href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit={ACCESS_TYPE_LIMIT[watchAccessType]}
+                type="button"
+                asChild
+              >
+                <NextLink href="/settings/billing#plans">
                   <Lock />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>

@@ -5,11 +5,11 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import {
   currentImpactByComponent,
+  fetchByJobType,
   fillStatusDataFor45Days,
   getEvents,
   getUptime,
@@ -840,6 +840,76 @@ describe("fillStatusDataFor45Days", () => {
 });
 
 describe("getUptime", () => {
+  describe("heartbeat monitors", () => {
+    it("counts a silent day's incident as downtime in requests mode", () => {
+      // pings only on the first and last day: a ping tally would read 100%
+      const data = Array.from({ length: 10 }, (_, i) =>
+        createStatusData(i, i === 0 || i === 9 ? 1 : 0, 0, 0),
+      );
+      const uptime = getUptime({
+        data,
+        events: [createIncident(1, 5, 24)],
+        barType: "absolute",
+        cardType: "requests",
+        heartbeat: true,
+      });
+      expect(uptime).toBe("90%");
+    });
+
+    it("starts at the first ping, not the start of the lookback", () => {
+      const data = Array.from({ length: 45 }, (_, i) =>
+        createStatusData(i, i === 2 ? 1 : 0, 0, 0),
+      );
+      const uptime = getUptime({
+        data,
+        events: [createIncident(1, 1, 24)],
+        barType: "absolute",
+        cardType: "duration",
+        heartbeat: true,
+      });
+      expect(uptime).toBe("66.666%");
+    });
+
+    it("starts at a mid-day incident before any ping, not at midnight", () => {
+      // no pings at all: the 12h incident on day 0 is the only signal
+      const data = Array.from({ length: 3 }, (_, i) => createStatusData(i));
+      const from = new Date(data[0].day);
+      from.setUTCHours(6);
+      const to = new Date(from.getTime() + 12 * 60 * 60 * 1000);
+      const uptime = getUptime({
+        data,
+        events: [
+          {
+            id: 1,
+            name: "Downtime",
+            from,
+            to,
+            type: "incident",
+            status: "error",
+          },
+        ],
+        barType: "absolute",
+        cardType: "requests",
+        heartbeat: true,
+      });
+      // covered 06:00 → 24:00 = 18h, 12h down
+      expect(uptime).toBe("33.333%");
+    });
+
+    it("never pinged and no incident reads 100%", () => {
+      const data = Array.from({ length: 45 }, (_, i) => createStatusData(i));
+      expect(
+        getUptime({
+          data,
+          events: [],
+          barType: "dominant",
+          cardType: "dominant",
+          heartbeat: true,
+        }),
+      ).toBe("100%");
+    });
+  });
+
   describe("manual bar type", () => {
     it("should calculate uptime based on report durations", () => {
       const data = Array.from({ length: 45 }, (_, i) =>
@@ -1749,6 +1819,151 @@ describe("componentImpacts", () => {
     });
   });
 
+  describe("getUptime - duration mode probe downtime", () => {
+    const day2 = dayStartUTC(2);
+    // day 2: 6 of 24 hourly checks failed; day 1: all ok
+    const twoDayData = [createStatusData(2, 18, 0, 6), createStatusData(1, 24)];
+    const incident = {
+      id: 1,
+      name: "Downtime",
+      from: hoursAfter(day2, 6),
+      to: hoursAfter(day2, 12),
+      type: "incident" as const,
+      status: "error" as const,
+    };
+
+    it("public monitor: incident covering the failed checks counts once", () => {
+      // pre-fix the day-wide probe weight stacked on the incident: 10.5h/48h
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [incident],
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("87.5%");
+    });
+
+    it("public monitor: failed checks without an incident do not count", () => {
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("100%");
+    });
+
+    it("private-only monitor: failed checks count since probes never open incidents", () => {
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("87.5%");
+    });
+
+    it("private-only monitor: incident covering the failed checks counts once", () => {
+      const fullDay = { ...incident, from: day2, to: hoursAfter(day2, 24) };
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [fullDay],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("50%");
+    });
+
+    it("private-only monitor: incident on another day adds to the failed checks", () => {
+      const day1 = dayStartUTC(1);
+      const other = { ...incident, from: day1, to: hoursAfter(day1, 12) };
+      // 6h probe (day 2) + 12h incident (day 1) = 18h / 48h
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [other],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("62.5%");
+    });
+
+    it("private-only monitor: worst weight wins between a report and failed checks", () => {
+      // partial_outage (0.5) across day 2 outweighs the 0.25 probe error ratio
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("75%");
+    });
+
+    it("private-only monitor: degraded checks count as up", () => {
+      expect(
+        getUptime({
+          data: [createStatusData(2, 18, 6, 0), createStatusData(1, 24)],
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("100%");
+    });
+
+    it("private-only monitor: a day without checks adds no downtime", () => {
+      expect(
+        getUptime({
+          data: [createStatusData(2, 0, 0, 0), createStatusData(1, 24)],
+          events: [],
+          barType: "absolute",
+          cardType: "duration",
+          privateLocationOnly: true,
+        }),
+      ).toBe("100%");
+    });
+
+    it("flag is ignored in requests mode", () => {
+      for (const privateLocationOnly of [true, false]) {
+        expect(
+          getUptime({
+            data: twoDayData,
+            events: [],
+            barType: "absolute",
+            cardType: "requests",
+            privateLocationOnly,
+          }),
+        ).toBe("87.5%");
+      }
+    });
+
+    it("flag is ignored in manual mode: reports only", () => {
+      expect(
+        getUptime({
+          data: twoDayData,
+          events: [incident],
+          barType: "manual",
+          cardType: "manual",
+          privateLocationOnly: true,
+        }),
+      ).toBe("100%");
+    });
+  });
+
   describe("getEvents - impact projection", () => {
     const day = dayStartUTC(1);
 
@@ -2105,8 +2320,8 @@ describe("withTinybirdFallback", () => {
   });
 
   it("falls back when the read exceeds the timeout", async () => {
-    // keep a handle on the slow read's timer — deno's leak sanitizer fails
-    // the test if it outlives the assertion
+    // keep a handle on the slow read's timer so it can be cleared before
+    // the test ends
     let slowRead!: ReturnType<typeof setTimeout>;
     const result = await withTinybirdFallback(
       () =>
@@ -2117,5 +2332,85 @@ describe("withTinybirdFallback", () => {
     );
     clearTimeout(slowRead);
     expect(result).toEqual({ ok: false, data: null });
+  });
+});
+
+describe("fetchByJobType", () => {
+  const component = (id: number, jobType: string) => ({
+    monitor: { id, jobType },
+  });
+
+  it("queries each job type once, only with its own monitors", async () => {
+    const calls: { type: string; monitorIds: string[] }[] = [];
+    await fetchByJobType(
+      [component(1, "http"), component(2, "tcp"), component(3, "http")],
+      (type) =>
+        async ({ monitorIds }) => {
+          calls.push({ type, monitorIds });
+          return { data: [] };
+        },
+    );
+
+    expect(calls).toEqual([
+      { type: "http", monitorIds: ["1", "3"] },
+      { type: "tcp", monitorIds: ["2"] },
+    ]);
+  });
+
+  it("skips job types the pipes don't cover", async () => {
+    const types: string[] = [];
+    await fetchByJobType([component(1, "udp")], (type) => async () => {
+      types.push(type);
+      return { data: [] };
+    });
+    expect(types).toEqual([]);
+  });
+
+  it("queries heartbeat monitors through their own pipe", async () => {
+    const calls: string[] = [];
+    await fetchByJobType([component(4, "heartbeat")], (type) => async () => {
+      calls.push(type);
+      return { data: [] };
+    });
+    expect(calls).toEqual(["heartbeat"]);
+  });
+
+  it("skips a type whose procedure is null", async () => {
+    const result = await fetchByJobType(
+      [component(1, "http"), component(2, "heartbeat")],
+      (type) =>
+        type === "heartbeat"
+          ? null
+          : async () => ({ data: [{ monitorId: "1" }] }),
+    );
+    expect([...result.keys()]).toEqual(["1"]);
+  });
+
+  it("groups rows from every pipe by monitor id, keeping order", async () => {
+    const rows: Record<string, { monitorId: string; day: string }[]> = {
+      http: [
+        { monitorId: "1", day: "a" },
+        { monitorId: "3", day: "a" },
+        { monitorId: "1", day: "b" },
+      ],
+      dns: [{ monitorId: "2", day: "a" }],
+    };
+    const result = await fetchByJobType(
+      [component(1, "http"), component(2, "dns"), component(3, "http")],
+      (type) => async () => ({ data: rows[type] ?? [] }),
+    );
+
+    expect(result.get("1")?.map((r) => r.day)).toEqual(["a", "b"]);
+    expect(result.get("2")).toEqual([{ monitorId: "2", day: "a" }]);
+    expect(result.get("3")).toHaveLength(1);
+    expect(result.has("4")).toBe(false);
+  });
+
+  it("propagates a pipe failure so withTinybirdFallback can catch it", async () => {
+    await expect(
+      fetchByJobType([component(1, "http")], () => async () => {
+        throw new Error("tinybird down");
+      }),
+    ).rejects.toThrow("tinybird down");
   });
 });

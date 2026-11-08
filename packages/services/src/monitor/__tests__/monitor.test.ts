@@ -10,8 +10,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
   clearAuditLog,
@@ -403,6 +402,75 @@ describe("cloneMonitor", () => {
       });
 
       expect(clone.status).toBe("active");
+    });
+  });
+
+  test("rejects a source whose periodicity is outside the current plan", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const source = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-clone-periodicity`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      // Simulates a monitor that predates a downgrade.
+      await tx
+        .update(monitor)
+        .set({ periodicity: "30s" })
+        .where(eq(monitor.id, source.id));
+
+      const downgradedCtx: ServiceContext = {
+        ...ctx,
+        workspace: {
+          ...ctx.workspace,
+          limits: { ...ctx.workspace.limits, periodicity: ["10m", "30m"] },
+        },
+      };
+
+      await expect(
+        cloneMonitor({ ctx: downgradedCtx, input: { id: source.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("rejects a source whose regions are outside the current plan", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const source = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-clone-regions`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      await tx
+        .update(monitor)
+        .set({ regions: "ams,iad,gru" })
+        .where(eq(monitor.id, source.id));
+
+      const downgradedCtx: ServiceContext = {
+        ...ctx,
+        workspace: {
+          ...ctx.workspace,
+          limits: { ...ctx.workspace.limits, "max-regions": 2 },
+        },
+      };
+
+      await expect(
+        cloneMonitor({ ctx: downgradedCtx, input: { id: source.id } }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
     });
   });
 });
@@ -1234,18 +1302,18 @@ describe("updateMonitorConfig clearing + replacement", () => {
     });
   });
 
-  // The proto declares 0–120_000 ms for `timeout`/`degraded_at`; the RPC API
+  // The proto declares 0–300_000 ms for `timeout`/`degraded_at`; the RPC API
   // accepted that range before these verbs existed, so they must too.
-  test("accepts the proto's full 0–120_000 ms timeout range", async () => {
+  test("accepts the proto's full 0–300_000 ms timeout range", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const row = await seed(tx, `${TEST_PREFIX}-wide-timeout`);
 
       const updated = await updateMonitorConfig({
         ctx,
-        input: { id: row.id, timeout: 120_000, degradedAfter: 90_000 },
+        input: { id: row.id, timeout: 300_000, degradedAfter: 90_000 },
       });
-      expect(updated.timeout).toBe(120_000);
+      expect(updated.timeout).toBe(300_000);
       expect(updated.degradedAfter).toBe(90_000);
 
       const created = await createMonitor({
@@ -1258,11 +1326,11 @@ describe("updateMonitorConfig clearing + replacement", () => {
           headers: [],
           assertions: [],
           active: false,
-          timeout: 120_000,
+          timeout: 300_000,
           degradedAfter: 90_000,
         },
       });
-      expect(created.timeout).toBe(120_000);
+      expect(created.timeout).toBe(300_000);
       expect(created.degradedAfter).toBe(90_000);
     });
   });
@@ -1273,7 +1341,7 @@ describe("updateMonitorConfig clearing + replacement", () => {
       const row = await seed(tx, `${TEST_PREFIX}-over-timeout`);
 
       await expect(
-        updateMonitorConfig({ ctx, input: { id: row.id, timeout: 120_001 } }),
+        updateMonitorConfig({ ctx, input: { id: row.id, timeout: 300_001 } }),
       ).rejects.toThrow();
     });
   });
@@ -1433,6 +1501,83 @@ describe("monitor count quota", () => {
       await expect(
         cloneMonitor({ ctx, input: { id: source.id } }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-pages",
+          userId: 1,
+          scopes: ["pages:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createMonitor({
+          ctx,
+          input: {
+            name: `${TEST_PREFIX}-other-group`,
+            jobType: "http",
+            url: "https://example.com",
+            method: "GET",
+            headers: [],
+            assertions: [],
+            active: false,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listMonitors({ ctx, input: { limit: 100, offset: 0, order: "desc" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("monitors:read and legacy read list, monitors:write creates", async () => {
+    await withTestTransaction(async (tx) => {
+      for (const scopes of [["monitors:read"], ["read"]] as const) {
+        const ctx = {
+          ...makeApiKeyCtx(teamCtx.workspace, {
+            keyId: "k-read",
+            userId: 1,
+            scopes: [...scopes],
+          }),
+          db: tx,
+        };
+        await expect(
+          listMonitors({
+            ctx,
+            input: { limit: 100, offset: 0, order: "desc" },
+          }),
+        ).resolves.toBeDefined();
+      }
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-monitors",
+          userId: 1,
+          scopes: ["monitors:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        listMonitors({ ctx, input: { limit: 100, offset: 0, order: "desc" } }),
+      ).resolves.toBeDefined();
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-group-write`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+      expect(row.id).toBeGreaterThan(0);
     });
   });
 });

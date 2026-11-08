@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -137,7 +138,7 @@ export function FormLocale({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="locales">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Locales</FormCardTitle>
@@ -229,11 +230,16 @@ export function FormLocale({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
-                <Link href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit="i18n"
+                type="button"
+                asChild
+              >
+                <NextLink href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>

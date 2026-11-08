@@ -92,7 +92,7 @@ export async function linkIncidentStatusReport(args: {
   input: LinkIncidentStatusReportInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = LinkIncidentStatusReportInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -123,7 +123,7 @@ export async function unlinkIncidentStatusReport(args: {
   input: IncidentIdInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = IncidentIdInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

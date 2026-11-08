@@ -1,5 +1,6 @@
 "use client";
 
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { Clock, Close, Globe, Notification, Team } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons/brand";
@@ -41,7 +42,11 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   return (
     <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex h-7 items-center justify-between pr-0 pl-0">
-        <span>Upgrade to {plan.title}</span>
+        <span>
+          {workspace?.trial.eligible
+            ? `Try ${plan.title} free for ${TRIAL_DAYS} days`
+            : `Upgrade to ${plan.title}`}
+        </span>
         <SidebarMenuAction
           onClick={handleClose}
           className="relative top-0 right-0"
@@ -65,9 +70,14 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
             data-active="true"
             onClick={() => setOpen(true)}
           >
-            Upgrade
+            {workspace?.trial.eligible ? "Start trial" : "Upgrade"}
           </SidebarMenuButton>
         </SidebarMenuItem>
+        {workspace?.trial.eligible ? (
+          <SidebarMenuItem className="text-muted-foreground text-center text-[10px]">
+            No credit card needed
+          </SidebarMenuItem>
+        ) : null}
       </SidebarMenu>
       <UpgradeDialog open={open} onOpenChange={setOpen} />
     </SidebarGroup>

@@ -13,12 +13,14 @@ import {
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
 import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { heartbeatSnippets } from "@/components/forms/monitor/form-heartbeat";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -37,23 +39,9 @@ export function NavActions() {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const router = useRouter();
-  const pathname = usePathname();
 
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-
-  const deleteMonitorMutation = useMutation(
-    trpc.monitor.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.monitor.list.queryKey(),
-        });
-        if (pathname.includes(`/monitors/${id}`)) {
-          router.push("/monitors");
-        }
-      },
-    }),
   );
 
   const cloneMonitorMutation = useMutation(
@@ -67,18 +55,54 @@ export function NavActions() {
     }),
   );
 
+  const updateMonitorsMutation = useMutation(
+    trpc.monitor.updateMonitors.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
+      },
+    }),
+  );
+
   const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
   const testIcmpMutation = useMutation(trpc.checker.testIcmp.mutationOptions());
   const testGrpcMutation = useMutation(trpc.checker.testGrpc.mutationOptions());
+  const { data: heartbeat, refetch: refetchHeartbeat } = useQuery({
+    ...trpc.monitor.heartbeat.queryOptions({ id: Number.parseInt(id) }),
+    enabled: monitor?.jobType === "heartbeat",
+  });
 
-  // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+  // the request an http monitor sends, or the ping a heartbeat expects; hidden for the rest
   const curlCommand =
-    monitor?.jobType === "http" ? buildCurlCommand(monitor) : null;
+    monitor?.jobType === "http"
+      ? buildCurlCommand(monitor)
+      : heartbeat?.pingUrl
+        ? heartbeatSnippets(heartbeat.pingUrl).curl
+        : null;
 
+  function setActive(active: boolean) {
+    const promise = updateMonitorsMutation.mutateAsync({
+      ids: [Number.parseInt(id)],
+      active,
+    });
+    toast.promise(promise, {
+      loading: active ? "Resuming monitor..." : "Pausing monitor...",
+      success: active ? "Monitor resumed" : "Monitor paused",
+      error: (error) => {
+        if (isTRPCClientError(error)) {
+          return error.message;
+        }
+        return active ? "Failed to resume monitor" : "Failed to pause monitor";
+      },
+    });
+  }
+
+  const hiddenAction = monitor?.active ? "resume" : "pause";
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
+    pause: () => setActive(false),
+    resume: () => setActive(true),
     "copy-id": async () => {
       await navigator.clipboard.writeText(id);
       toast.success("Monitor ID copied to clipboard");
@@ -104,9 +128,33 @@ export function NavActions() {
         },
       });
     },
-  }).filter((action) => action.id !== "copy-curl" || Boolean(curlCommand));
+  }).filter(
+    (action) =>
+      action.id !== hiddenAction &&
+      (action.id !== "copy-curl" || Boolean(curlCommand)),
+  );
 
   async function testAction() {
+    if (monitor?.jobType === "heartbeat") {
+      const pingUrl = heartbeat?.pingUrl;
+      if (!pingUrl) return;
+      const promise = fetch(pingUrl, {
+        method: "POST",
+        body: "Test ping from the openstatus dashboard",
+      }).then((res) => {
+        if (!res.ok) throw new Error(`Ping failed with ${res.status}`);
+        return refetchHeartbeat();
+      });
+      toast.promise(promise, {
+        loading: "Sending test ping...",
+        success: monitor.active
+          ? "Test ping received"
+          : "Test ping received, but the monitor is paused",
+        error: (error) =>
+          error instanceof Error ? error.message : "Test ping failed",
+      });
+      return;
+    }
     if (monitor?.jobType === "http") {
       const assertions = deserialize(monitor.assertions ?? "[]");
       const promise = testHttpMutation.mutateAsync({
@@ -212,37 +260,7 @@ export function NavActions() {
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
       <div className="text-muted-foreground hidden font-medium lg:inline-block">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {!monitor.active ? (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-muted-foreground/70 relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            ) : monitor.status === "active" ? (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-success/80 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
-                <span className="bg-success relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            ) : monitor.status === "error" ? (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-destructive relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            ) : (
-              <span className="relative ml-1.5 inline-flex">
-                <span className="bg-warning relative inline-flex h-2.5 w-2.5 rounded-full" />
-              </span>
-            )}
-          </TooltipTrigger>
-          <TooltipContent>
-            {!monitor.active
-              ? "Inactive"
-              : monitor.status === "active"
-                ? "Normal"
-                : monitor.status === "error"
-                  ? "Failing"
-                  : "Degraded"}
-          </TooltipContent>
-        </Tooltip>
+        <MonitorStatusDot monitor={monitor} className="ml-1.5" />
       </div>
       <TooltipProvider>
         <Tooltip>
@@ -257,20 +275,15 @@ export function NavActions() {
               <Speed className="text-muted-foreground group-hover:text-foreground" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Test Monitor</TooltipContent>
+          <TooltipContent>
+            {monitor.jobType === "heartbeat"
+              ? "Send test ping"
+              : "Test Monitor"}
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <QuickActions
-        actions={actions}
-        deleteAction={{
-          confirmationValue: monitor.name ?? "monitor",
-          submitAction: async () => {
-            await deleteMonitorMutation.mutateAsync({
-              id: Number.parseInt(id),
-            });
-          },
-        }}
-      />
+      {/* no delete up here: on a nested page the bar belongs to the parent */}
+      <QuickActions actions={actions} />
       <DataTableSheetTest
         data={test}
         monitor={monitor}

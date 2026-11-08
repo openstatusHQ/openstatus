@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
-import { spy } from "@std/testing/mock";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { PhaseResult } from "../../types";
 import {
@@ -22,7 +20,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function mockFetchByPath(status = 200) {
-  globalThis.fetch = spy((input: string | URL | Request) => {
+  globalThis.fetch = vi.fn((input: string | URL | Request) => {
     const url = String(input);
     let body: unknown = [];
     // incidents must be matched before the status-pages prefix

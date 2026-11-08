@@ -76,7 +76,7 @@ export function FormLinks({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="links">
           <FormCardHeader>
             <FormCardTitle>Links</FormCardTitle>
             <FormCardDescription>

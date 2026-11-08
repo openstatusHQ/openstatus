@@ -75,7 +75,7 @@ export function FormVisibility({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="visibility">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Visibility</FormCardTitle>
@@ -121,8 +121,12 @@ export function FormVisibility({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
-                <NextLink href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit="monitor-values-visibility"
+                asChild
+              >
+                <NextLink href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>

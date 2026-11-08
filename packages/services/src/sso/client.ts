@@ -16,6 +16,7 @@ export type WorkOSConnectionState =
 export type WorkOSClient = {
   organizations: {
     createOrganization(payload: { name: string }): Promise<{ id: string }>;
+    deleteOrganization(id: string): Promise<void>;
     getOrganization(id: string): Promise<{
       domains: { domain: string; state: string }[];
     }>;

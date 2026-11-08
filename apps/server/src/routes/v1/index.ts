@@ -6,7 +6,12 @@ import type { RequestIdVariables } from "hono/request-id";
 
 import { env } from "@/env";
 import { handleZodError } from "@/libs/errors";
-import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
+import {
+  authMiddleware,
+  apiTrackMiddleware,
+  requireGroupScope,
+  requireScopeChecked,
+} from "@/libs/middlewares";
 
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
@@ -145,11 +150,19 @@ api.get(
  * Middlewares
  */
 api.use("/*", authMiddleware);
-// Primary scope enforcement for V1: routes here use inline Drizzle
-// queries instead of `@openstatus/services`, so the service-level
-// `requireScope` won't run. After per-route migration to services,
-// this stays as defense-in-depth.
-api.use("/*", requireWriteScope());
+api.use("/*", apiTrackMiddleware());
+// V1 handlers query Drizzle inline, so this is the only scope gate for them.
+api.use("/monitor/*", requireGroupScope("monitors"));
+api.use("/check/*", requireGroupScope("monitors"));
+api.use("/page/*", requireGroupScope("pages"));
+api.use("/status_report/*", requireGroupScope("incidents"));
+api.use("/status_report_update/*", requireGroupScope("incidents"));
+api.use("/incident/*", requireGroupScope("incidents"));
+api.use("/maintenance/*", requireGroupScope("incidents"));
+api.use("/notification/*", requireGroupScope("notifications"));
+api.use("/page_subscriber/*", requireGroupScope("subscribers"));
+api.use("/whoami/*", requireGroupScope("any"));
+api.use("/*", requireScopeChecked());
 
 /**
  * Routes

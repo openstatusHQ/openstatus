@@ -121,6 +121,18 @@ const maintenanceActions = [
   action("maintenance.delete", "maintenance", intId),
 ] as const;
 
+const maintenanceUpdateActions = [
+  action("maintenance_update.create", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("maintenance_update.update", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("maintenance_update.delete", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 const monitorIncidentActions = [
   action("monitor_incident.update", "monitor_incident", intId),
   action("monitor_incident.delete", "monitor_incident", intId),
@@ -194,6 +206,15 @@ const memberActions = [
   // they're (userId, workspaceId) composite — so the user id is the most
   // useful identifier to fix on in the audit log.
   action("member.create", "member", intId, { optionalMetadata: true }),
+  // Only a role change today (ownership transfer). A transfer writes two rows,
+  // one per affected user, paired through this metadata, so it is required.
+  action("member.update", "member", intId).extend({
+    metadata: z.object({
+      reason: z.literal("ownership_transfer"),
+      fromUserId: intId,
+      toUserId: intId,
+    }),
+  }),
   action("member.delete", "member", intId),
 ] as const;
 
@@ -249,6 +270,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...userActions,
   ...workspaceActions,
   ...maintenanceActions,
+  ...maintenanceUpdateActions,
   ...monitorIncidentActions,
   ...incidentActions,
   ...incidentEventActions,

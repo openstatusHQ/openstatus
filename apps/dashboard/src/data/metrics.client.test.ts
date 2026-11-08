@@ -1,0 +1,215 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  getMonitorListMetrics,
+  getRegionAxisMax,
+  hasMetricsData,
+  isPaidPeriod,
+  mapMetrics,
+  mapRegionMetrics,
+} from "./metrics.client";
+
+type Monitors = Parameters<typeof getMonitorListMetrics>[0];
+type Metrics = Parameters<typeof mapMetrics>[0];
+type Timeline = Parameters<typeof mapRegionMetrics>[0];
+
+describe("isPaidPeriod", () => {
+  it("gates only the long periods", () => {
+    expect(isPaidPeriod("30d")).toBe(true);
+    expect(isPaidPeriod("90d")).toBe(true);
+    expect(isPaidPeriod("14d")).toBe(true);
+    expect(isPaidPeriod("7d")).toBe(false);
+    expect(isPaidPeriod("1d")).toBe(false);
+  });
+});
+
+describe("mapMetrics", () => {
+  it("counts degraded checks as up", () => {
+    const [row] =
+      mapMetrics({
+        data: [
+          {
+            p50Latency: 1,
+            p75Latency: 2,
+            p90Latency: 3,
+            p95Latency: 4,
+            p99Latency: 5,
+            count: 10,
+            success: 7,
+            degraded: 2,
+            error: 1,
+            lastTimestamp: 123,
+          },
+        ],
+      } as unknown as Metrics) ?? [];
+    expect(row).toEqual({
+      p50: 1,
+      p75: 2,
+      p90: 3,
+      p95: 4,
+      p99: 5,
+      total: 10,
+      uptime: 0.9,
+      degraded: 2,
+      error: 1,
+      lastTimestamp: 123,
+    });
+  });
+});
+
+describe("hasMetricsData", () => {
+  function window(lastTimestamp: number | null) {
+    return {
+      p50Latency: 0,
+      p75Latency: 0,
+      p90Latency: 0,
+      p95Latency: 0,
+      p99Latency: 0,
+      count: 0,
+      success: 0,
+      degraded: 0,
+      error: 0,
+      lastTimestamp,
+    };
+  }
+
+  it("is false when only the previous window row exists", () => {
+    expect(hasMetricsData({ data: [window(null)] } as unknown as Metrics)).toBe(
+      false,
+    );
+  });
+
+  it("is true once the current window has a check", () => {
+    expect(
+      hasMetricsData({
+        data: [window(null), window(123)],
+      } as unknown as Metrics),
+    ).toBe(true);
+  });
+});
+
+describe("mapRegionMetrics", () => {
+  function row(region: string, timestamp: number, p50: number, p99: number) {
+    return {
+      region,
+      timestamp,
+      p50Latency: p50,
+      p75Latency: null,
+      p90Latency: p50,
+      p95Latency: null,
+      p99Latency: p99,
+    };
+  }
+
+  it("returns empty sorted entries without a timeline", () => {
+    expect(mapRegionMetrics(undefined, ["iad", "ams"])).toEqual([
+      { region: "ams", p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, buckets: 0 },
+      { region: "iad", p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, buckets: 0 },
+    ]);
+  });
+
+  it("keeps requested regions without data", () => {
+    const timeline = {
+      data: [row("iad", 1, 10, 20)],
+    } as unknown as Timeline;
+    const result = mapRegionMetrics(timeline, ["iad", "fra"]);
+    expect(result.map((r) => [r.region, r.buckets])).toEqual([
+      ["fra", 0],
+      ["iad", 1],
+    ]);
+  });
+
+  it("averages percentiles per region", () => {
+    const timeline = {
+      data: [
+        row("iad", 2, 100, 300),
+        row("iad", 1, 201, 400),
+        row("ams", 2, 50, 60),
+        row("fra", 2, 999, 999),
+      ],
+    } as unknown as Timeline;
+
+    const result = mapRegionMetrics(timeline, ["ams", "iad"]);
+    expect(result.map((r) => r.region)).toEqual(["ams", "iad"]);
+
+    const iad = result[1];
+    expect(iad.p50).toBe(151);
+    expect(iad.p99).toBe(350);
+  });
+
+  it("treats missing percentile values as 0", () => {
+    const timeline = {
+      data: [row("ams", 1, 10, 20)],
+    } as unknown as Timeline;
+    expect(mapRegionMetrics(timeline, ["ams"])[0].p75).toBe(0);
+  });
+});
+
+describe("getRegionAxisMax", () => {
+  function metric(p90: number, p99: number, buckets = 1) {
+    return { region: "x", p50: 0, p75: 0, p90, p95: 0, p99, buckets };
+  }
+
+  it("rounds the largest P99 up", () => {
+    expect(getRegionAxisMax([metric(192, 301), metric(410, 556)])).toBe(600);
+  });
+
+  it("clips an outlier P99 but keeps every P90", () => {
+    expect(
+      getRegionAxisMax([metric(192, 301), metric(410, 1240), metric(177, 254)]),
+    ).toBe(500);
+  });
+
+  it("adds headroom for the overflow badge when a P99 is clipped", () => {
+    expect(
+      getRegionAxisMax([metric(500, 600), metric(100, 200), metric(100, 2000)]),
+    ).toBe(700);
+  });
+
+  it("draws an outlier normally once the rounded axis covers it", () => {
+    const metrics = [50, 100, 100, 200, 201].map((p99) => metric(10, p99));
+    const max = getRegionAxisMax(metrics);
+    expect(max).toBe(300);
+    expect(metrics.some((m) => m.p99 > max)).toBe(false);
+  });
+
+  it("averages the two middle P99s for an even count", () => {
+    expect(getRegionAxisMax([metric(50, 100), metric(50, 210)])).toBe(300);
+  });
+
+  it("ignores regions without data", () => {
+    expect(getRegionAxisMax([metric(0, 0, 0)])).toBe(100);
+    expect(getRegionAxisMax([metric(50, 80), metric(0, 9000, 0)])).toBe(80);
+  });
+});
+
+describe("getMonitorListMetrics", () => {
+  const monitors = [
+    { status: "active", active: true },
+    { status: "active", active: true },
+    { status: "degraded", active: true },
+    { status: "error", active: true },
+    { status: "error", active: false },
+  ] as unknown as Monitors;
+
+  it("counts active monitors per status and inactive ones separately", () => {
+    const metrics = getMonitorListMetrics(monitors, [
+      { monitorId: "1", p95Latency: 120 },
+      { monitorId: "2", p95Latency: 1500 },
+    ]);
+    expect(
+      metrics.map(({ key, value, variant }) => ({ key, value, variant })),
+    ).toEqual([
+      { key: "active", value: 2, variant: "success" },
+      { key: "degraded", value: 1, variant: "warning" },
+      { key: "error", value: 1, variant: "destructive" },
+      { key: "inactive", value: 1, variant: "default" },
+      { key: "p95", value: "1.5 sec", variant: "ghost" },
+    ]);
+  });
+
+  it("shows an em dash without latency data", () => {
+    const p95 = getMonitorListMetrics().find((m) => m.key === "p95");
+    expect(p95?.value).toBe("—");
+  });
+});

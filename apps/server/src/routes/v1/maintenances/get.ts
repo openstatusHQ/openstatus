@@ -7,6 +7,7 @@ import { notEmpty } from "@/utils/not-empty";
 
 import type { maintenancesApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
+import { withLatestMessage } from "./updates";
 
 const getRoute = createRoute({
   method: "get",
@@ -37,6 +38,7 @@ export function registerGetMaintenance(api: typeof maintenancesApi) {
     const _maintenance = await db.query.maintenance.findFirst({
       with: {
         maintenancesToPageComponents: { with: { pageComponent: true } },
+        maintenanceUpdates: true,
       },
       where: and(
         eq(maintenance.id, Number(id)),
@@ -52,7 +54,7 @@ export function registerGetMaintenance(api: typeof maintenancesApi) {
     }
 
     const data = MaintenanceSchema.parse({
-      ..._maintenance,
+      ...withLatestMessage(_maintenance),
       monitorIds: _maintenance.maintenancesToPageComponents
         .map((m) => m.pageComponent.monitorId)
         .filter(notEmpty),

@@ -11,9 +11,9 @@ import { formatDistanceToNowShort } from "@/lib/formatter";
 
 import { TableCellSkeleton } from "../dable-cell-skeleton";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellEmpty } from "../table-cell-empty";
 import { TableCellIndicator } from "../table-cell-indicator";
 import { TableCellNumber } from "../table-cell-number";
-import { TableCellUnavailable } from "../table-cell-unavailable";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
@@ -26,6 +26,7 @@ type Monitor = RouterOutputs["monitor"]["list"][number] & {
 export const columns: ColumnDef<Monitor>[] = [
   {
     id: "select",
+    meta: { ghost: false },
     header: ({ table }) => (
       <Checkbox
         checked={
@@ -65,16 +66,16 @@ export const columns: ColumnDef<Monitor>[] = [
       }
     },
     filterFn: (row, _, value) => {
-      if (Array.isArray(value)) {
-        if (value.includes("inactive")) {
-          return !row.original.active;
-        }
-        if (value.includes("active")) {
+      const statuses: string[] = Array.isArray(value) ? value : [value];
+      // "inactive" is a paused monitor, "active" a running healthy one;
+      // every other status matches the monitor's status as-is
+      return statuses.some((status) => {
+        if (status === "inactive") return !row.original.active;
+        if (status === "active") {
           return !!row.original.active && row.original.status === "active";
         }
-        return value.includes(row.original.status);
-      }
-      return row.original.status === value;
+        return row.original.status === status;
+      });
     },
     enableSorting: false,
     enableHiding: false,
@@ -82,6 +83,7 @@ export const columns: ColumnDef<Monitor>[] = [
     meta: {
       headerClassName: "pr-0",
       cellClassName: "w-8 pr-0",
+      ghost: false,
     },
   },
   {
@@ -93,6 +95,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return (
         <TableCellLink
           value={row.getValue("name")}
+          empty="No name"
           href={`/monitors/${row.original.id}/overview`}
         />
       );
@@ -134,7 +137,7 @@ export const columns: ColumnDef<Monitor>[] = [
       const value = row.getValue("tags");
       if (!Array.isArray(value)) return null;
       if (value.length === 0) {
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No tags</TableCellEmpty>;
       }
       return (
         <div className="group/badges flex flex-wrap -space-x-2">
@@ -168,11 +171,17 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "lastIncident",
-    header: "Last Incident",
+    header: "Last Downtime",
     accessorFn: (row) => row.incidents?.[0]?.createdAt,
     cell: ({ row }) => {
       const value = row.getValue("lastIncident");
-      return <TableCellDate value={value} formatStr="LLL dd, y" />;
+      return (
+        <TableCellDate
+          value={value}
+          formatStr="LLL dd, y"
+          empty="No downtime"
+        />
+      );
     },
     enableHiding: false,
     enableGlobalFilter: false,
@@ -209,6 +218,7 @@ export const columns: ColumnDef<Monitor>[] = [
               ? formatDistanceToNowShort(new Date(value))
               : value
           }
+          empty="Never"
         />
       );
     },
@@ -227,9 +237,11 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p50");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    // fixed width: the skeleton is narrower than the values, so an auto width jumps on load
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
   },
   {
@@ -244,9 +256,10 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p90");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
     enableGlobalFilter: false,
   },
@@ -262,9 +275,10 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p95");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
     enableGlobalFilter: false,
   },

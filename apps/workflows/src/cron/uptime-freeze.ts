@@ -1,7 +1,7 @@
 import { getLogger } from "@logtape/logtape";
 import {
-  type UptimeFreezePipes,
   runUptimeFreeze,
+  uptimeFreezePipes,
 } from "@openstatus/services/frozen-uptime";
 import { OSTinybird } from "@openstatus/tinybird";
 import type { Context } from "hono";
@@ -17,19 +17,13 @@ const tb = new OSTinybird({
   noop: env().TINYBIRD_NOOP,
 });
 
-const pipes: UptimeFreezePipes = {
-  http: tb.httpStatus45d,
-  tcp: tb.tcpStatus45d,
-  dns: tb.dnsStatus45d,
-  icmp: tb.icmpStatus45d,
-  grpc: tb.grpcStatus45d,
-};
+const pipes = uptimeFreezePipes(tb);
 
 export async function handleUptimeFreezeCron(c: Context) {
   const { cronCompleted, cronFailed } = runSentryCron("uptime-freeze");
 
   // Background chain: must not capture `c` or anything derived from it —
-  // the handler returns 200 before this resolves (see external-status.ts)
+  // the handler returns 200 before this resolves (see the /checker route in ./index.ts)
   void runUptimeFreeze({
     pipes,
     onChunkFailure: ({ jobType, error }) => {

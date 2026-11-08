@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import { page as pageTable } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import {
   clearAuditLogFor,

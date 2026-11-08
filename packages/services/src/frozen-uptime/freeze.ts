@@ -21,7 +21,7 @@ export async function freezeMonitorMonth(args: {
   input: FreezeMonitorMonthInput;
 }): Promise<FrozenMonitorUptime | null> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = FreezeMonitorMonthInput.parse(args.input);
 
   const db = ctx.db ?? defaultDb;

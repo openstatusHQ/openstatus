@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -142,11 +143,17 @@ export function FormMembers({
                   </Link>
                   .
                 </FormCardFooterInfo>
-                <Button type="button" size="sm" asChild>
-                  <Link href="/settings/billing">
+                <Button
+                  data-track="paywall_viewed"
+                  data-limit="members"
+                  type="button"
+                  size="sm"
+                  asChild
+                >
+                  <NextLink href="/settings/billing#plans">
                     <Lock />
                     Upgrade
-                  </Link>
+                  </NextLink>
                 </Button>
               </>
             ) : (

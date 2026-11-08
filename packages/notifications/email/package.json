@@ -4,8 +4,8 @@
   "description": "Log drains Vercel integration.",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

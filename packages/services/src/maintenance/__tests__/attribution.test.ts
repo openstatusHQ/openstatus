@@ -1,8 +1,7 @@
 import { db, eq } from "@openstatus/db";
 import { maintenance, page } from "@openstatus/db/src/schema";
 import { createUser } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -47,7 +46,7 @@ function range() {
 }
 
 async function create(ctx: ServiceContext, title: string) {
-  return createMaintenance({
+  const { maintenance } = await createMaintenance({
     ctx,
     input: {
       title: `${TEST_PREFIX}-${title}`,
@@ -57,6 +56,7 @@ async function create(ctx: ServiceContext, title: string) {
       pageComponentIds: [],
     },
   });
+  return maintenance;
 }
 
 describe("maintenance attribution", () => {

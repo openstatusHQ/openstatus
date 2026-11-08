@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,28 +39,16 @@ type ICMPData struct {
 	PacketsSent     uint8 `json:"packetsSent"`
 	PacketsReceived uint8 `json:"packetsReceived"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
 func (h Handler) ICMPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "icmp_response__v0"
 
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
+	if !h.acceptCron(c) {
 		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
 	}
 
 	var req request.ICMPCheckerRequest
@@ -70,39 +59,45 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		return
 	}
 
-	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+	setCheckerEvent(c, req.URI, req.WorkspaceID, req.MonitorID, cronTrigger(req.Trigger), "icmp")
+
+	response, err := h.RunICMPCheck(ctx, req)
+	if respondInvalid(c, err) {
+		return
+	}
+
+	returnData := c.Query("data")
+	if returnData == "true" {
+		c.JSON(http.StatusOK, response)
 
 		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
+// RunICMPCheck probes and records one cron ICMP check. A nil error means the
+// result was recorded, whether the monitor passed or not.
+func (h Handler) RunICMPCheck(ctx context.Context, req request.ICMPCheckerRequest) (checker.ICMPResponse, error) {
+	dataSourceName := "icmp_response__v0"
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
+	var response checker.ICMPResponse
+
+	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	if err != nil {
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
-		return
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
-	var trigger = "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
-	}
+	trigger := cronTrigger(req.Trigger)
 
-	e, f := c.Get("event")
-	if f {
-		t := e.(map[string]any)
-		t["checker"] = map[string]string{
-			"uri":          req.URI,
-			"workspace_id": req.WorkspaceID,
-			"monitor_id":   req.MonitorID,
-			"trigger":      trigger,
-			"type":         "icmp",
-		}
-		c.Set("event", t)
-	}
-
-	var response checker.ICMPResponse
+	var recordErr error
 
 	var retry int
 	if req.Retry != 0 {
@@ -111,7 +106,10 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		retry = 3
 	}
 
+	var called int
+
 	op := func() (struct{}, error) {
+		called++
 		res, err := checker.PingICMP(req.Timeout, req.URI)
 		if err != nil {
 			return struct{}{}, fmt.Errorf("unable to check icmp %s", err)
@@ -142,6 +140,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		timestamp := time.Now().UTC().UnixMilli()
 
 		data := ICMPData{
+			Attempts:        called,
 			ID:              id.String(),
 			WorkspaceID:     workspaceId,
 			Timestamp:       timestamp,
@@ -208,18 +207,20 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 
 		return struct{}{}, nil
 	}
 
-	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return
+			return response, e
 		}
 		data := ICMPData{
+			Attempts:      called,
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
@@ -233,6 +234,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -254,14 +256,7 @@ func (h Handler) ICMPHandler(c *gin.Context) {
 		otelOS.RecordICMPMetrics(ctx, req, response, h.Region)
 	}
 
-	returnData := c.Query("data")
-	if returnData == "true" {
-		c.JSON(http.StatusOK, response)
-
-		return
-	}
-
-	c.JSON(http.StatusOK, nil)
+	return response, recordErr
 }
 
 func (h Handler) ICMPHandlerRegion(c *gin.Context) {
@@ -299,6 +294,8 @@ func (h Handler) ICMPHandlerRegion(c *gin.Context) {
 
 		return
 	}
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
 
 	var response checker.ICMPResponse
 

@@ -22,7 +22,7 @@ export async function setPageCustomDomain(args: {
   input: UpdatePageCustomDomainInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageCustomDomainInput.parse(args.input);
   const next = input.customDomain;
 

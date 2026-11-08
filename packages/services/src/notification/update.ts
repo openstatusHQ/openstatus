@@ -23,7 +23,7 @@ export async function updateNotification(args: {
   input: UpdateNotificationInput;
 }): Promise<Notification> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "notifications:write");
   const input = UpdateNotificationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

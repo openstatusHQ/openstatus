@@ -14,23 +14,22 @@ import {
 import {
   afterAll,
   afterEach,
-  assertSpyCalls,
   beforeAll,
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import { env } from "../env";
-import { checkerAudit } from "../utils/audit-log";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { checkerRoute } from "./index";
 import { providerToFunction } from "./utils";
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 let stubs: AnyStub[] = [];
 
 let workspaceId: number;
@@ -61,7 +60,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  for (const s of stubs) s.restore();
+  for (const s of stubs) s.mockRestore();
   stubs = [];
   await db
     .delete(notificationTrigger)
@@ -98,13 +97,13 @@ describe("updateStatus audit failures", () => {
     // Tinybird is down: every audit publish rejects, including the status one
     // that runs after the transition batch has committed.
     stubs.push(
-      stub(checkerAudit, "publishAuditLog", () =>
+      stubPublishAuditLog(() =>
         Promise.reject(new Error("tinybird unavailable")),
-      ) as AnyStub,
+      ),
     );
-    const sendAlert = stub(providerToFunction.email, "sendAlert", () =>
-      Promise.resolve(),
-    );
+    const sendAlert = vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve());
     stubs.push(sendAlert as AnyStub);
 
     const res = await post({
@@ -118,7 +117,7 @@ describe("updateStatus audit failures", () => {
     // Retrying this transition is useless — the region status is already
     // written, so the retry takes the fast path and sends nothing.
     expect(res.status).toBe(200);
-    assertSpyCalls(sendAlert, 1);
+    expect(sendAlert).toHaveBeenCalledTimes(1);
 
     const rows = await db
       .select()

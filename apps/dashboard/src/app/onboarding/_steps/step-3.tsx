@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { AgentPromptButton } from "@/components/common/agent-prompt-button";
 import { Code } from "@/components/common/code";
 import { Link as CommonLink } from "@/components/common/link";
 import { CreateApiKeyDialog } from "@/components/forms/api-key/dialog";
@@ -80,8 +81,16 @@ export function Step3({
       });
     }
     const filler: Link[] = [
-      { name: "Invite team", href: "/settings/general", icon: Invite },
-      { name: "Notifiers", href: "/notifications", icon: Notification },
+      {
+        name: "Invite team",
+        href: "/settings/general#team-members",
+        icon: Invite,
+      },
+      {
+        name: "Notifiers",
+        href: "/notifications#notifier-channels",
+        icon: Notification,
+      },
       { name: "Overview", href: "/overview", icon: Overview },
       { name: "Billing", href: "/settings/billing", icon: Billing },
     ];
@@ -132,6 +141,13 @@ export function Step3({
             SOC2 audit incoming? Ping us to try the Team plan.
           </p>
         </div>
+        <AgentPromptButton
+          source="onboarding"
+          size="default"
+          className="w-full shrink-0"
+        >
+          Copy a prompt for your agent
+        </AgentPromptButton>
         <NoClickopsCard />
       </OnboardingFormColumn>
       <OnboardingResultColumn>
@@ -156,7 +172,7 @@ function NoClickopsCard() {
   const hasKeys = (apiKeys?.length ?? 0) > 0;
 
   return (
-    <FormCard className="shrink-0">
+    <FormCard id="agent-first" className="shrink-0">
       <FormCardHeader>
         <FormCardTitle>Agent-first, no clickops</FormCardTitle>
         <FormCardDescription>

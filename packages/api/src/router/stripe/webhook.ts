@@ -1,9 +1,8 @@
-import { Events, setupAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import { type EventProps, Events, setupAnalytics } from "@openstatus/analytics";
 import {
   billingRecipients,
   cancelScheduledEmail,
+  scheduleMemberAccessEnding,
   schedulePlanEndingSoon,
   sendCancellationScheduled,
   sendMemberRemoved,
@@ -18,6 +17,7 @@ import {
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
   listWorkspaceOwners,
+  markWorkspaceTrialed,
   previewWorkspaceDowngrade,
   updateWorkspacePlan,
 } from "@openstatus/services/workspace";
@@ -39,6 +39,7 @@ import {
   syncedLimits,
   trialEndsAtOf,
 } from "./shared";
+import { billingProps } from "./utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -60,6 +61,39 @@ const webhookProcedure = publicProcedure.input(
 // "plan ends in 3 days" reminder, so a resume can cancel it without a schema
 // change.
 const REMINDER_METADATA_KEY = "reminder_email_id";
+// Comma-separated: one scheduled email per 50 members.
+const MEMBER_REMINDER_METADATA_KEY = "member_reminder_email_ids";
+// Stripe caps a metadata value at 500 chars: 13 Resend ids (36 chars + comma).
+// Past that the warning goes out now, as an untracked schedule could not be
+// cancelled on resume.
+const MAX_SCHEDULED_MEMBERS = 13 * 50;
+
+/**
+ * Cancels the scheduled owner and member reminders and clears the ids that
+ * were cancelled; a failed cancel keeps its id so a retry can still cancel it.
+ */
+async function cancelReminders(
+  subscriptionId: string,
+  metadata: Record<string, string | undefined>,
+) {
+  const cleared: Record<string, string> = {};
+  const reminderId = metadata[REMINDER_METADATA_KEY];
+  if (reminderId && (await cancelScheduledEmail(reminderId))) {
+    cleared[REMINDER_METADATA_KEY] = "";
+  }
+  const memberIds =
+    metadata[MEMBER_REMINDER_METADATA_KEY]?.split(",").filter(Boolean) ?? [];
+  const kept: string[] = [];
+  for (const id of memberIds) {
+    if (!(await cancelScheduledEmail(id))) kept.push(id);
+  }
+  if (kept.length < memberIds.length) {
+    cleared[MEMBER_REMINDER_METADATA_KEY] = kept.join(",");
+  }
+  if (Object.keys(cleared).length > 0) {
+    await stripe.subscriptions.update(subscriptionId, { metadata: cleared });
+  }
+}
 
 type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 
@@ -67,14 +101,20 @@ type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
 // processing can lag behind that timestamp by a little.
 const TRIAL_END_SLACK_S = 60 * 60;
 
-function endedDuringTrial(
+async function endedDuringTrial(
   subscription: Stripe.Subscription,
   eventCreated: number,
 ) {
   if (!subscription.trial_end) return false;
   const endedAt =
     subscription.ended_at ?? subscription.canceled_at ?? eventCreated;
-  return endedAt <= subscription.trial_end + TRIAL_END_SLACK_S;
+  if (endedAt <= subscription.trial_end) return true;
+  // Inside the slack, a trial with a card converted to paid before it was
+  // cancelled: that is churn, not a trial running out.
+  return (
+    endedAt <= subscription.trial_end + TRIAL_END_SLACK_S &&
+    !(await hasPaymentMethod(subscription))
+  );
 }
 
 async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
@@ -89,7 +129,10 @@ async function getBillingRecipients(
 ) {
   const owners = await getOwnerEmails(db, workspaceId);
   const customer = await stripe.customers.retrieve(customerId);
-  return billingRecipients(owners, customer.deleted ? null : customer.email);
+  return {
+    to: billingRecipients(owners, customer.deleted ? null : customer.email),
+    owners: billingRecipients(owners),
+  };
 }
 
 function toPlanLoss(
@@ -110,9 +153,43 @@ function toPlanLoss(
   };
 }
 
+type StripeWorkspace = NonNullable<
+  Awaited<ReturnType<typeof getWorkspaceByStripeId>>
+>;
+
+// Never throws: runs after DB writes and emails, so a failure here would make
+// Stripe redeliver the event and resend them.
+async function trackForWorkspaceOwner(args: {
+  db: NonNullable<Db>;
+  ws: StripeWorkspace;
+  event: EventProps;
+  props?: Record<string, unknown>;
+}) {
+  try {
+    const owners = await listWorkspaceOwners({
+      input: { workspaceId: args.ws.id },
+      db: args.db,
+    });
+    // Owners come back unordered: with several, picking one would attribute
+    // billing to an arbitrary profile, so only the workspace group gets it.
+    const owner = owners.length === 1 ? owners[0] : undefined;
+    const analytics = await setupAnalytics({
+      userId: owner ? `usr_${owner.id}` : undefined,
+      email: owner?.email ?? undefined,
+      workspaceId: String(args.ws.id),
+      workspaceName: args.ws.name || args.ws.slug,
+      plan: args.ws.plan ?? undefined,
+      source: "stripe",
+    });
+    await analytics.track({ ...args.props, ...args.event });
+  } catch (err) {
+    console.error(`Failed to track ${args.event.name}:`, err);
+  }
+}
+
 async function sendCancellationEmails(args: {
   db: NonNullable<Db>;
-  ws: NonNullable<Awaited<ReturnType<typeof getWorkspaceByStripeId>>>;
+  ws: StripeWorkspace;
   customerId: string;
   current: Stripe.Subscription;
   plan: string;
@@ -120,7 +197,7 @@ async function sendCancellationEmails(args: {
 }) {
   const { db, ws, customerId, current, plan, eventId } = args;
   const endsAt = getCurrentPeriodEnd(current);
-  const to = await getBillingRecipients(db, ws.id, customerId);
+  const { to, owners } = await getBillingRecipients(db, ws.id, customerId);
   const preview = await previewWorkspaceDowngrade({
     ctx: {
       workspace: ws,
@@ -145,20 +222,34 @@ async function sendCancellationEmails(args: {
     endsAt,
     loss,
   });
-  if (!reminderId) return;
-
-  const updated = await stripe.subscriptions.update(current.id, {
-    metadata: { [REMINDER_METADATA_KEY]: reminderId },
-  });
-  // A resume handled while we were scheduling found no id to cancel. The
-  // update response is the state after our write, so undo the reminder here.
-  if (
-    !updated.cancel_at_period_end &&
-    (await cancelScheduledEmail(reminderId))
-  ) {
-    await stripe.subscriptions.update(current.id, {
-      metadata: { [REMINDER_METADATA_KEY]: "" },
+  let memberIds: string[] = [];
+  try {
+    memberIds = await scheduleMemberAccessEnding({
+      to: preview.membersRemoved,
+      eventId,
+      workspaceName: ws.name || ws.slug,
+      plan,
+      endsAt,
+      reason: "cancellation",
+      owners,
+      schedule: preview.membersRemoved.length <= MAX_SCHEDULED_MEMBERS,
     });
+  } catch (err) {
+    console.error("Failed to schedule member-access-ending emails:", err);
+  }
+
+  const metadata: Record<string, string> = {};
+  if (reminderId) metadata[REMINDER_METADATA_KEY] = reminderId;
+  if (memberIds.length > 0) {
+    metadata[MEMBER_REMINDER_METADATA_KEY] = memberIds.join(",");
+  }
+  if (Object.keys(metadata).length === 0) return;
+
+  const updated = await stripe.subscriptions.update(current.id, { metadata });
+  // A resume handled while we were scheduling found no id to cancel. The
+  // update response is the state after our write, so undo the reminders here.
+  if (!updated.cancel_at_period_end) {
+    await cancelReminders(current.id, metadata);
   }
 }
 
@@ -191,6 +282,23 @@ async function attachSetupPaymentMethod(session: Stripe.Checkout.Session) {
   await stripe.subscriptions.update(subscriptionId, {
     default_payment_method: paymentMethod,
   });
+
+  // The card now carries the billing address the setup session required, and
+  // Stripe Tax falls back to it. Just try: Stripe rejects a location it cannot
+  // place, and that must not undo the card we already attached.
+  if (!subscription.automatic_tax?.enabled) {
+    try {
+      await stripe.subscriptions.update(subscriptionId, {
+        automatic_tax: { enabled: true },
+      });
+    } catch (err) {
+      console.error(
+        `Failed to enable automatic tax on ${subscriptionId}:`,
+        err,
+      );
+    }
+  }
+  return subscription;
 }
 
 // Never mount this on an app router: the procedures trust `event`, and only
@@ -298,13 +406,7 @@ export const webhookRouter = createTRPCRouter({
             eventId: opts.input.event.id,
           });
         } else {
-          const reminderId = current.metadata?.[REMINDER_METADATA_KEY];
-          // Keep the id when the cancel fails, so a retry can still cancel it.
-          if (reminderId && (await cancelScheduledEmail(reminderId))) {
-            await stripe.subscriptions.update(current.id, {
-              metadata: { [REMINDER_METADATA_KEY]: "" },
-            });
-          }
+          await cancelReminders(current.id, current.metadata ?? {});
         }
       } catch (err) {
         console.error("Failed to handle cancellation emails:", err);
@@ -318,53 +420,57 @@ export const webhookRouter = createTRPCRouter({
       wasTrialing &&
       current.status === "active"
     ) {
-      const [owner] = await listWorkspaceOwners({
-        input: { workspaceId: ws.id },
+      await trackForWorkspaceOwner({
         db: opts.ctx.db,
+        ws: { ...ws, plan: built.plan },
+        event: Events.ConvertTrial,
+        props: { toPlan: built.plan, ...billingProps(current) },
       });
-      const analytics = await setupAnalytics({
-        userId: owner ? `usr_${owner.id}` : undefined,
-        email: owner?.email ?? undefined,
-        workspaceId: String(ws.id),
-        plan: built.plan,
-      });
-      await analytics.track(Events.ConvertTrial);
     }
 
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
-      const customer = await stripe.customers.retrieve(customerId);
-      if (!customer.deleted && customer.email) {
-        const userResult = await opts.ctx.db
-          .select()
-          .from(user)
-          .where(eq(user.email, customer.email))
-          .get();
-        if (!userResult) return;
+      const planOrder = ["free", "starter", "team", "scale"] as const;
+      const oldIndex = planOrder.indexOf(oldPlan ?? "free");
+      const newIndex = planOrder.indexOf(newPlan ?? "free");
 
-        const planOrder = ["free", "starter", "team", "scale"] as const;
-        const oldIndex = planOrder.indexOf(oldPlan ?? "free");
-        const newIndex = planOrder.indexOf(newPlan ?? "free");
-
-        const event =
+      await trackForWorkspaceOwner({
+        db: opts.ctx.db,
+        ws: { ...ws, plan: newPlan },
+        event:
           newIndex > oldIndex
             ? Events.UpgradeWorkspace
-            : Events.DowngradeWorkspace;
-
-        const analytics = await setupAnalytics({
-          userId: `usr_${userResult.id}`,
-          email: userResult.email || undefined,
-          workspaceId: String(ws.id),
-          plan: newPlan,
-        });
-        await analytics.track(event);
-      }
+            : Events.DowngradeWorkspace,
+        props: { fromPlan: oldPlan, toPlan: newPlan, ...billingProps(current) },
+      });
     }
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {
     const session = opts.input.event.data.object as Stripe.Checkout.Session;
     if (session.mode === "setup") {
-      await attachSetupPaymentMethod(session);
+      const subscription = await attachSetupPaymentMethod(session);
+      if (!subscription) return;
+      const ws = await getWorkspaceByStripeId({
+        input: { stripeId: customerIdOf(subscription) },
+        db: opts.ctx.db,
+      });
+      if (!ws) return;
+      await trackForWorkspaceOwner({
+        db: opts.ctx.db,
+        ws,
+        event: Events.AddTrialPaymentMethod,
+        props: {
+          subscriptionStatus: subscription.status,
+          trialDaysLeft: subscription.trial_end
+            ? Math.max(
+                0,
+                Math.ceil(
+                  (subscription.trial_end * 1000 - Date.now()) / 86_400_000,
+                ),
+              )
+            : undefined,
+        },
+      });
       return;
     }
     if (typeof session.subscription !== "string") {
@@ -416,12 +522,16 @@ export const webhookRouter = createTRPCRouter({
     // for an unrelated `customer.subscription.updated` to come along.
     await cancelSupersededSubscriptions(live, subscription);
 
+    // Not the live status: a late delivery can land after the trial ended.
+    const isTrial = subscription.metadata.source === "trial_opt_in";
+    const wsCtx: ServiceContext = {
+      workspace: ws,
+      actor: { type: "system", job: "stripe-session-completed" },
+      db: opts.ctx.db,
+    };
+
     await updateWorkspacePlan({
-      ctx: {
-        workspace: ws,
-        actor: { type: "system", job: "stripe-session-completed" },
-        db: opts.ctx.db,
-      },
+      ctx: wsCtx,
       input: {
         plan: built.plan,
         subscriptionId: subscription.id,
@@ -429,27 +539,44 @@ export const webhookRouter = createTRPCRouter({
         paidUntil: getCurrentPeriodEnd(subscription),
         trialEndsAt: trialEndsAtOf(subscription),
         limits: syncedLimits(subscription, built),
-        reason: "checkout_session_completed",
+        reason: isTrial ? "trial_started" : "checkout_session_completed",
       },
     });
 
-    const customer = await stripe.customers.retrieve(customerId);
-    if (!customer.deleted && customer.email) {
-      const userResult = await opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.email, customer.email))
-        .get();
-      if (!userResult) return;
-
-      const analytics = await setupAnalytics({
-        userId: `usr_${userResult.id}`,
-        email: userResult.email || undefined,
-        workspaceId: String(ws.id),
-        plan: built.plan,
+    if (isTrial) {
+      // Stamped on completion, not when the Checkout opens, so an abandoned
+      // page does not burn the trial.
+      await stripe.customers.update(customerId, {
+        metadata: { trialed: "true" },
       });
-      await analytics.track(Events.UpgradeWorkspace);
+      const firstMark = await markWorkspaceTrialed({ ctx: wsCtx });
+      // A redelivered event must not count the trial twice.
+      if (firstMark) {
+        await trackForWorkspaceOwner({
+          db: opts.ctx.db,
+          ws: { ...ws, plan: built.plan },
+          event: Events.StartTrial,
+          props: {
+            surface: subscription.metadata.surface,
+            intent: subscription.metadata.intent,
+            trialEndsAt: trialEndsAtOf(subscription)?.toISOString(),
+            ...billingProps(subscription),
+          },
+        });
+      }
+      return;
     }
+
+    await trackForWorkspaceOwner({
+      db: opts.ctx.db,
+      ws: { ...ws, plan: built.plan },
+      event: Events.UpgradeWorkspace,
+      props: {
+        fromPlan: ws.plan,
+        toPlan: built.plan,
+        ...billingProps(subscription),
+      },
+    });
   }),
   customerSubscriptionTrialWillEnd: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
@@ -491,16 +618,49 @@ export const webhookRouter = createTRPCRouter({
           console.error("Failed to preview trial downgrade:", err);
           return undefined;
         });
+    const { to, owners } = await getBillingRecipients(
+      opts.ctx.db,
+      ws.id,
+      customerId,
+    );
+    const trialEnd = new Date(subscription.trial_end * 1000);
+    const plan = ws.plan ?? "starter";
     await sendTrialEnding({
-      to: await getBillingRecipients(opts.ctx.db, ws.id, customerId),
+      to,
       eventId: opts.input.event.id,
       workspaceSlug: ws.slug,
-      trialEnd: new Date(subscription.trial_end * 1000),
-      plan: ws.plan ?? "starter",
+      trialEnd,
+      plan,
       hasPaymentMethod: withCard,
       loss: preview
         ? toPlanLoss(preview, preview.customDomains, preview.ssoEnabled)
         : undefined,
+    });
+
+    // Best-effort: a failed member warning must not fail the webhook. Sent
+    // now, never scheduled: nothing stores the id to cancel it later.
+    if (preview) {
+      try {
+        await scheduleMemberAccessEnding({
+          to: preview.membersRemoved,
+          eventId: opts.input.event.id,
+          workspaceName: ws.name || ws.slug,
+          plan,
+          endsAt: trialEnd,
+          reason: "trial",
+          owners,
+          schedule: false,
+        });
+      } catch (err) {
+        console.error("Failed to send member-access-ending emails:", err);
+      }
+    }
+
+    await trackForWorkspaceOwner({
+      db: opts.ctx.db,
+      ws,
+      event: Events.NotifyTrialEnding,
+      props: { hasPaymentMethod: withCard },
     });
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {
@@ -552,7 +712,10 @@ export const webhookRouter = createTRPCRouter({
     // not a paying customer churning — keep the audit trail honest. Read
     // off the subscription rather than `ws.trialEndsAt`: a delayed
     // trial-to-active webhook leaves that marker stale on a paying customer.
-    const reason = endedDuringTrial(subscription, opts.input.event.created)
+    const reason = (await endedDuringTrial(
+      subscription,
+      opts.input.event.created,
+    ))
       ? subscription.cancellation_details?.reason === "cancellation_requested"
         ? "trial_cancelled"
         : "trial_ended"
@@ -575,6 +738,7 @@ export const webhookRouter = createTRPCRouter({
         workspaceSlug: ws.slug,
         previousPlan: ws.plan ?? "paid",
         loss: toPlanLoss(trimmed, customDomains, ssoDisabled),
+        reason,
       });
     } catch (err) {
       console.error("Failed to send plan-downgraded email:", err);
@@ -605,23 +769,14 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
-    const customer = await stripe.customers.retrieve(customerId);
-
-    if (!customer.deleted && customer.email) {
-      const userResult = await opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.email, customer.email))
-        .get();
-      if (!userResult) return;
-
-      const analytics = await setupAnalytics({
-        userId: `usr_${userResult.id}`,
-        email: customer.email || undefined,
-        workspaceId: String(ws.id),
-        plan: "free",
-      });
-      await analytics.track(Events.DowngradeWorkspace);
-    }
+    await trackForWorkspaceOwner({
+      db: opts.ctx.db,
+      ws: { ...ws, plan: "free" },
+      event:
+        reason === "subscription_deleted"
+          ? Events.DowngradeWorkspace
+          : Events.ExpireTrial,
+      props: { fromPlan: ws.plan, toPlan: "free", reason },
+    });
   }),
 });

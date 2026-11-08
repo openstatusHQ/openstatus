@@ -74,7 +74,7 @@ export function FormResponseTime({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="response-time">
           <FormCardHeader>
             <FormCardTitle>Response Time Thresholds</FormCardTitle>
             <FormCardDescription>

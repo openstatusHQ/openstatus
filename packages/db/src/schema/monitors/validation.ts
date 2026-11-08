@@ -85,8 +85,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
-  timeout: z.coerce.number().gte(0).lte(60000).prefault(45000),
-  degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
+  timeout: z.coerce.number().gte(0).lte(300_000).prefault(45000),
+  degradedAfter: z.coerce.number().gte(0).lte(300_000).nullish(),
 });
 
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;

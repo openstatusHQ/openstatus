@@ -36,7 +36,7 @@ export default function Page() {
     <div className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
       <h1>{homePage.metadata.hero ?? homePage.metadata.title}</h1>
-      <p className="text-lg">{homePage.metadata.description}</p>
+      <p>{homePage.metadata.description}</p>
       <CustomMDX source={homePage.content} />
     </div>
   );

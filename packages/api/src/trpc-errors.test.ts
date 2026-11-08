@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { describe, expect, test } from "vitest";
 
 import {
   EXPECTED_TRPC_CODES,

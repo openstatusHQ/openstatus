@@ -6,6 +6,9 @@ export type ListMembersInput = z.infer<typeof ListMembersInput>;
 export const DeleteMemberInput = z.object({ userId: z.number().int() });
 export type DeleteMemberInput = z.infer<typeof DeleteMemberInput>;
 
+export const TransferOwnershipInput = z.object({ userId: z.number().int() });
+export type TransferOwnershipInput = z.infer<typeof TransferOwnershipInput>;
+
 export const FindMemberByEmailInput = z.object({ email: z.string() });
 export type FindMemberByEmailInput = z.infer<typeof FindMemberByEmailInput>;
 

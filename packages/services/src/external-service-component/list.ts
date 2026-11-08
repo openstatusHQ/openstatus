@@ -1,9 +1,20 @@
-import { and, asc, db as defaultDb, eq, or, sql } from "@openstatus/db";
+import {
+  and,
+  asc,
+  db as defaultDb,
+  eq,
+  inArray,
+  or,
+  sql,
+} from "@openstatus/db";
 import type { ApiConfigType, ExternalService } from "@openstatus/db/src/schema";
 import { externalServiceComponent } from "@openstatus/db/src/schema";
 
 import { defaultTb } from "../context";
-import { getExternalServiceBySlug } from "../external-service";
+import {
+  getExternalServiceBySlug,
+  listExternalServicesBySlugs,
+} from "../external-service";
 import type { GlobalReadContext } from "../external-service/internal";
 import { retryRead } from "../retry";
 
@@ -231,4 +242,76 @@ export async function getExternalComponentBySlug(args: {
     service,
     component: { ...row, lastFetchedAt, stale },
   };
+}
+
+export type ComponentRef = { service: string; component: string };
+
+export type ComponentByRef = {
+  service: ExternalService;
+  component: ExternalComponentListItem;
+};
+
+// Components by current service and component slug, in the order asked;
+// refs that do not resolve are skipped. Two DB queries and one Tinybird
+// read in total, however many refs.
+export async function listExternalComponentsByRefs(args: {
+  ctx?: GlobalReadContext;
+  refs: ComponentRef[];
+}): Promise<ComponentByRef[]> {
+  const { ctx, refs } = args;
+  if (refs.length === 0) return [];
+  const db = ctx?.db ?? defaultDb;
+
+  const services = await listExternalServicesBySlugs({
+    ctx,
+    slugs: [...new Set(refs.map((r) => r.service))],
+  });
+  if (services.length === 0) return [];
+  const serviceBySlug = new Map(services.map((s) => [s.slug, s]));
+
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+        upstreamComponentId: externalServiceComponent.upstreamComponentId,
+        slug: externalServiceComponent.slug,
+        name: externalServiceComponent.name,
+        description: externalServiceComponent.description,
+        groupName: externalServiceComponent.groupName,
+        position: externalServiceComponent.position,
+        indicator: externalServiceComponent.indicator,
+        status: externalServiceComponent.status,
+        firstSeenAt: externalServiceComponent.firstSeenAt,
+      })
+      .from(externalServiceComponent)
+      .where(
+        and(
+          inArray(
+            externalServiceComponent.externalServiceId,
+            services.map((s) => s.id),
+          ),
+          inArray(externalServiceComponent.slug, [
+            ...new Set(refs.map((r) => r.component)),
+          ]),
+        ),
+      )
+      .all(),
+  );
+  const rowByKey = new Map(
+    rows.map((r) => [`${r.externalServiceId}/${r.slug}`, r]),
+  );
+
+  const matched = refs.flatMap((ref) => {
+    const service = serviceBySlug.get(ref.service);
+    const row = service ? rowByKey.get(`${service.id}/${ref.component}`) : null;
+    return service && row ? [{ service, row }] : [];
+  });
+  if (matched.length === 0) return [];
+
+  const { byId } = await fetchLatestByIds(matched.map((m) => String(m.row.id)));
+  return matched.map(({ service, row }) => ({
+    service,
+    component: { ...row, lastFetchedAt: byId.get(String(row.id)) ?? null },
+  }));
 }

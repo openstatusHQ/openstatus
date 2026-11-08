@@ -28,6 +28,7 @@ type GRPCPrivateRegionData struct {
 	CronTimestamp int64  `json:"cron_timestamp"`
 	Error         int    `json:"error"`
 	Timing        string `json:"timing"`
+	Attempts      int    `json:"attempts"`
 }
 
 func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region string) (*GRPCPrivateRegionData, error) {
@@ -43,6 +44,12 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 
 	req := grpcCheckerRequest(monitor)
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate UUID: %w", err)
+	}
+	requestID := id.String()
+
 	var called int
 	var lastResult checker.GRPCResponse
 
@@ -55,7 +62,7 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 			monitor.Uri,
 			monitor.Service,
 			checker.ParseGRPCTLSMode(monitor.TlsMode),
-			headersToMap(monitor.GetMetadata()),
+			request.WithRequestID(headersToMap(monitor.GetMetadata()), requestID),
 		)
 		if err != nil {
 			// Only a call that never reached the server is worth repeating.
@@ -63,10 +70,7 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 				return nil, fmt.Errorf("gRPC check failed: %w", err)
 			}
 
-			data, dataErr := newGRPCData(monitor.Uri, monitor.Service, start)
-			if dataErr != nil {
-				return nil, dataErr
-			}
+			data := newGRPCData(requestID, monitor.Uri, monitor.Service, start)
 
 			lastResult = checker.GRPCResponse{Error: 1, GRPCCode: res.GRPCCode}
 
@@ -105,10 +109,7 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 			requestStatus = "degraded"
 		}
 
-		data, err := newGRPCData(monitor.Uri, monitor.Service, start)
-		if err != nil {
-			return nil, err
-		}
+		data := newGRPCData(requestID, monitor.Uri, monitor.Service, start)
 
 		data.Latency = res.Latency
 		data.GRPCCode = res.GRPCCode
@@ -132,25 +133,21 @@ func (jobRunner) GRPCJob(ctx context.Context, monitor *v1.GRPCMonitor, region st
 		return nil, fmt.Errorf("gRPC job failed after %d retries: %w", retry, err)
 	}
 
+	resp.Attempts = called
 	return resp, nil
 }
 
 // newGRPCData stamps the fields every result must carry regardless of outcome.
 // `Timestamp`/`CronTimestamp` are required: ValidateIngestGRPCRequest rejects a
 // non-positive timestamp, so a result missing them is dropped at ingest.
-func newGRPCData(uri, service string, start int64) (*GRPCPrivateRegionData, error) {
-	id, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate UUID: %w", err)
-	}
-
+func newGRPCData(id, uri, service string, start int64) *GRPCPrivateRegionData {
 	return &GRPCPrivateRegionData{
-		ID:            id.String(),
+		ID:            id,
 		URI:           uri,
 		Service:       service,
 		Timestamp:     start,
 		CronTimestamp: start,
-	}, nil
+	}
 }
 
 // marshalGRPCTiming keeps whatever phases completed. A transport failure still

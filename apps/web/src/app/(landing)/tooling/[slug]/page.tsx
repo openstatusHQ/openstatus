@@ -2,18 +2,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CustomMDX } from "../../../../content/mdx";
+import { sections } from "../../../../content/sections";
 import { getToolingPages } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { getPageMetadata } from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDHowTo,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 
@@ -58,11 +56,10 @@ export default async function ToolingPage({
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
     getJsonLDWebPage(page),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Tooling", url: `${BASE_URL}/tooling` },
-      { name: page.metadata.title, url: `${BASE_URL}/tooling/${slug}` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.tooling, {
+      label: page.metadata.title,
+      path: page.href,
+    }),
     getJsonLDHowTo(page),
     getJsonLDFAQPage(page),
   ]);

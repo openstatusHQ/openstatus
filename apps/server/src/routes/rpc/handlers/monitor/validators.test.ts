@@ -1,7 +1,6 @@
 import { ConnectError } from "@connectrpc/connect";
 import { Periodicity, Region } from "@openstatus/proto/monitor/v1";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { MONITOR_DEFAULTS } from "./converters";
 import {
@@ -191,8 +190,8 @@ describe("validateMonitorPatchBounds", () => {
       name: "a".repeat(256),
       uri: "b".repeat(2048),
       description: "c".repeat(1024),
-      timeout: BigInt(120_000),
-      degradedAt: BigInt(120_000),
+      timeout: BigInt(300_000),
+      degradedAt: BigInt(300_000),
       retry: BigInt(10),
     });
   });
@@ -213,13 +212,13 @@ describe("validateMonitorPatchBounds", () => {
 
   test("rejects a timeout above the proto maximum", () => {
     expect(() =>
-      validateMonitorPatchBounds({ timeout: BigInt(120_001) }),
+      validateMonitorPatchBounds({ timeout: BigInt(300_001) }),
     ).toThrow(ConnectError);
   });
 
   test("rejects a degradedAt outside its range", () => {
     expect(() =>
-      validateMonitorPatchBounds({ degradedAt: BigInt(120_001) }),
+      validateMonitorPatchBounds({ degradedAt: BigInt(300_001) }),
     ).toThrow(ConnectError);
     expect(() =>
       validateMonitorPatchBounds({ degradedAt: BigInt(-1) }),

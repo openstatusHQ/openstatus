@@ -1,8 +1,7 @@
 import crypto from "node:crypto";
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 
 import type { SlackConfig } from "./config";
 import { createSlackRoute } from "./index";

@@ -69,23 +69,29 @@ export const statusReportRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         const serviceCtx = toServiceCtx(ctx);
-        const { initialUpdate } = await createStatusReport({
-          ctx: serviceCtx,
-          input: {
-            title: input.title,
-            status: input.status,
-            pageId: input.pageId,
-            pageComponentIds: input.pageComponents,
-            componentImpacts: input.componentImpacts ?? undefined,
-            date: input.date,
-            message: input.message,
-            incidentId: input.incidentId,
-          },
-        });
+        const { statusReport: report, initialUpdate } =
+          await createStatusReport({
+            ctx: serviceCtx,
+            input: {
+              title: input.title,
+              status: input.status,
+              pageId: input.pageId,
+              pageComponentIds: input.pageComponents,
+              componentImpacts: input.componentImpacts ?? undefined,
+              date: input.date,
+              message: input.message,
+              incidentId: input.incidentId,
+            },
+          });
         // Notification is a separate, client-driven step
         // (subscriberNotification.statusReport) so creation and dispatch stay
         // split — dispatch must run on lambda, this router is Edge-served.
-        return { ...initialUpdate, notifySubscribers: input.notifySubscribers };
+        // subscriberNotification.statusReport is keyed by update id.
+        return {
+          ...report,
+          initialUpdateId: initialUpdate.id,
+          notifySubscribers: input.notifySubscribers,
+        };
       } catch (err) {
         toTRPCError(err);
       }

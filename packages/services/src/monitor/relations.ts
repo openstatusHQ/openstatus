@@ -9,9 +9,11 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { ValidationError } from "../errors";
 import {
+  assertSchedulingWithinPlan,
   getMonitorInWorkspace,
+  monitorAuditSnapshot,
   validateNotificationIds,
   validatePrivateLocationIds,
   validateTagIds,
@@ -32,24 +34,9 @@ export async function updateMonitorSchedulingRegions(args: {
   input: UpdateMonitorSchedulingRegionsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorSchedulingRegionsInput.parse(args.input);
-  const limits = ctx.workspace.limits;
-
-  if (!limits.periodicity.includes(input.periodicity)) {
-    throw new LimitExceededError("periodicity", limits.periodicity.length);
-  }
-  if (limits["max-regions"] < input.regions.length) {
-    throw new LimitExceededError("max-regions", limits["max-regions"]);
-  }
-  if (
-    input.regions.length > 0 &&
-    !input.regions.every((r) =>
-      limits.regions.includes(r as (typeof limits)["regions"][number]),
-    )
-  ) {
-    throw new LimitExceededError("regions", limits.regions.length);
-  }
+  assertSchedulingWithinPlan(ctx.workspace.limits, input);
 
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -57,6 +44,11 @@ export async function updateMonitorSchedulingRegions(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    if (existing.jobType === "heartbeat") {
+      throw new ValidationError(
+        "Heartbeat monitors have no regions to schedule",
+      );
+    }
 
     const validatedLocations = await validatePrivateLocationIds({
       tx,
@@ -94,8 +86,8 @@ export async function updateMonitorSchedulingRegions(args: {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -106,7 +98,7 @@ export async function updateMonitorTags(args: {
   input: UpdateMonitorTagsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorTagsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -160,7 +152,7 @@ export async function updateMonitorNotifiers(args: {
   input: UpdateMonitorNotifiersInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorNotifiersInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

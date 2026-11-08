@@ -1,6 +1,5 @@
 "use client";
 
-import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -15,9 +14,13 @@ import {
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
 
-import { DataTableBasics } from "./data-table-basics";
-
-type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+import {
+  DataTableBasics,
+  DataTableBasicsHeartbeat,
+  type HeartbeatPing,
+  type ResponseLog,
+  isHeartbeatPing,
+} from "./data-table-basics";
 
 export function Sheet({
   data,
@@ -25,7 +28,7 @@ export function Sheet({
   onClose,
   showCopyUrl = true,
 }: {
-  data: ResponseLog | null;
+  data: ResponseLog | HeartbeatPing | null;
   privateLocations?: PrivateLocation[];
   onClose: () => void;
   showCopyUrl?: boolean;
@@ -37,9 +40,15 @@ export function Sheet({
     <DataTableSheet defaultOpen onOpenChange={(open) => !open && onClose()}>
       <DataTableSheetContent className="sm:max-w-lg">
         <DataTableSheetHeader className="px-2">
-          <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
+          <DataTableSheetTitle>
+            {isHeartbeatPing(data) ? "Ping" : "Response Logs"}
+          </DataTableSheetTitle>
         </DataTableSheetHeader>
-        <DataTableBasics data={data} privateLocations={privateLocations} />
+        {isHeartbeatPing(data) ? (
+          <DataTableBasicsHeartbeat data={data} />
+        ) : (
+          <DataTableBasics data={data} privateLocations={privateLocations} />
+        )}
         {showCopyUrl ? (
           <>
             <Separator />

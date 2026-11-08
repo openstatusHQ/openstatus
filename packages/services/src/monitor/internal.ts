@@ -21,7 +21,13 @@ import {
 import { regionDict } from "@openstatus/regions";
 
 import type { DB } from "../context";
-import { ForbiddenError, NotFoundError } from "../errors";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from "../errors";
+import { toBase64Url } from "../oauth/crypto";
 import type { Workspace } from "../types";
 
 /** Load a monitor by id, scoped to the workspace and excluding soft-deleted. */
@@ -179,4 +185,70 @@ export function pickDefaultRegions(workspace: Workspace): {
     regions,
     periodicity: workspace.plan === "free" ? "30m" : "1m",
   };
+}
+
+/**
+ * Enforce the plan's periodicity, region-count and region-access limits on
+ * a monitor's scheduling. Shared by every path that writes them so a clone
+ * (or a source that predates a downgrade) can't carry out-of-plan values.
+ * A field left `undefined` isn't being written and isn't checked, so a
+ * partial update of a monitor that predates a downgrade still goes through.
+ */
+export function assertSchedulingWithinPlan(
+  limits: Workspace["limits"],
+  scheduling: { periodicity?: string; regions?: ReadonlyArray<string> },
+): void {
+  const { periodicity, regions } = scheduling;
+  if (
+    periodicity !== undefined &&
+    !limits.periodicity.includes(
+      periodicity as (typeof limits)["periodicity"][number],
+    )
+  ) {
+    throw new LimitExceededError("periodicity", limits.periodicity.length);
+  }
+  if (regions === undefined) return;
+  if (limits["max-regions"] < regions.length) {
+    throw new LimitExceededError("max-regions", limits["max-regions"]);
+  }
+  if (
+    regions.length > 0 &&
+    !regions.every((r) =>
+      limits.regions.includes(r as (typeof limits)["regions"][number]),
+    )
+  ) {
+    throw new LimitExceededError("regions", limits.regions.length);
+  }
+}
+
+// The token authenticates pings; keep a fingerprint so a rotation still diffs
+// without storing any of it. Web Crypto keeps this module Edge-safe.
+export async function monitorAuditSnapshot<
+  T extends { heartbeatToken: string | null },
+>(row: T): Promise<T> {
+  if (!row.heartbeatToken) return row;
+  const data = new TextEncoder().encode(row.heartbeatToken);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  const fingerprint = Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 16);
+  return { ...row, heartbeatToken: `sha256:${fingerprint}` };
+}
+
+// Ping details are private and a heartbeat has no latency to chart, so the
+// public monitor pages never show one.
+export function assertHeartbeatNotPublic(
+  row: { jobType: string },
+  isPublic: boolean | undefined,
+) {
+  if (row.jobType === "heartbeat" && isPublic) {
+    throw new ValidationError("Heartbeat monitors cannot be public");
+  }
+}
+
+export function generateHeartbeatToken(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return toBase64Url(bytes);
 }

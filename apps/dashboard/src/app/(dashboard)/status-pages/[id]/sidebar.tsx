@@ -12,7 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -48,7 +50,12 @@ export function Sidebar() {
               label: "Access Type",
               value: statusPage.accessType,
             },
-            { label: "Domain", value: statusPage.customDomain || "-" },
+            {
+              label: "Domain",
+              value: statusPage.customDomain || (
+                <TableCellEmpty>No domain</TableCellEmpty>
+              ),
+            },
             {
               label: "Favicon",
               value: statusPage.icon ? (
@@ -56,7 +63,7 @@ export function Sidebar() {
                   <img src={statusPage.icon} alt="favicon" />
                 </div>
               ) : (
-                "-"
+                <TableCellEmpty>No favicon</TableCellEmpty>
               ),
             },
             {
@@ -89,15 +96,25 @@ export function Sidebar() {
           items: [
             {
               label: "Theme",
-              value: statusPage.configuration?.theme ?? "-",
+              value: statusPage.configuration?.theme ?? (
+                <TableCellEmpty>Default</TableCellEmpty>
+              ),
             },
             {
-              label: "Bar Value",
-              value: statusPage.configuration?.type ?? "-",
+              label: "Status source",
+              value: statusPage.configuration?.type ? (
+                configurationLabels.type[statusPage.configuration.type]
+              ) : (
+                <TableCellEmpty>Default</TableCellEmpty>
+              ),
             },
             {
-              label: "Card Value",
-              value: statusPage.configuration?.value ?? "-",
+              label: "Card shows",
+              value: statusPage.configuration?.value ? (
+                configurationLabels.value[statusPage.configuration.value]
+              ) : (
+                <TableCellEmpty>Default</TableCellEmpty>
+              ),
             },
             {
               label: "Show Uptime",

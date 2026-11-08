@@ -78,11 +78,15 @@ export function getComparePages(): MDXData[] {
   );
 }
 
+// The file is home.mdx but the page lives at the root, not /home.
 export function getHomePage(): MDXData {
-  return getMDXDataFromFile(
-    path.join(process.cwd(), "src", "content", "pages", "home.mdx"),
-    "",
-  );
+  return {
+    ...getMDXDataFromFile(
+      path.join(process.cwd(), "src", "content", "pages", "home.mdx"),
+      "",
+    ),
+    href: "/",
+  };
 }
 
 // `*-slug.mdx` files back dynamic routes (e.g. /play/checker/[slug],

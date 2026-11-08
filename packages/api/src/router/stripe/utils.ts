@@ -359,3 +359,18 @@ export const FEATURES = [
     yearly: PriceIds;
   };
 }>;
+
+// List price only: discounts and prorations are not reflected.
+export function billingProps(subscription: Stripe.Subscription) {
+  const items = subscription.items.data;
+  const interval = items[0]?.price.recurring?.interval;
+  const total = items.reduce(
+    (sum, item) => sum + (item.price.unit_amount ?? 0) * (item.quantity ?? 1),
+    0,
+  );
+  return {
+    interval,
+    currency: subscription.currency,
+    mrr: (interval === "year" ? total / 12 : total) / 100,
+  };
+}

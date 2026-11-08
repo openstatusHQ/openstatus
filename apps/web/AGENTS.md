@@ -23,10 +23,20 @@ Content pages are MDX prose built from the existing components (`Grid`,
 Never link out to a competitor. Name them as plain text — an external link
 donates domain authority and leaks the conversion.
 
+A dashboard location is a link, not just a bold path:
+`[**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys)`.
+For a monitor or status page, put `_` where the id goes
+(`https://app.openstatus.dev/status-pages/_/edit#custom-domain`); the dashboard
+asks which one. Anchors are the `id`s on the dashboard's `FormCard`s and `Section`s.
+Self-hosting docs keep plain bold paths.
+
 The home and product pages (`pages/home.mdx`, `pages/product/*.mdx`) follow one
 section pattern: an `h2` outside the grid, a text cell with two sentences and a
 short list of internal links, and one `<Demo type="…" />` in the other cell of
-a `<Grid variant="borderless">`. `content-lint.test.ts` enforces the structural
+a `<Grid variant="borderless">`. Inside a `<Timeline>` (the home page story)
+the `Eyebrow` and `h2` move into the text cell instead, and the text cell comes
+first, so the label, heading and copy stick together beside the demo and every
+marker lands on the rail. `content-lint.test.ts` enforces the structural
 rules on those pages (registered tags, `SrOnly` next to every demo, no raw
 `className`, every demo type in the kitchen sink); the rest of the rules below
 are kept by hand and in review. `/kitchen-sink` (noindex) renders every
@@ -56,3 +66,50 @@ component once so drift is visible.
 - Every capitalised tag must be registered in `mdx-components/index.tsx`.
 - No new colours beyond tokens, no font sizes beyond the prose scale, no radius.
   Dark mode comes from tokens only; images get a `.dark` sibling.
+
+## Spacing and type
+
+Prose runs at `text-base` with headings near body size (`h1` `text-xl`, the
+rest `text-base`) in both the mono content layout and the sans docs layout,
+so the chrome is scaled down to match. One 12px rhythm, nothing else:
+
+- Controls and cells (buttons, inputs, selects, textareas, tab triggers,
+  table `th`/`td`, header and footer nav tiles, menu items) are
+  `px-3 py-2` at `text-base`. The usual string is
+  `h-auto! rounded-none px-3 py-2 text-base`.
+- Containers (Grid cells, Card, Aside, ContentBox, footer columns,
+  pagination tiles, `details`) are `p-3`; the page gutters and sub-nav are
+  `px-3`, so text edges line up with the header tiles.
+- Never `p-4` on anything in `apps/web` outside the demos, which mirror
+  the status page and keep its spacing.
+- Tile grids drawn with `bg-border` + `gap-px` also carry `bg-clip-padding`,
+  or in dark mode (translucent `--border`) the outer border stacks on the
+  fill and reads heavier than the dividers.
+- Headings and `strong` are full `text-foreground`; body stays at the base
+  `.prose` color (`foreground/80`) so hierarchy comes from weight and
+  contrast, not size.
+
+## Screenshots
+
+For any visible change, shoot it before reporting it done:
+`node scripts/screenshot.mjs --app web /pricing` (the `screenshot` skill has the
+flags). Judge against the root `DESIGN.md`.
+
+Images that ship in content are 16:9. `image:` heroes on changelog, blog,
+guide and use-case pages render in an `aspect-video` frame with
+`object-contain`, so any other ratio letterboxes; inline `<Image>`s in a
+`figure` are cropped to 16:9 with `object-cover`, so any other ratio loses
+its edges. Shoot them with `--aspect 16:9 --device desktop` and check the
+PNG's size before committing. The one exception is an inline image that is
+wide or tall on purpose (a flow diagram, a terminal strip): give it
+`className="img-fit"` and its real `width`/`height`, and it shows whole.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

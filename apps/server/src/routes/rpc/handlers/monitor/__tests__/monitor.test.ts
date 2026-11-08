@@ -14,14 +14,14 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -448,22 +448,31 @@ describe("MonitorService.ListMonitors", () => {
   });
 
   test("uses offset for pagination", async () => {
-    // First page
-    const res1 = await connectRequest(
-      "ListMonitors",
-      { limit: 1 },
-      { "x-openstatus-key": "1" },
-    );
+    // Isolate in a dedicated workspace so concurrent monitor inserts/deletes
+    // on the seeded workspace can't shift the pagination window mid-test.
+    // Distinct createdAt values give the `desc(createdAt)` order a
+    // deterministic sequence (it has no id tiebreaker).
+    const ws = await createWorkspace();
+    const key = String(ws.id);
+    const now = Date.now();
+    await createMonitor(ws.id, { createdAt: new Date(now - 1000) });
+    await createMonitor(ws.id, { createdAt: new Date(now) });
 
-    expect(res1.status).toBe(200);
-    const data1 = await res1.json();
+    try {
+      const res1 = await connectRequest(
+        "ListMonitors",
+        { limit: 1 },
+        { "x-openstatus-key": key },
+      );
 
-    if (data1.totalSize > 1) {
-      // Second page using offset
+      expect(res1.status).toBe(200);
+      const data1 = await res1.json();
+      expect(data1.totalSize).toBe(2);
+
       const res2 = await connectRequest(
         "ListMonitors",
         { limit: 1, offset: 1 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
 
       expect(res2.status).toBe(200);
@@ -482,11 +491,12 @@ describe("MonitorService.ListMonitors", () => {
         ...(data2.dnsMonitors || []).map((m: { id: string }) => m.id),
       ];
 
-      // Should have no overlap
-      const overlap = firstPageIds.filter((id: string) =>
-        secondPageIds.includes(id),
-      );
-      expect(overlap.length).toBe(0);
+      expect(firstPageIds).toHaveLength(1);
+      expect(secondPageIds).toHaveLength(1);
+      expect(firstPageIds[0]).not.toBe(secondPageIds[0]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.workspaceId, ws.id));
+      await db.delete(workspace).where(eq(workspace.id, ws.id));
     }
   });
 
@@ -1690,8 +1700,8 @@ describe("MonitorService.UpdateICMPMonitor", () => {
     for (const [field, monitor] of [
       ["retry above max", { retry: "11" }],
       ["negative retry", { retry: "-1" }],
-      ["timeout above max", { timeout: "120001" }],
-      ["degradedAt above max", { degradedAt: "120001" }],
+      ["timeout above max", { timeout: "300001" }],
+      ["degradedAt above max", { degradedAt: "300001" }],
       ["over-long description", { description: "d".repeat(1025) }],
       ["over-long name", { name: "n".repeat(257) }],
       ["over-long uri", { uri: "u".repeat(2049) }],
@@ -1740,7 +1750,7 @@ describe("MonitorService.UpdateICMPMonitor", () => {
       "UpdateICMPMonitor",
       {
         id: String(testIcmpMonitorId),
-        monitor: { retry: "10", timeout: "120000" },
+        monitor: { retry: "10", timeout: "300000" },
       },
       { "x-openstatus-key": "1" },
     );
@@ -2017,6 +2027,218 @@ describe("MonitorService.TriggerMonitor", () => {
       await db.delete(monitorRun).where(eq(monitorRun.monitorId, icmpMon.id));
       await db.delete(monitor).where(eq(monitor.id, icmpMon.id));
     }
+  });
+  test("succeeds when only some regions fail to dispatch", async () => {
+    const mon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-partial-trigger`,
+      url: "https://example.com",
+      periodicity: "10m",
+      active: true,
+      regions: "ams,fra",
+    });
+
+    const realFetch = globalThis.fetch;
+    const regions: string[] = [];
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) => {
+      const region = new Headers(init?.headers).get("fly-prefer-region") ?? "";
+      regions.push(region);
+      return region === "fra"
+        ? Promise.reject(new TypeError("network error"))
+        : Promise.resolve(new Response(null, { status: 200 }));
+    }) as typeof fetch;
+
+    try {
+      const res = await connectRequest(
+        "TriggerMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+      expect(regions.sort()).toEqual(["ams", "fra"]);
+    } finally {
+      globalThis.fetch = realFetch;
+      await db.delete(monitorRun).where(eq(monitorRun.monitorId, mon.id));
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("returns Unavailable when no region could be reached", async () => {
+    const mon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-failed-trigger`,
+      url: "https://example.com",
+      periodicity: "10m",
+      active: true,
+      regions: "ams,fra",
+    });
+
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      Promise.reject(new TypeError("network error"))) as typeof fetch;
+
+    try {
+      const res = await connectRequest(
+        "TriggerMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get("error-reason")).toBe("MONITOR_TRIGGER_FAILED");
+    } finally {
+      globalThis.fetch = realFetch;
+      await db.delete(monitorRun).where(eq(monitorRun.monitorId, mon.id));
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+});
+
+// HTTP, TCP and DNS updates skip the validation interceptor like ICMP and gRPC,
+// so the same bounds must be enforced in their handlers.
+describe("MonitorService - update bounds (HTTP, TCP, DNS)", () => {
+  const cases = [
+    {
+      method: "UpdateHTTPMonitor",
+      id: () => testHttpMonitorId,
+      target: "url",
+    },
+    {
+      method: "UpdateTCPMonitor",
+      id: () => testTcpMonitorId,
+      target: "uri",
+    },
+    {
+      method: "UpdateDNSMonitor",
+      id: () => testDnsMonitorId,
+      target: "uri",
+    },
+  ] as const;
+
+  for (const { method, id, target } of cases) {
+    test(`${method} rejects out-of-bounds patches`, async () => {
+      for (const monitor of [
+        { retry: "1000000" },
+        { retry: "11" },
+        { name: "n".repeat(257) },
+        { description: "d".repeat(1025) },
+        { [target]: "u".repeat(2049) },
+      ]) {
+        const res = await connectRequest(
+          method,
+          { id: String(id()), monitor },
+          { "x-openstatus-key": "1" },
+        );
+
+        expect(res.status).toBe(400);
+      }
+    });
+
+    test(`${method} leaves the stored monitor untouched on rejection`, async () => {
+      const before = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, id()))
+        .get();
+
+      const res = await connectRequest(
+        method,
+        {
+          id: String(id()),
+          monitor: { name: "should-not-be-written", retry: "1000000" },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+
+      const after = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, id()))
+        .get();
+      expect(after?.name).toBe(before?.name);
+      expect(after?.retry).toBe(before?.retry);
+    });
+  }
+});
+
+// `Number("0x10")` is 16 and `Number("1e3")` is 1000: a loosely parsed id
+// silently targets another row instead of failing.
+describe("MonitorService - strict id parsing", () => {
+  const looseIds = (id: number) => [
+    `0x${id.toString(16)}`,
+    `${id}.0`,
+    `${id}abc`,
+    `+${id}`,
+    "",
+  ];
+
+  test("DeleteMonitor rejects non-decimal ids without deleting", async () => {
+    const mon = await createMonitor(1, {
+      name: `${TEST_PREFIX}-strict-id`,
+      url: "https://example.com",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+    });
+
+    try {
+      for (const id of looseIds(mon.id)) {
+        const res = await connectRequest(
+          "DeleteMonitor",
+          { id },
+          { "x-openstatus-key": "1" },
+        );
+        expect(res.status).toBe(400);
+      }
+
+      const row = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, mon.id))
+        .get();
+      expect(row?.deletedAt).toBeNull();
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("GetMonitor and UpdateHTTPMonitor reject non-decimal ids", async () => {
+    for (const id of looseIds(testHttpMonitorId).filter((id) => id !== "")) {
+      const get = await connectRequest(
+        "GetMonitor",
+        { id },
+        { "x-openstatus-key": "1" },
+      );
+      expect(get.status).toBe(400);
+      expect(get.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+
+      const update = await connectRequest(
+        "UpdateHTTPMonitor",
+        { id, monitor: { name: "should-not-be-written" } },
+        { "x-openstatus-key": "1" },
+      );
+      expect(update.status).toBe(400);
+    }
+  });
+
+  test("an id with CR/LF is InvalidArgument, not Internal", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: `${testHttpMonitorId}\r\nx-injected: 1` },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(400);
+    expect(res.headers.get("error-reason")).toBe("MONITOR_ID_INVALID");
+  });
+
+  test("still accepts a plain decimal id", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
   });
 });
 
@@ -3062,16 +3284,16 @@ describe("MonitorService.GetMonitor", () => {
     // Insert a monitor with invalid data that will fail selectMonitorSchema parsing
     const corruptedMon = await db
       .insert(monitor)
-      // @ts-expect-error - intentionally invalid periodicity to test parse failure
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-corrupted-data`,
         url: "https://corrupted.example.com",
+        // intentionally invalid periodicity to test parse failure
         periodicity: "invalid-periodicity",
         active: true,
         regions: "ams",
         jobType: "http",
-      })
+      } as unknown as typeof monitor.$inferInsert)
       .returning()
       .get();
 

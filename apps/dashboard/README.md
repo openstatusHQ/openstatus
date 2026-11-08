@@ -4,9 +4,8 @@
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en/) >= 20.0.0 — runtime
+- [Node.js](https://nodejs.org/en/) >= 26.2 — runtime (`devbox.json` pins the exact version)
 - [pnpm](https://pnpm.io/) >= 8 — monorepo package manager (see root `package.json` for pinned version)
-- [Deno](https://deno.com/) — runs the db env/migrate/seed scripts in `packages/db`
 - [Bun](https://bun.sh/) — optional, used by the utility scripts in `src/scripts`
 - [Turso CLI](https://docs.turso.tech/quickstart) — starts the local libSQL server via `pnpm --filter '@openstatus/db' dev`
 
@@ -82,6 +81,7 @@ To log in:
 - **Port 8080 already in use** — a leftover libSQL server from step 2. Kill that terminal and re-run `pnpm -w dev:dashboard`.
 - **Magic link doesn't arrive** — it isn't emailed in dev. Look in the dashboard terminal stdout for `>>> Magic Link: ...`.
 - **Reset the dev DB** — stop the libSQL server, delete `openstatus-dev.db` at the repo root, restart libSQL, re-run `pnpm -w dx`.
+- **No Turso CLI on the machine** (a cloud sandbox) — `node scripts/dev-stack.mjs up` does steps 2 to 5 with sqld fetched from npm; `down` stops them. Its database is `.screenshots/stack/openstatus-dev.db`: `up --reseed` resets the fixtures, or delete the directory while the stack is down.
 
 ## Related services (optional for dashboard development)
 

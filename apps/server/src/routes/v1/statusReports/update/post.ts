@@ -128,7 +128,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           s.unsubscribedAt === null,
       );
       if (_statusReportWithRelations?.page && validSubscribers.length > 0) {
-        await emailClient.sendStatusReportUpdate({
+        await emailClient.sendPageUpdate({
           subscribers: validSubscribers.map((subscriber) => ({
             email: subscriber.email,
             token: subscriber.token,

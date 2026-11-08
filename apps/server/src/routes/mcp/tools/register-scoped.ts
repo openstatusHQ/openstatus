@@ -3,7 +3,8 @@ import type {
   RegisteredTool,
   ToolCallback,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Scope } from "@openstatus/db/src/schema";
+import type { RequiredScope, Scope } from "@openstatus/db/src/schema";
+import { isReadScope } from "@openstatus/db/src/schema/api-keys/constants";
 import type { ServiceContext } from "@openstatus/services";
 import { matchesScope } from "@openstatus/services/auth";
 import type { ZodRawShape } from "zod";
@@ -30,13 +31,14 @@ type ToolAnnotations = {
 
 /**
  * Tool config layered on top of the MCP SDK's `registerTool` shape.
- * The new field is `scope`: a required read/write decision per tool.
+ * `scope` is what the credential must satisfy: a group scope, or `any`
+ * for tools every authenticated key may see.
  */
 type ScopedToolDefinition<
   InputArgs extends ZodRawShape | undefined,
   OutputArgs extends ZodRawShape | undefined,
 > = {
-  scope: Scope;
+  scope: RequiredScope;
   description: string;
   annotations?: ToolAnnotations;
   inputSchema?: InputArgs;
@@ -61,8 +63,9 @@ function actorScopes(ctx: ServiceContext): Scope[] {
  * because skipped tools aren't registered with the server at all.
  *
  * Defense in depth: even if the filter has a bug, the underlying
- * service verb still calls `requireScope(ctx, 'write')` and throws
- * `ForbiddenError`. The filter is UX; the service check is correctness.
+ * service verb still calls `requireScope(ctx, '<group>:write')` and
+ * throws `ForbiddenError`. The filter is UX; the service check is
+ * correctness.
  *
  * Returns the `RegisteredTool` when registered, `undefined` when
  * filtered out (so callers can still maintain a `Map<name,
@@ -91,7 +94,7 @@ export function registerScopedTool<
   // disagreement at registration so it can never ship.
   if (
     annotations?.readOnlyHint !== undefined &&
-    annotations.readOnlyHint !== (scope === "read")
+    annotations.readOnlyHint !== isReadScope(scope)
   ) {
     throw new Error(
       `MCP tool "${name}": scope="${scope}" disagrees with annotations.readOnlyHint=${annotations.readOnlyHint}`,

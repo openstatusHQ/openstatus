@@ -1,3 +1,4 @@
+import { Events } from "@openstatus/analytics";
 import {
   CreateSsoPortalLinkInput,
   createSsoPortalLink,
@@ -18,13 +19,15 @@ export const ssoRouter = createTRPCRouter({
     }
   }),
 
-  enable: protectedProcedure.mutation(async ({ ctx }) => {
-    try {
-      return await enableSso({ ctx: toServiceCtx(ctx) });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
+  enable: protectedProcedure
+    .meta({ track: Events.EnableSso })
+    .mutation(async ({ ctx }) => {
+      try {
+        return await enableSso({ ctx: toServiceCtx(ctx) });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
 
   disable: protectedProcedure.mutation(async ({ ctx }) => {
     try {

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
+import { AUTH_REDIRECT_COOKIE } from "@/lib/auth-redirect-cookie";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";
@@ -46,7 +47,7 @@ export default async function Page({
   // didn't pass the callbackUrl properly. The cookie has a 10-minute TTL
   // and will expire naturally.
   const cookieStore = await cookies();
-  const authRedirect = cookieStore.get("auth-redirect")?.value;
+  const authRedirect = cookieStore.get(AUTH_REDIRECT_COOKIE)?.value;
   if (authRedirect) {
     tryRedirectToCallback(authRedirect);
   }

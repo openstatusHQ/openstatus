@@ -21,6 +21,7 @@ import { privateLocationRouter } from "./router/privateLocation";
 import { statusPageRouter } from "./router/statusPage";
 import { statusReportRouter } from "./router/statusReport";
 import { tinybirdRouter } from "./router/tinybird";
+import { trackRouter } from "./router/track";
 import { userRouter } from "./router/user";
 import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
@@ -46,6 +47,7 @@ export const edgeRouter = createTRPCRouter({
   member: memberRouter,
   checker: checkerRouter,
   feedback: feedbackRouter,
+  track: trackRouter,
   statusPage: statusPageRouter,
   privateLocation: privateLocationRouter,
   import: importRouter,

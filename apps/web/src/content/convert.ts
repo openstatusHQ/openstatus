@@ -1,6 +1,9 @@
 import { customers, getCustomer } from "../data/customers";
+import { canonicalUrl, frontmatter } from "./frontmatter";
 import type { MDXData } from "./utils";
-import { formatDate } from "./utils";
+
+// Agents parse these dates; the human form stays on the HTML page.
+const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 
 /**
  * Converts MDX content to clean markdown format for AI tools
@@ -10,26 +13,20 @@ export function convertMdxToMarkdown(data: MDXData): string {
   let output = "";
 
   // Step 0: Generate YAML frontmatter from metadata
-  const { metadata, content } = data;
+  const { metadata, content, href } = data;
 
-  output += "---\n";
-  output += `title: "${metadata.title}"\n`;
-  if (metadata.publishedAt) {
-    output += `date: ${formatDate(metadata.publishedAt)}\n`;
-  }
-  if (metadata.author) {
-    output += `author: "${metadata.author}"\n`;
-  }
-  if (metadata.description) {
-    output += `description: "${metadata.description}"\n`;
-  }
-  if (metadata.category) {
-    output += `category: "${metadata.category}"\n`;
-  }
-  if (metadata.image) {
-    output += `image: "${metadata.image}"\n`;
-  }
-  output += "---\n\n";
+  // Same fallbacks as `getPageMetadata`, so the twin carries the <title>
+  // and meta description the HTML page advertises.
+  output += frontmatter({
+    title: metadata.seo?.title ?? metadata.title,
+    url: canonicalUrl(metadata.seo?.canonical ?? href),
+    date: metadata.publishedAt ? isoDate(metadata.publishedAt) : undefined,
+    updated: metadata.updatedAt ? isoDate(metadata.updatedAt) : undefined,
+    author: metadata.author,
+    description: metadata.seo?.description ?? metadata.description,
+    category: metadata.category,
+    image: metadata.image ? canonicalUrl(metadata.image) : undefined,
+  });
 
   // Step 1: Strip import statements (confirmed: always at top of file)
   let markdown = content.replace(/^import\s+.*$/gm, "");
@@ -102,16 +99,15 @@ export function convertMdxToMarkdown(data: MDXData): string {
     },
   );
 
-  // Step 8: Convert <ShowcaseYouTube entries={[...]}> to a list of links
-  markdown = markdown.replace(/<ShowcaseYouTube\b[\s\S]*?\/>/g, (match) => {
-    const items: string[] = [];
-    for (const entry of match.matchAll(/\{[^{}]*href:[^{}]*\}/g)) {
-      const href = entry[0].match(/href:\s*['"]([^'"]+)['"]/)?.[1];
-      const title = entry[0].match(/title:\s*['"]([^'"]+)['"]/)?.[1];
-      if (href) items.push(`- [${title ?? "YouTube video"}](${href})`);
-    }
-    return items.join("\n");
-  });
+  // Step 8: Convert <ShowcaseYouTube href="…" title="…" /> to a link list item
+  markdown = markdown.replace(
+    /<ShowcaseYouTube\b([^>]*?)\/>/g,
+    (_match, attrs: string) => {
+      const href = attrs.match(/href=["']([^"']+)["']/)?.[1];
+      const title = attrs.match(/title=["']([^"']+)["']/)?.[1];
+      return href ? `- [${title ?? "YouTube video"}](${href})` : "";
+    },
+  );
 
   // Step 9: Convert card components (unwrap grid, then serialize each card)
   markdown = markdown.replace(
@@ -171,7 +167,7 @@ export function convertMdxToMarkdown(data: MDXData): string {
   markdown = markdown.replace(/<Eyebrow\b[^>]*>[\s\S]*?<\/Eyebrow>/g, "");
   // SrOnly is a demo's text alternative: hidden on the page, plain copy here.
   // One pass skips wrappers nested inside a match, so repeat until stable.
-  const wrapper = /<(Grid|Subtle|p|SrOnly)\b[^>]*>([\s\S]*?)<\/\1>/g;
+  const wrapper = /<(Grid|Subtle|p|SrOnly|Timeline)\b[^>]*>([\s\S]*?)<\/\1>/g;
   while (wrapper.test(markdown)) {
     markdown = markdown.replace(wrapper, (_match, _tag, content) => content);
   }

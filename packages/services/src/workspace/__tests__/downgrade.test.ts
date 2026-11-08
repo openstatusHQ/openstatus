@@ -10,8 +10,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   expectAuditRow,
@@ -102,6 +101,9 @@ async function seedTeamWorkspace(tx: DrizzleTx) {
       password: "hunter2",
       accessType: "password",
       allowIndex: false,
+      defaultTimezone: "Asia/Tokyo",
+      defaultLocale: "fr",
+      locales: ["en", "fr"],
       createdAt: OLDEST,
     })
     .returning()
@@ -331,6 +333,11 @@ describe("downgradeWorkspaceToFree", () => {
       expect(kept?.accessType).toBe("public");
       // no-index is paid-only — the survivor must become indexable again.
       expect(kept?.allowIndex).toBe(true);
+      // so is the page time zone
+      expect(kept?.defaultTimezone).toBe("UTC");
+      // and translations: back to English only
+      expect(kept?.defaultLocale).toBe("en");
+      expect(kept?.locales).toBeNull();
 
       await expectAuditRow({
         workspaceId: s.ws.id,
@@ -546,6 +553,24 @@ describe("downgradeWorkspaceToFree", () => {
           keyId: "k-read",
           userId: 1,
           scopes: ["read"],
+        }),
+        db: tx,
+      };
+
+      await expect(downgradeWorkspaceToFree({ ctx })).rejects.toBeInstanceOf(
+        ForbiddenError,
+      );
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+      const ctx: ServiceContext = {
+        ...makeApiKeyCtx(s.ws, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
         }),
         db: tx,
       };

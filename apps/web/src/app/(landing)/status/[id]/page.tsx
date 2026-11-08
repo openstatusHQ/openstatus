@@ -11,6 +11,7 @@ import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
+  markdownAlternate,
   ogMetadata,
   twitterMetadata,
 } from "../../../../lib/metadata/shared-metadata";
@@ -20,11 +21,15 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../content-box";
-import { ServiceDetail } from "./service-detail";
+import { prefetchPopularStatus } from "../prefetch";
+import { PopularStatus } from "../sections";
+import { AgentHint } from "../service-blocks";
+import { ServiceDetail } from "./client";
 
 export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
+const RELATED_COUNT = 6;
 
 type RouteParams = { id: string };
 
@@ -42,8 +47,8 @@ export async function generateMetadata(args: {
       ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
       : `Is ${service.name} Down? ${service.name} Status & Incidents`;
     const description = escalated
-      ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
-      : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
+      ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by openstatus.`
+      : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by openstatus.`;
     const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
     const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
     const indexable = service.deletedAt == null;
@@ -54,6 +59,7 @@ export async function generateMetadata(args: {
       description,
       alternates: {
         canonical: canonicalUrl,
+        ...markdownAlternate(`/status/${service.slug}`),
       },
       robots: {
         index: indexable,
@@ -102,20 +108,11 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       slug: service.slug,
       days: HISTORY_DAYS,
     }),
+    prefetchPopularStatus(),
   ]);
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
-        <CustomLink
-          href={`${APP_URL}?ref=status-service-top`}
-          className="font-medium underline-offset-4 hover:underline"
-        >
-          Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
-        </CustomLink>
-      </ContentBoxContainer>
-
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
       <HydrateClient>
         <Suspense
           fallback={
@@ -128,14 +125,25 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         >
           <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
         </Suspense>
+        <Suspense fallback={null}>
+          <PopularStatus
+            id="related"
+            title="People also check"
+            aside={null}
+            exclude={{ service: service.slug }}
+            limit={8}
+          />
+        </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
+      <AgentHint markdownPath={`/status/${service.slug}.md`} />
+
+      <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus — see
+          Every service needs a status page. Run yours with openstatus — see
           what a{" "}
           <CustomLink href="/status-page" className="underline-offset-4">
             hosted status page

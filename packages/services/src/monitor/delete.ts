@@ -11,6 +11,7 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
+import { monitorAuditSnapshot } from "./internal";
 import { DeleteMonitorInput, DeleteMonitorsInput } from "./schemas";
 
 /**
@@ -23,7 +24,7 @@ export async function deleteMonitor(args: {
   input: DeleteMonitorInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -68,7 +69,7 @@ export async function deleteMonitor(args: {
       action: "monitor.delete",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
+      before: await monitorAuditSnapshot(existing),
     });
   });
 }
@@ -82,7 +83,7 @@ export async function deleteMonitors(args: {
   input: DeleteMonitorsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -152,7 +153,7 @@ export async function deleteMonitors(args: {
         action: "monitor.delete",
         entityType: "monitor",
         entityId: row.id,
-        before: row,
+        before: await monitorAuditSnapshot(row),
       });
     }
   });

@@ -54,7 +54,10 @@ export function FormSheetStatusReportCreate({
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
-  const setOpen = onOpenChange ?? setInternalOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
   const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -81,7 +84,9 @@ export function FormSheetStatusReportCreate({
     trpc.statusReport.create.mutationOptions({
       onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutate({ id: statusReport.id });
+          sendStatusReportUpdateMutation.mutate({
+            id: statusReport.initialUpdateId,
+          });
         }
         // no-input prefix key — matches every statusReport.list query
         queryClient.invalidateQueries({

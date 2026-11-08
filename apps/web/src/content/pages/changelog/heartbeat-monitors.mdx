@@ -1,0 +1,29 @@
+---
+title: "Heartbeat monitors"
+description: "Monitor cron jobs, backups and workers: your job pings a unique URL, and you get alerted when it stops or reports a failure."
+publishedAt: "2026-11-06"
+category: "monitoring"
+author: "openstatus"
+image: "/assets/changelog/heartbeat-monitors.png"
+---
+
+Heartbeat monitors are now available in every workspace.
+
+HTTP checks can't see a job that runs on its own schedule. A heartbeat monitor flips the direction: your job calls a unique ping URL each time it runs, and the monitor goes down when a ping doesn't arrive in time.
+
+Pick **Heartbeat** when creating a monitor, set how often the job runs (**period**) and how late a ping may be (**grace period**), then add the ping to your job:
+
+```bash
+0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 https://api.openstatus.dev/heartbeat/<token>
+```
+
+- **Missed pings:** when the deadline passes, an incident opens and your notification channels are alerted. The next ping recovers the monitor and resolves the incident.
+- **Reported failures:** ping the same URL followed by `/fail` to go down within a minute instead of waiting for the grace period.
+- **Ping logs:** each ping shows up in the monitor's **Logs** tab. Send your job's error output as a `POST` body to keep the first 10 KB with the ping, with anything that looks like a secret redacted on a best-effort basis.
+- **Status pages:** add a heartbeat monitor to a status page like any other monitor.
+
+A new heartbeat monitor stays silent until its first ping, so you can create it before the job is deployed. Periods go from 1 minute to 30 days, and each heartbeat counts as one monitor on your plan.
+
+You can also manage them through the API with `CreateHeartbeatMonitor` and `UpdateHeartbeatMonitor`.
+
+Read the [heartbeat monitor reference](/docs/reference/heartbeat-monitor) or the guide on [what a cron heartbeat monitor is](/guides/what-is-a-cron-heartbeat-monitor).

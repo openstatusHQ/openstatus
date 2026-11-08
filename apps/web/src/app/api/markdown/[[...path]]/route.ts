@@ -2,7 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { notFoundMarkdown } from "../../../../content/agent-recovery";
 import { convertMdxToMarkdown } from "../../../../content/convert";
+import { generateOssFriendsMarkdown } from "../../../../content/oss-friends";
 import {
+  generateStatusComponentMarkdown,
   generateStatusDetailMarkdown,
   generateStatusIndexMarkdown,
 } from "../../../../content/status-markdown";
@@ -43,6 +45,18 @@ export async function GET(
           "Cache-Control":
             "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
           "X-Content-Source": "status",
+        },
+      });
+    }
+
+    if (pathname === "/oss-friends") {
+      return new NextResponse(await generateOssFriendsMarkdown(), {
+        status: 200,
+        headers: {
+          ...MARKDOWN_HEADERS,
+          "Cache-Control":
+            "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
+          "X-Content-Source": "oss-friends",
         },
       });
     }
@@ -106,6 +120,11 @@ async function resolveStatusMarkdown(
     const slug = pathSegments[1];
     if (!slug) return null;
     return generateStatusDetailMarkdown(slug);
+  }
+  if (pathSegments.length === 3) {
+    const [, slug, component] = pathSegments;
+    if (!slug || !component) return null;
+    return generateStatusComponentMarkdown(slug, component);
   }
   return null;
 }

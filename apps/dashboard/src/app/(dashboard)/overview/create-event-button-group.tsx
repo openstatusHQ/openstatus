@@ -24,7 +24,7 @@ export function CreateEventButtonGroup() {
       <ButtonGroup>
         <FormSheetStatusReportCreate>
           <Button data-section="action" variant="outline" size="sm">
-            Create Status Report
+            Create status report
           </Button>
         </FormSheetStatusReportCreate>
         <DropdownMenu>

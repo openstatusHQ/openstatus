@@ -5,8 +5,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import {
   type DynamicToolUIPart,
   type ToolUIPart,
@@ -16,12 +19,15 @@ import {
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
+import { useModifierKey } from "@/lib/keyboard";
+import { useTRPC } from "@/lib/trpc/client";
 
 import { useChatTool } from "./chat-tool-context";
 import {
   renderToolDraft,
   renderToolResult,
   summarizeToolOutput,
+  toolBeforeIdField,
 } from "./tool-renderers";
 
 // SDK tool-part state machine: input-streaming/-available → in-flight;
@@ -66,6 +72,32 @@ function ApprovalCard({
   confirmTool: (id: string) => void;
   cancelTool: (id: string, reason?: string) => void;
 }) {
+  const modifier = useModifierKey();
+  const idField = toolBeforeIdField(toolName);
+  const entityId = idField ? integerField(input, idField) : undefined;
+  const loadsBefore = entityId !== undefined;
+  const trpc = useTRPC();
+  // Fetched fresh for every card (a revert must not reuse the snapshot taken
+  // before the change it reverts), then held still so the diff can't shift
+  // under the user while the card is open.
+  const beforeQuery = useQuery({
+    ...trpc.chatSession.approvalBefore.queryOptions({
+      toolName,
+      ids: idField && entityId !== undefined ? { [idField]: entityId } : {},
+    }),
+    enabled: loadsBefore,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  // Without a snapshot (no loader, error, entity gone) the card falls back
+  // to the proposed values only.
+  const loading =
+    loadsBefore && (beforeQuery.isPending || !beforeQuery.isFetchedAfterMount);
+  const before = loading ? undefined : (beforeQuery.data ?? undefined);
+
   // Scope key handling to the card so batched approvals / popovers don't share a window listener.
   const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -73,16 +105,23 @@ function ApprovalCard({
   }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // An open popover (e.g. an entity hover card) already handled this key.
+    if (e.defaultPrevented) return;
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      confirmTool(approvalId);
+      if (!loading) confirmTool(approvalId);
     } else if (e.key === "Escape") {
       e.preventDefault();
       cancelTool(approvalId);
     }
   };
 
-  const draft = renderToolDraft(toolName, input);
+  // While loading, the proposed-only rows give the skeleton its field names.
+  const draft = renderToolDraft(toolName, input, before);
+  // The id row drops once `before` lands (the header names the entity).
+  const skeletonFields = draft
+    ?.filter((row) => row.field !== idField)
+    .map((row) => row.field);
   return (
     <div
       ref={cardRef}
@@ -93,9 +132,24 @@ function ApprovalCard({
       <div className="flex items-center gap-2 p-3 text-sm">
         <ToolStateDot state="approval-requested" />
         <span className="font-commit-mono font-medium">{toolName}</span>
+        {loading ? (
+          <Skeleton className="h-4 w-48" />
+        ) : before ? (
+          <span className="text-muted-foreground flex-1 truncate">
+            · {before.label}
+          </span>
+        ) : null}
       </div>
       <div className="border-t p-3">
-        {draft ? (
+        {loading ? (
+          <ChangesTableSkeleton
+            fields={skeletonFields?.length ? skeletonFields : [undefined]}
+          />
+        ) : draft && draft.length === 0 && before ? (
+          <p className="text-muted-foreground text-sm">
+            No changes: these values are already set.
+          </p>
+        ) : draft ? (
           <ChangesTable changes={draft} />
         ) : (
           <pre className="bg-muted/50 max-h-64 overflow-auto rounded p-2 text-xs">
@@ -103,28 +157,75 @@ function ApprovalCard({
           </pre>
         )}
       </div>
-      <div className="bg-muted/30 flex items-center justify-end gap-3 border-t p-3">
-        <span className="text-muted-foreground text-xs">
-          <kbd className="bg-background rounded border px-1 font-mono">Esc</kbd>{" "}
-          to cancel ·{" "}
-          <kbd className="bg-background rounded border px-1 font-mono">⌘ ↵</kbd>{" "}
-          to apply
-        </span>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => cancelTool(approvalId)}
-          >
-            Cancel
-          </Button>
-          <Button size="sm" onClick={() => confirmTool(approvalId)}>
-            Apply
-          </Button>
-        </div>
+      <div className="bg-muted/30 flex items-center justify-end gap-2 border-t p-3">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => cancelTool(approvalId)}
+        >
+          Cancel
+          <Kbd className="font-mono">Esc</Kbd>
+        </Button>
+        <Button
+          size="sm"
+          disabled={loading}
+          onClick={() => confirmTool(approvalId)}
+        >
+          Apply
+          <KbdGroup>
+            <Kbd className="bg-primary-foreground/20 text-primary-foreground font-mono">
+              {modifier}
+            </Kbd>
+            <Kbd className="bg-primary-foreground/20 text-primary-foreground font-mono">
+              ↵
+            </Kbd>
+          </KbdGroup>
+        </Button>
       </div>
     </div>
   );
+}
+
+/** Mirrors `ChangesTable`'s grid so the card doesn't jump once values land. */
+function ChangesTableSkeleton({ fields }: { fields: (string | undefined)[] }) {
+  return (
+    <div
+      aria-busy
+      aria-label="Loading current values"
+      className="bg-background overflow-hidden rounded-md border text-sm"
+    >
+      {fields.map((field, idx) => (
+        <div
+          key={field ?? idx}
+          className={cn(
+            "grid grid-cols-1 md:grid-cols-4",
+            idx > 0 && "border-t",
+          )}
+        >
+          <div className="bg-muted/40 text-muted-foreground truncate border-r px-3 py-2 font-mono md:col-span-1">
+            {field ?? <Skeleton className="my-0.5 h-4 w-16" />}
+          </div>
+          <div className="grid gap-2 px-3 py-2 md:col-span-3">
+            <Skeleton className="my-0.5 h-4 w-32" />
+            <Skeleton className="my-0.5 h-4 w-40" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The entity id from a tool input. The preview query is a GET, so only this
+ * goes in its URL, never free-text fields that may carry secrets (monitor
+ * headers, bodies).
+ */
+function integerField(input: unknown, field: string): number | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const value = (input as Record<string, unknown>)[field];
+  return typeof value === "number" && Number.isInteger(value)
+    ? value
+    : undefined;
 }
 
 function ToolDisclosure({

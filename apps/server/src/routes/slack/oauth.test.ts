@@ -1,9 +1,8 @@
 import crypto from "node:crypto";
 
 import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 
 import {
   TEST_SIGNING_SECRET as SIGNING_SECRET,

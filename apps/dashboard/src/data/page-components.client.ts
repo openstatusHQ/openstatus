@@ -20,7 +20,8 @@ export const getActions = (
   }));
 };
 
-type OrderedComponent = {
+/** A page component with enough ordering info to list it in page order. */
+export type OrderedComponent = {
   id: number;
   name: string;
   groupId?: number | null;

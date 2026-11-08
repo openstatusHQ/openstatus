@@ -15,7 +15,7 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-border border p-4 [&>*:last-child]:!mb-0">
+    <div className="border-border border p-3 [&>*:last-child]:!mb-0">
       {title ? (
         <p className="text-foreground !mt-0 mb-2 font-medium">{title}</p>
       ) : null}
@@ -40,7 +40,7 @@ export function LinkCard({
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noopener noreferrer" : undefined}
       className={cn(
-        "border-border hover:bg-muted my-4 block border p-4 no-underline!",
+        "border-border hover:bg-muted my-4 block border p-3 no-underline!",
       )}
     >
       <span className="text-foreground block font-medium">{title}</span>

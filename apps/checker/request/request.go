@@ -2,7 +2,28 @@ package request
 
 import (
 	"encoding/json"
+	"strings"
 )
+
+const RequestIDHeader = "x-openstatus-request-id"
+
+// WithRequestID returns a copy of headers carrying the request ID. Keys match
+// case-insensitively: gRPC metadata lowercases them and would send both values.
+func WithRequestID(headers map[string]string, requestID string) map[string]string {
+	if requestID == "" {
+		return headers
+	}
+
+	merged := make(map[string]string, len(headers)+1)
+	for key, value := range headers {
+		if !strings.EqualFold(key, RequestIDHeader) {
+			merged[key] = value
+		}
+	}
+	merged[RequestIDHeader] = requestID
+
+	return merged
+}
 
 type AssertionType string
 
@@ -72,6 +93,7 @@ type HttpCheckerRequest struct {
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
 	WorkspaceID     string            `json:"workspaceId"`
+	RequestID       string            `json:"-"`
 	URL             string            `json:"url"`
 	MonitorID       string            `json:"monitorId"`
 	Method          string            `json:"method"`
@@ -126,6 +148,7 @@ type ICMPCheckerRequest struct {
 }
 
 type GRPCCheckerRequest struct {
+	RequestID     string            `json:"-"`
 	Status        string            `json:"status"`
 	WorkspaceID   string            `json:"workspaceId"`
 	URI           string            `json:"uri"`

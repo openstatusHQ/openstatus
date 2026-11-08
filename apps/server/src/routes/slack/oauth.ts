@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { getLogger } from "@logtape/logtape";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
@@ -178,6 +179,16 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
       `${config.dashboardUrl}/settings/integrations?slack=error`,
     );
   }
+
+  setupAnalytics({
+    userId: `usr_${state.userId}`,
+    workspaceId: String(workspaceParsed.data.id),
+    workspaceName: workspaceParsed.data.name || workspaceParsed.data.slug,
+    plan: workspaceParsed.data.plan,
+    source: "slack",
+  })
+    .then((analytics) => analytics.track(Events.InstallSlackAgent))
+    .catch(() => undefined);
 
   return c.redirect(
     `${config.dashboardUrl}/settings/integrations?slack=success`,

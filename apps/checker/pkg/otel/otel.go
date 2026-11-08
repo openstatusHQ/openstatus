@@ -15,7 +15,7 @@ import (
 	sdkMetrics "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 
-	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
 )
 
 func setupOTelSDK(ctx context.Context, url string, headers map[string]string) (shutdown func(context.Context) error, err error) {

@@ -22,6 +22,7 @@ import {
   Close,
   Globe,
   Network,
+  Schedule,
   Server,
   Speed,
 } from "@openstatus/icons";
@@ -65,7 +66,11 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { headerPairSchema } from "@openstatus/utils";
+import {
+  HEARTBEAT_GRACE_RANGE,
+  HEARTBEAT_PERIOD_RANGE,
+  headerPairSchema,
+} from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -84,7 +89,9 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-const TYPES = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+import { HeartbeatDurationInput } from "./heartbeat-duration-input";
+
+const TYPES = ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const;
 const GRPC_TLS_LABELS = {
   tls: "TLS (verify certificate)",
   tls_insecure: "TLS (skip verification)",
@@ -93,28 +100,67 @@ const GRPC_TLS_LABELS = {
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
-const schema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  type: z.enum(TYPES),
-  method: z.enum(monitorMethods),
-  url: z.string().min(1, "URL is required"),
-  headers: z.array(headerPairSchema),
-  active: z.boolean().prefault(true),
-  assertions: z.array(
-    z.discriminatedUnion("type", [
-      statusAssertion,
-      headerAssertion,
-      textBodyAssertion,
-      jsonBodyAssertion,
-      recordAssertion,
-    ]),
-  ),
-  body: z.string().optional(),
-  grpcService: z.string().optional(),
-  grpcTls: z.enum(grpcTlsModes).prefault("tls"),
-  skipCheck: z.boolean().prefault(false),
-  saveCheck: z.boolean().prefault(false),
-});
+const heartbeatPeriodSchema = z
+  .number({ error: "Period is required" })
+  .int()
+  .min(HEARTBEAT_PERIOD_RANGE.min, "At least 1 minute")
+  .max(HEARTBEAT_PERIOD_RANGE.max, "At most 30 days");
+const heartbeatGraceSchema = z
+  .number({ error: "Grace period is required" })
+  .int()
+  .min(HEARTBEAT_GRACE_RANGE.min, "At least 1 minute")
+  .max(HEARTBEAT_GRACE_RANGE.max, "At most 7 days");
+
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    type: z.enum(TYPES),
+    method: z.enum(monitorMethods),
+    url: z.string(),
+    headers: z.array(headerPairSchema),
+    active: z.boolean().prefault(true),
+    assertions: z.array(
+      z.discriminatedUnion("type", [
+        statusAssertion,
+        headerAssertion,
+        textBodyAssertion,
+        jsonBodyAssertion,
+        recordAssertion,
+      ]),
+    ),
+    body: z.string().optional(),
+    grpcService: z.string().optional(),
+    grpcTls: z.enum(grpcTlsModes).prefault("tls"),
+    skipCheck: z.boolean().prefault(false),
+    saveCheck: z.boolean().prefault(false),
+    heartbeatPeriod: z.number().optional(),
+    heartbeatGrace: z.number().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.type !== "heartbeat") {
+      if (values.url.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["url"],
+          message: "URL is required",
+        });
+      }
+      return;
+    }
+    for (const [key, rule] of [
+      ["heartbeatPeriod", heartbeatPeriodSchema],
+      ["heartbeatGrace", heartbeatGraceSchema],
+    ] as const) {
+      const result = rule.safeParse(values[key]);
+      if (!result.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: result.error.issues[0]?.message ?? "Invalid value",
+        });
+      }
+    }
+  });
 
 type FormValues = z.input<typeof schema>;
 
@@ -144,6 +190,8 @@ export function FormGeneral({
       grpcTls: "tls",
       skipCheck: false,
       saveCheck: false,
+      heartbeatPeriod: 3_600,
+      heartbeatGrace: 300,
     },
   });
   // Stable row ids so removing a row remounts the shifted controllers.
@@ -163,6 +211,15 @@ export function FormGeneral({
   // Each type has its own reference page; only http and dns support assertions.
   const referenceUrl = `https://www.openstatus.dev/docs/reference/${watchType ?? "http"}-monitor/`;
   const hasAssertions = watchType === "http" || watchType === "dns";
+  const isHeartbeat = watchType === "heartbeat";
+  const typeOptions = [
+    { value: "http", icon: Globe, label: "HTTP" },
+    { value: "tcp", icon: Network, label: "TCP" },
+    { value: "dns", icon: Server, label: "DNS" },
+    { value: "icmp", icon: Speed, label: "ICMP" },
+    { value: "grpc", icon: Api, label: "gRPC" },
+    { value: "heartbeat", icon: Schedule, label: "Heartbeat" },
+  ];
 
   useEffect(() => {
     // NOTE: reset form when type changes
@@ -176,7 +233,6 @@ export function FormGeneral({
   }, [watchType, defaultValues, form]);
 
   function submitAction(values: FormValues) {
-    console.log("submitAction", values);
     if (isPending || disabled) return;
 
     // Validate assertions based on type
@@ -250,7 +306,7 @@ export function FormGeneral({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="monitor-configuration">
           <FormCardHeader>
             <FormCardTitle>Monitor Configuration</FormCardTitle>
             <FormCardDescription>
@@ -306,16 +362,10 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-5"
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6"
                       disabled={!!defaultValues?.type}
                     >
-                      {[
-                        { value: "http", icon: Globe, label: "HTTP" },
-                        { value: "tcp", icon: Network, label: "TCP" },
-                        { value: "dns", icon: Server, label: "DNS" },
-                        { value: "icmp", icon: Speed, label: "ICMP" },
-                        { value: "grpc", icon: Api, label: "gRPC" },
-                      ].map((type) => {
+                      {typeOptions.map((type) => {
                         return (
                           <Tooltip key={type.value}>
                             <TooltipTrigger asChild>
@@ -710,6 +760,52 @@ export function FormGeneral({
               </div>
             </FormCardContent>
           )}
+          {watchType === "heartbeat" && (
+            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="heartbeatPeriod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expected every</FormLabel>
+                    <FormControl>
+                      <HeartbeatDurationInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>The schedule of your job.</FormDescription>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="heartbeatGrace"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grace period</FormLabel>
+                    <FormControl>
+                      <HeartbeatDurationInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Extra time before a late ping counts as missed.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              {defaultValues?.type ? null : (
+                <div className="text-muted-foreground col-span-full text-sm">
+                  Your job pings a unique URL when it finishes. You get it right
+                  after creating the monitor. Alerts start after the first ping.
+                </div>
+              )}
+            </FormCardContent>
+          )}
           {watchType === "icmp" && (
             <FormCardContent className="grid gap-4 sm:grid-cols-3">
               <FormField
@@ -1080,7 +1176,10 @@ export function FormGeneral({
                   </Link>
                 </>
               )}
-              . We test your endpoint before saving the monitor.
+              .
+              {isHeartbeat
+                ? " openstatus never calls your job: it waits for its pings."
+                : " We test your endpoint before saving the monitor."}
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending || disabled}>
               {isPending ? "Submitting..." : "Submit"}

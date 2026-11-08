@@ -1,6 +1,10 @@
 // Test double for @slack/web-api (only WebClient is used), swapped in via
 // --import-map. Captures chat calls into the shared slack test state.
-import { slackTestState as s } from "./slack-test-state.ts";
+import {
+  type HistoryArgs,
+  type MembersArgs,
+  slackTestState as s,
+} from "./slack-test-state.ts";
 
 export class WebClient {
   chat = {
@@ -72,18 +76,50 @@ export class WebClient {
     };
   };
   conversations = {
-    replies: (args: Record<string, unknown>) => s.repliesImpl(args),
+    replies: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.replies", args });
+      return s.repliesImpl(args);
+    },
     join: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.join", args });
       return Promise.resolve({ ok: true });
     },
-    history: (args: Record<string, unknown>) => {
+    history: (args: HistoryArgs) => {
       s.calls.push({ method: "conversations.history", args });
-      return s.historyImpl();
+      return s.historyImpl(args);
     },
     info: (args: Record<string, unknown>) => {
       s.calls.push({ method: "conversations.info", args });
       return s.conversationsInfoImpl(args);
+    },
+    members: (args: MembersArgs) => {
+      s.calls.push({ method: "conversations.members", args });
+      return s.membersImpl(args);
+    },
+    create: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.create", args });
+      return Promise.resolve({
+        ok: true,
+        channel: { id: "C_INCIDENT", name: args.name },
+      });
+    },
+    invite: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.invite", args });
+      return Promise.resolve({ ok: true });
+    },
+    setTopic: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "conversations.setTopic", args });
+      return Promise.resolve({ ok: true });
+    },
+    archive: (args: { channel: string }) => {
+      s.calls.push({ method: "conversations.archive", args });
+      return s.archiveImpl(args);
+    },
+  };
+  pins = {
+    add: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "pins.add", args });
+      return Promise.resolve({ ok: true });
     },
   };
   agents = {
@@ -113,6 +149,10 @@ export class WebClient {
       s.calls.push({ method: "users.info", args });
       return s.usersInfoImpl(args);
     },
+    lookupByEmail: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "users.lookupByEmail", args });
+      return Promise.reject(new Error("users_not_found"));
+    },
   };
   views = {
     publish: (args: Record<string, unknown>) => {
@@ -121,6 +161,10 @@ export class WebClient {
     },
     open: (args: Record<string, unknown>) => {
       s.calls.push({ method: "views.open", args });
+      return Promise.resolve({ ok: true });
+    },
+    update: (args: Record<string, unknown>) => {
+      s.calls.push({ method: "views.update", args });
       return Promise.resolve({ ok: true });
     },
   };

@@ -1,5 +1,10 @@
 export { createPage, newPage } from "./create";
+export {
+  getStatusUpdateTypes,
+  type StatusUpdateType,
+} from "./status-update-types";
 export { deletePage } from "./delete";
+export { assertCustomDomainAvailable } from "./internal";
 export {
   attachDomain,
   detachDomain,
@@ -39,6 +44,7 @@ export {
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
+  updatePageTimezone,
 } from "./update";
 
 export {
@@ -57,4 +63,5 @@ export {
   UpdatePageLinksInput,
   UpdatePageLocalesInput,
   UpdatePagePasswordProtectionInput,
+  UpdatePageTimezoneInput,
 } from "./schemas";

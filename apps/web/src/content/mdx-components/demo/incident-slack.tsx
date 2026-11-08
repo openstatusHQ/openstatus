@@ -137,7 +137,7 @@ export function IncidentDeclareDemo() {
   );
 }
 
-/** The incident's own channel: pinned card on top, a pinned message becomes a timeline note. */
+/** The incident's own channel: pinned card on top, a message added from its ⋯ menu or with 📌 becomes a timeline note. */
 export function IncidentChannelDemo() {
   return (
     <Cell>
@@ -169,9 +169,20 @@ export function IncidentChannelDemo() {
                     <SlackFieldValue>Open</SlackFieldValue>
                   </SlackField>
                 </SlackFields>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline">
+                    Update status
+                  </Button>
+                  <Button type="button" size="sm" variant="outline">
+                    Update status page
+                  </Button>
+                  <Button type="button" size="sm" variant="outline">
+                    Open in openstatus
+                  </Button>
+                </div>
                 <div className="text-muted-foreground text-xs">
-                  <SlackLink>Open in openstatus</SlackLink> · Pin a message with
-                  📌 to add it to the timeline.
+                  Add a message to the timeline: ⋯ → Add to incident timeline,
+                  or react 📌.
                 </div>
               </SlackAttachment>
             </SlackMessageBody>
@@ -193,7 +204,7 @@ export function IncidentChannelDemo() {
         </SlackMessage>
       </CellBody>
       <CellFooter>
-        <span>Pinned messages land on the timeline</span>
+        <span>Any message can go on the timeline</span>
         <span>
           Reminder after {response.staleAfterHours}h without an update
         </span>

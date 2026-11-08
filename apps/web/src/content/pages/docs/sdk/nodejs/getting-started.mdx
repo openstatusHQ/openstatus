@@ -10,7 +10,7 @@ description: "Install and start using the openstatus Node.js SDK"
 Before using the SDK, you need an API key:
 
 1. Log in to the [openstatus dashboard](https://app.openstatus.dev/login)
-2. Go to **Settings** > **General** and find the **API Keys** card
+2. Go to [**Settings > General**](https://app.openstatus.dev/settings/general#api-keys) and find the **API Keys** card
 3. Click **Create** and copy the key
 
 <Aside type="tip">Store your API key as an environment variable (`OPENSTATUS_API_KEY`) — never commit it to source control.</Aside>
@@ -46,6 +46,7 @@ bun add @openstatus/sdk-node
 ```typescript
 import {
   createOpenStatusClient,
+  HTTPMethod,
   Periodicity,
   Region,
 } from "@openstatus/sdk-node";
@@ -59,6 +60,7 @@ const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
   monitor: {
     name: "My API",
     url: "https://api.example.com/health",
+    method: HTTPMethod.HTTP_METHOD_GET,
     periodicity: Periodicity.PERIODICITY_1M,
     regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
     active: true,
@@ -119,6 +121,7 @@ A complete example: create a monitor, set up a status page, add the monitor as a
 ```typescript
 import {
   createOpenStatusClient,
+  HTTPMethod,
   NotificationProvider,
   Periodicity,
   Region,
@@ -137,6 +140,7 @@ const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
   monitor: {
     name: "Production API",
     url: "https://api.example.com/health",
+    method: HTTPMethod.HTTP_METHOD_GET,
     periodicity: Periodicity.PERIODICITY_1M,
     regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
     active: true,

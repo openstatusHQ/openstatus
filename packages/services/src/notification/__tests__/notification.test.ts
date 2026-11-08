@@ -7,8 +7,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
   expectAuditRow,
@@ -509,6 +508,38 @@ describe("notification-channel count quota", () => {
       await expect(
         createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-monitors",
+          userId: 1,
+          scopes: ["monitors:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createNotification({
+          ctx,
+          input: {
+            name: `${TEST_PREFIX}-other-group`,
+            provider: "discord",
+            data: { discord: "https://discord.com/api/webhooks/1/abc" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listNotifications({
+          ctx,
+          input: { limit: 100, offset: 0, order: "desc" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

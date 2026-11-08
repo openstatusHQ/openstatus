@@ -16,6 +16,10 @@ export const Events = {
     name: "onboarding_completed",
     channel: "onboarding",
   },
+  CopyAgentPrompt: {
+    name: "agent_prompt_copied",
+    channel: "agent",
+  },
   SignInUser: {
     name: "user_signed_in",
     channel: "login",
@@ -120,6 +124,18 @@ export const Events = {
     name: "maintenance_deleted",
     channel: "maintenance",
   },
+  CreateMaintenanceUpdate: {
+    name: "maintenance_update_created",
+    channel: "maintenance",
+  },
+  UpdateMaintenanceUpdate: {
+    name: "maintenance_update_updated",
+    channel: "maintenance",
+  },
+  DeleteMaintenanceUpdate: {
+    name: "maintenance_update_deleted",
+    channel: "maintenance",
+  },
   NotifyMaintenance: {
     name: "maintenance_notified",
     channel: "maintenance",
@@ -130,6 +146,10 @@ export const Events = {
   },
   UpdateNotification: {
     name: "notification_updated",
+    channel: "notification",
+  },
+  TestNotification: {
+    name: "notification_tested",
     channel: "notification",
   },
   DeleteNotification: {
@@ -216,6 +236,10 @@ export const Events = {
     name: "user_removed",
     channel: "team",
   },
+  TransferOwnership: {
+    name: "ownership_transferred",
+    channel: "team",
+  },
   CreateAPI: {
     name: "api_key_created",
     channel: "api_key",
@@ -256,6 +280,46 @@ export const Events = {
     name: "trial_converted",
     channel: "billing",
   },
+  AddTrialPaymentMethod: {
+    name: "trial_payment_method_added",
+    channel: "billing",
+  },
+  NotifyTrialEnding: {
+    name: "trial_ending_notified",
+    channel: "billing",
+  },
+  ExpireTrial: {
+    name: "trial_expired",
+    channel: "billing",
+  },
+  StartCheckout: {
+    name: "checkout_started",
+    channel: "billing",
+  },
+  ReachLimit: {
+    name: "limit_reached",
+    channel: "billing",
+  },
+  PreviewImport: {
+    name: "import_previewed",
+    channel: "import",
+  },
+  RunImport: {
+    name: "import_completed",
+    channel: "import",
+  },
+  InstallSlackAgent: {
+    name: "slack_agent_installed",
+    channel: "integration",
+  },
+  EnableSso: {
+    name: "sso_enabled",
+    channel: "workspace",
+  },
+  SubmitFeedback: {
+    name: "feedback_submitted",
+    channel: "feedback",
+  },
   GlobalSpeedChecker: {
     name: "global_speed_checker",
     channel: "checker",
@@ -271,5 +335,17 @@ export const Events = {
   McpRequest: {
     name: "mcp_request",
     channel: "mcp",
+  },
+  ApiRequest: {
+    name: "api_request",
+    channel: "api",
+  },
+  CliCommand: {
+    name: "cli_command",
+    channel: "cli",
+  },
+  ContentCopied: {
+    name: "content_copied",
+    channel: "content",
   },
 } as const satisfies Record<string, EventProps>;

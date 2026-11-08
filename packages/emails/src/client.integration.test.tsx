@@ -1,12 +1,11 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
 import "./test-preload.ts";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { render } from "react-email";
+import { describe, expect, test } from "vitest";
 
-import StatusReportEmail from "../emails/status-report";
-import { statusReportSubject } from "./client";
+import PageUpdateEmail from "../emails/page-update";
+import { pageUpdateSubject } from "./client";
 
 describe("Status Report Email - Unsubscribe Link in Body", () => {
   const unsubscribeUrl =
@@ -15,7 +14,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
   test("should include unsubscribe link in email body when URL is provided", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -33,7 +32,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
   test("should not include unsubscribe section when URL is not provided", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -51,7 +50,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
   test("should render unsubscribe link as clickable", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -69,7 +68,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
   test("should render the unsubscribe link in the footer, outside the card", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -92,7 +91,7 @@ describe("Status Report Email - Subject Line", () => {
   const reportTitle = "API Outage";
 
   test('prepends "RESOLVED:" only when status is "resolved"', () => {
-    expect(statusReportSubject({ status: "resolved", reportTitle })).toBe(
+    expect(pageUpdateSubject({ status: "resolved", reportTitle })).toBe(
       `RESOLVED: ${reportTitle}`,
     );
   });
@@ -101,14 +100,14 @@ describe("Status Report Email - Subject Line", () => {
     const ongoing = ["investigating", "identified", "monitoring"] as const;
 
     for (const status of ongoing) {
-      const subject = statusReportSubject({ status, reportTitle });
+      const subject = pageUpdateSubject({ status, reportTitle });
       expect(subject).toBe(reportTitle);
       expect(subject).not.toContain("RESOLVED:");
     }
   });
 
   test('prepends "Planned Maintenance:" when status is "maintenance"', () => {
-    expect(statusReportSubject({ status: "maintenance", reportTitle })).toBe(
+    expect(pageUpdateSubject({ status: "maintenance", reportTitle })).toBe(
       `Planned Maintenance: ${reportTitle}`,
     );
   });
@@ -127,7 +126,7 @@ describe("Status Report Email - Email Content Validation", () => {
       manageUrl: "https://openstatus.openstatus.dev/manage/test",
     };
 
-    const html = await render(<StatusReportEmail {...props} />);
+    const html = await render(<PageUpdateEmail {...props} />);
 
     expect(html).toContain(props.pageTitle);
     expect(html).toContain(props.reportTitle);
@@ -148,7 +147,7 @@ describe("Status Report Email - Email Content Validation", () => {
 
     for (const status of statuses) {
       const html = await render(
-        <StatusReportEmail
+        <PageUpdateEmail
           pageTitle="Test"
           reportTitle="Test Report"
           status={status}

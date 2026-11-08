@@ -2,6 +2,7 @@ import { and, eq } from "@openstatus/db";
 import {
   type Incident,
   type IncidentEvent,
+  type IncidentEventSource,
   type IncidentEventType,
   type IncidentStatus,
   incident,
@@ -11,9 +12,24 @@ import {
 
 import { displayName } from "../attribution";
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
+import {
+  type Actor,
+  type DB,
+  type ServiceContext,
+  tryGetActorUserId,
+} from "../context";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import { getMembership } from "../member/membership";
+
+export const incidentUserColumns = {
+  id: true,
+  name: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  photoUrl: true,
+  deletedAt: true,
+} as const;
 
 export async function getIncidentInWorkspace(
   tx: DB,
@@ -63,6 +79,35 @@ export function assertTransition(
   }
 }
 
+function actorSource(actor: Actor): IncidentEventSource {
+  switch (actor.type) {
+    case "user":
+      return "dashboard";
+    case "apiKey":
+      return "api";
+    case "mcp":
+      return "mcp";
+    case "slack":
+      return "slack";
+    case "system":
+    case "webhook":
+    case "subscriber":
+      return "system";
+  }
+}
+
+function actorSourceRef(actor: Actor): string | null {
+  switch (actor.type) {
+    case "apiKey":
+    case "mcp":
+      return actor.keyId;
+    case "slack":
+      return actor.permalink ?? null;
+    default:
+      return null;
+  }
+}
+
 /** The only way an event is written: the row and its audit entry together. */
 export async function appendIncidentEvent(
   tx: DB,
@@ -73,6 +118,8 @@ export async function appendIncidentEvent(
     message?: string | null;
     createdAt?: Date;
     createdBy?: number | null;
+    source?: IncidentEventSource;
+    sourceRef?: string | null;
   },
 ): Promise<IncidentEvent> {
   const event = await tx
@@ -81,6 +128,11 @@ export async function appendIncidentEvent(
       incidentId: args.incidentId,
       type: args.type,
       message: args.message ?? null,
+      source: args.source ?? actorSource(ctx.actor),
+      sourceRef:
+        args.sourceRef !== undefined
+          ? args.sourceRef
+          : actorSourceRef(ctx.actor),
       createdBy: args.createdBy ?? tryGetActorUserId(ctx.actor),
       createdAt: args.createdAt ?? new Date(),
     })

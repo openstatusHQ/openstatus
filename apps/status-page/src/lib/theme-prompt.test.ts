@@ -1,6 +1,5 @@
 import { THEME_VAR_NAMES, THEMES } from "@openstatus/theme-store";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   generateThemePrompt,

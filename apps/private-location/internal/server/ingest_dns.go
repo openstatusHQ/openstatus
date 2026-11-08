@@ -29,7 +29,8 @@ type DNSResponse struct {
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
 
-	Error uint8 `json:"error"`
+	Error    uint8 `json:"error"`
+	Attempts int   `json:"attempts"`
 }
 
 func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Request[private_locationv1.IngestDNSRequest]) (*connect.Response[private_locationv1.IngestDNSResponse], error) {
@@ -74,6 +75,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		WorkspaceID:   int64(ic.Monitor.WorkspaceID),
 		Timestamp:     req.Msg.Timestamp,
 		Error:         uint8(req.Msg.Error),
+		Attempts:      attemptCount(req.Msg.Attempts),
 		Region:        strconv.Itoa(ic.Region.ID),
 		MonitorID:     int64(ic.Monitor.ID),
 		Timing:        req.Msg.Timing,

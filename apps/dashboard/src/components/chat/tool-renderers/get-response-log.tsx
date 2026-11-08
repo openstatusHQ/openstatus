@@ -3,11 +3,13 @@ import type {
   AgentToolOutput,
 } from "@openstatus/services/agent-tools";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { toEntityId } from "@/data/entity-refs.client";
 
 import type {
   DetailsRow,
@@ -19,13 +21,25 @@ type Input = AgentToolInput<"get_response_log">;
 type Output = AgentToolOutput<"get_response_log">;
 type Timing = NonNullable<Output["timing"]>;
 
+function MonitorRef({ value }: { value: string }) {
+  const id = toEntityId(value);
+  return id ? (
+    <EntityRef kind="monitor" id={id} />
+  ) : (
+    <TableCellText value={value} />
+  );
+}
+
 export function getResponseLogDetails(
   _input: Input,
   output: Output,
 ): DetailsTableData {
   const request: DetailsRow[] = [
     { label: "Log ID", value: <TableCellText value={output.id} /> },
-    { label: "Monitor", value: <TableCellText value={output.monitorId} /> },
+    {
+      label: "Monitor",
+      value: <MonitorRef value={output.monitorId} />,
+    },
     { label: "Region", value: <TableCellRegion value={output.region} /> },
     { label: "URL", value: <TableCellText value={output.url} /> },
     {

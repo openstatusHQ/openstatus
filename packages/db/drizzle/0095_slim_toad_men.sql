@@ -1,0 +1,1 @@
+ALTER TABLE `page` ADD `default_timezone` text DEFAULT 'UTC' NOT NULL;

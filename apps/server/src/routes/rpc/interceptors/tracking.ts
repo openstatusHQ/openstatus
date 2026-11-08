@@ -1,3 +1,4 @@
+import { isMessage, type Message } from "@bufbuild/protobuf";
 import type { Interceptor } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
 import {
@@ -6,7 +7,16 @@ import {
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
+import {
+  DeclareIncidentRequestSchema,
+  IncidentSeverity,
+  IncidentStatus,
+  SetIncidentStatusRequestSchema,
+} from "@openstatus/proto/incident/v1";
 
+import { apiAnalyticsIdentity } from "../../../libs/analytics-identity";
+import { apiRequestSampleRate } from "../../../libs/api-request-sampling";
+import { parseCliHeaders, trackCliCommand } from "../../../libs/cli-telemetry";
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");
@@ -15,7 +25,24 @@ type RpcEventMapping = {
   event: EventProps;
   eventProps?: string[];
   normalizeInput?: (message: unknown) => Record<string, unknown>;
+  props?: (message: Message) => Record<string, string>;
 };
+
+function incidentProps(message: Message): Record<string, string> {
+  if (isMessage(message, DeclareIncidentRequestSchema)) {
+    return {
+      source: "api",
+      severity: IncidentSeverity[message.severity].toLowerCase(),
+    };
+  }
+  if (isMessage(message, SetIncidentStatusRequestSchema)) {
+    return {
+      source: "api",
+      status: IncidentStatus[message.status].toLowerCase(),
+    };
+  }
+  return { source: "api" };
+}
 
 // Create*Monitor requests nest the config under `monitor`, so top-level
 // extraction yields nothing; ICMP and gRPC name their target `uri` and none of
@@ -63,6 +90,11 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     eventProps: ["url", "jobType"],
     normalizeInput: monitorCreateInput("grpc"),
   },
+  "openstatus.monitor.v1.MonitorService/CreateHeartbeatMonitor": {
+    event: Events.CreateMonitor,
+    eventProps: ["jobType"],
+    normalizeInput: monitorCreateInput("heartbeat"),
+  },
   "openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor": {
     event: Events.UpdateMonitor,
   },
@@ -76,6 +108,9 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/UpdateGRPCMonitor": {
+    event: Events.UpdateMonitor,
+  },
+  "openstatus.monitor.v1.MonitorService/UpdateHeartbeatMonitor": {
     event: Events.UpdateMonitor,
   },
   "openstatus.monitor.v1.MonitorService/DeleteMonitor": {
@@ -121,6 +156,15 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenance": {
     event: Events.DeleteMaintenance,
   },
+  "openstatus.maintenance.v1.MaintenanceService/AddMaintenanceUpdate": {
+    event: Events.CreateMaintenanceUpdate,
+  },
+  "openstatus.maintenance.v1.MaintenanceService/UpdateMaintenanceUpdate": {
+    event: Events.UpdateMaintenanceUpdate,
+  },
+  "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenanceUpdate": {
+    event: Events.DeleteMaintenanceUpdate,
+  },
 
   // NotificationService
   "openstatus.notification.v1.NotificationService/CreateNotification": {
@@ -147,54 +191,135 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     {
       event: Events.DeletePrivateLocation,
     },
+
+  // IncidentService
+  "openstatus.incident.v1.IncidentService/DeclareIncident": {
+    event: Events.DeclareManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/UpdateIncident": {
+    event: Events.UpdateManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/SetIncidentStatus": {
+    event: Events.ChangeManagedIncidentStatus,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/AddIncidentNote": {
+    event: Events.AddManagedIncidentNote,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/LinkStatusReport": {
+    event: Events.LinkManagedIncidentReport,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/CloseIncident": {
+    event: Events.CloseManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/DeleteIncident": {
+    event: Events.DeleteManagedIncident,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/UpdatePostmortem": {
+    event: Events.DraftManagedPostmortem,
+    props: incidentProps,
+  },
+  "openstatus.incident.v1.IncidentService/ApprovePostmortem": {
+    event: Events.ApproveManagedPostmortem,
+    props: incidentProps,
+  },
 };
 
 /**
  * Tracking interceptor for ConnectRPC.
- * Fires OpenPanel analytics events on successful RPC calls.
- * Must be placed after authInterceptor (needs workspace context)
- * and validationInterceptor (only track valid requests).
+ *
+ * Every authenticated call fires an `api_request` event — reads included, and
+ * failures too (`success: false`) — so API volume is countable per workspace
+ * the same way `mcp_request` counts MCP traffic. V1 REST fires the same event
+ * from `apiTrackMiddleware`. Successful calls listed in
+ * `RPC_EVENT_MAP` additionally fire their domain event (e.g. `monitor_created`).
+ *
+ * Requests from the openstatus CLI also carry `cliCommand`/`cliVersion` on
+ * `api_request`, and the first request of each CLI run fires one `cli_command`.
+ * CLI requests always fire `api_request`; the rest are sampled (see
+ * `apiRequestSampleRate`). Domain events are never sampled.
+ *
+ * Must be placed after authInterceptor (needs workspace context) and
+ * validationInterceptor (requests it rejects never reach here, so they are not
+ * counted). Unauthenticated calls (HealthService) carry no context and are
+ * skipped.
  */
 export function trackingInterceptor(): Interceptor {
   return (next) => async (req) => {
-    const response = await next(req);
-
-    const key = `${req.service.typeName}/${req.method.name}`;
-    const mapping = RPC_EVENT_MAP[key];
-
-    if (!mapping) {
+    let success = false;
+    try {
+      const response = await next(req);
+      success = true;
       return response;
+    } finally {
+      // Tracking must never replace the call's own result or error.
+      try {
+        trackRpcCall(req, success);
+      } catch {
+        logger.warn("Failed to track RPC call {method}", {
+          method: `${req.service.typeName}/${req.method.name}`,
+        });
+      }
     }
-
-    const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
-
-    if (!rpcCtx) {
-      return response;
-    }
-
-    const input = mapping.normalizeInput?.(req.message) ?? req.message;
-    const additionalProps = parseInputToProps(input, mapping.eventProps);
-
-    setupAnalytics({
-      userId: `api_${rpcCtx.workspace.id}`,
-      workspaceId: `${rpcCtx.workspace.id}`,
-      plan: rpcCtx.workspace.plan,
-      location: req.header.get("x-forwarded-for") ?? undefined,
-      userAgent: req.header.get("user-agent") ?? undefined,
-    })
-      .then((analytics) =>
-        analytics.track({ ...mapping.event, additionalProps }),
-      )
-      .catch(() => {
-        logger.warn(
-          "Failed to send analytics event {event} for workspace {workspaceId}",
-          {
-            event: mapping.event.name,
-            workspaceId: rpcCtx.workspace.id,
-          },
-        );
-      });
-
-    return response;
   };
+}
+
+type TrackedRequest = Parameters<Parameters<Interceptor>[0]>[0];
+
+function trackRpcCall(req: TrackedRequest, success: boolean) {
+  const rpcCtx = req.contextValues.get(RPC_CONTEXT_KEY);
+
+  if (!rpcCtx) {
+    return;
+  }
+
+  const key = `${req.service.typeName}/${req.method.name}`;
+  const mapping = success ? RPC_EVENT_MAP[key] : undefined;
+  const cli = parseCliHeaders(req.header);
+  const sampleRate = apiRequestSampleRate(cli);
+
+  const events: (EventProps & Record<string, unknown>)[] = [];
+
+  if (sampleRate !== undefined) {
+    events.push({
+      ...Events.ApiRequest,
+      service: req.service.typeName,
+      method: req.method.name,
+      success,
+      sampleRate,
+      ...(cli ? { cliCommand: cli.command } : {}),
+      ...(cli?.version ? { cliVersion: cli.version } : {}),
+    });
+  }
+
+  if (mapping) {
+    const input = mapping.normalizeInput?.(req.message) ?? req.message;
+    const additionalProps = {
+      ...parseInputToProps(input, mapping.eventProps),
+      ...(mapping.props && !req.stream ? mapping.props(req.message) : {}),
+    };
+    events.push({ ...additionalProps, ...mapping.event });
+  }
+
+  if (events.length === 0) return;
+
+  setupAnalytics(apiAnalyticsIdentity(rpcCtx.workspace, req.header))
+    .then((analytics) =>
+      Promise.all([
+        ...events.map((event) => analytics.track(event)),
+        ...(cli ? [trackCliCommand(analytics, rpcCtx.workspace.id, cli)] : []),
+      ]),
+    )
+    .catch(() => {
+      logger.warn(
+        "Failed to send analytics events for {method} in workspace {workspaceId}",
+        { method: key, workspaceId: rpcCtx.workspace.id },
+      );
+    });
 }

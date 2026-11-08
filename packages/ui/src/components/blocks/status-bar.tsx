@@ -612,9 +612,7 @@ export function StatusBarCard({
   const labels = useStatusBlocksLabels();
   return (
     <div data-slot="status-bar-card">
-      <div className="p-2 text-xs">
-        {labels.formatDateShort(new Date(item.day))}
-      </div>
+      <div className="p-2 text-xs">{labels.formatDay(item.day)}</div>
       {item.card.length > 0 && (
         <>
           <Separator />

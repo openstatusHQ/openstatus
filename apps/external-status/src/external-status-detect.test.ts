@@ -1,0 +1,359 @@
+import { FetchError } from "@openstatus/status-fetcher";
+import type { DetectionResult } from "@openstatus/status-fetcher";
+import { Effect, Semaphore } from "effect";
+import { describe, expect, test } from "vitest";
+
+import {
+  PROBE_TTL_MS,
+  TICK_CLAIM_TTL_MS,
+  UPSERT_CONCURRENCY,
+  UpsertTimeoutError,
+  claimTick,
+  clearProbeStamp,
+  decideDetectionAction,
+  isBlocked,
+  isSuspicious,
+  isTransientDbError,
+  runUpsert,
+  shouldProbe,
+} from "./external-status-detect";
+
+const URL = "https://status.example.com";
+
+const fetchError = (init: {
+  kind?: "http" | "parse" | "schema" | "network" | "timeout";
+  httpStatus?: number;
+}) => new FetchError({ url: URL, ...init });
+
+const result = (partial: Partial<DetectionResult>): DetectionResult => ({
+  currentProviderValidated: false,
+  matches: [],
+  hostnameSuggestions: [],
+  evidence: ["e"],
+  ...partial,
+});
+
+describe("shouldProbe", () => {
+  test("probes once per TTL per slug and stamps on true", () => {
+    const map = new Map<string, number>();
+    expect(shouldProbe("a", 1000, map)).toBe(true);
+    expect(shouldProbe("a", 1000 + PROBE_TTL_MS - 1, map)).toBe(false);
+    expect(shouldProbe("a", 1000 + PROBE_TTL_MS, map)).toBe(true);
+    expect(shouldProbe("b", 1000, map)).toBe(true);
+  });
+
+  test("clearProbeStamp refunds the TTL", () => {
+    const map = new Map<string, number>();
+    expect(shouldProbe("a", 1000, map)).toBe(true);
+    clearProbeStamp("a", map);
+    expect(shouldProbe("a", 1001, map)).toBe(true);
+  });
+});
+
+describe("isSuspicious", () => {
+  test("parse, schema and 4xx are suspicious", () => {
+    expect(isSuspicious(fetchError({ kind: "parse" }))).toBe(true);
+    expect(isSuspicious(fetchError({ kind: "schema" }))).toBe(true);
+    expect(isSuspicious(fetchError({ kind: "http", httpStatus: 404 }))).toBe(
+      true,
+    );
+  });
+
+  test("bot challenges and rate limits are blocked, not suspicious", () => {
+    for (const httpStatus of [401, 403, 429]) {
+      const err = fetchError({ kind: "http", httpStatus });
+      expect(isBlocked(err)).toBe(true);
+      expect(isSuspicious(err)).toBe(false);
+    }
+    expect(isBlocked(fetchError({ kind: "http", httpStatus: 404 }))).toBe(
+      false,
+    );
+  });
+
+  test("5xx, network, timeout and untyped errors are not", () => {
+    expect(isSuspicious(fetchError({ kind: "http", httpStatus: 503 }))).toBe(
+      false,
+    );
+    expect(isSuspicious(fetchError({ kind: "network" }))).toBe(false);
+    expect(isSuspicious(fetchError({ kind: "timeout" }))).toBe(false);
+    expect(isSuspicious(fetchError({}))).toBe(false);
+  });
+});
+
+describe("isTransientDbError", () => {
+  const upsertError = (cause: Error) => new FetchError({ url: URL, cause });
+
+  test("busy, locked and Turso 5xx upsert failures are transient", () => {
+    expect(
+      isTransientDbError(upsertError(new Error("database is locked"))),
+    ).toBe(true);
+    expect(
+      isTransientDbError(
+        upsertError(new Error("Server returned HTTP status 502")),
+      ),
+    ).toBe(true);
+  });
+
+  test("a stalled Turso connection is transient", () => {
+    const stalled = new Error("Failed query: select ...", {
+      cause: new TypeError("fetch failed", {
+        cause: new Error('HTTP/2: "headers timeout after 300000"'),
+      }),
+    });
+    expect(isTransientDbError(upsertError(stalled))).toBe(true);
+  });
+
+  test("permanent upsert failures are not", () => {
+    expect(
+      isTransientDbError(
+        upsertError(new Error("UNIQUE constraint failed: slug")),
+      ),
+    ).toBe(false);
+  });
+
+  test("upstream fetch failures are not", () => {
+    expect(
+      isTransientDbError(fetchError({ kind: "http", httpStatus: 503 })),
+    ).toBe(false);
+    expect(
+      isTransientDbError(
+        new FetchError({
+          url: URL,
+          kind: "network",
+          cause: new TypeError("fetch failed"),
+        }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("runUpsert", () => {
+  const target = {
+    entry: { id: "toggl", status_page_url: URL },
+    fetcher: { name: "atlassian" },
+  } as unknown as Parameters<typeof runUpsert>[0];
+
+  test("returns the upsert result", async () => {
+    const value = await Effect.runPromise(
+      runUpsert(target, () => Promise.resolve(42)),
+    );
+    expect(value).toBe(42);
+  });
+
+  test("a stalled upsert fails as a transient error instead of hanging", async () => {
+    const err = await Effect.runPromise(
+      runUpsert(
+        target,
+        () => new Promise(() => {}),
+        "10 millis",
+        Semaphore.makeUnsafe(1),
+      ).pipe(Effect.flip),
+    );
+    expect(err).toBeInstanceOf(FetchError);
+    expect(err.cause).toBeInstanceOf(UpsertTimeoutError);
+    expect(isTransientDbError(err)).toBe(true);
+  });
+
+  test("a permanent upsert failure stays reportable", async () => {
+    const err = await Effect.runPromise(
+      runUpsert(target, () =>
+        Promise.reject(new Error("UNIQUE constraint failed: slug")),
+      ).pipe(Effect.flip),
+    );
+    expect(err.message).toBe(`[atlassian (toggl)] fetch failed: ${URL}`);
+    expect(isTransientDbError(err)).toBe(false);
+  });
+
+  test("never runs more than UPSERT_CONCURRENCY upserts at once", async () => {
+    let running = 0;
+    let peak = 0;
+    await Effect.runPromise(
+      Effect.all(
+        Array.from({ length: UPSERT_CONCURRENCY * 4 }, () =>
+          runUpsert(target, async () => {
+            running++;
+            peak = Math.max(peak, running);
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            running--;
+          }),
+        ),
+        { concurrency: "unbounded" },
+      ),
+    );
+    expect(peak).toBe(UPSERT_CONCURRENCY);
+  });
+
+  test("an upsert that times out waiting for a permit is never sent", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+    await Effect.runPromise(permits.take(1));
+    let started = false;
+
+    const err = await Effect.runPromise(
+      runUpsert(
+        target,
+        async () => {
+          started = true;
+        },
+        "10 millis",
+        permits,
+      ).pipe(Effect.flip),
+    );
+
+    expect(err.cause).toBeInstanceOf(UpsertTimeoutError);
+    expect(started).toBe(false);
+    // The abandoned wait must not have consumed the permit once it is released.
+    await Effect.runPromise(permits.release(1));
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(true);
+  });
+
+  test("a timed-out upsert keeps its permit until the request settles", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+    let settle = () => {};
+    const stalled = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+
+    await Effect.runPromise(
+      runUpsert(target, () => stalled, "10 millis", permits).pipe(Effect.flip),
+    );
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(false);
+
+    settle();
+    await stalled;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(true);
+  });
+
+  test("a rejected upsert releases its permit", async () => {
+    const permits = Semaphore.makeUnsafe(1);
+
+    await Effect.runPromise(
+      runUpsert(
+        target,
+        () => Promise.reject(new Error("boom")),
+        "1 second",
+        permits,
+      ).pipe(Effect.flip),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(await Effect.runPromise(permits.takeIfAvailable(1))).toBe(true);
+  });
+});
+
+describe("claimTick", () => {
+  test("refuses a second tick until the first releases", () => {
+    const release = claimTick(1_000);
+    expect(release).not.toBeNull();
+    expect(claimTick(2_000)).toBeNull();
+
+    release?.();
+    const next = claimTick(3_000);
+    expect(next).not.toBeNull();
+    next?.();
+  });
+
+  test("a stuck tick stops blocking after the TTL, and its late release is ignored", () => {
+    const stuck = claimTick(0);
+    expect(claimTick(TICK_CLAIM_TTL_MS - 1)).toBeNull();
+
+    const replacement = claimTick(TICK_CLAIM_TTL_MS);
+    expect(replacement).not.toBeNull();
+
+    stuck?.();
+    expect(claimTick(TICK_CLAIM_TTL_MS + 1)).toBeNull();
+    replacement?.();
+  });
+});
+
+describe("decideDetectionAction", () => {
+  const row = (apiConfig: { type: "atlassian"; endpoint?: string } | null) =>
+    ({ provider: "atlassian-statuspage", apiConfig }) as const;
+
+  test("clears config when current validates and a custom endpoint is set", () => {
+    const action = decideDetectionAction(
+      result({ currentProviderValidated: true }),
+      row({ type: "atlassian", endpoint: "https://stale.example.com" }),
+    );
+    expect(action.kind).toBe("clear-config");
+  });
+
+  test("noop transient when current validates with default endpoint", () => {
+    const action = decideDetectionAction(
+      result({ currentProviderValidated: true }),
+      row(null),
+    );
+    expect(action).toMatchObject({ kind: "noop", reason: "transient" });
+  });
+
+  test("applies a single match", () => {
+    const action = decideDetectionAction(
+      result({
+        matches: [{ type: "instatus", provider: "instatus", endpoint: URL }],
+      }),
+      row(null),
+    );
+    expect(action).toMatchObject({ kind: "apply", provider: "instatus" });
+  });
+
+  test("suggests when multiple matches", () => {
+    const action = decideDetectionAction(
+      result({
+        matches: [
+          { type: "incidentio", provider: "incidentio", endpoint: URL },
+          {
+            type: "atlassian",
+            provider: "atlassian-statuspage",
+            endpoint: URL,
+          },
+        ],
+      }),
+      row(null),
+    );
+    expect(action).toMatchObject({
+      kind: "suggest",
+      suggestion: "atlassian-statuspage|incidentio",
+    });
+  });
+
+  test("suggests the new base when the page moved", () => {
+    const action = decideDetectionAction(
+      result({
+        movedTo: {
+          base: "https://example.status.atlassian.com",
+          matches: [
+            {
+              type: "atlassian",
+              provider: "atlassian-statuspage",
+              endpoint:
+                "https://example.status.atlassian.com/api/v2/summary.json",
+            },
+          ],
+        },
+        hostnameSuggestions: ["uptime-robot"],
+      }),
+      row(null),
+    );
+    expect(action).toMatchObject({
+      kind: "suggest",
+      suggestion:
+        "atlassian-statuspage at https://example.status.atlassian.com",
+    });
+  });
+
+  test("suggests hostname evidence", () => {
+    const action = decideDetectionAction(
+      result({ hostnameSuggestions: ["uptime-robot"] }),
+      row(null),
+    );
+    expect(action).toMatchObject({
+      kind: "suggest",
+      suggestion: "uptime-robot",
+    });
+  });
+
+  test("noop no-evidence when nothing found", () => {
+    const action = decideDetectionAction(result({}), row(null));
+    expect(action).toMatchObject({ kind: "noop", reason: "no-evidence" });
+  });
+});

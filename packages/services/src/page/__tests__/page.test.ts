@@ -8,8 +8,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -35,12 +34,14 @@ import {
   updatePageCustomTheme,
   updatePageGeneral,
   updatePageLocales,
+  updatePageTimezone,
 } from "../update";
 
 const TEST_PREFIX = "svc-page-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
+let otherTeamCtx: ServiceContext;
 let teamMonitorId: number;
 
 // Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
@@ -56,6 +57,8 @@ const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 beforeAll(async () => {
   const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
+  const otherTeam = (await createWorkspaceFixture("team")).workspace;
+  otherTeamCtx = makeUserCtx(otherTeam, { userId: 3 });
 
   await db
     .delete(workspace)
@@ -163,6 +166,14 @@ describe("createPage (full form)", () => {
       name: "additional locale",
       input: { locales: ["en", "fr"] },
     },
+    {
+      name: "custom domain",
+      input: { customDomain: `${TEST_PREFIX}-denied.example.com` },
+    },
+    {
+      name: "time zone",
+      input: { defaultTimezone: "Asia/Tokyo" },
+    },
   ] satisfies {
     name: string;
     input: Partial<CreatePageInput>;
@@ -201,6 +212,7 @@ describe("createPage (full form)", () => {
         customTheme: { light: {}, dark: {} },
         defaultLocale: "en",
         locales: ["en"],
+        defaultTimezone: "UTC",
       },
     ] satisfies Partial<CreatePageInput>[]
   ).entries()) {
@@ -548,6 +560,68 @@ describe("updatePageCustomDomain", () => {
   });
 });
 
+describe("custom domain uniqueness", () => {
+  const uniqueDomain = (tag: string) =>
+    `${uniqueSlug(tag)}.example.com`.toLowerCase();
+
+  test("updatePageCustomDomain rejects a domain used by another page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const domain = uniqueDomain("taken-update");
+      const owner = await newPage({
+        ctx,
+        input: { title: "Owner", slug: uniqueSlug("domain-owner") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: owner.id, customDomain: domain },
+      });
+
+      const other = await newPage({
+        ctx,
+        input: { title: "Other", slug: uniqueSlug("domain-other") },
+      });
+      await expect(
+        updatePageCustomDomain({
+          ctx,
+          input: { id: other.id, customDomain: domain },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, other.id))
+        .get();
+      expect(row?.customDomain).toBe("");
+    });
+  });
+
+  test("updatePageCustomDomain lets a page re-save its own domain", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const domain = uniqueDomain("own");
+      const p = await newPage({
+        ctx,
+        input: { title: "Own", slug: uniqueSlug("domain-own") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: domain },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: domain },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customDomain).toBe(domain);
+    });
+  });
+});
+
 describe("updatePageConfiguration", () => {
   test("preserves omitted settings in partial updates", async () => {
     await withTestTransaction(async (tx) => {
@@ -623,6 +697,135 @@ describe("updatePageLocales", () => {
           input: { id: p.id, defaultLocale: "en", locales: ["en"] },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("lets a plan without i18n go back to English only", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("free-en") },
+      });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultLocale: "fr", locales: ["en", "fr"] })
+        .where(eq(pageTable.id, p.id));
+      await updatePageLocales({
+        ctx,
+        input: { id: p.id, defaultLocale: "en", locales: null },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultLocale).toBe("en");
+      expect(row?.locales).toBeNull();
+    });
+  });
+});
+
+describe("updatePageTimezone", () => {
+  test("stores the zone + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone") },
+      });
+      for (const zone of ["Asia/Tokyo", "Asia/Kolkata"]) {
+        await updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: zone },
+        });
+        const row = await tx
+          .select()
+          .from(pageTable)
+          .where(eq(pageTable.id, p.id))
+          .get();
+        expect(row?.defaultTimezone).toBe(zone);
+      }
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects a name that is not a time zone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone-bad") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Mars/Olympus" },
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  test("lets a plan without timezone go back to UTC", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free-utc") },
+      });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultTimezone: "Asia/Tokyo" })
+        .where(eq(pageTable.id, p.id));
+      await updatePageTimezone({
+        ctx,
+        input: { id: p.id, defaultTimezone: "UTC" },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultTimezone).toBe("UTC");
+    });
+  });
+
+  test("rejects when plan lacks timezone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("cross-workspace → NotFoundError", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await newPage({
+        ctx: { ...teamCtx, db: tx },
+        input: { title: "Zone", slug: uniqueSlug("zone-iso") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx: { ...otherTeamCtx, db: tx },
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });
@@ -1019,6 +1222,30 @@ describe("status-page count quota", () => {
           input: { title: "Quota 4", slug: uniqueSlug("quota-4") },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-incidents",
+          userId: 1,
+          scopes: ["incidents:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        newPage({
+          ctx,
+          input: { title: "Other group", slug: uniqueSlug("other-group") },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listPages({ ctx, input: { order: "desc" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

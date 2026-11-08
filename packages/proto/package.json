@@ -36,11 +36,15 @@
     "./private_location/v1": {
       "import": "./gen/ts/openstatus/private_location/v1/index.ts",
       "types": "./gen/ts/openstatus/private_location/v1/index.ts"
+    },
+    "./incident/v1": {
+      "import": "./gen/ts/openstatus/incident/v1/index.ts",
+      "types": "./gen/ts/openstatus/incident/v1/index.ts"
     }
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "buf:openapi": "buf generate --path api/openstatus --template buf.gen.openapi.yaml && deno run --allow-read=gen/openapi.yaml --allow-write=gen/openapi.yaml,../../apps/server/static/openapi.yaml scripts/clean-openapi.ts",
+    "check": "tsc --noEmit",
+    "buf:openapi": "buf generate --path api/openstatus --template buf.gen.openapi.yaml && node scripts/clean-openapi.ts",
     "buf:ts": "buf generate --path api/openstatus --template buf.gen.ts.yaml",
     "buf:go": "buf generate --path internal/private_location --template buf.gen.go.yaml",
     "buf:lint": "buf lint",

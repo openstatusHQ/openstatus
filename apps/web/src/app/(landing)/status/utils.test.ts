@@ -1,7 +1,12 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
-import { getComponentFullName } from "./utils";
+import {
+  formatDuration,
+  getCheckerHref,
+  getComponentFullName,
+  getHost,
+  summarizeHistory,
+} from "./utils";
 
 describe("getComponentFullName", () => {
   test("does not repeat the provider already in the component name", () => {
@@ -48,5 +53,55 @@ describe("getComponentFullName", () => {
     expect(getComponentFullName("Zoom", "   ")).toBe("Zoom");
     expect(getComponentFullName("", "Zoom AI")).toBe("Zoom AI");
     expect(getComponentFullName("  ", "")).toBe("");
+  });
+});
+
+describe("getHost", () => {
+  test("returns the hostname without a www prefix", () => {
+    expect(getHost("https://www.github.com/")).toBe("github.com");
+    expect(getHost("https://api.vercel.com/v1")).toBe("api.vercel.com");
+  });
+
+  test("falls back to the input when it is not a URL", () => {
+    expect(getHost("not a url")).toBe("not a url");
+  });
+});
+
+describe("getCheckerHref", () => {
+  test("links the checker with the url encoded", () => {
+    expect(getCheckerHref("https://github.com")).toBe(
+      "/play/checker?url=https%3A%2F%2Fgithub.com%2F",
+    );
+  });
+
+  test("refuses non-http schemes and invalid urls", () => {
+    expect(getCheckerHref("ftp://files.example.com")).toBeNull();
+    expect(getCheckerHref("javascript:alert(1)")).toBeNull();
+    expect(getCheckerHref("not a url")).toBeNull();
+  });
+});
+
+describe("formatDuration", () => {
+  test("minutes, hours and days", () => {
+    expect(formatDuration(47 * 60_000)).toBe("47m");
+    expect(formatDuration(72 * 60_000)).toBe("1h 12m");
+    expect(formatDuration(120 * 60_000)).toBe("2h");
+    expect(formatDuration(26 * 3_600_000)).toBe("1d 2h");
+  });
+
+  test("never reads zero", () => {
+    expect(formatDuration(5_000)).toBe("1m");
+  });
+});
+
+describe("summarizeHistory", () => {
+  test("counts each day once, worst alias wins", () => {
+    expect(
+      summarizeHistory([
+        { day: "2026-11-01 00:00:00", worstIndicator: "none" },
+        { day: "2026-11-01 00:00:00", worstIndicator: "minor" },
+        { day: "2026-11-02 00:00:00", worstIndicator: "none" },
+      ]),
+    ).toEqual({ tracked: 2, issueDays: 1 });
   });
 });

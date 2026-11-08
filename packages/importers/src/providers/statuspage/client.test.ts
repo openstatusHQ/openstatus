@@ -1,6 +1,12 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, spy } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { createStatuspageClient } from "./client";
 import {
@@ -14,7 +20,7 @@ import {
 const originalFetch = globalThis.fetch;
 
 function mockFetch(data: unknown, status = 200) {
-  globalThis.fetch = spy(() =>
+  globalThis.fetch = vi.fn(() =>
     Promise.resolve(
       new Response(JSON.stringify(data), {
         status,
@@ -30,7 +36,7 @@ function mockFetch(data: unknown, status = 200) {
  */
 function mockFetchPaginated(data: unknown, status = 200) {
   let callCount = 0;
-  globalThis.fetch = spy(() => {
+  globalThis.fetch = vi.fn(() => {
     callCount++;
     const body = callCount === 1 ? data : [];
     return Promise.resolve(
@@ -90,6 +96,110 @@ describe("StatuspageClient", () => {
     expect(incidents[2].scheduled_for).toBe("2024-06-20T02:00:00.000Z");
   });
 
+  test("getIncidents accepts postmortem status on incidents and updates", async () => {
+    const [incident] = MOCK_INCIDENTS;
+    const updates = incident.incident_updates ?? [];
+    mockFetchPaginated([
+      {
+        ...incident,
+        status: "postmortem",
+        incident_updates: [
+          { ...updates[0], id: "sp_upd_postmortem", status: "postmortem" },
+          ...updates,
+        ],
+      },
+    ]);
+    const incidents = await client.getIncidents("sp_page_001");
+    expect(incidents[0].status).toBe("postmortem");
+    expect(incidents[0].incident_updates?.[0].status).toBe("postmortem");
+  });
+
+  test("getIncidents accepts maintenance impact and empty component status", async () => {
+    const scheduled = MOCK_INCIDENTS[2];
+    mockFetchPaginated([
+      {
+        ...scheduled,
+        impact: "maintenance",
+        components: [{ ...MOCK_COMPONENTS[0], status: "" }],
+      },
+    ]);
+    const incidents = await client.getIncidents("sp_page_001");
+    expect(incidents[0].impact).toBe("maintenance");
+    expect(incidents[0].components?.[0].status).toBe("");
+  });
+
+  test("getIncidents parses unrecognised values as unknown", async () => {
+    const [incident] = MOCK_INCIDENTS;
+    const updates = incident.incident_updates ?? [];
+    mockFetchPaginated([
+      {
+        ...incident,
+        status: "brand_new_status",
+        impact: "brand_new_impact",
+        incident_updates: [{ ...updates[0], status: "brand_new_status" }],
+      },
+    ]);
+    const incidents = await client.getIncidents("sp_page_001");
+    expect(incidents[0].status).toBe("unknown");
+    expect(incidents[0].impact).toBe("unknown");
+    expect(incidents[0].incident_updates?.[0].status).toBe("unknown");
+  });
+
+  test("getSubscribers accepts teams subscribers", async () => {
+    mockFetchPaginated([{ ...MOCK_SUBSCRIBERS[2], mode: "teams" }]);
+    const subscribers = await client.getSubscribers("sp_page_001");
+    expect(subscribers[0].mode).toBe("teams");
+  });
+
+  test("getSubscribers accepts subscribers with omitted optional fields", async () => {
+    const {
+      phone_number,
+      phone_country,
+      display_phone_number,
+      obfuscated_channel_name,
+      workspace_name,
+      components,
+      quarantined_at,
+      ...subscriber
+    } = MOCK_SUBSCRIBERS[0];
+    mockFetchPaginated([subscriber]);
+    const subscribers = await client.getSubscribers("sp_page_001");
+    expect(subscribers[0].email).toBe(MOCK_SUBSCRIBERS[0].email);
+    expect(subscribers[0].workspace_name).toBeUndefined();
+  });
+
+  test("getSubscribers accepts the real API shape without page_id", async () => {
+    mockFetchPaginated([
+      {
+        id: "ht9cy29jdb3r",
+        mode: "email",
+        email: "user@example.com",
+        created_at: "03-14-22 12:19 CET",
+        confirmed_at: "03-14-22 12:19 CET",
+        skip_confirmation_notification: false,
+        quarantined_at: null,
+        purge_at: null,
+      },
+    ]);
+    const subscribers = await client.getSubscribers("sp_page_001");
+    expect(subscribers[0].email).toBe("user@example.com");
+    expect(subscribers[0].page_id).toBeUndefined();
+  });
+
+  test("getIncidents accepts incidents with omitted optional fields", async () => {
+    const [incident] = MOCK_INCIDENTS;
+    const { metadata, postmortem_body, shortlink, ...rest } = incident;
+    const updates = (incident.incident_updates ?? []).map(
+      ({ affected_components, display_at, deliver_notifications, ...u }) => u,
+    );
+    mockFetchPaginated([{ ...rest, incident_updates: updates }]);
+    const incidents = await client.getIncidents("sp_page_001");
+    expect(incidents[0].postmortem_body).toBeUndefined();
+    expect(
+      incidents[0].incident_updates?.[0].affected_components,
+    ).toBeUndefined();
+  });
+
   test("getSubscribers returns parsed subscribers", async () => {
     mockFetchPaginated(MOCK_SUBSCRIBERS);
     const subscribers = await client.getSubscribers("sp_page_001");
@@ -119,8 +229,8 @@ describe("StatuspageClient", () => {
   test("getPage calls correct URL path", async () => {
     mockFetch(MOCK_PAGES[0]);
     await client.getPage("sp_page_001");
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    const [url] = fetchMock.calls[0].args as [string, RequestInit];
+    const fetchMock = globalThis.fetch as unknown as Mock;
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.statuspage.io/v1/pages/sp_page_001");
   });
 
@@ -139,9 +249,9 @@ describe("StatuspageClient", () => {
   test("sends correct auth header", async () => {
     mockFetch(MOCK_PAGES);
     await client.getPages();
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    assertSpyCalls(fetchMock, 1);
-    const [url, options] = fetchMock.calls[0].args as [string, RequestInit];
+    const fetchMock = globalThis.fetch as unknown as Mock;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.statuspage.io/v1/pages");
     expect((options.headers as Record<string, string>).Authorization).toBe(
       "OAuth test-api-key",

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import { convertMdxToMarkdown } from "./convert";
 import { getHomePage, getProductPages } from "./utils";
@@ -15,6 +14,68 @@ describe("convertMdxToMarkdown", () => {
     } as Parameters<typeof convertMdxToMarkdown>[0]);
     expect(markdown).toContain("<summary>Q?</summary>");
     expect(markdown).toContain("Answer.");
+  });
+
+  test("turns ShowcaseYouTube into links, unwrapping a Grid of videos", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: { title: "t" },
+      content: [
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=a" title="One" />',
+        "",
+        '<Grid cols={2} variant="borderless">',
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=b" title="Two" />',
+        '<ShowcaseYouTube href="https://www.youtube.com/watch?v=c" />',
+        "</Grid>",
+      ].join("\n"),
+      slug: "t",
+      href: "/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain("- [One](https://www.youtube.com/watch?v=a)");
+    expect(markdown).toContain("- [Two](https://www.youtube.com/watch?v=b)");
+    expect(markdown).toContain(
+      "- [YouTube video](https://www.youtube.com/watch?v=c)",
+    );
+    expect(markdown).not.toContain("ShowcaseYouTube");
+    expect(markdown).not.toContain("<Grid");
+  });
+
+  test("frontmatter carries an absolute url, ISO dates and escaped quotes", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: {
+        title: 'Say "hi"',
+        publishedAt: new Date("2026-01-02"),
+        updatedAt: new Date("2026-03-04"),
+        description: "d",
+      },
+      content: "Body",
+      slug: "t",
+      href: "/blog/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain('title: "Say \\"hi\\""');
+    expect(markdown).toContain('url: "https://www.openstatus.dev/blog/t"');
+    expect(markdown).toContain('date: "2026-01-02"');
+    expect(markdown).toContain('updated: "2026-03-04"');
+  });
+
+  test("frontmatter prefers the seo overrides, like <title> and <meta>", () => {
+    const markdown = convertMdxToMarkdown({
+      metadata: {
+        title: "Page title",
+        description: "Page description",
+        seo: { title: "SEO title", description: "SEO description" },
+      },
+      content: "Body",
+      slug: "t",
+      href: "/t",
+    } as Parameters<typeof convertMdxToMarkdown>[0]);
+    expect(markdown).toContain('title: "SEO title"');
+    expect(markdown).toContain('description: "SEO description"');
+  });
+
+  test("the home page resolves to the site root, not /home", () => {
+    const markdown = convertMdxToMarkdown(getHomePage());
+    expect(markdown).toContain('url: "https://www.openstatus.dev/"');
+    expect(markdown).not.toContain("openstatus.dev/home");
   });
 
   test("the home page keeps every FAQ entry in its markdown representation", () => {

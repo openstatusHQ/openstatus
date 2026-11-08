@@ -50,7 +50,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="general">
         <SectionHeader>
           <SectionTitle>General</SectionTitle>
           <SectionDescription>

@@ -1,8 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "vitest";
 
 import { lookupWorkspace } from "@/libs/middlewares/auth";
 

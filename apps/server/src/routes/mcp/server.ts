@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
+import { buildMcpServerInstructions } from "@openstatus/services/agent-tools";
 
 import packageJson from "../../../package.json" with { type: "json" };
 import { registerPublicResources } from "./resources";
@@ -12,6 +13,7 @@ import { registerNotificationTools } from "./tools/notification";
 import { registerPageTools } from "./tools/page";
 import { registerPrivateLocationTools } from "./tools/private-location";
 import { registerStatusReportTools } from "./tools/status-report";
+import { registerWorkspaceTools } from "./tools/workspace";
 
 /**
  * Build a fresh `McpServer` for this request. Each tool registration
@@ -21,13 +23,20 @@ import { registerStatusReportTools } from "./tools/status-report";
  * and its transport are scoped to a single request and become
  * garbage-collectable once the response stream is consumed.
  *
- * Static tool list (`listChanged: false`); no prompts. Resources are the
+ * Static tool list (`listChanged: false`); no prompts. `instructions`
+ * carry the write-confirmation rules, since clients may not prompt. Resources are the
  * public documents from `./resources` — they carry no workspace data.
  */
 export function createMcpServer(ctx: ServiceContext): McpServer {
   const server = new McpServer(
     { name: "openstatus", version: packageJson.version },
-    { capabilities: { tools: { listChanged: false } } },
+    {
+      capabilities: { tools: { listChanged: false } },
+      instructions: buildMcpServerInstructions({
+        canNotifySubscribers:
+          ctx.workspace.limits["status-subscribers"] === true,
+      }),
+    },
   );
   registerPublicResources(server);
   registerPageTools(server, ctx);
@@ -37,6 +46,7 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);
   registerPrivateLocationTools(server, ctx);
+  registerWorkspaceTools(server, ctx);
   registerAuditTools(server, ctx);
   registerContentTools(server, ctx);
   return server;

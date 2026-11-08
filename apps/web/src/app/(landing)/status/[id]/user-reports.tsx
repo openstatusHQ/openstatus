@@ -10,6 +10,7 @@ import {
 import { Bar, BarChart, XAxis } from "recharts";
 
 import { api } from "../../../../trpc/rq-client";
+import { StatusSection } from "../service-blocks";
 
 const chartConfig = {
   total: { label: "Reports", color: "var(--color-warning)" },
@@ -55,9 +56,12 @@ export function UserReports({
   const active = win.reporters >= threshold;
 
   return (
-    <>
-      <h2>{serviceName} user reports</h2>
-      <div className="not-prose flex flex-col gap-3">
+    <StatusSection
+      id="reports"
+      title="User reports"
+      aside={`Last ${days} days`}
+    >
+      <div className="flex flex-col gap-3">
         {active ? (
           <div className="border-warning/30 bg-warning/10 text-warning border px-3 py-2 text-sm">
             Users are reporting problems with {serviceName}: {win.reporters} in
@@ -118,6 +122,6 @@ export function UserReports({
           </div>
         ) : null}
       </div>
-    </>
+    </StatusSection>
   );
 }

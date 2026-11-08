@@ -1,5 +1,4 @@
 import type { AgentToolInput } from "@openstatus/services/agent-tools";
-import { formatComponentImpacts } from "@openstatus/services/status-report/utils";
 
 import type { ChangeRow } from "@/components/common/changes-table";
 
@@ -26,7 +25,7 @@ export function addStatusReportUpdateChanges(
   if (input.componentImpacts?.length) {
     changes.push({
       field: "componentImpacts",
-      after: formatComponentImpacts(input.componentImpacts),
+      after: input.componentImpacts,
     });
   }
   if (input.date) {

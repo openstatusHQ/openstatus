@@ -1,8 +1,7 @@
 import type { ServiceContext } from "@openstatus/services";
 import { agentTools } from "@openstatus/services/agent-tools";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import {
@@ -249,7 +248,7 @@ describe("executeRegistryAction", () => {
         summarize: () => ({ title: "fake", lines: [] }),
       },
     });
-    expect(
+    await expect(
       executeRegistryAction({
         tool: t,
         ctx: fakeCtx,
@@ -265,7 +264,7 @@ describe("executeRegistryAction", () => {
         throw new Error("kaboom");
       },
     });
-    expect(
+    await expect(
       executeRegistryAction({
         tool: t,
         ctx: fakeCtx,

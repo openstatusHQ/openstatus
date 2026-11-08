@@ -1,31 +1,72 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
-import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import {
+  type PageComponentImpact,
+  pageComponentImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { Settings, Delete } from "@openstatus/icons";
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import type { FormValues as StatusReportUpdateFormValues } from "@/components/forms/status-report-update/form";
+import { toEntityId } from "@/data/entity-refs.client";
 
 export const impactConfig = {
   operational: {
     label: "Operational",
+    short: "Operational",
     variant: "success",
   },
   degraded_performance: {
     label: "Degraded performance",
+    short: "Degraded",
     variant: "warning",
   },
   partial_outage: {
     label: "Partial outage",
+    short: "Partial outage",
     variant: "warning",
   },
   major_outage: {
     label: "Major outage",
+    short: "Major outage",
     variant: "destructive",
   },
 } as const satisfies Record<
   PageComponentImpact,
-  { label: string; variant: StatusVariant }
+  // `short` fits row status columns and calendar legends
+  { label: string; short: string; variant: StatusVariant }
 >;
+
+export type ComponentImpact = {
+  pageComponentId: number;
+  impact: PageComponentImpact;
+};
+
+export function isPageComponentImpact(
+  value: unknown,
+): value is PageComponentImpact {
+  return (
+    typeof value === "string" &&
+    (pageComponentImpact as readonly string[]).includes(value)
+  );
+}
+
+export function isComponentImpactList(
+  value: unknown,
+): value is ComponentImpact[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item: unknown) =>
+        typeof item === "object" &&
+        item !== null &&
+        "pageComponentId" in item &&
+        "impact" in item &&
+        typeof item.pageComponentId === "number" &&
+        toEntityId(item.pageComponentId) !== undefined &&
+        isPageComponentImpact(item.impact),
+    )
+  );
+}
 
 /** Set equality regardless of order — used to skip no-op impact writes. */
 export function impactsEqual(
@@ -43,8 +84,9 @@ export function impactsEqual(
 // legacy report (created before impact tracking): no impact rows
 export const untriagedImpact = {
   label: "Untriaged",
+  short: "Untriaged",
   variant: "default",
-} as const satisfies { label: string; variant: StatusVariant };
+} as const satisfies { label: string; short: string; variant: StatusVariant };
 
 /** Label + dot variant for an impact; nullish reads as untriaged. */
 export function impactDisplay(impact: PageComponentImpact | null | undefined) {

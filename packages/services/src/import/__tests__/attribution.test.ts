@@ -6,8 +6,7 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import type { PhaseResult } from "@openstatus/importers";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   createWorkspaceFixture,

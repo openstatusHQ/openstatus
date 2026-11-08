@@ -70,6 +70,33 @@ export interface CarrierStore {
     payload: PendingPayload,
   ): Promise<PendingAction | undefined>;
   replace(id: string, payload: PendingPayload): Promise<void>;
+  recordCreated(threadTs: string, record: CreatedRecord): Promise<void>;
+  listCreated(threadTs: string): Promise<CreatedRecord[]>;
+}
+
+const createdRecordSchema = z.object({
+  kind: z.enum(["status_report", "incident", "maintenance"]),
+  id: z.number().int(),
+  label: z.string().optional(),
+});
+
+export type CreatedRecord = z.infer<typeof createdRecordSchema>;
+
+const MAX_CREATED = 20;
+
+function appendCreated(
+  list: CreatedRecord[],
+  record: CreatedRecord,
+): CreatedRecord[] {
+  const rest = list.filter(
+    (r) => !(r.kind === record.kind && r.id === record.id),
+  );
+  return [...rest, record].slice(-MAX_CREATED);
+}
+
+/** Collapses repeats of the same record, keeping its latest position. */
+function dedupeCreated(list: CreatedRecord[]): CreatedRecord[] {
+  return list.reduce<CreatedRecord[]>(appendCreated, []);
 }
 
 /**
@@ -81,6 +108,8 @@ export interface CarrierStore {
 const TTL_SECONDS = 30 * 24 * 60 * 60;
 const ACTION_PREFIX = "slack:action:";
 const THREAD_PREFIX = "slack:thread:";
+// A Redis list, so concurrent approvals append without overwriting each other.
+const CREATED_PREFIX = "slack:created-list:";
 
 function parse(raw: unknown): PendingAction | undefined {
   const data = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -169,6 +198,31 @@ export function createRedisCarrierStore(): CarrierStore {
         ),
       ]);
     },
+
+    async recordCreated(threadTs, record) {
+      const key = `${CREATED_PREFIX}${threadTs}`;
+      await redis
+        .multi()
+        .rpush(key, JSON.stringify(record))
+        .ltrim(key, -MAX_CREATED, -1)
+        .expire(key, TTL_SECONDS)
+        .exec();
+    },
+
+    async listCreated(threadTs) {
+      const raw = await redis.lrange<unknown>(
+        `${CREATED_PREFIX}${threadTs}`,
+        0,
+        -1,
+      );
+      const records = raw.flatMap((item) => {
+        const parsed = createdRecordSchema.safeParse(
+          typeof item === "string" ? JSON.parse(item) : item,
+        );
+        return parsed.success ? [parsed.data] : [];
+      });
+      return dedupeCreated(records);
+    },
   };
 }
 
@@ -179,6 +233,7 @@ export function createRedisCarrierStore(): CarrierStore {
 export function createMemoryCarrierStore(): CarrierStore {
   const actions = new Map<string, PendingAction>();
   const threads = new Map<string, string>();
+  const created = new Map<string, CreatedRecord[]>();
 
   return {
     async put(action) {
@@ -222,6 +277,14 @@ export function createMemoryCarrierStore(): CarrierStore {
         createdAt: Date.now(),
       });
     },
+
+    async recordCreated(threadTs, record) {
+      created.set(threadTs, appendCreated(created.get(threadTs) ?? [], record));
+    },
+
+    async listCreated(threadTs) {
+      return created.get(threadTs) ?? [];
+    },
   };
 }
 
@@ -243,3 +306,9 @@ export const findByThread = (
   defaultStore.findByThread(threadTs, payload);
 export const replace = (id: string, payload: PendingPayload): Promise<void> =>
   defaultStore.replace(id, payload);
+export const recordCreated = (
+  threadTs: string,
+  record: CreatedRecord,
+): Promise<void> => defaultStore.recordCreated(threadTs, record);
+export const listCreated = (threadTs: string): Promise<CreatedRecord[]> =>
+  defaultStore.listCreated(threadTs);

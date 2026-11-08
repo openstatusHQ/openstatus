@@ -12,7 +12,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/libsql/sqlite-antlr4-parser/sqliteparserutils"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/server"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/workflows"
@@ -26,12 +27,27 @@ func testDB() *sqlx.DB {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	db, err := sqlx.Connect("sqlite3", f.Name())
+	db, err := database.Open("file:"+f.Name(), "")
 	if err != nil {
 		log.Fatalln(err)
 	}
+	// libSQL enforces foreign keys by default and the fixture isn't insert-ordered.
+	// The pragma is per-connection, so pin the pool to a single connection.
+	db.SetMaxOpenConns(1)
+	db.MustExec("PRAGMA foreign_keys = OFF")
+
 	dat, err := os.ReadFile("./db_testdata")
-	db.MustExec(string(dat))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// libSQL executes a single statement per call, so run the fixture one statement at a time.
+	stmts, info := sqliteparserutils.SplitStatement(string(dat))
+	if info.IncompleteCreateTriggerStatement || info.IncompleteMultilineComment {
+		log.Fatalln("db_testdata ends with an incomplete statement")
+	}
+	for _, stmt := range stmts {
+		db.MustExec(stmt)
+	}
 
 	return db
 }

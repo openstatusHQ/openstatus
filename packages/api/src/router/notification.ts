@@ -138,6 +138,7 @@ export const notificationRouter = createTRPCRouter({
     }),
 
   sendTest: protectedProcedure
+    .meta({ track: Events.TestNotification, trackProps: ["provider"] })
     .input(
       z.object({
         provider: z.enum(notificationProvider),

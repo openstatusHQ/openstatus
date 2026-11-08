@@ -49,6 +49,12 @@ export class ConflictError extends ServiceError {
   }
 }
 
+/**
+ * A concurrent write won the race: the same request may succeed on a retry.
+ * Still `CONFLICT` for adapters that don't tell the two apart.
+ */
+export class ConcurrentUpdateError extends ConflictError {}
+
 export class ValidationError extends ServiceError {
   constructor(message: string, cause?: unknown) {
     super("VALIDATION", message, cause);
@@ -57,7 +63,7 @@ export class ValidationError extends ServiceError {
 
 export class LimitExceededError extends ServiceError {
   constructor(
-    limit: string,
+    public limit: string,
     public max: number,
     /** Actual usage when the caller counted it — surfaced in client error metadata. */
     public current?: number,

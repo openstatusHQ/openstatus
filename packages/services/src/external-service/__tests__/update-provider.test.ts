@@ -1,7 +1,6 @@
 import { db, eq, like } from "@openstatus/db";
 import { externalService } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { applyDetectedProvider } from "../update-provider";
 

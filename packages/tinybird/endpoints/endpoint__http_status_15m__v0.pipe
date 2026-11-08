@@ -1,0 +1,23 @@
+NODE endpoint
+SQL >
+
+%
+WITH {{ String(timezone, 'UTC') }} AS tz
+SELECT
+    -- calendar date of the local day; the client re-keys it as UTC midnight like the 45d pipes
+    toDate(toTimeZone(time, tz)) AS day,
+    monitorId,
+    countMerge(count) AS count,
+    countMerge(success) AS ok,
+    countMerge(error) AS error,
+    countMerge(degraded) AS degraded
+FROM mv__http_status_15m__v0
+WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+    -- start at a local midnight so the oldest day is complete, not cut at the
+    -- TTL edge; the bound is under 46d + 1h for every zone (45 local days, one
+    -- of them 25h after a DST fall-back, plus today so far) and the TTL is 47d
+    AND time >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL 45 DAY
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint

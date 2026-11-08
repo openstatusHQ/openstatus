@@ -42,7 +42,7 @@ Lets you host your status page on a custom domain. Once configured, your status 
 
 **Domain verification (conditional):** if your domain is already registered on another Vercel project, a TXT record will be required to prove ownership. The dashboard will display the exact TXT record name and value when this step is needed.
 
-After saving your custom domain in the dashboard, the exact DNS records will be displayed with any additional verification steps needed.
+After saving your custom domain in the [dashboard](https://app.openstatus.dev/status-pages/_/edit#custom-domain), the exact DNS records will be displayed with any additional verification steps needed.
 
 ### Password (basic auth)
 
@@ -68,7 +68,7 @@ Visitors from outside the allowed ranges are redirected to a static "Access Rest
 
 **Configuration:**
 
-- Set the access type to IP restriction in the dashboard, or `access_type` to `PAGE_ACCESS_TYPE_IP_RESTRICTED` via the ConnectRPC `StatusPageService`.
+- Set the access type to IP restriction in the [dashboard](https://app.openstatus.dev/status-pages/_/edit#page-access), or `access_type` to `PAGE_ACCESS_TYPE_IP_RESTRICTED` via the ConnectRPC `StatusPageService`.
 - Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically append `/32` to single IPs).
 - IPv6 is not supported.
 - The deprecated v1 REST API does not expose this access type — its `accessType` field accepts only `public`, `password`, and `email-domain`.
@@ -102,7 +102,7 @@ Whether the page follows the visitor's OS preference or is pinned to one mode.
 
 Overrides individual CSS variables of the selected theme, separately for light and dark mode. Custom values take precedence over the theme; every variable you leave unset falls back to the theme's value.
 
-**Configuration:** in the dashboard, the editor provides a *Light* and a *Dark* tab. Each accepts one declaration per line:
+**Configuration:** in the [dashboard](https://app.openstatus.dev/status-pages/_/edit#custom-theme), the editor provides a *Light* and a *Dark* tab. Each accepts one declaration per line:
 
 ```css
 --primary: oklch(0.6 0.1 250);
@@ -164,13 +164,13 @@ Values accept any valid CSS value (colors in `oklch`, `hsl`, hex, lengths, etc.)
 **Type:** Object (optional)
 
 Controls how each component's status tracker renders and how uptime is computed. Configured on
-the **Components** page in the dashboard; see
+the [**Components**](https://app.openstatus.dev/status-pages/_/components#components-configuration) page in the dashboard; see
 [Configure your status page](/docs/guides/how-to-configure-status-page#1-components-configuration).
 
 | Field | Values | Default | Description |
 |---|---|---|---|
-| `type` | `absolute`, `manual` | `absolute` | Bar type. `absolute` draws each day proportionally; `manual` shows only the most significant status of the day. |
-| `value` | `duration`, `requests`, `manual` | `requests` | What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
+| `type` | `absolute`, `manual` | `absolute` | **Status source** in the dashboard. `absolute` (**Monitor checks**) draws each day proportionally from monitor results; `manual` (**Reports only**) uses only status reports and maintenances and shows the most significant status of the day. |
+| `value` | `duration`, `requests`, `manual` | `requests` | **Card shows** in the dashboard: `duration` (**Time per status**) or `requests` (**Number of checks**). What the hover card and uptime percentage are derived from. Only meaningful when `type` is `absolute`. |
 | `uptime` | boolean | `true` | Whether the uptime percentage is shown at all. |
 | `days` | `30`, `45` | `45` | Number of days of history rendered on the bars. |
 

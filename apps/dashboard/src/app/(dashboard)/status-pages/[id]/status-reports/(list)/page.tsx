@@ -1,14 +1,44 @@
 "use client";
 
-import { Impact } from "@openstatus/icons";
+import { ExternalLink, Impact, Success } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import NextLink from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 import { Link } from "@/components/common/link";
 import { NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
+import {
+  Activity,
+  ActivityEmpty,
+  ActivityFeed,
+  ActivityHeader,
+  ActivityPeriod,
+  ActivityTitle,
+} from "@/components/content/activity";
+import {
+  ActivityCalendar,
+  ActivityCalendarCell,
+  ActivityCalendarGrid,
+  ActivityCalendarLegend,
+  ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
+} from "@/components/content/activity-calendar";
+import {
+  EmptyStateActions,
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  EventGroup,
+  EventGroupCount,
+  EventGroupHeader,
+  EventGroupTitle,
+} from "@/components/content/event-group";
+import { EventList, EventListMore } from "@/components/content/event-list";
 import {
   Section,
   SectionDescription,
@@ -17,16 +47,33 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { StatusReportRow } from "@/components/status-reports/status-report-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { DataTable } from "@/components/ui/data-table/data-table";
+import {
+  activityDayLines,
+  activityRange,
+  groupByDay,
+  strongestMark,
+} from "@/data/activity.client";
+import { getPageUrl } from "@/data/status-pages.client";
+import {
+  impactConfig,
+  untriagedImpact,
+} from "@/data/status-report-updates.client";
+import {
+  reportActivity,
+  reportSpan,
+  reportStartedAt,
+} from "@/data/status-reports.client";
+import { usePaged } from "@/hooks/use-paged";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const [openCreate, setOpenCreate] = useState(false);
   const { data: page } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -41,7 +88,7 @@ export default function Page() {
       onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
           sendStatusReportUpdateMutation.mutate({
-            id: statusReport.id,
+            id: statusReport.initialUpdateId,
           });
         }
         refetch();
@@ -52,10 +99,79 @@ export default function Page() {
     }),
   );
 
+  const byStart = <T extends Parameters<typeof reportStartedAt>[0]>(
+    a: T,
+    b: T,
+  ) => reportStartedAt(b).getTime() - reportStartedAt(a).getTime();
+  const ongoing = (statusReports ?? [])
+    .filter((report) => report.status !== "resolved")
+    .sort(byStart);
+  const resolved = (statusReports ?? [])
+    .filter((report) => report.status === "resolved")
+    .sort(byStart);
+  const paged = usePaged(resolved);
+
   if (!statusReports || !page) return null;
 
-  const hasUnresolvedIssue = statusReports.some(
-    (report) => report.status !== "resolved",
+  const items = toCheckboxTreeItems(
+    page.pageComponents,
+    page.pageComponentGroups,
+  );
+  const createStatusReport = async (
+    values: Parameters<
+      React.ComponentProps<typeof FormSheetStatusReport>["onSubmit"]
+    >[0],
+  ) => {
+    // NOTE: for type safety, we need to check if the values have a date property
+    // because of the union type
+    if ("date" in values) {
+      // every selected component gets an impact row — fresh
+      // reports are never legacy; fallback must match the
+      // picker's defaultImpact
+      const componentImpacts = values.pageComponents.map((pageComponentId) => ({
+        pageComponentId,
+        impact:
+          values.componentImpacts?.find(
+            (ci) => ci.pageComponentId === pageComponentId,
+          )?.impact ?? ("degraded_performance" as const),
+      }));
+      await createStatusReportMutation.mutateAsync({
+        title: values.title,
+        status: values.status,
+        pageId: Number.parseInt(id),
+        pageComponents: values.pageComponents,
+        componentImpacts,
+        date: values.date,
+        message: values.message,
+        notifySubscribers: values.notifySubscribers,
+      });
+    }
+  };
+
+  const now = new Date();
+  const range = activityRange(now);
+  const days = groupByDay(range, statusReports, reportSpan, now).map(
+    ({ date, items }) => {
+      const marks = items.map((report) => ({
+        ...reportActivity(report),
+        title: report.title,
+      }));
+      const lead = strongestMark(marks);
+      return {
+        date,
+        ...lead,
+        lines: lead
+          ? activityDayLines(
+              `${lead.label} · ${lead.title}`,
+              marks.filter((m) => m !== lead).map((m) => m.label),
+            )
+          : undefined,
+        links: items.map((report) => ({
+          href: `/status-pages/${report.pageId}/status-reports/${report.id}`,
+          title: report.title,
+        })),
+      };
+    },
   );
 
   return (
@@ -72,12 +188,12 @@ export default function Page() {
           </NextLink>
         </NoteButton>
       </NoteDismissible>
-      <Section>
+      <Section id="status-reports">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{page.title}</SectionTitle>
             <SectionDescription>
-              List of all status reports. Looking for{" "}
+              What you have told your users, and when. Looking for{" "}
               <Link href={`/status-pages/${id}/maintenances`}>
                 maintenances
               </Link>
@@ -86,8 +202,10 @@ export default function Page() {
           </SectionHeader>
           <div>
             <FormSheetStatusReport
+              open={openCreate}
+              onOpenChange={setOpenCreate}
               warning={
-                hasUnresolvedIssue ? (
+                ongoing.length > 0 ? (
                   <>
                     An unresolved report already exists. Consider adding a{" "}
                     <span className="font-semibold">status report update</span>{" "}
@@ -95,46 +213,108 @@ export default function Page() {
                   </>
                 ) : undefined
               }
-              items={toCheckboxTreeItems(
-                page.pageComponents,
-                page.pageComponentGroups,
-              )}
-              onSubmit={async (values) => {
-                // NOTE: for type safety, we need to check if the values have a date property
-                // because of the union type
-                if ("date" in values) {
-                  // every selected component gets an impact row — fresh
-                  // reports are never legacy; fallback must match the
-                  // picker's defaultImpact
-                  const componentImpacts = values.pageComponents.map(
-                    (pageComponentId) => ({
-                      pageComponentId,
-                      impact:
-                        values.componentImpacts?.find(
-                          (ci) => ci.pageComponentId === pageComponentId,
-                        )?.impact ?? ("degraded_performance" as const),
-                    }),
-                  );
-                  await createStatusReportMutation.mutateAsync({
-                    title: values.title,
-                    status: values.status,
-                    pageId: Number.parseInt(id),
-                    pageComponents: values.pageComponents,
-                    componentImpacts,
-                    date: values.date,
-                    message: values.message,
-                    notifySubscribers: values.notifySubscribers,
-                  });
-                }
-              }}
+              items={items}
+              onSubmit={createStatusReport}
             >
               <Button data-section="action" size="sm">
-                Create Status Report
+                Create status report
               </Button>
             </FormSheetStatusReport>
           </div>
         </SectionHeaderRow>
-        <DataTable columns={columns} data={statusReports} />
+        <ActivityFeed>
+          <Activity>
+            <ActivityHeader>
+              <ActivityTitle>Activity</ActivityTitle>
+              <ActivityPeriod>Last 12 months</ActivityPeriod>
+            </ActivityHeader>
+            <ActivityCalendar>
+              <ActivityCalendarGrid days={days} today={now} />
+              <ActivityCalendarLegend>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell />
+                  None
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={1} />
+                  {impactConfig.degraded_performance.short}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={2} />
+                  {impactConfig.partial_outage.short}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell level={3} />
+                  {impactConfig.major_outage.short}
+                </ActivityCalendarLegendItem>
+                <ActivityCalendarLegendSeparator />
+                <ActivityCalendarLegendItem>
+                  <ActivityCalendarCell hatched />
+                  {untriagedImpact.short}
+                </ActivityCalendarLegendItem>
+              </ActivityCalendarLegend>
+            </ActivityCalendar>
+          </Activity>
+          <div className="flex flex-col gap-6">
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Ongoing
+                  <EventGroupCount>{ongoing.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {ongoing.map((report) => (
+                  <StatusReportRow key={report.id} report={report} />
+                ))}
+              </EventList>
+            </EventGroup>
+            <EventGroup>
+              <EventGroupHeader>
+                <EventGroupTitle>
+                  Resolved
+                  <EventGroupCount>{resolved.length}</EventGroupCount>
+                </EventGroupTitle>
+              </EventGroupHeader>
+              <EventList>
+                {paged.visible.map((report) => (
+                  <StatusReportRow key={report.id} report={report} />
+                ))}
+                {paged.hasMore ? (
+                  <EventListMore onClick={paged.showMore}>
+                    Show older
+                  </EventListMore>
+                ) : null}
+              </EventList>
+            </EventGroup>
+          </div>
+          <ActivityEmpty>
+            <EmptyStateMedia variant="success">
+              <Success />
+            </EmptyStateMedia>
+            <EmptyStateTitle>Nothing to report</EmptyStateTitle>
+            <EmptyStateDescription>
+              Nothing has been published on this page. When something breaks,
+              post a report here to keep visitors informed, and notify your
+              subscribers by email.
+            </EmptyStateDescription>
+            <EmptyStateActions>
+              <Button size="sm" onClick={() => setOpenCreate(true)}>
+                Create a report
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <NextLink
+                  href={getPageUrl(page)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink />
+                  Open public page
+                </NextLink>
+              </Button>
+            </EmptyStateActions>
+          </ActivityEmpty>
+        </ActivityFeed>
       </Section>
     </SectionGroup>
   );

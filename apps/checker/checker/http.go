@@ -8,10 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -29,6 +32,46 @@ type Timing struct {
 	FirstByteDone     int64 `json:"firstByteDone"`
 	TransferStart     int64 `json:"transferStart"`
 	TransferDone      int64 `json:"transferDone"`
+}
+
+// clearIncompletePhases zeroes any phase whose start or done hook never
+// fired (e.g. a timeout before the first byte). Downstream computes
+// done - start, so a lone epoch timestamp would yield a huge negative duration.
+func (t *Timing) clearIncompletePhases() {
+	for _, phase := range [][2]*int64{
+		{&t.DnsStart, &t.DnsDone},
+		{&t.ConnectStart, &t.ConnectDone},
+		{&t.TlsHandshakeStart, &t.TlsHandshakeDone},
+		{&t.FirstByteStart, &t.FirstByteDone},
+		{&t.TransferStart, &t.TransferDone},
+	} {
+		if *phase[0] == 0 || *phase[1] == 0 {
+			*phase[0], *phase[1] = 0, 0
+		}
+	}
+}
+
+// httpTimer guards the phase struct: net/http can still run ConnectDone or
+// TLSHandshakeDone on its dial goroutine after client.Do has timed out.
+type httpTimer struct {
+	mu     sync.Mutex
+	timing Timing
+}
+
+func (h *httpTimer) set(apply func(t *Timing)) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	apply(&h.timing)
+}
+
+// snapshot returns a copy with incomplete phases cleared, so a hook firing
+// after it cannot put a lone timestamp back into the response.
+func (h *httpTimer) snapshot() Timing {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	timing := h.timing
+	timing.clearIncompletePhases()
+	return timing
 }
 
 type Response struct {
@@ -54,6 +97,95 @@ func decodeBase64Body(body string) ([]byte, error) {
 		return base64.StdEncoding.DecodeString(data[1])
 	}
 	return nil, fmt.Errorf("invalid base64 data url format")
+}
+
+// defaultHTTPTimeout bounds a probe whose monitor has no timeout set: a zero
+// timeout would otherwise let a dial or TLS handshake hang forever.
+const defaultHTTPTimeout = 45 * time.Second
+
+// NewHTTPClient returns a client with a transport of its own. Leaving Transport
+// nil shares http.DefaultTransport: a probe could then be handed a pooled
+// connection (no DNS/connect/TLS timing), and CloseIdleConnections would tear
+// down the connections of every concurrent probe and of the Tinybird client.
+// With keep-alives off, every probe is sent with "Connection: close".
+func NewHTTPClient(timeout time.Duration, followRedirects bool) *http.Client {
+	if timeout <= 0 {
+		timeout = defaultHTTPTimeout
+	}
+
+	// Dial and TLS get the monitor's whole timeout: http.DefaultTransport caps
+	// them at 30s and 10s, which cut a check short of what the user set.
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: timeout}).DialContext,
+		TLSHandshakeTimeout:   timeout,
+		ExpectContinueTimeout: time.Second,
+		ForceAttemptHTTP2:     true,
+		DisableKeepAlives:     true,
+	}
+
+	client := &http.Client{
+		Timeout:   timeout,
+		Transport: transport,
+	}
+
+	if !followRedirects {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	} else {
+		// Explicitly limit the number of redirects to 10 (Go's default)
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return http.ErrUseLastResponse
+			}
+
+			return nil
+		}
+	}
+
+	return client
+}
+
+// httpErrorMessage turns a failed request into the message stored for the
+// customer: common transport failures get a short fixed message, and anything
+// else loses the method and URL prefix. DNS messages leave out the resolver,
+// which on fly is an internal address ([fdaa::3]:53).
+func httpErrorMessage(err error, latency int64) string {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) && urlErr.Timeout() {
+		return fmt.Sprintf("Timeout after %d ms", latency)
+	}
+
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return fmt.Sprintf("DNS lookup failed for %s: %s", dnsErr.Name, dnsErr.Err)
+	}
+
+	var certErr *tls.CertificateVerificationError
+	if errors.As(err, &certErr) {
+		return fmt.Sprintf("TLS certificate verification failed: %s", certErr.Err)
+	}
+
+	var opErr *net.OpError
+	if errors.As(err, &opErr) && opErr.Op == "remote error" {
+		return fmt.Sprintf("TLS handshake failed: %s", opErr.Err)
+	}
+
+	switch {
+	case errors.Is(err, syscall.ECONNREFUSED):
+		return "Connection refused"
+	case errors.Is(err, syscall.ECONNRESET):
+		return "Connection reset by peer"
+	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):
+		return "Connection closed by server before a response was received"
+	}
+
+	if urlErr != nil {
+		return urlErr.Err.Error()
+	}
+
+	return err.Error()
 }
 
 // FIXME: This should only return the TCP Timing Data;
@@ -93,6 +225,9 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 			req.Header.Set(header.Key, header.Value)
 		}
 	}
+	if inputData.RequestID != "" {
+		req.Header.Set(request.RequestIDHeader, inputData.RequestID)
+	}
 
 	// Maybe we should remove the default post to application JSON
 	// Default POST Content-Type
@@ -100,21 +235,26 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	timing := Timing{}
+	timer := &httpTimer{}
+	now := func() int64 { return time.Now().UTC().UnixMilli() }
 
 	trace := &httptrace.ClientTrace{
-		DNSStart:          func(_ httptrace.DNSStartInfo) { timing.DnsStart = time.Now().UTC().UnixMilli() },
-		DNSDone:           func(_ httptrace.DNSDoneInfo) { timing.DnsDone = time.Now().UTC().UnixMilli() },
-		ConnectStart:      func(_, _ string) { timing.ConnectStart = time.Now().UTC().UnixMilli() },
-		ConnectDone:       func(_, _ string, _ error) { timing.ConnectDone = time.Now().UTC().UnixMilli() },
-		TLSHandshakeStart: func() { timing.TlsHandshakeStart = time.Now().UTC().UnixMilli() },
-		TLSHandshakeDone:  func(_ tls.ConnectionState, _ error) { timing.TlsHandshakeDone = time.Now().UTC().UnixMilli() },
+		DNSStart:          func(_ httptrace.DNSStartInfo) { timer.set(func(t *Timing) { t.DnsStart = now() }) },
+		DNSDone:           func(_ httptrace.DNSDoneInfo) { timer.set(func(t *Timing) { t.DnsDone = now() }) },
+		ConnectStart:      func(_, _ string) { timer.set(func(t *Timing) { t.ConnectStart = now() }) },
+		ConnectDone:       func(_, _ string, _ error) { timer.set(func(t *Timing) { t.ConnectDone = now() }) },
+		TLSHandshakeStart: func() { timer.set(func(t *Timing) { t.TlsHandshakeStart = now() }) },
+		TLSHandshakeDone: func(_ tls.ConnectionState, _ error) {
+			timer.set(func(t *Timing) { t.TlsHandshakeDone = now() })
+		},
 		GotConn: func(_ httptrace.GotConnInfo) {
-			timing.FirstByteStart = time.Now().UTC().UnixMilli()
+			timer.set(func(t *Timing) { t.FirstByteStart = now() })
 		},
 		GotFirstResponseByte: func() {
-			timing.FirstByteDone = time.Now().UTC().UnixMilli()
-			timing.TransferStart = time.Now().UTC().UnixMilli()
+			timer.set(func(t *Timing) {
+				t.FirstByteDone = now()
+				t.TransferStart = now()
+			})
 		},
 	}
 
@@ -126,14 +266,11 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
-		errorMsg := err.Error()
+		errorMsg := httpErrorMessage(err, latency)
+		timing := timer.snapshot()
 
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			errorMsg = fmt.Sprintf("Timeout after %d ms", latency)
-		}
-
-		logger.Error().Err(err).Msg("error while pinging")
+		// A failing customer endpoint is expected, not a checker error.
+		logger.Warn().Err(err).Msg("error while pinging")
 
 		// Return Response with error field instead of returning a Go error
 		// This ensures all failures (timeouts, connection refused, DNS failures, etc.)
@@ -153,7 +290,8 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	// otherwise OOM these 512 MB machines (fleet-wide exit 137 waves).
 	body, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBodyBytes))
 
-	timing.TransferDone = time.Now().UTC().UnixMilli()
+	timer.set(func(t *Timing) { t.TransferDone = now() })
+	timing := timer.snapshot()
 
 	if err != nil {
 		return Response{

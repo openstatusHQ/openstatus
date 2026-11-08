@@ -1,4 +1,4 @@
-import { and, db as defaultDb, eq, gte, isNull } from "@openstatus/db";
+import { and, db as defaultDb, eq, gte, isNull, sql } from "@openstatus/db";
 import {
   invitation,
   selectInvitationSchema,
@@ -59,7 +59,8 @@ export async function getInvitationByToken(args: {
       eq(invitation.token, input.token),
       isNull(invitation.acceptedAt),
       gte(invitation.expiresAt, new Date()),
-      eq(invitation.email, input.email),
+      // Rows created before emails were normalized keep their original casing.
+      sql`lower(${invitation.email}) = ${input.email}`,
     ),
     with: { workspace: true },
   });

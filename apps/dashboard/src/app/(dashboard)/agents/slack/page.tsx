@@ -3,6 +3,7 @@
 import { Info } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import NextLink from "next/link";
 
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
@@ -60,7 +61,7 @@ export default function Page() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   return (
     <SectionGroup>
-      <Section>
+      <Section id="slack-agent">
         <SectionHeader>
           <SectionTitle>Slack Agent</SectionTitle>
           <SectionDescription>
@@ -82,10 +83,12 @@ export default function Page() {
           </Note>
         ) : null}
         <Button size="sm" asChild>
-          <Link href="/settings/integrations">Install the Slack agent</Link>
+          <NextLink href="/settings/integrations#slack">
+            Install the Slack agent
+          </NextLink>
         </Button>
       </Section>
-      <Section>
+      <Section id="messages">
         <SectionHeader>
           <SectionTitle>Messages</SectionTitle>
           <SectionDescription>
@@ -108,7 +111,7 @@ export default function Page() {
           ))}
         </ul>
       </Section>
-      <Section>
+      <Section id="commands">
         <SectionHeader>
           <SectionTitle>Commands</SectionTitle>
           <SectionDescription>

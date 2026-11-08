@@ -6,7 +6,7 @@ import {
   notificationTrigger,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 
 import { drainUntilEmpty, sweepExpiredOutbox } from "../checker/outbox";
 

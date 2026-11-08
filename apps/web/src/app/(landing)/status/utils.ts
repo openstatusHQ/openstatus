@@ -1,4 +1,6 @@
-export const STALE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+import { STALE_THRESHOLD_MS } from "@openstatus/services/external-service-status/effective";
+
+export { STALE_THRESHOLD_MS };
 
 export function formatRelative(updatedAtMs: number): string {
   const diff = Date.now() - updatedAtMs;
@@ -17,6 +19,28 @@ export function isStale(fetchedAtMs: number): boolean {
   return Date.now() - fetchedAtMs > STALE_THRESHOLD_MS;
 }
 
+export function getHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+// Directory rows carry the marketing site, which is what a visitor asking
+// "is it down for me?" wants probed; only http(s) can be checked.
+export function getCheckerHref(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    return `/play/checker?${new URLSearchParams({ url: parsed.toString() })}`;
+  } catch {
+    return null;
+  }
+}
+
 // Upstream component names often already carry the provider ("Zoom AI" on
 // Zoom), so prefixing blindly yields "Zoom Zoom AI".
 export function getComponentFullName(
@@ -33,31 +57,42 @@ export function getComponentFullName(
   return `${service} ${component}`;
 }
 
-// Natural-language answer to "Is <name> down?", used both as on-page lead copy
-// and as the FAQPage answer in JSON-LD. Mirrors getPillStyle semantics.
-export function getStatusAnswer(args: {
-  name: string;
-  indicator: string;
-  status: string;
-  hasLiveData: boolean;
-}): string {
-  const { name, indicator, status, hasLiveData } = args;
-  if (!hasLiveData) {
-    return `We don't have live data for ${name} right now. Check the official ${name} status page below.`;
+export {
+  getStatusAnswer,
+  isFresh,
+  isProblem,
+  problemRank,
+} from "@openstatus/services/external-service-status/effective";
+
+export function formatDuration(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours < 24) return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours ? `${days}d ${restHours}h` : `${days}d`;
+}
+
+const ISSUE_INDICATORS = new Set(["minor", "major", "critical"]);
+
+// History rows come one per (day, slug alias); a day counts once. A
+// maintenance-only day counts as affected, like the bars that label it.
+export function summarizeHistory(
+  rows: { day: string; worstIndicator: string; hadMaintenance?: number }[],
+): { tracked: number; issueDays: number } {
+  const byDay = new Map<string, boolean>();
+  for (const r of rows) {
+    const key = r.day.slice(0, 10);
+    byDay.set(
+      key,
+      (byDay.get(key) ?? false) ||
+        ISSUE_INDICATORS.has(r.worstIndicator) ||
+        Boolean(r.hadMaintenance),
+    );
   }
-  if (status === "under_maintenance") {
-    return `${name} is currently undergoing scheduled maintenance.`;
-  }
-  switch (indicator) {
-    case "none":
-      return `No, ${name} is not down. All ${name} systems are operational.`;
-    case "minor":
-      return `${name} is up, but currently experiencing a minor issue.`;
-    case "major":
-      return `Yes, ${name} is experiencing a partial outage right now.`;
-    case "critical":
-      return `Yes, ${name} is down. A major outage is currently affecting ${name}.`;
-    default:
-      return `The current status of ${name} is unknown. Check the official ${name} status page below.`;
-  }
+  let issueDays = 0;
+  for (const issue of byDay.values()) if (issue) issueDays++;
+  return { tracked: byDay.size, issueDays };
 }

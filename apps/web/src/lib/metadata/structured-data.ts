@@ -19,6 +19,7 @@ import type {
   WithContext,
 } from "schema-dts";
 
+import type { ContentSection } from "../../content/sections";
 import type { MDXData } from "../../content/utils";
 import { BASE_URL } from "./shared-metadata";
 
@@ -185,7 +186,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     "@type": "Product",
     name: "openstatus",
     description:
-      "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
+      "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
     image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
@@ -213,9 +214,10 @@ export const getJsonLDSoftwareApplication =
       name: "openstatus",
       url: BASE_URL,
       description:
-        "The open-source status page and uptime monitoring platform built for infra as code. Declare monitors in code and let your agents update them.",
+        "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
       applicationCategory: "BusinessApplication",
-      applicationSubCategory: "Status Pages & Uptime Monitoring",
+      applicationSubCategory:
+        "Status Pages, Incident Response & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",
       offers: Object.entries(allPlans).map(([_, value]) => ({
         "@type": "Offer",
@@ -291,6 +293,17 @@ export function getJsonLDItemList(
     },
   };
 }
+
+// Home → section → optional leaf (a post, a category); paths are site-relative.
+export const getJsonLDSectionBreadcrumb = (
+  section: Pick<ContentSection, "label" | "path">,
+  leaf?: { label: string; path: string },
+): WithContext<BreadcrumbList> =>
+  getJsonLDBreadcrumbList([
+    { name: "Home", url: BASE_URL },
+    { name: section.label, url: `${BASE_URL}${section.path}` },
+    ...(leaf ? [{ name: leaf.label, url: `${BASE_URL}${leaf.path}` }] : []),
+  ]);
 
 export const getJsonLDBreadcrumbList = (
   items: { name: string; url: string }[],

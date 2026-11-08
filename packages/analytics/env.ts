@@ -3,11 +3,9 @@ import { z } from "zod";
 
 /**
  * `NODE_ENV` is read through this alias rather than as a literal
- * `process.env.NODE_ENV` member access: `deno bundle` (esbuild) constant-folds
- * that exact expression into a string at build time — `"development"` unless
- * `--minify` is passed — which left `setupAnalytics` permanently no-op inside
- * the compiled `apps/server` binary. The other keys stay as literal member
- * accesses because Next.js needs them that way to inline `NEXT_PUBLIC_*`.
+ * `process.env.NODE_ENV` member access, which some bundlers fold into a
+ * build-time string. The other keys stay as literal member accesses because
+ * Next.js needs them that way to inline `NEXT_PUBLIC_*`.
  */
 const processEnv: Record<string, string | undefined> = process.env;
 

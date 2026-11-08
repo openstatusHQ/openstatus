@@ -1,6 +1,5 @@
 import { regionDict } from "@openstatus/regions";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   MOCK_INCIDENTS,
@@ -130,6 +129,11 @@ describe("mapMonitor", () => {
   test("maps monitor with empty headers", () => {
     const result = mapMonitor(MOCK_MONITORS[1], 42);
     expect(result.headers).toBe("");
+  });
+
+  test("carries over the monitor's follow_redirects setting", () => {
+    expect(mapMonitor(MOCK_MONITORS[0], 42).followRedirects).toBe(true);
+    expect(mapMonitor(MOCK_MONITORS[2], 42).followRedirects).toBe(false);
   });
 });
 

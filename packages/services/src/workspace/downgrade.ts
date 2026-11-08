@@ -18,7 +18,9 @@ import { deleteNotification } from "../notification";
 import {
   deletePage,
   updatePageCustomDomain,
+  updatePageLocales,
   updatePagePasswordProtection,
+  updatePageTimezone,
 } from "../page";
 import { disableSso } from "../sso";
 import { DowngradeWorkspaceInput } from "./schemas";
@@ -71,7 +73,7 @@ export async function downgradeWorkspaceToFree(args: {
   trimmed: DowngradeTrim;
 }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = DowngradeWorkspaceInput.parse(args.input ?? {});
   const reason = input.reason ?? "subscription_deleted";
   const workspaceId = ctx.workspace.id;
@@ -128,6 +130,9 @@ export async function downgradeWorkspaceToFree(args: {
         id: page.id,
         title: page.title,
         customDomain: page.customDomain,
+        defaultTimezone: page.defaultTimezone,
+        defaultLocale: page.defaultLocale,
+        locales: page.locales,
       })
       .from(page)
       .where(eq(page.workspaceId, workspaceId))
@@ -166,6 +171,18 @@ export async function downgradeWorkspaceToFree(args: {
           allowIndex: true,
         },
       });
+      if (keptPage.defaultTimezone !== "UTC") {
+        await updatePageTimezone({
+          ctx: txCtx,
+          input: { id: keptPage.id, defaultTimezone: "UTC" },
+        });
+      }
+      if (keptPage.defaultLocale !== "en" || keptPage.locales !== null) {
+        await updatePageLocales({
+          ctx: txCtx,
+          input: { id: keptPage.id, defaultLocale: "en", locales: null },
+        });
+      }
     }
 
     const notifications = await tx
@@ -241,7 +258,7 @@ export async function previewWorkspaceDowngrade(args: {
   ctx: ServiceContext;
 }): Promise<DowngradePreview> {
   const { ctx } = args;
-  requireScope(ctx, "read");
+  requireScope(ctx, "admin");
   const db = ctx.db ?? defaultDb;
   const workspaceId = ctx.workspace.id;
 

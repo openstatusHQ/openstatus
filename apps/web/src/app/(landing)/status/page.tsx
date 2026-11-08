@@ -1,87 +1,109 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { ButtonLink } from "../../../content/mdx-components/button-link";
 import { CustomLink } from "../../../content/mdx-components/custom-link";
+import { sections } from "../../../content/sections";
 import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
+  getListingMetadata,
 } from "../../../lib/metadata/shared-metadata";
-import { HydrateClient, api } from "../../../trpc/rq-server";
+import { HydrateClient } from "../../../trpc/rq-server";
 import {
   ContentBoxContainer,
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../content-box";
-import { ExternalStatusGrid } from "./external-status-grid";
+import { Client } from "./client";
+import { getPrefetchedGrid, prefetchPopularStatus } from "./prefetch";
 import { searchParamsCache } from "./search-params";
-import { ServiceSearch } from "./service-search";
+import { AgentHint, StatusSkeleton } from "./service-blocks";
+import { statusHref } from "./status-href";
+import { buildStatusIndex } from "./status-index";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "External Status";
-const DESCRIPTION =
-  "Easily check if your external providers is working properly";
-
-export async function generateMetadata(props: {
+type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}): Promise<Metadata> {
-  const { q } = await searchParamsCache.parse(props.searchParams);
+};
+
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const { q, page, letter } = await searchParamsCache.parse(props.searchParams);
   const hasQuery = q.trim() !== "";
+  const metadata = getListingMetadata({
+    ...sections.status,
+    ogImage: `${BASE_URL}/api/og/external-service`,
+  });
+  const browsing = !hasQuery && (page > 1 || letter !== null);
+  const label = letter === "0" ? "#" : letter?.toUpperCase();
 
   return {
-    ...defaultMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    alternates: {
-      canonical: "/status",
-    },
+    ...metadata,
+    ...(browsing
+      ? {
+          title: [
+            sections.status.title,
+            label ? `services starting with ${label}` : null,
+            page > 1 ? `page ${page}` : null,
+          ]
+            .filter(Boolean)
+            .join(", "),
+          alternates: {
+            ...metadata.alternates,
+            canonical: statusHref({ letter, page }),
+          },
+        }
+      : {}),
     robots: hasQuery ? { index: false, follow: true } : defaultMetadata.robots,
-    openGraph: {
-      ...ogMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-      images: [`${BASE_URL}/api/og/external-service`],
-    },
-    twitter: {
-      ...twitterMetadata,
-      title: TITLE,
-      description: DESCRIPTION,
-      images: [`${BASE_URL}/api/og/external-service`],
-    },
   };
 }
 
-export default async function Page() {
-  await api.externalService.grid.prefetch();
-
+export default async function Page(props: PageProps) {
+  const params = await searchParamsCache.parse(props.searchParams);
+  const query = params.q.trim();
+  const letter = query === "" ? params.letter : null;
+  // Popular only renders on the bare index, so only prefetch it there.
+  const landing = query === "" && letter === null && params.page <= 1;
+  const [services] = await Promise.all([
+    getPrefetchedGrid(),
+    landing ? prefetchPopularStatus() : null,
+  ]);
+  const index = buildStatusIndex({
+    services,
+    q: query,
+    page: params.page,
+    letter: letter ?? undefined,
+    popularSlugs: [],
+  });
+  // ?page=999 or ?page=0: send to the page actually shown, so the title and
+  // canonical never name a page that does not exist.
+  if (index.page !== params.page) {
+    redirect(statusHref({ q: query, letter, page: index.page }));
+  }
   return (
-    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-4">
-      <ContentBoxContainer className="not-prose mb-2 px-4 py-2 text-sm">
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
+      <ContentBoxContainer className="not-prose px-3 py-2 text-sm">
         <CustomLink
           href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"
         >
           Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
+          OpenStatus
         </CustomLink>
       </ContentBoxContainer>
 
       <HydrateClient>
-        <ServiceSearch />
-        <Suspense
-          fallback={
-            <p className="text-muted-foreground">Loading external status…</p>
-          }
-        >
-          <ExternalStatusGrid />
+        <Suspense fallback={<StatusSkeleton />}>
+          <Client />
         </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
+      <AgentHint markdownPath="/status.md" />
+
+      <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>

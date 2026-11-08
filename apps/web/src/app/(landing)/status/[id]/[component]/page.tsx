@@ -9,6 +9,7 @@ import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
+  markdownAlternate,
   ogMetadata,
   twitterMetadata,
 } from "../../../../../lib/metadata/shared-metadata";
@@ -18,8 +19,11 @@ import {
   ContentBoxDescription,
   ContentBoxTitle,
 } from "../../../content-box";
-import { getComponentFullName } from "../../utils";
-import { ComponentDetail } from "./component-detail";
+import { prefetchPopularStatus } from "../../prefetch";
+import { PopularStatus } from "../../sections";
+import { AgentHint } from "../../service-blocks";
+import { getCheckerHref, getComponentFullName, getHost } from "../../utils";
+import { ComponentDetail } from "./client";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +45,7 @@ export async function generateMetadata(args: {
 
   const fullName = getComponentFullName(service.name, component.name);
   const title = `Is ${fullName} Down? ${fullName} Status & History`;
-  const description = `Is ${component.name} (${service.name}) down right now? Check the live status, uptime over the last ${HISTORY_DAYS} days, and recent incidents for ${component.name} tracked by OpenStatus.`;
+  const description = `Is ${component.name} (${service.name}) down right now? Check the live status, uptime over the last ${HISTORY_DAYS} days, and recent incidents for ${component.name}, part of the ${service.name} status tracked by openstatus.`;
   const canonicalUrl = `${BASE_URL}/status/${service.slug}/${component.slug}`;
   const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}&component=${encodeURIComponent(component.slug)}`;
   const indexable = service.deletedAt == null && !component.stale;
@@ -50,7 +54,10 @@ export async function generateMetadata(args: {
     ...defaultMetadata,
     title,
     description,
-    alternates: { canonical: canonicalUrl },
+    alternates: {
+      canonical: canonicalUrl,
+      ...markdownAlternate(`/status/${service.slug}/${component.slug}`),
+    },
     robots: { index: indexable, follow: true },
     openGraph: {
       ...ogMetadata,
@@ -80,24 +87,24 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
   const fullName = getComponentFullName(service.name, component.name);
 
-  await api.externalService.component.prefetch({
-    serviceSlug: service.slug,
-    componentSlug: component.slug,
-    days: HISTORY_DAYS,
-  });
+  await Promise.all([
+    api.externalService.component.prefetch({
+      serviceSlug: service.slug,
+      componentSlug: component.slug,
+      days: HISTORY_DAYS,
+    }),
+    // Sibling list is rendered on the server so its links are crawlable.
+    api.externalService.components.prefetch({ slug: service.slug, days: 1 }),
+    prefetchPopularStatus(),
+  ]);
+
+  const checkerHref = getCheckerHref(service.url);
+  const checker = checkerHref
+    ? { href: checkerHref, host: getHost(service.url) }
+    : null;
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
-        <CustomLink
-          href={`${APP_URL}?ref=status-component-top`}
-          className="font-medium underline-offset-4 hover:underline"
-        >
-          Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
-        </CustomLink>
-      </ContentBoxContainer>
-
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-10">
       <HydrateClient>
         <Suspense
           fallback={
@@ -112,16 +119,30 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
             serviceSlug={service.slug}
             componentSlug={component.slug}
             days={HISTORY_DAYS}
+            checker={checker}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <PopularStatus
+            id="related"
+            title="People also check"
+            aside={null}
+            exclude={{ service: service.slug, component: component.slug }}
+            limit={8}
           />
         </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
+      <AgentHint
+        markdownPath={`/status/${service.slug}/${component.slug}.md`}
+      />
+
+      <ContentBoxContainer className="not-prose bg-muted/30 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus — see
+          Every service needs a status page. Run yours with openstatus — see
           what a{" "}
           <CustomLink href="/status-page" className="underline-offset-4">
             hosted status page

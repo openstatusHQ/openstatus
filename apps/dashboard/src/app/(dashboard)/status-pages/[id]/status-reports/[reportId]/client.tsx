@@ -1,6 +1,9 @@
 "use client";
 
-import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
+import {
+  currentImpactsFromUpdates,
+  peakImpactsFromUpdates,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -33,7 +36,10 @@ import { Notifications } from "@/components/status-pages/notifications";
 import { StatusReportActions } from "@/components/status-reports/status-report-actions";
 import { StatusReportComposer } from "@/components/status-reports/status-report-composer";
 import { StatusReportProperties } from "@/components/status-reports/status-report-properties";
-import { StatusReportTimelineItem } from "@/components/status-reports/status-report-timeline";
+import {
+  StatusReportOpenedTimelineItem,
+  StatusReportTimelineItem,
+} from "@/components/status-reports/status-report-timeline";
 import { useInvalidateStatusReport } from "@/components/status-reports/use-invalidate-status-report";
 import { toGroupNameLookup } from "@/data/page-components.client";
 import { getPageUrl } from "@/data/status-pages.client";
@@ -66,6 +72,9 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
   );
   const latest = updates[0];
   const currentImpacts = currentImpactsFromUpdates(report.updates);
+  // peak, not current: a resolved report would always read operational
+  const peakImpacts = peakImpactsFromUpdates(report.updates);
+  const resolved = report.status === "resolved";
   const groupOf = toGroupNameLookup(
     page?.pageComponents ?? [],
     page?.pageComponentGroups ?? [],
@@ -105,24 +114,34 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
       </DetailHeader>
       <DetailContent>
         <DetailMain>
-          <Timeline>
-            <StatusReportComposer
-              report={report}
-              currentImpacts={currentImpacts}
-              pageComponents={page?.pageComponents ?? []}
-              groups={page?.pageComponentGroups ?? []}
-              canNotify={canNotify}
-            />
-            {updates.map((update, i) => (
-              <StatusReportTimelineItem
-                key={update.id}
+          <DetailSection>
+            <DetailSectionTitle variant="heading">
+              Updates
+              <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+                {updates.length}
+              </span>
+            </DetailSectionTitle>
+            <Timeline>
+              <StatusReportComposer
                 report={report}
-                update={update}
-                index={updates.length - i}
-                groupOf={groupOf}
+                currentImpacts={currentImpacts}
+                pageComponents={page?.pageComponents ?? []}
+                groups={page?.pageComponentGroups ?? []}
+                canNotify={canNotify}
               />
-            ))}
-          </Timeline>
+              {updates.map((update, i) => (
+                <StatusReportTimelineItem
+                  key={update.id}
+                  report={report}
+                  update={update}
+                  before={currentImpactsFromUpdates(updates.slice(i + 1))}
+                  index={updates.length - i}
+                  groupOf={groupOf}
+                />
+              ))}
+              <StatusReportOpenedTimelineItem report={report} />
+            </Timeline>
+          </DetailSection>
         </DetailMain>
         <DetailAside>
           <DetailSection>
@@ -139,9 +158,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
                       {component.name}
                     </ComponentListName>
                     <ComponentListActions>
-                      <ComponentImpact
-                        impact={currentImpacts.get(component.id)}
-                      />
+                      <ComponentImpact impact={peakImpacts.get(component.id)} />
                     </ComponentListActions>
                   </ComponentListItem>
                 ))}
@@ -149,9 +166,11 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
             ) : (
               <ComponentListEmpty />
             )}
-            <p className="text-muted-foreground text-sm">
-              Change impact per component in the composer.
-            </p>
+            {resolved ? null : (
+              <p className="text-muted-foreground text-sm">
+                Peak impact so far. Change the current impact in the composer.
+              </p>
+            )}
           </DetailSection>
           <DetailSection>
             <DetailSectionTitle>Notifications</DetailSectionTitle>

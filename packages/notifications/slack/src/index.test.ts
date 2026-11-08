@@ -1,8 +1,14 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { COLORS } from "@openstatus/notification-base";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
 import {
   buildAlertBlocks,
@@ -18,16 +24,18 @@ import {
 } from "./index";
 
 describe("Slack Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: MockInstance;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
   });
 
   const createMockMonitor = () => ({
@@ -67,8 +75,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://hooks.slack.com/services/url");
     expect(callArgs[1].method).toBe("POST");
 
@@ -94,8 +102,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments[0].color).toBe(COLORS.red);
     expect(body.attachments[0].blocks[3].fields[0].text).toContain("Unknown");
@@ -116,8 +124,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].color).toBe(COLORS.green);
@@ -139,8 +147,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].color).toBe(COLORS.yellow);
@@ -152,8 +160,8 @@ describe("Slack Notifications", () => {
 
     await sendTestSlackMessage(webhookUrl);
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
 
     const body = JSON.parse(callArgs[1].body);
@@ -163,20 +171,20 @@ describe("Slack Notifications", () => {
   });
 
   test("Send Test Slack Message throws error on empty webhookUrl", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
-    expect(sendTestSlackMessage("")).rejects.toThrow();
-    assertSpyCalls(fetchMock, 0);
+    await expect(sendTestSlackMessage("")).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
@@ -194,7 +202,7 @@ describe("Slack Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 

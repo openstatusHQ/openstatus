@@ -1,16 +1,15 @@
 "use client";
 
-import { Check } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@openstatus/ui/components/ui/dropdown-menu";
-import { cn } from "@openstatus/ui/lib/utils";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { SelectTrigger } from "@radix-ui/react-select";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
 import { PERCENTILES } from "@/data/metrics.client";
@@ -24,31 +23,31 @@ export function DropdownPercentile() {
   );
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="capitalize">
-          {percentile}
+    <Select
+      value={percentile}
+      onValueChange={(value) =>
+        setPercentile(value as (typeof PERCENTILES)[number])
+      }
+    >
+      <SelectTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium capitalize underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+        >
+          <SelectValue />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
-            Percentile
-          </DropdownMenuLabel>
+      </SelectTrigger>
+      <SelectContent position="item-aligned">
+        <SelectGroup>
+          <SelectLabel>Percentile</SelectLabel>
           {PERCENTILES.map((item) => (
-            <DropdownMenuItem
-              key={item}
-              onSelect={() => setPercentile(item)}
-              className={cn("capitalize")}
-            >
+            <SelectItem key={item} value={item} className="capitalize">
               {item}
-              {percentile === item ? (
-                <Check className="ml-auto shrink-0" />
-              ) : null}
-            </DropdownMenuItem>
+            </SelectItem>
           ))}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }

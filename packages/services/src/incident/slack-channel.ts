@@ -17,7 +17,7 @@ export async function bindIncidentSlackChannel(args: {
   input: BindIncidentSlackChannelInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = BindIncidentSlackChannelInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -27,6 +27,14 @@ export async function bindIncidentSlackChannel(args: {
       input.id,
     );
     assertNotClosed(existing);
+    if (
+      input.expectedChannelId !== undefined &&
+      existing.slackChannelId !== input.expectedChannelId
+    ) {
+      throw new ConflictError(
+        "This incident has moved to another channel since.",
+      );
+    }
     if (
       existing.slackTeamId === input.teamId &&
       existing.slackChannelId === input.channelId
@@ -71,7 +79,10 @@ export async function bindIncidentSlackChannel(args: {
     await appendIncidentEvent(tx, ctx, {
       incidentId: updated.id,
       type: "slack_channel_bound",
-      message: `Slack channel <#${input.channelId}> bound`,
+      message:
+        existing.slackChannelId && existing.slackTeamId === input.teamId
+          ? `Slack channel moved from <#${existing.slackChannelId}> to <#${input.channelId}>`
+          : `Slack channel <#${input.channelId}> bound`,
     });
     return updated;
   });
@@ -83,7 +94,7 @@ export async function unbindIncidentSlackChannel(args: {
   input: IncidentIdInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = IncidentIdInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

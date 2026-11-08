@@ -26,7 +26,7 @@ export async function deleteInvitation(args: {
   input: DeleteInvitationInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = DeleteInvitationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

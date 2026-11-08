@@ -3,19 +3,17 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { CustomMDX } from "../../../../content/mdx";
+import { sections } from "../../../../content/sections";
 import { getBlogPosts } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { getPageMetadata } from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBlogPosting,
-  getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDHowTo,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 import { ContentMetadata } from "../../content-metadata";
@@ -70,11 +68,10 @@ export default async function Blog({
     getJsonLDOrganization(),
     getJsonLDWebPage(post),
     getJsonLDBlogPosting(post, "blog"),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Blog", url: `${BASE_URL}/blog` },
-      { name: post.metadata.title, url: `${BASE_URL}/blog/${slug}` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.blog, {
+      label: post.metadata.title,
+      path: post.href,
+    }),
     getJsonLDHowTo(post),
     getJsonLDFAQPage(post),
   ]);

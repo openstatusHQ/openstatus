@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net"
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -114,6 +118,79 @@ func Test_ping(t *testing.T) {
 			if tt.name == "Wrong url should return an error" && got.Error == "" {
 				t.Errorf("Expected Response.Error to be populated for transport failure")
 			}
+		})
+	}
+}
+
+// Each probe must open its own connection: a pooled one would skip DNS,
+// connect and TLS, and report those timings as zero.
+func TestNewHTTPClientDoesNotReuseConnections(t *testing.T) {
+	var newConns atomic.Int32
+
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			newConns.Add(1)
+		}
+	}
+	server.Start()
+	t.Cleanup(server.Close)
+
+	client := checker.NewHTTPClient(5*time.Second, true)
+	defer client.CloseIdleConnections()
+
+	for range 2 {
+		input := request.HttpCheckerRequest{URL: server.URL, Method: http.MethodGet}
+		res, err := checker.Http(context.Background(), client, input)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.Status)
+		assert.NotZero(t, res.Timing.ConnectStart)
+	}
+
+	assert.Equal(t, int32(2), newConns.Load())
+}
+
+func Test_HttpRequestIDHeader(t *testing.T) {
+	type customHeader = struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	}
+
+	tests := []struct {
+		name      string
+		requestID string
+		headers   []customHeader
+		want      []string
+	}{
+		{name: "sent when set", requestID: "id-1", want: []string{"id-1"}},
+		{
+			name:      "a custom header cannot overwrite it",
+			requestID: "id-1",
+			headers:   []customHeader{{Key: "X-OpenStatus-Request-ID", Value: "custom"}},
+			want:      []string{"id-1"},
+		},
+		{name: "absent when empty", want: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			client := NewTestClient(func(req *http.Request) *http.Response {
+				got = req.Header.Values(request.RequestIDHeader)
+				return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}
+			})
+
+			_, err := checker.Http(context.Background(), client, request.HttpCheckerRequest{
+				URL:       "https://openstat.us",
+				Method:    http.MethodGet,
+				RequestID: tt.requestID,
+				Headers:   tt.headers,
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

@@ -4,11 +4,6 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
 import { Link } from "@/components/common/link";
-import {
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { EmptyStateContainer } from "@/components/content/empty-state";
 import { DataTable } from "@/components/data-table/settings/api-key/data-table";
 import { CreateApiKeyDialog } from "@/components/forms/api-key/dialog";
 import {
@@ -26,9 +21,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export function FormApiKey() {
   const trpc = useTRPC();
-  const { data: apiKeys = [], refetch } = useQuery(
-    trpc.apiKey.list.queryOptions(),
-  );
+  const { data: apiKeys = [] } = useQuery(trpc.apiKey.list.queryOptions());
 
   return (
     <FormCard id="api-keys">
@@ -39,26 +32,25 @@ export function FormApiKey() {
         </FormCardDescription>
       </FormCardHeader>
       <FormCardContent>
-        {apiKeys.length === 0 ? (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No API keys</EmptyStateTitle>
-            <EmptyStateDescription>
-              Access your data via API.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        ) : (
-          <DataTable apiKeys={apiKeys} refetch={refetch} />
-        )}
+        <DataTable apiKeys={apiKeys} />
       </FormCardContent>
       <FormCardFooter>
         <FormCardFooterInfo>
-          Trigger monitors via CLI, CI/CD or create your own status page.{" "}
+          Keys carry read or write access per resource. Read about{" "}
           <Link
-            href="https://api.openstatus.dev/v1"
+            href="https://www.openstatus.dev/docs/sdk/nodejs/authentication#scopes"
             rel="noreferrer"
             target="_blank"
           >
-            Learn more
+            scopes
+          </Link>{" "}
+          or browse the{" "}
+          <Link
+            href="https://api.openstatus.dev/openapi"
+            rel="noreferrer"
+            target="_blank"
+          >
+            API reference
           </Link>
           .
         </FormCardFooterInfo>

@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -116,7 +117,7 @@ export function FormCustomTheme({
           if (errored) setMode(errored);
         })}
       >
-        <FormCard>
+        <FormCard id="custom-theme">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Custom Theme</FormCardTitle>
@@ -197,11 +198,16 @@ export function FormCustomTheme({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
-                <Link href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit="custom-theme"
+                type="button"
+                asChild
+              >
+                <NextLink href="/settings/billing#plans">
                   <Lock className="size-4" />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>

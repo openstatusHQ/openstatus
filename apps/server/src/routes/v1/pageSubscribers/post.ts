@@ -3,7 +3,11 @@ import { Events } from "@openstatus/analytics";
 import { and, eq, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { PageSubscriptionEmail, sendEmail } from "@openstatus/emails";
+import {
+  PageSubscriptionEmail,
+  sendEmail,
+  statusPageFrom,
+} from "@openstatus/emails";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
@@ -112,7 +116,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
         link,
         page: _page.title,
       }),
-      from: "Status Page <notifications@notifications.openstatus.dev>",
+      from: statusPageFrom(_page.title),
       to: [normalizedEmail],
       subject: `Confirm your subscription to ${_page.title}`,
     });

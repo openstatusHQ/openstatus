@@ -5,11 +5,10 @@ import {
   createPageComponent,
   createTestWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { NextRequest } from "next/server.js";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { appRouter } from "../root";
 import { createInnerTRPCContext, createTRPCContext } from "../trpc";
@@ -146,7 +145,49 @@ describe("statusPage over HTTP", () => {
   });
 });
 
+describe("statusPage.getGate", () => {
+  test("carries the page's time zone for the markdown detail pages", async () => {
+    const setZone = (defaultTimezone: string) =>
+      db
+        .update(page)
+        .set({ defaultTimezone })
+        .where(eq(page.id, pageIds.public));
+    await setZone("Asia/Tokyo");
+    try {
+      const gate = await caller().statusPage.getGate({ slug: slugs.public });
+      expect(gate?.defaultTimezone).toBe("Asia/Tokyo");
+    } finally {
+      // the other tests share this page and expect it on UTC
+      await setZone("UTC");
+    }
+  });
+});
+
 describe("statusPage access gate", () => {
+  test("public page exposes subscription options from effective limits", async () => {
+    const enabled = await createTestWorkspace({
+      plan: "free",
+      limits: JSON.stringify({ "status-subscribers": true }),
+    });
+    const enabledPage = await createPage(enabled.workspace.id);
+    const enabledResult = await caller().statusPage.get({
+      slug: enabledPage.slug,
+    });
+    expect(enabledResult?.statusUpdateTypes).toEqual([
+      "email",
+      "slack",
+      "rss",
+      "json",
+    ]);
+
+    const disabled = await createTestWorkspace({ plan: "free" });
+    const disabledPage = await createPage(disabled.workspace.id);
+    const disabledResult = await caller().statusPage.get({
+      slug: disabledPage.slug,
+    });
+    expect(disabledResult?.statusUpdateTypes).toEqual(["slack", "rss", "json"]);
+  });
+
   for (const accessType of Object.keys(authorized) as (keyof typeof slugs)[]) {
     test(`${accessType}: authorized caller gets the full page`, async () => {
       const c = authorized[accessType]();

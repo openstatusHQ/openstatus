@@ -7,6 +7,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError } from "../errors";
 import {
   assertAccessTypeAllowed,
+  assertCustomDomainAvailable,
   assertSlugAvailable,
   getPageInWorkspace,
 } from "./internal";
@@ -19,6 +20,7 @@ import {
   UpdatePageLinksInput,
   UpdatePageLocalesInput,
   UpdatePagePasswordProtectionInput,
+  UpdatePageTimezoneInput,
 } from "./schemas";
 
 export async function updatePageGeneral(args: {
@@ -26,7 +28,7 @@ export async function updatePageGeneral(args: {
   input: UpdatePageGeneralInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageGeneralInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -72,7 +74,7 @@ export async function updatePageCustomDomain(args: {
   input: UpdatePageCustomDomainInput;
 }): Promise<{ existingDomain: string | null }> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageCustomDomainInput.parse(args.input);
 
   if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
@@ -84,6 +86,11 @@ export async function updatePageCustomDomain(args: {
       tx,
       id: input.id,
       workspaceId: ctx.workspace.id,
+    });
+    await assertCustomDomainAvailable({
+      tx,
+      customDomain: input.customDomain,
+      excludePageId: existing.id,
     });
 
     const updated = await tx
@@ -120,7 +127,7 @@ export async function updatePagePasswordProtection(args: {
   input: UpdatePagePasswordProtectionInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePagePasswordProtectionInput.parse(args.input);
 
   assertAccessTypeAllowed(ctx.workspace, {
@@ -149,7 +156,8 @@ export async function updatePagePasswordProtection(args: {
         // non-empty joins (e.g. `"a@b.com"` / `"10.0.0.0/24"`) pass
         // through unchanged.
         authEmailDomains: input.authEmailDomains?.join(",") || null,
-        password: input.password,
+        // Drop a retired password; `undefined` keeps the stored one.
+        password: input.accessType === "password" ? input.password : null,
         allowedIpRanges: input.allowedIpRanges?.join(",") || null,
         ...(input.allowIndex !== undefined && { allowIndex: input.allowIndex }),
         updatedAt: new Date(),
@@ -173,7 +181,7 @@ export async function updatePageAppearance(args: {
   input: UpdatePageAppearanceInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageAppearanceInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -218,7 +226,7 @@ export async function updatePageCustomTheme(args: {
   input: UpdatePageCustomThemeInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageCustomThemeInput.parse(args.input);
 
   if (!ctx.workspace.limits["custom-theme"]) {
@@ -254,7 +262,7 @@ export async function updatePageLinks(args: {
   input: UpdatePageLinksInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageLinksInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -289,10 +297,12 @@ export async function updatePageLocales(args: {
   input: UpdatePageLocalesInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageLocalesInput.parse(args.input);
 
-  if (!ctx.workspace.limits.i18n) {
+  // English only stays open to every plan, so a page can always be set back to it
+  const englishOnly = input.defaultLocale === "en" && input.locales === null;
+  if (!englishOnly && !ctx.workspace.limits.i18n) {
     throw new LimitExceededError("i18n", 0);
   }
 
@@ -324,12 +334,49 @@ export async function updatePageLocales(args: {
   });
 }
 
+export async function updatePageTimezone(args: {
+  ctx: ServiceContext;
+  input: UpdatePageTimezoneInput;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "pages:write");
+  const input = UpdatePageTimezoneInput.parse(args.input);
+
+  // UTC stays open to every plan, so a page can always be set back to it
+  if (input.defaultTimezone !== "UTC" && !ctx.workspace.limits.timezone) {
+    throw new LimitExceededError("timezone", 0);
+  }
+
+  await withTransaction(ctx, async (tx) => {
+    const existing = await getPageInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+
+    const updated = await tx
+      .update(page)
+      .set({ defaultTimezone: input.defaultTimezone, updatedAt: new Date() })
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "page.update",
+      entityType: "page",
+      entityId: existing.id,
+      before: existing,
+      after: updated,
+    });
+  });
+}
+
 export async function updatePageConfiguration(args: {
   ctx: ServiceContext;
   input: UpdatePageConfigurationInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageConfigurationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

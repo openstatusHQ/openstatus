@@ -18,7 +18,7 @@ export async function disableSso(args: {
   input?: DisableSsoInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = DisableSsoInput.parse(args.input ?? {});
 
   await withTransaction(ctx, async (tx) => {

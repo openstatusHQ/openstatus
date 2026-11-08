@@ -7,6 +7,7 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import NextLink from "next/link";
 
+import { AgentPromptButton } from "@/components/common/agent-prompt-button";
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
@@ -189,12 +190,22 @@ const prompts = [
 const tools = [
   {
     group: "Status pages",
-    items: ["list_status_pages", "list_page_components"],
+    items: [
+      "list_status_pages",
+      "list_page_components",
+      "create_status_page",
+      "update_status_page",
+      "add_page_component",
+      "update_page_component",
+      "create_component_group",
+      "update_component_group",
+    ],
   },
   {
     group: "Status reports",
     items: [
       "list_status_reports",
+      "get_status_report",
       "create_status_report",
       "add_status_report_update",
       "update_status_report",
@@ -203,7 +214,12 @@ const tools = [
   },
   {
     group: "Maintenance",
-    items: ["list_maintenances", "create_maintenance"],
+    items: [
+      "list_maintenances",
+      "get_maintenance",
+      "create_maintenance",
+      "update_maintenance",
+    ],
   },
   {
     group: "Monitors",
@@ -214,11 +230,14 @@ const tools = [
       "get_monitor_summary",
       "list_response_logs",
       "get_response_log",
+      "create_monitor",
+      "update_monitor",
     ],
   },
   {
     group: "Workspace",
     items: [
+      "get_workspace",
       "list_notifications",
       "list_private_locations",
       "list_audit_logs",
@@ -239,7 +258,7 @@ const tools = [
 export default function Page() {
   return (
     <SectionGroup>
-      <Section>
+      <Section id="mcp-server">
         <SectionHeader>
           <SectionTitle>MCP Server</SectionTitle>
           <SectionDescription>
@@ -252,6 +271,9 @@ export default function Page() {
             .
           </SectionDescription>
         </SectionHeader>
+        <AgentPromptButton source="agents">
+          Copy a prompt for your agent
+        </AgentPromptButton>
         <Code>{ENDPOINT}</Code>
         <Tabs defaultValue={clients[0].value} className="flex flex-col gap-3">
           <TabsList>
@@ -285,13 +307,13 @@ export default function Page() {
           ))}
         </Tabs>
       </Section>
-      <Section>
+      <Section id="authentication">
         <SectionHeader>
           <SectionTitle>Authentication</SectionTitle>
           <SectionDescription>
             OAuth is the default for interactive clients. Point the client at
-            the endpoint with no header, sign in, pick the workspace and access
-            level, and approve. Nothing to copy.
+            the endpoint with no header, sign in, pick the workspace and an
+            access preset, and approve. Nothing to copy.
           </SectionDescription>
         </SectionHeader>
         <Note size="sm">
@@ -310,12 +332,12 @@ export default function Page() {
         <p className="text-muted-foreground text-sm">
           For CI, cron jobs or agents running on a server, send an API key in
           the <code>x-openstatus-key</code> header instead. Create one in the{" "}
-          <Link href="/settings/general">general settings</Link>. The key's
-          read-only or read &amp; write scope decides which tools the server
-          exposes.
+          <Link href="/settings/general#api-keys">general settings</Link>. The
+          key's scopes decide which tools the server exposes: read only, read
+          &amp; write, or a custom set per resource.
         </p>
       </Section>
-      <Section>
+      <Section id="prompts">
         <SectionHeader>
           <SectionTitle>Prompts</SectionTitle>
           <SectionDescription>
@@ -339,14 +361,16 @@ export default function Page() {
           ))}
         </ul>
       </Section>
-      <Section>
+      <Section id="tools">
         <SectionHeader>
           <SectionTitle>Tools</SectionTitle>
           <SectionDescription>
-            Read tools are available on every credential. Mutation tools require
-            read &amp; write access. Audit log tools require the audit-log
-            feature on your plan. Content tools search public openstatus.dev
-            pages and carry no workspace data.
+            Workspace tools need the read or write scope of their resource;
+            workspace and content tools work with any credential, audit log
+            tools need Read only or Read & write. Use <strong>Custom</strong> to
+            grant write access to some resources only. Audit log tools require
+            the audit-log feature on your plan. Content tools search public
+            openstatus.dev pages and carry no workspace data.
           </SectionDescription>
         </SectionHeader>
         <ul className="flex flex-col gap-2">

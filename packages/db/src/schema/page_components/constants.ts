@@ -72,3 +72,27 @@ export function currentImpactsFromUpdates(
   }
   return current;
 }
+
+/** Worst impact each component reached across all updates. */
+export function peakImpactsFromUpdates(
+  updates: ReadonlyArray<{
+    componentImpacts: ReadonlyArray<{
+      pageComponentId: number;
+      impact: PageComponentImpact;
+    }>;
+  }>,
+): Map<number, PageComponentImpact> {
+  const peak = new Map<number, PageComponentImpact>();
+  for (const update of updates) {
+    for (const row of update.componentImpacts) {
+      peak.set(
+        row.pageComponentId,
+        worstImpact([
+          peak.get(row.pageComponentId) ?? "operational",
+          row.impact,
+        ]),
+      );
+    }
+  }
+  return peak;
+}

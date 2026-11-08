@@ -2,13 +2,13 @@ import {
   getAddonPackSize,
   getLimits,
 } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import type Stripe from "stripe";
+import { describe, expect, test } from "vitest";
 
 import {
   FEATURES,
   PLANS,
+  billingProps,
   buildLimitsFromSubscription,
   buildPlanChangeItems,
   getPriceIdForFeature,
@@ -348,5 +348,46 @@ describe("buildPlanChangeItems", () => {
         interval: "yearly",
       }),
     ).toThrow();
+  });
+});
+
+describe("billingProps", () => {
+  const subscription = (
+    interval: "month" | "year",
+    items: { unit_amount: number | null; quantity?: number }[],
+  ) =>
+    ({
+      currency: "usd",
+      items: {
+        data: items.map(({ unit_amount, quantity }) => ({
+          price: { unit_amount, recurring: { interval } },
+          quantity,
+        })),
+      },
+    }) as unknown as Stripe.Subscription;
+
+  test("sums monthly items times quantity, in major units", () => {
+    expect(
+      billingProps(
+        subscription("month", [
+          { unit_amount: 3000 },
+          { unit_amount: 500, quantity: 2 },
+        ]),
+      ),
+    ).toEqual({ interval: "month", currency: "usd", mrr: 40 });
+  });
+
+  test("normalises yearly prices to a monthly amount", () => {
+    expect(
+      billingProps(subscription("year", [{ unit_amount: 36000 }])).mrr,
+    ).toBe(30);
+  });
+
+  test("counts items without a unit amount as zero", () => {
+    expect(
+      billingProps(
+        subscription("month", [{ unit_amount: null }, { unit_amount: 1000 }]),
+      ).mrr,
+    ).toBe(10);
   });
 });
