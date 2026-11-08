@@ -96,6 +96,61 @@ describe("mapIncidentToStatusReport", () => {
     expect(result.sourceComponentIds).toEqual(["sp_comp_001"]);
   });
 
+  it.each([
+    ["2024-06-10T08:00:00.000Z", "2024-06-10T08:00:00.000Z"],
+    ["2024-06-12T10:00:00.000Z", "2024-06-12T10:00:00.000Z"],
+    [null, "2024-06-12T10:00:00.000Z"],
+    [undefined, "2024-06-12T10:00:00.000Z"],
+  ])(
+    "uses display_at %s with creation-time fallback",
+    (display_at, expected) => {
+      const result = mapIncidentToStatusReport(
+        {
+          ...MOCK_INCIDENTS[0],
+          incident_updates: [
+            {
+              ...(MOCK_INCIDENTS[0].incident_updates ?? [])[0],
+              created_at: "2024-06-12T10:00:00.000Z",
+              display_at,
+            },
+          ],
+        },
+        1,
+      );
+      expect(result.updates[0].date.toISOString()).toBe(expected);
+    },
+  );
+
+  it("orders backdated updates by display time without mutating the source", () => {
+    const updates = MOCK_INCIDENTS[0].incident_updates ?? [];
+    const incident = {
+      ...MOCK_INCIDENTS[0],
+      incident_updates: [
+        {
+          ...updates[3],
+          created_at: "2024-06-12T10:00:00Z",
+          display_at: "2024-06-10T09:00:00Z",
+        },
+        {
+          ...updates[0],
+          created_at: "2024-06-12T11:00:00Z",
+          display_at: "2024-06-10T08:00:00Z",
+        },
+      ],
+    };
+    const result = mapIncidentToStatusReport(incident, 1);
+    expect(result.updates.map((u) => u.status)).toEqual([
+      "investigating",
+      "resolved",
+    ]);
+    expect(result.report.status).toBe("resolved");
+    expect(result.updates[1].message).toContain("**Postmortem**");
+    expect(incident.incident_updates.map((u) => u.status)).toEqual([
+      "resolved",
+      "investigating",
+    ]);
+  });
+
   it("maps an ongoing incident", () => {
     const result = mapIncidentToStatusReport(MOCK_INCIDENTS[1], 1, 10);
     expect(result.report.status).toBe("identified");
