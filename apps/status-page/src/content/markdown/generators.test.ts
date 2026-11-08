@@ -162,31 +162,6 @@ describe("generateOverview", () => {
   });
 });
 
-describe("generateOverview quorum note", () => {
-  const note = "Since November 2026, a check covers all of a monitor's regions";
-
-  test("follows the legend when a component counts runs", () => {
-    const md = generateOverview(
-      overview,
-      [
-        { ...components[0], countsRuns: false },
-        { ...components[0], pageComponentId: 101, countsRuns: true },
-      ] as UptimeComponent[],
-      BASE,
-    );
-    expect(md).toMatch(/Legend: .*\n\nSince November 2026/);
-  });
-
-  test("is absent when every component counts per region", () => {
-    const md = generateOverview(
-      overview,
-      [{ ...components[0], countsRuns: false }] as UptimeComponent[],
-      BASE,
-    );
-    expect(md).not.toContain(note);
-  });
-});
-
 describe("generateOverview machine-readable pointer", () => {
   test("public page points to json endpoints + llms.txt", () => {
     const pub = {
@@ -702,13 +677,6 @@ describe("generateMonitor", () => {
       BASE,
     );
     expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 checks |");
-    expect(runs).toContain(
-      "· 48 checks |\n\nSince November 2026, a check covers all of a monitor's regions and counts as down when at least half of them fail.\n",
-    );
-  });
-
-  test("a per-region monitor carries no quorum note", () => {
-    expect(md).not.toContain("Since November 2026");
   });
 
   test("a bucket without a run quorum is converted to runs, not mixed in", () => {

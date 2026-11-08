@@ -36,7 +36,6 @@ import {
   ChartLineRegionsSkeleton,
 } from "../../../../../../../components/chart/chart-line-regions";
 import { useStatusPage } from "../../../../../../../components/status-page/floating-button";
-import { QuorumNote } from "../../../../../../../components/status-page/quorum-note";
 import { StatusBlankMonitors } from "../../../../../../../components/status-page/status-blank";
 import {
   StatusChartContent,
@@ -359,7 +358,6 @@ export default function Page() {
                 <StatusChartDescription>
                   {t("Main values of uptime and availability, transparent.")}
                 </StatusChartDescription>
-                {regionCount !== null ? <QuorumNote className="mt-1" /> : null}
               </StatusChartHeader>
               {isLoading ? (
                 <ChartBarUptimeSkeleton className="h-[250px]" />

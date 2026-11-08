@@ -1041,7 +1041,6 @@ export const statusPageRouter = createTRPCRouter({
           ...(c.monitor ? { monitor: c.monitor } : {}),
           data: processedData,
           uptime,
-          countsRuns: !!shouldUseRealData && regionCount !== null,
           // the zone the days were grouped in, UTC if the page's was rejected
           timeZone,
         };

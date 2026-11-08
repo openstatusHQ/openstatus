@@ -44,7 +44,6 @@
   "6zzIEm": "Region latency per p75 quantile, sorted by slowest region. Compare up to 6 regions.",
   "6pCzRs": "Total Uptime",
   "zL23-z": "Main values of uptime and availability, transparent.",
-  "vmwZ69": "Since November 2026, a check covers all of a monitor's regions and counts as down when at least half of them fail.",
   "gjBiyj": "Loading...",
   "_72cxa": "Invalid or expired link",
   "R10mIw": "This unsubscribe link is no longer valid. You may have already unsubscribed.",
