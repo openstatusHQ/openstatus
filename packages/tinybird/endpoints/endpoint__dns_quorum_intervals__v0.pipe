@@ -5,25 +5,23 @@ SQL >
 
 %
 -- Per `interval` bucket: how many scheduled cloud runs had each (errorRegions,
--- notOkRegions) combination. The bucket expression and the fromDate/toDate bounds
--- mirror endpoint__dns_uptime_7d__v0 on the run's cronTimestamp, so keys match.
+-- degradedOrErrorRegions) combination. The bucket expression and the
+-- fromDate/toDate bounds mirror endpoint__dns_uptime_7d__v0 on the run's
+-- cronTimestamp, so keys match.
 SELECT
     interval,
-    private,
     runErrorRegions AS errorRegions,
-    runNotOkRegions AS notOkRegions,
+    runDegradedOrErrorRegions AS degradedOrErrorRegions,
     count() AS runs
 FROM (
     SELECT
         toStartOfInterval(toDateTime(fromUnixTimestamp64Milli(cronTimestamp)), INTERVAL {{ String(interval, '30', required=True) }} minute) AS interval,
         cronTimestamp,
-        private,
         uniqExactMerge(errorRegions) AS runErrorRegions,
-        uniqExactMerge(notOkRegions) AS runNotOkRegions
+        uniqExactMerge(degradedOrErrorRegions) AS runDegradedOrErrorRegions
     FROM mv__dns_quorum_45d__v0
     WHERE
         monitorId = {{ String(monitorId, '1', required=True) }}
-        AND private = 0
         {% if fromDate %}
             AND time >= toStartOfDay(parseDateTimeBestEffortOrNull({{ String(fromDate) }}))
             AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) >= parseDateTimeBestEffortOrNull({{ String(fromDate) }})
@@ -32,9 +30,9 @@ FROM (
             AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
             AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
         {% end %}
-    GROUP BY interval, cronTimestamp, private
+    GROUP BY interval, cronTimestamp
 )
-GROUP BY interval, private, errorRegions, notOkRegions
+GROUP BY interval, errorRegions, degradedOrErrorRegions
 ORDER BY interval DESC
 
 TYPE endpoint

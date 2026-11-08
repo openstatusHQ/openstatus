@@ -1,12 +1,7 @@
-// Type-only imports on purpose: status-page and dashboard client components import this.
-import type { FrozenMonitorUptimeQuorum } from "@openstatus/db/src/schema";
+export type Counts = { ok: number; degraded: number; error: number };
 
-export type DayCounts = {
-  ok: number;
-  degraded: number;
-  error: number;
-  quorum?: FrozenMonitorUptimeQuorum;
-};
+/** Region checks, plus run verdicts under the region quorum when known. */
+export type DayCounts = { requests: Counts; runs?: Counts };
 
 /**
  * Runs when the monitor has a quorum `regionCount`, else region checks.
@@ -26,43 +21,27 @@ export function meetsQuorum(affected: number, total: number): boolean {
   return affected * 2 >= total;
 }
 
-function runCounts({ regionCount, buckets }: FrozenMonitorUptimeQuorum) {
-  const counts = { ok: 0, degraded: 0, error: 0 };
-  for (const { errorRegions, notOkRegions, runs } of buckets) {
-    if (meetsQuorum(errorRegions, regionCount)) counts.error += runs;
-    else if (meetsQuorum(notOkRegions, regionCount)) counts.degraded += runs;
-    else counts.ok += runs;
-  }
-  return counts;
-}
-
-// a day without a histogram keeps its ratio, expressed in run equivalents
-function dayCounts(day: DayCounts, regionCount: number | null) {
-  if (regionCount === null || regionCount <= 0) return day;
-  if (day.quorum && day.quorum.regionCount > 0) return runCounts(day.quorum);
+// a day without run verdicts keeps its ratio, expressed in run equivalents
+function dayCounts(day: DayCounts, regionCount: number | null): Counts {
+  if (regionCount === null || regionCount <= 0) return day.requests;
+  if (day.runs) return day.runs;
   return {
-    ok: day.ok / regionCount,
-    degraded: day.degraded / regionCount,
-    error: day.error / regionCount,
+    ok: day.requests.ok / regionCount,
+    degraded: day.requests.degraded / regionCount,
+    error: day.requests.error / regionCount,
   };
 }
 
-/**
- * `regionCount` is the monitor's quorum population: every day is counted in
- * runs. `null` (no population) counts region checks and ignores `quorum`.
- */
-export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
-  const { ok, degraded, error } = dayCounts(day, regionCount);
-  const total = ok + degraded + error;
+/** One set of counts as a tally, with the day status the bars show. */
+export function tallyCounts({ ok, degraded, error }: Counts): DayTally {
   return {
     up: ok + degraded,
-    total,
+    total: ok + degraded + error,
     ok,
     degraded,
     error,
     // rounded like the shown counts, so a red day always shows an error count
-    // and a day whose counts all round to 0 is empty; quorum and per-region
-    // days are integers already
+    // and a day whose counts all round to 0 is empty
     status:
       roundCount(error) > 0
         ? "error"
@@ -72,6 +51,14 @@ export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
             ? "success"
             : "empty",
   };
+}
+
+/**
+ * `regionCount` is the monitor's quorum population: every day is counted in
+ * runs, from `runs` or else `requests / regionCount`. `null` counts `requests`.
+ */
+export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
+  return tallyCounts(dayCounts(day, regionCount));
 }
 
 /** Sums `tallyDay` over days or buckets of one monitor. */

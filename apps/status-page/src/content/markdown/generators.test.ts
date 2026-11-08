@@ -626,8 +626,11 @@ describe("generateMonitor", () => {
       },
       uptime: {
         data: [
-          { interval: new Date(), success: 90, degraded: 5, error: 5 },
-          { interval: new Date(), success: 100, degraded: 0, error: 0 },
+          { interval: new Date(), requests: { ok: 90, degraded: 5, error: 5 } },
+          {
+            interval: new Date(),
+            requests: { ok: 100, degraded: 0, error: 0 },
+          },
         ],
       },
     },
@@ -652,9 +655,7 @@ describe("generateMonitor", () => {
               data: [
                 {
                   interval: new Date(),
-                  success: regionCount ?? 1,
-                  degraded: 0,
-                  error: 0,
+                  requests: { ok: regionCount ?? 1, degraded: 0, error: 0 },
                 },
               ],
             },
@@ -668,14 +669,7 @@ describe("generateMonitor", () => {
     expect(one(6)).toContain("| Uptime (last 7 days) | 100.000% · 1 check |");
   });
 
-  test("uptime counts runs when the buckets carry a run quorum", () => {
-    const quorum = (errorRegions: number, runs: number) => ({
-      regionCount: 6,
-      buckets: [
-        { errorRegions: 0, notOkRegions: 0, runs: 24 - runs },
-        { errorRegions, notOkRegions: errorRegions, runs },
-      ],
-    });
+  test("uptime counts runs when the buckets carry them", () => {
     const runs = generateMonitor(
       {
         ...monitor,
@@ -686,17 +680,13 @@ describe("generateMonitor", () => {
             data: [
               {
                 interval: new Date(),
-                success: 120,
-                degraded: 0,
-                error: 24,
-                quorum: quorum(1, 24),
+                requests: { ok: 120, degraded: 0, error: 24 },
+                runs: { ok: 24, degraded: 0, error: 0 },
               },
               {
                 interval: new Date(),
-                success: 132,
-                degraded: 0,
-                error: 12,
-                quorum: quorum(3, 4),
+                requests: { ok: 132, degraded: 0, error: 12 },
+                runs: { ok: 20, degraded: 0, error: 4 },
               },
             ],
           },
@@ -707,7 +697,7 @@ describe("generateMonitor", () => {
     expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 checks |");
   });
 
-  test("a bucket without a run quorum is converted to runs, not mixed in", () => {
+  test("a bucket without runs is converted to runs, not mixed in", () => {
     const converted = generateMonitor(
       {
         ...monitor,
@@ -718,18 +708,13 @@ describe("generateMonitor", () => {
             data: [
               {
                 interval: new Date(),
-                success: 120,
-                degraded: 0,
-                error: 24,
-                quorum: {
-                  regionCount: 6,
-                  buckets: [
-                    { errorRegions: 0, notOkRegions: 0, runs: 20 },
-                    { errorRegions: 3, notOkRegions: 3, runs: 4 },
-                  ],
-                },
+                requests: { ok: 120, degraded: 0, error: 24 },
+                runs: { ok: 20, degraded: 0, error: 4 },
               },
-              { interval: new Date(), success: 141, degraded: 0, error: 3 },
+              {
+                interval: new Date(),
+                requests: { ok: 141, degraded: 0, error: 3 },
+              },
             ],
           },
         },
@@ -750,9 +735,18 @@ describe("generateMonitor", () => {
           uptime: {
             regionCount: 6,
             data: [
-              { interval: new Date(), success: 1437, degraded: 0, error: 3 },
-              { interval: new Date(), success: 1440, degraded: 0, error: 0 },
-              { interval: new Date(), success: 1434, degraded: 2, error: 4 },
+              {
+                interval: new Date(),
+                requests: { ok: 1437, degraded: 0, error: 3 },
+              },
+              {
+                interval: new Date(),
+                requests: { ok: 1440, degraded: 0, error: 0 },
+              },
+              {
+                interval: new Date(),
+                requests: { ok: 1434, degraded: 2, error: 4 },
+              },
             ],
           },
         },

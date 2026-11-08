@@ -3,28 +3,31 @@ import { z } from "zod";
 
 import { frozenMonitorUptime } from "./frozen_monitor_uptime";
 
-export const frozenMonitorUptimeQuorumSchema = z.object({
-  // configured regions at freeze time: the denominator of the run rule
-  regionCount: z.number().int().positive(),
-  buckets: z
-    .object({
-      errorRegions: z.number().int().nonnegative(),
-      notOkRegions: z.number().int().nonnegative(),
-      runs: z.number().int().nonnegative(),
-    })
-    .array(),
-});
-export type FrozenMonitorUptimeQuorum = z.infer<
-  typeof frozenMonitorUptimeQuorumSchema
->;
-
-export const frozenMonitorUptimeDaySchema = z.object({
-  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "day must be YYYY-MM-DD"), // UTC
+const countsSchema = z.object({
   ok: z.number().int().nonnegative(),
   degraded: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
-  quorum: frozenMonitorUptimeQuorumSchema.optional(),
 });
+
+const legacyDaySchema = countsSchema.extend({ day: z.string() });
+
+// rows frozen before migration 0097 may still be read during its deploy window
+function fromLegacyDay(value: unknown): unknown {
+  const legacy = legacyDaySchema.safeParse(value);
+  if (!legacy.success) return value;
+  const { day, ...requests } = legacy.data;
+  return { day, requests };
+}
+
+export const frozenMonitorUptimeDaySchema = z.preprocess(
+  fromLegacyDay,
+  z.object({
+    day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "day must be YYYY-MM-DD"), // UTC
+    requests: countsSchema,
+    // run verdicts under the region quorum, absent when the day has none
+    runs: countsSchema.optional(),
+  }),
+);
 export type FrozenMonitorUptimeDay = z.infer<
   typeof frozenMonitorUptimeDaySchema
 >;

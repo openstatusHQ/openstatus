@@ -2,6 +2,7 @@ import { and, eq, gte, inArray } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   type FrozenMonitorUptimeDay,
+  frozenMonitorUptimeDaySchema,
   pageConfigurationSchema,
 } from "@openstatus/db/src/schema";
 
@@ -280,7 +281,10 @@ export async function getUptimeHistory(args: {
   const [{ frozenRows }, { days: liveDays, failedMonitorIds: liveFailed }] =
     await Promise.all([dbReads, liveReads]);
   const frozenByKey = new Map(
-    frozenRows.map((r) => [`${r.monitorId}:${r.month.slice(0, 7)}`, r.days]),
+    frozenRows.map((r) => [
+      `${r.monitorId}:${r.month.slice(0, 7)}`,
+      frozenMonitorUptimeDaySchema.array().parse(r.days),
+    ]),
   );
 
   function countsFor(
@@ -301,7 +305,7 @@ export async function getUptimeHistory(args: {
     return days.length > 0 ? days : null;
   }
 
-  // requests mode keeps per-region counts, ignoring any frozen histogram
+  // requests mode keeps per-region counts, ignoring any frozen `runs`
   const regionCounts = new Map(
     countsRuns
       ? [...monitorsById].map(([id, m]) => [id, uptimeRegionCount(m)])
@@ -313,7 +317,7 @@ export async function getUptimeHistory(args: {
         monitorIds.some(
           (id) =>
             regionCounts.get(id) != null &&
-            countsFor(id, key)?.some((d) => d.quorum),
+            countsFor(id, key)?.some((d) => d.runs),
         ),
       ) ?? null)
     : null;

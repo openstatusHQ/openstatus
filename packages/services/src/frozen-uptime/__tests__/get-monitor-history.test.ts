@@ -89,9 +89,7 @@ function frozenMonth(monitorId: number, month: string, error = 0) {
     month: `${month}-01`,
     days: monthDays(`${month}-01`).map((day) => ({
       day,
-      ok: 100 - error,
-      degraded: 0,
-      error,
+      requests: { ok: 100 - error, degraded: 0, error },
     })),
   };
 }
@@ -124,16 +122,14 @@ describe("getMonitorUptimeHistory", () => {
       expect(res.partial).toBe(false);
       expect(res.days[0]).toEqual({
         day: "2025-01-01",
-        ok: 98,
-        degraded: 0,
-        error: 2,
+        requests: { ok: 98, degraded: 0, error: 2 },
       });
-      expect(res.days.find((d) => d.day === "2026-10-31")?.error).toBe(0);
+      expect(res.days.find((d) => d.day === "2026-10-31")?.requests.error).toBe(
+        0,
+      );
       expect(res.days.at(-1)).toEqual({
         day: "2026-11-02",
-        ok: 15,
-        degraded: 1,
-        error: 2,
+        requests: { ok: 15, degraded: 1, error: 2 },
       });
       expect(res.days.length).toBe(31 + 31 + 1);
     });
@@ -286,7 +282,7 @@ describe("getMonitorUptimeHistory", () => {
       expect(attempts).toBe(2);
       expect(res.partial).toBe(false);
       expect(res.days).toEqual([
-        { day: "2026-11-01", ok: 3, degraded: 0, error: 0 },
+        { day: "2026-11-01", requests: { ok: 3, degraded: 0, error: 0 } },
       ]);
     });
   });
@@ -309,7 +305,7 @@ describe("getMonitorUptimeHistory", () => {
 });
 
 describe("getMonitorUptimeHistory with run quorum", () => {
-  test("live days carry the cloud histogram, merged per bucket", async () => {
+  test("live days carry run verdicts judged on the 6 cloud regions", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx, { regions: "ams,fra,iad,syd,gru,hkg" });
       const id = String(m.id);
@@ -327,34 +323,23 @@ describe("getMonitorUptimeHistory with run quorum", () => {
                 {
                   monitorId: id,
                   day,
-                  private: false,
                   errorRegions: 3,
-                  notOkRegions: 3,
+                  degradedOrErrorRegions: 3,
                   runs: 1,
                 },
                 {
                   monitorId: id,
                   day,
-                  private: false,
                   errorRegions: 3,
-                  notOkRegions: 3,
+                  degradedOrErrorRegions: 3,
                   runs: 1,
                 },
                 {
                   monitorId: id,
                   day,
-                  private: false,
                   errorRegions: 0,
-                  notOkRegions: 0,
+                  degradedOrErrorRegions: 0,
                   runs: 100,
-                },
-                {
-                  monitorId: id,
-                  day,
-                  private: true,
-                  errorRegions: 1,
-                  notOkRegions: 1,
-                  runs: 102,
                 },
               ],
             }),
@@ -367,23 +352,15 @@ describe("getMonitorUptimeHistory with run quorum", () => {
       expect(res.days).toEqual([
         {
           day: "2026-11-02",
-          ok: 600,
-          degraded: 0,
-          error: 12,
-          quorum: {
-            regionCount: 6,
-            buckets: [
-              { errorRegions: 3, notOkRegions: 3, runs: 2 },
-              { errorRegions: 0, notOkRegions: 0, runs: 100 },
-            ],
-          },
+          requests: { ok: 600, degraded: 0, error: 12 },
+          runs: { ok: 100, degraded: 0, error: 2 },
         },
       ]);
     });
   });
 
   test.each(["tcp", "dns", "icmp", "grpc"] as const)(
-    "live %s days carry the histogram from their own pipe",
+    "live %s days carry run verdicts from their own pipe",
     async (jobType) => {
       await withTestTransaction(async (tx) => {
         const m = await insertMonitor(tx, {
@@ -404,9 +381,8 @@ describe("getMonitorUptimeHistory with run quorum", () => {
                   {
                     monitorId: id,
                     day: "2026-11-02 00:00:00",
-                    private: false,
                     errorRegions: 2,
-                    notOkRegions: 2,
+                    degradedOrErrorRegions: 2,
                     runs: 3,
                   },
                 ],
@@ -416,10 +392,7 @@ describe("getMonitorUptimeHistory with run quorum", () => {
           sleep: noSleep,
         });
 
-        expect(res.days[0].quorum).toEqual({
-          regionCount: 4,
-          buckets: [{ errorRegions: 2, notOkRegions: 2, runs: 3 }],
-        });
+        expect(res.days[0].runs).toEqual({ ok: 0, degraded: 0, error: 3 });
         expect(res.regionCount).toBe(4);
       });
     },
@@ -448,13 +421,13 @@ describe("getMonitorUptimeHistory with run quorum", () => {
       });
       expect(res.partial).toBe(false);
       expect(res.days).toEqual([
-        { day: "2026-11-02", ok: 9, degraded: 0, error: 1 },
+        { day: "2026-11-02", requests: { ok: 9, degraded: 0, error: 1 } },
       ]);
       expect(res.regionCount).toBe(1);
     });
   });
 
-  test("monitors without a quorum population count per region", async () => {
+  test("monitors without a quorum region count count per region", async () => {
     await withTestTransaction(async (tx) => {
       const privateOnly = await insertMonitor(tx, { regions: "" });
       const heartbeat = await insertMonitor(tx, { jobType: "heartbeat" });

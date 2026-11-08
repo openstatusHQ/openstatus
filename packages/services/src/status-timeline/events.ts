@@ -15,7 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type DayWindow, dayWindow, todayIn } from "./day-window";
-import { type DayCounts, tallyDay } from "./tally";
+import { type DayCounts, tallyCounts } from "./tally";
 
 export type MonitorComponentWithNonNullMonitor =
   PageComponentWithMonitorRelation & {
@@ -36,15 +36,19 @@ export function isMonitorComponent(
   );
 }
 
-export type StatusData = {
+export type StatusData = DayCounts & { day: string; monitorId: string };
+
+/** A 45d status pipe row as `StatusData`: its counts are region checks. */
+export function toStatusData(row: {
   day: string;
-  count: number;
+  monitorId: string;
   ok: number;
   degraded: number;
   error: number;
-  monitorId: string;
-  quorum?: DayCounts["quorum"];
-};
+}): StatusData {
+  const { day, monitorId, ok, degraded, error } = row;
+  return { day, monitorId, requests: { ok, degraded, error } };
+}
 
 export function fillStatusDataFor45Days(
   data: Array<StatusData>,
@@ -52,8 +56,8 @@ export function fillStatusDataFor45Days(
   lookbackPeriod = 45,
   timeZone = "UTC",
 ): Array<StatusData> {
-  const result = [];
-  const dataByDay = new Map();
+  const result: StatusData[] = [];
+  const dataByDay = new Map<string, StatusData>();
 
   // Index existing data by day
   data.forEach((item) => {
@@ -70,9 +74,9 @@ export function fillStatusDataFor45Days(
     const dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
     const isoString = date.toISOString();
 
-    if (dataByDay.has(dayKey)) {
+    const existingData = dataByDay.get(dayKey);
+    if (existingData) {
       // Use existing data but ensure the day is properly formatted
-      const existingData = dataByDay.get(dayKey);
       result.push({
         ...existingData,
         day: isoString,
@@ -81,10 +85,7 @@ export function fillStatusDataFor45Days(
       // Fill missing day with default values
       result.push({
         day: isoString,
-        count: 0,
-        ok: 0,
-        degraded: 0,
-        error: 0,
+        requests: { ok: 0, degraded: 0, error: 0 },
         monitorId,
       });
     }
@@ -115,10 +116,11 @@ export function fillStatusDataFor45DaysNoop({
     date.setUTCDate(date.getUTCDate() - i);
     return {
       day: date.toISOString(),
-      count: 1,
-      ok: issueDays.includes(i) ? 0 : 1,
-      degraded: degradedDays.includes(i) ? 1 : 0,
-      error: errorDays.includes(i) ? 1 : 0,
+      requests: {
+        ok: issueDays.includes(i) ? 0 : 1,
+        degraded: degradedDays.includes(i) ? 1 : 0,
+        error: errorDays.includes(i) ? 1 : 0,
+      },
       monitorId: "1",
     };
   });
@@ -452,8 +454,7 @@ export function getWorstVariant<T extends keyof typeof STATUS_PRIORITY>(
 export function getHighestPriorityStatus(
   item: StatusData,
 ): keyof typeof STATUS_PRIORITY {
-  // one day's status: no totals across days whose units could mix
-  return tallyDay(item, item.quorum?.regionCount ?? null).status;
+  return tallyCounts(item.runs ?? item.requests).status;
 }
 
 // worst report impact for one day; null = legacy event (no impact rows)

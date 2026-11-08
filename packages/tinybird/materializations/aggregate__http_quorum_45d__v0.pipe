@@ -5,16 +5,16 @@ SQL >
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
         monitorId,
         cronTimestamp,
-        match(region, '^[0-9]+$') AS private,
         uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'error') AS errorRegions,
-        uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') IN ('error', 'degraded')) AS notOkRegions
+        uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') IN ('error', 'degraded')) AS degradedOrErrorRegions
     FROM ping_response__v8
     WHERE coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+        -- private locations carry no shared run key
+        AND NOT match(region, '^[0-9]+$')
     GROUP BY
         time,
         monitorId,
-        cronTimestamp,
-        private
+        cronTimestamp
 
 TYPE materialized
 DATASOURCE mv__http_quorum_45d__v0

@@ -1,13 +1,11 @@
-import type {
-  FrozenMonitorUptimeDay,
-  FrozenMonitorUptimeQuorum,
-} from "@openstatus/db/src/schema";
+import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
+import type { Counts, DayCounts } from "../status-timeline/tally";
 import {
-  quorumBy,
-  quorumByDay,
-  quorumPopulation,
-  quorumPopulations,
+  runsBy,
+  runsByDay,
+  quorumRegionCount,
+  quorumRegionCounts,
 } from "./quorum";
 import {
   fetchFreezeCounts,
@@ -22,26 +20,26 @@ import {
 
 type LiveMonitor = { id: number; jobType: string; regions: string };
 
-/** monitorId → YYYY-MM-DD → that day's run quorum. */
-export type LiveQuorum = Map<string, Map<string, FrozenMonitorUptimeQuorum>>;
+/** monitorId → YYYY-MM-DD → that day's run verdicts. */
+export type LiveRuns = Map<string, Map<string, Counts>>;
 
 /**
- * Per-day run quorum for the monitors with a quorum population, grouped into
- * the days of `timeZone`. Never throws: a monitor whose histogram failed is
- * left out, so its days stay on per-region counts.
+ * Per-day run verdicts for the monitors with a quorum region count, grouped
+ * into the days of `timeZone`. Never throws: a monitor whose histogram failed
+ * is left out, so its days keep only `requests`.
  */
-export async function fetchLiveQuorum(args: {
+export async function fetchLiveRuns(args: {
   monitors: LiveMonitor[];
   quorumPipes: UptimeQuorumPipes;
   timeZone?: string;
   attempts?: number;
   sleep?: (ms: number) => Promise<void>;
-}): Promise<LiveQuorum> {
-  const populations = quorumPopulations(
+}): Promise<LiveRuns> {
+  const regionCounts = quorumRegionCounts(
     args.monitors.filter((m) => hasQuorumPipe(args.quorumPipes, m.jobType)),
   );
   const { histograms, failedMonitorIds } = await fetchQuorumHistograms({
-    monitorIdsByJobType: monitorIdsWithQuorum(args.monitors, populations),
+    monitorIdsByJobType: monitorIdsWithQuorum(args.monitors, regionCounts),
     pipes: args.quorumPipes,
     timeZone: args.timeZone,
     attempts: args.attempts,
@@ -50,84 +48,84 @@ export async function fetchLiveQuorum(args: {
   });
 
   const byMonitorId = groupByMonitorId(histograms);
-  const out: LiveQuorum = new Map();
-  for (const [monitorId, population] of populations) {
+  const out: LiveRuns = new Map();
+  for (const [monitorId, regionCount] of regionCounts) {
     const id = String(monitorId);
     if (failedMonitorIds.has(id)) continue;
-    out.set(id, quorumByDay(byMonitorId.get(id) ?? [], population));
+    out.set(id, runsByDay(byMonitorId.get(id) ?? [], regionCount));
   }
   return out;
 }
 
-type WithQuorum<Row> = Row & { quorum?: FrozenMonitorUptimeQuorum };
-
-function attachBy<Row extends object>(
-  rows: Row[],
-  byKey: Map<string, FrozenMonitorUptimeQuorum> | undefined,
-  keyOf: (row: Row) => string,
-): WithQuorum<Row>[] {
-  return rows.map((row) => {
-    const quorum = byKey?.get(keyOf(row));
-    return quorum ? { ...row, quorum } : row;
-  });
-}
-
-/** Attach each day's run quorum to the count rows of the same day key. */
-export function attachQuorum<Row extends { monitorId: string; day: string }>(
+/** Attach each day's run verdicts to the rows of the same day key. */
+export function attachRuns<Row extends { monitorId: string; day: string }>(
   rowsByMonitorId: Map<string, Row[]>,
-  quorum: LiveQuorum,
-): Map<string, WithQuorum<Row>[]> {
-  const out = new Map<string, WithQuorum<Row>[]>();
+  runs: LiveRuns,
+): Map<string, (Row & { runs?: Counts })[]> {
+  const out = new Map<string, (Row & { runs?: Counts })[]>();
   for (const [monitorId, rows] of rowsByMonitorId) {
+    const byDay = runs.get(monitorId);
     out.set(
       monitorId,
-      attachBy(rows, quorum.get(monitorId), (row) =>
-        new Date(row.day).toISOString().slice(0, 10),
-      ),
+      rows.map((row) => {
+        const dayRuns = byDay?.get(
+          new Date(row.day).toISOString().slice(0, 10),
+        );
+        return dayRuns ? { ...row, runs: dayRuns } : row;
+      }),
     );
   }
   return out;
 }
 
-/** interval start (ISO) → that bucket's run quorum, for one monitor. */
-export type IntervalQuorum = Map<string, FrozenMonitorUptimeQuorum>;
+/** interval start (ISO) → that bucket's run verdicts, for one monitor. */
+export type IntervalRuns = Map<string, Counts>;
 
 /**
- * Run quorum per `interval`-minute bucket for one monitor, bucketed like the
- * uptime interval endpoints. Null when the monitor has no quorum population;
+ * Run verdicts per `interval`-minute bucket for one monitor, bucketed like the
+ * uptime interval endpoints. Null when the monitor has no quorum region count;
  * a failed read rejects.
  */
-export async function fetchIntervalQuorum(args: {
+export async function fetchIntervalRuns(args: {
   monitor: LiveMonitor;
   pipes: UptimeQuorumIntervalPipes;
   interval: number;
   fromDate?: string;
   toDate?: string;
-}): Promise<IntervalQuorum | null> {
+}): Promise<IntervalRuns | null> {
   const { monitor, pipes, ...window } = args;
   if (!hasQuorumPipe(pipes, monitor.jobType)) return null;
-  const population = quorumPopulation(monitor.regions);
-  if (!population) return null;
+  const regionCount = quorumRegionCount(monitor.regions);
+  if (regionCount === null) return null;
   const { data } = await pipes[monitor.jobType]({
     monitorId: String(monitor.id),
     ...window,
   });
-  return quorumBy(data, population, (row) => row.interval.toISOString());
+  return runsBy(data, regionCount, (row) => row.interval.toISOString());
 }
 
-/** Attach each bucket's run quorum to the uptime row of the same interval. */
-export function attachIntervalQuorum<Row extends { interval: Date }>(
-  rows: Row[],
-  quorum: IntervalQuorum,
-): WithQuorum<Row>[] {
-  return attachBy(rows, quorum, (row) => row.interval.toISOString());
+export type IntervalCounts = DayCounts & { interval: Date };
+
+/** Uptime interval rows as `requests`, with the run verdicts of the same interval. */
+export function toIntervalCounts(
+  rows: { interval: Date; success: number; degraded: number; error: number }[],
+  runs: IntervalRuns | null,
+): IntervalCounts[] {
+  return rows.map(({ interval, success, degraded, error }) => {
+    const intervalRuns = runs?.get(interval.toISOString());
+    return {
+      interval,
+      requests: { ok: success, degraded, error },
+      ...(intervalRuns ? { runs: intervalRuns } : {}),
+    };
+  });
 }
 
 /**
- * Live per-day counts from the 45d pipes, keyed monitorId → day, with the run
- * histogram attached where the job type has one (none without `quorumPipes`).
- * Never throws: a monitor whose counts failed lands in `failedMonitorIds`; a
- * failed histogram only leaves its days on per-region counts.
+ * Live per-day counts from the 45d pipes, keyed monitorId → day, with `runs`
+ * where the job type has run verdicts (none without `quorumPipes`). Never
+ * throws: a monitor whose counts failed lands in `failedMonitorIds`; a failed
+ * histogram only leaves its days without `runs`.
  */
 export async function fetchLiveDays(args: {
   monitors: LiveMonitor[];
@@ -145,7 +143,7 @@ export async function fetchLiveDays(args: {
     monitorIdsByJobType.set(m.jobType, ids);
   }
 
-  const [counts, quorum] = await Promise.all([
+  const [counts, runs] = await Promise.all([
     fetchFreezeCounts({
       monitorIdsByJobType,
       pipes: args.pipes,
@@ -153,32 +151,35 @@ export async function fetchLiveDays(args: {
       sleep: args.sleep,
     }),
     args.quorumPipes
-      ? fetchLiveQuorum({
+      ? fetchLiveRuns({
           monitors: args.monitors,
           quorumPipes: args.quorumPipes,
           sleep: args.sleep,
         })
-      : Promise.resolve<LiveQuorum>(new Map()),
+      : Promise.resolve<LiveRuns>(new Map()),
   ]);
 
   const days = new Map<string, Map<string, FrozenMonitorUptimeDay>>();
   for (const row of counts.counts) {
     const byDay = days.get(row.monitorId) ?? new Map();
     const day = row.day.slice(0, 10);
-    const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
-    acc.ok += row.ok;
-    acc.degraded += row.degraded;
-    acc.error += row.error;
+    const acc = byDay.get(day) ?? {
+      day,
+      requests: { ok: 0, degraded: 0, error: 0 },
+    };
+    acc.requests.ok += row.ok;
+    acc.requests.degraded += row.degraded;
+    acc.requests.error += row.error;
     byDay.set(day, acc);
     days.set(row.monitorId, byDay);
   }
 
-  for (const [monitorId, quorumDays] of quorum) {
+  for (const [monitorId, monitorRuns] of runs) {
     const byDay = days.get(monitorId);
     if (!byDay) continue;
-    for (const [day, dayQuorum] of quorumDays) {
+    for (const [day, dayRuns] of monitorRuns) {
       const acc = byDay.get(day);
-      if (acc) acc.quorum = dayQuorum;
+      if (acc) acc.runs = dayRuns;
     }
   }
 

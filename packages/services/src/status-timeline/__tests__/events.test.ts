@@ -15,6 +15,7 @@ import {
   resolveDayStatus,
   type StatusData,
 } from "../events";
+import type { Counts } from "../tally";
 import { durationDowntimeMs } from "../uptime";
 
 const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
@@ -31,15 +32,14 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
   };
 }
 
-function makeBucket(overrides: Partial<StatusData> = {}): StatusData {
+function makeBucket(
+  counts: Partial<Counts> = {},
+  day = "2026-01-11T00:00:00.000Z",
+): StatusData {
   return {
-    day: "2026-01-11T00:00:00.000Z",
-    count: 1,
-    ok: 1,
-    degraded: 0,
-    error: 0,
+    day,
+    requests: { ok: 1, degraded: 0, error: 0, ...counts },
     monitorId: "1",
-    ...overrides,
   };
 }
 
@@ -160,10 +160,8 @@ describe("getEvents lookback", () => {
           .map((event) => event.id),
       ).toEqual([0, 1, 2, 3]);
       expect(
-        resolveDayStatus(
-          makeBucket({ day: "2026-02-28T00:00:00.000Z" }),
-          events,
-        ).status,
+        resolveDayStatus(makeBucket({}, "2026-02-28T00:00:00.000Z"), events)
+          .status,
       ).toBe("down");
       expect(
         durationDowntimeMs(events, {
@@ -174,7 +172,7 @@ describe("getEvents lookback", () => {
       ).toBe(3_888_000_000);
       expect(
         resolveDayStatus(
-          makeBucket({ day: "2026-02-28T00:00:00.000Z" }),
+          makeBucket({}, "2026-02-28T00:00:00.000Z"),
           events.filter((event) => event.type === "maintenance"),
         ).status,
       ).toBe("maintenance");

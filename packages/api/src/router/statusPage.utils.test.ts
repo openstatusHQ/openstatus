@@ -19,10 +19,7 @@ import {
 
 type StatusData = {
   day: string;
-  count: number;
-  ok: number;
-  degraded: number;
-  error: number;
+  requests: { ok: number; degraded: number; error: number };
   monitorId: string;
 };
 
@@ -48,10 +45,7 @@ function createStatusData(
 
   return {
     day: date.toISOString(),
-    count: ok + degraded + error,
-    ok,
-    degraded,
-    error,
+    requests: { ok, degraded, error },
     monitorId: "1",
   };
 }
@@ -861,7 +855,10 @@ describe("fillStatusDataFor45Days", () => {
 
     expect(result).toHaveLength(45);
     const matchingDay = result.find(
-      (d) => d.ok === 100 && d.degraded === 50 && d.error === 10,
+      (d) =>
+        d.requests.ok === 100 &&
+        d.requests.degraded === 50 &&
+        d.requests.error === 10,
     );
     expect(matchingDay).toBeDefined();
   });
@@ -870,7 +867,9 @@ describe("fillStatusDataFor45Days", () => {
     const existingData = [createStatusData(5, 100, 0, 0)];
     const result = fillStatusDataFor45Days(existingData, "1");
 
-    const emptyDays = result.filter((d) => d.count === 0);
+    const emptyDays = result.filter(
+      (d) => d.requests.ok + d.requests.degraded + d.requests.error === 0,
+    );
     expect(emptyDays.length).toBe(44);
   });
 });

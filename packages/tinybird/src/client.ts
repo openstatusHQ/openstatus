@@ -361,9 +361,8 @@ export const quorumParameters = z.object({
 export const quorumHistogramShape = z.object({
   day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
   monitorId: z.string(),
-  private: z.number().transform((val) => val !== 0),
   errorRegions: z.number(),
-  notOkRegions: z.number(),
+  degradedOrErrorRegions: z.number(),
   runs: z.number(),
 });
 
@@ -379,9 +378,8 @@ export const quorumIntervalParameters = z.object({
 // `interval` parses like the uptime shapes' so both sides yield the same Date key
 export const quorumIntervalShape = z.object({
   interval: z.coerce.date(),
-  private: z.number().transform((val) => val !== 0),
   errorRegions: z.number(),
-  notOkRegions: z.number(),
+  degradedOrErrorRegions: z.number(),
   runs: z.number(),
 });
 

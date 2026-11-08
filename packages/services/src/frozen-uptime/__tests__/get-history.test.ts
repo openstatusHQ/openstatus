@@ -1,3 +1,4 @@
+import { sql } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   monitorIncidentTable,
@@ -73,9 +74,11 @@ function fullMonth(
 ): FrozenMonitorUptimeDay[] {
   return monthDays(`${k}-01`).map((day) => ({
     day,
-    ok: counts.ok ?? 0,
-    degraded: counts.degraded ?? 0,
-    error: counts.error ?? 0,
+    requests: {
+      ok: counts.ok ?? 0,
+      degraded: counts.degraded ?? 0,
+      error: counts.error ?? 0,
+    },
   }));
 }
 
@@ -470,7 +473,9 @@ describe("getUptimeHistory", () => {
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: "2026-08-01",
-        days: [{ day: "2026-08-01", ok: 25, degraded: 0, error: 75 }],
+        days: [
+          { day: "2026-08-01", requests: { ok: 25, degraded: 0, error: 75 } },
+        ],
       });
       const res = await getUptimeHistory({
         ctx,
@@ -528,7 +533,10 @@ describe("getUptimeHistory", () => {
         days: fullMonth(key(2), {}),
       });
       const days = fullMonth(key(1), {});
-      days[0] = { day: days[0].day, ok: 99_999, degraded: 0, error: 1 };
+      days[0] = {
+        day: days[0].day,
+        requests: { ok: 99_999, degraded: 0, error: 1 },
+      };
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(1)}-01`,
@@ -562,14 +570,17 @@ describe("getUptimeHistory", () => {
       });
 
       const up = fullMonth(key(2), {});
-      up[0] = { day: up[0].day, ok: 3000, degraded: 0, error: 0 };
+      up[0] = { day: up[0].day, requests: { ok: 3000, degraded: 0, error: 0 } };
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(2)}-01`,
         days: up,
       });
       const down = fullMonth(key(1), {});
-      down[0] = { day: down[0].day, ok: 0, degraded: 0, error: 1000 };
+      down[0] = {
+        day: down[0].day,
+        requests: { ok: 0, degraded: 0, error: 1000 },
+      };
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(1)}-01`,
@@ -673,7 +684,10 @@ describe("getUptimeHistory", () => {
       // checks on days 1-5 and 25-28 only; the monitor was paused in between
       const days = fullMonth(key(1), {});
       for (const i of [0, 1, 2, 3, 4, 24, 25, 26, 27]) {
-        days[i] = { day: days[i].day, ok: 10, degraded: 0, error: 0 };
+        days[i] = {
+          day: days[i].day,
+          requests: { ok: 10, degraded: 0, error: 0 },
+        };
       }
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
@@ -778,7 +792,10 @@ describe("getUptimeHistory", () => {
       // checks on only the first 10 days of the month
       const days = fullMonth(key(1), {});
       for (let i = 0; i < 10; i++) {
-        days[i] = { day: days[i].day, ok: 10, degraded: 0, error: 0 };
+        days[i] = {
+          day: days[i].day,
+          requests: { ok: 10, degraded: 0, error: 0 },
+        };
       }
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
@@ -834,7 +851,7 @@ describe("getUptimeHistory", () => {
 
         // one ping on the 1st of key(3), then silence: nothing frozen after it
         const days = fullMonth(key(3), {});
-        days[0] = { ...days[0], ok: 1 };
+        days[0] = { ...days[0], requests: { ok: 1, degraded: 0, error: 0 } };
         await insertFrozen(tx, {
           monitorId: testMonitor.id,
           month: `${key(3)}-01`,
@@ -997,7 +1014,7 @@ describe("getUptimeHistory with run quorum", () => {
     return { testMonitor, testPage };
   }
 
-  test("mixed window: per-region month, quorum month, live quorum month", async () => {
+  test("mixed window: per-region month, frozen runs month, live runs month", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const { testMonitor, testPage } = await setup(tx);
@@ -1013,10 +1030,7 @@ describe("getUptimeHistory with run quorum", () => {
         month: `${key(1)}-01`,
         days: fullMonth(key(1), { ok: 860, error: 4 }).map((d) => ({
           ...d,
-          quorum: {
-            regionCount: 6,
-            buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 144 }],
-          },
+          runs: { ok: 144, degraded: 0, error: 0 },
         })),
       });
 
@@ -1030,27 +1044,16 @@ describe("getUptimeHistory with run quorum", () => {
           {
             monitorId: id,
             day: today,
-            private: false,
             errorRegions: 0,
-            notOkRegions: 0,
+            degradedOrErrorRegions: 0,
             runs: 90,
           },
           {
             monitorId: id,
             day: today,
-            private: false,
             errorRegions: 3,
-            notOkRegions: 3,
+            degradedOrErrorRegions: 3,
             runs: 10,
-          },
-          // a private location failing while the monitor has cloud regions
-          {
-            monitorId: id,
-            day: today,
-            private: true,
-            errorRegions: 1,
-            notOkRegions: 1,
-            runs: 100,
           },
         ]),
         now,
@@ -1066,7 +1069,7 @@ describe("getUptimeHistory with run quorum", () => {
     });
   });
 
-  test("requests mode keeps per-region counts and never reads the histogram", async () => {
+  test("requests mode keeps per-region counts and never reads runs", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const { testMonitor, testPage } = await setup(tx, "http", "requests");
@@ -1076,10 +1079,7 @@ describe("getUptimeHistory with run quorum", () => {
         month: `${key(1)}-01`,
         days: fullMonth(key(1), { ok: 860, error: 4 }).map((d) => ({
           ...d,
-          quorum: {
-            regionCount: 6,
-            buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 144 }],
-          },
+          runs: { ok: 144, degraded: 0, error: 0 },
         })),
       });
       let quorumCalls = 0;
@@ -1131,17 +1131,15 @@ describe("getUptimeHistory with run quorum", () => {
               {
                 monitorId: id,
                 day: today,
-                private: false,
                 errorRegions: 2,
-                notOkRegions: 2,
+                degradedOrErrorRegions: 2,
                 runs: 90,
               },
               {
                 monitorId: id,
                 day: today,
-                private: false,
                 errorRegions: 3,
-                notOkRegions: 3,
+                degradedOrErrorRegions: 3,
                 runs: 10,
               },
             ],
@@ -1158,17 +1156,10 @@ describe("getUptimeHistory with run quorum", () => {
   );
 
   // 6 regions, 600 checks a day with 60 errors: 100 run equivalents, 90 up
-  const perRegionDay = { ok: 540, error: 60 };
+  const perRegionDay = { requests: { ok: 540, degraded: 0, error: 60 } };
   const quorumDayCounts = {
-    ok: 590,
-    error: 10,
-    quorum: {
-      regionCount: 6,
-      buckets: [
-        { errorRegions: 3, notOkRegions: 3, runs: 5 },
-        { errorRegions: 1, notOkRegions: 1, runs: 95 },
-      ],
-    },
+    requests: { ok: 590, degraded: 0, error: 10 },
+    runs: { ok: 95, degraded: 0, error: 5 },
   };
 
   test("rolling windows weigh per-region months in runs, months keep their percentage", async () => {
@@ -1178,7 +1169,7 @@ describe("getUptimeHistory with run quorum", () => {
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(2)}-01`,
-        days: fullMonth(key(2), perRegionDay),
+        days: fullMonth(key(2), perRegionDay.requests),
       });
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
@@ -1209,7 +1200,7 @@ describe("getUptimeHistory with run quorum", () => {
     });
   });
 
-  test("a month with some days lacking quorum stays in runs", async () => {
+  test("a month with some days lacking runs stays in runs", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const { testMonitor, testPage } = await setup(tx);
@@ -1237,7 +1228,7 @@ describe("getUptimeHistory with run quorum", () => {
     });
   });
 
-  test("a private-only monitor stays on region checks and ignores frozen quorum", async () => {
+  test("a private-only monitor stays on region checks and ignores frozen runs", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const testMonitor = await insertMonitor(tx, { regions: "" });
@@ -1264,6 +1255,33 @@ describe("getUptimeHistory with run quorum", () => {
       });
 
       expect(res.rows[0].months[key(1)]).toBe(floorPct(590 / 600));
+      expect(res.quorumSince).toBe(null);
+    });
+  });
+
+  test("a legacy flat frozen month still reads, converted into runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      await tx.run(
+        sql`INSERT INTO frozen_monitor_uptime (workspace_id, monitor_id, month, days) VALUES (${teamWorkspaceId}, ${testMonitor.id}, ${`${key(1)}-01`}, ${JSON.stringify(
+          monthDays(`${key(1)}-01`).map((day) => ({
+            day,
+            ...perRegionDay.requests,
+          })),
+        )})`,
+      );
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        quorumPipes: quorumPipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.rows[0].months[key(1)]).toBe(90);
       expect(res.quorumSince).toBe(null);
     });
   });

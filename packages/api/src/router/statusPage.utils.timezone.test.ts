@@ -10,10 +10,7 @@ import {
 function bucket(date: string, ok = 100): StatusData {
   return {
     day: `${date}T00:00:00.000Z`,
-    count: ok,
-    ok,
-    degraded: 0,
-    error: 0,
+    requests: { ok, degraded: 0, error: 0 },
     monitorId: "1",
   };
 }

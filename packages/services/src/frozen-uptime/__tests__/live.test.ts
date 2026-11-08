@@ -2,10 +2,10 @@ import { describe, expect, test } from "vitest";
 
 import { tallyDay } from "../../status-timeline";
 import {
-  attachIntervalQuorum,
-  attachQuorum,
-  fetchIntervalQuorum,
-  fetchLiveQuorum,
+  attachRuns,
+  fetchIntervalRuns,
+  fetchLiveRuns,
+  toIntervalCounts,
 } from "../live";
 import type { QuorumHistogramRow, QuorumIntervalRow } from "../quorum";
 import type {
@@ -35,9 +35,8 @@ function hist(overrides: Partial<QuorumHistogramRow>): QuorumHistogramRow {
   return {
     monitorId: "1",
     day: "2026-11-02T00:00:00.000Z",
-    private: false,
     errorRegions: 0,
-    notOkRegions: 0,
+    degradedOrErrorRegions: 0,
     runs: 1,
     ...overrides,
   };
@@ -46,11 +45,11 @@ function hist(overrides: Partial<QuorumHistogramRow>): QuorumHistogramRow {
 const sixRegions = "ams,fra,iad,gru,syd,hkg";
 const sleep = async () => {};
 
-describe("fetchLiveQuorum", () => {
+describe("fetchLiveRuns", () => {
   test("a UTC read sends the freeze's request shape, without a timezone", async () => {
     const { pipes: quorumPipes, calls } = pipes(async () => ({ data: [] }));
     for (const timeZone of [undefined, "UTC"]) {
-      await fetchLiveQuorum({
+      await fetchLiveRuns({
         monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
         quorumPipes,
         timeZone,
@@ -67,21 +66,22 @@ describe("fetchLiveQuorum", () => {
         hist({ day: "2026-11-03T00:00:00.000Z", errorRegions: 1, runs: 10 }),
       ],
     }));
-    const quorum = await fetchLiveQuorum({
+    const quorum = await fetchLiveRuns({
       monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
       quorumPipes,
       timeZone: "Europe/Berlin",
     });
     expect(calls).toEqual([{ monitorIds: ["1"], timezone: "Europe/Berlin" }]);
     expect(quorum.get("1")?.get("2026-11-03")).toEqual({
-      regionCount: 6,
-      buckets: [{ errorRegions: 1, notOkRegions: 0, runs: 10 }],
+      ok: 10,
+      degraded: 0,
+      error: 0,
     });
   });
 
   test("private-only and heartbeat monitors are never fetched", async () => {
     const { pipes: quorumPipes, calls } = pipes(async () => ({ data: [] }));
-    const quorum = await fetchLiveQuorum({
+    const quorum = await fetchLiveRuns({
       monitors: [
         { id: 1, jobType: "http", regions: "" },
         { id: 2, jobType: "heartbeat", regions: "" },
@@ -97,7 +97,7 @@ describe("fetchLiveQuorum", () => {
       if (monitorIds.includes("1")) throw new Error("tinybird 500");
       return { data: [hist({ monitorId: "2" })] };
     });
-    const quorum = await fetchLiveQuorum({
+    const quorum = await fetchLiveRuns({
       monitors: [
         { id: 1, jobType: "http", regions: sixRegions },
         { id: 2, jobType: "tcp", regions: sixRegions },
@@ -111,66 +111,36 @@ describe("fetchLiveQuorum", () => {
   });
 });
 
-describe("attachQuorum", () => {
-  const quorumDay = {
-    regionCount: 6,
-    buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 144 }],
-  };
+describe("attachRuns", () => {
+  const runs = { ok: 144, degraded: 0, error: 0 };
+  const day = (monitorId: string, date: string, ok: number, error: number) => ({
+    monitorId,
+    day: `${date}T00:00:00.000Z`,
+    requests: { ok, degraded: 0, error },
+  });
 
-  test("attaches by day key, leaves other days and monitors on per-region counts", () => {
+  test("attaches by day key, leaves other days and monitors without runs", () => {
     const rows = new Map([
-      [
-        "1",
-        [
-          {
-            monitorId: "1",
-            day: "2026-11-02T00:00:00.000Z",
-            ok: 720,
-            error: 144,
-          },
-          {
-            monitorId: "1",
-            day: "2026-11-01T00:00:00.000Z",
-            ok: 864,
-            error: 0,
-          },
-        ],
-      ],
-      [
-        "2",
-        [{ monitorId: "2", day: "2026-11-02T00:00:00.000Z", ok: 5, error: 1 }],
-      ],
+      ["1", [day("1", "2026-11-02", 720, 144), day("1", "2026-11-01", 864, 0)]],
+      ["2", [day("2", "2026-11-02", 5, 1)]],
     ]);
-    const out = attachQuorum(
+    const out = attachRuns(
       rows,
-      new Map([["1", new Map([["2026-11-02", quorumDay]])]]),
+      new Map([["1", new Map([["2026-11-02", runs]])]]),
     );
-    expect(out.get("1")?.[0]?.quorum).toEqual(quorumDay);
-    expect(out.get("1")?.[1]?.quorum).toBeUndefined();
-    expect(out.get("2")?.[0]?.quorum).toBeUndefined();
-    expect(rows.get("1")?.[0]).not.toHaveProperty("quorum");
+    expect(out.get("1")?.[0]?.runs).toEqual(runs);
+    expect(out.get("1")?.[1]?.runs).toBeUndefined();
+    expect(out.get("2")?.[0]?.runs).toBeUndefined();
+    expect(rows.get("1")?.[0]).not.toHaveProperty("checks");
   });
 
   test("1 of 6 regions failing every run: the day is up and counted in runs", () => {
-    const [day] =
-      attachQuorum(
-        new Map([
-          [
-            "1",
-            [
-              {
-                monitorId: "1",
-                day: "2026-11-02T00:00:00.000Z",
-                ok: 720,
-                degraded: 0,
-                error: 144,
-              },
-            ],
-          ],
-        ]),
-        new Map([["1", new Map([["2026-11-02", quorumDay]])]]),
+    const [attached] =
+      attachRuns(
+        new Map([["1", [day("1", "2026-11-02", 720, 144)]]]),
+        new Map([["1", new Map([["2026-11-02", runs]])]]),
       ).get("1") ?? [];
-    expect(day && tallyDay(day, 6)).toEqual({
+    expect(attached && tallyDay(attached, 6)).toEqual({
       up: 144,
       total: 144,
       ok: 144,
@@ -204,9 +174,8 @@ const bucketB = new Date("2026-11-08 12:00:00");
 function intervalRow(overrides: Partial<QuorumIntervalRow>): QuorumIntervalRow {
   return {
     interval: bucketA,
-    private: false,
     errorRegions: 0,
-    notOkRegions: 0,
+    degradedOrErrorRegions: 0,
     runs: 1,
     ...overrides,
   };
@@ -218,51 +187,36 @@ const window = {
   toDate: "2026-11-08T23:59:59.999Z",
 };
 
-describe("fetchIntervalQuorum", () => {
+describe("fetchIntervalRuns", () => {
   test("asks for the uptime window and keys buckets by interval start", async () => {
     const { pipes: quorumPipes, calls } = intervalPipes(async () => ({
       data: [
         intervalRow({ runs: 44 }),
-        intervalRow({ errorRegions: 1, notOkRegions: 1, runs: 4 }),
+        intervalRow({ errorRegions: 1, degradedOrErrorRegions: 1, runs: 4 }),
         intervalRow({ interval: bucketB, errorRegions: 3, runs: 2 }),
       ],
     }));
-    const quorum = await fetchIntervalQuorum({
+    const quorum = await fetchIntervalRuns({
       monitor: { id: 7, jobType: "tcp", regions: sixRegions },
       pipes: quorumPipes,
       ...window,
     });
     expect(calls).toEqual([{ monitorId: "7", ...window }]);
     expect(quorum?.get(bucketA.toISOString())).toEqual({
-      regionCount: 6,
-      buckets: [
-        { errorRegions: 0, notOkRegions: 0, runs: 44 },
-        { errorRegions: 1, notOkRegions: 1, runs: 4 },
-      ],
+      ok: 48,
+      degraded: 0,
+      error: 0,
     });
-    expect(quorum?.get(bucketB.toISOString())?.buckets).toEqual([
-      { errorRegions: 3, notOkRegions: 0, runs: 2 },
-    ]);
-  });
-
-  test("keeps only cloud-scope runs", async () => {
-    const { pipes: quorumPipes } = intervalPipes(async () => ({
-      data: [
-        intervalRow({ private: true, errorRegions: 1, runs: 9 }),
-        intervalRow({ interval: bucketB, private: true, runs: 3 }),
-      ],
-    }));
-    const quorum = await fetchIntervalQuorum({
-      monitor: { id: 1, jobType: "http", regions: sixRegions },
-      pipes: quorumPipes,
-      ...window,
+    expect(quorum?.get(bucketB.toISOString())).toEqual({
+      ok: 0,
+      degraded: 0,
+      error: 2,
     });
-    expect(quorum?.size).toBe(0);
   });
 
   test("an empty histogram yields no buckets", async () => {
     const { pipes: quorumPipes } = intervalPipes(async () => ({ data: [] }));
-    const quorum = await fetchIntervalQuorum({
+    const quorum = await fetchIntervalRuns({
       monitor: { id: 1, jobType: "http", regions: sixRegions },
       pipes: quorumPipes,
       ...window,
@@ -280,7 +234,7 @@ describe("fetchIntervalQuorum", () => {
       { id: 3, jobType: "udp", regions: sixRegions },
     ]) {
       expect(
-        await fetchIntervalQuorum({ monitor, pipes: quorumPipes, ...window }),
+        await fetchIntervalRuns({ monitor, pipes: quorumPipes, ...window }),
       ).toBeNull();
     }
     expect(calls).toEqual([]);
@@ -291,7 +245,7 @@ describe("fetchIntervalQuorum", () => {
       throw new Error("tinybird 500");
     });
     await expect(
-      fetchIntervalQuorum({
+      fetchIntervalRuns({
         monitor: { id: 1, jobType: "http", regions: sixRegions },
         pipes: quorumPipes,
         ...window,
@@ -300,42 +254,36 @@ describe("fetchIntervalQuorum", () => {
   });
 });
 
-describe("attachIntervalQuorum", () => {
-  const quorumBucket = {
-    regionCount: 6,
-    buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 48 }],
-  };
+describe("toIntervalCounts", () => {
+  const runs = { ok: 48, degraded: 0, error: 0 };
+  const rows = [
+    { interval: new Date(bucketA), success: 240, degraded: 0, error: 48 },
+    { interval: new Date(bucketB), success: 288, degraded: 0, error: 0 },
+  ];
 
-  test("attaches by interval start and leaves other buckets per region", () => {
-    const rows = [
-      { interval: new Date(bucketA), success: 240, degraded: 0, error: 48 },
-      { interval: new Date(bucketB), success: 288, degraded: 0, error: 0 },
-    ];
-    const out = attachIntervalQuorum(
-      rows,
-      new Map([[bucketA.toISOString(), quorumBucket]]),
-    );
-    expect(out[0]?.quorum).toEqual(quorumBucket);
-    expect(out[1]?.quorum).toBeUndefined();
-    expect(rows[0]).not.toHaveProperty("quorum");
+  test("reads uptime rows as requests, with the runs of the same interval", () => {
+    expect(
+      toIntervalCounts(rows, new Map([[bucketA.toISOString(), runs]])),
+    ).toEqual([
+      {
+        interval: bucketA,
+        requests: { ok: 240, degraded: 0, error: 48 },
+        runs,
+      },
+      { interval: bucketB, requests: { ok: 288, degraded: 0, error: 0 } },
+    ]);
+    expect(toIntervalCounts(rows, null)[0]).not.toHaveProperty("checks");
   });
 
   test("1 of 6 regions failing every run: the bucket is up in runs", () => {
-    const [row] = attachIntervalQuorum(
-      [{ interval: new Date(bucketA), success: 240, degraded: 0, error: 48 }],
-      new Map([[bucketA.toISOString(), quorumBucket]]),
+    const [row] = toIntervalCounts(
+      rows,
+      new Map([[bucketA.toISOString(), runs]]),
     );
-    expect(
-      row &&
-        tallyDay(
-          {
-            ok: row.success,
-            degraded: row.degraded,
-            error: row.error,
-            quorum: row.quorum,
-          },
-          6,
-        ),
-    ).toMatchObject({ up: 48, total: 48, error: 0 });
+    expect(row && tallyDay(row, 6)).toMatchObject({
+      up: 48,
+      total: 48,
+      error: 0,
+    });
   });
 });

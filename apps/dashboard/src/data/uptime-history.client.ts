@@ -27,7 +27,7 @@ export function formatUptime(ratio: number, digits = 2): string {
   return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
 }
 
-/** Muted without failures, else by failed share of the day's checks: < 1%, ≤ 5%, > 5%. */
+/** Muted without failures, else by failed share of the day's runs: < 1%, ≤ 5%, > 5%. */
 function dayMark(
   counts: CheckCounts | undefined,
   regionCount: number | null,
@@ -58,14 +58,14 @@ function dayMark(
   };
 }
 
-/** First UTC day whose counts are runs judged on quorum, as a local-midnight date. */
+/** First UTC day with run verdicts, as a local-midnight date. */
 export function quorumSince(
   counts: CheckCounts[],
   regionCount: number | null,
 ): Date | null {
   if (regionCount === null) return null;
   const first = counts
-    .filter((d) => d.quorum)
+    .filter((d) => d.runs)
     .reduce<string | null>(
       (min, d) => (!min || d.day < min ? d.day : min),
       null,
@@ -150,6 +150,9 @@ export function exampleUptimeCounts(now = new Date()): CheckCounts[] {
     const r = random();
     const error = r > 0.97 ? Math.ceil(random() * 90) : r > 0.9 ? 1 : 0;
     const degraded = random() > 0.85 ? Math.ceil(random() * 12) : 0;
-    return { day: dayKey(date), ok: 1440 - error - degraded, degraded, error };
+    return {
+      day: dayKey(date),
+      requests: { ok: 1440 - error - degraded, degraded, error },
+    };
   });
 }

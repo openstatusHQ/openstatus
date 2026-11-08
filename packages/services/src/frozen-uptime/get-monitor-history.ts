@@ -2,6 +2,7 @@ import { and, asc, eq, isNull } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   type FrozenMonitorUptimeDay,
+  frozenMonitorUptimeDaySchema,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -85,7 +86,9 @@ export async function getMonitorUptimeHistory(args: {
   const frozenMonths = new Set<string>();
   for (const row of frozenRows) {
     frozenMonths.add(row.month.slice(0, 7));
-    for (const d of row.days) byDay.set(d.day, d);
+    for (const d of frozenMonitorUptimeDaySchema.array().parse(row.days)) {
+      byDay.set(d.day, d);
+    }
   }
 
   // only unfrozen months still inside the pipes' 45d lookback: an older

@@ -4,30 +4,28 @@ NODE endpoint
 SQL >
 
 %
--- Per day: how many scheduled cloud runs had each (errorRegions, notOkRegions)
--- combination. A run's rows land in several insert blocks, so merge per run first.
+-- Per day: how many scheduled cloud runs had each (errorRegions,
+-- degradedOrErrorRegions) combination. A run's rows land in several insert
+-- blocks, so merge per run first.
 -- `day` is the run's local midnight in `timezone`; with the UTC default it equals `time`.
 SELECT
     day,
     monitorId,
-    private,
     runErrorRegions AS errorRegions,
-    runNotOkRegions AS notOkRegions,
+    runDegradedOrErrorRegions AS degradedOrErrorRegions,
     count() AS runs
 FROM (
     SELECT
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), {{ String(timezone, 'UTC') }})) AS day,
         monitorId,
         cronTimestamp,
-        private,
         uniqExactMerge(errorRegions) AS runErrorRegions,
-        uniqExactMerge(notOkRegions) AS runNotOkRegions
+        uniqExactMerge(degradedOrErrorRegions) AS runDegradedOrErrorRegions
     FROM mv__grpc_quorum_45d__v0
     WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
-        AND private = 0
-    GROUP BY day, monitorId, cronTimestamp, private
+    GROUP BY day, monitorId, cronTimestamp
 )
-GROUP BY day, monitorId, private, errorRegions, notOkRegions
+GROUP BY day, monitorId, errorRegions, degradedOrErrorRegions
 ORDER BY day DESC
 
 TYPE endpoint

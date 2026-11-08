@@ -136,13 +136,7 @@ export default function Page() {
     return monitor.data.uptime.data
       .sort((a, b) => a.interval.getTime() - b.interval.getTime())
       .map((item) => {
-        const counts = {
-          ok: item.success,
-          degraded: item.degraded,
-          error: item.error,
-          quorum: item.quorum,
-        };
-        const shown = shownCounts(tallyDay(counts, regionCount));
+        const shown = shownCounts(tallyDay(item, regionCount));
         return {
           timestamp: item.interval.toLocaleString("default", {
             day: "numeric",
@@ -153,7 +147,7 @@ export default function Page() {
             timeZone: timezone,
           }),
           interval: item.interval,
-          counts,
+          counts: item,
           success: shown.ok,
           degraded: shown.degraded,
           error: shown.error,

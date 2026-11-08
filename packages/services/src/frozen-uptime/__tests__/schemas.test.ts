@@ -6,7 +6,7 @@ import { FreezeMonitorMonthInput } from "../schemas";
 const valid: FreezeMonitorMonthInput = {
   monitorId: 1,
   month: "2026-06-01",
-  days: [{ day: "2026-06-01", ok: 10, degraded: 1, error: 0 }],
+  days: [{ day: "2026-06-01", requests: { ok: 10, degraded: 1, error: 0 } }],
 };
 
 describe("FreezeMonitorMonthInput", () => {
@@ -27,60 +27,60 @@ describe("FreezeMonitorMonthInput", () => {
     expect(() =>
       FreezeMonitorMonthInput.parse({
         ...valid,
-        days: [{ day: "2026-06-01", ok: 0 }],
+        days: [{ day: "2026-06-01", requests: { ok: 0 } }],
       }),
     ).toThrow();
     expect(() =>
       FreezeMonitorMonthInput.parse({
         ...valid,
-        days: [{ day: "2026-06-01T00:00:00Z", ok: 0, degraded: 0, error: 0 }],
+        days: [
+          {
+            day: "2026-06-01T00:00:00Z",
+            requests: { ok: 0, degraded: 0, error: 0 },
+          },
+        ],
       }),
     ).toThrow();
     expect(() =>
       FreezeMonitorMonthInput.parse({
         ...valid,
-        days: [{ day: "2026-06-01", ok: -1, degraded: 0, error: 0 }],
+        days: [
+          { day: "2026-06-01", requests: { ok: -1, degraded: 0, error: 0 } },
+        ],
       }),
     ).toThrow();
   });
 });
 
 describe("frozenMonitorUptimeDaySchema", () => {
-  const oldDay = { day: "2026-06-01", ok: 10, degraded: 1, error: 2 };
-  const quorum = {
-    regionCount: 6,
-    buckets: [
-      { errorRegions: 0, notOkRegions: 0, runs: 1430 },
-      { errorRegions: 3, notOkRegions: 4, runs: 10 },
-    ],
-  };
+  const requests = { ok: 10, degraded: 1, error: 2 };
+  const runs = { ok: 1430, degraded: 0, error: 10 };
 
-  test("accepts a day without a quorum histogram", () => {
-    expect(frozenMonitorUptimeDaySchema.parse(oldDay)).toEqual(oldDay);
+  test("accepts a day without runs", () => {
+    const day = { day: "2026-06-01", requests };
+    expect(frozenMonitorUptimeDaySchema.parse(day)).toEqual(day);
   });
 
-  test("accepts a day with a quorum histogram", () => {
-    const day = { ...oldDay, quorum };
+  test("accepts a day with runs", () => {
+    const day = { day: "2026-06-01", requests, runs };
     expect(frozenMonitorUptimeDaySchema.parse(day)).toEqual(day);
     expect(
-      FreezeMonitorMonthInput.parse({ ...valid, days: [day] }).days[0].quorum,
-    ).toEqual(quorum);
+      FreezeMonitorMonthInput.parse({ ...valid, days: [day] }).days[0].runs,
+    ).toEqual(runs);
   });
 
-  test("rejects a quorum without a positive region count or with bad buckets", () => {
+  test("reads a legacy flat day as requests", () => {
+    expect(
+      frozenMonitorUptimeDaySchema.parse({ day: "2026-06-01", ...requests }),
+    ).toEqual({ day: "2026-06-01", requests });
+  });
+
+  test("rejects negative runs", () => {
     expect(() =>
       frozenMonitorUptimeDaySchema.parse({
-        ...oldDay,
-        quorum: { ...quorum, regionCount: 0 },
-      }),
-    ).toThrow();
-    expect(() =>
-      frozenMonitorUptimeDaySchema.parse({
-        ...oldDay,
-        quorum: {
-          regionCount: 6,
-          buckets: [{ errorRegions: -1, notOkRegions: 0, runs: 1 }],
-        },
+        day: "2026-06-01",
+        requests,
+        runs: { ...runs, error: -1 },
       }),
     ).toThrow();
   });

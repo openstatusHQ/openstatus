@@ -315,13 +315,17 @@ describe("quorumHistogramShape", () => {
     const row = quorumHistogramShape.parse({
       day: "2026-10-14 00:00:00",
       monitorId: "1",
-      private: 0,
       errorRegions: 1,
-      notOkRegions: 1,
+      degradedOrErrorRegions: 1,
       runs: 3,
     });
-    expect(row.day).toBe("2026-10-14T00:00:00.000Z");
-    expect(row.private).toBe(false);
+    expect(row).toEqual({
+      day: "2026-10-14T00:00:00.000Z",
+      monitorId: "1",
+      errorRegions: 1,
+      degradedOrErrorRegions: 1,
+      runs: 3,
+    });
   });
 });
 
@@ -374,18 +378,16 @@ describe("quorumIntervalShape", () => {
     const interval = "2026-11-08 12:00:00";
     const row = quorumIntervalShape.parse({
       interval,
-      private: 0,
       errorRegions: 3,
-      notOkRegions: 3,
+      degradedOrErrorRegions: 3,
       runs: 4,
     });
     expect(row.interval.getTime()).toBe(
       z.coerce.date().parse(interval).getTime(),
     );
     expect(row).toMatchObject({
-      private: false,
       errorRegions: 3,
-      notOkRegions: 3,
+      degradedOrErrorRegions: 3,
       runs: 4,
     });
   });

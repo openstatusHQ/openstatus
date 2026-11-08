@@ -15,7 +15,7 @@ describe("uptimeYears", () => {
     expect(uptimeYears([], null, now)).toEqual([]);
     expect(
       uptimeYears(
-        [{ day: "2026-10-01", ok: 0, degraded: 0, error: 0 }],
+        [{ day: "2026-10-01", requests: { ok: 0, degraded: 0, error: 0 } }],
         null,
         now,
       ),
@@ -25,9 +25,9 @@ describe("uptimeYears", () => {
   it("one full grid per year, newest first", () => {
     const years = uptimeYears(
       [
-        { day: "2025-03-10", ok: 0, degraded: 0, error: 0 },
-        { day: "2025-03-11", ok: 90, degraded: 5, error: 5 },
-        { day: "2026-11-02", ok: 100, degraded: 0, error: 0 },
+        { day: "2025-03-10", requests: { ok: 0, degraded: 0, error: 0 } },
+        { day: "2025-03-11", requests: { ok: 90, degraded: 5, error: 5 } },
+        { day: "2026-11-02", requests: { ok: 100, degraded: 0, error: 0 } },
       ],
       null,
       now,
@@ -42,8 +42,8 @@ describe("uptimeYears", () => {
   it("blank before the first check, hatched for gaps, muted without failures", () => {
     const [year] = uptimeYears(
       [
-        { day: "2026-11-01", ok: 100, degraded: 0, error: 0 },
-        { day: "2026-11-03", ok: 97, degraded: 0, error: 3 },
+        { day: "2026-11-01", requests: { ok: 100, degraded: 0, error: 0 } },
+        { day: "2026-11-03", requests: { ok: 97, degraded: 0, error: 3 } },
       ],
       null,
       now,
@@ -67,7 +67,7 @@ describe("uptimeYears", () => {
 
   it("degraded checks count as up", () => {
     const [year] = uptimeYears(
-      [{ day: "2026-11-02", ok: 90, degraded: 10, error: 0 }],
+      [{ day: "2026-11-02", requests: { ok: 90, degraded: 10, error: 0 } }],
       null,
       now,
     );
@@ -84,10 +84,10 @@ describe("uptimeYears", () => {
   it("failure level by failed share: < 1%, ≤ 5%, > 5%", () => {
     const [year] = uptimeYears(
       [
-        { day: "2026-11-01", ok: 999, degraded: 0, error: 1 },
-        { day: "2026-11-02", ok: 99, degraded: 0, error: 1 },
-        { day: "2026-11-03", ok: 95, degraded: 0, error: 5 },
-        { day: "2026-11-04", ok: 94, degraded: 0, error: 6 },
+        { day: "2026-11-01", requests: { ok: 999, degraded: 0, error: 1 } },
+        { day: "2026-11-02", requests: { ok: 99, degraded: 0, error: 1 } },
+        { day: "2026-11-03", requests: { ok: 95, degraded: 0, error: 5 } },
+        { day: "2026-11-04", requests: { ok: 94, degraded: 0, error: 6 } },
       ],
       null,
       now,
@@ -99,7 +99,7 @@ describe("uptimeYears", () => {
 
   it("a year without checks after the first one has no uptime", () => {
     const years = uptimeYears(
-      [{ day: "2024-12-31", ok: 10, degraded: 0, error: 0 }],
+      [{ day: "2024-12-31", requests: { ok: 10, degraded: 0, error: 0 } }],
       null,
       now,
     );
@@ -112,7 +112,7 @@ describe("uptimeYears", () => {
     // 23:30 UTC: already the 5th east of UTC, still the 4th in UTC
     const late = new Date(Date.UTC(2026, 10, 4, 23, 30));
     const [year] = uptimeYears(
-      [{ day: "2026-11-04", ok: 10, degraded: 0, error: 0 }],
+      [{ day: "2026-11-04", requests: { ok: 10, degraded: 0, error: 0 } }],
       null,
       late,
     );
@@ -127,8 +127,8 @@ describe("uptimeYears", () => {
   it("ignores counts dated after now", () => {
     const [year] = uptimeYears(
       [
-        { day: "2026-11-01", ok: 10, degraded: 0, error: 0 },
-        { day: "2026-11-20", ok: 0, degraded: 0, error: 10 },
+        { day: "2026-11-01", requests: { ok: 10, degraded: 0, error: 0 } },
+        { day: "2026-11-20", requests: { ok: 0, degraded: 0, error: 10 } },
       ],
       null,
       now,
@@ -139,19 +139,17 @@ describe("uptimeYears", () => {
 });
 
 describe("uptimeYears in runs", () => {
-  const quorum = {
-    regionCount: 6,
-    buckets: [
-      { errorRegions: 0, notOkRegions: 0, runs: 95 },
-      { errorRegions: 3, notOkRegions: 3, runs: 5 },
-    ],
-  };
+  const runs = { ok: 95, degraded: 0, error: 5 };
 
-  it("converts days without a histogram so the year sums one unit", () => {
+  it("converts days without runs so the year sums one unit", () => {
     const [year] = uptimeYears(
       [
-        { day: "2026-10-31", ok: 540, degraded: 0, error: 60 },
-        { day: "2026-11-01", ok: 585, degraded: 0, error: 15, quorum },
+        { day: "2026-10-31", requests: { ok: 540, degraded: 0, error: 60 } },
+        {
+          day: "2026-11-01",
+          requests: { ok: 585, degraded: 0, error: 15 },
+          runs,
+        },
       ],
       6,
       now,
@@ -173,7 +171,7 @@ describe("uptimeYears in runs", () => {
 
   it("rounds converted counts at display", () => {
     const [year] = uptimeYears(
-      [{ day: "2026-11-02", ok: 595, degraded: 1, error: 4 }],
+      [{ day: "2026-11-02", requests: { ok: 595, degraded: 1, error: 4 } }],
       6,
       now,
     );
@@ -186,8 +184,8 @@ describe("uptimeYears in runs", () => {
   it("says check for a single one and shows a day that rounds to 0 as no checks", () => {
     const [year] = uptimeYears(
       [
-        { day: "2026-11-02", ok: 6, degraded: 0, error: 0 },
-        { day: "2026-11-03", ok: 2, degraded: 0, error: 0 },
+        { day: "2026-11-02", requests: { ok: 6, degraded: 0, error: 0 } },
+        { day: "2026-11-03", requests: { ok: 2, degraded: 0, error: 0 } },
       ],
       6,
       now,
@@ -199,9 +197,15 @@ describe("uptimeYears in runs", () => {
     expect(on(3)).toEqual(["No checks"]);
   });
 
-  it("without a population ignores the histogram and counts region checks", () => {
+  it("without a region count ignores runs and counts region checks", () => {
     const [year] = uptimeYears(
-      [{ day: "2026-11-01", ok: 585, degraded: 0, error: 15, quorum }],
+      [
+        {
+          day: "2026-11-01",
+          requests: { ok: 585, degraded: 0, error: 15 },
+          runs,
+        },
+      ],
       null,
       now,
     );
@@ -210,22 +214,22 @@ describe("uptimeYears in runs", () => {
 });
 
 describe("quorumSince", () => {
-  const quorum = { regionCount: 6, buckets: [] };
+  const runs = { ok: 1, degraded: 0, error: 0 };
   const days = [
-    { day: "2026-10-31", ok: 1, degraded: 0, error: 0 },
-    { day: "2026-11-01", ok: 1, degraded: 0, error: 0, quorum },
+    { day: "2026-10-31", requests: { ok: 1, degraded: 0, error: 0 } },
+    { day: "2026-11-01", requests: { ok: 1, degraded: 0, error: 0 }, runs },
   ];
 
-  it("is the first day with a histogram, only for monitors counted in runs", () => {
+  it("is the first day with runs, only for monitors counted in runs", () => {
     expect(quorumSince(days, 6)).toEqual(new Date(2026, 10, 1));
     expect(quorumSince(days, null)).toBeNull();
   });
 
-  it("returns the earliest histogram day when days arrive out of order", () => {
+  it("returns the earliest runs day when days arrive out of order", () => {
     const unordered = [
-      { day: "2026-11-03", ok: 1, degraded: 0, error: 0, quorum },
+      { day: "2026-11-03", requests: { ok: 1, degraded: 0, error: 0 }, runs },
       ...days,
-      { day: "2026-10-28", ok: 1, degraded: 0, error: 0, quorum },
+      { day: "2026-10-28", requests: { ok: 1, degraded: 0, error: 0 }, runs },
     ];
     expect(quorumSince(unordered, 6)).toEqual(new Date(2026, 9, 28));
   });
@@ -250,7 +254,8 @@ describe("exampleUptimeCounts", () => {
     expect(counts[0].day).toBe("2025-01-01");
     expect(counts.at(-1)?.day).toBe("2026-11-04");
     for (const c of counts) {
-      expect(c.ok + c.degraded + c.error).toBe(1440);
+      const { ok, degraded, error } = c.requests;
+      expect(ok + degraded + error).toBe(1440);
     }
   });
 });

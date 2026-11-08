@@ -1,7 +1,6 @@
-import type {
-  FrozenMonitorUptimeDay,
-  FrozenMonitorUptimeQuorum,
-} from "@openstatus/db/src/schema";
+import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
+
+import type { Counts } from "../status-timeline/tally";
 
 export type ComputeCountRow = {
   monitorId: string;
@@ -46,17 +45,14 @@ export function computeMonitorMonth(args: {
   month: string; // YYYY-MM-01
   monitorId: number;
   counts: ComputeCountRow[];
-  quorum?: Map<string, FrozenMonitorUptimeQuorum>;
+  runs?: Map<string, Counts>;
 }): { days: FrozenMonitorUptimeDay[] } | null {
-  const { month, monitorId, counts, quorum } = args;
+  const { month, monitorId, counts, runs } = args;
   const prefix = month.slice(0, 8); // YYYY-MM-
 
   // sum rather than overwrite: the pipe aggregates per day today, but a
   // silent overwrite here would freeze truncated counts permanently
-  const byDay = new Map<
-    string,
-    { ok: number; degraded: number; error: number }
-  >();
+  const byDay = new Map<string, Counts>();
   for (const row of counts) {
     if (row.monitorId !== String(monitorId)) continue;
     const day = row.day.slice(0, 10);
@@ -70,14 +66,11 @@ export function computeMonitorMonth(args: {
   if (byDay.size === 0) return null;
 
   const days = monthDays(month).map((day) => {
-    const row = byDay.get(day);
-    const dayQuorum = quorum?.get(day);
+    const dayRuns = runs?.get(day);
     return {
       day,
-      ok: row?.ok ?? 0,
-      degraded: row?.degraded ?? 0,
-      error: row?.error ?? 0,
-      ...(dayQuorum ? { quorum: dayQuorum } : {}),
+      requests: byDay.get(day) ?? { ok: 0, degraded: 0, error: 0 },
+      ...(dayRuns ? { runs: dayRuns } : {}),
     };
   });
 

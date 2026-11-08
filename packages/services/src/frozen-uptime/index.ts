@@ -9,19 +9,20 @@ export { freezeMonitorMonth } from "./freeze";
 export { getUptimeHistory } from "./get-history";
 export { getMonitorUptimeHistory } from "./get-monitor-history";
 export {
-  attachIntervalQuorum,
-  attachQuorum,
-  fetchIntervalQuorum,
-  fetchLiveQuorum,
-  type IntervalQuorum,
-  type LiveQuorum,
+  attachRuns,
+  fetchIntervalRuns,
+  fetchLiveRuns,
+  type IntervalRuns,
+  type IntervalCounts,
+  type LiveRuns,
+  toIntervalCounts,
 } from "./live";
 export {
+  runsBy,
+  runsByDay,
   type QuorumHistogramRow,
   type QuorumIntervalRow,
-  type QuorumPopulation,
-  quorumByDay,
-  quorumPopulation,
+  quorumRegionCount,
 } from "./quorum";
 export {
   type ChunkFailure,

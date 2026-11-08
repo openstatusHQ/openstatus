@@ -127,7 +127,7 @@ describe("uptimeQuorumPipes", () => {
 });
 
 describe("uptimeRegionCount", () => {
-  test("agrees with the quorum population on duplicated regions", () => {
+  test("agrees with the quorum region count on duplicated regions", () => {
     expect(uptimeRegionCount({ jobType: "http", regions: "ams,ams,fra" })).toBe(
       2,
     );
@@ -305,8 +305,8 @@ describe("runUptimeFreeze", () => {
       expect(rows.length).toBe(1);
       expect(rows[0].workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
       expect(rows[0].days.length).toBe(30);
-      expect(rows[0].days[4].ok).toBe(42);
-      expect(rows[0].days[0].ok).toBe(0);
+      expect(rows[0].days[4].requests.ok).toBe(42);
+      expect(rows[0].days[0].requests.ok).toBe(0);
 
       // re-run: frozen monitors are pre-skipped — no TB refetch, no insert
       const second = await runUptimeFreeze(runArgs);
@@ -488,7 +488,7 @@ describe("runUptimeFreeze", () => {
         .where(eq(frozenMonitorUptime.monitorId, paused.id))
         .all();
       expect(rows.length).toBe(1);
-      expect(rows[0].days[4].ok).toBe(42);
+      expect(rows[0].days[4].requests.ok).toBe(42);
     });
   });
 
@@ -562,7 +562,7 @@ describe("runUptimeFreeze", () => {
         .where(eq(frozenMonitorUptime.monitorId, dnsMonitor.id))
         .all();
       expect(frozenDns.length).toBe(1);
-      expect(frozenDns[0].days[4].ok).toBe(7);
+      expect(frozenDns[0].days[4].requests.ok).toBe(7);
     });
   });
 });
@@ -601,35 +601,28 @@ describe("runUptimeFreeze with run quorum", () => {
     return rows[0]?.days;
   }
 
-  test("http monitor freezes the cloud histogram with its configured region count", async () => {
+  test("http monitor freezes requests and run verdicts judged on its 6 regions", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       const id = String(m.id);
+      const run = (
+        errorRegions: number,
+        degradedOrErrorRegions: number,
+        runs: number,
+      ): QuorumHistogramRow => ({
+        monitorId: id,
+        day: "2026-06-05 00:00:00",
+        errorRegions,
+        degradedOrErrorRegions,
+        runs,
+      });
       const quorum = histogramPipe([
-        {
-          monitorId: id,
-          day: "2026-06-05 00:00:00",
-          private: false,
-          errorRegions: 0,
-          notOkRegions: 0,
-          runs: 140,
-        },
-        {
-          monitorId: id,
-          day: "2026-06-05 00:00:00",
-          private: false,
-          errorRegions: 3,
-          notOkRegions: 3,
-          runs: 4,
-        },
-        {
-          monitorId: id,
-          day: "2026-06-05 00:00:00",
-          private: true,
-          errorRegions: 1,
-          notOkRegions: 1,
-          runs: 144,
-        },
+        // one flaky region: ok
+        run(1, 1, 140),
+        // three failing: error
+        run(3, 3, 2),
+        // none failing, four degraded: degraded
+        run(0, 4, 3),
       ]);
 
       const res = await runUptimeFreeze({
@@ -646,22 +639,17 @@ describe("runUptimeFreeze with run quorum", () => {
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({
         day: "2026-06-05",
-        ok: 800,
-        degraded: 0,
-        error: 64,
-        quorum: {
-          regionCount: 6,
-          buckets: [
-            { errorRegions: 0, notOkRegions: 0, runs: 140 },
-            { errorRegions: 3, notOkRegions: 3, runs: 4 },
-          ],
-        },
+        requests: { ok: 800, degraded: 0, error: 64 },
+        runs: { ok: 140, degraded: 3, error: 2 },
       });
-      expect(days?.[0].quorum).toBeUndefined();
+      expect(days?.[0]).toEqual({
+        day: "2026-06-01",
+        requests: { ok: 0, degraded: 0, error: 0 },
+      });
     });
   });
 
-  test("private-only monitor freezes on per-region counts without a histogram fetch", async () => {
+  test("private-only monitor freezes requests only, without a histogram fetch", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: "" });
       const id = String(m.id);
@@ -684,9 +672,8 @@ describe("runUptimeFreeze with run quorum", () => {
         {
           monitorId: id,
           day: "2026-06-05 00:00:00",
-          private: true,
           errorRegions: 1,
-          notOkRegions: 1,
+          degradedOrErrorRegions: 1,
           runs: 10,
         },
       ]);
@@ -705,14 +692,12 @@ describe("runUptimeFreeze with run quorum", () => {
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({
         day: "2026-06-05",
-        ok: 800,
-        degraded: 0,
-        error: 64,
+        requests: { ok: 800, degraded: 0, error: 64 },
       });
     });
   });
 
-  test("a failed quorum chunk skips the monitor instead of freezing it without quorum", async () => {
+  test("a failed quorum chunk skips the monitor instead of freezing it without runs", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       const failures: ChunkFailure[] = [];
@@ -769,7 +754,7 @@ describe("runUptimeFreeze with run quorum", () => {
   });
 
   test.each(["tcp", "dns", "icmp", "grpc"] as const)(
-    "%s monitor freezes the histogram from its own quorum pipe",
+    "%s monitor freezes run verdicts from its own quorum pipe",
     async (jobType) => {
       await withTestTransaction(async (tx) => {
         const m = await insertTestMonitor(tx, {
@@ -781,17 +766,15 @@ describe("runUptimeFreeze with run quorum", () => {
           {
             monitorId: id,
             day: "2026-06-05 00:00:00",
-            private: false,
             errorRegions: 1,
-            notOkRegions: 2,
+            degradedOrErrorRegions: 2,
             runs: 140,
           },
           {
             monitorId: id,
             day: "2026-06-05 00:00:00",
-            private: false,
             errorRegions: 3,
-            notOkRegions: 3,
+            degradedOrErrorRegions: 3,
             runs: 4,
           },
         ]);
@@ -813,13 +796,7 @@ describe("runUptimeFreeze with run quorum", () => {
         expect(own.calls).toEqual([[id]]);
         expect(http.calls).toEqual([]);
         const days = await frozenDays(tx, m.id);
-        expect(days?.[4].quorum).toEqual({
-          regionCount: 6,
-          buckets: [
-            { errorRegions: 1, notOkRegions: 2, runs: 140 },
-            { errorRegions: 3, notOkRegions: 3, runs: 4 },
-          ],
-        });
+        expect(days?.[4].runs).toEqual({ ok: 140, degraded: 0, error: 4 });
       });
     },
   );
@@ -852,9 +829,7 @@ describe("runUptimeFreeze with run quorum", () => {
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({
         day: "2026-06-05",
-        ok: 800,
-        degraded: 0,
-        error: 64,
+        requests: { ok: 800, degraded: 0, error: 64 },
       });
     });
   });

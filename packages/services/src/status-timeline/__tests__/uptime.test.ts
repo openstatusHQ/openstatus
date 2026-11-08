@@ -197,9 +197,7 @@ describe("reportsOnlyDowntimeMs", () => {
 describe("heartbeatCoverageStart", () => {
   const day = (offset: number, ok: number) => ({
     day: new Date(base + offset * DAY).toISOString(),
-    ok,
-    degraded: 0,
-    error: 0,
+    requests: { ok, degraded: 0, error: 0 },
   });
 
   test("starts at the first day with a ping, ignoring silent days", () => {

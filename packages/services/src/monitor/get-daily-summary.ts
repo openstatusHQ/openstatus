@@ -3,7 +3,7 @@ import { monitor } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
 
 import type { DB } from "../context";
-import type { StatusData } from "../status-timeline";
+import { type StatusData, toStatusData } from "../status-timeline";
 
 type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat";
 
@@ -11,7 +11,7 @@ type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat";
  * Raw daily status buckets (one row per monitor per day) from the 45d Tinybird
  * pipes, grouped by jobType. Ids that are missing / soft-deleted / of an
  * unsupported jobType are skipped — callers want empty data for those, not a
- * throw. The pipe rows already match `StatusData` (day ISO, monitorId string).
+ * throw.
  */
 export async function fetchMonitorDailyStats(args: {
   db: DB;
@@ -76,5 +76,5 @@ export async function fetchMonitorDailyStats(args: {
       }),
   );
 
-  return results.flatMap((result) => result.data);
+  return results.flatMap((result) => result.data.map(toStatusData));
 }
