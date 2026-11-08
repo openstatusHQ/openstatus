@@ -1,5 +1,6 @@
 # Data Source created from Pipe 'aggregate__http_quorum_45d__v0'
-# One row per scheduled cloud run; private-location rows are filtered out.
+# Partial aggregates per scheduled cloud run until merges run; read with *Merge per run.
+# Private-location rows are filtered out.
 
 SCHEMA >
     `time` DateTime('UTC'),

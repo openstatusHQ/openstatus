@@ -46,7 +46,7 @@ export function csvRegionCountSql(): SQL {
   return sql`(WITH RECURSIVE split(rest, region) AS (
       SELECT ${monitor.regions} || ',', ''
       UNION ALL
-      SELECT substr(rest, instr(rest, ',') + 1), substr(rest, 1, instr(rest, ',') - 1)
+      SELECT substr(rest, instr(rest, ',') + 1), trim(substr(rest, 1, instr(rest, ',') - 1))
       FROM split WHERE rest <> ''
     ) SELECT count(DISTINCT region) FROM split WHERE region <> '')`;
 }
