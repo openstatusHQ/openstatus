@@ -1,0 +1,15 @@
+# Data Source created from Pipe 'aggregate__grpc_quorum_45d__v0'
+# One row per scheduled run and scope; private = region is a private-location id.
+
+SCHEMA >
+    `time` DateTime('UTC'),
+    `monitorId` String,
+    `cronTimestamp` Int64,
+    `private` UInt8,
+    `errorRegions` AggregateFunction(uniqExact, String),
+    `notOkRegions` AggregateFunction(uniqExact, String)
+
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time, cronTimestamp, private"
+ENGINE_TTL "time + toIntervalDay(46)"

@@ -49,9 +49,16 @@ function makePipes(
 }
 
 function makeQuorumPipes(
-  http: UptimeQuorumPipes["http"] = () => Promise.resolve({ data: [] }),
+  overrides: Partial<UptimeQuorumPipes> = {},
 ): UptimeQuorumPipes {
-  return { http };
+  const fallback = () => Promise.resolve({ data: [] });
+  return {
+    http: overrides.http ?? fallback,
+    tcp: overrides.tcp ?? fallback,
+    dns: overrides.dns ?? fallback,
+    icmp: overrides.icmp ?? fallback,
+    grpc: overrides.grpc ?? fallback,
+  };
 }
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
@@ -98,10 +105,23 @@ describe("uptimeFreezePipes", () => {
 });
 
 describe("uptimeQuorumPipes", () => {
-  test("covers http only for now", () => {
+  test("covers every job type except heartbeat, udp and ssl", () => {
     // safe because uptimeQuorumPipes only reads pipe getters off the client
     const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
-    expect(uptimeQuorumPipes(tb)).toEqual({ http: "httpQuorum45d" });
+    const pipes = uptimeQuorumPipes(tb);
+
+    expect(Object.keys(pipes).sort()).toEqual(
+      monitorJobTypes
+        .filter((t) => !["heartbeat", "udp", "ssl"].includes(t))
+        .sort(),
+    );
+    expect(pipes).toEqual({
+      http: "httpQuorum45d",
+      tcp: "tcpQuorum45d",
+      dns: "dnsQuorum45d",
+      icmp: "icmpQuorum45d",
+      grpc: "grpcQuorum45d",
+    });
   });
 });
 
@@ -605,7 +625,7 @@ describe("runUptimeFreeze with run quorum", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: countsPipe(m.id) }),
-        quorumPipes: makeQuorumPipes(quorum.pipe),
+        quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -665,7 +685,7 @@ describe("runUptimeFreeze with run quorum", () => {
 
       await runUptimeFreeze({
         pipes: makePipes({ http: countsPipe(m.id) }),
-        quorumPipes: makeQuorumPipes(quorum.pipe),
+        quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -687,9 +707,9 @@ describe("runUptimeFreeze with run quorum", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: countsPipe(m.id) }),
-        quorumPipes: makeQuorumPipes(() =>
-          Promise.reject(new Error("tb down")),
-        ),
+        quorumPipes: makeQuorumPipes({
+          http: () => Promise.reject(new Error("tb down")),
+        }),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -714,7 +734,7 @@ describe("runUptimeFreeze with run quorum", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: countsPipe(m.id) }),
-        quorumPipes: makeQuorumPipes(quorum.pipe),
+        quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -728,17 +748,79 @@ describe("runUptimeFreeze with run quorum", () => {
     });
   });
 
+  test.each(["tcp", "dns", "icmp", "grpc"] as const)(
+    "%s monitor freezes the histogram from its own quorum pipe",
+    async (jobType) => {
+      await withTestTransaction(async (tx) => {
+        const m = await insertTestMonitor(tx, {
+          jobType,
+          regions: SIX_REGIONS,
+        });
+        const id = String(m.id);
+        const own = histogramPipe([
+          {
+            monitorId: id,
+            day: "2026-06-05 00:00:00",
+            private: false,
+            errorRegions: 1,
+            notOkRegions: 2,
+            runs: 140,
+          },
+          {
+            monitorId: id,
+            day: "2026-06-05 00:00:00",
+            private: false,
+            errorRegions: 3,
+            notOkRegions: 3,
+            runs: 4,
+          },
+        ]);
+        const http = histogramPipe([]);
+
+        const res = await runUptimeFreeze({
+          pipes: makePipes({ [jobType]: countsPipe(m.id) }),
+          quorumPipes: makeQuorumPipes({
+            http: http.pipe,
+            [jobType]: own.pipe,
+          }),
+          now,
+          db: tx,
+          monitorIds: [m.id],
+          sleep: noSleep,
+        });
+
+        expect(res.frozen).toBe(1);
+        expect(own.calls).toEqual([[id]]);
+        expect(http.calls).toEqual([]);
+        const days = await frozenDays(tx, m.id);
+        expect(days?.[4].quorum).toEqual({
+          regionCount: 6,
+          buckets: [
+            { errorRegions: 1, notOkRegions: 2, runs: 140 },
+            { errorRegions: 3, notOkRegions: 3, runs: 4 },
+          ],
+        });
+      });
+    },
+  );
+
   test("job types without a quorum pipe freeze exactly as before", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, {
-        jobType: "dns",
+        jobType: "heartbeat",
         regions: SIX_REGIONS,
       });
       const quorum = histogramPipe([]);
 
       const res = await runUptimeFreeze({
-        pipes: makePipes({ dns: countsPipe(m.id) }),
-        quorumPipes: makeQuorumPipes(quorum.pipe),
+        pipes: makePipes({ heartbeat: countsPipe(m.id) }),
+        quorumPipes: makeQuorumPipes({
+          http: quorum.pipe,
+          tcp: quorum.pipe,
+          dns: quorum.pipe,
+          icmp: quorum.pipe,
+          grpc: quorum.pipe,
+        }),
         now,
         db: tx,
         monitorIds: [m.id],

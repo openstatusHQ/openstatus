@@ -1,0 +1,31 @@
+TOKEN "endpoint__tcp_quorum_45d__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- Per day: how many scheduled runs had each (errorRegions, notOkRegions)
+-- combination. A run's rows land in several insert blocks, so merge per run first.
+SELECT
+    day,
+    monitorId,
+    private,
+    runErrorRegions AS errorRegions,
+    runNotOkRegions AS notOkRegions,
+    count() AS runs
+FROM (
+    SELECT
+        time AS day,
+        monitorId,
+        cronTimestamp,
+        private,
+        uniqExactMerge(errorRegions) AS runErrorRegions,
+        uniqExactMerge(notOkRegions) AS runNotOkRegions
+    FROM mv__tcp_quorum_45d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+    GROUP BY day, monitorId, cronTimestamp, private
+)
+GROUP BY day, monitorId, private, errorRegions, notOkRegions
+ORDER BY day DESC
+
+TYPE endpoint

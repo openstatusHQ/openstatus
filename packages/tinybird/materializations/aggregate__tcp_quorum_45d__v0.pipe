@@ -1,0 +1,22 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        toString(monitorId) AS monitorId,
+        cronTimestamp,
+        match(region, '^[0-9]+$') AS private,
+        uniqExactStateIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS errorRegions,
+        uniqExactStateIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) IN ('error', 'degraded')) AS notOkRegions
+    FROM tcp_response__v0
+    WHERE coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+        -- cloud rows ingested while cronTimestamp read $.timestamp carry no shared run key
+        AND (match(region, '^[0-9]+$') OR cronTimestamp != timestamp)
+    GROUP BY
+        time,
+        monitorId,
+        cronTimestamp,
+        private
+
+TYPE materialized
+DATASOURCE mv__tcp_quorum_45d__v0

@@ -63,20 +63,11 @@ const JOB_TYPES_WITHOUT_QUORUM = [
   "ssl",
 ] as const satisfies readonly MonitorJobType[];
 
-// still tallied per region check until their quorum pipes exist
-const JOB_TYPES_QUORUM_PENDING = [
-  "tcp",
-  "dns",
-  "icmp",
-  "grpc",
-] as const satisfies readonly MonitorJobType[];
-
 // a new MonitorJobType fails tsc in uptimeQuorumPipes until it is wired up or
 // listed above
 export type UptimeQuorumJobType = Exclude<
   MonitorJobType,
-  | (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
-  | (typeof JOB_TYPES_QUORUM_PENDING)[number]
+  (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
 >;
 
 export type UptimeQuorumPipes = Record<UptimeQuorumJobType, QuorumPipeFn>;
@@ -84,6 +75,10 @@ export type UptimeQuorumPipes = Record<UptimeQuorumJobType, QuorumPipeFn>;
 export function uptimeQuorumPipes(tb: OSTinybird): UptimeQuorumPipes {
   return {
     http: tb.httpQuorum45d,
+    tcp: tb.tcpQuorum45d,
+    dns: tb.dnsQuorum45d,
+    icmp: tb.icmpQuorum45d,
+    grpc: tb.grpcQuorum45d,
   };
 }
 

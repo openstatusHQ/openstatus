@@ -960,17 +960,33 @@ describe("getUptimeHistory with run quorum", () => {
   const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
   const today = now.toISOString().slice(0, 10);
 
-  function quorumPipes(rows: QuorumHistogramRow[] | Error): UptimeQuorumPipes {
+  // only `jobType`'s pipe answers, so a row proves the monitor was routed to it
+  function quorumPipes(
+    rows: QuorumHistogramRow[] | Error,
+    jobType: keyof UptimeQuorumPipes = "http",
+  ): UptimeQuorumPipes {
+    const none = () => Promise.resolve({ data: [] });
     return {
-      http: () =>
+      http: none,
+      tcp: none,
+      dns: none,
+      icmp: none,
+      grpc: none,
+      [jobType]: () =>
         rows instanceof Error
           ? Promise.reject(rows)
           : Promise.resolve({ data: rows }),
     };
   }
 
-  async function setup(tx: Tx) {
-    const testMonitor = await insertMonitor(tx, { regions: SIX_REGIONS });
+  async function setup(
+    tx: Tx,
+    jobType: (typeof monitor.$inferInsert)["jobType"] = "http",
+  ) {
+    const testMonitor = await insertMonitor(tx, {
+      regions: SIX_REGIONS,
+      jobType,
+    });
     const testPage = await insertPage(tx);
     await insertComponent(tx, {
       pageId: testPage.id,
@@ -1047,6 +1063,51 @@ describe("getUptimeHistory with run quorum", () => {
       expect(row.months[key(0)]).toBe(90);
     });
   });
+
+  test.each(["tcp", "dns", "icmp", "grpc"] as const)(
+    "live %s month is judged per run",
+    async (jobType) => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...userCtx, db: tx };
+        const { testMonitor, testPage } = await setup(tx, jobType);
+        const id = String(testMonitor.id);
+
+        const res = await getUptimeHistory({
+          ctx,
+          input: { pageId: testPage.id },
+          pipes: makePipes([
+            { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+          ]),
+          quorumPipes: quorumPipes(
+            [
+              {
+                monitorId: id,
+                day: today,
+                private: false,
+                errorRegions: 2,
+                notOkRegions: 2,
+                runs: 90,
+              },
+              {
+                monitorId: id,
+                day: today,
+                private: false,
+                errorRegions: 3,
+                notOkRegions: 3,
+                runs: 10,
+              },
+            ],
+            jobType,
+          ),
+          now,
+          sleep: noSleep,
+        });
+
+        expect(res.quorumSince).toBe(key(0));
+        expect(res.rows[0].months[key(0)]).toBe(90);
+      });
+    },
+  );
 
   test("a failed histogram fetch falls back to per-region counts", async () => {
     await withTestTransaction(async (tx) => {

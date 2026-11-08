@@ -1495,6 +1495,17 @@ export class OSTinybird {
     });
   }
 
+  public get tcpQuorum45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_quorum_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: quorumHistogramShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
@@ -1964,6 +1975,17 @@ export class OSTinybird {
       pipe: "endpoint__icmp_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpQuorum45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_quorum_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2453,6 +2475,17 @@ export class OSTinybird {
       pipe: "endpoint__grpc_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcQuorum45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_quorum_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3769,6 +3802,17 @@ export class OSTinybird {
       pipe: "endpoint__dns_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsQuorum45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_quorum_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

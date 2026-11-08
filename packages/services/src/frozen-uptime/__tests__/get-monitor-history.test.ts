@@ -11,7 +11,8 @@ import { ForbiddenError, NotFoundError } from "../../errors";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getMonitorUptimeHistory } from "../get-monitor-history";
-import type { UptimeFreezePipes } from "../run";
+import type { QuorumHistogramRow } from "../quorum";
+import type { UptimeFreezePipes, UptimeQuorumPipes } from "../run";
 
 const noSleep = () => Promise.resolve();
 // the 10th: the previous month is still inside the 45d lookback
@@ -44,6 +45,18 @@ function pipes(rows: ComputeCountRow[] | Error): UptimeFreezePipes {
     icmp: pipe,
     grpc: pipe,
     heartbeat: pipe,
+  };
+}
+
+function quorumPipes(overrides: Partial<UptimeQuorumPipes>): UptimeQuorumPipes {
+  const none = () => Promise.resolve({ data: [] as QuorumHistogramRow[] });
+  return {
+    http: none,
+    tcp: none,
+    dns: none,
+    icmp: none,
+    grpc: none,
+    ...overrides,
   };
 }
 
@@ -307,7 +320,7 @@ describe("getMonitorUptimeHistory with run quorum", () => {
         pipes: pipes([
           { monitorId: id, day: "2026-11-02", ok: 600, degraded: 0, error: 12 },
         ]),
-        quorumPipes: {
+        quorumPipes: quorumPipes({
           http: () =>
             Promise.resolve({
               data: [
@@ -345,7 +358,7 @@ describe("getMonitorUptimeHistory with run quorum", () => {
                 },
               ],
             }),
-        },
+        }),
         now,
         sleep: noSleep,
       });
@@ -369,6 +382,48 @@ describe("getMonitorUptimeHistory with run quorum", () => {
     });
   });
 
+  test.each(["tcp", "dns", "icmp", "grpc"] as const)(
+    "live %s days carry the histogram from their own pipe",
+    async (jobType) => {
+      await withTestTransaction(async (tx) => {
+        const m = await insertMonitor(tx, {
+          jobType,
+          regions: "ams,fra,iad,syd",
+        });
+        const id = String(m.id);
+        const res = await getMonitorUptimeHistory({
+          ctx: { ...userCtx, db: tx },
+          input: { monitorId: m.id },
+          pipes: pipes([
+            { monitorId: id, day: "2026-11-02", ok: 90, degraded: 0, error: 6 },
+          ]),
+          quorumPipes: quorumPipes({
+            [jobType]: () =>
+              Promise.resolve({
+                data: [
+                  {
+                    monitorId: id,
+                    day: "2026-11-02 00:00:00",
+                    private: false,
+                    errorRegions: 2,
+                    notOkRegions: 2,
+                    runs: 3,
+                  },
+                ],
+              }),
+          }),
+          now,
+          sleep: noSleep,
+        });
+
+        expect(res.days[0].quorum).toEqual({
+          regionCount: 4,
+          buckets: [{ errorRegions: 2, notOkRegions: 2, runs: 3 }],
+        });
+      });
+    },
+  );
+
   test("a failed histogram fetch falls back to per-region counts", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx);
@@ -384,7 +439,9 @@ describe("getMonitorUptimeHistory with run quorum", () => {
             error: 1,
           },
         ]),
-        quorumPipes: { http: () => Promise.reject(new Error("tb down")) },
+        quorumPipes: quorumPipes({
+          http: () => Promise.reject(new Error("tb down")),
+        }),
         now,
         sleep: noSleep,
       });
