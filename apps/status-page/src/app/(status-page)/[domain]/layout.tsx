@@ -111,6 +111,7 @@ export async function generateMetadata({
     title: {
       template: `%s | ${page.title}`,
       default: page?.title,
+      absolute: page?.title,
     },
     description: page?.description,
     robots: page?.allowIndex
