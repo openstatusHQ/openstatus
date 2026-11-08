@@ -1,4 +1,4 @@
-import { and, db as defaultDb, ne, sql } from "@openstatus/db";
+import { db as defaultDb, ne, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
@@ -10,6 +10,7 @@ import {
   ServiceError,
   ValidationError,
 } from "../errors";
+import { findDomainHolder } from "./internal";
 
 const VERCEL_API_ORIGIN = "https://api.vercel.com";
 const TIMEOUT_MS = 5_000;
@@ -162,26 +163,6 @@ export async function detachDomain(
   throw new InternalServiceError(REMOVE_FAILED);
 }
 
-/** Any page (across workspaces) holding `domain`, case-insensitive. */
-export async function findDomainHolder(args: {
-  db: DB;
-  domain: string;
-  excludePageId?: number;
-}): Promise<{ id: number } | undefined> {
-  return args.db
-    .select({ id: page.id })
-    .from(page)
-    .where(
-      and(
-        sql`lower(${page.customDomain}) = ${args.domain.toLowerCase()}`,
-        args.excludePageId !== undefined
-          ? ne(page.id, args.excludePageId)
-          : undefined,
-      ),
-    )
-    .get();
-}
-
 // customDomain has no unique constraint, so another workspace's page may
 // hold the same domain — detaching it would take their status page down.
 // Concurrent deletes of the last two holders can both skip; reconcile catches it.
@@ -288,7 +269,9 @@ export async function reconcileProjectDomains(args: {
     .where(ne(page.customDomain, ""))
     .all();
   const held = new Set(rows.map((r) => r.domain));
-  const attachedSet = new Set(domains.map((d) => d.name.toLowerCase()));
+  const attachedSet = new Set(
+    domains.filter((d) => !d.gitBranch).map((d) => d.name.toLowerCase()),
+  );
   // A held apex redirecting to www is served by that target, which no row can hold.
   const redirectTargets = new Set(
     domains.flatMap((d) =>

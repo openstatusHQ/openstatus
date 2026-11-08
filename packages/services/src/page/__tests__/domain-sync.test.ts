@@ -193,6 +193,32 @@ describe("reconcileProjectDomains", () => {
     });
   });
 
+  test("a held domain bound to a git branch counts as missing", async () => {
+    await withTestTransaction(async (tx) => {
+      const branchBound = `${crypto.randomUUID()}.example.com`;
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId,
+          title: "Branch",
+          slug: `svc-domain-sync-${crypto.randomUUID()}`,
+          description: "",
+          customDomain: branchBound,
+        })
+        .run();
+
+      mockVercel(() =>
+        Response.json({
+          domains: [{ name: branchBound, gitBranch: "preview" }],
+          pagination: { next: null },
+        }),
+      );
+
+      const report = await reconcileProjectDomains({ db: tx, config });
+      expect(report.missing).toContain(branchBound);
+    });
+  });
+
   test("a held domain redirecting to www is neither missing nor an orphan", async () => {
     await withTestTransaction(async (tx) => {
       const apex = `${crypto.randomUUID()}.example.com`;

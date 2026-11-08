@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, ne, sql } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import {
   type pageAccessTypes,
@@ -14,7 +14,6 @@ import {
   ValidationError,
 } from "../errors";
 import type { Workspace } from "../types";
-import { findDomainHolder } from "./domain-sync";
 
 /** Load a page by id, scoped to the workspace. Throws on miss. */
 export async function getPageInWorkspace(args: {
@@ -61,6 +60,26 @@ export async function assertSlugAvailable(args: {
       "This slug is already taken. Please choose another one.",
     );
   }
+}
+
+/** Any page (across workspaces) holding `domain`, case-insensitive. */
+export async function findDomainHolder(args: {
+  db: DB;
+  domain: string;
+  excludePageId?: number;
+}): Promise<{ id: number } | undefined> {
+  return args.db
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${args.domain.toLowerCase()}`,
+        args.excludePageId !== undefined
+          ? ne(page.id, args.excludePageId)
+          : undefined,
+      ),
+    )
+    .get();
 }
 
 /** Assert no other page, in any workspace, already serves this custom domain. */
