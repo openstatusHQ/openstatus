@@ -149,7 +149,7 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 export function hasQuorumPipe(
-  pipes: UptimeQuorumPipes | UptimeQuorumIntervalPipes,
+  pipes: Record<UptimeQuorumJobType, unknown>,
   jobType: string,
 ): jobType is UptimeQuorumJobType {
   return Object.hasOwn(pipes, jobType);
@@ -171,7 +171,7 @@ type FetchOptions = {
   onChunkFailure?: (failure: ChunkFailure) => void;
 };
 
-async function fetchChunked<Row>(
+export async function fetchChunked<Row>(
   args: FetchOptions & {
     kind: FreezePipeKind;
     pipeFor: (jobType: string) => PipeFn<Row> | undefined;

@@ -44,3 +44,10 @@ export {
   uptimeRegionCount,
 } from "./run";
 export { FreezeMonitorMonthInput } from "./schemas";
+export {
+  type BackfillFrozenRunsResult,
+  type QuorumBackfillPipeFn,
+  type UptimeQuorumBackfillPipes,
+  backfillFrozenRuns,
+  uptimeQuorumBackfillPipes,
+} from "./backfill-runs";

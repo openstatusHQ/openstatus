@@ -1,0 +1,35 @@
+TOKEN "endpoint__http_quorum_backfill__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- The histogram of endpoint__http_quorum_45d__v0 (UTC days), recomputed from the raw
+-- source for [fromDate, toDate) so frozen months past the MV's TTL can get run
+-- verdicts. Filters and region predicates copy aggregate__http_quorum_45d__v0.
+SELECT
+    day,
+    monitorId,
+    runErrorRegions AS errorRegions,
+    runDegradedOrErrorRegions AS degradedOrErrorRegions,
+    count() AS runs
+FROM (
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS day,
+        monitorId,
+        cronTimestamp,
+        uniqExactIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'error') AS runErrorRegions,
+        uniqExactIf(CAST(region, 'String'), coalesce(requestStatus, '') IN ('error', 'degraded')) AS runDegradedOrErrorRegions
+    FROM ping_response__v8
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+        AND cronTimestamp >= toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(fromDate, '2026-10-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))
+        AND cronTimestamp < toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(toDate, '2026-11-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))
+        AND coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+        -- private locations carry no shared run key
+        AND NOT match(region, '^[0-9]+$')
+    GROUP BY day, monitorId, cronTimestamp
+)
+GROUP BY day, monitorId, errorRegions, degradedOrErrorRegions
+ORDER BY day DESC
+
+TYPE endpoint

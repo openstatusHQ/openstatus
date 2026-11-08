@@ -366,6 +366,13 @@ export const quorumHistogramShape = z.object({
   runs: z.number(),
 });
 
+// [fromDate, toDate) in UTC; the backfill pipes scan raw data, so both are required
+export const quorumBackfillParameters = z.object({
+  monitorIds: z.string().array(),
+  fromDate: z.string(),
+  toDate: z.string(),
+});
+
 // same params as the uptime_7d endpoint it pairs with, minus regions: a region
 // subset has no run quorum
 export const quorumIntervalParameters = z.object({
@@ -962,6 +969,15 @@ export class OSTinybird {
     });
   }
 
+  public get httpQuorumBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_quorum_backfill__v0",
+      parameters: quorumBackfillParameters,
+      data: quorumHistogramShape,
+      opts: { cache: "no-store" },
+    });
+  }
+
   public get httpQuorumIntervals() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_quorum_intervals__v0",
@@ -1537,6 +1553,15 @@ export class OSTinybird {
     });
   }
 
+  public get tcpQuorumBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_quorum_backfill__v0",
+      parameters: quorumBackfillParameters,
+      data: quorumHistogramShape,
+      opts: { cache: "no-store" },
+    });
+  }
+
   public get tcpQuorumIntervals() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_quorum_intervals__v0",
@@ -2025,6 +2050,15 @@ export class OSTinybird {
       parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpQuorumBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_quorum_backfill__v0",
+      parameters: quorumBackfillParameters,
+      data: quorumHistogramShape,
+      opts: { cache: "no-store" },
     });
   }
 
@@ -2532,6 +2566,15 @@ export class OSTinybird {
       parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcQuorumBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_quorum_backfill__v0",
+      parameters: quorumBackfillParameters,
+      data: quorumHistogramShape,
+      opts: { cache: "no-store" },
     });
   }
 
@@ -3874,6 +3917,15 @@ export class OSTinybird {
       parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsQuorumBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_quorum_backfill__v0",
+      parameters: quorumBackfillParameters,
+      data: quorumHistogramShape,
+      opts: { cache: "no-store" },
     });
   }
 

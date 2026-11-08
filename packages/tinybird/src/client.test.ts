@@ -6,6 +6,7 @@ import {
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
+  quorumBackfillParameters,
   quorumHistogramShape,
   quorumIntervalParameters,
   quorumIntervalShape,
@@ -341,6 +342,51 @@ describe("quorum pipes", () => {
         meta: [],
         data: [],
       });
+    });
+  }
+});
+
+const quorumBackfillGetters = [
+  "httpQuorumBackfill",
+  "tcpQuorumBackfill",
+  "dnsQuorumBackfill",
+  "icmpQuorumBackfill",
+  "grpcQuorumBackfill",
+] as const;
+
+describe("quorumBackfillParameters", () => {
+  const params = {
+    monitorIds: ["1", "2"],
+    fromDate: "2026-06-01T00:00:00.000Z",
+    toDate: "2026-07-01T00:00:00.000Z",
+  };
+
+  test("passes a month range through and drops a timezone: frozen days are UTC", () => {
+    expect(
+      quorumBackfillParameters.parse({ ...params, timezone: "Europe/Berlin" }),
+    ).toEqual(params);
+  });
+
+  test("requires both bounds so a raw scan is never unbounded", () => {
+    const { fromDate: _from, ...withoutFrom } = params;
+    const { toDate: _to, ...withoutTo } = params;
+    expect(quorumBackfillParameters.safeParse(withoutFrom).success).toBe(false);
+    expect(quorumBackfillParameters.safeParse(withoutTo).success).toBe(false);
+  });
+});
+
+describe("quorum backfill pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of quorumBackfillGetters) {
+    test(`${name} resolves for a month range`, async () => {
+      expect(
+        await tb[name]({
+          monitorIds: ["1"],
+          fromDate: "2026-06-01T00:00:00.000Z",
+          toDate: "2026-07-01T00:00:00.000Z",
+        }),
+      ).toEqual({ meta: [], data: [] });
     });
   }
 });
