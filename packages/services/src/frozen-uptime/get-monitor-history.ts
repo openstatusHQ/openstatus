@@ -15,6 +15,7 @@ import {
   uptimeFreezePipes,
   type UptimeQuorumPipes,
   uptimeQuorumPipes,
+  uptimeRegionCount,
 } from "./run";
 import { GetMonitorUptimeHistoryInput } from "./schemas";
 
@@ -23,6 +24,8 @@ type MonitorUptimeHistoryResult = {
   days: FrozenMonitorUptimeDay[];
   /** live counts failed to load, so the current month may be missing */
   partial: boolean;
+  /** pass to `tallyDay`: runs when set, region checks when null */
+  regionCount: number | null;
 };
 
 /**
@@ -97,5 +100,6 @@ export async function getMonitorUptimeHistory(args: {
   return {
     days: [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1)),
     partial: live.failedMonitorIds.size > 0,
+    regionCount: uptimeRegionCount(_monitor),
   };
 }

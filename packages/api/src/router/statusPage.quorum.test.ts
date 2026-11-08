@@ -14,6 +14,7 @@ import {
 } from "@openstatus/db/src/test/factories";
 import {
   floorPct,
+  roundCount,
   tallyBuckets,
   todayIn,
 } from "@openstatus/services/status-timeline";
@@ -73,11 +74,15 @@ function caller() {
   );
 }
 
-// yesterday in the zone, keyed as UTC midnight like every day-keyed row
-function yesterdayIn(timeZone: string) {
+// `n` days before today in the zone, keyed as UTC midnight like every day-keyed row
+function daysAgoIn(timeZone: string, n: number) {
   const day = todayIn(timeZone);
-  day.setUTCDate(day.getUTCDate() - 1);
+  day.setUTCDate(day.getUTCDate() - n);
   return day.toISOString();
+}
+
+function yesterdayIn(timeZone: string) {
+  return daysAgoIn(timeZone, 1);
 }
 
 function counts(
@@ -260,7 +265,7 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
     );
   });
 
-  test("counts falling back to UTC days drop quorum read in the page zone", async () => {
+  test("counts falling back to UTC days drop quorum read in the page zone and convert to runs", async () => {
     const zone = "Pacific/Kiritimati";
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus15m", async () => {
@@ -281,9 +286,71 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
 
     expect(component.timeZone).toBe("UTC");
     expect(bar?.card).toEqual([
-      { status: "success", value: "720 reqs" },
-      { status: "error", value: "144 reqs" },
+      { status: "success", value: "120 checks" },
+      { status: "error", value: "24 checks" },
     ]);
+  });
+
+  test("days lacking quorum in the window are converted, so cards and % share one unit", async () => {
+    const withQuorum = yesterdayIn("UTC");
+    const legacy = daysAgoIn("UTC", 30);
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [
+        counts(ids.cloud, withQuorum, { ok: 852, error: 12 }),
+        counts(ids.cloud, legacy, { ok: 540, error: 60 }),
+      ],
+    }));
+    pipes.impl.set("httpQuorum45d", async () => ({
+      data: [
+        hist(ids.cloud, withQuorum, {
+          errorRegions: 0,
+          notOkRegions: 0,
+          runs: 140,
+        }),
+        hist(ids.cloud, withQuorum, {
+          errorRegions: 3,
+          notOkRegions: 3,
+          runs: 4,
+        }),
+      ],
+    }));
+    const { slug, componentId } = await pageWith(ids.cloud);
+
+    const component = await uptime(slug, componentId);
+    const runsDay = component.data.find((d) => d.day === withQuorum);
+    const legacyDay = component.data.find((d) => d.day === legacy);
+
+    expect(runsDay?.card).toEqual([
+      { status: "success", value: "140 checks" },
+      { status: "error", value: "4 checks" },
+    ]);
+    expect(legacyDay?.card).toEqual([
+      { status: "success", value: "90 checks" },
+      { status: "error", value: "10 checks" },
+    ]);
+    const up = 140 + 90;
+    const total = 144 + 100;
+    expect(component.uptime).toBe(`${floorPct(up / total)}%`);
+    expect(component.uptime).not.toBe(
+      `${floorPct((140 + 540) / (144 + 600))}%`,
+    );
+  });
+
+  test("a converted day rounds its card counts at display", async () => {
+    const day = yesterdayIn("UTC");
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, day, { ok: 857, error: 7 })],
+    }));
+    const { slug, componentId } = await pageWith(ids.cloud);
+
+    const component = await uptime(slug, componentId);
+    const bar = component.data.find((d) => d.day === day);
+
+    expect(bar?.card).toEqual([
+      { status: "success", value: "143 checks" },
+      { status: "error", value: "1 checks" },
+    ]);
+    expect(component.uptime).toBe(`${floorPct(857 / 864)}%`);
   });
 
   test("private-only monitor stays on per-region counts and is never asked for runs", async () => {
@@ -303,7 +370,7 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
     expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
   });
 
-  test("a failed histogram falls back to per-region counts and the page still renders", async () => {
+  test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.cloud, day, { ok: 720, error: 144 })],
@@ -318,8 +385,8 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
 
     expect(bar?.bar).toEqual([{ status: "error", height: 100 }]);
     expect(bar?.card).toEqual([
-      { status: "success", value: "720 reqs" },
-      { status: "error", value: "144 reqs" },
+      { status: "success", value: "120 checks" },
+      { status: "error", value: "24 checks" },
     ]);
     expect(component.uptime).toBe(`${floorPct(720 / 864)}%`);
   });
@@ -352,13 +419,23 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
   }
 
   // what the monitor page and its markdown twin show
-  function shown(rows: Parameters<typeof tallyBuckets>[0]) {
-    const t = tallyBuckets(rows);
+  function shown(
+    rows: Parameters<typeof tallyBuckets>[0],
+    regionCount: number | null,
+  ) {
+    const t = tallyBuckets(rows, regionCount);
     return {
-      checks: t.total,
-      runs: t.runs,
+      checks: roundCount(t.total),
+      unit: regionCount !== null ? "checks" : "requests",
       uptime: t.total > 0 ? floorPct(t.up / t.total) : null,
     };
+  }
+
+  function view(result: Awaited<ReturnType<typeof monitorPage>>) {
+    return shown(
+      asCounts(result.data.uptime.data),
+      result.data.uptime.regionCount,
+    );
   }
 
   function asCounts(
@@ -416,9 +493,9 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
 
     const result = await monitorPage(publicIds.cloud);
 
-    expect(shown(asCounts(result.data.uptime.data))).toEqual({
+    expect(view(result)).toEqual({
       checks: 96,
-      runs: true,
+      unit: "checks",
       uptime: 100,
     });
     const uptimeCall = pipes.calls.find((c) => c.name === "httpUptimeWeekly");
@@ -449,10 +526,14 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
     }));
 
     const result = await monitorPage(publicIds.cloud);
-    const view = shown(asCounts(result.data.uptime.data));
+    const shownView = view(result);
 
-    expect(view).toEqual({ checks: 96, runs: true, uptime: floorPct(92 / 96) });
-    expect(view.uptime).toBe(95.833);
+    expect(shownView).toEqual({
+      checks: 96,
+      unit: "checks",
+      uptime: floorPct(92 / 96),
+    });
+    expect(shownView.uptime).toBe(95.833);
   });
 
   test("private-only monitor stays on per-region counts and is never asked for runs", async () => {
@@ -462,9 +543,10 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
 
     const result = await monitorPage(publicIds.private);
 
-    expect(shown(asCounts(result.data.uptime.data))).toEqual({
+    expect(result.data.uptime.regionCount).toBe(null);
+    expect(view(result)).toEqual({
       checks: 6,
-      runs: false,
+      unit: "requests",
       uptime: floorPct(5 / 6),
     });
     expect(pipes.calls.some((c) => c.name === "httpQuorumIntervals")).toBe(
@@ -472,7 +554,7 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
     );
   });
 
-  test("a failed histogram falls back to per-region counts and the page still renders", async () => {
+  test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
     pipes.impl.set("httpUptimeWeekly", async () => ({
       data: [uptimeRow(bucketA, { success: 240, error: 48 })],
     }));
@@ -485,10 +567,41 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
     expect(result.data.uptime.data).toEqual([
       uptimeRow(bucketA, { success: 240, error: 48 }),
     ]);
-    expect(shown(asCounts(result.data.uptime.data))).toEqual({
-      checks: 288,
-      runs: false,
+    expect(view(result)).toEqual({
+      checks: 48,
+      unit: "checks",
       uptime: floorPct(240 / 288),
+    });
+  });
+
+  test("a bucket the histogram misses (the DNS case) is converted, not mixed in", async () => {
+    const dnsId = (
+      await createMonitor(workspaceId, {
+        active: true,
+        public: true,
+        jobType: "dns",
+        regions: SIX_REGIONS,
+      })
+    ).id;
+    pipes.impl.set("dnsUptime30d", async () => ({
+      data: [
+        uptimeRow(bucketA, { success: 276, error: 12 }),
+        uptimeRow(bucketB, { success: 282, error: 6 }),
+      ],
+    }));
+    pipes.impl.set("dnsQuorumIntervals", async () => ({
+      data: [
+        intervalHist(bucketA, { errorRegions: 0, notOkRegions: 0, runs: 44 }),
+        intervalHist(bucketA, { errorRegions: 3, notOkRegions: 3, runs: 4 }),
+      ],
+    }));
+
+    const result = await monitorPage(dnsId);
+
+    expect(view(result)).toEqual({
+      checks: 96,
+      unit: "checks",
+      uptime: floorPct((44 + 47) / 96),
     });
   });
 });

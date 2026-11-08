@@ -17,7 +17,7 @@ import {
   getEvents,
   heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
-  requestsTally,
+  tallyBuckets,
   tallyDay,
 } from "../status-timeline";
 import { monthRange } from "./compute";
@@ -28,6 +28,7 @@ import {
   uptimeFreezePipes,
   type UptimeQuorumPipes,
   uptimeQuorumPipes,
+  uptimeRegionCount,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -42,7 +43,7 @@ function windowKey(w: (typeof WINDOWS)[number]): HistoryWindowKey {
 }
 
 // native-unit numerators kept alongside the percentage so rolling windows
-// stay additive (checks for requests mode, milliseconds for event math);
+// stay additive (runs or region checks for requests mode, milliseconds for event math);
 // averaging monthly percentages would weigh a 2-day month like a full one
 type MonthValue = { percentage: number; up: number; total: number } | null;
 
@@ -91,9 +92,12 @@ function monthKeys(now: Date): string[] {
   });
 }
 
-function requestsMonth(days: FrozenMonitorUptimeDay[] | null): MonthValue {
+function requestsMonth(
+  days: FrozenMonitorUptimeDay[] | null,
+  regionCount: number | null,
+): MonthValue {
   if (!days) return null;
-  const { up, total } = requestsTally(days);
+  const { up, total } = tallyBuckets(days, regionCount);
   if (total === 0) return null;
   return { percentage: floorPct(up / total), up, total };
 }
@@ -105,7 +109,7 @@ function durationMonth(
 ): MonthValue {
   // denominator = days with checks, matching getUptime's data.length; frozen
   // months are zero-filled so counting all days would inflate sparse months
-  const withChecks = (days ?? []).filter((d) => tallyDay(d).total > 0);
+  const withChecks = (days ?? []).filter((d) => tallyDay(d, null).total > 0);
   if (withChecks.length === 0) return null;
   // downtime is clipped to the checked days (a paused stretch can't exceed
   // the denominator) and the in-progress day is clamped to elapsed time so
@@ -294,9 +298,17 @@ export async function getUptimeHistory(args: {
     return days.length > 0 ? days : null;
   }
 
+  const regionCounts = new Map(
+    [...monitorsById].map(([id, m]) => [id, uptimeRegionCount(m)]),
+  );
+
   const quorumSince =
     months.find((key) =>
-      monitorIds.some((id) => countsFor(id, key)?.some((d) => d.quorum)),
+      monitorIds.some(
+        (id) =>
+          regionCounts.get(id) != null &&
+          countsFor(id, key)?.some((d) => d.quorum),
+      ),
     ) ?? null;
 
   const pastDays = HISTORY_MONTHS * 31 + 7;
@@ -337,13 +349,13 @@ export async function getUptimeHistory(args: {
       } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
         if (mode === "requests") {
-          value = requestsMonth(days);
+          value = requestsMonth(days, regionCounts.get(c.monitorId) ?? null);
         } else if (mode === "duration") {
           value = durationMonth(days, events, nowMs);
         } else {
           // manual mode still keys "did the monitor run" off counts: a
           // zero-check month has no meaningful uptime in any mode
-          value = days?.some((d) => tallyDay(d).total > 0)
+          value = days?.some((d) => tallyDay(d, null).total > 0)
             ? eventOnlyMonth(events, key, nowMs)
             : null;
         }

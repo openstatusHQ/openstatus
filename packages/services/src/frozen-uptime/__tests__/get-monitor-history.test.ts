@@ -420,6 +420,7 @@ describe("getMonitorUptimeHistory with run quorum", () => {
           regionCount: 4,
           buckets: [{ errorRegions: 2, notOkRegions: 2, runs: 3 }],
         });
+        expect(res.regionCount).toBe(4);
       });
     },
   );
@@ -449,6 +450,25 @@ describe("getMonitorUptimeHistory with run quorum", () => {
       expect(res.days).toEqual([
         { day: "2026-11-02", ok: 9, degraded: 0, error: 1 },
       ]);
+      expect(res.regionCount).toBe(1);
+    });
+  });
+
+  test("monitors without a quorum population count per region", async () => {
+    await withTestTransaction(async (tx) => {
+      const privateOnly = await insertMonitor(tx, { regions: "" });
+      const heartbeat = await insertMonitor(tx, { jobType: "heartbeat" });
+      for (const m of [privateOnly, heartbeat]) {
+        const res = await getMonitorUptimeHistory({
+          ctx: { ...userCtx, db: tx },
+          input: { monitorId: m.id },
+          pipes: pipes([]),
+          quorumPipes: quorumPipes({}),
+          now,
+          sleep: noSleep,
+        });
+        expect(res.regionCount).toBe(null);
+      }
     });
   });
 });

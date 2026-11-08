@@ -170,7 +170,7 @@ describe("attachQuorum", () => {
         ]),
         new Map([["1", new Map([["2026-11-02", quorumDay]])]]),
       ).get("1") ?? [];
-    expect(day && tallyDay(day)).toEqual({
+    expect(day && tallyDay(day, 6)).toEqual({
       up: 144,
       total: 144,
       ok: 144,
@@ -327,12 +327,15 @@ describe("attachIntervalQuorum", () => {
     );
     expect(
       row &&
-        tallyDay({
-          ok: row.success,
-          degraded: row.degraded,
-          error: row.error,
-          quorum: row.quorum,
-        }),
+        tallyDay(
+          {
+            ok: row.success,
+            degraded: row.degraded,
+            error: row.error,
+            quorum: row.quorum,
+          },
+          6,
+        ),
     ).toMatchObject({ up: 48, total: 48, error: 0 });
   });
 });

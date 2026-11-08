@@ -73,7 +73,7 @@ export function heartbeatCoverageStart(
 ): number | null {
   let start: number | null = null;
   for (const d of days) {
-    if (tallyDay(d).total === 0) continue;
+    if (tallyDay(d, null).total === 0) continue;
     const dayStart = dayWindow(d.day, timeZone).start;
     if (start === null || dayStart < start) start = dayStart;
   }
@@ -83,20 +83,6 @@ export function heartbeatCoverageStart(
     if (start === null || from < start) start = from;
   }
   return start;
-}
-
-export function requestsTally(counts: CheckCounts[]): {
-  up: number;
-  total: number;
-} {
-  let up = 0;
-  let total = 0;
-  for (const c of counts) {
-    const day = tallyDay(c);
-    up += day.up;
-    total += day.total;
-  }
-  return { up, total };
 }
 
 export function clampInterval(
@@ -195,11 +181,12 @@ export function probeDowntimeIntervals(
     const end = Math.min(dayEnd, window.end);
     if (end <= start) continue;
 
-    const { error, total } = tallyDay(item);
+    // only private-only monitors reach here, and they have no quorum population
+    const { error, total } = tallyDay(item, null);
     if (total === 0) continue;
 
     // Calculate error ratio as the weight
-    // degraded counts as "up" (like in requestsTally), only errors count as down
+    // degraded counts as "up" (like in tallyBuckets), only errors count as down
     const errorRatio = error / total;
     if (errorRatio === 0) continue;
 

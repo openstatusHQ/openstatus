@@ -26,6 +26,7 @@ import {
   type LiveQuorum,
   uptimeQuorumIntervalPipes,
   uptimeQuorumPipes,
+  uptimeRegionCount,
 } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
@@ -150,6 +151,13 @@ async function fetchStatusDays(
     );
     return readUtc();
   }
+}
+
+function regionCountOf(monitor: { jobType: string; regions: string[] }) {
+  return uptimeRegionCount({
+    jobType: monitor.jobType,
+    regions: monitor.regions.join(","),
+  });
 }
 
 // Run quorum per `timeZone` day. Its own budget: a slow or failed read only
@@ -1002,11 +1010,13 @@ export const statusPageRouter = createTRPCRouter({
         const effectiveBarType = forceManual ? "manual" : input.barType;
         const effectiveCardType = forceManual ? "manual" : input.cardType;
 
+        const regionCount = c.monitor ? regionCountOf(c.monitor) : null;
         const processedData = setDataByType({
           events,
           data: filledData,
           cardType: effectiveCardType,
           barType: effectiveBarType,
+          regionCount,
           timeZone,
         });
         const uptime = getUptime({
@@ -1014,6 +1024,7 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
+          regionCount,
           timeZone,
           privateLocationOnly:
             c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
@@ -1056,6 +1067,7 @@ export const statusPageRouter = createTRPCRouter({
       data,
       cardType: "requests",
       barType: "dominant",
+      regionCount: null,
     });
     return {
       data: processedData,
@@ -1357,6 +1369,7 @@ export const statusPageRouter = createTRPCRouter({
       const uptime = {
         ...counts,
         data: attachIntervalQuorum(counts.data, quorum ?? new Map()),
+        regionCount: regionCountOf(_monitor),
       };
 
       return {

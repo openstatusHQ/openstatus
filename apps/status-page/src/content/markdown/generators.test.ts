@@ -654,6 +654,7 @@ describe("generateMonitor", () => {
         data: {
           ...monitor.data,
           uptime: {
+            regionCount: 6,
             data: [
               {
                 interval: new Date(),
@@ -676,6 +677,40 @@ describe("generateMonitor", () => {
       BASE,
     );
     expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 checks |");
+  });
+
+  test("a bucket without a run quorum is converted to runs, not mixed in", () => {
+    const converted = generateMonitor(
+      {
+        ...monitor,
+        data: {
+          ...monitor.data,
+          uptime: {
+            regionCount: 6,
+            data: [
+              {
+                interval: new Date(),
+                success: 120,
+                degraded: 0,
+                error: 24,
+                quorum: {
+                  regionCount: 6,
+                  buckets: [
+                    { errorRegions: 0, notOkRegions: 0, runs: 20 },
+                    { errorRegions: 3, notOkRegions: 3, runs: 4 },
+                  ],
+                },
+              },
+              { interval: new Date(), success: 141, degraded: 0, error: 3 },
+            ],
+          },
+        },
+      } as unknown as MonitorDetail,
+      BASE,
+    );
+    expect(converted).toContain(
+      "| Uptime (last 7 days) | 90.625% · 48 checks |",
+    );
   });
 
   test("percentile table", () => {

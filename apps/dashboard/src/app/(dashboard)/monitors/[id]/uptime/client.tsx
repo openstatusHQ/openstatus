@@ -69,8 +69,15 @@ export function Client() {
   const now = useMemo(() => new Date(), []);
   const today = useMemo(() => utcToday(now), [now]);
   const counts = isLimited ? exampleUptimeCounts(now) : history?.days;
-  const years = useMemo(() => uptimeYears(counts ?? [], now), [counts, now]);
-  const since = useMemo(() => quorumSince(counts ?? []), [counts]);
+  const regionCount = isLimited ? null : (history?.regionCount ?? null);
+  const years = useMemo(
+    () => uptimeYears(counts ?? [], regionCount, now),
+    [counts, regionCount, now],
+  );
+  const since = useMemo(
+    () => quorumSince(counts ?? [], regionCount),
+    [counts, regionCount],
+  );
 
   if (!monitor || !workspace || (!isLimited && !history)) return null;
 

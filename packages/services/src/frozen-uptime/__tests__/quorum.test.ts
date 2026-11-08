@@ -87,12 +87,14 @@ describe("quorumByDay", () => {
       cloud,
     );
     const quorum = days.get("2026-11-02");
-    expect(tallyDay({ ok: 0, degraded: 0, error: 0, quorum })).toMatchObject({
-      up: 102,
-      total: 106,
-      ok: 100,
-      degraded: 2,
-      error: 4,
-    });
+    expect(tallyDay({ ok: 0, degraded: 0, error: 0, quorum }, 6)).toMatchObject(
+      {
+        up: 102,
+        total: 106,
+        ok: 100,
+        degraded: 2,
+        error: 4,
+      },
+    );
   });
 });

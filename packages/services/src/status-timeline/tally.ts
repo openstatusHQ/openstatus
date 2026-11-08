@@ -8,7 +8,10 @@ export type DayCounts = {
   quorum?: FrozenMonitorUptimeQuorum;
 };
 
-/** Counts are runs when the day carries a quorum histogram, else region checks. */
+/**
+ * Runs when the monitor has a quorum `regionCount`, else region checks.
+ * Converted days may be fractional: show counts through `roundCount`.
+ */
 export type DayTally = {
   up: number;
   total: number;
@@ -33,15 +36,23 @@ function runCounts({ regionCount, buckets }: FrozenMonitorUptimeQuorum) {
   return counts;
 }
 
-/** Whether `tallyDay` counts this day in runs rather than region checks. */
-export function countsRuns(
-  day: DayCounts,
-): day is DayCounts & { quorum: FrozenMonitorUptimeQuorum } {
-  return day.quorum !== undefined && day.quorum.regionCount > 0;
+// a day without a histogram keeps its ratio, expressed in run equivalents
+function dayCounts(day: DayCounts, regionCount: number | null) {
+  if (regionCount === null || regionCount <= 0) return day;
+  if (day.quorum && day.quorum.regionCount > 0) return runCounts(day.quorum);
+  return {
+    ok: day.ok / regionCount,
+    degraded: day.degraded / regionCount,
+    error: day.error / regionCount,
+  };
 }
 
-export function tallyDay(day: DayCounts): DayTally {
-  const { ok, degraded, error } = countsRuns(day) ? runCounts(day.quorum) : day;
+/**
+ * `regionCount` is the monitor's quorum population: every day is counted in
+ * runs. `null` (no population) counts region checks and ignores `quorum`.
+ */
+export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
+  const { ok, degraded, error } = dayCounts(day, regionCount);
   const total = ok + degraded + error;
   return {
     up: ok + degraded,
@@ -60,18 +71,22 @@ export function tallyDay(day: DayCounts): DayTally {
   };
 }
 
-/** Sums `tallyDay` over buckets; `runs` when any of them is counted in runs. */
-export function tallyBuckets(days: DayCounts[]): {
-  up: number;
-  total: number;
-  runs: boolean;
-} {
+/** Sums `tallyDay` over days or buckets of one monitor. */
+export function tallyBuckets(
+  days: DayCounts[],
+  regionCount: number | null,
+): { up: number; total: number } {
   let up = 0;
   let total = 0;
   for (const day of days) {
-    const tally = tallyDay(day);
+    const tally = tallyDay(day, regionCount);
     up += tally.up;
     total += tally.total;
   }
-  return { up, total, runs: days.some(countsRuns) };
+  return { up, total };
+}
+
+/** Counts are shown as integers; converted days carry fractions. */
+export function roundCount(count: number): number {
+  return Math.round(count);
 }

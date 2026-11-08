@@ -20,6 +20,7 @@ import {
   quorumByDay,
   type QuorumHistogramRow,
   type QuorumIntervalRow,
+  quorumPopulation,
   type QuorumPopulation,
   quorumPopulations,
 } from "./quorum";
@@ -81,6 +82,15 @@ export type UptimeQuorumJobType = Exclude<
 >;
 
 export type UptimeQuorumPipes = Record<UptimeQuorumJobType, QuorumPipeFn>;
+
+/** Region count of the monitor's quorum population: its uptime unit is runs. Null counts per region. */
+export function uptimeRegionCount(monitor: {
+  jobType: string;
+  regions: string;
+}): number | null {
+  if (JOB_TYPES_WITHOUT_QUORUM.some((t) => t === monitor.jobType)) return null;
+  return quorumPopulation(monitor.regions)?.regionCount ?? null;
+}
 
 export function uptimeQuorumPipes(tb: OSTinybird): UptimeQuorumPipes {
   return {

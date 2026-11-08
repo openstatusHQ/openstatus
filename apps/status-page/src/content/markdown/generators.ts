@@ -1,5 +1,8 @@
 import type { RouterOutputs } from "@openstatus/api";
-import { tallyBuckets } from "@openstatus/services/status-timeline/tally";
+import {
+  roundCount,
+  tallyBuckets,
+} from "@openstatus/services/status-timeline/tally";
 
 import { flattenComponents, worstComponent } from "../status-vocab";
 import {
@@ -655,6 +658,7 @@ export function generateMonitor(
 
   // Uptime over the hardcoded 7-day window.
   const uptimeData = monitor.data.uptime?.data ?? [];
+  const regionCount = monitor.data.uptime?.regionCount ?? null;
   const totals = tallyBuckets(
     uptimeData.map((d) => ({
       ok: d.success,
@@ -662,6 +666,7 @@ export function generateMonitor(
       error: d.error,
       quorum: d.quorum,
     })),
+    regionCount,
   );
   const uptime =
     totals.total > 0 ? formatPercent(totals.up / totals.total) : "N/A";
@@ -700,7 +705,7 @@ export function generateMonitor(
         ],
         [
           "Uptime (last 7 days)",
-          `${uptime} · ${totals.total} ${totals.runs ? "checks" : "requests"}`,
+          `${uptime} · ${roundCount(totals.total)} ${regionCount !== null ? "checks" : "requests"}`,
         ],
       ],
     ),

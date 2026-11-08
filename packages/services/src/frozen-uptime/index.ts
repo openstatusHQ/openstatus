@@ -40,5 +40,6 @@ export {
   uptimeFreezePipes,
   uptimeQuorumIntervalPipes,
   uptimeQuorumPipes,
+  uptimeRegionCount,
 } from "./run";
 export { FreezeMonitorMonthInput } from "./schemas";

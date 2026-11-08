@@ -2,6 +2,7 @@
 
 import { Trend } from "@openstatus/icons";
 import {
+  roundCount,
   tallyBuckets,
   tallyDay,
 } from "@openstatus/services/status-timeline/tally";
@@ -127,6 +128,8 @@ export default function Page() {
     return Object.values(grouped);
   }, [monitor?.data.regions?.data, timezone]);
 
+  const regionCount = monitor?.data.uptime?.regionCount ?? null;
+
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
     return monitor.data.uptime.data
@@ -138,7 +141,7 @@ export default function Page() {
           error: item.error,
           quorum: item.quorum,
         };
-        const tally = tallyDay(counts);
+        const tally = tallyDay(counts, regionCount);
         return {
           timestamp: item.interval.toLocaleString("default", {
             day: "numeric",
@@ -150,14 +153,14 @@ export default function Page() {
           }),
           interval: item.interval,
           counts,
-          success: tally.ok,
-          degraded: tally.degraded,
-          error: tally.error,
+          success: roundCount(tally.ok),
+          degraded: roundCount(tally.degraded),
+          error: roundCount(tally.error),
         };
       });
-  }, [monitor?.data.uptime?.data, timezone]);
+  }, [monitor?.data.uptime?.data, regionCount, timezone]);
 
-  const { countsRuns, totalChecks, uptimePercentage, slowestRegion, p75Range } =
+  const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {
       const p75Range = globalLatencyData.reduce(
         (acc, item) => ({
@@ -170,7 +173,10 @@ export default function Page() {
         },
       );
 
-      const uptimeStats = tallyBuckets(uptimeData.map((item) => item.counts));
+      const uptimeStats = tallyBuckets(
+        uptimeData.map((item) => item.counts),
+        regionCount,
+      );
 
       const uptimePercentage =
         uptimeStats.total > 0 ? uptimeStats.up / uptimeStats.total : 0;
@@ -199,8 +205,7 @@ export default function Page() {
         .sort((a, b) => b.avgLatency - a.avgLatency)[0];
 
       return {
-        countsRuns: uptimeStats.runs,
-        totalChecks: formatNumber(uptimeStats.total, {
+        totalChecks: formatNumber(roundCount(uptimeStats.total), {
           notation: "compact",
           compactDisplay: "short",
         }).replace("K", "k"),
@@ -213,7 +218,7 @@ export default function Page() {
             ? formatMillisecondsRange(p75Range.min, p75Range.max)
             : "N/A",
       };
-    }, [uptimeData, regionLatencyData, globalLatencyData]);
+    }, [uptimeData, regionCount, regionLatencyData, globalLatencyData]);
 
   if (!isLoading && !monitor) {
     return (
@@ -287,7 +292,8 @@ export default function Page() {
                 <StatusMonitorTabsTriggerValue>
                   {uptimePercentage}{" "}
                   <Badge variant="outline" className="py-px text-[10px]">
-                    {totalChecks} {countsRuns ? t("checks") : t("requests")}
+                    {totalChecks}{" "}
+                    {regionCount !== null ? t("checks") : t("requests")}
                   </Badge>
                 </StatusMonitorTabsTriggerValue>
               )}

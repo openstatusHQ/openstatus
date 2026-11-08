@@ -452,7 +452,8 @@ export function getWorstVariant<T extends keyof typeof STATUS_PRIORITY>(
 export function getHighestPriorityStatus(
   item: StatusData,
 ): keyof typeof STATUS_PRIORITY {
-  return tallyDay(item).status;
+  // one day's status: no totals across days whose units could mix
+  return tallyDay(item, item.quorum?.regionCount ?? null).status;
 }
 
 // worst report impact for one day; null = legacy event (no impact rows)

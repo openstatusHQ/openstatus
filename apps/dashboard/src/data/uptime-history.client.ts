@@ -1,5 +1,6 @@
 import {
   type DayCounts,
+  roundCount,
   tallyDay,
 } from "@openstatus/services/status-timeline/tally";
 import { eachDayOfInterval, endOfYear, format, startOfYear } from "date-fns";
@@ -27,8 +28,11 @@ export function formatUptime(ratio: number, digits = 2): string {
 }
 
 /** Muted without failures, else by failed share of the day's checks: < 1%, ≤ 5%, > 5%. */
-function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
-  const tally = counts ? tallyDay(counts) : null;
+function dayMark(
+  counts: CheckCounts | undefined,
+  regionCount: number | null,
+): Partial<ActivityDay> {
+  const tally = counts ? tallyDay(counts, regionCount) : null;
   // a day without checks is no data, never downtime
   if (!tally || tally.total === 0)
     return { hatched: true, lines: ["No checks"] };
@@ -41,16 +45,24 @@ function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
     lines: [
       `${formatUptime((total - error) / total)} uptime`,
       [
-        `${formatNumber(total)} checks`,
-        ...(error > 0 ? [`${formatNumber(error)} failed`] : []),
-        ...(degraded > 0 ? [`${formatNumber(degraded)} degraded`] : []),
+        `${formatNumber(roundCount(total))} checks`,
+        ...(roundCount(error) > 0
+          ? [`${formatNumber(roundCount(error))} failed`]
+          : []),
+        ...(roundCount(degraded) > 0
+          ? [`${formatNumber(roundCount(degraded))} degraded`]
+          : []),
       ].join(" · "),
     ],
   };
 }
 
 /** First UTC day whose counts are runs judged on quorum, as a local-midnight date. */
-export function quorumSince(counts: CheckCounts[]): Date | null {
+export function quorumSince(
+  counts: CheckCounts[],
+  regionCount: number | null,
+): Date | null {
+  if (regionCount === null) return null;
   const first = counts
     .filter((d) => d.quorum)
     .reduce<string | null>(
@@ -63,7 +75,7 @@ export function quorumSince(counts: CheckCounts[]): Date | null {
 }
 
 export function quorumNote(since: Date): string {
-  return `Since ${format(since, "MMMM yyyy")}, a check covers all of the monitor's regions and counts as down when at least half of them fail.`;
+  return `Since ${format(since, "MMMM yyyy")}, a check covers all of the monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.`;
 }
 
 /** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */
@@ -75,9 +87,13 @@ export function utcToday(now = new Date()) {
  * One calendar per year, newest first, from the oldest recorded day's year;
  * days before the first check are blank, days after today (UTC) are left empty.
  */
-export function uptimeYears(counts: CheckCounts[], now = new Date()) {
+export function uptimeYears(
+  counts: CheckCounts[],
+  regionCount: number | null,
+  now = new Date(),
+) {
   // frozen months are zero-filled: the record starts at the first checked day
-  const since = counts.find((c) => tallyDay(c).total > 0)?.day;
+  const since = counts.find((c) => tallyDay(c, regionCount).total > 0)?.day;
   if (!since) return [];
   const byDay = new Map(counts.map((c) => [c.day, c]));
   const first = Number(since.slice(0, 4));
@@ -95,12 +111,12 @@ export function uptimeYears(counts: CheckCounts[], now = new Date()) {
       if (key < since) return { date, blank: true };
       const c = byDay.get(key);
       if (c) {
-        const tally = tallyDay(c);
+        const tally = tallyDay(c, regionCount);
         up += tally.up;
         total += tally.total;
         if (tally.error > 0) failedDays++;
       }
-      return { date, ...dayMark(c) };
+      return { date, ...dayMark(c, regionCount) };
     });
     years.push({
       year,

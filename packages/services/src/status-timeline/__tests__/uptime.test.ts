@@ -7,7 +7,6 @@ import {
   floorPct,
   heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
-  requestsTally,
 } from "../uptime";
 
 const HOUR = 3_600_000;
@@ -77,21 +76,6 @@ describe("floorPct", () => {
   test("the epsilon does not lift a value onto the next thousandth", () => {
     expect(floorPct(28_9995 / 1_000_000)).toBe(28.999);
     expect(floorPct(99_9999 / 1_000_000)).toBe(99.999);
-  });
-});
-
-describe("requestsTally", () => {
-  test("degraded counts as up, error does not", () => {
-    expect(
-      requestsTally([
-        { ok: 90, degraded: 5, error: 5 },
-        { ok: 100, degraded: 0, error: 0 },
-      ]),
-    ).toEqual({ up: 195, total: 200 });
-  });
-
-  test("empty input is a zero tally", () => {
-    expect(requestsTally([])).toEqual({ up: 0, total: 0 });
   });
 });
 

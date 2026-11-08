@@ -19,6 +19,7 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
+import { floorPct } from "../../status-timeline";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getUptimeHistory } from "../get-history";
@@ -1108,6 +1109,115 @@ describe("getUptimeHistory with run quorum", () => {
       });
     },
   );
+
+  // 6 regions, 600 checks a day with 60 errors: 100 run equivalents, 90 up
+  const perRegionDay = { ok: 540, error: 60 };
+  const quorumDayCounts = {
+    ok: 590,
+    error: 10,
+    quorum: {
+      regionCount: 6,
+      buckets: [
+        { errorRegions: 3, notOkRegions: 3, runs: 5 },
+        { errorRegions: 1, notOkRegions: 1, runs: 95 },
+      ],
+    },
+  };
+
+  test("rolling windows weigh per-region months in runs, months keep their percentage", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(2)}-01`,
+        days: fullMonth(key(2), perRegionDay),
+      });
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), {}).map((d) => ({ ...d, ...quorumDayCounts })),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        quorumPipes: quorumPipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      const d2 = monthDays(`${key(2)}-01`).length;
+      const d1 = monthDays(`${key(1)}-01`).length;
+      const row = res.rows[0];
+      expect(row.months[key(2)]).toBe(90);
+      expect(row.months[key(1)]).toBe(95);
+      expect(row.rolling["6"]).toBe(
+        floorPct((90 * d2 + 95 * d1) / (100 * (d2 + d1))),
+      );
+      expect(row.rolling["6"]).not.toBe(
+        floorPct((540 * d2 + 95 * d1) / (600 * d2 + 100 * d1)),
+      );
+    });
+  });
+
+  test("a month with some days lacking quorum stays in runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), {}).map((d, i) =>
+          i < 10 ? { ...d, ...perRegionDay } : { ...d, ...quorumDayCounts },
+        ),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        quorumPipes: quorumPipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      const d1 = monthDays(`${key(1)}-01`).length;
+      const expected = floorPct((10 * 90 + (d1 - 10) * 95) / (100 * d1));
+      expect(res.rows[0].months[key(1)]).toBe(expected);
+      expect(res.rows[0].rolling["6"]).toBe(expected);
+    });
+  });
+
+  test("a private-only monitor stays on region checks and ignores frozen quorum", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx, { regions: "" });
+      const testPage = await insertPage(tx);
+      await insertComponent(tx, {
+        pageId: testPage.id,
+        monitorId: testMonitor.id,
+      });
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), {}).map((d) => ({ ...d, ...quorumDayCounts })),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        quorumPipes: quorumPipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.rows[0].months[key(1)]).toBe(floorPct(590 / 600));
+      expect(res.quorumSince).toBe(null);
+    });
+  });
 
   test("a failed histogram fetch falls back to per-region counts", async () => {
     await withTestTransaction(async (tx) => {

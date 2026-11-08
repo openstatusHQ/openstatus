@@ -7,7 +7,6 @@ import {
 } from "@openstatus/db/src/schema";
 import {
   clipToCoverage,
-  countsRuns,
   type CoverageSegment,
   type DayTally,
   type DayWindow,
@@ -28,7 +27,8 @@ import {
   reportEventDayImpact,
   reportEventDayStatus,
   reportsOnlyDowntimeMs,
-  requestsTally,
+  roundCount,
+  tallyBuckets,
   tallyDay,
 } from "@openstatus/services/status-timeline";
 
@@ -177,12 +177,15 @@ export function setDataByType({
   data,
   cardType,
   barType,
+  regionCount,
   timeZone = "UTC",
 }: {
   events: Event[];
   data: StatusData[];
   cardType: "requests" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
+  /** the monitor's quorum region count: counts are runs; null counts region checks */
+  regionCount: number | null;
   /** IANA zone whose calendar days the bars stand for */
   timeZone?: string;
 }): UptimeData[] {
@@ -362,6 +365,10 @@ export function setDataByType({
     unit: "checks" | "reqs",
   ): UptimeData["card"] {
     return entries
+      .map((entry) => ({
+        status: entry.status,
+        count: roundCount(entry.count),
+      }))
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
@@ -416,6 +423,8 @@ export function setDataByType({
     };
   }
 
+  const countUnit = regionCount === null ? "reqs" : "checks";
+
   return data.map((dayData) => {
     const day = dayWindow(dayData.day, timeZone);
     const dayMs = day.end - day.start;
@@ -448,9 +457,8 @@ export function setDataByType({
     // TODO: transform into a new Map<type, number>();
     let barData: UptimeData["bar"];
 
-    const counts = tallyDay(dayData);
+    const counts = tallyDay(dayData, regionCount);
     const { total, status: dataStatus } = counts;
-    const countUnit = countsRuns(dayData) ? "checks" : "reqs";
 
     switch (barType) {
       case "absolute":
@@ -674,6 +682,7 @@ export function getUptime({
   events,
   barType,
   cardType,
+  regionCount,
   privateLocationOnly = false,
   heartbeat = false,
   timeZone = "UTC",
@@ -682,6 +691,8 @@ export function getUptime({
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "duration" | "dominant" | "manual";
+  /** the monitor's quorum region count: counts are runs; null counts region checks */
+  regionCount: number | null;
   /** no public regions and ≥1 private location: include probe errors in duration uptime */
   privateLocationOnly?: boolean;
   /** pings are not checks: uptime is incident time since the first signal */
@@ -741,7 +752,7 @@ export function getUptime({
     return `${floorPct((total - duration) / total)}%`;
   }
 
-  const { up, total } = requestsTally(data);
+  const { up, total } = tallyBuckets(data, regionCount);
   if (total === 0) return "100%";
   return `${floorPct(up / total)}%`;
 }
