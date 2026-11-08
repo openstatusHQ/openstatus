@@ -19,6 +19,7 @@ import { freezeMonitorMonth } from "./freeze";
 import {
   quorumByDay,
   type QuorumHistogramRow,
+  type QuorumIntervalRow,
   type QuorumPopulation,
   quorumPopulations,
 } from "./quorum";
@@ -32,6 +33,12 @@ export type QuorumPipeFn = (params: {
   monitorIds: string[];
   timezone?: string;
 }) => Promise<{ data: QuorumHistogramRow[] }>;
+export type QuorumIntervalPipeFn = (params: {
+  monitorId: string;
+  interval: number;
+  fromDate?: string;
+  toDate?: string;
+}) => Promise<{ data: QuorumIntervalRow[] }>;
 
 // no 45d status pipe, so no counts on the live status page either
 const JOB_TYPES_WITHOUT_STATUS_PIPE = [
@@ -85,6 +92,23 @@ export function uptimeQuorumPipes(tb: OSTinybird): UptimeQuorumPipes {
   };
 }
 
+export type UptimeQuorumIntervalPipes = Record<
+  UptimeQuorumJobType,
+  QuorumIntervalPipeFn
+>;
+
+export function uptimeQuorumIntervalPipes(
+  tb: OSTinybird,
+): UptimeQuorumIntervalPipes {
+  return {
+    http: tb.httpQuorumIntervals,
+    tcp: tb.tcpQuorumIntervals,
+    dns: tb.dnsQuorumIntervals,
+    icmp: tb.icmpQuorumIntervals,
+    grpc: tb.grpcQuorumIntervals,
+  };
+}
+
 export type ChunkFailure = {
   jobType: string;
   monitorIds: string[];
@@ -113,7 +137,7 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 export function hasQuorumPipe(
-  pipes: UptimeQuorumPipes,
+  pipes: UptimeQuorumPipes | UptimeQuorumIntervalPipes,
   jobType: string,
 ): jobType is UptimeQuorumJobType {
   return Object.hasOwn(pipes, jobType);

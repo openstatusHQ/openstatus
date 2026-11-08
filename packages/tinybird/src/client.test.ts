@@ -7,6 +7,8 @@ import {
   noopFlagSchema,
   OSTinybird,
   quorumHistogramShape,
+  quorumIntervalParameters,
+  quorumIntervalShape,
   quorumParameters,
   status15mParameters,
   status15mShape,
@@ -335,6 +337,72 @@ describe("quorum pipes", () => {
         meta: [],
         data: [],
       });
+    });
+  }
+});
+
+const quorumIntervalGetters = [
+  "httpQuorumIntervals",
+  "tcpQuorumIntervals",
+  "dnsQuorumIntervals",
+  "icmpQuorumIntervals",
+  "grpcQuorumIntervals",
+] as const;
+
+describe("quorumIntervalParameters", () => {
+  test("takes the uptime interval window and drops a region subset", () => {
+    const params = {
+      monitorId: "1",
+      interval: 240,
+      fromDate: "2026-11-01T00:00:00.000Z",
+      toDate: "2026-11-08T23:59:59.999Z",
+    };
+    expect(
+      quorumIntervalParameters.parse({ ...params, regions: ["ams"] }),
+    ).toEqual(params);
+  });
+
+  test("requires the bucket width", () => {
+    expect(quorumIntervalParameters.safeParse({ monitorId: "1" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("quorumIntervalShape", () => {
+  test("parses `interval` to the same Date the uptime shapes produce", () => {
+    const interval = "2026-11-08 12:00:00";
+    const row = quorumIntervalShape.parse({
+      interval,
+      private: 0,
+      errorRegions: 3,
+      notOkRegions: 3,
+      runs: 4,
+    });
+    expect(row.interval.getTime()).toBe(
+      z.coerce.date().parse(interval).getTime(),
+    );
+    expect(row).toMatchObject({
+      private: false,
+      errorRegions: 3,
+      notOkRegions: 3,
+      runs: 4,
+    });
+  });
+});
+
+describe("quorum interval pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of quorumIntervalGetters) {
+    test(`${name} resolves for an uptime interval window`, async () => {
+      expect(
+        await tb[name]({
+          monitorId: "1",
+          interval: 240,
+          fromDate: "2026-11-01T00:00:00.000Z",
+        }),
+      ).toEqual({ meta: [], data: [] });
     });
   }
 });

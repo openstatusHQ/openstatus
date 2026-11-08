@@ -1,13 +1,18 @@
 import type { FrozenMonitorUptimeQuorum } from "@openstatus/db/src/schema";
 
-export type QuorumHistogramRow = {
-  monitorId: string;
-  day: string; // ISO or YYYY-MM-DD; sliced to YYYY-MM-DD here
+type QuorumCountRow = {
   private: boolean;
   errorRegions: number;
   notOkRegions: number;
   runs: number;
 };
+
+export type QuorumHistogramRow = QuorumCountRow & {
+  monitorId: string;
+  day: string; // ISO or YYYY-MM-DD; sliced to YYYY-MM-DD here
+};
+
+export type QuorumIntervalRow = QuorumCountRow & { interval: Date };
 
 /** The regions a run is judged against: the same set incidents open on. */
 export type QuorumPopulation = { private: boolean; regionCount: number };
@@ -33,19 +38,20 @@ export function quorumPopulations(
 }
 
 /**
- * One monitor's histogram rows → per-day quorum for its population. Days with
- * no run in scope get no entry, so they fall back to per-region counts.
+ * One monitor's histogram rows → quorum per `keyOf` bucket for its population.
+ * Buckets with no run in scope get no entry, so they fall back to per-region counts.
  */
-export function quorumByDay(
-  rows: QuorumHistogramRow[],
+export function quorumBy<Row extends QuorumCountRow>(
+  rows: Row[],
   population: QuorumPopulation,
+  keyOf: (row: Row) => string,
 ): Map<string, FrozenMonitorUptimeQuorum> {
   const out = new Map<string, FrozenMonitorUptimeQuorum>();
   if (population.regionCount <= 0) return out;
   for (const row of rows) {
     if (row.private !== population.private || row.runs <= 0) continue;
-    const day = row.day.slice(0, 10);
-    const quorum = out.get(day) ?? {
+    const key = keyOf(row);
+    const quorum = out.get(key) ?? {
       regionCount: population.regionCount,
       buckets: [],
     };
@@ -61,7 +67,15 @@ export function quorumByDay(
         notOkRegions: row.notOkRegions,
         runs: row.runs,
       });
-    out.set(day, quorum);
+    out.set(key, quorum);
   }
   return out;
+}
+
+/** Per-day quorum, keyed YYYY-MM-DD. */
+export function quorumByDay(
+  rows: QuorumHistogramRow[],
+  population: QuorumPopulation,
+): Map<string, FrozenMonitorUptimeQuorum> {
+  return quorumBy(rows, population, (row) => row.day.slice(0, 10));
 }

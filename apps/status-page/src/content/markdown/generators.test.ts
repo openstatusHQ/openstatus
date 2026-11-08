@@ -637,7 +637,45 @@ describe("generateMonitor", () => {
   test("KPI table", () => {
     expect(md).toContain("| Global latency (p75) | 200ms – 300ms |");
     expect(md).toContain("| Region latency | 2 regions · fastest: iad |");
-    expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 checks |");
+    expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 requests |");
+  });
+
+  test("uptime counts runs when the buckets carry a run quorum", () => {
+    const quorum = (errorRegions: number, runs: number) => ({
+      regionCount: 6,
+      buckets: [
+        { errorRegions: 0, notOkRegions: 0, runs: 24 - runs },
+        { errorRegions, notOkRegions: errorRegions, runs },
+      ],
+    });
+    const runs = generateMonitor(
+      {
+        ...monitor,
+        data: {
+          ...monitor.data,
+          uptime: {
+            data: [
+              {
+                interval: new Date(),
+                success: 120,
+                degraded: 0,
+                error: 24,
+                quorum: quorum(1, 24),
+              },
+              {
+                interval: new Date(),
+                success: 132,
+                degraded: 0,
+                error: 12,
+                quorum: quorum(3, 4),
+              },
+            ],
+          },
+        },
+      } as unknown as MonitorDetail,
+      BASE,
+    );
+    expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 checks |");
   });
 
   test("percentile table", () => {

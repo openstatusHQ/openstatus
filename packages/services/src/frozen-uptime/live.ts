@@ -3,7 +3,12 @@ import type {
   FrozenMonitorUptimeQuorum,
 } from "@openstatus/db/src/schema";
 
-import { quorumByDay, quorumPopulations } from "./quorum";
+import {
+  quorumBy,
+  quorumByDay,
+  quorumPopulation,
+  quorumPopulations,
+} from "./quorum";
 import {
   fetchFreezeCounts,
   fetchQuorumHistograms,
@@ -11,6 +16,7 @@ import {
   hasQuorumPipe,
   monitorIdsWithQuorum,
   type UptimeFreezePipes,
+  type UptimeQuorumIntervalPipes,
   type UptimeQuorumPipes,
 } from "./run";
 
@@ -53,28 +59,68 @@ export async function fetchLiveQuorum(args: {
   return out;
 }
 
+type WithQuorum<Row> = Row & { quorum?: FrozenMonitorUptimeQuorum };
+
+function attachBy<Row extends object>(
+  rows: Row[],
+  byKey: Map<string, FrozenMonitorUptimeQuorum> | undefined,
+  keyOf: (row: Row) => string,
+): WithQuorum<Row>[] {
+  return rows.map((row) => {
+    const quorum = byKey?.get(keyOf(row));
+    return quorum ? { ...row, quorum } : row;
+  });
+}
+
 /** Attach each day's run quorum to the count rows of the same day key. */
 export function attachQuorum<Row extends { monitorId: string; day: string }>(
   rowsByMonitorId: Map<string, Row[]>,
   quorum: LiveQuorum,
-): Map<string, (Row & { quorum?: FrozenMonitorUptimeQuorum })[]> {
-  const out = new Map<
-    string,
-    (Row & { quorum?: FrozenMonitorUptimeQuorum })[]
-  >();
+): Map<string, WithQuorum<Row>[]> {
+  const out = new Map<string, WithQuorum<Row>[]>();
   for (const [monitorId, rows] of rowsByMonitorId) {
-    const byDay = quorum.get(monitorId);
     out.set(
       monitorId,
-      rows.map((row) => {
-        const dayQuorum = byDay?.get(
-          new Date(row.day).toISOString().slice(0, 10),
-        );
-        return dayQuorum ? { ...row, quorum: dayQuorum } : row;
-      }),
+      attachBy(rows, quorum.get(monitorId), (row) =>
+        new Date(row.day).toISOString().slice(0, 10),
+      ),
     );
   }
   return out;
+}
+
+/** interval start (ISO) → that bucket's run quorum, for one monitor. */
+export type IntervalQuorum = Map<string, FrozenMonitorUptimeQuorum>;
+
+/**
+ * Run quorum per `interval`-minute bucket for one monitor, bucketed like the
+ * uptime interval endpoints. Null when the monitor has no quorum population;
+ * a failed read rejects.
+ */
+export async function fetchIntervalQuorum(args: {
+  monitor: LiveMonitor;
+  pipes: UptimeQuorumIntervalPipes;
+  interval: number;
+  fromDate?: string;
+  toDate?: string;
+}): Promise<IntervalQuorum | null> {
+  const { monitor, pipes, ...window } = args;
+  if (!hasQuorumPipe(pipes, monitor.jobType)) return null;
+  const population = quorumPopulation(monitor.regions);
+  if (!population) return null;
+  const { data } = await pipes[monitor.jobType]({
+    monitorId: String(monitor.id),
+    ...window,
+  });
+  return quorumBy(data, population, (row) => row.interval.toISOString());
+}
+
+/** Attach each bucket's run quorum to the uptime row of the same interval. */
+export function attachIntervalQuorum<Row extends { interval: Date }>(
+  rows: Row[],
+  quorum: IntervalQuorum,
+): WithQuorum<Row>[] {
+  return attachBy(rows, quorum, (row) => row.interval.toISOString());
 }
 
 /**

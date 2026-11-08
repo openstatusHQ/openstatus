@@ -1,9 +1,19 @@
 import { describe, expect, test } from "vitest";
 
 import { tallyDay } from "../../status-timeline";
-import { attachQuorum, fetchLiveQuorum } from "../live";
-import type { QuorumHistogramRow } from "../quorum";
-import type { QuorumPipeFn, UptimeQuorumPipes } from "../run";
+import {
+  attachIntervalQuorum,
+  attachQuorum,
+  fetchIntervalQuorum,
+  fetchLiveQuorum,
+} from "../live";
+import type { QuorumHistogramRow, QuorumIntervalRow } from "../quorum";
+import type {
+  QuorumIntervalPipeFn,
+  QuorumPipeFn,
+  UptimeQuorumIntervalPipes,
+  UptimeQuorumPipes,
+} from "../run";
 
 type Call = { monitorIds: string[]; timezone?: string };
 
@@ -168,5 +178,161 @@ describe("attachQuorum", () => {
       error: 0,
       status: "success",
     });
+  });
+});
+
+type IntervalCall = Parameters<QuorumIntervalPipeFn>[0];
+
+function intervalPipes(
+  impl: (params: IntervalCall) => Promise<{ data: QuorumIntervalRow[] }>,
+): { pipes: UptimeQuorumIntervalPipes; calls: IntervalCall[] } {
+  const calls: IntervalCall[] = [];
+  const pipe: QuorumIntervalPipeFn = (params) => {
+    calls.push(params);
+    return impl(params);
+  };
+  return {
+    pipes: { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe },
+    calls,
+  };
+}
+
+// both sides parse Tinybird's `interval` string with z.coerce.date()
+const bucketA = new Date("2026-11-08 08:00:00");
+const bucketB = new Date("2026-11-08 12:00:00");
+
+function intervalRow(overrides: Partial<QuorumIntervalRow>): QuorumIntervalRow {
+  return {
+    interval: bucketA,
+    private: false,
+    errorRegions: 0,
+    notOkRegions: 0,
+    runs: 1,
+    ...overrides,
+  };
+}
+
+const window = {
+  interval: 240,
+  fromDate: "2026-11-01T00:00:00.000Z",
+  toDate: "2026-11-08T23:59:59.999Z",
+};
+
+describe("fetchIntervalQuorum", () => {
+  test("asks for the uptime window and keys buckets by interval start", async () => {
+    const { pipes: quorumPipes, calls } = intervalPipes(async () => ({
+      data: [
+        intervalRow({ runs: 44 }),
+        intervalRow({ errorRegions: 1, notOkRegions: 1, runs: 4 }),
+        intervalRow({ interval: bucketB, errorRegions: 3, runs: 2 }),
+      ],
+    }));
+    const quorum = await fetchIntervalQuorum({
+      monitor: { id: 7, jobType: "tcp", regions: sixRegions },
+      pipes: quorumPipes,
+      ...window,
+    });
+    expect(calls).toEqual([{ monitorId: "7", ...window }]);
+    expect(quorum?.get(bucketA.toISOString())).toEqual({
+      regionCount: 6,
+      buckets: [
+        { errorRegions: 0, notOkRegions: 0, runs: 44 },
+        { errorRegions: 1, notOkRegions: 1, runs: 4 },
+      ],
+    });
+    expect(quorum?.get(bucketB.toISOString())?.buckets).toEqual([
+      { errorRegions: 3, notOkRegions: 0, runs: 2 },
+    ]);
+  });
+
+  test("keeps only cloud-scope runs", async () => {
+    const { pipes: quorumPipes } = intervalPipes(async () => ({
+      data: [
+        intervalRow({ private: true, errorRegions: 1, runs: 9 }),
+        intervalRow({ interval: bucketB, private: true, runs: 3 }),
+      ],
+    }));
+    const quorum = await fetchIntervalQuorum({
+      monitor: { id: 1, jobType: "http", regions: sixRegions },
+      pipes: quorumPipes,
+      ...window,
+    });
+    expect(quorum?.size).toBe(0);
+  });
+
+  test("an empty histogram yields no buckets", async () => {
+    const { pipes: quorumPipes } = intervalPipes(async () => ({ data: [] }));
+    const quorum = await fetchIntervalQuorum({
+      monitor: { id: 1, jobType: "http", regions: sixRegions },
+      pipes: quorumPipes,
+      ...window,
+    });
+    expect(quorum).toEqual(new Map());
+  });
+
+  test("private-only, heartbeat and udp monitors are never asked", async () => {
+    const { pipes: quorumPipes, calls } = intervalPipes(async () => ({
+      data: [],
+    }));
+    for (const monitor of [
+      { id: 1, jobType: "http", regions: "" },
+      { id: 2, jobType: "heartbeat", regions: "" },
+      { id: 3, jobType: "udp", regions: sixRegions },
+    ]) {
+      expect(
+        await fetchIntervalQuorum({ monitor, pipes: quorumPipes, ...window }),
+      ).toBeNull();
+    }
+    expect(calls).toEqual([]);
+  });
+
+  test("a failed read rejects, for the caller's fallback to catch", async () => {
+    const { pipes: quorumPipes } = intervalPipes(async () => {
+      throw new Error("tinybird 500");
+    });
+    await expect(
+      fetchIntervalQuorum({
+        monitor: { id: 1, jobType: "http", regions: sixRegions },
+        pipes: quorumPipes,
+        ...window,
+      }),
+    ).rejects.toThrow("tinybird 500");
+  });
+});
+
+describe("attachIntervalQuorum", () => {
+  const quorumBucket = {
+    regionCount: 6,
+    buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 48 }],
+  };
+
+  test("attaches by interval start and leaves other buckets per region", () => {
+    const rows = [
+      { interval: new Date(bucketA), success: 240, degraded: 0, error: 48 },
+      { interval: new Date(bucketB), success: 288, degraded: 0, error: 0 },
+    ];
+    const out = attachIntervalQuorum(
+      rows,
+      new Map([[bucketA.toISOString(), quorumBucket]]),
+    );
+    expect(out[0]?.quorum).toEqual(quorumBucket);
+    expect(out[1]?.quorum).toBeUndefined();
+    expect(rows[0]).not.toHaveProperty("quorum");
+  });
+
+  test("1 of 6 regions failing every run: the bucket is up in runs", () => {
+    const [row] = attachIntervalQuorum(
+      [{ interval: new Date(bucketA), success: 240, degraded: 0, error: 48 }],
+      new Map([[bucketA.toISOString(), quorumBucket]]),
+    );
+    expect(
+      row &&
+        tallyDay({
+          ok: row.success,
+          degraded: row.degraded,
+          error: row.error,
+          quorum: row.quorum,
+        }),
+    ).toMatchObject({ up: 48, total: 48, error: 0 });
   });
 });

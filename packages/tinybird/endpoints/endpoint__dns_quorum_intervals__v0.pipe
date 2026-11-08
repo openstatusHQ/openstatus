@@ -1,0 +1,40 @@
+TOKEN "endpoint__dns_quorum_intervals__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- Per `interval` bucket: how many scheduled cloud runs had each (errorRegions,
+-- notOkRegions) combination. Buckets on cronTimestamp: the paired dns uptime
+-- endpoint buckets on `timestamp`, so a run that started late may sit one bucket over.
+SELECT
+    interval,
+    private,
+    runErrorRegions AS errorRegions,
+    runNotOkRegions AS notOkRegions,
+    count() AS runs
+FROM (
+    SELECT
+        toStartOfInterval(toDateTime(fromUnixTimestamp64Milli(cronTimestamp)), INTERVAL {{ String(interval, '30', required=True) }} minute) AS interval,
+        cronTimestamp,
+        private,
+        uniqExactMerge(errorRegions) AS runErrorRegions,
+        uniqExactMerge(notOkRegions) AS runNotOkRegions
+    FROM mv__dns_quorum_45d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1', required=True) }}
+        AND private = 0
+        {% if fromDate %}
+            AND time >= toStartOfDay(parseDateTimeBestEffortOrNull({{ String(fromDate) }}))
+            AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) >= parseDateTimeBestEffortOrNull({{ String(fromDate) }})
+        {% end %}
+        {% if toDate %}
+            AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
+            AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
+        {% end %}
+    GROUP BY interval, cronTimestamp, private
+)
+GROUP BY interval, private, errorRegions, notOkRegions
+ORDER BY interval DESC
+
+TYPE endpoint

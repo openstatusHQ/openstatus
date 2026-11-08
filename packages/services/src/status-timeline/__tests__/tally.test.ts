@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { countsRuns, meetsQuorum, tallyDay } from "../tally";
+import { countsRuns, meetsQuorum, tallyBuckets, tallyDay } from "../tally";
 import { requestsTally } from "../uptime";
 
 function quorumDay(
@@ -127,5 +127,31 @@ describe("requestsTally", () => {
         quorumDay([{ errorRegions: 3, notOkRegions: 3, runs: 1 }]),
       ]),
     ).toEqual({ up: 10, total: 13 });
+  });
+});
+
+describe("tallyBuckets", () => {
+  const quorum = (errorRegions: number, runs: number) => ({
+    regionCount: 6,
+    buckets: [{ errorRegions, notOkRegions: errorRegions, runs }],
+  });
+
+  test("sums runs across buckets that carry a quorum", () => {
+    expect(
+      tallyBuckets([
+        { ok: 240, degraded: 0, error: 48, quorum: quorum(1, 48) },
+        { ok: 270, degraded: 0, error: 18, quorum: quorum(3, 6) },
+      ]),
+    ).toEqual({ up: 48, total: 54, runs: true });
+  });
+
+  test("stays in region checks when no bucket has a quorum", () => {
+    expect(
+      tallyBuckets([
+        { ok: 90, degraded: 5, error: 5 },
+        { ok: 100, degraded: 0, error: 0 },
+      ]),
+    ).toEqual({ up: 195, total: 200, runs: false });
+    expect(tallyBuckets([])).toEqual({ up: 0, total: 0, runs: false });
   });
 });

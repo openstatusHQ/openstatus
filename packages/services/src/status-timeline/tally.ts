@@ -59,3 +59,19 @@ export function tallyDay(day: DayCounts): DayTally {
             : "empty",
   };
 }
+
+/** Sums `tallyDay` over buckets; `runs` when any of them is counted in runs. */
+export function tallyBuckets(days: DayCounts[]): {
+  up: number;
+  total: number;
+  runs: boolean;
+} {
+  let up = 0;
+  let total = 0;
+  for (const day of days) {
+    const tally = tallyDay(day);
+    up += tally.up;
+    total += tally.total;
+  }
+  return { up, total, runs: days.some(countsRuns) };
+}

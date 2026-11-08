@@ -12,7 +12,11 @@ import {
   createPageComponent,
   createTestWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { floorPct, todayIn } from "@openstatus/services/status-timeline";
+import {
+  floorPct,
+  tallyBuckets,
+  todayIn,
+} from "@openstatus/services/status-timeline";
 import { NextRequest } from "next/server.js";
 import {
   afterAll,
@@ -27,7 +31,14 @@ import {
 import { appRouter } from "../root";
 import { createInnerTRPCContext } from "../trpc";
 
-type Params = { monitorIds: string[]; timezone?: string };
+type Params = {
+  monitorIds?: string[];
+  timezone?: string;
+  monitorId?: string;
+  interval?: number;
+  fromDate?: string;
+  toDate?: string;
+};
 type Pipe = (params: Params) => Promise<{ data: unknown[] }>;
 
 const pipes = vi.hoisted(() => ({
@@ -311,5 +322,173 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
       { status: "error", value: "144 reqs" },
     ]);
     expect(component.uptime).toBe(`${floorPct(720 / 864)}%`);
+  });
+});
+
+describe("getMonitor counts uptime in runs for monitors with a quorum population", () => {
+  const publicIds = {} as Record<"cloud" | "private", number>;
+  const bucketA = new Date("2026-11-08T08:00:00.000Z");
+  const bucketB = new Date("2026-11-08T12:00:00.000Z");
+
+  function uptimeRow(interval: Date, c: { success: number; error: number }) {
+    return { interval, degraded: 0, ...c };
+  }
+
+  function intervalHist(
+    interval: Date,
+    b: { errorRegions: number; notOkRegions: number; runs: number },
+  ) {
+    return { interval, private: false, ...b };
+  }
+
+  async function monitorPage(monitorId: number) {
+    const { slug } = await pageWith(monitorId);
+    const result = await caller().statusPage.getMonitor({
+      slug,
+      id: monitorId,
+    });
+    if (!result) throw new Error("monitor missing");
+    return result;
+  }
+
+  // what the monitor page and its markdown twin show
+  function shown(rows: Parameters<typeof tallyBuckets>[0]) {
+    const t = tallyBuckets(rows);
+    return {
+      checks: t.total,
+      runs: t.runs,
+      uptime: t.total > 0 ? floorPct(t.up / t.total) : null,
+    };
+  }
+
+  function asCounts(
+    data: {
+      success: number;
+      degraded: number;
+      error: number;
+      quorum?: Parameters<typeof tallyBuckets>[0][number]["quorum"];
+    }[],
+  ) {
+    return data.map((d) => ({
+      ok: d.success,
+      degraded: d.degraded,
+      error: d.error,
+      quorum: d.quorum,
+    }));
+  }
+
+  beforeAll(async () => {
+    publicIds.cloud = (
+      await createMonitor(workspaceId, {
+        active: true,
+        public: true,
+        jobType: "http",
+        regions: SIX_REGIONS,
+      })
+    ).id;
+    publicIds.private = (
+      await createMonitor(workspaceId, {
+        active: true,
+        public: true,
+        jobType: "http",
+        regions: "",
+      })
+    ).id;
+    await db.insert(privateLocationToMonitors).values({
+      privateLocationId: locationId,
+      monitorId: publicIds.private,
+    });
+  });
+
+  test("1 of 6 regions failing every run: 100% and checks counted in runs", async () => {
+    pipes.impl.set("httpUptimeWeekly", async () => ({
+      data: [
+        uptimeRow(bucketA, { success: 240, error: 48 }),
+        uptimeRow(bucketB, { success: 240, error: 48 }),
+      ],
+    }));
+    pipes.impl.set("httpQuorumIntervals", async () => ({
+      data: [
+        intervalHist(bucketA, { errorRegions: 1, notOkRegions: 1, runs: 48 }),
+        intervalHist(bucketB, { errorRegions: 1, notOkRegions: 1, runs: 48 }),
+      ],
+    }));
+
+    const result = await monitorPage(publicIds.cloud);
+
+    expect(shown(asCounts(result.data.uptime.data))).toEqual({
+      checks: 96,
+      runs: true,
+      uptime: 100,
+    });
+    const uptimeCall = pipes.calls.find((c) => c.name === "httpUptimeWeekly");
+    const quorumCall = pipes.calls.find(
+      (c) => c.name === "httpQuorumIntervals",
+    );
+    expect(quorumCall?.params).toEqual({
+      monitorId: String(publicIds.cloud),
+      interval: uptimeCall?.params.interval,
+      fromDate: uptimeCall?.params.fromDate,
+      toDate: uptimeCall?.params.toDate,
+    });
+  });
+
+  test("3 of 6 failing in some runs: the % matches the run counts", async () => {
+    pipes.impl.set("httpUptimeWeekly", async () => ({
+      data: [
+        uptimeRow(bucketA, { success: 276, error: 12 }),
+        uptimeRow(bucketB, { success: 288, error: 0 }),
+      ],
+    }));
+    pipes.impl.set("httpQuorumIntervals", async () => ({
+      data: [
+        intervalHist(bucketA, { errorRegions: 0, notOkRegions: 0, runs: 44 }),
+        intervalHist(bucketA, { errorRegions: 3, notOkRegions: 3, runs: 4 }),
+        intervalHist(bucketB, { errorRegions: 0, notOkRegions: 0, runs: 48 }),
+      ],
+    }));
+
+    const result = await monitorPage(publicIds.cloud);
+    const view = shown(asCounts(result.data.uptime.data));
+
+    expect(view).toEqual({ checks: 96, runs: true, uptime: floorPct(92 / 96) });
+    expect(view.uptime).toBe(95.833);
+  });
+
+  test("private-only monitor stays on per-region counts and is never asked for runs", async () => {
+    pipes.impl.set("httpUptimeWeekly", async () => ({
+      data: [uptimeRow(bucketA, { success: 5, error: 1 })],
+    }));
+
+    const result = await monitorPage(publicIds.private);
+
+    expect(shown(asCounts(result.data.uptime.data))).toEqual({
+      checks: 6,
+      runs: false,
+      uptime: floorPct(5 / 6),
+    });
+    expect(pipes.calls.some((c) => c.name === "httpQuorumIntervals")).toBe(
+      false,
+    );
+  });
+
+  test("a failed histogram falls back to per-region counts and the page still renders", async () => {
+    pipes.impl.set("httpUptimeWeekly", async () => ({
+      data: [uptimeRow(bucketA, { success: 240, error: 48 })],
+    }));
+    pipes.impl.set("httpQuorumIntervals", async () => {
+      throw new Error("tinybird 500");
+    });
+
+    const result = await monitorPage(publicIds.cloud);
+
+    expect(result.data.uptime.data).toEqual([
+      uptimeRow(bucketA, { success: 240, error: 48 }),
+    ]);
+    expect(shown(asCounts(result.data.uptime.data))).toEqual({
+      checks: 288,
+      runs: false,
+      uptime: floorPct(240 / 288),
+    });
   });
 });

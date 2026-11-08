@@ -367,6 +367,24 @@ export const quorumHistogramShape = z.object({
   runs: z.number(),
 });
 
+// same params as the uptime_7d endpoint it pairs with, minus regions: a region
+// subset has no run quorum
+export const quorumIntervalParameters = z.object({
+  monitorId: z.string(),
+  interval: z.int(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+});
+
+// `interval` parses like the uptime shapes' so both sides yield the same Date key
+export const quorumIntervalShape = z.object({
+  interval: z.coerce.date(),
+  private: z.number().transform((val) => val !== 0),
+  errorRegions: z.number(),
+  notOkRegions: z.number(),
+  runs: z.number(),
+});
+
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
 
 /**
@@ -946,6 +964,15 @@ export class OSTinybird {
     });
   }
 
+  public get httpQuorumIntervals() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_quorum_intervals__v0",
+      parameters: quorumIntervalParameters,
+      data: quorumIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpGetBiweekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_get_14d__v0",
@@ -1512,6 +1539,15 @@ export class OSTinybird {
     });
   }
 
+  public get tcpQuorumIntervals() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_quorum_intervals__v0",
+      parameters: quorumIntervalParameters,
+      data: quorumIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
@@ -1990,6 +2026,15 @@ export class OSTinybird {
       pipe: "endpoint__icmp_quorum_45d__v0",
       parameters: quorumParameters,
       data: quorumHistogramShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpQuorumIntervals() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_quorum_intervals__v0",
+      parameters: quorumIntervalParameters,
+      data: quorumIntervalShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2488,6 +2533,15 @@ export class OSTinybird {
       pipe: "endpoint__grpc_quorum_45d__v0",
       parameters: quorumParameters,
       data: quorumHistogramShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcQuorumIntervals() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_quorum_intervals__v0",
+      parameters: quorumIntervalParameters,
+      data: quorumIntervalShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3813,6 +3867,15 @@ export class OSTinybird {
       pipe: "endpoint__dns_quorum_45d__v0",
       parameters: quorumParameters,
       data: quorumHistogramShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsQuorumIntervals() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_quorum_intervals__v0",
+      parameters: quorumIntervalParameters,
+      data: quorumIntervalShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

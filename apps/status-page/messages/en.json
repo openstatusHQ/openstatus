@@ -38,6 +38,7 @@
   "fFOayY": "regions",
   "u81G9-": "Uptime",
   "i2FBWn": "checks",
+  "_a0E_I": "requests",
   "G5Lt80": "The aggregated latency from all active regions based on different quantiles.",
   "YV7rXP": "Latency by Region",
   "6zzIEm": "Region latency per p75 quantile, sorted by slowest region. Compare up to 6 regions.",

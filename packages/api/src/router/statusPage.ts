@@ -18,9 +18,13 @@ import {
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
 import {
+  attachIntervalQuorum,
   attachQuorum,
+  fetchIntervalQuorum,
   fetchLiveQuorum,
+  type IntervalQuorum,
   type LiveQuorum,
+  uptimeQuorumIntervalPipes,
   uptimeQuorumPipes,
 } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
@@ -170,6 +174,28 @@ async function fetchQuorumDays(
     "using per-region counts",
   );
   return result.data ?? new Map();
+}
+
+// Run quorum per uptime interval, with the same budget rule as fetchQuorumDays.
+async function fetchQuorumIntervals(
+  monitor: { id: number; jobType: string; regions: string[] },
+  window: { interval: number; fromDate: string; toDate: string },
+): Promise<IntervalQuorum | null> {
+  const result = await withTinybirdFallback(
+    () =>
+      fetchIntervalQuorum({
+        monitor: {
+          id: monitor.id,
+          jobType: monitor.jobType,
+          regions: monitor.regions.join(","),
+        },
+        pipes: uptimeQuorumIntervalPipes(tb),
+        ...window,
+      }),
+    undefined,
+    "using per-region counts",
+  );
+  return result.data;
 }
 
 export const statusPageRouter = createTRPCRouter({
@@ -1294,35 +1320,44 @@ export const statusPageRouter = createTRPCRouter({
       const fromDate = startOfDay(subDays(new Date(), 7)).toISOString();
       const toDate = endOfDay(new Date()).toISOString();
 
-      // Slow/erroring Tinybird → empty chart data so the page still renders.
-      const metrics = !procedures
-        ? { ok: false as const, data: null }
-        : await withTinybirdFallback(() =>
-            Promise.all([
-              procedures.latency({
-                monitorId: _monitor.id.toString(),
-                fromDate,
-                toDate,
-              }),
-              procedures.regions({
-                monitorId: _monitor.id.toString(),
-                fromDate,
-                toDate,
-              }),
-              procedures.uptime({
-                monitorId: _monitor.id.toString(),
-                interval: 240,
-                fromDate,
-                toDate,
-              }),
-            ]),
-          );
+      const interval = 240;
 
-      const [latency, regions, uptime] = metrics.data ?? [
+      // Slow/erroring Tinybird → empty chart data so the page still renders.
+      const [metrics, quorum] = !procedures
+        ? [{ ok: false as const, data: null }, null]
+        : await Promise.all([
+            withTinybirdFallback(() =>
+              Promise.all([
+                procedures.latency({
+                  monitorId: _monitor.id.toString(),
+                  fromDate,
+                  toDate,
+                }),
+                procedures.regions({
+                  monitorId: _monitor.id.toString(),
+                  fromDate,
+                  toDate,
+                }),
+                procedures.uptime({
+                  monitorId: _monitor.id.toString(),
+                  interval,
+                  fromDate,
+                  toDate,
+                }),
+              ]),
+            ),
+            fetchQuorumIntervals(_monitor, { interval, fromDate, toDate }),
+          ]);
+
+      const [latency, regions, counts] = metrics.data ?? [
         { data: [] },
         { data: [] },
         { data: [] },
       ];
+      const uptime = {
+        ...counts,
+        data: attachIntervalQuorum(counts.data, quorum ?? new Map()),
+      };
 
       return {
         ...selectPublicMonitorSchema.parse(_monitor),

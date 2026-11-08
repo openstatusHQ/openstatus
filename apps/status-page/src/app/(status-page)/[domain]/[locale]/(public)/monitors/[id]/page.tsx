@@ -1,7 +1,10 @@
 "use client";
 
 import { Trend } from "@openstatus/icons";
-import { tallyDay } from "@openstatus/services/status-timeline/tally";
+import {
+  tallyBuckets,
+  tallyDay,
+} from "@openstatus/services/status-timeline/tally";
 import {
   Status,
   StatusContent,
@@ -128,20 +131,33 @@ export default function Page() {
     if (!monitor?.data.uptime?.data) return [];
     return monitor.data.uptime.data
       .sort((a, b) => a.interval.getTime() - b.interval.getTime())
-      .map((item) => ({
-        timestamp: item.interval.toLocaleString("default", {
-          day: "numeric",
-          month: "short",
-          hour: "numeric",
-          minute: "numeric",
-          timeZoneName: "short",
-          timeZone: timezone,
-        }),
-        ...item,
-      }));
+      .map((item) => {
+        const counts = {
+          ok: item.success,
+          degraded: item.degraded,
+          error: item.error,
+          quorum: item.quorum,
+        };
+        const tally = tallyDay(counts);
+        return {
+          timestamp: item.interval.toLocaleString("default", {
+            day: "numeric",
+            month: "short",
+            hour: "numeric",
+            minute: "numeric",
+            timeZoneName: "short",
+            timeZone: timezone,
+          }),
+          interval: item.interval,
+          counts,
+          success: tally.ok,
+          degraded: tally.degraded,
+          error: tally.error,
+        };
+      });
   }, [monitor?.data.uptime?.data, timezone]);
 
-  const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
+  const { countsRuns, totalChecks, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {
       const p75Range = globalLatencyData.reduce(
         (acc, item) => ({
@@ -154,17 +170,7 @@ export default function Page() {
         },
       );
 
-      const uptimeStats = uptimeData.reduce(
-        (acc, item) => {
-          const bucket = tallyDay({
-            ok: item.success,
-            degraded: item.degraded,
-            error: item.error,
-          });
-          return { total: acc.total + bucket.total, up: acc.up + bucket.up };
-        },
-        { total: 0, up: 0 },
-      );
+      const uptimeStats = tallyBuckets(uptimeData.map((item) => item.counts));
 
       const uptimePercentage =
         uptimeStats.total > 0 ? uptimeStats.up / uptimeStats.total : 0;
@@ -193,6 +199,7 @@ export default function Page() {
         .sort((a, b) => b.avgLatency - a.avgLatency)[0];
 
       return {
+        countsRuns: uptimeStats.runs,
         totalChecks: formatNumber(uptimeStats.total, {
           notation: "compact",
           compactDisplay: "short",
@@ -280,7 +287,7 @@ export default function Page() {
                 <StatusMonitorTabsTriggerValue>
                   {uptimePercentage}{" "}
                   <Badge variant="outline" className="py-px text-[10px]">
-                    {totalChecks} {t("checks")}
+                    {totalChecks} {countsRuns ? t("checks") : t("requests")}
                   </Badge>
                 </StatusMonitorTabsTriggerValue>
               )}
