@@ -4,6 +4,7 @@ import {
   fetchFreezeCounts,
   fetchRunsByDay,
   type UptimeFreezePipes,
+  type UptimeRunsPipes,
 } from "./run";
 
 /**
@@ -15,6 +16,7 @@ import {
 export async function fetchLiveDays(args: {
   monitors: { id: number; jobType: string; regions: string }[];
   pipes: UptimeFreezePipes;
+  runsPipes: UptimeRunsPipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{
   days: Map<string, Map<string, FrozenMonitorUptimeDay>>;
@@ -36,7 +38,7 @@ export async function fetchLiveDays(args: {
     }),
     fetchRunsByDay({
       monitors: args.monitors,
-      pipes: args.pipes,
+      pipes: args.runsPipes,
       throttleMs: 0,
       sleep: args.sleep,
     }),

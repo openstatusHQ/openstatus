@@ -22,11 +22,7 @@ type PipeFn<Row> = (params: {
   monitorIds: string[];
 }) => Promise<{ data: Row[] }>;
 
-/** A day-count pipe; `type: "runs"` returns run verdicts instead of region checks. */
-export type StatusPipeFn = (params: {
-  monitorIds: string[];
-  type?: "runs";
-}) => Promise<{ data: ComputeCountRow[] }>;
+export type StatusPipeFn = PipeFn<ComputeCountRow>;
 
 // no 45d status pipe, so no counts on the live status page either
 const JOB_TYPES_WITHOUT_STATUS_PIPE = [
@@ -66,8 +62,18 @@ export type UptimeQuorumJobType = Exclude<
   (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
 >;
 
-/** The day-count pipes that can return run verdicts. */
+/** Day-count pipes that return run verdicts instead of region checks. */
 export type UptimeRunsPipes = Record<UptimeQuorumJobType, StatusPipeFn>;
+
+export function uptimeRunsPipes(tb: OSTinybird): UptimeRunsPipes {
+  return {
+    http: tb.httpRuns45d,
+    tcp: tb.tcpRuns45d,
+    dns: tb.dnsRuns45d,
+    icmp: tb.icmpRuns45d,
+    grpc: tb.grpcRuns45d,
+  };
+}
 
 // a new MonitorJobType fails tsc here until it is wired up or listed above
 const RUNS_JOB_TYPES = {
@@ -215,11 +221,7 @@ export async function fetchRunsByDay(
     ...args,
     monitorIdsByJobType,
     kind: "runs",
-    pipeFor: (jobType) => {
-      if (!hasRuns(jobType)) return undefined;
-      const pipe = args.pipes[jobType];
-      return ({ monitorIds }) => pipe({ monitorIds, type: "runs" });
-    },
+    pipeFor: (jobType) => (hasRuns(jobType) ? args.pipes[jobType] : undefined),
   });
   return { runs: runsByMonitorDay(rows), failedMonitorIds };
 }
@@ -251,6 +253,7 @@ export type RunUptimeFreezeResult = {
  */
 export async function runUptimeFreeze(args: {
   pipes: UptimeFreezePipes;
+  runsPipes: UptimeRunsPipes;
   now?: Date;
   db?: DB;
   monitorIds?: number[]; // scope a run (tests, manual retries); default all
@@ -343,7 +346,7 @@ export async function runUptimeFreeze(args: {
   // chunk skips the monitor exactly like a failed counts chunk
   const runs = await fetchRunsByDay({
     monitors: pending.filter((m) => !countsFailed.has(String(m.id))),
-    pipes: args.pipes,
+    pipes: args.runsPipes,
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });

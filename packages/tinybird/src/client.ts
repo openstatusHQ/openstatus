@@ -44,11 +44,6 @@ export const status15mParameters = z.object({
     .prefault("UTC"),
 });
 
-/** `runs` judges each run against the cloud regions that reported in it. */
-export const countsParameters = {
-  type: z.enum(["requests", "runs"]).optional(),
-};
-
 /**
  * Same columns as the 45d pipes. `day` is the local calendar date re-keyed as
  * UTC midnight, the convention day-keyed consumers already read — a Berlin
@@ -366,6 +361,20 @@ export const runsBackfillShape = z.object({
   ok: z.number(),
   degraded: z.number(),
   error: z.number(),
+});
+
+export const runs45dParameters = z.object({
+  monitorIds: z.string().array(),
+});
+
+// Each run is judged against the cloud regions that reported in it.
+export const runs45dShape = z.object({
+  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+  monitorId: z.string(),
+  count: z.number().prefault(0),
+  ok: z.number().prefault(0),
+  degraded: z.number().prefault(0),
+  error: z.number().prefault(0),
 });
 
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
@@ -926,12 +935,20 @@ export class OSTinybird {
     });
   }
 
+  public get httpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_45d__v1",
       parameters: z.object({
         monitorIds: z.string().array(),
-        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -1514,13 +1531,21 @@ export class OSTinybird {
     });
   }
 
+  public get tcpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
       parameters: z.object({
         monitorIds: z.string().array(),
         days: z.int().max(45).optional(),
-        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -1997,13 +2022,21 @@ export class OSTinybird {
     });
   }
 
+  public get icmpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get icmpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_status_45d__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
         days: z.int().max(45).optional(),
-        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -2496,13 +2529,21 @@ export class OSTinybird {
     });
   }
 
+  public get grpcRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get grpcStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_status_45d__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
         days: z.int().max(45).optional(),
-        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -3822,12 +3863,20 @@ export class OSTinybird {
     });
   }
 
+  public get dnsRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get dnsStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_45d__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
-        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {

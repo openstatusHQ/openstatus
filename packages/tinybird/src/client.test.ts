@@ -1,13 +1,13 @@
-import { Tinybird } from "@chronark/zod-bird";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import {
   attemptsSchema,
-  countsParameters,
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
+  runs45dParameters,
+  runs45dShape,
   runsBackfillParameters,
   runsBackfillShape,
   status15mParameters,
@@ -282,69 +282,48 @@ describe("15m status pipes", () => {
   }
 });
 
-const status45dGetters = [
-  "httpStatus45d",
-  "tcpStatus45d",
-  "dnsStatus45d",
-  "icmpStatus45d",
-  "grpcStatus45d",
+const runs45dGetters = [
+  "httpRuns45d",
+  "tcpRuns45d",
+  "dnsRuns45d",
+  "icmpRuns45d",
+  "grpcRuns45d",
 ] as const;
 
-describe("countsParameters", () => {
-  test("rejects an unknown type", () => {
-    const schema = z.object(countsParameters);
-    expect(schema.safeParse({ type: "http" }).success).toBe(false);
-    expect(schema.parse({})).toEqual({});
+describe("runs45dParameters", () => {
+  test("sends monitorIds only", () => {
+    expect(
+      runs45dParameters.parse({ monitorIds: ["1", "666"], type: "runs" }),
+    ).toEqual({ monitorIds: ["1", "666"] });
   });
 });
 
-describe("counts type query string", () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  async function queryOf(params: {
-    monitorIds: string[];
-    type?: "requests" | "runs";
-  }) {
-    const fetch = vi.fn(async (_url: URL) =>
-      Response.json({ meta: [], data: [] }),
-    );
-    vi.stubGlobal("fetch", fetch);
-    const pipe = new Tinybird({ token: "t", baseUrl: "http://tb" }).buildPipe({
-      pipe: "p",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        ...countsParameters,
+describe("runs45dShape", () => {
+  test("re-keys the UTC day as an ISO midnight and defaults missing counts", () => {
+    expect(
+      runs45dShape.parse({
+        day: "2026-06-14 00:00:00",
+        monitorId: "1",
+        count: 144,
+        ok: 140,
       }),
-      data: z.object({}),
-    });
-    await pipe(params);
-    return Object.fromEntries(fetch.mock.calls[0][0].searchParams);
-  }
-
-  test("a requests call sends monitorIds only", async () => {
-    expect(await queryOf({ monitorIds: ["1", "666"] })).toEqual({
-      monitorIds: "1,666",
-    });
-  });
-
-  test("a runs call sends the type and monitorIds only", async () => {
-    expect(await queryOf({ monitorIds: ["1", "666"], type: "runs" })).toEqual({
-      monitorIds: "1,666",
-      type: "runs",
+    ).toEqual({
+      day: "2026-06-14T00:00:00.000Z",
+      monitorId: "1",
+      count: 144,
+      ok: 140,
+      degraded: 0,
+      error: 0,
     });
   });
 });
 
-describe("runs-capable count pipes", () => {
+describe("runs 45d pipes", () => {
   const tb = new OSTinybird({ token: "a-token" });
 
-  for (const name of status45dGetters) {
-    test(`${name} resolves for both types`, async () => {
+  for (const name of runs45dGetters) {
+    test(`${name} resolves`, async () => {
       expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
-        meta: [],
-        data: [],
-      });
-      expect(await tb[name]({ monitorIds: ["1"], type: "runs" })).toEqual({
         meta: [],
         data: [],
       });

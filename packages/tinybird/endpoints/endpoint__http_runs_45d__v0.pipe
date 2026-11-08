@@ -1,0 +1,29 @@
+TOKEN "endpoint__http_runs_45d__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+SELECT
+    day,
+    monitorId,
+    count() AS count,
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 >= n) AS error,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded
+FROM (
+    SELECT
+        time AS day,
+        monitorId,
+        cronTimestamp,
+        countMerge(count) AS n,
+        countMerge(error) AS e,
+        countMerge(degraded) AS d
+    FROM mv__http_runs_45d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+    GROUP BY day, monitorId, cronTimestamp
+)
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint

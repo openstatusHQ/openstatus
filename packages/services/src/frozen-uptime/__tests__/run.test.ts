@@ -16,18 +16,18 @@ import {
   type ChunkFailure,
   type StatusPipeFn,
   type UptimeFreezePipes,
+  type UptimeRunsPipes,
   fetchFreezeCounts,
   runUptimeFreeze,
   uptimeFreezePipes,
+  uptimeRunsPipes,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
 
-// counts only: `calls` records the requests reads, a runs read returns nothing
 function okPipe(rows: ComputeCountRow[] = []) {
   const calls: string[][] = [];
   const pipe: StatusPipeFn = (params) => {
-    if (params.type === "runs") return Promise.resolve({ data: [] });
     calls.push(params.monitorIds);
     return Promise.resolve({ data: rows });
   };
@@ -45,6 +45,19 @@ function makePipes(
     icmp: overrides.icmp ?? fallback,
     grpc: overrides.grpc ?? fallback,
     heartbeat: overrides.heartbeat ?? fallback,
+  };
+}
+
+function makeRunsPipes(
+  overrides: Partial<UptimeRunsPipes> = {},
+  fallback: StatusPipeFn = okPipe().pipe,
+): UptimeRunsPipes {
+  return {
+    http: overrides.http ?? fallback,
+    tcp: overrides.tcp ?? fallback,
+    dns: overrides.dns ?? fallback,
+    icmp: overrides.icmp ?? fallback,
+    grpc: overrides.grpc ?? fallback,
   };
 }
 
@@ -87,6 +100,21 @@ describe("uptimeFreezePipes", () => {
       icmp: "icmpStatus45d",
       grpc: "grpcStatus45d",
       heartbeat: "heartbeatStatus45d",
+    });
+  });
+});
+
+describe("uptimeRunsPipes", () => {
+  test("covers every job type with cloud regions", () => {
+    // safe because uptimeRunsPipes only reads pipe getters off the client
+    const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
+
+    expect(uptimeRunsPipes(tb)).toEqual({
+      http: "httpRuns45d",
+      tcp: "tcpRuns45d",
+      dns: "dnsRuns45d",
+      icmp: "icmpRuns45d",
+      grpc: "grpcRuns45d",
     });
   });
 });
@@ -265,6 +293,7 @@ describe("runUptimeFreeze", () => {
       ]);
       const runArgs = {
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [testMonitor.id],
@@ -303,6 +332,7 @@ describe("runUptimeFreeze", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes(),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [paused.id],
@@ -329,6 +359,7 @@ describe("runUptimeFreeze", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [deleted.id],
@@ -350,6 +381,7 @@ describe("runUptimeFreeze", () => {
       // 45d lookback — writing would freeze permanent zero-count days
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 7, 20)),
         db: tx,
         monitorIds: [testMonitor.id],
@@ -387,6 +419,7 @@ describe("runUptimeFreeze", () => {
       // July 15 is 44 days after June 1 — inside the window
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 15)),
         db: tx,
         monitorIds: [testMonitor.id],
@@ -410,6 +443,7 @@ describe("runUptimeFreeze", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [paused.id],
@@ -448,6 +482,7 @@ describe("runUptimeFreeze", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [paused.id],
@@ -478,6 +513,7 @@ describe("runUptimeFreeze", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [paused.id],
@@ -509,6 +545,7 @@ describe("runUptimeFreeze", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: dead, dns: dns.pipe }),
+        runsPipes: makeRunsPipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
         monitorIds: [httpMonitor.id, dnsMonitor.id],
@@ -545,22 +582,31 @@ describe("runUptimeFreeze with run verdicts", () => {
   const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
   const requests = { ok: 800, degraded: 0, error: 64 };
 
-  // one pipe, as in production: a requests read gets counts, a runs read verdicts
+  // `pipe` serves the requests counts, `runsPipe` the run verdicts
   function dayPipe(monitorId: number, runs: Partial<ComputeCountRow>[] = []) {
+    const base = {
+      monitorId: String(monitorId),
+      day: "2026-06-05T00:00:00.000Z",
+    };
     const calls: Parameters<StatusPipeFn>[0][] = [];
+    const runsCalls: Parameters<StatusPipeFn>[0][] = [];
     const pipe: StatusPipeFn = (params) => {
       calls.push(params);
-      const day = "2026-06-05T00:00:00.000Z";
-      const base = { monitorId: String(monitorId), day };
+      return Promise.resolve({ data: [{ ...base, ...requests }] });
+    };
+    const runsPipe: StatusPipeFn = (params) => {
+      runsCalls.push(params);
       return Promise.resolve({
-        data:
-          params.type === "runs"
-            ? runs.map((r) => ({ ...base, ok: 0, degraded: 0, error: 0, ...r }))
-            : [{ ...base, ...requests }],
+        data: runs.map((r) => ({
+          ...base,
+          ok: 0,
+          degraded: 0,
+          error: 0,
+          ...r,
+        })),
       });
     };
-    const runsCalls = () => calls.filter((c) => c.type === "runs");
-    return { pipe, calls, runsCalls };
+    return { pipe, runsPipe, calls, runsCalls };
   }
 
   async function frozenDays(tx: Tx, monitorId: number) {
@@ -579,6 +625,7 @@ describe("runUptimeFreeze with run verdicts", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes({ http: http.runsPipe }),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -586,10 +633,8 @@ describe("runUptimeFreeze with run verdicts", () => {
       });
 
       expect(res.frozen).toBe(1);
-      expect(http.calls).toEqual([
-        { monitorIds: [String(m.id)] },
-        { monitorIds: [String(m.id)], type: "runs" },
-      ]);
+      expect(http.calls).toEqual([{ monitorIds: [String(m.id)] }]);
+      expect(http.runsCalls).toEqual([{ monitorIds: [String(m.id)] }]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({
         day: "2026-06-05",
@@ -612,16 +657,16 @@ describe("runUptimeFreeze with run verdicts", () => {
 
       await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes({ http: http.runsPipe }),
         now,
         db: tx,
         monitorIds: [a.id, b.id, c.id],
         sleep: noSleep,
       });
 
-      const [call] = http.runsCalls();
+      const [call] = http.runsCalls;
       expect(call).toEqual({
         monitorIds: expect.arrayContaining([a.id, b.id, c.id].map(String)),
-        type: "runs",
       });
       expect(call?.monitorIds).toHaveLength(3);
     });
@@ -637,6 +682,7 @@ describe("runUptimeFreeze with run verdicts", () => {
 
         const res = await runUptimeFreeze({
           pipes: makePipes({ http: http.pipe }),
+          runsPipes: makeRunsPipes({ http: http.runsPipe }),
           now,
           db: tx,
           monitorIds: [m.id],
@@ -644,7 +690,7 @@ describe("runUptimeFreeze with run verdicts", () => {
         });
 
         expect(res.frozen).toBe(1);
-        expect(http.runsCalls()).toEqual([]);
+        expect(http.runsCalls).toEqual([]);
         const days = await frozenDays(tx, m.id);
         expect(days?.[4]).toEqual({ day: "2026-06-05", requests });
       });
@@ -659,15 +705,14 @@ describe("runUptimeFreeze with run verdicts", () => {
 
       await runUptimeFreeze({
         pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes({ http: http.runsPipe }),
         now,
         db: tx,
         monitorIds: [m.id],
         sleep: noSleep,
       });
 
-      expect(http.runsCalls()).toEqual([
-        { monitorIds: [String(m.id)], type: "runs" },
-      ]);
+      expect(http.runsCalls).toEqual([{ monitorIds: [String(m.id)] }]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]?.runs).toEqual({ ok: 0, degraded: 0, error: 4 });
     });
@@ -680,11 +725,9 @@ describe("runUptimeFreeze with run verdicts", () => {
       const counts = dayPipe(m.id);
 
       const res = await runUptimeFreeze({
-        pipes: makePipes({
-          http: (params) =>
-            params.type === "runs"
-              ? Promise.reject(new Error("tb down"))
-              : counts.pipe(params),
+        pipes: makePipes({ http: counts.pipe }),
+        runsPipes: makeRunsPipes({
+          http: () => Promise.reject(new Error("tb down")),
         }),
         now,
         db: tx,
@@ -709,15 +752,11 @@ describe("runUptimeFreeze with run verdicts", () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       const failures: ChunkFailure[] = [];
-      const calls: Parameters<StatusPipeFn>[0][] = [];
+      const runs = dayPipe(m.id);
 
       const res = await runUptimeFreeze({
-        pipes: makePipes({
-          http: (params) => {
-            calls.push(params);
-            return Promise.reject(new Error("tb down"));
-          },
-        }),
+        pipes: makePipes({ http: () => Promise.reject(new Error("tb down")) }),
+        runsPipes: makeRunsPipes({ http: runs.runsPipe }),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -725,7 +764,7 @@ describe("runUptimeFreeze with run verdicts", () => {
         onChunkFailure: (f) => failures.push(f),
       });
 
-      expect(calls.some((c) => c.type === "runs")).toBe(false);
+      expect(runs.runsCalls).toEqual([]);
       expect(res.skipped).toBe(1);
       expect(res.failures).toEqual([
         `monitor ${m.id}: tinybird counts unavailable`,
@@ -749,6 +788,10 @@ describe("runUptimeFreeze with run verdicts", () => {
 
         const res = await runUptimeFreeze({
           pipes: makePipes({ http: http.pipe, [jobType]: own.pipe }),
+          runsPipes: makeRunsPipes({
+            http: http.runsPipe,
+            [jobType]: own.runsPipe,
+          }),
           now,
           db: tx,
           monitorIds: [m.id],
@@ -756,10 +799,9 @@ describe("runUptimeFreeze with run verdicts", () => {
         });
 
         expect(res.frozen).toBe(1);
-        expect(own.runsCalls()).toEqual([
-          { monitorIds: [String(m.id)], type: "runs" },
-        ]);
+        expect(own.runsCalls).toEqual([{ monitorIds: [String(m.id)] }]);
         expect(http.calls).toEqual([]);
+        expect(http.runsCalls).toEqual([]);
         const days = await frozenDays(tx, m.id);
         expect(days?.[4].runs).toEqual({ ok: 140, degraded: 0, error: 4 });
       });
@@ -776,6 +818,7 @@ describe("runUptimeFreeze with run verdicts", () => {
 
       const res = await runUptimeFreeze({
         pipes: makePipes({ heartbeat: heartbeat.pipe }),
+        runsPipes: makeRunsPipes({}, heartbeat.runsPipe),
         now,
         db: tx,
         monitorIds: [m.id],
@@ -784,6 +827,7 @@ describe("runUptimeFreeze with run verdicts", () => {
 
       expect(res.frozen).toBe(1);
       expect(heartbeat.calls).toEqual([{ monitorIds: [String(m.id)] }]);
+      expect(heartbeat.runsCalls).toEqual([]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({ day: "2026-06-05", requests });
     });

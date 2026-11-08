@@ -26,7 +26,9 @@ import type { Counts } from "./quorum";
 import {
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
+  type UptimeRunsPipes,
   uptimeFreezePipes,
+  uptimeRunsPipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -252,6 +254,7 @@ export async function getUptimeHistory(args: {
   ctx: ServiceContext;
   input: GetUptimeHistoryInput;
   pipes?: UptimeFreezePipes;
+  runsPipes?: UptimeRunsPipes;
   now?: Date;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<UptimeHistoryResult> {
@@ -336,6 +339,7 @@ export async function getUptimeHistory(args: {
   const liveReads = fetchLiveDays({
     monitors: components.flatMap((c) => (c.monitor ? [c.monitor] : [])),
     pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
+    runsPipes: args.runsPipes ?? uptimeRunsPipes(defaultTb),
     sleep: args.sleep,
   });
 

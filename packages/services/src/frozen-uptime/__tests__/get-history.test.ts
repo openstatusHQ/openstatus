@@ -26,7 +26,7 @@ import { floorPct } from "../../status-timeline";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getUptimeHistory } from "../get-history";
-import type { StatusPipeFn, UptimeFreezePipes } from "../run";
+import type { StatusPipeFn, UptimeFreezePipes, UptimeRunsPipes } from "../run";
 
 const MS_PER_DAY = 86_400_000;
 const noSleep = () => Promise.resolve();
@@ -83,10 +83,8 @@ function fullMonth(
   }));
 }
 
-// counts only: a runs read returns nothing
 function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
-  const pipe: StatusPipeFn = (params) =>
-    Promise.resolve({ data: params.type === "runs" ? [] : rows });
+  const pipe: StatusPipeFn = () => Promise.resolve({ data: rows });
   return {
     http: pipe,
     tcp: pipe,
@@ -95,6 +93,19 @@ function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
     grpc: pipe,
     heartbeat: pipe,
   };
+}
+
+function makeRunsPipes(
+  runs: ComputeCountRow[] | Error = [],
+  calls: Parameters<StatusPipeFn>[0][] = [],
+): UptimeRunsPipes {
+  const pipe: StatusPipeFn = (params) => {
+    calls.push(params);
+    return runs instanceof Error
+      ? Promise.reject(runs)
+      : Promise.resolve({ data: runs });
+  };
+  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
 }
 
 function failingPipes(): UptimeFreezePipes {
@@ -330,6 +341,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -377,6 +389,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -436,6 +449,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes,
+        runsPipes: makeRunsPipes(),
         now: new Date(monthStart(key(0)).getTime() + MS_PER_DAY),
         sleep: noSleep,
       });
@@ -496,6 +510,7 @@ describe("getUptimeHistory", () => {
           ctx,
           input: { pageId: testPage.id },
           pipes,
+          runsPipes: makeRunsPipes(),
           now: new Date(date),
           sleep: noSleep,
         });
@@ -518,6 +533,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes,
+        runsPipes: makeRunsPipes(),
         now: new Date("2026-09-30T12:00:00.000Z"),
         sleep: noSleep,
       });
@@ -545,6 +561,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: failingPipes(),
+        runsPipes: makeRunsPipes(new Error("tinybird down")),
         now,
         sleep: noSleep,
       });
@@ -584,6 +601,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -628,6 +646,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -689,6 +708,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -746,6 +766,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -800,6 +821,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes,
+        runsPipes: makeRunsPipes(),
         now: injectedNow,
         sleep: noSleep,
       });
@@ -853,6 +875,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -915,6 +938,7 @@ describe("getUptimeHistory", () => {
           ctx,
           input: { pageId: testPage.id },
           pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         });
@@ -961,6 +985,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -986,6 +1011,7 @@ describe("getUptimeHistory", () => {
           ctx: { ...freeCtx, db: tx },
           input: { pageId: 999_999 },
           pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         }),
@@ -1010,6 +1036,7 @@ describe("getUptimeHistory", () => {
           ctx: otherCtx,
           input: { pageId: testPage.id },
           pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         }),
@@ -1023,31 +1050,6 @@ describe("getUptimeHistory runs view", () => {
   const today = now.toISOString().slice(0, 10);
 
   type Call = Parameters<StatusPipeFn>[0];
-
-  function withRuns(
-    rows: ComputeCountRow[],
-    runs: ComputeCountRow[] | Error,
-    runsCalls: Call[] = [],
-  ): UptimeFreezePipes {
-    const requests = makePipes(rows);
-    const pipe =
-      (t: keyof UptimeFreezePipes): StatusPipeFn =>
-      (params) => {
-        if (params.type !== "runs") return requests[t](params);
-        runsCalls.push(params);
-        return runs instanceof Error
-          ? Promise.reject(runs)
-          : Promise.resolve({ data: runs });
-      };
-    return {
-      http: pipe("http"),
-      tcp: pipe("tcp"),
-      dns: pipe("dns"),
-      icmp: pipe("icmp"),
-      grpc: pipe("grpc"),
-      heartbeat: pipe("heartbeat"),
-    };
-  }
 
   async function setup(
     tx: Tx,
@@ -1090,8 +1092,10 @@ describe("getUptimeHistory runs view", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: withRuns(
-          [{ monitorId: id, day: today, ok: 500, degraded: 0, error: 100 }],
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+        ]),
+        runsPipes: makeRunsPipes(
           [{ monitorId: id, day: today, ok: 90, degraded: 5, error: 5 }],
           runsCalls,
         ),
@@ -1099,7 +1103,7 @@ describe("getUptimeHistory runs view", () => {
         sleep: noSleep,
       });
 
-      expect(runsCalls).toEqual([{ monitorIds: [id], type: "runs" }]);
+      expect(runsCalls).toEqual([{ monitorIds: [id] }]);
       const row = res.rows[0];
       expect(row.unit).toBe("requests");
       expect(row.months[key(2)]?.percentage).toBe(90);
@@ -1149,11 +1153,10 @@ describe("getUptimeHistory runs view", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: withRuns(
-          [{ monitorId: id, day: today, ok: 99, degraded: 0, error: 1 }],
-          [],
-          runsCalls,
-        ),
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 99, degraded: 0, error: 1 },
+        ]),
+        runsPipes: makeRunsPipes([], runsCalls),
         now,
         sleep: noSleep,
       });
@@ -1175,10 +1178,10 @@ describe("getUptimeHistory runs view", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: withRuns(
-          [{ monitorId: id, day: today, ok: 99, degraded: 0, error: 1 }],
-          new Error("tinybird down"),
-        ),
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 99, degraded: 0, error: 1 },
+        ]),
+        runsPipes: makeRunsPipes(new Error("tinybird down")),
         now,
         sleep: noSleep,
       });
@@ -1204,24 +1207,22 @@ describe("getUptimeHistory runs view", () => {
         pageId: requestsPage.id,
         monitorId: heartbeat.id,
       });
-      const pipes = withRuns(
-        [
-          {
-            monitorId: String(testMonitor.id),
-            day: today,
-            ok: 1,
-            degraded: 0,
-            error: 0,
-          },
-        ],
-        [],
-      );
+      const pipes = makePipes([
+        {
+          monitorId: String(testMonitor.id),
+          day: today,
+          ok: 1,
+          degraded: 0,
+          error: 0,
+        },
+      ]);
 
       for (const pageId of [testPage.id, requestsPage.id]) {
         const res = await getUptimeHistory({
           ctx,
           input: { pageId },
           pipes,
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         });
