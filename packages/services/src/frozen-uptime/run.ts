@@ -16,10 +16,13 @@ import {
   previousMonth,
 } from "./compute";
 import { freezeMonitorMonth } from "./freeze";
+import { quorumRegionCount, type RunsByDay, runsByMonitorDay } from "./quorum";
 
-export type StatusPipeFn = (params: {
+type PipeFn<Row> = (params: {
   monitorIds: string[];
-}) => Promise<{ data: ComputeCountRow[] }>;
+}) => Promise<{ data: Row[] }>;
+
+export type StatusPipeFn = PipeFn<ComputeCountRow>;
 
 // no 45d status pipe, so no counts on the live status page either
 const JOB_TYPES_WITHOUT_STATUS_PIPE = [
@@ -47,7 +50,48 @@ export function uptimeFreezePipes(tb: OSTinybird): UptimeFreezePipes {
   };
 }
 
+// no run verdicts: heartbeat has no regions, udp and ssl no status pipe
+const JOB_TYPES_WITHOUT_QUORUM = [
+  "heartbeat",
+  "udp",
+  "ssl",
+] as const satisfies readonly MonitorJobType[];
+
+export type UptimeQuorumJobType = Exclude<
+  MonitorJobType,
+  (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
+>;
+
+/** Day-count pipes that return run verdicts instead of region checks. */
+export type UptimeRunsPipes = Record<UptimeQuorumJobType, StatusPipeFn>;
+
+export function uptimeRunsPipes(tb: OSTinybird): UptimeRunsPipes {
+  return {
+    http: tb.httpRuns45d,
+    tcp: tb.tcpRuns45d,
+    dns: tb.dnsRuns45d,
+    icmp: tb.icmpRuns45d,
+    grpc: tb.grpcRuns45d,
+  };
+}
+
+// a new MonitorJobType fails tsc here until it is wired up or listed above
+const RUNS_JOB_TYPES = {
+  http: true,
+  tcp: true,
+  dns: true,
+  icmp: true,
+  grpc: true,
+} satisfies Record<UptimeQuorumJobType, true>;
+
+export function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
+  return Object.hasOwn(RUNS_JOB_TYPES, jobType);
+}
+
+export type FreezePipeKind = "counts" | "runs";
+
 export type ChunkFailure = {
+  pipe: FreezePipeKind;
   jobType: string;
   monitorIds: string[];
   error: unknown;
@@ -81,33 +125,34 @@ function hasStatusPipe(
   return Object.hasOwn(pipes, jobType);
 }
 
-/**
- * Fetch daily counts for all monitors, chunked and retried. Monitors whose
- * chunk still fails after retries land in `failedMonitorIds` — they are
- * skipped (never frozen with silent zeros) and picked up by a re-run.
- */
-export async function fetchFreezeCounts(args: {
+type FetchOptions = {
   monitorIdsByJobType: Map<string, Set<string>>;
-  pipes: UptimeFreezePipes;
   chunkSize?: number;
   attempts?: number;
   throttleMs?: number;
   sleep?: (ms: number) => Promise<void>;
   onChunkFailure?: (failure: ChunkFailure) => void;
-}): Promise<{ counts: ComputeCountRow[]; failedMonitorIds: Set<string> }> {
+};
+
+export async function fetchChunked<Row>(
+  args: FetchOptions & {
+    kind: FreezePipeKind;
+    pipeFor: (jobType: string) => PipeFn<Row> | undefined;
+  },
+): Promise<{ rows: Row[]; failedMonitorIds: Set<string> }> {
   const chunkSize = args.chunkSize ?? TB_CHUNK_SIZE;
   const attempts = args.attempts ?? TB_ATTEMPTS;
   const throttleMs = args.throttleMs ?? TB_THROTTLE_MS;
   const sleep =
     args.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
 
-  const counts: ComputeCountRow[] = [];
+  const rows: Row[] = [];
   const failedMonitorIds = new Set<string>();
   let firstChunk = true;
 
   for (const [jobType, ids] of args.monitorIdsByJobType) {
-    if (!hasStatusPipe(args.pipes, jobType)) continue;
-    const pipe = args.pipes[jobType];
+    const pipe = args.pipeFor(jobType);
+    if (!pipe) continue;
     for (const monitorIds of chunk([...ids], chunkSize)) {
       if (!firstChunk && throttleMs > 0) await sleep(throttleMs);
       firstChunk = false;
@@ -117,7 +162,7 @@ export async function fetchFreezeCounts(args: {
         try {
           if (attempt > 0) await sleep(1000 * 2 ** (attempt - 1));
           const res = await pipe({ monitorIds });
-          counts.push(...res.data);
+          rows.push(...res.data);
           done = true;
         } catch (e) {
           lastError = e;
@@ -125,12 +170,72 @@ export async function fetchFreezeCounts(args: {
       }
       if (!done) {
         for (const id of monitorIds) failedMonitorIds.add(id);
-        args.onChunkFailure?.({ jobType, monitorIds, error: lastError });
+        args.onChunkFailure?.({
+          pipe: args.kind,
+          jobType,
+          monitorIds,
+          error: lastError,
+        });
       }
     }
   }
 
-  return { counts, failedMonitorIds };
+  return { rows, failedMonitorIds };
+}
+
+/**
+ * Fetch daily counts for all monitors, chunked and retried. Monitors whose
+ * chunk still fails after retries land in `failedMonitorIds` — they are
+ * skipped (never frozen with silent zeros) and picked up by a re-run.
+ */
+export async function fetchFreezeCounts(
+  args: FetchOptions & { pipes: UptimeFreezePipes },
+): Promise<{ counts: ComputeCountRow[]; failedMonitorIds: Set<string> }> {
+  const { rows, failedMonitorIds } = await fetchChunked({
+    ...args,
+    kind: "counts",
+    pipeFor: (jobType) =>
+      hasStatusPipe(args.pipes, jobType) ? args.pipes[jobType] : undefined,
+  });
+  return { counts: rows, failedMonitorIds };
+}
+
+/**
+ * Run verdicts per UTC day (or per day of the zone the pipes are bound to) for
+ * the monitors with cloud regions; the others are never fetched.
+ */
+export async function fetchRunsByDay(
+  args: Omit<FetchOptions, "monitorIdsByJobType"> & {
+    monitors: { id: number; jobType: string; regions: string }[];
+    pipes: UptimeRunsPipes;
+  },
+): Promise<{ runs: RunsByDay; failedMonitorIds: Set<string> }> {
+  const monitorIdsByJobType = new Map<string, Set<string>>();
+  for (const m of args.monitors) {
+    if (!hasRuns(m.jobType) || quorumRegionCount(m.regions) === null) continue;
+    const ids = monitorIdsByJobType.get(m.jobType) ?? new Set<string>();
+    ids.add(String(m.id));
+    monitorIdsByJobType.set(m.jobType, ids);
+  }
+  const { rows, failedMonitorIds } = await fetchChunked({
+    ...args,
+    monitorIdsByJobType,
+    kind: "runs",
+    pipeFor: (jobType) => (hasRuns(jobType) ? args.pipes[jobType] : undefined),
+  });
+  return { runs: runsByMonitorDay(rows), failedMonitorIds };
+}
+
+export function groupByMonitorId<Row extends { monitorId: string }>(
+  rows: Row[],
+): Map<string, Row[]> {
+  const out = new Map<string, Row[]>();
+  for (const row of rows) {
+    const list = out.get(row.monitorId);
+    if (list) list.push(row);
+    else out.set(row.monitorId, [row]);
+  }
+  return out;
 }
 
 export type RunUptimeFreezeResult = {
@@ -148,6 +253,7 @@ export type RunUptimeFreezeResult = {
  */
 export async function runUptimeFreeze(args: {
   pipes: UptimeFreezePipes;
+  runsPipes: UptimeRunsPipes;
   now?: Date;
   db?: DB;
   monitorIds?: number[]; // scope a run (tests, manual retries); default all
@@ -180,6 +286,7 @@ export async function runUptimeFreeze(args: {
       id: monitor.id,
       workspaceId: monitor.workspaceId,
       jobType: monitor.jobType,
+      regions: monitor.regions,
       active: monitor.active,
       updatedAt: monitor.updatedAt,
     })
@@ -226,20 +333,29 @@ export async function runUptimeFreeze(args: {
     monitorIdsByJobType.set(m.jobType, ids);
   }
 
-  const { counts, failedMonitorIds } = await fetchFreezeCounts({
+  const { counts, failedMonitorIds: countsFailed } = await fetchFreezeCounts({
     monitorIdsByJobType,
     pipes: args.pipes,
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });
+  const failedPipeByMonitorId = new Map<string, FreezePipeKind>();
+  for (const id of countsFailed) failedPipeByMonitorId.set(id, "counts");
+
+  // a month frozen without its run verdicts can never get them: a failed runs
+  // chunk skips the monitor exactly like a failed counts chunk
+  const runs = await fetchRunsByDay({
+    monitors: pending.filter((m) => !countsFailed.has(String(m.id))),
+    pipes: args.runsPipes,
+    sleep: args.sleep,
+    onChunkFailure: args.onChunkFailure,
+  });
+  for (const id of runs.failedMonitorIds) {
+    failedPipeByMonitorId.set(id, "runs");
+  }
 
   // avoid an O(pending²) sweep: computeMonitorMonth scans linearly per call
-  const countsByMonitorId = new Map<string, ComputeCountRow[]>();
-  for (const row of counts) {
-    const rows = countsByMonitorId.get(row.monitorId);
-    if (rows) rows.push(row);
-    else countsByMonitorId.set(row.monitorId, [row]);
-  }
+  const countsByMonitorId = groupByMonitorId(counts);
 
   const workspaceIds = [...new Set(pending.map((m) => m.workspaceId))];
   const workspaceRows =
@@ -258,9 +374,10 @@ export async function runUptimeFreeze(args: {
   const failures: string[] = [];
 
   for (const m of pending) {
-    if (failedMonitorIds.has(String(m.id))) {
+    const failedPipe = failedPipeByMonitorId.get(String(m.id));
+    if (failedPipe) {
       skipped++;
-      failures.push(`monitor ${m.id}: tinybird counts unavailable`);
+      failures.push(`monitor ${m.id}: tinybird ${failedPipe} unavailable`);
       continue;
     }
 
@@ -270,6 +387,7 @@ export async function runUptimeFreeze(args: {
       month,
       monitorId: m.id,
       counts: countsByMonitorId.get(String(m.id)) ?? [],
+      runs: runs.runs.get(String(m.id)),
     });
     if (!computed) continue;
 

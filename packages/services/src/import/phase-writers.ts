@@ -17,6 +17,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { PageComponentImpact } from "@openstatus/db/src/schema";
 import type { PhaseResult, UpdateComponentImpact } from "@openstatus/importers";
+import { uniqueRegions } from "@openstatus/utils";
 
 import { emitAudit } from "../audit";
 import {
@@ -909,7 +910,7 @@ export async function writeMonitorsPhase(
             | "other",
           status: "active",
           active: data.active,
-          regions: data.regions,
+          regions: uniqueRegions(data.regions).join(","),
           url: data.url,
           name: data.name,
           description: data.description,

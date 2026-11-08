@@ -3,11 +3,17 @@ import { z } from "zod";
 
 import { frozenMonitorUptime } from "./frozen_monitor_uptime";
 
-export const frozenMonitorUptimeDaySchema = z.object({
-  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "day must be YYYY-MM-DD"), // UTC
+const countsSchema = z.object({
   ok: z.number().int().nonnegative(),
   degraded: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
+});
+
+export const frozenMonitorUptimeDaySchema = z.object({
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "day must be YYYY-MM-DD"), // UTC
+  requests: countsSchema,
+  // run verdicts under the region quorum, absent when the day has none
+  runs: countsSchema.optional(),
 });
 export type FrozenMonitorUptimeDay = z.infer<
   typeof frozenMonitorUptimeDaySchema

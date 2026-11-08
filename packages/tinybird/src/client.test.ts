@@ -6,6 +6,10 @@ import {
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
+  runs45dParameters,
+  runs45dShape,
+  runsBackfillParameters,
+  runsBackfillShape,
   status15mParameters,
   status15mShape,
 } from "./client";
@@ -274,6 +278,126 @@ describe("15m status pipes", () => {
         meta: [],
         data: [],
       });
+    });
+  }
+});
+
+const runs45dGetters = [
+  "httpRuns45d",
+  "tcpRuns45d",
+  "dnsRuns45d",
+  "icmpRuns45d",
+  "grpcRuns45d",
+] as const;
+
+describe("runs45dParameters", () => {
+  test("sends monitorIds only", () => {
+    expect(
+      runs45dParameters.parse({ monitorIds: ["1", "666"], type: "runs" }),
+    ).toEqual({ monitorIds: ["1", "666"] });
+  });
+});
+
+describe("runs45dShape", () => {
+  test("re-keys the UTC day as an ISO midnight and defaults missing counts", () => {
+    expect(
+      runs45dShape.parse({
+        day: "2026-06-14 00:00:00",
+        monitorId: "1",
+        count: 144,
+        ok: 140,
+      }),
+    ).toEqual({
+      day: "2026-06-14T00:00:00.000Z",
+      monitorId: "1",
+      count: 144,
+      ok: 140,
+      degraded: 0,
+      error: 0,
+    });
+  });
+});
+
+describe("runs 45d pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of runs45dGetters) {
+    test(`${name} resolves`, async () => {
+      expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
+        meta: [],
+        data: [],
+      });
+    });
+  }
+});
+
+const runsBackfillGetters = [
+  "httpRunsBackfill",
+  "tcpRunsBackfill",
+  "dnsRunsBackfill",
+  "icmpRunsBackfill",
+  "grpcRunsBackfill",
+] as const;
+
+describe("runsBackfillParameters", () => {
+  const params = {
+    monitorIds: ["1", "2"],
+    fromDate: "2026-06-01T00:00:00.000Z",
+    toDate: "2026-07-01T00:00:00.000Z",
+  };
+
+  test("passes a month range through and drops a timezone: frozen days are UTC", () => {
+    expect(
+      runsBackfillParameters.parse({ ...params, timezone: "Europe/Berlin" }),
+    ).toEqual(params);
+  });
+
+  test("requires both bounds", () => {
+    const { fromDate: _from, ...withoutFrom } = params;
+    const { toDate: _to, ...withoutTo } = params;
+    expect(runsBackfillParameters.safeParse(withoutFrom).success).toBe(false);
+    expect(runsBackfillParameters.safeParse(withoutTo).success).toBe(false);
+  });
+
+  test("drops region counts: each run carries its own", () => {
+    expect(
+      runsBackfillParameters.parse({ ...params, regionCounts: [6, 3] }),
+    ).toEqual(params);
+  });
+});
+
+describe("runsBackfillShape", () => {
+  test("re-keys the UTC day as an ISO midnight", () => {
+    expect(
+      runsBackfillShape.parse({
+        day: "2026-06-14 00:00:00",
+        monitorId: "1",
+        ok: 140,
+        degraded: 3,
+        error: 1,
+      }),
+    ).toEqual({
+      day: "2026-06-14T00:00:00.000Z",
+      monitorId: "1",
+      ok: 140,
+      degraded: 3,
+      error: 1,
+    });
+  });
+});
+
+describe("runs backfill pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of runsBackfillGetters) {
+    test(`${name} resolves for a month range`, async () => {
+      expect(
+        await tb[name]({
+          monitorIds: ["1"],
+          fromDate: "2026-06-01T00:00:00.000Z",
+          toDate: "2026-07-01T00:00:00.000Z",
+        }),
+      ).toEqual({ meta: [], data: [] });
     });
   }
 });

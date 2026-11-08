@@ -63,6 +63,15 @@ This is the current default mode for most openstatus users. It's simple, data-dr
 
 Like with time per status, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 
+#### Requests or runs in the uptime history
+
+The status page's [**History**](https://app.openstatus.dev/status-pages/_/history) in the dashboard lets you switch monitor components between **Requests** and **Runs**. It changes only that view, not your public status page.
+
+- **Requests** counts each region's result, as above.
+- **Runs** counts each scheduled run once. A run is down when at least half of the cloud regions that reported in it fail, degraded when failing and degraded regions together make up at least half, and successful otherwise. Degraded runs still count as up.
+
+Runs are recorded for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions. Months without run data, and monitors that run only from private locations, show no data under **Runs**.
+
 ## Reports only
 
 The **Reports only** status source (`manual`) is for teams who want to **fully control what's shown** on your status page, without relying on automatic checks. By default, your monitor is marked operational. You can then manually create status reports whenever you want to reflect changes — independent of any monitoring data.

@@ -5,7 +5,8 @@
     "dev": "NODE_ENV=development node --import @oxc-node/core/register --watch src/serve.ts",
     "start": "NODE_ENV=production node dist/serve.mjs",
     "test": "NODE_ENV=test RESEND_API_KEY=test-key CRON_SECRET=test-secret vitest run",
-    "build": "tsdown"
+    "build": "tsdown",
+    "backfill:uptime-runs": "node --import @oxc-node/core/register --env-file-if-exists=.env src/scripts/backfill-uptime-runs.ts"
   },
   "dependencies": {
     "@google-cloud/pubsub": "catalog:",

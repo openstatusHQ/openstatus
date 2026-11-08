@@ -32,11 +32,14 @@ export function ChartTooltipNumber({
 export function ChartTooltipNumberRaw({
   value,
   label,
+  unit = "ms",
   style,
   className,
 }: {
   value: ValueType;
   label: React.ReactNode;
+  /** `null` for values that carry their own unit, such as "2h 32m" */
+  unit?: string | null;
   style?: React.CSSProperties;
   className?: string;
 }) {
@@ -52,7 +55,9 @@ export function ChartTooltipNumberRaw({
       <span>{label}</span>
       <div className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
         {value}
-        <span className="text-muted-foreground font-normal">ms</span>
+        {unit !== null && (
+          <span className="text-muted-foreground font-normal">{unit}</span>
+        )}
       </div>
     </>
   );

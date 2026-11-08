@@ -76,9 +76,8 @@ function frozenMonth(monitorId: number, month: string, error = 0) {
     month: `${month}-01`,
     days: monthDays(`${month}-01`).map((day) => ({
       day,
-      ok: 100 - error,
-      degraded: 0,
-      error,
+      requests: { ok: 100 - error, degraded: 0, error },
+      runs: { ok: 1, degraded: 0, error: 0 },
     })),
   };
 }

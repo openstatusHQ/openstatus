@@ -9,6 +9,7 @@ import {
   monthKeyToFullLabel,
   monthKeyToLabel,
   windowKey,
+  windowLabel,
 } from "@/data/status-page-history";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +44,7 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
     const isCurrent = offset === 1;
     return {
       id: String(offset),
-      accessorFn: (row: HistoryRow) => row.months[key],
+      accessorFn: (row: HistoryRow) => row.months[key]?.percentage ?? null,
       header: () => (
         <span className={cn("block text-center", isCurrent && "text-info")}>
           {monthKeyToLabel(key)}
@@ -51,9 +52,10 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
       ),
       cell: ({ row }: { row: { original: HistoryRow } }) => (
         <TableCellUptime
-          percentage={row.original.months[key] ?? null}
+          value={row.original.months[key] ?? null}
+          unit={row.original.unit}
+          label={monthKeyToFullLabel(key)}
           isCurrent={isCurrent}
-          monthLabel={monthKeyToFullLabel(key)}
           events={eventsForMonth(row.original.events, key)}
           monitorId={row.original.component.monitorId}
         />
@@ -67,16 +69,20 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
 function rollingColumn(window: HistoryWindow): ColumnDef<HistoryRow> {
   return {
     id: "rolling",
-    accessorFn: (row) => row.rolling[windowKey(window)],
+    accessorFn: (row) => row.rolling[windowKey(window)]?.percentage ?? null,
     header: "Total",
-    cell: ({ row }) => {
-      const value = row.original.rolling[windowKey(window)];
-      return value === null ? "–" : `${value.toFixed(3)}%`;
-    },
+    cell: ({ row }) => (
+      <TableCellUptime
+        value={row.original.rolling[windowKey(window)]}
+        unit={row.original.unit}
+        label={windowLabel(window)}
+        tinted={false}
+      />
+    ),
     enableSorting: false,
     meta: {
       headerClassName: "text-center tabular-nums",
-      cellClassName: "text-center font-medium font-mono text-xs",
+      cellClassName: "p-1",
     },
   };
 }

@@ -1,6 +1,8 @@
 import { and, eq, gte, inArray } from "@openstatus/db";
 import {
   frozenMonitorUptime,
+  type FrozenMonitorUptimeDay,
+  frozenMonitorUptimeDaySchema,
   pageConfigurationSchema,
 } from "@openstatus/db/src/schema";
 
@@ -18,12 +20,15 @@ import {
   reportsOnlyDowntimeMs,
   requestsTally,
 } from "../status-timeline";
-import { type ComputeCountRow, monthRange } from "./compute";
+import { monthRange } from "./compute";
+import { fetchLiveDays } from "./live";
+import type { Counts } from "./quorum";
 import {
-  fetchFreezeCounts,
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
+  type UptimeRunsPipes,
   uptimeFreezePipes,
+  uptimeRunsPipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -42,14 +47,42 @@ type DayCount = { day: string; ok: number; degraded: number; error: number };
 // native-unit numerators kept alongside the percentage so rolling windows
 // stay additive (checks for requests mode, milliseconds for event math);
 // averaging monthly percentages would weigh a 2-day month like a full one
-type MonthValue = { percentage: number; up: number; total: number } | null;
+type MonthValue = {
+  percentage: number;
+  up: number;
+  total: number;
+  shown: Counts;
+} | null;
+
+/**
+ * Whole requests or runs, or milliseconds for `time`, where `ok` is uptime,
+ * `error` downtime and `degraded` always 0.
+ */
+type UptimeHistoryValue = Counts & { percentage: number };
+
+type HistoryValues = {
+  /** "YYYY-MM" → month; null = no data recorded, NEVER "down" */
+  months: Record<string, UptimeHistoryValue | null>;
+  /** counts are the sums of the window's month counts */
+  rolling: Record<HistoryWindowKey, UptimeHistoryValue | null>;
+};
+
+function timeMonth(up: number, total: number): MonthValue {
+  const shownUp = Math.round(up);
+  return {
+    percentage: floorPct(up / total),
+    up,
+    total,
+    shown: { ok: shownUp, degraded: 0, error: Math.round(total) - shownUp },
+  };
+}
 
 type UptimeHistoryEvent = Pick<
   Event,
   "id" | "name" | "type" | "status" | "from" | "to"
 >;
 
-type UptimeHistoryRow = {
+type UptimeHistoryRow = HistoryValues & {
   component: {
     id: number;
     name: string;
@@ -57,9 +90,10 @@ type UptimeHistoryRow = {
     /** for event links, null for static components */
     monitorId: number | null;
   };
-  /** "YYYY-MM" → percentage; null = no data recorded, NEVER "down" */
-  months: Record<string, number | null>;
-  rolling: Record<HistoryWindowKey, number | null>;
+  /** unit of `months` and `rolling` */
+  unit: "requests" | "time";
+  /** the same months counted per run, for monitors counted per request */
+  runs: HistoryValues | null;
   /** component events in the window; clients bucket per month by overlap */
   events: UptimeHistoryEvent[];
 };
@@ -69,7 +103,10 @@ type UptimeHistoryResult = {
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
   createdAt: Date | null;
-  summary: Record<HistoryWindowKey, { uptime: number | null; reports: number }>;
+  summary: Record<
+    HistoryWindowKey,
+    { uptime: number | null; runsUptime: number | null; reports: number }
+  >;
   rows: UptimeHistoryRow[];
 };
 
@@ -91,7 +128,13 @@ function requestsMonth(days: DayCount[] | null): MonthValue {
   if (!days) return null;
   const { up, total } = requestsTally(days);
   if (total === 0) return null;
-  return { percentage: floorPct(up / total), up, total };
+  const shown = { ok: 0, degraded: 0, error: 0 };
+  for (const d of days) {
+    shown.ok += d.ok;
+    shown.degraded += d.degraded;
+    shown.error += d.error;
+  }
+  return { percentage: floorPct(up / total), up, total, shown };
 }
 
 function durationMonth(
@@ -117,8 +160,7 @@ function durationMonth(
     now: nowMs,
   };
   const downtime = durationDowntimeMs(events, window, segments);
-  const up = Math.max(0, totalMs - downtime);
-  return { percentage: floorPct(up / totalMs), up, total: totalMs };
+  return timeMonth(Math.max(0, totalMs - downtime), totalMs);
 }
 
 function eventOnlyMonth(
@@ -138,8 +180,7 @@ function eventOnlyMonth(
     end: clampedEnd,
     now: nowMs,
   });
-  const up = Math.max(0, total - downtime);
-  return { percentage: floorPct(up / total), up, total };
+  return timeMonth(Math.max(0, total - downtime), total);
 }
 
 // heartbeat months span from the first signal, not just days with pings: a
@@ -161,8 +202,47 @@ function heartbeatMonth(
     ? reportsOnlyDowntimeMs(events, window)
     : durationDowntimeMs(events, window);
   const total = to - from;
-  const up = Math.max(0, total - downtime);
-  return { percentage: floorPct(up / total), up, total };
+  return timeMonth(Math.max(0, total - downtime), total);
+}
+
+function historyValues(
+  months: string[],
+  values: Map<string, MonthValue>,
+): HistoryValues {
+  const rolling = {} as HistoryValues["rolling"];
+  for (const w of WINDOWS) {
+    let up = 0;
+    let total = 0;
+    const shown = { ok: 0, degraded: 0, error: 0 };
+    for (const key of months.slice(-w)) {
+      const v = values.get(key);
+      if (!v) continue;
+      up += v.up;
+      total += v.total;
+      shown.ok += v.shown.ok;
+      shown.degraded += v.shown.degraded;
+      shown.error += v.shown.error;
+    }
+    rolling[windowKey(w)] =
+      total > 0 ? { percentage: floorPct(up / total), ...shown } : null;
+  }
+  return {
+    months: Object.fromEntries(
+      months.map((k) => {
+        const v = values.get(k);
+        return [k, v ? { percentage: v.percentage, ...v.shown } : null];
+      }),
+    ),
+    rolling,
+  };
+}
+
+// components weigh equally — native units (checks vs ms) differ per
+// component, so a cross-component sum would weight by unit volume
+function averageUptime(values: (UptimeHistoryValue | null)[]): number | null {
+  const uptimes = values.flatMap((v) => (v ? [v.percentage] : []));
+  if (uptimes.length === 0) return null;
+  return floorPct(uptimes.reduce((a, b) => a + b, 0) / uptimes.length / 100);
 }
 
 /**
@@ -174,6 +254,7 @@ export async function getUptimeHistory(args: {
   ctx: ServiceContext;
   input: GetUptimeHistoryInput;
   pipes?: UptimeFreezePipes;
+  runsPipes?: UptimeRunsPipes;
   now?: Date;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<UptimeHistoryResult> {
@@ -253,52 +334,31 @@ export async function getUptimeHistory(args: {
   })();
 
   // current month is never frozen, the previous may not be yet (the freeze
-  // runs early next month) — both come live from the 45d pipes; fetchFreezeCounts never
-  // throws, failed monitors land in failedMonitorIds and render as no-data
-  const liveReads = (async () => {
-    if (monitorIds.length === 0) {
-      return {
-        counts: [] as ComputeCountRow[],
-        failedMonitorIds: new Set<string>(),
-      };
-    }
-    const monitorIdsByJobType = new Map<string, Set<string>>();
-    for (const c of components) {
-      if (c.monitorId === null || !c.monitor) continue;
-      const ids = monitorIdsByJobType.get(c.monitor.jobType) ?? new Set();
-      ids.add(String(c.monitorId));
-      monitorIdsByJobType.set(c.monitor.jobType, ids);
-    }
-    return fetchFreezeCounts({
-      monitorIdsByJobType,
-      pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
-      throttleMs: 0,
-      sleep: args.sleep,
-    });
-  })();
+  // runs early next month) — both come live from the 45d pipes; failed
+  // monitors land in failedMonitorIds and render as no-data
+  const liveReads = fetchLiveDays({
+    monitors: components.flatMap((c) => (c.monitor ? [c.monitor] : [])),
+    pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
+    runsPipes:
+      mode === "requests"
+        ? (args.runsPipes ?? uptimeRunsPipes(defaultTb))
+        : undefined,
+    sleep: args.sleep,
+  });
 
-  const [{ frozenRows }, { counts: liveCounts, failedMonitorIds: liveFailed }] =
+  const [{ frozenRows }, { days: liveDays, failedMonitorIds: liveFailed }] =
     await Promise.all([dbReads, liveReads]);
   const frozenByKey = new Map(
-    frozenRows.map((r) => [`${r.monitorId}:${r.month.slice(0, 7)}`, r.days]),
+    frozenRows.map((r) => [
+      `${r.monitorId}:${r.month.slice(0, 7)}`,
+      frozenMonitorUptimeDaySchema.array().parse(r.days),
+    ]),
   );
 
-  const liveByMonitorMonth = new Map<string, Map<string, DayCount>>();
-  for (const row of liveCounts) {
-    const day = row.day.slice(0, 10);
-    const key = day.slice(0, 7);
-    if (key !== currentKey && key !== previousKey) continue;
-    const mapKey = `${row.monitorId}:${key}`;
-    const byDay = liveByMonitorMonth.get(mapKey) ?? new Map<string, DayCount>();
-    const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
-    acc.ok += row.ok;
-    acc.degraded += row.degraded;
-    acc.error += row.error;
-    byDay.set(day, acc);
-    liveByMonitorMonth.set(mapKey, byDay);
-  }
-
-  function countsFor(monitorId: number, key: string): DayCount[] | null {
+  function daysFor(
+    monitorId: number,
+    key: string,
+  ): FrozenMonitorUptimeDay[] | null {
     const frozen = frozenByKey.get(`${monitorId}:${key}`);
     if (frozen && key !== currentKey) return frozen;
     // Unfrozen months need full retention coverage, just like the freeze job.
@@ -307,9 +367,24 @@ export async function getUptimeHistory(args: {
       (key === previousKey &&
         nowMs - monthRange(`${key}-01`).start < FREEZE_CUTOFF_MS);
     if (!isLive || liveFailed.has(String(monitorId))) return null;
-    const byDay = liveByMonitorMonth.get(`${monitorId}:${key}`);
-    if (!byDay || byDay.size === 0) return null;
-    return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+    const days = [...(liveDays.get(String(monitorId))?.values() ?? [])]
+      .filter((d) => d.day.startsWith(key))
+      .sort((a, b) => (a.day < b.day ? -1 : 1));
+    return days.length > 0 ? days : null;
+  }
+
+  // a day without `runs` is left out of the runs view, never derived
+  function countsFor(
+    monitorId: number,
+    key: string,
+    metric: "requests" | "runs" = "requests",
+  ): DayCount[] | null {
+    const days = daysFor(monitorId, key);
+    if (!days) return null;
+    return days.flatMap((d) => {
+      const counts = d[metric];
+      return counts ? [{ day: d.day, ...counts }] : [];
+    });
   }
 
   const pastDays = HISTORY_MONTHS * 31 + 7;
@@ -371,17 +446,15 @@ export async function getUptimeHistory(args: {
       values.set(key, value);
     }
 
-    const rolling = {} as Record<HistoryWindowKey, number | null>;
-    for (const w of WINDOWS) {
-      let up = 0;
-      let total = 0;
-      for (const key of months.slice(-w)) {
-        const v = values.get(key);
-        if (!v) continue;
-        up += v.up;
-        total += v.total;
+    const requestsId =
+      heartbeatId === null && c.type === "monitor" && mode === "requests"
+        ? c.monitorId
+        : null;
+    const runValues = new Map<string, MonthValue>();
+    if (requestsId !== null) {
+      for (const key of months) {
+        runValues.set(key, requestsMonth(countsFor(requestsId, key, "runs")));
       }
-      rolling[windowKey(w)] = total > 0 ? floorPct(up / total) : null;
     }
 
     return {
@@ -391,10 +464,9 @@ export async function getUptimeHistory(args: {
         type: c.type === "static" ? ("static" as const) : ("monitor" as const),
         monitorId: c.monitorId,
       },
-      months: Object.fromEntries(
-        months.map((k) => [k, values.get(k)?.percentage ?? null]),
-      ),
-      rolling,
+      unit: requestsId !== null ? ("requests" as const) : ("time" as const),
+      ...historyValues(months, values),
+      runs: requestsId !== null ? historyValues(months, runValues) : null,
       events: events.map((e) => ({
         id: e.id,
         name: e.name,
@@ -425,17 +497,10 @@ export async function getUptimeHistory(args: {
         seen.add(e.id);
       }
     }
-    // components weigh equally — native units (checks vs ms) differ per
-    // component, so a cross-component sum would weight by unit volume
     const wk = windowKey(w);
-    const uptimes = rows.flatMap((r) =>
-      r.rolling[wk] !== null ? [r.rolling[wk] as number] : [],
-    );
     summary[wk] = {
-      uptime:
-        uptimes.length > 0
-          ? floorPct(uptimes.reduce((a, b) => a + b, 0) / uptimes.length / 100)
-          : null,
+      uptime: averageUptime(rows.map((r) => r.rolling[wk])),
+      runsUptime: averageUptime(rows.map((r) => (r.runs ?? r).rolling[wk])),
       reports: seen.size,
     };
   }

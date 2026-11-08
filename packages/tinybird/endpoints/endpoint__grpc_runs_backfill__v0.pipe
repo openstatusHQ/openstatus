@@ -1,0 +1,35 @@
+TOKEN "endpoint__grpc_runs_backfill__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- Temporary: delete once the frozen runs backfill has run.
+-- Judged runs per UTC day in [fromDate, toDate); filters copy aggregate__grpc_runs_45d__v0.
+SELECT
+    day,
+    toString(monitorId) AS monitorId,
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded,
+    countIf(e * 2 >= n) AS error
+FROM (
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS day,
+        monitorId,
+        cronTimestamp,
+        uniqExact(region) AS n,
+        uniqExactIf(region, coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS e,
+        uniqExactIf(region, coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'degraded') AS d
+    FROM grpc_response__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'Int32', '1') }}
+        AND cronTimestamp >= toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(fromDate, '2026-10-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))
+        AND cronTimestamp < toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(toDate, '2026-11-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))
+        AND coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+        -- private locations carry no shared run key
+        AND NOT match(region, '^[0-9]+$')
+    GROUP BY day, monitorId, cronTimestamp
+)
+GROUP BY day, monitorId
+ORDER BY day DESC
+
+TYPE endpoint

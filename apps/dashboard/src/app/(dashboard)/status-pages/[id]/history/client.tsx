@@ -53,8 +53,10 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import {
+  HISTORY_METRICS,
   HISTORY_WINDOWS,
   getColumnVisibility,
+  historyRows,
   parseWindow,
   windowKey,
 } from "@/data/status-page-history";
@@ -75,7 +77,8 @@ const MODE_LABELS = {
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [{ window }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [{ window, metric }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -92,6 +95,10 @@ export function Client() {
     [isLimited],
   );
   const history = isLimited ? exampleHistory : liveHistory;
+  const rows = useMemo(
+    () => historyRows(history?.rows ?? [], metric),
+    [history?.rows, metric],
+  );
 
   const columns = useMemo(
     () => getColumns(history?.months ?? [], window),
@@ -105,7 +112,10 @@ export function Client() {
   if (!history) return null;
 
   const summary = history.summary[windowKey(window)];
-  const hasAnyData = history.rows.some((row) =>
+  const showMetric = !isLimited && history.mode === "requests";
+  const uptime =
+    showMetric && metric === "runs" ? summary.runsUptime : summary.uptime;
+  const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
   );
 
@@ -122,18 +132,38 @@ export function Client() {
                   : "Long-term uptime, built from your page's components."}
               </SectionDescription>
             </div>
-            <Tabs
-              value={String(window)}
-              onValueChange={(v) => setSearchParams({ window: parseWindow(v) })}
-            >
-              <TabsList>
-                {HISTORY_WINDOWS.map((w) => (
-                  <TabsTrigger key={w} value={String(w)}>
-                    {w} months
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap justify-end gap-2">
+              {showMetric ? (
+                <Tabs
+                  value={metric}
+                  onValueChange={(v) =>
+                    setSearchParams({ metric: v === "runs" ? "runs" : null })
+                  }
+                >
+                  <TabsList>
+                    {HISTORY_METRICS.map((m) => (
+                      <TabsTrigger key={m} value={m} className="capitalize">
+                        {m}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              ) : null}
+              <Tabs
+                value={String(window)}
+                onValueChange={(v) =>
+                  setSearchParams({ window: parseWindow(v) })
+                }
+              >
+                <TabsList>
+                  {HISTORY_WINDOWS.map((w) => (
+                    <TabsTrigger key={w} value={String(w)}>
+                      {w} months
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
           </SectionHeaderRow>
         </SectionHeader>
       </Section>
@@ -152,7 +182,7 @@ export function Client() {
               </MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {summary.uptime === null ? "—" : `${summary.uptime.toFixed(3)}%`}
+              {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
             </MetricCardValue>
           </MetricCard>
           <MetricCard>
@@ -167,7 +197,7 @@ export function Client() {
                 Components
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>{history.rows.length}</MetricCardValue>
+            <MetricCardValue>{rows.length}</MetricCardValue>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -186,7 +216,7 @@ export function Client() {
               <DataTable
                 paginationComponent={DataTablePaginationSimple}
                 columns={columns}
-                data={history.rows}
+                data={rows}
                 columnVisibility={columnVisibility}
               />
             </div>
@@ -215,7 +245,7 @@ export function Client() {
               paginationComponent={DataTablePaginationSimple}
               columns={columns}
               // rows without a single value are not history yet
-              data={hasAnyData ? history.rows : []}
+              data={hasAnyData ? rows : []}
               columnVisibility={columnVisibility}
               emptyState={
                 <DataTableEmpty>
@@ -258,11 +288,15 @@ export function Client() {
                   {MODE_LABELS.requests}
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  — Monitor components. Uptime is{" "}
-                  <span className="text-foreground font-medium">
-                    (ok + degraded) / total checks
-                  </span>
-                  . Degraded responses still count as up.
+                  — Monitor components, counted in requests or runs.{" "}
+                  <span className="text-foreground font-medium">Requests</span>{" "}
+                  counts each region&apos;s result.{" "}
+                  <span className="text-foreground font-medium">Runs</span>{" "}
+                  counts each scheduled check once across its cloud regions: a
+                  run is down when at least half of the regions that reported
+                  fail. Uptime is (ok + degraded) / total; degraded still counts
+                  as up. Months without run data, and monitors with only private
+                  locations, show no data in runs.
                 </span>
               </li>
               <li>

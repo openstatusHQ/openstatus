@@ -1,9 +1,12 @@
+import { sql } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   monitorIncidentTable,
   monitor,
   page,
   pageComponent,
+  privateLocation,
+  privateLocationToMonitors,
   statusReport,
   statusReportsToPageComponents,
   statusReportUpdate,
@@ -19,10 +22,11 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
+import { floorPct } from "../../status-timeline";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getUptimeHistory } from "../get-history";
-import type { UptimeFreezePipes } from "../run";
+import type { StatusPipeFn, UptimeFreezePipes, UptimeRunsPipes } from "../run";
 
 const MS_PER_DAY = 86_400_000;
 const noSleep = () => Promise.resolve();
@@ -71,14 +75,16 @@ function fullMonth(
 ): FrozenMonitorUptimeDay[] {
   return monthDays(`${k}-01`).map((day) => ({
     day,
-    ok: counts.ok ?? 0,
-    degraded: counts.degraded ?? 0,
-    error: counts.error ?? 0,
+    requests: {
+      ok: counts.ok ?? 0,
+      degraded: counts.degraded ?? 0,
+      error: counts.error ?? 0,
+    },
   }));
 }
 
 function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
-  const pipe = () => Promise.resolve({ data: rows });
+  const pipe: StatusPipeFn = () => Promise.resolve({ data: rows });
   return {
     http: pipe,
     tcp: pipe,
@@ -87,6 +93,19 @@ function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
     grpc: pipe,
     heartbeat: pipe,
   };
+}
+
+function makeRunsPipes(
+  runs: ComputeCountRow[] | Error = [],
+  calls: Parameters<StatusPipeFn>[0][] = [],
+): UptimeRunsPipes {
+  const pipe: StatusPipeFn = (params) => {
+    calls.push(params);
+    return runs instanceof Error
+      ? Promise.reject(runs)
+      : Promise.resolve({ data: runs });
+  };
+  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
 }
 
 function failingPipes(): UptimeFreezePipes {
@@ -104,6 +123,27 @@ function failingPipes(): UptimeFreezePipes {
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 
 let slugCounter = 0;
+
+async function attachPrivateLocations(
+  tx: Tx,
+  monitorId: number,
+  count: number,
+) {
+  for (let i = 0; i < count; i++) {
+    const location = await tx
+      .insert(privateLocation)
+      .values({
+        name: `pl-${i}`,
+        token: `t-${i}-${monitorId}`,
+        workspaceId: teamWorkspaceId,
+      })
+      .returning()
+      .get();
+    await tx
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: location.id, monitorId });
+  }
+}
 
 async function insertPage(
   tx: Tx,
@@ -301,6 +341,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -308,7 +349,7 @@ describe("getUptimeHistory", () => {
       const totalMs = monthEnd(key(1)).getTime() - monthStart(key(1)).getTime();
       const expected =
         Math.floor(((totalMs - twelveHours) / totalMs) * 100_000) / 1_000;
-      expect(res.rows[0].months[key(1)]).toBe(expected);
+      expect(res.rows[0].months[key(1)]?.percentage ?? null).toBe(expected);
     });
   });
 
@@ -348,6 +389,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -360,9 +402,13 @@ describe("getUptimeHistory", () => {
 
       const byName = new Map(res.rows.map((r) => [r.component.name, r]));
       // empty projection falls through to legacy full-duration downtime
-      expect(byName.get("member-only")?.months[key(1)]).toBe(legacyExpected);
+      expect(
+        byName.get("member-only")?.months[key(1)]?.percentage ?? null,
+      ).toBe(legacyExpected);
       // the impacted component keeps its weighted (0.5) interval
-      expect(byName.get("impacted")?.months[key(1)]).toBe(partialExpected);
+      expect(byName.get("impacted")?.months[key(1)]?.percentage ?? null).toBe(
+        partialExpected,
+      );
     });
   });
 
@@ -403,6 +449,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes,
+        runsPipes: makeRunsPipes(),
         now: new Date(monthStart(key(0)).getTime() + MS_PER_DAY),
         sleep: noSleep,
       });
@@ -412,11 +459,18 @@ describe("getUptimeHistory", () => {
       expect(res.months[res.months.length - 1]).toBe(key(0));
       const row = res.rows[0];
       expect(row.component.type).toBe("monitor");
-      expect(row.months[key(2)]).toBe(100);
-      expect(row.months[key(1)]).toBe(99);
-      expect(row.months[key(0)]).toBe(100);
+      expect(row.months[key(2)]?.percentage ?? null).toBe(100);
+      expect(row.months[key(1)]?.percentage ?? null).toBe(99);
+      expect(row.months[key(0)]?.percentage ?? null).toBe(100);
+      expect(row.unit).toBe("requests");
+      expect(row.months[key(1)]).toEqual({
+        percentage: 99,
+        ok: 99,
+        degraded: 0,
+        error: 1,
+      });
       // aged past the TB window without a freeze → no data, never down
-      expect(row.months[key(3)]).toBe(null);
+      expect(row.months[key(3)]?.percentage ?? null).toBe(null);
       expect(res.createdAt?.getTime()).toBe(testPage.createdAt?.getTime());
     });
   });
@@ -456,29 +510,35 @@ describe("getUptimeHistory", () => {
           ctx,
           input: { pageId: testPage.id },
           pipes,
+          runsPipes: makeRunsPipes(),
           now: new Date(date),
           sleep: noSleep,
         });
-        expect(res.rows[0].months["2026-08"]).toBe(previous);
-        expect(res.rows[0].months["2026-09"]).toBe(0);
-        expect(res.rows[0].rolling["6"]).toBe(rolling);
+        expect(res.rows[0].months["2026-08"]?.percentage ?? null).toBe(
+          previous,
+        );
+        expect(res.rows[0].months["2026-09"]?.percentage ?? null).toBe(0);
+        expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(rolling);
         expect(res.summary["6"].uptime).toBe(rolling);
       }
 
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: "2026-08-01",
-        days: [{ day: "2026-08-01", ok: 25, degraded: 0, error: 75 }],
+        days: [
+          { day: "2026-08-01", requests: { ok: 25, degraded: 0, error: 75 } },
+        ],
       });
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
         pipes,
+        runsPipes: makeRunsPipes(),
         now: new Date("2026-09-30T12:00:00.000Z"),
         sleep: noSleep,
       });
-      expect(res.rows[0].months["2026-08"]).toBe(25);
-      expect(res.rows[0].rolling["6"]).toBe(12.5);
+      expect(res.rows[0].months["2026-08"]?.percentage ?? null).toBe(25);
+      expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(12.5);
     });
   });
 
@@ -501,13 +561,14 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: failingPipes(),
+        runsPipes: makeRunsPipes(new Error("tinybird down")),
         now,
         sleep: noSleep,
       });
 
       const row = res.rows[0];
-      expect(row.months[key(1)]).toBe(100);
-      expect(row.months[key(0)]).toBe(null);
+      expect(row.months[key(1)]?.percentage ?? null).toBe(100);
+      expect(row.months[key(0)]?.percentage ?? null).toBe(null);
     });
   });
 
@@ -526,7 +587,10 @@ describe("getUptimeHistory", () => {
         days: fullMonth(key(2), {}),
       });
       const days = fullMonth(key(1), {});
-      days[0] = { day: days[0].day, ok: 99_999, degraded: 0, error: 1 };
+      days[0] = {
+        day: days[0].day,
+        requests: { ok: 99_999, degraded: 0, error: 1 },
+      };
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(1)}-01`,
@@ -537,15 +601,16 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
 
       const row = res.rows[0];
-      expect(row.months[key(2)]).toBe(null);
-      expect(row.months[key(1)]).toBe(99.999);
+      expect(row.months[key(2)]?.percentage ?? null).toBe(null);
+      expect(row.months[key(1)]?.percentage ?? null).toBe(99.999);
       // live month with zero pipe rows is also no-data
-      expect(row.months[key(0)]).toBe(null);
+      expect(row.months[key(0)]?.percentage ?? null).toBe(null);
     });
   });
 
@@ -560,14 +625,17 @@ describe("getUptimeHistory", () => {
       });
 
       const up = fullMonth(key(2), {});
-      up[0] = { day: up[0].day, ok: 3000, degraded: 0, error: 0 };
+      up[0] = { day: up[0].day, requests: { ok: 3000, degraded: 0, error: 0 } };
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(2)}-01`,
         days: up,
       });
       const down = fullMonth(key(1), {});
-      down[0] = { day: down[0].day, ok: 0, degraded: 0, error: 1000 };
+      down[0] = {
+        day: down[0].day,
+        requests: { ok: 0, degraded: 0, error: 1000 },
+      };
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: `${key(1)}-01`,
@@ -578,16 +646,17 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
 
       const row = res.rows[0];
-      expect(row.months[key(2)]).toBe(100);
-      expect(row.months[key(1)]).toBe(0);
+      expect(row.months[key(2)]?.percentage ?? null).toBe(100);
+      expect(row.months[key(1)]?.percentage ?? null).toBe(0);
       // additive: 3000/4000 = 75.00; a naive percentage average would say 50
-      expect(row.rolling["6"]).toBe(75);
-      expect(row.rolling["24"]).toBe(75);
+      expect(row.rolling["6"]?.percentage ?? null).toBe(75);
+      expect(row.rolling["24"]?.percentage ?? null).toBe(75);
     });
   });
 
@@ -639,6 +708,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
@@ -648,9 +718,9 @@ describe("getUptimeHistory", () => {
       const totalMs = monthDays(`${key(1)}-01`).length * MS_PER_DAY;
       const expected =
         Math.floor(((totalMs - 3 * 3_600_000) / totalMs) * 100_000) / 1_000;
-      expect(row.months[key(1)]).toBe(expected);
+      expect(row.months[key(1)]?.percentage ?? null).toBe(expected);
       // events overlap key(2) not at all and it has no counts → null anyway
-      expect(row.months[key(2)]).toBe(null);
+      expect(row.months[key(2)]?.percentage ?? null).toBe(null);
       // reports metric counts status reports only, not checker incidents
       expect(res.summary["6"].reports).toBe(2);
     });
@@ -671,7 +741,10 @@ describe("getUptimeHistory", () => {
       // checks on days 1-5 and 25-28 only; the monitor was paused in between
       const days = fullMonth(key(1), {});
       for (const i of [0, 1, 2, 3, 4, 24, 25, 26, 27]) {
-        days[i] = { day: days[i].day, ok: 10, degraded: 0, error: 0 };
+        days[i] = {
+          day: days[i].day,
+          requests: { ok: 10, degraded: 0, error: 0 },
+        };
       }
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
@@ -693,13 +766,14 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
 
       // downtime is clipped to checked days: the gap outage contributes 0,
       // so the month is 100%, not max(0, 9d - 12d) = 0%
-      expect(res.rows[0].months[key(1)]).toBe(100);
+      expect(res.rows[0].months[key(1)]?.percentage ?? null).toBe(100);
     });
   });
 
@@ -747,6 +821,7 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes,
+        runsPipes: makeRunsPipes(),
         now: injectedNow,
         sleep: noSleep,
       });
@@ -756,7 +831,7 @@ describe("getUptimeHistory", () => {
       const total = 2 * MS_PER_DAY - (lastDayEnd - injectedNow.getTime());
       const expected =
         Math.floor(((total - twoHours) / total) * 100_000) / 1_000;
-      expect(res.rows[0].months[key(0)]).toBe(expected);
+      expect(res.rows[0].months[key(0)]?.percentage ?? null).toBe(expected);
       expect(expected).toBeLessThan(95);
     });
   });
@@ -776,7 +851,10 @@ describe("getUptimeHistory", () => {
       // checks on only the first 10 days of the month
       const days = fullMonth(key(1), {});
       for (let i = 0; i < 10; i++) {
-        days[i] = { day: days[i].day, ok: 10, degraded: 0, error: 0 };
+        days[i] = {
+          day: days[i].day,
+          requests: { ok: 10, degraded: 0, error: 0 },
+        };
       }
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
@@ -797,13 +875,21 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
 
       // 1 day down of 10 days with checks = 90.00 — a full-month denominator
       // would dilute it to ~96.7
-      expect(res.rows[0].months[key(1)]).toBe(90);
+      expect(res.rows[0].months[key(1)]?.percentage ?? null).toBe(90);
+      expect(res.rows[0].unit).toBe("time");
+      expect(res.rows[0].months[key(1)]).toEqual({
+        percentage: 90,
+        ok: 9 * MS_PER_DAY,
+        degraded: 0,
+        error: MS_PER_DAY,
+      });
     });
   });
 
@@ -832,7 +918,7 @@ describe("getUptimeHistory", () => {
 
         // one ping on the 1st of key(3), then silence: nothing frozen after it
         const days = fullMonth(key(3), {});
-        days[0] = { ...days[0], ok: 1 };
+        days[0] = { ...days[0], requests: { ok: 1, degraded: 0, error: 0 } };
         await insertFrozen(tx, {
           monitorId: testMonitor.id,
           month: `${key(3)}-01`,
@@ -852,6 +938,7 @@ describe("getUptimeHistory", () => {
           ctx,
           input: { pageId: testPage.id },
           pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         });
@@ -860,16 +947,16 @@ describe("getUptimeHistory", () => {
         const row = res.rows[0];
         const key2Ms =
           monthEnd(key(2)).getTime() - monthStart(key(2)).getTime();
-        expect(row.months[key(4)]).toBe(null);
-        expect(row.months[key(3)]).toBe(100);
+        expect(row.months[key(4)]?.percentage ?? null).toBe(null);
+        expect(row.months[key(3)]?.percentage ?? null).toBe(100);
         // Reports only ignores incidents, like for any other component
-        expect(row.months[key(2)]).toBe(
+        expect(row.months[key(2)]?.percentage ?? null).toBe(
           incidentCounts
             ? Math.floor(((key2Ms - 2 * MS_PER_DAY) / key2Ms) * 100_000) / 1_000
             : 100,
         );
-        expect(row.months[key(1)]).toBe(100);
-        expect(row.months[key(0)]).toBe(100);
+        expect(row.months[key(1)]?.percentage ?? null).toBe(100);
+        expect(row.months[key(0)]?.percentage ?? null).toBe(100);
       });
     },
   );
@@ -898,19 +985,20 @@ describe("getUptimeHistory", () => {
         ctx,
         input: { pageId: testPage.id },
         pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
         now,
         sleep: noSleep,
       });
 
       const row = res.rows[0];
       expect(row.component.type).toBe("static");
-      expect(row.months[key(2)]).toBe(null);
+      expect(row.months[key(2)]?.percentage ?? null).toBe(null);
       const totalMs = monthEnd(key(1)).getTime() - monthStart(key(1)).getTime();
       const expected =
         Math.floor(((totalMs - sixHours) / totalMs) * 100_000) / 1_000;
-      expect(row.months[key(1)]).toBe(expected);
+      expect(row.months[key(1)]?.percentage ?? null).toBe(expected);
       // current month: no events → clean so far
-      expect(row.months[key(0)]).toBe(100);
+      expect(row.months[key(0)]?.percentage ?? null).toBe(100);
     });
   });
 
@@ -923,6 +1011,7 @@ describe("getUptimeHistory", () => {
           ctx: { ...freeCtx, db: tx },
           input: { pageId: 999_999 },
           pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         }),
@@ -947,10 +1036,221 @@ describe("getUptimeHistory", () => {
           ctx: otherCtx,
           input: { pageId: testPage.id },
           pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
           now,
           sleep: noSleep,
         }),
       ).rejects.toThrow(NotFoundError);
+    });
+  });
+});
+
+describe("getUptimeHistory runs view", () => {
+  const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
+  const today = now.toISOString().slice(0, 10);
+
+  type Call = Parameters<StatusPipeFn>[0];
+
+  async function setup(
+    tx: Tx,
+    overrides: Partial<typeof monitor.$inferInsert> = {},
+    value: "requests" | "duration" = "requests",
+  ) {
+    const testMonitor = await insertMonitor(tx, {
+      regions: SIX_REGIONS,
+      ...overrides,
+    });
+    const testPage = await insertPage(tx, { configuration: { value } });
+    await insertComponent(tx, {
+      pageId: testPage.id,
+      monitorId: testMonitor.id,
+    });
+    return { testMonitor, testPage };
+  }
+
+  test("returns requests and runs side by side; a month without runs is no data", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      const id = String(testMonitor.id);
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(2)}-01`,
+        days: fullMonth(key(2), { ok: 90, error: 10 }),
+      });
+      // 1 of 6 regions failing every run all month: per region this is 99.5%
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), { ok: 860, error: 4 }).map((d) => ({
+          ...d,
+          runs: { ok: 144, degraded: 0, error: 0 },
+        })),
+      });
+
+      const runsCalls: Call[] = [];
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+        ]),
+        runsPipes: makeRunsPipes(
+          [{ monitorId: id, day: today, ok: 90, degraded: 5, error: 5 }],
+          runsCalls,
+        ),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(runsCalls).toEqual([{ monitorIds: [id] }]);
+      const row = res.rows[0];
+      expect(row.unit).toBe("requests");
+      expect(row.months[key(2)]?.percentage).toBe(90);
+      expect(row.months[key(1)]?.percentage).toBe(99.537);
+      expect(row.months[key(0)]).toEqual({
+        percentage: 83.333,
+        ok: 500,
+        degraded: 0,
+        error: 100,
+      });
+
+      const d1 = monthDays(`${key(1)}-01`).length;
+      expect(row.runs?.months[key(2)]).toBe(null);
+      expect(row.runs?.months[key(1)]).toEqual({
+        percentage: 100,
+        ok: 144 * d1,
+        degraded: 0,
+        error: 0,
+      });
+      expect(row.runs?.months[key(0)]).toEqual({
+        percentage: 95,
+        ok: 90,
+        degraded: 5,
+        error: 5,
+      });
+      expect(row.runs?.rolling["6"]).toEqual({
+        percentage: floorPct((144 * d1 + 95) / (144 * d1 + 100)),
+        ok: 144 * d1 + 90,
+        degraded: 5,
+        error: 5,
+      });
+      expect(res.summary["6"].runsUptime).toBe(
+        row.runs?.rolling["6"]?.percentage,
+      );
+      expect(res.summary["6"].uptime).toBe(row.rolling["6"]?.percentage);
+    });
+  });
+
+  test("duration mode does not read runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, {}, "duration");
+      const id = String(testMonitor.id);
+
+      const runsCalls: Call[] = [];
+      await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 99, degraded: 0, error: 1 },
+        ]),
+        runsPipes: makeRunsPipes([], runsCalls),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(runsCalls).toEqual([]);
+    });
+  });
+
+  test("a private-only monitor has requests but no runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, { regions: "" });
+      await attachPrivateLocations(tx, testMonitor.id, 1);
+      const id = String(testMonitor.id);
+
+      const runsCalls: Call[] = [];
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 99, degraded: 0, error: 1 },
+        ]),
+        runsPipes: makeRunsPipes([], runsCalls),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(runsCalls).toEqual([]);
+      const row = res.rows[0];
+      expect(row.months[key(0)]?.percentage).toBe(99);
+      expect(row.runs?.months[key(0)]).toBe(null);
+      expect(res.summary["6"].runsUptime).toBe(null);
+    });
+  });
+
+  test("a failed runs read keeps requests and leaves runs empty", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      const id = String(testMonitor.id);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 99, degraded: 0, error: 1 },
+        ]),
+        runsPipes: makeRunsPipes(new Error("tinybird down")),
+        now,
+        sleep: noSleep,
+      });
+
+      const row = res.rows[0];
+      expect(row.months[key(0)]?.percentage).toBe(99);
+      expect(row.runs?.months[key(0)]).toBe(null);
+    });
+  });
+
+  test("duration mode and heartbeats carry no runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, {}, "duration");
+      const heartbeat = await insertMonitor(tx, {
+        jobType: "heartbeat",
+        regions: "",
+      });
+      const requestsPage = await insertPage(tx, {
+        configuration: { value: "requests" },
+      });
+      await insertComponent(tx, {
+        pageId: requestsPage.id,
+        monitorId: heartbeat.id,
+      });
+      const pipes = makePipes([
+        {
+          monitorId: String(testMonitor.id),
+          day: today,
+          ok: 1,
+          degraded: 0,
+          error: 0,
+        },
+      ]);
+
+      for (const pageId of [testPage.id, requestsPage.id]) {
+        const res = await getUptimeHistory({
+          ctx,
+          input: { pageId },
+          pipes,
+          runsPipes: makeRunsPipes(),
+          now,
+          sleep: noSleep,
+        });
+        expect(res.rows[0].unit).toBe("time");
+        expect(res.rows[0].runs).toBe(null);
+      }
     });
   });
 });

@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull } from "@openstatus/db";
 import {
   frozenMonitorUptime,
-  type FrozenMonitorUptimeDay,
+  frozenMonitorUptimeDaySchema,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -16,9 +16,11 @@ import {
 } from "./run";
 import { GetMonitorUptimeHistoryInput } from "./schemas";
 
+type DayCount = { day: string; ok: number; degraded: number; error: number };
+
 type MonitorUptimeHistoryResult = {
   /** UTC days oldest → newest; frozen months are zero-filled, live ones sparse */
-  days: FrozenMonitorUptimeDay[];
+  days: DayCount[];
   /** live counts failed to load, so the current month may be missing */
   partial: boolean;
 };
@@ -77,11 +79,13 @@ export async function getMonitorUptimeHistory(args: {
     }),
   ]);
 
-  const byDay = new Map<string, FrozenMonitorUptimeDay>();
+  const byDay = new Map<string, DayCount>();
   const frozenMonths = new Set<string>();
   for (const row of frozenRows) {
     frozenMonths.add(row.month.slice(0, 7));
-    for (const d of row.days) byDay.set(d.day, d);
+    for (const d of frozenMonitorUptimeDaySchema.array().parse(row.days)) {
+      byDay.set(d.day, { day: d.day, ...d.requests });
+    }
   }
 
   // only unfrozen months still inside the pipes' 45d lookback: an older
