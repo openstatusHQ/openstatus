@@ -17,9 +17,9 @@ FROM (
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS day,
         monitorId,
         cronTimestamp,
-        count() AS n,
-        countIf(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS e,
-        countIf(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'degraded') AS d
+        uniqExact(region) AS n,
+        uniqExactIf(region, coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS e,
+        uniqExactIf(region, coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'degraded') AS d
     FROM dns_response__v0
     WHERE monitorId IN {{ Array(monitorIds, 'Int32', '1') }}
         AND cronTimestamp >= toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(fromDate, '2026-10-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))

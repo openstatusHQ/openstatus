@@ -339,7 +339,10 @@ export async function getUptimeHistory(args: {
   const liveReads = fetchLiveDays({
     monitors: components.flatMap((c) => (c.monitor ? [c.monitor] : [])),
     pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
-    runsPipes: args.runsPipes ?? uptimeRunsPipes(defaultTb),
+    runsPipes:
+      mode === "requests"
+        ? (args.runsPipes ?? uptimeRunsPipes(defaultTb))
+        : undefined,
     sleep: args.sleep,
   });
 

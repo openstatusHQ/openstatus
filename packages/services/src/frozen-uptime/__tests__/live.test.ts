@@ -91,6 +91,18 @@ describe("fetchLiveDays", () => {
     expect(calls).toEqual([{ monitorIds: ["1"] }]);
   });
 
+  test("skips the runs read without runs pipes", async () => {
+    const { pipes: livePipes } = pipes(async () => ({ data: [row({})] }));
+    const { days } = await fetchLiveDays({
+      monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
+      pipes: livePipes,
+    });
+    expect(days.get("1")?.get("2026-11-02")).toEqual({
+      day: "2026-11-02",
+      requests: { ok: 1, degraded: 0, error: 0 },
+    });
+  });
+
   test("a failed runs read keeps requests and never throws", async () => {
     const { pipes: livePipes } = pipes(async () => ({ data: [row({})] }));
     const { pipes: liveRunsPipes } = runsPipes(async () => {

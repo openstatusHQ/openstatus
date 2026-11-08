@@ -5,10 +5,9 @@ SQL >
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
         monitorId,
         cronTimestamp,
-        countState() AS count,
-        countState(if(coalesce(requestStatus, '') = 'success', 1, NULL)) AS success,
-        countState(if(coalesce(requestStatus, '') = 'error', 1, NULL)) AS error,
-        countState(if(coalesce(requestStatus, '') = 'degraded', 1, NULL)) AS degraded
+        uniqExactState(CAST(region, 'String')) AS regions,
+        uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'error') AS errorRegions,
+        uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'degraded') AS degradedRegions
     FROM ping_response__v8
     WHERE coalesce(nullIf(trigger, ''), 'cron') = 'cron'
         -- private locations carry no shared run key

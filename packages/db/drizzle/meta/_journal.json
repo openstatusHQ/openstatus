@@ -680,13 +680,6 @@
       "when": 1793176105120,
       "tag": "0096_round_xavin",
       "breakpoints": true
-    },
-    {
-      "idx": 97,
-      "version": "6",
-      "when": 1794149722796,
-      "tag": "0097_frozen_uptime_requests_shape",
-      "breakpoints": true
     }
   ]
 }

@@ -17,9 +17,9 @@ FROM (
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS day,
         monitorId,
         cronTimestamp,
-        count() AS n,
-        countIf(coalesce(requestStatus, '') = 'error') AS e,
-        countIf(coalesce(requestStatus, '') = 'degraded') AS d
+        uniqExact(region) AS n,
+        uniqExactIf(region, coalesce(requestStatus, '') = 'error') AS e,
+        uniqExactIf(region, coalesce(requestStatus, '') = 'degraded') AS d
     FROM ping_response__v8
     WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
         AND cronTimestamp >= toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(fromDate, '2026-10-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))

@@ -16,7 +16,8 @@ import {
 export async function fetchLiveDays(args: {
   monitors: { id: number; jobType: string; regions: string }[];
   pipes: UptimeFreezePipes;
-  runsPipes: UptimeRunsPipes;
+  /** Omit to skip the run read, leaving every day without `runs`. */
+  runsPipes?: UptimeRunsPipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{
   days: Map<string, Map<string, FrozenMonitorUptimeDay>>;
@@ -36,12 +37,14 @@ export async function fetchLiveDays(args: {
       throttleMs: 0,
       sleep: args.sleep,
     }),
-    fetchRunsByDay({
-      monitors: args.monitors,
-      pipes: args.runsPipes,
-      throttleMs: 0,
-      sleep: args.sleep,
-    }),
+    args.runsPipes
+      ? fetchRunsByDay({
+          monitors: args.monitors,
+          pipes: args.runsPipes,
+          throttleMs: 0,
+          sleep: args.sleep,
+        })
+      : undefined,
   ]);
 
   const days = new Map<string, Map<string, FrozenMonitorUptimeDay>>();
@@ -59,7 +62,7 @@ export async function fetchLiveDays(args: {
     days.set(row.monitorId, byDay);
   }
 
-  for (const [monitorId, monitorRuns] of runs.runs) {
+  for (const [monitorId, monitorRuns] of runs?.runs ?? []) {
     const byDay = days.get(monitorId);
     if (!byDay) continue;
     for (const [day, dayRuns] of monitorRuns) {

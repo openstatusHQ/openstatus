@@ -16,9 +16,9 @@ FROM (
         time AS day,
         monitorId,
         cronTimestamp,
-        countMerge(count) AS n,
-        countMerge(error) AS e,
-        countMerge(degraded) AS d
+        uniqExactMerge(regions) AS n,
+        uniqExactMerge(errorRegions) AS e,
+        uniqExactMerge(degradedRegions) AS d
     FROM mv__dns_runs_45d__v0
     WHERE monitorId IN {{ Array(monitorIds, 'String', '7417') }}
     GROUP BY day, monitorId, cronTimestamp

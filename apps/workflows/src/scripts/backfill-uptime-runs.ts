@@ -108,7 +108,12 @@ for (const [i, month] of months.entries()) {
   for (const failure of res.failures) console.log(`  ${failure}`);
   if (res.failed.length > 0 || res.failures.length > 0) hadFailures = true;
 
-  if (res.updated === 0 && res.failed.length === 0 && res.noData.length > 0) {
+  if (
+    res.updated === 0 &&
+    res.upToDate === 0 &&
+    res.failed.length === 0 &&
+    res.noData.length > 0
+  ) {
     console.warn(
       `[backfill-uptime-runs] ${month}: no run data for any of ${res.noData.length} monitor(s), likely past raw retention; stopping before older months`,
     );

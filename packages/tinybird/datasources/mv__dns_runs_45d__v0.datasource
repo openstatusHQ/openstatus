@@ -1,15 +1,15 @@
 # Data Source created from Pipe 'aggregate__dns_runs_45d__v0'
 # Partial aggregates per scheduled cloud run until merges run; read with *Merge per run.
 # Private-location rows are filtered out.
+# Distinct regions, not rows: checker delivery is at least once, so a redelivered row must not add a vote.
 
 SCHEMA >
     `time` DateTime('UTC'),
     `monitorId` String,
     `cronTimestamp` Int64,
-    `count` AggregateFunction(count),
-    `success` AggregateFunction(count, Nullable(UInt8)),
-    `error` AggregateFunction(count, Nullable(UInt8)),
-    `degraded` AggregateFunction(count, Nullable(UInt8))
+    `regions` AggregateFunction(uniqExact, String),
+    `errorRegions` AggregateFunction(uniqExact, String),
+    `degradedRegions` AggregateFunction(uniqExact, String)
 
 ENGINE "AggregatingMergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

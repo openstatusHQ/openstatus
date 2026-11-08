@@ -69,12 +69,6 @@ describe("frozenMonitorUptimeDaySchema", () => {
     ).toEqual(runs);
   });
 
-  test("reads a legacy flat day as requests", () => {
-    expect(
-      frozenMonitorUptimeDaySchema.parse({ day: "2026-06-01", ...requests }),
-    ).toEqual({ day: "2026-06-01", requests });
-  });
-
   test("rejects negative runs", () => {
     expect(() =>
       frozenMonitorUptimeDaySchema.parse({

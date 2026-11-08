@@ -132,7 +132,7 @@ export function Client() {
                   : "Long-term uptime, built from your page's components."}
               </SectionDescription>
             </div>
-            <div className="flex flex-wrap gap-2 justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
               {showMetric ? (
                 <Tabs
                   value={metric}
@@ -288,8 +288,7 @@ export function Client() {
                   {MODE_LABELS.requests}
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  — Monitor components, counted in requests or runs (the toggle
-                  above).{" "}
+                  — Monitor components, counted in requests or runs.{" "}
                   <span className="text-foreground font-medium">Requests</span>{" "}
                   counts each region&apos;s result.{" "}
                   <span className="text-foreground font-medium">Runs</span>{" "}

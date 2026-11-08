@@ -1142,6 +1142,28 @@ describe("getUptimeHistory runs view", () => {
     });
   });
 
+  test("duration mode does not read runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, {}, "duration");
+      const id = String(testMonitor.id);
+
+      const runsCalls: Call[] = [];
+      await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 99, degraded: 0, error: 1 },
+        ]),
+        runsPipes: makeRunsPipes([], runsCalls),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(runsCalls).toEqual([]);
+    });
+  });
+
   test("a private-only monitor has requests but no runs", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
