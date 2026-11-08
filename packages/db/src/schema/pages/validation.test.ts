@@ -30,8 +30,8 @@ describe("selectPageSchema defaultTimezone", () => {
 });
 
 describe("pageConfigurationSchema value", () => {
-  it("accepts checks next to the existing values", () => {
-    for (const value of ["duration", "requests", "manual", "checks"]) {
+  it("accepts runs next to the existing values", () => {
+    for (const value of ["duration", "requests", "manual", "runs"]) {
       expect(pageConfigurationSchema.parse({ value }).value).toBe(value);
     }
   });

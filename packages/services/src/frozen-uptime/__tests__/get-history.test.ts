@@ -1000,7 +1000,7 @@ describe("getUptimeHistory with run quorum", () => {
   async function setup(
     tx: Tx,
     jobType: (typeof monitor.$inferInsert)["jobType"] = "http",
-    value: "checks" | "requests" = "checks",
+    value: "runs" | "requests" = "runs",
   ) {
     const testMonitor = await insertMonitor(tx, {
       regions: SIX_REGIONS,
@@ -1060,7 +1060,7 @@ describe("getUptimeHistory with run quorum", () => {
         sleep: noSleep,
       });
 
-      expect(res.mode).toBe("checks");
+      expect(res.mode).toBe("runs");
       expect(res.quorumSince).toBe(key(1));
       const row = res.rows[0];
       expect(row.months[key(2)]).toBe(90);
@@ -1233,7 +1233,7 @@ describe("getUptimeHistory with run quorum", () => {
       const ctx = { ...userCtx, db: tx };
       const testMonitor = await insertMonitor(tx, { regions: "" });
       const testPage = await insertPage(tx, {
-        configuration: { value: "checks" },
+        configuration: { value: "runs" },
       });
       await insertComponent(tx, {
         pageId: testPage.id,

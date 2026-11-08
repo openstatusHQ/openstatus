@@ -75,7 +75,7 @@ describe("frozenMonitorUptimeDaySchema", () => {
     expect(frozenMonitorUptimeDaySchema.parse(legacy[0])).toEqual(migrated[0]);
   });
 
-  it("keeps requests and checks", () => {
+  it("keeps requests and runs", () => {
     expect(frozenMonitorUptimeDaySchema.parse(current[0])).toEqual(current[0]);
   });
 

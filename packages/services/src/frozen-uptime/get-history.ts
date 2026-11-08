@@ -44,7 +44,7 @@ function windowKey(w: (typeof WINDOWS)[number]): HistoryWindowKey {
 }
 
 // native-unit numerators kept alongside the percentage so rolling windows
-// stay additive (region checks or runs for requests/checks mode, milliseconds for event math);
+// stay additive (region checks for requests mode, runs for runs mode, milliseconds for event math);
 // averaging monthly percentages would weigh a 2-day month like a full one
 type MonthValue = { percentage: number; up: number; total: number } | null;
 
@@ -69,11 +69,11 @@ type UptimeHistoryRow = {
 };
 
 type UptimeHistoryResult = {
-  mode: "requests" | "checks" | "duration" | "manual";
+  mode: "requests" | "runs" | "duration" | "manual";
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
   createdAt: Date | null;
-  /** checks mode only: "YYYY-MM" of the first month whose monitor counts are runs judged on quorum */
+  /** runs mode only: "YYYY-MM" of the first month whose monitor counts are runs judged on quorum */
   quorumSince: string | null;
   summary: Record<HistoryWindowKey, { uptime: number | null; reports: number }>;
   rows: UptimeHistoryRow[];
@@ -228,7 +228,7 @@ export async function getUptimeHistory(args: {
     _page.configuration ?? {},
   );
   const mode = configuration.success ? configuration.data.value : "requests";
-  const countsRuns = mode === "checks";
+  const countsRuns = mode === "runs";
 
   const months = monthKeys(now);
   const currentKey = months[months.length - 1];
@@ -359,7 +359,7 @@ export async function getUptimeHistory(args: {
         );
       } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
-        if (mode === "requests" || mode === "checks") {
+        if (mode === "requests" || mode === "runs") {
           value = requestsMonth(days, regionCounts.get(c.monitorId) ?? null);
         } else if (mode === "duration") {
           value = durationMonth(days, events, nowMs);

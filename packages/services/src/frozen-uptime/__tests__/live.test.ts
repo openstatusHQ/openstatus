@@ -131,7 +131,7 @@ describe("attachRuns", () => {
     expect(out.get("1")?.[0]?.runs).toEqual(runs);
     expect(out.get("1")?.[1]?.runs).toBeUndefined();
     expect(out.get("2")?.[0]?.runs).toBeUndefined();
-    expect(rows.get("1")?.[0]).not.toHaveProperty("checks");
+    expect(rows.get("1")?.[0]).not.toHaveProperty("runs");
   });
 
   test("1 of 6 regions failing every run: the day is up and counted in runs", () => {
@@ -272,7 +272,7 @@ describe("toIntervalCounts", () => {
       },
       { interval: bucketB, requests: { ok: 288, degraded: 0, error: 0 } },
     ]);
-    expect(toIntervalCounts(rows, null)[0]).not.toHaveProperty("checks");
+    expect(toIntervalCounts(rows, null)[0]).not.toHaveProperty("runs");
   });
 
   test("1 of 6 regions failing every run: the bucket is up in runs", () => {

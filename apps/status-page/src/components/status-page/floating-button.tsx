@@ -48,7 +48,7 @@ export const IS_DEV = process.env.NODE_ENV === "development";
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
 
-export const CARD_TYPE = ["duration", "requests", "checks", "manual"] as const;
+export const CARD_TYPE = ["duration", "requests", "runs", "manual"] as const;
 export type CardType = (typeof CARD_TYPE)[number];
 
 export const BAR_TYPE = ["absolute", "manual"] as const;
@@ -66,7 +66,7 @@ const LABELS = {
   value: {
     duration: "Time per status",
     requests: "Number of requests",
-    checks: "Number of checks",
+    runs: "Number of runs",
     manual: "Worst status of the day",
   },
 } as const;
@@ -298,7 +298,7 @@ export function FloatingButton({
                     )}
                   </SelectTrigger>
                   <SelectContent>
-                    {(["duration", "requests", "checks"] as const).map((v) => (
+                    {(["duration", "requests", "runs"] as const).map((v) => (
                       <SelectItem key={v} value={v}>
                         {LABELS.value[v]}
                       </SelectItem>

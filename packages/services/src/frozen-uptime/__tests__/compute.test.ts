@@ -120,7 +120,7 @@ describe("computeMonitorMonth", () => {
       requests: { ok: 10, degraded: 0, error: 0 },
       runs,
     });
-    expect(computed?.days[0]).not.toHaveProperty("checks");
+    expect(computed?.days[0]).not.toHaveProperty("runs");
   });
 
   test("returns null when the monitor has no counts in the month", () => {

@@ -108,12 +108,12 @@ function hist(
   return { day, monitorId: String(monitorId), ...b };
 }
 
-type CardValue = "checks" | "requests";
+type CardValue = "runs" | "requests";
 
 async function pageWith(
   monitorId: number,
   defaultTimezone = "UTC",
-  value: CardValue = "checks",
+  value: CardValue = "runs",
 ) {
   const _page = await createPage(workspaceId, {
     defaultTimezone,
@@ -129,7 +129,7 @@ async function pageWith(
 async function uptime(
   slug: string,
   componentId: number,
-  cardType: CardValue = "checks",
+  cardType: CardValue = "runs",
 ) {
   const result = await caller().statusPage.getUptime({
     slug,
@@ -196,7 +196,7 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId));
 });
 
-describe("getUptime on a checks page counts runs for monitors with a quorum population", () => {
+describe("getUptime on a runs page counts runs for monitors with a quorum population", () => {
   test("UTC page: 1 of 6 regions failing all day is a green day in runs at 100%", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({
@@ -217,7 +217,7 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
     const bar = component.data.find((d) => d.day === day);
 
     expect(bar?.bar).toEqual([{ status: "success", height: 100 }]);
-    expect(bar?.card).toEqual([{ status: "success", value: "144 checks" }]);
+    expect(bar?.card).toEqual([{ status: "success", value: "144 runs" }]);
     expect(component.uptime).toBe("100%");
     expect(pipes.calls.find((c) => c.name === "httpQuorum45d")?.params).toEqual(
       { monitorIds: [String(ids.cloud)] },
@@ -250,8 +250,8 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
     const shown = cardCounts(bar?.card ?? []);
 
     expect(bar?.card).toEqual([
-      { status: "success", value: "140 checks" },
-      { status: "error", value: "4 checks" },
+      { status: "success", value: "140 runs" },
+      { status: "error", value: "4 runs" },
     ]);
     expect(bar?.bar).toEqual([{ status: "error", height: 100 }]);
     expect(component.uptime).toBe(
@@ -284,7 +284,7 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
     const bar = component.data.find((d) => d.day === localDay);
 
     expect(component.timeZone).toBe(zone);
-    expect(bar?.card).toEqual([{ status: "success", value: "144 checks" }]);
+    expect(bar?.card).toEqual([{ status: "success", value: "144 runs" }]);
     expect(component.uptime).toBe("100%");
     expect(pipes.calls.find((c) => c.name === "httpQuorum45d")?.params).toEqual(
       { monitorIds: [String(ids.cloud)], timezone: zone },
@@ -316,8 +316,8 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
 
     expect(component.timeZone).toBe("UTC");
     expect(bar?.card).toEqual([
-      { status: "success", value: "120 checks" },
-      { status: "error", value: "24 checks" },
+      { status: "success", value: "120 runs" },
+      { status: "error", value: "24 runs" },
     ]);
   });
 
@@ -351,12 +351,12 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
     const legacyDay = component.data.find((d) => d.day === legacy);
 
     expect(runsDay?.card).toEqual([
-      { status: "success", value: "140 checks" },
-      { status: "error", value: "4 checks" },
+      { status: "success", value: "140 runs" },
+      { status: "error", value: "4 runs" },
     ]);
     expect(legacyDay?.card).toEqual([
-      { status: "success", value: "90 checks" },
-      { status: "error", value: "10 checks" },
+      { status: "success", value: "90 runs" },
+      { status: "error", value: "10 runs" },
     ]);
     const up = 140 + 90;
     const total = 144 + 100;
@@ -377,8 +377,8 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
     const bar = component.data.find((d) => d.day === day);
 
     expect(bar?.card).toEqual([
-      { status: "success", value: "143 checks" },
-      { status: "error", value: "1 check" },
+      { status: "success", value: "143 runs" },
+      { status: "error", value: "1 run" },
     ]);
     expect(component.uptime).toBe(`${floorPct(857 / 864)}%`);
   });
@@ -425,7 +425,7 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
     const bar = component.data.find((d) => d.day === day);
 
     expect(bar?.bar).toEqual([{ status: "success", height: 100 }]);
-    expect(bar?.card).toEqual([{ status: "success", value: "144 checks" }]);
+    expect(bar?.card).toEqual([{ status: "success", value: "144 runs" }]);
   });
 
   test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
@@ -443,8 +443,8 @@ describe("getUptime on a checks page counts runs for monitors with a quorum popu
 
     expect(bar?.bar).toEqual([{ status: "error", height: 100 }]);
     expect(bar?.card).toEqual([
-      { status: "success", value: "120 checks" },
-      { status: "error", value: "24 checks" },
+      { status: "success", value: "120 runs" },
+      { status: "error", value: "24 runs" },
     ]);
     expect(component.uptime).toBe(`${floorPct(720 / 864)}%`);
   });
@@ -496,7 +496,7 @@ describe("getUptime on a requests page keeps per-region counts", () => {
   });
 });
 
-describe("getMonitor on a checks page counts uptime in runs for monitors with a quorum population", () => {
+describe("getMonitor on a runs page counts uptime in runs for monitors with a quorum population", () => {
   const publicIds = {} as Record<"cloud" | "private", number>;
   const bucketA = new Date("2026-11-08T08:00:00.000Z");
   const bucketB = new Date("2026-11-08T12:00:00.000Z");
@@ -512,7 +512,7 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
     return { interval, ...b };
   }
 
-  async function monitorPage(monitorId: number, value: CardValue = "checks") {
+  async function monitorPage(monitorId: number, value: CardValue = "runs") {
     const { slug } = await pageWith(monitorId, "UTC", value);
     const result = await caller().statusPage.getMonitor({
       slug,
@@ -529,8 +529,8 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
   ) {
     const t = tallyBuckets(rows, regionCount);
     return {
-      checks: roundCount(t.total),
-      unit: regionCount !== null ? "checks" : "requests",
+      total: roundCount(t.total),
+      unit: regionCount !== null ? "runs" : "requests",
       uptime: t.total > 0 ? floorPct(t.up / t.total) : null,
     };
   }
@@ -562,7 +562,7 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
     });
   });
 
-  test("1 of 6 regions failing every run: 100% and checks counted in runs", async () => {
+  test("1 of 6 regions failing every run: 100% and counted in runs", async () => {
     pipes.impl.set("httpUptimeWeekly", async () => ({
       data: [
         uptimeRow(bucketA, { success: 240, error: 48 }),
@@ -587,8 +587,8 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
     const result = await monitorPage(publicIds.cloud);
 
     expect(view(result)).toEqual({
-      checks: 96,
-      unit: "checks",
+      total: 96,
+      unit: "runs",
       uptime: 100,
     });
     const uptimeCall = pipes.calls.find((c) => c.name === "httpUptimeWeekly");
@@ -634,8 +634,8 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
     const shownView = view(result);
 
     expect(shownView).toEqual({
-      checks: 96,
-      unit: "checks",
+      total: 96,
+      unit: "runs",
       uptime: floorPct(92 / 96),
     });
     expect(shownView.uptime).toBe(95.833);
@@ -650,7 +650,7 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
 
     expect(result.data.uptime.regionCount).toBe(null);
     expect(view(result)).toEqual({
-      checks: 6,
+      total: 6,
       unit: "requests",
       uptime: floorPct(5 / 6),
     });
@@ -673,8 +673,8 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
       { interval: bucketA, requests: { ok: 240, degraded: 0, error: 48 } },
     ]);
     expect(view(result)).toEqual({
-      checks: 48,
-      unit: "checks",
+      total: 48,
+      unit: "runs",
       uptime: floorPct(240 / 288),
     });
   });
@@ -712,8 +712,8 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
     const result = await monitorPage(dnsId);
 
     expect(view(result)).toEqual({
-      checks: 96,
-      unit: "checks",
+      total: 96,
+      unit: "runs",
       uptime: floorPct((44 + 47) / 96),
     });
   });
@@ -730,7 +730,7 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
 
     expect(result.data.uptime.regionCount).toBe(null);
     expect(view(result)).toEqual({
-      checks: 576,
+      total: 576,
       unit: "requests",
       uptime: floorPct(480 / 576),
     });
@@ -753,7 +753,7 @@ describe("getMonitor on a checks page counts uptime in runs for monitors with a 
     const result = await monitorPage(dnsId, "requests");
 
     expect(view(result)).toEqual({
-      checks: 6,
+      total: 6,
       unit: "requests",
       uptime: floorPct(5 / 6),
     });

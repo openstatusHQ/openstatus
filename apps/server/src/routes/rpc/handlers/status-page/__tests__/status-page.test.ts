@@ -3304,18 +3304,18 @@ describe("StatusPageService.GetStatusPageOverview", () => {
     }
   });
 
-  test("maps a checks configuration", async () => {
+  test("maps a runs configuration", async () => {
     const createdPage = await db
       .insert(page)
       .values({
         workspaceId: 1,
-        title: `${TEST_PREFIX}-overview-checks-config`,
-        slug: `${TEST_PREFIX}-overview-checks-config-slug`,
+        title: `${TEST_PREFIX}-overview-runs-config`,
+        slug: `${TEST_PREFIX}-overview-runs-config-slug`,
         description: "",
         customDomain: "",
         published: true,
         accessType: "public",
-        configuration: { value: "checks", type: "absolute" },
+        configuration: { value: "runs", type: "absolute" },
       })
       .returning()
       .get();
@@ -3330,7 +3330,7 @@ describe("StatusPageService.GetStatusPageOverview", () => {
       expect(res.status).toBe(200);
 
       const data = await res.json();
-      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_CHECKS");
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_RUNS");
     } finally {
       await db.delete(page).where(eq(page.id, createdPage.id));
     }

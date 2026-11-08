@@ -1,7 +1,7 @@
 ---
 category: Concepts
 title: Uptime Calculation and Shared Values
-description: Understand how openstatus calculates uptime — from monitor checks (time per status, number of requests or number of checks) or from reports only — and choose which values to share on your status page.
+description: Understand how openstatus calculates uptime — from monitor checks (time per status, number of requests or number of runs) or from reports only — and choose which values to share on your status page.
 ---
 
 Uptime values can be a complete lie if they're not properly connected to monitoring. openstatus makes uptime transparent and configurable — you decide how it's calculated and which values to share on your status page.
@@ -20,9 +20,9 @@ In the dashboard, two settings on the status page's [**Components**](https://app
 - **Card shows** — what the hover card (and uptime) is based on, when the source is **Monitor checks**:
     - **Time per status** — aggregated from the incidents' duration.
     - **Number of requests** (default) — aggregated from every region's result.
-    - **Number of checks** — aggregated from every run across all of the monitor's regions.
+    - **Number of runs** — aggregated from every run across all of the monitor's cloud regions.
 
-> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration`, **Number of requests** is `value: requests` and **Number of checks** is `value: checks`.
+> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration`, **Number of requests** is `value: requests` and **Number of runs** is `value: runs`.
 
 **TL;DR**
 
@@ -30,12 +30,12 @@ In the dashboard, two settings on the status page's [**Components**](https://app
 |-------------|----------------------|-------------------------------------|----------------------------------|
 | **Monitor checks** + **Time per status** | Incidents and report impacts | Time-based uptime, proportional colours | Accurate long-term view         |
 | **Monitor checks** + **Number of requests** | Every region's result | Request-based uptime %           | Real-time reflection            |
-| **Monitor checks** + **Number of checks** | Every run across all regions | Check-based uptime %       | Availability commitments (SLAs) |
+| **Monitor checks** + **Number of runs** | Every run across all regions | Run-based uptime %         | Availability commitments (SLAs) |
 | **Reports only**   | Your status reports and maintenances  | Controlled, narrative updates       | Transparency without monitoring |
 
 ## Monitor checks
 
-With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in three variants: _time per status_, _number of requests_ and _number of checks_. All three share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
+With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in three variants: _time per status_, _number of requests_ and _number of runs_. All three share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
 
 ### Time per status
 
@@ -63,15 +63,15 @@ In simple terms: `uptime = (success + degraded) / total requests`
 
 This is the current default mode for most openstatus users. It's simple, data-driven, and updates immediately as new results come in.
 
-### Number of checks
+### Number of runs
 
-The number of checks value (`checks`) counts each scheduled run once, across all of the monitor's configured regions. **A check is down when at least half of its regions fail.** Otherwise it is degraded when the failing and degraded regions together make up at least half, and successful when they don't. Regions that did not report count as not failing. One flaky region no longer drags uptime down, and an outage seen by half of your regions counts in full.
+The number of runs value (`runs`) counts each scheduled run once. **A run covers all of a monitor's cloud regions and counts as down when at least half of them fail.** Otherwise it is degraded when the failing and degraded regions together make up at least half, and successful when they don't. Regions that did not report count as not failing. One flaky region no longer drags uptime down, and an outage seen by half of your regions counts in full.
 
-In simple terms: `uptime = (successful + degraded checks) / total checks`
+In simple terms: `uptime = (successful + degraded runs) / total runs`
 
 This applies to HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions. Monitors that run only from [private locations](/docs/concept/private-locations), and heartbeat, UDP and SSL monitors, keep counting each region's result, as with number of requests.
 
-Days from before run data was recorded are converted from region results, so they count in checks too.
+Days from before run data was recorded are converted from region results, so they count in runs too.
 
 Like with time per status, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 

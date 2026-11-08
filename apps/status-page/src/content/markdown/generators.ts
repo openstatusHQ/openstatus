@@ -701,7 +701,7 @@ export function generateMonitor(
         ],
         [
           "Uptime (last 7 days)",
-          `${uptime} · ${countLabel(shownTotal(uptimeData, regionCount), regionCount !== null ? "check" : "request")}`,
+          `${uptime} · ${countLabel(shownTotal(uptimeData, regionCount), regionCount !== null ? "run" : "request")}`,
         ],
       ],
     ),

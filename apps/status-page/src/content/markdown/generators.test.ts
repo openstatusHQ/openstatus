@@ -643,7 +643,7 @@ describe("generateMonitor", () => {
     expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 requests |");
   });
 
-  test("a single request or check is singular", () => {
+  test("a single request or run is singular", () => {
     const one = (regionCount: number | null) =>
       generateMonitor(
         {
@@ -666,7 +666,7 @@ describe("generateMonitor", () => {
     expect(one(null)).toContain(
       "| Uptime (last 7 days) | 100.000% · 1 request |",
     );
-    expect(one(6)).toContain("| Uptime (last 7 days) | 100.000% · 1 check |");
+    expect(one(6)).toContain("| Uptime (last 7 days) | 100.000% · 1 run |");
   });
 
   test("uptime counts runs when the buckets carry them", () => {
@@ -694,7 +694,7 @@ describe("generateMonitor", () => {
       } as unknown as MonitorDetail,
       BASE,
     );
-    expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 checks |");
+    expect(runs).toContain("| Uptime (last 7 days) | 91.667% · 48 runs |");
   });
 
   test("a bucket without runs is converted to runs, not mixed in", () => {
@@ -721,12 +721,10 @@ describe("generateMonitor", () => {
       } as unknown as MonitorDetail,
       BASE,
     );
-    expect(converted).toContain(
-      "| Uptime (last 7 days) | 90.625% · 49 checks |",
-    );
+    expect(converted).toContain("| Uptime (last 7 days) | 90.625% · 49 runs |");
   });
 
-  test("the checks total is the sum of the chart's rounded buckets", () => {
+  test("the runs total is the sum of the chart's rounded buckets", () => {
     const converted = generateMonitor(
       {
         ...monitor,
@@ -753,7 +751,7 @@ describe("generateMonitor", () => {
       } as unknown as MonitorDetail,
       BASE,
     );
-    expect(converted).toContain("· 721 checks |");
+    expect(converted).toContain("· 721 runs |");
   });
 
   test("percentile table", () => {

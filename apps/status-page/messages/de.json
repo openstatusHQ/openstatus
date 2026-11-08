@@ -37,7 +37,7 @@
   "9vqdq3": "Regionale Latenz",
   "fFOayY": "Regionen",
   "u81G9-": "Verfügbarkeit",
-  "CqmHY6": "{count, plural, one {Prüfung} other {Prüfungen}}",
+  "-X8BJz": "{count, plural, one {Durchlauf} other {Durchläufe}}",
   "xQCgLd": "{count, plural, one {Anfrage} other {Anfragen}}",
   "G5Lt80": "Die aggregierte Latenz aller aktiven Regionen basierend auf verschiedenen Quantilen.",
   "YV7rXP": "Latenz nach Region",

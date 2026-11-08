@@ -62,7 +62,7 @@ enum PageMetricType {
   PAGE_METRIC_TYPE_DURATION = 1;
   PAGE_METRIC_TYPE_REQUESTS = 2;
   PAGE_METRIC_TYPE_MANUAL = 3;
-  PAGE_METRIC_TYPE_CHECKS = 4;
+  PAGE_METRIC_TYPE_RUNS = 4;
 }
 
 // PageBarType mirrors page.configuration.type (how the status bar is computed).

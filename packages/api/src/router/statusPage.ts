@@ -223,7 +223,7 @@ export const statusPageRouter = createTRPCRouter({
         pw: queryPasswordSchema,
         // NOTE: override the defaults we are getting from the page configuration
         cardType: z
-          .enum(["requests", "checks", "duration", "dominant", "manual"])
+          .enum(["requests", "runs", "duration", "dominant", "manual"])
           .nullish(),
         barType: z.enum(["absolute", "dominant", "manual"]).nullish(),
       }),
@@ -859,7 +859,7 @@ export const statusPageRouter = createTRPCRouter({
         pw: queryPasswordSchema,
         pageComponentIds: z.string().array(),
         cardType: z
-          .enum(["requests", "checks", "duration", "dominant", "manual"])
+          .enum(["requests", "runs", "duration", "dominant", "manual"])
           .prefault("requests"),
         barType: z
           .enum(["absolute", "dominant", "manual"])
@@ -923,8 +923,8 @@ export const statusPageRouter = createTRPCRouter({
         .catch("UTC")
         .parse(_page.defaultTimezone);
 
-      // only checks pages count runs; every other card type keeps per-region counts
-      const countsRuns = input.cardType === "checks";
+      // only the runs card type counts runs; every other card type keeps per-region counts
+      const countsRuns = input.cardType === "runs";
 
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
@@ -1310,7 +1310,7 @@ export const statusPageRouter = createTRPCRouter({
         _page.configuration ?? {},
       );
       const countsRuns =
-        configuration.success && configuration.data.value === "checks";
+        configuration.success && configuration.data.value === "runs";
 
       const proceduresByType = {
         http: {

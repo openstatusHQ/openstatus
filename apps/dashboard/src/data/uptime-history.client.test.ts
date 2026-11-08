@@ -159,14 +159,8 @@ describe("uptimeYears in runs", () => {
       year.days.find(
         (x) => x.date.getTime() === new Date(2026, m, d).getTime(),
       );
-    expect(on(9, 31)?.lines).toEqual([
-      "90.00% uptime",
-      "100 checks · 10 failed",
-    ]);
-    expect(on(10, 1)?.lines).toEqual([
-      "95.00% uptime",
-      "100 checks · 5 failed",
-    ]);
+    expect(on(9, 31)?.lines).toEqual(["90.00% uptime", "100 runs · 10 failed"]);
+    expect(on(10, 1)?.lines).toEqual(["95.00% uptime", "100 runs · 5 failed"]);
   });
 
   it("rounds converted counts at display", () => {
@@ -178,10 +172,10 @@ describe("uptimeYears in runs", () => {
     expect(
       year.days.find((d) => d.date.getDate() === 2 && d.date.getMonth() === 10)
         ?.lines,
-    ).toEqual(["99.33% uptime", "100 checks · 1 failed"]);
+    ).toEqual(["99.33% uptime", "100 runs · 1 failed"]);
   });
 
-  it("says check for a single one and shows a day that rounds to 0 as no checks", () => {
+  it("says run for a single one and shows a day that rounds to 0 as no checks", () => {
     const [year] = uptimeYears(
       [
         { day: "2026-11-02", requests: { ok: 6, degraded: 0, error: 0 } },
@@ -193,7 +187,7 @@ describe("uptimeYears in runs", () => {
     const on = (d: number) =>
       year.days.find((x) => x.date.getDate() === d && x.date.getMonth() === 10)
         ?.lines;
-    expect(on(2)).toEqual(["100.00% uptime", "1 check"]);
+    expect(on(2)).toEqual(["100.00% uptime", "1 run"]);
     expect(on(3)).toEqual(["No checks"]);
   });
 
@@ -234,15 +228,15 @@ describe("quorumSince", () => {
     expect(quorumSince(unordered, 6)).toEqual(new Date(2026, 9, 28));
   });
 
-  it("the note says how earlier checks are counted", () => {
+  it("the note says how earlier runs are counted", () => {
     expect(quorumNote(new Date(2026, 10, 1))).toBe(
-      "Since November 2026, a check covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.",
+      "Since November 2026, a run covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions.",
     );
   });
 
   it("the page note limits run counting to monitors with cloud regions", () => {
     expect(quorumNote(new Date(2026, 10, 1), "page")).toBe(
-      "Since November 2026, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a check covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.",
+      "Since November 2026, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions. Monitors with only private locations count each region's result.",
     );
   });
 });

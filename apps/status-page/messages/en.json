@@ -37,7 +37,7 @@
   "9vqdq3": "Region Latency",
   "fFOayY": "regions",
   "u81G9-": "Uptime",
-  "CqmHY6": "{count, plural, one {check} other {checks}}",
+  "-X8BJz": "{count, plural, one {run} other {runs}}",
   "xQCgLd": "{count, plural, one {request} other {requests}}",
   "G5Lt80": "The aggregated latency from all active regions based on different quantiles.",
   "YV7rXP": "Latency by Region",

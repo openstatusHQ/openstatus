@@ -715,16 +715,16 @@ describe("updatePageConfiguration", () => {
   });
 });
 
-describe("updatePageConfiguration checks value", () => {
-  test("stores checks and keeps the other settings", async () => {
+describe("updatePageConfiguration runs value", () => {
+  test("stores runs and keeps the other settings", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const p = await createPage({
         ctx,
         input: {
           workspaceId: ctx.workspace.id,
-          title: "Checks",
-          slug: uniqueSlug("checks"),
+          title: "Runs",
+          slug: uniqueSlug("runs"),
           description: "",
           customDomain: "",
           configuration: { type: "absolute", value: "requests", days: 30 },
@@ -735,7 +735,7 @@ describe("updatePageConfiguration checks value", () => {
         ctx,
         input: UpdatePageConfigurationInput.parse({
           id: p.id,
-          configuration: { value: "checks" },
+          configuration: { value: "runs" },
         }),
       });
 
@@ -746,7 +746,7 @@ describe("updatePageConfiguration checks value", () => {
         .get();
       expect(row?.configuration).toEqual({
         type: "absolute",
-        value: "checks",
+        value: "runs",
         days: 30,
       });
     });
@@ -756,7 +756,7 @@ describe("updatePageConfiguration checks value", () => {
     expect(() =>
       UpdatePageConfigurationInput.parse({
         id: 1,
-        configuration: { value: "runs" },
+        configuration: { value: "checks" },
       }),
     ).toThrow();
   });

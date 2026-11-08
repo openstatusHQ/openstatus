@@ -183,7 +183,7 @@ export function setDataByType({
 }: {
   events: Event[];
   data: StatusData[];
-  cardType: "requests" | "checks" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
   /** the monitor's quorum region count: counts are runs; null counts region checks */
   regionCount: number | null;
@@ -357,13 +357,13 @@ export function setDataByType({
     ];
   }
 
-  // a run across all regions is a check; per-region counts stay requests
+  // a run across all regions counts once; per-region counts stay requests
   function entriesToRequestCardData(
     entries: Array<{
       status: "success" | "degraded" | "error" | "info";
       count: number;
     }>,
-    unit: "check" | "req",
+    unit: "run" | "req",
   ): UptimeData["card"] {
     return entries
       .filter((entry) => entry.count > 0)
@@ -420,7 +420,7 @@ export function setDataByType({
     };
   }
 
-  const countUnit = regionCount === null ? "req" : "check";
+  const countUnit = regionCount === null ? "req" : "run";
 
   return data.map((dayData) => {
     const day = dayWindow(dayData.day, timeZone);
@@ -529,7 +529,7 @@ export function setDataByType({
 
     switch (cardType) {
       case "requests":
-      case "checks":
+      case "runs":
         if (shownTotal === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
@@ -690,7 +690,7 @@ export function getUptime({
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
-  cardType: "requests" | "checks" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   /** the monitor's quorum region count: counts are runs; null counts region checks */
   regionCount: number | null;
   /** no public regions and ≥1 private location: include probe errors in duration uptime */

@@ -27,6 +27,12 @@ export function formatUptime(ratio: number, digits = 2): string {
   return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
 }
 
+/** Run counts when the monitor has a quorum region count, else region results. */
+function countUnit(count: number, regionCount: number | null) {
+  if (regionCount !== null) return count === 1 ? "run" : "runs";
+  return count === 1 ? "check" : "checks";
+}
+
 /** Muted without failures, else by failed share of the day's runs: < 1%, ≤ 5%, > 5%. */
 function dayMark(
   counts: CheckCounts | undefined,
@@ -34,9 +40,9 @@ function dayMark(
 ): Partial<ActivityDay> {
   const tally = counts ? tallyDay(counts, regionCount) : null;
   const shown = tally ? shownCounts(tally) : null;
-  const checks = shown ? shown.ok + shown.degraded + shown.error : 0;
+  const shownTotal = shown ? shown.ok + shown.degraded + shown.error : 0;
   // a day without a shown check is no data, never downtime
-  if (!tally || !shown || checks === 0)
+  if (!tally || !shown || shownTotal === 0)
     return { hatched: true, lines: ["No checks"] };
   const { total } = tally;
   const failed = tally.error / total;
@@ -48,7 +54,7 @@ function dayMark(
     lines: [
       `${formatUptime((total - tally.error) / total)} uptime`,
       [
-        `${formatNumber(checks)} ${checks === 1 ? "check" : "checks"}`,
+        `${formatNumber(shownTotal)} ${countUnit(shownTotal, regionCount)}`,
         ...(shown.error > 0 ? [`${formatNumber(shown.error)} failed`] : []),
         ...(shown.degraded > 0
           ? [`${formatNumber(shown.degraded)} degraded`]
@@ -82,9 +88,9 @@ export function quorumNote(
 ): string {
   const month = format(since, "MMMM yyyy");
   if (scope === "page") {
-    return `Since ${month}, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a check covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.`;
+    return `Since ${month}, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions. Monitors with only private locations count each region's result.`;
   }
-  return `Since ${month}, a check covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.`;
+  return `Since ${month}, a run covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions.`;
 }
 
 /** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */

@@ -69,7 +69,7 @@ const UPTIME_DOCS_URL =
 
 const MODE_LABELS = {
   requests: configurationLabels.value.requests,
-  checks: configurationLabels.value.checks,
+  runs: configurationLabels.value.runs,
   duration: configurationLabels.value.duration,
   manual: configurationLabels.type.manual,
 } as const;
@@ -108,7 +108,7 @@ export function Client() {
 
   const summary = history.summary[windowKey(window)];
   const quorumSince =
-    history.mode === "checks" && history.quorumSince
+    history.mode === "runs" && history.quorumSince
       ? new Date(`${history.quorumSince}-01T00:00:00`)
       : null;
   const hasAnyData = history.rows.some((row) =>
@@ -279,17 +279,18 @@ export function Client() {
               </li>
               <li>
                 <span className="text-foreground font-medium">
-                  {MODE_LABELS.checks}
+                  {MODE_LABELS.runs}
                 </span>{" "}
                 <span className="text-muted-foreground">
                   — Monitor components. Uptime is{" "}
                   <span className="text-foreground font-medium">
-                    (ok + degraded) / total checks
+                    (ok + degraded) / total runs
                   </span>
-                  , one check per run across all of the monitor&apos;s regions,
-                  down when at least half of them fail, for HTTP, TCP, DNS, ICMP
-                  and gRPC monitors with cloud regions; other monitors count
-                  each region&apos;s result. Degraded checks still count as up.
+                  . For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud
+                  regions, a run covers all of the monitor&apos;s cloud regions
+                  and counts as down when at least half of them fail; other
+                  monitors count each region&apos;s result. Degraded runs still
+                  count as up.
                 </span>
               </li>
               <li>
@@ -316,7 +317,7 @@ export function Client() {
             </ul>
             <p className="text-muted-foreground">
               Heartbeat monitors receive pings, not checks. With{" "}
-              {MODE_LABELS.requests}, {MODE_LABELS.checks} or{" "}
+              {MODE_LABELS.requests}, {MODE_LABELS.runs} or{" "}
               {MODE_LABELS.duration}, their uptime is the time since the first
               day with a ping (or the first incident, if earlier) minus
               incidents from missed or failed pings and impact-weighted status
