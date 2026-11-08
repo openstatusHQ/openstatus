@@ -1,18 +1,19 @@
-import { describe, expect, test } from "vitest";
+import { Tinybird } from "@chronark/zod-bird";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 
 import {
   attemptsSchema,
+  countsParameters,
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
-  quorumBackfillParameters,
-  quorumHistogramShape,
-  quorumIntervalParameters,
-  quorumIntervalShape,
-  quorumParameters,
+  runsBackfillParameters,
+  runsBackfillShape,
+  status15mCountsParameters,
   status15mParameters,
   status15mShape,
+  uptime7dParameters,
 } from "./client";
 
 describe("attemptsSchema", () => {
@@ -283,188 +284,196 @@ describe("15m status pipes", () => {
   }
 });
 
-const quorumGetters = [
-  "httpQuorum45d",
-  "tcpQuorum45d",
-  "dnsQuorum45d",
-  "icmpQuorum45d",
-  "grpcQuorum45d",
+const status45dGetters = [
+  "httpStatus45d",
+  "tcpStatus45d",
+  "dnsStatus45d",
+  "icmpStatus45d",
+  "grpcStatus45d",
 ] as const;
 
-describe("quorumParameters", () => {
-  test("leaves timezone out when omitted, so the request keeps its UTC shape", () => {
-    expect(quorumParameters.parse({ monitorIds: ["1"] })).toEqual({
+const uptime7dGetters = [
+  "httpUptimeWeekly",
+  "tcpUptimeWeekly",
+  "dnsUptime7d",
+  "icmpUptimeWeekly",
+  "grpcUptimeWeekly",
+] as const;
+
+describe("counts type parameters", () => {
+  test("a requests call keeps exactly its old params", () => {
+    expect(status15mCountsParameters.parse({ monitorIds: ["1"] })).toEqual({
       monitorIds: ["1"],
+      timezone: "UTC",
     });
+    const window = { monitorId: "1", interval: 240, fromDate: "2026-11-01" };
+    expect(uptime7dParameters.parse(window)).toEqual(window);
   });
 
-  test("forwards a zone and rejects one ClickHouse would 400 on", () => {
+  test("rejects an unknown type and negative region counts", () => {
+    const schema = z.object(countsParameters);
+    expect(schema.safeParse({ type: "http" }).success).toBe(false);
+    expect(schema.safeParse({ regionCounts: [-1] }).success).toBe(false);
     expect(
-      quorumParameters.parse({ monitorIds: ["1"], timezone: "Asia/Kolkata" })
-        .timezone,
-    ).toBe("Asia/Kolkata");
-    for (const timezone of ["Mars/Olympus", "", "+05:30"]) {
-      expect(
-        quorumParameters.safeParse({ monitorIds: ["1"], timezone }).success,
-      ).toBe(false);
-    }
+      uptime7dParameters.safeParse({ monitorId: "1", regionCount: 1.5 })
+        .success,
+    ).toBe(false);
   });
-});
 
-describe("quorumHistogramShape", () => {
-  test("re-keys a local midnight as that calendar date at UTC midnight", () => {
-    const row = quorumHistogramShape.parse({
-      day: "2026-10-14 00:00:00",
-      monitorId: "1",
-      errorRegions: 1,
-      degradedOrErrorRegions: 1,
-      runs: 3,
-    });
-    expect(row).toEqual({
-      day: "2026-10-14T00:00:00.000Z",
-      monitorId: "1",
-      errorRegions: 1,
-      degradedOrErrorRegions: 1,
-      runs: 3,
+  test("15m pipes forward a zone alongside runs", () => {
+    expect(
+      status15mCountsParameters.parse({
+        monitorIds: ["1", "2"],
+        timezone: "Asia/Kolkata",
+        type: "runs",
+        regionCounts: [6, 3],
+      }),
+    ).toEqual({
+      monitorIds: ["1", "2"],
+      timezone: "Asia/Kolkata",
+      type: "runs",
+      regionCounts: [6, 3],
     });
   });
 });
 
-describe("quorum pipes", () => {
+describe("counts type query string", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function queryOf(params: {
+    monitorIds: string[];
+    type?: "requests" | "runs";
+    regionCounts?: number[];
+  }) {
+    const fetch = vi.fn(async (_url: URL) =>
+      Response.json({ meta: [], data: [] }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const pipe = new Tinybird({ token: "t", baseUrl: "http://tb" }).buildPipe({
+      pipe: "p",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        ...countsParameters,
+      }),
+      data: z.object({}),
+    });
+    await pipe(params);
+    return Object.fromEntries(fetch.mock.calls[0][0].searchParams);
+  }
+
+  test("a requests call sends monitorIds only", async () => {
+    expect(await queryOf({ monitorIds: ["1", "666"] })).toEqual({
+      monitorIds: "1,666",
+    });
+  });
+
+  test("a runs call sends region counts in monitorIds order", async () => {
+    expect(
+      await queryOf({
+        monitorIds: ["1", "666"],
+        type: "runs",
+        regionCounts: [6, 3],
+      }),
+    ).toEqual({ monitorIds: "1,666", type: "runs", regionCounts: "6,3" });
+  });
+});
+
+describe("runs-capable count pipes", () => {
   const tb = new OSTinybird({ token: "a-token" });
 
-  for (const name of quorumGetters) {
-    test(`${name} resolves with and without a timezone`, async () => {
-      expect(
-        await tb[name]({ monitorIds: ["1"], timezone: "Europe/Berlin" }),
-      ).toEqual({ meta: [], data: [] });
+  for (const name of status45dGetters) {
+    test(`${name} resolves for both types`, async () => {
       expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
         meta: [],
         data: [],
       });
+      expect(
+        await tb[name]({ monitorIds: ["1"], type: "runs", regionCounts: [6] }),
+      ).toEqual({ meta: [], data: [] });
+    });
+  }
+
+  for (const name of uptime7dGetters) {
+    test(`${name} resolves for both types`, async () => {
+      const window = {
+        monitorId: "1",
+        interval: 240,
+        fromDate: "2026-11-01T00:00:00.000Z",
+        toDate: "2026-11-08T23:59:59.999Z",
+      };
+      expect(await tb[name](window)).toEqual({ meta: [], data: [] });
+      expect(
+        await tb[name]({ ...window, type: "runs", regionCount: 6 }),
+      ).toEqual({ meta: [], data: [] });
     });
   }
 });
 
-const quorumBackfillGetters = [
-  "httpQuorumBackfill",
-  "tcpQuorumBackfill",
-  "dnsQuorumBackfill",
-  "icmpQuorumBackfill",
-  "grpcQuorumBackfill",
+const runsBackfillGetters = [
+  "httpRunsBackfill",
+  "tcpRunsBackfill",
+  "dnsRunsBackfill",
+  "icmpRunsBackfill",
+  "grpcRunsBackfill",
 ] as const;
 
-describe("quorumBackfillParameters", () => {
+describe("runsBackfillParameters", () => {
   const params = {
     monitorIds: ["1", "2"],
+    regionCounts: [6, 3],
     fromDate: "2026-06-01T00:00:00.000Z",
     toDate: "2026-07-01T00:00:00.000Z",
   };
 
   test("passes a month range through and drops a timezone: frozen days are UTC", () => {
     expect(
-      quorumBackfillParameters.parse({ ...params, timezone: "Europe/Berlin" }),
+      runsBackfillParameters.parse({ ...params, timezone: "Europe/Berlin" }),
     ).toEqual(params);
   });
 
-  test("requires both bounds so a raw scan is never unbounded", () => {
+  test("requires both bounds and the region counts", () => {
     const { fromDate: _from, ...withoutFrom } = params;
     const { toDate: _to, ...withoutTo } = params;
-    expect(quorumBackfillParameters.safeParse(withoutFrom).success).toBe(false);
-    expect(quorumBackfillParameters.safeParse(withoutTo).success).toBe(false);
+    const { regionCounts: _counts, ...withoutCounts } = params;
+    expect(runsBackfillParameters.safeParse(withoutFrom).success).toBe(false);
+    expect(runsBackfillParameters.safeParse(withoutTo).success).toBe(false);
+    expect(runsBackfillParameters.safeParse(withoutCounts).success).toBe(false);
   });
 });
 
-describe("quorum backfill pipes", () => {
+describe("runsBackfillShape", () => {
+  test("re-keys the UTC day as an ISO midnight", () => {
+    expect(
+      runsBackfillShape.parse({
+        day: "2026-06-14 00:00:00",
+        monitorId: "1",
+        ok: 140,
+        degraded: 3,
+        error: 1,
+      }),
+    ).toEqual({
+      day: "2026-06-14T00:00:00.000Z",
+      monitorId: "1",
+      ok: 140,
+      degraded: 3,
+      error: 1,
+    });
+  });
+});
+
+describe("runs backfill pipes", () => {
   const tb = new OSTinybird({ token: "a-token" });
 
-  for (const name of quorumBackfillGetters) {
+  for (const name of runsBackfillGetters) {
     test(`${name} resolves for a month range`, async () => {
       expect(
         await tb[name]({
           monitorIds: ["1"],
+          regionCounts: [6],
           fromDate: "2026-06-01T00:00:00.000Z",
           toDate: "2026-07-01T00:00:00.000Z",
         }),
       ).toEqual({ meta: [], data: [] });
     });
   }
-});
-
-const quorumIntervalGetters = [
-  "httpQuorumIntervals",
-  "tcpQuorumIntervals",
-  "dnsQuorumIntervals",
-  "icmpQuorumIntervals",
-  "grpcQuorumIntervals",
-] as const;
-
-describe("quorumIntervalParameters", () => {
-  test("takes the uptime interval window and drops a region subset", () => {
-    const params = {
-      monitorId: "1",
-      interval: 240,
-      fromDate: "2026-11-01T00:00:00.000Z",
-      toDate: "2026-11-08T23:59:59.999Z",
-    };
-    expect(
-      quorumIntervalParameters.parse({ ...params, regions: ["ams"] }),
-    ).toEqual(params);
-  });
-
-  test("requires the bucket width", () => {
-    expect(quorumIntervalParameters.safeParse({ monitorId: "1" }).success).toBe(
-      false,
-    );
-  });
-});
-
-describe("quorumIntervalShape", () => {
-  test("parses `interval` to the same Date the uptime shapes produce", () => {
-    const interval = "2026-11-08 12:00:00";
-    const row = quorumIntervalShape.parse({
-      interval,
-      errorRegions: 3,
-      degradedOrErrorRegions: 3,
-      runs: 4,
-    });
-    expect(row.interval.getTime()).toBe(
-      z.coerce.date().parse(interval).getTime(),
-    );
-    expect(row).toMatchObject({
-      errorRegions: 3,
-      degradedOrErrorRegions: 3,
-      runs: 4,
-    });
-  });
-});
-
-describe("quorum interval pipes", () => {
-  const tb = new OSTinybird({ token: "a-token" });
-
-  for (const name of quorumIntervalGetters) {
-    test(`${name} resolves for an uptime interval window`, async () => {
-      expect(
-        await tb[name]({
-          monitorId: "1",
-          interval: 240,
-          fromDate: "2026-11-01T00:00:00.000Z",
-        }),
-      ).toEqual({ meta: [], data: [] });
-    });
-  }
-});
-
-describe("dnsUptime7d", () => {
-  test("takes the window its quorum interval pipe takes", async () => {
-    const tb = new OSTinybird({ token: "a-token" });
-    expect(
-      await tb.dnsUptime7d({
-        monitorId: "1",
-        interval: 240,
-        fromDate: "2026-11-01T00:00:00.000Z",
-        toDate: "2026-11-08T23:59:59.999Z",
-      }),
-    ).toEqual({ meta: [], data: [] });
-  });
 });

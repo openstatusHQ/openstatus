@@ -1,4 +1,4 @@
-# Data Source created from Pipe 'aggregate__icmp_quorum_45d__v0'
+# Data Source created from Pipe 'aggregate__icmp_runs_45d__v0'
 # Partial aggregates per scheduled cloud run until merges run; read with *Merge per run.
 # Private-location rows are filtered out.
 

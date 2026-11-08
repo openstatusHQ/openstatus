@@ -415,8 +415,9 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      const procedure = getUptimeProcedure(opts.input.period, opts.input.type);
-      return await procedure(opts.input);
+      // `type` here is the job type, not the pipe's counts type
+      const { type, period, ...params } = opts.input;
+      return await getUptimeProcedure(period, type)(params);
     }),
 
   auditLog: protectedProcedure

@@ -16,11 +16,6 @@ export type DayTally = {
   status: "success" | "degraded" | "error" | "empty";
 };
 
-/** At least half of `total` affected — the same rule incidents open on. */
-export function meetsQuorum(affected: number, total: number): boolean {
-  return affected * 2 >= total;
-}
-
 // a day without run verdicts keeps its ratio, expressed in run equivalents
 function dayCounts(day: DayCounts, checksPerRun: number | null): Counts {
   if (checksPerRun === null || checksPerRun <= 0) return day.requests;

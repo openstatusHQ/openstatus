@@ -39,11 +39,16 @@ type Params = {
   interval?: number;
   fromDate?: string;
   toDate?: string;
+  type?: "requests" | "runs";
+  regionCounts?: number[];
+  regionCount?: number;
 };
 type Pipe = (params: Params) => Promise<{ data: unknown[] }>;
 
+// `impl` answers a pipe's requests reads, `runs` its `type: "runs"` reads
 const pipes = vi.hoisted(() => ({
   impl: new Map<string, Pipe>(),
+  runs: new Map<string, Pipe>(),
   calls: [] as { name: string; params: Params }[],
 }));
 
@@ -53,11 +58,20 @@ vi.mock("../tb", () => ({
     {
       get: (_, name: string) => (params: Params) => {
         pipes.calls.push({ name, params });
-        return pipes.impl.get(name)?.(params) ?? Promise.resolve({ data: [] });
+        const impl = params.type === "runs" ? pipes.runs : pipes.impl;
+        return impl.get(name)?.(params) ?? Promise.resolve({ data: [] });
       },
     },
   ),
 }));
+
+function runsCall(name: string) {
+  return pipes.calls.find((c) => c.name === name && c.params.type === "runs");
+}
+
+function anyRunsCall() {
+  return pipes.calls.some((c) => c.params.type === "runs");
+}
 
 const SIX_REGIONS = "ams,fra,iad,gru,syd,hkg";
 
@@ -102,14 +116,6 @@ function counts(
     degraded: 0,
     error: c.error,
   };
-}
-
-function hist(
-  monitorId: number,
-  day: string,
-  b: { errorRegions: number; degradedOrErrorRegions: number; runs: number },
-) {
-  return { day, monitorId: String(monitorId), ...b };
 }
 
 type CardValue = "runs" | "requests";
@@ -213,6 +219,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   pipes.impl.clear();
+  pipes.runs.clear();
   pipes.calls.length = 0;
 });
 
@@ -236,14 +243,8 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.cloud, day, { ok: 720, error: 144 })],
     }));
-    pipes.impl.set("httpQuorum45d", async () => ({
-      data: [
-        hist(ids.cloud, day, {
-          errorRegions: 1,
-          degradedOrErrorRegions: 1,
-          runs: 144,
-        }),
-      ],
+    pipes.runs.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, day, { ok: 144, error: 0 })],
     }));
     const { slug, componentId } = await pageWith(ids.cloud);
 
@@ -253,9 +254,11 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(bar?.bar).toEqual([{ status: "success", height: 100 }]);
     expect(bar?.card).toEqual([{ status: "success", value: "144 runs" }]);
     expect(component.uptime).toBe("100%");
-    expect(pipes.calls.find((c) => c.name === "httpQuorum45d")?.params).toEqual(
-      { monitorIds: [String(ids.cloud)] },
-    );
+    expect(runsCall("httpStatus45d")?.params).toEqual({
+      monitorIds: [String(ids.cloud)],
+      type: "runs",
+      regionCounts: [6],
+    });
   });
 
   test("3 of 6 failing in some runs: those runs are errors and the % matches the cards", async () => {
@@ -263,19 +266,8 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.cloud, day, { ok: 852, error: 12 })],
     }));
-    pipes.impl.set("httpQuorum45d", async () => ({
-      data: [
-        hist(ids.cloud, day, {
-          errorRegions: 0,
-          degradedOrErrorRegions: 0,
-          runs: 140,
-        }),
-        hist(ids.cloud, day, {
-          errorRegions: 3,
-          degradedOrErrorRegions: 3,
-          runs: 4,
-        }),
-      ],
+    pipes.runs.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, day, { ok: 140, error: 4 })],
     }));
     const { slug, componentId } = await pageWith(ids.cloud);
 
@@ -294,22 +286,16 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(component.uptime).toBe("97.222%");
   });
 
-  test("non-UTC page: quorum is read in the page zone and lands on its local day", async () => {
+  test("non-UTC page: runs are read in the page zone and lands on its local day", async () => {
     const zone = "Pacific/Kiritimati";
     const localDay = yesterdayIn(zone);
     pipes.impl.set("httpStatus15m", async () => ({
       data: [counts(ids.cloud, localDay, { ok: 720, error: 144 })],
     }));
-    pipes.impl.set("httpQuorum45d", async ({ timezone }) => ({
+    pipes.runs.set("httpStatus15m", async ({ timezone }) => ({
       data:
         timezone === zone
-          ? [
-              hist(ids.cloud, localDay, {
-                errorRegions: 1,
-                degradedOrErrorRegions: 1,
-                runs: 144,
-              }),
-            ]
+          ? [counts(ids.cloud, localDay, { ok: 144, error: 0 })]
           : [],
     }));
     const { slug, componentId } = await pageWith(ids.cloud, zone);
@@ -320,12 +306,15 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(component.timeZone).toBe(zone);
     expect(bar?.card).toEqual([{ status: "success", value: "144 runs" }]);
     expect(component.uptime).toBe("100%");
-    expect(pipes.calls.find((c) => c.name === "httpQuorum45d")?.params).toEqual(
-      { monitorIds: [String(ids.cloud)], timezone: zone },
-    );
+    expect(runsCall("httpStatus15m")?.params).toEqual({
+      monitorIds: [String(ids.cloud)],
+      type: "runs",
+      regionCounts: [6],
+      timezone: zone,
+    });
   });
 
-  test("counts falling back to UTC days drop quorum read in the page zone and convert to runs", async () => {
+  test("counts falling back to UTC days drop runs read in the page zone and convert to runs", async () => {
     const zone = "Pacific/Kiritimati";
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus15m", async () => {
@@ -334,14 +323,8 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.cloud, day, { ok: 720, error: 144 })],
     }));
-    pipes.impl.set("httpQuorum45d", async () => ({
-      data: [
-        hist(ids.cloud, day, {
-          errorRegions: 1,
-          degradedOrErrorRegions: 1,
-          runs: 144,
-        }),
-      ],
+    pipes.runs.set("httpStatus15m", async () => ({
+      data: [counts(ids.cloud, day, { ok: 144, error: 0 })],
     }));
     const { slug, componentId } = await pageWith(ids.cloud, zone);
 
@@ -355,33 +338,22 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     ]);
   });
 
-  test("days lacking quorum in the window are converted, so cards and % share one unit", async () => {
-    const withQuorum = yesterdayIn("UTC");
+  test("days lacking runs in the window are converted, so cards and % share one unit", async () => {
+    const withRunsDay = yesterdayIn("UTC");
     const legacy = daysAgoIn("UTC", 30);
     pipes.impl.set("httpStatus45d", async () => ({
       data: [
-        counts(ids.cloud, withQuorum, { ok: 852, error: 12 }),
+        counts(ids.cloud, withRunsDay, { ok: 852, error: 12 }),
         counts(ids.cloud, legacy, { ok: 540, error: 60 }),
       ],
     }));
-    pipes.impl.set("httpQuorum45d", async () => ({
-      data: [
-        hist(ids.cloud, withQuorum, {
-          errorRegions: 0,
-          degradedOrErrorRegions: 0,
-          runs: 140,
-        }),
-        hist(ids.cloud, withQuorum, {
-          errorRegions: 3,
-          degradedOrErrorRegions: 3,
-          runs: 4,
-        }),
-      ],
+    pipes.runs.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, withRunsDay, { ok: 140, error: 4 })],
     }));
     const { slug, componentId } = await pageWith(ids.cloud);
 
     const component = await uptime(slug, componentId);
-    const runsDay = component.data.find((d) => d.day === withQuorum);
+    const runsDay = component.data.find((d) => d.day === withRunsDay);
     const legacyDay = component.data.find((d) => d.day === legacy);
 
     expect(runsDay?.card).toEqual([
@@ -445,7 +417,7 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
       { status: "success", value: "5 runs" },
       { status: "error", value: "1 run" },
     ]);
-    expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
+    expect(anyRunsCall()).toBe(false);
   });
 
   test("several private locations stay on per-region counts and are never asked for runs", async () => {
@@ -462,7 +434,7 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
       { status: "success", value: "5 reqs" },
       { status: "error", value: "1 req" },
     ]);
-    expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
+    expect(anyRunsCall()).toBe(false);
   });
 
   test("private locations join the divisor of a converted day: 6 cloud + 2 private", async () => {
@@ -492,19 +464,8 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.mixed, day, { ok: 788, error: 12 })],
     }));
-    pipes.impl.set("httpQuorum45d", async () => ({
-      data: [
-        hist(ids.mixed, day, {
-          errorRegions: 0,
-          degradedOrErrorRegions: 0,
-          runs: 96,
-        }),
-        hist(ids.mixed, day, {
-          errorRegions: 3,
-          degradedOrErrorRegions: 3,
-          runs: 4,
-        }),
-      ],
+    pipes.runs.set("httpStatus45d", async () => ({
+      data: [counts(ids.mixed, day, { ok: 96, error: 4 })],
     }));
     const { slug, componentId } = await pageWith(ids.mixed);
 
@@ -530,12 +491,12 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(bar?.card).toEqual([{ status: "success", value: "144 runs" }]);
   });
 
-  test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
+  test("a failed runs read converts per-region counts to runs and the page still renders", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.cloud, day, { ok: 720, error: 144 })],
     }));
-    pipes.impl.set("httpQuorum45d", async () => {
+    pipes.runs.set("httpStatus45d", async () => {
       throw new Error("tinybird 500");
     });
     const { slug, componentId } = await pageWith(ids.cloud);
@@ -553,19 +514,13 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
 });
 
 describe("getUptime on a requests page keeps per-region counts", () => {
-  test("1 of 6 regions failing all day stays a red day in reqs and the histogram is never read", async () => {
+  test("1 of 6 regions failing all day stays a red day in reqs and runs are never read", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.cloud, day, { ok: 720, error: 144 })],
     }));
-    pipes.impl.set("httpQuorum45d", async () => ({
-      data: [
-        hist(ids.cloud, day, {
-          errorRegions: 1,
-          degradedOrErrorRegions: 1,
-          runs: 144,
-        }),
-      ],
+    pipes.runs.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, day, { ok: 144, error: 0 })],
     }));
     const { slug, componentId } = await pageWith(ids.cloud, "UTC", "requests");
 
@@ -578,7 +533,7 @@ describe("getUptime on a requests page keeps per-region counts", () => {
       { status: "error", value: "144 reqs" },
     ]);
     expect(component.uptime).toBe(`${floorPct(720 / 864)}%`);
-    expect(pipes.calls.some((c) => c.name.includes("Quorum"))).toBe(false);
+    expect(anyRunsCall()).toBe(false);
   });
 
   test("a single region check reads as 1 req", async () => {
@@ -608,13 +563,6 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
 
   function uptimeRow(interval: Date, c: { success: number; error: number }) {
     return { interval, degraded: 0, ...c };
-  }
-
-  function intervalHist(
-    interval: Date,
-    b: { errorRegions: number; degradedOrErrorRegions: number; runs: number },
-  ) {
-    return { interval, ...b };
   }
 
   async function monitorPage(monitorId: number, value: CardValue = "runs") {
@@ -696,18 +644,10 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
         uptimeRow(bucketB, { success: 240, error: 48 }),
       ],
     }));
-    pipes.impl.set("httpQuorumIntervals", async () => ({
+    pipes.runs.set("httpUptimeWeekly", async () => ({
       data: [
-        intervalHist(bucketA, {
-          errorRegions: 1,
-          degradedOrErrorRegions: 1,
-          runs: 48,
-        }),
-        intervalHist(bucketB, {
-          errorRegions: 1,
-          degradedOrErrorRegions: 1,
-          runs: 48,
-        }),
+        uptimeRow(bucketA, { success: 48, error: 0 }),
+        uptimeRow(bucketB, { success: 48, error: 0 }),
       ],
     }));
 
@@ -718,15 +658,17 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
       unit: "runs",
       uptime: 100,
     });
-    const uptimeCall = pipes.calls.find((c) => c.name === "httpUptimeWeekly");
-    const quorumCall = pipes.calls.find(
-      (c) => c.name === "httpQuorumIntervals",
+    const uptimeCall = pipes.calls.find(
+      (c) => c.name === "httpUptimeWeekly" && c.params.type === undefined,
     );
-    expect(quorumCall?.params).toEqual({
+    expect(uptimeCall?.params).not.toHaveProperty("regionCount");
+    expect(runsCall("httpUptimeWeekly")?.params).toEqual({
       monitorId: String(publicIds.cloud),
       interval: uptimeCall?.params.interval,
       fromDate: uptimeCall?.params.fromDate,
       toDate: uptimeCall?.params.toDate,
+      type: "runs",
+      regionCount: 6,
     });
   });
 
@@ -737,23 +679,10 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
         uptimeRow(bucketB, { success: 288, error: 0 }),
       ],
     }));
-    pipes.impl.set("httpQuorumIntervals", async () => ({
+    pipes.runs.set("httpUptimeWeekly", async () => ({
       data: [
-        intervalHist(bucketA, {
-          errorRegions: 0,
-          degradedOrErrorRegions: 0,
-          runs: 44,
-        }),
-        intervalHist(bucketA, {
-          errorRegions: 3,
-          degradedOrErrorRegions: 3,
-          runs: 4,
-        }),
-        intervalHist(bucketB, {
-          errorRegions: 0,
-          degradedOrErrorRegions: 0,
-          runs: 48,
-        }),
+        uptimeRow(bucketA, { success: 44, error: 4 }),
+        uptimeRow(bucketB, { success: 48, error: 0 }),
       ],
     }));
 
@@ -786,9 +715,7 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
         unit,
         uptime: floorPct(5 / 6),
       });
-      expect(pipes.calls.some((c) => c.name === "httpQuorumIntervals")).toBe(
-        false,
-      );
+      expect(anyRunsCall()).toBe(false);
     },
   );
 
@@ -803,11 +730,11 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
     expect(view(result)).toEqual({ total: 100, unit: "runs", uptime: 100 });
   });
 
-  test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
+  test("a failed runs read converts per-region counts to runs and the page still renders", async () => {
     pipes.impl.set("httpUptimeWeekly", async () => ({
       data: [uptimeRow(bucketA, { success: 240, error: 48 })],
     }));
-    pipes.impl.set("httpQuorumIntervals", async () => {
+    pipes.runs.set("httpUptimeWeekly", async () => {
       throw new Error("tinybird 500");
     });
 
@@ -823,7 +750,7 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
     });
   });
 
-  test("a bucket the histogram misses is converted, not mixed in", async () => {
+  test("a bucket the runs read misses is converted, not mixed in", async () => {
     const dnsId = (
       await createMonitor(workspaceId, {
         active: true,
@@ -838,19 +765,8 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
         uptimeRow(bucketB, { success: 282, error: 6 }),
       ],
     }));
-    pipes.impl.set("dnsQuorumIntervals", async () => ({
-      data: [
-        intervalHist(bucketA, {
-          errorRegions: 0,
-          degradedOrErrorRegions: 0,
-          runs: 44,
-        }),
-        intervalHist(bucketA, {
-          errorRegions: 3,
-          degradedOrErrorRegions: 3,
-          runs: 4,
-        }),
-      ],
+    pipes.runs.set("dnsUptime7d", async () => ({
+      data: [uptimeRow(bucketA, { success: 44, error: 4 })],
     }));
 
     const result = await monitorPage(dnsId);
@@ -862,7 +778,7 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
     });
   });
 
-  test("a requests page keeps per-region counts and never reads the histogram", async () => {
+  test("a requests page keeps per-region counts and never reads runs", async () => {
     pipes.impl.set("httpUptimeWeekly", async () => ({
       data: [
         uptimeRow(bucketA, { success: 240, error: 48 }),
@@ -878,7 +794,7 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
       unit: "requests",
       uptime: floorPct(480 / 576),
     });
-    expect(pipes.calls.some((c) => c.name.includes("Quorum"))).toBe(false);
+    expect(anyRunsCall()).toBe(false);
   });
 
   test("a requests page reads DNS uptime from the timestamp-bucketed pipe", async () => {
@@ -902,6 +818,6 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
       uptime: floorPct(5 / 6),
     });
     expect(pipes.calls.some((c) => c.name === "dnsUptime7d")).toBe(false);
-    expect(pipes.calls.some((c) => c.name.includes("Quorum"))).toBe(false);
+    expect(anyRunsCall()).toBe(false);
   });
 });

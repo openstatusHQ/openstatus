@@ -22,12 +22,13 @@ import {
   checksPerRun,
   fetchIntervalRuns,
   fetchLiveRuns,
+  hasRuns,
   type IntervalRuns,
-  type LiveRuns,
   privateLocationCounts,
+  type RunsByDay,
   toIntervalCounts,
-  uptimeQuorumIntervalPipes,
-  uptimeQuorumPipes,
+  type UptimeQuorumJobType,
+  type UptimeRunsPipes,
 } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
@@ -173,12 +174,28 @@ function checksPerRunOf(
   );
 }
 
+// the same day pipes fetchStatusDays reads, so runs land on the same day keys
+function runsDayPipes(timeZone: string): UptimeRunsPipes {
+  const pipeFor = (type: UptimeQuorumJobType): UptimeRunsPipes[typeof type] =>
+    timeZone === "UTC"
+      ? getStatusProcedure("45d", type)
+      : (params) =>
+          getStatusInTimeZoneProcedure(type)({ ...params, timezone: timeZone });
+  return {
+    http: pipeFor("http"),
+    tcp: pipeFor("tcp"),
+    dns: pipeFor("dns"),
+    icmp: pipeFor("icmp"),
+    grpc: pipeFor("grpc"),
+  };
+}
+
 // Run verdicts per `timeZone` day. Its own budget: a slow or failed read only
 // leaves per-region counts, never manual mode.
 async function fetchRunsDays(
   monitors: { monitor: { id: number; jobType: string; regions: string[] } }[],
   timeZone: string,
-): Promise<LiveRuns> {
+): Promise<RunsByDay> {
   const result = await withTinybirdFallback(
     () =>
       fetchLiveRuns({
@@ -187,8 +204,7 @@ async function fetchRunsDays(
           jobType: monitor.jobType,
           regions: monitor.regions.join(","),
         })),
-        quorumPipes: uptimeQuorumPipes(tb),
-        timeZone,
+        pipes: runsDayPipes(timeZone),
         attempts: 1,
       }),
     undefined,
@@ -202,15 +218,17 @@ async function fetchRunsIntervals(
   monitor: { id: number; jobType: string; regions: string[] },
   window: { interval: number; fromDate: string; toDate: string },
 ): Promise<IntervalRuns | null> {
+  const { jobType } = monitor;
+  if (!hasRuns(jobType)) return null;
   const result = await withTinybirdFallback(
     () =>
       fetchIntervalRuns({
         monitor: {
           id: monitor.id,
-          jobType: monitor.jobType,
+          jobType,
           regions: monitor.regions.join(","),
         },
-        pipes: uptimeQuorumIntervalPipes(tb),
+        pipe: getUptimeProcedure("7d", jobType),
         ...window,
       }),
     undefined,

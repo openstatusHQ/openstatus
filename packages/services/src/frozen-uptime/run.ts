@@ -26,28 +26,23 @@ import {
 } from "./compute";
 import { freezeMonitorMonth } from "./freeze";
 import {
-  runsByDay,
-  type QuorumHistogramRow,
-  type QuorumIntervalRow,
+  alignedRegionCounts,
   quorumRegionCount,
   quorumRegionCounts,
+  type RunsByDay,
+  runsByMonitorDay,
 } from "./quorum";
 
 type PipeFn<Row> = (params: {
   monitorIds: string[];
 }) => Promise<{ data: Row[] }>;
 
-export type StatusPipeFn = PipeFn<ComputeCountRow>;
-export type QuorumPipeFn = (params: {
+/** A day-count pipe; `type: "runs"` returns run verdicts instead of region checks. */
+export type StatusPipeFn = (params: {
   monitorIds: string[];
-  timezone?: string;
-}) => Promise<{ data: QuorumHistogramRow[] }>;
-export type QuorumIntervalPipeFn = (params: {
-  monitorId: string;
-  interval: number;
-  fromDate?: string;
-  toDate?: string;
-}) => Promise<{ data: QuorumIntervalRow[] }>;
+  type?: "runs";
+  regionCounts?: number[];
+}) => Promise<{ data: ComputeCountRow[] }>;
 
 // no 45d status pipe, so no counts on the live status page either
 const JOB_TYPES_WITHOUT_STATUS_PIPE = [
@@ -75,21 +70,33 @@ export function uptimeFreezePipes(tb: OSTinybird): UptimeFreezePipes {
   };
 }
 
-// no run-level histogram: heartbeat has no regions, udp and ssl no status pipe
+// no run verdicts: heartbeat has no regions, udp and ssl no status pipe
 const JOB_TYPES_WITHOUT_QUORUM = [
   "heartbeat",
   "udp",
   "ssl",
 ] as const satisfies readonly MonitorJobType[];
 
-// a new MonitorJobType fails tsc in uptimeQuorumPipes until it is wired up or
-// listed above
 export type UptimeQuorumJobType = Exclude<
   MonitorJobType,
   (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
 >;
 
-export type UptimeQuorumPipes = Record<UptimeQuorumJobType, QuorumPipeFn>;
+/** The day-count pipes that can return run verdicts. */
+export type UptimeRunsPipes = Record<UptimeQuorumJobType, StatusPipeFn>;
+
+// a new MonitorJobType fails tsc here until it is wired up or listed above
+const RUNS_JOB_TYPES = {
+  http: true,
+  tcp: true,
+  dns: true,
+  icmp: true,
+  grpc: true,
+} satisfies Record<UptimeQuorumJobType, true>;
+
+export function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
+  return Object.hasOwn(RUNS_JOB_TYPES, jobType);
+}
 
 /**
  * Checks one run makes, cloud and private: the divisor that turns a day's
@@ -99,7 +106,7 @@ export function checksPerRun(
   monitor: { jobType: string; regions: string },
   privateLocationCount: number,
 ): number | null {
-  if (JOB_TYPES_WITHOUT_QUORUM.some((t) => t === monitor.jobType)) return null;
+  if (!hasRuns(monitor.jobType)) return null;
   const cloud = quorumRegionCount(monitor.regions);
   if (cloud !== null) return cloud + privateLocationCount;
   // several private checks of one run share no run key to group them by
@@ -136,34 +143,7 @@ export async function privateLocationCounts(
   return out;
 }
 
-export function uptimeQuorumPipes(tb: OSTinybird): UptimeQuorumPipes {
-  return {
-    http: tb.httpQuorum45d,
-    tcp: tb.tcpQuorum45d,
-    dns: tb.dnsQuorum45d,
-    icmp: tb.icmpQuorum45d,
-    grpc: tb.grpcQuorum45d,
-  };
-}
-
-export type UptimeQuorumIntervalPipes = Record<
-  UptimeQuorumJobType,
-  QuorumIntervalPipeFn
->;
-
-export function uptimeQuorumIntervalPipes(
-  tb: OSTinybird,
-): UptimeQuorumIntervalPipes {
-  return {
-    http: tb.httpQuorumIntervals,
-    tcp: tb.tcpQuorumIntervals,
-    dns: tb.dnsQuorumIntervals,
-    icmp: tb.icmpQuorumIntervals,
-    grpc: tb.grpcQuorumIntervals,
-  };
-}
-
-export type FreezePipeKind = "counts" | "quorum";
+export type FreezePipeKind = "counts" | "runs";
 
 export type ChunkFailure = {
   pipe: FreezePipeKind;
@@ -191,13 +171,6 @@ function chunk<T>(items: T[], size: number): T[][] {
     out.push(items.slice(i, i + size));
   }
   return out;
-}
-
-export function hasQuorumPipe(
-  pipes: Record<UptimeQuorumJobType, unknown>,
-  jobType: string,
-): jobType is UptimeQuorumJobType {
-  return Object.hasOwn(pipes, jobType);
 }
 
 function hasStatusPipe(
@@ -283,29 +256,41 @@ export async function fetchFreezeCounts(
 }
 
 /**
- * Run histograms for the monitors whose job type has a quorum pipe, grouped
- * into the days of `timeZone` (UTC when omitted).
+ * Run verdicts per UTC day (or per day of the zone the pipes are bound to) for
+ * the monitors with a quorum region count; the others are never fetched.
  */
-export async function fetchQuorumHistograms(
-  args: FetchOptions & { pipes: UptimeQuorumPipes; timeZone?: string },
-): Promise<{
-  histograms: QuorumHistogramRow[];
-  failedMonitorIds: Set<string>;
-}> {
-  const timezone =
-    args.timeZone && args.timeZone !== "UTC" ? args.timeZone : undefined;
+export async function fetchRunsByDay(
+  args: Omit<FetchOptions, "monitorIdsByJobType"> & {
+    monitors: { id: number; jobType: string; regions: string }[];
+    pipes: UptimeRunsPipes;
+  },
+): Promise<{ runs: RunsByDay; failedMonitorIds: Set<string> }> {
+  const regionCounts = quorumRegionCounts(
+    args.monitors.filter((m) => hasRuns(m.jobType)),
+  );
+  const monitorIdsByJobType = new Map<string, Set<string>>();
+  for (const m of args.monitors) {
+    if (!regionCounts.has(m.id)) continue;
+    const ids = monitorIdsByJobType.get(m.jobType) ?? new Set<string>();
+    ids.add(String(m.id));
+    monitorIdsByJobType.set(m.jobType, ids);
+  }
   const { rows, failedMonitorIds } = await fetchChunked({
     ...args,
-    kind: "quorum",
+    monitorIdsByJobType,
+    kind: "runs",
     pipeFor: (jobType) => {
-      if (!hasQuorumPipe(args.pipes, jobType)) return undefined;
+      if (!hasRuns(jobType)) return undefined;
       const pipe = args.pipes[jobType];
-      return timezone
-        ? ({ monitorIds }) => pipe({ monitorIds, timezone })
-        : pipe;
+      return ({ monitorIds }) =>
+        pipe({
+          monitorIds,
+          type: "runs",
+          regionCounts: alignedRegionCounts(monitorIds, regionCounts),
+        });
     },
   });
-  return { histograms: rows, failedMonitorIds };
+  return { runs: runsByMonitorDay(rows), failedMonitorIds };
 }
 
 export function groupByMonitorId<Row extends { monitorId: string }>(
@@ -316,20 +301,6 @@ export function groupByMonitorId<Row extends { monitorId: string }>(
     const list = out.get(row.monitorId);
     if (list) list.push(row);
     else out.set(row.monitorId, [row]);
-  }
-  return out;
-}
-
-export function monitorIdsWithQuorum(
-  monitors: { id: number; jobType: string }[],
-  regionCounts: Map<number, number>,
-): Map<string, Set<string>> {
-  const out = new Map<string, Set<string>>();
-  for (const m of monitors) {
-    if ((regionCounts.get(m.id) ?? 0) <= 0) continue;
-    const ids = out.get(m.jobType) ?? new Set<string>();
-    ids.add(String(m.id));
-    out.set(m.jobType, ids);
   }
   return out;
 }
@@ -349,7 +320,6 @@ export type RunUptimeFreezeResult = {
  */
 export async function runUptimeFreeze(args: {
   pipes: UptimeFreezePipes;
-  quorumPipes: UptimeQuorumPipes;
   now?: Date;
   db?: DB;
   monitorIds?: number[]; // scope a run (tests, manual retries); default all
@@ -438,26 +408,17 @@ export async function runUptimeFreeze(args: {
   const failedPipeByMonitorId = new Map<string, FreezePipeKind>();
   for (const id of countsFailed) failedPipeByMonitorId.set(id, "counts");
 
-  const regionCounts = quorumRegionCounts(
-    pending.filter(
-      (m) =>
-        hasQuorumPipe(args.quorumPipes, m.jobType) &&
-        !countsFailed.has(String(m.id)),
-    ),
-  );
-  const quorumIdsByJobType = monitorIdsWithQuorum(pending, regionCounts);
-  // a month frozen without its run verdicts can never get them: a failed quorum
+  // a month frozen without its run verdicts can never get them: a failed runs
   // chunk skips the monitor exactly like a failed counts chunk
-  const quorum = await fetchQuorumHistograms({
-    monitorIdsByJobType: quorumIdsByJobType,
-    pipes: args.quorumPipes,
+  const runs = await fetchRunsByDay({
+    monitors: pending.filter((m) => !countsFailed.has(String(m.id))),
+    pipes: args.pipes,
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });
-  for (const id of quorum.failedMonitorIds) {
-    failedPipeByMonitorId.set(id, "quorum");
+  for (const id of runs.failedMonitorIds) {
+    failedPipeByMonitorId.set(id, "runs");
   }
-  const histogramsByMonitorId = groupByMonitorId(quorum.histograms);
 
   // avoid an O(pending²) sweep: computeMonitorMonth scans linearly per call
   const countsByMonitorId = groupByMonitorId(counts);
@@ -488,18 +449,11 @@ export async function runUptimeFreeze(args: {
 
     // no counts in the month (paused, created later, or no status pipe for
     // the job type): nothing to freeze — silent, not a failure
-    const regionCount = regionCounts.get(m.id);
     const computed = computeMonitorMonth({
       month,
       monitorId: m.id,
       counts: countsByMonitorId.get(String(m.id)) ?? [],
-      runs:
-        regionCount !== undefined
-          ? runsByDay(
-              histogramsByMonitorId.get(String(m.id)) ?? [],
-              regionCount,
-            )
-          : undefined,
+      runs: runs.runs.get(String(m.id)),
     });
     if (!computed) continue;
 

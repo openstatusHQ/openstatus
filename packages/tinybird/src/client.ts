@@ -45,6 +45,18 @@ export const status15mParameters = z.object({
 });
 
 /**
+ * `runs` judges each run with the region quorum against `regionCounts[i]`,
+ * the region count of `monitorIds[i]`; monitors with 0 return no rows.
+ */
+export const countsParameters = {
+  type: z.enum(["requests", "runs"]).optional(),
+  regionCounts: z.int().nonnegative().array().optional(),
+};
+
+export const status15mCountsParameters =
+  status15mParameters.extend(countsParameters);
+
+/**
  * Same columns as the 45d pipes. `day` is the local calendar date re-keyed as
  * UTC midnight, the convention day-keyed consumers already read — a Berlin
  * 2026-10-14 stays "2026-10-14", not the 22:00Z instant of local midnight.
@@ -134,6 +146,11 @@ const uptimeParameters = z.object({
   toDate: z.string().optional(),
   regions: z.enum(monitorRegions).or(z.string()).array().optional(),
   interval: z.int().optional(),
+});
+
+export const uptime7dParameters = uptimeParameters.extend({
+  type: countsParameters.type,
+  regionCount: z.int().nonnegative().optional(),
 });
 
 const uptimeShape = z.object({
@@ -348,46 +365,20 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
-// optional, not prefaulted: without a zone the request stays the UTC one the freeze sends
-export const quorumParameters = z.object({
-  monitorIds: z.string().array(),
-  timezone: z
-    .string()
-    .refine(isValidTimeZone, "timezone must be an IANA zone name")
-    .optional(),
-});
-
-// `day` is a local midnight in the requested zone, re-keyed as UTC midnight
-export const quorumHistogramShape = z.object({
-  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
-  monitorId: z.string(),
-  errorRegions: z.number(),
-  degradedOrErrorRegions: z.number(),
-  runs: z.number(),
-});
-
 // [fromDate, toDate) in UTC; the backfill pipes scan raw data, so both are required
-export const quorumBackfillParameters = z.object({
+export const runsBackfillParameters = z.object({
   monitorIds: z.string().array(),
+  regionCounts: z.int().nonnegative().array(),
   fromDate: z.string(),
   toDate: z.string(),
 });
 
-// same params as the uptime_7d endpoint it pairs with, minus regions: a region
-// subset has no run quorum
-export const quorumIntervalParameters = z.object({
+export const runsBackfillShape = z.object({
+  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
   monitorId: z.string(),
-  interval: z.int(),
-  fromDate: z.string().optional(),
-  toDate: z.string().optional(),
-});
-
-// `interval` parses like the uptime shapes' so both sides yield the same Date key
-export const quorumIntervalShape = z.object({
-  interval: z.coerce.date(),
-  errorRegions: z.number(),
-  degradedOrErrorRegions: z.number(),
-  runs: z.number(),
+  ok: z.number(),
+  degraded: z.number(),
+  error: z.number(),
 });
 
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
@@ -933,7 +924,7 @@ export class OSTinybird {
   public get httpStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_15m__v0",
-      parameters: status15mParameters,
+      parameters: status15mCountsParameters,
       data: status15mShape(z.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -944,6 +935,7 @@ export class OSTinybird {
       pipe: "endpoint__http_status_45d__v1",
       parameters: z.object({
         monitorIds: z.string().array(),
+        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -960,30 +952,12 @@ export class OSTinybird {
     });
   }
 
-  public get httpQuorum45d() {
+  public get httpRunsBackfill() {
     return this.tb.buildPipe({
-      pipe: "endpoint__http_quorum_45d__v0",
-      parameters: quorumParameters,
-      data: quorumHistogramShape,
-      opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get httpQuorumBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__http_quorum_backfill__v0",
-      parameters: quorumBackfillParameters,
-      data: quorumHistogramShape,
+      pipe: "endpoint__http_runs_backfill__v0",
+      parameters: runsBackfillParameters,
+      data: runsBackfillShape,
       opts: { cache: "no-store" },
-    });
-  }
-
-  public get httpQuorumIntervals() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__http_quorum_intervals__v0",
-      parameters: quorumIntervalParameters,
-      data: quorumIntervalShape,
-      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -1538,36 +1512,18 @@ export class OSTinybird {
   public get tcpStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_15m__v0",
-      parameters: status15mParameters,
+      parameters: status15mCountsParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
-  public get tcpQuorum45d() {
+  public get tcpRunsBackfill() {
     return this.tb.buildPipe({
-      pipe: "endpoint__tcp_quorum_45d__v0",
-      parameters: quorumParameters,
-      data: quorumHistogramShape,
-      opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get tcpQuorumBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__tcp_quorum_backfill__v0",
-      parameters: quorumBackfillParameters,
-      data: quorumHistogramShape,
+      pipe: "endpoint__tcp_runs_backfill__v0",
+      parameters: runsBackfillParameters,
+      data: runsBackfillShape,
       opts: { cache: "no-store" },
-    });
-  }
-
-  public get tcpQuorumIntervals() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__tcp_quorum_intervals__v0",
-      parameters: quorumIntervalParameters,
-      data: quorumIntervalShape,
-      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -1577,6 +1533,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorIds: z.string().array(),
         days: z.int().max(45).optional(),
+        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -2038,36 +1995,18 @@ export class OSTinybird {
   public get icmpStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_status_15m__v0",
-      parameters: status15mParameters,
+      parameters: status15mCountsParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
-  public get icmpQuorum45d() {
+  public get icmpRunsBackfill() {
     return this.tb.buildPipe({
-      pipe: "endpoint__icmp_quorum_45d__v0",
-      parameters: quorumParameters,
-      data: quorumHistogramShape,
-      opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get icmpQuorumBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__icmp_quorum_backfill__v0",
-      parameters: quorumBackfillParameters,
-      data: quorumHistogramShape,
+      pipe: "endpoint__icmp_runs_backfill__v0",
+      parameters: runsBackfillParameters,
+      data: runsBackfillShape,
       opts: { cache: "no-store" },
-    });
-  }
-
-  public get icmpQuorumIntervals() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__icmp_quorum_intervals__v0",
-      parameters: quorumIntervalParameters,
-      data: quorumIntervalShape,
-      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -2077,6 +2016,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorIds: z.string().array(),
         days: z.int().max(45).optional(),
+        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -2096,7 +2036,7 @@ export class OSTinybird {
   public get icmpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_7d__v0",
-      parameters: uptimeParameters,
+      parameters: uptime7dParameters,
       data: uptimeShape,
     });
   }
@@ -2554,36 +2494,18 @@ export class OSTinybird {
   public get grpcStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_status_15m__v0",
-      parameters: status15mParameters,
+      parameters: status15mCountsParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
-  public get grpcQuorum45d() {
+  public get grpcRunsBackfill() {
     return this.tb.buildPipe({
-      pipe: "endpoint__grpc_quorum_45d__v0",
-      parameters: quorumParameters,
-      data: quorumHistogramShape,
-      opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get grpcQuorumBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__grpc_quorum_backfill__v0",
-      parameters: quorumBackfillParameters,
-      data: quorumHistogramShape,
+      pipe: "endpoint__grpc_runs_backfill__v0",
+      parameters: runsBackfillParameters,
+      data: runsBackfillShape,
       opts: { cache: "no-store" },
-    });
-  }
-
-  public get grpcQuorumIntervals() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__grpc_quorum_intervals__v0",
-      parameters: quorumIntervalParameters,
-      data: quorumIntervalShape,
-      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -2593,6 +2515,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorIds: z.string().array(),
         days: z.int().max(45).optional(),
+        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -2612,7 +2535,7 @@ export class OSTinybird {
   public get grpcUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_uptime_7d__v0",
-      parameters: grpcUptimeParameters,
+      parameters: uptime7dParameters,
       data: grpcUptimeShape,
     });
   }
@@ -2818,13 +2741,7 @@ export class OSTinybird {
   public get httpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_uptime_7d__v1",
-      parameters: z.object({
-        monitorId: z.string(),
-        fromDate: z.string().optional(),
-        toDate: z.string().optional(),
-        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
-        interval: z.int().optional(),
-      }),
+      parameters: uptime7dParameters,
       data: z.object({
         interval: z.coerce.date(),
         success: z.int(),
@@ -2856,13 +2773,7 @@ export class OSTinybird {
   public get tcpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_uptime_7d__v1",
-      parameters: z.object({
-        monitorId: z.string(),
-        fromDate: z.string().optional(),
-        toDate: z.string().optional(),
-        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
-        interval: z.int().optional(),
-      }),
+      parameters: uptime7dParameters,
       data: z.object({
         interval: z.coerce.date(),
         success: z.int(),
@@ -3297,7 +3208,7 @@ export class OSTinybird {
   public get dnsUptime7d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_uptime_7d__v0",
-      parameters: uptimeParameters,
+      parameters: uptime7dParameters,
       data: uptimeShape,
     });
   }
@@ -3905,36 +3816,18 @@ export class OSTinybird {
   public get dnsStatus15m() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_15m__v0",
-      parameters: status15mParameters,
+      parameters: status15mCountsParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
-  public get dnsQuorum45d() {
+  public get dnsRunsBackfill() {
     return this.tb.buildPipe({
-      pipe: "endpoint__dns_quorum_45d__v0",
-      parameters: quorumParameters,
-      data: quorumHistogramShape,
-      opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get dnsQuorumBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__dns_quorum_backfill__v0",
-      parameters: quorumBackfillParameters,
-      data: quorumHistogramShape,
+      pipe: "endpoint__dns_runs_backfill__v0",
+      parameters: runsBackfillParameters,
+      data: runsBackfillShape,
       opts: { cache: "no-store" },
-    });
-  }
-
-  public get dnsQuorumIntervals() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__dns_quorum_intervals__v0",
-      parameters: quorumIntervalParameters,
-      data: quorumIntervalShape,
-      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -3943,6 +3836,7 @@ export class OSTinybird {
       pipe: "endpoint__dns_status_45d__v0",
       parameters: z.object({
         monitorIds: z.string().array(),
+        ...countsParameters,
       }),
       data: z.object({
         day: z.string().transform((val) => {

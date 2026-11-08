@@ -17,4 +17,4 @@ SQL >
         cronTimestamp
 
 TYPE materialized
-DATASOURCE mv__http_quorum_45d__v0
+DATASOURCE mv__http_runs_45d__v0

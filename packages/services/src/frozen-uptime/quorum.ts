@@ -1,19 +1,6 @@
 import { uniqueRegions } from "@openstatus/utils";
 
-import { type Counts, meetsQuorum } from "../status-timeline/tally";
-
-type QuorumCountRow = {
-  errorRegions: number;
-  degradedOrErrorRegions: number;
-  runs: number;
-};
-
-export type QuorumHistogramRow = QuorumCountRow & {
-  monitorId: string;
-  day: string; // ISO or YYYY-MM-DD; sliced to YYYY-MM-DD here
-};
-
-export type QuorumIntervalRow = QuorumCountRow & { interval: Date };
+import type { Counts } from "../status-timeline/tally";
 
 // mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
 // private-only monitors get none: private checks carry no shared run key
@@ -34,34 +21,31 @@ export function quorumRegionCounts(
   return out;
 }
 
-/**
- * One monitor's histogram rows → run verdicts per `keyOf` key, judged against
- * `regionCount`. Keys with no run get no entry.
- */
-export function runsBy<Row extends QuorumCountRow>(
-  rows: Row[],
-  regionCount: number,
-  keyOf: (row: Row) => string,
-): Map<string, Counts> {
-  const out = new Map<string, Counts>();
-  if (regionCount <= 0) return out;
-  for (const row of rows) {
-    if (row.runs <= 0) continue;
-    const key = keyOf(row);
-    const runs = out.get(key) ?? { ok: 0, degraded: 0, error: 0 };
-    if (meetsQuorum(row.errorRegions, regionCount)) runs.error += row.runs;
-    else if (meetsQuorum(row.degradedOrErrorRegions, regionCount))
-      runs.degraded += row.runs;
-    else runs.ok += row.runs;
-    out.set(key, runs);
-  }
-  return out;
+/** The `regionCounts` param for a `type: "runs"` read, aligned with `monitorIds`. */
+export function alignedRegionCounts(
+  monitorIds: string[],
+  regionCounts: Map<number, number>,
+): number[] {
+  return monitorIds.map((id) => regionCounts.get(Number(id)) ?? 0);
 }
 
-/** Run verdicts per day, keyed YYYY-MM-DD. */
-export function runsByDay(
-  rows: QuorumHistogramRow[],
-  regionCount: number,
-): Map<string, Counts> {
-  return runsBy(rows, regionCount, (row) => row.day.slice(0, 10));
+/** monitorId → YYYY-MM-DD → that day's run verdicts. */
+export type RunsByDay = Map<string, Map<string, Counts>>;
+
+export function runsByMonitorDay(
+  rows: (Counts & { monitorId: string; day: string })[],
+): RunsByDay {
+  const out: RunsByDay = new Map();
+  for (const { monitorId, day, ok, degraded, error } of rows) {
+    if (ok + degraded + error <= 0) continue;
+    const byDay = out.get(monitorId) ?? new Map<string, Counts>();
+    const key = day.slice(0, 10);
+    const acc = byDay.get(key) ?? { ok: 0, degraded: 0, error: 0 };
+    acc.ok += ok;
+    acc.degraded += degraded;
+    acc.error += error;
+    byDay.set(key, acc);
+    out.set(monitorId, byDay);
+  }
+  return out;
 }

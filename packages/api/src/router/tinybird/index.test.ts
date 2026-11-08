@@ -141,3 +141,19 @@ test("tinybird.listInfinite accepts React Query's own paging direction", async (
     expect(result).toEqual({ data: [], nextCursor: null, prevCursor: null });
   }
 });
+
+// ─── uptime ──────────────────────────────────────────────────────
+
+test("tinybird.uptime does not forward the job type as the 7d pipe's counts type", async () => {
+  const caller = callerForWorkspace(1);
+
+  for (const type of ["http", "tcp", "dns", "icmp", "grpc"] as const) {
+    const result = await caller.tinybird.uptime({
+      monitorId: "1",
+      period: "7d",
+      type,
+      interval: 240,
+    });
+    expect(result).toBeDefined();
+  }
+});

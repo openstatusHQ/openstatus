@@ -2,7 +2,7 @@ import { parseArgs } from "node:util";
 
 import {
   backfillFrozenRuns,
-  uptimeQuorumBackfillPipes,
+  uptimeRunsBackfillPipes,
 } from "@openstatus/services/frozen-uptime";
 import { OSTinybird } from "@openstatus/tinybird";
 
@@ -78,7 +78,7 @@ const tb = new OSTinybird({
   token: config.TINY_BIRD_API_KEY,
   baseUrl: config.TINYBIRD_URL,
 });
-const pipes = uptimeQuorumBackfillPipes(tb);
+const pipes = uptimeRunsBackfillPipes(tb);
 
 console.log(
   `[backfill-uptime-runs] ${months.length} month(s) ${months.at(-1)}..${months[0]}${dryRun ? " (dry run)" : ""}${monitorIds ? ` monitors ${monitorIds.join(",")}` : ""}`,
@@ -110,7 +110,7 @@ for (const [i, month] of months.entries()) {
 
   if (res.updated === 0 && res.failed.length === 0 && res.noData.length > 0) {
     console.warn(
-      `[backfill-uptime-runs] ${month}: no histogram data for any of ${res.noData.length} monitor(s), likely past raw retention; stopping before older months`,
+      `[backfill-uptime-runs] ${month}: no run data for any of ${res.noData.length} monitor(s), likely past raw retention; stopping before older months`,
     );
     break;
   }

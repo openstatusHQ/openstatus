@@ -10,13 +10,12 @@ import { describe, expect, test } from "vitest";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { withTestTransaction } from "../../../test/helpers";
 import {
-  type QuorumBackfillPipeFn,
-  type UptimeQuorumBackfillPipes,
+  type RunsBackfillPipeFn,
+  type UptimeRunsBackfillPipes,
   backfillFrozenRuns,
-  uptimeQuorumBackfillPipes,
+  uptimeRunsBackfillPipes,
 } from "../backfill-runs";
-import { monthDays } from "../compute";
-import type { QuorumHistogramRow } from "../quorum";
+import { type ComputeCountRow, monthDays } from "../compute";
 import type { ChunkFailure } from "../run";
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
@@ -25,9 +24,9 @@ const MONTH = "2025-06-01";
 const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
 const noSleep = () => Promise.resolve();
 
-function histogramPipe(rows: QuorumHistogramRow[]) {
-  const calls: Parameters<QuorumBackfillPipeFn>[0][] = [];
-  const pipe: QuorumBackfillPipeFn = (params) => {
+function runsPipe(rows: ComputeCountRow[]) {
+  const calls: Parameters<RunsBackfillPipeFn>[0][] = [];
+  const pipe: RunsBackfillPipeFn = (params) => {
     calls.push(params);
     return Promise.resolve({
       data: rows.filter((r) => params.monitorIds.includes(r.monitorId)),
@@ -37,9 +36,9 @@ function histogramPipe(rows: QuorumHistogramRow[]) {
 }
 
 function makePipes(
-  overrides: Partial<UptimeQuorumBackfillPipes> = {},
-): UptimeQuorumBackfillPipes {
-  const fallback: QuorumBackfillPipeFn = () => Promise.resolve({ data: [] });
+  overrides: Partial<UptimeRunsBackfillPipes> = {},
+): UptimeRunsBackfillPipes {
+  const fallback: RunsBackfillPipeFn = () => Promise.resolve({ data: [] });
   return {
     http: overrides.http ?? fallback,
     tcp: overrides.tcp ?? fallback,
@@ -102,40 +101,36 @@ async function frozenDays(tx: Tx, monitorId: number) {
   return row?.days;
 }
 
-function histogram(monitorId: number): QuorumHistogramRow[] {
-  const run = (
-    day: string,
-    errorRegions: number,
-    degradedOrErrorRegions: number,
-    runs: number,
-  ): QuorumHistogramRow => ({
-    monitorId: String(monitorId),
-    day,
-    errorRegions,
-    degradedOrErrorRegions,
-    runs,
-  });
+function runs(monitorId: number): ComputeCountRow[] {
+  const id = String(monitorId);
   return [
-    // one flaky region of six: ok
-    run("2025-06-05T00:00:00.000Z", 1, 1, 140),
-    // three of six failing: error
-    run("2025-06-05T00:00:00.000Z", 3, 3, 2),
-    // four of six degraded: degraded
-    run("2025-06-05T00:00:00.000Z", 0, 4, 3),
-    run("2025-06-06T00:00:00.000Z", 6, 6, 144),
+    {
+      monitorId: id,
+      day: "2025-06-05T00:00:00.000Z",
+      ok: 140,
+      degraded: 3,
+      error: 2,
+    },
+    {
+      monitorId: id,
+      day: "2025-06-06T00:00:00.000Z",
+      ok: 0,
+      degraded: 0,
+      error: 144,
+    },
   ];
 }
 
-describe("uptimeQuorumBackfillPipes", () => {
-  test("maps every quorum job type to its backfill pipe", () => {
-    // safe because uptimeQuorumBackfillPipes only reads pipe getters off the client
+describe("uptimeRunsBackfillPipes", () => {
+  test("maps every job type with runs to its backfill pipe", () => {
+    // safe because uptimeRunsBackfillPipes only reads pipe getters off the client
     const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
-    expect(uptimeQuorumBackfillPipes(tb)).toEqual({
-      http: "httpQuorumBackfill",
-      tcp: "tcpQuorumBackfill",
-      dns: "dnsQuorumBackfill",
-      icmp: "icmpQuorumBackfill",
-      grpc: "grpcQuorumBackfill",
+    expect(uptimeRunsBackfillPipes(tb)).toEqual({
+      http: "httpRunsBackfill",
+      tcp: "tcpRunsBackfill",
+      dns: "dnsRunsBackfill",
+      icmp: "icmpRunsBackfill",
+      grpc: "grpcRunsBackfill",
     });
   });
 });
@@ -145,7 +140,7 @@ describe("backfillFrozenRuns", () => {
     await withTestTransaction(async (tx) => {
       const m = await insertFrozenMonitor(tx);
       const before = await frozenDays(tx, m.id);
-      const tb = histogramPipe(histogram(m.id));
+      const tb = runsPipe(runs(m.id));
 
       const res = await backfillFrozenRuns({
         month: MONTH,
@@ -158,6 +153,7 @@ describe("backfillFrozenRuns", () => {
       expect(tb.calls).toEqual([
         {
           monitorIds: [String(m.id)],
+          regionCounts: [6],
           fromDate: "2025-06-01T00:00:00.000Z",
           toDate: "2025-07-01T00:00:00.000Z",
         },
@@ -192,10 +188,36 @@ describe("backfillFrozenRuns", () => {
     });
   });
 
+  test("sends each monitor's current cloud region count, aligned with monitorIds", async () => {
+    await withTestTransaction(async (tx) => {
+      const six = await insertFrozenMonitor(tx);
+      const two = await insertFrozenMonitor(tx, { regions: "ams,fra" });
+      const tb = runsPipe([]);
+
+      await backfillFrozenRuns({
+        month: MONTH,
+        pipes: makePipes({ http: tb.pipe }),
+        monitorIds: [six.id, two.id],
+        db: tx,
+        sleep: noSleep,
+      });
+
+      const [call] = tb.calls;
+      expect(
+        new Map(call?.monitorIds.map((id, i) => [id, call.regionCounts[i]])),
+      ).toEqual(
+        new Map([
+          [String(six.id), 6],
+          [String(two.id), 2],
+        ]),
+      );
+    });
+  });
+
   test("a re-run fetches nothing and writes nothing", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertFrozenMonitor(tx);
-      const tb = histogramPipe(histogram(m.id));
+      const tb = runsPipe(runs(m.id));
       const run = () =>
         backfillFrozenRuns({
           month: MONTH,
@@ -221,10 +243,7 @@ describe("backfillFrozenRuns", () => {
       const heartbeat = await insertFrozenMonitor(tx, {
         jobType: "heartbeat",
       });
-      const tb = histogramPipe([
-        ...histogram(privateOnly.id),
-        ...histogram(heartbeat.id),
-      ]);
+      const tb = runsPipe([...runs(privateOnly.id), ...runs(heartbeat.id)]);
 
       const res = await backfillFrozenRuns({
         month: MONTH,
@@ -254,7 +273,7 @@ describe("backfillFrozenRuns", () => {
         month: MONTH,
         pipes: makePipes({
           http: () => Promise.reject(new Error("tb down")),
-          tcp: histogramPipe(histogram(healthy.id)).pipe,
+          tcp: runsPipe(runs(healthy.id)).pipe,
         }),
         monitorIds: [failing.id, healthy.id],
         db: tx,
@@ -265,7 +284,7 @@ describe("backfillFrozenRuns", () => {
       expect(res.failed).toEqual([failing.id]);
       expect(res.updated).toBe(1);
       expect(failures.map((f) => [f.pipe, f.jobType, f.monitorIds])).toEqual([
-        ["quorum", "http", [String(failing.id)]],
+        ["runs", "http", [String(failing.id)]],
       ]);
       expect(await frozenDays(tx, failing.id)).toEqual(frozenMonth());
       expect((await frozenDays(tx, healthy.id))?.[4]?.runs).toEqual({
@@ -282,7 +301,7 @@ describe("backfillFrozenRuns", () => {
 
       const res = await backfillFrozenRuns({
         month: MONTH,
-        pipes: makePipes({ http: histogramPipe(histogram(m.id)).pipe }),
+        pipes: makePipes({ http: runsPipe(runs(m.id)).pipe }),
         monitorIds: [m.id],
         dryRun: true,
         db: tx,
@@ -294,7 +313,7 @@ describe("backfillFrozenRuns", () => {
     });
   });
 
-  test("a month without histogram rows reports the monitor as having no data", async () => {
+  test("a month without run rows reports the monitor as having no data", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertFrozenMonitor(tx);
 

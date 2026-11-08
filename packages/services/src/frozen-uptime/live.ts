@@ -1,66 +1,36 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
 import type { Counts, DayCounts } from "../status-timeline/tally";
-import {
-  runsBy,
-  runsByDay,
-  quorumRegionCount,
-  quorumRegionCounts,
-} from "./quorum";
+import { quorumRegionCount, type RunsByDay } from "./quorum";
 import {
   fetchFreezeCounts,
-  fetchQuorumHistograms,
-  groupByMonitorId,
-  hasQuorumPipe,
-  monitorIdsWithQuorum,
+  fetchRunsByDay,
+  hasRuns,
   type UptimeFreezePipes,
-  type UptimeQuorumIntervalPipes,
-  type UptimeQuorumPipes,
+  type UptimeRunsPipes,
 } from "./run";
 
 type LiveMonitor = { id: number; jobType: string; regions: string };
 
-/** monitorId → YYYY-MM-DD → that day's run verdicts. */
-export type LiveRuns = Map<string, Map<string, Counts>>;
-
 /**
- * Per-day run verdicts for the monitors with a quorum region count, grouped
- * into the days of `timeZone`. Never throws: a monitor whose histogram failed
- * is left out, so its days keep only `requests`.
+ * Per-day run verdicts for the monitors with a quorum region count, in the
+ * days the pipes group by. Never throws: a monitor whose read failed is left
+ * out, so its days keep only `requests`.
  */
 export async function fetchLiveRuns(args: {
   monitors: LiveMonitor[];
-  quorumPipes: UptimeQuorumPipes;
-  timeZone?: string;
+  pipes: UptimeRunsPipes;
   attempts?: number;
   sleep?: (ms: number) => Promise<void>;
-}): Promise<LiveRuns> {
-  const regionCounts = quorumRegionCounts(
-    args.monitors.filter((m) => hasQuorumPipe(args.quorumPipes, m.jobType)),
-  );
-  const { histograms, failedMonitorIds } = await fetchQuorumHistograms({
-    monitorIdsByJobType: monitorIdsWithQuorum(args.monitors, regionCounts),
-    pipes: args.quorumPipes,
-    timeZone: args.timeZone,
-    attempts: args.attempts,
-    throttleMs: 0,
-    sleep: args.sleep,
-  });
-
-  const byMonitorId = groupByMonitorId(histograms);
-  const out: LiveRuns = new Map();
-  for (const [monitorId, regionCount] of regionCounts) {
-    const id = String(monitorId);
-    if (failedMonitorIds.has(id)) continue;
-    out.set(id, runsByDay(byMonitorId.get(id) ?? [], regionCount));
-  }
-  return out;
+}): Promise<RunsByDay> {
+  const { runs } = await fetchRunsByDay({ ...args, throttleMs: 0 });
+  return runs;
 }
 
 /** Attach each day's run verdicts to the rows of the same day key. */
 export function attachRuns<Row extends { monitorId: string; day: string }>(
   rowsByMonitorId: Map<string, Row[]>,
-  runs: LiveRuns,
+  runs: RunsByDay,
 ): Map<string, (Row & { runs?: Counts })[]> {
   const out = new Map<string, (Row & { runs?: Counts })[]>();
   for (const [monitorId, rows] of rowsByMonitorId) {
@@ -78,37 +48,61 @@ export function attachRuns<Row extends { monitorId: string; day: string }>(
   return out;
 }
 
+type IntervalRow = {
+  interval: Date;
+  success: number;
+  degraded: number;
+  error: number;
+};
+
+/** An uptime interval pipe; `type: "runs"` returns run verdicts per bucket. */
+export type IntervalPipeFn = (params: {
+  monitorId: string;
+  interval: number;
+  fromDate?: string;
+  toDate?: string;
+  type: "runs";
+  regionCount: number;
+}) => Promise<{ data: IntervalRow[] }>;
+
 /** interval start (ISO) → that bucket's run verdicts, for one monitor. */
 export type IntervalRuns = Map<string, Counts>;
 
 /**
- * Run verdicts per `interval`-minute bucket for one monitor, bucketed like the
- * uptime interval endpoints. Null when the monitor has no quorum region count;
- * a failed read rejects.
+ * Run verdicts per `interval`-minute bucket for one monitor. Null when the
+ * monitor has no quorum region count; a failed read rejects.
  */
 export async function fetchIntervalRuns(args: {
   monitor: LiveMonitor;
-  pipes: UptimeQuorumIntervalPipes;
+  pipe: IntervalPipeFn;
   interval: number;
   fromDate?: string;
   toDate?: string;
 }): Promise<IntervalRuns | null> {
-  const { monitor, pipes, ...window } = args;
-  if (!hasQuorumPipe(pipes, monitor.jobType)) return null;
+  const { monitor, pipe, ...window } = args;
+  if (!hasRuns(monitor.jobType)) return null;
   const regionCount = quorumRegionCount(monitor.regions);
   if (regionCount === null) return null;
-  const { data } = await pipes[monitor.jobType]({
+  const { data } = await pipe({
     monitorId: String(monitor.id),
     ...window,
+    type: "runs",
+    regionCount,
   });
-  return runsBy(data, regionCount, (row) => row.interval.toISOString());
+  const out: IntervalRuns = new Map();
+  for (const { interval, success, degraded, error } of data) {
+    if (success + degraded + error > 0) {
+      out.set(interval.toISOString(), { ok: success, degraded, error });
+    }
+  }
+  return out;
 }
 
 export type IntervalCounts = DayCounts & { interval: Date };
 
 /** Uptime interval rows as `requests`, with the run verdicts of the same interval. */
 export function toIntervalCounts(
-  rows: { interval: Date; success: number; degraded: number; error: number }[],
+  rows: IntervalRow[],
   runs: IntervalRuns | null,
 ): IntervalCounts[] {
   return rows.map(({ interval, success, degraded, error }) => {
@@ -123,14 +117,14 @@ export function toIntervalCounts(
 
 /**
  * Live per-day counts from the 45d pipes, keyed monitorId → day, with `runs`
- * where the job type has run verdicts (none without `quorumPipes`). Never
- * throws: a monitor whose counts failed lands in `failedMonitorIds`; a failed
- * histogram only leaves its days without `runs`.
+ * under `withRuns` where the monitor has run verdicts. Never throws: a monitor
+ * whose counts failed lands in `failedMonitorIds`; a failed runs read only
+ * leaves its days without `runs`.
  */
 export async function fetchLiveDays(args: {
   monitors: LiveMonitor[];
   pipes: UptimeFreezePipes;
-  quorumPipes?: UptimeQuorumPipes;
+  withRuns?: boolean;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{
   days: Map<string, Map<string, FrozenMonitorUptimeDay>>;
@@ -150,13 +144,13 @@ export async function fetchLiveDays(args: {
       throttleMs: 0,
       sleep: args.sleep,
     }),
-    args.quorumPipes
+    args.withRuns
       ? fetchLiveRuns({
           monitors: args.monitors,
-          quorumPipes: args.quorumPipes,
+          pipes: args.pipes,
           sleep: args.sleep,
         })
-      : Promise.resolve<LiveRuns>(new Map()),
+      : Promise.resolve<RunsByDay>(new Map()),
   ]);
 
   const days = new Map<string, Map<string, FrozenMonitorUptimeDay>>();

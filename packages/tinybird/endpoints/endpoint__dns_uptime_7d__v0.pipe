@@ -4,7 +4,37 @@ NODE endpoint
 SQL >
 
 %
--- Buckets on cronTimestamp, like endpoint__dns_quorum_intervals__v0, so keys match.
+{% if String(type, 'requests') == 'runs' %}
+SELECT
+    interval,
+    countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 < n) AS success,
+    countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 >= n) AS degraded,
+    countIf(runErrorRegions * 2 >= n) AS error
+FROM (
+    SELECT
+        toStartOfInterval(toDateTime(fromUnixTimestamp64Milli(cronTimestamp)), INTERVAL {{ String(interval, '30', required=True) }} minute) AS interval,
+        cronTimestamp,
+        uniqExactMerge(errorRegions) AS runErrorRegions,
+        uniqExactMerge(degradedOrErrorRegions) AS runDegradedOrErrorRegions,
+        {{ Int32(regionCount, 0) }} AS n
+    FROM mv__dns_runs_45d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '7417', required=True) }}
+        {% if fromDate %}
+            AND time >= toStartOfDay(parseDateTimeBestEffortOrNull({{ String(fromDate) }}))
+            AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) >= parseDateTimeBestEffortOrNull({{ String(fromDate) }})
+        {% end %}
+        {% if toDate %}
+            AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
+            AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
+        {% end %}
+    GROUP BY interval, cronTimestamp
+)
+WHERE n > 0
+GROUP BY interval
+ORDER BY interval DESC
+{% else %}
+-- Buckets on cronTimestamp, like the runs branch, so keys match.
 SELECT
     toStartOfInterval(
         toDateTime(fromUnixTimestamp64Milli(cronTimestamp)), INTERVAL {{ String(interval, '30', required=True) }} minute
@@ -26,5 +56,6 @@ WHERE
     {% if defined(regions) %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
 GROUP BY interval
 ORDER BY interval DESC
+{% end %}
 
 TYPE endpoint

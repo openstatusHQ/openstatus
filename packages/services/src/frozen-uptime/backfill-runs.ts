@@ -10,40 +10,41 @@ import type { OSTinybird } from "@openstatus/tinybird";
 
 import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
+import type { Counts } from "../status-timeline/tally";
 import { monthRange } from "./compute";
 import {
-  type QuorumHistogramRow,
+  alignedRegionCounts,
   quorumRegionCount,
-  runsByDay,
+  runsByMonitorDay,
 } from "./quorum";
 import {
   type ChunkFailure,
   fetchChunked,
-  groupByMonitorId,
-  hasQuorumPipe,
+  hasRuns,
   type UptimeQuorumJobType,
 } from "./run";
 
-export type QuorumBackfillPipeFn = (params: {
+export type RunsBackfillPipeFn = (params: {
   monitorIds: string[];
+  regionCounts: number[];
   fromDate: string;
   toDate: string;
-}) => Promise<{ data: QuorumHistogramRow[] }>;
+}) => Promise<{ data: (Counts & { monitorId: string; day: string })[] }>;
 
-export type UptimeQuorumBackfillPipes = Record<
+export type UptimeRunsBackfillPipes = Record<
   UptimeQuorumJobType,
-  QuorumBackfillPipeFn
+  RunsBackfillPipeFn
 >;
 
-export function uptimeQuorumBackfillPipes(
+export function uptimeRunsBackfillPipes(
   tb: OSTinybird,
-): UptimeQuorumBackfillPipes {
+): UptimeRunsBackfillPipes {
   return {
-    http: tb.httpQuorumBackfill,
-    tcp: tb.tcpQuorumBackfill,
-    dns: tb.dnsQuorumBackfill,
-    icmp: tb.icmpQuorumBackfill,
-    grpc: tb.grpcQuorumBackfill,
+    http: tb.httpRunsBackfill,
+    tcp: tb.tcpRunsBackfill,
+    dns: tb.dnsRunsBackfill,
+    icmp: tb.icmpRunsBackfill,
+    grpc: tb.grpcRunsBackfill,
   };
 }
 
@@ -72,7 +73,7 @@ function lacksRuns(day: FrozenMonitorUptimeDay): boolean {
  */
 export async function backfillFrozenRuns(args: {
   month: string; // YYYY-MM-01
-  pipes: UptimeQuorumBackfillPipes;
+  pipes: UptimeRunsBackfillPipes;
   monitorIds?: number[];
   dryRun?: boolean;
   db?: DB;
@@ -122,10 +123,10 @@ export async function backfillFrozenRuns(args: {
     monitorId: number;
     jobType: string;
     days: FrozenMonitorUptimeDay[];
-    regionCount: number;
   }[] = [];
+  const regionCounts = new Map<number, number>();
   for (const row of rows) {
-    const regionCount = hasQuorumPipe(args.pipes, row.jobType)
+    const regionCount = hasRuns(row.jobType)
       ? quorumRegionCount(row.regions)
       : null;
     if (regionCount === null) {
@@ -137,7 +138,8 @@ export async function backfillFrozenRuns(args: {
       result.upToDate++;
       continue;
     }
-    pending.push({ ...row, days, regionCount });
+    pending.push({ ...row, days });
+    regionCounts.set(row.monitorId, regionCount);
   }
 
   const monitorIdsByJobType = new Map<string, Set<string>>();
@@ -149,32 +151,34 @@ export async function backfillFrozenRuns(args: {
 
   const fromDate = new Date(start).toISOString();
   const toDate = new Date(end).toISOString();
-  const { rows: histograms, failedMonitorIds } =
-    await fetchChunked<QuorumHistogramRow>({
-      monitorIdsByJobType,
-      kind: "quorum",
-      sleep: args.sleep,
-      onChunkFailure: args.onChunkFailure,
-      pipeFor: (jobType) => {
-        if (!hasQuorumPipe(args.pipes, jobType)) return undefined;
-        const pipe = args.pipes[jobType];
-        return ({ monitorIds }) => pipe({ monitorIds, fromDate, toDate });
-      },
-    });
-  const histogramsByMonitorId = groupByMonitorId(histograms);
+  const { rows: runRows, failedMonitorIds } = await fetchChunked({
+    monitorIdsByJobType,
+    kind: "runs",
+    sleep: args.sleep,
+    onChunkFailure: args.onChunkFailure,
+    pipeFor: (jobType) => {
+      if (!hasRuns(jobType)) return undefined;
+      const pipe = args.pipes[jobType];
+      return ({ monitorIds }) =>
+        pipe({
+          monitorIds,
+          regionCounts: alignedRegionCounts(monitorIds, regionCounts),
+          fromDate,
+          toDate,
+        });
+    },
+  });
+  const runsByMonitorId = runsByMonitorDay(runRows);
 
   for (const row of pending) {
     if (failedMonitorIds.has(String(row.monitorId))) {
       result.failed.push(row.monitorId);
       continue;
     }
-    const runs = runsByDay(
-      histogramsByMonitorId.get(String(row.monitorId)) ?? [],
-      row.regionCount,
-    );
+    const runs = runsByMonitorId.get(String(row.monitorId));
     let filled = 0;
     const days = row.days.map((day) => {
-      const dayRuns = lacksRuns(day) ? runs.get(day.day) : undefined;
+      const dayRuns = lacksRuns(day) ? runs?.get(day.day) : undefined;
       if (!dayRuns) return day;
       filled++;
       return { ...day, runs: dayRuns };

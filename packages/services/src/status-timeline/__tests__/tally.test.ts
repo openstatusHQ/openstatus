@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  meetsQuorum,
   roundCount,
   shownCounts,
   shownBuckets,
@@ -21,17 +20,6 @@ function runsDay(ok: number, degraded: number, error: number) {
     runs: { ok, degraded, error },
   };
 }
-
-describe("meetsQuorum", () => {
-  test("at least half affected", () => {
-    expect(meetsQuorum(3, 6)).toBe(true);
-    expect(meetsQuorum(2, 6)).toBe(false);
-    expect(meetsQuorum(2, 3)).toBe(true);
-    expect(meetsQuorum(1, 3)).toBe(false);
-    expect(meetsQuorum(1, 1)).toBe(true);
-    expect(meetsQuorum(0, 1)).toBe(false);
-  });
-});
 
 describe("tallyDay", () => {
   test("counts region checks without a region count", () => {

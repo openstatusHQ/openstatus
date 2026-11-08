@@ -4,6 +4,30 @@ NODE endpoint
 SQL >
 
     %
+    {% if String(type, 'requests') == 'runs' %}
+    SELECT
+        day,
+        monitorId,
+        count() AS count,
+        countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 < n) AS ok,
+        countIf(runErrorRegions * 2 >= n) AS error,
+        countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 >= n) AS degraded
+    FROM (
+        SELECT
+            time AS day,
+            monitorId,
+            cronTimestamp,
+            uniqExactMerge(errorRegions) AS runErrorRegions,
+            uniqExactMerge(degradedOrErrorRegions) AS runDegradedOrErrorRegions,
+            arrayElement({{ Array(regionCounts, 'Int32', '0') }}, indexOf({{ Array(monitorIds, 'String', '4433') }}, monitorId)) AS n
+        FROM mv__grpc_runs_45d__v0
+        WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+        GROUP BY day, monitorId, cronTimestamp
+    )
+    WHERE n > 0
+    GROUP BY day, monitorId
+    ORDER BY day DESC
+    {% else %}
     SELECT
         time as day,
         monitorId,
@@ -15,6 +39,7 @@ SQL >
     WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
     GROUP BY day, monitorId
     ORDER BY day DESC
+    {% end %}
 
 
 TYPE ENDPOINT

@@ -26,8 +26,7 @@ import { floorPct } from "../../status-timeline";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getUptimeHistory } from "../get-history";
-import type { QuorumHistogramRow } from "../quorum";
-import type { UptimeFreezePipes, UptimeQuorumPipes } from "../run";
+import type { StatusPipeFn, UptimeFreezePipes } from "../run";
 
 const MS_PER_DAY = 86_400_000;
 const noSleep = () => Promise.resolve();
@@ -84,8 +83,10 @@ function fullMonth(
   }));
 }
 
+// counts only: a runs read returns nothing
 function makePipes(rows: ComputeCountRow[]): UptimeFreezePipes {
-  const pipe = () => Promise.resolve({ data: rows });
+  const pipe: StatusPipeFn = (params) =>
+    Promise.resolve({ data: params.type === "runs" ? [] : rows });
   return {
     http: pipe,
     tcp: pipe,
@@ -1017,26 +1018,38 @@ describe("getUptimeHistory", () => {
   });
 });
 
-describe("getUptimeHistory with run quorum", () => {
+describe("getUptimeHistory with run verdicts", () => {
   const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
   const today = now.toISOString().slice(0, 10);
 
-  // only `jobType`'s pipe answers, so a row proves the monitor was routed to it
-  function quorumPipes(
-    rows: QuorumHistogramRow[] | Error,
-    jobType: keyof UptimeQuorumPipes = "http",
-  ): UptimeQuorumPipes {
-    const none = () => Promise.resolve({ data: [] });
+  type Call = Parameters<StatusPipeFn>[0];
+
+  // requests reads get `rows`; runs reads get `runs` from `jobType`'s pipe
+  // only, so a run row proves the monitor was routed to it
+  function withRuns(
+    rows: ComputeCountRow[],
+    runs: ComputeCountRow[] | Error = [],
+    jobType: keyof UptimeFreezePipes = "http",
+    runsCalls: Call[] = [],
+  ): UptimeFreezePipes {
+    const requests = makePipes(rows);
+    const pipe =
+      (t: keyof UptimeFreezePipes): StatusPipeFn =>
+      (params) => {
+        if (params.type !== "runs") return requests[t](params);
+        runsCalls.push(params);
+        if (t !== jobType) return Promise.resolve({ data: [] });
+        return runs instanceof Error
+          ? Promise.reject(runs)
+          : Promise.resolve({ data: runs });
+      };
     return {
-      http: none,
-      tcp: none,
-      dns: none,
-      icmp: none,
-      grpc: none,
-      [jobType]: () =>
-        rows instanceof Error
-          ? Promise.reject(rows)
-          : Promise.resolve({ data: rows }),
+      http: pipe("http"),
+      tcp: pipe("tcp"),
+      dns: pipe("dns"),
+      icmp: pipe("icmp"),
+      grpc: pipe("grpc"),
+      heartbeat: pipe("heartbeat"),
     };
   }
 
@@ -1077,32 +1090,23 @@ describe("getUptimeHistory with run quorum", () => {
         })),
       });
 
+      const runsCalls: Call[] = [];
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([
-          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
-        ]),
-        quorumPipes: quorumPipes([
-          {
-            monitorId: id,
-            day: today,
-            errorRegions: 0,
-            degradedOrErrorRegions: 0,
-            runs: 90,
-          },
-          {
-            monitorId: id,
-            day: today,
-            errorRegions: 3,
-            degradedOrErrorRegions: 3,
-            runs: 10,
-          },
-        ]),
+        pipes: withRuns(
+          [{ monitorId: id, day: today, ok: 500, degraded: 0, error: 100 }],
+          [{ monitorId: id, day: today, ok: 90, degraded: 0, error: 10 }],
+          "http",
+          runsCalls,
+        ),
         now,
         sleep: noSleep,
       });
 
+      expect(runsCalls).toEqual([
+        { monitorIds: [id], type: "runs", regionCounts: [6] },
+      ]);
       expect(res.mode).toBe("runs");
       const row = res.rows[0];
       expect(row.unit).toBe("runs");
@@ -1149,32 +1153,10 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([
-          { monitorId: id, day: today, ok: 580, degraded: 10, error: 10 },
-        ]),
-        quorumPipes: quorumPipes([
-          {
-            monitorId: id,
-            day: today,
-            errorRegions: 0,
-            degradedOrErrorRegions: 0,
-            runs: 80,
-          },
-          {
-            monitorId: id,
-            day: today,
-            errorRegions: 1,
-            degradedOrErrorRegions: 3,
-            runs: 15,
-          },
-          {
-            monitorId: id,
-            day: today,
-            errorRegions: 3,
-            degradedOrErrorRegions: 3,
-            runs: 5,
-          },
-        ]),
+        pipes: withRuns(
+          [{ monitorId: id, day: today, ok: 580, degraded: 10, error: 10 }],
+          [{ monitorId: id, day: today, ok: 80, degraded: 15, error: 5 }],
+        ),
         now,
         sleep: noSleep,
       });
@@ -1229,29 +1211,23 @@ describe("getUptimeHistory with run quorum", () => {
           runs: { ok: 144, degraded: 0, error: 0 },
         })),
       });
-      let quorumCalls = 0;
-      const countingPipes = quorumPipes([]);
-      const spied: UptimeQuorumPipes = {
-        ...countingPipes,
-        http: (args) => {
-          quorumCalls++;
-          return countingPipes.http(args);
-        },
-      };
+      const runsCalls: Call[] = [];
 
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([
-          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
-        ]),
-        quorumPipes: spied,
+        pipes: withRuns(
+          [{ monitorId: id, day: today, ok: 500, degraded: 0, error: 100 }],
+          [],
+          "http",
+          runsCalls,
+        ),
         now,
         sleep: noSleep,
       });
 
       expect(res.mode).toBe("requests");
-      expect(quorumCalls).toBe(0);
+      expect(runsCalls).toEqual([]);
       const row = res.rows[0];
       expect(row.unit).toBe("requests");
       expect(row.months[key(1)]?.percentage ?? null).toBe(floorPct(860 / 864));
@@ -1270,26 +1246,9 @@ describe("getUptimeHistory with run quorum", () => {
         const res = await getUptimeHistory({
           ctx,
           input: { pageId: testPage.id },
-          pipes: makePipes([
-            { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
-          ]),
-          quorumPipes: quorumPipes(
-            [
-              {
-                monitorId: id,
-                day: today,
-                errorRegions: 2,
-                degradedOrErrorRegions: 2,
-                runs: 90,
-              },
-              {
-                monitorId: id,
-                day: today,
-                errorRegions: 3,
-                degradedOrErrorRegions: 3,
-                runs: 10,
-              },
-            ],
+          pipes: withRuns(
+            [{ monitorId: id, day: today, ok: 500, degraded: 0, error: 100 }],
+            [{ monitorId: id, day: today, ok: 90, degraded: 0, error: 10 }],
             jobType,
           ),
           now,
@@ -1326,8 +1285,7 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([]),
-        quorumPipes: quorumPipes([]),
+        pipes: withRuns([]),
         now,
         sleep: noSleep,
       });
@@ -1361,8 +1319,7 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([]),
-        quorumPipes: quorumPipes([]),
+        pipes: withRuns([]),
         now,
         sleep: noSleep,
       });
@@ -1394,8 +1351,7 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([]),
-        quorumPipes: quorumPipes([]),
+        pipes: withRuns([]),
         now,
         sleep: noSleep,
       });
@@ -1425,7 +1381,6 @@ describe("getUptimeHistory with run quorum", () => {
             error: 0,
           },
         ]),
-        quorumPipes: quorumPipes([]),
         now,
         sleep: noSleep,
       });
@@ -1443,7 +1398,7 @@ describe("getUptimeHistory with run quorum", () => {
     [1, "runs"],
     [2, "requests"],
   ] as const)(
-    "a monitor with only %i private location(s) counts %s, without a histogram fetch",
+    "a monitor with only %i private location(s) counts %s, without a runs read",
     async (locations, unit) => {
       await withTestTransaction(async (tx) => {
         const ctx = { ...userCtx, db: tx };
@@ -1456,36 +1411,30 @@ describe("getUptimeHistory with run quorum", () => {
           pageId: testPage.id,
           monitorId: testMonitor.id,
         });
-        let quorumCalls = 0;
-        const none = () => {
-          quorumCalls++;
-          return Promise.resolve({ data: [] });
-        };
+        const runsCalls: Call[] = [];
 
         const res = await getUptimeHistory({
           ctx,
           input: { pageId: testPage.id },
-          pipes: makePipes([
-            {
-              monitorId: String(testMonitor.id),
-              day: today,
-              ok: 140,
-              degraded: 2,
-              error: 3,
-            },
-          ]),
-          quorumPipes: {
-            http: none,
-            tcp: none,
-            dns: none,
-            icmp: none,
-            grpc: none,
-          },
+          pipes: withRuns(
+            [
+              {
+                monitorId: String(testMonitor.id),
+                day: today,
+                ok: 140,
+                degraded: 2,
+                error: 3,
+              },
+            ],
+            [],
+            "http",
+            runsCalls,
+          ),
           now,
           sleep: noSleep,
         });
 
-        expect(quorumCalls).toBe(0);
+        expect(runsCalls).toEqual([]);
         expect(res.rows[0].unit).toBe(unit);
         expect(res.rows[0].months[key(0)]).toMatchObject({
           ok: 140,
@@ -1512,8 +1461,7 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([]),
-        quorumPipes: quorumPipes([]),
+        pipes: withRuns([]),
         now,
         sleep: noSleep,
       });
@@ -1523,7 +1471,7 @@ describe("getUptimeHistory with run quorum", () => {
     });
   });
 
-  test("a failed histogram fetch falls back to per-region counts", async () => {
+  test("a failed runs read falls back to per-region counts", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const { testMonitor, testPage } = await setup(tx);
@@ -1531,16 +1479,18 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([
-          {
-            monitorId: String(testMonitor.id),
-            day: today,
-            ok: 500,
-            degraded: 0,
-            error: 100,
-          },
-        ]),
-        quorumPipes: quorumPipes(new Error("tinybird down")),
+        pipes: withRuns(
+          [
+            {
+              monitorId: String(testMonitor.id),
+              day: today,
+              ok: 500,
+              degraded: 0,
+              error: 100,
+            },
+          ],
+          new Error("tinybird down"),
+        ),
         now,
         sleep: noSleep,
       });
@@ -1567,8 +1517,7 @@ describe("getUptimeHistory with run quorum", () => {
       const res = await getUptimeHistory({
         ctx,
         input: { pageId: testPage.id },
-        pipes: makePipes([]),
-        quorumPipes: quorumPipes([]),
+        pipes: withRuns([]),
         now,
         sleep: noSleep,
       });

@@ -16,8 +16,6 @@ import {
   privateLocationCounts,
   type UptimeFreezePipes,
   uptimeFreezePipes,
-  type UptimeQuorumPipes,
-  uptimeQuorumPipes,
 } from "./run";
 import { GetMonitorUptimeHistoryInput } from "./schemas";
 
@@ -38,7 +36,6 @@ export async function getMonitorUptimeHistory(args: {
   ctx: ServiceContext;
   input: GetMonitorUptimeHistoryInput;
   pipes?: UptimeFreezePipes;
-  quorumPipes?: UptimeQuorumPipes;
   now?: Date;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<MonitorUptimeHistoryResult> {
@@ -78,7 +75,7 @@ export async function getMonitorUptimeHistory(args: {
     fetchLiveDays({
       monitors: [_monitor],
       pipes: args.pipes ?? uptimeFreezePipes(ctx.tb ?? defaultTb),
-      quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(ctx.tb ?? defaultTb),
+      withRuns: true,
       sleep: args.sleep,
     }),
     privateLocationCounts(db, [_monitor.id]),

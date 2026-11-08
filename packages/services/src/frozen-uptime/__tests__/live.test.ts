@@ -1,27 +1,24 @@
 import { describe, expect, test } from "vitest";
 
 import { tallyDay } from "../../status-timeline";
+import type { ComputeCountRow } from "../compute";
 import {
   attachRuns,
   fetchIntervalRuns,
   fetchLiveRuns,
+  type IntervalPipeFn,
   toIntervalCounts,
 } from "../live";
-import type { QuorumHistogramRow, QuorumIntervalRow } from "../quorum";
-import type {
-  QuorumIntervalPipeFn,
-  QuorumPipeFn,
-  UptimeQuorumIntervalPipes,
-  UptimeQuorumPipes,
-} from "../run";
+import type { StatusPipeFn, UptimeRunsPipes } from "../run";
 
-type Call = { monitorIds: string[]; timezone?: string };
+type Call = Parameters<StatusPipeFn>[0];
 
-function pipes(
-  impl: (params: Call) => Promise<{ data: QuorumHistogramRow[] }>,
-): { pipes: UptimeQuorumPipes; calls: Call[] } {
+function pipes(impl: (params: Call) => Promise<{ data: ComputeCountRow[] }>): {
+  pipes: UptimeRunsPipes;
+  calls: Call[];
+} {
   const calls: Call[] = [];
-  const pipe: QuorumPipeFn = (params) => {
+  const pipe: StatusPipeFn = (params) => {
     calls.push(params);
     return impl(params);
   };
@@ -31,13 +28,13 @@ function pipes(
   };
 }
 
-function hist(overrides: Partial<QuorumHistogramRow>): QuorumHistogramRow {
+function runRow(overrides: Partial<ComputeCountRow>): ComputeCountRow {
   return {
     monitorId: "1",
     day: "2026-11-02T00:00:00.000Z",
-    errorRegions: 0,
-    degradedOrErrorRegions: 0,
-    runs: 1,
+    ok: 1,
+    degraded: 0,
+    error: 0,
     ...overrides,
   };
 }
@@ -46,68 +43,66 @@ const sixRegions = "ams,fra,iad,gru,syd,hkg";
 const sleep = async () => {};
 
 describe("fetchLiveRuns", () => {
-  test("a UTC read sends the freeze's request shape, without a timezone", async () => {
-    const { pipes: quorumPipes, calls } = pipes(async () => ({ data: [] }));
-    for (const timeZone of [undefined, "UTC"]) {
-      await fetchLiveRuns({
-        monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
-        quorumPipes,
-        timeZone,
-      });
-    }
-    expect(calls).toEqual([{ monitorIds: ["1"] }, { monitorIds: ["1"] }]);
-    for (const call of calls)
-      expect(Object.hasOwn(call, "timezone")).toBe(false);
+  test("asks each job type's pipe for runs with region counts aligned to monitorIds", async () => {
+    const { pipes: runsPipes, calls } = pipes(async () => ({ data: [] }));
+    await fetchLiveRuns({
+      monitors: [
+        { id: 3, jobType: "http", regions: sixRegions },
+        { id: 1, jobType: "http", regions: "ams,fra" },
+        { id: 2, jobType: "tcp", regions: "ams,fra,iad" },
+      ],
+      pipes: runsPipes,
+    });
+    expect(calls).toEqual([
+      { monitorIds: ["3", "1"], type: "runs", regionCounts: [6, 2] },
+      { monitorIds: ["2"], type: "runs", regionCounts: [3] },
+    ]);
   });
 
-  test("a zoned read passes the zone and keys the local days it returns", async () => {
-    const { pipes: quorumPipes, calls } = pipes(async () => ({
-      data: [
-        hist({ day: "2026-11-03T00:00:00.000Z", errorRegions: 1, runs: 10 }),
-      ],
+  test("keys the judged rows by monitor and day", async () => {
+    const { pipes: runsPipes } = pipes(async () => ({
+      data: [runRow({ day: "2026-11-03T00:00:00.000Z", ok: 10, error: 2 })],
     }));
-    const quorum = await fetchLiveRuns({
+    const runs = await fetchLiveRuns({
       monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
-      quorumPipes,
-      timeZone: "Europe/Berlin",
+      pipes: runsPipes,
     });
-    expect(calls).toEqual([{ monitorIds: ["1"], timezone: "Europe/Berlin" }]);
-    expect(quorum.get("1")?.get("2026-11-03")).toEqual({
+    expect(runs.get("1")?.get("2026-11-03")).toEqual({
       ok: 10,
       degraded: 0,
-      error: 0,
+      error: 2,
     });
   });
 
   test("private-only and heartbeat monitors are never fetched", async () => {
-    const { pipes: quorumPipes, calls } = pipes(async () => ({ data: [] }));
-    const quorum = await fetchLiveRuns({
+    const { pipes: runsPipes, calls } = pipes(async () => ({ data: [] }));
+    const runs = await fetchLiveRuns({
       monitors: [
         { id: 1, jobType: "http", regions: "" },
-        { id: 2, jobType: "heartbeat", regions: "" },
+        { id: 2, jobType: "heartbeat", regions: sixRegions },
       ],
-      quorumPipes,
+      pipes: runsPipes,
     });
     expect(calls).toEqual([]);
-    expect(quorum.size).toBe(0);
+    expect(runs.size).toBe(0);
   });
 
-  test("a failed histogram leaves the monitor out and never throws", async () => {
-    const { pipes: quorumPipes } = pipes(async ({ monitorIds }) => {
+  test("a failed read leaves the monitor out and never throws", async () => {
+    const { pipes: runsPipes } = pipes(async ({ monitorIds }) => {
       if (monitorIds.includes("1")) throw new Error("tinybird 500");
-      return { data: [hist({ monitorId: "2" })] };
+      return { data: [runRow({ monitorId: "2" })] };
     });
-    const quorum = await fetchLiveRuns({
+    const runs = await fetchLiveRuns({
       monitors: [
         { id: 1, jobType: "http", regions: sixRegions },
         { id: 2, jobType: "tcp", regions: sixRegions },
       ],
-      quorumPipes,
+      pipes: runsPipes,
       attempts: 1,
       sleep,
     });
-    expect(quorum.has("1")).toBe(false);
-    expect(quorum.get("2")?.has("2026-11-02")).toBe(true);
+    expect(runs.has("1")).toBe(false);
+    expect(runs.get("2")?.has("2026-11-02")).toBe(true);
   });
 });
 
@@ -151,18 +146,18 @@ describe("attachRuns", () => {
   });
 });
 
-type IntervalCall = Parameters<QuorumIntervalPipeFn>[0];
+type IntervalCall = Parameters<IntervalPipeFn>[0];
+type IntervalRow = Awaited<ReturnType<IntervalPipeFn>>["data"][number];
 
-function intervalPipes(
-  impl: (params: IntervalCall) => Promise<{ data: QuorumIntervalRow[] }>,
-): { pipes: UptimeQuorumIntervalPipes; calls: IntervalCall[] } {
+function intervalPipe(
+  impl: (params: IntervalCall) => Promise<{ data: IntervalRow[] }>,
+): { pipe: IntervalPipeFn; calls: IntervalCall[] } {
   const calls: IntervalCall[] = [];
-  const pipe: QuorumIntervalPipeFn = (params) => {
-    calls.push(params);
-    return impl(params);
-  };
   return {
-    pipes: { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe },
+    pipe: (params) => {
+      calls.push(params);
+      return impl(params);
+    },
     calls,
   };
 }
@@ -171,16 +166,6 @@ function intervalPipes(
 const bucketA = new Date("2026-11-08 08:00:00");
 const bucketB = new Date("2026-11-08 12:00:00");
 
-function intervalRow(overrides: Partial<QuorumIntervalRow>): QuorumIntervalRow {
-  return {
-    interval: bucketA,
-    errorRegions: 0,
-    degradedOrErrorRegions: 0,
-    runs: 1,
-    ...overrides,
-  };
-}
-
 const window = {
   interval: 240,
   fromDate: "2026-11-01T00:00:00.000Z",
@@ -188,66 +173,63 @@ const window = {
 };
 
 describe("fetchIntervalRuns", () => {
-  test("asks for the uptime window and keys buckets by interval start", async () => {
-    const { pipes: quorumPipes, calls } = intervalPipes(async () => ({
+  test("asks for runs over the uptime window and keys buckets by interval start", async () => {
+    const { pipe, calls } = intervalPipe(async () => ({
       data: [
-        intervalRow({ runs: 44 }),
-        intervalRow({ errorRegions: 1, degradedOrErrorRegions: 1, runs: 4 }),
-        intervalRow({ interval: bucketB, errorRegions: 3, runs: 2 }),
+        { interval: bucketA, success: 48, degraded: 0, error: 0 },
+        { interval: bucketB, success: 0, degraded: 0, error: 2 },
       ],
     }));
-    const quorum = await fetchIntervalRuns({
+    const runs = await fetchIntervalRuns({
       monitor: { id: 7, jobType: "tcp", regions: sixRegions },
-      pipes: quorumPipes,
+      pipe,
       ...window,
     });
-    expect(calls).toEqual([{ monitorId: "7", ...window }]);
-    expect(quorum?.get(bucketA.toISOString())).toEqual({
+    expect(calls).toEqual([
+      { monitorId: "7", ...window, type: "runs", regionCount: 6 },
+    ]);
+    expect(runs?.get(bucketA.toISOString())).toEqual({
       ok: 48,
       degraded: 0,
       error: 0,
     });
-    expect(quorum?.get(bucketB.toISOString())).toEqual({
+    expect(runs?.get(bucketB.toISOString())).toEqual({
       ok: 0,
       degraded: 0,
       error: 2,
     });
   });
 
-  test("an empty histogram yields no buckets", async () => {
-    const { pipes: quorumPipes } = intervalPipes(async () => ({ data: [] }));
-    const quorum = await fetchIntervalRuns({
+  test("an empty read yields no buckets", async () => {
+    const { pipe } = intervalPipe(async () => ({ data: [] }));
+    const runs = await fetchIntervalRuns({
       monitor: { id: 1, jobType: "http", regions: sixRegions },
-      pipes: quorumPipes,
+      pipe,
       ...window,
     });
-    expect(quorum).toEqual(new Map());
+    expect(runs).toEqual(new Map());
   });
 
   test("private-only, heartbeat and udp monitors are never asked", async () => {
-    const { pipes: quorumPipes, calls } = intervalPipes(async () => ({
-      data: [],
-    }));
+    const { pipe, calls } = intervalPipe(async () => ({ data: [] }));
     for (const monitor of [
       { id: 1, jobType: "http", regions: "" },
       { id: 2, jobType: "heartbeat", regions: "" },
       { id: 3, jobType: "udp", regions: sixRegions },
     ]) {
-      expect(
-        await fetchIntervalRuns({ monitor, pipes: quorumPipes, ...window }),
-      ).toBeNull();
+      expect(await fetchIntervalRuns({ monitor, pipe, ...window })).toBeNull();
     }
     expect(calls).toEqual([]);
   });
 
   test("a failed read rejects, for the caller's fallback to catch", async () => {
-    const { pipes: quorumPipes } = intervalPipes(async () => {
+    const { pipe } = intervalPipe(async () => {
       throw new Error("tinybird 500");
     });
     await expect(
       fetchIntervalRuns({
         monitor: { id: 1, jobType: "http", regions: sixRegions },
-        pipes: quorumPipes,
+        pipe,
         ...window,
       }),
     ).rejects.toThrow("tinybird 500");
