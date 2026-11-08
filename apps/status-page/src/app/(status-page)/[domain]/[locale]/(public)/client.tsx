@@ -33,6 +33,7 @@ import { useMemo } from "react";
 import { Link } from "../../../../../components/common/link";
 import { StatusBlocksProvider } from "../../../../../components/i18n/status-blocks-provider";
 import { useStatusPage } from "../../../../../components/status-page/floating-button";
+import { QuorumNote } from "../../../../../components/status-page/quorum-note";
 import {
   StatusBanner,
   StatusBannerContainer,
@@ -384,6 +385,7 @@ export function Client() {
                 </StatusComponentGroup>
               );
             })}
+            {uptimeData?.some((u) => u.countsRuns) ? <QuorumNote /> : null}
           </StatusContent>
         ) : null}
         <Separator className="group-data-[hide-components=true]/embed:hidden group-data-[hide-feed=true]/embed:hidden" />

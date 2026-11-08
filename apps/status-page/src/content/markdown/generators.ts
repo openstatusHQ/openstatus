@@ -55,6 +55,9 @@ type PageFields = {
   defaultTimezone?: string;
 };
 
+const QUORUM_NOTE =
+  "Since November 2026, a check covers all of a monitor's regions and counts as down when at least half of them fail.";
+
 function avg(values: number[]): number | null {
   if (values.length === 0) return null;
   return values.reduce((a, b) => a + b, 0) / values.length;
@@ -202,6 +205,7 @@ export function generateOverview(
     out.push("No components.\n");
   } else {
     out.push(`${legend()}\n`);
+    if (rows.some((r) => r.component.countsRuns)) out.push(`${QUORUM_NOTE}\n`);
 
     const lastActivity = (r: OverviewPage["statusReports"][number]) => {
       const dates = r.statusReportUpdates.map((u) =>
@@ -709,6 +713,7 @@ export function generateMonitor(
     ),
   );
   out.push("");
+  if (regionCount !== null) out.push(`${QUORUM_NOTE}\n`);
 
   out.push("## Latency percentiles (last 7 days)\n");
   out.push(

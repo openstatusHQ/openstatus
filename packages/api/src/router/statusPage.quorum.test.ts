@@ -201,6 +201,7 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
     expect(bar?.bar).toEqual([{ status: "success", height: 100 }]);
     expect(bar?.card).toEqual([{ status: "success", value: "144 checks" }]);
     expect(component.uptime).toBe("100%");
+    expect(component.countsRuns).toBe(true);
     expect(pipes.calls.find((c) => c.name === "httpQuorum45d")?.params).toEqual(
       { monitorIds: [String(ids.cloud)] },
     );
@@ -367,7 +368,25 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
       { status: "success", value: "5 reqs" },
       { status: "error", value: "1 reqs" },
     ]);
+    expect(component.countsRuns).toBe(false);
     expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
+  });
+
+  test("manual mode and an unhealthy Tinybird count no runs", async () => {
+    const { slug, componentId } = await pageWith(ids.cloud);
+    const manual = await caller().statusPage.getUptime({
+      slug,
+      pageComponentIds: [String(componentId)],
+      barType: "manual",
+      cardType: "manual",
+    });
+    expect(manual?.[0]?.countsRuns).toBe(false);
+
+    pipes.impl.set("httpStatus45d", async () => {
+      throw new Error("tinybird 500");
+    });
+    const component = await uptime(slug, componentId);
+    expect(component.countsRuns).toBe(false);
   });
 
   test("a converted day with one flaky region check is green, like under the run rule", async () => {
