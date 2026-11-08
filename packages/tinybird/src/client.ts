@@ -348,21 +348,6 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
-// [fromDate, toDate) in UTC; the backfill pipes scan raw data, so both are required
-export const runsBackfillParameters = z.object({
-  monitorIds: z.string().array(),
-  fromDate: z.string(),
-  toDate: z.string(),
-});
-
-export const runsBackfillShape = z.object({
-  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
-  monitorId: z.string(),
-  ok: z.number(),
-  degraded: z.number(),
-  error: z.number(),
-});
-
 export const runs45dParameters = z.object({
   monitorIds: z.string().array(),
 });
@@ -923,15 +908,6 @@ export class OSTinybird {
       parameters: status15mParameters,
       data: status15mShape(z.string()),
       opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get httpRunsBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__http_runs_backfill__v0",
-      parameters: runsBackfillParameters,
-      data: runsBackfillShape,
-      opts: { cache: "no-store" },
     });
   }
 
@@ -1522,15 +1498,6 @@ export class OSTinybird {
     });
   }
 
-  public get tcpRunsBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__tcp_runs_backfill__v0",
-      parameters: runsBackfillParameters,
-      data: runsBackfillShape,
-      opts: { cache: "no-store" },
-    });
-  }
-
   public get tcpRuns45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_runs_45d__v0",
@@ -2010,15 +1977,6 @@ export class OSTinybird {
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get icmpRunsBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__icmp_runs_backfill__v0",
-      parameters: runsBackfillParameters,
-      data: runsBackfillShape,
-      opts: { cache: "no-store" },
     });
   }
 
@@ -2517,15 +2475,6 @@ export class OSTinybird {
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get grpcRunsBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__grpc_runs_backfill__v0",
-      parameters: runsBackfillParameters,
-      data: runsBackfillShape,
-      opts: { cache: "no-store" },
     });
   }
 
@@ -3851,15 +3800,6 @@ export class OSTinybird {
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
       opts: { next: { revalidate: REVALIDATE } },
-    });
-  }
-
-  public get dnsRunsBackfill() {
-    return this.tb.buildPipe({
-      pipe: "endpoint__dns_runs_backfill__v0",
-      parameters: runsBackfillParameters,
-      data: runsBackfillShape,
-      opts: { cache: "no-store" },
     });
   }
 

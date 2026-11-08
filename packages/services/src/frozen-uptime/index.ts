@@ -21,10 +21,3 @@ export {
   uptimeRunsPipes,
 } from "./run";
 export { FreezeMonitorMonthInput } from "./schemas";
-export {
-  type BackfillFrozenRunsResult,
-  type RunsBackfillPipeFn,
-  type UptimeRunsBackfillPipes,
-  backfillFrozenRuns,
-  uptimeRunsBackfillPipes,
-} from "./backfill-runs";
