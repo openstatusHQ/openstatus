@@ -4270,7 +4270,7 @@ components:
         day:
           type: string
           title: day
-          description: Calendar day in the page's time zone (UTC if Tinybird can't load it), written as UTC midnight in RFC 3339.
+          description: Calendar day in the page's time zone (UTC as fallback), written as UTC midnight in RFC 3339.
         count:
           type:
             - integer
@@ -4791,6 +4791,10 @@ components:
             $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentDailySummary'
           title: components
           description: Per-component daily summaries, in page order.
+        timeZone:
+          type: string
+          title: time_zone
+          description: 'IANA time zone the days are grouped in: the page''s time zone, or UTC as fallback.'
       title: GetPageComponentDailySummaryResponse
       additionalProperties: false
       description: GetPageComponentDailySummaryResponse is the response containing per-component summaries.
