@@ -8,11 +8,13 @@ import { requireScope } from "../auth";
 import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { monthRange } from "./compute";
+import { fetchLiveDays } from "./live";
 import {
-  fetchFreezeCounts,
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
   uptimeFreezePipes,
+  type UptimeQuorumPipes,
+  uptimeQuorumPipes,
 } from "./run";
 import { GetMonitorUptimeHistoryInput } from "./schemas";
 
@@ -31,6 +33,7 @@ export async function getMonitorUptimeHistory(args: {
   ctx: ServiceContext;
   input: GetMonitorUptimeHistoryInput;
   pipes?: UptimeFreezePipes;
+  quorumPipes?: UptimeQuorumPipes;
   now?: Date;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<MonitorUptimeHistoryResult> {
@@ -67,12 +70,11 @@ export async function getMonitorUptimeHistory(args: {
         ),
       )
       .orderBy(asc(frozenMonitorUptime.month)),
-    fetchFreezeCounts({
-      monitorIdsByJobType: new Map([
-        [_monitor.jobType, new Set([String(_monitor.id)])],
-      ]),
+    fetchLiveDays({
+      db,
+      monitors: [_monitor],
       pipes: args.pipes ?? uptimeFreezePipes(ctx.tb ?? defaultTb),
-      throttleMs: 0,
+      quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(ctx.tb ?? defaultTb),
       sleep: args.sleep,
     }),
   ]);
@@ -86,16 +88,11 @@ export async function getMonitorUptimeHistory(args: {
 
   // only unfrozen months still inside the pipes' 45d lookback: an older
   // month would come back with its first days missing
-  for (const row of live.counts) {
-    const day = row.day.slice(0, 10);
-    const month = day.slice(0, 7);
+  for (const d of live.days.get(String(_monitor.id))?.values() ?? []) {
+    const month = d.day.slice(0, 7);
     if (frozenMonths.has(month)) continue;
     if (nowMs - monthRange(`${month}-01`).start >= FREEZE_CUTOFF_MS) continue;
-    const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
-    acc.ok += row.ok;
-    acc.degraded += row.degraded;
-    acc.error += row.error;
-    byDay.set(day, acc);
+    byDay.set(d.day, d);
   }
 
   return {

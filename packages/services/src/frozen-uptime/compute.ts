@@ -1,4 +1,7 @@
-import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
+import type {
+  FrozenMonitorUptimeDay,
+  FrozenMonitorUptimeQuorum,
+} from "@openstatus/db/src/schema";
 
 export type ComputeCountRow = {
   monitorId: string;
@@ -43,8 +46,9 @@ export function computeMonitorMonth(args: {
   month: string; // YYYY-MM-01
   monitorId: number;
   counts: ComputeCountRow[];
+  quorum?: Map<string, FrozenMonitorUptimeQuorum>;
 }): { days: FrozenMonitorUptimeDay[] } | null {
-  const { month, monitorId, counts } = args;
+  const { month, monitorId, counts, quorum } = args;
   const prefix = month.slice(0, 8); // YYYY-MM-
 
   // sum rather than overwrite: the pipe aggregates per day today, but a
@@ -67,11 +71,13 @@ export function computeMonitorMonth(args: {
 
   const days = monthDays(month).map((day) => {
     const row = byDay.get(day);
+    const dayQuorum = quorum?.get(day);
     return {
       day,
       ok: row?.ok ?? 0,
       degraded: row?.degraded ?? 0,
       error: row?.error ?? 0,
+      ...(dayQuorum ? { quorum: dayQuorum } : {}),
     };
   });
 

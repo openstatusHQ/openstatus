@@ -22,7 +22,8 @@ import { ForbiddenError, NotFoundError } from "../../errors";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getUptimeHistory } from "../get-history";
-import type { UptimeFreezePipes } from "../run";
+import type { QuorumHistogramRow } from "../quorum";
+import type { UptimeFreezePipes, UptimeQuorumPipes } from "../run";
 
 const MS_PER_DAY = 86_400_000;
 const noSleep = () => Promise.resolve();
@@ -951,6 +952,126 @@ describe("getUptimeHistory", () => {
           sleep: noSleep,
         }),
       ).rejects.toThrow(NotFoundError);
+    });
+  });
+});
+
+describe("getUptimeHistory with run quorum", () => {
+  const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
+  const today = now.toISOString().slice(0, 10);
+
+  function quorumPipes(rows: QuorumHistogramRow[] | Error): UptimeQuorumPipes {
+    return {
+      http: () =>
+        rows instanceof Error
+          ? Promise.reject(rows)
+          : Promise.resolve({ data: rows }),
+    };
+  }
+
+  async function setup(tx: Tx) {
+    const testMonitor = await insertMonitor(tx, { regions: SIX_REGIONS });
+    const testPage = await insertPage(tx);
+    await insertComponent(tx, {
+      pageId: testPage.id,
+      monitorId: testMonitor.id,
+    });
+    return { testMonitor, testPage };
+  }
+
+  test("mixed window: per-region month, quorum month, live quorum month", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      const id = String(testMonitor.id);
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(2)}-01`,
+        days: fullMonth(key(2), { ok: 90, error: 10 }),
+      });
+      // 1 of 6 regions failing every run all month: per region this is 99.5%
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), { ok: 860, error: 4 }).map((d) => ({
+          ...d,
+          quorum: {
+            regionCount: 6,
+            buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 144 }],
+          },
+        })),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+        ]),
+        quorumPipes: quorumPipes([
+          {
+            monitorId: id,
+            day: today,
+            private: false,
+            errorRegions: 0,
+            notOkRegions: 0,
+            runs: 90,
+          },
+          {
+            monitorId: id,
+            day: today,
+            private: false,
+            errorRegions: 3,
+            notOkRegions: 3,
+            runs: 10,
+          },
+          // a private location failing while the monitor has cloud regions
+          {
+            monitorId: id,
+            day: today,
+            private: true,
+            errorRegions: 1,
+            notOkRegions: 1,
+            runs: 100,
+          },
+        ]),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.mode).toBe("requests");
+      expect(res.quorumSince).toBe(key(1));
+      const row = res.rows[0];
+      expect(row.months[key(2)]).toBe(90);
+      expect(row.months[key(1)]).toBe(100);
+      expect(row.months[key(0)]).toBe(90);
+    });
+  });
+
+  test("a failed histogram fetch leaves the live month without data", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          {
+            monitorId: String(testMonitor.id),
+            day: today,
+            ok: 500,
+            degraded: 0,
+            error: 100,
+          },
+        ]),
+        quorumPipes: quorumPipes(new Error("tinybird down")),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.rows[0].months[key(0)]).toBe(null);
+      expect(res.quorumSince).toBe(null);
     });
   });
 });

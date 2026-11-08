@@ -20,12 +20,14 @@ import {
   requestsTally,
   tallyDay,
 } from "../status-timeline";
-import { type ComputeCountRow, monthRange } from "./compute";
+import { monthRange } from "./compute";
+import { fetchLiveDays } from "./live";
 import {
-  fetchFreezeCounts,
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
   uptimeFreezePipes,
+  type UptimeQuorumPipes,
+  uptimeQuorumPipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -69,6 +71,8 @@ type UptimeHistoryResult = {
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
   createdAt: Date | null;
+  /** "YYYY-MM" of the first month whose monitor counts are runs judged on quorum */
+  quorumSince: string | null;
   summary: Record<HistoryWindowKey, { uptime: number | null; reports: number }>;
   rows: UptimeHistoryRow[];
 };
@@ -172,6 +176,7 @@ export async function getUptimeHistory(args: {
   ctx: ServiceContext;
   input: GetUptimeHistoryInput;
   pipes?: UptimeFreezePipes;
+  quorumPipes?: UptimeQuorumPipes;
   now?: Date;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<UptimeHistoryResult> {
@@ -251,55 +256,26 @@ export async function getUptimeHistory(args: {
   })();
 
   // current month is never frozen, the previous may not be yet (the freeze
-  // runs early next month) — both come live from the 45d pipes; fetchFreezeCounts never
-  // throws, failed monitors land in failedMonitorIds and render as no-data
-  const liveReads = (async () => {
-    if (monitorIds.length === 0) {
-      return {
-        counts: [] as ComputeCountRow[],
-        failedMonitorIds: new Set<string>(),
-      };
-    }
-    const monitorIdsByJobType = new Map<string, Set<string>>();
-    for (const c of components) {
-      if (c.monitorId === null || !c.monitor) continue;
-      const ids = monitorIdsByJobType.get(c.monitor.jobType) ?? new Set();
-      ids.add(String(c.monitorId));
-      monitorIdsByJobType.set(c.monitor.jobType, ids);
-    }
-    return fetchFreezeCounts({
-      monitorIdsByJobType,
-      pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
-      throttleMs: 0,
-      sleep: args.sleep,
-    });
-  })();
+  // runs early next month) — both come live from the 45d pipes; failed
+  // monitors land in failedMonitorIds and render as no-data
+  const monitorsById = new Map(
+    components.flatMap((c) =>
+      c.monitorId !== null && c.monitor ? [[c.monitorId, c.monitor]] : [],
+    ),
+  );
+  const liveReads = fetchLiveDays({
+    db,
+    monitors: [...monitorsById.values()],
+    pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
+    quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(defaultTb),
+    sleep: args.sleep,
+  });
 
-  const [{ frozenRows }, { counts: liveCounts, failedMonitorIds: liveFailed }] =
+  const [{ frozenRows }, { days: liveDays, failedMonitorIds: liveFailed }] =
     await Promise.all([dbReads, liveReads]);
   const frozenByKey = new Map(
     frozenRows.map((r) => [`${r.monitorId}:${r.month.slice(0, 7)}`, r.days]),
   );
-
-  const liveByMonitorMonth = new Map<
-    string,
-    Map<string, FrozenMonitorUptimeDay>
-  >();
-  for (const row of liveCounts) {
-    const day = row.day.slice(0, 10);
-    const key = day.slice(0, 7);
-    if (key !== currentKey && key !== previousKey) continue;
-    const mapKey = `${row.monitorId}:${key}`;
-    const byDay =
-      liveByMonitorMonth.get(mapKey) ??
-      new Map<string, FrozenMonitorUptimeDay>();
-    const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
-    acc.ok += row.ok;
-    acc.degraded += row.degraded;
-    acc.error += row.error;
-    byDay.set(day, acc);
-    liveByMonitorMonth.set(mapKey, byDay);
-  }
 
   function countsFor(
     monitorId: number,
@@ -313,10 +289,16 @@ export async function getUptimeHistory(args: {
       (key === previousKey &&
         nowMs - monthRange(`${key}-01`).start < FREEZE_CUTOFF_MS);
     if (!isLive || liveFailed.has(String(monitorId))) return null;
-    const byDay = liveByMonitorMonth.get(`${monitorId}:${key}`);
-    if (!byDay || byDay.size === 0) return null;
-    return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+    const days = [...(liveDays.get(String(monitorId))?.values() ?? [])]
+      .filter((d) => d.day.startsWith(key))
+      .sort((a, b) => (a.day < b.day ? -1 : 1));
+    return days.length > 0 ? days : null;
   }
+
+  const quorumSince =
+    months.find((key) =>
+      monitorIds.some((id) => countsFor(id, key)?.some((d) => d.quorum)),
+    ) ?? null;
 
   const pastDays = HISTORY_MONTHS * 31 + 7;
   const rows: UptimeHistoryRow[] = components.map((c) => {
@@ -450,6 +432,7 @@ export async function getUptimeHistory(args: {
     mode,
     months,
     createdAt: _page.createdAt,
+    quorumSince,
     summary,
     rows,
   };

@@ -1,0 +1,20 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        monitorId,
+        cronTimestamp,
+        match(region, '^[0-9]+$') AS private,
+        uniqExactStateIf(region, coalesce(requestStatus, '') = 'error') AS errorRegions,
+        uniqExactStateIf(region, coalesce(requestStatus, '') IN ('error', 'degraded')) AS notOkRegions
+    FROM ping_response__v8
+    WHERE coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+    GROUP BY
+        time,
+        monitorId,
+        cronTimestamp,
+        private
+
+TYPE materialized
+DATASOURCE mv__http_quorum_45d__v0

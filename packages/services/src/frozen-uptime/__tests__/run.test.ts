@@ -3,6 +3,8 @@ import {
   frozenMonitorUptime,
   monitor,
   monitorJobTypes,
+  privateLocation,
+  privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
 import { describe, expect, test } from "vitest";
@@ -10,12 +12,15 @@ import { describe, expect, test } from "vitest";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { withTestTransaction } from "../../../test/helpers";
 import type { ComputeCountRow } from "../compute";
+import type { QuorumHistogramRow } from "../quorum";
 import {
   type ChunkFailure,
   type UptimeFreezePipes,
+  type UptimeQuorumPipes,
   fetchFreezeCounts,
   runUptimeFreeze,
   uptimeFreezePipes,
+  uptimeQuorumPipes,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
@@ -41,6 +46,12 @@ function makePipes(
     grpc: overrides.grpc ?? fallback,
     heartbeat: overrides.heartbeat ?? fallback,
   };
+}
+
+function makeQuorumPipes(
+  http: UptimeQuorumPipes["http"] = () => Promise.resolve({ data: [] }),
+): UptimeQuorumPipes {
+  return { http };
 }
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
@@ -83,6 +94,14 @@ describe("uptimeFreezePipes", () => {
       grpc: "grpcStatus45d",
       heartbeat: "heartbeatStatus45d",
     });
+  });
+});
+
+describe("uptimeQuorumPipes", () => {
+  test("covers http only for now", () => {
+    // safe because uptimeQuorumPipes only reads pipe getters off the client
+    const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
+    expect(uptimeQuorumPipes(tb)).toEqual({ http: "httpQuorum45d" });
   });
 });
 
@@ -234,6 +253,7 @@ describe("runUptimeFreeze", () => {
         },
       ]);
       const runArgs = {
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -272,6 +292,7 @@ describe("runUptimeFreeze", () => {
       const paused = await insertTestMonitor(tx, { active: false });
 
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes(),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -298,6 +319,7 @@ describe("runUptimeFreeze", () => {
       const http = okPipe();
 
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -319,6 +341,7 @@ describe("runUptimeFreeze", () => {
       // freezing July on Aug 20: July 1 is 50 days back, beyond the pipes'
       // 45d lookback — writing would freeze permanent zero-count days
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 7, 20)),
         db: tx,
@@ -356,6 +379,7 @@ describe("runUptimeFreeze", () => {
 
       // July 15 is 44 days after June 1 — inside the window
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 6, 15)),
         db: tx,
@@ -379,6 +403,7 @@ describe("runUptimeFreeze", () => {
       const http = okPipe();
 
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -417,6 +442,7 @@ describe("runUptimeFreeze", () => {
       ]);
 
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -447,6 +473,7 @@ describe("runUptimeFreeze", () => {
       const http = okPipe();
 
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: http.pipe }),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -478,6 +505,7 @@ describe("runUptimeFreeze", () => {
       ]);
 
       const res = await runUptimeFreeze({
+        quorumPipes: makeQuorumPipes(),
         pipes: makePipes({ http: dead, dns: dns.pipe }),
         now: new Date(Date.UTC(2026, 6, 10)),
         db: tx,
@@ -506,6 +534,226 @@ describe("runUptimeFreeze", () => {
         .all();
       expect(frozenDns.length).toBe(1);
       expect(frozenDns[0].days[4].ok).toBe(7);
+    });
+  });
+});
+
+describe("runUptimeFreeze with run quorum", () => {
+  const now = new Date(Date.UTC(2026, 6, 10));
+  const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
+
+  function countsPipe(monitorId: number) {
+    return okPipe([
+      {
+        monitorId: String(monitorId),
+        day: "2026-06-05T00:00:00.000Z",
+        ok: 800,
+        degraded: 0,
+        error: 64,
+      },
+    ]).pipe;
+  }
+
+  function histogramPipe(rows: QuorumHistogramRow[]) {
+    const calls: string[][] = [];
+    const pipe = (params: { monitorIds: string[] }) => {
+      calls.push(params.monitorIds);
+      return Promise.resolve({ data: rows });
+    };
+    return { pipe, calls };
+  }
+
+  async function frozenDays(tx: Tx, monitorId: number) {
+    const rows = await tx
+      .select()
+      .from(frozenMonitorUptime)
+      .where(eq(frozenMonitorUptime.monitorId, monitorId))
+      .all();
+    return rows[0]?.days;
+  }
+
+  test("http monitor freezes the cloud histogram with its configured region count", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+      const id = String(m.id);
+      const quorum = histogramPipe([
+        {
+          monitorId: id,
+          day: "2026-06-05 00:00:00",
+          private: false,
+          errorRegions: 0,
+          notOkRegions: 0,
+          runs: 140,
+        },
+        {
+          monitorId: id,
+          day: "2026-06-05 00:00:00",
+          private: false,
+          errorRegions: 3,
+          notOkRegions: 3,
+          runs: 4,
+        },
+        {
+          monitorId: id,
+          day: "2026-06-05 00:00:00",
+          private: true,
+          errorRegions: 1,
+          notOkRegions: 1,
+          runs: 144,
+        },
+      ]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: countsPipe(m.id) }),
+        quorumPipes: makeQuorumPipes(quorum.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res.frozen).toBe(1);
+      expect(quorum.calls).toEqual([[id]]);
+      const days = await frozenDays(tx, m.id);
+      expect(days?.[4]).toEqual({
+        day: "2026-06-05",
+        ok: 800,
+        degraded: 0,
+        error: 64,
+        quorum: {
+          regionCount: 6,
+          buckets: [
+            { errorRegions: 0, notOkRegions: 0, runs: 140 },
+            { errorRegions: 3, notOkRegions: 3, runs: 4 },
+          ],
+        },
+      });
+      expect(days?.[0].quorum).toBeUndefined();
+    });
+  });
+
+  test("private-only http monitor is judged on its attached private locations", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: "" });
+      const id = String(m.id);
+      for (const name of ["a", "b", "gone"]) {
+        const location = await tx
+          .insert(privateLocation)
+          .values({
+            name,
+            token: `t-${name}-${m.id}`,
+            workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+          })
+          .returning()
+          .get();
+        await tx.insert(privateLocationToMonitors).values({
+          privateLocationId: location.id,
+          monitorId: m.id,
+          deletedAt: name === "gone" ? new Date() : null,
+        });
+      }
+      const quorum = histogramPipe([
+        {
+          monitorId: id,
+          day: "2026-06-05 00:00:00",
+          private: true,
+          errorRegions: 1,
+          notOkRegions: 1,
+          runs: 10,
+        },
+      ]);
+
+      await runUptimeFreeze({
+        pipes: makePipes({ http: countsPipe(m.id) }),
+        quorumPipes: makeQuorumPipes(quorum.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      const days = await frozenDays(tx, m.id);
+      expect(days?.[4].quorum).toEqual({
+        regionCount: 2,
+        buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 10 }],
+      });
+    });
+  });
+
+  test("a failed quorum chunk skips the monitor instead of freezing it without quorum", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+      const failures: ChunkFailure[] = [];
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: countsPipe(m.id) }),
+        quorumPipes: makeQuorumPipes(() =>
+          Promise.reject(new Error("tb down")),
+        ),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+        onChunkFailure: (f) => failures.push(f),
+      });
+
+      expect(res.frozen).toBe(0);
+      expect(res.skipped).toBe(1);
+      expect(res.failures).toEqual([
+        `monitor ${m.id}: tinybird counts unavailable`,
+      ]);
+      expect(failures.map((f) => f.jobType)).toEqual(["http"]);
+      expect(await frozenDays(tx, m.id)).toBeUndefined();
+    });
+  });
+
+  test("no configured regions freezes without quorum and skips the histogram fetch", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: "" });
+      const quorum = histogramPipe([]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: countsPipe(m.id) }),
+        quorumPipes: makeQuorumPipes(quorum.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res.frozen).toBe(1);
+      expect(quorum.calls).toEqual([]);
+      const days = await frozenDays(tx, m.id);
+      expect(days?.some((d) => d.quorum)).toBe(false);
+    });
+  });
+
+  test("job types without a quorum pipe freeze exactly as before", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, {
+        jobType: "dns",
+        regions: SIX_REGIONS,
+      });
+      const quorum = histogramPipe([]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ dns: countsPipe(m.id) }),
+        quorumPipes: makeQuorumPipes(quorum.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res.frozen).toBe(1);
+      expect(quorum.calls).toEqual([]);
+      const days = await frozenDays(tx, m.id);
+      expect(days?.[4]).toEqual({
+        day: "2026-06-05",
+        ok: 800,
+        degraded: 0,
+        error: 64,
+      });
     });
   });
 });

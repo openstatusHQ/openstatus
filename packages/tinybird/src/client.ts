@@ -348,6 +348,15 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
+const quorumHistogramShape = z.object({
+  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+  monitorId: z.string(),
+  private: z.number().transform((val) => val !== 0),
+  errorRegions: z.number(),
+  notOkRegions: z.number(),
+  runs: z.number(),
+});
+
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
 
 /**
@@ -914,6 +923,17 @@ export class OSTinybird {
         error: z.number().prefault(0),
         monitorId: z.string(),
       }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpQuorum45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_quorum_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

@@ -294,3 +294,93 @@ describe("getMonitorUptimeHistory", () => {
     });
   });
 });
+
+describe("getMonitorUptimeHistory with run quorum", () => {
+  test("live days carry the cloud histogram, merged per bucket", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "ams,fra,iad,syd,gru,hkg" });
+      const id = String(m.id);
+      const day = "2026-11-02 00:00:00";
+      const res = await getMonitorUptimeHistory({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([
+          { monitorId: id, day: "2026-11-02", ok: 600, degraded: 0, error: 12 },
+        ]),
+        quorumPipes: {
+          http: () =>
+            Promise.resolve({
+              data: [
+                {
+                  monitorId: id,
+                  day,
+                  private: false,
+                  errorRegions: 3,
+                  notOkRegions: 3,
+                  runs: 1,
+                },
+                {
+                  monitorId: id,
+                  day,
+                  private: false,
+                  errorRegions: 3,
+                  notOkRegions: 3,
+                  runs: 1,
+                },
+                {
+                  monitorId: id,
+                  day,
+                  private: false,
+                  errorRegions: 0,
+                  notOkRegions: 0,
+                  runs: 100,
+                },
+                {
+                  monitorId: id,
+                  day,
+                  private: true,
+                  errorRegions: 1,
+                  notOkRegions: 1,
+                  runs: 102,
+                },
+              ],
+            }),
+        },
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.partial).toBe(false);
+      expect(res.days).toEqual([
+        {
+          day: "2026-11-02",
+          ok: 600,
+          degraded: 0,
+          error: 12,
+          quorum: {
+            regionCount: 6,
+            buckets: [
+              { errorRegions: 3, notOkRegions: 3, runs: 2 },
+              { errorRegions: 0, notOkRegions: 0, runs: 100 },
+            ],
+          },
+        },
+      ]);
+    });
+  });
+
+  test("a failed histogram fetch marks the result partial", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx);
+      const res = await getMonitorUptimeHistory({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([]),
+        quorumPipes: { http: () => Promise.reject(new Error("tb down")) },
+        now,
+        sleep: noSleep,
+      });
+      expect(res.partial).toBe(true);
+    });
+  });
+});

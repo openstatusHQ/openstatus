@@ -2,7 +2,7 @@ import {
   type DayCounts,
   tallyDay,
 } from "@openstatus/services/status-timeline/tally";
-import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
+import { eachDayOfInterval, endOfYear, format, startOfYear } from "date-fns";
 
 import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
@@ -47,6 +47,23 @@ function dayMark(counts: CheckCounts | undefined): Partial<ActivityDay> {
       ].join(" · "),
     ],
   };
+}
+
+/** First UTC day whose counts are runs judged on quorum, as a local-midnight date. */
+export function quorumSince(counts: CheckCounts[]): Date | null {
+  const first = counts
+    .filter((d) => d.quorum)
+    .reduce<string | null>(
+      (min, d) => (!min || d.day < min ? d.day : min),
+      null,
+    );
+  if (!first) return null;
+  const [y, m, d] = first.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export function quorumNote(since: Date): string {
+  return `Since ${format(since, "MMMM yyyy")}, a check covers all of the monitor's regions and counts as down when at least half of them fail.`;
 }
 
 /** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */

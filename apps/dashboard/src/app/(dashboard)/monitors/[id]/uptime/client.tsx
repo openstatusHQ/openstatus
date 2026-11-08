@@ -44,6 +44,8 @@ import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   exampleUptimeCounts,
   formatUptime,
+  quorumNote,
+  quorumSince,
   uptimeYears,
   utcToday,
 } from "@/data/uptime-history.client";
@@ -68,6 +70,7 @@ export function Client() {
   const today = useMemo(() => utcToday(now), [now]);
   const counts = isLimited ? exampleUptimeCounts(now) : history?.days;
   const years = useMemo(() => uptimeYears(counts ?? [], now), [counts, now]);
+  const since = useMemo(() => quorumSince(counts ?? []), [counts]);
 
   if (!monitor || !workspace || (!isLimited && !history)) return null;
 
@@ -84,6 +87,9 @@ export function Client() {
           Recent checks couldn't be loaded, so the last few weeks may be
           incomplete.
         </p>
+      ) : null}
+      {since ? (
+        <p className="text-muted-foreground text-sm">{quorumNote(since)}</p>
       ) : null}
       {years.map(({ year, days, uptime, failedDays }) => (
         <Activity key={year}>

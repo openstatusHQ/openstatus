@@ -89,6 +89,7 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
     createdAt: new Date(
       Date.UTC(now.getUTCFullYear() - 2, now.getUTCMonth(), 1),
     ),
+    quorumSince: null,
     summary,
     rows,
   };
