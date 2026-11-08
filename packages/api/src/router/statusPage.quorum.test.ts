@@ -63,7 +63,11 @@ const SIX_REGIONS = "ams,fra,iad,gru,syd,hkg";
 
 let workspaceId: number;
 let locationId: number;
-const ids = {} as Record<"cloud" | "private", number>;
+let secondLocationId: number;
+const ids = {} as Record<
+  "cloud" | "private" | "privateMulti" | "mixed",
+  number
+>;
 
 function caller() {
   return appRouter.createCaller(
@@ -174,9 +178,37 @@ beforeAll(async () => {
     .returning()
     .get();
   locationId = location.id;
-  await db
-    .insert(privateLocationToMonitors)
-    .values({ privateLocationId: locationId, monitorId: ids.private });
+  const second = await db
+    .insert(privateLocation)
+    .values({
+      name: "quorum-test-2",
+      token: `quorum-2-${workspaceId}`,
+      workspaceId,
+    })
+    .returning()
+    .get();
+  secondLocationId = second.id;
+  ids.privateMulti = (
+    await createMonitor(workspaceId, {
+      active: true,
+      jobType: "http",
+      regions: "",
+    })
+  ).id;
+  ids.mixed = (
+    await createMonitor(workspaceId, {
+      active: true,
+      jobType: "http",
+      regions: SIX_REGIONS,
+    })
+  ).id;
+  await db.insert(privateLocationToMonitors).values([
+    { privateLocationId: locationId, monitorId: ids.private },
+    { privateLocationId: locationId, monitorId: ids.privateMulti },
+    { privateLocationId: secondLocationId, monitorId: ids.privateMulti },
+    { privateLocationId: locationId, monitorId: ids.mixed },
+    { privateLocationId: secondLocationId, monitorId: ids.mixed },
+  ]);
 });
 
 beforeEach(() => {
@@ -189,10 +221,12 @@ afterAll(async () => {
     .delete(pageComponent)
     .where(eq(pageComponent.workspaceId, workspaceId));
   await db.delete(page).where(eq(page.workspaceId, workspaceId));
-  await db
-    .delete(privateLocationToMonitors)
-    .where(eq(privateLocationToMonitors.privateLocationId, locationId));
-  await db.delete(privateLocation).where(eq(privateLocation.id, locationId));
+  for (const id of [locationId, secondLocationId]) {
+    await db
+      .delete(privateLocationToMonitors)
+      .where(eq(privateLocationToMonitors.privateLocationId, id));
+    await db.delete(privateLocation).where(eq(privateLocation.id, id));
+  }
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId));
 });
 
@@ -397,7 +431,7 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(bar?.card).toEqual([{ status: "empty", value: "" }]);
   });
 
-  test("private-only monitor stays on per-region counts and is never asked for runs", async () => {
+  test("a single private location counts one check per run and is never asked for runs", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.private, day, { ok: 5, error: 1 })],
@@ -408,10 +442,78 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     const bar = component.data.find((d) => d.day === day);
 
     expect(bar?.card).toEqual([
+      { status: "success", value: "5 runs" },
+      { status: "error", value: "1 run" },
+    ]);
+    expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
+  });
+
+  test("several private locations stay on per-region counts and are never asked for runs", async () => {
+    const day = yesterdayIn("UTC");
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [counts(ids.privateMulti, day, { ok: 5, error: 1 })],
+    }));
+    const { slug, componentId } = await pageWith(ids.privateMulti);
+
+    const component = await uptime(slug, componentId);
+    const bar = component.data.find((d) => d.day === day);
+
+    expect(bar?.card).toEqual([
       { status: "success", value: "5 reqs" },
       { status: "error", value: "1 req" },
     ]);
     expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
+  });
+
+  test("private locations join the divisor of a converted day: 6 cloud + 2 private", async () => {
+    const clean = daysAgoIn("UTC", 2);
+    const day = yesterdayIn("UTC");
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [
+        counts(ids.mixed, clean, { ok: 800, error: 0 }),
+        counts(ids.mixed, day, { ok: 792, error: 8 }),
+      ],
+    }));
+    const { slug, componentId } = await pageWith(ids.mixed);
+
+    const component = await uptime(slug, componentId);
+
+    expect(component.data.find((d) => d.day === clean)?.card).toEqual([
+      { status: "success", value: "100 runs" },
+    ]);
+    expect(component.data.find((d) => d.day === day)?.card).toEqual([
+      { status: "success", value: "99 runs" },
+      { status: "error", value: "1 run" },
+    ]);
+  });
+
+  test("run verdicts stay judged on cloud regions when private locations are attached", async () => {
+    const day = yesterdayIn("UTC");
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [counts(ids.mixed, day, { ok: 788, error: 12 })],
+    }));
+    pipes.impl.set("httpQuorum45d", async () => ({
+      data: [
+        hist(ids.mixed, day, {
+          errorRegions: 0,
+          degradedOrErrorRegions: 0,
+          runs: 96,
+        }),
+        hist(ids.mixed, day, {
+          errorRegions: 3,
+          degradedOrErrorRegions: 3,
+          runs: 4,
+        }),
+      ],
+    }));
+    const { slug, componentId } = await pageWith(ids.mixed);
+
+    const component = await uptime(slug, componentId);
+
+    expect(component.data.find((d) => d.day === day)?.card).toEqual([
+      { status: "success", value: "96 runs" },
+      { status: "error", value: "4 runs" },
+    ]);
   });
 
   test("a converted day with one flaky region check is green, like under the run rule", async () => {
@@ -497,7 +599,10 @@ describe("getUptime on a requests page keeps per-region counts", () => {
 });
 
 describe("getMonitor on a runs page counts uptime in runs for monitors with a quorum population", () => {
-  const publicIds = {} as Record<"cloud" | "private", number>;
+  const publicIds = {} as Record<
+    "cloud" | "private" | "privateMulti" | "mixed",
+    number
+  >;
   const bucketA = new Date("2026-11-08T08:00:00.000Z");
   const bucketB = new Date("2026-11-08T12:00:00.000Z");
 
@@ -525,18 +630,18 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
   // what the monitor page and its markdown twin show
   function shown(
     rows: Parameters<typeof tallyBuckets>[0],
-    regionCount: number | null,
+    checksPerRun: number | null,
   ) {
-    const t = tallyBuckets(rows, regionCount);
+    const t = tallyBuckets(rows, checksPerRun);
     return {
       total: roundCount(t.total),
-      unit: regionCount !== null ? "runs" : "requests",
+      unit: checksPerRun !== null ? "runs" : "requests",
       uptime: t.total > 0 ? floorPct(t.up / t.total) : null,
     };
   }
 
   function view(result: Awaited<ReturnType<typeof monitorPage>>) {
-    return shown(result.data.uptime.data, result.data.uptime.regionCount);
+    return shown(result.data.uptime.data, result.data.uptime.checksPerRun);
   }
 
   beforeAll(async () => {
@@ -556,10 +661,32 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
         regions: "",
       })
     ).id;
-    await db.insert(privateLocationToMonitors).values({
-      privateLocationId: locationId,
-      monitorId: publicIds.private,
-    });
+    publicIds.privateMulti = (
+      await createMonitor(workspaceId, {
+        active: true,
+        public: true,
+        jobType: "http",
+        regions: "",
+      })
+    ).id;
+    publicIds.mixed = (
+      await createMonitor(workspaceId, {
+        active: true,
+        public: true,
+        jobType: "http",
+        regions: SIX_REGIONS,
+      })
+    ).id;
+    await db.insert(privateLocationToMonitors).values([
+      { privateLocationId: locationId, monitorId: publicIds.private },
+      { privateLocationId: locationId, monitorId: publicIds.privateMulti },
+      {
+        privateLocationId: secondLocationId,
+        monitorId: publicIds.privateMulti,
+      },
+      { privateLocationId: locationId, monitorId: publicIds.mixed },
+      { privateLocationId: secondLocationId, monitorId: publicIds.mixed },
+    ]);
   });
 
   test("1 of 6 regions failing every run: 100% and counted in runs", async () => {
@@ -641,22 +768,39 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
     expect(shownView.uptime).toBe(95.833);
   });
 
-  test("private-only monitor stays on per-region counts and is never asked for runs", async () => {
+  test.each([
+    ["private", 1, "runs"],
+    ["privateMulti", null, "requests"],
+  ] as const)(
+    "%s monitor counts one check per run or per request and is never asked for runs",
+    async (which, checksPerRun, unit) => {
+      pipes.impl.set("httpUptimeWeekly", async () => ({
+        data: [uptimeRow(bucketA, { success: 5, error: 1 })],
+      }));
+
+      const result = await monitorPage(publicIds[which]);
+
+      expect(result.data.uptime.checksPerRun).toBe(checksPerRun);
+      expect(view(result)).toEqual({
+        total: 6,
+        unit,
+        uptime: floorPct(5 / 6),
+      });
+      expect(pipes.calls.some((c) => c.name === "httpQuorumIntervals")).toBe(
+        false,
+      );
+    },
+  );
+
+  test("6 cloud + 2 private: a bucket without runs divides by 8", async () => {
     pipes.impl.set("httpUptimeWeekly", async () => ({
-      data: [uptimeRow(bucketA, { success: 5, error: 1 })],
+      data: [uptimeRow(bucketA, { success: 800, error: 0 })],
     }));
 
-    const result = await monitorPage(publicIds.private);
+    const result = await monitorPage(publicIds.mixed);
 
-    expect(result.data.uptime.regionCount).toBe(null);
-    expect(view(result)).toEqual({
-      total: 6,
-      unit: "requests",
-      uptime: floorPct(5 / 6),
-    });
-    expect(pipes.calls.some((c) => c.name === "httpQuorumIntervals")).toBe(
-      false,
-    );
+    expect(result.data.uptime.checksPerRun).toBe(8);
+    expect(view(result)).toEqual({ total: 100, unit: "runs", uptime: 100 });
   });
 
   test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
@@ -728,7 +872,7 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
 
     const result = await monitorPage(publicIds.cloud, "requests");
 
-    expect(result.data.uptime.regionCount).toBe(null);
+    expect(result.data.uptime.checksPerRun).toBe(null);
     expect(view(result)).toEqual({
       total: 576,
       unit: "requests",

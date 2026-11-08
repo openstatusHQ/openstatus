@@ -19,14 +19,15 @@ import {
 } from "@openstatus/db/src/schema";
 import {
   attachRuns,
+  checksPerRun,
   fetchIntervalRuns,
   fetchLiveRuns,
   type IntervalRuns,
   type LiveRuns,
+  privateLocationCounts,
   toIntervalCounts,
   uptimeQuorumIntervalPipes,
   uptimeQuorumPipes,
-  uptimeRegionCount,
 } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
@@ -162,11 +163,14 @@ async function fetchStatusDays(
   }
 }
 
-function regionCountOf(monitor: { jobType: string; regions: string[] }) {
-  return uptimeRegionCount({
-    jobType: monitor.jobType,
-    regions: monitor.regions.join(","),
-  });
+function checksPerRunOf(
+  monitor: { id: number; jobType: string; regions: string[] },
+  privateCounts: Map<number, number>,
+) {
+  return checksPerRun(
+    { jobType: monitor.jobType, regions: monitor.regions.join(",") },
+    privateCounts.get(monitor.id) ?? 0,
+  );
 }
 
 // Run verdicts per `timeZone` day. Its own budget: a slow or failed read only
@@ -958,24 +962,12 @@ export const statusPageRouter = createTRPCRouter({
 
       // No public regions alone doesn't make a monitor private-only: it may
       // have no locations at all, so confirm an active private assignment.
-      const noRegionMonitorIds = monitors
-        .filter((c) => c.monitor.regions.length === 0)
-        .map((c) => c.monitor.id);
-      const privateOnlyMonitorIds = new Set<number>();
-      if (noRegionMonitorIds.length > 0) {
-        const rows = await opts.ctx.db.query.privateLocationToMonitors.findMany(
-          {
-            where: and(
-              inArray(privateLocationToMonitors.monitorId, noRegionMonitorIds),
-              isNull(privateLocationToMonitors.deletedAt),
-            ),
-            columns: { monitorId: true },
-          },
-        );
-        for (const row of rows) {
-          if (row.monitorId !== null) privateOnlyMonitorIds.add(row.monitorId);
-        }
-      }
+      const privateCounts = await privateLocationCounts(
+        opts.ctx.db,
+        monitors
+          .filter((c) => countsRuns || c.monitor.regions.length === 0)
+          .map((c) => c.monitor.id),
+      );
 
       return pageComponents.map((c) => {
         const events = getEvents({
@@ -1022,14 +1014,16 @@ export const statusPageRouter = createTRPCRouter({
         const effectiveBarType = forceManual ? "manual" : input.barType;
         const effectiveCardType = forceManual ? "manual" : input.cardType;
 
-        const regionCount =
-          countsRuns && c.monitor ? regionCountOf(c.monitor) : null;
+        const checksPerRun =
+          countsRuns && c.monitor
+            ? checksPerRunOf(c.monitor, privateCounts)
+            : null;
         const processedData = setDataByType({
           events,
           data: filledData,
           cardType: effectiveCardType,
           barType: effectiveBarType,
-          regionCount,
+          checksPerRun,
           timeZone,
         });
         const uptime = getUptime({
@@ -1037,10 +1031,12 @@ export const statusPageRouter = createTRPCRouter({
           events,
           barType: effectiveBarType,
           cardType: effectiveCardType,
-          regionCount,
+          checksPerRun,
           timeZone,
           privateLocationOnly:
-            c.monitor != null && privateOnlyMonitorIds.has(c.monitor.id),
+            c.monitor != null &&
+            c.monitor.regions.length === 0 &&
+            (privateCounts.get(c.monitor.id) ?? 0) > 0,
           heartbeat: c.monitor?.jobType === "heartbeat",
         });
 
@@ -1080,7 +1076,7 @@ export const statusPageRouter = createTRPCRouter({
       data,
       cardType: "requests",
       barType: "dominant",
-      regionCount: null,
+      checksPerRun: null,
     });
     return {
       data: processedData,
@@ -1355,33 +1351,38 @@ export const statusPageRouter = createTRPCRouter({
       const interval = 240;
 
       // Slow/erroring Tinybird → empty chart data so the page still renders.
-      const [metrics, runs] = !procedures
-        ? [{ ok: false as const, data: null }, null]
-        : await Promise.all([
-            withTinybirdFallback(() =>
-              Promise.all([
-                procedures.latency({
-                  monitorId: _monitor.id.toString(),
-                  fromDate,
-                  toDate,
-                }),
-                procedures.regions({
-                  monitorId: _monitor.id.toString(),
-                  fromDate,
-                  toDate,
-                }),
-                procedures.uptime({
-                  monitorId: _monitor.id.toString(),
-                  interval,
-                  fromDate,
-                  toDate,
-                }),
-              ]),
-            ),
-            countsRuns
-              ? fetchRunsIntervals(_monitor, { interval, fromDate, toDate })
-              : null,
-          ]);
+      const [[metrics, runs], privateCounts] = await Promise.all([
+        !procedures
+          ? Promise.resolve([{ ok: false as const, data: null }, null] as const)
+          : Promise.all([
+              withTinybirdFallback(() =>
+                Promise.all([
+                  procedures.latency({
+                    monitorId: _monitor.id.toString(),
+                    fromDate,
+                    toDate,
+                  }),
+                  procedures.regions({
+                    monitorId: _monitor.id.toString(),
+                    fromDate,
+                    toDate,
+                  }),
+                  procedures.uptime({
+                    monitorId: _monitor.id.toString(),
+                    interval,
+                    fromDate,
+                    toDate,
+                  }),
+                ]),
+              ),
+              countsRuns
+                ? fetchRunsIntervals(_monitor, { interval, fromDate, toDate })
+                : null,
+            ]),
+        countsRuns
+          ? privateLocationCounts(opts.ctx.db, [_monitor.id])
+          : new Map<number, number>(),
+      ]);
 
       const [latency, regions, counts] = metrics.data ?? [
         { data: [] },
@@ -1391,7 +1392,9 @@ export const statusPageRouter = createTRPCRouter({
       const uptime = {
         ...counts,
         data: toIntervalCounts(counts.data, runs),
-        regionCount: countsRuns ? regionCountOf(_monitor) : null,
+        checksPerRun: countsRuns
+          ? checksPerRunOf(_monitor, privateCounts)
+          : null,
       };
 
       return {

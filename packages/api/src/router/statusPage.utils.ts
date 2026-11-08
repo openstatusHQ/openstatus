@@ -178,7 +178,7 @@ export function setDataByType({
   data,
   cardType,
   barType,
-  regionCount,
+  checksPerRun,
   timeZone = "UTC",
 }: {
   events: Event[];
@@ -186,7 +186,7 @@ export function setDataByType({
   cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
   /** the monitor's quorum region count: counts are runs; null counts region checks */
-  regionCount: number | null;
+  checksPerRun: number | null;
   /** IANA zone whose calendar days the bars stand for */
   timeZone?: string;
 }): UptimeData[] {
@@ -420,7 +420,7 @@ export function setDataByType({
     };
   }
 
-  const countUnit = regionCount === null ? "req" : "run";
+  const countUnit = checksPerRun === null ? "req" : "run";
 
   return data.map((dayData) => {
     const day = dayWindow(dayData.day, timeZone);
@@ -454,7 +454,7 @@ export function setDataByType({
     // TODO: transform into a new Map<type, number>();
     let barData: UptimeData["bar"];
 
-    const tally = tallyDay(dayData, regionCount);
+    const tally = tallyDay(dayData, checksPerRun);
     const { status: dataStatus } = tally;
     const counts = shownCounts(tally);
     const shownTotal = counts.ok + counts.degraded + counts.error;
@@ -682,7 +682,7 @@ export function getUptime({
   events,
   barType,
   cardType,
-  regionCount,
+  checksPerRun,
   privateLocationOnly = false,
   heartbeat = false,
   timeZone = "UTC",
@@ -692,7 +692,7 @@ export function getUptime({
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   /** the monitor's quorum region count: counts are runs; null counts region checks */
-  regionCount: number | null;
+  checksPerRun: number | null;
   /** no public regions and ≥1 private location: include probe errors in duration uptime */
   privateLocationOnly?: boolean;
   /** pings are not checks: uptime is incident time since the first signal */
@@ -752,7 +752,7 @@ export function getUptime({
     return `${floorPct((total - duration) / total)}%`;
   }
 
-  const { up, total } = tallyBuckets(data, regionCount);
+  const { up, total } = tallyBuckets(data, checksPerRun);
   if (total === 0) return "100%";
   return `${floorPct(up / total)}%`;
 }

@@ -20,8 +20,9 @@ import {
   fetchFreezeCounts,
   runUptimeFreeze,
   uptimeFreezePipes,
+  checksPerRun,
+  privateLocationCounts,
   uptimeQuorumPipes,
-  uptimeRegionCount,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
@@ -126,11 +127,72 @@ describe("uptimeQuorumPipes", () => {
   });
 });
 
-describe("uptimeRegionCount", () => {
-  test("agrees with the quorum region count on duplicated regions", () => {
-    expect(uptimeRegionCount({ jobType: "http", regions: "ams,ams,fra" })).toBe(
+async function attachPrivateLocations(
+  tx: Tx,
+  monitorId: number,
+  count: number,
+) {
+  const ids: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const location = await tx
+      .insert(privateLocation)
+      .values({
+        name: `pl-${i}`,
+        token: `t-${i}-${monitorId}`,
+        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      })
+      .returning()
+      .get();
+    await tx.insert(privateLocationToMonitors).values({
+      privateLocationId: location.id,
+      monitorId,
+    });
+    ids.push(location.id);
+  }
+  return ids;
+}
+
+describe("checksPerRun", () => {
+  test("counts unique cloud regions plus attached private locations", () => {
+    expect(checksPerRun({ jobType: "http", regions: "ams,ams,fra" }, 0)).toBe(
       2,
     );
+    expect(checksPerRun({ jobType: "http", regions: "ams,fra" }, 2)).toBe(4);
+  });
+
+  test("a single private location makes one check per run", () => {
+    expect(checksPerRun({ jobType: "tcp", regions: "" }, 1)).toBe(1);
+  });
+
+  test("several private locations alone, or no locations, count requests", () => {
+    expect(checksPerRun({ jobType: "http", regions: "" }, 2)).toBeNull();
+    expect(checksPerRun({ jobType: "http", regions: "" }, 0)).toBeNull();
+  });
+
+  test.each(["heartbeat", "udp", "ssl"])("%s counts requests", (jobType) => {
+    expect(checksPerRun({ jobType, regions: "ams" }, 1)).toBeNull();
+  });
+});
+
+describe("privateLocationCounts", () => {
+  test("counts attached locations per monitor, skipping detached ones", async () => {
+    await withTestTransaction(async (tx) => {
+      const a = await insertTestMonitor(tx, { regions: "ams" });
+      const b = await insertTestMonitor(tx, { regions: "" });
+      const c = await insertTestMonitor(tx, { regions: "ams" });
+      await attachPrivateLocations(tx, a.id, 2);
+      const [detached] = await attachPrivateLocations(tx, b.id, 2);
+      await tx
+        .update(privateLocationToMonitors)
+        .set({ deletedAt: new Date() })
+        .where(eq(privateLocationToMonitors.privateLocationId, detached));
+
+      const counts = await privateLocationCounts(tx, [a.id, b.id, c.id]);
+
+      expect(counts.get(a.id)).toBe(2);
+      expect(counts.get(b.id)).toBe(1);
+      expect(counts.has(c.id)).toBe(false);
+    });
   });
 });
 
@@ -649,36 +711,57 @@ describe("runUptimeFreeze with run quorum", () => {
     });
   });
 
-  test("private-only monitor freezes requests only, without a histogram fetch", async () => {
-    await withTestTransaction(async (tx) => {
-      const m = await insertTestMonitor(tx, { regions: "" });
-      const id = String(m.id);
-      for (const name of ["a", "b"]) {
-        const location = await tx
-          .insert(privateLocation)
-          .values({
-            name,
-            token: `t-${name}-${m.id}`,
-            workspaceId: SEEDED_WORKSPACE_TEAM_ID,
-          })
-          .returning()
-          .get();
-        await tx.insert(privateLocationToMonitors).values({
-          privateLocationId: location.id,
-          monitorId: m.id,
+  test.each([1, 2])(
+    "private-only monitor with %i locations freezes requests only, without a histogram fetch",
+    async (locations) => {
+      await withTestTransaction(async (tx) => {
+        const m = await insertTestMonitor(tx, { regions: "" });
+        await attachPrivateLocations(tx, m.id, locations);
+        const quorum = histogramPipe([
+          {
+            monitorId: String(m.id),
+            day: "2026-06-05 00:00:00",
+            errorRegions: 1,
+            degradedOrErrorRegions: 1,
+            runs: 10,
+          },
+        ]);
+
+        const res = await runUptimeFreeze({
+          pipes: makePipes({ http: countsPipe(m.id) }),
+          quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
+          now,
+          db: tx,
+          monitorIds: [m.id],
+          sleep: noSleep,
         });
-      }
+
+        expect(res.frozen).toBe(1);
+        expect(quorum.calls).toEqual([]);
+        const days = await frozenDays(tx, m.id);
+        expect(days?.[4]).toEqual({
+          day: "2026-06-05",
+          requests: { ok: 800, degraded: 0, error: 64 },
+        });
+      });
+    },
+  );
+
+  test("run verdicts are judged on cloud regions only when private locations are attached", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+      await attachPrivateLocations(tx, m.id, 2);
       const quorum = histogramPipe([
         {
-          monitorId: id,
+          monitorId: String(m.id),
           day: "2026-06-05 00:00:00",
-          errorRegions: 1,
-          degradedOrErrorRegions: 1,
-          runs: 10,
+          errorRegions: 3,
+          degradedOrErrorRegions: 3,
+          runs: 4,
         },
       ]);
 
-      const res = await runUptimeFreeze({
+      await runUptimeFreeze({
         pipes: makePipes({ http: countsPipe(m.id) }),
         quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
         now,
@@ -687,13 +770,8 @@ describe("runUptimeFreeze with run quorum", () => {
         sleep: noSleep,
       });
 
-      expect(res.frozen).toBe(1);
-      expect(quorum.calls).toEqual([]);
       const days = await frozenDays(tx, m.id);
-      expect(days?.[4]).toEqual({
-        day: "2026-06-05",
-        requests: { ok: 800, degraded: 0, error: 64 },
-      });
+      expect(days?.[4]?.runs).toEqual({ ok: 0, degraded: 0, error: 4 });
     });
   });
 

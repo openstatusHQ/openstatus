@@ -26,12 +26,13 @@ import {
 import { monthRange } from "./compute";
 import { fetchLiveDays } from "./live";
 import {
+  checksPerRun,
   FREEZE_CUTOFF_MS,
+  privateLocationCounts,
   type UptimeFreezePipes,
   uptimeFreezePipes,
   type UptimeQuorumPipes,
   uptimeQuorumPipes,
-  uptimeRegionCount,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -125,16 +126,16 @@ function monthKeys(now: Date): string[] {
 
 function requestsMonth(
   days: FrozenMonitorUptimeDay[] | null,
-  regionCount: number | null,
+  checksPerRun: number | null,
 ): MonthValue {
   if (!days) return null;
-  const { up, total } = tallyBuckets(days, regionCount);
+  const { up, total } = tallyBuckets(days, checksPerRun);
   if (total === 0) return null;
   return {
     percentage: floorPct(up / total),
     up,
     total,
-    shown: shownBuckets(days, regionCount),
+    shown: shownBuckets(days, checksPerRun),
   };
 }
 
@@ -275,22 +276,29 @@ export async function getUptimeHistory(args: {
 
   // the frozen-rows read and the independent Tinybird round-trip overlap
   const dbReads = (async () => {
-    if (monitorIds.length === 0) return { frozenRows: [] };
-    const frozenRows = await db
-      .select({
-        monitorId: frozenMonitorUptime.monitorId,
-        month: frozenMonitorUptime.month,
-        days: frozenMonitorUptime.days,
-      })
-      .from(frozenMonitorUptime)
-      .where(
-        and(
-          eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
-          inArray(frozenMonitorUptime.monitorId, monitorIds),
-          gte(frozenMonitorUptime.month, `${months[0]}-01`),
+    if (monitorIds.length === 0) {
+      return { frozenRows: [], privateCounts: new Map<number, number>() };
+    }
+    const [frozenRows, privateCounts] = await Promise.all([
+      db
+        .select({
+          monitorId: frozenMonitorUptime.monitorId,
+          month: frozenMonitorUptime.month,
+          days: frozenMonitorUptime.days,
+        })
+        .from(frozenMonitorUptime)
+        .where(
+          and(
+            eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
+            inArray(frozenMonitorUptime.monitorId, monitorIds),
+            gte(frozenMonitorUptime.month, `${months[0]}-01`),
+          ),
         ),
-      );
-    return { frozenRows };
+      countsRuns
+        ? privateLocationCounts(db, monitorIds)
+        : new Map<number, number>(),
+    ]);
+    return { frozenRows, privateCounts };
   })();
 
   // current month is never frozen, the previous may not be yet (the freeze
@@ -310,8 +318,10 @@ export async function getUptimeHistory(args: {
     sleep: args.sleep,
   });
 
-  const [{ frozenRows }, { days: liveDays, failedMonitorIds: liveFailed }] =
-    await Promise.all([dbReads, liveReads]);
+  const [
+    { frozenRows, privateCounts },
+    { days: liveDays, failedMonitorIds: liveFailed },
+  ] = await Promise.all([dbReads, liveReads]);
   const frozenByKey = new Map(
     frozenRows.map((r) => [
       `${r.monitorId}:${r.month.slice(0, 7)}`,
@@ -338,9 +348,12 @@ export async function getUptimeHistory(args: {
   }
 
   // requests mode keeps per-region counts, ignoring any frozen `runs`
-  const regionCounts = new Map(
+  const checksPerRunById = new Map(
     countsRuns
-      ? [...monitorsById].map(([id, m]) => [id, uptimeRegionCount(m)])
+      ? [...monitorsById].map(([id, m]) => [
+          id,
+          checksPerRun(m, privateCounts.get(id) ?? 0),
+        ])
       : [],
   );
 
@@ -368,14 +381,14 @@ export async function getUptimeHistory(args: {
           )
         : null;
 
-    const regionCount =
-      c.monitorId !== null ? (regionCounts.get(c.monitorId) ?? null) : null;
+    const checksPerRun =
+      c.monitorId !== null ? (checksPerRunById.get(c.monitorId) ?? null) : null;
     const unit: HistoryUnit =
       heartbeatId === null &&
       c.type === "monitor" &&
       c.monitorId !== null &&
       (mode === "requests" || mode === "runs")
-        ? regionCount !== null
+        ? checksPerRun !== null
           ? "runs"
           : "requests"
         : "time";
@@ -394,7 +407,7 @@ export async function getUptimeHistory(args: {
       } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
         if (mode === "requests" || mode === "runs") {
-          value = requestsMonth(days, regionCount);
+          value = requestsMonth(days, checksPerRun);
         } else if (mode === "duration") {
           value = durationMonth(days, events, nowMs);
         } else {

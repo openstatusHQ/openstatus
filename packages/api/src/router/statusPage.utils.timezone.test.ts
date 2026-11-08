@@ -35,7 +35,7 @@ describe("setDataByType in a time zone", () => {
 
   it("colors the bar of the zone's date", () => {
     const [tokyo] = setDataByType({
-      regionCount: null,
+      checksPerRun: null,
       events: [early],
       data: [bucket("2026-10-16")],
       cardType: "requests",
@@ -45,7 +45,7 @@ describe("setDataByType in a time zone", () => {
     expect(tokyo.bar[0].status).toBe("error");
 
     const [utc] = setDataByType({
-      regionCount: null,
+      checksPerRun: null,
       events: [early],
       data: [bucket("2026-10-16")],
       cardType: "requests",
@@ -61,7 +61,7 @@ describe("setDataByType in a time zone", () => {
       "2026-10-25T22:45:00.000Z",
     );
     const [day] = setDataByType({
-      regionCount: null,
+      checksPerRun: null,
       events: [late],
       data: [bucket("2026-10-25")],
       cardType: "requests",
@@ -83,7 +83,7 @@ describe("getUptime in a time zone", () => {
   it("counts downtime inside the zone's days", () => {
     const uptime = (timeZone?: string) =>
       getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data: [bucket("2026-10-14")],
         events: [morning],
         barType: "absolute",

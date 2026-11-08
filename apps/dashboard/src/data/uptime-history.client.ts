@@ -27,18 +27,18 @@ export function formatUptime(ratio: number, digits = 2): string {
   return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
 }
 
-/** Run counts when the monitor has a quorum region count, else region results. */
-function countUnit(count: number, regionCount: number | null) {
-  if (regionCount !== null) return count === 1 ? "run" : "runs";
+/** Run counts when the monitor has a `checksPerRun`, else region results. */
+function countUnit(count: number, checksPerRun: number | null) {
+  if (checksPerRun !== null) return count === 1 ? "run" : "runs";
   return count === 1 ? "check" : "checks";
 }
 
 /** Muted without failures, else by failed share of the day's runs: < 1%, ≤ 5%, > 5%. */
 function dayMark(
   counts: CheckCounts | undefined,
-  regionCount: number | null,
+  checksPerRun: number | null,
 ): Partial<ActivityDay> {
-  const tally = counts ? tallyDay(counts, regionCount) : null;
+  const tally = counts ? tallyDay(counts, checksPerRun) : null;
   const shown = tally ? shownCounts(tally) : null;
   const shownTotal = shown ? shown.ok + shown.degraded + shown.error : 0;
   // a day without a shown check is no data, never downtime
@@ -54,7 +54,7 @@ function dayMark(
     lines: [
       `${formatUptime((total - tally.error) / total)} uptime`,
       [
-        `${formatNumber(shownTotal)} ${countUnit(shownTotal, regionCount)}`,
+        `${formatNumber(shownTotal)} ${countUnit(shownTotal, checksPerRun)}`,
         ...(shown.error > 0 ? [`${formatNumber(shown.error)} failed`] : []),
         ...(shown.degraded > 0
           ? [`${formatNumber(shown.degraded)} degraded`]
@@ -75,11 +75,11 @@ export function utcToday(now = new Date()) {
  */
 export function uptimeYears(
   counts: CheckCounts[],
-  regionCount: number | null,
+  checksPerRun: number | null,
   now = new Date(),
 ) {
   // frozen months are zero-filled: the record starts at the first checked day
-  const since = counts.find((c) => tallyDay(c, regionCount).total > 0)?.day;
+  const since = counts.find((c) => tallyDay(c, checksPerRun).total > 0)?.day;
   if (!since) return [];
   const byDay = new Map(counts.map((c) => [c.day, c]));
   const first = Number(since.slice(0, 4));
@@ -97,12 +97,12 @@ export function uptimeYears(
       if (key < since) return { date, blank: true };
       const c = byDay.get(key);
       if (c) {
-        const tally = tallyDay(c, regionCount);
+        const tally = tallyDay(c, checksPerRun);
         up += tally.up;
         total += tally.total;
         if (tally.status === "error") failedDays++;
       }
-      return { date, ...dayMark(c, regionCount) };
+      return { date, ...dayMark(c, checksPerRun) };
     });
     years.push({
       year,

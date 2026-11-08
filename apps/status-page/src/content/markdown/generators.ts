@@ -662,8 +662,8 @@ export function generateMonitor(
 
   // Uptime over the hardcoded 7-day window.
   const uptimeData = monitor.data.uptime?.data ?? [];
-  const regionCount = monitor.data.uptime?.regionCount ?? null;
-  const totals = tallyBuckets(uptimeData, regionCount);
+  const checksPerRun = monitor.data.uptime?.checksPerRun ?? null;
+  const totals = tallyBuckets(uptimeData, checksPerRun);
   const uptime =
     totals.total > 0 ? formatPercent(totals.up / totals.total) : "N/A";
 
@@ -701,7 +701,7 @@ export function generateMonitor(
         ],
         [
           "Uptime (last 7 days)",
-          `${uptime} · ${countLabel(shownTotal(uptimeData, regionCount), regionCount !== null ? "run" : "request")}`,
+          `${uptime} · ${countLabel(shownTotal(uptimeData, checksPerRun), checksPerRun !== null ? "run" : "request")}`,
         ],
       ],
     ),

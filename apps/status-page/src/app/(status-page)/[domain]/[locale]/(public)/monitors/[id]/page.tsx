@@ -129,14 +129,14 @@ export default function Page() {
     return Object.values(grouped);
   }, [monitor?.data.regions?.data, timezone]);
 
-  const regionCount = monitor?.data.uptime?.regionCount ?? null;
+  const checksPerRun = monitor?.data.uptime?.checksPerRun ?? null;
 
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
     return monitor.data.uptime.data
       .sort((a, b) => a.interval.getTime() - b.interval.getTime())
       .map((item) => {
-        const shown = shownCounts(tallyDay(item, regionCount));
+        const shown = shownCounts(tallyDay(item, checksPerRun));
         return {
           timestamp: item.interval.toLocaleString("default", {
             day: "numeric",
@@ -153,7 +153,7 @@ export default function Page() {
           error: shown.error,
         };
       });
-  }, [monitor?.data.uptime?.data, regionCount, timezone]);
+  }, [monitor?.data.uptime?.data, checksPerRun, timezone]);
 
   const { shownCount, shownLabel, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {
@@ -170,7 +170,7 @@ export default function Page() {
 
       const uptimeStats = tallyBuckets(
         uptimeData.map((item) => item.counts),
-        regionCount,
+        checksPerRun,
       );
 
       const uptimePercentage =
@@ -201,7 +201,7 @@ export default function Page() {
 
       const shownCount = shownTotal(
         uptimeData.map((item) => item.counts),
-        regionCount,
+        checksPerRun,
       );
 
       return {
@@ -219,7 +219,7 @@ export default function Page() {
             ? formatMillisecondsRange(p75Range.min, p75Range.max)
             : "N/A",
       };
-    }, [uptimeData, regionCount, regionLatencyData, globalLatencyData]);
+    }, [uptimeData, checksPerRun, regionLatencyData, globalLatencyData]);
 
   if (!isLoading && !monitor) {
     return (
@@ -294,7 +294,7 @@ export default function Page() {
                   {uptimePercentage}{" "}
                   <Badge variant="outline" className="py-px text-[10px]">
                     {shownLabel}{" "}
-                    {regionCount !== null
+                    {checksPerRun !== null
                       ? t("{count, plural, one {run} other {runs}}", {
                           count: shownCount,
                         })

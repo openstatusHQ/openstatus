@@ -1,4 +1,9 @@
-import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
+import {
+  frozenMonitorUptime,
+  monitor,
+  privateLocation,
+  privateLocationToMonitors,
+} from "@openstatus/db/src/schema";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -8,6 +13,7 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
+import { tallyDay } from "../../status-timeline";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getMonitorUptimeHistory } from "../get-monitor-history";
@@ -80,6 +86,27 @@ async function insertMonitor(
     })
     .returning()
     .get();
+}
+
+async function attachPrivateLocations(
+  tx: Tx,
+  monitorId: number,
+  count: number,
+) {
+  for (let i = 0; i < count; i++) {
+    const location = await tx
+      .insert(privateLocation)
+      .values({
+        name: `pl-${i}`,
+        token: `t-${i}-${monitorId}`,
+        workspaceId: teamWorkspaceId,
+      })
+      .returning()
+      .get();
+    await tx
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: location.id, monitorId });
+  }
 }
 
 function frozenMonth(monitorId: number, month: string, error = 0) {
@@ -393,7 +420,7 @@ describe("getMonitorUptimeHistory with run quorum", () => {
         });
 
         expect(res.days[0].runs).toEqual({ ok: 0, degraded: 0, error: 3 });
-        expect(res.regionCount).toBe(4);
+        expect(res.checksPerRun).toBe(4);
       });
     },
   );
@@ -423,7 +450,7 @@ describe("getMonitorUptimeHistory with run quorum", () => {
       expect(res.days).toEqual([
         { day: "2026-11-02", requests: { ok: 9, degraded: 0, error: 1 } },
       ]);
-      expect(res.regionCount).toBe(1);
+      expect(res.checksPerRun).toBe(1);
     });
   });
 
@@ -440,8 +467,110 @@ describe("getMonitorUptimeHistory with run quorum", () => {
           now,
           sleep: noSleep,
         });
-        expect(res.regionCount).toBe(null);
+        expect(res.checksPerRun).toBe(null);
       }
+    });
+  });
+
+  test("private locations join the divisor of days without runs, not the run verdicts", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "ams,fra,iad,syd,gru,hkg" });
+      await attachPrivateLocations(tx, m.id, 2);
+      const id = String(m.id);
+      const res = await getMonitorUptimeHistory({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([
+          { monitorId: id, day: "2026-11-01", ok: 800, degraded: 0, error: 0 },
+          { monitorId: id, day: "2026-11-02", ok: 792, degraded: 0, error: 8 },
+          { monitorId: id, day: "2026-11-03", ok: 800, degraded: 0, error: 0 },
+        ]),
+        quorumPipes: quorumPipes({
+          http: () =>
+            Promise.resolve({
+              data: [
+                {
+                  monitorId: id,
+                  day: "2026-11-03 00:00:00",
+                  errorRegions: 3,
+                  degradedOrErrorRegions: 3,
+                  runs: 4,
+                },
+              ],
+            }),
+        }),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.checksPerRun).toBe(8);
+      const [fallback, privateFailures, withRuns] = res.days.map((d) =>
+        tallyDay(d, res.checksPerRun),
+      );
+      expect(fallback).toMatchObject({ ok: 100, total: 100 });
+      expect(privateFailures).toMatchObject({ error: 1, total: 100 });
+      expect(withRuns).toMatchObject({ error: 4, total: 4 });
+    });
+  });
+
+  test("a single private location counts runs one check each, without a histogram fetch", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "" });
+      await attachPrivateLocations(tx, m.id, 1);
+      let quorumCalls = 0;
+      const res = await getMonitorUptimeHistory({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([
+          {
+            monitorId: String(m.id),
+            day: "2026-11-02",
+            ok: 140,
+            degraded: 2,
+            error: 3,
+          },
+        ]),
+        quorumPipes: quorumPipes({
+          http: () => {
+            quorumCalls++;
+            return Promise.resolve({ data: [] });
+          },
+        }),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(quorumCalls).toBe(0);
+      expect(res.checksPerRun).toBe(1);
+      expect(tallyDay(res.days[0], res.checksPerRun)).toMatchObject({
+        ok: 140,
+        degraded: 2,
+        error: 3,
+      });
+    });
+  });
+
+  test("several private locations keep per-request counts, without a histogram fetch", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "" });
+      await attachPrivateLocations(tx, m.id, 2);
+      let quorumCalls = 0;
+      const res = await getMonitorUptimeHistory({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([]),
+        quorumPipes: quorumPipes({
+          http: () => {
+            quorumCalls++;
+            return Promise.resolve({ data: [] });
+          },
+        }),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(quorumCalls).toBe(0);
+      expect(res.checksPerRun).toBe(null);
     });
   });
 });

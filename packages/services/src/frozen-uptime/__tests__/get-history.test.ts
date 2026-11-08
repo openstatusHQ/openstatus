@@ -5,6 +5,8 @@ import {
   monitor,
   page,
   pageComponent,
+  privateLocation,
+  privateLocationToMonitors,
   statusReport,
   statusReportsToPageComponents,
   statusReportUpdate,
@@ -109,6 +111,27 @@ function failingPipes(): UptimeFreezePipes {
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 
 let slugCounter = 0;
+
+async function attachPrivateLocations(
+  tx: Tx,
+  monitorId: number,
+  count: number,
+) {
+  for (let i = 0; i < count; i++) {
+    const location = await tx
+      .insert(privateLocation)
+      .values({
+        name: `pl-${i}`,
+        token: `t-${i}-${monitorId}`,
+        workspaceId: teamWorkspaceId,
+      })
+      .returning()
+      .get();
+    await tx
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: location.id, monitorId });
+  }
+}
 
 async function insertPage(
   tx: Tx,
@@ -1383,6 +1406,95 @@ describe("getUptimeHistory with run quorum", () => {
       expect(res.rows[0].unit).toBe("requests");
     });
   });
+
+  test("private locations join the divisor of days without runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      await attachPrivateLocations(tx, testMonitor.id, 2);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          {
+            monitorId: String(testMonitor.id),
+            day: today,
+            ok: 800,
+            degraded: 0,
+            error: 0,
+          },
+        ]),
+        quorumPipes: quorumPipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.rows[0].unit).toBe("runs");
+      expect(res.rows[0].months[key(0)]).toMatchObject({
+        ok: 100,
+        degraded: 0,
+        error: 0,
+      });
+    });
+  });
+
+  test.each([
+    [1, "runs"],
+    [2, "requests"],
+  ] as const)(
+    "a monitor with only %i private location(s) counts %s, without a histogram fetch",
+    async (locations, unit) => {
+      await withTestTransaction(async (tx) => {
+        const ctx = { ...userCtx, db: tx };
+        const testMonitor = await insertMonitor(tx, { regions: "" });
+        await attachPrivateLocations(tx, testMonitor.id, locations);
+        const testPage = await insertPage(tx, {
+          configuration: { value: "runs" },
+        });
+        await insertComponent(tx, {
+          pageId: testPage.id,
+          monitorId: testMonitor.id,
+        });
+        let quorumCalls = 0;
+        const none = () => {
+          quorumCalls++;
+          return Promise.resolve({ data: [] });
+        };
+
+        const res = await getUptimeHistory({
+          ctx,
+          input: { pageId: testPage.id },
+          pipes: makePipes([
+            {
+              monitorId: String(testMonitor.id),
+              day: today,
+              ok: 140,
+              degraded: 2,
+              error: 3,
+            },
+          ]),
+          quorumPipes: {
+            http: none,
+            tcp: none,
+            dns: none,
+            icmp: none,
+            grpc: none,
+          },
+          now,
+          sleep: noSleep,
+        });
+
+        expect(quorumCalls).toBe(0);
+        expect(res.rows[0].unit).toBe(unit);
+        expect(res.rows[0].months[key(0)]).toMatchObject({
+          ok: 140,
+          degraded: 2,
+          error: 3,
+        });
+      });
+    },
+  );
 
   test("a legacy flat frozen month still reads, converted into runs", async () => {
     await withTestTransaction(async (tx) => {

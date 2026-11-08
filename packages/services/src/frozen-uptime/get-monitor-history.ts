@@ -11,12 +11,13 @@ import { ForbiddenError, NotFoundError } from "../errors";
 import { monthRange } from "./compute";
 import { fetchLiveDays } from "./live";
 import {
+  checksPerRun,
   FREEZE_CUTOFF_MS,
+  privateLocationCounts,
   type UptimeFreezePipes,
   uptimeFreezePipes,
   type UptimeQuorumPipes,
   uptimeQuorumPipes,
-  uptimeRegionCount,
 } from "./run";
 import { GetMonitorUptimeHistoryInput } from "./schemas";
 
@@ -25,8 +26,8 @@ type MonitorUptimeHistoryResult = {
   days: FrozenMonitorUptimeDay[];
   /** live counts failed to load, so the current month may be missing */
   partial: boolean;
-  /** pass to `tallyDay`: runs when set, region checks when null */
-  regionCount: number | null;
+  /** pass to `tallyDay`: runs when set, requests when null */
+  checksPerRun: number | null;
 };
 
 /**
@@ -60,7 +61,7 @@ export async function getMonitorUptimeHistory(args: {
   });
   if (!_monitor) throw new NotFoundError("monitor", input.monitorId);
 
-  const [frozenRows, live] = await Promise.all([
+  const [frozenRows, live, privateCounts] = await Promise.all([
     db
       .select({
         month: frozenMonitorUptime.month,
@@ -80,6 +81,7 @@ export async function getMonitorUptimeHistory(args: {
       quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(ctx.tb ?? defaultTb),
       sleep: args.sleep,
     }),
+    privateLocationCounts(db, [_monitor.id]),
   ]);
 
   const byDay = new Map<string, FrozenMonitorUptimeDay>();
@@ -103,6 +105,6 @@ export async function getMonitorUptimeHistory(args: {
   return {
     days: [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1)),
     partial: live.failedMonitorIds.size > 0,
-    regionCount: uptimeRegionCount(_monitor),
+    checksPerRun: checksPerRun(_monitor, privateCounts.get(_monitor.id) ?? 0),
   };
 }

@@ -644,18 +644,18 @@ describe("generateMonitor", () => {
   });
 
   test("a single request or run is singular", () => {
-    const one = (regionCount: number | null) =>
+    const one = (checksPerRun: number | null) =>
       generateMonitor(
         {
           ...monitor,
           data: {
             ...monitor.data,
             uptime: {
-              regionCount,
+              checksPerRun,
               data: [
                 {
                   interval: new Date(),
-                  requests: { ok: regionCount ?? 1, degraded: 0, error: 0 },
+                  requests: { ok: checksPerRun ?? 1, degraded: 0, error: 0 },
                 },
               ],
             },
@@ -676,7 +676,7 @@ describe("generateMonitor", () => {
         data: {
           ...monitor.data,
           uptime: {
-            regionCount: 6,
+            checksPerRun: 6,
             data: [
               {
                 interval: new Date(),
@@ -704,7 +704,7 @@ describe("generateMonitor", () => {
         data: {
           ...monitor.data,
           uptime: {
-            regionCount: 6,
+            checksPerRun: 6,
             data: [
               {
                 interval: new Date(),
@@ -731,7 +731,7 @@ describe("generateMonitor", () => {
         data: {
           ...monitor.data,
           uptime: {
-            regionCount: 6,
+            checksPerRun: 6,
             data: [
               {
                 interval: new Date(),

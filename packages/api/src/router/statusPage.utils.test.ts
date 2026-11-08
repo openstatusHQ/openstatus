@@ -115,7 +115,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0, 2)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -140,7 +140,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -163,7 +163,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -188,7 +188,7 @@ describe("setDataByType", () => {
       const events = [createMaintenance(1, 0, 2)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -205,7 +205,7 @@ describe("setDataByType", () => {
       const events = [createReport(1, 0, 2)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -222,7 +222,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -239,7 +239,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -256,7 +256,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -277,7 +277,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -294,7 +294,7 @@ describe("setDataByType", () => {
       const events = [createReport(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -311,7 +311,7 @@ describe("setDataByType", () => {
       const events = [createMaintenance(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -332,7 +332,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -347,7 +347,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -364,7 +364,7 @@ describe("setDataByType", () => {
       const events = [createReport(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "manual",
@@ -381,7 +381,7 @@ describe("setDataByType", () => {
       const events = [createMaintenance(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "manual",
@@ -398,7 +398,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "manual",
@@ -414,7 +414,7 @@ describe("setDataByType", () => {
       const events = [createReport(1, 0), createMaintenance(2, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "manual",
@@ -431,7 +431,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -455,7 +455,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -470,7 +470,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -487,7 +487,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -508,7 +508,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -531,7 +531,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0, 1.5)]; // 1.5 hours = 1h 30m
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -549,7 +549,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0, 1)]; // 1 hour downtime
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -567,7 +567,7 @@ describe("setDataByType", () => {
       const events = [createMaintenance(1, 0, 2)]; // 2 hours maintenance
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -584,7 +584,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -602,7 +602,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "dominant",
@@ -621,7 +621,7 @@ describe("setDataByType", () => {
       const events = [createReport(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "manual",
@@ -638,7 +638,7 @@ describe("setDataByType", () => {
       const events = [createIncident(1, 0)];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "manual",
@@ -661,7 +661,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -684,7 +684,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -707,7 +707,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -733,7 +733,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -753,7 +753,7 @@ describe("setDataByType", () => {
       const events: Event[] = [];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -777,7 +777,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "duration",
@@ -810,7 +810,7 @@ describe("setDataByType", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data,
         cardType: "requests",
@@ -882,7 +882,7 @@ describe("getUptime", () => {
         createStatusData(i, i === 0 || i === 9 ? 1 : 0, 0, 0),
       );
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events: [createIncident(1, 5, 24)],
         barType: "absolute",
@@ -897,7 +897,7 @@ describe("getUptime", () => {
         createStatusData(i, i === 2 ? 1 : 0, 0, 0),
       );
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events: [createIncident(1, 1, 24)],
         barType: "absolute",
@@ -914,7 +914,7 @@ describe("getUptime", () => {
       from.setUTCHours(6);
       const to = new Date(from.getTime() + 12 * 60 * 60 * 1000);
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events: [
           {
@@ -938,7 +938,7 @@ describe("getUptime", () => {
       const data = Array.from({ length: 45 }, (_, i) => createStatusData(i));
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data,
           events: [],
           barType: "dominant",
@@ -957,7 +957,7 @@ describe("getUptime", () => {
       const events = [createReport(1, 0, 24)]; // 1 day downtime
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "manual",
@@ -976,7 +976,7 @@ describe("getUptime", () => {
       const events = [createIncident(1, 0, 24)]; // Should be ignored
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "manual",
@@ -1007,7 +1007,7 @@ describe("getUptime", () => {
       });
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "manual",
@@ -1039,7 +1039,7 @@ describe("getUptime", () => {
       ];
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "manual",
@@ -1061,7 +1061,7 @@ describe("getUptime", () => {
       const events = [createIncident(1, 0, 24)]; // 1 day downtime
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "absolute",
@@ -1079,7 +1079,7 @@ describe("getUptime", () => {
       const events = [createReport(2, 0, 24)]; // Should be ignored
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "absolute",
@@ -1099,7 +1099,7 @@ describe("getUptime", () => {
       const events: Event[] = [];
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "absolute",
@@ -1115,7 +1115,7 @@ describe("getUptime", () => {
       const events: Event[] = [];
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "absolute",
@@ -1130,7 +1130,7 @@ describe("getUptime", () => {
       const events: Event[] = [];
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "absolute",
@@ -1145,7 +1145,7 @@ describe("getUptime", () => {
       const events: Event[] = [];
 
       const uptime = getUptime({
-        regionCount: null,
+        checksPerRun: null,
         data,
         events,
         barType: "absolute",
@@ -1535,7 +1535,7 @@ describe("componentImpacts", () => {
       const events = [createLegacyEvent(1, day, hoursAfter(day, 24))];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1552,7 +1552,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1569,7 +1569,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1590,7 +1590,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1607,7 +1607,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1635,7 +1635,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1663,7 +1663,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1691,7 +1691,7 @@ describe("componentImpacts", () => {
           events,
           barType: "manual",
           cardType: "manual",
-          regionCount: null,
+          checksPerRun: null,
         }),
       ).toBe("50%");
     });
@@ -1703,7 +1703,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1726,7 +1726,7 @@ describe("componentImpacts", () => {
           events,
           barType: "manual",
           cardType: "manual",
-          regionCount: null,
+          checksPerRun: null,
         }),
       ).toBe("25%");
     });
@@ -1742,7 +1742,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1760,7 +1760,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: dayData,
           events,
           barType: "manual",
@@ -1794,7 +1794,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1811,7 +1811,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1832,7 +1832,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1850,7 +1850,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1868,7 +1868,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1886,7 +1886,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1913,7 +1913,7 @@ describe("componentImpacts", () => {
       // pre-fix the day-wide probe weight stacked on the incident: 10.5h/48h
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events: [incident],
           barType: "absolute",
@@ -1925,7 +1925,7 @@ describe("componentImpacts", () => {
     it("public monitor: failed checks without an incident do not count", () => {
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events: [],
           barType: "absolute",
@@ -1937,7 +1937,7 @@ describe("componentImpacts", () => {
     it("private-only monitor: failed checks count since probes never open incidents", () => {
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events: [],
           barType: "absolute",
@@ -1951,7 +1951,7 @@ describe("componentImpacts", () => {
       const fullDay = { ...incident, from: day2, to: hoursAfter(day2, 24) };
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events: [fullDay],
           barType: "absolute",
@@ -1967,7 +1967,7 @@ describe("componentImpacts", () => {
       // 6h probe (day 2) + 12h incident (day 1) = 18h / 48h
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events: [other],
           barType: "absolute",
@@ -1986,7 +1986,7 @@ describe("componentImpacts", () => {
       ];
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events,
           barType: "absolute",
@@ -1999,7 +1999,7 @@ describe("componentImpacts", () => {
     it("private-only monitor: degraded checks count as up", () => {
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: [createStatusData(2, 18, 6, 0), createStatusData(1, 24)],
           events: [],
           barType: "absolute",
@@ -2012,7 +2012,7 @@ describe("componentImpacts", () => {
     it("private-only monitor: a day without checks adds no downtime", () => {
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: [createStatusData(2, 0, 0, 0), createStatusData(1, 24)],
           events: [],
           barType: "absolute",
@@ -2026,7 +2026,7 @@ describe("componentImpacts", () => {
       for (const privateLocationOnly of [true, false]) {
         expect(
           getUptime({
-            regionCount: null,
+            checksPerRun: null,
             data: twoDayData,
             events: [],
             barType: "absolute",
@@ -2040,7 +2040,7 @@ describe("componentImpacts", () => {
     it("flag is ignored in manual mode: reports only", () => {
       expect(
         getUptime({
-          regionCount: null,
+          checksPerRun: null,
           data: twoDayData,
           events: [incident],
           barType: "manual",
@@ -2215,7 +2215,7 @@ describe("componentImpacts", () => {
       events: Parameters<typeof setDataByType>[0]["events"],
     ) {
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data: dayData,
         cardType: "manual",
@@ -2252,7 +2252,7 @@ describe("componentImpacts", () => {
 
     it("carries the day's worst impact for the hover card label", () => {
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events: [
           createImpactEvent(1, day, hoursAfter(day, 24), [
             { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
@@ -2268,7 +2268,7 @@ describe("componentImpacts", () => {
 
     it("legacy report day carries no impact (generic label)", () => {
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events: [createLegacyEvent(1, day, hoursAfter(day, 24))],
         data: dayData,
         cardType: "manual",
@@ -2307,7 +2307,7 @@ describe("componentImpacts", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data: dayData,
         cardType: "requests",
@@ -2337,7 +2337,7 @@ describe("componentImpacts", () => {
       ];
 
       const result = setDataByType({
-        regionCount: null,
+        checksPerRun: null,
         events,
         data: dayData,
         cardType: "requests",

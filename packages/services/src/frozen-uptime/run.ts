@@ -1,8 +1,17 @@
-import { and, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
+import {
+  and,
+  countDistinct,
+  db as defaultDb,
+  eq,
+  inArray,
+  isNull,
+} from "@openstatus/db";
 import {
   frozenMonitorUptime,
   type MonitorJobType,
   monitor,
+  privateLocation,
+  privateLocationToMonitors,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
@@ -82,13 +91,49 @@ export type UptimeQuorumJobType = Exclude<
 
 export type UptimeQuorumPipes = Record<UptimeQuorumJobType, QuorumPipeFn>;
 
-/** Cloud region count runs are judged against: the monitor's uptime unit is runs. Null counts per region. */
-export function uptimeRegionCount(monitor: {
-  jobType: string;
-  regions: string;
-}): number | null {
+/**
+ * Checks one run makes, cloud and private: the divisor that turns a day's
+ * `requests` into runs. Null keeps the monitor counting per request.
+ */
+export function checksPerRun(
+  monitor: { jobType: string; regions: string },
+  privateLocationCount: number,
+): number | null {
   if (JOB_TYPES_WITHOUT_QUORUM.some((t) => t === monitor.jobType)) return null;
-  return quorumRegionCount(monitor.regions);
+  const cloud = quorumRegionCount(monitor.regions);
+  if (cloud !== null) return cloud + privateLocationCount;
+  // several private checks of one run share no run key to group them by
+  return privateLocationCount === 1 ? 1 : null;
+}
+
+/** monitorId → attached private locations, as the private checker loads them. */
+export async function privateLocationCounts(
+  db: DB,
+  monitorIds: number[],
+): Promise<Map<number, number>> {
+  if (monitorIds.length === 0) return new Map();
+  const rows = await db
+    .select({
+      monitorId: privateLocationToMonitors.monitorId,
+      count: countDistinct(privateLocationToMonitors.privateLocationId),
+    })
+    .from(privateLocationToMonitors)
+    .innerJoin(
+      privateLocation,
+      eq(privateLocation.id, privateLocationToMonitors.privateLocationId),
+    )
+    .where(
+      and(
+        inArray(privateLocationToMonitors.monitorId, monitorIds),
+        isNull(privateLocationToMonitors.deletedAt),
+      ),
+    )
+    .groupBy(privateLocationToMonitors.monitorId);
+  const out = new Map<number, number>();
+  for (const row of rows) {
+    if (row.monitorId !== null) out.set(row.monitorId, row.count);
+  }
+  return out;
 }
 
 export function uptimeQuorumPipes(tb: OSTinybird): UptimeQuorumPipes {

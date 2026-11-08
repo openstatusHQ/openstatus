@@ -11,14 +11,17 @@ import type { OSTinybird } from "@openstatus/tinybird";
 import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
 import { monthRange } from "./compute";
-import { type QuorumHistogramRow, runsByDay } from "./quorum";
+import {
+  type QuorumHistogramRow,
+  quorumRegionCount,
+  runsByDay,
+} from "./quorum";
 import {
   type ChunkFailure,
   fetchChunked,
   groupByMonitorId,
   hasQuorumPipe,
   type UptimeQuorumJobType,
-  uptimeRegionCount,
 } from "./run";
 
 export type QuorumBackfillPipeFn = (params: {
@@ -122,8 +125,10 @@ export async function backfillFrozenRuns(args: {
     regionCount: number;
   }[] = [];
   for (const row of rows) {
-    const regionCount = uptimeRegionCount(row);
-    if (regionCount === null || !hasQuorumPipe(args.pipes, row.jobType)) {
+    const regionCount = hasQuorumPipe(args.pipes, row.jobType)
+      ? quorumRegionCount(row.regions)
+      : null;
+    if (regionCount === null) {
       result.noPopulation.push(row.monitorId);
       continue;
     }

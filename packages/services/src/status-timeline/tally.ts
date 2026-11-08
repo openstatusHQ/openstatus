@@ -4,7 +4,7 @@ export type Counts = { ok: number; degraded: number; error: number };
 export type DayCounts = { requests: Counts; runs?: Counts };
 
 /**
- * Runs when the monitor has a quorum `regionCount`, else region checks.
+ * Runs when the monitor has a `checksPerRun`, else region checks.
  * Converted days may be fractional: show counts through `roundCount`.
  */
 export type DayTally = {
@@ -22,13 +22,13 @@ export function meetsQuorum(affected: number, total: number): boolean {
 }
 
 // a day without run verdicts keeps its ratio, expressed in run equivalents
-function dayCounts(day: DayCounts, regionCount: number | null): Counts {
-  if (regionCount === null || regionCount <= 0) return day.requests;
+function dayCounts(day: DayCounts, checksPerRun: number | null): Counts {
+  if (checksPerRun === null || checksPerRun <= 0) return day.requests;
   if (day.runs) return day.runs;
   return {
-    ok: day.requests.ok / regionCount,
-    degraded: day.requests.degraded / regionCount,
-    error: day.requests.error / regionCount,
+    ok: day.requests.ok / checksPerRun,
+    degraded: day.requests.degraded / checksPerRun,
+    error: day.requests.error / checksPerRun,
   };
 }
 
@@ -54,22 +54,25 @@ export function tallyCounts({ ok, degraded, error }: Counts): DayTally {
 }
 
 /**
- * `regionCount` is the monitor's quorum population: every day is counted in
- * runs, from `runs` or else `requests / regionCount`. `null` counts `requests`.
+ * With `checksPerRun` (cloud and private checks one run makes) every day is
+ * counted in runs, from `runs` or else `requests / checksPerRun`. `null` counts `requests`.
  */
-export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
-  return tallyCounts(dayCounts(day, regionCount));
+export function tallyDay(
+  day: DayCounts,
+  checksPerRun: number | null,
+): DayTally {
+  return tallyCounts(dayCounts(day, checksPerRun));
 }
 
 /** Sums `tallyDay` over days or buckets of one monitor. */
 export function tallyBuckets(
   days: DayCounts[],
-  regionCount: number | null,
+  checksPerRun: number | null,
 ): { up: number; total: number } {
   let up = 0;
   let total = 0;
   for (const day of days) {
-    const tally = tallyDay(day, regionCount);
+    const tally = tallyDay(day, checksPerRun);
     up += tally.up;
     total += tally.total;
   }
@@ -97,11 +100,11 @@ export function shownCounts(tally: DayTally): {
 /** Shown counts over buckets: sums of each bucket's shown counts, so they match a per-bucket chart. */
 export function shownBuckets(
   days: DayCounts[],
-  regionCount: number | null,
+  checksPerRun: number | null,
 ): Counts {
   const sum = { ok: 0, degraded: 0, error: 0 };
   for (const day of days) {
-    const { ok, degraded, error } = shownCounts(tallyDay(day, regionCount));
+    const { ok, degraded, error } = shownCounts(tallyDay(day, checksPerRun));
     sum.ok += ok;
     sum.degraded += degraded;
     sum.error += error;
@@ -112,8 +115,8 @@ export function shownBuckets(
 /** Shown total over buckets, see `shownBuckets`. */
 export function shownTotal(
   days: DayCounts[],
-  regionCount: number | null,
+  checksPerRun: number | null,
 ): number {
-  const { ok, degraded, error } = shownBuckets(days, regionCount);
+  const { ok, degraded, error } = shownBuckets(days, checksPerRun);
   return ok + degraded + error;
 }

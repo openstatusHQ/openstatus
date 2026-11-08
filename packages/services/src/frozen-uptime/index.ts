@@ -35,13 +35,14 @@ export {
   type UptimeQuorumIntervalPipes,
   type UptimeQuorumJobType,
   type UptimeQuorumPipes,
+  checksPerRun,
   fetchFreezeCounts,
   fetchQuorumHistograms,
+  privateLocationCounts,
   runUptimeFreeze,
   uptimeFreezePipes,
   uptimeQuorumIntervalPipes,
   uptimeQuorumPipes,
-  uptimeRegionCount,
 } from "./run";
 export { FreezeMonitorMonthInput } from "./schemas";
 export {
