@@ -1,4 +1,5 @@
 import type { FrozenMonitorUptimeQuorum } from "@openstatus/db/src/schema";
+import { uniqueRegions } from "@openstatus/utils";
 
 type QuorumCountRow = {
   private: boolean;
@@ -20,14 +21,10 @@ export type QuorumPopulation = { private: boolean; regionCount: number };
 // mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
 // private-only monitors get none: private checks carry no shared run key
 export function quorumPopulation(regions: string): QuorumPopulation | null {
-  // writes do not reject duplicates; a run counts each region once
-  const cloud = new Set(
-    regions
-      .split(",")
-      .map((r) => r.trim())
-      .filter((r) => r.length > 0),
-  );
-  return cloud.size > 0 ? { private: false, regionCount: cloud.size } : null;
+  const cloud = uniqueRegions(regions);
+  return cloud.length > 0
+    ? { private: false, regionCount: cloud.length }
+    : null;
 }
 
 export function quorumPopulations(

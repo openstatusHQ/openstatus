@@ -42,7 +42,13 @@ export function quorumGuardSql(params: QuorumParams): SQL {
  * hand — currently just the drift sweep, which scans every monitor at once.
  */
 export function csvRegionCountSql(): SQL {
-  return sql`(length(${monitor.regions}) - length(replace(${monitor.regions}, ',', '')) + 1)`;
+  // distinct, like uniqueRegions: stored regions may repeat a code
+  return sql`(WITH RECURSIVE split(rest, region) AS (
+      SELECT ${monitor.regions} || ',', ''
+      UNION ALL
+      SELECT substr(rest, instr(rest, ',') + 1), substr(rest, 1, instr(rest, ',') - 1)
+      FROM split WHERE rest <> ''
+    ) SELECT count(DISTINCT region) FROM split WHERE region <> '')`;
 }
 
 export function csvRegionMemberSql(region: SQL): SQL {
