@@ -71,7 +71,6 @@ export async function getMonitorUptimeHistory(args: {
       )
       .orderBy(asc(frozenMonitorUptime.month)),
     fetchLiveDays({
-      db,
       monitors: [_monitor],
       pipes: args.pipes ?? uptimeFreezePipes(ctx.tb ?? defaultTb),
       quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(ctx.tb ?? defaultTb),

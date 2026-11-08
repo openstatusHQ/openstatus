@@ -652,11 +652,11 @@ describe("runUptimeFreeze with run quorum", () => {
     });
   });
 
-  test("private-only http monitor is judged on its attached private locations", async () => {
+  test("private-only monitor freezes on per-region counts without a histogram fetch", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: "" });
       const id = String(m.id);
-      for (const name of ["a", "b", "gone"]) {
+      for (const name of ["a", "b"]) {
         const location = await tx
           .insert(privateLocation)
           .values({
@@ -669,7 +669,6 @@ describe("runUptimeFreeze with run quorum", () => {
         await tx.insert(privateLocationToMonitors).values({
           privateLocationId: location.id,
           monitorId: m.id,
-          deletedAt: name === "gone" ? new Date() : null,
         });
       }
       const quorum = histogramPipe([
@@ -683,7 +682,7 @@ describe("runUptimeFreeze with run quorum", () => {
         },
       ]);
 
-      await runUptimeFreeze({
+      const res = await runUptimeFreeze({
         pipes: makePipes({ http: countsPipe(m.id) }),
         quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
         now,
@@ -692,10 +691,14 @@ describe("runUptimeFreeze with run quorum", () => {
         sleep: noSleep,
       });
 
+      expect(res.frozen).toBe(1);
+      expect(quorum.calls).toEqual([]);
       const days = await frozenDays(tx, m.id);
-      expect(days?.[4].quorum).toEqual({
-        regionCount: 2,
-        buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 10 }],
+      expect(days?.[4]).toEqual({
+        day: "2026-06-05",
+        ok: 800,
+        degraded: 0,
+        error: 64,
       });
     });
   });
@@ -724,27 +727,6 @@ describe("runUptimeFreeze with run quorum", () => {
       ]);
       expect(failures.map((f) => f.jobType)).toEqual(["http"]);
       expect(await frozenDays(tx, m.id)).toBeUndefined();
-    });
-  });
-
-  test("no configured regions freezes without quorum and skips the histogram fetch", async () => {
-    await withTestTransaction(async (tx) => {
-      const m = await insertTestMonitor(tx, { regions: "" });
-      const quorum = histogramPipe([]);
-
-      const res = await runUptimeFreeze({
-        pipes: makePipes({ http: countsPipe(m.id) }),
-        quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
-        now,
-        db: tx,
-        monitorIds: [m.id],
-        sleep: noSleep,
-      });
-
-      expect(res.frozen).toBe(1);
-      expect(quorum.calls).toEqual([]);
-      const days = await frozenDays(tx, m.id);
-      expect(days?.some((d) => d.quorum)).toBe(false);
     });
   });
 

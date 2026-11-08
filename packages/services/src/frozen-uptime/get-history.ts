@@ -264,7 +264,6 @@ export async function getUptimeHistory(args: {
     ),
   );
   const liveReads = fetchLiveDays({
-    db,
     monitors: [...monitorsById.values()],
     pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
     quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(defaultTb),

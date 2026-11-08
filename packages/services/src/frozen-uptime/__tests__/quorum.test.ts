@@ -21,16 +21,15 @@ function row(overrides: Partial<QuorumHistogramRow>): QuorumHistogramRow {
 
 describe("quorumPopulation", () => {
   test("cloud regions decide when the monitor has any", () => {
-    expect(
-      quorumPopulation({ regions: "ams,fra,iad", privateLocationCount: 2 }),
-    ).toEqual({ private: false, regionCount: 3 });
+    expect(quorumPopulation("ams,fra,iad")).toEqual({
+      private: false,
+      regionCount: 3,
+    });
   });
 
-  test("private-only monitors decide on their private locations", () => {
-    expect(quorumPopulation({ regions: "", privateLocationCount: 2 })).toEqual({
-      private: true,
-      regionCount: 2,
-    });
+  test("private-only monitors get no population", () => {
+    expect(quorumPopulation("")).toBeNull();
+    expect(quorumPopulation(" , ")).toBeNull();
   });
 });
 
@@ -49,14 +48,6 @@ describe("quorumByDay", () => {
       regionCount: 6,
       buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 144 }],
     });
-
-    const privateOnly = quorumByDay(
-      [row({ errorRegions: 1, runs: 5 }), row({ private: true, runs: 7 })],
-      { private: true, regionCount: 2 },
-    );
-    expect(privateOnly.get("2026-11-02")?.buckets).toEqual([
-      { errorRegions: 0, notOkRegions: 0, runs: 7 },
-    ]);
   });
 
   test("sums runs of identical buckets and splits days", () => {

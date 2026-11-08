@@ -1,7 +1,6 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
-import type { DB } from "../context";
-import { loadQuorumPopulations, quorumByDay } from "./quorum";
+import { quorumByDay, quorumPopulations } from "./quorum";
 import {
   fetchFreezeCounts,
   fetchQuorumHistograms,
@@ -19,7 +18,6 @@ import {
  * its days on per-region counts.
  */
 export async function fetchLiveDays(args: {
-  db: DB;
   monitors: { id: number; jobType: string; regions: string }[];
   pipes: UptimeFreezePipes;
   quorumPipes: UptimeQuorumPipes;
@@ -35,12 +33,9 @@ export async function fetchLiveDays(args: {
     monitorIdsByJobType.set(m.jobType, ids);
   }
 
-  const populations = await loadQuorumPopulations({
-    db: args.db,
-    monitors: args.monitors.filter((m) =>
-      hasQuorumPipe(args.quorumPipes, m.jobType),
-    ),
-  });
+  const populations = quorumPopulations(
+    args.monitors.filter((m) => hasQuorumPipe(args.quorumPipes, m.jobType)),
+  );
 
   const [counts, quorum] = await Promise.all([
     fetchFreezeCounts({

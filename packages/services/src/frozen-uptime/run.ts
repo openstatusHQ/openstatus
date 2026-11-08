@@ -17,10 +17,10 @@ import {
 } from "./compute";
 import { freezeMonitorMonth } from "./freeze";
 import {
-  loadQuorumPopulations,
   quorumByDay,
   type QuorumHistogramRow,
   type QuorumPopulation,
+  quorumPopulations,
 } from "./quorum";
 
 type PipeFn<Row> = (params: {
@@ -334,10 +334,9 @@ export async function runUptimeFreeze(args: {
     onChunkFailure: args.onChunkFailure,
   });
 
-  const populations = await loadQuorumPopulations({
-    db,
-    monitors: pending.filter((m) => hasQuorumPipe(args.quorumPipes, m.jobType)),
-  });
+  const populations = quorumPopulations(
+    pending.filter((m) => hasQuorumPipe(args.quorumPipes, m.jobType)),
+  );
   const quorumIdsByJobType = monitorIdsWithQuorum(pending, populations);
   // a month frozen without its histogram can never get one: a failed quorum
   // chunk skips the monitor exactly like a failed counts chunk

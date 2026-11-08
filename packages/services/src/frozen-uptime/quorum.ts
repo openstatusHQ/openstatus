@@ -1,10 +1,4 @@
-import { and, count, inArray, isNull } from "@openstatus/db";
-import {
-  type FrozenMonitorUptimeQuorum,
-  privateLocationToMonitors,
-} from "@openstatus/db/src/schema";
-
-import type { DB } from "../context";
+import type { FrozenMonitorUptimeQuorum } from "@openstatus/db/src/schema";
 
 export type QuorumHistogramRow = {
   monitorId: string;
@@ -18,61 +12,24 @@ export type QuorumHistogramRow = {
 /** The regions a run is judged against: the same set incidents open on. */
 export type QuorumPopulation = { private: boolean; regionCount: number };
 
-// mirrors apps/workflows/src/checker: monitors with cloud regions decide on
-// them alone (transition.ts); private locations decide only for private-only
-// monitors (private-location.ts)
-export function quorumPopulation(args: {
-  regions: string;
-  privateLocationCount: number;
-}): QuorumPopulation {
-  const cloud = args.regions.split(",").filter((r) => r.trim().length > 0);
+// mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
+// private-only monitors get none: private checks carry no shared run key
+export function quorumPopulation(regions: string): QuorumPopulation | null {
+  const cloud = regions.split(",").filter((r) => r.trim().length > 0);
   return cloud.length > 0
     ? { private: false, regionCount: cloud.length }
-    : { private: true, regionCount: args.privateLocationCount };
+    : null;
 }
 
-const IN_CHUNK = 500;
-
-export async function loadQuorumPopulations(args: {
-  db: DB;
-  monitors: { id: number; regions: string }[];
-}): Promise<Map<number, QuorumPopulation>> {
-  const privateOnlyIds = args.monitors
-    .filter((m) => quorumPopulation({ ...m, privateLocationCount: 0 }).private)
-    .map((m) => m.id);
-
-  const locations = new Map<number, number>();
-  for (let i = 0; i < privateOnlyIds.length; i += IN_CHUNK) {
-    const rows = await args.db
-      .select({
-        monitorId: privateLocationToMonitors.monitorId,
-        count: count(),
-      })
-      .from(privateLocationToMonitors)
-      .where(
-        and(
-          inArray(
-            privateLocationToMonitors.monitorId,
-            privateOnlyIds.slice(i, i + IN_CHUNK),
-          ),
-          isNull(privateLocationToMonitors.deletedAt),
-        ),
-      )
-      .groupBy(privateLocationToMonitors.monitorId);
-    for (const row of rows) {
-      if (row.monitorId !== null) locations.set(row.monitorId, row.count);
-    }
+export function quorumPopulations(
+  monitors: { id: number; regions: string }[],
+): Map<number, QuorumPopulation> {
+  const out = new Map<number, QuorumPopulation>();
+  for (const m of monitors) {
+    const population = quorumPopulation(m.regions);
+    if (population) out.set(m.id, population);
   }
-
-  return new Map(
-    args.monitors.map((m) => [
-      m.id,
-      quorumPopulation({
-        regions: m.regions,
-        privateLocationCount: locations.get(m.id) ?? 0,
-      }),
-    ]),
-  );
+  return out;
 }
 
 /**
