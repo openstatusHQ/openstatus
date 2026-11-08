@@ -369,18 +369,29 @@ describe("getMonitorUptimeHistory with run quorum", () => {
     });
   });
 
-  test("a failed histogram fetch marks the result partial", async () => {
+  test("a failed histogram fetch falls back to per-region counts", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx);
       const res = await getMonitorUptimeHistory({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
-        pipes: pipes([]),
+        pipes: pipes([
+          {
+            monitorId: String(m.id),
+            day: "2026-11-02",
+            ok: 9,
+            degraded: 0,
+            error: 1,
+          },
+        ]),
         quorumPipes: { http: () => Promise.reject(new Error("tb down")) },
         now,
         sleep: noSleep,
       });
-      expect(res.partial).toBe(true);
+      expect(res.partial).toBe(false);
+      expect(res.days).toEqual([
+        { day: "2026-11-02", ok: 9, degraded: 0, error: 1 },
+      ]);
     });
   });
 });

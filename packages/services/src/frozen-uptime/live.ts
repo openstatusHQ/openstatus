@@ -15,7 +15,8 @@ import {
 /**
  * Live per-day counts from the 45d pipes, keyed monitorId → day, with the run
  * histogram attached where the job type has one. Never throws: a monitor whose
- * counts or histogram failed lands in `failedMonitorIds`.
+ * counts failed lands in `failedMonitorIds`; a failed histogram only leaves
+ * its days on per-region counts.
  */
 export async function fetchLiveDays(args: {
   db: DB;
@@ -81,9 +82,6 @@ export async function fetchLiveDays(args: {
 
   return {
     days,
-    failedMonitorIds: new Set([
-      ...counts.failedMonitorIds,
-      ...quorum.failedMonitorIds,
-    ]),
+    failedMonitorIds: counts.failedMonitorIds,
   };
 }

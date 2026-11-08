@@ -1048,7 +1048,7 @@ describe("getUptimeHistory with run quorum", () => {
     });
   });
 
-  test("a failed histogram fetch leaves the live month without data", async () => {
+  test("a failed histogram fetch falls back to per-region counts", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const { testMonitor, testPage } = await setup(tx);
@@ -1070,7 +1070,7 @@ describe("getUptimeHistory with run quorum", () => {
         sleep: noSleep,
       });
 
-      expect(res.rows[0].months[key(0)]).toBe(null);
+      expect(res.rows[0].months[key(0)]).toBe(83.333);
       expect(res.quorumSince).toBe(null);
     });
   });
