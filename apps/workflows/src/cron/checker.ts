@@ -4,7 +4,6 @@ import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
 import {
   and,
-  db as primaryDb,
   eq,
   gte,
   inArray,
@@ -164,10 +163,9 @@ export async function sendCheckerTasks(
     return { success: 0, failed: 0 };
   }
 
-  // From primary, not the replica: the checker only reports a region whose
-  // result differs from this status, so a stale value leaves the region stuck.
+  // Batch fetch all monitor statuses in a single query (N+1 fix)
   const monitorIds = monitors.data.map((m) => m.id);
-  const rawStatuses = await primaryDb
+  const rawStatuses = await db
     .select()
     .from(monitorStatusTable)
     .where(inArray(monitorStatusTable.monitorId, monitorIds))
