@@ -1,6 +1,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { format } from "date-fns";
 
+import { formatDurationShort, formatNumber } from "@/lib/formatter";
+
 // single client-side source for the window set; the server keeps its own
 // WINDOWS tuple (services can't be imported into client bundles)
 export const HISTORY_WINDOWS = [6, 12, 24] as const;
@@ -31,6 +33,30 @@ export type MonthCell = {
 export type HistoryRow =
   RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
 export type HistoryEvent = HistoryRow["events"][number];
+export type HistoryMonth = NonNullable<HistoryRow["months"][string]>;
+export type HistoryUnit = HistoryRow["unit"];
+
+/** "8,600 of 8,640 runs up", "40 down"; time months read "2h 32m down of 30d". */
+export function monthCountLines(
+  month: HistoryMonth,
+  unit: HistoryUnit,
+): string[] {
+  const down = month.total - month.up;
+  if (unit === "time") {
+    const total = formatDurationShort(month.total);
+    return [
+      // under half a second formats as "0s"
+      down >= 500
+        ? `${formatDurationShort(down)} down of ${total}`
+        : `No downtime in ${total}`,
+    ];
+  }
+  const noun = month.total === 1 ? unit.slice(0, -1) : unit;
+  return [
+    `${formatNumber(month.up)} of ${formatNumber(month.total)} ${noun} up`,
+    ...(down > 0 ? [`${formatNumber(down)} down`] : []),
+  ];
+}
 
 // safe because HistoryRow.rolling keys are exactly the string forms of HistoryWindow
 export function windowKey(window: HistoryWindow): keyof HistoryRow["rolling"] {

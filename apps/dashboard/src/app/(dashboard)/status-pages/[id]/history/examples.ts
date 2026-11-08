@@ -43,6 +43,9 @@ const COMPONENTS: { id: number; name: string; type: "monitor" | "static" }[] = [
 
 const round = (value: number) => Math.round(value * 1_000) / 1_000;
 
+// a month of one-minute requests, or of milliseconds for static components
+const MONTH_TOTAL = { requests: 30 * 1_440, time: 30 * 86_400_000 } as const;
+
 function average(values: (number | null)[]): number | null {
   const present = values.filter((v): v is number => v !== null);
   if (present.length === 0) return null;
@@ -63,9 +66,27 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
       return round(99.9 + rng() * 0.1);
     });
 
+    const unit = component.type === "monitor" ? "requests" : "time";
+    const total = MONTH_TOTAL[unit];
+
     return {
       component: { ...component, monitorId: null },
-      months: Object.fromEntries(months.map((key, i) => [key, values[i]])),
+      unit,
+      months: Object.fromEntries(
+        months.map((key, i) => {
+          const percentage = values[i];
+          return [
+            key,
+            percentage === null
+              ? null
+              : {
+                  percentage,
+                  up: Math.round((total * percentage) / 100),
+                  total,
+                },
+          ];
+        }),
+      ),
       rolling: Object.fromEntries(
         WINDOWS.map((w) => [w, average(values.slice(-Number(w)))]),
       ) as HistoryRow["rolling"],
@@ -89,7 +110,6 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
     createdAt: new Date(
       Date.UTC(now.getUTCFullYear() - 2, now.getUTCMonth(), 1),
     ),
-    quorumSince: null,
     summary,
     rows,
   };

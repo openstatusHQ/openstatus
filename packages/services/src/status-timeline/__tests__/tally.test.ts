@@ -4,6 +4,7 @@ import {
   meetsQuorum,
   roundCount,
   shownCounts,
+  shownBuckets,
   shownTotal,
   tallyBuckets,
   tallyDay,
@@ -166,5 +167,14 @@ describe("shownTotal", () => {
     expect(shownTotal(buckets, 6)).toBe(chart);
     expect(chart).toBe(721);
     expect(roundCount(tallyBuckets(buckets, 6).total)).toBe(720);
+  });
+});
+
+describe("shownBuckets", () => {
+  test("up and total are sums of each bucket's shown counts", () => {
+    const buckets = [r(1437, 0, 3), r(1440, 0, 0), r(1434, 2, 4)];
+    // 239.5 + 240 + 239.33 up, 0.5 + 0 + 0.67 down
+    expect(shownBuckets(buckets, 6)).toEqual({ up: 719, total: 721 });
+    expect(shownBuckets(buckets, null)).toEqual({ up: 4313, total: 4320 });
   });
 });

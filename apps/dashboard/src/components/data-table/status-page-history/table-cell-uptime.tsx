@@ -11,8 +11,11 @@ import { Fragment } from "react";
 
 import {
   type HistoryEvent,
+  type HistoryMonth,
+  type HistoryUnit,
   type UptimeStatus,
   cellFromPercentage,
+  monthCountLines,
 } from "@/data/status-page-history";
 import { cn } from "@/lib/utils";
 
@@ -87,20 +90,22 @@ function EventItem({ event }: { event: HistoryEvent }) {
 }
 
 export function TableCellUptime({
-  percentage,
+  month,
+  unit,
   isCurrent,
   monthLabel,
   events = [],
   monitorId = null,
 }: {
-  percentage: number | null;
+  month: HistoryMonth | null;
+  unit: HistoryUnit;
   isCurrent?: boolean;
   monthLabel: string;
   events?: HistoryEvent[];
   monitorId?: number | null;
 }) {
   const { id: pageId } = useParams<{ id: string }>();
-  const cell = cellFromPercentage(percentage, isCurrent);
+  const cell = cellFromPercentage(month?.percentage ?? null, isCurrent);
 
   return (
     <HoverCard openDelay={50} closeDelay={50}>
@@ -122,23 +127,33 @@ export function TableCellUptime({
         <div className="flex items-center justify-between gap-4 font-medium">
           <span>{monthLabel}</span>
         </div>
-        {cell.percentage === null ? (
+        {month === null || cell.percentage === null ? (
           <div className="text-muted-foreground">
             No data recorded for {monthLabel}.
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "size-2.5 shrink-0 rounded-xs",
-                indicatorStyles[cell.status],
-              )}
-            />
-            <span>Uptime</span>
-            <span className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
-              {cell.percentage.toFixed(3)}
-              <span className="text-muted-foreground font-normal">%</span>
-            </span>
+          <div className="grid gap-0.5">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "size-2.5 shrink-0 rounded-xs",
+                  indicatorStyles[cell.status],
+                )}
+              />
+              <span>Uptime</span>
+              <span className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
+                {cell.percentage.toFixed(3)}
+                <span className="text-muted-foreground font-normal">%</span>
+              </span>
+            </div>
+            {monthCountLines(month, unit).map((line) => (
+              <div
+                key={line}
+                className="text-muted-foreground pl-4.5 tabular-nums"
+              >
+                {line}
+              </div>
+            ))}
           </div>
         )}
         {events.length > 0 && (

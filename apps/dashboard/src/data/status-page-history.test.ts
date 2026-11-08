@@ -6,6 +6,7 @@ import {
   eventsForMonth,
   getColumnVisibility,
   monthKeyToFullLabel,
+  monthCountLines,
   monthKeyToLabel,
   parseWindow,
 } from "./status-page-history";
@@ -98,5 +99,44 @@ describe("getColumnVisibility", () => {
       "8": false,
       "9": false,
     });
+  });
+});
+
+describe("monthCountLines", () => {
+  const DAY = 86_400_000;
+
+  it("shows up of total runs and the down count", () => {
+    expect(
+      monthCountLines({ percentage: 99.537, up: 8600, total: 8640 }, "runs"),
+    ).toEqual(["8,600 of 8,640 runs up", "40 down"]);
+  });
+
+  it("drops the down line without failures", () => {
+    expect(
+      monthCountLines({ percentage: 100, up: 51840, total: 51840 }, "requests"),
+    ).toEqual(["51,840 of 51,840 requests up"]);
+  });
+
+  it("uses the singular for a single run", () => {
+    expect(monthCountLines({ percentage: 0, up: 0, total: 1 }, "runs")).toEqual(
+      ["0 of 1 run up", "1 down"],
+    );
+  });
+
+  it("formats time months as downtime of the covered span", () => {
+    const total = 30 * DAY;
+    const down = (2 * 60 + 32) * 60_000;
+    expect(
+      monthCountLines({ percentage: 99.648, up: total - down, total }, "time"),
+    ).toEqual(["2h 32m down of 30d"]);
+  });
+
+  it("says no downtime when a time month has none", () => {
+    expect(
+      monthCountLines(
+        { percentage: 100, up: 7.5 * DAY, total: 7.5 * DAY },
+        "time",
+      ),
+    ).toEqual(["No downtime in 7d 12h"]);
   });
 });

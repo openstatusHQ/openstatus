@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   exampleUptimeCounts,
   formatUptime,
-  quorumNote,
-  quorumSince,
   uptimeYears,
 } from "./uptime-history.client";
 
@@ -204,40 +202,6 @@ describe("uptimeYears in runs", () => {
       now,
     );
     expect(year.uptime).toBe(585 / 600);
-  });
-});
-
-describe("quorumSince", () => {
-  const runs = { ok: 1, degraded: 0, error: 0 };
-  const days = [
-    { day: "2026-10-31", requests: { ok: 1, degraded: 0, error: 0 } },
-    { day: "2026-11-01", requests: { ok: 1, degraded: 0, error: 0 }, runs },
-  ];
-
-  it("is the first day with runs, only for monitors counted in runs", () => {
-    expect(quorumSince(days, 6)).toEqual(new Date(2026, 10, 1));
-    expect(quorumSince(days, null)).toBeNull();
-  });
-
-  it("returns the earliest runs day when days arrive out of order", () => {
-    const unordered = [
-      { day: "2026-11-03", requests: { ok: 1, degraded: 0, error: 0 }, runs },
-      ...days,
-      { day: "2026-10-28", requests: { ok: 1, degraded: 0, error: 0 }, runs },
-    ];
-    expect(quorumSince(unordered, 6)).toEqual(new Date(2026, 9, 28));
-  });
-
-  it("the note says how earlier runs are counted", () => {
-    expect(quorumNote(new Date(2026, 10, 1))).toBe(
-      "Since November 2026, a run covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions.",
-    );
-  });
-
-  it("the page note limits run counting to monitors with cloud regions", () => {
-    expect(quorumNote(new Date(2026, 10, 1), "page")).toBe(
-      "Since November 2026, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions. Monitors with only private locations count each region's result.",
-    );
   });
 });
 

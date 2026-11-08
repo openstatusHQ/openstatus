@@ -43,7 +43,7 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
     const isCurrent = offset === 1;
     return {
       id: String(offset),
-      accessorFn: (row: HistoryRow) => row.months[key],
+      accessorFn: (row: HistoryRow) => row.months[key]?.percentage ?? null,
       header: () => (
         <span className={cn("block text-center", isCurrent && "text-info")}>
           {monthKeyToLabel(key)}
@@ -51,7 +51,8 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
       ),
       cell: ({ row }: { row: { original: HistoryRow } }) => (
         <TableCellUptime
-          percentage={row.original.months[key] ?? null}
+          month={row.original.months[key] ?? null}
+          unit={row.original.unit}
           isCurrent={isCurrent}
           monthLabel={monthKeyToFullLabel(key)}
           events={eventsForMonth(row.original.events, key)}

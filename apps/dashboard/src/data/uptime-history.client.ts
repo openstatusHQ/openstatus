@@ -3,7 +3,7 @@ import {
   shownCounts,
   tallyDay,
 } from "@openstatus/services/status-timeline/tally";
-import { eachDayOfInterval, endOfYear, format, startOfYear } from "date-fns";
+import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
 
 import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
@@ -62,35 +62,6 @@ function dayMark(
       ].join(" · "),
     ],
   };
-}
-
-/** First UTC day with run verdicts, as a local-midnight date. */
-export function quorumSince(
-  counts: CheckCounts[],
-  regionCount: number | null,
-): Date | null {
-  if (regionCount === null) return null;
-  const first = counts
-    .filter((d) => d.runs)
-    .reduce<string | null>(
-      (min, d) => (!min || d.day < min ? d.day : min),
-      null,
-    );
-  if (!first) return null;
-  const [y, m, d] = first.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-/** `page` qualifies the note for a page that can mix cloud and private-only monitors. */
-export function quorumNote(
-  since: Date,
-  scope: "monitor" | "page" = "monitor",
-): string {
-  const month = format(since, "MMMM yyyy");
-  if (scope === "page") {
-    return `Since ${month}, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions. Monitors with only private locations count each region's result.`;
-  }
-  return `Since ${month}, a run covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier runs are region results divided by the number of regions.`;
 }
 
 /** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */

@@ -18,6 +18,7 @@ import {
   getEvents,
   heartbeatCoverageStart,
   reportsOnlyDowntimeMs,
+  shownBuckets,
   tallyBuckets,
   tallyDay,
 } from "../status-timeline";
@@ -46,7 +47,26 @@ function windowKey(w: (typeof WINDOWS)[number]): HistoryWindowKey {
 // native-unit numerators kept alongside the percentage so rolling windows
 // stay additive (region checks for requests mode, runs for runs mode, milliseconds for event math);
 // averaging monthly percentages would weigh a 2-day month like a full one
-type MonthValue = { percentage: number; up: number; total: number } | null;
+type MonthValue = {
+  percentage: number;
+  up: number;
+  total: number;
+  shown: { up: number; total: number };
+} | null;
+
+type HistoryUnit = "runs" | "requests" | "time";
+
+/** `up` and `total` as shown: whole runs or requests, or milliseconds for `time`. */
+type UptimeHistoryMonth = { percentage: number; up: number; total: number };
+
+function timeMonth(up: number, total: number): MonthValue {
+  return {
+    percentage: floorPct(up / total),
+    up,
+    total,
+    shown: { up: Math.round(up), total: Math.round(total) },
+  };
+}
 
 type UptimeHistoryEvent = Pick<
   Event,
@@ -61,8 +81,10 @@ type UptimeHistoryRow = {
     /** for event links, null for static components */
     monitorId: number | null;
   };
-  /** "YYYY-MM" → percentage; null = no data recorded, NEVER "down" */
-  months: Record<string, number | null>;
+  /** unit of every month's `up` and `total` */
+  unit: HistoryUnit;
+  /** "YYYY-MM" → month; null = no data recorded, NEVER "down" */
+  months: Record<string, UptimeHistoryMonth | null>;
   rolling: Record<HistoryWindowKey, number | null>;
   /** component events in the window; clients bucket per month by overlap */
   events: UptimeHistoryEvent[];
@@ -73,8 +95,6 @@ type UptimeHistoryResult = {
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
   createdAt: Date | null;
-  /** runs mode only: "YYYY-MM" of the first month whose monitor counts are runs judged on quorum */
-  quorumSince: string | null;
   summary: Record<HistoryWindowKey, { uptime: number | null; reports: number }>;
   rows: UptimeHistoryRow[];
 };
@@ -100,7 +120,12 @@ function requestsMonth(
   if (!days) return null;
   const { up, total } = tallyBuckets(days, regionCount);
   if (total === 0) return null;
-  return { percentage: floorPct(up / total), up, total };
+  return {
+    percentage: floorPct(up / total),
+    up,
+    total,
+    shown: shownBuckets(days, regionCount),
+  };
 }
 
 function durationMonth(
@@ -124,8 +149,7 @@ function durationMonth(
     now: nowMs,
   };
   const downtime = durationDowntimeMs(events, window, segments);
-  const up = Math.max(0, totalMs - downtime);
-  return { percentage: floorPct(up / totalMs), up, total: totalMs };
+  return timeMonth(Math.max(0, totalMs - downtime), totalMs);
 }
 
 function eventOnlyMonth(
@@ -145,8 +169,7 @@ function eventOnlyMonth(
     end: clampedEnd,
     now: nowMs,
   });
-  const up = Math.max(0, total - downtime);
-  return { percentage: floorPct(up / total), up, total };
+  return timeMonth(Math.max(0, total - downtime), total);
 }
 
 // heartbeat months span from the first signal, not just days with pings: a
@@ -168,8 +191,7 @@ function heartbeatMonth(
     ? reportsOnlyDowntimeMs(events, window)
     : durationDowntimeMs(events, window);
   const total = to - from;
-  const up = Math.max(0, total - downtime);
-  return { percentage: floorPct(up / total), up, total };
+  return timeMonth(Math.max(0, total - downtime), total);
 }
 
 /**
@@ -312,16 +334,6 @@ export async function getUptimeHistory(args: {
       : [],
   );
 
-  const quorumSince = countsRuns
-    ? (months.find((key) =>
-        monitorIds.some(
-          (id) =>
-            regionCounts.get(id) != null &&
-            countsFor(id, key)?.some((d) => d.runs),
-        ),
-      ) ?? null)
-    : null;
-
   const pastDays = HISTORY_MONTHS * 31 + 7;
   const rows: UptimeHistoryRow[] = components.map((c) => {
     const events = getEvents({
@@ -346,6 +358,18 @@ export async function getUptimeHistory(args: {
           )
         : null;
 
+    const regionCount =
+      c.monitorId !== null ? (regionCounts.get(c.monitorId) ?? null) : null;
+    const unit: HistoryUnit =
+      heartbeatId === null &&
+      c.type === "monitor" &&
+      c.monitorId !== null &&
+      (mode === "requests" || mode === "runs")
+        ? regionCount !== null
+          ? "runs"
+          : "requests"
+        : "time";
+
     const values = new Map<string, MonthValue>();
     for (const key of months) {
       let value: MonthValue = null;
@@ -360,7 +384,7 @@ export async function getUptimeHistory(args: {
       } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
         if (mode === "requests" || mode === "runs") {
-          value = requestsMonth(days, regionCounts.get(c.monitorId) ?? null);
+          value = requestsMonth(days, regionCount);
         } else if (mode === "duration") {
           value = durationMonth(days, events, nowMs);
         } else {
@@ -401,8 +425,21 @@ export async function getUptimeHistory(args: {
         type: c.type === "static" ? ("static" as const) : ("monitor" as const),
         monitorId: c.monitorId,
       },
+      unit,
       months: Object.fromEntries(
-        months.map((k) => [k, values.get(k)?.percentage ?? null]),
+        months.map((k) => {
+          const v = values.get(k);
+          return [
+            k,
+            v
+              ? {
+                  percentage: v.percentage,
+                  up: v.shown.up,
+                  total: v.shown.total,
+                }
+              : null,
+          ];
+        }),
       ),
       rolling,
       events: events.map((e) => ({
@@ -454,7 +491,6 @@ export async function getUptimeHistory(args: {
     mode,
     months,
     createdAt: _page.createdAt,
-    quorumSince,
     summary,
     rows,
   };

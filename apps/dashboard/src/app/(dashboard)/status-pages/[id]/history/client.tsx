@@ -58,7 +58,6 @@ import {
   parseWindow,
   windowKey,
 } from "@/data/status-page-history";
-import { quorumNote } from "@/data/uptime-history.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { buildExampleHistory } from "./examples";
@@ -107,10 +106,6 @@ export function Client() {
   if (!history) return null;
 
   const summary = history.summary[windowKey(window)];
-  const quorumSince =
-    history.mode === "runs" && history.quorumSince
-      ? new Date(`${history.quorumSince}-01T00:00:00`)
-      : null;
   const hasAnyData = history.rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
   );
@@ -238,11 +233,6 @@ export function Client() {
             />
           </div>
         )}
-        {quorumSince ? (
-          <p className="text-muted-foreground text-sm">
-            {quorumNote(quorumSince, "page")}
-          </p>
-        ) : null}
         <HintCollapsible>
           <HintCollapsibleTrigger>
             <HintCollapsibleTitle>
@@ -289,8 +279,9 @@ export function Client() {
                   . For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud
                   regions, a run covers all of the monitor&apos;s cloud regions
                   and counts as down when at least half of them fail; other
-                  monitors count each region&apos;s result. Degraded runs still
-                  count as up.
+                  monitors count each region&apos;s result. Days without run
+                  data are derived from region results divided by the number of
+                  regions. Degraded runs still count as up.
                 </span>
               </li>
               <li>

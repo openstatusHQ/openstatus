@@ -94,15 +94,25 @@ export function shownCounts(tally: DayTally): {
   };
 }
 
-/** Shown total over buckets: the sum of each bucket's shown counts, so it matches a per-bucket chart. */
+/** Shown up and total over buckets: sums of each bucket's shown counts, so they match a per-bucket chart. */
+export function shownBuckets(
+  days: DayCounts[],
+  regionCount: number | null,
+): { up: number; total: number } {
+  let up = 0;
+  let total = 0;
+  for (const day of days) {
+    const { ok, degraded, error } = shownCounts(tallyDay(day, regionCount));
+    up += ok + degraded;
+    total += ok + degraded + error;
+  }
+  return { up, total };
+}
+
+/** Shown total over buckets, see `shownBuckets`. */
 export function shownTotal(
   days: DayCounts[],
   regionCount: number | null,
 ): number {
-  let total = 0;
-  for (const day of days) {
-    const { ok, degraded, error } = shownCounts(tallyDay(day, regionCount));
-    total += ok + degraded + error;
-  }
-  return total;
+  return shownBuckets(days, regionCount).total;
 }

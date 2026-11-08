@@ -71,7 +71,7 @@ In simple terms: `uptime = (successful + degraded runs) / total runs`
 
 This applies to HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions. Monitors that run only from [private locations](/docs/concept/private-locations), and heartbeat, UDP and SSL monitors, keep counting each region's result, as with number of requests.
 
-Days from before run data was recorded are converted from region results, so they count in runs too.
+Days without run data are converted from region results, divided by the number of regions, so they count in runs too.
 
 Like with time per status, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 
