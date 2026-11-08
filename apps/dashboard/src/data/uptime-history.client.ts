@@ -1,6 +1,6 @@
 import {
   type DayCounts,
-  roundCount,
+  shownCounts,
   tallyDay,
 } from "@openstatus/services/status-timeline/tally";
 import { eachDayOfInterval, endOfYear, format, startOfYear } from "date-fns";
@@ -36,21 +36,21 @@ function dayMark(
   // a day without checks is no data, never downtime
   if (!tally || tally.total === 0)
     return { hatched: true, lines: ["No checks"] };
-  const { total, degraded, error } = tally;
-  const failed = error / total;
+  const { total } = tally;
+  const failed = tally.error / total;
+  const shown = shownCounts(tally);
   return {
     // degraded counts as up, like the uptime math
     scale: "failure",
-    level: error === 0 ? 0 : failed < 0.01 ? 1 : failed <= 0.05 ? 2 : 3,
+    level:
+      tally.status !== "error" ? 0 : failed < 0.01 ? 1 : failed <= 0.05 ? 2 : 3,
     lines: [
-      `${formatUptime((total - error) / total)} uptime`,
+      `${formatUptime((total - tally.error) / total)} uptime`,
       [
-        `${formatNumber(roundCount(total))} checks`,
-        ...(roundCount(error) > 0
-          ? [`${formatNumber(roundCount(error))} failed`]
-          : []),
-        ...(roundCount(degraded) > 0
-          ? [`${formatNumber(roundCount(degraded))} degraded`]
+        `${formatNumber(shown.ok + shown.degraded + shown.error)} checks`,
+        ...(shown.error > 0 ? [`${formatNumber(shown.error)} failed`] : []),
+        ...(shown.degraded > 0
+          ? [`${formatNumber(shown.degraded)} degraded`]
           : []),
       ].join(" · "),
     ],
@@ -114,7 +114,7 @@ export function uptimeYears(
         const tally = tallyDay(c, regionCount);
         up += tally.up;
         total += tally.total;
-        if (tally.error > 0) failedDays++;
+        if (tally.status === "error") failedDays++;
       }
       return { date, ...dayMark(c, regionCount) };
     });

@@ -60,10 +60,12 @@ export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
     ok,
     degraded,
     error,
+    // rounded like the shown counts, so a red day always shows an error count;
+    // quorum and per-region days are integers already
     status:
-      error > 0
+      roundCount(error) > 0
         ? "error"
-        : degraded > 0
+        : roundCount(degraded) > 0
           ? "degraded"
           : total > 0
             ? "success"
@@ -89,4 +91,30 @@ export function tallyBuckets(
 /** Counts are shown as integers; converted days carry fractions. */
 export function roundCount(count: number): number {
   return Math.round(count);
+}
+
+/** One day's or bucket's counts as shown. */
+export function shownCounts(tally: DayTally): {
+  ok: number;
+  degraded: number;
+  error: number;
+} {
+  return {
+    ok: roundCount(tally.ok),
+    degraded: roundCount(tally.degraded),
+    error: roundCount(tally.error),
+  };
+}
+
+/** Shown total over buckets: the sum of each bucket's shown counts, so it matches a per-bucket chart. */
+export function shownTotal(
+  days: DayCounts[],
+  regionCount: number | null,
+): number {
+  let total = 0;
+  for (const day of days) {
+    const { ok, degraded, error } = shownCounts(tallyDay(day, regionCount));
+    total += ok + degraded + error;
+  }
+  return total;
 }

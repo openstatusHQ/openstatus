@@ -370,6 +370,20 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
     expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
   });
 
+  test("a converted day with one flaky region check is green, like under the run rule", async () => {
+    const day = yesterdayIn("UTC");
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, day, { ok: 863, error: 1 })],
+    }));
+    const { slug, componentId } = await pageWith(ids.cloud);
+
+    const component = await uptime(slug, componentId);
+    const bar = component.data.find((d) => d.day === day);
+
+    expect(bar?.bar).toEqual([{ status: "success", height: 100 }]);
+    expect(bar?.card).toEqual([{ status: "success", value: "144 checks" }]);
+  });
+
   test("a failed histogram converts per-region counts to runs and the page still renders", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({

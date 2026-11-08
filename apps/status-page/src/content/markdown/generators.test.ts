@@ -709,8 +709,29 @@ describe("generateMonitor", () => {
       BASE,
     );
     expect(converted).toContain(
-      "| Uptime (last 7 days) | 90.625% · 48 checks |",
+      "| Uptime (last 7 days) | 90.625% · 49 checks |",
     );
+  });
+
+  test("the checks total is the sum of the chart's rounded buckets", () => {
+    const converted = generateMonitor(
+      {
+        ...monitor,
+        data: {
+          ...monitor.data,
+          uptime: {
+            regionCount: 6,
+            data: [
+              { interval: new Date(), success: 1437, degraded: 0, error: 3 },
+              { interval: new Date(), success: 1440, degraded: 0, error: 0 },
+              { interval: new Date(), success: 1434, degraded: 2, error: 4 },
+            ],
+          },
+        },
+      } as unknown as MonitorDetail,
+      BASE,
+    );
+    expect(converted).toContain("· 721 checks |");
   });
 
   test("percentile table", () => {

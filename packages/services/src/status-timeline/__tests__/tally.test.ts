@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
 
-import { meetsQuorum, roundCount, tallyBuckets, tallyDay } from "../tally";
+import {
+  meetsQuorum,
+  roundCount,
+  shownCounts,
+  shownTotal,
+  tallyBuckets,
+  tallyDay,
+} from "../tally";
 
 function quorumDay(
   buckets: Array<{ errorRegions: number; notOkRegions: number; runs: number }>,
@@ -138,6 +145,22 @@ describe("run equivalents", () => {
     expect(roundCount(day.degraded)).toBe(0);
   });
 
+  test("a converted day's status follows its shown counts, crossing at half a run", () => {
+    const one = tallyDay({ ok: 599, degraded: 0, error: 1 }, 6);
+    expect(shownCounts(one)).toEqual({ ok: 100, degraded: 0, error: 0 });
+    expect(one.status).toBe("success");
+    expect(one.up / one.total).toBe(599 / 600);
+    expect(tallyDay({ ok: 598, degraded: 0, error: 2 }, 6).status).toBe(
+      "success",
+    );
+    const three = tallyDay({ ok: 597, degraded: 0, error: 3 }, 6);
+    expect(shownCounts(three).error).toBe(1);
+    expect(three.status).toBe("error");
+    expect(tallyDay({ ok: 597, degraded: 3, error: 0 }, 6).status).toBe(
+      "degraded",
+    );
+  });
+
   test("a frozen histogram keeps its own region count", () => {
     expect(
       tallyDay(
@@ -202,5 +225,21 @@ describe("tallyBuckets", () => {
       ),
     ).toEqual({ up: 195, total: 200 });
     expect(tallyBuckets([], null)).toEqual({ up: 0, total: 0 });
+  });
+});
+
+describe("shownTotal", () => {
+  test("equals the sum of each bucket's shown counts on a converted window", () => {
+    const buckets = [
+      { ok: 1437, degraded: 0, error: 3 },
+      { ok: 1440, degraded: 0, error: 0 },
+      { ok: 1434, degraded: 2, error: 4 },
+    ];
+    const chart = buckets
+      .map((b) => shownCounts(tallyDay(b, 6)))
+      .reduce((sum, c) => sum + c.ok + c.degraded + c.error, 0);
+    expect(shownTotal(buckets, 6)).toBe(chart);
+    expect(chart).toBe(721);
+    expect(roundCount(tallyBuckets(buckets, 6).total)).toBe(720);
   });
 });

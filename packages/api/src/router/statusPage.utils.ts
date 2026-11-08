@@ -8,7 +8,6 @@ import {
 import {
   clipToCoverage,
   type CoverageSegment,
-  type DayTally,
   type DayWindow,
   downtimeIntervals,
   type Event,
@@ -27,7 +26,7 @@ import {
   reportEventDayImpact,
   reportEventDayStatus,
   reportsOnlyDowntimeMs,
-  roundCount,
+  shownCounts,
   tallyBuckets,
   tallyDay,
 } from "@openstatus/services/status-timeline";
@@ -172,6 +171,8 @@ function getTotalEventsDurationMs(events: Event[], day: DayWindow): number {
   return Math.min(total, end - startOfDay);
 }
 
+type ShownCounts = ReturnType<typeof shownCounts>;
+
 export function setDataByType({
   events,
   data,
@@ -284,7 +285,7 @@ export function setDataByType({
   }
 
   function createStatusSegments(
-    dayData: DayTally,
+    dayData: ShownCounts,
   ): Array<{ status: "success" | "degraded" | "error"; count: number }> {
     return [
       { status: "success" as const, count: dayData.ok },
@@ -332,7 +333,7 @@ export function setDataByType({
     return [{ status: eventStatus ?? "empty", value: "" }];
   }
 
-  function createRequestEntries(dayData: DayTally): Array<{
+  function createRequestEntries(dayData: ShownCounts): Array<{
     status: "success" | "degraded" | "error" | "info";
     count: number;
   }> {
@@ -344,7 +345,7 @@ export function setDataByType({
     ];
   }
 
-  function createDurationEntries(dayData: DayTally): Array<{
+  function createDurationEntries(dayData: ShownCounts): Array<{
     status: "success" | "degraded" | "error" | "info";
     count: number;
   }> {
@@ -365,10 +366,6 @@ export function setDataByType({
     unit: "checks" | "reqs",
   ): UptimeData["card"] {
     return entries
-      .map((entry) => ({
-        status: entry.status,
-        count: roundCount(entry.count),
-      }))
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
@@ -457,8 +454,10 @@ export function setDataByType({
     // TODO: transform into a new Map<type, number>();
     let barData: UptimeData["bar"];
 
-    const counts = tallyDay(dayData, regionCount);
-    const { total, status: dataStatus } = counts;
+    const tally = tallyDay(dayData, regionCount);
+    const { total, status: dataStatus } = tally;
+    const counts = shownCounts(tally);
+    const shownTotal = counts.ok + counts.degraded + counts.error;
 
     switch (barType) {
       case "absolute":
@@ -491,7 +490,7 @@ export function setDataByType({
           } else {
             // Multiple segments for absolute view - show proportional distribution of status data
             const statusSegments = createStatusSegments(counts);
-            barData = segmentsToBarData(statusSegments, total);
+            barData = segmentsToBarData(statusSegments, shownTotal);
           }
         }
         break;
@@ -569,7 +568,7 @@ export function setDataByType({
                   maintenances,
                 );
                 const statusMinutes = Math.round(
-                  (entry.count / total) * totalMinutes,
+                  (entry.count / shownTotal) * totalMinutes,
                 );
                 if (statusMinutes === 0) return null;
                 durationMap.set(entry.status, statusMinutes);

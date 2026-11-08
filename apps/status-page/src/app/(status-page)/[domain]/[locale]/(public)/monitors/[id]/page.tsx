@@ -2,7 +2,8 @@
 
 import { Trend } from "@openstatus/icons";
 import {
-  roundCount,
+  shownCounts,
+  shownTotal,
   tallyBuckets,
   tallyDay,
 } from "@openstatus/services/status-timeline/tally";
@@ -141,7 +142,7 @@ export default function Page() {
           error: item.error,
           quorum: item.quorum,
         };
-        const tally = tallyDay(counts, regionCount);
+        const shown = shownCounts(tallyDay(counts, regionCount));
         return {
           timestamp: item.interval.toLocaleString("default", {
             day: "numeric",
@@ -153,9 +154,9 @@ export default function Page() {
           }),
           interval: item.interval,
           counts,
-          success: roundCount(tally.ok),
-          degraded: roundCount(tally.degraded),
-          error: roundCount(tally.error),
+          success: shown.ok,
+          degraded: shown.degraded,
+          error: shown.error,
         };
       });
   }, [monitor?.data.uptime?.data, regionCount, timezone]);
@@ -205,10 +206,16 @@ export default function Page() {
         .sort((a, b) => b.avgLatency - a.avgLatency)[0];
 
       return {
-        totalChecks: formatNumber(roundCount(uptimeStats.total), {
-          notation: "compact",
-          compactDisplay: "short",
-        }).replace("K", "k"),
+        totalChecks: formatNumber(
+          shownTotal(
+            uptimeData.map((item) => item.counts),
+            regionCount,
+          ),
+          {
+            notation: "compact",
+            compactDisplay: "short",
+          },
+        ).replace("K", "k"),
         uptimePercentage:
           uptimeStats.total > 0 ? formatPercentage(uptimePercentage) : "N/A",
         slowestRegion: slowestRegion?.region || "N/A",
