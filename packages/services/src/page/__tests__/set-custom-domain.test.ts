@@ -27,7 +27,7 @@ const vercel: VercelDomainConfig = {
   token: "token",
 };
 
-type Call = { method: string; url: URL };
+type Call = { method: string; url: URL; body?: Record<string, unknown> };
 const originalFetch = globalThis.fetch;
 let calls: Call[] = [];
 
@@ -35,7 +35,11 @@ function mockVercel(handler: (call: Call) => Response) {
   calls = [];
   globalThis.fetch = (input, init) => {
     const request = new Request(input, init);
-    const call = { method: request.method, url: new URL(request.url) };
+    const call = {
+      method: request.method,
+      url: new URL(request.url),
+      body: init?.body ? JSON.parse(String(init.body)) : undefined,
+    };
     calls.push(call);
     return Promise.resolve(handler(call));
   };
@@ -122,8 +126,9 @@ describe("setPageCustomDomain", () => {
 
       mockVercel(({ method }) => (method === "DELETE" ? status(500)() : ok()));
       await setPageCustomDomain({ ctx, input: { id, customDomain: next } });
-      expect(calls.map((c) => c.method)).toEqual(["POST", "DELETE"]);
-      expect(calls[1].url.pathname).toContain(encodeURIComponent(old));
+      // The GET looks for a www companion of the old domain to release with it.
+      expect(calls.map((c) => c.method)).toEqual(["POST", "GET", "DELETE"]);
+      expect(calls[2].url.pathname).toContain(encodeURIComponent(old));
       expect(await storedDomain(tx, id)).toBe(next);
     });
   });
@@ -158,6 +163,79 @@ describe("setPageCustomDomain", () => {
       mockVercel(status(500));
       await setPageCustomDomain({ ctx, input: { id, customDomain: current } });
       expect(await storedDomain(tx, id)).toBe(current);
+    });
+  });
+
+  test("an apex gets a www companion redirecting to it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const apex = domain();
+      const id = await pageWithDomain(tx, teamCtx, "");
+      mockVercel(({ method }) =>
+        method === "GET"
+          ? status(404)()
+          : Response.json({ name: apex, apexName: apex }),
+      );
+      await setPageCustomDomain({ ctx, input: { id, customDomain: apex } });
+      expect(calls.map((c) => c.method)).toEqual(["POST", "GET", "POST"]);
+      expect(calls[2].body).toEqual({
+        name: `www.${apex}`,
+        redirect: apex,
+        redirectStatusCode: 308,
+      });
+      expect(await storedDomain(tx, id)).toBe(apex);
+    });
+  });
+
+  test("a subdomain gets no companion", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const apex = domain();
+      const id = await pageWithDomain(tx, teamCtx, "");
+      mockVercel(() =>
+        Response.json({ name: `status.${apex}`, apexName: apex }),
+      );
+      await setPageCustomDomain({
+        ctx,
+        input: { id, customDomain: `status.${apex}` },
+      });
+      expect(calls.map((c) => c.method)).toEqual(["POST"]);
+    });
+  });
+
+  test("a companion failure does not fail the save", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const apex = domain();
+      const id = await pageWithDomain(tx, teamCtx, "");
+      let posts = 0;
+      mockVercel(({ method }) => {
+        if (method === "GET") return status(404)();
+        return posts++ === 0
+          ? Response.json({ name: apex, apexName: apex })
+          : status(403)();
+      });
+      await setPageCustomDomain({ ctx, input: { id, customDomain: apex } });
+      expect(await storedDomain(tx, id)).toBe(apex);
+    });
+  });
+
+  test("an unchanged save heals a www alias attached without a redirect", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const apex = domain();
+      const id = await pageWithDomain(tx, teamCtx, apex);
+      mockVercel(({ method, url }) => {
+        if (method === "POST") return status(409)();
+        if (method === "GET" && url.pathname.includes(`www.${apex}`)) {
+          return Response.json({ name: `www.${apex}`, apexName: apex });
+        }
+        return Response.json({ name: apex, apexName: apex });
+      });
+      await setPageCustomDomain({ ctx, input: { id, customDomain: apex } });
+      const patch = calls.find((c) => c.method === "PATCH");
+      expect(patch?.url.pathname).toContain(`www.${apex}`);
+      expect(patch?.body).toEqual({ redirect: apex, redirectStatusCode: 308 });
     });
   });
 
@@ -293,7 +371,7 @@ describe("deletePage domain release", () => {
     const id = await committedPage(domain());
     mockVercel(ok);
     await deletePage({ ctx: teamCtx, input: { id } });
-    expect(calls.map((c) => c.method)).toEqual(["DELETE"]);
+    expect(calls.map((c) => c.method)).toEqual(["GET", "DELETE"]);
     expect(await storedDomain(db, id)).toBeUndefined();
   });
 

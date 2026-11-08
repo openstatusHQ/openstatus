@@ -1,5 +1,6 @@
 import { db as defaultDb, ne, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
+import { wwwCounterpart } from "@openstatus/utils";
 import { z } from "zod";
 
 import type { DB, ServiceContext } from "../context";
@@ -102,6 +103,7 @@ const READ_FAILED =
 
 export type ProjectDomain = {
   name: string;
+  apexName?: string;
   redirect?: string | null;
   gitBranch?: string | null;
   verified?: boolean;
@@ -123,25 +125,58 @@ export async function getProjectDomain(
   return response.json();
 }
 
-/** Idempotent: a domain already attached to the project counts as success. */
+function projectDomainsPath(config: VercelDomainConfig) {
+  return `/v9/projects/${config.projectId}/domains?teamId=${config.teamId}`;
+}
+
+async function patchRedirect(
+  config: VercelDomainConfig,
+  domain: string,
+  redirect: string | null,
+) {
+  const response = await syncFetch(config, projectDomainPath(config, domain), {
+    method: "PATCH",
+    body: JSON.stringify({
+      redirect,
+      redirectStatusCode: redirect ? 308 : null,
+    }),
+    failure: ADD_FAILED,
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.warn("Failed to update domain redirect on Vercel:", {
+      domain,
+      error,
+    });
+    throw new InternalServiceError(ADD_FAILED, error);
+  }
+}
+
+/**
+ * Idempotent: a domain already attached to the project counts as success. A
+ * page's domain must serve the page, so an existing redirect on it is cleared.
+ */
 export async function attachDomain(
   config: VercelDomainConfig | null,
   domain: string,
-): Promise<void> {
-  if (!config) return;
-  const response = await syncFetch(
-    config,
-    `/v9/projects/${config.projectId}/domains?teamId=${config.teamId}`,
-    {
-      method: "POST",
-      body: JSON.stringify({ name: domain }),
-      failure: ADD_FAILED,
-    },
-  );
-  if (response.ok) return;
+): Promise<ProjectDomain | null> {
+  if (!config) return null;
+  const response = await syncFetch(config, projectDomainsPath(config), {
+    method: "POST",
+    body: JSON.stringify({ name: domain }),
+    failure: ADD_FAILED,
+  });
+  if (response.ok) return response.json();
 
   const error = await response.json().catch(() => ({}));
-  if (await getProjectDomain(config, domain)) return;
+  const existing = await getProjectDomain(config, domain);
+  if (existing) {
+    if (existing.redirect) {
+      await patchRedirect(config, domain, null);
+      return { ...existing, redirect: null };
+    }
+    return existing;
+  }
   console.warn("Failed to add domain to Vercel:", { domain, error });
   throw toDomainError(domain, error?.error?.code);
 }
@@ -163,8 +198,61 @@ export async function detachDomain(
   throw new InternalServiceError(REMOVE_FAILED);
 }
 
+/**
+ * Vercel serves only the exact hosts attached, so an apex page answers on `www.`
+ * through a companion redirecting to it. A companion another page holds, or one
+ * configured by hand, is left alone.
+ */
+export async function attachWwwCompanion(args: {
+  db: DB;
+  config: VercelDomainConfig | null;
+  domain: ProjectDomain;
+}): Promise<void> {
+  const { config } = args;
+  if (!config) return;
+  const domain = args.domain.name.toLowerCase();
+  const apex = args.domain.apexName?.toLowerCase();
+  if (!apex || domain !== apex) return;
+  const companion = `www.${apex}`;
+  if (await findDomainHolder({ db: args.db, domain: companion })) return;
+
+  const existing = await getProjectDomain(config, companion);
+  if (existing) {
+    if (existing.redirect || existing.gitBranch) return;
+    await patchRedirect(config, companion, domain);
+    return;
+  }
+
+  const response = await syncFetch(config, projectDomainsPath(config), {
+    method: "POST",
+    body: JSON.stringify({
+      name: companion,
+      redirect: domain,
+      redirectStatusCode: 308,
+    }),
+    failure: ADD_FAILED,
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.warn("Failed to add www companion to Vercel:", {
+      domain: companion,
+      error,
+    });
+    throw new InternalServiceError(ADD_FAILED, error);
+  }
+}
+
+async function detachWwwCompanion(config: VercelDomainConfig, domain: string) {
+  const companion = wwwCounterpart(domain);
+  if (!companion) return;
+  const existing = await getProjectDomain(config, companion);
+  if (existing?.redirect?.toLowerCase() !== domain.toLowerCase()) return;
+  await detachDomain(config, companion);
+}
+
 // customDomain has no unique constraint, so another workspace's page may
 // hold the same domain — detaching it would take their status page down.
+// A held www counterpart keeps it too: it is that page's companion.
 // Concurrent deletes of the last two holders can both skip; reconcile catches it.
 // Returns whether the domain was detached.
 export async function detachDomainIfUnused(args: {
@@ -176,11 +264,17 @@ export async function detachDomainIfUnused(args: {
   const config = resolveVercelConfig({ vercel: args.config });
   if (!config) return false;
 
-  const holder = await findDomainHolder({
-    db: args.db ?? defaultDb,
-    domain: args.domain,
-    excludePageId: args.excludePageId,
-  });
+  const db = args.db ?? defaultDb;
+  const counterpart = wwwCounterpart(args.domain);
+  const holder =
+    (await findDomainHolder({
+      db,
+      domain: args.domain,
+      excludePageId: args.excludePageId,
+    })) ??
+    (counterpart
+      ? await findDomainHolder({ db, domain: counterpart })
+      : undefined);
   if (holder) {
     console.warn("Skipping Vercel domain removal, still in use:", {
       domain: args.domain,
@@ -189,6 +283,13 @@ export async function detachDomainIfUnused(args: {
     return false;
   }
 
+  // Companion first: it redirects to the domain, so it must not outlive it.
+  await detachWwwCompanion(config, args.domain).catch((err) =>
+    console.warn("Failed to detach www companion:", {
+      domain: args.domain,
+      error: err,
+    }),
+  );
   await detachDomain(config, args.domain);
   return true;
 }
@@ -281,10 +382,17 @@ export async function reconcileProjectDomains(args: {
     ),
   );
 
+  const isHeldCompanion = (d: string) => {
+    const counterpart = wwwCounterpart(d);
+    return !!counterpart && held.has(counterpart);
+  };
+
   const orphans = domains
     .filter((d) => !isOwnDomain(d))
     .map((d) => d.name.toLowerCase())
-    .filter((d) => !held.has(d) && !redirectTargets.has(d))
+    .filter(
+      (d) => !held.has(d) && !redirectTargets.has(d) && !isHeldCompanion(d),
+    )
     .sort();
   const missing = [...held].filter((d) => !attachedSet.has(d)).sort();
 

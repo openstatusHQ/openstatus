@@ -1,10 +1,13 @@
 import { requireScope } from "../auth";
-import { getReadDb, type ServiceContext } from "../context";
+import { type DB, getReadDb, type ServiceContext } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
 import {
   attachDomain,
+  attachWwwCompanion,
   detachDomainIfUnused,
+  type ProjectDomain,
   resolveVercelConfig,
+  type VercelDomainConfig,
 } from "./domain-sync";
 import { assertCustomDomainAvailable } from "./internal";
 import { getPageCustomDomain } from "./list";
@@ -57,12 +60,14 @@ export async function setPageCustomDomain(args: {
   // because nothing changed, so a Vercel outage must not fail the save.
   if (previous.toLowerCase() === next.toLowerCase()) {
     if (previous) {
-      await attachDomain(config, previous).catch((err) =>
+      const attached = await attachDomain(config, previous).catch((err) => {
         console.warn("Failed to re-attach unchanged domain:", {
           domain: previous,
           error: err,
-        }),
-      );
+        });
+        return null;
+      });
+      await syncCompanion(getReadDb(ctx), config, attached);
     }
     return;
   }
@@ -73,12 +78,14 @@ export async function setPageCustomDomain(args: {
     excludePageId: input.id,
   });
 
-  if (next) await attachDomain(config, next);
+  const attached = next ? await attachDomain(config, next) : null;
 
   await updatePageCustomDomain({
     ctx,
     input: { id: input.id, customDomain: next },
   });
+
+  await syncCompanion(getReadDb(ctx), config, attached);
 
   if (previous) {
     // The row has moved on: a leftover attachment is an orphan reconcile clears.
@@ -94,4 +101,19 @@ export async function setPageCustomDomain(args: {
       }),
     );
   }
+}
+
+// Best-effort: the page's own domain is routed, only its www/apex alias is not.
+async function syncCompanion(
+  db: DB,
+  config: VercelDomainConfig | null,
+  attached: ProjectDomain | null,
+) {
+  if (!attached) return;
+  await attachWwwCompanion({ db, config, domain: attached }).catch((err) =>
+    console.warn("Failed to sync www companion:", {
+      domain: attached.name,
+      error: err,
+    }),
+  );
 }

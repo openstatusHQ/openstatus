@@ -10,6 +10,10 @@ import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { resolveUnresolvedHostAction } from "./lib/proxy/resolve-unresolved-host-action";
+import {
+  canonicalDomainUrl,
+  counterpartHost,
+} from "./lib/proxy/resolve-www-counterpart";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
@@ -90,6 +94,25 @@ export default auth(async (req) => {
 
   // No page for this host/slug — never fall through to the theme explorer.
   if (!validation.success) {
+    // Vercel routes a `www.`/apex alias attached without a redirect here.
+    const counterpart = counterpartHost(initialRoute);
+    if (counterpart) {
+      const canonical = await db
+        .select({ customDomain: page.customDomain })
+        .from(page)
+        .where(sql`lower(${page.customDomain}) = ${counterpart}`)
+        .get();
+      if (canonical?.customDomain) {
+        return NextResponse.redirect(
+          canonicalDomainUrl({
+            customDomain: canonical.customDomain,
+            pathname: url.pathname,
+            search: url.search,
+          }),
+          308,
+        );
+      }
+    }
     return unresolvedHostResponse();
   }
 

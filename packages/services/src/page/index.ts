@@ -7,6 +7,7 @@ export { deletePage } from "./delete";
 export { assertCustomDomainAvailable } from "./internal";
 export {
   attachDomain,
+  attachWwwCompanion,
   detachDomain,
   detachDomainIfUnused,
   getProjectDomain,
