@@ -103,13 +103,13 @@ export function resolveRoute({
   const locale = resolvedLocale ?? defaultLocale;
 
   if (hasLocale) {
-    // Already has locale in path — rewrite path is the pathname as-is
+    const rest = pathnames.slice(3).filter(Boolean).join("/");
     return {
       type,
       prefix,
       locale,
       localeExplicit: true,
-      rewritePath: pathname,
+      rewritePath: `/${pathnames[1]}/${locale}${rest ? `/${rest}` : ""}`,
     };
   }
 

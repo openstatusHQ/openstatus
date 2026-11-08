@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { LocaleSwitcher } from "./locale-switcher";
+import { LocaleSwitcher, resolveLocaleSwitchPath } from "./locale-switcher";
 
 describe("LocaleSwitcher", () => {
   it("renders nothing for a single-locale page", () => {
@@ -18,5 +18,18 @@ describe("LocaleSwitcher", () => {
     expect(
       renderToStaticMarkup(<LocaleSwitcher pageLocales={["en", "fr"]} />),
     ).toContain('data-slot="status-locale-switcher-skeleton"');
+  });
+});
+
+describe("resolveLocaleSwitchPath", () => {
+  it("replaces a lowercase region locale", () => {
+    expect(
+      resolveLocaleSwitchPath({
+        pathname: "/acme/zh-cn/events",
+        domain: "acme",
+        nextLocale: "fr",
+        defaultLocale: "en",
+      }),
+    ).toBe("/acme/fr/events");
   });
 });

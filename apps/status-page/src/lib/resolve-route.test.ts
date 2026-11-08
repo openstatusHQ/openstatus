@@ -636,8 +636,7 @@ describe("resolveRoute", () => {
       });
     });
 
-    test("path routing lowercases the lookup prefix but rewrites the original casing", () => {
-      // The `[locale]` layout then rejects "EN" and renders the 404.
+    test("path routing preserves slug casing and canonicalizes locale casing", () => {
       const result = resolveRoute({
         host: "www.stpg.dev",
         urlHost: "www.stpg.dev",
@@ -648,15 +647,15 @@ describe("resolveRoute", () => {
         prefix: "acme",
         locale: "en",
         localeExplicit: true,
-        rewritePath: "/ACME/EN/events",
+        rewritePath: "/ACME/en/events",
       });
     });
 
-    test("preserves the canonical casing of a region locale", () => {
+    test("canonicalizes a lowercase region locale", () => {
       const result = resolveRoute({
         host: "www.stpg.dev",
         urlHost: "www.stpg.dev",
-        pathname: "/acme/zh-CN/events",
+        pathname: "/acme/zh-cn/events",
       });
       expect(result).toEqual({
         type: "pathname",

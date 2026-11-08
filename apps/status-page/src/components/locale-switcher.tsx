@@ -15,6 +15,44 @@ import {
   locales,
 } from "../i18n/config";
 
+export function resolveLocaleSwitchPath({
+  pathname,
+  domain,
+  nextLocale,
+  defaultLocale,
+}: {
+  pathname: string;
+  domain: string;
+  nextLocale: string;
+  defaultLocale: string;
+}): string {
+  const segments = pathname.split("/");
+
+  // Pathname routing: slug is in the browser URL (e.g., /acme/fr/events)
+  // Hostname routing: slug is NOT in the browser URL (e.g., /fr/events)
+  const isPathnameRouting = segments.includes(domain);
+  const localeIndex = isPathnameRouting ? 2 : 1;
+  const hasLocaleSegment = locales.some(
+    (locale) => locale.toLowerCase() === segments[localeIndex]?.toLowerCase(),
+  );
+
+  // Pathname routing always keeps the locale segment (including default).
+  // Hostname routing omits the default locale from the URL.
+  const omitLocale = nextLocale === defaultLocale && !isPathnameRouting;
+
+  if (omitLocale) {
+    if (hasLocaleSegment) {
+      segments.splice(localeIndex, 1);
+    }
+  } else if (hasLocaleSegment) {
+    segments[localeIndex] = nextLocale;
+  } else {
+    segments.splice(localeIndex, 0, nextLocale);
+  }
+
+  return segments.join("/") || "/";
+}
+
 export function LocaleSwitcher({
   className,
   pageLocales,
@@ -48,35 +86,14 @@ export function LocaleSwitcher({
 
   function onSelectLocale(nextLocale: string) {
     startTransition(() => {
-      // Use the browser pathname — usePathname() returns the rewritten path
-      // which always includes the slug, even for hostname routing.
-      const browserPath = window.location.pathname;
-      const segments = browserPath.split("/");
-      const domain = params.domain as string;
-
-      // Pathname routing: slug is in the browser URL (e.g., /acme/fr/events)
-      // Hostname routing: slug is NOT in the browser URL (e.g., /fr/events)
-      const isPathnameRouting = segments.includes(domain);
-      const localeIndex = isPathnameRouting ? 2 : 1;
-      const hasLocaleSegment = (locales as readonly string[]).includes(
-        segments[localeIndex] as (typeof locales)[number],
+      router.replace(
+        resolveLocaleSwitchPath({
+          pathname: window.location.pathname,
+          domain: params.domain as string,
+          nextLocale,
+          defaultLocale,
+        }),
       );
-
-      // Pathname routing always keeps the locale segment (including default).
-      // Hostname routing omits the default locale from the URL.
-      const omitLocale = nextLocale === defaultLocale && !isPathnameRouting;
-
-      if (omitLocale) {
-        if (hasLocaleSegment) {
-          segments.splice(localeIndex, 1);
-        }
-      } else if (hasLocaleSegment) {
-        segments[localeIndex] = nextLocale;
-      } else {
-        segments.splice(localeIndex, 0, nextLocale);
-      }
-
-      router.replace(segments.join("/") || "/");
     });
   }
 
