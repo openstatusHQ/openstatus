@@ -137,9 +137,10 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 
 | Value | Description |
 |-------|-------------|
-| `DURATION` | Status bars represent response duration |
-| `REQUESTS` | Status bars represent request counts |
-| `MANUAL` | Status bars set manually |
+| `DURATION` | Cards show the time per status; uptime from incidents and status reports |
+| `REQUESTS` | Cards show request counts, one per region per run |
+| `CHECKS` | Cards show check counts, one per run across all regions (HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions; others count per region) |
+| `MANUAL` | Cards show the worst status of the day |
 
 ### PageBarType
 

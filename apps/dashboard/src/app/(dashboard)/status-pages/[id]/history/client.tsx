@@ -287,8 +287,9 @@ export function Client() {
                     (ok + degraded) / total checks
                   </span>
                   , one check per run across all of the monitor&apos;s regions,
-                  down when at least half of them fail. Degraded checks still
-                  count as up.
+                  down when at least half of them fail, for HTTP, TCP, DNS, ICMP
+                  and gRPC monitors with cloud regions; other monitors count
+                  each region&apos;s result. Degraded checks still count as up.
                 </span>
               </li>
               <li>
@@ -317,9 +318,10 @@ export function Client() {
               Heartbeat monitors receive pings, not checks. With{" "}
               {MODE_LABELS.requests}, {MODE_LABELS.checks} or{" "}
               {MODE_LABELS.duration}, their uptime is the time since the first
-              day with a ping minus incidents from missed or failed pings and
-              impact-weighted status reports — a silent month still counts. With{" "}
-              {MODE_LABELS.manual}, only status reports count.
+              day with a ping (or the first incident, if earlier) minus
+              incidents from missed or failed pings and impact-weighted status
+              reports — a silent month still counts. With {MODE_LABELS.manual},
+              only status reports count.
             </p>
             <p className="text-muted-foreground">
               Months without recorded checks are shown as{" "}

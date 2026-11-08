@@ -232,13 +232,13 @@ describe("quorumSince", () => {
 
   it("the note says how earlier checks are counted", () => {
     expect(quorumNote(new Date(2026, 10, 1))).toBe(
-      "Since November 2026, a check covers all of the monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.",
+      "Since November 2026, a check covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.",
     );
   });
 
   it("the page note limits run counting to monitors with cloud regions", () => {
     expect(quorumNote(new Date(2026, 10, 1), "page")).toBe(
-      "Since November 2026, for monitors with cloud regions, a check covers all of a monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.",
+      "Since November 2026, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a check covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.",
     );
   });
 });

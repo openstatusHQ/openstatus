@@ -416,7 +416,7 @@ const message = {
     requests:
       "cards show how many requests succeeded, degraded or failed, counted per region.",
     checks:
-      "cards show how many checks succeeded, degraded or failed. A check is one run across all regions, down when at least half of them fail.",
+      "cards show how many checks succeeded, degraded or failed. For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions a check is one run across all regions, down when at least half fail; other monitors count each region's result.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {

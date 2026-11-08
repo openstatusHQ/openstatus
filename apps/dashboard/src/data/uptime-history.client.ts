@@ -82,9 +82,9 @@ export function quorumNote(
 ): string {
   const month = format(since, "MMMM yyyy");
   if (scope === "page") {
-    return `Since ${month}, for monitors with cloud regions, a check covers all of a monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.`;
+    return `Since ${month}, for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a check covers all of a monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.`;
   }
-  return `Since ${month}, a check covers all of the monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.`;
+  return `Since ${month}, a check covers all of the monitor's cloud regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.`;
 }
 
 /** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */

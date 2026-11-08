@@ -56,14 +56,14 @@ The component reflects the current operational state of your monitor. If the mon
 Monitor components display historical uptime data through status trackers. Depending on your [tracker configuration](/docs/guides/how-to-configure-status-page#1-components-configuration), you can show:
 - **Monitor checks with Time per status**: Shows the time spent in each status (success, error, degraded, maintenance).
 - **Monitor checks with Number of requests**: Shows the number of successful, degraded, and failed requests, one per region per run.
-- **Monitor checks with Number of checks**: Shows the number of successful, degraded, and failed checks, one per run across all regions.
+- **Monitor checks with Number of checks**: Shows the number of successful, degraded, and failed checks, one per run across all regions. Applies to HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions; other monitors show one per region per run.
 - **Reports only**: Shows only the most significant status of each day, based on your status reports and maintenances.
 
 **Uptime calculations:**
 Monitor components calculate uptime percentages based on:
-- Duration of successful vs. failed checks (for duration-based tracking).
-- Number of successful vs. failed requests (for request-based tracking).
-- Includes incidents and status reports in the calculation.
+- **Time per status**: monitoring time minus the downtime from incidents and impact-weighted status reports.
+- **Number of requests**: successful and degraded requests out of all requests, one per region per run.
+- **Number of checks**: successful and degraded checks out of all checks, where a check is down when at least half of the monitor's regions fail.
 
 **Monitor selection:**
 When adding a monitor component, the dashboard shows you available monitors with indicators for:
