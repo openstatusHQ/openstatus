@@ -132,7 +132,7 @@ export function Client() {
                   : "Long-term uptime, built from your page's components."}
               </SectionDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 justify-end">
               {showMetric ? (
                 <Tabs
                   value={metric}
