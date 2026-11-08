@@ -5,8 +5,10 @@ SQL >
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
         toString(monitorId) AS monitorId,
         cronTimestamp,
-        uniqExactStateIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS errorRegions,
-        uniqExactStateIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) IN ('error', 'degraded')) AS degradedOrErrorRegions
+        countState() AS count,
+        countState(if(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'success', 1, NULL)) AS success,
+        countState(if(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error', 1, NULL)) AS error,
+        countState(if(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'degraded', 1, NULL)) AS degraded
     FROM grpc_response__v0
     WHERE coalesce(nullIf(trigger, ''), 'cron') = 'cron'
         -- private locations carry no shared run key

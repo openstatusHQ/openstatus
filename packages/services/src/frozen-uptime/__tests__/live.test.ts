@@ -43,7 +43,7 @@ const sixRegions = "ams,fra,iad,gru,syd,hkg";
 const sleep = async () => {};
 
 describe("fetchLiveRuns", () => {
-  test("asks each job type's pipe for runs with region counts aligned to monitorIds", async () => {
+  test("asks each job type's pipe for runs by monitorIds only", async () => {
     const { pipes: runsPipes, calls } = pipes(async () => ({ data: [] }));
     await fetchLiveRuns({
       monitors: [
@@ -54,8 +54,8 @@ describe("fetchLiveRuns", () => {
       pipes: runsPipes,
     });
     expect(calls).toEqual([
-      { monitorIds: ["3", "1"], type: "runs", regionCounts: [6, 2] },
-      { monitorIds: ["2"], type: "runs", regionCounts: [3] },
+      { monitorIds: ["3", "1"], type: "runs" },
+      { monitorIds: ["2"], type: "runs" },
     ]);
   });
 
@@ -185,9 +185,7 @@ describe("fetchIntervalRuns", () => {
       pipe,
       ...window,
     });
-    expect(calls).toEqual([
-      { monitorId: "7", ...window, type: "runs", regionCount: 6 },
-    ]);
+    expect(calls).toEqual([{ monitorId: "7", ...window, type: "runs" }]);
     expect(runs?.get(bucketA.toISOString())).toEqual({
       ok: 48,
       degraded: 0,

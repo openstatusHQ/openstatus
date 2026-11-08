@@ -277,12 +277,12 @@ export function Client() {
                     (ok + degraded) / total runs
                   </span>
                   . For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud
-                  regions, a run covers all of the monitor&apos;s cloud regions
-                  and counts as down when at least half of them fail; a monitor
-                  with a single private location counts each check as a run;
-                  other monitors count each region&apos;s result. Days without
-                  run data are derived from region results divided by the checks
-                  one run makes. Degraded runs still count as up.
+                  regions, a run counts as down when at least half of the cloud
+                  regions that reported in it fail; a monitor with a single
+                  private location counts each check as a run; other monitors
+                  count each region&apos;s result. Days without run data are
+                  derived from region results divided by the checks one run
+                  makes. Degraded runs still count as up.
                 </span>
               </li>
               <li>

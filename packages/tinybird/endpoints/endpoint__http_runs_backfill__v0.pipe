@@ -9,17 +9,17 @@ SQL >
 SELECT
     day,
     monitorId,
-    countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 < n) AS ok,
-    countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 >= n) AS degraded,
-    countIf(runErrorRegions * 2 >= n) AS error
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded,
+    countIf(e * 2 >= n) AS error
 FROM (
     SELECT
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS day,
         monitorId,
         cronTimestamp,
-        uniqExactIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'error') AS runErrorRegions,
-        uniqExactIf(CAST(region, 'String'), coalesce(requestStatus, '') IN ('error', 'degraded')) AS runDegradedOrErrorRegions,
-        arrayElement({{ Array(regionCounts, 'Int32', '0') }}, indexOf({{ Array(monitorIds, 'String', '1,666') }}, monitorId)) AS n
+        count() AS n,
+        countIf(coalesce(requestStatus, '') = 'error') AS e,
+        countIf(coalesce(requestStatus, '') = 'degraded') AS d
     FROM ping_response__v8
     WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
         AND cronTimestamp >= toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(fromDate, '2026-10-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))
@@ -29,7 +29,6 @@ FROM (
         AND NOT match(region, '^[0-9]+$')
     GROUP BY day, monitorId, cronTimestamp
 )
-WHERE n > 0
 GROUP BY day, monitorId
 ORDER BY day DESC
 

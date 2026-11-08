@@ -153,7 +153,6 @@ describe("backfillFrozenRuns", () => {
       expect(tb.calls).toEqual([
         {
           monitorIds: [String(m.id)],
-          regionCounts: [6],
           fromDate: "2025-06-01T00:00:00.000Z",
           toDate: "2025-07-01T00:00:00.000Z",
         },
@@ -188,7 +187,7 @@ describe("backfillFrozenRuns", () => {
     });
   });
 
-  test("sends each monitor's current cloud region count, aligned with monitorIds", async () => {
+  test("reads every monitor with cloud regions, without region counts", async () => {
     await withTestTransaction(async (tx) => {
       const six = await insertFrozenMonitor(tx);
       const two = await insertFrozenMonitor(tx, { regions: "ams,fra" });
@@ -203,14 +202,12 @@ describe("backfillFrozenRuns", () => {
       });
 
       const [call] = tb.calls;
-      expect(
-        new Map(call?.monitorIds.map((id, i) => [id, call.regionCounts[i]])),
-      ).toEqual(
-        new Map([
-          [String(six.id), 6],
-          [String(two.id), 2],
-        ]),
-      );
+      expect(call).toEqual({
+        monitorIds: expect.arrayContaining([String(six.id), String(two.id)]),
+        fromDate: "2025-06-01T00:00:00.000Z",
+        toDate: "2025-07-01T00:00:00.000Z",
+      });
+      expect(call?.monitorIds).toHaveLength(2);
     });
   });
 

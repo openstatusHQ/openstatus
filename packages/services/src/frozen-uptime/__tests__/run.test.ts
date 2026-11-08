@@ -618,7 +618,7 @@ describe("runUptimeFreeze with run verdicts", () => {
     return rows[0]?.days;
   }
 
-  test("http monitor freezes requests and the run verdicts read for its 6 regions", async () => {
+  test("http monitor freezes requests and its run verdicts", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       const http = dayPipe(m.id, [{ ok: 140, degraded: 3, error: 2 }]);
@@ -634,7 +634,7 @@ describe("runUptimeFreeze with run verdicts", () => {
       expect(res.frozen).toBe(1);
       expect(http.calls).toEqual([
         { monitorIds: [String(m.id)] },
-        { monitorIds: [String(m.id)], type: "runs", regionCounts: [6] },
+        { monitorIds: [String(m.id)], type: "runs" },
       ]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({
@@ -649,7 +649,7 @@ describe("runUptimeFreeze with run verdicts", () => {
     });
   });
 
-  test("region counts stay aligned with the monitorIds of each chunk", async () => {
+  test("every monitor with cloud regions is in the runs read, without region counts", async () => {
     await withTestTransaction(async (tx) => {
       const a = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       const b = await insertTestMonitor(tx, { regions: "ams,fra" });
@@ -665,17 +665,11 @@ describe("runUptimeFreeze with run verdicts", () => {
       });
 
       const [call] = http.runsCalls();
-      const sent = new Map(
-        call?.monitorIds.map((id, i) => [id, call.regionCounts?.[i]]),
-      );
-      expect(call?.regionCounts).toHaveLength(3);
-      expect(sent).toEqual(
-        new Map([
-          [String(a.id), 6],
-          [String(b.id), 2],
-          [String(c.id), 3],
-        ]),
-      );
+      expect(call).toEqual({
+        monitorIds: expect.arrayContaining([a.id, b.id, c.id].map(String)),
+        type: "runs",
+      });
+      expect(call?.monitorIds).toHaveLength(3);
     });
   });
 
@@ -703,7 +697,7 @@ describe("runUptimeFreeze with run verdicts", () => {
     },
   );
 
-  test("runs are judged on cloud regions only when private locations are attached", async () => {
+  test("attached private locations do not change the runs read", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       await attachPrivateLocations(tx, m.id, 2);
@@ -717,7 +711,9 @@ describe("runUptimeFreeze with run verdicts", () => {
         sleep: noSleep,
       });
 
-      expect(http.runsCalls()[0]?.regionCounts).toEqual([6]);
+      expect(http.runsCalls()).toEqual([
+        { monitorIds: [String(m.id)], type: "runs" },
+      ]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]?.runs).toEqual({ ok: 0, degraded: 0, error: 4 });
     });
@@ -807,7 +803,7 @@ describe("runUptimeFreeze with run verdicts", () => {
 
         expect(res.frozen).toBe(1);
         expect(own.runsCalls()).toEqual([
-          { monitorIds: [String(m.id)], type: "runs", regionCounts: [6] },
+          { monitorIds: [String(m.id)], type: "runs" },
         ]);
         expect(http.calls).toEqual([]);
         const days = await frozenDays(tx, m.id);

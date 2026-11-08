@@ -40,8 +40,6 @@ type Params = {
   fromDate?: string;
   toDate?: string;
   type?: "requests" | "runs";
-  regionCounts?: number[];
-  regionCount?: number;
 };
 type Pipe = (params: Params) => Promise<{ data: unknown[] }>;
 
@@ -257,7 +255,6 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(runsCall("httpStatus45d")?.params).toEqual({
       monitorIds: [String(ids.cloud)],
       type: "runs",
-      regionCounts: [6],
     });
   });
 
@@ -309,7 +306,6 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     expect(runsCall("httpStatus15m")?.params).toEqual({
       monitorIds: [String(ids.cloud)],
       type: "runs",
-      regionCounts: [6],
       timezone: zone,
     });
   });
@@ -459,7 +455,7 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
     ]);
   });
 
-  test("run verdicts stay judged on cloud regions when private locations are attached", async () => {
+  test("private locations attached: the page shows the runs read by monitorIds only", async () => {
     const day = yesterdayIn("UTC");
     pipes.impl.set("httpStatus45d", async () => ({
       data: [counts(ids.mixed, day, { ok: 788, error: 12 })],
@@ -475,6 +471,10 @@ describe("getUptime on a runs page counts runs for monitors with a quorum popula
       { status: "success", value: "96 runs" },
       { status: "error", value: "4 runs" },
     ]);
+    expect(runsCall("httpStatus45d")?.params).toEqual({
+      monitorIds: [String(ids.mixed)],
+      type: "runs",
+    });
   });
 
   test("a converted day with one flaky region check is green, like under the run rule", async () => {
@@ -661,14 +661,12 @@ describe("getMonitor on a runs page counts uptime in runs for monitors with a qu
     const uptimeCall = pipes.calls.find(
       (c) => c.name === "httpUptimeWeekly" && c.params.type === undefined,
     );
-    expect(uptimeCall?.params).not.toHaveProperty("regionCount");
     expect(runsCall("httpUptimeWeekly")?.params).toEqual({
       monitorId: String(publicIds.cloud),
       interval: uptimeCall?.params.interval,
       fromDate: uptimeCall?.params.fromDate,
       toDate: uptimeCall?.params.toDate,
       type: "runs",
-      regionCount: 6,
     });
   });
 

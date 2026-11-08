@@ -1104,9 +1104,7 @@ describe("getUptimeHistory with run verdicts", () => {
         sleep: noSleep,
       });
 
-      expect(runsCalls).toEqual([
-        { monitorIds: [id], type: "runs", regionCounts: [6] },
-      ]);
+      expect(runsCalls).toEqual([{ monitorIds: [id], type: "runs" }]);
       expect(res.mode).toBe("runs");
       const row = res.rows[0];
       expect(row.unit).toBe("runs");

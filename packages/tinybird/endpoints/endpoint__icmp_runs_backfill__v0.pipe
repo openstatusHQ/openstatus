@@ -9,17 +9,17 @@ SQL >
 SELECT
     day,
     toString(monitorId) AS monitorId,
-    countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 < n) AS ok,
-    countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 >= n) AS degraded,
-    countIf(runErrorRegions * 2 >= n) AS error
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded,
+    countIf(e * 2 >= n) AS error
 FROM (
     SELECT
         toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS day,
         monitorId,
         cronTimestamp,
-        uniqExactIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS runErrorRegions,
-        uniqExactIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) IN ('error', 'degraded')) AS runDegradedOrErrorRegions,
-        arrayElement({{ Array(regionCounts, 'Int32', '0') }}, indexOf({{ Array(monitorIds, 'Int32', '1') }}, monitorId)) AS n
+        count() AS n,
+        countIf(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS e,
+        countIf(coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'degraded') AS d
     FROM icmp_response__v0
     WHERE monitorId IN {{ Array(monitorIds, 'Int32', '1') }}
         AND cronTimestamp >= toUnixTimestamp64Milli(parseDateTime64BestEffort({{ String(fromDate, '2026-10-01T00:00:00.000Z', required=True) }}, 3, 'UTC'))
@@ -29,7 +29,6 @@ FROM (
         AND NOT match(region, '^[0-9]+$')
     GROUP BY day, monitorId, cronTimestamp
 )
-WHERE n > 0
 GROUP BY day, monitorId
 ORDER BY day DESC
 

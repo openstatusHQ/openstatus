@@ -25,13 +25,7 @@ import {
   previousMonth,
 } from "./compute";
 import { freezeMonitorMonth } from "./freeze";
-import {
-  alignedRegionCounts,
-  quorumRegionCount,
-  quorumRegionCounts,
-  type RunsByDay,
-  runsByMonitorDay,
-} from "./quorum";
+import { quorumRegionCount, type RunsByDay, runsByMonitorDay } from "./quorum";
 
 type PipeFn<Row> = (params: {
   monitorIds: string[];
@@ -41,7 +35,6 @@ type PipeFn<Row> = (params: {
 export type StatusPipeFn = (params: {
   monitorIds: string[];
   type?: "runs";
-  regionCounts?: number[];
 }) => Promise<{ data: ComputeCountRow[] }>;
 
 // no 45d status pipe, so no counts on the live status page either
@@ -257,7 +250,7 @@ export async function fetchFreezeCounts(
 
 /**
  * Run verdicts per UTC day (or per day of the zone the pipes are bound to) for
- * the monitors with a quorum region count; the others are never fetched.
+ * the monitors with cloud regions; the others are never fetched.
  */
 export async function fetchRunsByDay(
   args: Omit<FetchOptions, "monitorIdsByJobType"> & {
@@ -265,12 +258,9 @@ export async function fetchRunsByDay(
     pipes: UptimeRunsPipes;
   },
 ): Promise<{ runs: RunsByDay; failedMonitorIds: Set<string> }> {
-  const regionCounts = quorumRegionCounts(
-    args.monitors.filter((m) => hasRuns(m.jobType)),
-  );
   const monitorIdsByJobType = new Map<string, Set<string>>();
   for (const m of args.monitors) {
-    if (!regionCounts.has(m.id)) continue;
+    if (!hasRuns(m.jobType) || quorumRegionCount(m.regions) === null) continue;
     const ids = monitorIdsByJobType.get(m.jobType) ?? new Set<string>();
     ids.add(String(m.id));
     monitorIdsByJobType.set(m.jobType, ids);
@@ -282,12 +272,7 @@ export async function fetchRunsByDay(
     pipeFor: (jobType) => {
       if (!hasRuns(jobType)) return undefined;
       const pipe = args.pipes[jobType];
-      return ({ monitorIds }) =>
-        pipe({
-          monitorIds,
-          type: "runs",
-          regionCounts: alignedRegionCounts(monitorIds, regionCounts),
-        });
+      return ({ monitorIds }) => pipe({ monitorIds, type: "runs" });
     },
   });
   return { runs: runsByMonitorDay(rows), failedMonitorIds };

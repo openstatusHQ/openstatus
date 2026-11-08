@@ -310,14 +310,22 @@ describe("counts type parameters", () => {
     expect(uptime7dParameters.parse(window)).toEqual(window);
   });
 
-  test("rejects an unknown type and negative region counts", () => {
+  test("rejects an unknown type", () => {
     const schema = z.object(countsParameters);
     expect(schema.safeParse({ type: "http" }).success).toBe(false);
-    expect(schema.safeParse({ regionCounts: [-1] }).success).toBe(false);
     expect(
-      uptime7dParameters.safeParse({ monitorId: "1", regionCount: 1.5 })
-        .success,
+      uptime7dParameters.safeParse({ monitorId: "1", type: "http" }).success,
     ).toBe(false);
+  });
+
+  test("a runs call carries no region counts", () => {
+    expect(
+      uptime7dParameters.parse({
+        monitorId: "1",
+        type: "runs",
+        regionCount: 6,
+      }),
+    ).toEqual({ monitorId: "1", type: "runs" });
   });
 
   test("15m pipes forward a zone alongside runs", () => {
@@ -326,13 +334,11 @@ describe("counts type parameters", () => {
         monitorIds: ["1", "2"],
         timezone: "Asia/Kolkata",
         type: "runs",
-        regionCounts: [6, 3],
       }),
     ).toEqual({
       monitorIds: ["1", "2"],
       timezone: "Asia/Kolkata",
       type: "runs",
-      regionCounts: [6, 3],
     });
   });
 });
@@ -343,7 +349,6 @@ describe("counts type query string", () => {
   async function queryOf(params: {
     monitorIds: string[];
     type?: "requests" | "runs";
-    regionCounts?: number[];
   }) {
     const fetch = vi.fn(async (_url: URL) =>
       Response.json({ meta: [], data: [] }),
@@ -367,14 +372,11 @@ describe("counts type query string", () => {
     });
   });
 
-  test("a runs call sends region counts in monitorIds order", async () => {
-    expect(
-      await queryOf({
-        monitorIds: ["1", "666"],
-        type: "runs",
-        regionCounts: [6, 3],
-      }),
-    ).toEqual({ monitorIds: "1,666", type: "runs", regionCounts: "6,3" });
+  test("a runs call sends the type and monitorIds only", async () => {
+    expect(await queryOf({ monitorIds: ["1", "666"], type: "runs" })).toEqual({
+      monitorIds: "1,666",
+      type: "runs",
+    });
   });
 });
 
@@ -387,9 +389,10 @@ describe("runs-capable count pipes", () => {
         meta: [],
         data: [],
       });
-      expect(
-        await tb[name]({ monitorIds: ["1"], type: "runs", regionCounts: [6] }),
-      ).toEqual({ meta: [], data: [] });
+      expect(await tb[name]({ monitorIds: ["1"], type: "runs" })).toEqual({
+        meta: [],
+        data: [],
+      });
     });
   }
 
@@ -402,9 +405,10 @@ describe("runs-capable count pipes", () => {
         toDate: "2026-11-08T23:59:59.999Z",
       };
       expect(await tb[name](window)).toEqual({ meta: [], data: [] });
-      expect(
-        await tb[name]({ ...window, type: "runs", regionCount: 6 }),
-      ).toEqual({ meta: [], data: [] });
+      expect(await tb[name]({ ...window, type: "runs" })).toEqual({
+        meta: [],
+        data: [],
+      });
     });
   }
 });
@@ -420,7 +424,6 @@ const runsBackfillGetters = [
 describe("runsBackfillParameters", () => {
   const params = {
     monitorIds: ["1", "2"],
-    regionCounts: [6, 3],
     fromDate: "2026-06-01T00:00:00.000Z",
     toDate: "2026-07-01T00:00:00.000Z",
   };
@@ -431,13 +434,17 @@ describe("runsBackfillParameters", () => {
     ).toEqual(params);
   });
 
-  test("requires both bounds and the region counts", () => {
+  test("requires both bounds", () => {
     const { fromDate: _from, ...withoutFrom } = params;
     const { toDate: _to, ...withoutTo } = params;
-    const { regionCounts: _counts, ...withoutCounts } = params;
     expect(runsBackfillParameters.safeParse(withoutFrom).success).toBe(false);
     expect(runsBackfillParameters.safeParse(withoutTo).success).toBe(false);
-    expect(runsBackfillParameters.safeParse(withoutCounts).success).toBe(false);
+  });
+
+  test("drops region counts: each run carries its own", () => {
+    expect(
+      runsBackfillParameters.parse({ ...params, regionCounts: [6, 3] }),
+    ).toEqual(params);
   });
 });
 
@@ -469,7 +476,6 @@ describe("runs backfill pipes", () => {
       expect(
         await tb[name]({
           monitorIds: ["1"],
-          regionCounts: [6],
           fromDate: "2026-06-01T00:00:00.000Z",
           toDate: "2026-07-01T00:00:00.000Z",
         }),

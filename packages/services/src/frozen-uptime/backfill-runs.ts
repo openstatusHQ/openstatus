@@ -12,11 +12,7 @@ import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
 import type { Counts } from "../status-timeline/tally";
 import { monthRange } from "./compute";
-import {
-  alignedRegionCounts,
-  quorumRegionCount,
-  runsByMonitorDay,
-} from "./quorum";
+import { quorumRegionCount, runsByMonitorDay } from "./quorum";
 import {
   type ChunkFailure,
   fetchChunked,
@@ -26,7 +22,6 @@ import {
 
 export type RunsBackfillPipeFn = (params: {
   monitorIds: string[];
-  regionCounts: number[];
   fromDate: string;
   toDate: string;
 }) => Promise<{ data: (Counts & { monitorId: string; day: string })[] }>;
@@ -117,19 +112,14 @@ export async function backfillFrozenRuns(args: {
     failures: [],
   };
 
-  // region history is not stored: runs are judged against today's regions
   const pending: {
     id: number;
     monitorId: number;
     jobType: string;
     days: FrozenMonitorUptimeDay[];
   }[] = [];
-  const regionCounts = new Map<number, number>();
   for (const row of rows) {
-    const regionCount = hasRuns(row.jobType)
-      ? quorumRegionCount(row.regions)
-      : null;
-    if (regionCount === null) {
+    if (!hasRuns(row.jobType) || quorumRegionCount(row.regions) === null) {
       result.noPopulation.push(row.monitorId);
       continue;
     }
@@ -139,7 +129,6 @@ export async function backfillFrozenRuns(args: {
       continue;
     }
     pending.push({ ...row, days });
-    regionCounts.set(row.monitorId, regionCount);
   }
 
   const monitorIdsByJobType = new Map<string, Set<string>>();
@@ -159,13 +148,7 @@ export async function backfillFrozenRuns(args: {
     pipeFor: (jobType) => {
       if (!hasRuns(jobType)) return undefined;
       const pipe = args.pipes[jobType];
-      return ({ monitorIds }) =>
-        pipe({
-          monitorIds,
-          regionCounts: alignedRegionCounts(monitorIds, regionCounts),
-          fromDate,
-          toDate,
-        });
+      return ({ monitorIds }) => pipe({ monitorIds, fromDate, toDate });
     },
   });
   const runsByMonitorId = runsByMonitorDay(runRows);

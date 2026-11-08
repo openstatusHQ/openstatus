@@ -34,9 +34,9 @@ pnpm --filter @openstatus/workflows backfill:uptime-runs -- --from 2025-11 --to 
 ```
 
 It walks months newest to oldest and stops at the first month with no raw data
-for any monitor (past raw retention). Runs are judged against each monitor's
-current regions: region history is not stored. Failed monitors are listed; run
-again to retry them.
+for any monitor (past raw retention). Each run is judged against the cloud
+regions that reported in it. Failed monitors are listed; run again to retry
+them.
 
 ## Deploy
 

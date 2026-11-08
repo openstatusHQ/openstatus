@@ -1,13 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import {
-  alignedRegionCounts,
-  quorumRegionCount,
-  runsByMonitorDay,
-} from "../quorum";
+import { quorumRegionCount, runsByMonitorDay } from "../quorum";
 
 describe("quorumRegionCount", () => {
-  test("counts the monitor's cloud regions", () => {
+  test("counts unique cloud regions", () => {
     expect(quorumRegionCount("ams,fra,iad")).toBe(3);
   });
 
@@ -18,20 +14,6 @@ describe("quorumRegionCount", () => {
   test("private-only monitors get none", () => {
     expect(quorumRegionCount("")).toBeNull();
     expect(quorumRegionCount(" , ")).toBeNull();
-  });
-});
-
-describe("alignedRegionCounts", () => {
-  test("follows the monitorIds order, 0 for a monitor without a count", () => {
-    expect(
-      alignedRegionCounts(
-        ["7", "3", "9"],
-        new Map([
-          [3, 6],
-          [7, 2],
-        ]),
-      ),
-    ).toEqual([2, 6, 0]);
   });
 });
 

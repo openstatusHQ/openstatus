@@ -44,13 +44,9 @@ export const status15mParameters = z.object({
     .prefault("UTC"),
 });
 
-/**
- * `runs` judges each run with the region quorum against `regionCounts[i]`,
- * the region count of `monitorIds[i]`; monitors with 0 return no rows.
- */
+/** `runs` judges each run against the cloud regions that reported in it. */
 export const countsParameters = {
   type: z.enum(["requests", "runs"]).optional(),
-  regionCounts: z.int().nonnegative().array().optional(),
 };
 
 export const status15mCountsParameters =
@@ -148,10 +144,7 @@ const uptimeParameters = z.object({
   interval: z.int().optional(),
 });
 
-export const uptime7dParameters = uptimeParameters.extend({
-  type: countsParameters.type,
-  regionCount: z.int().nonnegative().optional(),
-});
+export const uptime7dParameters = uptimeParameters.extend(countsParameters);
 
 const uptimeShape = z.object({
   interval: z.coerce.date(),
@@ -368,7 +361,6 @@ const grpcUptimeShape = z.object({
 // [fromDate, toDate) in UTC; the backfill pipes scan raw data, so both are required
 export const runsBackfillParameters = z.object({
   monitorIds: z.string().array(),
-  regionCounts: z.int().nonnegative().array(),
   fromDate: z.string(),
   toDate: z.string(),
 });

@@ -336,7 +336,7 @@ describe("getMonitorUptimeHistory", () => {
 });
 
 describe("getMonitorUptimeHistory with run verdicts", () => {
-  test("live days carry run verdicts judged on the 6 cloud regions", async () => {
+  test("live days carry the run verdicts the pipe judged", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx, { regions: "ams,fra,iad,syd,gru,hkg" });
       const id = String(m.id);
@@ -375,9 +375,7 @@ describe("getMonitorUptimeHistory with run verdicts", () => {
         sleep: noSleep,
       });
 
-      expect(calls).toEqual([
-        { monitorIds: [id], type: "runs", regionCounts: [6] },
-      ]);
+      expect(calls).toEqual([{ monitorIds: [id], type: "runs" }]);
       expect(res.partial).toBe(false);
       expect(res.days).toEqual([
         {

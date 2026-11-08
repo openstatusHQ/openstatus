@@ -7,16 +7,16 @@ SQL >
     {% if String(type, 'requests') == 'runs' %}
     SELECT
         interval,
-        countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 < n) AS success,
-        countIf(runErrorRegions * 2 < n AND runDegradedOrErrorRegions * 2 >= n) AS degraded,
-        countIf(runErrorRegions * 2 >= n) AS error
+        countIf(e * 2 < n AND (e + d) * 2 < n) AS success,
+        countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded,
+        countIf(e * 2 >= n) AS error
     FROM (
         SELECT
             toStartOfInterval(toDateTime(fromUnixTimestamp64Milli(cronTimestamp)), INTERVAL {{ String(interval, '30', required=True) }} minute) AS interval,
             cronTimestamp,
-            uniqExactMerge(errorRegions) AS runErrorRegions,
-            uniqExactMerge(degradedOrErrorRegions) AS runDegradedOrErrorRegions,
-            {{ Int32(regionCount, 0) }} AS n
+            countMerge(count) AS n,
+            countMerge(error) AS e,
+            countMerge(degraded) AS d
         FROM mv__grpc_runs_45d__v0
         WHERE
             monitorId = {{ String(monitorId, '4433', required=True) }}
@@ -30,7 +30,6 @@ SQL >
             {% end %}
         GROUP BY interval, cronTimestamp
     )
-    WHERE n > 0
     GROUP BY interval
     ORDER BY interval DESC
     {% else %}

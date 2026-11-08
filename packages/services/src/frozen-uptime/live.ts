@@ -13,7 +13,7 @@ import {
 type LiveMonitor = { id: number; jobType: string; regions: string };
 
 /**
- * Per-day run verdicts for the monitors with a quorum region count, in the
+ * Per-day run verdicts for the monitors with cloud regions, in the
  * days the pipes group by. Never throws: a monitor whose read failed is left
  * out, so its days keep only `requests`.
  */
@@ -62,7 +62,6 @@ export type IntervalPipeFn = (params: {
   fromDate?: string;
   toDate?: string;
   type: "runs";
-  regionCount: number;
 }) => Promise<{ data: IntervalRow[] }>;
 
 /** interval start (ISO) → that bucket's run verdicts, for one monitor. */
@@ -70,7 +69,7 @@ export type IntervalRuns = Map<string, Counts>;
 
 /**
  * Run verdicts per `interval`-minute bucket for one monitor. Null when the
- * monitor has no quorum region count; a failed read rejects.
+ * monitor has no cloud regions; a failed read rejects.
  */
 export async function fetchIntervalRuns(args: {
   monitor: LiveMonitor;
@@ -80,14 +79,12 @@ export async function fetchIntervalRuns(args: {
   toDate?: string;
 }): Promise<IntervalRuns | null> {
   const { monitor, pipe, ...window } = args;
-  if (!hasRuns(monitor.jobType)) return null;
-  const regionCount = quorumRegionCount(monitor.regions);
-  if (regionCount === null) return null;
+  if (!hasRuns(monitor.jobType) || quorumRegionCount(monitor.regions) === null)
+    return null;
   const { data } = await pipe({
     monitorId: String(monitor.id),
     ...window,
     type: "runs",
-    regionCount,
   });
   const out: IntervalRuns = new Map();
   for (const { interval, success, degraded, error } of data) {

@@ -415,7 +415,7 @@ const message = {
       "cards show how long the monitor was operational, degraded or down.",
     requests:
       "cards show how many requests succeeded, degraded or failed, counted per region.",
-    runs: "cards show how many runs succeeded, degraded or failed. For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run covers all of a monitor's cloud regions and counts as down when at least half of them fail; a monitor with a single private location counts each check as a run; other monitors count each region's result.",
+    runs: "cards show how many runs succeeded, degraded or failed. For HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions, a run counts as down when at least half of the cloud regions that reported in it fail; a monitor with a single private location counts each check as a run; other monitors count each region's result.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {
