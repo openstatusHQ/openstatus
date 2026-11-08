@@ -119,7 +119,10 @@ export function uptimeQuorumIntervalPipes(
   };
 }
 
+export type FreezePipeKind = "counts" | "quorum";
+
 export type ChunkFailure = {
+  pipe: FreezePipeKind;
   jobType: string;
   monitorIds: string[];
   error: unknown;
@@ -171,6 +174,7 @@ type FetchOptions = {
 
 async function fetchChunked<Row>(
   args: FetchOptions & {
+    kind: FreezePipeKind;
     pipeFor: (jobType: string) => PipeFn<Row> | undefined;
   },
 ): Promise<{ rows: Row[]; failedMonitorIds: Set<string> }> {
@@ -204,7 +208,12 @@ async function fetchChunked<Row>(
       }
       if (!done) {
         for (const id of monitorIds) failedMonitorIds.add(id);
-        args.onChunkFailure?.({ jobType, monitorIds, error: lastError });
+        args.onChunkFailure?.({
+          pipe: args.kind,
+          jobType,
+          monitorIds,
+          error: lastError,
+        });
       }
     }
   }
@@ -222,6 +231,7 @@ export async function fetchFreezeCounts(
 ): Promise<{ counts: ComputeCountRow[]; failedMonitorIds: Set<string> }> {
   const { rows, failedMonitorIds } = await fetchChunked({
     ...args,
+    kind: "counts",
     pipeFor: (jobType) =>
       hasStatusPipe(args.pipes, jobType) ? args.pipes[jobType] : undefined,
   });
@@ -242,6 +252,7 @@ export async function fetchQuorumHistograms(
     args.timeZone && args.timeZone !== "UTC" ? args.timeZone : undefined;
   const { rows, failedMonitorIds } = await fetchChunked({
     ...args,
+    kind: "quorum",
     pipeFor: (jobType) => {
       if (!hasQuorumPipe(args.pipes, jobType)) return undefined;
       const pipe = args.pipes[jobType];
@@ -374,15 +385,21 @@ export async function runUptimeFreeze(args: {
     monitorIdsByJobType.set(m.jobType, ids);
   }
 
-  const { counts, failedMonitorIds } = await fetchFreezeCounts({
+  const { counts, failedMonitorIds: countsFailed } = await fetchFreezeCounts({
     monitorIdsByJobType,
     pipes: args.pipes,
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });
+  const failedPipeByMonitorId = new Map<string, FreezePipeKind>();
+  for (const id of countsFailed) failedPipeByMonitorId.set(id, "counts");
 
   const populations = quorumPopulations(
-    pending.filter((m) => hasQuorumPipe(args.quorumPipes, m.jobType)),
+    pending.filter(
+      (m) =>
+        hasQuorumPipe(args.quorumPipes, m.jobType) &&
+        !countsFailed.has(String(m.id)),
+    ),
   );
   const quorumIdsByJobType = monitorIdsWithQuorum(pending, populations);
   // a month frozen without its histogram can never get one: a failed quorum
@@ -393,7 +410,9 @@ export async function runUptimeFreeze(args: {
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });
-  for (const id of quorum.failedMonitorIds) failedMonitorIds.add(id);
+  for (const id of quorum.failedMonitorIds) {
+    failedPipeByMonitorId.set(id, "quorum");
+  }
   const histogramsByMonitorId = groupByMonitorId(quorum.histograms);
 
   // avoid an O(pending²) sweep: computeMonitorMonth scans linearly per call
@@ -416,9 +435,10 @@ export async function runUptimeFreeze(args: {
   const failures: string[] = [];
 
   for (const m of pending) {
-    if (failedMonitorIds.has(String(m.id))) {
+    const failedPipe = failedPipeByMonitorId.get(String(m.id));
+    if (failedPipe) {
       skipped++;
-      failures.push(`monitor ${m.id}: tinybird counts unavailable`);
+      failures.push(`monitor ${m.id}: tinybird ${failedPipe} unavailable`);
       continue;
     }
 

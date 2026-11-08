@@ -239,7 +239,7 @@ export function Client() {
         )}
         {quorumSince ? (
           <p className="text-muted-foreground text-sm">
-            {quorumNote(quorumSince)}
+            {quorumNote(quorumSince, "page")}
           </p>
         ) : null}
         <HintCollapsible>

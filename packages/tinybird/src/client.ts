@@ -128,7 +128,7 @@ const icmpMetricsLatencyShape = z.object({
   p99Latency: z.int(),
 });
 
-const icmpUptimeParameters = z.object({
+const uptimeParameters = z.object({
   monitorId: z.string(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
@@ -136,7 +136,7 @@ const icmpUptimeParameters = z.object({
   interval: z.int().optional(),
 });
 
-const icmpUptimeShape = z.object({
+const uptimeShape = z.object({
   interval: z.coerce.date(),
   success: z.int(),
   degraded: z.int(),
@@ -2064,24 +2064,24 @@ export class OSTinybird {
   public get icmpUptimeWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_7d__v0",
-      parameters: icmpUptimeParameters,
-      data: icmpUptimeShape,
+      parameters: uptimeParameters,
+      data: uptimeShape,
     });
   }
 
   public get icmpUptime30d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_30d__v0",
-      parameters: icmpUptimeParameters,
-      data: icmpUptimeShape,
+      parameters: uptimeParameters,
+      data: uptimeShape,
     });
   }
 
   public get icmpUptime90d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_uptime_90d__v0",
-      parameters: icmpUptimeParameters,
-      data: icmpUptimeShape,
+      parameters: uptimeParameters,
+      data: uptimeShape,
     });
   }
 
@@ -3250,6 +3250,14 @@ export class OSTinybird {
         lastTimestamp: z.int().nullable(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsUptime7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_uptime_7d__v0",
+      parameters: uptimeParameters,
+      data: uptimeShape,
     });
   }
 

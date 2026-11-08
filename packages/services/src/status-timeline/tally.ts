@@ -60,14 +60,15 @@ export function tallyDay(day: DayCounts, regionCount: number | null): DayTally {
     ok,
     degraded,
     error,
-    // rounded like the shown counts, so a red day always shows an error count;
-    // quorum and per-region days are integers already
+    // rounded like the shown counts, so a red day always shows an error count
+    // and a day whose counts all round to 0 is empty; quorum and per-region
+    // days are integers already
     status:
       roundCount(error) > 0
         ? "error"
         : roundCount(degraded) > 0
           ? "degraded"
-          : total > 0
+          : roundCount(ok) > 0
             ? "success"
             : "empty",
   };

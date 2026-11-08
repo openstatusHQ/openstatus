@@ -640,6 +640,34 @@ describe("generateMonitor", () => {
     expect(md).toContain("| Uptime (last 7 days) | 97.500% · 200 requests |");
   });
 
+  test("a single request or check is singular", () => {
+    const one = (regionCount: number | null) =>
+      generateMonitor(
+        {
+          ...monitor,
+          data: {
+            ...monitor.data,
+            uptime: {
+              regionCount,
+              data: [
+                {
+                  interval: new Date(),
+                  success: regionCount ?? 1,
+                  degraded: 0,
+                  error: 0,
+                },
+              ],
+            },
+          },
+        } as unknown as MonitorDetail,
+        BASE,
+      );
+    expect(one(null)).toContain(
+      "| Uptime (last 7 days) | 100.000% · 1 request |",
+    );
+    expect(one(6)).toContain("| Uptime (last 7 days) | 100.000% · 1 check |");
+  });
+
   test("uptime counts runs when the buckets carry a run quorum", () => {
     const quorum = (errorRegions: number, runs: number) => ({
       regionCount: 6,

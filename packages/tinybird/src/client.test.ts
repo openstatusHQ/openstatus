@@ -406,3 +406,17 @@ describe("quorum interval pipes", () => {
     });
   }
 });
+
+describe("dnsUptime7d", () => {
+  test("takes the window its quorum interval pipe takes", async () => {
+    const tb = new OSTinybird({ token: "a-token" });
+    expect(
+      await tb.dnsUptime7d({
+        monitorId: "1",
+        interval: 240,
+        fromDate: "2026-11-01T00:00:00.000Z",
+        toDate: "2026-11-08T23:59:59.999Z",
+      }),
+    ).toEqual({ meta: [], data: [] });
+  });
+});

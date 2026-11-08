@@ -5,8 +5,8 @@ SQL >
 
 %
 -- Per `interval` bucket: how many scheduled cloud runs had each (errorRegions,
--- notOkRegions) combination. Buckets on cronTimestamp: the paired dns uptime
--- endpoint buckets on `timestamp`, so a run that started late may sit one bucket over.
+-- notOkRegions) combination. The bucket expression and the fromDate/toDate bounds
+-- mirror endpoint__dns_uptime_7d__v0 on the run's cronTimestamp, so keys match.
 SELECT
     interval,
     private,

@@ -33,12 +33,13 @@ function dayMark(
   regionCount: number | null,
 ): Partial<ActivityDay> {
   const tally = counts ? tallyDay(counts, regionCount) : null;
-  // a day without checks is no data, never downtime
-  if (!tally || tally.total === 0)
+  const shown = tally ? shownCounts(tally) : null;
+  const checks = shown ? shown.ok + shown.degraded + shown.error : 0;
+  // a day without a shown check is no data, never downtime
+  if (!tally || !shown || checks === 0)
     return { hatched: true, lines: ["No checks"] };
   const { total } = tally;
   const failed = tally.error / total;
-  const shown = shownCounts(tally);
   return {
     // degraded counts as up, like the uptime math
     scale: "failure",
@@ -47,7 +48,7 @@ function dayMark(
     lines: [
       `${formatUptime((total - tally.error) / total)} uptime`,
       [
-        `${formatNumber(shown.ok + shown.degraded + shown.error)} checks`,
+        `${formatNumber(checks)} ${checks === 1 ? "check" : "checks"}`,
         ...(shown.error > 0 ? [`${formatNumber(shown.error)} failed`] : []),
         ...(shown.degraded > 0
           ? [`${formatNumber(shown.degraded)} degraded`]
@@ -74,8 +75,16 @@ export function quorumSince(
   return new Date(y, m - 1, d);
 }
 
-export function quorumNote(since: Date): string {
-  return `Since ${format(since, "MMMM yyyy")}, a check covers all of the monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.`;
+/** `page` qualifies the note for a page that can mix cloud and private-only monitors. */
+export function quorumNote(
+  since: Date,
+  scope: "monitor" | "page" = "monitor",
+): string {
+  const month = format(since, "MMMM yyyy");
+  if (scope === "page") {
+    return `Since ${month}, for monitors with cloud regions, a check covers all of a monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.`;
+  }
+  return `Since ${month}, a check covers all of the monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.`;
 }
 
 /** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */

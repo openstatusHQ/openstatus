@@ -20,10 +20,14 @@ export type QuorumPopulation = { private: boolean; regionCount: number };
 // mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
 // private-only monitors get none: private checks carry no shared run key
 export function quorumPopulation(regions: string): QuorumPopulation | null {
-  const cloud = regions.split(",").filter((r) => r.trim().length > 0);
-  return cloud.length > 0
-    ? { private: false, regionCount: cloud.length }
-    : null;
+  // writes do not reject duplicates; a run counts each region once
+  const cloud = new Set(
+    regions
+      .split(",")
+      .map((r) => r.trim())
+      .filter((r) => r.length > 0),
+  );
+  return cloud.size > 0 ? { private: false, regionCount: cloud.size } : null;
 }
 
 export function quorumPopulations(

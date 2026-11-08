@@ -183,6 +183,22 @@ describe("uptimeYears in runs", () => {
     ).toEqual(["99.33% uptime", "100 checks · 1 failed"]);
   });
 
+  it("says check for a single one and shows a day that rounds to 0 as no checks", () => {
+    const [year] = uptimeYears(
+      [
+        { day: "2026-11-02", ok: 6, degraded: 0, error: 0 },
+        { day: "2026-11-03", ok: 2, degraded: 0, error: 0 },
+      ],
+      6,
+      now,
+    );
+    const on = (d: number) =>
+      year.days.find((x) => x.date.getDate() === d && x.date.getMonth() === 10)
+        ?.lines;
+    expect(on(2)).toEqual(["100.00% uptime", "1 check"]);
+    expect(on(3)).toEqual(["No checks"]);
+  });
+
   it("without a population ignores the histogram and counts region checks", () => {
     const [year] = uptimeYears(
       [{ day: "2026-11-01", ok: 585, degraded: 0, error: 15, quorum }],
@@ -194,15 +210,10 @@ describe("uptimeYears in runs", () => {
 });
 
 describe("quorumSince", () => {
+  const quorum = { regionCount: 6, buckets: [] };
   const days = [
     { day: "2026-10-31", ok: 1, degraded: 0, error: 0 },
-    {
-      day: "2026-11-01",
-      ok: 1,
-      degraded: 0,
-      error: 0,
-      quorum: { regionCount: 6, buckets: [] },
-    },
+    { day: "2026-11-01", ok: 1, degraded: 0, error: 0, quorum },
   ];
 
   it("is the first day with a histogram, only for monitors counted in runs", () => {
@@ -210,9 +221,24 @@ describe("quorumSince", () => {
     expect(quorumSince(days, null)).toBeNull();
   });
 
+  it("returns the earliest histogram day when days arrive out of order", () => {
+    const unordered = [
+      { day: "2026-11-03", ok: 1, degraded: 0, error: 0, quorum },
+      ...days,
+      { day: "2026-10-28", ok: 1, degraded: 0, error: 0, quorum },
+    ];
+    expect(quorumSince(unordered, 6)).toEqual(new Date(2026, 9, 28));
+  });
+
   it("the note says how earlier checks are counted", () => {
     expect(quorumNote(new Date(2026, 10, 1))).toBe(
       "Since November 2026, a check covers all of the monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions.",
+    );
+  });
+
+  it("the page note limits run counting to monitors with cloud regions", () => {
+    expect(quorumNote(new Date(2026, 10, 1), "page")).toBe(
+      "Since November 2026, for monitors with cloud regions, a check covers all of a monitor's regions and counts as down when at least half of them fail. Earlier checks are region results divided by the number of regions. Monitors with only private locations count each region result as a check.",
     );
   });
 });

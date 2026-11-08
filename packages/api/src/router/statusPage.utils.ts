@@ -363,13 +363,13 @@ export function setDataByType({
       status: "success" | "degraded" | "error" | "info";
       count: number;
     }>,
-    unit: "checks" | "reqs",
+    unit: "check" | "req",
   ): UptimeData["card"] {
     return entries
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
-        value: `${formatNumber(entry.count)} ${unit}`,
+        value: `${formatNumber(entry.count)} ${entry.count === 1 ? unit : `${unit}s`}`,
       }));
   }
 
@@ -420,7 +420,7 @@ export function setDataByType({
     };
   }
 
-  const countUnit = regionCount === null ? "reqs" : "checks";
+  const countUnit = regionCount === null ? "req" : "check";
 
   return data.map((dayData) => {
     const day = dayWindow(dayData.day, timeZone);
@@ -455,7 +455,7 @@ export function setDataByType({
     let barData: UptimeData["bar"];
 
     const tally = tallyDay(dayData, regionCount);
-    const { total, status: dataStatus } = tally;
+    const { status: dataStatus } = tally;
     const counts = shownCounts(tally);
     const shownTotal = counts.ok + counts.degraded + counts.error;
 
@@ -480,7 +480,7 @@ export function setDataByType({
             // Multiple segments: show proportional distribution
             barData = createProportionalBarData(eventSegments, dayMs);
           }
-        } else if (total === 0) {
+        } else if (shownTotal === 0) {
           // Empty day - no data available
           barData = createEmptyBarData();
         } else {
@@ -529,7 +529,7 @@ export function setDataByType({
 
     switch (cardType) {
       case "requests":
-        if (total === 0) {
+        if (shownTotal === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
           const requestEntries = createRequestEntries(counts);
@@ -538,7 +538,7 @@ export function setDataByType({
         break;
 
       case "duration":
-        if (total === 0) {
+        if (shownTotal === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
           const entries = createDurationEntries(counts);
@@ -624,7 +624,7 @@ export function setDataByType({
       }
       default:
         // Default to requests behavior
-        if (total === 0) {
+        if (shownTotal === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
           const defaultEntries = createRequestEntries(counts);

@@ -55,6 +55,10 @@ type PageFields = {
   defaultTimezone?: string;
 };
 
+function countLabel(count: number, unit: string): string {
+  return `${count} ${count === 1 ? unit : `${unit}s`}`;
+}
+
 function avg(values: number[]): number | null {
   if (values.length === 0) return null;
   return values.reduce((a, b) => a + b, 0) / values.length;
@@ -703,7 +707,7 @@ export function generateMonitor(
         ],
         [
           "Uptime (last 7 days)",
-          `${uptime} · ${shownTotal(buckets, regionCount)} ${regionCount !== null ? "checks" : "requests"}`,
+          `${uptime} · ${countLabel(shownTotal(buckets, regionCount), regionCount !== null ? "check" : "request")}`,
         ],
       ],
     ),

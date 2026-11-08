@@ -21,6 +21,7 @@ import {
   runUptimeFreeze,
   uptimeFreezePipes,
   uptimeQuorumPipes,
+  uptimeRegionCount,
 } from "../run";
 
 const noSleep = () => Promise.resolve();
@@ -125,6 +126,14 @@ describe("uptimeQuorumPipes", () => {
   });
 });
 
+describe("uptimeRegionCount", () => {
+  test("agrees with the quorum population on duplicated regions", () => {
+    expect(uptimeRegionCount({ jobType: "http", regions: "ams,ams,fra" })).toBe(
+      2,
+    );
+  });
+});
+
 describe("fetchFreezeCounts", () => {
   test("chunks ids and concatenates rows", async () => {
     const row = (id: string): ComputeCountRow => ({
@@ -216,7 +225,7 @@ describe("fetchFreezeCounts", () => {
     expect(counts).toEqual([]);
     expect([...failedMonitorIds].sort()).toEqual(["1", "2"]);
     expect(failures.length).toBe(1);
-    expect(failures[0].jobType).toBe("http");
+    expect(failures[0]).toMatchObject({ pipe: "counts", jobType: "http" });
     expect((failures[0].error as Error).message).toBe("tb down");
   });
 
@@ -723,10 +732,39 @@ describe("runUptimeFreeze with run quorum", () => {
       expect(res.frozen).toBe(0);
       expect(res.skipped).toBe(1);
       expect(res.failures).toEqual([
+        `monitor ${m.id}: tinybird quorum unavailable`,
+      ]);
+      expect(failures.map((f) => [f.pipe, f.jobType])).toEqual([
+        ["quorum", "http"],
+      ]);
+      expect(await frozenDays(tx, m.id)).toBeUndefined();
+    });
+  });
+
+  test("a failed counts chunk skips the quorum fetch and says counts failed", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+      const failures: ChunkFailure[] = [];
+      const quorum = histogramPipe([]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: () => Promise.reject(new Error("tb down")) }),
+        quorumPipes: makeQuorumPipes({ http: quorum.pipe }),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+        onChunkFailure: (f) => failures.push(f),
+      });
+
+      expect(quorum.calls).toEqual([]);
+      expect(res.skipped).toBe(1);
+      expect(res.failures).toEqual([
         `monitor ${m.id}: tinybird counts unavailable`,
       ]);
-      expect(failures.map((f) => f.jobType)).toEqual(["http"]);
-      expect(await frozenDays(tx, m.id)).toBeUndefined();
+      expect(failures.map((f) => [f.pipe, f.jobType])).toEqual([
+        ["counts", "http"],
+      ]);
     });
   });
 

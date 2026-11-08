@@ -161,7 +161,7 @@ export default function Page() {
       });
   }, [monitor?.data.uptime?.data, regionCount, timezone]);
 
-  const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
+  const { checkCount, totalChecks, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {
       const p75Range = globalLatencyData.reduce(
         (acc, item) => ({
@@ -205,17 +205,17 @@ export default function Page() {
         }))
         .sort((a, b) => b.avgLatency - a.avgLatency)[0];
 
+      const checkCount = shownTotal(
+        uptimeData.map((item) => item.counts),
+        regionCount,
+      );
+
       return {
-        totalChecks: formatNumber(
-          shownTotal(
-            uptimeData.map((item) => item.counts),
-            regionCount,
-          ),
-          {
-            notation: "compact",
-            compactDisplay: "short",
-          },
-        ).replace("K", "k"),
+        checkCount,
+        totalChecks: formatNumber(checkCount, {
+          notation: "compact",
+          compactDisplay: "short",
+        }).replace("K", "k"),
         uptimePercentage:
           uptimeStats.total > 0 ? formatPercentage(uptimePercentage) : "N/A",
         slowestRegion: slowestRegion?.region || "N/A",
@@ -300,7 +300,13 @@ export default function Page() {
                   {uptimePercentage}{" "}
                   <Badge variant="outline" className="py-px text-[10px]">
                     {totalChecks}{" "}
-                    {regionCount !== null ? t("checks") : t("requests")}
+                    {regionCount !== null
+                      ? t("{count, plural, one {check} other {checks}}", {
+                          count: checkCount,
+                        })
+                      : t("{count, plural, one {request} other {requests}}", {
+                          count: checkCount,
+                        })}
                   </Badge>
                 </StatusMonitorTabsTriggerValue>
               )}

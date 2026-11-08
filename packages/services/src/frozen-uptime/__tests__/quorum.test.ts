@@ -27,6 +27,13 @@ describe("quorumPopulation", () => {
     });
   });
 
+  test("a region listed twice counts once", () => {
+    expect(quorumPopulation("ams,fra,ams, fra,iad")).toEqual({
+      private: false,
+      regionCount: 3,
+    });
+  });
+
   test("private-only monitors get no population", () => {
     expect(quorumPopulation("")).toBeNull();
     expect(quorumPopulation(" , ")).toBeNull();

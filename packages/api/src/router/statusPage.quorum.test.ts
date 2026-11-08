@@ -348,9 +348,23 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
 
     expect(bar?.card).toEqual([
       { status: "success", value: "143 checks" },
-      { status: "error", value: "1 checks" },
+      { status: "error", value: "1 check" },
     ]);
     expect(component.uptime).toBe(`${floorPct(857 / 864)}%`);
+  });
+
+  test("a converted day whose counts all round to 0 renders as empty", async () => {
+    const day = yesterdayIn("UTC");
+    pipes.impl.set("httpStatus45d", async () => ({
+      data: [counts(ids.cloud, day, { ok: 2, error: 0 })],
+    }));
+    const { slug, componentId } = await pageWith(ids.cloud);
+
+    const component = await uptime(slug, componentId);
+    const bar = component.data.find((d) => d.day === day);
+
+    expect(bar?.bar).toEqual([{ status: "empty", height: 100 }]);
+    expect(bar?.card).toEqual([{ status: "empty", value: "" }]);
   });
 
   test("private-only monitor stays on per-region counts and is never asked for runs", async () => {
@@ -365,7 +379,7 @@ describe("getUptime counts runs for monitors with a quorum population", () => {
 
     expect(bar?.card).toEqual([
       { status: "success", value: "5 reqs" },
-      { status: "error", value: "1 reqs" },
+      { status: "error", value: "1 req" },
     ]);
     expect(pipes.calls.some((c) => c.name === "httpQuorum45d")).toBe(false);
   });
@@ -588,7 +602,7 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
     });
   });
 
-  test("a bucket the histogram misses (the DNS case) is converted, not mixed in", async () => {
+  test("a bucket the histogram misses is converted, not mixed in", async () => {
     const dnsId = (
       await createMonitor(workspaceId, {
         active: true,
@@ -597,7 +611,7 @@ describe("getMonitor counts uptime in runs for monitors with a quorum population
         regions: SIX_REGIONS,
       })
     ).id;
-    pipes.impl.set("dnsUptime30d", async () => ({
+    pipes.impl.set("dnsUptime7d", async () => ({
       data: [
         uptimeRow(bucketA, { success: 276, error: 12 }),
         uptimeRow(bucketB, { success: 282, error: 6 }),

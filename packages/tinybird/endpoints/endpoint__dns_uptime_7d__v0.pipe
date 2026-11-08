@@ -1,0 +1,30 @@
+TOKEN "endpoint__dns_uptime_7d__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- Buckets on cronTimestamp, like endpoint__dns_quorum_intervals__v0, so keys match.
+SELECT
+    toStartOfInterval(
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)), INTERVAL {{ String(interval, '30', required=True) }} minute
+    ) AS interval,
+    countIf(requestStatus = 'success') AS success,
+    countIf(requestStatus = 'degraded') AS degraded,
+    countIf(requestStatus = 'error') AS error
+FROM dns_response__v0
+WHERE
+    monitorId = {{ String(monitorId, '7417', required=True) }}
+    -- dns_response__v0 has no TTL; cap the window like the TTL-bound http/tcp uptime MVs
+    AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) >= now() - INTERVAL 7 DAY
+    {% if defined(fromDate) %}
+        AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) >= parseDateTimeBestEffortOrNull({{ String(fromDate) }})
+    {% end %}
+    {% if defined(toDate) %}
+        AND toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) <= parseDateTimeBestEffortOrNull({{ String(toDate) }})
+    {% end %}
+    {% if defined(regions) %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
+GROUP BY interval
+ORDER BY interval DESC
+
+TYPE endpoint

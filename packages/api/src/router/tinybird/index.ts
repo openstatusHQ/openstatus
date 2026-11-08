@@ -239,8 +239,7 @@ export function getGlobalMetricsProcedure(type: Type) {
 export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {
   switch (period) {
     case "7d":
-      // no 7d DNS uptime pipe; the 30d MV is filtered down by the client window
-      if (type === "dns") return tb.dnsUptime30d;
+      if (type === "dns") return tb.dnsUptime7d;
       if (type === "http") return tb.httpUptimeWeekly;
       if (type === "tcp") return tb.tcpUptimeWeekly;
       if (type === "icmp") return tb.icmpUptimeWeekly;

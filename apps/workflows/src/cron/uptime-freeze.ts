@@ -29,11 +29,15 @@ export async function handleUptimeFreezeCron(c: Context) {
   void runUptimeFreeze({
     pipes,
     quorumPipes,
-    onChunkFailure: ({ jobType, error }) => {
-      logger.warn("uptime-freeze: tinybird {jobType} chunk failed: {reason}", {
-        jobType,
-        reason: error instanceof Error ? error.message : String(error),
-      });
+    onChunkFailure: ({ pipe, jobType, error }) => {
+      logger.warn(
+        "uptime-freeze: tinybird {jobType} {pipe} chunk failed: {reason}",
+        {
+          pipe,
+          jobType,
+          reason: error instanceof Error ? error.message : String(error),
+        },
+      );
     },
   })
     .then(async (res) => {
