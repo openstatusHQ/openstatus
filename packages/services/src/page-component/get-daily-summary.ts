@@ -55,6 +55,8 @@ export type PageComponentDailySummary = {
 
 export type GetPageComponentDailySummaryResult = {
   components: PageComponentDailySummary[];
+  // IANA zone the days were grouped in: the page's, or UTC when it was rejected
+  timeZone: string;
 };
 
 export async function getPageComponentDailySummary(args: {
@@ -198,5 +200,5 @@ export async function getPageComponentDailySummary(args: {
     };
   });
 
-  return { components: summaries };
+  return { components: summaries, timeZone };
 }

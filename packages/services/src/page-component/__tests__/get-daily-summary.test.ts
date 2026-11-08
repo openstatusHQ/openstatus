@@ -344,12 +344,13 @@ describe("getPageComponentDailySummary", () => {
           },
         } as unknown as NonNullable<ServiceContext["tb"]>;
 
-        const { components } = await getPageComponentDailySummary({
+        const { components, timeZone } = await getPageComponentDailySummary({
           ctx: { ...teamCtx, db: tx, tb },
           input: { pageId, workspaceId, days: 2 },
         });
 
         expect(requestedZone).toBe("Asia/Tokyo");
+        expect(timeZone).toBe("Asia/Tokyo");
         const buckets = components[0].buckets;
         expect(buckets.at(-1)?.day).toBe(today);
         expect(buckets.at(-1)?.count).toBe(10);
@@ -378,11 +379,12 @@ describe("getPageComponentDailySummary", () => {
             }),
         } as unknown as NonNullable<ServiceContext["tb"]>;
 
-        const { components } = await getPageComponentDailySummary({
+        const { components, timeZone } = await getPageComponentDailySummary({
           ctx: { ...teamCtx, db: tx, tb },
           input: { pageId, workspaceId, days: 2 },
         });
 
+        expect(timeZone).toBe("UTC");
         const buckets = components[0].buckets;
         expect(buckets.at(-1)?.day).toBe(today);
         expect(buckets.at(-1)?.count).toBe(4);
