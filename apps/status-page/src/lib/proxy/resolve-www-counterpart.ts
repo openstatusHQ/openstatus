@@ -8,13 +8,21 @@ export function counterpartHost(route: ResolvedRoute): string | null {
   return wwwCounterpart(route.prefix);
 }
 
+/**
+ * The same request on the page's own domain. Drops a leading segment repeating
+ * the alias host (the apps/web `/:domain/:path*` proxy) and assigns the path
+ * instead of resolving it, so `//evil.com` cannot become the target host.
+ */
 export function canonicalDomainUrl(args: {
+  route: Pick<ResolvedRoute, "prefix">;
   customDomain: string;
   pathname: string;
   search: string;
 }): URL {
-  return new URL(
-    `${args.pathname}${args.search}`,
-    `https://${args.customDomain}`,
-  );
+  const segments = args.pathname.split("/").filter(Boolean);
+  if (segments[0]?.toLowerCase() === args.route.prefix) segments.shift();
+  const url = new URL(`https://${args.customDomain}`);
+  url.pathname = `/${segments.join("/")}`;
+  url.search = args.search;
+  return url;
 }

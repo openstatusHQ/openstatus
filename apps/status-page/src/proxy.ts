@@ -68,11 +68,37 @@ export default auth(async (req) => {
     return unresolvedHostResponse();
   }
 
+  // Vercel routes a `www.`/apex alias attached without a redirect here.
+  const counterpartRedirect = async () => {
+    const counterpart = counterpartHost(initialRoute);
+    if (!counterpart) return null;
+    const canonical = await db
+      .select({ customDomain: page.customDomain })
+      .from(page)
+      .where(sql`lower(${page.customDomain}) = ${counterpart}`)
+      .get();
+    if (!canonical?.customDomain) return null;
+    return NextResponse.redirect(
+      canonicalDomainUrl({
+        route: initialRoute,
+        customDomain: canonical.customDomain,
+        pathname: url.pathname,
+        search: url.search,
+      }),
+      308,
+    );
+  };
+
   // Markdown requests bypass the proxy's DB lookup and gate chain: the route is
   // reachable directly via `/api` anyway, so it re-validates every gate itself.
   // Short-circuiting before the gates avoids 307-redirecting a gated `.md` to
   // /login (it would never reach the route).
   if (wantsMarkdown) {
+    // No page can hold a `www.` domain, so it is always an alias to redirect.
+    if (initialRoute.prefix.startsWith("www.")) {
+      const redirect = await counterpartRedirect();
+      if (redirect) return redirect;
+    }
     const rewriteUrl = url.clone();
     rewriteUrl.pathname = `/api/markdown${initialRoute.rewritePath}`;
     const requestHeaders = new Headers(req.headers);
@@ -94,26 +120,7 @@ export default auth(async (req) => {
 
   // No page for this host/slug — never fall through to the theme explorer.
   if (!validation.success) {
-    // Vercel routes a `www.`/apex alias attached without a redirect here.
-    const counterpart = counterpartHost(initialRoute);
-    if (counterpart) {
-      const canonical = await db
-        .select({ customDomain: page.customDomain })
-        .from(page)
-        .where(sql`lower(${page.customDomain}) = ${counterpart}`)
-        .get();
-      if (canonical?.customDomain) {
-        return NextResponse.redirect(
-          canonicalDomainUrl({
-            customDomain: canonical.customDomain,
-            pathname: url.pathname,
-            search: url.search,
-          }),
-          308,
-        );
-      }
-    }
-    return unresolvedHostResponse();
+    return (await counterpartRedirect()) ?? unresolvedHostResponse();
   }
 
   const _page = validation.data;

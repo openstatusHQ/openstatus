@@ -32,11 +32,40 @@ describe("counterpartHost", () => {
   });
 });
 
-test("canonicalDomainUrl keeps path and query", () => {
-  const url = canonicalDomainUrl({
-    customDomain: "twenty-status.com",
-    pathname: "/events/report/1",
-    search: "?a=1",
+describe("canonicalDomainUrl", () => {
+  const route = { prefix: "www.twenty-status.com" };
+
+  test("keeps path and query", () => {
+    const url = canonicalDomainUrl({
+      route,
+      customDomain: "twenty-status.com",
+      pathname: "/events/report/1",
+      search: "?a=1",
+    });
+    expect(url.toString()).toBe(
+      "https://twenty-status.com/events/report/1?a=1",
+    );
   });
-  expect(url.toString()).toBe("https://twenty-status.com/events/report/1?a=1");
+
+  test("drops a leading segment repeating the alias host", () => {
+    const url = canonicalDomainUrl({
+      route,
+      customDomain: "twenty-status.com",
+      pathname: "/www.twenty-status.com/events",
+      search: "",
+    });
+    expect(url.toString()).toBe("https://twenty-status.com/events");
+  });
+
+  test("a protocol-relative path cannot change the host", () => {
+    for (const pathname of ["//evil.com/x", "/\\evil.com/x", "///evil.com"]) {
+      const url = canonicalDomainUrl({
+        route,
+        customDomain: "twenty-status.com",
+        pathname,
+        search: "",
+      });
+      expect(url.host).toBe("twenty-status.com");
+    }
+  });
 });
