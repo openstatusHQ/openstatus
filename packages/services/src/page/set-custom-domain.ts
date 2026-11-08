@@ -1,6 +1,10 @@
 import { requireScope } from "../auth";
-import { type DB, getReadDb, type ServiceContext } from "../context";
-import { LimitExceededError, ValidationError } from "../errors";
+import { type DB, getReadDb, isTx, type ServiceContext } from "../context";
+import {
+  InternalServiceError,
+  LimitExceededError,
+  ValidationError,
+} from "../errors";
 import {
   attachDomain,
   attachWwwCompanion,
@@ -50,6 +54,13 @@ export async function setPageCustomDomain(args: {
 }): Promise<void> {
   const { ctx } = args;
   requireScope(ctx, "pages:write");
+  // The write would only stage in a caller's transaction while Vercel moves now,
+  // so a rollback would leave the row on a detached domain.
+  if (ctx.db && isTx(ctx.db)) {
+    throw new InternalServiceError(
+      "setPageCustomDomain must run outside a transaction.",
+    );
+  }
   const input = UpdatePageCustomDomainInput.parse(args.input);
   const next = input.customDomain;
 
