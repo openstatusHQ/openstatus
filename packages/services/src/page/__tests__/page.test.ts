@@ -715,6 +715,53 @@ describe("updatePageConfiguration", () => {
   });
 });
 
+describe("updatePageConfiguration checks value", () => {
+  test("stores checks and keeps the other settings", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          title: "Checks",
+          slug: uniqueSlug("checks"),
+          description: "",
+          customDomain: "",
+          configuration: { type: "absolute", value: "requests", days: 30 },
+        },
+      });
+
+      await updatePageConfiguration({
+        ctx,
+        input: UpdatePageConfigurationInput.parse({
+          id: p.id,
+          configuration: { value: "checks" },
+        }),
+      });
+
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.configuration).toEqual({
+        type: "absolute",
+        value: "checks",
+        days: 30,
+      });
+    });
+  });
+
+  test("rejects an unknown value", () => {
+    expect(() =>
+      UpdatePageConfigurationInput.parse({
+        id: 1,
+        configuration: { value: "runs" },
+      }),
+    ).toThrow();
+  });
+});
+
 describe("updatePageLocales", () => {
   test("rejects when plan lacks i18n", async () => {
     await withTestTransaction(async (tx) => {

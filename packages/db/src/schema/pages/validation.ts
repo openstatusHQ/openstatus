@@ -133,7 +133,7 @@ export const insertPageSchema = createInsertSchema(page, {
 // barType and rendering manual-mode bars as empty).
 export const pageConfigurationSchema = z.object({
   value: z
-    .enum(["duration", "requests", "manual"])
+    .enum(["duration", "requests", "manual", "checks"])
     .nullish()
     .transform((v) => v ?? "requests"),
   type: z

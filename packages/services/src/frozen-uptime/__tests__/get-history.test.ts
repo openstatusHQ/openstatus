@@ -983,12 +983,13 @@ describe("getUptimeHistory with run quorum", () => {
   async function setup(
     tx: Tx,
     jobType: (typeof monitor.$inferInsert)["jobType"] = "http",
+    value: "checks" | "requests" = "checks",
   ) {
     const testMonitor = await insertMonitor(tx, {
       regions: SIX_REGIONS,
       jobType,
     });
-    const testPage = await insertPage(tx);
+    const testPage = await insertPage(tx, { configuration: { value } });
     await insertComponent(tx, {
       pageId: testPage.id,
       monitorId: testMonitor.id,
@@ -1056,12 +1057,58 @@ describe("getUptimeHistory with run quorum", () => {
         sleep: noSleep,
       });
 
-      expect(res.mode).toBe("requests");
+      expect(res.mode).toBe("checks");
       expect(res.quorumSince).toBe(key(1));
       const row = res.rows[0];
       expect(row.months[key(2)]).toBe(90);
       expect(row.months[key(1)]).toBe(100);
       expect(row.months[key(0)]).toBe(90);
+    });
+  });
+
+  test("requests mode keeps per-region counts and never reads the histogram", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, "http", "requests");
+      const id = String(testMonitor.id);
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), { ok: 860, error: 4 }).map((d) => ({
+          ...d,
+          quorum: {
+            regionCount: 6,
+            buckets: [{ errorRegions: 1, notOkRegions: 1, runs: 144 }],
+          },
+        })),
+      });
+      let quorumCalls = 0;
+      const countingPipes = quorumPipes([]);
+      const spied: UptimeQuorumPipes = {
+        ...countingPipes,
+        http: (args) => {
+          quorumCalls++;
+          return countingPipes.http(args);
+        },
+      };
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+        ]),
+        quorumPipes: spied,
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.mode).toBe("requests");
+      expect(res.quorumSince).toBe(null);
+      expect(quorumCalls).toBe(0);
+      const row = res.rows[0];
+      expect(row.months[key(1)]).toBe(floorPct(860 / 864));
+      expect(row.months[key(0)]).toBe(83.333);
     });
   });
 
@@ -1194,7 +1241,9 @@ describe("getUptimeHistory with run quorum", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const testMonitor = await insertMonitor(tx, { regions: "" });
-      const testPage = await insertPage(tx);
+      const testPage = await insertPage(tx, {
+        configuration: { value: "checks" },
+      });
       await insertComponent(tx, {
         pageId: testPage.id,
         monitorId: testMonitor.id,

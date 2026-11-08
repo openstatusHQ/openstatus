@@ -214,7 +214,7 @@ export const statusPageRouter = createTRPCRouter({
         pw: queryPasswordSchema,
         // NOTE: override the defaults we are getting from the page configuration
         cardType: z
-          .enum(["requests", "duration", "dominant", "manual"])
+          .enum(["requests", "checks", "duration", "dominant", "manual"])
           .nullish(),
         barType: z.enum(["absolute", "dominant", "manual"]).nullish(),
       }),
@@ -850,7 +850,7 @@ export const statusPageRouter = createTRPCRouter({
         pw: queryPasswordSchema,
         pageComponentIds: z.string().array(),
         cardType: z
-          .enum(["requests", "duration", "dominant", "manual"])
+          .enum(["requests", "checks", "duration", "dominant", "manual"])
           .prefault("requests"),
         barType: z
           .enum(["absolute", "dominant", "manual"])
@@ -914,6 +914,9 @@ export const statusPageRouter = createTRPCRouter({
         .catch("UTC")
         .parse(_page.defaultTimezone);
 
+      // only checks pages count runs; every other card type keeps per-region counts
+      const countsRuns = input.cardType === "checks";
+
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
       // whole page to manual mode so bars still render from DB events.
@@ -923,7 +926,7 @@ export const statusPageRouter = createTRPCRouter({
             ? Promise.resolve(null)
             : fetchStatusDays(monitors, pageTimeZone),
         ),
-        input.barType === "manual"
+        input.barType === "manual" || !countsRuns
           ? null
           : fetchQuorumDays(monitors, pageTimeZone),
       ]);
@@ -1010,7 +1013,8 @@ export const statusPageRouter = createTRPCRouter({
         const effectiveBarType = forceManual ? "manual" : input.barType;
         const effectiveCardType = forceManual ? "manual" : input.cardType;
 
-        const regionCount = c.monitor ? regionCountOf(c.monitor) : null;
+        const regionCount =
+          countsRuns && c.monitor ? regionCountOf(c.monitor) : null;
         const processedData = setDataByType({
           events,
           data: filledData,
@@ -1293,6 +1297,12 @@ export const statusPageRouter = createTRPCRouter({
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
+      const configuration = pageConfigurationSchema.safeParse(
+        _page.configuration ?? {},
+      );
+      const countsRuns =
+        configuration.success && configuration.data.value === "checks";
+
       const proceduresByType = {
         http: {
           latency: getMetricsLatencyProcedure("7d", "http"),
@@ -1307,7 +1317,8 @@ export const statusPageRouter = createTRPCRouter({
         dns: {
           latency: getMetricsLatencyProcedure("7d", "dns"),
           regions: getMetricsRegionsProcedure("7d", "dns"),
-          uptime: getUptimeProcedure("7d", "dns"),
+          // the 7d pipe buckets on cronTimestamp to line up with the quorum intervals
+          uptime: getUptimeProcedure(countsRuns ? "7d" : "30d", "dns"),
         },
         icmp: {
           latency: getMetricsLatencyProcedure("7d", "icmp"),
@@ -1358,7 +1369,9 @@ export const statusPageRouter = createTRPCRouter({
                 }),
               ]),
             ),
-            fetchQuorumIntervals(_monitor, { interval, fromDate, toDate }),
+            countsRuns
+              ? fetchQuorumIntervals(_monitor, { interval, fromDate, toDate })
+              : null,
           ]);
 
       const [latency, regions, counts] = metrics.data ?? [
@@ -1369,7 +1382,7 @@ export const statusPageRouter = createTRPCRouter({
       const uptime = {
         ...counts,
         data: attachIntervalQuorum(counts.data, quorum ?? new Map()),
-        regionCount: regionCountOf(_monitor),
+        regionCount: countsRuns ? regionCountOf(_monitor) : null,
       };
 
       return {

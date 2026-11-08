@@ -125,14 +125,14 @@ export function attachIntervalQuorum<Row extends { interval: Date }>(
 
 /**
  * Live per-day counts from the 45d pipes, keyed monitorId → day, with the run
- * histogram attached where the job type has one. Never throws: a monitor whose
- * counts failed lands in `failedMonitorIds`; a failed histogram only leaves
- * its days on per-region counts.
+ * histogram attached where the job type has one (none without `quorumPipes`).
+ * Never throws: a monitor whose counts failed lands in `failedMonitorIds`; a
+ * failed histogram only leaves its days on per-region counts.
  */
 export async function fetchLiveDays(args: {
   monitors: LiveMonitor[];
   pipes: UptimeFreezePipes;
-  quorumPipes: UptimeQuorumPipes;
+  quorumPipes?: UptimeQuorumPipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{
   days: Map<string, Map<string, FrozenMonitorUptimeDay>>;
@@ -152,11 +152,13 @@ export async function fetchLiveDays(args: {
       throttleMs: 0,
       sleep: args.sleep,
     }),
-    fetchLiveQuorum({
-      monitors: args.monitors,
-      quorumPipes: args.quorumPipes,
-      sleep: args.sleep,
-    }),
+    args.quorumPipes
+      ? fetchLiveQuorum({
+          monitors: args.monitors,
+          quorumPipes: args.quorumPipes,
+          sleep: args.sleep,
+        })
+      : Promise.resolve<LiveQuorum>(new Map()),
   ]);
 
   const days = new Map<string, Map<string, FrozenMonitorUptimeDay>>();

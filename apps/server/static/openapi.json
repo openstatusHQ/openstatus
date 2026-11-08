@@ -6261,7 +6261,8 @@
           "PAGE_METRIC_TYPE_UNSPECIFIED",
           "PAGE_METRIC_TYPE_DURATION",
           "PAGE_METRIC_TYPE_REQUESTS",
-          "PAGE_METRIC_TYPE_MANUAL"
+          "PAGE_METRIC_TYPE_MANUAL",
+          "PAGE_METRIC_TYPE_CHECKS"
         ],
         "description": "PageMetricType mirrors page.configuration.value (which metric the status bars represent)."
       },

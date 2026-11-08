@@ -43,7 +43,7 @@ function windowKey(w: (typeof WINDOWS)[number]): HistoryWindowKey {
 }
 
 // native-unit numerators kept alongside the percentage so rolling windows
-// stay additive (runs or region checks for requests mode, milliseconds for event math);
+// stay additive (region checks or runs for requests/checks mode, milliseconds for event math);
 // averaging monthly percentages would weigh a 2-day month like a full one
 type MonthValue = { percentage: number; up: number; total: number } | null;
 
@@ -68,11 +68,11 @@ type UptimeHistoryRow = {
 };
 
 type UptimeHistoryResult = {
-  mode: "requests" | "duration" | "manual";
+  mode: "requests" | "checks" | "duration" | "manual";
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
   createdAt: Date | null;
-  /** "YYYY-MM" of the first month whose monitor counts are runs judged on quorum */
+  /** checks mode only: "YYYY-MM" of the first month whose monitor counts are runs judged on quorum */
   quorumSince: string | null;
   summary: Record<HistoryWindowKey, { uptime: number | null; reports: number }>;
   rows: UptimeHistoryRow[];
@@ -227,6 +227,7 @@ export async function getUptimeHistory(args: {
     _page.configuration ?? {},
   );
   const mode = configuration.success ? configuration.data.value : "requests";
+  const countsRuns = mode === "checks";
 
   const months = monthKeys(now);
   const currentKey = months[months.length - 1];
@@ -270,7 +271,9 @@ export async function getUptimeHistory(args: {
   const liveReads = fetchLiveDays({
     monitors: [...monitorsById.values()],
     pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
-    quorumPipes: args.quorumPipes ?? uptimeQuorumPipes(defaultTb),
+    quorumPipes: countsRuns
+      ? (args.quorumPipes ?? uptimeQuorumPipes(defaultTb))
+      : undefined,
     sleep: args.sleep,
   });
 
@@ -298,18 +301,22 @@ export async function getUptimeHistory(args: {
     return days.length > 0 ? days : null;
   }
 
+  // requests mode keeps per-region counts, ignoring any frozen histogram
   const regionCounts = new Map(
-    [...monitorsById].map(([id, m]) => [id, uptimeRegionCount(m)]),
+    countsRuns
+      ? [...monitorsById].map(([id, m]) => [id, uptimeRegionCount(m)])
+      : [],
   );
 
-  const quorumSince =
-    months.find((key) =>
-      monitorIds.some(
-        (id) =>
-          regionCounts.get(id) != null &&
-          countsFor(id, key)?.some((d) => d.quorum),
-      ),
-    ) ?? null;
+  const quorumSince = countsRuns
+    ? (months.find((key) =>
+        monitorIds.some(
+          (id) =>
+            regionCounts.get(id) != null &&
+            countsFor(id, key)?.some((d) => d.quorum),
+        ),
+      ) ?? null)
+    : null;
 
   const pastDays = HISTORY_MONTHS * 31 + 7;
   const rows: UptimeHistoryRow[] = components.map((c) => {
@@ -348,7 +355,7 @@ export async function getUptimeHistory(args: {
         );
       } else if (c.type === "monitor" && c.monitorId !== null) {
         const days = countsFor(c.monitorId, key);
-        if (mode === "requests") {
+        if (mode === "requests" || mode === "checks") {
           value = requestsMonth(days, regionCounts.get(c.monitorId) ?? null);
         } else if (mode === "duration") {
           value = durationMonth(days, events, nowMs);

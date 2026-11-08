@@ -183,7 +183,7 @@ export function setDataByType({
 }: {
   events: Event[];
   data: StatusData[];
-  cardType: "requests" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "checks" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
   /** the monitor's quorum region count: counts are runs; null counts region checks */
   regionCount: number | null;
@@ -529,6 +529,7 @@ export function setDataByType({
 
     switch (cardType) {
       case "requests":
+      case "checks":
         if (shownTotal === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
@@ -689,7 +690,7 @@ export function getUptime({
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
-  cardType: "requests" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "checks" | "duration" | "dominant" | "manual";
   /** the monitor's quorum region count: counts are runs; null counts region checks */
   regionCount: number | null;
   /** no public regions and ≥1 private location: include probe errors in duration uptime */

@@ -58,7 +58,7 @@ const schema = z.object({
 const configurationSchema = z
   .object({
     type: z.enum(["manual", "absolute"]),
-    value: z.enum(["duration", "requests", "manual"]).nullish(),
+    value: z.enum(["duration", "requests", "checks", "manual"]).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
     days: z
@@ -103,7 +103,8 @@ export function FormConfiguration({
     | "absolute";
   const watchConfigurationValue = form.watch("configuration.value") as
     | "duration"
-    | "requests";
+    | "requests"
+    | "checks";
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
@@ -216,11 +217,13 @@ export function FormConfiguration({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(["duration", "requests"] as const).map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {configurationLabels.value[value]}
-                          </SelectItem>
-                        ))}
+                        {(["duration", "requests", "checks"] as const).map(
+                          (value) => (
+                            <SelectItem key={value} value={value}>
+                              {configurationLabels.value[value]}
+                            </SelectItem>
+                          ),
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -387,7 +390,7 @@ export function FormConfiguration({
 }
 
 // UI labels only - the stored enum values stay `absolute`/`manual` and
-// `duration`/`requests`/`manual` (DB, API and URL params).
+// `duration`/`requests`/`checks`/`manual` (DB, API and URL params).
 export const configurationLabels = {
   type: {
     absolute: "Monitor checks",
@@ -395,7 +398,8 @@ export const configurationLabels = {
   },
   value: {
     duration: "Time per status",
-    requests: "Number of checks",
+    requests: "Number of requests",
+    checks: "Number of checks",
     manual: "Worst status of the day",
   },
 } as const;
@@ -409,7 +413,10 @@ const message = {
   value: {
     duration:
       "cards show how long the monitor was operational, degraded or down.",
-    requests: "cards show how many checks succeeded, degraded or failed.",
+    requests:
+      "cards show how many requests succeeded, degraded or failed, counted per region.",
+    checks:
+      "cards show how many checks succeeded, degraded or failed. A check is one run across all regions, down when at least half of them fail.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {
@@ -422,7 +429,7 @@ const message = {
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
-  value: parseAsStringLiteral(["duration", "requests", "manual"]),
+  value: parseAsStringLiteral(["duration", "requests", "checks", "manual"]),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
   days: parseAsStringLiteral(["30", "45"]),

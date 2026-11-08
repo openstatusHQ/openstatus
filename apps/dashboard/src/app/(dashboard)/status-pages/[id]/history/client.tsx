@@ -69,6 +69,7 @@ const UPTIME_DOCS_URL =
 
 const MODE_LABELS = {
   requests: configurationLabels.value.requests,
+  checks: configurationLabels.value.checks,
   duration: configurationLabels.value.duration,
   manual: configurationLabels.type.manual,
 } as const;
@@ -107,7 +108,7 @@ export function Client() {
 
   const summary = history.summary[windowKey(window)];
   const quorumSince =
-    history.mode === "requests" && history.quorumSince
+    history.mode === "checks" && history.quorumSince
       ? new Date(`${history.quorumSince}-01T00:00:00`)
       : null;
   const hasAnyData = history.rows.some((row) =>
@@ -270,9 +271,24 @@ export function Client() {
                 <span className="text-muted-foreground">
                   — Monitor components. Uptime is{" "}
                   <span className="text-foreground font-medium">
+                    (ok + degraded) / total requests
+                  </span>
+                  , one request per region per run. Degraded responses still
+                  count as up.
+                </span>
+              </li>
+              <li>
+                <span className="text-foreground font-medium">
+                  {MODE_LABELS.checks}
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  — Monitor components. Uptime is{" "}
+                  <span className="text-foreground font-medium">
                     (ok + degraded) / total checks
                   </span>
-                  . Degraded responses still count as up.
+                  , one check per run across all of the monitor&apos;s regions,
+                  down when at least half of them fail. Degraded checks still
+                  count as up.
                 </span>
               </li>
               <li>
@@ -299,11 +315,11 @@ export function Client() {
             </ul>
             <p className="text-muted-foreground">
               Heartbeat monitors receive pings, not checks. With{" "}
-              {MODE_LABELS.requests} or {MODE_LABELS.duration}, their uptime is
-              the time since the first day with a ping minus incidents from
-              missed or failed pings and impact-weighted status reports — a
-              silent month still counts. With {MODE_LABELS.manual}, only status
-              reports count.
+              {MODE_LABELS.requests}, {MODE_LABELS.checks} or{" "}
+              {MODE_LABELS.duration}, their uptime is the time since the first
+              day with a ping minus incidents from missed or failed pings and
+              impact-weighted status reports — a silent month still counts. With{" "}
+              {MODE_LABELS.manual}, only status reports count.
             </p>
             <p className="text-muted-foreground">
               Months without recorded checks are shown as{" "}

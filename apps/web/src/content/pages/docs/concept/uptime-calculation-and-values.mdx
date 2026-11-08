@@ -19,21 +19,23 @@ In the dashboard, two settings on the status page's [**Components**](https://app
     - **Reports only** — only from the status reports and maintenances you publish.
 - **Card shows** — what the hover card (and uptime) is based on, when the source is **Monitor checks**:
     - **Time per status** — aggregated from the incidents' duration.
-    - **Number of checks** (default) — aggregated from every check result.
+    - **Number of requests** (default) — aggregated from every region's result.
+    - **Number of checks** — aggregated from every run across all of the monitor's regions.
 
-> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration` and **Number of checks** is `value: requests`.
+> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration`, **Number of requests** is `value: requests` and **Number of checks** is `value: checks`.
 
 **TL;DR**
 
 | Setting        | Source of truth      | What users see                      | Best for                        |
 |-------------|----------------------|-------------------------------------|----------------------------------|
 | **Monitor checks** + **Time per status** | Incidents and report impacts | Time-based uptime, proportional colours | Accurate long-term view         |
-| **Monitor checks** + **Number of checks** | Every check result    | Check-based uptime %              | Real-time reflection            |
+| **Monitor checks** + **Number of requests** | Every region's result | Request-based uptime %           | Real-time reflection            |
+| **Monitor checks** + **Number of checks** | Every run across all regions | Check-based uptime %       | Availability commitments (SLAs) |
 | **Reports only**   | Your status reports and maintenances  | Controlled, narrative updates       | Transparency without monitoring |
 
 ## Monitor checks
 
-With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in two variants: _time per status_ and _number of checks_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
+With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in three variants: _time per status_, _number of requests_ and _number of checks_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
 
 ### Time per status
 
@@ -53,13 +55,21 @@ Temporary single-region ping failures (e.g., one location failing once, sometime
 
 The proportional colours in the status bar are drawn from these duration values. Hovering over a day shows both incidents and status reports, so users can explore what happened.
 
-### Number of checks
+### Number of requests
 
-The number of checks value (`requests`) is more straightforward — it looks at each ping result individually. **Every check we run contributes to your uptime score**.
+The number of requests value (`requests`) is more straightforward — it looks at each region's result individually. **Every request we send, from every region, contributes to your uptime score**.
 
 In simple terms: `uptime = (success + degraded) / total requests`
 
 This is the current default mode for most openstatus users. It's simple, data-driven, and updates immediately as new results come in.
+
+### Number of checks
+
+The number of checks value (`checks`) counts each scheduled run once, across all of the monitor's regions. **A check is down when at least half of its regions fail**, and degraded when at least half fail or are degraded; regions that did not report count as not failing. One flaky region no longer drags uptime down, and an outage seen by half of your regions counts in full.
+
+In simple terms: `uptime = (successful + degraded checks) / total checks`
+
+Monitors that run only from [private locations](/docs/concept/private-locations) keep counting each region's result.
 
 Like with time per status, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 
