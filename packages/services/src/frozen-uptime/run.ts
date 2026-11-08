@@ -57,7 +57,7 @@ const JOB_TYPES_WITHOUT_QUORUM = [
   "ssl",
 ] as const satisfies readonly MonitorJobType[];
 
-export type UptimeQuorumJobType = Exclude<
+type UptimeQuorumJobType = Exclude<
   MonitorJobType,
   (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
 >;
@@ -84,7 +84,7 @@ const RUNS_JOB_TYPES = {
   grpc: true,
 } satisfies Record<UptimeQuorumJobType, true>;
 
-export function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
+function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
   return Object.hasOwn(RUNS_JOB_TYPES, jobType);
 }
 
@@ -134,7 +134,7 @@ type FetchOptions = {
   onChunkFailure?: (failure: ChunkFailure) => void;
 };
 
-export async function fetchChunked<Row>(
+async function fetchChunked<Row>(
   args: FetchOptions & {
     kind: FreezePipeKind;
     pipeFor: (jobType: string) => PipeFn<Row> | undefined;
