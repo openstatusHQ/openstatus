@@ -8,6 +8,7 @@ export {
 export { freezeMonitorMonth } from "./freeze";
 export { getUptimeHistory } from "./get-history";
 export { getMonitorUptimeHistory } from "./get-monitor-history";
+export { attachQuorum, fetchLiveQuorum, type LiveQuorum } from "./live";
 export {
   type QuorumHistogramRow,
   type QuorumPopulation,

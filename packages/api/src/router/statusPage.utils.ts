@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema";
 import {
   clipToCoverage,
+  countsRuns,
   type CoverageSegment,
   type DayTally,
   type DayWindow,
@@ -49,6 +50,7 @@ export type TinybirdResult<T> =
 export async function withTinybirdFallback<T>(
   fetch: () => Promise<T>,
   timeoutMs = TINYBIRD_FALLBACK_TIMEOUT_MS,
+  fallback = "using manual mode",
 ): Promise<TinybirdResult<T>> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -63,7 +65,7 @@ export async function withTinybirdFallback<T>(
     ]);
     return { ok: true, data };
   } catch (err) {
-    console.error("[status-page] tinybird unhealthy, using manual mode:", err);
+    console.error(`[status-page] tinybird unhealthy, ${fallback}:`, err);
     return { ok: false, data: null };
   } finally {
     clearTimeout(timer);
@@ -351,17 +353,19 @@ export function setDataByType({
     ];
   }
 
+  // a run across all regions is a check; per-region counts stay requests
   function entriesToRequestCardData(
     entries: Array<{
       status: "success" | "degraded" | "error" | "info";
       count: number;
     }>,
+    unit: "checks" | "reqs",
   ): UptimeData["card"] {
     return entries
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
-        value: `${formatNumber(entry.count)} reqs`,
+        value: `${formatNumber(entry.count)} ${unit}`,
       }));
   }
 
@@ -446,6 +450,7 @@ export function setDataByType({
 
     const counts = tallyDay(dayData);
     const { total, status: dataStatus } = counts;
+    const countUnit = countsRuns(dayData) ? "checks" : "reqs";
 
     switch (barType) {
       case "absolute":
@@ -521,7 +526,7 @@ export function setDataByType({
           cardData = createEmptyCardData(eventStatus);
         } else {
           const requestEntries = createRequestEntries(counts);
-          cardData = entriesToRequestCardData(requestEntries);
+          cardData = entriesToRequestCardData(requestEntries, countUnit);
         }
         break;
 
@@ -616,7 +621,7 @@ export function setDataByType({
           cardData = createEmptyCardData(eventStatus);
         } else {
           const defaultEntries = createRequestEntries(counts);
-          cardData = entriesToRequestCardData(defaultEntries);
+          cardData = entriesToRequestCardData(defaultEntries, countUnit);
         }
         break;
     }

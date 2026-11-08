@@ -17,6 +17,12 @@ import {
   statusReport,
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
+import {
+  attachQuorum,
+  fetchLiveQuorum,
+  type LiveQuorum,
+  uptimeQuorumPipes,
+} from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
   constantTimeEqual,
@@ -40,6 +46,7 @@ import {
   visitorFromCtx,
 } from "../lib/page-access";
 import { sendSubscriberVerification } from "../lib/subscriber-verification";
+import { tb } from "../tb";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -139,6 +146,30 @@ async function fetchStatusDays(
     );
     return readUtc();
   }
+}
+
+// Run quorum per `timeZone` day. Its own budget: a slow or failed read only
+// leaves per-region counts, never manual mode.
+async function fetchQuorumDays(
+  monitors: { monitor: { id: number; jobType: string; regions: string[] } }[],
+  timeZone: string,
+): Promise<LiveQuorum> {
+  const result = await withTinybirdFallback(
+    () =>
+      fetchLiveQuorum({
+        monitors: monitors.map(({ monitor }) => ({
+          id: monitor.id,
+          jobType: monitor.jobType,
+          regions: monitor.regions.join(","),
+        })),
+        quorumPipes: uptimeQuorumPipes(tb),
+        timeZone,
+        attempts: 1,
+      }),
+    undefined,
+    "using per-region counts",
+  );
+  return result.data ?? new Map();
 }
 
 export const statusPageRouter = createTRPCRouter({
@@ -852,16 +883,25 @@ export const statusPageRouter = createTRPCRouter({
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
       // whole page to manual mode so bars still render from DB events.
-      const tinybird = await withTinybirdFallback(() =>
+      const [tinybird, quorum] = await Promise.all([
+        withTinybirdFallback(() =>
+          input.barType === "manual"
+            ? Promise.resolve(null)
+            : fetchStatusDays(monitors, pageTimeZone),
+        ),
         input.barType === "manual"
-          ? Promise.resolve(null)
-          : fetchStatusDays(monitors, pageTimeZone),
-      );
+          ? null
+          : fetchQuorumDays(monitors, pageTimeZone),
+      ]);
 
       const tinybirdUnhealthy = !tinybird.ok;
       const timeZone = tinybird.data?.timeZone ?? pageTimeZone;
-      const statusDataByMonitorId =
-        tinybird.data?.rows ?? new Map<string, never[]>();
+      // quorum days are keyed in the page zone: drop them if counts fell back to UTC
+      const statusDataByMonitorId = tinybird.data
+        ? quorum && timeZone === pageTimeZone
+          ? attachQuorum(tinybird.data.rows, quorum)
+          : tinybird.data.rows
+        : new Map<string, never[]>();
 
       const parsedConfiguration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},

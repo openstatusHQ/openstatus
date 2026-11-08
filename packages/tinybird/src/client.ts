@@ -348,7 +348,17 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
-const quorumHistogramShape = z.object({
+// optional, not prefaulted: without a zone the request stays the UTC one the freeze sends
+export const quorumParameters = z.object({
+  monitorIds: z.string().array(),
+  timezone: z
+    .string()
+    .refine(isValidTimeZone, "timezone must be an IANA zone name")
+    .optional(),
+});
+
+// `day` is a local midnight in the requested zone, re-keyed as UTC midnight
+export const quorumHistogramShape = z.object({
   day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
   monitorId: z.string(),
   private: z.number().transform((val) => val !== 0),
@@ -930,9 +940,7 @@ export class OSTinybird {
   public get httpQuorum45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_quorum_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -1498,9 +1506,7 @@ export class OSTinybird {
   public get tcpQuorum45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_quorum_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -1982,9 +1988,7 @@ export class OSTinybird {
   public get icmpQuorum45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_quorum_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -2482,9 +2486,7 @@ export class OSTinybird {
   public get grpcQuorum45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_quorum_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -3809,9 +3811,7 @@ export class OSTinybird {
   public get dnsQuorum45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_quorum_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: quorumParameters,
       data: quorumHistogramShape,
       opts: { next: { revalidate: REVALIDATE } },
     });

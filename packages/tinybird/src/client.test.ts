@@ -6,6 +6,8 @@ import {
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
+  quorumHistogramShape,
+  quorumParameters,
   status15mParameters,
   status15mShape,
 } from "./client";
@@ -269,6 +271,65 @@ describe("15m status pipes", () => {
     test(`${name} resolves for any zone and when timezone is omitted`, async () => {
       expect(
         await tb[name]({ monitorIds: ["1"], timezone: "Asia/Kolkata" }),
+      ).toEqual({ meta: [], data: [] });
+      expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
+        meta: [],
+        data: [],
+      });
+    });
+  }
+});
+
+const quorumGetters = [
+  "httpQuorum45d",
+  "tcpQuorum45d",
+  "dnsQuorum45d",
+  "icmpQuorum45d",
+  "grpcQuorum45d",
+] as const;
+
+describe("quorumParameters", () => {
+  test("leaves timezone out when omitted, so the request keeps its UTC shape", () => {
+    expect(quorumParameters.parse({ monitorIds: ["1"] })).toEqual({
+      monitorIds: ["1"],
+    });
+  });
+
+  test("forwards a zone and rejects one ClickHouse would 400 on", () => {
+    expect(
+      quorumParameters.parse({ monitorIds: ["1"], timezone: "Asia/Kolkata" })
+        .timezone,
+    ).toBe("Asia/Kolkata");
+    for (const timezone of ["Mars/Olympus", "", "+05:30"]) {
+      expect(
+        quorumParameters.safeParse({ monitorIds: ["1"], timezone }).success,
+      ).toBe(false);
+    }
+  });
+});
+
+describe("quorumHistogramShape", () => {
+  test("re-keys a local midnight as that calendar date at UTC midnight", () => {
+    const row = quorumHistogramShape.parse({
+      day: "2026-10-14 00:00:00",
+      monitorId: "1",
+      private: 0,
+      errorRegions: 1,
+      notOkRegions: 1,
+      runs: 3,
+    });
+    expect(row.day).toBe("2026-10-14T00:00:00.000Z");
+    expect(row.private).toBe(false);
+  });
+});
+
+describe("quorum pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of quorumGetters) {
+    test(`${name} resolves with and without a timezone`, async () => {
+      expect(
+        await tb[name]({ monitorIds: ["1"], timezone: "Europe/Berlin" }),
       ).toEqual({ meta: [], data: [] });
       expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
         meta: [],

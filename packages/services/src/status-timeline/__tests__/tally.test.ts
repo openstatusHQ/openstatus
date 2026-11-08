@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { meetsQuorum, tallyDay } from "../tally";
+import { countsRuns, meetsQuorum, tallyDay } from "../tally";
 import { requestsTally } from "../uptime";
 
 function quorumDay(
@@ -108,6 +108,14 @@ describe("tallyDay", () => {
       error: 0,
       status: "empty",
     });
+  });
+});
+
+describe("countsRuns", () => {
+  test("only a histogram with configured regions makes the day count runs", () => {
+    expect(countsRuns(quorumDay([]))).toBe(true);
+    expect(countsRuns(quorumDay([], 0))).toBe(false);
+    expect(countsRuns({ ok: 1, degraded: 0, error: 0 })).toBe(false);
   });
 });
 

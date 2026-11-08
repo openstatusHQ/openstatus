@@ -12,4 +12,4 @@ SCHEMA >
 ENGINE "AggregatingMergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"
 ENGINE_SORTING_KEY "monitorId, time, cronTimestamp, private"
-ENGINE_TTL "time + toIntervalDay(46)"
+ENGINE_TTL "time + toIntervalDay(47)"

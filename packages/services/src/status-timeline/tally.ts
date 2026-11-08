@@ -33,9 +33,15 @@ function runCounts({ regionCount, buckets }: FrozenMonitorUptimeQuorum) {
   return counts;
 }
 
+/** Whether `tallyDay` counts this day in runs rather than region checks. */
+export function countsRuns(
+  day: DayCounts,
+): day is DayCounts & { quorum: FrozenMonitorUptimeQuorum } {
+  return day.quorum !== undefined && day.quorum.regionCount > 0;
+}
+
 export function tallyDay(day: DayCounts): DayTally {
-  const { ok, degraded, error } =
-    day.quorum && day.quorum.regionCount > 0 ? runCounts(day.quorum) : day;
+  const { ok, degraded, error } = countsRuns(day) ? runCounts(day.quorum) : day;
   const total = ok + degraded + error;
   return {
     up: ok + degraded,

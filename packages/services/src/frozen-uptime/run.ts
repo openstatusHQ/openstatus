@@ -28,7 +28,10 @@ type PipeFn<Row> = (params: {
 }) => Promise<{ data: Row[] }>;
 
 export type StatusPipeFn = PipeFn<ComputeCountRow>;
-export type QuorumPipeFn = PipeFn<QuorumHistogramRow>;
+export type QuorumPipeFn = (params: {
+  monitorIds: string[];
+  timezone?: string;
+}) => Promise<{ data: QuorumHistogramRow[] }>;
 
 // no 45d status pipe, so no counts on the live status page either
 const JOB_TYPES_WITHOUT_STATUS_PIPE = [
@@ -191,17 +194,27 @@ export async function fetchFreezeCounts(
   return { counts: rows, failedMonitorIds };
 }
 
-/** Run histograms for the monitors whose job type has a quorum pipe. */
+/**
+ * Run histograms for the monitors whose job type has a quorum pipe, grouped
+ * into the days of `timeZone` (UTC when omitted).
+ */
 export async function fetchQuorumHistograms(
-  args: FetchOptions & { pipes: UptimeQuorumPipes },
+  args: FetchOptions & { pipes: UptimeQuorumPipes; timeZone?: string },
 ): Promise<{
   histograms: QuorumHistogramRow[];
   failedMonitorIds: Set<string>;
 }> {
+  const timezone =
+    args.timeZone && args.timeZone !== "UTC" ? args.timeZone : undefined;
   const { rows, failedMonitorIds } = await fetchChunked({
     ...args,
-    pipeFor: (jobType) =>
-      hasQuorumPipe(args.pipes, jobType) ? args.pipes[jobType] : undefined,
+    pipeFor: (jobType) => {
+      if (!hasQuorumPipe(args.pipes, jobType)) return undefined;
+      const pipe = args.pipes[jobType];
+      return timezone
+        ? ({ monitorIds }) => pipe({ monitorIds, timezone })
+        : pipe;
+    },
   });
   return { histograms: rows, failedMonitorIds };
 }
