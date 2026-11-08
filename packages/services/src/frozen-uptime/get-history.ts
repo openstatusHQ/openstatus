@@ -10,6 +10,7 @@ import { requireScope } from "../auth";
 import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import {
+  type Counts,
   dayCoverage,
   dayWindow,
   durationDowntimeMs,
@@ -51,21 +52,29 @@ type MonthValue = {
   percentage: number;
   up: number;
   total: number;
-  shown: { up: number; total: number };
+  shown: Counts;
 } | null;
 
 type HistoryUnit = "runs" | "requests" | "time";
 
-/** `up` and `total` as shown: whole runs or requests, or milliseconds for `time`. */
-type UptimeHistoryMonth = { percentage: number; up: number; total: number };
+/**
+ * Shown counts: whole runs or requests, or milliseconds for `time`, where
+ * `ok` is uptime, `error` downtime and `degraded` always 0.
+ */
+type UptimeHistoryValue = Counts & { percentage: number };
 
 function timeMonth(up: number, total: number): MonthValue {
+  const shownUp = Math.round(up);
   return {
     percentage: floorPct(up / total),
     up,
     total,
-    shown: { up: Math.round(up), total: Math.round(total) },
+    shown: { ok: shownUp, degraded: 0, error: Math.round(total) - shownUp },
   };
+}
+
+function historyValue(v: MonthValue): UptimeHistoryValue | null {
+  return v ? { percentage: v.percentage, ...v.shown } : null;
 }
 
 type UptimeHistoryEvent = Pick<
@@ -81,11 +90,12 @@ type UptimeHistoryRow = {
     /** for event links, null for static components */
     monitorId: number | null;
   };
-  /** unit of every month's `up` and `total` */
+  /** unit of every month's and window's counts */
   unit: HistoryUnit;
   /** "YYYY-MM" → month; null = no data recorded, NEVER "down" */
-  months: Record<string, UptimeHistoryMonth | null>;
-  rolling: Record<HistoryWindowKey, number | null>;
+  months: Record<string, UptimeHistoryValue | null>;
+  /** counts are the sums of the window's month counts */
+  rolling: Record<HistoryWindowKey, UptimeHistoryValue | null>;
   /** component events in the window; clients bucket per month by overlap */
   events: UptimeHistoryEvent[];
 };
@@ -405,17 +415,22 @@ export async function getUptimeHistory(args: {
       values.set(key, value);
     }
 
-    const rolling = {} as Record<HistoryWindowKey, number | null>;
+    const rolling = {} as UptimeHistoryRow["rolling"];
     for (const w of WINDOWS) {
       let up = 0;
       let total = 0;
+      const shown = { ok: 0, degraded: 0, error: 0 };
       for (const key of months.slice(-w)) {
         const v = values.get(key);
         if (!v) continue;
         up += v.up;
         total += v.total;
+        shown.ok += v.shown.ok;
+        shown.degraded += v.shown.degraded;
+        shown.error += v.shown.error;
       }
-      rolling[windowKey(w)] = total > 0 ? floorPct(up / total) : null;
+      rolling[windowKey(w)] =
+        total > 0 ? { percentage: floorPct(up / total), ...shown } : null;
     }
 
     return {
@@ -427,19 +442,7 @@ export async function getUptimeHistory(args: {
       },
       unit,
       months: Object.fromEntries(
-        months.map((k) => {
-          const v = values.get(k);
-          return [
-            k,
-            v
-              ? {
-                  percentage: v.percentage,
-                  up: v.shown.up,
-                  total: v.shown.total,
-                }
-              : null,
-          ];
-        }),
+        months.map((k) => [k, historyValue(values.get(k) ?? null)]),
       ),
       rolling,
       events: events.map((e) => ({
@@ -475,9 +478,10 @@ export async function getUptimeHistory(args: {
     // components weigh equally — native units (checks vs ms) differ per
     // component, so a cross-component sum would weight by unit volume
     const wk = windowKey(w);
-    const uptimes = rows.flatMap((r) =>
-      r.rolling[wk] !== null ? [r.rolling[wk] as number] : [],
-    );
+    const uptimes = rows.flatMap((r) => {
+      const value = r.rolling[wk];
+      return value ? [value.percentage] : [];
+    });
     summary[wk] = {
       uptime:
         uptimes.length > 0

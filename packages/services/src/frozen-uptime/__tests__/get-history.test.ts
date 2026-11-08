@@ -425,7 +425,12 @@ describe("getUptimeHistory", () => {
       expect(row.months[key(1)]?.percentage ?? null).toBe(99);
       expect(row.months[key(0)]?.percentage ?? null).toBe(100);
       expect(row.unit).toBe("requests");
-      expect(row.months[key(1)]).toMatchObject({ up: 99, total: 100 });
+      expect(row.months[key(1)]).toEqual({
+        percentage: 99,
+        ok: 99,
+        degraded: 0,
+        error: 1,
+      });
       // aged past the TB window without a freeze → no data, never down
       expect(row.months[key(3)]?.percentage ?? null).toBe(null);
       expect(res.createdAt?.getTime()).toBe(testPage.createdAt?.getTime());
@@ -474,7 +479,7 @@ describe("getUptimeHistory", () => {
           previous,
         );
         expect(res.rows[0].months["2026-09"]?.percentage ?? null).toBe(0);
-        expect(res.rows[0].rolling["6"]).toBe(rolling);
+        expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(rolling);
         expect(res.summary["6"].uptime).toBe(rolling);
       }
 
@@ -493,7 +498,7 @@ describe("getUptimeHistory", () => {
         sleep: noSleep,
       });
       expect(res.rows[0].months["2026-08"]?.percentage ?? null).toBe(25);
-      expect(res.rows[0].rolling["6"]).toBe(12.5);
+      expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(12.5);
     });
   });
 
@@ -607,8 +612,8 @@ describe("getUptimeHistory", () => {
       expect(row.months[key(2)]?.percentage ?? null).toBe(100);
       expect(row.months[key(1)]?.percentage ?? null).toBe(0);
       // additive: 3000/4000 = 75.00; a naive percentage average would say 50
-      expect(row.rolling["6"]).toBe(75);
-      expect(row.rolling["24"]).toBe(75);
+      expect(row.rolling["6"]?.percentage ?? null).toBe(75);
+      expect(row.rolling["24"]?.percentage ?? null).toBe(75);
     });
   });
 
@@ -832,9 +837,11 @@ describe("getUptimeHistory", () => {
       // would dilute it to ~96.7
       expect(res.rows[0].months[key(1)]?.percentage ?? null).toBe(90);
       expect(res.rows[0].unit).toBe("time");
-      expect(res.rows[0].months[key(1)]).toMatchObject({
-        up: 9 * MS_PER_DAY,
-        total: 10 * MS_PER_DAY,
+      expect(res.rows[0].months[key(1)]).toEqual({
+        percentage: 90,
+        ok: 9 * MS_PER_DAY,
+        degraded: 0,
+        error: MS_PER_DAY,
       });
     });
   });
@@ -1081,10 +1088,108 @@ describe("getUptimeHistory with run quorum", () => {
       expect(row.months[key(0)]?.percentage ?? null).toBe(90);
       const d1 = monthDays(`${key(1)}-01`).length;
       expect(row.months[key(1)]).toMatchObject({
-        up: 144 * d1,
-        total: 144 * d1,
+        ok: 144 * d1,
+        degraded: 0,
+        error: 0,
       });
-      expect(row.months[key(0)]).toMatchObject({ up: 90, total: 100 });
+      expect(row.months[key(0)]).toMatchObject({
+        ok: 90,
+        degraded: 0,
+        error: 10,
+      });
+    });
+  });
+
+  test("month breakdowns add up per day and rolling windows sum them", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx);
+      const id = String(testMonitor.id);
+      // converted from 6 regions: 143.17 ok, 0.17 degraded, 0.67 error runs a day
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(2)}-01`,
+        days: fullMonth(key(2), { ok: 859, degraded: 1, error: 4 }),
+      });
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: `${key(1)}-01`,
+        days: fullMonth(key(1), {}).map((d, i) => ({
+          ...d,
+          runs:
+            i === 0
+              ? { ok: 140, degraded: 3, error: 1 }
+              : { ok: 144, degraded: 0, error: 0 },
+        })),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 580, degraded: 10, error: 10 },
+        ]),
+        quorumPipes: quorumPipes([
+          {
+            monitorId: id,
+            day: today,
+            errorRegions: 0,
+            degradedOrErrorRegions: 0,
+            runs: 80,
+          },
+          {
+            monitorId: id,
+            day: today,
+            errorRegions: 1,
+            degradedOrErrorRegions: 3,
+            runs: 15,
+          },
+          {
+            monitorId: id,
+            day: today,
+            errorRegions: 3,
+            degradedOrErrorRegions: 3,
+            runs: 5,
+          },
+        ]),
+        now,
+        sleep: noSleep,
+      });
+
+      const d2 = monthDays(`${key(2)}-01`).length;
+      const d1 = monthDays(`${key(1)}-01`).length;
+      const row = res.rows[0];
+      expect(row.months[key(2)]).toEqual({
+        percentage: floorPct(860 / 864),
+        // each day rounds to 143 + 0 + 1 before the month sums
+        ok: 143 * d2,
+        degraded: 0,
+        error: 1 * d2,
+      });
+      expect(row.months[key(1)]).toEqual({
+        percentage: floorPct((144 * d1 - 1) / (144 * d1)),
+        ok: 140 + 144 * (d1 - 1),
+        degraded: 3,
+        error: 1,
+      });
+      expect(row.months[key(0)]).toEqual({
+        percentage: 95,
+        ok: 80,
+        degraded: 15,
+        error: 5,
+      });
+
+      const months = [key(2), key(1), key(0)].map((k) => row.months[k]);
+      const sum = (field: "ok" | "degraded" | "error") =>
+        months.reduce((a, m) => a + (m?.[field] ?? 0), 0);
+      for (const w of ["6", "12", "24"] as const) {
+        expect(row.rolling[w]).toMatchObject({
+          ok: sum("ok"),
+          degraded: sum("degraded"),
+          error: sum("error"),
+        });
+        expect(res.summary[w].uptime).toBe(row.rolling[w]?.percentage);
+      }
     });
   });
 
@@ -1209,10 +1314,10 @@ describe("getUptimeHistory with run quorum", () => {
       const row = res.rows[0];
       expect(row.months[key(2)]?.percentage ?? null).toBe(90);
       expect(row.months[key(1)]?.percentage ?? null).toBe(95);
-      expect(row.rolling["6"]).toBe(
+      expect(row.rolling["6"]?.percentage ?? null).toBe(
         floorPct((90 * d2 + 95 * d1) / (100 * (d2 + d1))),
       );
-      expect(row.rolling["6"]).not.toBe(
+      expect(row.rolling["6"]?.percentage ?? null).not.toBe(
         floorPct((540 * d2 + 95 * d1) / (600 * d2 + 100 * d1)),
       );
     });
@@ -1242,7 +1347,7 @@ describe("getUptimeHistory with run quorum", () => {
       const d1 = monthDays(`${key(1)}-01`).length;
       const expected = floorPct((10 * 90 + (d1 - 10) * 95) / (100 * d1));
       expect(res.rows[0].months[key(1)]?.percentage ?? null).toBe(expected);
-      expect(res.rows[0].rolling["6"]).toBe(expected);
+      expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(expected);
     });
   });
 
@@ -1329,7 +1434,11 @@ describe("getUptimeHistory with run quorum", () => {
       });
 
       expect(res.rows[0].months[key(0)]?.percentage ?? null).toBe(83.333);
-      expect(res.rows[0].months[key(0)]).toMatchObject({ up: 83, total: 100 });
+      expect(res.rows[0].months[key(0)]).toMatchObject({
+        ok: 83,
+        degraded: 0,
+        error: 17,
+      });
     });
   });
   test("a converted month shows the sum of each day's rounded counts", async () => {
@@ -1355,7 +1464,7 @@ describe("getUptimeHistory with run quorum", () => {
       const d1 = monthDays(`${key(1)}-01`).length;
       const month = res.rows[0].months[key(1)];
       expect(month?.percentage).toBe(99.5);
-      expect(month).toMatchObject({ up: 100 * d1, total: 101 * d1 });
+      expect(month).toMatchObject({ ok: 100 * d1, degraded: 0, error: d1 });
     });
   });
 });

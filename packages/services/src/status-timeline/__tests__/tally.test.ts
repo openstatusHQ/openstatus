@@ -171,10 +171,18 @@ describe("shownTotal", () => {
 });
 
 describe("shownBuckets", () => {
-  test("up and total are sums of each bucket's shown counts", () => {
+  test("each count is the sum of the buckets' shown counts", () => {
     const buckets = [r(1437, 0, 3), r(1440, 0, 0), r(1434, 2, 4)];
-    // 239.5 + 240 + 239.33 up, 0.5 + 0 + 0.67 down
-    expect(shownBuckets(buckets, 6)).toEqual({ up: 719, total: 721 });
-    expect(shownBuckets(buckets, null)).toEqual({ up: 4313, total: 4320 });
+    // ok 239.5 + 240 + 239, degraded 0 + 0 + 0.33, error 0.5 + 0 + 0.67
+    expect(shownBuckets(buckets, 6)).toEqual({
+      ok: 719,
+      degraded: 0,
+      error: 2,
+    });
+    expect(shownBuckets(buckets, null)).toEqual({
+      ok: 4311,
+      degraded: 2,
+      error: 7,
+    });
   });
 });

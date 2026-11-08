@@ -5,10 +5,11 @@ import {
   cellFromPercentage,
   eventsForMonth,
   getColumnVisibility,
+  historyBreakdown,
   monthKeyToFullLabel,
-  monthCountLines,
   monthKeyToLabel,
   parseWindow,
+  windowLabel,
 } from "./status-page-history";
 
 describe("parseWindow", () => {
@@ -102,41 +103,73 @@ describe("getColumnVisibility", () => {
   });
 });
 
-describe("monthCountLines", () => {
+describe("historyBreakdown", () => {
   const DAY = 86_400_000;
 
-  it("shows up of total runs and the down count", () => {
+  it("lists success, degraded and error with the total in the unit", () => {
     expect(
-      monthCountLines({ percentage: 99.537, up: 8600, total: 8640 }, "runs"),
-    ).toEqual(["8,600 of 8,640 runs up", "40 down"]);
+      historyBreakdown(
+        { percentage: 99.975, ok: 73_450, degraded: 18, error: 18 },
+        "requests",
+      ),
+    ).toEqual({
+      rows: [
+        { key: "ok", label: "Success", value: "73,450" },
+        { key: "degraded", label: "Degraded", value: "18" },
+        { key: "error", label: "Error", value: "18" },
+      ],
+      total: { value: "73,486", unit: "requests" },
+    });
   });
 
-  it("drops the down line without failures", () => {
-    expect(
-      monthCountLines({ percentage: 100, up: 51840, total: 51840 }, "requests"),
-    ).toEqual(["51,840 of 51,840 requests up"]);
-  });
-
-  it("uses the singular for a single run", () => {
-    expect(monthCountLines({ percentage: 0, up: 0, total: 1 }, "runs")).toEqual(
-      ["0 of 1 run up", "1 down"],
+  it("keeps zero rows", () => {
+    const { rows, total } = historyBreakdown(
+      { percentage: 100, ok: 8640, degraded: 0, error: 0 },
+      "runs",
     );
+    expect(rows.map((row) => row.value)).toEqual(["8,640", "0", "0"]);
+    expect(total).toEqual({ value: "8,640", unit: "runs" });
   });
 
-  it("formats time months as downtime of the covered span", () => {
-    const total = 30 * DAY;
+  it("uses the singular for a single run or request", () => {
+    const one = { percentage: 0, ok: 0, degraded: 0, error: 1 };
+    expect(historyBreakdown(one, "runs").total).toEqual({
+      value: "1",
+      unit: "run",
+    });
+    expect(historyBreakdown(one, "requests").total).toEqual({
+      value: "1",
+      unit: "request",
+    });
+  });
+
+  it("formats time as success and error durations of the covered span", () => {
     const down = (2 * 60 + 32) * 60_000;
     expect(
-      monthCountLines({ percentage: 99.648, up: total - down, total }, "time"),
-    ).toEqual(["2h 32m down of 30d"]);
-  });
-
-  it("says no downtime when a time month has none", () => {
-    expect(
-      monthCountLines(
-        { percentage: 100, up: 7.5 * DAY, total: 7.5 * DAY },
+      historyBreakdown(
+        { percentage: 99.648, ok: 30 * DAY - down, degraded: 0, error: down },
         "time",
       ),
-    ).toEqual(["No downtime in 7d 12h"]);
+    ).toEqual({
+      rows: [
+        { key: "ok", label: "Success", value: "29d 21h" },
+        { key: "error", label: "Error", value: "2h 32m" },
+      ],
+      total: { value: "30d", unit: null },
+    });
+  });
+
+  it("shows a zero error duration", () => {
+    const { rows } = historyBreakdown(
+      { percentage: 100, ok: 7.5 * DAY, degraded: 0, error: 0 },
+      "time",
+    );
+    expect(rows[1]).toEqual({ key: "error", label: "Error", value: "0s" });
+  });
+});
+
+describe("windowLabel", () => {
+  it("names the window", () => {
+    expect(windowLabel(6)).toBe("Last 6 months");
   });
 });

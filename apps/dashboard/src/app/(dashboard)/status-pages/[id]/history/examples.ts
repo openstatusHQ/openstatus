@@ -2,6 +2,7 @@ import type { RouterOutputs } from "@openstatus/api";
 
 type UptimeHistory = RouterOutputs["page"]["getUptimeHistory"];
 type HistoryRow = UptimeHistory["rows"][number];
+type HistoryValue = NonNullable<HistoryRow["months"][string]>;
 
 // TODO: rework later - currently not happy how we keep the metrics data available
 
@@ -46,6 +47,16 @@ const round = (value: number) => Math.round(value * 1_000) / 1_000;
 // a month of one-minute requests, or of milliseconds for static components
 const MONTH_TOTAL = { requests: 30 * 1_440, time: 30 * 86_400_000 } as const;
 
+function sumValues(values: (HistoryValue | null)[]): HistoryValue | null {
+  const present = values.filter((v): v is HistoryValue => v !== null);
+  if (present.length === 0) return null;
+  const ok = present.reduce((a, v) => a + v.ok, 0);
+  const degraded = present.reduce((a, v) => a + v.degraded, 0);
+  const error = present.reduce((a, v) => a + v.error, 0);
+  const percentage = round(((ok + degraded) / (ok + degraded + error)) * 100);
+  return { percentage, ok, degraded, error };
+}
+
 function average(values: (number | null)[]): number | null {
   const present = values.filter((v): v is number => v !== null);
   if (present.length === 0) return null;
@@ -68,27 +79,18 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
 
     const unit = component.type === "monitor" ? "requests" : "time";
     const total = MONTH_TOTAL[unit];
+    const monthValues = values.map((percentage): HistoryValue | null => {
+      if (percentage === null) return null;
+      const ok = Math.round((total * percentage) / 100);
+      return { percentage, ok, degraded: 0, error: total - ok };
+    });
 
     return {
       component: { ...component, monitorId: null },
       unit,
-      months: Object.fromEntries(
-        months.map((key, i) => {
-          const percentage = values[i];
-          return [
-            key,
-            percentage === null
-              ? null
-              : {
-                  percentage,
-                  up: Math.round((total * percentage) / 100),
-                  total,
-                },
-          ];
-        }),
-      ),
+      months: Object.fromEntries(months.map((key, i) => [key, monthValues[i]])),
       rolling: Object.fromEntries(
-        WINDOWS.map((w) => [w, average(values.slice(-Number(w)))]),
+        WINDOWS.map((w) => [w, sumValues(monthValues.slice(-Number(w)))]),
       ) as HistoryRow["rolling"],
       events: [],
     };
@@ -98,7 +100,7 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
     WINDOWS.map((w) => [
       w,
       {
-        uptime: average(rows.map((row) => row.rolling[w])),
+        uptime: average(rows.map((row) => row.rolling[w]?.percentage ?? null)),
         reports: Number(w) / 3,
       },
     ]),

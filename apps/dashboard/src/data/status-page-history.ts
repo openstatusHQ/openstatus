@@ -33,29 +33,57 @@ export type MonthCell = {
 export type HistoryRow =
   RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
 export type HistoryEvent = HistoryRow["events"][number];
-export type HistoryMonth = NonNullable<HistoryRow["months"][string]>;
+export type HistoryValue = NonNullable<HistoryRow["months"][string]>;
 export type HistoryUnit = HistoryRow["unit"];
 
-/** "8,600 of 8,640 runs up", "40 down"; time months read "2h 32m down of 30d". */
-export function monthCountLines(
-  month: HistoryMonth,
+export type BreakdownRow = {
+  key: "ok" | "degraded" | "error";
+  label: string;
+  value: string;
+};
+
+/** Rows of a month's or window's card; time units have no degraded duration. */
+export function historyBreakdown(
+  value: HistoryValue,
   unit: HistoryUnit,
-): string[] {
-  const down = month.total - month.up;
+): { rows: BreakdownRow[]; total: { value: string; unit: string | null } } {
   if (unit === "time") {
-    const total = formatDurationShort(month.total);
-    return [
-      // under half a second formats as "0s"
-      down >= 500
-        ? `${formatDurationShort(down)} down of ${total}`
-        : `No downtime in ${total}`,
-    ];
+    return {
+      rows: [
+        { key: "ok", label: "Success", value: formatDurationShort(value.ok) },
+        {
+          key: "error",
+          label: "Error",
+          value: formatDurationShort(value.error),
+        },
+      ],
+      total: {
+        value: formatDurationShort(value.ok + value.error),
+        unit: null,
+      },
+    };
   }
-  const noun = month.total === 1 ? unit.slice(0, -1) : unit;
-  return [
-    `${formatNumber(month.up)} of ${formatNumber(month.total)} ${noun} up`,
-    ...(down > 0 ? [`${formatNumber(down)} down`] : []),
-  ];
+  const total = value.ok + value.degraded + value.error;
+  return {
+    rows: [
+      { key: "ok", label: "Success", value: formatNumber(value.ok) },
+      {
+        key: "degraded",
+        label: "Degraded",
+        value: formatNumber(value.degraded),
+      },
+      { key: "error", label: "Error", value: formatNumber(value.error) },
+    ],
+    total: {
+      value: formatNumber(total),
+      unit: total === 1 ? unit.slice(0, -1) : unit,
+    },
+  };
+}
+
+/** "Last 6 months", the header of the window total's card. */
+export function windowLabel(window: HistoryWindow): string {
+  return `Last ${window} months`;
 }
 
 // safe because HistoryRow.rolling keys are exactly the string forms of HistoryWindow
