@@ -90,13 +90,14 @@ export function mapIncidentToStatusReport(
 ) {
   const updates = [...(incident.incident_updates ?? [])].sort(
     (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      new Date(a.display_at ?? a.created_at).getTime() -
+      new Date(b.display_at ?? b.created_at).getTime(),
   );
 
   const mappedUpdates = updates.map((u) => ({
     status: mapIncidentUpdateStatus(u.status),
     message: u.body ?? "",
-    date: new Date(u.created_at),
+    date: new Date(u.display_at ?? u.created_at),
     componentImpacts: (u.affected_components ?? []).flatMap(
       (c): UpdateComponentImpact[] => {
         const impact = COMPONENT_IMPACT_MAP[c.new_status];
