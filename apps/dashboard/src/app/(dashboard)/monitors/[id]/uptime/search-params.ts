@@ -1,9 +1,9 @@
 import { createSearchParamsCache, parseAsStringLiteral } from "nuqs/server";
 
-import { UPTIME_METRICS } from "@/data/uptime-history.client";
+import { HISTORY_METRICS } from "@/data/status-page-history";
 
 export const searchParamsParsers = {
-  metric: parseAsStringLiteral(UPTIME_METRICS).withDefault("requests"),
+  metric: parseAsStringLiteral(HISTORY_METRICS).withDefault("requests"),
 };
 
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

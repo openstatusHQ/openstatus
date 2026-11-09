@@ -49,7 +49,7 @@ describe("uptimeYears", () => {
       lines: ["100.00% uptime", "100 requests"],
     });
     expect(year.days[0].blank).toBe(true);
-    expect(on(2)).toMatchObject({ hatched: true, lines: ["No data"] });
+    expect(on(2)).toMatchObject({ hatched: true, lines: ["No requests"] });
     expect(on(3)).toMatchObject({
       level: 2,
       lines: ["97.00% uptime", "100 requests · 3 failed"],

@@ -2,6 +2,7 @@ import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
 
 import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
+import type { HistoryMetric } from "@/data/status-page-history";
 import { formatNumber } from "@/lib/formatter";
 
 export type CheckCounts = {
@@ -10,9 +11,6 @@ export type CheckCounts = {
   degraded: number;
   error: number;
 };
-
-export const UPTIME_METRICS = ["requests", "runs"] as const;
-export type UptimeMetric = (typeof UPTIME_METRICS)[number];
 
 export type UptimeYear = {
   year: number;
@@ -30,18 +28,20 @@ export function formatUptime(ratio: number, digits = 2): string {
   return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
 }
 
-function countLabel(count: number, metric: UptimeMetric): string {
+function countLabel(count: number, metric: HistoryMetric): string {
   return `${formatNumber(count)} ${count === 1 ? metric.slice(0, -1) : metric}`;
 }
 
 /** Muted without failures, else by failed share of the day's counts: < 1%, ≤ 5%, > 5%. */
 function dayMark(
   counts: CheckCounts | undefined,
-  metric: UptimeMetric,
+  metric: HistoryMetric,
 ): Partial<ActivityDay> {
   const total = counts ? counts.ok + counts.degraded + counts.error : 0;
   // a day without counts is no data, never downtime
-  if (!counts || total === 0) return { hatched: true, lines: ["No data"] };
+  if (!counts || total === 0) {
+    return { hatched: true, lines: [`No ${metric}`] };
+  }
   const { degraded, error } = counts;
   const failed = error / total;
   return {
@@ -71,7 +71,7 @@ export function utcToday(now = new Date()) {
 export function uptimeYears(
   counts: CheckCounts[],
   now = new Date(),
-  metric: UptimeMetric = "requests",
+  metric: HistoryMetric = "requests",
 ) {
   // frozen months are zero-filled: the record starts at the first counted day
   const since = counts.find((c) => c.ok + c.degraded + c.error > 0)?.day;

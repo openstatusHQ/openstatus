@@ -1,8 +1,6 @@
 "use client";
 
 import { Calendar, Lock } from "@openstatus/icons";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -45,8 +43,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import {
-  UPTIME_METRICS,
   exampleUptimeCounts,
   formatUptime,
   uptimeYears,
@@ -87,7 +85,7 @@ export function Client() {
     [counts, now, metric],
   );
 
-  if (!monitor || !workspace) return null;
+  if (!monitor || !workspace || (!isLimited && !history)) return null;
 
   const partial = metric === "runs" ? history?.runsPartial : history?.partial;
 
@@ -118,7 +116,7 @@ export function Client() {
             <ActivityTitle>{year}</ActivityTitle>
             <ActivityPeriod>
               {uptime === null
-                ? "No data"
+                ? `No ${metric}`
                 : `${formatUptime(uptime, 3)} uptime`}
               {failedDays > 0
                 ? ` · ${failedDays} ${failedDays === 1 ? "day" : "days"} with failures`
@@ -150,7 +148,7 @@ export function Client() {
           <ActivityCalendarLegendSeparator />
           <ActivityCalendarLegendItem>
             <ActivityCalendarCell hatched />
-            No data
+            No {metric}
           </ActivityCalendarLegendItem>
           <ActivityCalendarLegendSeparator />
           <ActivityCalendarLegendItem>Days in UTC</ActivityCalendarLegendItem>
@@ -183,26 +181,14 @@ export function Client() {
               </SectionDescription>
             </div>
             {showMetric ? (
-              <Tabs
+              <UptimeMetricTabs
                 value={metric}
-                onValueChange={(v) =>
-                  setSearchParams({ metric: v === "runs" ? "runs" : null })
-                }
-              >
-                <TabsList>
-                  {UPTIME_METRICS.map((m) => (
-                    <TabsTrigger key={m} value={m} className="capitalize">
-                      {m}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+                onValueChange={(m) => setSearchParams({ metric: m })}
+              />
             ) : null}
           </SectionHeaderRow>
         </SectionHeader>
-        {!isLimited && !history ? (
-          <Skeleton className="h-36 w-full" />
-        ) : isLimited ? (
+        {isLimited ? (
           <BillingOverlayContainer>
             {calendars}
             <BillingOverlay>

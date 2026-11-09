@@ -1,7 +1,6 @@
 "use client";
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -47,16 +46,14 @@ import {
   MetricCard,
   MetricCardGroup,
   MetricCardHeader,
-  MetricCardSkeleton,
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
+import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import {
-  HISTORY_METRICS,
   HISTORY_WINDOWS,
   getColumnVisibility,
   historyRows,
@@ -112,10 +109,12 @@ export function Client() {
     [window, history?.months.length],
   );
 
-  const summary = history?.summary[windowKey(window)];
-  const showMetric = !isLimited && history?.mode === "requests";
+  if (!history) return null;
+
+  const summary = history.summary[windowKey(window)];
+  const showMetric = !isLimited && history.mode === "requests";
   const uptime =
-    showMetric && metric === "runs" ? summary?.runsUptime : summary?.uptime;
+    showMetric && metric === "runs" ? summary.runsUptime : summary.uptime;
   // rows without a value in the window are left out of the page average
   const averaged = rows.filter(
     (row) => row.rolling[windowKey(window)] !== null,
@@ -139,20 +138,10 @@ export function Client() {
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               {showMetric ? (
-                <Tabs
+                <UptimeMetricTabs
                   value={metric}
-                  onValueChange={(v) =>
-                    setSearchParams({ metric: v === "runs" ? "runs" : null })
-                  }
-                >
-                  <TabsList>
-                    {HISTORY_METRICS.map((m) => (
-                      <TabsTrigger key={m} value={m} className="capitalize">
-                        {m}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
+                  onValueChange={(m) => setSearchParams({ metric: m })}
+                />
               ) : null}
               <Tabs
                 value={String(window)}
@@ -186,30 +175,22 @@ export function Client() {
                 Page Uptime
               </MetricCardTitle>
             </MetricCardHeader>
-            {!history ? (
-              <MetricCardSkeleton className="h-6 w-20" />
-            ) : (
-              <div className="flex flex-wrap items-baseline gap-x-2">
-                <MetricCardValue>
-                  {uptime == null ? "—" : `${uptime.toFixed(3)}%`}
-                </MetricCardValue>
-                {averaged > 0 && averaged < rows.length ? (
-                  <span className="text-muted-foreground text-xs">
-                    {averaged} of {rows.length} components
-                  </span>
-                ) : null}
-              </div>
-            )}
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <MetricCardValue>
+                {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
+              </MetricCardValue>
+              {averaged > 0 && averaged < rows.length ? (
+                <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                  {averaged} of {rows.length} components
+                </span>
+              ) : null}
+            </div>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
               <MetricCardTitle className="uppercase">Reports</MetricCardTitle>
             </MetricCardHeader>
-            {!history ? (
-              <MetricCardSkeleton className="h-6 w-8" />
-            ) : (
-              <MetricCardValue>{summary?.reports}</MetricCardValue>
-            )}
+            <MetricCardValue>{summary.reports}</MetricCardValue>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -217,11 +198,7 @@ export function Client() {
                 Components
               </MetricCardTitle>
             </MetricCardHeader>
-            {!history ? (
-              <MetricCardSkeleton className="h-6 w-8" />
-            ) : (
-              <MetricCardValue>{rows.length}</MetricCardValue>
-            )}
+            <MetricCardValue>{rows.length}</MetricCardValue>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -229,18 +206,12 @@ export function Client() {
                 Created At
               </MetricCardTitle>
             </MetricCardHeader>
-            {!history ? (
-              <MetricCardSkeleton className="h-6 w-16" />
-            ) : (
-              <MetricCardValue>
-                {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
-              </MetricCardValue>
-            )}
+            <MetricCardValue>
+              {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
+            </MetricCardValue>
           </MetricCard>
         </MetricCardGroup>
-        {!history ? (
-          <DataTableSkeleton rows={3} />
-        ) : isLimited ? (
+        {isLimited ? (
           <BillingOverlayContainer>
             <div className="overflow-x-auto">
               <DataTable
@@ -298,7 +269,7 @@ export function Client() {
               How uptime is calculated
             </HintCollapsibleTitle>
             <HintCollapsibleDescription>
-              {isLimited || !history
+              {isLimited
                 ? "Each percentage depends on the page's calculation mode and the component type."
                 : `This page uses ${MODE_LABELS[history.mode]}. Each percentage also depends on the component type.`}
             </HintCollapsibleDescription>
