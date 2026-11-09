@@ -20,9 +20,16 @@ export default async function Page({
 
   // NOTE: store in cache to avoid flicker on clients first render
   await searchParamsCache.parse(searchParams);
-  await queryClient.prefetchQuery(
-    trpc.page.getUptimeHistory.queryOptions({ id: pageId }),
+  const workspace = await queryClient.fetchQuery(
+    trpc.workspace.get.queryOptions(),
   );
+  // plans without uptime history get a FORBIDDEN, which would land in Sentry;
+  // not awaited: the live Tinybird reads stream to the client behind a skeleton
+  if (workspace.limits["uptime-history"]) {
+    void queryClient.prefetchQuery(
+      trpc.page.getUptimeHistory.queryOptions({ id: pageId }),
+    );
+  }
 
   return (
     <HydrateClient>

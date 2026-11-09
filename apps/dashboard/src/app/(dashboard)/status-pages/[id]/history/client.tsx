@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -46,12 +47,14 @@ import {
   MetricCard,
   MetricCardGroup,
   MetricCardHeader,
+  MetricCardSkeleton,
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import {
   HISTORY_METRICS,
   HISTORY_WINDOWS,
@@ -109,12 +112,14 @@ export function Client() {
     [window, history?.months.length],
   );
 
-  if (!history) return null;
-
-  const summary = history.summary[windowKey(window)];
-  const showMetric = !isLimited && history.mode === "requests";
+  const summary = history?.summary[windowKey(window)];
+  const showMetric = !isLimited && history?.mode === "requests";
   const uptime =
-    showMetric && metric === "runs" ? summary.runsUptime : summary.uptime;
+    showMetric && metric === "runs" ? summary?.runsUptime : summary?.uptime;
+  // rows without a value in the window are left out of the page average
+  const averaged = rows.filter(
+    (row) => row.rolling[windowKey(window)] !== null,
+  ).length;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
   );
@@ -181,15 +186,30 @@ export function Client() {
                 Page Uptime
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>
-              {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
-            </MetricCardValue>
+            {!history ? (
+              <MetricCardSkeleton className="h-6 w-20" />
+            ) : (
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <MetricCardValue>
+                  {uptime == null ? "—" : `${uptime.toFixed(3)}%`}
+                </MetricCardValue>
+                {averaged > 0 && averaged < rows.length ? (
+                  <span className="text-muted-foreground text-xs">
+                    {averaged} of {rows.length} components
+                  </span>
+                ) : null}
+              </div>
+            )}
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
               <MetricCardTitle className="uppercase">Reports</MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>{summary.reports}</MetricCardValue>
+            {!history ? (
+              <MetricCardSkeleton className="h-6 w-8" />
+            ) : (
+              <MetricCardValue>{summary?.reports}</MetricCardValue>
+            )}
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -197,7 +217,11 @@ export function Client() {
                 Components
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>{rows.length}</MetricCardValue>
+            {!history ? (
+              <MetricCardSkeleton className="h-6 w-8" />
+            ) : (
+              <MetricCardValue>{rows.length}</MetricCardValue>
+            )}
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -205,12 +229,18 @@ export function Client() {
                 Created At
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>
-              {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
-            </MetricCardValue>
+            {!history ? (
+              <MetricCardSkeleton className="h-6 w-16" />
+            ) : (
+              <MetricCardValue>
+                {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
+              </MetricCardValue>
+            )}
           </MetricCard>
         </MetricCardGroup>
-        {isLimited ? (
+        {!history ? (
+          <DataTableSkeleton rows={3} />
+        ) : isLimited ? (
           <BillingOverlayContainer>
             <div className="overflow-x-auto">
               <DataTable
@@ -268,7 +298,7 @@ export function Client() {
               How uptime is calculated
             </HintCollapsibleTitle>
             <HintCollapsibleDescription>
-              {isLimited
+              {isLimited || !history
                 ? "Each percentage depends on the page's calculation mode and the component type."
                 : `This page uses ${MODE_LABELS[history.mode]}. Each percentage also depends on the component type.`}
             </HintCollapsibleDescription>
@@ -295,8 +325,9 @@ export function Client() {
                   counts each scheduled check once across its cloud regions: a
                   run is down when at least half of the regions that reported
                   fail. Uptime is (ok + degraded) / total; degraded still counts
-                  as up. Months without run data, and monitors with only private
-                  locations, show no data in runs.
+                  as up. Monitors with only private locations have no runs and
+                  show no data in runs; Page Uptime then averages the components
+                  that have data.
                 </span>
               </li>
               <li>
@@ -339,9 +370,9 @@ export function Client() {
         {!isLimited ? (
           <NoteDismissible cookieKey="note_status_page_history_missing_months">
             <Info />
-            If there are any missing months, please contact us.
+            Is a month missing that your monitors were running? Let us know.
             <FormDialogSupportContact>
-              <NoteButton variant="default">Request Backfill</NoteButton>
+              <NoteButton variant="default">Contact us</NoteButton>
             </FormDialogSupportContact>
           </NoteDismissible>
         ) : null}

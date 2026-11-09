@@ -336,13 +336,12 @@ export async function getUptimeHistory(args: {
   // current month is never frozen, the previous may not be yet (the freeze
   // runs early next month) — both come live from the 45d pipes; failed
   // monitors land in failedMonitorIds and render as no-data
+  const tb = ctx.tb ?? defaultTb;
   const liveReads = fetchLiveDays({
     monitors: components.flatMap((c) => (c.monitor ? [c.monitor] : [])),
-    pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
+    pipes: args.pipes ?? uptimeFreezePipes(tb),
     runsPipes:
-      mode === "requests"
-        ? (args.runsPipes ?? uptimeRunsPipes(defaultTb))
-        : undefined,
+      mode === "requests" ? (args.runsPipes ?? uptimeRunsPipes(tb)) : undefined,
     sleep: args.sleep,
   });
 

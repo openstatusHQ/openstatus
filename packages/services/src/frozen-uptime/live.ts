@@ -11,7 +11,7 @@ import {
  * Live per-day counts from the 45d pipes, keyed monitorId → day, with `runs`
  * where the monitor has run verdicts. Never throws: a monitor whose counts
  * failed lands in `failedMonitorIds`; a failed runs read only leaves its days
- * without `runs`.
+ * without `runs` and lands in `failedRunsMonitorIds`.
  */
 export async function fetchLiveDays(args: {
   monitors: { id: number; jobType: string; regions: string }[];
@@ -22,6 +22,7 @@ export async function fetchLiveDays(args: {
 }): Promise<{
   days: Map<string, Map<string, FrozenMonitorUptimeDay>>;
   failedMonitorIds: Set<string>;
+  failedRunsMonitorIds: Set<string>;
 }> {
   const monitorIdsByJobType = new Map<string, Set<string>>();
   for (const m of args.monitors) {
@@ -71,5 +72,9 @@ export async function fetchLiveDays(args: {
     }
   }
 
-  return { days, failedMonitorIds: counts.failedMonitorIds };
+  return {
+    days,
+    failedMonitorIds: counts.failedMonitorIds,
+    failedRunsMonitorIds: runs?.failedMonitorIds ?? new Set(),
+  };
 }
