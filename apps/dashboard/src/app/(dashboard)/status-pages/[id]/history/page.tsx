@@ -23,10 +23,9 @@ export default async function Page({
   const workspace = await queryClient.fetchQuery(
     trpc.workspace.get.queryOptions(),
   );
-  // plans without uptime history get a FORBIDDEN, which would land in Sentry;
-  // not awaited: the live Tinybird reads stream to the client behind a skeleton
+  // plans without uptime history get a FORBIDDEN, which would land in Sentry
   if (workspace.limits["uptime-history"]) {
-    void queryClient.prefetchQuery(
+    await queryClient.prefetchQuery(
       trpc.page.getUptimeHistory.queryOptions({ id: pageId }),
     );
   }
