@@ -19,16 +19,16 @@ In the dashboard, two settings on the status page's [**Components**](https://app
     - **Reports only** — only from the status reports and maintenances you publish.
 - **Card shows** — what the hover card (and uptime) is based on, when the source is **Monitor checks**:
     - **Time per status** — aggregated from the incidents' duration.
-    - **Number of checks** (default) — aggregated from every check result.
+    - **Number of requests** (default) — aggregated from every check result.
 
-> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration` and **Number of checks** is `value: requests`.
+> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration` and **Number of requests** is `value: requests`.
 
 **TL;DR**
 
 | Setting        | Source of truth      | What users see                      | Best for                        |
 |-------------|----------------------|-------------------------------------|----------------------------------|
 | **Monitor checks** + **Time per status** | Incidents and report impacts | Time-based uptime, proportional colours | Accurate long-term view         |
-| **Monitor checks** + **Number of checks** | Every check result    | Check-based uptime %              | Real-time reflection            |
+| **Monitor checks** + **Number of requests** | Every check result    | Check-based uptime %              | Real-time reflection            |
 | **Reports only**   | Your status reports and maintenances  | Controlled, narrative updates       | Transparency without monitoring |
 
 ## Monitor checks
@@ -53,9 +53,9 @@ Temporary single-region ping failures (e.g., one location failing once, sometime
 
 The proportional colours in the status bar are drawn from these duration values. Hovering over a day shows both incidents and status reports, so users can explore what happened.
 
-### Number of checks
+### Number of requests
 
-The number of checks value (`requests`) is more straightforward — it looks at each ping result individually. **Every check we run contributes to your uptime score**.
+The number of requests value (`requests`) is more straightforward — it looks at each ping result individually. **Every check we run contributes to your uptime score**.
 
 In simple terms: `uptime = (success + degraded) / total requests`
 

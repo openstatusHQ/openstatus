@@ -395,7 +395,7 @@ export const configurationLabels = {
   },
   value: {
     duration: "Time per status",
-    requests: "Number of checks",
+    requests: "Number of requests",
     manual: "Worst status of the day",
   },
 } as const;
