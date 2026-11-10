@@ -43,6 +43,14 @@ function resolvePage(
   }
 }
 
+// Open reports beyond this stay in the scoped view, which lists them all.
+const MAX_REPORT_UPDATES = 3;
+
+// Keyed lookup so a reorder of a scope builder cannot change what shows here.
+function itemsOf(groups: CommandMenuGroup[], key: string): CommandMenuItem[] {
+  return groups.find((g) => g.key === key)?.items ?? [];
+}
+
 // The likely next steps from the page the user is on: the entity's sub-pages
 // and actions. Long entity lists stay behind the "Scope to" item.
 function candidateItems(
@@ -52,30 +60,40 @@ function candidateItems(
 ): CommandMenuItem[] {
   switch (page.type) {
     case "monitor": {
-      const [tabs, sections] = monitorScopeGroups(page);
-      return [...tabs.items, ...sections.items];
+      const groups = monitorScopeGroups(page);
+      return [...itemsOf(groups, "monitor"), ...itemsOf(groups, "sections")];
     }
     case "incident": {
-      const [anchors, report] = incidentScopeGroups({
+      const groups = incidentScopeGroups({
         page,
         incidents: data.incidents,
         statusReports: data.statusReports,
       });
-      return [...report.items, ...anchors.items];
+      return [...itemsOf(groups, "report"), ...itemsOf(groups, "incident")];
     }
     case "status-page": {
-      const [actions, , , tabs, sections] = statusPageScopeGroups({
+      const groups = statusPageScopeGroups({
         page,
         statusReports: data.sortedStatusReports,
         maintenances: data.sortedMaintenances,
       });
       const reportId = context.type === "status-page" && context.reportId;
       const viewedUpdate = `add-update-${reportId}`;
-      const actionItems = [
-        ...actions.items.filter((i) => i.value === viewedUpdate),
-        ...actions.items.filter((i) => i.value !== viewedUpdate),
+      const actions = itemsOf(groups, "actions");
+      const isUpdate = (i: CommandMenuItem) =>
+        i.action.type === "sheet" &&
+        i.action.sheet.sheet === "status-report-update";
+      const viewed = actions.filter((i) => i.value === viewedUpdate);
+      const otherUpdates = actions
+        .filter((i) => isUpdate(i) && i.value !== viewedUpdate)
+        .slice(0, MAX_REPORT_UPDATES - viewed.length);
+      return [
+        ...viewed,
+        ...actions.filter((i) => !isUpdate(i)),
+        ...otherUpdates,
+        ...itemsOf(groups, "pages"),
+        ...itemsOf(groups, "sections"),
       ];
-      return [...actionItems, ...tabs.items, ...sections.items];
     }
   }
 }

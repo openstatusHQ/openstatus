@@ -79,6 +79,37 @@ describe("currentPageGroup", () => {
     ]);
   });
 
+  it("caps per-report updates, keeping the viewed report", () => {
+    const reports = [1, 2, 3, 4, 5].map((id) => ({
+      id,
+      pageId: 4,
+      title: `Report ${id}`,
+      status: "investigating",
+    }));
+    const many = { ...data, sortedStatusReports: reports } as CurrentPageData;
+    const updates = (pathname: string) =>
+      group(pathname, many)
+        ?.items.map((i) => i.action)
+        .filter(
+          (a) => a.type === "sheet" && a.sheet.sheet === "status-report-update",
+        )
+        .map(
+          (a) =>
+            a.type === "sheet" && "reportId" in a.sheet && a.sheet.reportId,
+        );
+    expect(updates("/status-pages/4/status-reports")).toEqual([1, 2, 3]);
+    expect(updates("/status-pages/4/status-reports/5")).toEqual([5, 1, 2]);
+  });
+
+  it("includes tabs and settings sections on a status page", () => {
+    expect(hrefs("/status-pages/4/edit")).toContain(
+      "/status-pages/4/status-reports",
+    );
+    expect(hrefs("/status-pages/4/edit")).toContain(
+      "/status-pages/4/edit#general",
+    );
+  });
+
   it("leads with the linked report on an incident and drops the self link", () => {
     expect(group("/incidents/7")?.items[0].action).toEqual({
       type: "sheet",
