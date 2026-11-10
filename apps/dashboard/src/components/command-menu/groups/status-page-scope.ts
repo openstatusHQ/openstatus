@@ -55,7 +55,7 @@ export function statusPageScopeGroups({
   ];
 
   return [
-    { heading: "Actions", items: actionItems },
+    { heading: "Actions", key: "actions", items: actionItems },
     {
       heading: "Status Reports",
       items: pageReports.map(statusReportItem),
@@ -75,6 +75,7 @@ export function statusPageScopeGroups({
     },
     {
       heading: "Pages",
+      key: "pages",
       items: STATUS_PAGE_TABS.map((tab) => ({
         value: tab.label,
         label: tab.label,
@@ -88,6 +89,7 @@ export function statusPageScopeGroups({
     {
       // Not "Settings": the tab group above already has a Settings entry.
       heading: "Settings Sections",
+      key: "sections",
       items: STATUS_PAGE_EDIT_ANCHORS.map((anchor) => ({
         value: `edit-${anchor.id}`,
         label: anchor.label,
