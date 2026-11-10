@@ -1,12 +1,14 @@
 "use client";
 
-import { Calendar, Lock } from "@openstatus/icons";
+import { Calendar, Info, Lock } from "@openstatus/icons";
 import { cn } from "@openstatus/ui/lib/utils";
 import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
+import { Note } from "@/components/common/note";
 import {
   Activity,
   ActivityHeader,
@@ -38,9 +40,11 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import {
   exampleUptimeCounts,
   formatUptime,
@@ -49,10 +53,14 @@ import {
 } from "@/data/uptime-history.client";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { searchParamsParsers } from "./search-params";
+
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
+  const [{ metric: requestedMetric }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitor } = useQuery(
@@ -66,10 +74,25 @@ export function Client() {
 
   const now = useMemo(() => new Date(), []);
   const today = useMemo(() => utcToday(now), [now]);
-  const counts = isLimited ? exampleUptimeCounts(now) : history?.days;
-  const years = useMemo(() => uptimeYears(counts ?? [], now), [counts, now]);
+  // a failed runs read keeps the tab so its warning still shows
+  const showMetric =
+    !isLimited &&
+    !!history?.runs &&
+    (history.runs.length > 0 || history.runsPartial);
+  const metric = showMetric ? requestedMetric : "requests";
+  const counts = isLimited
+    ? exampleUptimeCounts(now)
+    : metric === "runs"
+      ? history?.runs
+      : history?.days;
+  const years = useMemo(
+    () => uptimeYears(counts ?? [], now, metric),
+    [counts, now, metric],
+  );
 
   if (!monitor || !workspace || (!isLimited && !history)) return null;
+
+  const partial = metric === "runs" ? history?.runsPartial : history?.partial;
 
   const calendars = (
     <div
@@ -79,19 +102,13 @@ export function Client() {
         isLimited && "pointer-events-none blur-sm select-none",
       )}
     >
-      {history?.partial ? (
-        <p className="text-muted-foreground text-sm">
-          Recent checks couldn't be loaded, so the last few weeks may be
-          incomplete.
-        </p>
-      ) : null}
       {years.map(({ year, days, uptime, failedDays }) => (
         <Activity key={year}>
           <ActivityHeader>
             <ActivityTitle>{year}</ActivityTitle>
             <ActivityPeriod>
               {uptime === null
-                ? "No checks"
+                ? `No ${metric}`
                 : `${formatUptime(uptime, 3)} uptime`}
               {failedDays > 0
                 ? ` · ${failedDays} ${failedDays === 1 ? "day" : "days"} with failures`
@@ -123,7 +140,7 @@ export function Client() {
           <ActivityCalendarLegendSeparator />
           <ActivityCalendarLegendItem>
             <ActivityCalendarCell hatched />
-            No checks
+            No {metric}
           </ActivityCalendarLegendItem>
           <ActivityCalendarLegendSeparator />
           <ActivityCalendarLegendItem>Days in UTC</ActivityCalendarLegendItem>
@@ -136,19 +153,48 @@ export function Client() {
     <SectionGroup>
       <Section id="uptime">
         <SectionHeader>
-          <SectionTitle>{monitor.name}</SectionTitle>
-          <SectionDescription>
-            {monitor.jobType === "http" ? (
-              <a href={monitor.url} target="_blank" rel="noopener noreferrer">
-                {monitor.url}
-              </a>
-            ) : monitor.jobType === "heartbeat" ? (
-              `Heartbeat · ${heartbeatExpectation(monitor)}`
-            ) : (
-              monitor.url
-            )}
-          </SectionDescription>
+          <SectionHeaderRow>
+            <div>
+              <SectionTitle>{monitor.name}</SectionTitle>
+              <SectionDescription>
+                {monitor.jobType === "http" ? (
+                  <a
+                    href={monitor.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {monitor.url}
+                  </a>
+                ) : monitor.jobType === "heartbeat" ? (
+                  `Heartbeat · ${heartbeatExpectation(monitor)}`
+                ) : (
+                  monitor.url
+                )}
+              </SectionDescription>
+            </div>
+            {showMetric ? (
+              <UptimeMetricTabs
+                value={metric}
+                onValueChange={(m) => setSearchParams({ metric: m })}
+              />
+            ) : null}
+          </SectionHeaderRow>
         </SectionHeader>
+        {metric === "runs" ? (
+          <Note size="sm">
+            <Info />
+            A run counts each scheduled check once across the monitor&apos;s
+            cloud regions: it is down when at least half of the regions that
+            reported fail.
+          </Note>
+        ) : null}
+        {partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent {metric} couldn&apos;t be loaded, so the last few weeks may
+            be incomplete.
+          </Note>
+        ) : null}
         {isLimited ? (
           <BillingOverlayContainer>
             {calendars}
@@ -176,9 +222,13 @@ export function Client() {
             <EmptyStateMedia>
               <Calendar />
             </EmptyStateMedia>
-            <EmptyStateTitle>No checks yet</EmptyStateTitle>
+            <EmptyStateTitle>
+              {metric === "runs" ? "No runs yet" : "No checks yet"}
+            </EmptyStateTitle>
             <EmptyStateDescription>
-              Each day fills in once the monitor has run its first checks.
+              {metric === "runs"
+                ? "Each day fills in once the monitor's scheduled checks have run across its cloud regions."
+                : "Each day fills in once the monitor has run its first checks."}
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (

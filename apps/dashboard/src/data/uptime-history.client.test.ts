@@ -46,15 +46,32 @@ describe("uptimeYears", () => {
       );
     expect(on(1)).toMatchObject({
       level: 0,
-      lines: ["100.00% uptime", "100 checks"],
+      lines: ["100.00% uptime", "100 requests"],
     });
     expect(year.days[0].blank).toBe(true);
-    expect(on(2)).toMatchObject({ hatched: true, lines: ["No checks"] });
+    expect(on(2)).toMatchObject({ hatched: true, lines: ["No requests"] });
     expect(on(3)).toMatchObject({
       level: 2,
-      lines: ["97.00% uptime", "100 checks · 3 failed"],
+      lines: ["97.00% uptime", "100 requests · 3 failed"],
     });
     expect(on(5)?.scale).toBeUndefined();
+  });
+
+  it("labels counts in runs, singular for one", () => {
+    const [year] = uptimeYears(
+      [
+        { day: "2026-11-01", ok: 1, degraded: 0, error: 0 },
+        { day: "2026-11-02", ok: 140, degraded: 0, error: 4 },
+      ],
+      now,
+      "runs",
+    );
+    const on = (d: number) =>
+      year.days.find(
+        (x) => x.date.getTime() === new Date(2026, 10, d).getTime(),
+      );
+    expect(on(1)?.lines?.[1]).toBe("1 run");
+    expect(on(2)?.lines?.[1]).toBe("144 runs · 4 failed");
   });
 
   it("degraded checks count as up", () => {
@@ -68,7 +85,7 @@ describe("uptimeYears", () => {
       year.days.find((d) => d.date.getDate() === 2 && d.date.getMonth() === 10),
     ).toMatchObject({
       level: 0,
-      lines: ["100.00% uptime", "100 checks · 10 degraded"],
+      lines: ["100.00% uptime", "100 requests · 10 degraded"],
     });
   });
 

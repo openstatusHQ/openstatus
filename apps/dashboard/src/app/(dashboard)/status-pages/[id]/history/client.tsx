@@ -10,7 +10,7 @@ import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
 import { Link } from "@/components/common/link";
-import { NoteButton } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   BillingOverlay,
@@ -49,11 +49,11 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
+import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import {
-  HISTORY_METRICS,
   HISTORY_WINDOWS,
   getColumnVisibility,
   historyRows,
@@ -113,8 +113,13 @@ export function Client() {
 
   const summary = history.summary[windowKey(window)];
   const showMetric = !isLimited && history.mode === "requests";
-  const uptime =
-    showMetric && metric === "runs" ? summary.runsUptime : summary.uptime;
+  const showRuns = showMetric && metric === "runs";
+  const uptime = showRuns ? summary.runsUptime : summary.uptime;
+  const partial = showRuns ? history.runsPartial : history.partial;
+  // rows without a value in the window are left out of the page average
+  const averaged = rows.filter(
+    (row) => row.rolling[windowKey(window)] !== null,
+  ).length;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
   );
@@ -134,20 +139,10 @@ export function Client() {
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               {showMetric ? (
-                <Tabs
+                <UptimeMetricTabs
                   value={metric}
-                  onValueChange={(v) =>
-                    setSearchParams({ metric: v === "runs" ? "runs" : null })
-                  }
-                >
-                  <TabsList>
-                    {HISTORY_METRICS.map((m) => (
-                      <TabsTrigger key={m} value={m} className="capitalize">
-                        {m}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
+                  onValueChange={(m) => setSearchParams({ metric: m })}
+                />
               ) : null}
               <Tabs
                 value={String(window)}
@@ -166,6 +161,18 @@ export function Client() {
             </div>
           </SectionHeaderRow>
         </SectionHeader>
+        {!isLimited && partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent{" "}
+            {showRuns
+              ? "runs"
+              : history.mode === "requests"
+                ? "requests"
+                : "uptime data"}{" "}
+            couldn&apos;t be loaded, so the latest months may be incomplete.
+          </Note>
+        ) : null}
       </Section>
       <Section id="history-metrics">
         <MetricCardGroup
@@ -181,9 +188,16 @@ export function Client() {
                 Page Uptime
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>
-              {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
-            </MetricCardValue>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <MetricCardValue>
+                {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
+              </MetricCardValue>
+              {averaged > 0 && averaged < rows.length ? (
+                <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                  {averaged} of {rows.length} components
+                </span>
+              ) : null}
+            </div>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -295,8 +309,9 @@ export function Client() {
                   counts each scheduled check once across its cloud regions: a
                   run is down when at least half of the regions that reported
                   fail. Uptime is (ok + degraded) / total; degraded still counts
-                  as up. Months without run data, and monitors with only private
-                  locations, show no data in runs.
+                  as up. Monitors with only private locations have no runs and
+                  show no data in runs; Page Uptime then averages the components
+                  that have data.
                 </span>
               </li>
               <li>
@@ -339,9 +354,9 @@ export function Client() {
         {!isLimited ? (
           <NoteDismissible cookieKey="note_status_page_history_missing_months">
             <Info />
-            If there are any missing months, please contact us.
+            Is a month missing that your monitors were running? Let us know.
             <FormDialogSupportContact>
-              <NoteButton variant="default">Request Backfill</NoteButton>
+              <NoteButton variant="default">Contact us</NoteButton>
             </FormDialogSupportContact>
           </NoteDismissible>
         ) : null}

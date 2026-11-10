@@ -88,6 +88,11 @@ function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
   return Object.hasOwn(RUNS_JOB_TYPES, jobType);
 }
 
+/** Whether the monitor gets run verdicts: a job type with runs pipes and cloud regions. */
+export function countsRuns(m: { jobType: string; regions: string }): boolean {
+  return hasRuns(m.jobType) && quorumRegionCount(m.regions) !== null;
+}
+
 export type FreezePipeKind = "counts" | "runs";
 
 export type ChunkFailure = {
@@ -212,7 +217,7 @@ export async function fetchRunsByDay(
 ): Promise<{ runs: RunsByDay; failedMonitorIds: Set<string> }> {
   const monitorIdsByJobType = new Map<string, Set<string>>();
   for (const m of args.monitors) {
-    if (!hasRuns(m.jobType) || quorumRegionCount(m.regions) === null) continue;
+    if (!countsRuns(m)) continue;
     const ids = monitorIdsByJobType.get(m.jobType) ?? new Set<string>();
     ids.add(String(m.id));
     monitorIdsByJobType.set(m.jobType, ids);

@@ -26,6 +26,7 @@ import type { Counts } from "./quorum";
 import {
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
+  countsRuns,
   type UptimeRunsPipes,
   uptimeFreezePipes,
   uptimeRunsPipes,
@@ -103,6 +104,10 @@ type UptimeHistoryResult = {
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
   createdAt: Date | null;
+  /** live counts failed for a monitor, so recent months may be missing */
+  partial: boolean;
+  /** live run verdicts failed, or the live counts they attach to */
+  runsPartial: boolean;
   summary: Record<
     HistoryWindowKey,
     { uptime: number | null; runsUptime: number | null; reports: number }
@@ -336,18 +341,23 @@ export async function getUptimeHistory(args: {
   // current month is never frozen, the previous may not be yet (the freeze
   // runs early next month) — both come live from the 45d pipes; failed
   // monitors land in failedMonitorIds and render as no-data
+  const tb = ctx.tb ?? defaultTb;
   const liveReads = fetchLiveDays({
     monitors: components.flatMap((c) => (c.monitor ? [c.monitor] : [])),
-    pipes: args.pipes ?? uptimeFreezePipes(defaultTb),
+    pipes: args.pipes ?? uptimeFreezePipes(tb),
     runsPipes:
-      mode === "requests"
-        ? (args.runsPipes ?? uptimeRunsPipes(defaultTb))
-        : undefined,
+      mode === "requests" ? (args.runsPipes ?? uptimeRunsPipes(tb)) : undefined,
     sleep: args.sleep,
   });
 
-  const [{ frozenRows }, { days: liveDays, failedMonitorIds: liveFailed }] =
-    await Promise.all([dbReads, liveReads]);
+  const [
+    { frozenRows },
+    {
+      days: liveDays,
+      failedMonitorIds: liveFailed,
+      failedRunsMonitorIds: liveRunsFailed,
+    },
+  ] = await Promise.all([dbReads, liveReads]);
   const frozenByKey = new Map(
     frozenRows.map((r) => [
       `${r.monitorId}:${r.month.slice(0, 7)}`,
@@ -509,6 +519,15 @@ export async function getUptimeHistory(args: {
     mode,
     months,
     createdAt: _page.createdAt,
+    partial: liveFailed.size > 0,
+    runsPartial:
+      liveRunsFailed.size > 0 ||
+      components.some(
+        (c) =>
+          c.monitor &&
+          countsRuns(c.monitor) &&
+          liveFailed.has(String(c.monitor.id)),
+      ),
     summary,
     rows,
   };
