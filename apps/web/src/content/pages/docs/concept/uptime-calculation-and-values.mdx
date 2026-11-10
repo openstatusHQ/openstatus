@@ -1,7 +1,7 @@
 ---
 category: Concepts
 title: Uptime Calculation and Shared Values
-description: Understand how openstatus calculates uptime — from monitor checks (time per status or number of checks) or from reports only — and choose which values to share on your status page.
+description: Understand how openstatus calculates uptime — from monitor checks (time per status or number of requests) or from reports only — and choose which values to share on your status page.
 ---
 
 Uptime values can be a complete lie if they're not properly connected to monitoring. openstatus makes uptime transparent and configurable — you decide how it's calculated and which values to share on your status page.
@@ -33,7 +33,7 @@ In the dashboard, two settings on the status page's [**Components**](https://app
 
 ## Monitor checks
 
-With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in two variants: _time per status_ and _number of checks_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
+With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in two variants: _time per status_ and _number of requests_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
 
 ### Time per status
 

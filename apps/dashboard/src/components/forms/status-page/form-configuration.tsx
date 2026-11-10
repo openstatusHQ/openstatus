@@ -409,7 +409,7 @@ const message = {
   value: {
     duration:
       "cards show how long the monitor was operational, degraded or down.",
-    requests: "cards show how many checks succeeded, degraded or failed.",
+    requests: "cards show how many requests succeeded, degraded or failed.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {

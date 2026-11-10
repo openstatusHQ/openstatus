@@ -74,7 +74,11 @@ export function Client() {
 
   const now = useMemo(() => new Date(), []);
   const today = useMemo(() => utcToday(now), [now]);
-  const showMetric = !isLimited && !!history?.runs?.length;
+  // a failed runs read keeps the tab so its warning still shows
+  const showMetric =
+    !isLimited &&
+    !!history?.runs &&
+    (history.runs.length > 0 || history.runsPartial);
   const metric = showMetric ? requestedMetric : "requests";
   const counts = isLimited
     ? exampleUptimeCounts(now)
@@ -218,9 +222,13 @@ export function Client() {
             <EmptyStateMedia>
               <Calendar />
             </EmptyStateMedia>
-            <EmptyStateTitle>No checks yet</EmptyStateTitle>
+            <EmptyStateTitle>
+              {metric === "runs" ? "No runs yet" : "No checks yet"}
+            </EmptyStateTitle>
             <EmptyStateDescription>
-              Each day fills in once the monitor has run its first checks.
+              {metric === "runs"
+                ? "Each day fills in once the monitor's scheduled checks have run across its cloud regions."
+                : "Each day fills in once the monitor has run its first checks."}
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (

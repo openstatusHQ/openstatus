@@ -1193,6 +1193,26 @@ describe("getUptimeHistory runs view", () => {
     });
   });
 
+  test("failed counts of a monitor without runs do not flag runsPartial", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, { regions: "" });
+      await attachPrivateLocations(tx, testMonitor.id, 1);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: failingPipes(),
+        runsPipes: makeRunsPipes(),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.partial).toBe(true);
+      expect(res.runsPartial).toBe(false);
+    });
+  });
+
   test("a failed runs read keeps requests and leaves runs empty", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };

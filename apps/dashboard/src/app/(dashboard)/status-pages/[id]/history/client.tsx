@@ -164,8 +164,13 @@ export function Client() {
         {!isLimited && partial ? (
           <Note color="warning" size="sm">
             <Info />
-            Recent {showRuns ? "runs" : "requests"} couldn&apos;t be loaded, so
-            the latest months may be incomplete.
+            Recent{" "}
+            {showRuns
+              ? "runs"
+              : history.mode === "requests"
+                ? "requests"
+                : "uptime data"}{" "}
+            couldn&apos;t be loaded, so the latest months may be incomplete.
           </Note>
         ) : null}
       </Section>

@@ -26,6 +26,7 @@ import type { Counts } from "./quorum";
 import {
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
+  countsRuns,
   type UptimeRunsPipes,
   uptimeFreezePipes,
   uptimeRunsPipes,
@@ -519,7 +520,14 @@ export async function getUptimeHistory(args: {
     months,
     createdAt: _page.createdAt,
     partial: liveFailed.size > 0,
-    runsPartial: liveFailed.size > 0 || liveRunsFailed.size > 0,
+    runsPartial:
+      liveRunsFailed.size > 0 ||
+      components.some(
+        (c) =>
+          c.monitor &&
+          countsRuns(c.monitor) &&
+          liveFailed.has(String(c.monitor.id)),
+      ),
     summary,
     rows,
   };
