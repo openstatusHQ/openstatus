@@ -7,6 +7,7 @@ import type { StatusVariant } from "@/components/common/status-dot";
 import {
   EventRow,
   EventRowActions,
+  EventRowActor,
   EventRowContent,
   EventRowDate,
   EventRowDuration,
@@ -70,6 +71,10 @@ export function MonitorIncidentRow({
   const down = (resolvedAt ?? new Date()).getTime() - startedAt.getTime();
   // bars by time down, same steps as the calendar; open rows keep their status color
   const { level } = downtimeActivity(down);
+  // auto-resolved after an acknowledgement: credit whoever acknowledged it
+  const actor = incident.resolvedByUser
+    ? { user: incident.resolvedByUser, label: "Resolved by" }
+    : { user: incident.acknowledgedByUser, label: "Acknowledged by" };
   const variant =
     status === "resolved"
       ? level === 3
@@ -111,6 +116,7 @@ export function MonitorIncidentRow({
           </>
         )}
       </EventRowActions>
+      <EventRowActor actor={actor.user} label={actor.label} optional />
       <EventRowDuration>{formatDurationShort(down)}</EventRowDuration>
       <EventRowMenu>
         <IncidentRowActions incident={incident} />
