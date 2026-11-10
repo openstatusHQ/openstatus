@@ -74,7 +74,7 @@ export function Client() {
 
   const now = useMemo(() => new Date(), []);
   const today = useMemo(() => utcToday(now), [now]);
-  const showMetric = !isLimited && !!history?.runs;
+  const showMetric = !isLimited && !!history?.runs?.length;
   const metric = showMetric ? requestedMetric : "requests";
   const counts = isLimited
     ? exampleUptimeCounts(now)

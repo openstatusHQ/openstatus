@@ -28,7 +28,7 @@ type MonitorUptimeHistoryResult = {
   runs: DayCount[] | null;
   /** live counts failed to load, so the current month may be missing */
   partial: boolean;
-  /** live run verdicts failed to load */
+  /** live run verdicts failed to load, or the live counts they attach to */
   runsPartial: boolean;
 };
 
@@ -111,10 +111,12 @@ export async function getMonitorUptimeHistory(args: {
   const sorted = (days: Map<string, DayCount>) =>
     [...days.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
 
+  const partial = live.failedMonitorIds.size > 0;
   return {
     days: sorted(byDay),
-    runs: withRuns ? sorted(runsByDay) : null,
-    partial: live.failedMonitorIds.size > 0,
-    runsPartial: live.failedRunsMonitorIds.size > 0,
+    // frozen runs outlive a move to private-only locations
+    runs: withRuns || runsByDay.size > 0 ? sorted(runsByDay) : null,
+    partial,
+    runsPartial: partial || live.failedRunsMonitorIds.size > 0,
   };
 }

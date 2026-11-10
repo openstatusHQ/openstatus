@@ -322,7 +322,11 @@ describe("getMonitorUptimeHistory", () => {
   test("monitors without cloud regions have no runs and skip the runs read", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx, { regions: "" });
-      await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-10"));
+      const frozen = frozenMonth(m.id, "2026-10");
+      await tx.insert(frozenMonitorUptime).values({
+        ...frozen,
+        days: frozen.days.map(({ runs: _, ...d }) => d),
+      });
       const res = await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
@@ -352,6 +356,47 @@ describe("getMonitorUptimeHistory", () => {
       expect(res.partial).toBe(false);
       expect(res.runsPartial).toBe(true);
       expect(res.runs?.length).toBe(31);
+    });
+  });
+
+  test("a failed counts read also flags runsPartial", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx);
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes(new Error("tinybird down")),
+        runsPipes: runsPipes([
+          {
+            monitorId: String(m.id),
+            day: "2026-11-01",
+            ok: 1,
+            degraded: 0,
+            error: 0,
+          },
+        ]),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.partial).toBe(true);
+      expect(res.runsPartial).toBe(true);
+    });
+  });
+
+  test("frozen runs stay after a move to private-only locations", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "" });
+      await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-10"));
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([]),
+        runsPipes: runsPipes(new Error("must not be called")),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.runs?.length).toBe(31);
+      expect(res.runsPartial).toBe(false);
     });
   });
 

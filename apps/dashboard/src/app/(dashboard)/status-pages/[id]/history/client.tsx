@@ -10,7 +10,7 @@ import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
 import { Link } from "@/components/common/link";
-import { NoteButton } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   BillingOverlay,
@@ -113,8 +113,9 @@ export function Client() {
 
   const summary = history.summary[windowKey(window)];
   const showMetric = !isLimited && history.mode === "requests";
-  const uptime =
-    showMetric && metric === "runs" ? summary.runsUptime : summary.uptime;
+  const showRuns = showMetric && metric === "runs";
+  const uptime = showRuns ? summary.runsUptime : summary.uptime;
+  const partial = showRuns ? history.runsPartial : history.partial;
   // rows without a value in the window are left out of the page average
   const averaged = rows.filter(
     (row) => row.rolling[windowKey(window)] !== null,
@@ -160,6 +161,13 @@ export function Client() {
             </div>
           </SectionHeaderRow>
         </SectionHeader>
+        {!isLimited && partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent {showRuns ? "runs" : "requests"} couldn&apos;t be loaded, so
+            the latest months may be incomplete.
+          </Note>
+        ) : null}
       </Section>
       <Section id="history-metrics">
         <MetricCardGroup
