@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Lock } from "@openstatus/icons";
+import { Calendar, Info, Lock } from "@openstatus/icons";
 import { cn } from "@openstatus/ui/lib/utils";
 import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
+import { Note } from "@/components/common/note";
 import {
   Activity,
   ActivityHeader,
@@ -97,19 +98,6 @@ export function Client() {
         isLimited && "pointer-events-none blur-sm select-none",
       )}
     >
-      {metric === "runs" ? (
-        <p className="text-muted-foreground text-sm">
-          A run counts each scheduled check once across the monitor&apos;s cloud
-          regions: it is down when at least half of the regions that reported
-          fail.
-        </p>
-      ) : null}
-      {partial ? (
-        <p className="text-muted-foreground text-sm">
-          Recent {metric} couldn&apos;t be loaded, so the last few weeks may be
-          incomplete.
-        </p>
-      ) : null}
       {years.map(({ year, days, uptime, failedDays }) => (
         <Activity key={year}>
           <ActivityHeader>
@@ -188,6 +176,21 @@ export function Client() {
             ) : null}
           </SectionHeaderRow>
         </SectionHeader>
+        {metric === "runs" ? (
+          <Note size="sm">
+            <Info />
+            A run counts each scheduled check once across the monitor&apos;s
+            cloud regions: it is down when at least half of the regions that
+            reported fail.
+          </Note>
+        ) : null}
+        {partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent {metric} couldn&apos;t be loaded, so the last few weeks may
+            be incomplete.
+          </Note>
+        ) : null}
         {isLimited ? (
           <BillingOverlayContainer>
             {calendars}
