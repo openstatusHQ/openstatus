@@ -334,4 +334,55 @@ describe("safeFetch", () => {
       restore();
     }
   });
+
+  it("aborts when signal is already cancelled prior to fetch", async () => {
+    const controller = new AbortController();
+    controller.abort(new Error("pre-aborted"));
+    let fetchCalled = false;
+    const original = globalThis.fetch;
+    globalThis.fetch = () => {
+      fetchCalled = true;
+      return Promise.resolve(new Response("ok"));
+    };
+    try {
+      await expect(
+        safeFetch("https://example.com/hook", { signal: controller.signal }),
+      ).rejects.toThrow("pre-aborted");
+      expect(fetchCalled).toBe(false);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it("shares deadline budget across multiple redirects", async () => {
+    const controller = new AbortController();
+    const original = globalThis.fetch;
+    let callCount = 0;
+    globalThis.fetch = (input, init) => {
+      callCount++;
+      const url = String(input);
+      if (url === "https://example.com/hop1") {
+        return Promise.resolve(
+          new Response(null, {
+            status: 307,
+            headers: { location: "/hop2" },
+          }),
+        );
+      }
+      if (url === "https://example.com/hop2") {
+        // Abort the shared deadline during the second hop
+        controller.abort(new Error("deadline expired during redirect"));
+        return Promise.reject(init?.signal?.reason);
+      }
+      return Promise.resolve(new Response("ok"));
+    };
+    try {
+      await expect(
+        safeFetch("https://example.com/hop1", { signal: controller.signal }),
+      ).rejects.toThrow("deadline expired during redirect");
+      expect(callCount).toBe(2);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });
