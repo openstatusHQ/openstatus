@@ -362,6 +362,7 @@ describe("safeFetch", () => {
       callCount++;
       const url = String(input);
       if (url === "https://example.com/hop1") {
+        controller.abort(new Error("deadline expired during redirect"));
         return Promise.resolve(
           new Response(null, {
             status: 307,
@@ -369,18 +370,13 @@ describe("safeFetch", () => {
           }),
         );
       }
-      if (url === "https://example.com/hop2") {
-        // Abort the shared deadline during the second hop
-        controller.abort(new Error("deadline expired during redirect"));
-        return Promise.reject(init?.signal?.reason);
-      }
       return Promise.resolve(new Response("ok"));
     };
     try {
       await expect(
         safeFetch("https://example.com/hop1", { signal: controller.signal }),
       ).rejects.toThrow("deadline expired during redirect");
-      expect(callCount).toBe(2);
+      expect(callCount).toBe(1);
     } finally {
       globalThis.fetch = original;
     }

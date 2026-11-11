@@ -1,5 +1,5 @@
 import type { NotificationContext } from "@openstatus/notification-base";
-import { safeFetch, transformHeaders } from "@openstatus/utils";
+import { raceWithSignal, safeFetch, transformHeaders } from "@openstatus/utils";
 
 import { PayloadSchema, WebhookSchema } from "./schema";
 
@@ -13,25 +13,25 @@ export interface WebhookDeliveryOptions {
 function resolveDeliverySignal(options?: WebhookDeliveryOptions): {
   signal: AbortSignal;
 } {
-  if (options?.signal && options?.timeoutMs) {
+  const timeoutMs = options?.timeoutMs ?? WEBHOOK_TIMEOUT_MS;
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  if (options?.signal) {
     return {
-      signal: AbortSignal.any([
-        options.signal,
-        AbortSignal.timeout(options.timeoutMs),
-      ]),
+      signal: AbortSignal.any([options.signal, timeoutSignal]),
     };
   }
-  if (options?.signal) {
-    return { signal: options.signal };
-  }
-  const timeoutMs = options?.timeoutMs ?? WEBHOOK_TIMEOUT_MS;
-  return { signal: AbortSignal.timeout(timeoutMs) };
+  return { signal: timeoutSignal };
 }
 
 export const sendAlert = async (
   context: NotificationContext & WebhookDeliveryOptions,
   options?: WebhookDeliveryOptions,
 ) => {
+  const { signal } = resolveDeliverySignal({
+    signal: options?.signal ?? context.signal,
+    timeoutMs: options?.timeoutMs ?? context.timeoutMs,
+  });
+
   const notificationData = WebhookSchema.parse(
     JSON.parse(context.notification.data),
   );
@@ -43,11 +43,6 @@ export const sendAlert = async (
     statusCode: context.statusCode,
     latency: context.latency,
     errorMessage: context.message,
-  });
-
-  const { signal } = resolveDeliverySignal({
-    signal: options?.signal ?? context.signal,
-    timeoutMs: options?.timeoutMs ?? context.timeoutMs,
   });
 
   const res = await safeFetch(notificationData.webhook.endpoint, {
@@ -64,7 +59,9 @@ export const sendAlert = async (
       throw new Error(`Failed to send webhook notification: ${res.statusText}`);
     }
   } finally {
-    await res.body?.cancel();
+    if (res.body) {
+      await raceWithSignal(res.body.cancel(), signal);
+    }
   }
 };
 
@@ -72,6 +69,11 @@ export const sendRecovery = async (
   context: NotificationContext & WebhookDeliveryOptions,
   options?: WebhookDeliveryOptions,
 ) => {
+  const { signal } = resolveDeliverySignal({
+    signal: options?.signal ?? context.signal,
+    timeoutMs: options?.timeoutMs ?? context.timeoutMs,
+  });
+
   const notificationData = WebhookSchema.parse(
     JSON.parse(context.notification.data),
   );
@@ -83,11 +85,6 @@ export const sendRecovery = async (
     statusCode: context.statusCode,
     latency: context.latency,
     errorMessage: context.message,
-  });
-
-  const { signal } = resolveDeliverySignal({
-    signal: options?.signal ?? context.signal,
-    timeoutMs: options?.timeoutMs ?? context.timeoutMs,
   });
 
   const url = notificationData.webhook.endpoint;
@@ -105,7 +102,9 @@ export const sendRecovery = async (
       throw new Error(`Failed to send webhook notification: ${res.statusText}`);
     }
   } finally {
-    await res.body?.cancel();
+    if (res.body) {
+      await raceWithSignal(res.body.cancel(), signal);
+    }
   }
 };
 
@@ -113,6 +112,11 @@ export const sendDegraded = async (
   context: NotificationContext & WebhookDeliveryOptions,
   options?: WebhookDeliveryOptions,
 ) => {
+  const { signal } = resolveDeliverySignal({
+    signal: options?.signal ?? context.signal,
+    timeoutMs: options?.timeoutMs ?? context.timeoutMs,
+  });
+
   const notificationData = WebhookSchema.parse(
     JSON.parse(context.notification.data),
   );
@@ -124,11 +128,6 @@ export const sendDegraded = async (
     statusCode: context.statusCode,
     latency: context.latency,
     errorMessage: context.message,
-  });
-
-  const { signal } = resolveDeliverySignal({
-    signal: options?.signal ?? context.signal,
-    timeoutMs: options?.timeoutMs ?? context.timeoutMs,
   });
 
   const res = await safeFetch(notificationData.webhook.endpoint, {
@@ -145,7 +144,9 @@ export const sendDegraded = async (
       throw new Error(`Failed to send webhook notification: ${res.statusText}`);
     }
   } finally {
-    await res.body?.cancel();
+    if (res.body) {
+      await raceWithSignal(res.body.cancel(), signal);
+    }
   }
 };
 
@@ -160,6 +161,11 @@ export const sendTest = async ({
   timeoutMs?: number;
   signal?: AbortSignal;
 }) => {
+  const { signal: deliverySignal } = resolveDeliverySignal({
+    signal,
+    timeoutMs,
+  });
+
   const body = PayloadSchema.parse({
     monitor: {
       id: 1,
@@ -170,11 +176,6 @@ export const sendTest = async ({
     status: "recovered",
     statusCode: 200,
     latency: 1337,
-  });
-
-  const { signal: deliverySignal } = resolveDeliverySignal({
-    signal,
-    timeoutMs,
   });
 
   try {
@@ -193,7 +194,9 @@ export const sendTest = async ({
       }
       return true;
     } finally {
-      await response.body?.cancel();
+      if (response.body) {
+        await raceWithSignal(response.body.cancel(), deliverySignal);
+      }
     }
   } catch (err) {
     console.log(err);

@@ -180,6 +180,69 @@ describe("Webhook sendTest", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  test("should compose caller signal with default timeout", async () => {
+    const url = "https://example.com/webhook";
+    const controller = new AbortController();
+    fetchMock.mockRestore();
+    fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+      Promise.resolve(new Response(null, { status: 200 })),
+    );
+
+    const result = await sendTest({ url, signal: controller.signal });
+
+    expect(result).toBe(true);
+    const init = fetchMock.mock.calls[0][1];
+    expect(init.signal).not.toBe(controller.signal);
+    expect(init.signal.aborted).toBe(false);
+    controller.abort(new DOMException("caller aborted", "AbortError"));
+    expect(init.signal.aborted).toBe(true);
+  });
+
+  test("should fail when timeoutMs is 0", async () => {
+    const url = "https://example.com/webhook";
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((_url, init) => {
+        return new Promise((_resolve, reject) => {
+          const signal = init?.signal;
+          if (signal?.aborted) {
+            return reject(signal.reason);
+          }
+          signal?.addEventListener("abort", () => {
+            reject(signal.reason);
+          });
+        });
+      });
+
+    await expect(sendTest({ url, timeoutMs: 0 })).rejects.toThrow(
+      "Failed to send test",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("should not hang up when response body cancel never settles", async () => {
+    const url = "https://example.com/webhook";
+    const hangingBody = {
+      cancel: vi.fn().mockImplementation(() => new Promise(() => {})),
+    };
+    fetchMock.mockRestore();
+    fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        body: hangingBody,
+      } as unknown as Response),
+    );
+
+    await expect(sendTest({ url, timeoutMs: 30 })).rejects.toThrow(
+      "Failed to send test",
+    );
+    expect(hangingBody.cancel).toHaveBeenCalledTimes(1);
+  });
+
   test("should send test webhook with empty headers array", async () => {
     const url = "https://example.com/webhook";
     const headers: { key: string; value: string }[] = [];
@@ -497,6 +560,25 @@ describe("Webhook sendAlert, sendRecovery, sendDegraded", () => {
       "Failed to send webhook notification: Internal Server Error",
     );
     expect(finalBody.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  test("sendAlert does not hang up when response body cancel never settles", async () => {
+    const hangingBody = {
+      cancel: vi.fn().mockImplementation(() => new Promise(() => {})),
+    };
+    fetchMock.mockRestore();
+    fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        body: hangingBody,
+      } as unknown as Response);
+    });
+
+    await expect(sendAlert(mockContext, { timeoutMs: 30 })).rejects.toThrow();
+    expect(hangingBody.cancel).toHaveBeenCalledTimes(1);
   });
 
   test("WEBHOOK_TIMEOUT_MS constant is 5000ms", () => {

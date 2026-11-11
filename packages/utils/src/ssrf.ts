@@ -126,7 +126,7 @@ function isSafeRedirect(from: URL, to: URL): boolean {
   );
 }
 
-function raceWithSignal<T>(
+export function raceWithSignal<T>(
   promise: Promise<T>,
   signal?: AbortSignal,
 ): Promise<T> {
