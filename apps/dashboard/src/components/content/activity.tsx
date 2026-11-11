@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * One color recipe for every activity mark (calendar cell, lane tick): the
- * scale picks the hue, the level its lightness, so the marks read in grayscale.
+ * scale picks red or neutral, the level its lightness, so the marks read in grayscale.
  */
 export const activityColorVariants = cva("", {
   variants: {
