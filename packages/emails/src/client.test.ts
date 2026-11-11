@@ -137,44 +137,56 @@ describe("EmailClient.sendPageUpdate - idempotency & chunking", () => {
   });
 
   test("uses default cloud status page base URL for notification email links", async () => {
-    await client.sendPageUpdate(
-      baseReq({
-        pageSlug: "my-status",
-        subscribers: [{ email: "user@example.com", token: "tok_456" }],
-      }),
-    );
+    vi.stubEnv("STATUS_PAGE_BASE_URL", "");
+    vi.stubEnv("OPENSTATUS_STATUS_PAGE_URL", "");
+    try {
+      await client.sendPageUpdate(
+        baseReq({
+          pageSlug: "my-status",
+          subscribers: [{ email: "user@example.com", token: "tok_456" }],
+        }),
+      );
 
-    expect(batchSend).toHaveBeenCalledTimes(1);
-    const item = batchSend.mock.calls[0][0][0];
-    expect(item.react.props.statusPageUrl).toBe(
-      "https://my-status.openstatus.dev",
-    );
-    expect(item.react.props.unsubscribeUrl).toBe(
-      "https://my-status.openstatus.dev/unsubscribe/tok_456",
-    );
-    expect(item.react.props.manageUrl).toBe(
-      "https://my-status.openstatus.dev/manage/tok_456",
-    );
+      expect(batchSend).toHaveBeenCalledTimes(1);
+      const item = batchSend.mock.calls[0][0][0];
+      expect(item.react.props.statusPageUrl).toBe(
+        "https://my-status.openstatus.dev",
+      );
+      expect(item.react.props.unsubscribeUrl).toBe(
+        "https://my-status.openstatus.dev/unsubscribe/tok_456",
+      );
+      expect(item.react.props.manageUrl).toBe(
+        "https://my-status.openstatus.dev/manage/tok_456",
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   test("uses customDomain when provided and no override is configured", async () => {
-    await client.sendPageUpdate(
-      baseReq({
-        pageSlug: "my-status",
-        customDomain: "status.mybrand.org",
-        subscribers: [{ email: "user@example.com", token: "tok_456" }],
-      }),
-    );
+    vi.stubEnv("STATUS_PAGE_BASE_URL", "");
+    vi.stubEnv("OPENSTATUS_STATUS_PAGE_URL", "");
+    try {
+      await client.sendPageUpdate(
+        baseReq({
+          pageSlug: "my-status",
+          customDomain: "status.mybrand.org",
+          subscribers: [{ email: "user@example.com", token: "tok_456" }],
+        }),
+      );
 
-    expect(batchSend).toHaveBeenCalledTimes(1);
-    const item = batchSend.mock.calls[0][0][0];
-    expect(item.react.props.statusPageUrl).toBe("https://status.mybrand.org");
-    expect(item.react.props.unsubscribeUrl).toBe(
-      "https://status.mybrand.org/unsubscribe/tok_456",
-    );
-    expect(item.react.props.manageUrl).toBe(
-      "https://status.mybrand.org/manage/tok_456",
-    );
+      expect(batchSend).toHaveBeenCalledTimes(1);
+      const item = batchSend.mock.calls[0][0][0];
+      expect(item.react.props.statusPageUrl).toBe("https://status.mybrand.org");
+      expect(item.react.props.unsubscribeUrl).toBe(
+        "https://status.mybrand.org/unsubscribe/tok_456",
+      );
+      expect(item.react.props.manageUrl).toBe(
+        "https://status.mybrand.org/manage/tok_456",
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   test("uses configured STATUS_PAGE_BASE_URL override with explicit port and scheme", async () => {

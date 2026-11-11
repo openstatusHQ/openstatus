@@ -1,8 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildSubscriberVerificationUrl } from "./subscriber-verification";
 
 describe("buildSubscriberVerificationUrl", () => {
+  beforeEach(() => {
+    vi.stubEnv("STATUS_PAGE_BASE_URL", "");
+    vi.stubEnv("OPENSTATUS_STATUS_PAGE_URL", "");
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -42,6 +47,8 @@ describe("buildSubscriberVerificationUrl", () => {
       { slug: "status-page", customDomain: null },
       "tok_123",
     );
-    expect(url).toBe("https://status-page.status.selfhost.org/verify/tok_123");
+    expect(url).toBe(
+      "https://status-page.status.selfhost.org/verify/tok_123",
+    );
   });
 });

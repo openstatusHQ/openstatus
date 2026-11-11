@@ -8,6 +8,7 @@ describe("getStatusPageBaseUrl", () => {
   beforeEach(() => {
     delete process.env.STATUS_PAGE_BASE_URL;
     delete process.env.OPENSTATUS_STATUS_PAGE_URL;
+    delete process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL;
     delete process.env.NODE_ENV;
   });
 
@@ -82,6 +83,16 @@ describe("getStatusPageBaseUrl", () => {
       ).toBe("https://status.example.net:8443");
     });
 
+    it("normalizes override missing scheme to https", () => {
+      expect(
+        getStatusPageBaseUrl({
+          slug: "acme",
+          override: "status.example.net:8443",
+          nodeEnv: "production",
+        }),
+      ).toBe("https://status.example.net:8443");
+    });
+
     it("strips trailing slashes from override", () => {
       expect(
         getStatusPageBaseUrl({
@@ -143,6 +154,14 @@ describe("getStatusPageBaseUrl", () => {
       expect(
         getStatusPageBaseUrl({ slug: "acme", nodeEnv: "production" }),
       ).toBe("https://primary.example.com");
+    });
+
+    it("falls back to OPENSTATUS_STATUS_PAGE_URL when STATUS_PAGE_BASE_URL is whitespace", () => {
+      process.env.STATUS_PAGE_BASE_URL = "   ";
+      process.env.OPENSTATUS_STATUS_PAGE_URL = "https://fallback.example.com";
+      expect(
+        getStatusPageBaseUrl({ slug: "acme", nodeEnv: "production" }),
+      ).toBe("https://fallback.example.com");
     });
 
     it("ignores empty or whitespace override and falls back to standard logic", () => {

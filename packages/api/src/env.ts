@@ -4,6 +4,30 @@ import { z } from "zod";
 // Parse SELF_HOST using z.stringbool() to ensure consistency with the schema
 const isSelfHost = z.stringbool().catch(false).parse(process.env.SELF_HOST);
 
+// Validate status-page URL override syntax after substituting a placeholder for {slug}.
+const statusPageUrlSchema = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() !== "" ? v.trim() : undefined),
+  z
+    .string()
+    .refine(
+      (val) => {
+        try {
+          const testUrl = val.replace(/\{slug\}/g, "test-slug");
+          const withScheme =
+            testUrl.startsWith("http://") || testUrl.startsWith("https://")
+              ? testUrl
+              : `https://${testUrl}`;
+          new URL(withScheme);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "Invalid status page base URL syntax" },
+    )
+    .optional(),
+);
+
 export const env = createEnv({
   server: {
     STRIPE_SECRET_KEY: isSelfHost ? z.string().optional() : z.string(),
@@ -27,14 +51,8 @@ export const env = createEnv({
       z.url().optional(),
     ),
     // Optional public status-page base URL override for self-hosted instances.
-    STATUS_PAGE_BASE_URL: z.preprocess(
-      (v) => (v === "" ? undefined : v),
-      z.string().optional(),
-    ),
-    OPENSTATUS_STATUS_PAGE_URL: z.preprocess(
-      (v) => (v === "" ? undefined : v),
-      z.string().optional(),
-    ),
+    STATUS_PAGE_BASE_URL: statusPageUrlSchema,
+    OPENSTATUS_STATUS_PAGE_URL: statusPageUrlSchema,
     NODE_ENV: z.enum(["development", "test", "production"]).optional(),
   },
 

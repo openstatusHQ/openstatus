@@ -71,4 +71,20 @@ describe("getBaseUrl", () => {
       "https://acme.status.example.net",
     );
   });
+
+  it("resolves from window.location.origin in browser when server env is not present", () => {
+    setNodeEnv("production");
+    const originalWindow = globalThis.window;
+    try {
+      // @ts-expect-error mock window for browser environment test
+      globalThis.window = {
+        location: { origin: "https://status.selfhosted.io:8443" },
+      };
+      expect(getBaseUrl({ slug: "acme" })).toBe(
+        "https://status.selfhosted.io:8443",
+      );
+    } finally {
+      globalThis.window = originalWindow;
+    }
+  });
 });

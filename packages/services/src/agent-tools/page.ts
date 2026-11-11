@@ -68,12 +68,13 @@ function toStatusPageOutput(page: {
   id: number;
   slug: string;
   title: string;
+  customDomain?: string | null;
 }): z.infer<typeof StatusPageOutput> {
   return {
     id: page.id,
     slug: page.slug,
     title: page.title,
-    url: statusPageUrl(page.slug),
+    url: statusPageUrl(page.slug, page.customDomain),
     dashboardUrl: dashboardUrl(`/status-pages/${page.id}/components`),
   };
 }

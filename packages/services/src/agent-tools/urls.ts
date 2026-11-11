@@ -10,6 +10,9 @@ export function dashboardUrl(path: string): string {
   return `${base}${path}`;
 }
 
-export function statusPageUrl(slug: string): string {
-  return getStatusPageBaseUrl({ slug });
+export function statusPageUrl(
+  slug: string,
+  customDomain?: string | null,
+): string {
+  return getStatusPageBaseUrl({ slug, customDomain });
 }
