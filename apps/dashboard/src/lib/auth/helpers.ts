@@ -1,4 +1,4 @@
-import { db, eq, sql } from "@openstatus/db";
+import { db, eq, is, SQLiteTransaction, sql } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import type { AdapterUser } from "next-auth/adapters";
 import * as randomWordSlugs from "random-word-slugs";
@@ -38,9 +38,6 @@ export async function getUserByEmail(email: string) {
 
 type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-// Atomically create the user, their initial workspace, and owner membership in a
-// single transaction. If workspace or membership creation fails, rollback prevents
-// persisting an orphaned user without workspace access (#3077).
 export async function createUser(data: AdapterUser, client: DbClient = db) {
   const run = async (tx: DbClient) => {
     const newUser = await tx
@@ -90,11 +87,11 @@ export async function createUser(data: AdapterUser, client: DbClient = db) {
     return newUser;
   };
 
-  if ("transaction" in client && typeof client.transaction === "function") {
-    return await client.transaction(run);
+  if (is(client, SQLiteTransaction)) {
+    return await run(client);
   }
 
-  return await run(client);
+  return await client.transaction(run);
 }
 
 export async function getUser(id: string) {
