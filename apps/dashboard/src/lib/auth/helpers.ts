@@ -36,52 +36,65 @@ export async function getUserByEmail(email: string) {
   return legacy[0] ?? null;
 }
 
-export async function createUser(data: AdapterUser) {
-  const newUser = await db
-    .insert(user)
-    .values({
-      email: normalizeEmail(data.email),
-      photoUrl: data.image,
-      name: data.name,
-      firstName: data.firstName,
-      lastName: data.lastName,
-    })
-    .returning()
-    .get();
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-  let slug: string | undefined = undefined;
-
-  while (!slug) {
-    slug = randomWordSlugs.generateSlug(2);
-    const slugAlreadyExists = await db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.slug, slug))
+// Atomically create the user, their initial workspace, and owner membership in a
+// single transaction. If workspace or membership creation fails, rollback prevents
+// persisting an orphaned user without workspace access (#3077).
+export async function createUser(data: AdapterUser, client: DbClient = db) {
+  const run = async (tx: DbClient) => {
+    const newUser = await tx
+      .insert(user)
+      .values({
+        email: normalizeEmail(data.email),
+        photoUrl: data.image,
+        name: data.name,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      })
+      .returning()
       .get();
 
-    if (slugAlreadyExists) {
-      console.warn(`slug already exists: '${slug} - recreating new one'`);
-      slug = undefined;
+    let slug: string | undefined = undefined;
+
+    while (!slug) {
+      slug = randomWordSlugs.generateSlug(2);
+      const slugAlreadyExists = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, slug))
+        .get();
+
+      if (slugAlreadyExists) {
+        console.warn(`slug already exists: '${slug} - recreating new one'`);
+        slug = undefined;
+      }
     }
+
+    const newWorkspace = await tx
+      .insert(workspace)
+      .values({ slug, name: "" })
+      .returning({ id: workspace.id })
+      .get();
+
+    await tx
+      .insert(usersToWorkspaces)
+      .values({
+        userId: newUser.id,
+        workspaceId: newWorkspace.id,
+        role: "owner",
+      })
+      .returning()
+      .get();
+
+    return newUser;
+  };
+
+  if ("transaction" in client && typeof client.transaction === "function") {
+    return await client.transaction(run);
   }
 
-  const newWorkspace = await db
-    .insert(workspace)
-    .values({ slug, name: "" })
-    .returning({ id: workspace.id })
-    .get();
-
-  await db
-    .insert(usersToWorkspaces)
-    .values({
-      userId: newUser.id,
-      workspaceId: newWorkspace.id,
-      role: "owner",
-    })
-    .returning()
-    .get();
-
-  return newUser;
+  return await run(client);
 }
 
 export async function getUser(id: string) {
