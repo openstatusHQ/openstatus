@@ -184,9 +184,11 @@ describe("Webhook sendTest", () => {
     const url = "https://example.com/webhook";
     const controller = new AbortController();
     fetchMock.mockRestore();
-    fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
 
     const result = await sendTest({ url, signal: controller.signal });
 
