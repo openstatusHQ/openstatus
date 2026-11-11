@@ -13,6 +13,7 @@ import type {
   HeartbeatMonitor,
   ICMPMonitor,
   ListMonitorHTTPResponseLogsResponse,
+  ListMonitorHeartbeatPingsResponse,
   MonitorConfig,
   MonitorService,
   RegionStatus,
@@ -35,7 +36,9 @@ import {
   getMonitorSummary,
   getPrivateLocationIdsByMonitor,
   getResponseLog,
+  listHeartbeatPings,
   listResponseLogs,
+  regenerateHeartbeatToken,
   triggerMonitorRun,
   updateMonitorConfig,
 } from "@openstatus/services/monitor";
@@ -58,6 +61,7 @@ import {
   dbMonitorToIcmpProto,
   grpcTlsModeToString,
   dbMonitorToTcpProto,
+  heartbeatPingKindToString,
   protoDnsAssertionsToService,
   protoHeadersToService,
   protoHttpAssertionsToService,
@@ -67,9 +71,10 @@ import {
   stringToRegion,
   stringsToRegions,
   timeRangeToKey,
-  type HeartbeatLastPing,
+  type HeartbeatPingState,
 } from "./converters";
 import {
+  cursorInvalidError,
   monitorIdInvalidError,
   monitorIdRequiredError,
   monitorInvalidDataError,
@@ -82,6 +87,11 @@ import {
   responseLogNotFoundError,
   responseLogsNotEnabledError,
 } from "./errors";
+import {
+  decodePingCursor,
+  encodePingCursor,
+  toHeartbeatPing,
+} from "./heartbeat-pings";
 import { checkMonitorConfigLimits, checkMonitorLimits } from "./limits";
 import {
   toHTTPResponseLogDetail,
@@ -147,26 +157,37 @@ async function validateAndGetMonitor(
 
 type ParsedMonitor = ReturnType<typeof selectMonitorSchema.parse>;
 
-async function lastPingsByMonitor(
+async function heartbeatStatesByMonitor(
   ids: number[],
-): Promise<Map<number, HeartbeatLastPing>> {
+): Promise<Map<number, HeartbeatPingState>> {
   if (ids.length === 0) return new Map();
   const rows = await db
     .select({
       monitorId: monitorHeartbeatState.monitorId,
       lastPingAt: monitorHeartbeatState.lastPingAt,
       lastPingKind: monitorHeartbeatState.lastPingKind,
+      nextDueAt: monitorHeartbeatState.nextDueAt,
     })
     .from(monitorHeartbeatState)
     .where(inArray(monitorHeartbeatState.monitorId, ids))
     .all();
-  const map = new Map<number, HeartbeatLastPing>();
+  const map = new Map<number, HeartbeatPingState>();
   for (const row of rows) {
     if (row.lastPingAt) {
-      map.set(row.monitorId, { at: row.lastPingAt, kind: row.lastPingKind });
+      map.set(row.monitorId, {
+        at: row.lastPingAt,
+        kind: row.lastPingKind,
+        nextDueAt: row.nextDueAt,
+      });
     }
   }
   return map;
+}
+
+function heartbeatTypeHint(jobType: string): string | undefined {
+  return jobType === "heartbeat"
+    ? "Use ListMonitorHeartbeatPings for heartbeat monitors"
+    : undefined;
 }
 
 /** Apply a built patch through the service and shape the proto response. */
@@ -379,15 +400,18 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       rpcCtx.workspace.id,
       "heartbeat",
     );
-    const lastPings = await lastPingsByMonitor([dbMon.id]);
-    const lastPing = lastPings.get(dbMon.id) ?? null;
-
     if (!req.monitor) {
       const parsed = selectMonitorSchema.safeParse(dbMon);
       if (!parsed.success) {
         throw monitorParseFailedError(req.id);
       }
-      return { monitor: dbMonitorToHeartbeatProto(parsed.data, lastPing) };
+      const states = await heartbeatStatesByMonitor([dbMon.id]);
+      return {
+        monitor: dbMonitorToHeartbeatProto(
+          parsed.data,
+          states.get(dbMon.id) ?? null,
+        ),
+      };
     }
 
     // This method skips the protovalidate interceptor (see SKIP_VALIDATION_METHODS):
@@ -407,9 +431,48 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     if (mon.period) updateValues.heartbeatPeriod = Number(mon.period);
     if (mon.grace) updateValues.heartbeatGrace = Number(mon.grace);
 
-    return applyUpdate(rpcCtx, dbMon.id, updateValues, (data) =>
-      dbMonitorToHeartbeatProto(data, lastPing),
+    // a resume re-anchors the deadline, so the state is read after the update
+    const { monitor: updated } = await applyUpdate(
+      rpcCtx,
+      dbMon.id,
+      updateValues,
+      (data) => data,
     );
+    const states = await heartbeatStatesByMonitor([updated.id]);
+    return {
+      monitor: dbMonitorToHeartbeatProto(
+        updated,
+        states.get(updated.id) ?? null,
+      ),
+    };
+  },
+
+  async regenerateHeartbeatToken(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const id = parseMonitorId(req.id);
+    try {
+      const updated = await regenerateHeartbeatToken({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id },
+      });
+      const states = await heartbeatStatesByMonitor([updated.id]);
+      return {
+        monitor: dbMonitorToHeartbeatProto(
+          updated,
+          states.get(updated.id) ?? null,
+        ),
+      };
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      if (err instanceof ValidationError) {
+        const jobType =
+          (await getMonitorById(id, rpcCtx.workspace.id))?.jobType ?? "unknown";
+        throw monitorTypeMismatchError(req.id, "heartbeat", jobType);
+      }
+      toConnectError(err);
+    }
   },
 
   async createGRPCMonitor(req, ctx) {
@@ -900,7 +963,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const icmpMonitors: ICMPMonitor[] = [];
     const grpcMonitors: GRPCMonitor[] = [];
     const heartbeatMonitors: HeartbeatMonitor[] = [];
-    const lastPings = await lastPingsByMonitor(
+    const heartbeatStates = await heartbeatStatesByMonitor(
       parsedMonitors.filter((m) => m.jobType === "heartbeat").map((m) => m.id),
     );
 
@@ -924,7 +987,10 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           break;
         case "heartbeat":
           heartbeatMonitors.push(
-            dbMonitorToHeartbeatProto(data, lastPings.get(data.id) ?? null),
+            dbMonitorToHeartbeatProto(
+              data,
+              heartbeatStates.get(data.id) ?? null,
+            ),
           );
           break;
       }
@@ -1047,7 +1113,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
             value: dbMonitorToHeartbeatProto(
               monitorData,
               state.lastPingAt && state.lastPingKind
-                ? { at: state.lastPingAt, kind: state.lastPingKind }
+                ? {
+                    at: state.lastPingAt,
+                    kind: state.lastPingKind,
+                    nextDueAt: state.nextDueAt,
+                  }
                 : null,
             ),
           },
@@ -1155,7 +1225,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         const jobType =
           (await getMonitorById(parseMonitorId(req.id), rpcCtx.workspace.id))
             ?.jobType ?? "unknown";
-        throw monitorTypeMismatchError(req.id, "http", jobType);
+        throw monitorTypeMismatchError(
+          req.id,
+          "http",
+          jobType,
+          heartbeatTypeHint(jobType),
+        );
       }
       toConnectError(err);
     }
@@ -1187,7 +1262,66 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         const jobType =
           (await getMonitorById(parseMonitorId(req.id), rpcCtx.workspace.id))
             ?.jobType ?? "unknown";
-        throw monitorTypeMismatchError(req.id, "http", jobType);
+        throw monitorTypeMismatchError(
+          req.id,
+          "http",
+          jobType,
+          heartbeatTypeHint(jobType),
+        );
+      }
+      toConnectError(err);
+    }
+  },
+
+  async listMonitorHeartbeatPings(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const id = parseMonitorId(req.id);
+    const cursor =
+      req.cursor !== undefined ? decodePingCursor(req.cursor) : undefined;
+    if (cursor === null) {
+      throw cursorInvalidError();
+    }
+    const kinds = req.kinds.flatMap((kind) => {
+      const value = heartbeatPingKindToString(kind);
+      return value ? [value] : [];
+    });
+
+    try {
+      const result = await listHeartbeatPings({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          monitorId: id,
+          fromTimestamp:
+            req.fromTimestamp !== undefined
+              ? Number(req.fromTimestamp)
+              : undefined,
+          toTimestamp:
+            req.toTimestamp !== undefined ? Number(req.toTimestamp) : undefined,
+          kinds: kinds.length ? kinds : undefined,
+          cursor,
+          limit: req.limit ?? 50,
+        },
+      });
+      return {
+        $typeName:
+          "openstatus.monitor.v1.ListMonitorHeartbeatPingsResponse" as const,
+        pings: result.data.map((ping) => toHeartbeatPing(ping, id)),
+        nextCursor:
+          result.nextCursor !== null
+            ? encodePingCursor(result.nextCursor)
+            : undefined,
+      } satisfies ListMonitorHeartbeatPingsResponse;
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      if (err instanceof ForbiddenError) {
+        throw responseLogsNotEnabledError();
+      }
+      if (err instanceof ValidationError) {
+        const jobType =
+          (await getMonitorById(id, rpcCtx.workspace.id))?.jobType ?? "unknown";
+        throw monitorTypeMismatchError(req.id, "heartbeat", jobType);
       }
       toConnectError(err);
     }

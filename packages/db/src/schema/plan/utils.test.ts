@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { allPlans } from "./config";
-import { YEARLY_ADDON_MULTIPLIER, getAddonPriceConfig } from "./utils";
+import {
+  YEARLY_ADDON_MULTIPLIER,
+  dataRetentionCutoff,
+  getAddonPriceConfig,
+} from "./utils";
 
 describe("getAddonPriceConfig", () => {
   it("defaults to the monthly price", () => {
@@ -29,5 +33,35 @@ describe("getAddonPriceConfig", () => {
     expect(getAddonPriceConfig("free", "white-label", "USD", "yearly")).toBe(
       null,
     );
+  });
+});
+
+describe("dataRetentionCutoff", () => {
+  const now = new Date("2026-05-31T12:00:00.000Z");
+
+  it("subtracts days for the 14-day plan", () => {
+    expect(dataRetentionCutoff("14 days", now).toISOString()).toBe(
+      "2026-05-17T12:00:00.000Z",
+    );
+  });
+
+  it("subtracts calendar months", () => {
+    expect(dataRetentionCutoff("12 months", now).toISOString()).toBe(
+      "2025-05-31T12:00:00.000Z",
+    );
+    expect(dataRetentionCutoff("24 months", now).toISOString()).toBe(
+      "2024-05-31T12:00:00.000Z",
+    );
+  });
+
+  it("clamps to the end of a shorter month", () => {
+    expect(dataRetentionCutoff("3 months", now).toISOString()).toBe(
+      "2026-02-28T12:00:00.000Z",
+    );
+  });
+
+  it("does not mutate now", () => {
+    dataRetentionCutoff("3 months", now);
+    expect(now.toISOString()).toBe("2026-05-31T12:00:00.000Z");
   });
 });

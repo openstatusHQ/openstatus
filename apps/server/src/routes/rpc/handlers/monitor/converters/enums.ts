@@ -115,6 +115,19 @@ export function stringToHeartbeatPingKind(
   );
 }
 
+export function heartbeatPingKindToString(
+  kind: HeartbeatPingKind,
+): "success" | "fail" | null {
+  switch (kind) {
+    case HeartbeatPingKind.SUCCESS:
+      return "success";
+    case HeartbeatPingKind.FAIL:
+      return "fail";
+    default:
+      return null;
+  }
+}
+
 // ============================================================
 // gRPC TLS Mode Conversions
 // ============================================================
