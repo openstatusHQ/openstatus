@@ -135,6 +135,100 @@ describe("EmailClient.sendPageUpdate - idempotency & chunking", () => {
     // retrying only re-logs the same error.
     expect(batchSend).toHaveBeenCalledTimes(1);
   });
+
+  test("uses default cloud status page base URL for notification email links", async () => {
+    await client.sendPageUpdate(
+      baseReq({
+        pageSlug: "my-status",
+        subscribers: [{ email: "user@example.com", token: "tok_456" }],
+      }),
+    );
+
+    expect(batchSend).toHaveBeenCalledTimes(1);
+    const item = batchSend.mock.calls[0][0][0];
+    expect(item.react.props.statusPageUrl).toBe(
+      "https://my-status.openstatus.dev",
+    );
+    expect(item.react.props.unsubscribeUrl).toBe(
+      "https://my-status.openstatus.dev/unsubscribe/tok_456",
+    );
+    expect(item.react.props.manageUrl).toBe(
+      "https://my-status.openstatus.dev/manage/tok_456",
+    );
+  });
+
+  test("uses customDomain when provided and no override is configured", async () => {
+    await client.sendPageUpdate(
+      baseReq({
+        pageSlug: "my-status",
+        customDomain: "status.mybrand.org",
+        subscribers: [{ email: "user@example.com", token: "tok_456" }],
+      }),
+    );
+
+    expect(batchSend).toHaveBeenCalledTimes(1);
+    const item = batchSend.mock.calls[0][0][0];
+    expect(item.react.props.statusPageUrl).toBe("https://status.mybrand.org");
+    expect(item.react.props.unsubscribeUrl).toBe(
+      "https://status.mybrand.org/unsubscribe/tok_456",
+    );
+    expect(item.react.props.manageUrl).toBe(
+      "https://status.mybrand.org/manage/tok_456",
+    );
+  });
+
+  test("uses configured STATUS_PAGE_BASE_URL override with explicit port and scheme", async () => {
+    vi.stubEnv("STATUS_PAGE_BASE_URL", "https://status.example.net:8443");
+    try {
+      await client.sendPageUpdate(
+        baseReq({
+          pageSlug: "my-status",
+          customDomain: "planned-dns.mybrand.org",
+          subscribers: [{ email: "user@example.com", token: "tok_456" }],
+        }),
+      );
+
+      expect(batchSend).toHaveBeenCalledTimes(1);
+      const item = batchSend.mock.calls[0][0][0];
+      expect(item.react.props.statusPageUrl).toBe(
+        "https://status.example.net:8443",
+      );
+      expect(item.react.props.unsubscribeUrl).toBe(
+        "https://status.example.net:8443/unsubscribe/tok_456",
+      );
+      expect(item.react.props.manageUrl).toBe(
+        "https://status.example.net:8443/manage/tok_456",
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test("interpolates {slug} when STATUS_PAGE_BASE_URL is a slug template", async () => {
+    vi.stubEnv("STATUS_PAGE_BASE_URL", "https://{slug}.status.selfhosted.io");
+    try {
+      await client.sendPageUpdate(
+        baseReq({
+          pageSlug: "infra",
+          subscribers: [{ email: "user@example.com", token: "tok_789" }],
+        }),
+      );
+
+      expect(batchSend).toHaveBeenCalledTimes(1);
+      const item = batchSend.mock.calls[0][0][0];
+      expect(item.react.props.statusPageUrl).toBe(
+        "https://infra.status.selfhosted.io",
+      );
+      expect(item.react.props.unsubscribeUrl).toBe(
+        "https://infra.status.selfhosted.io/unsubscribe/tok_789",
+      );
+      expect(item.react.props.manageUrl).toBe(
+        "https://infra.status.selfhosted.io/manage/tok_789",
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 });
 
 describe("EmailClient.sendMonitorAlert", () => {

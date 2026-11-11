@@ -26,6 +26,15 @@ export const env = createEnv({
       (v) => (v === "" ? undefined : v),
       z.url().optional(),
     ),
+    // Optional public status-page base URL override for self-hosted instances.
+    STATUS_PAGE_BASE_URL: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.string().optional(),
+    ),
+    OPENSTATUS_STATUS_PAGE_URL: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.string().optional(),
+    ),
     NODE_ENV: z.enum(["development", "test", "production"]).optional(),
   },
 
@@ -46,6 +55,8 @@ export const env = createEnv({
     EXTERNAL_REPORT_SALT: process.env.EXTERNAL_REPORT_SALT,
     SELF_HOST: process.env.SELF_HOST,
     HEARTBEAT_PING_BASE_URL: process.env.HEARTBEAT_PING_BASE_URL,
+    STATUS_PAGE_BASE_URL: process.env.STATUS_PAGE_BASE_URL,
+    OPENSTATUS_STATUS_PAGE_URL: process.env.OPENSTATUS_STATUS_PAGE_URL,
     NODE_ENV: process.env.NODE_ENV,
   },
   skipValidation: process.env.NODE_ENV === "test",

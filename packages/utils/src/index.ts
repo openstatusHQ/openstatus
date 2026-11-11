@@ -48,3 +48,7 @@ export {
   heartbeatExpectation,
   statusRegions,
 } from "./heartbeat";
+export {
+  getStatusPageBaseUrl,
+  type GetStatusPageBaseUrlOptions,
+} from "./status-page-url";
