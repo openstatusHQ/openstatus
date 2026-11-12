@@ -9,15 +9,13 @@ import { beforeAll, describe, expect, test } from "vitest";
 import {
   createWorkspaceFixture,
   withTestTransaction,
+  postOnlySlackClient,
 } from "../../../test/helpers";
 import type { DB } from "../../context";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
-import {
-  reminderWindow,
-  remindStaleIncidents,
-  type SlackIncidentClient,
-} from "../index";
+import { reminderWindow, remindStaleIncidents } from "../index";
+import { dueStaleReminders } from "../reminders";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -47,14 +45,10 @@ describe("reminderWindow", () => {
 
 function fakeClient() {
   const sent: { channel: string; text: string }[] = [];
-  const client = {
-    chat: {
-      postMessage: async (args: { channel: string; text: string }) => {
-        sent.push(args);
-        return { ok: true, ts: "1.1" };
-      },
-    },
-  } as SlackIncidentClient;
+  const client = postOnlySlackClient(async (args) => {
+    sent.push(args);
+    return { ok: true, ts: "1.1" };
+  });
   return { client, sent };
 }
 
@@ -180,15 +174,11 @@ describe("remindStaleIncidents", () => {
 
   function failingClient(error: unknown) {
     let calls = 0;
-    const client = {
-      chat: {
-        postMessage: async () => {
-          calls++;
-          if (calls === 1) throw error;
-          return { ok: true, ts: "1.1" };
-        },
-      },
-    } as unknown as SlackIncidentClient;
+    const client = postOnlySlackClient(async () => {
+      calls++;
+      if (calls === 1) throw error;
+      return { ok: true, ts: "1.1" };
+    });
     return { client, calls: () => calls };
   }
 
@@ -275,6 +265,38 @@ describe("remindStaleIncidents", () => {
         },
         tx,
       );
+      const claimed: string[] = [];
+      const { client, sent } = fakeClient();
+      const results = await remindStaleIncidents({
+        db: tx,
+        clientFor: () => client,
+        claim: async (key) => {
+          claimed.push(key);
+          return true;
+        },
+        release: async () => {},
+        dashboardUrl: "https://app.test",
+      });
+      expect(results.find((r) => r.incidentId === row.id)).toBeUndefined();
+      expect(
+        claimed.some((k) => k.startsWith(`incident:reminder:${row.id}:`)),
+      ).toBe(false);
+      expect(sent).toHaveLength(0);
+    });
+  });
+
+  test("workspace without slack: due, but nothing claimed or sent", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createIncident(
+        workspace.id,
+        { declaredAt: new Date(Date.now() - 5 * HOUR) },
+        tx,
+      );
+      const due = await dueStaleReminders({ db: tx, now: new Date() });
+      expect(due.find((d) => d.incident.id === row.id)?.key).toBe(
+        `incident:reminder:${row.id}:0:0`,
+      );
+
       const claimed: string[] = [];
       const { client, sent } = fakeClient();
       const results = await remindStaleIncidents({

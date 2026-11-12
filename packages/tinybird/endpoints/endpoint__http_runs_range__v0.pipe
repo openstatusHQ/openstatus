@@ -1,0 +1,34 @@
+TOKEN "endpoint__http_runs_range__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- same quorum as endpoint__http_runs_45d__v0, summed over the half-open range [fromDate, toDate) in epoch ms
+WITH
+    {{ Int64(fromDate, 1730419200000, required=True) }} AS fromMs,
+    {{ Int64(toDate, 1733011200000, required=True) }} AS toMs
+SELECT
+    monitorId,
+    count() AS count,
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 >= n) AS error,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded
+FROM (
+    SELECT
+        monitorId,
+        cronTimestamp,
+        uniqExactMerge(regions) AS n,
+        uniqExactMerge(errorRegions) AS e,
+        uniqExactMerge(degradedRegions) AS d
+    FROM mv__http_runs_45d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+        AND time >= toStartOfDay(toDateTime(intDiv(fromMs, 1000), 'UTC'))
+        AND time < fromUnixTimestamp64Milli(toInt64(toMs), 'UTC')
+        AND cronTimestamp >= fromMs
+        AND cronTimestamp < toMs
+    GROUP BY monitorId, cronTimestamp
+)
+GROUP BY monitorId
+
+TYPE endpoint

@@ -118,6 +118,27 @@ components:
         - SERVING_STATUS_SERVING
         - SERVING_STATUS_NOT_SERVING
       description: ServingStatus represents the health status of the service.
+    openstatus.incident.v1.AcknowledgeIncidentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the incident (required).
+      title: AcknowledgeIncidentRequest
+      additionalProperties: false
+      description: AcknowledgeIncidentRequest is the request to acknowledge an incident.
+    openstatus.incident.v1.AcknowledgeIncidentResponse:
+      type: object
+      properties:
+        incident:
+          title: incident
+          description: The acknowledged incident (without its timeline).
+          $ref: '#/components/schemas/openstatus.incident.v1.Incident'
+      title: AcknowledgeIncidentResponse
+      additionalProperties: false
+      description: AcknowledgeIncidentResponse is the response after acknowledging an incident.
     openstatus.incident.v1.AddIncidentNoteRequest:
       type: object
       properties:
@@ -260,6 +281,17 @@ components:
             - "null"
           title: open_slack_channel
           description: Whether to open a Slack channel for the incident when Slack is connected (optional, defaults to false).
+        reportedAt:
+          type:
+            - string
+            - "null"
+          examples:
+            - "2024-03-15T10:10:00Z"
+          title: reported_at
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: |-
+            When the request reached the team, if before the declare (RFC 3339 format, optional).
+             At most 30 days before now and never later; SLA timers start here.
       title: DeclareIncidentRequest
       additionalProperties: false
       description: DeclareIncidentRequest is the request to declare a new incident.
@@ -445,6 +477,34 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the incident was last updated (RFC 3339 format).
+        acknowledgedAt:
+          type:
+            - string
+            - "null"
+          title: acknowledged_at
+          description: |-
+            Timestamp when the incident was acknowledged (RFC 3339 format, unset until acknowledged).
+             Incidents declared by a person are acknowledged at declare.
+        acknowledgedBy:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: acknowledged_by
+          description: Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
+        sla:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSla'
+            - type: "null"
+          title: sla
+          description: SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones).
+        reportedAt:
+          type:
+            - string
+            - "null"
+          title: reported_at
+          description: |-
+            Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
+             SLA timers start here instead of at declared_at.
       title: Incident
       additionalProperties: false
       description: Incident is a managed incident with full details.
@@ -497,6 +557,11 @@ components:
         - INCIDENT_EVENT_TYPE_POSTMORTEM_UPDATED
         - INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED
         - INCIDENT_EVENT_TYPE_CLOSED
+        - INCIDENT_EVENT_TYPE_ACKNOWLEDGED
+        - INCIDENT_EVENT_TYPE_SLA_RESPONSE_BREACHED
+        - INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED
+        - INCIDENT_EVENT_TYPE_SLA_UPDATE_MISSED
+        - INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED
       description: IncidentEventType is the kind of entry in an incident timeline.
     openstatus.incident.v1.IncidentSeverity:
       type: string
@@ -507,6 +572,71 @@ components:
         - INCIDENT_SEVERITY_MAJOR
         - INCIDENT_SEVERITY_MINOR
       description: IncidentSeverity is how bad an incident is.
+    openstatus.incident.v1.IncidentSla:
+      type: object
+      properties:
+        response:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimer'
+            - type: "null"
+          title: response
+          description: Response target (unset when the severity has none).
+        resolution:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimer'
+            - type: "null"
+          title: resolution
+          description: Resolution target (unset when the severity has none).
+      title: IncidentSla
+      additionalProperties: false
+      description: IncidentSla is the SLA state of a tracked incident.
+    openstatus.incident.v1.IncidentSlaTimer:
+      type: object
+      properties:
+        targetMinutes:
+          type: integer
+          title: target_minutes
+          format: int32
+          description: Target in minutes, from the policy fixed on the incident at declare.
+        dueAt:
+          type: string
+          title: due_at
+          description: Timestamp when the target is due (RFC 3339 format).
+        metAt:
+          type:
+            - string
+            - "null"
+          title: met_at
+          description: Timestamp when the target was met (RFC 3339 format, unset while open).
+        missedAt:
+          type:
+            - string
+            - "null"
+          title: missed_at
+          description: Due time recorded as missed (RFC 3339 format, unset until the miss is recorded; never cleared).
+        status:
+          title: status
+          description: Current state of the target.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimerStatus'
+        missReason:
+          type:
+            - string
+            - "null"
+          title: miss_reason
+          description: Why the target was missed, written by a member (unset without a recorded miss or a reason).
+      title: IncidentSlaTimer
+      additionalProperties: false
+      description: IncidentSlaTimer is the state of one SLA target of an incident.
+    openstatus.incident.v1.IncidentSlaTimerStatus:
+      type: string
+      title: IncidentSlaTimerStatus
+      enum:
+        - INCIDENT_SLA_TIMER_STATUS_UNSPECIFIED
+        - INCIDENT_SLA_TIMER_STATUS_RUNNING
+        - INCIDENT_SLA_TIMER_STATUS_AT_RISK
+        - INCIDENT_SLA_TIMER_STATUS_MET
+        - INCIDENT_SLA_TIMER_STATUS_BREACHED
+      description: IncidentSlaTimerStatus is the state of one SLA target.
     openstatus.incident.v1.IncidentStatus:
       type: string
       title: IncidentStatus
@@ -600,6 +730,32 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the incident was last updated (RFC 3339 format).
+        acknowledgedAt:
+          type:
+            - string
+            - "null"
+          title: acknowledged_at
+          description: Timestamp when the incident was acknowledged (RFC 3339 format, unset until acknowledged).
+        acknowledgedBy:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentUser'
+            - type: "null"
+          title: acknowledged_by
+          description: Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
+        sla:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSla'
+            - type: "null"
+          title: sla
+          description: SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones).
+        reportedAt:
+          type:
+            - string
+            - "null"
+          title: reported_at
+          description: |-
+            Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
+             SLA timers start here instead of at declared_at.
       title: IncidentSummary
       additionalProperties: false
       description: IncidentSummary is the metadata of an incident (used in list responses).
@@ -868,11 +1024,27 @@ components:
           title: started_at
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
           description: New start of impact (RFC 3339 format, optional).
+        reportedAt:
+          type:
+            - string
+            - "null"
+          title: reported_at
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: |-
+            New report time (RFC 3339 format, optional), between 30 days before the declare and the declare.
+             Moves the due times of running SLA timers; met and missed targets keep their verdict.
+        clearReportedAt:
+          type:
+            - boolean
+            - "null"
+          title: clear_reported_at
+          description: Set to true to remove the report time, so SLA timers start at the declare again. Cannot be combined with reported_at.
       title: UpdateIncidentRequest
       additionalProperties: false
       description: |
         UpdateIncidentRequest is the request to edit an incident.
         commander_email_or_clear_commander // set either commander_email or clear_commander, not both
+        reported_at_or_clear_reported_at // set either reported_at or clear_reported_at, not both
         summary_or_clear_summary // set either summary or clear_summary, not both
     openstatus.incident.v1.UpdateIncidentResponse:
       type: object
@@ -6386,6 +6558,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+  /rpc/openstatus.incident.v1.IncidentService/AcknowledgeIncident:
+    post:
+      tags:
+        - IncidentService
+      summary: AcknowledgeIncident
+      description: 'Acknowledges an incident: someone is on it. Works on every incident. Incidents declared by a person are acknowledged at declare; incidents declared through the API or MCP stay unacknowledged until this call or until a person acts on them. The API key''s creator is recorded as the acknowledger, or nobody for keys without a creator, and the timeline shows the acknowledgement came from the API. An incident that is already acknowledged or closed fails with failed_precondition.'
+      operationId: IncidentService_AcknowledgeIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.incident.v1.AcknowledgeIncidentRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.incident.v1.AcknowledgeIncidentResponse'
   /rpc/openstatus.incident.v1.IncidentService/AddIncidentNote:
     post:
       tags:
@@ -6785,7 +6985,7 @@ paths:
       tags:
         - IncidentService
       summary: UpdateIncident
-      description: UpdateIncident edits the title, severity, summary, commander or start time of an incident.
+      description: UpdateIncident edits the title, severity, summary, commander, start time or report time of an incident.
       operationId: IncidentService_UpdateIncident
       requestBody:
         content:

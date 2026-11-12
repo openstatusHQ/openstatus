@@ -5,6 +5,7 @@ import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 
+import { meetV1IncidentResponse } from "../utils";
 import type { statusReportUpdatesApi } from "./index";
 import { StatusReportUpdateSchema } from "./schema";
 
@@ -90,6 +91,8 @@ export function registerPostStatusReportUpdate(
 
       return update;
     });
+
+    await meetV1IncidentResponse(c, _statusReport.id);
 
     if (limits["status-subscribers"] && _statusReport.pageId) {
       await dispatchStatusReportUpdate(_statusReportUpdate.id);

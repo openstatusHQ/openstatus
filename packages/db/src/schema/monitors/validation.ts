@@ -7,6 +7,7 @@ import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 import {
   grpcTlsModes,
   monitorJobTypes,
+  monitorMaintenanceModes,
   monitorMethods,
   monitorStatus,
 } from "./constants";
@@ -51,6 +52,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   // milliseconds, matches the column default
   timeout: z.number().prefault(45_000),
   followRedirects: z.boolean().prefault(true),
+  maintenanceMode: z.enum(monitorMaintenanceModes).prefault("pause"),
   retry: z.number().prefault(3),
   regions: regionsToArraySchema.prefault([]),
 }).extend({

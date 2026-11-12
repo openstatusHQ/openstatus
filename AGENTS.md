@@ -48,6 +48,9 @@ workflows pin the same node. Never float one back to `@latest` or
   and never wipe a table globally — scope every cleanup to your own workspace id.
 - The `external_service` suites are not workspace-scoped; an aborted run leaves
   rows that fail the *next* local run on a foreign key. Reseed to recover.
+- A suite killed or timed out inside a transaction leaves sqld's write lock
+  held for minutes, and every later suite hangs in `beforeAll`. Restart sqld
+  before re-running; let a running suite finish rather than killing it.
 - The `test` turbo task is deliberately uncached — results depend on database
   state that is not in the input hash. Do not "fix" it.
 

@@ -15,6 +15,7 @@ import type { DB, ServiceContext } from "../../context";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
 import {
+  afterIncidentAcknowledged,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -367,6 +368,23 @@ describe("channel announcements", () => {
         "Jane marked the incident *mitigated*.\n>rolled back",
       );
       expect(calls[1]?.args.topic).toContain("· mitigated ·");
+    });
+  });
+
+  test("an acknowledge is announced without archiving", async () => {
+    await withTestTransaction(async (tx) => {
+      await connectSlack(tx);
+      const row = await declare(tx);
+      await bind(tx, row.id);
+      const { effects, calls } = makeEffects();
+      await afterIncidentAcknowledged({
+        ctx: ctxFor(tx),
+        effects,
+        incidentId: row.id,
+      });
+      expect(calls[0]?.method).toBe("postMessage");
+      expect(calls[0]?.args.text).toBe("Jane acknowledged the incident.");
+      expect(calls.some((c) => c.method === "archive")).toBe(false);
     });
   });
 

@@ -16,7 +16,7 @@ While a maintenance window is active (the current time is between `from` and `to
 - A higher-priority event overrides it: an active incident (error) or an unresolved status report (degraded) takes precedence, so the component shows that status instead. Maintenance only outranks the default operational status.
 - The maintenance is reflected in the historical status bars for the days it overlaps.
 
-Maintenance windows **do not** exclude downtime from uptime calculations. The uptime percentage is computed from raw check results and is unaffected by maintenance windows; only the displayed status changes.
+What happens to the checks of a monitor-linked component depends on that monitor's [maintenance setting](#checks-during-maintenance). By default its cloud checks pause, so the window is absent from its uptime.
 
 When a maintenance is created, status page subscribers can be notified that it has been scheduled (see [Notify](#notify)). Updating a maintenance never re-notifies.
 
@@ -86,6 +86,17 @@ A maintenance is a timeline of dated notes. The first one is the announcement wr
 - **Notify** — Boolean (optional, write-only). Sends the note to status page subscribers.
 
 A maintenance always keeps at least one update: deleting the last one is rejected; delete the maintenance instead. Reads return them newest-first under `updates` (RPC, agent tools) or `maintenanceUpdates` (status page JSON). The public status page, feeds and Markdown render the updates in order, oldest first on the page.
+
+## Checks during maintenance
+
+Each monitor chooses what happens while an active maintenance covers one of its page components. Set it in the dashboard under the monitor's settings, card **Maintenance**.
+
+- **Pause checks** (default) — cloud regions do not check the monitor at all. The window is absent from both sides of its uptime and can never count as downtime, whatever happened during it.
+- **Keep checking without alerting** — cloud checks run and are stored as usual, with their real outcome, so failures during the window count against uptime. The monitor's status does not change, no monitor incident opens and no notification is sent. When the window ends, normal behaviour resumes with the next check: a failure that is still there then opens its incident and notifies.
+
+Private locations always keep checking during maintenance and ignore status changes while it is active, whatever the setting. Heartbeat monitors are never evaluated during maintenance.
+
+For what this means for a monthly uptime target, see the [monitor SLA policy reference](/docs/reference/monitor-sla-policy#maintenance).
 
 ## Relationships
 

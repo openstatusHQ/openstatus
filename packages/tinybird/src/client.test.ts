@@ -8,6 +8,8 @@ import {
   OSTinybird,
   runs45dParameters,
   runs45dShape,
+  runsRangeParameters,
+  runsRangeShape,
   status15mParameters,
   status15mShape,
 } from "./client";
@@ -325,6 +327,57 @@ describe("runs 45d pipes", () => {
         meta: [],
         data: [],
       });
+    });
+  }
+});
+
+const runsRangeGetters = [
+  "httpRunsRange",
+  "tcpRunsRange",
+  "dnsRunsRange",
+  "icmpRunsRange",
+  "grpcRunsRange",
+] as const;
+
+describe("runsRangeParameters", () => {
+  test("requires both instants as epoch milliseconds", () => {
+    expect(
+      runsRangeParameters.parse({
+        monitorIds: ["1"],
+        fromDate: 1_761_955_200_000,
+        toDate: 1_764_547_200_000,
+      }),
+    ).toEqual({
+      monitorIds: ["1"],
+      fromDate: 1_761_955_200_000,
+      toDate: 1_764_547_200_000,
+    });
+    expect(
+      runsRangeParameters.safeParse({ monitorIds: ["1"], fromDate: 1 }).success,
+    ).toBe(false);
+  });
+});
+
+describe("runsRangeShape", () => {
+  test("defaults missing counts", () => {
+    expect(runsRangeShape.parse({ monitorId: "1", count: 3, ok: 3 })).toEqual({
+      monitorId: "1",
+      count: 3,
+      ok: 3,
+      degraded: 0,
+      error: 0,
+    });
+  });
+});
+
+describe("runs range pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of runsRangeGetters) {
+    test(`${name} resolves`, async () => {
+      expect(
+        await tb[name]({ monitorIds: ["1"], fromDate: 0, toDate: 1 }),
+      ).toEqual({ meta: [], data: [] });
     });
   }
 });

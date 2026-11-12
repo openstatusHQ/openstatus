@@ -1,6 +1,9 @@
+import { incidentSlaTimerIso } from "@openstatus/db/src/schema/incident_sla_policies/state";
 import type {
   Incident,
   IncidentEvent,
+  IncidentSla,
+  IncidentSlaTimer,
   IncidentStatusReport,
   IncidentSummary,
   IncidentUser,
@@ -9,6 +12,7 @@ import type {
 import {
   IncidentEventType,
   IncidentSeverity,
+  IncidentSlaTimerStatus,
   IncidentStatus,
   PostmortemAuthor,
   PostmortemStatus,
@@ -34,6 +38,8 @@ type PostmortemRow = NonNullable<Awaited<ReturnType<typeof getPostmortem>>>;
 type DbSeverity = IncidentView["severity"];
 type DbStatus = IncidentView["status"];
 type DbEventType = IncidentEventRow["type"];
+type IncidentSlaState = IncidentView["sla"];
+type DbSlaTimer = NonNullable<NonNullable<IncidentSlaState>["response"]>;
 
 type UserRow = {
   id: number;
@@ -51,11 +57,15 @@ type IncidentFields = {
   status: DbStatus;
   declaredAt: Date;
   startedAt: Date;
+  reportedAt: Date | null;
   resolvedAt: Date | null;
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  acknowledgedAt: Date | null;
   commander: UserRow | null;
+  acknowledgedByUser: UserRow | null;
+  sla: IncidentSlaState;
 };
 
 export function protoSeverityToDb(severity: IncidentSeverity): DbSeverity {
@@ -146,6 +156,16 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
       return IncidentEventType.POSTMORTEM_APPROVED;
     case "closed":
       return IncidentEventType.CLOSED;
+    case "acknowledged":
+      return IncidentEventType.ACKNOWLEDGED;
+    case "sla_response_breached":
+      return IncidentEventType.SLA_RESPONSE_BREACHED;
+    case "sla_resolution_breached":
+      return IncidentEventType.SLA_RESOLUTION_BREACHED;
+    case "sla_update_missed":
+      return IncidentEventType.SLA_UPDATE_MISSED;
+    case "reported_at_changed":
+      return IncidentEventType.REPORTED_AT_CHANGED;
   }
 }
 
@@ -195,6 +215,46 @@ function iso(date: Date | null | undefined): string | undefined {
   return date ? date.toISOString() : undefined;
 }
 
+function dbSlaStatusToProto(
+  status: DbSlaTimer["status"],
+): IncidentSlaTimerStatus {
+  switch (status) {
+    case "running":
+      return IncidentSlaTimerStatus.RUNNING;
+    case "at_risk":
+      return IncidentSlaTimerStatus.AT_RISK;
+    case "met":
+      return IncidentSlaTimerStatus.MET;
+    case "breached":
+      return IncidentSlaTimerStatus.BREACHED;
+  }
+}
+
+function toSlaTimer(timer: DbSlaTimer | null): IncidentSlaTimer | undefined {
+  if (!timer) return undefined;
+  const t = incidentSlaTimerIso(timer);
+  return {
+    $typeName: "openstatus.incident.v1.IncidentSlaTimer",
+    targetMinutes: t.targetMinutes,
+    dueAt: t.dueAt,
+    metAt: t.metAt ?? undefined,
+    missedAt: t.missedAt ?? undefined,
+    status: dbSlaStatusToProto(t.status),
+    missReason: t.missReason ?? undefined,
+  };
+}
+
+export function incidentSlaToProto(
+  state: IncidentSlaState,
+): IncidentSla | undefined {
+  if (!state) return undefined;
+  return {
+    $typeName: "openstatus.incident.v1.IncidentSla",
+    response: toSlaTimer(state.response),
+    resolution: toSlaTimer(state.resolution),
+  };
+}
+
 function summaryFields(row: IncidentFields) {
   return {
     id: String(row.id),
@@ -204,10 +264,14 @@ function summaryFields(row: IncidentFields) {
     commander: toIncidentUser(row.commander),
     declaredAt: row.declaredAt.toISOString(),
     startedAt: row.startedAt.toISOString(),
+    reportedAt: iso(row.reportedAt),
     resolvedAt: iso(row.resolvedAt),
     closedAt: iso(row.closedAt),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    acknowledgedAt: iso(row.acknowledgedAt),
+    acknowledgedBy: toIncidentUser(row.acknowledgedByUser),
+    sla: incidentSlaToProto(row.sla),
   };
 }
 

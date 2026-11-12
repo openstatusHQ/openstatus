@@ -13,6 +13,8 @@ import {
   appendIncidentEvent,
   assertNotClosed,
   getIncidentInWorkspace,
+  meetResponseByStatusReport,
+  withAcknowledgement,
 } from "./internal";
 import { IncidentIdInput, LinkIncidentStatusReportInput } from "./schemas";
 
@@ -82,7 +84,10 @@ async function setStatusReport(
         ? `Unlinked status report #${existing.statusReportId}`
         : `Linked status report #${statusReportId}`,
   });
-  return updated;
+  if (statusReportId !== null) {
+    await meetResponseByStatusReport(tx, ctx, statusReportId, new Date());
+  }
+  return withAcknowledgement(tx, updated);
 }
 
 // The update and its `incident.update` audit row live in `setStatusReport`.
@@ -160,4 +165,18 @@ export async function unlinkIncidentFromStatusReport(args: {
     .get();
   if (!holder) return;
   await setStatusReport(tx, ctx, holder, null);
+}
+
+/** Meets the response of the incident holding the report, for writers that post updates outside the services. */
+// The audit row comes from `meetResponse`, and only when the response is met.
+// oxlint-disable-next-line openstatus/services-mutation-guards
+export async function meetIncidentResponseByStatusReport(args: {
+  ctx: ServiceContext;
+  input: { statusReportId: number };
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "incidents:write");
+  await withTransaction(ctx, (tx) =>
+    meetResponseByStatusReport(tx, ctx, args.input.statusReportId, new Date()),
+  );
 }

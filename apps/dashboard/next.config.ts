@@ -5,6 +5,8 @@ import type { NextConfig } from "next";
 const useNucleoIcons = process.env.ICON_SET === "nucleo";
 
 const nextConfig: NextConfig = {
+  // A second `next dev` in this tree needs its own dir (see AGENTS.md).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
   experimental: {
     // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias

@@ -2,9 +2,12 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  INCIDENT_REPORTED_AT_MAX_BEFORE_MS,
   type IncidentStatus,
   incidentSeverity,
 } from "@openstatus/db/src/schema/incidents/constants";
+import { Close } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -26,6 +29,7 @@ import { StatusDot } from "@/components/common/status-dot";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
   Property,
+  PropertyDateTimePicker,
   PropertyLabel,
   PropertyList,
   PropertySelectTrigger,
@@ -85,6 +89,7 @@ export function IncidentProperties({
   const status = statusConfig[incident.status];
   const commander = personName(incident.commander);
   const endedAt = incidentEndedAt(incident);
+  const acknowledgedBy = personName(incident.acknowledgedByUser);
 
   return (
     <PropertyList>
@@ -228,6 +233,59 @@ export function IncidentProperties({
         </PropertyValue>
       </Property>
       <Property>
+        <PropertyLabel>Reported at</PropertyLabel>
+        <PropertyValue>
+          {closed ? (
+            incident.reportedAt ? (
+              <HoverCardTimestamp date={incident.reportedAt} side="left">
+                <span>{format(incident.reportedAt, "LLL dd, y HH:mm")}</span>
+              </HoverCardTimestamp>
+            ) : (
+              <span className="text-muted-foreground">At declare</span>
+            )
+          ) : (
+            <>
+              <PropertyDateTimePicker
+                aria-label="Reported at"
+                className={incident.reportedAt ? "w-auto flex-1" : undefined}
+                value={incident.reportedAt ?? incident.declaredAt}
+                min={
+                  new Date(
+                    incident.declaredAt.getTime() -
+                      INCIDENT_REPORTED_AT_MAX_BEFORE_MS,
+                  )
+                }
+                max={incident.declaredAt}
+                onChange={(reportedAt) =>
+                  update.mutate({ id: incident.id, reportedAt })
+                }
+              >
+                {incident.reportedAt ? (
+                  format(incident.reportedAt, "LLL dd, y HH:mm")
+                ) : (
+                  <span className="text-muted-foreground">At declare</span>
+                )}
+              </PropertyDateTimePicker>
+              {incident.reportedAt ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  aria-label="Clear reported at"
+                  disabled={update.isPending}
+                  onClick={() =>
+                    update.mutate({ id: incident.id, reportedAt: null })
+                  }
+                >
+                  <Close />
+                </Button>
+              ) : null}
+            </>
+          )}
+        </PropertyValue>
+      </Property>
+      <Property>
         <PropertyLabel>Duration</PropertyLabel>
         <PropertyValue>
           {formatDistanceStrict(incident.startedAt, endedAt ?? new Date())}
@@ -257,6 +315,40 @@ export function IncidentProperties({
           <span className="truncate">
             {personName(incident.declaredByUser) ?? "System"}
           </span>
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Acknowledged</PropertyLabel>
+        <PropertyValue>
+          {incident.acknowledgedAt ? (
+            <>
+              {acknowledgedBy ? (
+                <>
+                  <UserAvatar
+                    name={acknowledgedBy}
+                    src={incident.acknowledgedByUser?.photoUrl}
+                  />
+                  <span className="truncate">{acknowledgedBy}</span>
+                </>
+              ) : null}
+              <HoverCardTimestamp date={incident.acknowledgedAt} side="left">
+                <span
+                  className={
+                    acknowledgedBy
+                      ? "text-muted-foreground shrink-0"
+                      : undefined
+                  }
+                >
+                  {incident.acknowledgedAt.getTime() ===
+                  incident.declaredAt.getTime()
+                    ? "at declare"
+                    : format(incident.acknowledgedAt, "LLL dd, HH:mm")}
+                </span>
+              </HoverCardTimestamp>
+            </>
+          ) : (
+            <span className="text-muted-foreground">Not yet</span>
+          )}
         </PropertyValue>
       </Property>
     </PropertyList>

@@ -17,6 +17,7 @@ import { workspace } from "../workspaces/workspace";
 import {
   grpcTlsModes,
   monitorJobTypes,
+  monitorMaintenanceModes,
   monitorMethods,
   monitorStatus,
 } from "./constants";
@@ -77,6 +78,11 @@ export const monitor = sqliteTable(
     heartbeatGrace: integer("heartbeat_grace"),
     heartbeatCron: text("heartbeat_cron"),
     heartbeatTz: text("heartbeat_tz"),
+
+    // "continue": cloud checks keep running during a status page maintenance; status updates are ignored
+    maintenanceMode: text("maintenance_mode", { enum: monitorMaintenanceModes })
+      .default("pause")
+      .notNull(),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,

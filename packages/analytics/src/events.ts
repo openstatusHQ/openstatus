@@ -168,6 +168,38 @@ export const Events = {
     name: "private_location_deleted",
     channel: "private_location",
   },
+  CreateMonitorSlaPolicy: {
+    name: "monitor_sla_policy_created",
+    channel: "sla_policy",
+  },
+  UpdateMonitorSlaPolicy: {
+    name: "monitor_sla_policy_updated",
+    channel: "sla_policy",
+  },
+  ArchiveMonitorSlaPolicy: {
+    name: "monitor_sla_policy_archived",
+    channel: "sla_policy",
+  },
+  DeleteMonitorSlaPolicy: {
+    name: "monitor_sla_policy_deleted",
+    channel: "sla_policy",
+  },
+  AddMonitorSlaExcusedWindow: {
+    name: "monitor_sla_excused_window_added",
+    channel: "sla_policy",
+  },
+  RemoveMonitorSlaExcusedWindow: {
+    name: "monitor_sla_excused_window_removed",
+    channel: "sla_policy",
+  },
+  SaveIncidentSlaPolicy: {
+    name: "incident_sla_policy_saved",
+    channel: "sla_policy",
+  },
+  DeleteIncidentSlaPolicy: {
+    name: "incident_sla_policy_deleted",
+    channel: "sla_policy",
+  },
   AcknowledgeIncident: {
     name: "incident_acknowledged",
     channel: "incident",
@@ -194,6 +226,10 @@ export const Events = {
   },
   ChangeManagedIncidentStatus: {
     name: "incident_status_changed",
+    channel: "incident_management",
+  },
+  AcknowledgeManagedIncident: {
+    name: "managed_incident_acknowledged",
     channel: "incident_management",
   },
   AddManagedIncidentNote: {

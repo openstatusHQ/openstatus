@@ -8,6 +8,7 @@ import { getAuditLogTool, listAuditLogsTool } from "./audit";
 import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
 import {
+  acknowledgeIncidentTool,
   addIncidentNoteTool,
   approvePostmortemTool,
   declareIncidentTool,
@@ -71,6 +72,7 @@ export { getAuditLogTool, listAuditLogsTool } from "./audit";
 export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
 export {
+  acknowledgeIncidentTool,
   addIncidentNoteTool,
   approvePostmortemTool,
   declareIncidentTool,
@@ -180,6 +182,7 @@ export const agentTools = {
   resolve_incident: resolveIncidentTool,
   set_incident_status: setIncidentStatusTool,
   add_incident_note: addIncidentNoteTool,
+  acknowledge_incident: acknowledgeIncidentTool,
   get_postmortem: getPostmortemTool,
   draft_postmortem: draftPostmortemTool,
   approve_postmortem: approvePostmortemTool,

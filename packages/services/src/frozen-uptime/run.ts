@@ -16,7 +16,13 @@ import {
   previousMonth,
 } from "./compute";
 import { freezeMonitorMonth } from "./freeze";
-import { quorumRegionCount, type RunsByDay, runsByMonitorDay } from "./quorum";
+import {
+  addCounts,
+  type Counts,
+  quorumRegionCount,
+  type RunsByDay,
+  runsByMonitorDay,
+} from "./quorum";
 
 type PipeFn<Row> = (params: {
   monitorIds: string[];
@@ -224,6 +230,63 @@ export async function fetchRunsByDay(
     pipeFor: (jobType) => (hasRuns(jobType) ? args.pipes[jobType] : undefined),
   });
   return { runs: runsByMonitorDay(rows), failedMonitorIds };
+}
+
+export type RunsRangePipeFn = (params: {
+  monitorIds: string[];
+  fromDate: number;
+  toDate: number;
+}) => Promise<{ data: (Counts & { monitorId: string })[] }>;
+
+export type UptimeRunsRangePipes = Record<UptimeQuorumJobType, RunsRangePipeFn>;
+
+export function uptimeRunsRangePipes(tb: OSTinybird): UptimeRunsRangePipes {
+  return {
+    http: tb.httpRunsRange,
+    tcp: tb.tcpRunsRange,
+    dns: tb.dnsRunsRange,
+    icmp: tb.icmpRunsRange,
+    grpc: tb.grpcRunsRange,
+  };
+}
+
+/**
+ * Run verdicts per monitor over [from, to), last ~45 days only. Never throws:
+ * a failed chunk (also an endpoint not deployed yet) lands in `failedMonitorIds`.
+ */
+export async function fetchRunCounts(
+  args: Omit<FetchOptions, "monitorIdsByJobType"> & {
+    monitors: { id: number; jobType: string; regions: string }[];
+    pipes: UptimeRunsRangePipes;
+    from: Date;
+    to: Date;
+  },
+): Promise<{ counts: Map<string, Counts>; failedMonitorIds: Set<string> }> {
+  const monitorIdsByJobType = new Map<string, Set<string>>();
+  for (const m of args.monitors) {
+    if (!hasRuns(m.jobType) || quorumRegionCount(m.regions) === null) continue;
+    const ids = monitorIdsByJobType.get(m.jobType) ?? new Set<string>();
+    ids.add(String(m.id));
+    monitorIdsByJobType.set(m.jobType, ids);
+  }
+  const fromDate = args.from.getTime();
+  const toDate = args.to.getTime();
+  const { rows, failedMonitorIds } = await fetchChunked({
+    ...args,
+    monitorIdsByJobType,
+    kind: "runs",
+    pipeFor: (jobType) => {
+      if (!hasRuns(jobType)) return undefined;
+      const pipe = args.pipes[jobType];
+      return ({ monitorIds }) => pipe({ monitorIds, fromDate, toDate });
+    },
+  });
+  const counts = new Map<string, Counts>();
+  for (const { monitorId, ...c } of rows) {
+    if (c.ok + c.degraded + c.error <= 0) continue;
+    addCounts(counts, monitorId, c);
+  }
+  return { counts, failedMonitorIds };
 }
 
 export function groupByMonitorId<Row extends { monitorId: string }>(

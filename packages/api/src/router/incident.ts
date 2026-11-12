@@ -11,13 +11,16 @@ import {
   DraftPostmortemInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
+  SetIncidentSlaMissReasonInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
+  acknowledgeIncident,
   addIncidentNote,
   approvePostmortem,
   draftPostmortem,
   generatePostmortemDraft,
   getPostmortem,
+  afterIncidentAcknowledged,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -32,6 +35,7 @@ import {
   getIncidentForStatusReport,
   getIncidentOrThrow,
   linkIncidentStatusReport,
+  setIncidentSlaMissReason,
   listIncidentEvents,
   listAllIncidents,
   listIncidents,
@@ -207,6 +211,42 @@ export const incidentRouter = createTRPCRouter({
           }),
         );
         return row;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  acknowledge: protectedProcedure
+    .meta({ track: Events.AcknowledgeManagedIncident })
+    .input(IncidentIdInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const row = await acknowledgeIncident({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+        afterResponse(() =>
+          afterIncidentAcknowledged({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incidentId: row.id,
+          }),
+        );
+        return row;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  setSlaMissReason: protectedProcedure
+    .meta({ track: Events.UpdateManagedIncident })
+    .input(SetIncidentSlaMissReasonInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await setIncidentSlaMissReason({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
       } catch (err) {
         toTRPCError(err);
       }

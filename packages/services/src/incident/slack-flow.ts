@@ -1,5 +1,11 @@
 import { and, eq, isNull } from "@openstatus/db";
-import { type Incident, slackUser, user } from "@openstatus/db/src/schema";
+import {
+  type Incident,
+  type IncidentAcknowledgeFields,
+  incidentAwaitsAcknowledgement,
+  slackUser,
+  user,
+} from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
 import {
@@ -307,16 +313,15 @@ export async function openIncidentSlackChannel(args: {
 
 /** Action ids of the pinned card's buttons; the value is the incident id. */
 export const INCIDENT_CARD_ACTIONS = {
+  acknowledge: "incident_card_acknowledge",
   updateStatus: "incident_card_update_status",
   statusPage: "incident_card_status_page",
   open: "incident_card_open",
 } as const;
 
 export function headerBlocks(
-  incident: Pick<
-    Incident,
-    "id" | "title" | "severity" | "status" | "summary" | "closedAt"
-  >,
+  incident: Pick<Incident, "id" | "title" | "summary"> &
+    IncidentAcknowledgeFields,
   url: string,
 ): SlackIncidentBlock[] {
   const status = `*Severity:* ${incident.severity}   *Status:* ${incident.status}`;
@@ -344,6 +349,20 @@ export function headerBlocks(
       elements: incident.closedAt
         ? [open]
         : [
+            ...(incidentAwaitsAcknowledgement(incident)
+              ? [
+                  {
+                    type: "button" as const,
+                    text: {
+                      type: "plain_text" as const,
+                      text: "Acknowledge",
+                    },
+                    action_id: INCIDENT_CARD_ACTIONS.acknowledge,
+                    value,
+                    style: "primary" as const,
+                  },
+                ]
+              : []),
             {
               type: "button",
               text: { type: "plain_text", text: "Update status" },

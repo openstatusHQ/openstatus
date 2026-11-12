@@ -1,6 +1,10 @@
 import { getLogger } from "@logtape/logtape";
 import { type ServiceContext, ServiceError } from "@openstatus/services";
-import { escapeMrkdwn } from "@openstatus/services/incident";
+import {
+  escapeMrkdwn,
+  INCIDENT_REPORTED_AT_ERROR,
+  isAllowedIncidentReportedAt,
+} from "@openstatus/services/incident";
 import { type ModalView, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
@@ -135,6 +139,17 @@ export function buildDeclareIncidentModal(args: {
         },
       },
       {
+        type: "input",
+        block_id: "reported_at",
+        optional: true,
+        label: { type: "plain_text", text: "Reported at" },
+        hint: {
+          type: "plain_text",
+          text: "When the request reached you, if before now. SLA timers start here.",
+        },
+        element: { type: "datetimepicker", action_id: "value" },
+      },
+      {
         type: "context",
         elements: [
           {
@@ -257,6 +272,7 @@ export type DeclareSubmission = {
   severity: "critical" | "major" | "minor";
   summary?: string;
   commanderSlackUserId?: string;
+  reportedAt?: Date;
 };
 
 export function parseDeclareSubmission(
@@ -270,11 +286,18 @@ export function parseDeclareSubmission(
   if (!severity) return { error: { severity: "Pick a severity." } };
   const summary = values.summary?.value?.value?.trim();
   const commander = values.commander?.value?.selected_user;
+  const reportedSeconds = values.reported_at?.value?.selected_date_time;
+  const reportedAt =
+    reportedSeconds == null ? undefined : new Date(reportedSeconds * 1000);
+  if (reportedAt && !isAllowedIncidentReportedAt(reportedAt, new Date())) {
+    return { error: { reported_at: INCIDENT_REPORTED_AT_ERROR } };
+  }
   return {
     title,
     severity,
     ...(summary ? { summary } : {}),
     ...(commander ? { commanderSlackUserId: commander } : {}),
+    ...(reportedAt ? { reportedAt } : {}),
   };
 }
 
@@ -357,13 +380,16 @@ export async function submitDeclareIncident(
         severity: parsed.severity,
         summary: parsed.summary,
         commanderId,
+        reportedAt: parsed.reportedAt?.toISOString(),
       },
       flags: {},
     });
     incidentId = (output as { id: number }).id;
   } catch (error) {
     if (error instanceof ServiceError) {
-      return { response_action: "errors", errors: { title: error.message } };
+      const field =
+        error.message === INCIDENT_REPORTED_AT_ERROR ? "reported_at" : "title";
+      return { response_action: "errors", errors: { [field]: error.message } };
     }
     logger.error("slack declare modal failed", { error, teamId });
     return {

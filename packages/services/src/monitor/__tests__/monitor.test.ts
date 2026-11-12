@@ -41,6 +41,7 @@ import {
   bulkUpdateMonitors,
   updateMonitorConfig,
   updateMonitorGeneral,
+  updateMonitorMaintenanceMode,
 } from "../update";
 
 const TEST_PREFIX = "svc-monitor-test";
@@ -1665,6 +1666,69 @@ describe("duplicate regions", () => {
         },
       });
       expect(await storedRegions(tx, row.id)).toBe("iad,ams");
+    });
+  });
+});
+
+describe("updateMonitorMaintenanceMode", () => {
+  test("defaults to pause and switches to continue with an audit row", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-maintenance`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          periodicity: "10m",
+          regions: ["ams"],
+        },
+      });
+      expect(row.maintenanceMode).toBe("pause");
+
+      await updateMonitorMaintenanceMode({
+        ctx,
+        input: { id: row.id, maintenanceMode: "continue" },
+      });
+
+      const updated = await getMonitor({ ctx, input: { id: row.id } });
+      expect(updated.maintenanceMode).toBe("continue");
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor.update",
+        entityType: "monitor",
+        entityId: row.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects a monitor from another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-maintenance-foreign`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          periodicity: "10m",
+          regions: ["ams"],
+        },
+      });
+      await expect(
+        updateMonitorMaintenanceMode({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: row.id, maintenanceMode: "continue" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });

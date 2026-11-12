@@ -1,0 +1,24 @@
+---
+title: "Incident SLA policy"
+description: "Hold every incident to response, resolution and update targets per severity, get warned in Slack before one is due, and show month by month that you kept them."
+image: "/assets/changelog/incident-sla-policy.png"
+publishedAt: "2026-11-11"
+author: "openstatus"
+category: "incidents"
+---
+
+You can now hold your incidents to the targets in your support contract. Open [**SLA Policies > Incidents**](https://app.openstatus.dev/sla-policies/incidents#targets) and set a first response, a resolution and an update interval for each severity, for example `1h`, `4h` and `2h` for `critical`.
+
+Every incident declared from then on carries its timers. The incident list shows the one due next, and the detail page shows each timer as running, at risk, met or missed.
+
+- **Acknowledge.** A new **Acknowledge** button on the incident, on the pinned Slack card, over the API and as an MCP tool. Any note, status change or other action a member takes acknowledges the incident too.
+- **Response on your terms.** Count the response at acknowledgement, or at the first update on the incident's status report, when your contract measures when customers were told.
+- **Reported at.** When a customer email arrived before you declared, set **Reported at** and the timers start there.
+- **Resolution stop.** The resolution timer stops at `mitigated` by default, or at `resolved` if your contract says so.
+- **Misses on the record.** A missed target or update is written to the timeline at its due time and never cleared. Any member can add the reason for a miss.
+- **Notices.** A warning at 75% of each target and a notice when it is missed, in the incident's Slack channel, or by email to the commander and declarer when Slack cannot deliver.
+- **Monthly attainment.** A table of the last twelve months: how many incidents responded and resolved within their targets, and how many updates were missed.
+
+Editing the policy never changes incidents already declared. The incident SLA policy is included in the Pro and Scale plans; acknowledgement works on every plan.
+
+Read the [incident SLA reference](/docs/reference/incident-management#sla-policy) for the exact rules.

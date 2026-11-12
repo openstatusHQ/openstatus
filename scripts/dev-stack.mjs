@@ -237,16 +237,20 @@ function alive(pid) {
 // group's members decide, not the leader.
 function groupMembers(pgid) {
   // Full command lines, so a group can be told apart by what it runs.
-  const r = spawnSync("pgrep", ["-a", "-g", String(pgid)], {
+  // `ps` rather than `pgrep -a`, which lists only pids on macOS.
+  const r = spawnSync("ps", ["-A", "-o", "pgid=,command="], {
     encoding: "utf8",
   });
-  // pgrep exits 1 for "no match"; anything else means it could not answer,
-  // and guessing "empty" would make `down` drop the state while the stack runs.
-  if (r.error || (r.status !== 0 && r.status !== 1))
+  // Guessing "empty" would make `down` drop the state while the stack runs.
+  if (r.error || r.status !== 0)
     throw new Error(
-      `pgrep is needed to stop the stack: ${r.error?.message ?? r.stderr.trim()}`,
+      `ps is needed to stop the stack: ${r.error?.message ?? r.stderr.trim()}`,
     );
-  return r.status === 0 ? r.stdout.trim().split("\n").filter(Boolean) : [];
+  return r.stdout
+    .split("\n")
+    .map((line) => line.trim().match(/^(\d+)\s+(.*)$/))
+    .filter((m) => m && Number(m[1]) === pgid)
+    .map((m) => m[2]);
 }
 
 // Signal 0 probes the group without pgrep, which `up` must not depend on.
@@ -355,11 +359,19 @@ async function up() {
       "dashboard",
       "pnpm",
       ["--filter", "@openstatus/dashboard", "dev"],
-      { cwd: repo, env: { ...env, PORT: String(port) } },
+      // Own distDir, so a human's `pnpm dev` in apps/dashboard can keep running.
+      {
+        cwd: repo,
+        env: {
+          ...env,
+          PORT: String(port),
+          NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || ".next-agent",
+        },
+      },
     );
     writeState(state);
     const t = Date.now();
-    // Next refuses a second dev server per app dir; fail now, not after 180s.
+    // Next refuses a second dev server per distDir; fail now, not after 180s.
     await waitFor(
       async () => {
         if (!groupAlive(state.dashboard))

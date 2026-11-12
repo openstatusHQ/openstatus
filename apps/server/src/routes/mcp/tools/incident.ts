@@ -4,6 +4,7 @@ import type {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 import {
+  acknowledgeIncidentTool,
   addIncidentNoteTool,
   approvePostmortemTool,
   declareIncidentTool,
@@ -30,6 +31,7 @@ export function registerIncidentTools(
     resolveIncidentTool,
     setIncidentStatusTool,
     addIncidentNoteTool,
+    acknowledgeIncidentTool,
     getPostmortemTool,
     draftPostmortemTool,
     approvePostmortemTool,

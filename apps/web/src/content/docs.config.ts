@@ -265,6 +265,10 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/icmp-monitor", label: "ICMP Monitor Reference" },
       { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
       {
+        slug: "reference/monitor-sla-policy",
+        label: "Monitor SLA Policy Reference",
+      },
+      {
         slug: "reference/notification",
         label: "Notification Channels Reference",
       },

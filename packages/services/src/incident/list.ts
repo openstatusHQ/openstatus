@@ -1,8 +1,11 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
 import {
   type Incident,
+  type IncidentSlaState,
   type IncidentStatus,
   incident,
+  incidentSlaState,
+  incidentUpdateCadence,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -11,22 +14,30 @@ import { NotFoundError } from "../errors";
 import { isDeletable } from "./delete";
 import { allowedTransitions, incidentUserColumns } from "./internal";
 import { IncidentIdInput, ListIncidentsInput } from "./schemas";
+import {
+  loadIncidentUpdateActivity,
+  noUpdateActivity,
+} from "./update-activity";
 
 export function toIncidentView<T extends Incident>(
   row: T,
+  now: Date = new Date(),
 ): T & {
   allowedTransitions: ReadonlyArray<IncidentStatus>;
   deletable: boolean;
+  sla: IncidentSlaState | null;
 } {
   return {
     ...row,
     allowedTransitions: allowedTransitions(row),
     deletable: isDeletable(row),
+    sla: incidentSlaState(row, now),
   };
 }
 
 const incidentListWith = {
   commander: { columns: incidentUserColumns },
+  acknowledgedByUser: { columns: incidentUserColumns },
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
 
@@ -64,7 +75,7 @@ export async function listIncidents(args: {
       offset: input.offset,
       with: incidentListWith,
     })
-  ).map(toIncidentView);
+  ).map((row) => toIncidentView(row));
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;
@@ -93,7 +104,7 @@ export async function listAllIncidents(args: {
     orderBy: [desc(incident.declaredAt), desc(incident.id)],
     with: incidentListWith,
   });
-  return rows.map(toIncidentView);
+  return rows.map((row) => toIncidentView(row));
 }
 
 export async function getIncident(args: {
@@ -103,7 +114,8 @@ export async function getIncident(args: {
   const { ctx } = args;
   requireScope(ctx, "incidents:read");
   const input = IncidentIdInput.parse(args.input);
-  const row = await getReadDb(ctx).query.incident.findFirst({
+  const db = getReadDb(ctx);
+  const row = await db.query.incident.findFirst({
     where: and(
       eq(incident.id, input.id),
       eq(incident.workspaceId, ctx.workspace.id),
@@ -112,12 +124,22 @@ export async function getIncident(args: {
       commander: { columns: incidentUserColumns },
       declaredByUser: { columns: incidentUserColumns },
       resolvedByUser: { columns: incidentUserColumns },
+      acknowledgedByUser: { columns: incidentUserColumns },
       statusReport: {
         columns: { id: true, title: true, status: true, pageId: true },
       },
     },
   });
-  return row ? toIncidentView(row) : undefined;
+  if (!row) return undefined;
+  const now = new Date();
+  const updateActivity =
+    (await loadIncidentUpdateActivity(db, [row])).get(row.id) ??
+    noUpdateActivity(row);
+  return {
+    ...toIncidentView(row, now),
+    updateActivity,
+    updateCadence: incidentUpdateCadence(row, updateActivity, now),
+  };
 }
 
 export async function getIncidentOrThrow(args: {

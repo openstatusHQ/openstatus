@@ -347,9 +347,68 @@ describe("announceIncidentChange", () => {
 });
 
 describe("headerBlocks", () => {
+  const untracked = {
+    declaredAt: new Date("2026-11-11T10:00:00Z"),
+    slaSnapshot: null,
+    responseMetAt: null,
+    responseBreachDueAt: null,
+    acknowledgedAt: null,
+  };
+  const tracked = {
+    ...untracked,
+    id: 9,
+    title: "Checkout down",
+    severity: "critical" as const,
+    status: "open" as const,
+    summary: null,
+    closedAt: null,
+    slaSnapshot: {
+      targets: { critical: { responseMinutes: 60 } },
+      resolutionStop: "mitigated" as const,
+    },
+  };
+  const actionIdsOf = (incident: Parameters<typeof headerBlocks>[0]) =>
+    headerBlocks(incident, "https://app.test/incidents/9")
+      .flatMap((b) => (b.type === "actions" ? b.elements : []))
+      .map((e) => e.action_id);
+
+  test("a tracked, unacknowledged incident offers Acknowledge first", () => {
+    const blocks = headerBlocks(tracked, "https://app.test/incidents/9");
+    const actions = blocks.find((b) => b.type === "actions");
+    if (actions?.type !== "actions") throw new Error("no actions block");
+    expect(actions.elements[0]).toEqual({
+      type: "button",
+      text: { type: "plain_text", text: "Acknowledge" },
+      action_id: INCIDENT_CARD_ACTIONS.acknowledge,
+      value: "9",
+      style: "primary",
+    });
+    expect(actionIdsOf(tracked)).toEqual([
+      INCIDENT_CARD_ACTIONS.acknowledge,
+      INCIDENT_CARD_ACTIONS.updateStatus,
+      INCIDENT_CARD_ACTIONS.statusPage,
+      INCIDENT_CARD_ACTIONS.open,
+    ]);
+  });
+
+  test("no Acknowledge for an untracked, acknowledged or closed incident", () => {
+    const noAck = (incident: Parameters<typeof headerBlocks>[0]) =>
+      expect(actionIdsOf(incident)).not.toContain(
+        INCIDENT_CARD_ACTIONS.acknowledge,
+      );
+    noAck({ ...tracked, slaSnapshot: null });
+    noAck({ ...tracked, acknowledgedAt: new Date() });
+    noAck({ ...tracked, status: "resolved", closedAt: new Date() });
+    noAck({
+      ...tracked,
+      slaSnapshot: { ...tracked.slaSnapshot, responseMet: "status_report" },
+    });
+  });
+
   test("escapes mrkdwn and keeps within Block Kit limits", () => {
     const blocks = headerBlocks(
       {
+        ...untracked,
         id: 1,
         closedAt: null,
         title: "t".repeat(200),
@@ -373,6 +432,7 @@ describe("headerBlocks", () => {
 
   test("offers status and status page buttons until the incident closes", () => {
     const base = {
+      ...untracked,
       id: 7,
       title: "API down",
       severity: "major" as const,

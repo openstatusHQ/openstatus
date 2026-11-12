@@ -241,6 +241,19 @@ export async function afterIncidentStatusChanged(
   });
 }
 
+export async function afterIncidentAcknowledged(
+  args: EffectArgs & { incidentId: number },
+): Promise<void> {
+  const { ctx, effects } = args;
+  await announceIncidentChange({
+    ctx,
+    incidentId: args.incidentId,
+    text: `${effects.actorLabel} acknowledged the incident.`,
+    clientFor: effects.clientFor,
+    dashboardUrl: effects.dashboardUrl,
+  });
+}
+
 export async function afterIncidentClosed(
   args: EffectArgs & { incidentId: number },
 ): Promise<void> {

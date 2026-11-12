@@ -76,7 +76,7 @@ The server only advertises tools the credential can call. Read only sees `list_*
 
 ## Tools
 
-The server exposes 50 tools (48 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
+The server exposes 51 tools (49 on plans without the `audit-log` feature), grouped by resource: 47 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
 
 ### Pages
 
@@ -122,13 +122,14 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 
 | Tool                  | Scope | Purpose |
 |-----------------------|----------|---------|
-| `list_incidents`      | `incidents:read` | List declared incidents, newest declared first. Optional `status` filter; `limit` ≤ 100 and `offset`. |
-| `get_incident`        | `incidents:read` | One incident with its timeline (newest first, up to 50 events) and linked status report. |
+| `list_incidents`      | `incidents:read` | List declared incidents, newest declared first. Optional `status` filter; `limit` ≤ 100 and `offset`. Each item carries `sla`: the response and resolution target, due time, met time, missed time, the reason a member wrote for the miss (`missReason`) and status (`running`, `at_risk`, `met`, `breached`), or `null` when the incident is not tracked by an incident SLA policy. |
+| `get_incident`        | `incidents:read` | One incident with its timeline (newest first, up to 50 events), linked status report and `sla` state. |
 | `declare_incident`    | `incidents:write` | Declare an incident with a `title` and `severity` (`critical` / `major` / `minor`), optionally a summary, commander, start time and status report to link. |
 | `update_incident`     | `incidents:write` | Change the title, severity, summary, commander or start time. |
 | `set_incident_status` | `incidents:write` | Move to `mitigated`, `resolved`, `canceled` or back to `open`, with an optional timeline note. Canceling closes the incident for good. |
 | `resolve_incident`    | `incidents:write` | Mark an incident resolved. Does not resolve its status report; use `resolve_status_report` for that. |
 | `add_incident_note`   | `incidents:write` | Append a note to the timeline. Append-only. |
+| `acknowledge_incident` | `incidents:write` | Record that someone is on the incident. Runs without a confirmation step, like `add_incident_note`. Fails when the incident is already acknowledged or closed. The timeline shows it came from MCP. |
 | `get_postmortem`      | `incidents:read` | Read the incident's postmortem (markdown), if one was drafted. |
 | `draft_postmortem`    | `incidents:write` | Save a postmortem draft for a resolved incident. Replaces an existing draft; an approved postmortem can't be redrafted. |
 | `approve_postmortem`  | `incidents:write` | Approve the draft and, by default, close the incident. Only an owner, an admin or the incident's commander can approve. |

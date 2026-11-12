@@ -8,6 +8,7 @@ import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { expect } from "vitest";
 
 import type { Actor, DB, DrizzleTx, ServiceContext } from "../src/context";
+import type { SlackIncidentClient } from "../src/incident/slack-flow";
 import { isRetryableDbError } from "../src/retry";
 import type { Workspace } from "../src/types";
 
@@ -325,4 +326,11 @@ export async function expectAuditRow(match: {
     );
   }
   expect(hit).toBeDefined();
+}
+
+// safe because the notice and reminder paths only ever call chat.postMessage
+export function postOnlySlackClient(
+  postMessage: SlackIncidentClient["chat"]["postMessage"],
+): SlackIncidentClient {
+  return { chat: { postMessage } } as unknown as SlackIncidentClient;
 }

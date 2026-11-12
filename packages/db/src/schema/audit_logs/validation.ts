@@ -27,9 +27,15 @@ import { auditLog } from "./audit_log";
 const metadataSchema = z.record(z.string(), z.unknown());
 const snapshotSchema = z.record(z.string(), z.unknown());
 
-// Small helper so every variant reads the same — keeps the discriminated
-// union legible when skimming.
-function action<A extends string, E extends string, I extends z.ZodTypeAny>(
+type AuditVerb = "create" | "update" | "delete";
+
+// Small helper so every variant reads the same; the type enforces the
+// three-verb rule above.
+function action<
+  A extends `${E}.${AuditVerb}`,
+  E extends string,
+  I extends z.ZodTypeAny,
+>(
   action: A,
   entityType: E,
   entityIdSchema: I,
@@ -234,6 +240,28 @@ const monitorTagActions = [
   action("monitor_tag.delete", "monitor_tag", intId),
 ] as const;
 
+const monitorSlaPolicyActions = [
+  action("monitor_sla_policy.create", "monitor_sla_policy", intId),
+  action("monitor_sla_policy.update", "monitor_sla_policy", intId),
+  action("monitor_sla_policy.delete", "monitor_sla_policy", intId),
+  action(
+    "monitor_sla_excused_window.create",
+    "monitor_sla_excused_window",
+    intId,
+  ),
+  action(
+    "monitor_sla_excused_window.delete",
+    "monitor_sla_excused_window",
+    intId,
+  ),
+] as const;
+
+const incidentSlaPolicyActions = [
+  action("incident_sla_policy.create", "incident_sla_policy", intId),
+  action("incident_sla_policy.update", "incident_sla_policy", intId),
+  action("incident_sla_policy.delete", "incident_sla_policy", intId),
+] as const;
+
 const privateLocationActions = [
   action("private_location.create", "private_location", intId, {
     optionalMetadata: true,
@@ -283,6 +311,8 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
+  ...monitorSlaPolicyActions,
+  ...incidentSlaPolicyActions,
   ...ssoActions,
 ]);
 

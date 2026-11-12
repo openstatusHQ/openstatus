@@ -12,6 +12,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
 
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
+import { meetV1IncidentResponse } from "../../utils";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
 
@@ -95,6 +96,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       })
       .returning()
       .get();
+
+    await meetV1IncidentResponse(c, _statusReport.id);
 
     if (limits["status-subscribers"] && _statusReport.pageId) {
       const _statusReportWithRelations = await db.query.statusReport.findFirst({

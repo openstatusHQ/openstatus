@@ -14,6 +14,7 @@ import {
 } from "./form-follow-redirect";
 import { FormGeneral } from "./form-general";
 import { FormHeartbeat } from "./form-heartbeat";
+import { FormMaintenance } from "./form-maintenance";
 import { FormNotifiers } from "./form-notifiers";
 import { FormOtel } from "./form-otel";
 import { FormResponseTime } from "./form-response-time";
@@ -76,6 +77,11 @@ export function FormMonitorUpdate() {
   const regenerateHeartbeatTokenMutation = useMutation(
     trpc.monitor.regenerateHeartbeatToken.mutationOptions({
       onSuccess: () => refetchHeartbeat(),
+    }),
+  );
+  const updateMaintenanceModeMutation = useMutation(
+    trpc.monitor.updateMaintenanceMode.mutationOptions({
+      onSuccess: () => refetch(),
     }),
   );
   const updateFollowRedirectsMutation = useMutation(
@@ -264,6 +270,15 @@ export function FormMonitorUpdate() {
                 id: Number.parseInt(id),
                 followRedirects:
                   values.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
+              })
+            }
+          />
+          <FormMaintenance
+            defaultValues={{ maintenanceMode: monitor.maintenanceMode }}
+            onSubmit={async (values) =>
+              await updateMaintenanceModeMutation.mutateAsync({
+                id: Number.parseInt(id),
+                maintenanceMode: values.maintenanceMode,
               })
             }
           />

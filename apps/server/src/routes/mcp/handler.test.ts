@@ -126,6 +126,7 @@ describe("MCP transport", () => {
     const tools = (body.result as { tools: { name: string }[] }).tools;
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
+      "acknowledge_incident",
       "add_incident_note",
       "add_maintenance_update",
       "add_page_component",
@@ -472,6 +473,7 @@ async function connectScoped(scopes: Scope[]) {
 }
 
 const INCIDENT_GROUP_TOOLS = [
+  "acknowledge_incident",
   "add_incident_note",
   "add_maintenance_update",
   "add_status_report_update",
@@ -561,6 +563,17 @@ describe("MCP transport — group scopes", () => {
       for (const tool of tools) {
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
       }
+    } finally {
+      await close();
+    }
+  });
+
+  test("incidents:read sees the incident reads but not acknowledge_incident", async () => {
+    const { client, close } = await connectScoped(["incidents:read"]);
+    try {
+      const names = (await client.listTools()).tools.map((t) => t.name);
+      expect(names).toContain("get_incident");
+      expect(names).not.toContain("acknowledge_incident");
     } finally {
       await close();
     }

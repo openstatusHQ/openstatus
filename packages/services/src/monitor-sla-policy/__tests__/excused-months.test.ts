@@ -1,0 +1,532 @@
+import { eq } from "@openstatus/db";
+import {
+  frozenMonitorUptime,
+  monitor,
+  monitorSlaExcusedWindow,
+  monitorSlaPolicy,
+  monitorSlaPolicyToMonitor,
+  monitorSlaSealedMonth,
+} from "@openstatus/db/src/schema";
+import { beforeAll, describe, expect, test } from "vitest";
+
+import {
+  createWorkspaceFixture,
+  makeUserCtx,
+  withTestTransaction,
+} from "../../../test/helpers";
+import type { ServiceContext } from "../../context";
+import type { ComputeCountRow } from "../../frozen-uptime/compute";
+import { monthDays } from "../../frozen-uptime/compute";
+import type {
+  UptimeRunsPipes,
+  UptimeRunsRangePipes,
+} from "../../frozen-uptime/run";
+import { exportMonitorSlaPolicy } from "../export";
+import { getMonitorSlaPolicy } from "../get";
+import { listMonitorSlaPolicies } from "../list";
+import { sealMonitorSlaMonths } from "../seal";
+
+const MIN = 60_000;
+const at = (month: number, d: number, h = 0, m = 0) =>
+  Date.UTC(2026, month, d, h, m);
+const now = new Date(at(10, 15, 12));
+const sealNow = new Date(at(10, 5));
+
+// one run every 10 minutes from Oct 1; runs inside an outage failed
+const OUTAGES = [
+  { start: at(9, 20, 22), end: at(9, 20, 23) },
+  { start: at(10, 1, 0), end: at(10, 1, 1) },
+];
+const STEP = 10 * MIN;
+
+function runsIn(from: number, to: number) {
+  let ok = 0;
+  let error = 0;
+  const first = Math.max(Math.ceil((from - at(9, 1)) / STEP), 0);
+  for (let t = at(9, 1) + first * STEP; t < to; t += STEP) {
+    if (OUTAGES.some((o) => o.start <= t && t < o.end)) error++;
+    else ok++;
+  }
+  return { ok, degraded: 0, error };
+}
+
+function rangePipes(
+  calls: { fromDate: number; toDate: number }[] = [],
+): UptimeRunsRangePipes {
+  const pipe = async (p: {
+    monitorIds: string[];
+    fromDate: number;
+    toDate: number;
+  }) => {
+    calls.push({ fromDate: p.fromDate, toDate: p.toDate });
+    return {
+      data: p.monitorIds.map((monitorId) => ({
+        monitorId,
+        ...runsIn(p.fromDate, p.toDate),
+      })),
+    };
+  };
+  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
+}
+
+// November so far as daily rows: Nov 1 had the outage
+const runsPipes: UptimeRunsPipes = (() => {
+  const pipe = async ({ monitorIds }: { monitorIds: string[] }) => ({
+    data: monitorIds.flatMap((monitorId) =>
+      Array.from({ length: 14 }, (_, i): ComputeCountRow => ({
+        monitorId,
+        day: new Date(at(10, i + 1)).toISOString(),
+        ok: i === 0 ? 138 : 144,
+        degraded: 0,
+        error: i === 0 ? 6 : 0,
+      })),
+    ),
+  });
+  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
+})();
+const sleep = async () => {};
+
+let ctx: ServiceContext;
+
+beforeAll(async () => {
+  const team = await createWorkspaceFixture("team");
+  ctx = makeUserCtx(team.workspace, { userId: team.userId });
+});
+
+type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
+
+async function setup(
+  tx: Tx,
+  opts: {
+    frozenOctober?: { ok: number; error: number };
+  } = {},
+) {
+  const api = await tx
+    .insert(monitor)
+    .values({
+      workspaceId: ctx.workspace.id,
+      active: true,
+      url: "https://example.com",
+      name: "svc-sla-excused",
+      periodicity: "10m",
+      regions: "ams",
+      jobType: "http",
+    })
+    .returning()
+    .get();
+  const policy = await tx
+    .insert(monitorSlaPolicy)
+    .values({
+      workspaceId: ctx.workspace.id,
+      name: "Partner contract",
+      target: 99_900,
+      createdAt: new Date(at(9, 1)),
+    })
+    .returning()
+    .get();
+  await tx.insert(monitorSlaPolicyToMonitor).values({
+    monitorSlaPolicyId: policy.id,
+    monitorId: api.id,
+    createdAt: new Date(at(9, 1)),
+  });
+  // October: 4464 runs, the six of the Oct 20 outage failed
+  const runs = opts.frozenOctober ?? { ok: 4458, error: 6 };
+  await tx.insert(frozenMonitorUptime).values({
+    workspaceId: ctx.workspace.id,
+    monitorId: api.id,
+    month: "2026-10-01",
+    days: monthDays("2026-10-01").map((day, i) => ({
+      day,
+      requests: { ok: 10, degraded: 0, error: 0 },
+      ...(i === 0 ? { runs: { ...runs, degraded: 0 } } : {}),
+    })),
+  });
+  return { api, policy };
+}
+
+async function excuse(tx: Tx, policyId: number, from: number, to: number) {
+  return tx
+    .insert(monitorSlaExcusedWindow)
+    .values({
+      workspaceId: ctx.workspace.id,
+      monitorSlaPolicyId: policyId,
+      kind: "maintenance",
+      reason: "Database upgrade",
+      from: new Date(from),
+      to: new Date(to),
+    })
+    .returning()
+    .get();
+}
+
+function get(tx: Tx, id: number, at = now) {
+  return getMonitorSlaPolicy({
+    ctx: { ...ctx, db: tx },
+    input: { id },
+    now: at,
+    runsPipes,
+    runsRangePipes: rangePipes(),
+    sleep,
+  });
+}
+
+function cell(detail: Awaited<ReturnType<typeof get>>, month: string) {
+  return detail.monitors[0]?.months.find((m) => m.month === month);
+}
+
+describe("excused windows in a month's figure", () => {
+  test("excused runs drop from both sides of the fraction", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
+        state: "preview",
+        met: false,
+        // 4458 of 4464
+        uptime: 99_865,
+      });
+
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+
+      expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
+        state: "preview",
+        counts: { ok: 4458, degraded: 0, error: 6 },
+        excused: { ok: 0, degraded: 0, error: 6 },
+        met: true,
+        uptime: 100_000,
+      });
+    });
+  });
+
+  test("overlapping windows excuse a run once", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 21), at(9, 20, 22, 40));
+      await excuse(tx, policy.id, at(9, 20, 22, 20), at(9, 20, 23));
+
+      // 21:00 to 23:00: six ok runs, six failed
+      expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
+        excused: { ok: 6, degraded: 0, error: 6 },
+        uptime: 100_000,
+      });
+    });
+  });
+
+  test("a window across two months is split at the boundary", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 31, 23), at(10, 1, 1));
+
+      const detail = await get(tx, policy.id);
+      expect(cell(detail, "2026-10-01")?.excused).toEqual({
+        ok: 6,
+        degraded: 0,
+        error: 0,
+      });
+      expect(cell(detail, "2026-11-01")).toMatchObject({
+        state: "live",
+        counts: { ok: 2010, degraded: 0, error: 6 },
+        excused: { ok: 0, degraded: 0, error: 6 },
+        uptime: 100_000,
+      });
+    });
+  });
+
+  test("the list asks no Tinybird: an unsealed month with a window is a preview of its frozen counts", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      const noTinybird = new Proxy(
+        {},
+        {
+          get(_, prop) {
+            throw new Error(`Tinybird touched: ${String(prop)}`);
+          },
+        },
+      ) as NonNullable<ServiceContext["tb"]>;
+      const list = await listMonitorSlaPolicies({
+        ctx: { ...ctx, db: tx, tb: noTinybird },
+        now,
+      });
+      const item = list.find((p) => p.id === policy.id);
+      // 4458 of 4464 is below 99.9% before the window is applied
+      expect(item?.months.at(-1)).toEqual({
+        month: "2026-10-01",
+        status: "missed",
+        preview: true,
+      });
+      expect(item?.missed).toEqual({ months: 1, previews: 1, of: 12 });
+    });
+  });
+
+  test("a sealed month on the list keeps its excused judgement", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      await sealMonitorSlaMonths({
+        db: tx,
+        now: sealNow,
+        policyIds: [policy.id],
+        runsRangePipes: rangePipes(),
+        sleep,
+      });
+      const list = await listMonitorSlaPolicies({
+        ctx: { ...ctx, db: tx },
+        now,
+      });
+      expect(list.find((p) => p.id === policy.id)?.months.at(-1)).toEqual({
+        month: "2026-10-01",
+        status: "met",
+        preview: false,
+      });
+    });
+  });
+
+  test("the export counts excused runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      const { csv } = await exportMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, from: "2026-10", to: "2026-10" },
+        now,
+        runsPipes,
+        runsRangePipes: rangePipes(),
+        sleep,
+      });
+      const [header, row] = csv.trim().split("\r\n").slice(2);
+      const columns = header.split(",");
+      const values = row.split(",");
+      const value = (name: string) => values[columns.indexOf(name)];
+      expect(value("excused_runs")).toBe("6");
+      expect(value("uptime")).toBe("100.000");
+      expect(value("met")).toBe("yes");
+    });
+  });
+});
+
+describe("sealing with excused windows", () => {
+  test("a sealed month records its excused runs and the windows that applied", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      const w = await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      // a November window is not October's
+      await excuse(tx, policy.id, at(10, 2), at(10, 2, 1));
+
+      const res = await sealMonitorSlaMonths({
+        db: tx,
+        now: sealNow,
+        policyIds: [policy.id],
+        runsRangePipes: rangePipes(),
+        sleep,
+      });
+      expect(res).toMatchObject({ sealed: 1, unavailable: 0 });
+
+      const [row] = await tx
+        .select()
+        .from(monitorSlaSealedMonth)
+        .where(eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id))
+        .all();
+      expect(row).toMatchObject({
+        ok: 4458,
+        error: 6,
+        excusedOk: 0,
+        excusedDegraded: 0,
+        excusedError: 6,
+        total: 4458,
+        up: 4458,
+        uptime: 100_000,
+        met: true,
+        excusedWindows: [
+          {
+            id: w.id,
+            kind: "maintenance",
+            reason: "Database upgrade",
+            from: at(9, 20, 22),
+            to: at(9, 20, 23),
+          },
+        ],
+      });
+
+      const detail = await get(tx, policy.id);
+      expect(cell(detail, "2026-10-01")).toMatchObject({
+        state: "sealed",
+        excused: { ok: 0, degraded: 0, error: 6 },
+      });
+      const locks = detail.excusedWindows.map((x) => [x.id, x.locked]);
+      expect(locks).toContainEqual([w.id, "sealed"]);
+    });
+  });
+
+  test("a month whose runs are all excused is sealed without a judgement, keeping its windows", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx, {
+        frozenOctober: { ok: 0, error: 6 },
+      });
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+
+      const res = await sealMonitorSlaMonths({
+        db: tx,
+        now: sealNow,
+        policyIds: [policy.id],
+        runsRangePipes: rangePipes(),
+        sleep,
+      });
+      expect(res.sealed).toBe(1);
+      const [row] = await tx
+        .select()
+        .from(monitorSlaSealedMonth)
+        .where(eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id))
+        .all();
+      expect(row).toMatchObject({
+        excusedError: 6,
+        total: 0,
+        uptime: null,
+        met: null,
+      });
+      expect(row?.excusedWindows).toHaveLength(1);
+      expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
+        state: "sealed",
+        met: null,
+        uptime: null,
+      });
+    });
+  });
+
+  test("when the excused runs cannot be read the pair waits for the next run", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      const failing = {
+        ...rangePipes(),
+        http: async () => {
+          throw new Error("tinybird down");
+        },
+      } as UptimeRunsRangePipes;
+      const res = await sealMonitorSlaMonths({
+        db: tx,
+        now: sealNow,
+        policyIds: [policy.id],
+        runsRangePipes: failing,
+        sleep,
+      });
+      expect(res).toMatchObject({ sealed: 0, unavailable: 1 });
+    });
+  });
+});
+
+describe("excused windows too old to count", () => {
+  const december = new Date(at(11, 10, 12));
+
+  test("an unsealed month falls back to a preview of its frozen counts, on the page and in the export", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      const calls: { fromDate: number; toDate: number }[] = [];
+      const detail = await getMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now: december,
+        runsPipes,
+        runsRangePipes: rangePipes(calls),
+        sleep,
+      });
+      expect(cell(detail, "2026-10-01")).toMatchObject({
+        state: "preview",
+        counts: { ok: 4458, degraded: 0, error: 6 },
+        excused: null,
+        met: false,
+        uptime: 99_865,
+      });
+      expect(detail.excusedExpired).toBe(true);
+      expect(calls).toEqual([]);
+
+      const { csv } = await exportMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, from: "2026-10", to: "2026-10" },
+        now: december,
+        runsPipes,
+        runsRangePipes: rangePipes(),
+        sleep,
+      });
+      const [, comment, header, row] = csv.trim().split("\r\n");
+      expect(comment).toContain(
+        "Some unsealed months are judged without their excused windows",
+      );
+      const columns = header.split(",");
+      const values = row.split(",");
+      const value = (name: string) => values[columns.indexOf(name)];
+      expect(value("state")).toBe("preview");
+      expect(value("excused_runs")).toBe("");
+      expect(value("uptime")).toBe("99.865");
+      expect(value("met")).toBe("no");
+    });
+  });
+});
+
+describe("export without live months", () => {
+  test("reads no excused runs for the live months it leaves out", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      // November is the unfrozen previous month on Dec 5: live, so dropped
+      await excuse(tx, policy.id, at(10, 2), at(10, 2, 1));
+      const calls: { fromDate: number; toDate: number }[] = [];
+      const { csv } = await exportMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, from: "2026-10", to: "2026-11" },
+        now: new Date(at(11, 5)),
+        runsPipes,
+        runsRangePipes: rangePipes(calls),
+        sleep,
+      });
+      expect(calls).toEqual([]);
+      expect(csv).not.toContain("2026-11,live");
+    });
+  });
+});
+
+describe("sealing while a window changes", () => {
+  test("a window added while the month is counted defers the policy to the next run", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      let added = false;
+      const racing = rangePipes();
+      const http = racing.http;
+      racing.http = async (p) => {
+        if (!added) {
+          added = true;
+          await excuse(tx, policy.id, at(9, 5), at(9, 5, 1));
+        }
+        return http(p);
+      };
+
+      const first = await sealMonitorSlaMonths({
+        db: tx,
+        now: sealNow,
+        policyIds: [policy.id],
+        runsRangePipes: racing,
+        sleep,
+      });
+      expect(first).toMatchObject({
+        sealed: 0,
+        unavailable: 1,
+        unavailablePolicyIds: [policy.id],
+      });
+
+      const second = await sealMonitorSlaMonths({
+        db: tx,
+        now: sealNow,
+        policyIds: [policy.id],
+        runsRangePipes: rangePipes(),
+        sleep,
+      });
+      expect(second.sealed).toBe(1);
+      const [row] = await tx
+        .select()
+        .from(monitorSlaSealedMonth)
+        .where(eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id))
+        .all();
+      expect(row?.excusedWindows).toHaveLength(2);
+    });
+  });
+});

@@ -1,7 +1,7 @@
 ---
 category: Reference
 title: Incident Management Reference
-description: Technical specification for declared incidents - severity, status, timeline, postmortem and the Slack channel
+description: Technical specification for declared incidents - severity, status, timeline, SLA policy, postmortem and the Slack channel
 ---
 
 A managed incident is your team's internal record of an outage: who declared it, how severe it is, who is in command, what happened when, and the postmortem that follows. Someone on the team declares it. Nothing about it is published.
@@ -27,6 +27,8 @@ It is a different object from the two things it sits between:
 | Summary | Optional, up to 4,000 characters. |
 | Commander | Optional workspace member in charge of the incident. |
 | Started at | When the impact began. Defaults to the declare time, or to the start of the monitor incident or status report it was declared from. Can be set in the past. |
+| Reported at | Optional. When the request reached you, by email or phone, if before the declare. [SLA](#sla-policy) timers start here. See [reported at](#reported-at). |
+| Acknowledged | When someone was first on the incident, and who. See [acknowledgement](#acknowledgement). |
 | Status report | Optional link to one status report. |
 | Slack channel | The incident's channel, when Slack is connected. |
 
@@ -37,6 +39,8 @@ It is a different object from the two things it sits between:
 | `critical` | Major outage or data loss | 1 hour |
 | `major` | Significant degradation | 4 hours |
 | `minor` | Limited impact | 24 hours |
+
+An incident tracked by an [SLA policy](#sla-policy) whose severity has an update target gets [update notices](#notices) instead of [stale reminders](#stale-reminders).
 
 ## Status
 
@@ -55,13 +59,178 @@ Closing ends the incident's life. Only a resolved incident can be closed, by an 
 
 ## Timeline
 
-Every change is appended to the incident's timeline with its time and the member behind it: declared, severity, status, commander and start-time changes, notes, status report links, Slack channel binding, postmortem drafted and approved, closed.
+Every change is appended to the incident's timeline with its time and the member behind it: declared, acknowledged, severity, status, commander, start-time and reported-at changes, notes, status report links, Slack channel binding, postmortem drafted and approved, closed. An acknowledgement made outside the dashboard says where it came from: via API, MCP or Slack.
+
+On a tracked incident, openstatus also writes [missed targets and missed updates](#recorded-misses) to the timeline. They are attributed to the system, not to a member.
 
 Notes are internal and append-only, up to 10,000 characters each.
 
 ## Status report link
 
 An incident can link to one status report. The two keep their own status: marking the incident `mitigated` or `resolved` does not post a public update or resolve the report. Resolve the report separately, with its own public message.
+
+## SLA policy
+
+An incident SLA policy holds your incidents to response, resolution and update targets per severity. openstatus times every incident declared under it, records each target it misses, warns before a target is due and shows month by month how many incidents met their targets.
+
+Find it in the dashboard under [**SLA Policies > Incidents**](https://app.openstatus.dev/sla-policies/incidents#targets). The incident SLA policy is included in the Pro and Scale plans. Acknowledgement is recorded on every plan.
+
+### Targets
+
+A workspace has one policy. Each severity has three optional targets:
+
+| Target | Meaning | Default: `critical` | `major` | `minor` |
+|---|---|---|---|---|
+| First response | Time until the [response](#response). | 1h | 4h | 24h |
+| Resolution | Time until the incident reaches the [resolution stop](#resolution-stop). | 4h | 24h | 72h |
+| Update every | The longest gap between two [updates](#update-cadence). | 2h | 4h | 12h |
+
+- Durations are entered as `30m`, `4h`, `3d` or a combination like `1d 4h`, from 5 minutes to 30 days. An empty field turns that timer off for the severity.
+- **Response is met by**: `Acknowledgement` (default) or `First status report update`. See [response](#response).
+- **Resolution target stops at**: `Mitigated` (default) or `Resolved`. See [resolution stop](#resolution-stop).
+
+Owners and admins can save the policy or turn it off. Every workspace member can view it. Each change is recorded in the audit log. The policy is managed in the dashboard only; it is not available over the API, the CLI or the MCP server.
+
+### Tracked incidents
+
+An incident is tracked when it was declared while the workspace had a policy and its plan included it. At declare, the incident keeps a copy of the policy: the targets, the response rule and the resolution stop.
+
+- Editing the policy or turning it off never changes incidents already declared. They finish with the terms they were declared with.
+- After a downgrade, tracked incidents keep their timers. New incidents are not tracked.
+- Canceled incidents and incidents declared without a policy have no SLA state.
+- A severity without targets in the copy has no timers.
+
+On a tracked incident, the list row and the detail page show the timer that is due next, and the **SLA** section of the detail page shows each timer with its status. Nothing about the SLA appears on the status page.
+
+### Timers
+
+Every timer starts at the [reported at](#reported-at) time when one is set, otherwise at the declare. Time is wall-clock: no business hours, no pausing.
+
+| Status | When, first match wins |
+|---|---|
+| Breached | A miss is [recorded](#recorded-misses). |
+| Met | The target was met in time. |
+| Breached | Now is past the due time. |
+| At risk | 75% of the target has passed. |
+| Running | Otherwise. |
+
+- "Met in 4m" and similar durations are measured from the start of the timer. A target met by the declare itself reads "met at declare".
+- A severity change moves the due time of timers that are still running. A severity upgrade can make a timer due at once.
+- Met and missed timers keep their verdict. A met timer is never compared with a new due time.
+
+### Acknowledgement
+
+Acknowledgement records that someone is on the incident. It is set once, by whichever of these comes first:
+
+| Trigger | Time | By |
+|---|---|---|
+| Declare by a person, from the dashboard or Slack | The declare | That person |
+| Any timeline entry a person writes: a note, a status, severity or commander change, a reported-at change, a postmortem | When it is written | That person |
+| **Acknowledge**, by anyone with `incidents:write` | When it is clicked or called | The member or the API key's user; nobody for a key without one |
+| Resolving, by anyone | When it is resolved | The member or the key's user; nobody for a key without one |
+
+- A person is a member acting in the dashboard or in Slack. API keys and the MCP server are not, even when the key belongs to a member, so a declare through the API or MCP is never acknowledged automatically.
+- The time is when the entry is written, never the time a note carries. A backdated note cannot acknowledge before the declare.
+- **Acknowledge** writes an `acknowledged` entry to the timeline. The other triggers do not add one.
+
+Acknowledge from the button on the incident's row or detail page, from the pinned Slack card, from a Slack [response notice](#notices), with `AcknowledgeIncident` in the [Incident Service](/docs/sdk/nodejs/incident-service) or with the `acknowledge_incident` [MCP tool](/docs/reference/mcp-server#incidents). The buttons show only on tracked incidents whose response is met by acknowledgement, while they are `open` or `mitigated` and not yet acknowledged. The API call and the tool work on every incident.
+
+### Response
+
+The response time is stored separately from the acknowledgement, once, and never cleared. What sets it depends on the policy's **Response is met by** at declare:
+
+- **Acknowledgement**: the response is met when the incident is [acknowledged](#acknowledgement). It measures when the team noticed.
+- **First status report update**: the response is met when the incident has a linked [status report](#status-report-link) with an update posted at or after the start of the timer. That is when such an update is posted on the linked report, when a report that already has one is linked, or when the incident is declared with one. It measures when customers were told. Acknowledgement is still recorded but does not meet the response, and no Acknowledge button is shown.
+
+In both modes, resolving an incident meets its response if it is still open.
+
+### Reported at
+
+Set **Reported at** when the request reached you before you declared, for example a customer email that arrived an hour earlier. It is optional at declare (dashboard, Slack declare form, API, agent tools) and can be changed or cleared until the incident is closed.
+
+- It lies between 30 days before the declare and the declare; never later.
+- The response and resolution timers start there. The [update cadence](#update-cadence) still counts from the declare.
+- Changing it writes a timeline entry and moves the due time of running timers. Met and missed timers keep their verdict.
+- A declare whose response is met at once but was already due records the miss in the same write.
+
+### Resolution stop
+
+The resolution timer stops when the incident enters a stop state:
+
+| Policy | Stop states |
+|---|---|
+| `Mitigated` (default) | `mitigated` or `resolved`. Cleanup after mitigation does not count against the target. |
+| `Resolved` | `resolved` only. |
+
+The stop time is when the incident last entered a stop state. Reopening to `open` clears it and the timer runs again against its original due time.
+
+### Recorded misses
+
+A miss is a stored fact holding the due time that was missed. It is recorded once, in one of two ways:
+
+- **When the time passes.** A background check runs every five minutes, so a timer that is still open is recorded as missed within about five minutes of its due time.
+- **When the target is met late.** The action that meets it, such as an acknowledgement or a mitigation, records the miss in the same write. The timer then reads "met 3h late".
+
+Each miss writes a system entry to the timeline, dated at the due time so it sits where the target passed: "System recorded a missed response target of 1h due Nov 11, 20:50". A miss never clears: not when the severity is lowered, not when the incident is reopened, not when the target is met later.
+
+#### Explain a miss
+
+Any member can add a reason to a recorded response or resolution miss with **Explain miss** under the timer in the **SLA** section, for example an on-call handover gap or an upstream outage. Up to 2,000 characters. It can be edited or cleared later, also after the incident is closed. Changes are recorded in the audit log, not on the timeline. The API and the MCP tools return it as `missReason`.
+
+### Update cadence
+
+With an **Update every** target, the incident needs an update at least that often. The **SLA** section shows when the next one is due.
+
+The interval runs while the incident is `open` or `mitigated`, is not closed and has not reached its resolution stop. It restarts at the latest of:
+
+- the declare (not the reported at time),
+- the newest update on the linked status report, by when it was posted, not its editable date,
+- the newest status change,
+- the newest note, only when no status report is linked.
+
+Missed targets and missed updates never count as an update.
+
+Each interval that passes without an update is one missed update, written to the timeline at its due time: "System recorded a missed update due Nov 11, 20:50 (every 4h)". After a long gap they are written oldest first, ten per incident every five minutes, until none is missing.
+
+### Notices
+
+Six notices: a warning and a miss for the response target, the resolution target and the update interval.
+
+| Notice | Sent |
+|---|---|
+| Response due soon, Resolution due soon | At 75% of the target, while it is still open. |
+| Response target missed, Resolution target missed | When the miss is recorded and the target is still unmet. Not for a target met late. |
+| Update due soon | At 75% of the running interval. |
+| Update overdue | For the newest missed update only, so a long gap sends one notice. |
+
+Every notice goes to Slack first:
+
+- **Slack**: the incident's channel, otherwise a direct message to the commander, otherwise to the person who declared it. Requires the [Slack agent](/docs/guides/how-to-setup-slack-agent). Response notices carry an **Acknowledge** button, except when the response is met by the first status report update; they then ask for a status report update.
+- **Email**, only when no Slack message went out: the workspace has no Slack agent or connection, there is nobody to message, or Slack refused permanently. It goes to the commander and the declarer. An incident declared with an API key has no declarer here, even when a member created the key. When the incident has neither, it goes to the workspace owners and admins. A commander or declarer who has left the workspace gets nothing, and there is no fallback then.
+
+A temporary Slack failure is retried every five minutes and does not fall back to email. A missed-target notice is retried while its due time is less than a day old. Each notice is sent once per channel; a due time that moves can warn again. A severity upgrade that makes a target due at once sends the miss without a warning. There is no escalation and no paging.
+
+### Monthly attainment
+
+The **Monthly attainment** table under the policy shows the last twelve months, the current one included, one row per month:
+
+| Column | Description |
+|---|---|
+| Month | The calendar month in UTC in which an incident's timers started: its reported at time, else its declare. |
+| Incidents | Tracked incidents of that month. |
+| Responded within target | Incidents that met their response target, of those whose severity has one, plus how many are still open. |
+| Resolved within target | The same for the resolution target. |
+| Missed updates | Missed updates recorded on that month's incidents. |
+
+- A target counts as missed once its miss is recorded. Past due but not recorded yet, it still counts as open.
+- A target that is still running counts as open, never as met.
+- Canceled and untracked incidents are left out. An empty month or a column without targets shows an em dash (`—`).
+
+Every member can view the table. Without the plan it shows example rows.
+
+### API and agents
+
+Tracked incidents carry their SLA state over the [Incident Service](/docs/sdk/nodejs/incident-service#sla-targets) and the `list_incidents` and `get_incident` [MCP tools](/docs/reference/mcp-server#incidents): target, due time, met time, missed time, miss reason and status for the response and the resolution.
 
 ## Postmortem
 
@@ -83,7 +252,7 @@ Declaring an incident, from Slack or the dashboard, opens a channel named `inc-Y
 - **Link this channel instead.** When you declare from an existing channel, that channel gets a notice with this button. Clicking it moves the incident there: the card is pinned in it, the `inc-` channel is told and archived, and the move is on the timeline.
 - **Create a status report?** The incident channel gets a card with a suggested first update, drafted from the incident and the channel you declared from. It suggests the page, components and **Started at** (the time users were first affected) when the draft has enough evidence; the form also pre-fills the impact. **Create status report** opens the form filled in. Nothing is published until you submit it. **Not needed** dismisses the card.
 
-- Use the pinned card's buttons. **Update status** changes the status or severity, or posts an update to the channel and timeline. **Update status page** publishes a status report linked to the incident, or adds an update to the one already linked. You can notify subscribers from the same form. The card redraws with the new status after the change.
+- Use the pinned card's buttons. **Update status** changes the status or severity, or posts an update to the channel and timeline. **Update status page** publishes a status report linked to the incident, or adds an update to the one already linked. You can notify subscribers from the same form. On a tracked incident that waits for its [acknowledgement](#acknowledgement), **Acknowledge** comes first. The card redraws with the new status after the change.
 - **Started at** on a new status report sets when the report begins, defaulting to the incident's start. Picking an earlier time also moves the incident's start back. It can't be in the future.
 - Add a message to the timeline from its ⋯ menu (**Add to incident timeline**) or by reacting with 📌 (`:pushpin:`). It becomes a timeline note, attributed to its author and linked back to Slack. Thread replies work too. The bot confirms with ✅.
 - Status changes are announced in the channel and the topic is kept in sync.
@@ -117,6 +286,11 @@ After you approve a card, the result shows the usual next step with buttons: **U
 
 An `open` or `mitigated` incident with no activity gets a reminder after the threshold for its [severity](#severity). If it stays quiet, the next reminders follow at twice, four times and eight times that threshold, and so on. The reminder goes to the incident's channel. Without a channel it is sent as a direct message to the commander, or else to the person who declared it.
 
+- A tracked incident with a running [update cadence](#update-cadence) gets no stale reminders. Its [update notices](#notices) take their place, and fall back to email when Slack cannot deliver.
+- Once the cadence ends, for example at the resolution stop, or when the severity has no update target, stale reminders apply as before.
+- Missed targets and missed updates written by the system are not activity. They neither delay a reminder nor count as the last activity.
+- Stale reminders are sent in Slack only. Without the Slack agent there are none.
+
 ## Audit log
 
 Every change to an incident or its postmortem is written to the audit log with the member behind it, whether it came from the dashboard, Slack or an agent.
@@ -126,3 +300,5 @@ Every change to an incident or its postmortem is written to the audit log with t
 - **[Understanding status reports and incidents](/docs/concept/status-reports-and-incidents)**: how the objects fit together.
 - **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)**: install Slack and run your first incident from it.
 - **[MCP server reference](/docs/reference/mcp-server#incidents)**: the incident tools for agents.
+- **[Incident Service](/docs/sdk/nodejs/incident-service)**: incidents, acknowledgement and SLA state over the API.
+- **[Monitor SLA policy reference](/docs/reference/monitor-sla-policy)**: monthly uptime targets for monitors.

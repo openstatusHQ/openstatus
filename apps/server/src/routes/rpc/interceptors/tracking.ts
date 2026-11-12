@@ -205,6 +205,10 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.ChangeManagedIncidentStatus,
     props: incidentProps,
   },
+  "openstatus.incident.v1.IncidentService/AcknowledgeIncident": {
+    event: Events.AcknowledgeManagedIncident,
+    props: incidentProps,
+  },
   "openstatus.incident.v1.IncidentService/AddIncidentNote": {
     event: Events.AddManagedIncidentNote,
     props: incidentProps,

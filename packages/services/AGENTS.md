@@ -11,11 +11,16 @@ transaction where it needs a single atomic `db.batch()`, and a fail-closed
 `emitAudit` would roll back a real status transition because an audit insert
 failed. Do not "fix" it by routing it through a verb.
 
+Cross-workspace system jobs (`runUptimeFreeze`, `sealMonitorSlaMonths`,
+`claimMonitorSlaMissNotices`, `recordIncidentSlaBreaches`, `recordIncidentMissedUpdates`,
+`sendIncidentSlaNotices`) take an optional `db` instead of a `ctx` and skip scope checks.
+
 ## Shape of a verb
 
-- **One file per verb** under `packages/services/src/<entity>/` (`create.ts`,
-  `update.ts`, `remove.ts`), re-exported from that entity's `index.ts`. Callers
-  import from `@openstatus/services/<entity>`.
+- **One file per operation** under `packages/services/src/<entity>/` (`create.ts`,
+  `update.ts`, `delete.ts`), re-exported from that entity's `index.ts`. `list.ts`
+  also holds the `get` reads; opposite pairs share a file (`link`/`unlink`).
+  Callers import from `@openstatus/services/<entity>`.
 - **Signature:** `async function verbEntity(args: { ctx: ServiceContext; input: VerbInput })`.
   `ctx` carries `workspace`, `actor`, and an optional `db`/transaction.
 - **`requireScope(ctx, "<group>:write")` is the first line of every write
@@ -60,9 +65,9 @@ a reason.
 
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
-monitor-incident, frozen-uptime), `pages` (page, page-component,
+monitor-incident, frozen-uptime, monitor-sla-policy), `pages` (page, page-component,
 page-component-group, import), `incidents` (status-report, incident,
-maintenance), `notifications` and `subscribers` (page-subscriber). Workspace,
+maintenance, incident-sla-policy), `notifications` and `subscribers` (page-subscriber). Workspace,
 billing, members, invitations, API keys, OAuth, SSO and integrations require
 `admin`, which only the internal `*` token satisfies. "Write" means any DB
 mutation **or** side-effecting external call (probe, webhook, notification);

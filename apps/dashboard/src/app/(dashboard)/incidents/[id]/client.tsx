@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  incidentUpdateCadence,
+  isIncidentSystemEvent,
+} from "@openstatus/db/src/schema/incident_sla_policies/cadence";
+import {
+  incidentAwaitsAcknowledgement,
+  incidentSlaHeadline,
+  incidentSlaState,
+} from "@openstatus/db/src/schema/incident_sla_policies/state";
 import type { IncidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +28,7 @@ import {
 } from "@/components/content/detail";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
+import { IncidentAcknowledgeButton } from "@/components/incidents/incident-acknowledge-button";
 import {
   IncidentActions,
   hasIncidentActions,
@@ -28,6 +38,8 @@ import { IncidentComposer } from "@/components/incidents/incident-composer";
 import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
+import { IncidentSla } from "@/components/incidents/incident-sla";
+import { IncidentSlaBadge } from "@/components/incidents/incident-sla-badge";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
@@ -65,6 +77,18 @@ export function Client({ id }: { id: number }) {
   };
 
   const resolved = incident.status === "resolved";
+  const now = new Date();
+  const sla = incidentSlaState(incident, now);
+  const slaHeadline = sla ? incidentSlaHeadline(sla) : null;
+  const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
+  const updateCadence = incidentUpdateCadence(
+    incident,
+    incident.updateActivity,
+    now,
+  );
+  const lastUpdateAt = events?.find(
+    (event) => !isIncidentSystemEvent(event.type),
+  )?.createdAt;
   const timeline = (
     <DetailSection id="activity">
       <DetailSectionTitle variant="heading">
@@ -108,8 +132,13 @@ export function Client({ id }: { id: number }) {
         <IncidentHeading
           incident={incident}
           actions={
-            hasIncidentActions(incident) ? (
-              <IncidentActions incident={incident} />
+            awaitsAcknowledgement || hasIncidentActions(incident) ? (
+              <>
+                {awaitsAcknowledgement ? (
+                  <IncidentAcknowledgeButton incidentId={incident.id} />
+                ) : null}
+                <IncidentActions incident={incident} />
+              </>
             ) : null
           }
         />
@@ -143,6 +172,15 @@ export function Client({ id }: { id: number }) {
               </span>
             </DetailMetaItem>
           )}
+          {slaHeadline ? (
+            <DetailMetaItem>
+              <IncidentSlaBadge
+                timer={slaHeadline.timer}
+                kind={slaHeadline.kind}
+                now={now}
+              />
+            </DetailMetaItem>
+          ) : null}
         </DetailMeta>
       </DetailHeader>
       <DetailContent>
@@ -158,10 +196,21 @@ export function Client({ id }: { id: number }) {
             <DetailSectionTitle>Properties</DetailSectionTitle>
             <IncidentProperties
               incident={incident}
-              lastUpdateAt={events?.[0]?.createdAt}
+              lastUpdateAt={lastUpdateAt}
               onStatusChanged={onStatusChanged}
             />
           </DetailSection>
+          {sla ? (
+            <DetailSection id="sla">
+              <DetailSectionTitle>SLA</DetailSectionTitle>
+              <IncidentSla
+                incidentId={incident.id}
+                state={sla}
+                cadence={updateCadence}
+                now={now}
+              />
+            </DetailSection>
+          ) : null}
           <DetailSection id="communication">
             <DetailSectionTitle>Communication</DetailSectionTitle>
             <IncidentCommunication incident={incident} />

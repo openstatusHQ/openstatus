@@ -7,6 +7,7 @@ import {
   Notification,
   Overview,
   Settings,
+  Shield,
   StatusPage,
   Terminal,
 } from "@openstatus/icons";
@@ -40,6 +41,12 @@ export const NAV = {
     href: "/monitors",
     icon: Monitor,
     keywords: ["checks", "uptime"],
+  },
+  slaPolicies: {
+    label: "SLA Policies",
+    href: "/sla-policies",
+    icon: Shield,
+    keywords: ["sla", "uptime target", "availability", "commitment"],
   },
   statusPages: {
     label: "Status Pages",

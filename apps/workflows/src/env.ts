@@ -14,6 +14,7 @@ export const env = () =>
         .prefault("cloudtasks"),
       CRON_SECRET: z.string().prefault(""),
       SITE_URL: z.string().prefault("http://localhost:3000"),
+      DASHBOARD_URL: z.string().prefault(""),
       DATABASE_URL: z.string().prefault("http://localhost:8080"),
       DATABASE_AUTH_TOKEN: z.string().prefault(""),
       RESEND_API_KEY: z.string().prefault(""),
@@ -32,4 +33,12 @@ export const env = () =>
       NOTIFICATION_TIMEOUT_MS: z.coerce.number().prefault(10_000),
       OUTBOX_ROLLOUT_PCT: z.coerce.number().min(0).max(100).prefault(0),
     })
+    .transform((e) => ({
+      ...e,
+      DASHBOARD_URL:
+        e.DASHBOARD_URL ||
+        (e.NODE_ENV === "production"
+          ? "https://app.openstatus.dev"
+          : "http://localhost:3001"),
+    }))
     .parse(process.env);

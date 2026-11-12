@@ -96,8 +96,9 @@ describe("buildMcpServerInstructions", () => {
   const instructions = buildMcpServerInstructions({
     canNotifySubscribers: true,
   });
+  const noConfirmation = ["add_incident_note", "acknowledge_incident"];
   const writeTools = Object.values(agentTools).filter(
-    (t) => !isReadScope(t.scope) && t.name !== "add_incident_note",
+    (t) => !isReadScope(t.scope) && !noConfirmation.includes(t.name),
   );
 
   test("names every write tool in the confirmation rules", () => {
@@ -108,6 +109,24 @@ describe("buildMcpServerInstructions", () => {
     );
     for (const tool of writeTools) {
       expect(listed, tool.name).toContain(tool.name);
+    }
+  });
+
+  test("the no-confirmation exception names exactly the non-destructive writes", () => {
+    const nonDestructive = Object.values(agentTools)
+      .filter((t) => !isReadScope(t.scope) && !t.destructive)
+      .map((t) => t.name)
+      .sort();
+    expect(nonDestructive).toEqual([...noConfirmation].sort());
+    const exception = instructions
+      .split("\n")
+      .find((l) => l.includes("runs without confirmation"));
+    for (const name of noConfirmation) expect(exception, name).toContain(name);
+    for (const surface of ["dashboard", "slack"] as const) {
+      const prompt = buildAgentSystemPrompt({ ...base, surface });
+      expect(prompt, surface).toContain(
+        "except add_incident_note and acknowledge_incident",
+      );
     }
   });
 

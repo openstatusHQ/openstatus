@@ -2,6 +2,21 @@ import { uniqueRegions } from "@openstatus/utils";
 
 export type Counts = { ok: number; degraded: number; error: number };
 
+export const NO_RUNS: Readonly<Counts> = Object.freeze({
+  ok: 0,
+  degraded: 0,
+  error: 0,
+});
+
+/** Adds `c` into the counts under `key`. */
+export function addCounts<K>(map: Map<K, Counts>, key: K, c: Counts): void {
+  const acc = map.get(key) ?? { ...NO_RUNS };
+  acc.ok += c.ok;
+  acc.degraded += c.degraded;
+  acc.error += c.error;
+  map.set(key, acc);
+}
+
 // mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
 // private-only monitors get none: private checks carry no shared run key
 /** The monitor's unique cloud regions, null without any: it gets no run verdicts. */

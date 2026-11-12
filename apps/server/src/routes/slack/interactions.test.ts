@@ -1,10 +1,12 @@
 import crypto from "node:crypto";
 
+import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray } from "@openstatus/db";
 import {
   auditLog,
   incident,
   incidentEvent,
+  integration,
   selectWorkspaceSchema,
   slackUser,
   statusReport,
@@ -24,6 +26,7 @@ import {
   bindIncidentSlackChannel,
   declareIncident,
 } from "@openstatus/services/incident";
+import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
 import { WebClient } from "@slack/web-api";
 import { Hono } from "hono";
 import {
@@ -32,6 +35,7 @@ import {
   beforeEach,
   describe,
   expect,
+  type Mock,
   test,
 } from "vitest";
 
@@ -779,6 +783,7 @@ describe("declare incident modal", () => {
     const view = open?.args.view as Record<string, unknown>;
     expect(view.callback_id).toBe("declare_incident");
     expect(JSON.stringify(view.blocks)).toContain('"initial_user":"U_OWNER"');
+    expect(JSON.stringify(view.blocks)).toContain('"block_id":"reported_at"');
   });
 
   test("the message shortcut prefills the summary", async () => {
@@ -844,6 +849,62 @@ describe("declare incident modal", () => {
       response_action: "errors",
       errors: { title: "Give the incident a title." },
     });
+  });
+
+  test("a reported time in the future is rejected on the form", async () => {
+    const res = await signAndPost(
+      app,
+      submission({
+        title: { value: { value: "Mail down" } },
+        severity: { value: { selected_option: { value: "major" } } },
+        reported_at: {
+          value: {
+            selected_date_time: Math.floor(Date.now() / 1000) + 3600,
+          },
+        },
+      }),
+    );
+    expect(await res.json()).toEqual({
+      response_action: "errors",
+      errors: {
+        reported_at:
+          "Reported at must be between 30 days before the declare and the declare itself",
+      },
+    });
+  });
+
+  test("submitting with a reported time stores it", async () => {
+    const title = `Modal reported ${crypto.randomUUID()}`;
+    const reportedAt = Math.floor(Date.now() / 1000) - 40 * 60;
+    await signAndPost(
+      app,
+      submission({
+        title: { value: { value: title } },
+        severity: { value: { selected_option: { value: "critical" } } },
+        reported_at: { value: { selected_date_time: reportedAt } },
+      }),
+    );
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.title, title))
+      .get();
+    try {
+      expect(row?.reportedAt).toEqual(new Date(reportedAt * 1000));
+    } finally {
+      if (row) {
+        await db
+          .delete(auditLog)
+          .where(
+            and(
+              eq(auditLog.entityType, "incident"),
+              eq(auditLog.entityId, String(row.id)),
+            ),
+          );
+        await deleteIncidentEvents(row.id);
+        await db.delete(incident).where(eq(incident.id, row.id));
+      }
+    }
   });
 
   test("submitting declares the incident and closes the form", async () => {
@@ -1645,6 +1706,204 @@ describe("pinned incident card buttons", () => {
       .where(eq(incident.id, incidentId))
       .get();
     expect(row?.severity).toBe("major");
+  });
+});
+
+describe("Acknowledge on the pinned incident card", () => {
+  const app = createTestApp();
+  // @openstatus/analytics is a double whose spies live on globalThis.
+  const analytics = (globalThis as Record<string, unknown>)
+    .__analyticsSpies as {
+    track: Mock;
+  };
+  let incidentId: number;
+  let installId: number;
+  let workspaceId: number;
+  let owner: { id: number; email: string | null };
+  let teamId: string;
+
+  beforeAll(async () => {
+    const fixture = await createTestWorkspace();
+    workspaceId = fixture.workspace.id;
+    owner = fixture.user;
+    teamId = `T_ACK_${workspaceId}`;
+  });
+
+  beforeEach(async () => {
+    configureSlackDoubles();
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: { email: owner.email } } });
+    slackTestState.resolveWorkspace = (id: string) =>
+      id === teamId
+        ? Promise.resolve({
+            botToken: "xoxb-fallback",
+            workspace: { id: workspaceId, limits: { "slack-agent": true } },
+          })
+        : Promise.resolve(null);
+    redisStore.clear();
+    analytics.track.mockClear();
+    const workspace = selectWorkspaceSchema.parse(
+      await db.query.workspace.findFirst({
+        where: eq(workspaceTable.id, workspaceId),
+      }),
+    );
+    const created = await declareIncident({
+      ctx: { workspace, actor: { type: "system", job: "test" } },
+      input: { title: `Ack ${crypto.randomUUID()}`, severity: "critical" },
+    });
+    incidentId = created.id;
+    await db
+      .update(incident)
+      .set({
+        slaSnapshot: {
+          targets: { critical: { responseMinutes: 60 } },
+          resolutionStop: "mitigated",
+        },
+        slackTeamId: teamId,
+        slackChannelId: "C_ACK",
+      })
+      .where(eq(incident.id, incidentId));
+    const install = await db
+      .insert(integration)
+      .values({
+        name: "slack-agent",
+        workspaceId,
+        externalId: teamId,
+        credential: { botToken: "xoxb-test", botUserId: "UBOT" },
+        data: { teamId, scopes: SLACK_BOT_SCOPES.join(",") },
+      })
+      .returning()
+      .get();
+    installId = install.id;
+  });
+
+  afterEach(async () => {
+    await db.delete(integration).where(eq(integration.id, installId));
+    await deleteIncidentEvents(incidentId);
+    await db
+      .delete(auditLog)
+      .where(
+        and(
+          eq(auditLog.entityType, "incident"),
+          eq(auditLog.entityId, String(incidentId)),
+        ),
+      );
+    await db.delete(incident).where(eq(incident.id, incidentId));
+  });
+
+  function click(slackUserId = "U_OWNER") {
+    return signAndPost(app, {
+      type: "block_actions",
+      team: { id: teamId },
+      user: { id: slackUserId },
+      channel: { id: "C_ACK" },
+      message: { ts: "55.5" },
+      actions: [
+        { action_id: "incident_card_acknowledge", value: String(incidentId) },
+      ],
+    });
+  }
+
+  function redrawnCard() {
+    return slackTestState.calls.find(
+      (c) =>
+        c.method === "update" &&
+        c.args.channel === "C_ACK" &&
+        c.args.ts === "55.5",
+    );
+  }
+
+  test("acknowledges as the clicking member and redraws the card without the button", async () => {
+    const res = await click();
+    expect(res.status).toBe(200);
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.acknowledgedAt).toBeInstanceOf(Date);
+    expect(row?.acknowledgedBy).toBe(owner.id);
+    const event = await db
+      .select()
+      .from(incidentEvent)
+      .where(
+        and(
+          eq(incidentEvent.incidentId, incidentId),
+          eq(incidentEvent.type, "acknowledged"),
+        ),
+      )
+      .get();
+    expect(event?.source).toBe("slack");
+    const card = redrawnCard();
+    expect(card).toBeDefined();
+    expect(JSON.stringify(card?.args.blocks)).toContain(
+      "incident_card_update_status",
+    );
+    expect(JSON.stringify(card?.args.blocks)).not.toContain(
+      "incident_card_acknowledge",
+    );
+  });
+
+  test("the channel sees the acknowledgement", async () => {
+    await click();
+    const posted = slackTestState.calls.filter(
+      (c) => c.method === "postMessage" && c.args.channel === "C_ACK",
+    );
+    expect(posted.map((c) => c.args.text)).toEqual([
+      "<@U_OWNER> acknowledged the incident.",
+    ]);
+  });
+
+  test("records the Slack analytics event", async () => {
+    await click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(analytics.track.mock.calls.map((c) => c[0])).toContainEqual(
+      expect.objectContaining({
+        name: Events.AcknowledgeManagedIncident.name,
+      }),
+    );
+  });
+
+  test("an unlinked Slack user gets the link card and nothing is written", async () => {
+    slackTestState.usersInfoImpl = () =>
+      Promise.resolve({ ok: true, user: { profile: {} } });
+    await click(`U_UNLINKED_${crypto.randomUUID()}`);
+    const ephemeral = slackTestState.calls.find(
+      (c) => c.method === "postEphemeral",
+    );
+    expect(ephemeral?.args.text).toContain("Link your openstatus account");
+    expect(JSON.stringify(ephemeral?.args.blocks)).toContain(
+      "/settings/integrations/slack/link",
+    );
+    const row = await db
+      .select()
+      .from(incident)
+      .where(eq(incident.id, incidentId))
+      .get();
+    expect(row?.acknowledgedAt).toBeNull();
+    expect(redrawnCard()).toBeUndefined();
+  });
+
+  test("a stale button says so and still redraws the clicked card", async () => {
+    await db
+      .update(incident)
+      .set({ acknowledgedAt: new Date(), acknowledgedBy: null })
+      .where(eq(incident.id, incidentId));
+    await click();
+    const ephemeral = slackTestState.calls.find(
+      (c) => c.method === "postEphemeral",
+    );
+    expect(ephemeral?.args.text).toBe("This incident is already acknowledged.");
+    expect(
+      slackTestState.calls.some(
+        (c) => c.method === "postMessage" && c.args.channel === "C_ACK",
+      ),
+    ).toBe(false);
+    const card = redrawnCard();
+    expect(card).toBeDefined();
+    expect(JSON.stringify(card?.args.blocks)).not.toContain(
+      "incident_card_acknowledge",
+    );
   });
 });
 

@@ -362,6 +362,21 @@ export const runs45dShape = z.object({
   error: z.number().prefault(0),
 });
 
+// Half-open [fromDate, toDate) in epoch ms; only the last ~45 days have rows.
+export const runsRangeParameters = z.object({
+  monitorIds: z.string().array(),
+  fromDate: z.int(),
+  toDate: z.int(),
+});
+
+export const runsRangeShape = z.object({
+  monitorId: z.string(),
+  count: z.number().prefault(0),
+  ok: z.number().prefault(0),
+  degraded: z.number().prefault(0),
+  error: z.number().prefault(0),
+});
+
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
 
 /**
@@ -916,6 +931,15 @@ export class OSTinybird {
       pipe: "endpoint__http_runs_45d__v0",
       parameters: runs45dParameters,
       data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpRunsRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_range__v0",
+      parameters: runsRangeParameters,
+      data: runsRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1507,6 +1531,15 @@ export class OSTinybird {
     });
   }
 
+  public get tcpRunsRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_runs_range__v0",
+      parameters: runsRangeParameters,
+      data: runsRangeShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
@@ -1985,6 +2018,15 @@ export class OSTinybird {
       pipe: "endpoint__icmp_runs_45d__v0",
       parameters: runs45dParameters,
       data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpRunsRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_runs_range__v0",
+      parameters: runsRangeParameters,
+      data: runsRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2483,6 +2525,15 @@ export class OSTinybird {
       pipe: "endpoint__grpc_runs_45d__v0",
       parameters: runs45dParameters,
       data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcRunsRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_runs_range__v0",
+      parameters: runsRangeParameters,
+      data: runsRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3808,6 +3859,15 @@ export class OSTinybird {
       pipe: "endpoint__dns_runs_45d__v0",
       parameters: runs45dParameters,
       data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsRunsRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_runs_range__v0",
+      parameters: runsRangeParameters,
+      data: runsRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

@@ -7,6 +7,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import type { IncidentSlaSnapshot } from "../incident_sla_policies/constants";
 import { statusReport } from "../status_reports";
 import { user } from "../users";
 import { workspace } from "../workspaces";
@@ -33,10 +34,32 @@ export const incident = sqliteTable(
     declaredBy: integer("declared_by").references(() => user.id),
     declaredAt: integer("declared_at", { mode: "timestamp" }).notNull(),
     startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
+    // when the request arrived, if before the declare; SLA timers start here
+    reportedAt: integer("reported_at", { mode: "timestamp" }),
     mitigatedAt: integer("mitigated_at", { mode: "timestamp" }),
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
     resolvedBy: integer("resolved_by").references(() => user.id),
     closedAt: integer("closed_at", { mode: "timestamp" }),
+    acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
+    acknowledgedBy: integer("acknowledged_by").references(() => user.id),
+    // null = untracked: no policy or no `incident-sla` limit at declare
+    slaSnapshot: text("sla_snapshot", {
+      mode: "json",
+    }).$type<IncidentSlaSnapshot>(),
+    responseMetAt: integer("response_met_at", { mode: "timestamp" }),
+    // the due time that was missed; set once, never cleared
+    responseBreachDueAt: integer("response_breach_due_at", {
+      mode: "timestamp",
+    }),
+    // last entry into a stop state; cleared on reopen (mitigated_at keeps the first)
+    resolutionStoppedAt: integer("resolution_stopped_at", {
+      mode: "timestamp",
+    }),
+    resolutionBreachDueAt: integer("resolution_breach_due_at", {
+      mode: "timestamp",
+    }),
+    responseMissReason: text("response_miss_reason"),
+    resolutionMissReason: text("resolution_miss_reason"),
     statusReportId: integer("status_report_id").references(
       () => statusReport.id,
       { onDelete: "set null" },
@@ -84,6 +107,12 @@ export const incidentEvent = sqliteTable(
       t.incidentId,
       t.createdAt,
     ),
+    // system events: a second write of the same one is a no-op (two ticks race)
+    uniqueIndex("incident_event_system_unique_idx")
+      .on(t.incidentId, t.type, t.createdAt)
+      .where(
+        sql`${t.type} IN ('sla_response_breached', 'sla_resolution_breached', 'sla_update_missed')`,
+      ),
   ],
 );
 
@@ -106,6 +135,11 @@ export const incidentRelations = relations(incident, ({ one, many }) => ({
     fields: [incident.resolvedBy],
     references: [user.id],
     relationName: "incidentResolvedBy",
+  }),
+  acknowledgedByUser: one(user, {
+    fields: [incident.acknowledgedBy],
+    references: [user.id],
+    relationName: "incidentAcknowledgedBy",
   }),
   statusReport: one(statusReport, {
     fields: [incident.statusReportId],

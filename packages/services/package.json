@@ -49,6 +49,14 @@
       "import": "./src/frozen-uptime/index.ts",
       "types": "./src/frozen-uptime/index.ts"
     },
+    "./incident-sla-policy": {
+      "import": "./src/incident-sla-policy/index.ts",
+      "types": "./src/incident-sla-policy/index.ts"
+    },
+    "./monitor-sla-policy": {
+      "import": "./src/monitor-sla-policy/index.ts",
+      "types": "./src/monitor-sla-policy/index.ts"
+    },
     "./workspace": {
       "import": "./src/workspace/index.ts",
       "types": "./src/workspace/index.ts"

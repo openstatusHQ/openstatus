@@ -24,6 +24,7 @@ export const limitsSchema = z.object({
   screenshots: z.boolean().prefault(false),
   "response-logs": z.boolean().prefault(false),
   otel: z.boolean().prefault(false),
+  "monitor-sla": z.boolean().prefault(false),
   /**
    * Status page limits
    */
@@ -66,6 +67,7 @@ export const limitsSchema = z.object({
    * Other limits
    */
   "slack-agent": z.boolean().prefault(false),
+  "incident-sla": z.boolean().prefault(false),
 });
 
 export type Limits = z.infer<typeof limitsSchema>;

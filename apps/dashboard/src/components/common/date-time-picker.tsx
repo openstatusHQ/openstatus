@@ -36,6 +36,7 @@ export function DateTimePicker({
   max,
   className,
   size = "sm",
+  children,
   ...props
 }: DateTimePickerProps) {
   const mobile = useIsMobile();
@@ -59,7 +60,7 @@ export function DateTimePicker({
           className={cn("justify-start font-normal", className)}
           {...props}
         >
-          {format(value, "PP, h:mm a")}
+          {children ?? format(value, "PP, h:mm a")}
           <CalendarIcon className="text-muted-foreground ml-auto" />
         </Button>
       </PopoverTrigger>

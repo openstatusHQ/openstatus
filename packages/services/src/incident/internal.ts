@@ -1,12 +1,21 @@
-import { and, eq } from "@openstatus/db";
+import { and, eq, gte, isNull } from "@openstatus/db";
 import {
   type Incident,
   type IncidentEvent,
   type IncidentEventSource,
   type IncidentEventType,
+  type IncidentSlaFields,
+  type IncidentSlaSnapshot,
+  type IncidentSlaTimerKind,
   type IncidentStatus,
   incident,
   incidentEvent,
+  incidentResponsePatch,
+  incidentSlaBreachMessage,
+  incidentSlaClockStart,
+  incidentSlaResponseMet,
+  incidentSlaState,
+  statusReportUpdate,
   user,
 } from "@openstatus/db/src/schema";
 
@@ -19,6 +28,7 @@ import {
   tryGetActorUserId,
 } from "../context";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
+import { findIncidentSlaPolicy } from "../incident-sla-policy/internal";
 import { getMembership } from "../member/membership";
 
 export const incidentUserColumns = {
@@ -79,6 +89,11 @@ export function assertTransition(
   }
 }
 
+/** The member behind a person actor (`user`, `slack`); keys, MCP and jobs are not people. */
+export function personUserId(actor: Actor): number | null {
+  return actor.type === "user" || actor.type === "slack" ? actor.userId : null;
+}
+
 function actorSource(actor: Actor): IncidentEventSource {
   switch (actor.type) {
     case "user":
@@ -108,7 +123,243 @@ function actorSourceRef(actor: Actor): string | null {
   }
 }
 
-/** The only way an event is written: the row and its audit entry together. */
+/** The policy fixed on a new incident; only with a policy and the `incident-sla` limit on. */
+export async function slaSnapshotAtDeclare(
+  tx: DB,
+  ctx: ServiceContext,
+): Promise<IncidentSlaSnapshot | null> {
+  if (!ctx.workspace.limits["incident-sla"]) return null;
+  const policy = await findIncidentSlaPolicy(tx, ctx.workspace.id);
+  if (!policy) return null;
+  return {
+    targets: policy.targets,
+    resolutionStop: policy.resolutionStop,
+    responseMet: policy.responseMet,
+  };
+}
+
+/**
+ * The system's record of a missed target, at its due time; null when it was
+ * already written. Never acknowledges and never counts as activity.
+ */
+export async function appendIncidentSlaBreach(
+  tx: DB,
+  ctx: ServiceContext,
+  args: {
+    incidentId: number;
+    kind: IncidentSlaTimerKind;
+    targetMinutes: number;
+    dueAt: Date;
+  },
+): Promise<IncidentEvent | null> {
+  const event = await tx
+    .insert(incidentEvent)
+    .values({
+      incidentId: args.incidentId,
+      type:
+        args.kind === "response"
+          ? "sla_response_breached"
+          : "sla_resolution_breached",
+      message: incidentSlaBreachMessage(args),
+      source: "system",
+      sourceRef: null,
+      createdBy: null,
+      createdAt: args.dueAt,
+    })
+    .onConflictDoNothing()
+    .returning()
+    .get();
+  if (!event) return null;
+  await emitAudit(tx, ctx, {
+    action: "incident_event.create",
+    entityType: "incident_event",
+    entityId: event.id,
+    after: event,
+    metadata: { incidentId: args.incidentId, type: event.type },
+  });
+  return event;
+}
+
+/** The breach events for the misses a write just stamped; `before` is the row it judged. */
+export async function appendIncidentSlaBreaches(
+  tx: DB,
+  ctx: ServiceContext,
+  before: IncidentSlaFields & { id: number },
+  stamped: { responseBreachDueAt?: Date; resolutionBreachDueAt?: Date },
+  at: Date,
+): Promise<void> {
+  const state = incidentSlaState(before, at);
+  const misses = [
+    ["response", stamped.responseBreachDueAt],
+    ["resolution", stamped.resolutionBreachDueAt],
+  ] as const;
+  for (const [kind, dueAt] of misses) {
+    const targetMinutes = state?.[kind]?.targetMinutes;
+    if (!dueAt || targetMinutes === undefined) continue;
+    await appendIncidentSlaBreach(tx, ctx, {
+      incidentId: before.id,
+      kind,
+      targetMinutes,
+      dueAt,
+    });
+  }
+}
+
+/** Where a response patch may land: still unmet, and unstamped when it stamps the miss. */
+export function responsePatchGuard(
+  incidentId: number,
+  patch: { responseBreachDueAt?: Date },
+) {
+  return and(
+    eq(incident.id, incidentId),
+    isNull(incident.responseMetAt),
+    patch.responseBreachDueAt
+      ? isNull(incident.responseBreachDueAt)
+      : undefined,
+  );
+}
+
+/** Meets a tracked incident's response at `at`, once; a late meet stamps the miss in the same write. */
+export async function meetResponse(
+  tx: DB,
+  ctx: ServiceContext,
+  incidentId: number,
+  at: Date,
+): Promise<void> {
+  const existing = await getIncidentInWorkspace(
+    tx,
+    ctx.workspace.id,
+    incidentId,
+  );
+  const patch = incidentResponsePatch(existing, at);
+  if (!patch.responseMetAt) return;
+  const updated = await tx
+    .update(incident)
+    .set(patch)
+    .where(responsePatchGuard(incidentId, patch))
+    .returning()
+    .get();
+  if (!updated) {
+    // the miss was stamped meanwhile: meet it without stamping again
+    if (patch.responseBreachDueAt) await meetResponse(tx, ctx, incidentId, at);
+    return;
+  }
+  await emitAudit(tx, ctx, {
+    action: "incident.update",
+    entityType: "incident",
+    entityId: updated.id,
+    before: existing,
+    after: updated,
+  });
+  await appendIncidentSlaBreaches(tx, ctx, existing, patch, at);
+}
+
+/**
+ * In `status_report` mode, meets the response of the incident holding the report
+ * once the report has an update created at or after the clock start.
+ */
+export async function meetResponseByStatusReport(
+  tx: DB,
+  ctx: ServiceContext,
+  statusReportId: number,
+  at: Date,
+): Promise<void> {
+  const holder = await tx
+    .select()
+    .from(incident)
+    .where(
+      and(
+        eq(incident.statusReportId, statusReportId),
+        eq(incident.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .get();
+  if (
+    !holder?.slaSnapshot ||
+    holder.responseMetAt ||
+    incidentSlaResponseMet(holder.slaSnapshot) !== "status_report"
+  ) {
+    return;
+  }
+  const update = await tx
+    .select({ id: statusReportUpdate.id })
+    .from(statusReportUpdate)
+    .where(
+      and(
+        eq(statusReportUpdate.statusReportId, statusReportId),
+        gte(statusReportUpdate.createdAt, incidentSlaClockStart(holder)),
+      ),
+    )
+    .get();
+  if (update) await meetResponse(tx, ctx, holder.id, at);
+}
+
+// Set once, at the write's time: a person's event acknowledges as them, resolving
+// does for any actor. Resolving meets the response; acknowledging does unless
+// the snapshot counts status report updates instead.
+async function acknowledgeOnEvent(
+  tx: DB,
+  ctx: ServiceContext,
+  incidentId: number,
+  type: IncidentEventType,
+): Promise<void> {
+  const personId = personUserId(ctx.actor);
+  if (personId === null && type !== "resolved") return;
+  const now = new Date();
+  const acknowledged = await tx
+    .update(incident)
+    .set({
+      acknowledgedAt: now,
+      acknowledgedBy: personId ?? tryGetActorUserId(ctx.actor),
+    })
+    .where(and(eq(incident.id, incidentId), isNull(incident.acknowledgedAt)))
+    .returning()
+    .get();
+  if (!acknowledged) {
+    if (type === "resolved") await meetResponse(tx, ctx, incidentId, now);
+    return;
+  }
+  const patch =
+    type === "resolved" ||
+    incidentSlaResponseMet(acknowledged.slaSnapshot) === "acknowledged"
+      ? incidentResponsePatch(acknowledged, now)
+      : {};
+  const met = patch.responseMetAt
+    ? await tx
+        .update(incident)
+        .set(patch)
+        .where(responsePatchGuard(incidentId, patch))
+        .returning()
+        .get()
+    : undefined;
+  const updated = met ?? acknowledged;
+  await emitAudit(tx, ctx, {
+    action: "incident.update",
+    entityType: "incident",
+    entityId: updated.id,
+    before: {
+      ...acknowledged,
+      acknowledgedAt: null,
+      acknowledgedBy: null,
+    },
+    after: updated,
+  });
+  if (met) await appendIncidentSlaBreaches(tx, ctx, acknowledged, patch, now);
+  else if (patch.responseMetAt) await meetResponse(tx, ctx, incidentId, now);
+}
+
+/** Verbs that wrote events return this, so an acknowledgement or response they caused shows. */
+export async function withAcknowledgement(
+  tx: DB,
+  row: Incident,
+): Promise<Incident> {
+  if (row.acknowledgedAt && (!row.slaSnapshot || row.responseMetAt)) {
+    return row;
+  }
+  return getIncidentInWorkspace(tx, row.workspaceId, row.id);
+}
+
+/** The only way an event is written: the row, its audit entry and the acknowledgement it implies. */
 export async function appendIncidentEvent(
   tx: DB,
   ctx: ServiceContext,
@@ -145,6 +396,7 @@ export async function appendIncidentEvent(
     after: event,
     metadata: { incidentId: args.incidentId, type: args.type },
   });
+  await acknowledgeOnEvent(tx, ctx, args.incidentId, args.type);
   return event;
 }
 

@@ -1,3 +1,9 @@
+import { db, eq } from "@openstatus/db";
+import { incident, statusReport } from "@openstatus/db/src/schema";
+import {
+  createIncident,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import { beforeEach, expect, test } from "vitest";
 
 import { app } from "@/index";
@@ -318,4 +324,47 @@ test("create a status report update calls dispatchStatusReportUpdate", async () 
   expect(typeof spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBe(
     "number",
   );
+});
+
+test("an update meets the response of an incident that counts status report updates", async () => {
+  const { workspace } = await createTestWorkspace();
+  const report = await db
+    .insert(statusReport)
+    .values({
+      workspaceId: workspace.id,
+      title: "Outage",
+      status: "investigating",
+    })
+    .returning()
+    .get();
+  const tracked = await createIncident(workspace.id, {
+    statusReportId: report.id,
+    slaSnapshot: {
+      targets: { major: { responseMinutes: 60 } },
+      resolutionStop: "resolved",
+      responseMet: "status_report",
+    },
+  });
+
+  const res = await app.request("/v1/status_report_update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": String(workspace.id),
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "identified",
+      date: new Date().toISOString(),
+      message: "Found it",
+      statusReportId: report.id,
+    }),
+  });
+
+  expect(res.status).toBe(200);
+  const row = await db
+    .select({ responseMetAt: incident.responseMetAt })
+    .from(incident)
+    .where(eq(incident.id, tracked.id))
+    .get();
+  expect(row?.responseMetAt).toBeInstanceOf(Date);
 });

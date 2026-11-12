@@ -1,6 +1,9 @@
 import { getLogger } from "@logtape/logtape";
 import { ServiceError } from "@openstatus/services";
-import { INCIDENT_CARD_ACTIONS } from "@openstatus/services/incident";
+import {
+  INCIDENT_CARD_ACTIONS,
+  INCIDENT_SLA_NOTICE_ACKNOWLEDGE,
+} from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 
@@ -46,7 +49,9 @@ import {
   type ViewSubmissionPayload,
   type ViewSubmissionResponse,
 } from "./incident-modal";
+import { acknowledgeFromNotice } from "./incident-notice";
 import {
+  acknowledgeFromCard,
   afterIncidentTool,
   bindChannelFromButton,
   INCIDENT_BIND_ACTION_PREFIX,
@@ -88,6 +93,43 @@ interface SlackInteractionPayload {
   message: { ts: string };
   team?: { id: string };
   actions: Array<{ action_id: string; value?: string }>;
+}
+
+type MessageActionBase = {
+  resolved: NonNullable<Awaited<ReturnType<typeof resolveWorkspace>>>;
+  config: SlackConfig;
+  teamId: string;
+  slackUserId: string;
+  channelId: string;
+  messageTs: string;
+};
+
+/** Runs a button action on the clicked message in the background, once its workspace resolves. */
+function onMessageAction(
+  payload: SlackInteractionPayload,
+  config: SlackConfig,
+  name: string,
+  act: (base: MessageActionBase) => Promise<void>,
+  context: Record<string, unknown> = {},
+) {
+  const teamId = payload.team?.id;
+  if (!teamId) return;
+  runInBackground(
+    name,
+    async () => {
+      const resolved = await resolveWorkspace(teamId);
+      if (!resolved) return;
+      await act({
+        resolved,
+        config,
+        teamId,
+        slackUserId: payload.user.id,
+        channelId: payload.channel.id,
+        messageTs: payload.message.ts,
+      });
+    },
+    { teamId, ...context },
+  );
 }
 
 async function processIncidentBind(payload: SlackInteractionPayload) {
@@ -459,27 +501,32 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     return c.json({ ok: true });
   }
 
-  if (payload.actions[0].action_id === INCIDENT_RELINK_ACTION) {
-    const teamId = payload.team?.id;
-    if (teamId) {
-      runInBackground(
-        "incident-relink",
-        async () => {
-          const resolved = await resolveWorkspace(teamId);
-          if (!resolved) return;
-          await relinkIncidentChannel({
-            resolved,
-            config,
-            teamId,
-            slackUserId: payload.user.id,
-            channelId: payload.channel.id,
-            messageTs: payload.message.ts,
-            value: payload.actions[0].value,
-          });
-        },
-        { teamId },
+  const action = payload.actions[0];
+  if (action.action_id === INCIDENT_RELINK_ACTION) {
+    onMessageAction(payload, config, "incident-relink", (base) =>
+      relinkIncidentChannel({ ...base, value: action.value }),
+    );
+    return c.json({ ok: true });
+  }
+
+  if (action.action_id === INCIDENT_CARD_ACTIONS.acknowledge) {
+    const incidentId = Number(action.value);
+    if (Number.isInteger(incidentId)) {
+      onMessageAction(
+        payload,
+        config,
+        "incident-acknowledge",
+        (base) => acknowledgeFromCard({ ...base, incidentId }),
+        { incidentId },
       );
     }
+    return c.json({ ok: true });
+  }
+
+  if (action.action_id === INCIDENT_SLA_NOTICE_ACKNOWLEDGE) {
+    onMessageAction(payload, config, "incident-notice-acknowledge", (base) =>
+      acknowledgeFromNotice({ ...base, value: action.value }),
+    );
     return c.json({ ok: true });
   }
 
