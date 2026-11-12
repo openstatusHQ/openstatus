@@ -171,9 +171,12 @@ describe("getStatusPageBaseUrl", () => {
       ).toBe("https://acme.openstatus.dev");
     });
 
-    it("reads server-propagated data-status-page-base-url from documentElement in browser when process.env is unavailable", () => {
+    it("reads server-propagated data-status-page-base-url from documentElement in browser when process is unavailable", () => {
       const originalDocument = globalThis.document;
+      const originalProcess = globalThis.process;
       try {
+        // @ts-expect-error simulate browser runtime without Node process global
+        globalThis.process = undefined;
         // @ts-expect-error mock document for browser environment test
         globalThis.document = {
           documentElement: {
@@ -186,6 +189,7 @@ describe("getStatusPageBaseUrl", () => {
           getStatusPageBaseUrl({ slug: "acme", nodeEnv: "production" }),
         ).toBe("https://acme.status.selfhosted.net:8443");
       } finally {
+        globalThis.process = originalProcess;
         globalThis.document = originalDocument;
       }
     });
