@@ -1,4 +1,7 @@
-import { getStatusPageBaseUrl } from "@openstatus/utils";
+import {
+  getConfiguredStatusPageBaseUrl,
+  getStatusPageBaseUrl,
+} from "@openstatus/utils";
 
 export function getBaseUrl({
   slug,
@@ -10,10 +13,7 @@ export function getBaseUrl({
   override?: string;
 }) {
   const configuredOverride =
-    override?.trim() ||
-    process.env.STATUS_PAGE_BASE_URL?.trim() ||
-    process.env.OPENSTATUS_STATUS_PAGE_URL?.trim() ||
-    process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL?.trim();
+    override?.trim() || getConfiguredStatusPageBaseUrl();
 
   if (
     typeof window !== "undefined" &&

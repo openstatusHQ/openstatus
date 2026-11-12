@@ -38,7 +38,7 @@ export function Client() {
       items={statusPages?.map((page) => ({
         id: page.id,
         name: page.title,
-        description: getPageUrl(page).replace("https://", ""),
+        description: getPageUrl(page).replace(/^https?:\/\//, ""),
       }))}
       empty={
         <EmptyStateContainer>

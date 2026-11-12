@@ -12,12 +12,36 @@ export interface GetStatusPageBaseUrlOptions {
   nodeEnv?: string;
 }
 
-function pickNonEmpty(...candidates: (string | undefined | null)[]): string | undefined {
+function pickNonEmpty(
+  ...candidates: (string | undefined | null)[]
+): string | undefined {
   for (const c of candidates) {
     if (typeof c === "string" && c.trim().length > 0) {
       return c.trim();
     }
   }
+  return undefined;
+}
+
+/**
+ * Returns the configured status-page base URL override from environment variables
+ * (`STATUS_PAGE_BASE_URL` or `OPENSTATUS_STATUS_PAGE_URL`) or, in browser contexts,
+ * from the root HTML `data-status-page-base-url` attribute rendered by the server.
+ */
+export function getConfiguredStatusPageBaseUrl(): string | undefined {
+  const envOverride =
+    typeof process !== "undefined"
+      ? pickNonEmpty(
+          process.env.STATUS_PAGE_BASE_URL,
+          process.env.OPENSTATUS_STATUS_PAGE_URL,
+        )
+      : undefined;
+  if (envOverride) return envOverride;
+
+  if (typeof document !== "undefined") {
+    return pickNonEmpty(document.documentElement?.dataset?.statusPageBaseUrl);
+  }
+
   return undefined;
 }
 
@@ -37,15 +61,10 @@ export function getStatusPageBaseUrl(
 ): string {
   const slug = options?.slug;
   const customDomain = options?.customDomain;
-  const rawOverride =
-    options?.override ??
-    (typeof process !== "undefined"
-      ? pickNonEmpty(
-          process.env.STATUS_PAGE_BASE_URL,
-          process.env.OPENSTATUS_STATUS_PAGE_URL,
-          process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL,
-        )
-      : undefined);
+  const rawOverride = pickNonEmpty(
+    options?.override,
+    getConfiguredStatusPageBaseUrl(),
+  );
 
   if (rawOverride && rawOverride.trim().length > 0) {
     let end = rawOverride.trim().length;

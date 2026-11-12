@@ -2,6 +2,7 @@ import {
   StatusPageMain,
   StatusPageShell,
 } from "@openstatus/ui/components/blocks/status-page-shell";
+import { getConfiguredStatusPageBaseUrl } from "@openstatus/utils";
 import { Suspense } from "react";
 
 import { EmbedShell } from "../../../../../components/layout/embed-shell";
@@ -9,11 +10,7 @@ import { Footer } from "../../../../../components/nav/footer";
 import { Header } from "../../../../../components/nav/header";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const baseUrlOverride =
-    process.env.STATUS_PAGE_BASE_URL?.trim() ||
-    process.env.OPENSTATUS_STATUS_PAGE_URL?.trim() ||
-    process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL?.trim() ||
-    undefined;
+  const baseUrlOverride = getConfiguredStatusPageBaseUrl();
 
   return (
     <Suspense>

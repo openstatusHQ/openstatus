@@ -170,5 +170,24 @@ describe("getStatusPageBaseUrl", () => {
         getStatusPageBaseUrl({ slug: "acme", nodeEnv: "production" }),
       ).toBe("https://acme.openstatus.dev");
     });
+
+    it("reads server-propagated data-status-page-base-url from documentElement in browser when process.env is unavailable", () => {
+      const originalDocument = globalThis.document;
+      try {
+        // @ts-expect-error mock document for browser environment test
+        globalThis.document = {
+          documentElement: {
+            dataset: {
+              statusPageBaseUrl: "https://{slug}.status.selfhosted.net:8443",
+            },
+          },
+        };
+        expect(
+          getStatusPageBaseUrl({ slug: "acme", nodeEnv: "production" }),
+        ).toBe("https://acme.status.selfhosted.net:8443");
+      } finally {
+        globalThis.document = originalDocument;
+      }
+    });
   });
 });
