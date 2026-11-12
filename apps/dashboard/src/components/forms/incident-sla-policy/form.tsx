@@ -38,8 +38,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -150,7 +151,10 @@ export function FormIncidentSlaPolicy({
   const [isPending, startTransition] = useTransition();
   const stop = useWatch({ control: form.control, name: "resolutionStop" });
   const responseMet = useWatch({ control: form.control, name: "responseMet" });
-  const disabled = locked || readOnly;
+  const [turningOn, setTurningOn] = useState(false);
+  // no saved policy: show the defaults muted until the user turns it on
+  const off = !saved && !locked && !turningOn;
+  const disabled = locked || readOnly || off;
 
   function run(
     promise: Promise<void>,
@@ -218,14 +222,21 @@ export function FormIncidentSlaPolicy({
         <FormCard id="targets">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
-            <FormCardTitle>Targets</FormCardTitle>
+            <FormCardTitle>
+              Targets
+              {off ? (
+                <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+                  off
+                </span>
+              ) : null}
+            </FormCardTitle>
             <FormCardDescription>
               How fast an incident gets its first response, updates and a
               resolution, per severity. Applies to incidents declared from now
               on.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className={cn(off && "opacity-50")}>
             <div
               role="table"
               aria-label="Targets per severity"
@@ -302,7 +313,9 @@ export function FormIncidentSlaPolicy({
             )}
           </FormCardContent>
           <FormCardSeparator />
-          <FormCardContent className="grid gap-4 sm:grid-cols-3">
+          <FormCardContent
+            className={cn("grid gap-4 sm:grid-cols-3", off && "opacity-50")}
+          >
             <FormField
               control={form.control}
               name="responseMet"
@@ -338,7 +351,9 @@ export function FormIncidentSlaPolicy({
             </p>
           </FormCardContent>
           <FormCardSeparator />
-          <FormCardContent className="grid gap-4 sm:grid-cols-3">
+          <FormCardContent
+            className={cn("grid gap-4 sm:grid-cols-3", off && "opacity-50")}
+          >
             <FormField
               control={form.control}
               name="resolutionStop"
@@ -373,7 +388,9 @@ export function FormIncidentSlaPolicy({
             <FormCardFooterInfo>
               {readOnly && !locked
                 ? "Only owners and admins can change the policy."
-                : "A notice goes out at 75% of each target and again when it is missed: in Slack, or by email to the commander and declarer when Slack cannot deliver."}
+                : off
+                  ? "The policy is off: incidents are declared without targets. Turn it on to review these defaults and save them."
+                  : "A notice goes out at 75% of each target and again when it is missed: in Slack, or by email to the commander and declarer when Slack cannot deliver."}
             </FormCardFooterInfo>
             <div className="flex shrink-0 items-center gap-2">
               {saved && !readOnly ? (
@@ -418,7 +435,19 @@ export function FormIncidentSlaPolicy({
                   <Lock />
                   Upgrade
                 </Button>
-              ) : readOnly ? null : (
+              ) : readOnly ? null : off ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  // the submit button renders in its place before the click's default action
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setTurningOn(true);
+                  }}
+                >
+                  Turn on
+                </Button>
+              ) : (
                 <Button type="submit" size="sm" disabled={isPending}>
                   {isPending ? "Submitting..." : "Submit"}
                 </Button>

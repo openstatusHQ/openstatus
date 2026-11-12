@@ -73,7 +73,7 @@ export function SlaPolicyMaintenance({
     .reverse()
     .map((month) => ({
       month,
-      windows: data.windows.filter((w) => w.months.includes(month)),
+      windows: data.windows.filter((w) => w.month === month),
     }))
     .filter((g) => g.windows.length > 0);
 
@@ -150,7 +150,7 @@ export function SlaPolicyMaintenance({
                     <EventRowDuration>
                       {formatDurationShort(w.to.getTime() - w.from.getTime())}
                     </EventRowDuration>
-                    {onExcuse ? (
+                    {onExcuse && w.excusable ? (
                       <EventRowMenu>
                         <Button
                           size="sm"

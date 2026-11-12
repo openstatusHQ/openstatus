@@ -96,6 +96,7 @@ export const NAV = {
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
   NAV.monitors,
+  NAV.slaPolicies,
   NAV.statusPages,
   NAV.notifications,
   NAV.chat,

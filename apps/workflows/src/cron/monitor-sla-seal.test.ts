@@ -42,24 +42,22 @@ describe("monitor-sla-seal", () => {
 });
 
 describe("monitor-sla-seal miss email", () => {
-  let policyId: number | undefined;
-  let monitorId: number | undefined;
+  const policyIds: number[] = [];
+  const monitorIds: number[] = [];
 
   afterAll(async () => {
-    if (policyId) {
-      await db
-        .delete(monitorSlaPolicy)
-        .where(eq(monitorSlaPolicy.id, policyId));
+    for (const id of policyIds) {
+      await db.delete(monitorSlaPolicy).where(eq(monitorSlaPolicy.id, id));
     }
-    if (monitorId) {
+    for (const id of monitorIds) {
       await db
         .delete(frozenMonitorUptime)
-        .where(eq(frozenMonitorUptime.monitorId, monitorId));
-      await db.delete(monitor).where(eq(monitor.id, monitorId));
+        .where(eq(frozenMonitorUptime.monitorId, id));
+      await db.delete(monitor).where(eq(monitor.id, id));
     }
   });
 
-  test("two machines sealing together send one email to the owners", async () => {
+  async function missedPolicy() {
     const { workspace, user } = await createTestWorkspace();
     const m = await createMonitor(workspace.id, {
       name: "Checkout API",
@@ -67,7 +65,7 @@ describe("monitor-sla-seal miss email", () => {
       regions: "ams",
       periodicity: "10m",
     });
-    monitorId = m.id;
+    monitorIds.push(m.id);
     const policy = await db
       .insert(monitorSlaPolicy)
       .values({
@@ -78,7 +76,7 @@ describe("monitor-sla-seal miss email", () => {
       })
       .returning()
       .get();
-    policyId = policy.id;
+    policyIds.push(policy.id);
     await db.insert(monitorSlaPolicyToMonitor).values({
       monitorSlaPolicyId: policy.id,
       monitorId: m.id,
@@ -96,6 +94,11 @@ describe("monitor-sla-seal miss email", () => {
         },
       ],
     });
+    return { user, m, policy };
+  }
+
+  test("two machines sealing together send one email to the owners", async () => {
+    const { user, m, policy } = await missedPolicy();
 
     const sent: Parameters<typeof sendMonitorSlaMissed>[0][] = [];
     const send: typeof sendMonitorSlaMissed = async (req) => {
@@ -128,5 +131,41 @@ describe("monitor-sla-seal miss email", () => {
 
     await tick();
     expect(sent).toHaveLength(1);
+  });
+
+  test("a failed or skipped send is not counted, and is never retried", async () => {
+    const { policy } = await missedPolicy();
+    let calls = 0;
+    const tick = (send: typeof sendMonitorSlaMissed) =>
+      runMonitorSlaSealTick({
+        now,
+        policyIds: [policy.id],
+        send,
+        dashboardUrl: "https://app.test",
+      });
+
+    const failed = await tick(async () => {
+      calls++;
+      throw new Error("Resend rejected");
+    });
+    expect(failed.notified).toBe(0);
+
+    const again = await tick(async () => {
+      calls++;
+      return "email_1";
+    });
+    expect(again.notified).toBe(0);
+    expect(calls).toBe(1);
+  });
+
+  test("a send that returns no id (outside production) is not counted", async () => {
+    const { policy } = await missedPolicy();
+    const res = await runMonitorSlaSealTick({
+      now,
+      policyIds: [policy.id],
+      send: async () => undefined,
+      dashboardUrl: "https://app.test",
+    });
+    expect(res.notified).toBe(0);
   });
 });

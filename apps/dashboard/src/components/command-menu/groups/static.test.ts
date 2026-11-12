@@ -30,6 +30,7 @@ describe("navigationGroup", () => {
         "/overview",
         "/incidents",
         "/monitors",
+        "/sla-policies",
         "/status-pages",
         "/notifications",
         "/chat",

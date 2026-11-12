@@ -2,7 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { Hide } from "@openstatus/icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
@@ -18,6 +18,10 @@ export function DataTableRowActions({ row }: { row: Row<MonitorSlaPolicy> }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [archiving, setArchiving] = useState(false);
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const { data: members } = useQuery(trpc.member.list.queryOptions());
+  const role = members?.find((m) => m.user.id === user?.id)?.role;
+  const canEdit = role === "owner" || role === "admin";
   const invalidate = () => {
     queryClient.invalidateQueries({
       queryKey: trpc.monitorSlaPolicy.list.queryKey(),
@@ -34,6 +38,7 @@ export function DataTableRowActions({ row }: { row: Row<MonitorSlaPolicy> }) {
   );
 
   // a sealed month is a record: such a policy can only be archived
+  if (!canEdit) return <QuickActions />;
   if (policy.sealed) {
     if (policy.archivedAt) return <QuickActions />;
     return (

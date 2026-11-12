@@ -1,28 +1,22 @@
-import type {
-  IncidentUpdateCadence,
-  IncidentUpdateCadenceStatus,
-} from "@openstatus/db/src/schema/incident_sla_policies/cadence";
+import type { IncidentUpdateCadence } from "@openstatus/db/src/schema/incident_sla_policies/cadence";
 import { formatIncidentSlaMinutes } from "@openstatus/db/src/schema/incident_sla_policies/events";
 import type {
   IncidentSlaState,
   IncidentSlaTimer,
   IncidentSlaTimerKind,
 } from "@openstatus/db/src/schema/incident_sla_policies/state";
-import { cn } from "@openstatus/ui/lib/utils";
 import { format } from "date-fns";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Link } from "@/components/common/link";
-import { StatusDot, type StatusVariant } from "@/components/common/status-dot";
 import {
   Property,
   PropertyLabel,
   PropertyList,
   PropertyValue,
 } from "@/components/content/property-list";
-import { updateCadencePhrase } from "@/data/incident-sla.client";
 
-import { IncidentSlaBadge } from "./incident-sla-badge";
+import { IncidentSlaBadge, IncidentUpdateBadge } from "./incident-sla-badge";
 import { IncidentSlaMissReason } from "./incident-sla-miss-reason";
 
 function TimerProperty({
@@ -66,18 +60,6 @@ function TimerProperty({
   );
 }
 
-const cadenceVariant = {
-  running: "default",
-  at_risk: "warning",
-  overdue: "destructive",
-} as const satisfies Record<IncidentUpdateCadenceStatus, StatusVariant>;
-
-const cadenceTone = {
-  running: "",
-  at_risk: "text-warning",
-  overdue: "text-destructive",
-} as const satisfies Record<IncidentUpdateCadenceStatus, string>;
-
 function CadenceProperty({
   cadence,
   now,
@@ -89,18 +71,7 @@ function CadenceProperty({
     <Property>
       <PropertyLabel>Next update</PropertyLabel>
       <PropertyValue className="flex-col items-start gap-0.5 py-1.5">
-        <span
-          className={cn(
-            "font-mono whitespace-nowrap tabular-nums",
-            cadenceTone[cadence.status],
-          )}
-        >
-          <StatusDot
-            variant={cadenceVariant[cadence.status]}
-            className="mr-1.5 mb-px size-1.5 align-middle"
-          />
-          {updateCadencePhrase(cadence, now)}
-        </span>
+        <IncidentUpdateBadge cadence={cadence} now={now} />
         <span className="text-muted-foreground text-xs">
           every {formatIncidentSlaMinutes(cadence.intervalMinutes)}
           {" · "}
@@ -126,26 +97,28 @@ export function IncidentSla({
   now: Date;
 }) {
   return (
-    <PropertyList>
-      {state.response ? (
-        <TimerProperty
-          incidentId={incidentId}
-          kind="response"
-          label="Response"
-          timer={state.response}
-          now={now}
-        />
-      ) : null}
-      {state.resolution ? (
-        <TimerProperty
-          incidentId={incidentId}
-          kind="resolution"
-          label="Resolution"
-          timer={state.resolution}
-          now={now}
-        />
-      ) : null}
-      {cadence ? <CadenceProperty cadence={cadence} now={now} /> : null}
+    <div className="flex flex-col gap-1">
+      <PropertyList>
+        {state.response ? (
+          <TimerProperty
+            incidentId={incidentId}
+            kind="response"
+            label="Response"
+            timer={state.response}
+            now={now}
+          />
+        ) : null}
+        {state.resolution ? (
+          <TimerProperty
+            incidentId={incidentId}
+            kind="resolution"
+            label="Resolution"
+            timer={state.resolution}
+            now={now}
+          />
+        ) : null}
+        {cadence ? <CadenceProperty cadence={cadence} now={now} /> : null}
+      </PropertyList>
       <p className="text-muted-foreground pt-1 text-xs">
         {state.response || state.resolution || cadence
           ? null
@@ -158,6 +131,6 @@ export function IncidentSla({
         were fixed when the incident was declared.{" "}
         <Link href="/sla-policies/incidents">Edit policy</Link>
       </p>
-    </PropertyList>
+    </div>
   );
 }

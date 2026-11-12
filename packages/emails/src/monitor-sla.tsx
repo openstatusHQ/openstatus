@@ -9,7 +9,7 @@ import { sendEmail } from "./send";
 const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
 const SUPPORT_EMAIL = "ping@openstatus.dev";
 
-/** Sends only in production (`delivery.enabled`); returns the Resend id. */
+/** Sends only in production (`delivery.enabled`); returns the Resend id, throws on a Resend error. */
 export async function sendMonitorSlaMissed(
   req: MonitorSlaMissedProps & { to: string[]; idempotencyKey: string },
 ) {
@@ -23,6 +23,6 @@ export async function sendMonitorSlaMissed(
       subject: monitorSlaMissedSubject(props),
       react: <MonitorSlaMissedEmail {...props} />,
     },
-    { idempotencyKey },
+    { idempotencyKey, throwOnError: true },
   );
 }

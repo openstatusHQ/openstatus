@@ -39,10 +39,14 @@ import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
 import { IncidentSla } from "@/components/incidents/incident-sla";
-import { IncidentSlaBadge } from "@/components/incidents/incident-sla-badge";
+import {
+  IncidentSlaBadge,
+  IncidentUpdateBadge,
+} from "@/components/incidents/incident-sla-badge";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
+import { useNow } from "@/hooks/use-now";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client({ id }: { id: number }) {
@@ -53,6 +57,7 @@ export function Client({ id }: { id: number }) {
     trpc.incident.listEvents.queryOptions({ id }),
   );
   const [followUp, setFollowUp] = useState<{ note: string } | null>(null);
+  const now = useNow(30_000);
 
   if (!incident) return null;
 
@@ -77,7 +82,6 @@ export function Client({ id }: { id: number }) {
   };
 
   const resolved = incident.status === "resolved";
-  const now = new Date();
   const sla = incidentSlaState(incident, now);
   const slaHeadline = sla ? incidentSlaHeadline(sla) : null;
   const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
@@ -177,6 +181,15 @@ export function Client({ id }: { id: number }) {
               <IncidentSlaBadge
                 timer={slaHeadline.timer}
                 kind={slaHeadline.kind}
+                now={now}
+              />
+            </DetailMetaItem>
+          ) : null}
+          {updateCadence?.status === "overdue" ? (
+            <DetailMetaItem>
+              <IncidentUpdateBadge
+                cadence={updateCadence}
+                kind="update"
                 now={now}
               />
             </DetailMetaItem>

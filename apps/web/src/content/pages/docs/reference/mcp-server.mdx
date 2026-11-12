@@ -122,7 +122,7 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 
 | Tool                  | Scope | Purpose |
 |-----------------------|----------|---------|
-| `list_incidents`      | `incidents:read` | List declared incidents, newest declared first. Optional `status` filter; `limit` ≤ 100 and `offset`. Each item carries `sla`: the response and resolution target, due time, met time, missed time, the reason a member wrote for the miss (`missReason`) and status (`running`, `at_risk`, `met`, `breached`), or `null` when the incident is not tracked by an incident SLA policy. |
+| `list_incidents`      | `incidents:read` | List declared incidents, newest declared first. Optional `status` filter; `limit` ≤ 100 and `offset`. Each item carries `sla`: the response and resolution target, due time, met time, missed time, the reason a member wrote for the miss (`missReason`) and status (`running`, `at_risk`, `met`, `breached`), or `null` when the incident is not tracked by an incident SLA policy or was canceled. |
 | `get_incident`        | `incidents:read` | One incident with its timeline (newest first, up to 50 events), linked status report and `sla` state. |
 | `declare_incident`    | `incidents:write` | Declare an incident with a `title` and `severity` (`critical` / `major` / `minor`), optionally a summary, commander, start time and status report to link. |
 | `update_incident`     | `incidents:write` | Change the title, severity, summary, commander or start time. |

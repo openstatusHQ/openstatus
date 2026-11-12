@@ -31,7 +31,7 @@ export async function runMonitorSlaSealTick(
     });
     for (const notice of notices) {
       try {
-        await send({
+        const id = await send({
           to: notice.to,
           idempotencyKey: `monitor-sla-miss:${notice.policy.id}:${notice.month}`,
           policyName: notice.policy.name,
@@ -40,7 +40,7 @@ export async function runMonitorSlaSealTick(
           monitors: notice.monitors,
           url: `${baseUrl}/sla-policies/monitors/${notice.policy.id}`,
         });
-        notified++;
+        if (id) notified++;
       } catch (err) {
         logger.error(
           "monitor-sla-seal: miss email for policy {policyId} failed: {err}",

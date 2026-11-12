@@ -201,6 +201,10 @@ describe("with status_report, a report update meets the response", () => {
         input: { id: declared.id, statusReportId: reportId },
       });
       expect(linked.responseMetAt).toBeNull();
+      await tx
+        .update(incident)
+        .set({ updatedAt: seconds(Date.now() - 60 * MINUTE) })
+        .where(eq(incident.id, declared.id));
 
       const before = seconds(Date.now());
       // a backdated `date` does not move the met time
@@ -209,6 +213,7 @@ describe("with status_report, a report update meets the response", () => {
       expect(row.responseMetAt?.getTime()).toBeGreaterThanOrEqual(
         before.getTime(),
       );
+      expect(row.updatedAt?.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(row.responseBreachDueAt).toBeNull();
       expect(row.sla?.response?.status).toBe("met");
     });

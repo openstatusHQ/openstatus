@@ -174,7 +174,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
           main.components.get(web.id) ?? 0,
         ],
       });
-      // spans two months
+      // spans two months: listed once, under the month it started in
       const spanning = await insertMaintenance(tx, {
         pageId: partner.page.id,
         title: "Network move",
@@ -224,13 +224,16 @@ describe("listMonitorSlaPolicyMaintenances", () => {
         pageId: main.page.id,
         pageTitle: "Main",
         monitorIds: [api.id, web.id],
-        months: ["2026-10-01"],
+        month: "2026-10-01",
+        excusable: true,
       });
       expect(res.windows[1]).toMatchObject({
         id: spanning.id,
         pageTitle: "Partner",
         monitorIds: [api.id],
-        months: ["2026-09-01", "2026-10-01"],
+        month: "2026-09-01",
+        // September is older than the previous month: no window fits it
+        excusable: false,
       });
 
       expect(res.monitors).toEqual([
@@ -266,6 +269,31 @@ describe("listMonitorSlaPolicyMaintenances", () => {
       expect(res.windows).toEqual([]);
       expect(res.monitors).toEqual([
         { id: api.id, name: "API", maintenanceMode: "pause", statusPages: [] },
+      ]);
+    });
+  });
+
+  test("a window that started before the range is listed under its first month", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const main = await insertPage(tx, "Main", [api.id]);
+      await insertMaintenance(tx, {
+        pageId: main.page.id,
+        title: "Overnight",
+        from: utc(2025, 10, 31, 22),
+        to: utc(2025, 11, 1, 2),
+        componentIds: [main.components.get(api.id) ?? 0],
+      });
+
+      const res = await listMonitorSlaPolicyMaintenances({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+      });
+      expect(res.months[0]).toBe("2025-11-01");
+      expect(res.windows.map((w) => [w.title, w.month])).toEqual([
+        ["Overnight", "2025-11-01"],
       ]);
     });
   });

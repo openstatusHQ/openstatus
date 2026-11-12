@@ -25,12 +25,16 @@ type Policy = RouterOutputs["monitorSlaPolicy"]["get"];
 
 export function SlaPolicyExcusedWindows({
   policy,
+  canEdit,
   onAdd,
 }: {
   policy: Policy;
+  /** owners and admins; members see the windows read-only */
+  canEdit: boolean;
   onAdd: () => void;
 }) {
-  const readOnly = policy.archivedAt !== null;
+  const archived = policy.archivedAt !== null;
+  const readOnly = archived || !canEdit;
   const columns = useMemo(() => getColumns({ readOnly }), [readOnly]);
   const windows = policy.excusedWindows;
 
@@ -59,7 +63,9 @@ export function SlaPolicyExcusedWindows({
           </div>
         )}
       </SectionHeaderRow>
+      {/* the page size is read on mount: remount so a new window is not paged out */}
       <DataTable
+        key={windows.length}
         columns={columns}
         data={windows}
         defaultPagination={{ pageIndex: 0, pageSize: windows.length || 1 }}
@@ -75,7 +81,7 @@ export function SlaPolicyExcusedWindows({
           </DataTableEmpty>
         }
       />
-      {policy.excusedExpired ? (
+      {!archived && policy.excusedExpired ? (
         <p className="text-warning text-sm">
           Some months not sealed are shown without their excused windows: the
           checks inside them are older than 45 days and can no longer be

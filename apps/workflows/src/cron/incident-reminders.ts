@@ -17,6 +17,11 @@ const logger = getLogger(["workflow", "incident-reminders"]);
 
 let redis: ReturnType<typeof Redis.fromEnv> | undefined;
 
+// Default retries can hold the tick for ~30 min; a released claim retries
+// on the next tick instead.
+const clientFor = (token: string) =>
+  new WebClient(token, { retryConfig: { retries: 2 } });
+
 function countBy<T>(
   items: readonly T[],
   keyOf: (item: T) => string,
@@ -29,10 +34,8 @@ function countBy<T>(
   return out;
 }
 
-/** Records SLA misses, sends SLA notices (email when Slack cannot), then stale reminders. */
-export async function runIncidentSlaAndRemindersTick(): Promise<
-  ReminderResult[]
-> {
+/** Records SLA misses and sends SLA notices, by Slack or by email when Slack cannot. */
+async function runIncidentSlaPhase(): Promise<void> {
   const breaches = await recordIncidentSlaBreaches();
   const missedUpdates = await recordIncidentMissedUpdates();
   if (breaches.length + missedUpdates.length > 0) {
@@ -42,12 +45,7 @@ export async function runIncidentSlaAndRemindersTick(): Promise<
     );
   }
 
-  // Default retries can hold the tick for ~30 min; a released claim retries
-  // on the next tick instead.
-  const clientFor = (token: string) =>
-    new WebClient(token, { retryConfig: { retries: 2 } });
   const dashboardUrl = env().DASHBOARD_URL;
-
   const notices = await sendIncidentSlaNotices({
     breaches,
     missedUpdates,
@@ -76,16 +74,19 @@ export async function runIncidentSlaAndRemindersTick(): Promise<
   });
   if (emailed.length > 0) {
     logger.info(
-      "incident sla notice emails sent: {sent}, no recipients: {no_recipients}, failed: {failed}",
+      "incident sla notice emails sent: {sent}, skipped: {skipped}, no recipients: {no_recipients}, failed: {failed}",
       {
         sent: 0,
+        skipped: 0,
         no_recipients: 0,
         failed: 0,
         ...countBy(emailed, (e) => e.outcome),
       },
     );
   }
+}
 
+async function runStaleReminders(): Promise<ReminderResult[]> {
   redis ??= Redis.fromEnv();
   const client = redis;
   const results = await remindStaleIncidents({
@@ -95,7 +96,7 @@ export async function runIncidentSlaAndRemindersTick(): Promise<
     release: async (key) => {
       await client.del(key);
     },
-    dashboardUrl,
+    dashboardUrl: env().DASHBOARD_URL,
   });
   logger.info(
     "incident reminders sent: {sent}, failed: {failed}, skipped: {skipped}",
@@ -109,4 +110,20 @@ export async function runIncidentSlaAndRemindersTick(): Promise<
     },
   );
   return results;
+}
+
+/** Runs the SLA phase, then the stale reminders, which an SLA failure must not skip. */
+export async function runIncidentSlaAndRemindersTick(
+  phases: {
+    sla?: () => Promise<void>;
+    reminders?: () => Promise<ReminderResult[]>;
+  } = {},
+): Promise<ReminderResult[]> {
+  const { sla = runIncidentSlaPhase, reminders = runStaleReminders } = phases;
+  try {
+    await sla();
+  } catch (err) {
+    logger.error("incident sla phase failed: {err}", { err: String(err) });
+  }
+  return reminders();
 }

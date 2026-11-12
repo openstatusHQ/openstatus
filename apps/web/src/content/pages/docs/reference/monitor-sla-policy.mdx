@@ -53,7 +53,7 @@ On-demand checks and private locations never count. They are requests outside th
 ```
 total  = (OK + slow + failed runs) − (OK + slow + failed excused runs)
 up     = (OK runs − excused OK runs) + (slow runs − excused slow runs)
-         (OK runs only in strict mode)
+up     = (OK runs − excused OK runs)                      in strict mode
 uptime = up / total
 ```
 
@@ -135,7 +135,7 @@ The runs inside a window are counted from the same run verdicts as the month. op
 - Removing a monitor keeps its sealed months. They are hidden until the monitor is added back.
 - Deleting a monitor removes it from every policy.
 - A policy without a sealed month can be deleted.
-- A policy with a sealed month can only be archived: it becomes read-only, is no longer sealed and leaves the default list. The **Archived** tab still shows it.
+- A policy with a sealed month can only be archived: it becomes read-only, seals no further months and leaves the default list. Its sealed months stay on record. The **Archived** tab still shows it.
 
 ## Export
 

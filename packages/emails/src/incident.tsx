@@ -29,7 +29,7 @@ export async function sendIncidentCommander(
   );
 }
 
-/** One email to every recipient; sends only in production. Returns the Resend id. */
+/** One email to every recipient; sends only in production. Returns the Resend id, throws on a Resend error. */
 export async function sendIncidentSlaNotice(
   req: IncidentSlaNoticeProps & { to: string[]; idempotencyKey: string },
 ) {
@@ -43,6 +43,6 @@ export async function sendIncidentSlaNotice(
       subject: incidentSlaNoticeSubject(props),
       react: <IncidentSlaNoticeEmail {...props} />,
     },
-    { idempotencyKey },
+    { idempotencyKey, throwOnError: true },
   );
 }

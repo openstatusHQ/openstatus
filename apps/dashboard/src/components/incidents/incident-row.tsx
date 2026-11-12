@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { incidentUpdateCadence } from "@openstatus/db/src/schema/incident_sla_policies/cadence";
 import {
   incidentAwaitsAcknowledgement,
   incidentSlaHeadline,
@@ -33,6 +34,7 @@ import {
   severityLevels,
   statusConfig,
 } from "@/data/managed-incidents.client";
+import { useNow } from "@/hooks/use-now";
 import {
   formatClockOrDay,
   formatDurationShort,
@@ -44,7 +46,7 @@ import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { IncidentAcknowledgeButton } from "./incident-acknowledge-button";
-import { IncidentSlaBadge } from "./incident-sla-badge";
+import { IncidentSlaBadge, IncidentUpdateBadge } from "./incident-sla-badge";
 import { ResolveReportDialog } from "./resolve-report-dialog";
 
 type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
@@ -127,9 +129,6 @@ export function IncidentRow({
           (endedAt ?? new Date()).getTime() - incident.startedAt.getTime(),
         );
   const allowed = new Set(incident.allowedTransitions);
-  const now = new Date();
-  const sla = incidentSlaState(incident, now);
-  const headline = sla ? incidentSlaHeadline(sla) : null;
   const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
   // canceling closes the incident for good; ask first
   const transition = (next: IncidentStatus) =>
@@ -154,15 +153,7 @@ export function IncidentRow({
         </EventRowTitle>
         <EventRowMeta>
           {/* first, so it is the item that survives a narrow row */}
-          {headline ? (
-            <IncidentSlaBadge
-              timer={headline.timer}
-              kind={headline.kind}
-              now={now}
-              // folded, the row keeps the time and drops the name
-              className="@max-3xl:[&>[data-slot=incident-sla-kind]]:hidden"
-            />
-          ) : null}
+          {incident.slaSnapshot ? <IncidentRowSla incident={incident} /> : null}
           {meta
             .filter((item) => item !== null)
             .map((item) => (
@@ -239,5 +230,35 @@ export function IncidentRow({
         />
       ) : null}
     </EventRow>
+  );
+}
+
+// its own component so only tracked rows tick
+function IncidentRowSla({ incident }: { incident: Incident }) {
+  const now = useNow(30_000);
+  const sla = incidentSlaState(incident, now);
+  const headline = sla ? incidentSlaHeadline(sla) : null;
+  const cadence = incidentUpdateCadence(incident, incident.updateActivity, now);
+  // folded, the row keeps the time and drops the name
+  const folded = "@max-3xl:[&>[data-slot=incident-sla-kind]]:hidden";
+  return (
+    <>
+      {headline ? (
+        <IncidentSlaBadge
+          timer={headline.timer}
+          kind={headline.kind}
+          now={now}
+          className={folded}
+        />
+      ) : null}
+      {cadence?.status === "overdue" ? (
+        <IncidentUpdateBadge
+          cadence={cadence}
+          kind="update"
+          now={now}
+          className={folded}
+        />
+      ) : null}
+    </>
   );
 }

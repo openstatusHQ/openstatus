@@ -85,6 +85,22 @@ describe("sendMonitorSlaMissed", () => {
     });
   });
 
+  test("a Resend error throws so the caller does not count it as sent", async () => {
+    send.mockImplementation(() =>
+      Promise.resolve({
+        data: null,
+        error: { name: "validation_error", message: "too many recipients" },
+      } as never),
+    );
+    await expect(
+      sendMonitorSlaMissed({
+        ...props,
+        to: ["a@acme.dev"],
+        idempotencyKey: "k",
+      }),
+    ).rejects.toThrow("too many recipients");
+  });
+
   test("nothing without recipients or outside production", async () => {
     await sendMonitorSlaMissed({ ...props, to: [], idempotencyKey: "k" });
     enabled.mockImplementation(() => false);

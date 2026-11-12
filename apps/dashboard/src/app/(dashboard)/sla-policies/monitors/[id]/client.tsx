@@ -1,7 +1,7 @@
 "use client";
 
 import { formatSlaUptime } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
-import { Lock, Shield } from "@openstatus/icons";
+import { Shield } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
@@ -17,7 +17,6 @@ import { parseAsNumberLiteral, useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 
 import {
-  EmptyStateActions,
   EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
@@ -32,7 +31,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { getColumns } from "@/components/data-table/monitor-sla-policy-months/columns";
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   DialogExcusedWindow,
   type ExcusedWindowPrefill,
@@ -51,6 +49,7 @@ import {
 } from "@/components/sla-policies/sla-month-strip";
 import { SlaPolicyExcusedWindows } from "@/components/sla-policies/sla-policy-excused-windows";
 import { SlaPolicyMaintenance } from "@/components/sla-policies/sla-policy-maintenance";
+import { SlaPolicyPaywall } from "@/components/sla-policies/sla-policy-paywall";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { allowedDowntime, formatSlaTarget } from "@/data/sla-policies.client";
@@ -64,11 +63,12 @@ export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const [months, setMonths] = useQueryState("months", parseMonths);
-  const [openDialog, setOpenDialog] = useState(false);
   const [excuse, setExcuse] = useState<{
     prefill: ExcusedWindowPrefill | null;
   } | null>(null);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const { data: members } = useQuery(trpc.member.list.queryOptions());
   const allowed = workspace?.limits["monitor-sla"] === true;
   const { data: policy, isError } = useQuery({
     ...trpc.monitorSlaPolicy.get.queryOptions({
@@ -79,7 +79,7 @@ export function Client() {
   });
   const { data: workspaceMonitors } = useQuery({
     ...trpc.monitor.list.queryOptions(),
-    enabled: allowed && policy?.strict === true,
+    enabled: allowed && policy?.strict === true && !policy.archivedAt,
   });
   const columns = useMemo(
     () => (policy ? getColumns(policy.months) : []),
@@ -88,37 +88,7 @@ export function Client() {
 
   if (!workspace) return null;
 
-  if (!allowed) {
-    return (
-      <SectionGroup>
-        <EmptyStateContainer>
-          <EmptyStateMedia>
-            <Lock />
-          </EmptyStateMedia>
-          <EmptyStateTitle>SLA policies are not on your plan</EmptyStateTitle>
-          <EmptyStateDescription>
-            Upgrade to see how each monitor did against its target, month by
-            month.
-          </EmptyStateDescription>
-          <EmptyStateActions>
-            <Button
-              size="sm"
-              data-track="paywall_viewed"
-              data-limit="monitor-sla"
-              onClick={() => setOpenDialog(true)}
-            >
-              Upgrade
-            </Button>
-          </EmptyStateActions>
-        </EmptyStateContainer>
-        <UpgradeDialog
-          open={openDialog}
-          onOpenChange={setOpenDialog}
-          limit="monitor-sla"
-        />
-      </SectionGroup>
-    );
-  }
+  if (!allowed) return <SlaPolicyPaywall />;
 
   if (isError) {
     return (
@@ -138,6 +108,8 @@ export function Client() {
 
   if (!policy) return null;
 
+  const role = members?.find((m) => m.user.id === user?.id)?.role;
+  const canEdit = role === "owner" || role === "admin";
   const { missed } = policy;
   const currentMonth = policy.months.at(-1);
   let lowest: { name: string; uptime: number; met: boolean } | null = null;
@@ -149,13 +121,16 @@ export function Client() {
       lowest = { name: m.name, uptime: month.uptime, met: month.met === true };
     }
   }
-  const neverSlow = policy.strict
-    ? (workspaceMonitors ?? []).filter(
-        (m) =>
-          m.degradedAfter == null &&
-          policy.monitors.some((pm) => pm.id === m.id),
-      )
-    : [];
+  // an archived policy is a record: no live warnings
+  const live = policy.archivedAt === null;
+  const neverSlow =
+    live && policy.strict
+      ? (workspaceMonitors ?? []).filter(
+          (m) =>
+            m.degradedAfter == null &&
+            policy.monitors.some((pm) => pm.id === m.id),
+        )
+      : [];
 
   return (
     <SectionGroup>
@@ -171,8 +146,8 @@ export function Client() {
               {policy.archivedAt ? (
                 <>
                   {" "}
-                  · archived {formatDate(policy.archivedAt)}, read-only and no
-                  longer sealed
+                  · archived {formatDate(policy.archivedAt)}, read-only, seals
+                  no further months
                 </>
               ) : null}
             </SectionDescription>
@@ -316,7 +291,7 @@ export function Client() {
             Uptime in %, after excused downtime, floored to three decimals
           </span>
         </SlaMonthLegend>
-        {policy.liveIncomplete ? (
+        {live && policy.liveIncomplete ? (
           <p className="text-warning text-sm">
             Recent counts could not be loaded, so the recent weeks may be
             incomplete. Sealed months are not affected.
@@ -335,6 +310,7 @@ export function Client() {
 
       <SlaPolicyExcusedWindows
         policy={policy}
+        canEdit={canEdit}
         onAdd={() => setExcuse({ prefill: null })}
       />
 
@@ -342,7 +318,9 @@ export function Client() {
         policyId={policy.id}
         months={months}
         onExcuse={
-          policy.archivedAt ? undefined : (prefill) => setExcuse({ prefill })
+          policy.archivedAt || !canEdit
+            ? undefined
+            : (prefill) => setExcuse({ prefill })
         }
       />
       <DialogExcusedWindow

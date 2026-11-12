@@ -11,8 +11,9 @@ import {
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { monthRange } from "../frozen-uptime/compute";
-import { assertMonitorSlaLimit, findPolicy } from "./internal";
-import { completeMonths, monthOf, splitByMonth } from "./months";
+import { excusedWindowLock } from "./excused";
+import { assertMonitorSlaLimit, findPolicy, sealedMonthsOf } from "./internal";
+import { completeMonths, monthOf } from "./months";
 import { GetMonitorSlaPolicyInput } from "./schemas";
 
 /**
@@ -111,8 +112,12 @@ export async function listMonitorSlaPolicyMaintenances(args: {
     pageId: number | null;
     pageTitle: string | null;
     monitorIds: number[];
-    months: string[];
+    /** Listed once, under the month it started in, or the first month shown. */
+    month: string;
+    /** Every month it touches can still take an excused window. */
+    excusable: boolean;
   };
+  const sealed = await sealedMonthsOf(db, policy);
   const windows = new Map<number, Window>();
   for (const row of touched) {
     if (row.monitorId === null) continue;
@@ -120,9 +125,10 @@ export async function listMonitorSlaPolicyMaintenances(args: {
     const window = windows.get(row.id) ?? {
       ...rest,
       monitorIds: [],
-      months: splitByMonth(row.from.getTime(), row.to.getTime())
-        .map((part) => part.month)
-        .filter((month) => months.includes(month)),
+      month: row.from < rangeStart ? months[0] : monthOf(row.from),
+      excusable:
+        policy.archivedAt === null &&
+        excusedWindowLock(row, { now, sealed }) === null,
     };
     if (!window.monitorIds.includes(monitorId)) {
       window.monitorIds.push(monitorId);

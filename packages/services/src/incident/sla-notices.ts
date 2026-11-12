@@ -427,7 +427,7 @@ export function incidentSlaNoticeBlocks(args: {
     ...(args.role ? { role: args.role } : {}),
   };
   return {
-    text: `${copy.headline}: ${args.incident.title}`,
+    text: `${copy.headline}: ${escapeMrkdwn(args.incident.title)}`,
     blocks: [
       { type: "section", text: { type: "mrkdwn", text: lines.join("\n") } },
       ...(context.length > 0

@@ -80,6 +80,8 @@ export function Client() {
   const [view, setView] = useQueryState("view", parseView);
   const archived = view === "archived";
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const { data: members } = useQuery(trpc.member.list.queryOptions());
   const allowed = workspace?.limits["monitor-sla"] === true;
   const { data: policies } = useQuery({
     ...trpc.monitorSlaPolicy.list.queryOptions({ archived }),
@@ -92,7 +94,18 @@ export function Client() {
 
   if (!workspace) return null;
 
-  const create = (
+  const role = members?.find((m) => m.user.id === user?.id)?.role;
+  const canEdit = role === "owner" || role === "admin";
+  const create = !canEdit ? (
+    <Button
+      data-section="action"
+      size="sm"
+      disabled
+      title="Only owners and admins can create a policy."
+    >
+      Create policy
+    </Button>
+  ) : (
     <FormSheetMonitorSlaPolicyCreate monitors={monitors ?? []}>
       <Button data-section="action" size="sm">
         Create policy

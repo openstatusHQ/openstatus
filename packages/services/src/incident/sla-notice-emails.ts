@@ -36,7 +36,8 @@ export type IncidentSlaNoticeEmail = {
 export type IncidentSlaNoticeEmailResult = {
   notice: IncidentSlaNoticeResult;
   to: string[];
-  outcome: "sent" | "no_recipients" | "failed";
+  /** `skipped`: the sender returned no id, e.g. outside production. */
+  outcome: "sent" | "skipped" | "no_recipients" | "failed";
 };
 
 const UNDELIVERED: ReadonlySet<IncidentSlaNoticeOutcome> = new Set([
@@ -67,7 +68,7 @@ async function claimEmail(db: DB, n: IncidentSlaNoticeResult) {
   return row !== undefined;
 }
 
-/** The declaring user; none when an API key declared, whoever created the key. */
+/** The declaring user; none when an API key or MCP declared, whoever created the key. */
 async function declarer(db: DB, n: IncidentSlaNoticeResult) {
   if (n.incident.declaredBy === null) return null;
   const declared = await db
@@ -80,7 +81,9 @@ async function declarer(db: DB, n: IncidentSlaNoticeResult) {
       ),
     )
     .get();
-  return declared?.source === "api" ? null : n.incident.declaredBy;
+  return declared?.source === "api" || declared?.source === "mcp"
+    ? null
+    : n.incident.declaredBy;
 }
 
 /** Commander and declarer, else (neither set) the owners and admins; current members with an email only. */
@@ -121,7 +124,7 @@ async function recipients(db: DB, n: IncidentSlaNoticeResult) {
  */
 export async function emailIncidentSlaNotices(args: {
   notices: IncidentSlaNoticeResult[];
-  send: (email: IncidentSlaNoticeEmail) => Promise<unknown>;
+  send: (email: IncidentSlaNoticeEmail) => Promise<string | undefined>;
   dashboardUrl: string;
   db?: DB;
 }): Promise<IncidentSlaNoticeEmailResult[]> {
@@ -156,7 +159,7 @@ export async function emailIncidentSlaNotices(args: {
           time: (date) => `${dueFormat.format(date)} UTC`,
         },
       );
-      await args.send({
+      const id = await args.send({
         to,
         idempotencyKey: `incident-sla-notice:${n.incident.id}:${n.kind}:${n.notice}:${n.dueAt.getTime()}`,
         notice: n.notice,
@@ -172,7 +175,7 @@ export async function emailIncidentSlaNotices(args: {
         audience: found.audience,
         url: `${args.dashboardUrl}/incidents/${n.incident.id}`,
       });
-      results.push({ notice: n, to, outcome: "sent" });
+      results.push({ notice: n, to, outcome: id ? "sent" : "skipped" });
     } catch (error) {
       // The claim stays: a lost email beats a duplicate on the next tick.
       console.warn("incident sla notice email not sent", {

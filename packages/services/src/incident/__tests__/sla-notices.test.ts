@@ -178,7 +178,7 @@ describe("warnings", () => {
       expect(summary(await notices(tx, client))).toEqual([]);
       expect(sent).toHaveLength(1);
       expect(sent[0]?.channel).toBe("C_SLA");
-      expect(sent[0]?.text).toBe("Response due soon: Checkout <down>");
+      expect(sent[0]?.text).toBe("Response due soon: Checkout &lt;down&gt;");
       const blocks = JSON.stringify(sent[0]?.blocks);
       expect(blocks).toContain("*Checkout &lt;down&gt;* (critical)");
       expect(blocks).toContain(
@@ -247,7 +247,9 @@ describe("misses", () => {
         [id, "response", "miss", "sent"],
       ]);
       expect(summary(await notices(tx, client))).toEqual([]);
-      expect(sent[0]?.text).toBe("Response target missed: Checkout <down>");
+      expect(sent[0]?.text).toBe(
+        "Response target missed: Checkout &lt;down&gt;",
+      );
       expect(JSON.stringify(sent[0]?.blocks)).toContain(
         "incident_sla_notice_acknowledge",
       );
@@ -421,7 +423,7 @@ describe("update notices", () => {
       ]);
       expect(summary(await notices(tx, client, { now: at(55) }))).toEqual([]);
       expect(sent).toHaveLength(1);
-      expect(sent[0]?.text).toBe("Update due soon: Checkout <down>");
+      expect(sent[0]?.text).toBe("Update due soon: Checkout &lt;down&gt;");
       const blocks = JSON.stringify(sent[0]?.blocks);
       expect(blocks).toContain(
         "The next update on *Checkout &lt;down&gt;* (critical) is due",
@@ -450,7 +452,7 @@ describe("update notices", () => {
         summary(await notices(tx, client, { now: at(61), missedUpdates })),
       ).toEqual([[id, "update", "miss", "sent"]]);
       expect(summary(await notices(tx, client, { now: at(66) }))).toEqual([]);
-      expect(sent[1]?.text).toBe("Update overdue: Checkout <down>");
+      expect(sent[1]?.text).toBe("Update overdue: Checkout &lt;down&gt;");
       const blocks = JSON.stringify(sent[1]?.blocks);
       expect(blocks).toContain(
         "The update on *Checkout &lt;down&gt;* (critical) was due",

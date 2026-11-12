@@ -374,11 +374,11 @@ export async function acknowledgeFromCard(args: {
     await acknowledgeIncident({ ctx, input: { id: incidentId } });
     acknowledgedHere = true;
     trackSlackIncident(ctx, "acknowledged");
-    await afterIncidentAcknowledged({
-      ctx,
-      effects: await slackEffects(ctx, config),
-      incidentId,
-    }).catch(() => undefined);
+    await slackEffects(ctx, config)
+      .then((effects) =>
+        afterIncidentAcknowledged({ ctx, effects, incidentId }),
+      )
+      .catch(() => undefined);
   } catch (error) {
     if (!(error instanceof ServiceError)) throw error;
     const current = await getIncident({ ctx, input: { id: incidentId } }).catch(

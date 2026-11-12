@@ -15,9 +15,13 @@ export function Breadcrumb() {
   const trpc = useTRPC();
   const root = NAV.slaPolicies;
   const tab = SLA_POLICY_TABS.find((t) => pathname.startsWith(t.href));
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: policies } = useQuery({
     ...trpc.monitorSlaPolicy.list.queryOptions(),
-    enabled: !!id && tab?.value === "monitors",
+    enabled:
+      workspace?.limits["monitor-sla"] === true &&
+      !!id &&
+      tab?.value === "monitors",
   });
   const active = id ? policies?.find((p) => String(p.id) === id) : undefined;
   const { data: archived } = useQuery({

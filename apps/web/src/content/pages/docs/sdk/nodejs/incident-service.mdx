@@ -130,7 +130,7 @@ Incidents declared while the workspace has an [incident SLA policy](/docs/refere
 
 | Field | Description |
 |-------|-------------|
-| `targetMinutes` | The target, fixed on the incident at declare. |
+| `targetMinutes` | The target for the incident's current severity, from the policy snapshot fixed on the incident at declare. A severity change can change it. |
 | `dueAt` | When the target is due, counted from `reportedAt` when set, else from `declaredAt`. A severity or `reportedAt` change moves it while the target is still open. |
 | `metAt` | When the target was met. The response: when the incident was acknowledged, or, when the policy counts the first status report update as the response, when the linked status report got an update; in both cases at the latest when the incident was resolved. The resolution: when the incident entered the policy's stop state. Unset while open. |
 | `missedAt` | The due time recorded as missed. Once set it never clears, not even on reopen or a severity downgrade. |

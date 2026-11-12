@@ -9,7 +9,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import { type ServiceContext, getReadDb } from "../context";
+import { type DB, type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { isDeletable } from "./delete";
 import { allowedTransitions, incidentUserColumns } from "./internal";
@@ -41,6 +41,18 @@ const incidentListWith = {
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
 
+// only open, tracked incidents can have an active update cadence
+async function withUpdateActivity<T extends Incident>(db: DB, rows: T[]) {
+  const activity = await loadIncidentUpdateActivity(
+    db,
+    rows.filter((row) => row.slaSnapshot !== null && row.closedAt === null),
+  );
+  return rows.map((row) => ({
+    ...toIncidentView(row),
+    updateActivity: activity.get(row.id) ?? noUpdateActivity(row),
+  }));
+}
+
 function listWhere(
   ctx: ServiceContext,
   input: Pick<ListIncidentsInput, "status" | "closed">,
@@ -67,15 +79,16 @@ export async function listIncidents(args: {
   const db = getReadDb(ctx);
 
   const where = listWhere(ctx, input);
-  const items = (
+  const items = await withUpdateActivity(
+    db,
     await db.query.incident.findMany({
       where,
       orderBy: [desc(incident.declaredAt), desc(incident.id)],
       limit: input.limit,
       offset: input.offset,
       with: incidentListWith,
-    })
-  ).map((row) => toIncidentView(row));
+    }),
+  );
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;
@@ -99,12 +112,13 @@ export async function listAllIncidents(args: {
   input?: Pick<ListIncidentsInput, "status" | "closed">;
 }) {
   requireScope(args.ctx, "incidents:read");
-  const rows = await getReadDb(args.ctx).query.incident.findMany({
+  const db = getReadDb(args.ctx);
+  const rows = await db.query.incident.findMany({
     where: listWhere(args.ctx, args.input ?? {}),
     orderBy: [desc(incident.declaredAt), desc(incident.id)],
     with: incidentListWith,
   });
-  return rows.map((row) => toIncidentView(row));
+  return withUpdateActivity(db, rows);
 }
 
 export async function getIncident(args: {

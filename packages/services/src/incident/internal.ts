@@ -235,7 +235,7 @@ export async function meetResponse(
   if (!patch.responseMetAt) return;
   const updated = await tx
     .update(incident)
-    .set(patch)
+    .set({ ...patch, updatedAt: new Date() })
     .where(responsePatchGuard(incidentId, patch))
     .returning()
     .get();
@@ -311,6 +311,7 @@ async function acknowledgeOnEvent(
     .set({
       acknowledgedAt: now,
       acknowledgedBy: personId ?? tryGetActorUserId(ctx.actor),
+      updatedAt: now,
     })
     .where(and(eq(incident.id, incidentId), isNull(incident.acknowledgedAt)))
     .returning()
@@ -327,7 +328,7 @@ async function acknowledgeOnEvent(
   const met = patch.responseMetAt
     ? await tx
         .update(incident)
-        .set(patch)
+        .set({ ...patch, updatedAt: now })
         .where(responsePatchGuard(incidentId, patch))
         .returning()
         .get()

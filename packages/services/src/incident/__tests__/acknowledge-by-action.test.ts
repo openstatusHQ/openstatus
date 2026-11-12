@@ -1,4 +1,5 @@
-import { statusReport } from "@openstatus/db/src/schema";
+import { eq } from "@openstatus/db";
+import { incident, statusReport } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createUser,
@@ -83,6 +84,10 @@ describe("a note", () => {
   ])("by %s acknowledges, without an acknowledged event", async (_, ctx) => {
     await withTestTransaction(async (tx) => {
       const declared = await declareUnacknowledged(tx);
+      await tx
+        .update(incident)
+        .set({ updatedAt: new Date(Date.now() - 60 * 60 * 1000) })
+        .where(eq(incident.id, declared.id));
       const before = Date.now();
       await addIncidentNote({
         ctx: withDb(ctx(), tx),
@@ -91,6 +96,9 @@ describe("a note", () => {
       const row = await view(tx, declared.id);
       expect(row.acknowledgedBy).toBe(memberId);
       expect(row.acknowledgedAt?.getTime()).toBeGreaterThanOrEqual(
+        secondFloor(before),
+      );
+      expect(row.updatedAt?.getTime()).toBeGreaterThanOrEqual(
         secondFloor(before),
       );
       expect(await acknowledgedEvents(tx, declared.id)).toHaveLength(0);

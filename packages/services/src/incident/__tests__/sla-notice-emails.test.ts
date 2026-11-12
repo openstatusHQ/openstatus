@@ -14,6 +14,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import {
   createWorkspaceFixture,
   makeApiKeyCtx,
+  makeMcpCtx,
   makeUserCtx,
   withTestTransaction,
   postOnlySlackClient,
@@ -155,6 +156,7 @@ async function tick(
     dashboardUrl: "https://app.test",
     send: async (email) => {
       sent.push(email);
+      return "email_1";
     },
   });
   return { results, emailed, sent };
@@ -238,44 +240,50 @@ describe("email when Slack cannot deliver", () => {
     });
   });
 
-  test("declared by a user's API key with nobody assigned: owners and admins, not the key's creator", async () => {
-    await withTestTransaction(async (tx) => {
-      const admin = await member(tx, "admin");
-      const creator = await member(tx, "member");
-      await upsertIncidentSlaPolicy({
-        ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
-        input: {
-          targets: {
-            critical: { responseMinutes: 60, resolutionMinutes: 240 },
+  test.each([
+    ["API key", makeApiKeyCtx],
+    ["MCP", makeMcpCtx],
+  ] as const)(
+    "declared through a user's %s with nobody assigned: owners and admins, not the key's creator",
+    async (_, makeCtx) => {
+      await withTestTransaction(async (tx) => {
+        const admin = await member(tx, "admin");
+        const creator = await member(tx, "member");
+        await upsertIncidentSlaPolicy({
+          ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
+          input: {
+            targets: {
+              critical: { responseMinutes: 60, resolutionMinutes: 240 },
+            },
+            resolutionStop: "mitigated",
           },
-          resolutionStop: "mitigated",
-        },
-      });
-      const declared = await declareIncident({
-        ctx: withDb(
-          makeApiKeyCtx(team, { keyId: "k_user", userId: creator.id }),
-          tx,
-        ),
-        input: { title: "Checkout down", severity: "critical" },
-      });
-      expect(declared.declaredBy).toBe(creator.id);
-      await tx
-        .update(incident)
-        .set({
-          declaredAt: new Date(
-            Math.floor((Date.now() - 50 * MINUTE) / 1000) * 1000,
+        });
+        const declared = await declareIncident({
+          ctx: withDb(
+            makeCtx(team, { keyId: "k_user", userId: creator.id }),
+            tx,
           ),
-        })
-        .where(eq(incident.id, declared.id));
+          input: { title: "Checkout down", severity: "critical" },
+        });
+        expect(declared.declaredBy).toBe(creator.id);
+        await tx
+          .update(incident)
+          .set({
+            declaredAt: new Date(
+              Math.floor((Date.now() - 50 * MINUTE) / 1000) * 1000,
+            ),
+          })
+          .where(eq(incident.id, declared.id));
 
-      const { sent } = await tick(tx);
-      expect(sent).toHaveLength(1);
-      expect(sent[0]?.audience).toBe("workspace");
-      expect([...(sent[0]?.to ?? [])].sort()).toEqual(
-        [await emailOf(tx, ownerId), admin.email].sort(),
-      );
-    });
-  });
+        const { sent } = await tick(tx);
+        expect(sent).toHaveLength(1);
+        expect(sent[0]?.audience).toBe("workspace");
+        expect([...(sent[0]?.to ?? [])].sort()).toEqual(
+          [await emailOf(tx, ownerId), admin.email].sort(),
+        );
+      });
+    },
+  );
 
   test("nobody to reach in Slack and a permanent refusal both email", async () => {
     await withTestTransaction(async (tx) => {
@@ -327,6 +335,60 @@ describe("email when Slack cannot deliver", () => {
     });
   });
 
+  test("a rejected send is failed and never retried; a send without an id is skipped", async () => {
+    await withTestTransaction(async (tx) => {
+      await declare(tx, { minutesAgo: 50, commanderId: ownerId });
+      const results = await sendIncidentSlaNotices({
+        db: tx,
+        clientFor: () => slack(),
+        dashboardUrl: "https://app.test",
+        workspaceIds: [team.id],
+        breaches: [],
+        missedUpdates: [],
+      });
+      let calls = 0;
+      const failed = await emailIncidentSlaNotices({
+        db: tx,
+        notices: results,
+        dashboardUrl: "https://app.test",
+        send: async () => {
+          calls++;
+          throw new Error("Resend rejected");
+        },
+      });
+      expect(failed.map((e) => e.outcome)).toEqual(["failed"]);
+      const again = await emailIncidentSlaNotices({
+        db: tx,
+        notices: results,
+        dashboardUrl: "https://app.test",
+        send: async () => {
+          calls++;
+          return "email_1";
+        },
+      });
+      expect(again).toEqual([]);
+      expect(calls).toBe(1);
+    });
+    await withTestTransaction(async (tx) => {
+      await declare(tx, { minutesAgo: 50, commanderId: ownerId });
+      const results = await sendIncidentSlaNotices({
+        db: tx,
+        clientFor: () => slack(),
+        dashboardUrl: "https://app.test",
+        workspaceIds: [team.id],
+        breaches: [],
+        missedUpdates: [],
+      });
+      const skipped = await emailIncidentSlaNotices({
+        db: tx,
+        notices: results,
+        dashboardUrl: "https://app.test",
+        send: async () => undefined,
+      });
+      expect(skipped.map((e) => e.outcome)).toEqual(["skipped"]);
+    });
+  });
+
   test("each notice is emailed once, even when two machines hold the same result", async () => {
     await withTestTransaction(async (tx) => {
       await declare(tx, { minutesAgo: 50, commanderId: ownerId });
@@ -338,6 +400,7 @@ describe("email when Slack cannot deliver", () => {
         dashboardUrl: "https://app.test",
         send: async (email) => {
           other.push(email);
+          return "email_1";
         },
       });
       expect(sent).toHaveLength(1);

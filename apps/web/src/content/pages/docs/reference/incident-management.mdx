@@ -133,7 +133,7 @@ Acknowledgement records that someone is on the incident. It is set once, by whic
 - The time is when the entry is written, never the time a note carries. A backdated note cannot acknowledge before the declare.
 - **Acknowledge** writes an `acknowledged` entry to the timeline. The other triggers do not add one.
 
-Acknowledge from the button on the incident's row or detail page, from the pinned Slack card, from a Slack [response notice](#notices), with `AcknowledgeIncident` in the [Incident Service](/docs/sdk/nodejs/incident-service) or with the `acknowledge_incident` [MCP tool](/docs/reference/mcp-server#incidents). The buttons show only on tracked incidents whose response is met by acknowledgement, while they are `open` or `mitigated` and not yet acknowledged. The API call and the tool work on every incident.
+Acknowledge from the button on the incident's row or detail page, from the pinned Slack card, from a Slack [response notice](#notices), with `AcknowledgeIncident` in the [Incident Service](/docs/sdk/nodejs/incident-service) or with the `acknowledge_incident` [MCP tool](/docs/reference/mcp-server#incidents). The buttons show only on tracked incidents whose response is met by acknowledgement, while they are `open` or `mitigated` and not yet acknowledged. The API call and the tool work on any incident that is not closed and not yet acknowledged, tracked or not; otherwise they are refused.
 
 ### Response
 
@@ -162,7 +162,7 @@ The resolution timer stops when the incident enters a stop state:
 | `Mitigated` (default) | `mitigated` or `resolved`. Cleanup after mitigation does not count against the target. |
 | `Resolved` | `resolved` only. |
 
-The stop time is when the incident last entered a stop state. Reopening to `open` clears it and the timer runs again against its original due time.
+The stop time is when the incident first entered a stop state and stayed in one: moving from `mitigated` to `resolved` under the default policy keeps the mitigation time. Reopening to `open` clears it and the timer runs again against its original due time.
 
 ### Recorded misses
 
