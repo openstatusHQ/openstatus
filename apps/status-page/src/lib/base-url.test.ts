@@ -87,4 +87,34 @@ describe("getBaseUrl", () => {
       globalThis.window = originalWindow;
     }
   });
+
+  it("falls back to OPENSTATUS_STATUS_PAGE_URL when STATUS_PAGE_BASE_URL is whitespace", () => {
+    setNodeEnv("production");
+    process.env.STATUS_PAGE_BASE_URL = "   ";
+    process.env.OPENSTATUS_STATUS_PAGE_URL =
+      "https://fallback.example.net:8443";
+    expect(getBaseUrl({ slug: "acme" })).toBe(
+      "https://fallback.example.net:8443",
+    );
+  });
+
+  it("uses server-passed override in browser when private server env is unavailable", () => {
+    setNodeEnv("production");
+    const originalWindow = globalThis.window;
+    try {
+      // @ts-expect-error mock window for browser environment test
+      globalThis.window = {
+        location: { origin: "https://internal-proxy.local:3000" },
+      };
+      expect(
+        getBaseUrl({
+          slug: "acme",
+          customDomain: "planned-dns.example.com",
+          override: "https://{slug}.status.example.net:8443",
+        }),
+      ).toBe("https://acme.status.example.net:8443");
+    } finally {
+      globalThis.window = originalWindow;
+    }
+  });
 });

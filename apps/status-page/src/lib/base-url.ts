@@ -3,15 +3,22 @@ import { getStatusPageBaseUrl } from "@openstatus/utils";
 export function getBaseUrl({
   slug,
   customDomain,
+  override,
 }: {
   slug?: string;
   customDomain?: string | null;
+  override?: string;
 }) {
+  const configuredOverride =
+    override?.trim() ||
+    process.env.STATUS_PAGE_BASE_URL?.trim() ||
+    process.env.OPENSTATUS_STATUS_PAGE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL?.trim();
+
   if (
     typeof window !== "undefined" &&
     window.location?.origin &&
-    !process.env.STATUS_PAGE_BASE_URL &&
-    !process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL
+    !configuredOverride
   ) {
     if (customDomain) {
       return customDomain.startsWith("http://") ||
@@ -25,8 +32,6 @@ export function getBaseUrl({
   return getStatusPageBaseUrl({
     slug,
     customDomain,
-    override:
-      process.env.STATUS_PAGE_BASE_URL ||
-      process.env.NEXT_PUBLIC_STATUS_PAGE_BASE_URL,
+    override: configuredOverride,
   });
 }

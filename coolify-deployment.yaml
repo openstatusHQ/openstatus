@@ -227,6 +227,7 @@ services:
       - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
       - PORT=${SERVER_PORT:-3000}
       - STATUS_PAGE_BASE_URL=${STATUS_PAGE_BASE_URL:-}
+      - OPENSTATUS_STATUS_PAGE_URL=${OPENSTATUS_STATUS_PAGE_URL:-}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -318,6 +319,8 @@ services:
       - PORT=${DASHBOARD_PORT:-3000}
       - HOSTNAME=${DASHBOARD_HOSTNAME:-0.0.0.0}
       - AUTH_TRUST_HOST=${DASHBOARD_AUTH_TRUST_HOST:-true}
+      - STATUS_PAGE_BASE_URL=${STATUS_PAGE_BASE_URL:-}
+      - OPENSTATUS_STATUS_PAGE_URL=${OPENSTATUS_STATUS_PAGE_URL:-}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -356,6 +359,7 @@ services:
       - AUTH_TRUST_HOST=${STATUS_PAGE_AUTH_TRUST_HOST:-true}
       - OPENSTATUS_API_URL=${OPENSTATUS_API_URL:-http://server:3000}
       - STATUS_PAGE_BASE_URL=${STATUS_PAGE_BASE_URL:-}
+      - OPENSTATUS_STATUS_PAGE_URL=${OPENSTATUS_STATUS_PAGE_URL:-}
     depends_on:
       db-migrate:
         condition: service_completed_successfully

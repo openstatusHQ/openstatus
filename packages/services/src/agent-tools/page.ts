@@ -266,6 +266,7 @@ export const updateStatusPageTool: AgentTool<
       id: existing.id,
       slug: input.slug ?? existing.slug,
       title: input.title ?? existing.title,
+      customDomain: existing.customDomain,
     });
   },
 };
