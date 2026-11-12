@@ -88,7 +88,11 @@ function isBlockedHost(hostname: string): boolean {
  * `assertSafeUrlSync`, kept async for existing callers.
  * Throws an error if the URL is not safe.
  */
-export async function assertSafeUrl(urlString: string): Promise<void> {
+export async function assertSafeUrl(
+  urlString: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
   let parsed: URL;
   try {
     parsed = new URL(urlString);
@@ -113,15 +117,6 @@ export async function assertSafeUrl(urlString: string): Promise<void> {
 
 const MAX_REDIRECTS = 3;
 
-function isSameService(from: URL, to: URL): boolean {
-  return (
-    to.hostname === from.hostname &&
-    to.port === from.port &&
-    (to.protocol === from.protocol ||
-      (from.protocol === "http:" && to.protocol === "https:"))
-  );
-}
-
 function isSafeRedirect(from: URL, to: URL): boolean {
   return (
     to.hostname === from.hostname &&
@@ -131,26 +126,65 @@ function isSafeRedirect(from: URL, to: URL): boolean {
   );
 }
 
+export function raceWithSignal<T>(
+  promise: Promise<T>,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(
+      signal.reason ??
+        new DOMException("This operation was aborted", "AbortError"),
+    );
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      reject(
+        signal.reason ??
+          new DOMException("This operation was aborted", "AbortError"),
+      );
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
 /**
- * `fetch` for customer-supplied URLs. Follows only 307/308 (the redirects that
+ * fetch for customer-supplied URLs. Follows only 307/308 (the redirects that
  * keep method and body) to the same host and port, never downgrading https,
  * re-checking every hop; any other 3xx comes back as a non-ok response.
- * `init.body` must be replayable.
+ * init.body must be replayable.
  */
 export async function safeFetch(
   url: string,
   init?: Omit<RequestInit, "redirect">,
 ): Promise<Response> {
   let target = url;
+  const signal = init?.signal ?? undefined;
+
   for (let hop = 0; ; hop++) {
-    await assertSafeUrl(target);
+    signal?.throwIfAborted();
+    await raceWithSignal(assertSafeUrl(target, signal), signal);
+    signal?.throwIfAborted();
+
     const res = await fetch(target, { ...init, redirect: "manual" });
 
     const location = res.headers.get("location");
     if ((res.status !== 307 && res.status !== 308) || !location) return res;
 
     // Headers are replayed on the next hop, so it must be the same service and
-    // never plaintext: same host and port, protocol unchanged or http → https.
+    // never plaintext: same host and port, protocol unchanged or http to https.
     if (
       hop >= MAX_REDIRECTS ||
       !isSafeRedirect(new URL(target), new URL(location, target))
@@ -158,7 +192,10 @@ export async function safeFetch(
       return res;
     }
     const next = new URL(location, target);
-    await res.body?.cancel();
+    if (res.body) {
+      await raceWithSignal(res.body.cancel(), signal);
+    }
+    signal?.throwIfAborted();
     target = next.href;
   }
 }
