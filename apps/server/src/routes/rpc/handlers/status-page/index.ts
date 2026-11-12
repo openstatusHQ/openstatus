@@ -1731,6 +1731,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         $typeName:
           "openstatus.status_page.v1.GetPageComponentDailySummaryResponse" as const,
         components,
+        timeZone: result.timeZone,
       } satisfies GetPageComponentDailySummaryResponse;
     } catch (err) {
       if (err instanceof NotFoundError) {

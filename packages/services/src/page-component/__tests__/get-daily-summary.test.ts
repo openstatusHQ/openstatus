@@ -16,8 +16,9 @@ import {
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import { NotFoundError } from "../../errors";
+import { todayIn } from "../../status-timeline";
 import { getPageComponentDailySummary } from "../get-daily-summary";
 
 const TEST_PREFIX = "svc-page-component-daily-test";
@@ -273,6 +274,121 @@ describe("getPageComponentDailySummary", () => {
           },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  describe("in the page's time zone", () => {
+    async function seedTokyoPage(tx: DrizzleTx) {
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId,
+          title: `${TEST_PREFIX}-tokyo`,
+          description: "test",
+          slug: `${TEST_PREFIX}-tokyo-${Date.now()}`,
+          customDomain: "",
+          defaultTimezone: "Asia/Tokyo",
+        })
+        .returning()
+        .get();
+      const mon = await tx
+        .insert(monitor)
+        .values({
+          workspaceId,
+          active: true,
+          url: "https://example.com",
+          name: `${TEST_PREFIX}-tokyo-monitor`,
+          method: "GET",
+          jobType: "http",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+      await tx.insert(pageComponent).values({
+        workspaceId,
+        pageId: pageRow.id,
+        type: "monitor",
+        monitorId: mon.id,
+        name: "API",
+        order: 0,
+      });
+      return { pageId: pageRow.id, monitorId: String(mon.id) };
+    }
+
+    const dayKey = (timeZone: string) => todayIn(timeZone).toISOString();
+
+    test("groups days in the page's zone", async () => {
+      await withTestTransaction(async (tx) => {
+        const { pageId, monitorId } = await seedTokyoPage(tx);
+        const today = dayKey("Asia/Tokyo");
+        let requestedZone: string | undefined;
+        const tb = {
+          httpStatus15m: (params: {
+            monitorIds: string[];
+            timezone: string;
+          }) => {
+            requestedZone = params.timezone;
+            return Promise.resolve({
+              data: [
+                {
+                  day: today,
+                  count: 10,
+                  ok: 10,
+                  degraded: 0,
+                  error: 0,
+                  monitorId,
+                },
+              ],
+            });
+          },
+        } as unknown as NonNullable<ServiceContext["tb"]>;
+
+        const { components, timeZone } = await getPageComponentDailySummary({
+          ctx: { ...teamCtx, db: tx, tb },
+          input: { pageId, workspaceId, days: 2 },
+        });
+
+        expect(requestedZone).toBe("Asia/Tokyo");
+        expect(timeZone).toBe("Asia/Tokyo");
+        const buckets = components[0].buckets;
+        expect(buckets.at(-1)?.day).toBe(today);
+        expect(buckets.at(-1)?.count).toBe(10);
+      });
+    });
+
+    test("falls back to UTC days when Tinybird rejects the zone", async () => {
+      await withTestTransaction(async (tx) => {
+        const { pageId, monitorId } = await seedTokyoPage(tx);
+        const today = dayKey("UTC");
+        const tb = {
+          httpStatus15m: () =>
+            Promise.reject(new Error("Cannot load time zone Asia/Tokyo")),
+          httpStatus45d: () =>
+            Promise.resolve({
+              data: [
+                {
+                  day: today,
+                  count: 4,
+                  ok: 4,
+                  degraded: 0,
+                  error: 0,
+                  monitorId,
+                },
+              ],
+            }),
+        } as unknown as NonNullable<ServiceContext["tb"]>;
+
+        const { components, timeZone } = await getPageComponentDailySummary({
+          ctx: { ...teamCtx, db: tx, tb },
+          input: { pageId, workspaceId, days: 2 },
+        });
+
+        expect(timeZone).toBe("UTC");
+        const buckets = components[0].buckets;
+        expect(buckets.at(-1)?.day).toBe(today);
+        expect(buckets.at(-1)?.count).toBe(4);
+      });
     });
   });
 });
