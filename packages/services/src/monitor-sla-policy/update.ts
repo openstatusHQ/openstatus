@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray, ne } from "@openstatus/db";
+import { and, asc, eq, gt, inArray, ne } from "@openstatus/db";
 import {
   monitorSlaPolicy,
   monitorSlaPolicyTerms,
@@ -8,7 +8,7 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
-import { type ServiceContext, withTransaction } from "../context";
+import { type DB, type ServiceContext, withTransaction } from "../context";
 import { PreconditionFailedError } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
 import {
@@ -93,19 +93,18 @@ export async function updateMonitorSlaPolicy(args: {
       );
     }
 
-    let termsEffectiveFrom = latest.effectiveFrom;
-    if (termsChanged || zoneChanged) {
+    if (zoneChanged) {
+      await reanchorPendingTerms(tx, row, row.timeZone, timeZone, now);
+    }
+    if (termsChanged) {
       const liveMonth = monthOf(now, timeZone);
-      const nextMonth = monthOf(monthRange(liveMonth, timeZone).end, timeZone);
-      // rows past the live month are pending; a zone change can move the live month either way
-      const oldLiveMonth = monthOf(now, row.timeZone);
-      const pendingAfter = oldLiveMonth < liveMonth ? oldLiveMonth : liveMonth;
+      const nextMonth = nextMonthOf(now, timeZone);
       await tx
         .delete(monitorSlaPolicyTerms)
         .where(
           and(
             eq(monitorSlaPolicyTerms.monitorSlaPolicyId, row.id),
-            gt(monitorSlaPolicyTerms.effectiveFrom, pendingAfter),
+            gt(monitorSlaPolicyTerms.effectiveFrom, liveMonth),
             ne(monitorSlaPolicyTerms.effectiveFrom, nextMonth),
           ),
         );
@@ -119,7 +118,6 @@ export async function updateMonitorSlaPolicy(args: {
               eq(monitorSlaPolicyTerms.effectiveFrom, nextMonth),
             ),
           );
-        termsEffectiveFrom = live.effectiveFrom;
       } else {
         await tx
           .insert(monitorSlaPolicyTerms)
@@ -129,17 +127,21 @@ export async function updateMonitorSlaPolicy(args: {
             target,
             strict,
             effectiveFrom: nextMonth,
+            createdAt: now,
           })
           .onConflictDoUpdate({
             target: [
               monitorSlaPolicyTerms.monitorSlaPolicyId,
               monitorSlaPolicyTerms.effectiveFrom,
             ],
-            set: { target, strict },
+            // created_at is when the terms were last set
+            set: { target, strict, createdAt: now },
           });
-        termsEffectiveFrom = nextMonth;
       }
     }
+    const terms = (await latestTermsOf(tx, row.workspaceId, [row])).get(
+      row.id,
+    ) ?? { target: row.target, strict: row.strict, effectiveFrom: null };
 
     // target/strict on the row stay the terms before any terms row
     const updated = await tx
@@ -169,9 +171,9 @@ export async function updateMonitorSlaPolicy(args: {
 
     const after = {
       ...updated,
-      target,
-      strict,
-      termsEffectiveFrom,
+      target: terms.target,
+      strict: terms.strict,
+      termsEffectiveFrom: terms.effectiveFrom,
       monitorIds: nextIds,
     };
     await emitAudit(tx, ctx, {
@@ -183,4 +185,63 @@ export async function updateMonitorSlaPolicy(args: {
     });
     return after;
   });
+}
+
+function nextMonthOf(now: Date, timeZone: string): string {
+  return monthOf(monthRange(monthOf(now, timeZone), timeZone).end, timeZone);
+}
+
+/**
+ * Pending terms keep their month if set before it starts in the new zone;
+ * otherwise they would judge a month already running, so they move to the
+ * new zone's next month (the later-set row wins a clash there).
+ */
+async function reanchorPendingTerms(
+  tx: DB,
+  policy: { id: number; workspaceId: number },
+  fromZone: string,
+  toZone: string,
+  now: Date,
+) {
+  const nextMonth = nextMonthOf(now, toZone);
+  const where = (...extra: ReturnType<typeof eq>[]) =>
+    and(
+      eq(monitorSlaPolicyTerms.monitorSlaPolicyId, policy.id),
+      eq(monitorSlaPolicyTerms.workspaceId, policy.workspaceId),
+      ...extra,
+    );
+  const pending = await tx
+    .select()
+    .from(monitorSlaPolicyTerms)
+    .where(
+      where(gt(monitorSlaPolicyTerms.effectiveFrom, monthOf(now, fromZone))),
+    )
+    .orderBy(asc(monitorSlaPolicyTerms.effectiveFrom))
+    .all();
+  for (const t of pending) {
+    if (t.effectiveFrom === nextMonth) continue;
+    if (t.createdAt.getTime() < monthRange(t.effectiveFrom, toZone).start) {
+      continue;
+    }
+    const clash = await tx
+      .select()
+      .from(monitorSlaPolicyTerms)
+      .where(where(eq(monitorSlaPolicyTerms.effectiveFrom, nextMonth)))
+      .get();
+    if (clash && clash.createdAt.getTime() > t.createdAt.getTime()) {
+      await tx
+        .delete(monitorSlaPolicyTerms)
+        .where(eq(monitorSlaPolicyTerms.id, t.id));
+      continue;
+    }
+    if (clash) {
+      await tx
+        .delete(monitorSlaPolicyTerms)
+        .where(eq(monitorSlaPolicyTerms.id, clash.id));
+    }
+    await tx
+      .update(monitorSlaPolicyTerms)
+      .set({ effectiveFrom: nextMonth })
+      .where(eq(monitorSlaPolicyTerms.id, t.id));
+  }
 }

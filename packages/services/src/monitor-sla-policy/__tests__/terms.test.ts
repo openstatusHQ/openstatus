@@ -265,6 +265,86 @@ describe("terms in effect", () => {
     });
   });
 
+  test("a zone change keeps pending terms set before their month starts there", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "Auckland", target: 99_500 },
+      });
+      await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: policy.id, target: 99_900 },
+        now: new Date(Date.UTC(2026, 10, 10)),
+      });
+      // 14:00 UTC on 30 November is already 1 December in Auckland
+      const moved = await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: policy.id, timeZone: "Pacific/Auckland" },
+        now: new Date(Date.UTC(2026, 10, 30, 14)),
+      });
+      expect(await termsRows(tx, policy.id)).toEqual([
+        { target: 99_900, strict: false, effectiveFrom: "2026-12-01" },
+      ]);
+      expect(moved).toMatchObject({
+        timeZone: "Pacific/Auckland",
+        target: 99_900,
+        termsEffectiveFrom: "2026-12-01",
+      });
+    });
+  });
+
+  test("a zone change moves pending terms set after their month started there", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "Late", target: 99_500 },
+      });
+      // set at 12:00 UTC on 30 November, after December began in Auckland (11:00 UTC)
+      await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: policy.id, target: 99_900 },
+        now: new Date(Date.UTC(2026, 10, 30, 12)),
+      });
+      const moved = await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: policy.id, timeZone: "Pacific/Auckland" },
+        now: new Date(Date.UTC(2026, 10, 30, 14)),
+      });
+      expect(await termsRows(tx, policy.id)).toEqual([
+        { target: 99_900, strict: false, effectiveFrom: "2027-01-01" },
+      ]);
+      expect(moved.termsEffectiveFrom).toBe("2027-01-01");
+      expect(await termsForMonth(tx, policy, "2026-12-01")).toMatchObject({
+        target: 99_500,
+      });
+    });
+  });
+
+  test("a zone change to an earlier zone keeps pending terms", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "West", target: 99_500, timeZone: "Asia/Tokyo" },
+      });
+      await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: policy.id, strict: true },
+        now,
+      });
+      await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: policy.id, timeZone: "America/Los_Angeles" },
+        now,
+      });
+      expect(await termsRows(tx, policy.id)).toEqual([
+        { target: 99_500, strict: true, effectiveFrom: "2026-12-01" },
+      ]);
+    });
+  });
+
   test("edits in one month upsert one row; reverting drops it", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
