@@ -31,10 +31,10 @@ import {
   clipEpisodes,
   fetchSlaEpisodes,
   type SlaEpisodesPipes,
+  periodicityMs,
   slaEpisodesPipes,
 } from "./fetch-episodes";
 import {
-  episodeRange,
   type FetchedEpisodes,
   memberEpisodes,
   memberTimeMonth,
@@ -50,6 +50,9 @@ const EARLIEST_ZONE = "Pacific/Kiritimati";
 const LATEST_ZONE = "Etc/GMT+12";
 
 const EPISODE_INSERT_CHUNK = 500;
+
+// a run's weight reaches at most 2× the longest cadence past it, so later runs cannot change the month
+const SEAL_LOOKAHEAD_MS = 2 * periodicityMs("1h");
 
 export type SealMonitorSlaMonthsResult = {
   /** the month sealed, YYYY-MM-01; the same label in every zone that can seal */
@@ -464,7 +467,7 @@ async function policyWindows(
   return out;
 }
 
-/** Episodes per time zone over `episodeRange`. */
+/** Episodes per time zone over the month plus SEAL_LOOKAHEAD_MS, capped at now. */
 async function fetchZoneEpisodes(args: {
   pairs: Pair[];
   month: string;
@@ -489,7 +492,11 @@ async function fetchZoneEpisodes(args: {
           ]),
       ).values(),
     ];
-    const range = episodeRange([args.month], timeZone, args.now);
+    const { start, end } = monthRange(args.month, timeZone);
+    const range = {
+      start,
+      end: Math.min(end + SEAL_LOOKAHEAD_MS, args.now.getTime()),
+    };
     const res = await fetchSlaEpisodes({
       monitors,
       fromMs: range.start,

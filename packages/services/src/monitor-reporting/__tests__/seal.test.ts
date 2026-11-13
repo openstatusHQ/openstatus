@@ -18,6 +18,7 @@ import type { ServiceContext } from "../../context";
 import { getMonitorReporting } from "../get";
 import { SEAL_DELAY_MS, sealMonitorSlaMonths } from "../seal";
 import {
+  type EpisodesCall,
   episodesPipesFrom,
   failingEpisodesPipes,
   type Run,
@@ -343,6 +344,27 @@ describe("sealMonitorSlaMonths on episodes", () => {
         measuredMs: OCT_END - at(9, 16),
         coverage: 100_000,
       });
+    });
+  });
+
+  test("reads the month plus two hours, not up to now", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const calls: EpisodesCall[] = [];
+      await sealMonitorSlaMonths({
+        db: tx,
+        now: new Date(OCT_END + 10 * DAY),
+        policyIds: [policy.id],
+        episodesPipes: episodesPipesFrom(() => runs(), calls),
+        sleep,
+      });
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toMatchObject({
+        fromDate: OCT_START,
+        toDate: OCT_END + 2 * HOUR,
+      });
+      expect(await sealedRows(tx, policy.id)).toHaveLength(1);
     });
   });
 
