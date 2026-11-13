@@ -1,6 +1,5 @@
 import { db, eq } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
@@ -18,6 +17,43 @@ import { SCHEDULED_TASKS } from "./scheduler";
 const OCT_END = Date.UTC(2026, 10, 1);
 const now = new Date(OCT_END + 4 * 24 * 3_600_000);
 const beforeOctEnd = new Date(Date.UTC(2026, 9, 10));
+const HOUR = 3_600_000;
+
+type EpisodesPipes = NonNullable<
+  NonNullable<Parameters<typeof runMonitorSlaSealTick>[0]>["episodesPipes"]
+>;
+// six hours down from Oct 10, ok otherwise
+const pipe: EpisodesPipes["http"] = async ({
+  monitorIds,
+  fromDate,
+  toDate,
+}) => {
+  const down = beforeOctEnd.getTime();
+  const parts = [
+    { kind: "ok" as const, startedAt: fromDate, endedAt: down },
+    { kind: "error" as const, startedAt: down, endedAt: down + 6 * HOUR },
+    { kind: "ok" as const, startedAt: down + 6 * HOUR, endedAt: toDate },
+  ];
+  return {
+    data: monitorIds.flatMap((monitorId) =>
+      parts.map((p) => ({
+        monitorId,
+        ...p,
+        runs: (p.endedAt - p.startedAt) / 600_000,
+        weightedMs: p.endedAt - p.startedAt,
+      })),
+    ),
+  };
+};
+const episodesPipes: EpisodesPipes = {
+  http: pipe,
+  tcp: pipe,
+  dns: pipe,
+  icmp: pipe,
+  grpc: pipe,
+};
+// Oct 10 to Nov 1, six hours down
+const UPTIME = Math.floor(((528 - 6) * 100_000) / 528);
 
 describe("monitor-sla-seal", () => {
   test("runs daily with a check-in", () => {
@@ -25,9 +61,10 @@ describe("monitor-sla-seal", () => {
     expect(task).toMatchObject({ expression: "47 5 * * *", checkIn: true });
   });
 
-  test("leaves a month open for corrections for 72 hours after it ends", async () => {
+  test("leaves a month open for corrections for 72 hours after it ends in every zone", async () => {
+    // October ends first at Oct 31 10:00 UTC, in UTC+14
     const res = await runMonitorSlaSealTick({
-      now: new Date(Date.UTC(2026, 10, 3, 12)),
+      now: new Date(Date.UTC(2026, 10, 3, 9)),
       policyIds: [],
     });
     expect(res).toEqual({
@@ -50,9 +87,6 @@ describe("monitor-sla-seal miss email", () => {
       await db.delete(monitorSlaPolicy).where(eq(monitorSlaPolicy.id, id));
     }
     for (const id of monitorIds) {
-      await db
-        .delete(frozenMonitorUptime)
-        .where(eq(frozenMonitorUptime.monitorId, id));
       await db.delete(monitor).where(eq(monitor.id, id));
     }
   });
@@ -82,18 +116,6 @@ describe("monitor-sla-seal miss email", () => {
       monitorId: m.id,
       createdAt: beforeOctEnd,
     });
-    await db.insert(frozenMonitorUptime).values({
-      workspaceId: workspace.id,
-      monitorId: m.id,
-      month: "2026-10-01",
-      days: [
-        {
-          day: "2026-10-01",
-          requests: { ok: 10, degraded: 0, error: 0 },
-          runs: { ok: 990, degraded: 0, error: 10 },
-        },
-      ],
-    });
     return { user, m, policy };
   }
 
@@ -109,6 +131,8 @@ describe("monitor-sla-seal miss email", () => {
       runMonitorSlaSealTick({
         now,
         policyIds: [policy.id],
+        episodesPipes,
+        sleep: async () => {},
         send,
         dashboardUrl: "https://app.test",
       });
@@ -123,7 +147,7 @@ describe("monitor-sla-seal miss email", () => {
         month: "2026-10-01",
         workspaceName: expect.any(String),
         monitors: [
-          { id: m.id, name: "Checkout API", uptime: 99_000, target: 99_500 },
+          { id: m.id, name: "Checkout API", uptime: UPTIME, target: 99_500 },
         ],
         url: `https://app.test/sla-policies/monitors/${policy.id}`,
       },
@@ -140,6 +164,8 @@ describe("monitor-sla-seal miss email", () => {
       runMonitorSlaSealTick({
         now,
         policyIds: [policy.id],
+        episodesPipes,
+        sleep: async () => {},
         send,
         dashboardUrl: "https://app.test",
       });
@@ -163,6 +189,8 @@ describe("monitor-sla-seal miss email", () => {
     const res = await runMonitorSlaSealTick({
       now,
       policyIds: [policy.id],
+      episodesPipes,
+      sleep: async () => {},
       send: async () => undefined,
       dashboardUrl: "https://app.test",
     });

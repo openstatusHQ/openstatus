@@ -9,7 +9,6 @@ import { excusedWindowLock } from "./excused";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
-  findPolicy,
   judgePolicyMonths,
   loadPolicyMembers,
   sealedMonthsOf,
@@ -70,16 +69,14 @@ export async function getMonitorSlaPolicySummary(args: {
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
   const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
-  // the row's own target/strict, not the latest terms loadPolicyMembers merged in
-  const row = await findPolicy(db, ctx, input.id);
-  const liveMonth = monthOf(args.now ?? new Date(), row.timeZone);
-  const live = await termsForMonth(db, row, liveMonth);
+  const liveMonth = monthOf(args.now ?? new Date(), policy.timeZone);
+  const live = await termsForMonth(db, policy, liveMonth);
   return {
     ...policy,
     liveMonth,
     liveTerms: { target: live.target, strict: live.strict },
     /** the time zone is locked once any month is sealed */
-    sealed: (await sealedMonthsOf(db, row)).length > 0,
+    sealed: (await sealedMonthsOf(db, policy)).length > 0,
     monitors: monitors.map(
       ({ regions: _r, periodicity: _p, memberSince: _m, ...m }) => m,
     ),
