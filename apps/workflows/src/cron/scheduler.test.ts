@@ -20,4 +20,9 @@ describe("SCHEDULED_TASKS", () => {
     const task = SCHEDULED_TASKS.find((t) => t.name === "incident-reminders");
     expect(task?.expression).toBe("*/5 * * * *");
   });
+
+  test("a hung incident tick is abandoned before the next one is due", () => {
+    const task = SCHEDULED_TASKS.find((t) => t.name === "incident-reminders");
+    expect(task?.timeoutMs).toBeLessThan(5 * 60_000);
+  });
 });

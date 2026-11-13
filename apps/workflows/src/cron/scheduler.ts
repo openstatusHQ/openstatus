@@ -71,6 +71,8 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     name: "incident-reminders",
     expression: "*/5 * * * *",
     run: runIncidentSlaAndRemindersTick,
+    // A hung Slack or Resend call must not skip the next miss scan.
+    timeoutMs: 4 * 60_000,
   },
   {
     name: "uptime-freeze-daily",
