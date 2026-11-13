@@ -221,7 +221,7 @@ export function evaluateSlaPeriod(args: {
   };
 }
 
-/** Down-time budget of a month and how fast it is being used; all ms. */
+/** Down-time budget of a month and the down time it is on pace for; all ms, excused time leaves both. */
 export function slaBudget(args: {
   monthMs: number;
   excusedMs: number;
@@ -235,7 +235,9 @@ export function slaBudget(args: {
   const paceMs =
     args.elapsedMs > 0
       ? Number(
-          (BigInt(args.downMs) * BigInt(args.monthMs)) / BigInt(args.elapsedMs),
+          (BigInt(args.downMs) *
+            BigInt(Math.max(args.monthMs - args.excusedMs, 0))) /
+            BigInt(args.elapsedMs),
         )
       : 0;
   return {

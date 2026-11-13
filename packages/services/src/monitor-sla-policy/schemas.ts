@@ -67,6 +67,16 @@ const yearMonth = z
   .string()
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected a month as YYYY-MM");
 
+/** One policy member's month (YYYY-MM in the policy zone); defaults to the running month. */
+export const GetMonitorSlaMonitorMonthInput = z.object({
+  id: z.number().int().positive(),
+  monitorId: z.number().int().positive(),
+  month: yearMonth.optional(),
+});
+export type GetMonitorSlaMonitorMonthInput = z.input<
+  typeof GetMonitorSlaMonitorMonthInput
+>;
+
 /** Inclusive month range; defaults to the last twelve complete months. */
 export const ExportMonitorSlaPolicyInput = z.object({
   id: z.number().int().positive(),
