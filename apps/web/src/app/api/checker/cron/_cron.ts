@@ -3,7 +3,7 @@ import {
   and,
   db,
   eq,
-  gte,
+  gt,
   isNotNull,
   lte,
   ne,
@@ -70,7 +70,7 @@ export const cron = async ({
     .select({ id: maintenance.id })
     .from(maintenance)
     .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+      and(lte(maintenance.from, new Date()), gt(maintenance.to, new Date())),
     )
     .as("currentMaintenance");
 
