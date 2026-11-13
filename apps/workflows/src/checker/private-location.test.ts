@@ -1,14 +1,22 @@
 import { and, db, eq, or } from "@openstatus/db";
 import {
+  maintenance,
+  maintenancesToPageComponents,
   monitor,
   notification,
   notificationTrigger,
   notificationsToMonitors,
+  page,
+  pageComponent,
   privateLocation,
   privateLocationMonitorStatus,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  createPage,
+  createPageComponent,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
@@ -419,6 +427,64 @@ describe("updateStatusPrivate", () => {
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.status).toBe("active");
+  });
+
+  test("a report at the maintenance end instant is processed, one before it is suppressed", async () => {
+    const pageId = (await createPage(workspaceId)).id;
+    const component = await createPageComponent(workspaceId, pageId, {
+      type: "monitor",
+      monitorId: TEST_MONITOR_ID,
+    });
+    const to = new Date(Math.floor(Date.now() / 1000) * 1000 + 3_600_000);
+    const [window] = await db
+      .insert(maintenance)
+      .values({
+        title: "db upgrade",
+        message: "",
+        from: new Date(to.getTime() - 7_200_000),
+        to,
+        workspaceId,
+        pageId,
+      })
+      .returning();
+    if (!window) throw new Error("maintenance insert returned no row");
+    await db
+      .insert(maintenancesToPageComponents)
+      .values({ maintenanceId: window.id, pageComponentId: component.id })
+      .run();
+
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(to.getTime() - 1);
+      await post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp: 9300050,
+      });
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+      expect(await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID)).toBeUndefined();
+
+      vi.setSystemTime(to);
+      await post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp: 9300051,
+      });
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.workspaceId, workspaceId))
+        .run();
+      await db.delete(page).where(eq(page.workspaceId, workspaceId)).run();
+    }
   });
 
   test("degraded report sends a degraded notification", async () => {

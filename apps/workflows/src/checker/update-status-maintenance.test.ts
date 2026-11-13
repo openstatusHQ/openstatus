@@ -33,6 +33,7 @@ import {
 import { env } from "../env";
 import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { checkerRoute } from "./index";
+import { monitorsInMaintenance } from "./maintenance";
 import { providerToFunction } from "./utils";
 
 const HOUR_MS = 3_600_000;
@@ -232,5 +233,32 @@ describe("updateStatus for a monitor that pauses during maintenance", () => {
     expect(state.status).toBe("error");
     expect(state.incidents).toHaveLength(1);
     expect(sendAlert).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("monitorsInMaintenance window end", () => {
+  async function inMaintenanceAt(at: Date, monitorId: number) {
+    const row = await monitorsInMaintenance(db, {
+      at,
+      mode: "continue",
+      where: eq(monitor.id, monitorId),
+    }).get();
+    return row !== undefined;
+  }
+
+  test("the end instant is outside the window, the instant before is inside", async () => {
+    const { monitorId, maintenanceId } =
+      await monitorUnderMaintenance("continue");
+    const to = new Date(Math.floor(Date.now() / 1000) * 1000 + HOUR_MS);
+    await db
+      .update(maintenance)
+      .set({ to })
+      .where(eq(maintenance.id, maintenanceId))
+      .run();
+
+    expect(await inMaintenanceAt(to, monitorId)).toBe(false);
+    expect(await inMaintenanceAt(new Date(to.getTime() - 1), monitorId)).toBe(
+      true,
+    );
   });
 });

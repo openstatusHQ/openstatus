@@ -2,11 +2,16 @@ import {
   and,
   db as defaultDb,
   eq,
-  gte,
+  gt,
   lte,
   schema,
   type SQL,
 } from "@openstatus/db";
+
+/** A maintenance is active from `from` up to, but not including, `to`. */
+export function maintenanceActiveAt(at: Date) {
+  return and(lte(schema.maintenance.from, at), gt(schema.maintenance.to, at));
+}
 
 /** Monitors on a status page component under a maintenance active at `at`, in one maintenance mode. */
 export function monitorsInMaintenance(
@@ -37,8 +42,7 @@ export function monitorsInMaintenance(
     .where(
       and(
         eq(schema.monitor.maintenanceMode, args.mode),
-        lte(schema.maintenance.from, args.at),
-        gte(schema.maintenance.to, args.at),
+        maintenanceActiveAt(args.at),
         args.where,
       ),
     );

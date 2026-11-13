@@ -1,15 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import {
-  and,
-  db,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lte,
-  schema,
-  sql,
-} from "@openstatus/db";
+import { and, db, eq, inArray, isNull, schema, sql } from "@openstatus/db";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -19,6 +9,7 @@ import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
 import { findOpenIncident, resolveIncident } from "./incident-utils";
+import { maintenanceActiveAt } from "./maintenance";
 
 const logger = getLogger(["workflow"]);
 
@@ -104,8 +95,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
       )
       .where(
         and(
-          lte(schema.maintenance.from, now),
-          gte(schema.maintenance.to, now),
+          maintenanceActiveAt(now),
           eq(schema.pageComponent.monitorId, monitorIdNumber),
         ),
       )

@@ -377,6 +377,21 @@ export const runsRangeShape = z.object({
   error: z.number().prefault(0),
 });
 
+// fallbackIntervalMs: the monitor's current periodicity, used when a run has no neighbour.
+export const slaEpisodesRangeParameters = runsRangeParameters.extend({
+  fallbackIntervalMs: z.int(),
+});
+
+// Half-open [startedAt, endedAt) in epoch ms.
+export const slaEpisodesRangeShape = z.object({
+  monitorId: z.string(),
+  kind: z.enum(["ok", "degraded", "error", "unmeasured"]),
+  startedAt: z.number(),
+  endedAt: z.number(),
+  runs: z.number(),
+  weightedMs: z.number(),
+});
+
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
 
 /**
@@ -940,6 +955,15 @@ export class OSTinybird {
       pipe: "endpoint__http_runs_range__v0",
       parameters: runsRangeParameters,
       data: runsRangeShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpSlaEpisodesRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_sla_episodes_range__v0",
+      parameters: slaEpisodesRangeParameters,
+      data: slaEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1540,6 +1564,15 @@ export class OSTinybird {
     });
   }
 
+  public get tcpSlaEpisodesRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_sla_episodes_range__v0",
+      parameters: slaEpisodesRangeParameters,
+      data: slaEpisodesRangeShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
@@ -2027,6 +2060,15 @@ export class OSTinybird {
       pipe: "endpoint__icmp_runs_range__v0",
       parameters: runsRangeParameters,
       data: runsRangeShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpSlaEpisodesRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_sla_episodes_range__v0",
+      parameters: slaEpisodesRangeParameters,
+      data: slaEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2534,6 +2576,15 @@ export class OSTinybird {
       pipe: "endpoint__grpc_runs_range__v0",
       parameters: runsRangeParameters,
       data: runsRangeShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcSlaEpisodesRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_sla_episodes_range__v0",
+      parameters: slaEpisodesRangeParameters,
+      data: slaEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3868,6 +3919,15 @@ export class OSTinybird {
       pipe: "endpoint__dns_runs_range__v0",
       parameters: runsRangeParameters,
       data: runsRangeShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsSlaEpisodesRange() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_sla_episodes_range__v0",
+      parameters: slaEpisodesRangeParameters,
+      data: slaEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
