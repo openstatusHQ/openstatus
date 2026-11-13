@@ -6,7 +6,7 @@ import {
   EntityCardRow,
 } from "@/components/common/entity-card";
 import { entityKinds } from "@/data/entity-refs.client";
-import { formatSlaTarget } from "@/data/sla-policies.client";
+import { formatSlaTarget } from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import {
@@ -16,22 +16,22 @@ import {
   RelativeTime,
 } from "../parts";
 
-export function MonitorSlaPolicyCard({ id }: { id: number }) {
+export function MonitorReportingCard({ id }: { id: number }) {
   const trpc = useTRPC();
   const policy = useQuery(
-    trpc.monitorSlaPolicy.summary.queryOptions({ id }, lookupOptions),
+    trpc.monitorReporting.summary.queryOptions({ id }, lookupOptions),
   );
 
   if (!policy.data) {
-    return <EntityRefFallback kind="monitorSlaPolicy" id={id} query={policy} />;
+    return <EntityRefFallback kind="monitorReporting" id={id} query={policy} />;
   }
   const { data } = policy;
 
   return (
     <EntityCard>
       <EntityRefHeader
-        kind="monitorSlaPolicy"
-        href={entityKinds.monitorSlaPolicy.href(data)}
+        kind="monitorReporting"
+        href={entityKinds.monitorReporting.href(data)}
       >
         {data.name}
       </EntityRefHeader>

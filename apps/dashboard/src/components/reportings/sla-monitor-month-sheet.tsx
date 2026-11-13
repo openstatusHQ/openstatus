@@ -18,7 +18,7 @@ import {
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import type { ExcusedWindowPrefill } from "@/components/forms/monitor-sla-policy/dialog-excused-window";
+import type { ExcusedWindowPrefill } from "@/components/forms/monitor-reporting/dialog-excused-window";
 import {
   MetricCard,
   MetricCardGroup,
@@ -37,12 +37,12 @@ import {
   type SlaTreatment,
   slaTreatmentLabels,
   slaTreatmentTotals,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { SlaBudgetBar } from "./sla-budget";
 
-type MonitorMonth = RouterOutputs["monitorSlaPolicy"]["monitorMonth"];
+type MonitorMonth = RouterOutputs["monitorReporting"]["monitorMonth"];
 type Episode = NonNullable<MonitorMonth["episodes"]>[number];
 
 const EPISODES_SHOWN = 50;
@@ -70,10 +70,10 @@ const unavailableText: Record<
   expired:
     "Runs this old are no longer kept, so what used the budget cannot be shown.",
   "time-zone":
-    "After 45 days runs are kept per UTC day only, so this month cannot be judged in the policy's time zone.",
+    "After 45 days runs are kept per UTC day only, so this month cannot be judged in the reporting's time zone.",
 };
 
-/** One monitor's running month under the policy. */
+/** One monitor's running month under the reporting. */
 export function SlaMonitorMonthSheet({
   policy,
   monitor,
@@ -116,13 +116,13 @@ function SheetBody({
 }) {
   const trpc = useTRPC();
   const { data: covering } = useQuery(
-    trpc.monitorSlaPolicy.listForMonitor.queryOptions({
+    trpc.monitorReporting.listForMonitor.queryOptions({
       monitorId: monitor.id,
     }),
   );
   const alsoCoveredBy = (covering ?? []).filter((p) => p.id !== policy.id);
   const { data, isError } = useQuery(
-    trpc.monitorSlaPolicy.monitorMonth.queryOptions({
+    trpc.monitorReporting.monitorMonth.queryOptions({
       id: policy.id,
       monitorId: monitor.id,
     }),
@@ -168,7 +168,7 @@ function SheetBody({
               {alsoCoveredBy.map((p) => (
                 <li key={p.id} className="flex min-w-0 items-baseline gap-2">
                   <Link
-                    href={`/sla-policies/monitors/${p.id}?monitor=${monitor.id}`}
+                    href={`/reportings/monitors/${p.id}?monitor=${monitor.id}`}
                     className="truncate"
                   >
                     {p.name}

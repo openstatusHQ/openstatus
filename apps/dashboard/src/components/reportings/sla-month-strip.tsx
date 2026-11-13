@@ -1,10 +1,10 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { cn } from "@openstatus/ui/lib/utils";
 
-import { formatSlaMonth } from "@/data/sla-policies.client";
+import { formatSlaMonth } from "@/data/reportings.client";
 
 type StripMonth =
-  RouterOutputs["monitorSlaPolicy"]["list"][number]["months"][number];
+  RouterOutputs["monitorReporting"]["list"][number]["months"][number];
 
 const cell = {
   met: "bg-success",

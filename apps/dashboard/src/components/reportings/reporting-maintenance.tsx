@@ -34,15 +34,15 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/monitor-sla-policy-maintenance/columns";
-import type { ExcusedWindowPrefill } from "@/components/forms/monitor-sla-policy/dialog-excused-window";
+import { columns } from "@/components/data-table/monitor-reporting-maintenance/columns";
+import type { ExcusedWindowPrefill } from "@/components/forms/monitor-reporting/dialog-excused-window";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { formatSlaMonth } from "@/data/sla-policies.client";
+import { formatSlaMonth } from "@/data/reportings.client";
 import { formatDurationShort, formatWindow } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-/** Status page maintenances that touched a policy's monitors, newest month first. */
-export function SlaPolicyMaintenance({
+/** Status page maintenances that touched a reporting's monitors, newest month first. */
+export function ReportingMaintenance({
   policyId,
   months,
   onExcuse,
@@ -54,7 +54,7 @@ export function SlaPolicyMaintenance({
 }) {
   const trpc = useTRPC();
   const { data } = useQuery(
-    trpc.monitorSlaPolicy.maintenances.queryOptions({ id: policyId, months }),
+    trpc.monitorReporting.maintenances.queryOptions({ id: policyId, months }),
   );
   if (!data) return null;
 
@@ -82,7 +82,7 @@ export function SlaPolicyMaintenance({
       <SectionHeader>
         <SectionTitle>Maintenance</SectionTitle>
         <SectionDescription>
-          Status page maintenance windows that touched this policy&apos;s
+          Status page maintenance windows that touched this reporting&apos;s
           monitors. While a window is active, a monitor set to pause is not
           checked at all: that time is left out of both sides of its uptime and
           is never counted. A monitor set to continue is checked as usual, and

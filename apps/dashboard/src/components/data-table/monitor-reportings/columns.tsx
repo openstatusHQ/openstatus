@@ -3,29 +3,26 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { SlaMonthStrip } from "@/components/sla-policies/sla-month-strip";
+import { SlaMonthStrip } from "@/components/reportings/sla-month-strip";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import {
-  formatPendingTerms,
-  formatSlaTarget,
-} from "@/data/sla-policies.client";
+import { formatPendingTerms, formatSlaTarget } from "@/data/reportings.client";
 
 import { TableCellLink } from "../table-cell-link";
 import { TableCellNumber } from "../table-cell-number";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-type MonitorSlaPolicy = RouterOutputs["monitorSlaPolicy"]["list"][number];
+type MonitorReporting = RouterOutputs["monitorReporting"]["list"][number];
 
-export const columns: ColumnDef<MonitorSlaPolicy>[] = [
+export const columns: ColumnDef<MonitorReporting>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Policy" />
+      <DataTableColumnHeader column={column} title="Reporting" />
     ),
     cell: ({ row }) => (
       <TableCellLink
         value={row.original.name}
-        href={`/sla-policies/monitors/${row.original.id}`}
+        href={`/reportings/monitors/${row.original.id}`}
         className="font-medium"
       />
     ),

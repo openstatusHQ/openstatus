@@ -31,12 +31,12 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { getColumns } from "@/components/data-table/monitor-sla-policy-months/columns";
+import { getColumns } from "@/components/data-table/monitor-reporting-months/columns";
 import {
   DialogExcusedWindow,
   type ExcusedWindowPrefill,
-} from "@/components/forms/monitor-sla-policy/dialog-excused-window";
-import { MonitorSlaExportPopover } from "@/components/forms/monitor-sla-policy/export-popover";
+} from "@/components/forms/monitor-reporting/dialog-excused-window";
+import { MonitorSlaExportPopover } from "@/components/forms/monitor-reporting/export-popover";
 import {
   MetricCard,
   MetricCardGroup,
@@ -44,21 +44,21 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { SlaMonitorMonthSheet } from "@/components/sla-policies/sla-monitor-month-sheet";
+import { ReportingExcusedWindows } from "@/components/reportings/reporting-excused-windows";
+import { ReportingMaintenance } from "@/components/reportings/reporting-maintenance";
+import { ReportingPaywall } from "@/components/reportings/reporting-paywall";
+import { SlaMonitorMonthSheet } from "@/components/reportings/sla-monitor-month-sheet";
 import {
   SlaMonthLegend,
   SlaMonthLegendItem,
-} from "@/components/sla-policies/sla-month-strip";
-import { SlaPolicyExcusedWindows } from "@/components/sla-policies/sla-policy-excused-windows";
-import { SlaPolicyMaintenance } from "@/components/sla-policies/sla-policy-maintenance";
-import { SlaPolicyPaywall } from "@/components/sla-policies/sla-policy-paywall";
+} from "@/components/reportings/sla-month-strip";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import {
   allowedDowntime,
   formatPendingTerms,
   formatSlaTarget,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -83,7 +83,7 @@ export function Client() {
     refetch,
     isRefetching,
   } = useQuery({
-    ...trpc.monitorSlaPolicy.get.queryOptions({
+    ...trpc.monitorReporting.get.queryOptions({
       id: Number.parseInt(id),
       months,
     }),
@@ -106,7 +106,7 @@ export function Client() {
 
   if (!workspace) return null;
 
-  if (!allowed) return <SlaPolicyPaywall />;
+  if (!allowed) return <ReportingPaywall />;
 
   if (error) {
     const notFound = error.data?.code === "NOT_FOUND";
@@ -117,7 +117,7 @@ export function Client() {
             <Shield />
           </EmptyStateMedia>
           <EmptyStateTitle>
-            {notFound ? "Policy not found" : "Could not load the policy"}
+            {notFound ? "Reporting not found" : "Could not load the reporting"}
           </EmptyStateTitle>
           <EmptyStateDescription>
             {notFound
@@ -158,7 +158,7 @@ export function Client() {
       lowest = { name: m.name, uptime: month.uptime, met: month.met === true };
     }
   }
-  // an archived policy is a record: no live warnings
+  // an archived reporting is a record: no live warnings
   const live = policy.archivedAt === null;
   const neverSlow =
     live && liveTerms.strict
@@ -171,7 +171,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section id="policy">
+      <Section id="reporting">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{policy.name}</SectionTitle>
@@ -204,7 +204,7 @@ export function Client() {
             <MonitorSlaExportPopover policyId={policy.id} />
             {policy.archivedAt ? null : (
               <Button size="sm" variant="outline" asChild>
-                <Link href={`/sla-policies/monitors/${policy.id}/edit`}>
+                <Link href={`/reportings/monitors/${policy.id}/edit`}>
                   Settings
                 </Link>
               </Button>
@@ -319,7 +319,7 @@ export function Client() {
               </EmptyStateMedia>
               <EmptyStateTitle>No monitors</EmptyStateTitle>
               <EmptyStateDescription>
-                This policy covers no monitors yet.
+                This reporting covers no monitors yet.
               </EmptyStateDescription>
             </DataTableEmpty>
           }
@@ -359,13 +359,13 @@ export function Client() {
         ) : null}
       </Section>
 
-      <SlaPolicyExcusedWindows
+      <ReportingExcusedWindows
         policy={policy}
         canEdit={canEdit}
         onAdd={() => setExcuse({ prefill: null })}
       />
 
-      <SlaPolicyMaintenance
+      <ReportingMaintenance
         policyId={policy.id}
         months={months}
         onExcuse={

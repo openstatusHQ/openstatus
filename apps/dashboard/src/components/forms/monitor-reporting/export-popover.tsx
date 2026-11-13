@@ -22,7 +22,7 @@ import { isTRPCClientError } from "@trpc/client";
 import { useId, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { formatSlaMonth } from "@/data/sla-policies.client";
+import { formatSlaMonth } from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 /** YYYY-MM for the UTC month `offset` months from now. */
@@ -56,7 +56,7 @@ export function MonitorSlaExportPopover({ policyId }: { policyId: number }) {
     startTransition(async () => {
       try {
         const res = await queryClient.fetchQuery({
-          ...trpc.monitorSlaPolicy.export.queryOptions({
+          ...trpc.monitorReporting.export.queryOptions({
             id: policyId,
             from,
             to,

@@ -3,13 +3,13 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { formatSlaMonth } from "@/data/sla-policies.client";
+import { formatSlaMonth } from "@/data/reportings.client";
 
 import { TableCellEmpty } from "../table-cell-empty";
 import { TableCellNumber } from "../table-cell-number";
 
 type Month = NonNullable<
-  RouterOutputs["incidentSlaPolicy"]["attainment"]
+  RouterOutputs["incidentReporting"]["attainment"]
 >["months"][number];
 type Count = Month["response"];
 

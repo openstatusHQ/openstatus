@@ -24,7 +24,7 @@ export default async function Layout({
   // a locked plan gets the paywall from the page, not a 404
   if (workspace.limits["monitor-sla"]) {
     await fetchQueryOrNotFound(
-      trpc.monitorSlaPolicy.summary.queryOptions({ id: policyId }),
+      trpc.monitorReporting.summary.queryOptions({ id: policyId }),
     );
   }
 

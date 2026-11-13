@@ -21,7 +21,7 @@ import {
 import { columns as attainmentColumns } from "@/components/data-table/incident-sla-attainment/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormCardGroup } from "@/components/forms/form-card";
-import { FormIncidentSlaPolicy } from "@/components/forms/incident-sla-policy/form";
+import { FormIncidentReporting } from "@/components/forms/incident-reporting/form";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -51,21 +51,21 @@ export function Client() {
   const { data: user } = useQuery(trpc.user.get.queryOptions());
   const { data: members } = useQuery(trpc.member.list.queryOptions());
   const { data: policy, isPending } = useQuery(
-    trpc.incidentSlaPolicy.get.queryOptions(),
+    trpc.incidentReporting.get.queryOptions(),
   );
   const { data: attainment } = useQuery({
-    ...trpc.incidentSlaPolicy.attainment.queryOptions(),
+    ...trpc.incidentReporting.attainment.queryOptions(),
     enabled: workspace?.limits["incident-sla"] === true,
   });
   const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: trpc.incidentSlaPolicy.get.queryKey(),
+      queryKey: trpc.incidentReporting.get.queryKey(),
     });
   const upsert = useMutation(
-    trpc.incidentSlaPolicy.upsert.mutationOptions({ onSuccess: invalidate }),
+    trpc.incidentReporting.upsert.mutationOptions({ onSuccess: invalidate }),
   );
   const remove = useMutation(
-    trpc.incidentSlaPolicy.delete.mutationOptions({ onSuccess: invalidate }),
+    trpc.incidentReporting.delete.mutationOptions({ onSuccess: invalidate }),
   );
 
   if (!workspace || !user || !members || isPending) return null;
@@ -76,16 +76,16 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section id="incident-policy">
+      <Section id="incident-reporting">
         <SectionHeader>
-          <SectionTitle>Incident policy</SectionTitle>
+          <SectionTitle>Incident reporting</SectionTitle>
           <SectionDescription>
-            One policy for the workspace. It applies to every incident declared
-            after it is saved.
+            One reporting for the workspace. It applies to every incident
+            declared after it is saved.
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          <FormIncidentSlaPolicy
+          <FormIncidentReporting
             // remount so the fields follow a save or a turn-off
             key={policy ? `${policy.id}-${policy.updatedAt.getTime()}` : "new"}
             defaultValues={

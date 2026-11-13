@@ -21,9 +21,9 @@ import { getColumns } from "@/components/data-table/monitor-sla-excused-windows/
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 
-type Policy = RouterOutputs["monitorSlaPolicy"]["get"];
+type Policy = RouterOutputs["monitorReporting"]["get"];
 
-export function SlaPolicyExcusedWindows({
+export function ReportingExcusedWindows({
   policy,
   canEdit,
   onAdd,
@@ -54,9 +54,9 @@ export function SlaPolicyExcusedWindows({
           </SectionTitle>
           <SectionDescription>
             Checks inside these windows are left out of both sides of the month
-            for every monitor in the policy; overlapping windows excuse a check
-            once. A window is locked once a month it touches is sealed, or is
-            older than the previous month.
+            for every monitor in the reporting; overlapping windows excuse a
+            check once. A window is locked once a month it touches is sealed, or
+            is older than the previous month.
           </SectionDescription>
         </SectionHeader>
         {readOnly ? null : (

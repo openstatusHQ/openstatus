@@ -12,7 +12,7 @@ import {
   formatPendingTerms,
   formatSlaDuration,
   formatSlaTarget,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 /** The month's down-time budget: burned so far, and where the burn is on pace to end the month. */
@@ -74,7 +74,7 @@ export function SlaBudgetBar({
   );
 }
 
-/** One policy in the monitor sidebar: uptime so far, budget bar, time left. */
+/** One reporting in the monitor sidebar: uptime so far, budget bar, time left. */
 export function SlaMonitorSidebarEntry({
   policy,
   monitorId,
@@ -89,7 +89,7 @@ export function SlaMonitorSidebarEntry({
 }) {
   const trpc = useTRPC();
   const { data, isError } = useQuery(
-    trpc.monitorSlaPolicy.monitorMonth.queryOptions({
+    trpc.monitorReporting.monitorMonth.queryOptions({
       id: policy.id,
       monitorId,
     }),
@@ -98,7 +98,7 @@ export function SlaMonitorSidebarEntry({
 
   return (
     <NextLink
-      href={`/sla-policies/monitors/${policy.id}?monitor=${monitorId}`}
+      href={`/reportings/monitors/${policy.id}?monitor=${monitorId}`}
       className="hover:bg-sidebar-accent focus-visible:ring-ring flex flex-col gap-1.5 border-b px-2 py-2 text-sm transition-colors duration-150 ease-[ease] outline-none last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset"
     >
       <span className="flex min-w-0 items-baseline gap-2">

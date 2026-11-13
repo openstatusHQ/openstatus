@@ -85,13 +85,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export type IncidentSlaPolicyValues = {
+export type IncidentReportingValues = {
   targets: IncidentSlaTargets;
   resolutionStop: IncidentSlaResolutionStop;
   responseMet: IncidentSlaResponseMet;
 };
 
-function toFormValues(policy: IncidentSlaPolicyValues): FormValues {
+function toFormValues(policy: IncidentReportingValues): FormValues {
   const cell = (minutes: number | undefined) =>
     minutes === undefined ? "" : formatIncidentSlaMinutes(minutes);
   const cells = (severity: (typeof incidentSeverity)[number]) => {
@@ -126,7 +126,7 @@ function toTargets(values: FormValues): IncidentSlaTargets {
   return targets;
 }
 
-export function FormIncidentSlaPolicy({
+export function FormIncidentReporting({
   defaultValues,
   saved,
   locked,
@@ -135,12 +135,12 @@ export function FormIncidentSlaPolicy({
   onDelete,
   onUpgrade,
 }: {
-  defaultValues: IncidentSlaPolicyValues;
-  /** A policy exists, so it can be turned off. */
+  defaultValues: IncidentReportingValues;
+  /** A reporting exists, so it can be turned off. */
   saved: boolean;
   locked: boolean;
   readOnly: boolean;
-  onSubmit: (values: IncidentSlaPolicyValues) => Promise<void>;
+  onSubmit: (values: IncidentReportingValues) => Promise<void>;
   onDelete: () => Promise<void>;
   onUpgrade: () => void;
 }) {
@@ -387,9 +387,9 @@ export function FormIncidentSlaPolicy({
           <FormCardFooter>
             <FormCardFooterInfo>
               {readOnly && !locked
-                ? "Only owners and admins can change the policy."
+                ? "Only owners and admins can change the reporting."
                 : off
-                  ? "The policy is off: incidents are declared without targets. Turn it on to review these defaults and save them."
+                  ? "The reporting is off: incidents are declared without targets. Turn it on to review these defaults and save them."
                   : "A notice goes out at 75% of each target and again when it is missed: in Slack, or by email to the commander and declarer when Slack cannot deliver."}
             </FormCardFooterInfo>
             <div className="flex shrink-0 items-center gap-2">

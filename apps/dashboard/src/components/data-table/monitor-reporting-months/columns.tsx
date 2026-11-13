@@ -10,10 +10,10 @@ import {
   formatSlaDuration,
   formatSlaMonth,
   formatSlaTarget,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 
 type PolicyMonitor =
-  RouterOutputs["monitorSlaPolicy"]["get"]["monitors"][number];
+  RouterOutputs["monitorReporting"]["get"]["monitors"][number];
 type PolicyMonth = PolicyMonitor["months"][number];
 
 function runsNote(m: PolicyMonth): string | null {

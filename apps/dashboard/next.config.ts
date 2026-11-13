@@ -56,6 +56,11 @@ const nextConfig: NextConfig = {
         destination: "/settings/audit-logs",
         permanent: false,
       },
+      {
+        source: "/sla-policies/:path*",
+        destination: "/reportings/:path*",
+        permanent: true,
+      },
     ];
   },
 };

@@ -10,8 +10,8 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { FormMonitorSlaPolicyUpdate } from "@/components/forms/monitor-sla-policy/update";
-import { SlaPolicyPaywall } from "@/components/sla-policies/sla-policy-paywall";
+import { FormMonitorReportingUpdate } from "@/components/forms/monitor-reporting/update";
+import { ReportingPaywall } from "@/components/reportings/reporting-paywall";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
@@ -22,12 +22,12 @@ export default function Page() {
   const { data: members } = useQuery(trpc.member.list.queryOptions());
   const allowed = workspace?.limits["monitor-sla"] === true;
   const { data: policy } = useQuery({
-    ...trpc.monitorSlaPolicy.summary.queryOptions({ id: Number.parseInt(id) }),
+    ...trpc.monitorReporting.summary.queryOptions({ id: Number.parseInt(id) }),
     enabled: allowed,
   });
 
   if (!workspace) return null;
-  if (!allowed) return <SlaPolicyPaywall />;
+  if (!allowed) return <ReportingPaywall />;
   if (!policy || !user || !members) return null;
 
   const role = members.find((m) => m.user.id === user.id)?.role;
@@ -40,18 +40,18 @@ export default function Page() {
           <SectionTitle>{policy.name}</SectionTitle>
           <SectionDescription>
             {policy.archivedAt
-              ? "This policy is archived. Its terms and monitors are read-only."
+              ? "This reporting is archived. Its terms and monitors are read-only."
               : canEdit
                 ? "Previews follow every change. Sealed months keep the terms they were judged with."
-                : "Only owners and admins can change the policy."}
+                : "Only owners and admins can change the reporting."}
           </SectionDescription>
         </SectionHeader>
         <fieldset
           disabled={!!policy.archivedAt || !canEdit}
           className="contents"
-          aria-label="Policy settings"
+          aria-label="Reporting settings"
         >
-          <FormMonitorSlaPolicyUpdate />
+          <FormMonitorReportingUpdate />
         </fieldset>
       </Section>
     </SectionGroup>

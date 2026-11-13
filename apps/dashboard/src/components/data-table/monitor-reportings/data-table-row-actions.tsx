@@ -9,11 +9,11 @@ import { useState } from "react";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { DialogArchiveMonitorSlaPolicy } from "./dialog-archive";
+import { DialogArchiveMonitorReporting } from "./dialog-archive";
 
-type MonitorSlaPolicy = RouterOutputs["monitorSlaPolicy"]["list"][number];
+type MonitorReporting = RouterOutputs["monitorReporting"]["list"][number];
 
-export function DataTableRowActions({ row }: { row: Row<MonitorSlaPolicy> }) {
+export function DataTableRowActions({ row }: { row: Row<MonitorReporting> }) {
   const policy = row.original;
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -24,20 +24,20 @@ export function DataTableRowActions({ row }: { row: Row<MonitorSlaPolicy> }) {
   const canEdit = role === "owner" || role === "admin";
   const invalidate = () => {
     queryClient.invalidateQueries({
-      queryKey: trpc.monitorSlaPolicy.list.queryKey(),
+      queryKey: trpc.monitorReporting.list.queryKey(),
     });
     queryClient.invalidateQueries({
-      queryKey: trpc.monitorSlaPolicy.summary.queryKey(),
+      queryKey: trpc.monitorReporting.summary.queryKey(),
     });
   };
   const archiveMutation = useMutation(
-    trpc.monitorSlaPolicy.archive.mutationOptions({ onSuccess: invalidate }),
+    trpc.monitorReporting.archive.mutationOptions({ onSuccess: invalidate }),
   );
   const deleteMutation = useMutation(
-    trpc.monitorSlaPolicy.delete.mutationOptions({ onSuccess: invalidate }),
+    trpc.monitorReporting.delete.mutationOptions({ onSuccess: invalidate }),
   );
 
-  // a sealed month is a record: such a policy can only be archived
+  // a sealed month is a record: such a reporting can only be archived
   if (!canEdit) return <QuickActions />;
   if (policy.sealed) {
     if (policy.archivedAt) return <QuickActions />;
@@ -54,7 +54,7 @@ export function DataTableRowActions({ row }: { row: Row<MonitorSlaPolicy> }) {
             },
           ]}
         />
-        <DialogArchiveMonitorSlaPolicy
+        <DialogArchiveMonitorReporting
           name={policy.name}
           open={archiving}
           onOpenChange={setArchiving}
@@ -69,7 +69,7 @@ export function DataTableRowActions({ row }: { row: Row<MonitorSlaPolicy> }) {
       deleteAction={{
         confirmationValue: policy.name,
         description:
-          "No month of this policy has been sealed yet, so nothing is lost. This cannot be undone.",
+          "No month of this reporting has been sealed yet, so nothing is lost. This cannot be undone.",
         submitAction: async () => {
           await deleteMutation.mutateAsync({ id: policy.id });
         },

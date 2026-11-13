@@ -38,7 +38,7 @@ export const config: Record<
       },
       {
         value: "incident-sla",
-        label: "Incident SLA policy",
+        label: "Incident reporting",
       },
       {
         value: "monitor-values-visibility",
@@ -111,7 +111,7 @@ export const config: Record<
       { value: "data-retention", label: "Data retention" },
       { value: "response-logs", label: "Response Logs" },
       { value: "otel", label: "OTel Exporter" },
-      { value: "monitor-sla", label: "SLA policies" },
+      { value: "monitor-sla", label: "Reportings" },
       {
         value: "synthetic-checks",
         label: "Synthetic API Checks",

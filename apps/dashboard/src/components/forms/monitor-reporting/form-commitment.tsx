@@ -32,7 +32,7 @@ import {
   formatSlaTarget,
   nextSlaMonth,
   parseSlaTarget,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 
 import {
   SlaStrictField,
@@ -104,7 +104,7 @@ export function FormCommitment({
           <FormCardHeader>
             <FormCardTitle>Commitment</FormCardTitle>
             <FormCardDescription>
-              The monthly uptime each monitor in this policy has to reach. A
+              The monthly uptime each monitor in this reporting has to reach. A
               change applies from next month: the running month keeps the terms
               it started with.
             </FormCardDescription>

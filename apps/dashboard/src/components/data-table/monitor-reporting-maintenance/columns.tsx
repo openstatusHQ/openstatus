@@ -9,7 +9,7 @@ import { TableCellEmpty } from "../table-cell-empty";
 import { TableCellLink } from "../table-cell-link";
 
 type PolicyMonitor =
-  RouterOutputs["monitorSlaPolicy"]["maintenances"]["monitors"][number];
+  RouterOutputs["monitorReporting"]["maintenances"]["monitors"][number];
 
 export const columns: ColumnDef<PolicyMonitor>[] = [
   {

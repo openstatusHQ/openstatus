@@ -33,16 +33,16 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/monitor-sla-policies/columns";
+import { columns } from "@/components/data-table/monitor-reportings/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { FormSheetMonitorSlaPolicyCreate } from "@/components/forms/monitor-sla-policy/sheet-create";
-import { SlaMonthStripLegend } from "@/components/sla-policies/sla-month-strip";
+import { FormSheetMonitorReportingCreate } from "@/components/forms/monitor-reporting/sheet-create";
+import { SlaMonthStripLegend } from "@/components/reportings/sla-month-strip";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
-type Policy = RouterOutputs["monitorSlaPolicy"]["list"][number];
+type Policy = RouterOutputs["monitorReporting"]["list"][number];
 
 const VIEWS = ["active", "archived"] as const;
 const parseView = parseAsStringLiteral(VIEWS).withDefault("active");
@@ -93,7 +93,7 @@ export function Client() {
   const membersQuery = useQuery(trpc.member.list.queryOptions());
   const allowed = workspace?.limits["monitor-sla"] === true;
   const { data: policies } = useQuery({
-    ...trpc.monitorSlaPolicy.list.queryOptions({ archived }),
+    ...trpc.monitorReporting.list.queryOptions({ archived }),
     enabled: allowed,
   });
   const { data: monitors } = useQuery({
@@ -111,7 +111,7 @@ export function Client() {
   const roleLoading = !roleError && (!userQuery.data || !membersQuery.data);
   const disabledCreate = (
     <Button data-section="action" size="sm" disabled>
-      Create policy
+      Create reporting
     </Button>
   );
   const create = roleLoading ? (
@@ -127,23 +127,23 @@ export function Client() {
       <TooltipContent>
         {roleError
           ? "Could not check your role. Reload to try again."
-          : "Only owners and admins can create a policy."}
+          : "Only owners and admins can create a reporting."}
       </TooltipContent>
     </Tooltip>
   ) : (
-    <FormSheetMonitorSlaPolicyCreate monitors={monitors ?? []}>
+    <FormSheetMonitorReportingCreate monitors={monitors ?? []}>
       <Button data-section="action" size="sm">
-        Create policy
+        Create reporting
       </Button>
-    </FormSheetMonitorSlaPolicyCreate>
+    </FormSheetMonitorReportingCreate>
   );
 
   return (
     <SectionGroup>
-      <Section id="sla-policies">
+      <Section id="reportings">
         <SectionHeaderRow>
           <SectionHeader>
-            <SectionTitle>SLA policies</SectionTitle>
+            <SectionTitle>Reportings</SectionTitle>
             <SectionDescription>
               The uptime you committed to, judged per monitor and month.
             </SectionDescription>
@@ -174,7 +174,7 @@ export function Client() {
                 onClick={() => setOpenDialog(true)}
               >
                 <Lock />
-                Create policy
+                Create reporting
               </Button>
             )}
           </div>
@@ -191,9 +191,9 @@ export function Client() {
                     <EmptyStateMedia>
                       <Shield />
                     </EmptyStateMedia>
-                    <EmptyStateTitle>No archived policies</EmptyStateTitle>
+                    <EmptyStateTitle>No archived reportings</EmptyStateTitle>
                     <EmptyStateDescription>
-                      A policy with sealed months is archived instead of
+                      A reporting with sealed months is archived instead of
                       deleted, and kept here read-only.
                     </EmptyStateDescription>
                   </DataTableEmpty>
@@ -202,7 +202,7 @@ export function Client() {
                     <EmptyStateMedia>
                       <Shield />
                     </EmptyStateMedia>
-                    <EmptyStateTitle>No SLA policies</EmptyStateTitle>
+                    <EmptyStateTitle>No reportings</EmptyStateTitle>
                     <EmptyStateDescription>
                       Set a monthly uptime target for the monitors a contract
                       covers. Each monitor is judged against it month by month.
@@ -235,7 +235,7 @@ export function Client() {
         {!allowed || (policies && policies.length > 0) ? (
           <SlaMonthStripLegend>
             <span>
-              A month is missed when any monitor in the policy missed it.
+              A month is missed when any monitor in the reporting missed it.
             </span>
           </SlaMonthStripLegend>
         ) : null}

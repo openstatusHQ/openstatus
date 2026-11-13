@@ -32,7 +32,7 @@ import {
   allowedDowntime,
   formatSlaTarget,
   parseSlaTarget,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 
 export type MonitorOption = {
   id: number;

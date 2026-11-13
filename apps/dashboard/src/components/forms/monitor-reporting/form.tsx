@@ -23,7 +23,7 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { parseSlaTarget } from "@/data/sla-policies.client";
+import { parseSlaTarget } from "@/data/reportings.client";
 
 import {
   type MonitorOption,
@@ -46,7 +46,7 @@ const schema = z.object({
 
 export type FormValues = z.infer<typeof schema>;
 
-export function FormMonitorSlaPolicy({
+export function FormMonitorReporting({
   onSubmit,
   className,
   monitors,

@@ -14,27 +14,27 @@ import {
   FormSheetTrigger,
   FormSheetWithDirtyProtection,
 } from "@/components/forms/form-sheet";
-import { parseSlaTarget } from "@/data/sla-policies.client";
+import { parseSlaTarget } from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { FormMonitorSlaPolicy } from "./form";
+import { FormMonitorReporting } from "./form";
 
 /** Create sheet with the mutation attached. `children` is the trigger. */
-export function FormSheetMonitorSlaPolicyCreate({
+export function FormSheetMonitorReportingCreate({
   children,
   monitors,
 }: {
   children: React.ReactNode;
-  monitors: React.ComponentProps<typeof FormMonitorSlaPolicy>["monitors"];
+  monitors: React.ComponentProps<typeof FormMonitorReporting>["monitors"];
 }) {
   const [open, setOpen] = useState(false);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const createMutation = useMutation(
-    trpc.monitorSlaPolicy.create.mutationOptions({
+    trpc.monitorReporting.create.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorSlaPolicy.list.queryKey(),
+          queryKey: trpc.monitorReporting.list.queryKey(),
         });
       },
     }),
@@ -45,14 +45,14 @@ export function FormSheetMonitorSlaPolicyCreate({
       <FormSheetTrigger asChild>{children}</FormSheetTrigger>
       <FormSheetContent>
         <FormSheetHeader>
-          <FormSheetTitle>SLA policy</FormSheetTitle>
+          <FormSheetTitle>Reporting</FormSheetTitle>
           <FormSheetDescription>
-            The monthly uptime each monitor in the policy has to reach.
+            The monthly uptime each monitor in the reporting has to reach.
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
           <FormCard className="overflow-auto rounded-none border-none">
-            <FormMonitorSlaPolicy
+            <FormMonitorReporting
               monitors={monitors}
               onSubmit={async (values) => {
                 const target = parseSlaTarget(values.target);
@@ -66,13 +66,13 @@ export function FormSheetMonitorSlaPolicyCreate({
                 });
                 setOpen(false);
               }}
-              id="monitor-sla-policy-form"
+              id="monitor-reporting-form"
               className="my-4"
             />
           </FormCard>
         </FormCardGroup>
         <FormSheetFooter>
-          <Button type="submit" form="monitor-sla-policy-form">
+          <Button type="submit" form="monitor-reporting-form">
             Submit
           </Button>
         </FormSheetFooter>

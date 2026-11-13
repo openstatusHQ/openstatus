@@ -25,10 +25,10 @@ export function DataTableRowActions({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const removeMutation = useMutation(
-    trpc.monitorSlaPolicy.removeExcusedWindow.mutationOptions({
+    trpc.monitorReporting.removeExcusedWindow.mutationOptions({
       onSuccess: () =>
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorSlaPolicy.get.queryKey(),
+          queryKey: trpc.monitorReporting.get.queryKey(),
         }),
     }),
   );
@@ -51,7 +51,7 @@ export function DataTableRowActions({
       deleteAction={{
         confirmationValue: "remove window",
         description:
-          "Its checks count again for every monitor in the policy. This cannot be undone.",
+          "Its checks count again for every monitor in the reporting. This cannot be undone.",
         submitAction: async () => {
           await removeMutation.mutateAsync({ id: excused.id });
         },

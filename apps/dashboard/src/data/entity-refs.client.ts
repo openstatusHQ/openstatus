@@ -8,6 +8,7 @@ import {
   Notification,
   PrivateLocation,
   Report,
+  Reporting,
   Shield,
   StatusPage,
 } from "@openstatus/icons";
@@ -85,12 +86,12 @@ export const entityKinds = {
     // Notifiers are edited in a sheet on the list; there is no detail page.
     href: () => "/notifications",
   },
-  monitorSlaPolicy: {
-    label: "SLA policy",
-    icon: Shield,
+  monitorReporting: {
+    label: "Reporting",
+    icon: Reporting,
     fields: ["monitorSlaPolicyId"],
     auditType: "monitor_sla_policy",
-    href: (policy: { id: number }) => `/sla-policies/monitors/${policy.id}`,
+    href: (policy: { id: number }) => `/reportings/monitors/${policy.id}`,
   },
   monitorSlaExcusedWindow: {
     label: "Excused window",
@@ -98,14 +99,14 @@ export const entityKinds = {
     fields: [],
     auditType: "monitor_sla_excused_window",
     href: (window: { policy: { id: number } }) =>
-      `/sla-policies/monitors/${window.policy.id}`,
+      `/reportings/monitors/${window.policy.id}`,
   },
-  incidentSlaPolicy: {
-    label: "Incident SLA policy",
-    icon: Shield,
+  incidentReporting: {
+    label: "Incident reporting",
+    icon: Reporting,
     fields: [],
     auditType: "incident_sla_policy",
-    href: () => "/sla-policies/incidents",
+    href: () => "/reportings/incidents",
   },
 } as const satisfies Record<string, EntityKindConfig>;
 

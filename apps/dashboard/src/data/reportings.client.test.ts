@@ -14,7 +14,7 @@ import {
   parseSlaTarget,
   slaMonthOf,
   slaTreatmentTotals,
-} from "./sla-policies.client";
+} from "./reportings.client";
 
 describe("allowedDowntime", () => {
   test.each([

@@ -15,7 +15,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 /** Stays open on error so the archive can be retried. */
-export function DialogArchiveMonitorSlaPolicy({
+export function DialogArchiveMonitorReporting({
   name,
   open,
   onOpenChange,
@@ -59,8 +59,8 @@ export function DialogArchiveMonitorSlaPolicy({
           <AlertDialogTitle>Archive `{name}`?</AlertDialogTitle>
           <AlertDialogDescription>
             It has sealed months, so it is kept as a record instead of being
-            deleted. An archived policy is read-only, seals no more months and
-            only shows under the archived filter. This cannot be undone.
+            deleted. An archived reporting is read-only, seals no more months
+            and only shows under the archived filter. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

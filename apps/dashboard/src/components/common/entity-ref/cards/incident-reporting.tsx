@@ -10,17 +10,17 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { EntityRefFallback, EntityRefHeader } from "../parts";
 
-export function IncidentSlaPolicyCard({ id }: { id: number }) {
+export function IncidentReportingCard({ id }: { id: number }) {
   const trpc = useTRPC();
-  // one policy per workspace: an older id means it was deleted and saved again
+  // one reporting per workspace: an older id means it was deleted and saved again
   const policy = useQuery({
-    ...trpc.incidentSlaPolicy.get.queryOptions(),
+    ...trpc.incidentReporting.get.queryOptions(),
     select: (row) => (row?.id === id ? row : undefined),
   });
 
   if (!policy.data) {
     return (
-      <EntityRefFallback kind="incidentSlaPolicy" id={id} query={policy} />
+      <EntityRefFallback kind="incidentReporting" id={id} query={policy} />
     );
   }
   const { data } = policy;
@@ -28,10 +28,10 @@ export function IncidentSlaPolicyCard({ id }: { id: number }) {
   return (
     <EntityCard>
       <EntityRefHeader
-        kind="incidentSlaPolicy"
-        href={entityKinds.incidentSlaPolicy.href()}
+        kind="incidentReporting"
+        href={entityKinds.incidentReporting.href()}
       >
-        Incident SLA policy
+        Incident reporting
       </EntityRefHeader>
       <EntityCardContent>
         <EntityCardRow label="Response met by">

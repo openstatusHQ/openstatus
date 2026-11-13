@@ -14,7 +14,7 @@ import {
 import { SectionGroup } from "@/components/content/section";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 
-export function SlaPolicyPaywall() {
+export function ReportingPaywall() {
   const [open, setOpen] = useState(false);
   return (
     <SectionGroup>
@@ -22,7 +22,7 @@ export function SlaPolicyPaywall() {
         <EmptyStateMedia>
           <Lock />
         </EmptyStateMedia>
-        <EmptyStateTitle>SLA policies are not on your plan</EmptyStateTitle>
+        <EmptyStateTitle>Reportings are not on your plan</EmptyStateTitle>
         <EmptyStateDescription>
           Upgrade to see how each monitor did against its target, month by
           month.

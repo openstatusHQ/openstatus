@@ -1,17 +1,17 @@
 import { Incident, Monitor } from "@openstatus/icons";
 
 // The section root redirects to the first entry.
-export const SLA_POLICY_TABS = [
+export const REPORTING_TABS = [
   {
     value: "monitors",
     label: "Monitors",
     icon: Monitor,
-    href: "/sla-policies/monitors",
+    href: "/reportings/monitors",
   },
   {
     value: "incidents",
     label: "Incidents",
     icon: Incident,
-    href: "/sla-policies/incidents",
+    href: "/reportings/incidents",
   },
 ] as const;

@@ -11,11 +11,11 @@ import { type EntityKind, entityKinds } from "@/data/entity-refs.client";
 import { cn } from "@/lib/utils";
 
 import { IncidentCard } from "./cards/incident";
-import { IncidentSlaPolicyCard } from "./cards/incident-sla-policy";
+import { IncidentReportingCard } from "./cards/incident-reporting";
 import { MaintenanceCard } from "./cards/maintenance";
 import { MonitorCard } from "./cards/monitor";
+import { MonitorReportingCard } from "./cards/monitor-reporting";
 import { MonitorSlaExcusedWindowCard } from "./cards/monitor-sla-excused-window";
-import { MonitorSlaPolicyCard } from "./cards/monitor-sla-policy";
 import { NotificationCard } from "./cards/notification";
 import { PageCard } from "./cards/page";
 import { PageComponentCard } from "./cards/page-component";
@@ -31,9 +31,9 @@ const cards = {
   incident: IncidentCard,
   privateLocation: PrivateLocationCard,
   notification: NotificationCard,
-  monitorSlaPolicy: MonitorSlaPolicyCard,
+  monitorReporting: MonitorReportingCard,
   monitorSlaExcusedWindow: MonitorSlaExcusedWindowCard,
-  incidentSlaPolicy: IncidentSlaPolicyCard,
+  incidentReporting: IncidentReportingCard,
 } satisfies Record<EntityKind, React.ComponentType<{ id: number }>>;
 
 /** An entity id that opens a card with the entity on hover, focus or tap. */

@@ -47,11 +47,11 @@ import {
   excusedWindowContext,
   formatSlaMonth,
   slaMonthOf,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-type Policy = RouterOutputs["monitorSlaPolicy"]["get"];
+type Policy = RouterOutputs["monitorReporting"]["get"];
 
 export type ExcusedWindowPrefill = {
   from: Date;
@@ -150,10 +150,10 @@ function ExcusedWindowForm({
   const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const addMutation = useMutation(
-    trpc.monitorSlaPolicy.addExcusedWindow.mutationOptions({
+    trpc.monitorReporting.addExcusedWindow.mutationOptions({
       onSuccess: () =>
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorSlaPolicy.get.queryKey(),
+          queryKey: trpc.monitorReporting.get.queryKey(),
         }),
     }),
   );

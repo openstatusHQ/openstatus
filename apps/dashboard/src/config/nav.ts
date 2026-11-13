@@ -6,8 +6,8 @@ import {
   Monitor,
   Notification,
   Overview,
+  Reporting,
   Settings,
-  Shield,
   StatusPage,
   Terminal,
 } from "@openstatus/icons";
@@ -42,11 +42,11 @@ export const NAV = {
     icon: Monitor,
     keywords: ["checks", "uptime"],
   },
-  slaPolicies: {
-    label: "SLA Policies",
-    href: "/sla-policies",
-    icon: Shield,
-    keywords: ["sla", "uptime target", "availability", "commitment"],
+  reportings: {
+    label: "Reportings",
+    href: "/reportings",
+    icon: Reporting,
+    keywords: ["sla", "policy", "uptime target", "availability", "commitment"],
   },
   statusPages: {
     label: "Status Pages",
@@ -96,7 +96,7 @@ export const NAV = {
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
   NAV.monitors,
-  NAV.slaPolicies,
+  NAV.reportings,
   NAV.statusPages,
   NAV.notifications,
   NAV.chat,

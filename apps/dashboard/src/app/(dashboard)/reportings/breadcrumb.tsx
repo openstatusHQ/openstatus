@@ -7,26 +7,26 @@ import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { NAV } from "@/config/nav";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { SLA_POLICY_TABS } from "./constants";
+import { REPORTING_TABS } from "./constants";
 
 export function Breadcrumb() {
   const pathname = usePathname();
   const { id } = useParams<{ id?: string }>();
   const trpc = useTRPC();
-  const root = NAV.slaPolicies;
-  const tab = SLA_POLICY_TABS.find((t) => pathname.startsWith(t.href));
+  const root = NAV.reportings;
+  const tab = REPORTING_TABS.find((t) => pathname.startsWith(t.href));
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const onPolicy =
     workspace?.limits["monitor-sla"] === true &&
     !!id &&
     tab?.value === "monitors";
   const { data: policies } = useQuery({
-    ...trpc.monitorSlaPolicy.list.queryOptions(),
+    ...trpc.monitorReporting.list.queryOptions(),
     enabled: onPolicy,
   });
   const active = id ? policies?.find((p) => String(p.id) === id) : undefined;
   const { data: archived } = useQuery({
-    ...trpc.monitorSlaPolicy.list.queryOptions({ archived: true }),
+    ...trpc.monitorReporting.list.queryOptions({ archived: true }),
     enabled: onPolicy && !!policies && !active,
   });
   const policy = active ?? archived?.find((p) => String(p.id) === id);

@@ -4,32 +4,32 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
 import { FormCardGroup } from "@/components/forms/form-card";
-import { formatSlaTarget, parseSlaTarget } from "@/data/sla-policies.client";
+import { formatSlaTarget, parseSlaTarget } from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { FormCommitment } from "./form-commitment";
 import { FormMonitors } from "./form-monitors";
 
-export function FormMonitorSlaPolicyUpdate() {
+export function FormMonitorReportingUpdate() {
   const { id } = useParams<{ id: string }>();
   const policyId = Number.parseInt(id);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: policy } = useQuery(
-    trpc.monitorSlaPolicy.summary.queryOptions({ id: policyId }),
+    trpc.monitorReporting.summary.queryOptions({ id: policyId }),
   );
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateMutation = useMutation(
-    trpc.monitorSlaPolicy.update.mutationOptions({
+    trpc.monitorReporting.update.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorSlaPolicy.get.queryKey(),
+          queryKey: trpc.monitorReporting.get.queryKey(),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorSlaPolicy.summary.queryKey(),
+          queryKey: trpc.monitorReporting.summary.queryKey(),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorSlaPolicy.list.queryKey(),
+          queryKey: trpc.monitorReporting.list.queryKey(),
         });
       },
     }),

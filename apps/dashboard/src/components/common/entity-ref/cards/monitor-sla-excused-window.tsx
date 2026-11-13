@@ -9,7 +9,7 @@ import { entityKinds } from "@/data/entity-refs.client";
 import {
   excusedKindLabels,
   formatExcusedWindow,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { EntityRefFallback, EntityRefHeader, lookupOptions } from "../parts";
@@ -17,7 +17,7 @@ import { EntityRefFallback, EntityRefHeader, lookupOptions } from "../parts";
 export function MonitorSlaExcusedWindowCard({ id }: { id: number }) {
   const trpc = useTRPC();
   const window = useQuery(
-    trpc.monitorSlaPolicy.excusedWindow.queryOptions({ id }, lookupOptions),
+    trpc.monitorReporting.excusedWindow.queryOptions({ id }, lookupOptions),
   );
 
   if (!window.data) {

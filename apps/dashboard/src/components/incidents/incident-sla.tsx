@@ -84,7 +84,7 @@ function CadenceProperty({
   );
 }
 
-/** Aside block: both timers, the update cadence and the resolution stop, against the policy fixed at declare. */
+/** Aside block: both timers, the update cadence and the resolution stop, against the reporting fixed at declare. */
 export function IncidentSla({
   incidentId,
   state,
@@ -129,7 +129,7 @@ export function IncidentSla({
         Resolution stops at{" "}
         <span className="text-foreground">{state.resolutionStop}</span>. Targets
         were fixed when the incident was declared.{" "}
-        <Link href="/sla-policies/incidents">Edit policy</Link>
+        <Link href="/reportings/incidents">Edit reporting</Link>
       </p>
     </div>
   );

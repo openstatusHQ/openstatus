@@ -11,7 +11,7 @@ import { useParams, useRouter } from "next/navigation";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import type { SidebarMetadataProps } from "@/components/nav/sidebar-metadata";
 import { SidebarRight } from "@/components/nav/sidebar-right";
-import { SlaMonitorSidebarEntry } from "@/components/sla-policies/sla-budget";
+import { SlaMonitorSidebarEntry } from "@/components/reportings/sla-budget";
 import {
   type HeartbeatHealth,
   getHeartbeatHealth,
@@ -64,7 +64,7 @@ export function Sidebar() {
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: covering = [] } = useQuery({
-    ...trpc.monitorSlaPolicy.listForMonitor.queryOptions({ monitorId }),
+    ...trpc.monitorReporting.listForMonitor.queryOptions({ monitorId }),
     enabled: workspace?.limits["monitor-sla"] === true,
   });
 

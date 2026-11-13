@@ -7,14 +7,14 @@ import { StatusBadge } from "@/components/common/status-badge";
 import {
   excusedKindLabels,
   formatExcusedWindow,
-} from "@/data/sla-policies.client";
+} from "@/data/reportings.client";
 import { formatDurationShort } from "@/lib/formatter";
 
 import { TableCellText } from "../table-cell-text";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export type ExcusedWindow =
-  RouterOutputs["monitorSlaPolicy"]["get"]["excusedWindows"][number];
+  RouterOutputs["monitorReporting"]["get"]["excusedWindows"][number];
 
 const kindVariant: Record<
   ExcusedWindow["kind"],
@@ -33,7 +33,7 @@ export function getColumns({
   timeZone,
 }: {
   readOnly: boolean;
-  /** the policy's zone: windows read in the months they excuse */
+  /** the reporting's zone: windows read in the months they excuse */
   timeZone: string;
 }): ColumnDef<ExcusedWindow>[] {
   return [

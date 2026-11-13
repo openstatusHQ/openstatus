@@ -2,8 +2,8 @@
 
 import { NavTabs } from "@/components/nav/nav-tabs";
 
-import { SLA_POLICY_TABS } from "./constants";
+import { REPORTING_TABS } from "./constants";
 
 export function Tabs() {
-  return <NavTabs items={[...SLA_POLICY_TABS]} />;
+  return <NavTabs items={[...REPORTING_TABS]} />;
 }
