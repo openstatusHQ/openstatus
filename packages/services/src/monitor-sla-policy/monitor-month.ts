@@ -233,8 +233,9 @@ export async function getMonitorSlaMonitorMonth(args: {
   let spans: Span[];
   let budget: ReturnType<typeof monthBudget> | null = null;
   let episodes: MonitorSlaMonthEpisode[] | null = null;
-  /** runs: judged by run count; failed: episodes could not be read; expired: runs no longer kept */
-  let episodesUnavailable: "runs" | "failed" | "expired" | null = null;
+  /** runs: judged by run count; failed: episodes could not be read; expired: runs no longer kept; time-zone: old month in a non-UTC zone */
+  let episodesUnavailable: "runs" | "failed" | "expired" | "time-zone" | null =
+    null;
 
   if (seal) {
     cell = storedMonth({ month, seal, frozen: undefined, policy });
@@ -330,12 +331,23 @@ export async function getMonitorSlaMonitorMonth(args: {
           start: Math.max(now.getTime(), whole.start),
           end: whole.end,
         };
+        // checks pause under a pause-mode maintenance, so its time ahead goes unmeasured
+        const notAhead =
+          maintenances.mode === "pause"
+            ? mergeSpans([
+                ...spans.map((x) => ({
+                  from: new Date(x.start),
+                  to: new Date(x.end),
+                })),
+                ...maintenances.windows,
+              ])
+            : spans;
         budget = monthBudget({
           monthMs: whole.end - whole.start,
           excusedMs: overlapMs(whole, spans),
           remainingMs:
             ahead.end > ahead.start
-              ? ahead.end - ahead.start - overlapMs(ahead, spans)
+              ? ahead.end - ahead.start - overlapMs(ahead, notAhead)
               : 0,
           target: terms.target,
           downMs: cell.downMs,
@@ -354,7 +366,8 @@ export async function getMonitorSlaMonitorMonth(args: {
         sleep: args.sleep,
       });
       cell = judged.monitors[0].months[0];
-      episodesUnavailable = "expired";
+      episodesUnavailable =
+        cell.unavailable === "time-zone" ? "time-zone" : "expired";
     }
   }
 

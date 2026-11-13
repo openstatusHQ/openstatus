@@ -607,6 +607,75 @@ describe("getMonitorSlaMonitorMonth", () => {
     });
   });
 
+  test("an old month of a non-UTC policy says it is the zone, not expiry", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id], {
+        timeZone: "Europe/Berlin",
+      });
+      const res = await getMonitorSlaMonitorMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id, month: "2026-08" },
+        now,
+        episodesPipes: failingEpisodesPipes(),
+      });
+      expect(res).toMatchObject({
+        state: "none",
+        unavailable: "time-zone",
+        episodesUnavailable: "time-zone",
+      });
+    });
+  });
+
+  test("an active pause-mode maintenance is left out of the time still to come", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      // started an hour ago, ends in three; an excused window overlaps its last hour
+      await insertMaintenance(
+        tx,
+        api.id,
+        "Migration",
+        now.getTime() - HOUR,
+        now.getTime() + 3 * HOUR,
+      );
+      await insertExcused(
+        tx,
+        policy.id,
+        now.getTime() + 2 * HOUR,
+        now.getTime() + 4 * HOUR,
+      );
+      const res = await getMonitorSlaMonitorMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id },
+        now,
+        episodesPipes: novemberRuns(),
+      });
+      expect(res.budget?.remainingMs).toBe(17.5 * DAY - 4 * HOUR);
+    });
+  });
+
+  test("a continue-mode maintenance still counts in the time to come", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, { maintenanceMode: "continue" });
+      const policy = await insertPolicy(tx, [api.id]);
+      await insertMaintenance(
+        tx,
+        api.id,
+        "Migration",
+        now.getTime() - HOUR,
+        now.getTime() + 3 * HOUR,
+      );
+      const res = await getMonitorSlaMonitorMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id },
+        now,
+        episodesPipes: novemberRuns(),
+      });
+      expect(res.budget?.remainingMs).toBe(17.5 * DAY);
+    });
+  });
+
   test("episodes that fail to load leave the month without a budget", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);

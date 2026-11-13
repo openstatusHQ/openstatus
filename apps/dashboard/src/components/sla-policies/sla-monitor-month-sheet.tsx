@@ -69,6 +69,8 @@ const unavailableText: Record<
     "The checks of this month could not be loaded. Try again in a minute.",
   expired:
     "Runs this old are no longer kept, so what used the budget cannot be shown.",
+  "time-zone":
+    "After 45 days runs are kept per UTC day only, so this month cannot be judged in the policy's time zone.",
 };
 
 /** One monitor's running month under the policy. */
