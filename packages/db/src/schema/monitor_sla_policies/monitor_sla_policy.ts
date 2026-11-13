@@ -9,6 +9,7 @@ import {
 
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
+import { monitorSlaPolicyTerms } from "./monitor_sla_policy_terms";
 
 export const monitorSlaPolicy = sqliteTable(
   "monitor_sla_policy",
@@ -22,6 +23,8 @@ export const monitorSlaPolicy = sqliteTable(
     target: integer("target").notNull(),
     // slow checks (above the monitor's degraded threshold) count as down
     strict: integer("strict", { mode: "boolean" }).notNull().default(false),
+    // IANA zone that defines month boundaries; locked once a month is sealed
+    timeZone: text("time_zone").notNull().default("UTC"),
     // set = read-only, no more sealing, hidden from the default list
     archivedAt: integer("archived_at", { mode: "timestamp" }),
 
@@ -63,6 +66,7 @@ export const monitorSlaPolicyRelations = relations(
       references: [workspace.id],
     }),
     monitors: many(monitorSlaPolicyToMonitor),
+    terms: many(monitorSlaPolicyTerms),
   }),
 );
 

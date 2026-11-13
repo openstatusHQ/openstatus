@@ -67,6 +67,7 @@ const EXAMPLES = [
   name: String(name),
   target: Number(target),
   strict: false,
+  timeZone: "UTC",
   archivedAt: null,
   sealed: true,
   createdAt: new Date("2026-01-01"),
