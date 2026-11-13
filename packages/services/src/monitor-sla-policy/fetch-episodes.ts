@@ -58,7 +58,8 @@ export type EpisodeMonitor = {
 
 /**
  * Episodes per monitor over [fromMs, toMs). Never throws: failed chunks land in
- * `failed`; monitors without run verdicts are in neither. Runs past the TTL read as unmeasured.
+ * `failed`; monitors whose type or regions give no run verdicts are in neither.
+ * A read monitor without runs, or with runs past the TTL, gets unmeasured episodes.
  */
 export async function fetchSlaEpisodes(
   args: Omit<FetchOptions, "monitorIdsByJobType"> & {
