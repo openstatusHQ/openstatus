@@ -224,4 +224,19 @@ describe("excusedWindowLock", () => {
       }),
     ).toBe("closed");
   });
+
+  test("a window touching a month after the current one is locked", () => {
+    expect(
+      excusedWindowLock(
+        w(Date.UTC(2026, 10, 30, 23), Date.UTC(2026, 11, 1, 1)),
+        { now, sealed: [] },
+      ),
+    ).toBe("closed");
+    // 15:00 UTC on Nov 30 is already December in Tokyo
+    const tokyoDec = w(Date.UTC(2026, 10, 30, 15), Date.UTC(2026, 10, 30, 16));
+    expect(excusedWindowLock(tokyoDec, { now, sealed: [] })).toBeNull();
+    expect(
+      excusedWindowLock(tokyoDec, { now, sealed: [], timeZone: "Asia/Tokyo" }),
+    ).toBe("closed");
+  });
 });

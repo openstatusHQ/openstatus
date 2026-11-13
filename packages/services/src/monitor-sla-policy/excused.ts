@@ -7,7 +7,7 @@ import {
   hasRuns,
   type UptimeRunsRangePipes,
 } from "../frozen-uptime/run";
-import { completeMonths, monthCellKey, splitByMonth } from "./months";
+import { completeMonths, monthCellKey, monthOf, splitByMonth } from "./months";
 
 export type Span = { start: number; end: number };
 
@@ -102,7 +102,7 @@ export async function fetchExcusedCounts(args: {
   return { counts, failed, expired, unreadable };
 }
 
-/** Why a window can no longer be added or removed: it touches a sealed month or a month before the previous one. */
+/** Why a window cannot be added or removed: it touches a sealed month, a month before the previous one, or a future month. */
 export function excusedWindowLock(
   window: { from: Date; to: Date },
   args: {
@@ -119,7 +119,12 @@ export function excusedWindowLock(
     if (from < end && start < to) return "sealed";
   }
   const [previous] = completeMonths(args.now, 1, timeZone);
-  if (splitByMonth(from, to, timeZone).some((p) => p.month < previous)) {
+  const current = monthOf(args.now, timeZone);
+  if (
+    splitByMonth(from, to, timeZone).some(
+      (p) => p.month < previous || p.month > current,
+    )
+  ) {
     return "closed";
   }
   return null;

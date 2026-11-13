@@ -230,6 +230,25 @@ describe("addMonitorSlaExcusedWindow", () => {
     });
   });
 
+  test("a window reaching into a future month is refused", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await policyIn(tx);
+      const res = addMonitorSlaExcusedWindow({
+        ctx,
+        input: {
+          policyId: policy.id,
+          ...window,
+          from: new Date(Date.UTC(2026, 10, 30, 23)),
+          to: new Date(Date.UTC(2026, 11, 1, 1)),
+        },
+        now,
+      });
+      await expect(res).rejects.toBeInstanceOf(PreconditionFailedError);
+      await expect(res).rejects.toThrow(/current and the previous month/);
+    });
+  });
+
   test("owners and admins only, own workspace, active policy, write scope", async () => {
     await withTestTransaction(async (tx) => {
       const policy = await policyIn(tx);
