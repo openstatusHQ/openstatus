@@ -479,6 +479,44 @@ describe("sealMonitorSlaMonths on episodes", () => {
     });
   });
 
+  test("a pair with thousands of episodes seals whole, beside its siblings", async () => {
+    await withTestTransaction(async (tx) => {
+      const flappy = await insertMonitor(tx, { name: "flappy" });
+      const steady = await insertMonitor(tx, { name: "steady" });
+      const policy = await insertPolicy(tx, [flappy.id, steady.id]);
+      // every other October run fails: one error episode per failed run
+      const flapping = runs((t) =>
+        inSpan(t, OCT_START, OCT_END) && ((t - OCT_START) / STEP) % 2 === 1
+          ? "error"
+          : "ok",
+      );
+      const res = await sealMonitorSlaMonths({
+        db: tx,
+        now,
+        policyIds: [policy.id],
+        episodesPipes: pipesFor(
+          new Map([
+            [flappy.id, flapping],
+            [steady.id, runs()],
+          ]),
+        ),
+        sleep,
+      });
+
+      expect(res).toMatchObject({ sealed: 2, unavailable: 0 });
+      const rows = await sealedRows(tx, policy.id);
+      const flappyRow = rows.find((r) => r.monitorId === flappy.id);
+      const episodes = await sealedEpisodeRows(tx, flappyRow?.id ?? -1);
+      const failed = (OCT_END - OCT_START) / STEP / 2;
+      expect(episodes).toHaveLength(failed);
+      expect(episodes.length).toBeGreaterThan(1_000);
+      expect(episodes.every((e) => e.kind === "error")).toBe(true);
+      expect(flappyRow).toMatchObject({ error: failed, met: false });
+      const steadyRow = rows.find((r) => r.monitorId === steady.id);
+      expect(await sealedEpisodeRows(tx, steadyRow?.id ?? -1)).toEqual([]);
+    });
+  });
+
   test("a month already sealed on run counts is left as it is", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);

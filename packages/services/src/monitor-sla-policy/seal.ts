@@ -49,8 +49,7 @@ export const SEAL_DELAY_MS = 72 * 3_600_000;
 const EARLIEST_ZONE = "Pacific/Kiritimati";
 const LATEST_ZONE = "Etc/GMT+12";
 
-const INSERT_CHUNK = 50;
-const EPISODE_INSERT_CHUNK = 100;
+const EPISODE_INSERT_CHUNK = 500;
 
 export type SealMonitorSlaMonthsResult = {
   /** the month sealed, YYYY-MM-01; the same label in every zone that can seal */
@@ -342,36 +341,33 @@ export async function sealMonitorSlaMonths(
         ),
       });
     }
-    if (rows.length === 0) continue;
-
-    const inserted = await withBusyRetry(() =>
-      db.transaction(async (tx) => {
-        // Window adds and removes check for seal rows in their own write
-        // transaction, so re-reading the windows here serializes with them.
-        const current = await tx
-          .select({ id: monitorSlaExcusedWindow.id })
-          .from(monitorSlaExcusedWindow)
-          .where(
-            and(
-              eq(monitorSlaExcusedWindow.monitorSlaPolicyId, policyId),
-              lt(monitorSlaExcusedWindow.from, new Date(range.end)),
-              gt(monitorSlaExcusedWindow.to, new Date(range.start)),
-            ),
-          )
-          .all();
-        const counted = new Set(own.map((w) => w.id));
-        if (
-          current.length !== counted.size ||
-          current.some((w) => !counted.has(w.id))
-        ) {
-          return null;
-        }
-        let n = 0;
-        for (let i = 0; i < rows.length; i += INSERT_CHUNK) {
-          const chunk = rows.slice(i, i + INSERT_CHUNK);
-          const res = await tx
+    // one transaction per pair keeps each write short under thousands of episodes
+    for (const row of rows) {
+      const inserted = await withBusyRetry(() =>
+        db.transaction(async (tx) => {
+          // Window adds and removes check for seal rows in their own write
+          // transaction, so re-reading the windows here serializes with them.
+          const current = await tx
+            .select({ id: monitorSlaExcusedWindow.id })
+            .from(monitorSlaExcusedWindow)
+            .where(
+              and(
+                eq(monitorSlaExcusedWindow.monitorSlaPolicyId, policyId),
+                lt(monitorSlaExcusedWindow.from, new Date(range.end)),
+                gt(monitorSlaExcusedWindow.to, new Date(range.start)),
+              ),
+            )
+            .all();
+          const counted = new Set(own.map((w) => w.id));
+          if (
+            current.length !== counted.size ||
+            current.some((w) => !counted.has(w.id))
+          ) {
+            return null;
+          }
+          const [month] = await tx
             .insert(monitorSlaSealedMonth)
-            .values(chunk.map((r) => r.month))
+            .values(row.month)
             .onConflictDoNothing({
               target: [
                 monitorSlaSealedMonth.monitorSlaPolicyId,
@@ -379,31 +375,28 @@ export async function sealMonitorSlaMonths(
                 monitorSlaSealedMonth.month,
               ],
             })
-            .returning({
-              id: monitorSlaSealedMonth.id,
-              monitorId: monitorSlaSealedMonth.monitorId,
-            });
-          n += res.length;
-          const episodes = res.flatMap(({ id, monitorId }) =>
-            (
-              chunk.find((r) => r.month.monitorId === monitorId)?.episodes ?? []
-            ).map((e) => ({ workspaceId, sealedMonthId: id, ...e })),
-          );
-          for (let j = 0; j < episodes.length; j += EPISODE_INSERT_CHUNK) {
+            .returning({ id: monitorSlaSealedMonth.id });
+          if (!month) return 0;
+          const episodes = row.episodes.map((e) => ({
+            workspaceId,
+            sealedMonthId: month.id,
+            ...e,
+          }));
+          for (let i = 0; i < episodes.length; i += EPISODE_INSERT_CHUNK) {
             await tx
               .insert(monitorSlaSealedEpisode)
-              .values(episodes.slice(j, j + EPISODE_INSERT_CHUNK));
+              .values(episodes.slice(i, i + EPISODE_INSERT_CHUNK));
           }
-        }
-        return n;
-      }),
-    );
-    if (inserted === null) {
-      // its windows changed while its month was judged
-      unavailable.push(...rows.map(() => policyId));
-      continue;
+          return 1;
+        }),
+      );
+      if (inserted === null) {
+        // its windows changed while its month was judged
+        unavailable.push(policyId);
+        continue;
+      }
+      sealed += inserted;
     }
-    sealed += inserted;
   }
   if (unavailable.length > 0) {
     console.warn(
