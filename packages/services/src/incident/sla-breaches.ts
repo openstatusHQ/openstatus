@@ -159,11 +159,16 @@ export async function stampIncidentSlaBreach(args: {
       .returning()
       .get();
     if (!updated) return null;
+    // the guarded write set only this column, from null
+    const prior: Incident =
+      due.kind === "response"
+        ? { ...updated, responseBreachDueAt: null }
+        : { ...updated, resolutionBreachDueAt: null };
     await emitAudit(tx, ctx, {
       action: "incident.update",
       entityType: "incident",
       entityId: updated.id,
-      before,
+      before: prior,
       after: updated,
     });
     const event = await appendIncidentSlaBreach(tx, ctx, {
@@ -192,19 +197,10 @@ export async function recordIncidentSlaBreaches(
     workspaceIds: args.workspaceIds,
   });
   const recorded: IncidentSlaBreachRecord[] = [];
-  // a second stamp on the same incident audits against the first one's row
-  const latest = new Map<number, Incident>();
   for (const item of due) {
     try {
-      const record = await stampIncidentSlaBreach({
-        db,
-        due: {
-          ...item,
-          incident: latest.get(item.incident.id) ?? item.incident,
-        },
-      });
+      const record = await stampIncidentSlaBreach({ db, due: item });
       if (!record) continue;
-      latest.set(record.incident.id, record.incident);
       recorded.push(record);
     } catch (error) {
       console.warn("incident sla breach not recorded", {

@@ -10,6 +10,7 @@ import {
   createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
@@ -289,5 +290,39 @@ test("a severity upgrade that puts the due time in the past is recorded on the n
     expect(await breaches(tx, id)).toEqual([
       ["sla_response_breached", minutesAfter(declaredAt, 60)],
     ]);
+  });
+});
+
+describe("the stamp's audit row", () => {
+  test("a worker with a stale read audits against the row it actually changed", async () => {
+    await withTestTransaction(async (tx) => {
+      const { id, declaredAt } = await declare(tx, { minutesAgo: 241 });
+      const due = await dueIncidentSlaBreaches({
+        db: tx,
+        now: new Date(),
+        workspaceIds: [team.id],
+      });
+      const response = due.find((d) => d.kind === "response");
+      const resolution = due.find((d) => d.kind === "resolution");
+      if (!response || !resolution) throw new Error("expected both dues");
+      // another worker stamps the response first, from the same read
+      await stampIncidentSlaBreach({ db: tx, due: response });
+      await stampIncidentSlaBreach({ db: tx, due: resolution });
+
+      const audits = (
+        await readAuditLog({
+          workspaceId: team.id,
+          entityType: "incident",
+          entityId: id,
+          db: tx,
+        })
+      ).filter((a) => a.changedFields?.includes("resolutionBreachDueAt"));
+      expect(audits.map((a) => a.changedFields)).toEqual([
+        ["resolutionBreachDueAt"],
+      ]);
+      expect(minutesAfter(declaredAt, 240)).toEqual(
+        (await row(tx, id)).resolutionBreachDueAt,
+      );
+    });
   });
 });
