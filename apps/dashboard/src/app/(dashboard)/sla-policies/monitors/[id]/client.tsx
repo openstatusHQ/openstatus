@@ -91,8 +91,7 @@ export function Client() {
   });
   const { data: workspaceMonitors } = useQuery({
     ...trpc.monitor.list.queryOptions(),
-    enabled:
-      allowed && policy?.liveTerms.strict === true && !policy.archivedAt,
+    enabled: allowed && policy?.liveTerms.strict === true && !policy.archivedAt,
   });
   const columns = useMemo(
     () =>

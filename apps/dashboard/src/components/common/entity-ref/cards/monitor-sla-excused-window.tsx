@@ -47,9 +47,7 @@ export function MonitorSlaExcusedWindowCard({ id }: { id: number }) {
           <time dateTime={data.from.toISOString()}>
             {formatExcusedWindow(data.from, data.to, data.policy.timeZone)}
           </time>{" "}
-          <span className="text-muted-foreground">
-            {data.policy.timeZone}
-          </span>
+          <span className="text-muted-foreground">{data.policy.timeZone}</span>
         </EntityCardRow>
         <EntityCardRow label="Policy" title={data.policy.name}>
           {data.policy.name}

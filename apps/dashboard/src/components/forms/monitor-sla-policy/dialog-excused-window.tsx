@@ -46,6 +46,7 @@ import {
   excusedKindLabels,
   excusedWindowContext,
   formatSlaMonth,
+  slaMonthOf,
 } from "@/data/sla-policies.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
@@ -61,28 +62,40 @@ export type ExcusedWindowPrefill = {
   pausedMonitors?: string[];
 };
 
-const schema = z
-  .object({
-    from: z.date(),
-    to: z.date(),
-    kind: z.enum(monitorSlaExcusedWindowKinds),
-    reason: z
-      .string()
-      .trim()
-      .min(1, "A reason is required")
-      .max(MONITOR_SLA_EXCUSED_REASON_MAX),
-  })
-  .refine((v) => v.from < v.to, {
-    message: "The window must end after it starts.",
-    path: ["to"],
-  })
-  .refine(
-    (v) =>
-      v.to.getTime() - v.from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS,
-    { message: "A window lasts at most 7 days.", path: ["to"] },
-  );
+function makeSchema(timeZone: string) {
+  return z
+    .object({
+      from: z.date(),
+      to: z.date(),
+      kind: z.enum(monitorSlaExcusedWindowKinds),
+      reason: z
+        .string()
+        .trim()
+        .min(1, "A reason is required")
+        .max(MONITOR_SLA_EXCUSED_REASON_MAX),
+    })
+    .refine((v) => v.from < v.to, {
+      message: "The window must end after it starts.",
+      path: ["to"],
+    })
+    .refine(
+      (v) =>
+        v.to.getTime() - v.from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS,
+      { message: "A window lasts at most 7 days.", path: ["to"] },
+    )
+    .refine(
+      // the end is exclusive: a window ending at midnight on the 1st stays in its month
+      (v) =>
+        slaMonthOf(new Date(v.to.getTime() - 1), timeZone) <=
+        slaMonthOf(new Date(), timeZone),
+      {
+        message: "A window cannot reach into a future month.",
+        path: ["to"],
+      },
+    );
+}
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<ReturnType<typeof makeSchema>>;
 
 function defaultWindow(): { from: Date; to: Date } {
   const to = new Date();
@@ -145,7 +158,7 @@ function ExcusedWindowForm({
     }),
   );
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(makeSchema(policy.timeZone)),
     defaultValues: {
       ...(prefill ?? defaultWindow()),
       kind: prefill?.kind ?? "maintenance",
@@ -221,8 +234,9 @@ function ExcusedWindowForm({
           />
         </div>
         <p className="text-muted-foreground -mt-2 text-sm">
-          In your timezone ({timeZone}); the list shows windows in UTC. At most
-          7 days, in the current or the previous month.
+          In your timezone ({timeZone}); the list shows windows in{" "}
+          {policy.timeZone}. At most 7 days, in the current or the previous
+          month, in {policy.timeZone}.
         </p>
         <FormField
           control={form.control}
