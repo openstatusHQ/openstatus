@@ -59,7 +59,7 @@ export function Client() {
   });
   const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: trpc.incidentReporting.get.queryKey(),
+      queryKey: trpc.incidentReporting.pathKey(),
     });
   const upsert = useMutation(
     trpc.incidentReporting.upsert.mutationOptions({ onSuccess: invalidate }),

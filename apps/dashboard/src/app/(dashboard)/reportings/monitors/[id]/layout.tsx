@@ -18,9 +18,11 @@ export default async function Layout({
   const policyId = Number(id);
   if (!Number.isInteger(policyId) || policyId <= 0) notFound();
 
-  const workspace = await getQueryClient().fetchQuery(
-    trpc.workspace.get.queryOptions(),
-  );
+  const queryClient = getQueryClient();
+  const [workspace] = await Promise.all([
+    queryClient.fetchQuery(trpc.workspace.get.queryOptions()),
+    queryClient.prefetchQuery(trpc.member.list.queryOptions()),
+  ]);
   // a locked plan gets the paywall from the page, not a 404
   if (workspace.limits["monitor-sla"]) {
     await fetchQueryOrNotFound(

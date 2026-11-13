@@ -34,7 +34,7 @@ export function FormSheetMonitorReportingCreate({
     trpc.monitorReporting.create.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorReporting.list.queryKey(),
+          queryKey: trpc.monitorReporting.pathKey(),
         });
       },
     }),

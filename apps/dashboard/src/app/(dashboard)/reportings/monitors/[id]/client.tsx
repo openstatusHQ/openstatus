@@ -13,7 +13,7 @@ import { SelectTrigger } from "@radix-ui/react-select";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { parseAsInteger, parseAsNumberLiteral, useQueryState } from "nuqs";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 
 import {
@@ -62,13 +62,15 @@ import {
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-const MONTH_RANGES = [12, 24] as const;
-const parseMonths = parseAsNumberLiteral(MONTH_RANGES).withDefault(12);
+import { MONTH_RANGES, searchParamsParsers } from "./search-params";
 
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [months, setMonths] = useQueryState("months", parseMonths);
+  const [months, setMonths] = useQueryState(
+    "months",
+    searchParamsParsers.months,
+  );
   const [selected, setSelected] = useQueryState("monitor", parseAsInteger);
   const [excuse, setExcuse] = useState<{
     prefill: ExcusedWindowPrefill | null;

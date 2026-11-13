@@ -1,6 +1,6 @@
 import { Incident, Monitor } from "@openstatus/icons";
 
-// The section root redirects to the first entry.
+// next.config.ts redirects the section root to the first entry.
 export const REPORTING_TABS = [
   {
     value: "monitors",

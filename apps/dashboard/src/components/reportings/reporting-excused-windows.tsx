@@ -10,6 +10,7 @@ import {
   EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { EventGroupCount } from "@/components/content/event-group";
 import {
   Section,
   SectionDescription,
@@ -48,9 +49,9 @@ export function ReportingExcusedWindows({
         <SectionHeader>
           <SectionTitle>
             Excused downtime
-            <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+            <EventGroupCount className="ml-2 align-middle">
               {windows.length}
-            </span>
+            </EventGroupCount>
           </SectionTitle>
           <SectionDescription>
             Checks inside these windows are left out of both sides of the month

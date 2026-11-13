@@ -22,14 +22,10 @@ export function DataTableRowActions({ row }: { row: Row<MonitorReporting> }) {
   const { data: members } = useQuery(trpc.member.list.queryOptions());
   const role = members?.find((m) => m.user.id === user?.id)?.role;
   const canEdit = role === "owner" || role === "admin";
-  const invalidate = () => {
+  const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: trpc.monitorReporting.list.queryKey(),
+      queryKey: trpc.monitorReporting.pathKey(),
     });
-    queryClient.invalidateQueries({
-      queryKey: trpc.monitorReporting.summary.queryKey(),
-    });
-  };
   const archiveMutation = useMutation(
     trpc.monitorReporting.archive.mutationOptions({ onSuccess: invalidate }),
   );

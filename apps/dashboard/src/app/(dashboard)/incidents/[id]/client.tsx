@@ -26,6 +26,7 @@ import {
   DetailSection,
   DetailSectionTitle,
 } from "@/components/content/detail";
+import { EventGroupCount } from "@/components/content/event-group";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import { IncidentAcknowledgeButton } from "@/components/incidents/incident-acknowledge-button";
@@ -98,9 +99,9 @@ export function Client({ id }: { id: number }) {
       <DetailSectionTitle variant="heading">
         Activity
         {events ? (
-          <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+          <EventGroupCount className="ml-2 align-middle">
             {events.length}
-          </span>
+          </EventGroupCount>
         ) : null}
       </DetailSectionTitle>
       <Timeline>

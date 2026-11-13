@@ -1,5 +1,6 @@
 "use client";
 
+import { Settings } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 
@@ -51,7 +52,11 @@ export function Breadcrumb() {
                       label: policy.name,
                       href: `${tab.href}/${policy.id}`,
                     },
-                    { type: "page" as const, label: "Settings" },
+                    {
+                      type: "page" as const,
+                      label: "Settings",
+                      icon: Settings,
+                    },
                   ]
                 : [{ type: "page" as const, label: policy.name }]),
             ]

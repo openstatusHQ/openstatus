@@ -58,11 +58,6 @@ export function ReportingMaintenance({
   );
   if (!data) return null;
 
-  const paused = new Map(
-    data.monitors
-      .filter((m) => m.maintenanceMode === "pause")
-      .map((m) => [m.id, m.name]),
-  );
   const names = new Map(
     data.monitors.map((m) => [
       m.id,
@@ -162,10 +157,6 @@ export function ReportingMaintenance({
                               to: w.to,
                               kind: "maintenance",
                               reason: w.title,
-                              pausedMonitors: w.monitorIds.flatMap((id) => {
-                                const name = paused.get(id);
-                                return name ? [name] : [];
-                              }),
                             })
                           }
                         >

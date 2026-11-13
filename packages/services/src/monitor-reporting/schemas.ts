@@ -129,6 +129,25 @@ export type AddMonitorReportingExcusedWindowInput = z.input<
   typeof AddMonitorReportingExcusedWindowInput
 >;
 
+export const PreviewMonitorReportingExcusedWindowInput = z
+  .object({
+    policyId: z.number().int().positive(),
+    from: instant,
+    to: instant,
+  })
+  .refine((w) => w.from < w.to, {
+    message: "The window must end after it starts.",
+    path: ["to"],
+  })
+  .refine(
+    (w) =>
+      w.to.getTime() - w.from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS,
+    { message: "A window lasts at most 7 days.", path: ["to"] },
+  );
+export type PreviewMonitorReportingExcusedWindowInput = z.input<
+  typeof PreviewMonitorReportingExcusedWindowInput
+>;
+
 export const GetMonitorReportingExcusedWindowInput = z.object({
   id: z.number().int().positive(),
 });

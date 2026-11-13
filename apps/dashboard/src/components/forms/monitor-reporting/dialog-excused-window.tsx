@@ -34,7 +34,13 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  skipToken,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -58,8 +64,6 @@ export type ExcusedWindowPrefill = {
   to: Date;
   kind?: MonitorSlaExcusedWindowKind;
   reason?: string;
-  /** monitors of the maintenance whose checks pause: excusing changes nothing for them */
-  pausedMonitors?: string[];
 };
 
 function makeSchema(timeZone: string) {
@@ -153,7 +157,7 @@ function ExcusedWindowForm({
     trpc.monitorReporting.addExcusedWindow.mutationOptions({
       onSuccess: () =>
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorReporting.get.queryKey(),
+          queryKey: trpc.monitorReporting.pathKey(),
         }),
     }),
   );
@@ -167,6 +171,23 @@ function ExcusedWindowForm({
   });
   const kind = useWatch({ control: form.control, name: "kind" });
   const context = excusedWindowContext(policy, kind);
+  const [from, to] = useWatch({ control: form.control, name: ["from", "to"] });
+  const validWindow =
+    from instanceof Date &&
+    to instanceof Date &&
+    from < to &&
+    to.getTime() - from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS;
+  const { data: preview } = useQuery({
+    ...trpc.monitorReporting.excusedWindowPreview.queryOptions(
+      validWindow ? { policyId: policy.id, from, to } : skipToken,
+    ),
+    placeholderData: keepPreviousData,
+  });
+  const known = validWindow
+    ? (preview?.monitors.filter((m) => m.runs !== null) ?? [])
+    : [];
+  const idle = known.filter((m) => m.runs === 0).map((m) => m.name);
+  const checked = known.filter((m) => m.runs !== 0).map((m) => m.name);
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   function submitAction(values: FormValues) {
@@ -300,12 +321,11 @@ function ExcusedWindowForm({
             Contract rules about which windows qualify are not checked here.
           </li>
         </ul>
-        {prefill?.pausedMonitors?.length ? (
+        {idle.length ? (
           <p className="text-warning text-sm">
-            Checks pause during maintenance for{" "}
-            {prefill.pausedMonitors.join(", ")}: that time is not counted
-            anyway, so excusing it changes nothing for{" "}
-            {prefill.pausedMonitors.length === 1 ? "it" : "them"}.
+            {checked.length
+              ? `No checks ran in this window for ${idle.join(", ")}, so excusing it changes nothing for ${idle.length === 1 ? "it" : "them"}. It does change the month for ${checked.join(", ")}.`
+              : `No checks ran in this window for any monitor in ${policy.name}, so excusing it changes nothing.`}
           </p>
         ) : null}
         <DialogFooter>

@@ -224,11 +224,16 @@ export function FormIncidentReporting({
           <FormCardHeader>
             <FormCardTitle>
               Targets
-              {off ? (
-                <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
-                  off
-                </span>
-              ) : null}
+              {/* always rendered: the mono span changes the line box height */}
+              <span
+                aria-hidden={!off}
+                className={cn(
+                  "text-muted-foreground ml-2 font-mono text-xs leading-none font-normal",
+                  !off && "invisible",
+                )}
+              >
+                off
+              </span>
             </FormCardTitle>
             <FormCardDescription>
               How fast an incident gets its first response, updates and a

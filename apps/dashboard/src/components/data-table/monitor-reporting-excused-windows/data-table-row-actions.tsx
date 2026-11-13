@@ -28,7 +28,7 @@ export function DataTableRowActions({
     trpc.monitorReporting.removeExcusedWindow.mutationOptions({
       onSuccess: () =>
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorReporting.get.queryKey(),
+          queryKey: trpc.monitorReporting.pathKey(),
         }),
     }),
   );

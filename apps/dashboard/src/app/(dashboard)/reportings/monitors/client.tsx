@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useQueryState } from "nuqs";
 import { useState } from "react";
 
 import {
@@ -42,10 +42,9 @@ import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
-type Policy = RouterOutputs["monitorReporting"]["list"][number];
+import { VIEWS, searchParamsParsers } from "./search-params";
 
-const VIEWS = ["active", "archived"] as const;
-const parseView = parseAsStringLiteral(VIEWS).withDefault("active");
+type Policy = RouterOutputs["monitorReporting"]["list"][number];
 
 const EXAMPLE_MONITOR = {
   id: 1,
@@ -86,7 +85,7 @@ const EXAMPLES = [
 export function Client() {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
-  const [view, setView] = useQueryState("view", parseView);
+  const [view, setView] = useQueryState("view", searchParamsParsers.view);
   const archived = view === "archived";
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const userQuery = useQuery(trpc.user.get.queryOptions());

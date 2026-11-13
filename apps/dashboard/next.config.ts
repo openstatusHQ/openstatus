@@ -47,6 +47,11 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/reportings",
+        destination: "/reportings/monitors",
+        permanent: false,
+      },
+      {
         source: "/private-locations",
         destination: "/settings/private-locations",
         permanent: false,

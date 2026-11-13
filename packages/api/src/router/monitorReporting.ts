@@ -23,6 +23,8 @@ import {
   listMonitorReportingMonths,
   listMonitorReportingMaintenances,
   MonitorReportingIdInput,
+  PreviewMonitorReportingExcusedWindowInput,
+  previewMonitorReportingExcusedWindow,
   RemoveMonitorReportingExcusedWindowInput,
   removeMonitorReportingExcusedWindow,
   UpdateMonitorReportingInput,
@@ -110,6 +112,19 @@ export const monitorReportingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         return await getMonitorReportingExcusedWindow({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  excusedWindowPreview: protectedProcedure
+    .input(PreviewMonitorReportingExcusedWindowInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        return await previewMonitorReportingExcusedWindow({
           ctx: toServiceCtx(ctx),
           input,
         });

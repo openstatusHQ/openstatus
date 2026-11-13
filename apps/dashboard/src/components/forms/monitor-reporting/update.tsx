@@ -21,17 +21,10 @@ export function FormMonitorReportingUpdate() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateMutation = useMutation(
     trpc.monitorReporting.update.mutationOptions({
-      onSuccess: () => {
+      onSuccess: () =>
         queryClient.invalidateQueries({
-          queryKey: trpc.monitorReporting.get.queryKey(),
-        });
-        queryClient.invalidateQueries({
-          queryKey: trpc.monitorReporting.summary.queryKey(),
-        });
-        queryClient.invalidateQueries({
-          queryKey: trpc.monitorReporting.list.queryKey(),
-        });
-      },
+          queryKey: trpc.monitorReporting.pathKey(),
+        }),
     }),
   );
 
