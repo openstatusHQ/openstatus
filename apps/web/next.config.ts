@@ -132,6 +132,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/reference/monitor-sla-policy",
+        destination: "/docs/reference/monitor-reporting",
+        permanent: true,
+      },
+      {
         source: "/docs/reference/api",
         destination: "https://api.openstatus.dev/openapi",
         permanent: true,

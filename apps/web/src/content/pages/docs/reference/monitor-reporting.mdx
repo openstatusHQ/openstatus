@@ -1,39 +1,39 @@
 ---
 category: Reference
-title: Monitor SLA Policy Reference
-description: Technical specification for monitor SLA policies - what a policy judges, how monthly uptime is computed from run verdicts, sealed and preview months, strict mode, excused windows, the CSV export and maintenance.
+title: Monitor Reporting Reference
+description: Technical specification for monitor reportings - what a reporting judges, how monthly uptime is computed from run verdicts, sealed and preview months, strict mode, excused windows, the CSV export and maintenance.
 ---
 
-An SLA policy is a named availability commitment: a monthly uptime target applied to a set of monitors. openstatus judges every monitor in the policy on its own, month by month, and seals each month once it is over, so the result you show a customer no longer changes.
+A reporting is a named availability commitment: a monthly uptime target applied to a set of monitors. openstatus judges every monitor in the reporting on its own, month by month, and seals each month once it is over, so the result you show a customer no longer changes.
 
-Find them in the dashboard under [**SLA Policies > Monitors**](https://app.openstatus.dev/sla-policies/monitors). SLA policies are included in the Pro and Scale plans.
+Find them in the dashboard under [**Reportings > Monitors**](https://app.openstatus.dev/reportings/monitors). Reportings are included in the Pro and Scale plans.
 
 ## Properties
 
 | Property | Description |
 |---|---|
-| Name | Required. Shown in the list, the policy page, the export and the email. |
-| Monthly uptime target | A percentage with up to three decimals, for example `99.9`. Presets: `99`, `99.5`, `99.9`, `99.95`, `99.99`. The form shows how much downtime the target allows in a 30-day month. One target per policy, the same for every monitor in it. |
+| Name | Required. Shown in the list, the reporting page, the export and the email. |
+| Monthly uptime target | A percentage with up to three decimals, for example `99.9`. Presets: `99`, `99.5`, `99.9`, `99.95`, `99.99`. The form shows how much downtime the target allows in a 30-day month. One target per reporting, the same for every monitor in it. |
 | Count slow responses as downtime | Off by default. See [strict mode](#strict-mode). |
-| Time zone | `UTC` by default. The zone the policy's months start and end in. It can be changed only until the first month is sealed. |
-| Monitors | The monitors the policy covers. A monitor can be in several policies. |
+| Time zone | `UTC` by default. The zone the reporting's months start and end in. It can be changed only until the first month is sealed. |
+| Monitors | The monitors the reporting covers. A monitor can be in several reportings. |
 
-Owners and admins can create, edit, archive and delete policies, and add or remove [excused windows](#excused-windows). Every workspace member can view them and download the export. Each change is recorded in the audit log, with the values before and after an edit.
+Owners and admins can create, edit, archive and delete reportings, and add or remove [excused windows](#excused-windows). Every workspace member can view them and download the export. Each change is recorded in the audit log, with the values before and after an edit.
 
-Policies are managed in the dashboard only. They are not available over the API, the CLI or the MCP server.
+Reportings are managed in the dashboard only. They are not available over the API, the CLI or the MCP server.
 
 ### Eligible monitors
 
-A policy judges run verdicts (see [method](#method)), so it accepts only monitors that produce them:
+A reporting judges run verdicts (see [method](#method)), so it accepts only monitors that produce them:
 
 - **Accepted:** [HTTP](/docs/reference/http-monitor), [TCP](/docs/reference/tcp-monitor), [DNS](/docs/reference/dns-monitor), [ICMP](/docs/reference/icmp-monitor) and [gRPC](/docs/reference/grpc-monitor) monitors that check from at least one cloud region.
 - **Rejected:** heartbeat monitors, and monitors that run from [private locations](/docs/reference/private-location) only. The form names the monitor and the reason.
 
 ## What is judged
 
-One monitor, one calendar month in the policy's time zone. There is no combined figure across a policy's monitors: a policy with three monitors produces three results per month, each met or missed against the same target.
+One monitor, one calendar month in the reporting's time zone. There is no combined figure across a reporting's monitors: a reporting with three monitors produces three results per month, each met or missed against the same target.
 
-Months start and end at local midnight in the policy's [time zone](#properties), on the page, in the export, when sealed and in the email. With the default `UTC`, a failed run at 23:30 UTC on October 31 belongs to October.
+Months start and end at local midnight in the reporting's [time zone](#properties), on the page, in the export, when sealed and in the email. With the default `UTC`, a failed run at 23:30 UTC on October 31 belongs to October.
 
 ### Method
 
@@ -60,12 +60,12 @@ down     = failed time                            otherwise
 uptime   = (measured − down) / measured
 ```
 
-Excused time is the time inside the policy's [excused windows](#excused-windows), cut out at the millisecond. It drops from both sides of the fraction.
+Excused time is the time inside the reporting's [excused windows](#excused-windows), cut out at the millisecond. It drops from both sides of the fraction.
 
 - A month is **met** when its uptime is at or above the target. A month exactly at the target is met. The comparison is exact, on whole milliseconds.
 - Uptime is shown with three decimals, **rounded down**, so a missed month never displays as its target.
 - A month without measured time has no judgement. It shows an em dash (`—`): never 100%, never a miss. The same holds for a month whose time was all excused.
-- Months sealed before time weighting, and older unsealed months in a `UTC` policy, are judged by **run count** the same way, with runs in place of time. The page and the export say so (method `runs`).
+- Months sealed before time weighting, and older unsealed months in a `UTC` reporting, are judged by **run count** the same way, with runs in place of time. The page and the export say so (method `runs`).
 
 ### Strict mode
 
@@ -73,17 +73,17 @@ With **Count slow responses as downtime** on, slow time counts as down instead o
 
 ## Month states
 
-The policy page shows a table of its monitors against the last 12 or 24 months, plus the running month. Each cell is in one of these states, the first that applies:
+The reporting page shows a table of its monitors against the last 12 or 24 months, plus the running month. Each cell is in one of these states, the first that applies:
 
 | State | When | Figures from | Target and strict mode |
 |---|---|---|---|
-| Sealed | The month was sealed for this monitor and policy. | The counts stored at sealing. | The ones stored at sealing. |
-| Preview | The month is over, its run counts are frozen and it was not sealed. | The frozen run counts. | The policy's current ones. |
-| Live, provisional | The running month, and the previous month while its run counts are not frozen yet (at most 45 days after it began). | Run counts so far. | The policy's current ones. |
+| Sealed | The month was sealed for this monitor and reporting. | The counts stored at sealing. | The ones stored at sealing. |
+| Preview | The month is over, its run counts are frozen and it was not sealed. | The frozen run counts. | The reporting's current ones. |
+| Live, provisional | The running month, and the previous month while its run counts are not frozen yet (at most 45 days after it began). | Run counts so far. | The reporting's current ones. |
 | None | No figures exist for the month. | — | — |
 
 - Sealed cells are filled; preview cells have a dashed border; live cells use a distinct tone. Hover a sealed cell for its seal date and stored terms.
-- Previews follow every edit of the policy and reach back before the policy existed, so you can see how a target would have fared.
+- Previews follow every edit of the reporting and reach back before the reporting existed, so you can see how a target would have fared.
 - A live month below target is a miss in progress, not a result. If recent counts cannot be loaded, the page still renders and says the recent weeks may be incomplete.
 
 ### Freezing
@@ -92,12 +92,12 @@ After a month ends, openstatus freezes each monitor's run counts for it. This is
 
 ### Sealing
 
-A daily task seals the previous month. For each monitor in a policy it seals the month when all of these hold:
+A daily task seals the previous month. For each monitor in a reporting it seals the month when all of these hold:
 
-- At least 72 hours have passed since the month ended, so a policy can still be corrected or deleted.
-- The policy, and the monitor's membership in it, both existed before the month ended. A policy created on November 5 is first sealed for November, never for October.
+- At least 72 hours have passed since the month ended, so a reporting can still be corrected or deleted.
+- The reporting, and the monitor's membership in it, both existed before the month ended. A reporting created on November 5 is first sealed for November, never for October.
 - The month has runs, its run counts are frozen and the runs inside its excused windows load. If not, the next day tries again.
-- The policy is not archived, the monitor is not deleted and the workspace's plan includes SLA policies.
+- The reporting is not archived, the monitor is not deleted and the workspace's plan includes reportings.
 
 Sealing stores the run counts, the excused run counts, the excused windows that applied, the target and the strict setting of that moment, and never changes afterwards. A month whose runs were all excused is sealed without a judgement and keeps its windows. A month that is still unsealed when it stops being the previous month stays a preview for good.
 
@@ -106,15 +106,15 @@ Sealing stores the run counts, the excused run counts, the excused windows that 
 "The last 12 months" always means the twelve complete months before the current one.
 
 - **Per monitor:** how many of those months it missed.
-- **Per policy:** how many of those months had at least one monitor miss. This is the number a "three missed months in twelve" clause reads.
+- **Per reporting:** how many of those months had at least one monitor miss. This is the number a "three missed months in twelve" clause reads.
 
-Both count sealed and preview months, and say how many of the misses are previews. Live months never count. The policy list shows the same twelve months as a strip per policy: a month is missed when any monitor missed it, met when at least one monitor was judged and none missed, and empty otherwise. The list does not apply excused windows to unsealed months: it shows them as previews of the frozen counts, and the policy page has the excused figure.
+Both count sealed and preview months, and say how many of the misses are previews. Live months never count. The reporting list shows the same twelve months as a strip per reporting: a month is missed when any monitor missed it, met when at least one monitor was judged and none missed, and empty otherwise. The list does not apply excused windows to unsealed months: it shows them as previews of the frozen counts, and the reporting page has the excused figure.
 
-When a sealed month misses its target, the workspace owners get one email per policy and month, listing the monitors that missed and linking to the policy.
+When a sealed month misses its target, the workspace owners get one email per reporting and month, listing the monitors that missed and linking to the reporting.
 
 ## Excused windows
 
-An excused window is a stretch of time whose runs count for no monitor in the policy: a planned maintenance, an outage caused by the customer, a provider failure your contract excludes. Add one from the **Excused downtime** section of the policy page with **Add window**.
+An excused window is a stretch of time whose runs count for no monitor in the reporting: a planned maintenance, an outage caused by the customer, a provider failure your contract excludes. Add one from the **Excused downtime** section of the reporting page with **Add window**.
 
 | Field | Description |
 |---|---|
@@ -122,7 +122,7 @@ An excused window is a stretch of time whose runs count for no monitor in the po
 | Kind | `Maintenance`, `Emergency`, `Third party`, `Customer caused`, `Force majeure` or `Other`. A label for the record; it changes nothing in the calculation. |
 | Reason | Required. Shown in the list and kept with the sealed month. |
 
-- A window applies to every monitor in the policy, including monitors added later.
+- A window applies to every monitor in the reporting, including monitors added later.
 - Runs inside it are left out of both sides of the month: neither up nor down.
 - Overlapping windows excuse a run once.
 - A window across a month boundary is split there. Each month drops only its own part.
@@ -130,20 +130,20 @@ An excused window is a stretch of time whose runs count for no monitor in the po
 - The add dialog shows when the last window of the same kind started and how many of the last two complete months had a miss. It refuses nothing on that account: contract rules about which windows qualify, such as notice periods or weekly limits, are not checked.
 - Adding and removing a window are recorded in the audit log.
 
-The runs inside a window are counted from the same run verdicts as the month. openstatus keeps them at that resolution for about 45 days; a month is normally sealed well within that. If a month is still unsealed when its excused runs are older than that, for example for a monitor added to the policy afterwards, its cell shows the month's figure without its excused windows, as a preview like the list, and the page and the export say so.
+The runs inside a window are counted from the same run verdicts as the month. openstatus keeps them at that resolution for about 45 days; a month is normally sealed well within that. If a month is still unsealed when its excused runs are older than that, for example for a monitor added to the reporting afterwards, its cell shows the month's figure without its excused windows, as a preview like the list, and the page and the export say so.
 
 ## Editing, archiving and deleting
 
 - Editing the name, target, strict setting or monitors updates previews and live months at once. Sealed months keep the terms they were sealed with.
 - Adding a monitor shows its earlier months as previews.
 - Removing a monitor keeps its sealed months. They are hidden until the monitor is added back.
-- Deleting a monitor removes it from every policy.
-- A policy without a sealed month can be deleted.
-- A policy with a sealed month can only be archived: it becomes read-only, seals no further months and leaves the default list. Its sealed months stay on record. The **Archived** tab still shows it.
+- Deleting a monitor removes it from every reporting.
+- A reporting without a sealed month can be deleted.
+- A reporting with a sealed month can only be archived: it becomes read-only, seals no further months and leaves the default list. Its sealed months stay on record. The **Archived** tab still shows it.
 
 ## Export
 
-The **Export** button on a policy's page downloads its months as a CSV file, one row per monitor and month. This is the file to send to a customer or auditor.
+The **Export** button on a reporting's page downloads its months as a CSV file, one row per monitor and month. This is the file to send to a customer or auditor.
 
 - Pick a range of months. The default is the last 12 complete months; a file covers at most 60.
 - Live months are left out unless you tick **Include live months**. They are then marked `live (provisional)`.
@@ -153,14 +153,14 @@ The first line states the method. The second says when the file was generated, w
 
 | Column | Description |
 |---|---|
-| `policy` | Policy name. |
+| `reporting` | Reporting name. |
 | `target` | Target in percent, for example `99.900`. |
 | `strict` | `yes` or `no`. |
 | `monitor_id`, `monitor_name`, `monitor_url` | The monitor. |
 | `month` | `YYYY-MM`. |
 | `state` | `sealed`, `preview`, `live (provisional)` or `none`. |
 | `ok_runs`, `degraded_runs`, `failed_runs` | Run counts by verdict; slow runs are `degraded_runs`. |
-| `excused_runs` | Runs inside the policy's [excused windows](#excused-windows), left out of both sides of the uptime. `0` without windows. Empty without runs. |
+| `excused_runs` | Runs inside the reporting's [excused windows](#excused-windows), left out of both sides of the uptime. `0` without windows. Empty without runs. |
 | `uptime` | Percent, floored to three decimals. Empty without runs, or when every run was excused. |
 | `met` | `yes`, `no`, or empty without runs or when every run was excused. |
 | `sealed_at` | ISO timestamp, sealed rows only. |
@@ -176,9 +176,9 @@ What a status page [maintenance](/docs/reference/maintenance) does to the figure
 - **Pause checks** (default): cloud regions do not check the monitor while the maintenance is active. That time is left out of both sides of the fraction. It never counts as downtime, whatever happened during it.
 - **Keep checking without alerting:** checks run as usual and their real outcome counts. A failure during the maintenance counts against uptime like any other time; it just does not change the monitor's status, open an incident or notify anyone.
 
-To leave a maintenance out of the figure for such a monitor, excuse it: **Excuse** next to a maintenance window on the policy page opens the [excused window](#excused-windows) dialog with its times and title prefilled. Edit the times first if the maintenance overran and the overrun should count. Excusing is a separate step on purpose, so an overrun can be left to count. Excusing a maintenance for a monitor whose checks pause is allowed but changes nothing, since that time is not counted anyway; the dialog says so.
+To leave a maintenance out of the figure for such a monitor, excuse it: **Excuse** next to a maintenance window on the reporting page opens the [excused window](#excused-windows) dialog with its times and title prefilled. Edit the times first if the maintenance overran and the overrun should count. Excusing is a separate step on purpose, so an overrun can be left to count. Excusing a maintenance for a monitor whose checks pause is allowed but changes nothing, since that time is not counted anyway; the dialog says so.
 
-The policy page lists, per month, the maintenance windows that touched its monitors, found through the status page components they are linked to. It also shows for each monitor whether its checks pause or continue, with a link to [change the setting](https://app.openstatus.dev/monitors/_/edit#maintenance).
+The reporting page lists, per month, the maintenance windows that touched its monitors, found through the status page components they are linked to. It also shows for each monitor whether its checks pause or continue, with a link to [change the setting](https://app.openstatus.dev/monitors/_/edit#maintenance).
 
 ## Related resources
 

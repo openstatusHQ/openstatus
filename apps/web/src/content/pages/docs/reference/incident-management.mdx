@@ -1,7 +1,7 @@
 ---
 category: Reference
 title: Incident Management Reference
-description: Technical specification for declared incidents - severity, status, timeline, SLA policy, postmortem and the Slack channel
+description: Technical specification for declared incidents - severity, status, timeline, reporting, postmortem and the Slack channel
 ---
 
 A managed incident is your team's internal record of an outage: who declared it, how severe it is, who is in command, what happened when, and the postmortem that follows. Someone on the team declares it. Nothing about it is published.
@@ -27,7 +27,7 @@ It is a different object from the two things it sits between:
 | Summary | Optional, up to 4,000 characters. |
 | Commander | Optional workspace member in charge of the incident. |
 | Started at | When the impact began. Defaults to the declare time, or to the start of the monitor incident or status report it was declared from. Can be set in the past. |
-| Reported at | Optional. When the request reached you, by email or phone, if before the declare. [SLA](#sla-policy) timers start here. See [reported at](#reported-at). |
+| Reported at | Optional. When the request reached you, by email or phone, if before the declare. [SLA](#reporting) timers start here. See [reported at](#reported-at). |
 | Acknowledged | When someone was first on the incident, and who. See [acknowledgement](#acknowledgement). |
 | Status report | Optional link to one status report. |
 | Slack channel | The incident's channel, when Slack is connected. |
@@ -40,7 +40,7 @@ It is a different object from the two things it sits between:
 | `major` | Significant degradation | 4 hours |
 | `minor` | Limited impact | 24 hours |
 
-An incident tracked by an [SLA policy](#sla-policy) whose severity has an update target gets [update notices](#notices) instead of [stale reminders](#stale-reminders).
+An incident tracked by a [reporting](#reporting) whose severity has an update target gets [update notices](#notices) instead of [stale reminders](#stale-reminders).
 
 ## Status
 
@@ -69,15 +69,15 @@ Notes are internal and append-only, up to 10,000 characters each.
 
 An incident can link to one status report. The two keep their own status: marking the incident `mitigated` or `resolved` does not post a public update or resolve the report. Resolve the report separately, with its own public message.
 
-## SLA policy
+## Reporting
 
-An incident SLA policy holds your incidents to response, resolution and update targets per severity. openstatus times every incident declared under it, records each target it misses, warns before a target is due and shows month by month how many incidents met their targets.
+An incident reporting holds your incidents to response, resolution and update targets per severity. openstatus times every incident declared under it, records each target it misses, warns before a target is due and shows month by month how many incidents met their targets.
 
-Find it in the dashboard under [**SLA Policies > Incidents**](https://app.openstatus.dev/sla-policies/incidents#targets). The incident SLA policy is included in the Pro and Scale plans. Acknowledgement is recorded on every plan.
+Find it in the dashboard under [**Reportings > Incidents**](https://app.openstatus.dev/reportings/incidents#targets). The incident reporting is included in the Pro and Scale plans. Acknowledgement is recorded on every plan.
 
 ### Targets
 
-A workspace has one policy. Each severity has three optional targets:
+A workspace has one reporting. Each severity has three optional targets:
 
 | Target | Meaning | Default: `critical` | `major` | `minor` |
 |---|---|---|---|---|
@@ -89,15 +89,15 @@ A workspace has one policy. Each severity has three optional targets:
 - **Response is met by**: `Acknowledgement` (default) or `First status report update`. See [response](#response).
 - **Resolution target stops at**: `Mitigated` (default) or `Resolved`. See [resolution stop](#resolution-stop).
 
-Owners and admins can save the policy or turn it off. Every workspace member can view it. Each change is recorded in the audit log. The policy is managed in the dashboard only; it is not available over the API, the CLI or the MCP server.
+Owners and admins can save the reporting or turn it off. Every workspace member can view it. Each change is recorded in the audit log. The reporting is managed in the dashboard only; it is not available over the API, the CLI or the MCP server.
 
 ### Tracked incidents
 
-An incident is tracked when it was declared while the workspace had a policy and its plan included it. At declare, the incident keeps a copy of the policy: the targets, the response rule and the resolution stop.
+An incident is tracked when it was declared while the workspace had a reporting and its plan included it. At declare, the incident keeps a copy of the reporting: the targets, the response rule and the resolution stop.
 
-- Editing the policy or turning it off never changes incidents already declared. They finish with the terms they were declared with.
+- Editing the reporting or turning it off never changes incidents already declared. They finish with the terms they were declared with.
 - After a downgrade, tracked incidents keep their timers. New incidents are not tracked.
-- Canceled incidents and incidents declared without a policy have no SLA state.
+- Canceled incidents and incidents declared without a reporting have no SLA state.
 - A severity without targets in the copy has no timers.
 
 On a tracked incident, the list row and the detail page show the timer that is due next, and the **SLA** section of the detail page shows each timer with its status. Nothing about the SLA appears on the status page.
@@ -137,7 +137,7 @@ Acknowledge from the button on the incident's row or detail page, from the pinne
 
 ### Response
 
-The response time is stored separately from the acknowledgement, once, and never cleared. What sets it depends on the policy's **Response is met by** at declare:
+The response time is stored separately from the acknowledgement, once, and never cleared. What sets it depends on the reporting's **Response is met by** at declare:
 
 - **Acknowledgement**: the response is met when the incident is [acknowledged](#acknowledgement). It measures when the team noticed.
 - **First status report update**: the response is met when the incident has a linked [status report](#status-report-link) with an update posted at or after the start of the timer. That is when such an update is posted on the linked report, when a report that already has one is linked, or when the incident is declared with one. It measures when customers were told. Acknowledgement is still recorded but does not meet the response, and no Acknowledge button is shown.
@@ -157,12 +157,12 @@ Set **Reported at** when the request reached you before you declared, for exampl
 
 The resolution timer stops when the incident enters a stop state:
 
-| Policy | Stop states |
+| Setting | Stop states |
 |---|---|
 | `Mitigated` (default) | `mitigated` or `resolved`. Cleanup after mitigation does not count against the target. |
 | `Resolved` | `resolved` only. |
 
-The stop time is when the incident first entered a stop state and stayed in one: moving from `mitigated` to `resolved` under the default policy keeps the mitigation time. Reopening to `open` clears it and the timer runs again against its original due time.
+The stop time is when the incident first entered a stop state and stayed in one: moving from `mitigated` to `resolved` under the default reporting keeps the mitigation time. Reopening to `open` clears it and the timer runs again against its original due time.
 
 ### Recorded misses
 
@@ -212,7 +212,7 @@ A temporary Slack failure is retried every five minutes and does not fall back t
 
 ### Monthly attainment
 
-The **Monthly attainment** table under the policy shows the last twelve months, the current one included, one row per month:
+The **Monthly attainment** table under the reporting shows the last twelve months, the current one included, one row per month:
 
 | Column | Description |
 |---|---|
@@ -301,4 +301,4 @@ Every change to an incident or its postmortem is written to the audit log with t
 - **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)**: install Slack and run your first incident from it.
 - **[MCP server reference](/docs/reference/mcp-server#incidents)**: the incident tools for agents.
 - **[Incident Service](/docs/sdk/nodejs/incident-service)**: incidents, acknowledgement and SLA state over the API.
-- **[Monitor SLA policy reference](/docs/reference/monitor-sla-policy)**: monthly uptime targets for monitors.
+- **[Monitor reporting reference](/docs/reference/monitor-reporting)**: monthly uptime targets for monitors.

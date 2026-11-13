@@ -126,13 +126,13 @@ const atRisk = incidents.filter((incident) =>
 );
 ```
 
-Incidents declared while the workspace has an [incident SLA policy](/docs/reference/incident-management#sla-policy) carry `sla` on both `getIncident` and `listIncidents`. It is unset for incidents declared without a policy and for canceled ones. `sla.response` and `sla.resolution` are each unset when the incident's severity has no such target, otherwise:
+Incidents declared while the workspace has an [incident reporting](/docs/reference/incident-management#reporting) carry `sla` on both `getIncident` and `listIncidents`. It is unset for incidents declared without a reporting and for canceled ones. `sla.response` and `sla.resolution` are each unset when the incident's severity has no such target, otherwise:
 
 | Field | Description |
 |-------|-------------|
-| `targetMinutes` | The target for the incident's current severity, from the policy snapshot fixed on the incident at declare. A severity change can change it. |
+| `targetMinutes` | The target for the incident's current severity, from the reporting snapshot fixed on the incident at declare. A severity change can change it. |
 | `dueAt` | When the target is due, counted from `reportedAt` when set, else from `declaredAt`. A severity or `reportedAt` change moves it while the target is still open. |
-| `metAt` | When the target was met. The response: when the incident was acknowledged, or, when the policy counts the first status report update as the response, when the linked status report got an update; in both cases at the latest when the incident was resolved. The resolution: when the incident entered the policy's stop state. Unset while open. |
+| `metAt` | When the target was met. The response: when the incident was acknowledged, or, when the reporting counts the first status report update as the response, when the linked status report got an update; in both cases at the latest when the incident was resolved. The resolution: when the incident entered the reporting's stop state. Unset while open. |
 | `missedAt` | The due time recorded as missed. Once set it never clears, not even on reopen or a severity downgrade. |
 | `missReason` | Why the target was missed, written by a member in the dashboard. Unset without a recorded miss or a reason. |
 | `status` | `RUNNING`, `AT_RISK` (past 75% of the target), `MET` or `BREACHED` (past the due time, or met late). |

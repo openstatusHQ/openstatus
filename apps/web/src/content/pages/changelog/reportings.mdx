@@ -1,15 +1,15 @@
 ---
-title: "SLA policies"
+title: "Reportings"
 description: "Hold your monitors to a monthly uptime target, see every month met or missed, and export sealed months for your customers."
-image: "/assets/changelog/sla-policies.png"
+image: "/assets/changelog/reportings.png"
 publishedAt: "2026-11-11"
 author: "openstatus"
 category: "monitoring"
 ---
 
-You can now hold your monitors to a monthly uptime target. Open [**SLA Policies > Monitors**](https://app.openstatus.dev/sla-policies/monitors), name a policy, pick a target like `99.9%` and the monitors it covers.
+You can now hold your monitors to a monthly uptime target. Open [**Reportings > Monitors**](https://app.openstatus.dev/reportings/monitors), name a reporting, pick a target like `99.9%` and the monitors it covers.
 
-The policy page shows each monitor against the last 12 or 24 months, green when it met the target and red when it missed, plus the running month as provisional. Cards show the target, the lowest monitor this month and how many of the last twelve months had a miss.
+The reporting page shows each monitor against the last 12 or 24 months, green when it met the target and red when it missed, plus the running month as provisional. Cards show the target, the lowest monitor this month and how many of the last twelve months had a miss.
 
 - **Judged per monitor, per month.** There is no blended figure across monitors.
 - **Runs, not requests.** Each scheduled check gets one verdict across its cloud regions: it fails only when at least half of the reporting regions failed, so one bad region out of three is not an outage.
@@ -19,4 +19,4 @@ The policy page shows each monitor against the last 12 or 24 months, green when 
 - **CSV export.** Download a range of months with the run counts, uptime, target and whether each month is sealed. The file states the method, ready to send to a customer.
 - **Email on a miss.** Workspace owners get an email when a sealed month misses its target.
 
-SLA policies are included in the Pro and Scale plans. Read the [monitor SLA policy reference](/docs/reference/monitor-sla-policy) for the exact method.
+Reportings are included in the Pro and Scale plans. Read the [monitor reporting reference](/docs/reference/monitor-reporting) for the exact method.
