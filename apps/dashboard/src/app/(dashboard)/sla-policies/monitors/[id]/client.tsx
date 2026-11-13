@@ -17,6 +17,7 @@ import { parseAsInteger, parseAsNumberLiteral, useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 
 import {
+  EmptyStateActions,
   EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
@@ -76,7 +77,12 @@ export function Client() {
   const { data: user } = useQuery(trpc.user.get.queryOptions());
   const { data: members } = useQuery(trpc.member.list.queryOptions());
   const allowed = workspace?.limits["monitor-sla"] === true;
-  const { data: policy, isError } = useQuery({
+  const {
+    data: policy,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
     ...trpc.monitorSlaPolicy.get.queryOptions({
       id: Number.parseInt(id),
       months,
@@ -85,7 +91,8 @@ export function Client() {
   });
   const { data: workspaceMonitors } = useQuery({
     ...trpc.monitor.list.queryOptions(),
-    enabled: allowed && policy?.strict === true && !policy.archivedAt,
+    enabled:
+      allowed && policy?.liveTerms.strict === true && !policy.archivedAt,
   });
   const columns = useMemo(
     () =>
@@ -102,17 +109,34 @@ export function Client() {
 
   if (!allowed) return <SlaPolicyPaywall />;
 
-  if (isError) {
+  if (error) {
+    const notFound = error.data?.code === "NOT_FOUND";
     return (
       <SectionGroup>
         <EmptyStateContainer>
           <EmptyStateMedia>
             <Shield />
           </EmptyStateMedia>
-          <EmptyStateTitle>Policy not found</EmptyStateTitle>
+          <EmptyStateTitle>
+            {notFound ? "Policy not found" : "Could not load the policy"}
+          </EmptyStateTitle>
           <EmptyStateDescription>
-            It may have been deleted, or it belongs to another workspace.
+            {notFound
+              ? "It may have been deleted, or it belongs to another workspace."
+              : "Something went wrong while loading it. Try again."}
           </EmptyStateDescription>
+          {notFound ? null : (
+            <EmptyStateActions>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isRefetching}
+                onClick={() => void refetch()}
+              >
+                {isRefetching ? "Retrying..." : "Retry"}
+              </Button>
+            </EmptyStateActions>
+          )}
         </EmptyStateContainer>
       </SectionGroup>
     );
@@ -138,7 +162,7 @@ export function Client() {
   // an archived policy is a record: no live warnings
   const live = policy.archivedAt === null;
   const neverSlow =
-    live && policy.strict
+    live && liveTerms.strict
       ? (workspaceMonitors ?? []).filter(
           (m) =>
             m.degradedAfter == null &&
