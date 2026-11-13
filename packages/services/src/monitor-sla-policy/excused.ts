@@ -1,8 +1,10 @@
 import { monthRange } from "../frozen-uptime/compute";
 import { addCounts, type Counts } from "../frozen-uptime/quorum";
+import { quorumRegionCount } from "../frozen-uptime/quorum";
 import {
   FREEZE_CUTOFF_MS,
   fetchRunCounts,
+  hasRuns,
   type UptimeRunsRangePipes,
 } from "../frozen-uptime/run";
 import { completeMonths, monthCellKey, splitByMonth } from "./months";
@@ -43,7 +45,8 @@ export function spansInMonth(
 
 /**
  * Excused run verdicts per `monthCellKey` from the range endpoints. Never throws or
- * reports zero for what it could not read: failed reads land in `failed`, too-old months in `expired`.
+ * reports zero for what it could not read: failed reads land in `failed`, too-old months in `expired`,
+ * members whose current type or regions give no run verdicts in `unreadable`.
  */
 export async function fetchExcusedCounts(args: {
   monitors: readonly { id: number; jobType: string; regions: string }[];
@@ -56,10 +59,15 @@ export async function fetchExcusedCounts(args: {
   counts: Map<string, Counts>;
   failed: Set<string>;
   expired: Set<string>;
+  unreadable: Set<string>;
 }> {
   const counts = new Map<string, Counts>();
   const failed = new Set<string>();
   const expired = new Set<string>();
+  const unreadable = new Set<string>();
+  const readable = args.monitors.filter(
+    (m) => hasRuns(m.jobType) && quorumRegionCount(m.regions) !== null,
+  );
   const now = args.now.getTime();
   let pipes: UptimeRunsRangePipes | undefined;
   for (const month of args.months) {
@@ -69,10 +77,14 @@ export async function fetchExcusedCounts(args: {
       for (const m of args.monitors) expired.add(monthCellKey(m.id, month));
       continue;
     }
+    for (const m of args.monitors) {
+      if (!readable.includes(m)) unreadable.add(monthCellKey(m.id, month));
+    }
+    if (readable.length === 0) continue;
     pipes ??= args.pipes();
     for (const part of parts) {
       const res = await fetchRunCounts({
-        monitors: [...args.monitors],
+        monitors: readable,
         pipes,
         from: new Date(part.start),
         to: new Date(part.end),
@@ -87,7 +99,7 @@ export async function fetchExcusedCounts(args: {
     }
   }
   for (const key of failed) counts.delete(key);
-  return { counts, failed, expired };
+  return { counts, failed, expired, unreadable };
 }
 
 /** Why a window can no longer be added or removed: it touches a sealed month or a month before the previous one. */

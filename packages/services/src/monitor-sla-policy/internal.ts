@@ -671,7 +671,7 @@ export async function judgePolicyMonths(args: {
     sleep: args.sleep,
   });
   const excusedFor = (key: string): CellExcused =>
-    excused.failed.has(key)
+    excused.failed.has(key) || excused.unreadable.has(key)
       ? "unavailable"
       : excused.expired.has(key)
         ? "expired"

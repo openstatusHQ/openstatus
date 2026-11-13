@@ -78,6 +78,27 @@ function runPipes(calls: { fromDate: number; toDate: number }[] = []) {
 const monitors = [{ id: 1, jobType: "http", regions: "ams,fra" }];
 
 describe("fetchExcusedCounts", () => {
+  test("a member whose type or regions no longer give run verdicts is unreadable, not unexcused", async () => {
+    const res = await fetchExcusedCounts({
+      monitors: [
+        ...monitors,
+        { id: 2, jobType: "http", regions: "" },
+        { id: 3, jobType: "push", regions: "ams" },
+      ],
+      spans: mergeSpans([w(at(5, 0), at(5, 1))]),
+      months: ["2026-10-01"],
+      now: new Date(at(20)),
+      pipes: () => runPipes(),
+    });
+    expect(res.counts.has("1:2026-10-01")).toBe(true);
+    expect([...res.unreadable].sort()).toEqual([
+      "2:2026-10-01",
+      "3:2026-10-01",
+    ]);
+    expect(res.counts.has("2:2026-10-01")).toBe(false);
+    expect(res.failed.size).toBe(0);
+  });
+
   test("overlapping windows excuse each run once", async () => {
     const res = await fetchExcusedCounts({
       monitors,
