@@ -32,6 +32,7 @@ export async function getMonitorSlaExcusedWindow(args: {
       policy: {
         id: monitorSlaPolicy.id,
         name: monitorSlaPolicy.name,
+        timeZone: monitorSlaPolicy.timeZone,
         archivedAt: monitorSlaPolicy.archivedAt,
       },
     })
