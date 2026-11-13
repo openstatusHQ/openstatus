@@ -379,7 +379,7 @@ describe("months past the runs kept", () => {
       });
       const [, comment, header, row] = csv.trim().split("\r\n");
       expect(comment).toContain(
-        "Months before the previous one that were never sealed have no judgement.",
+        "Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement.",
       );
       const columns = header.split(",");
       const values = row.split(",");

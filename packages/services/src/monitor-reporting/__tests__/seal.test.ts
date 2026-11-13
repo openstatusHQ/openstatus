@@ -347,7 +347,7 @@ describe("sealMonitorSlaMonths on episodes", () => {
     });
   });
 
-  test("reads the month plus two hours, not up to now", async () => {
+  test("reads from the month start to now, like the preview", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
@@ -362,7 +362,7 @@ describe("sealMonitorSlaMonths on episodes", () => {
       expect(calls).toHaveLength(1);
       expect(calls[0]).toMatchObject({
         fromDate: OCT_START,
-        toDate: OCT_END + 2 * HOUR,
+        toDate: OCT_END + 10 * DAY,
       });
       expect(await sealedRows(tx, policy.id)).toHaveLength(1);
     });

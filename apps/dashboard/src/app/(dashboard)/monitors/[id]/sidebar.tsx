@@ -63,9 +63,15 @@ export function Sidebar() {
     trpc.monitor.get.queryOptions({ id: monitorId }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const slaEnabled = workspace?.limits["monitor-sla"] === true;
   const { data: covering = [] } = useQuery({
+    ...trpc.monitorReporting.listForMonitor.queryOptions({ monitorId }),
+    enabled: slaEnabled,
+  });
+  // names render at once; the months need Tinybird and fill in after
+  const { data: months, isError: monthsFailed } = useQuery({
     ...trpc.monitorReporting.monitorMonths.queryOptions({ monitorId }),
-    enabled: workspace?.limits["monitor-sla"] === true,
+    enabled: slaEnabled && covering.length > 0,
   });
 
   if (!monitor) return null;
@@ -80,6 +86,13 @@ export function Sidebar() {
               <SlaMonitorSidebarEntry
                 key={reporting.id}
                 reporting={reporting}
+                month={
+                  months
+                    ? (months.find((m) => m.id === reporting.id)?.month ?? null)
+                    : monthsFailed
+                      ? null
+                      : undefined
+                }
                 monitorId={monitorId}
               />
             )),

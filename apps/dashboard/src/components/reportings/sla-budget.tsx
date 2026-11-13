@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { formatSlaUptime } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import NextLink from "next/link";
 
@@ -73,18 +74,21 @@ export function SlaBudgetBar({
 }
 
 type SidebarReporting =
-  RouterOutputs["monitorReporting"]["monitorMonths"][number];
+  RouterOutputs["monitorReporting"]["listForMonitor"][number];
+type SidebarMonth =
+  RouterOutputs["monitorReporting"]["monitorMonths"][number]["month"];
 
-/** One reporting in the monitor sidebar: uptime so far, budget bar, time left. */
+/** One reporting in the monitor sidebar: uptime so far, budget bar, time left. `month` undefined: loading; null: could not load. */
 export function SlaMonitorSidebarEntry({
   reporting,
+  month,
   monitorId,
 }: {
   reporting: SidebarReporting;
+  month: SidebarMonth | null | undefined;
   monitorId: number;
 }) {
-  const { month } = reporting;
-  const budget = month.budget;
+  const budget = month?.budget ?? null;
 
   return (
     <NextLink
@@ -100,7 +104,9 @@ export function SlaMonitorSidebarEntry({
           ) : null}
         </span>
       </span>
-      {budget ? (
+      {month === undefined ? (
+        <Skeleton className="h-1 w-full" />
+      ) : budget ? (
         <SlaBudgetBar
           size="sm"
           burnedMs={budget.burnedMs}
@@ -112,14 +118,14 @@ export function SlaMonitorSidebarEntry({
       <span className="flex items-baseline justify-between gap-2 font-mono text-xs tabular-nums">
         <span
           className={cn(
-            month.uptime == null
+            month?.uptime == null
               ? "text-muted-foreground"
               : month.met === false
                 ? "text-destructive"
                 : "text-info",
           )}
         >
-          {month.uptime == null ? "—" : `${formatSlaUptime(month.uptime)}%`}
+          {month?.uptime == null ? "—" : `${formatSlaUptime(month.uptime)}%`}
           <span className="text-muted-foreground"> so far</span>
         </span>
         <span

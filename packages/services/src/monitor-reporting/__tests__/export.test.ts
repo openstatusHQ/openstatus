@@ -137,7 +137,7 @@ describe("exportMonitorReporting", () => {
       expect(comments[1]).toContain(`Generated ${now.toISOString()}`);
       expect(comments[1]).toContain("Live months are not included.");
       expect(comments[1]).toContain(
-        "Months before the previous one that were never sealed have no judgement.",
+        "Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement.",
       );
       expect(header).toBe(
         "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",

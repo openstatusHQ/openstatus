@@ -99,7 +99,7 @@ export async function exportMonitorReporting(args: {
 
   const lines = [
     `# ${MONITOR_SLA_METHOD}`,
-    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement. Months before the previous one that were never sealed have no judgement. Uptime is in percent, floored to three decimals. ${
+    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement. Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement. Uptime is in percent, floored to three decimals. ${
       input.includeLive
         ? "Live months are provisional: they are not sealed yet and will change."
         : "Live months are not included."
