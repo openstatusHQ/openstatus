@@ -12,6 +12,7 @@ import {
   formatSlaMonth,
   nextSlaMonth,
   parseSlaTarget,
+  slaMonthOf,
   slaTreatmentTotals,
 } from "./sla-policies.client";
 
@@ -22,6 +23,8 @@ describe("allowedDowntime", () => {
     [99_900, "43m 12s"],
     [99_950, "21m 36s"],
     [99_990, "4m 19s"],
+    [99_123, "6h 18m 52s"],
+    [97_000, "21h 36m"],
     [100_000, "0s"],
   ])("%i allows %s in 30 days", (target, expected) => {
     expect(allowedDowntime(target)).toBe(expected);
@@ -37,6 +40,7 @@ describe("formatSlaDuration", () => {
     [(43 * 60 + 12) * 1000, "43m 12s"],
     [(3 * 3600 + 36 * 60 + 59) * 1000, "3h 36m"],
     [72 * 3600_000, "72h"],
+    [(3600 + 5) * 1000, "1h"],
     [-4 * 60_000, "4m"],
   ])("%i ms → %s", (ms, expected) => {
     expect(formatSlaDuration(ms)).toBe(expected);
@@ -94,6 +98,15 @@ describe("formatSlaMonth", () => {
   test("short month in UTC, with the year on request", () => {
     expect(formatSlaMonth("2026-01-01")).toBe("Jan");
     expect(formatSlaMonth("2025-12-01", { year: true })).toBe("Dec 2025");
+  });
+});
+
+describe("slaMonthOf", () => {
+  test("the month in the given zone, not in UTC", () => {
+    const date = new Date(Date.UTC(2026, 10, 30, 23, 30));
+    expect(slaMonthOf(date, "UTC")).toBe("2026-11-01");
+    expect(slaMonthOf(date, "Europe/Berlin")).toBe("2026-12-01");
+    expect(slaMonthOf(date, "America/New_York")).toBe("2026-11-01");
   });
 });
 

@@ -6,8 +6,10 @@ import {
   EntityCardRow,
 } from "@/components/common/entity-card";
 import { entityKinds } from "@/data/entity-refs.client";
-import { excusedKindLabels } from "@/data/sla-policies.client";
-import { formatDateRange } from "@/lib/formatter";
+import {
+  excusedKindLabels,
+  formatExcusedWindow,
+} from "@/data/sla-policies.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { EntityRefFallback, EntityRefHeader, lookupOptions } from "../parts";
@@ -43,8 +45,9 @@ export function MonitorSlaExcusedWindowCard({ id }: { id: number }) {
         </EntityCardRow>
         <EntityCardRow label="Window" className="whitespace-normal">
           <time dateTime={data.from.toISOString()}>
-            {formatDateRange(data.from, data.to)}
-          </time>
+            {formatExcusedWindow(data.from, data.to, data.policy.timeZone)}
+          </time>{" "}
+          <span className="text-muted-foreground">{data.policy.timeZone}</span>
         </EntityCardRow>
         <EntityCardRow label="Policy" title={data.policy.name}>
           {data.policy.name}
