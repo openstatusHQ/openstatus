@@ -282,6 +282,36 @@ describe("handleHeartbeatSweepCron", () => {
 
     expect(await statusOf(row.id)).toBe("active");
   });
+
+  test("a maintenance that ends at the sweep no longer covers it", async () => {
+    const now = Math.floor(Date.now() / 1000) * 1000;
+    const row = await createHeartbeat(now - 2 * HOUR_MS);
+    const statusPage = await createPage(workspaceId);
+    const component = await createPageComponent(workspaceId, statusPage.id, {
+      type: "monitor",
+      monitorId: row.id,
+    });
+    const [window] = await db
+      .insert(maintenance)
+      .values({
+        title: "db upgrade",
+        message: "",
+        from: new Date(now - HOUR_MS),
+        to: new Date(now),
+        workspaceId,
+        pageId: statusPage.id,
+      })
+      .returning();
+    if (!window) throw new Error("maintenance insert returned no row");
+    await db
+      .insert(maintenancesToPageComponents)
+      .values({ maintenanceId: window.id, pageComponentId: component.id })
+      .run();
+
+    await handleHeartbeatSweepCron(now);
+
+    expect(await statusOf(row.id)).toBe("error");
+  });
 });
 
 test("failedPingMessage", () => {

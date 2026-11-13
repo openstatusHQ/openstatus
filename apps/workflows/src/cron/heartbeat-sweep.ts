@@ -74,7 +74,7 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
           JOIN ${maintenance} ON ${maintenance.id} = ${maintenancesToPageComponents.maintenanceId}
           JOIN ${pageComponent} ON ${pageComponent.id} = ${maintenancesToPageComponents.pageComponentId}
           WHERE ${maintenance.from} <= ${Math.floor(now / 1000)}
-            AND ${maintenance.to} >= ${Math.floor(now / 1000)}
+            AND ${maintenance.to} > ${Math.floor(now / 1000)}
             AND ${pageComponent.monitorId} IS NOT NULL
         )
       LIMIT ${CANDIDATE_LIMIT}
