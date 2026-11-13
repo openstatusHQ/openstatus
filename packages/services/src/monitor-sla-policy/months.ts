@@ -199,6 +199,7 @@ function judged(args: {
   if (runs === 0 || args.excused === "unavailable") {
     return {
       ...base,
+      method: null,
       terms: null,
       counts: null,
       excused: null,
@@ -289,7 +290,8 @@ export function timeMonth(args: {
   const cut = cutExcused(args.episodes, args.excusedSpans);
   const kept = runsByKind(cut.kept);
   const excused = runsByKind(cut.excused);
-  if (result.measuredMs > 0 && kept.ok + kept.degraded + kept.error === 0) {
+  const runsIn = (c: Counts) => c.ok + c.degraded + c.error;
+  if (result.measuredMs > 0 && runsIn(kept) + runsIn(excused) === 0) {
     // a measured slice with no run estimated inside it still stands for one
     kept[dominantVerdict(cut.kept)] += 1;
   }

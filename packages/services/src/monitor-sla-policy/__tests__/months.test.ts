@@ -9,6 +9,7 @@ import {
   monthOf,
   monthsBetween,
   splitByMonth,
+  storedMonth,
   timeMonth,
 } from "../months";
 
@@ -222,5 +223,57 @@ describe("timeMonth", () => {
     expect(month.counts).toEqual({ ok: 0, degraded: 0, error: 1 });
     expect(month.excused).toEqual({ ok: 0, degraded: 0, error: 0 });
     expect(month.uptime).toBe(0);
+  });
+
+  test("a run cut into an excused window is not counted again as kept", () => {
+    const start = Date.UTC(2026, 10, 2);
+    const month = timeMonth({
+      month: "2026-11-01",
+      state: "live",
+      episodes: [
+        {
+          kind: "error",
+          startedAt: start,
+          endedAt: start + 60_000,
+          runs: 1,
+          weightedMs: 60_000,
+        },
+      ],
+      covered: { start, end: start + 60_000 },
+      excusedSpans: [{ start, end: start + 10_000 }],
+      terms: { target: 99_000, strict: false },
+      timeZone: "UTC",
+    });
+    expect(month.measuredMs).toBe(50_000);
+    expect(month.counts).toEqual({ ok: 0, degraded: 0, error: 1 });
+    expect(month.excused).toEqual({ ok: 0, degraded: 0, error: 1 });
+  });
+});
+
+describe("storedMonth", () => {
+  const policy = { target: 99_000, strict: false };
+  test("no judgement basis carries no method", () => {
+    const noRuns = storedMonth({
+      month: "2026-01-01",
+      seal: undefined,
+      frozen: { ok: 0, degraded: 0, error: 0 },
+      policy,
+    });
+    expect(noRuns).toMatchObject({ method: null, met: null, counts: null });
+    const unreadable = storedMonth({
+      month: "2026-01-01",
+      seal: undefined,
+      frozen: { ok: 10, degraded: 0, error: 0 },
+      excused: "unavailable",
+      policy,
+    });
+    expect(unreadable).toMatchObject({ method: null, met: null });
+    const judged = storedMonth({
+      month: "2026-01-01",
+      seal: undefined,
+      frozen: { ok: 10, degraded: 0, error: 0 },
+      policy,
+    });
+    expect(judged).toMatchObject({ method: "runs", met: true });
   });
 });
