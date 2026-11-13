@@ -221,23 +221,22 @@ export function evaluateSlaPeriod(args: {
   };
 }
 
-/** Down-time budget of a month and the down time it is on pace for; all ms, excused time leaves both. */
+/**
+ * Down-time budget over measured time so far plus covered, non-excused time
+ * still to come; pace extrapolates the burn over that same horizon.
+ */
 export function slaBudget(args: {
-  monthMs: number;
-  excusedMs: number;
+  measuredMs: number;
+  remainingMs: number;
   target: number;
   downMs: number;
-  elapsedMs: number;
 }): { budgetMs: number; burnedMs: number; leftMs: number; paceMs: number } {
-  const budgetMs = Math.floor(
-    ((args.monthMs - args.excusedMs) * (100_000 - args.target)) / 100_000,
-  );
+  const horizonMs = args.measuredMs + Math.max(args.remainingMs, 0);
+  const budgetMs = Math.floor((horizonMs * (100_000 - args.target)) / 100_000);
   const paceMs =
-    args.elapsedMs > 0
+    args.measuredMs > 0
       ? Number(
-          (BigInt(args.downMs) *
-            BigInt(Math.max(args.monthMs - args.excusedMs, 0))) /
-            BigInt(args.elapsedMs),
+          (BigInt(args.downMs) * BigInt(horizonMs)) / BigInt(args.measuredMs),
         )
       : 0;
   return {

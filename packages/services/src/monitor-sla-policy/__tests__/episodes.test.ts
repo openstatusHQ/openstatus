@@ -324,16 +324,14 @@ describe("evaluateSlaPeriod", () => {
 
 describe("slaBudget", () => {
   const DAY = 24 * HOUR;
-  const monthMs = 30 * DAY;
 
-  test("99.9% of a 30 day month is 43.2 minutes, paced from 13 days", () => {
+  test("99.9% over 30 days is 43.2 minutes, paced from 13 measured days", () => {
     expect(
       slaBudget({
-        monthMs,
-        excusedMs: 0,
+        measuredMs: 13 * DAY,
+        remainingMs: 17 * DAY,
         target: 99_900,
         downMs: 10 * MIN,
-        elapsedMs: 13 * DAY,
       }),
     ).toEqual({
       budgetMs: 2_592_000,
@@ -343,37 +341,91 @@ describe("slaBudget", () => {
     });
   });
 
-  test("excused time shrinks the budget and left may go negative", () => {
+  test("unmeasured time does not grow the budget and left may go negative", () => {
+    // 20 days elapsed, 10 of them unmeasured; 10 days to come
     const res = slaBudget({
-      monthMs,
-      excusedMs: 10 * DAY,
+      measuredMs: 10 * DAY,
+      remainingMs: 10 * DAY,
       target: 99_900,
       downMs: HOUR,
-      elapsedMs: 20 * DAY,
     });
     expect(res.budgetMs).toBe(1_728_000);
     expect(res.leftMs).toBe(1_728_000 - HOUR);
+    expect(res.paceMs).toBe(2 * HOUR);
+  });
+
+  test("a closed month's budget is its measured time below target", () => {
+    expect(
+      slaBudget({
+        measuredMs: 20 * DAY,
+        remainingMs: 0,
+        target: 99_000,
+        downMs: 0,
+      }).budgetMs,
+    ).toBe(Math.floor((20 * DAY * 1_000) / 100_000));
+  });
+
+  test("at month end, time left is never negative exactly when the month is met", () => {
+    const targets = [
+      0, 90_000, 99_000, 99_500, 99_900, 99_990, 99_999, 100_000,
+    ];
+    const measured = [1, 999, 60_000, 13 * DAY + 7, 31 * DAY - 1, 31 * DAY];
+    for (const target of targets) {
+      for (const measuredMs of measured) {
+        const edge = Math.floor((measuredMs * (100_000 - target)) / 100_000);
+        for (const downMs of [0, edge - 1, edge, edge + 1, measuredMs]) {
+          if (downMs < 0 || downMs > measuredMs) continue;
+          const { leftMs } = slaBudget({
+            measuredMs,
+            remainingMs: 0,
+            target,
+            downMs,
+          });
+          const { met } = evaluateSlaPeriod({
+            episodes: [
+              {
+                kind: "ok",
+                startedAt: 0,
+                endedAt: measuredMs - downMs,
+                runs: 1,
+                weightedMs: measuredMs - downMs,
+              },
+              {
+                kind: "error",
+                startedAt: measuredMs - downMs,
+                endedAt: measuredMs,
+                runs: 1,
+                weightedMs: downMs,
+              },
+            ],
+            excusedSpans: [],
+            target,
+            strict: false,
+            coveredMs: measuredMs,
+          });
+          expect(leftMs >= 0, `${target} ${measuredMs} ${downMs}`).toBe(met);
+        }
+      }
+    }
   });
 
   test("pace stays exact beyond 2^53 intermediates", () => {
     const res = slaBudget({
-      monthMs: 31 * DAY,
-      excusedMs: 0,
+      measuredMs: 31 * DAY - 1,
+      remainingMs: 1,
       target: 0,
       downMs: 31 * DAY - 1,
-      elapsedMs: 31 * DAY - 1,
     });
     expect(res.paceMs).toBe(31 * DAY);
   });
 
-  test("nothing elapsed paces to zero", () => {
+  test("nothing measured paces to zero", () => {
     expect(
       slaBudget({
-        monthMs,
-        excusedMs: 0,
+        measuredMs: 0,
+        remainingMs: 30 * DAY,
         target: 99_000,
         downMs: 0,
-        elapsedMs: 0,
       }).paceMs,
     ).toBe(0);
   });

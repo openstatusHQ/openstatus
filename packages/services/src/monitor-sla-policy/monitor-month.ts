@@ -110,21 +110,21 @@ function labelMaintenances(
   });
 }
 
-/** Budget, burn and pace; unmeasured time left in the month is assumed up. */
+/** Budget, burn and pace over measured time plus covered, non-excused time still to come. */
 function monthBudget(args: {
   monthMs: number;
   excusedMs: number;
+  remainingMs: number;
   target: number;
   downMs: number | null;
   measuredMs: number | null;
 }) {
   const measuredMs = args.measuredMs ?? 0;
   const budget = slaBudget({
-    monthMs: args.monthMs,
-    excusedMs: args.excusedMs,
+    measuredMs,
+    remainingMs: args.remainingMs,
     target: args.target,
     downMs: args.downMs ?? 0,
-    elapsedMs: measuredMs,
   });
   return {
     ...budget,
@@ -132,6 +132,7 @@ function monthBudget(args: {
     monthMs: args.monthMs,
     excusedMs: args.excusedMs,
     measuredMs,
+    remainingMs: args.remainingMs,
   };
 }
 
@@ -280,6 +281,7 @@ export async function getMonitorSlaMonitorMonth(args: {
         // the sealed episodes tile the covered month
         monthMs: (seal.measuredMs ?? 0) + (seal.unmeasuredMs ?? 0) + excusedMs,
         excusedMs,
+        remainingMs: 0,
         target: seal.target,
         downMs: seal.downMs,
         measuredMs: seal.measuredMs,
@@ -325,9 +327,17 @@ export async function getMonitorSlaMonitorMonth(args: {
           spans,
           terms.strict,
         );
+        const ahead = {
+          start: Math.max(now.getTime(), whole.start),
+          end: whole.end,
+        };
         budget = monthBudget({
           monthMs: whole.end - whole.start,
           excusedMs: overlapMs(whole, spans),
+          remainingMs:
+            ahead.end > ahead.start
+              ? ahead.end - ahead.start - overlapMs(ahead, spans)
+              : 0,
           target: terms.target,
           downMs: cell.downMs,
           measuredMs: cell.measuredMs,

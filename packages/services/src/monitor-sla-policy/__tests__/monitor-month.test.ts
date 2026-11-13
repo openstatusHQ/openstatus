@@ -220,6 +220,7 @@ describe("getMonitorSlaMonitorMonth", () => {
         monthMs: 30 * DAY,
         excusedMs: 0,
         measuredMs: measured,
+        remainingMs: 17.5 * DAY,
       });
       expect(res.episodes).toEqual([
         {
@@ -359,7 +360,12 @@ describe("getMonitorSlaMonitorMonth", () => {
           maintenance: { id: upgrade.id, title: "DB upgrade" },
         },
       ]);
-      expect(res.budget).toMatchObject({ burnedMs: 0, paceMs: 0 });
+      // the unmeasured gap does not grow the budget
+      expect(res.budget).toMatchObject({
+        budgetMs: Math.floor(((30 * DAY - 4 * HOUR) * 100) / 100_000),
+        burnedMs: 0,
+        paceMs: 0,
+      });
       expect(res.unmeasuredMs).toBe(4 * HOUR);
       expect(res.countedMaintenances).toEqual([]);
     });
@@ -530,15 +536,17 @@ describe("getMonitorSlaMonitorMonth", () => {
         ["degraded", "lenient", null],
         ["error", "counted", null],
       ]);
-      const judged = 31 * DAY - HOUR;
+      // sealed: the budget is the measured time below target
+      const measured = 31 * DAY - 2 * HOUR;
       expect(res.budget).toEqual({
-        budgetMs: Math.floor((judged * 500) / 100_000),
+        budgetMs: Math.floor((measured * 500) / 100_000),
         burnedMs: HOUR,
-        leftMs: Math.floor((judged * 500) / 100_000) - HOUR,
-        paceMs: Math.floor((HOUR * judged) / (31 * DAY - 2 * HOUR)),
+        leftMs: Math.floor((measured * 500) / 100_000) - HOUR,
+        paceMs: HOUR,
         monthMs: 31 * DAY,
         excusedMs: HOUR,
-        measuredMs: 31 * DAY - 2 * HOUR,
+        measuredMs: measured,
+        remainingMs: 0,
       });
     });
   });
