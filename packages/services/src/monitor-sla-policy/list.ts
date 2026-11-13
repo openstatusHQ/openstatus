@@ -11,10 +11,22 @@ import {
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { sumMonthRuns } from "./evaluate";
-import { assertMonitorSlaLimit, withLatestTerms } from "./internal";
+import type { SlaEpisodesPipes } from "./fetch-episodes";
+import {
+  assertMonitorSlaLimit,
+  episodeMonths,
+  type FetchedEpisodes,
+  fetchMonthEpisodes,
+  memberTimeMonth,
+  policyExcusedSpans,
+  termsForMonth,
+  withLatestTerms,
+} from "./internal";
 import {
   completeMonths,
+  coveredSpan,
   LAST_TWELVE,
+  type MonitorSlaMonth,
   monthCellKey,
   rollUpMonth,
   storedMonth,
@@ -22,14 +34,17 @@ import {
 import { ListMonitorSlaPoliciesInput } from "./schemas";
 
 /**
- * Policies with a twelve-month strip from sealed and frozen months; never asks
- * Tinybird. Unsealed months ignore excused windows: they are previews, and the
- * policy page applies the windows.
+ * Policies with a twelve-month strip. Sealed months as stored; the previous
+ * month while its runs are kept is judged on episodes exactly as the policy
+ * page does (one Tinybird read per time zone); older unsealed months are
+ * frozen previews that ignore excused windows.
  */
 export async function listMonitorSlaPolicies(args: {
   ctx: ServiceContext;
   input?: ListMonitorSlaPoliciesInput;
   now?: Date;
+  episodesPipes?: SlaEpisodesPipes;
+  sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
@@ -61,6 +76,8 @@ export async function listMonitorSlaPolicies(args: {
       url: monitor.url,
       jobType: monitor.jobType,
       regions: monitor.regions,
+      periodicity: monitor.periodicity,
+      memberSince: monitorSlaPolicyToMonitor.createdAt,
     })
     .from(monitorSlaPolicyToMonitor)
     .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
@@ -155,23 +172,98 @@ export async function listMonitorSlaPolicies(args: {
     return links.filter((l) => l.policyId === policyId);
   }
 
+  // the previous month on episodes, for the members it is not sealed for yet
+  const previews = new Map<number, { month: string; members: typeof links }>();
+  for (const policy of policies) {
+    const [month] = [...episodeMonths(now, policy.timeZone)].flatMap(
+      ([m, state]) => (state === "preview" ? [m] : []),
+    );
+    if (!month) continue;
+    const members = membersOf(policy.id).filter(
+      (m) => !sealed.has(`${policy.id}:${monthCellKey(m.id, month)}`),
+    );
+    if (members.length > 0) previews.set(policy.id, { month, members });
+  }
+  const fetchedByZone = new Map<string, FetchedEpisodes>();
+  for (const timeZone of new Set(
+    policies.filter((p) => previews.has(p.id)).map((p) => p.timeZone),
+  )) {
+    const inZone = policies.filter(
+      (p) => p.timeZone === timeZone && previews.has(p.id),
+    );
+    const month = previews.get(inZone[0].id)?.month;
+    if (!month) continue;
+    // a member without covered time reads as none: no need to fetch it
+    const members = [
+      ...new Map(
+        inZone
+          .flatMap((p) => previews.get(p.id)?.members ?? [])
+          .filter((m) => coveredSpan(month, timeZone, m.memberSince, now))
+          .map((m) => [m.id, m]),
+      ).values(),
+    ];
+    fetchedByZone.set(
+      timeZone,
+      await fetchMonthEpisodes({
+        ctx,
+        members,
+        months: [month],
+        timeZone,
+        now,
+        pipes: args.episodesPipes,
+        sleep: args.sleep,
+      }),
+    );
+  }
+  const previewCells = new Map<string, MonitorSlaMonth>();
+  for (const policy of policies) {
+    const preview = previews.get(policy.id);
+    const fetched = fetchedByZone.get(policy.timeZone);
+    if (!preview || !fetched) continue;
+    const terms = await termsForMonth(db, policy, preview.month);
+    const excusedSpans = await policyExcusedSpans(db, policy);
+    for (const m of preview.members) {
+      previewCells.set(
+        `${policy.id}:${monthCellKey(m.id, preview.month)}`,
+        memberTimeMonth({
+          month: preview.month,
+          state: "preview",
+          member: m,
+          fetched,
+          excusedSpans,
+          terms,
+          timeZone: policy.timeZone,
+          now,
+        }),
+      );
+    }
+  }
+
   return policies.map((policy) => {
     const members = membersOf(policy.id).map(
-      ({ policyId: _, regions: _regions, ...m }) => m,
+      ({
+        policyId: _,
+        regions: _regions,
+        periodicity: _periodicity,
+        memberSince: _memberSince,
+        ...m
+      }) => m,
     );
-    // the current month is live (Tinybird) and stays off the list; so does an
-    // unfrozen previous month, which reads as none here
+    // the current month is live and stays off the list
     const strip = (monthsOf.get(policy.id) ?? []).map((month) =>
       rollUpMonth(
         month,
         members.map((m) => {
-          const key = monthCellKey(m.id, month);
-          return storedMonth({
-            month,
-            seal: sealed.get(`${policy.id}:${key}`),
-            frozen: frozen.get(key),
-            policy,
-          });
+          const key = `${policy.id}:${monthCellKey(m.id, month)}`;
+          return (
+            previewCells.get(key) ??
+            storedMonth({
+              month,
+              seal: sealed.get(key),
+              frozen: frozen.get(monthCellKey(m.id, month)),
+              policy,
+            })
+          );
         }),
       ),
     );

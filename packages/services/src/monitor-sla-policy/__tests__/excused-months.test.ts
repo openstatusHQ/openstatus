@@ -21,7 +21,11 @@ import { exportMonitorSlaPolicy } from "../export";
 import { getMonitorSlaPolicy } from "../get";
 import { listMonitorSlaPolicies } from "../list";
 import { sealMonitorSlaMonths } from "../seal";
-import { episodesPipesFrom, runsEvery } from "./fixtures/episodes-pipes";
+import {
+  episodesPipesFrom,
+  failingEpisodesPipes,
+  runsEvery,
+} from "./fixtures/episodes-pipes";
 
 const MIN = 60_000;
 const at = (month: number, d: number, h = 0, m = 0) =>
@@ -257,7 +261,7 @@ describe("excused windows in a month's figure", () => {
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
-        runsRangePipes: rangePipes(),
+        episodesPipes,
         sleep,
       });
       const list = await listMonitorSlaPolicies({
@@ -307,7 +311,7 @@ describe("sealing with excused windows", () => {
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
-        runsRangePipes: rangePipes(),
+        episodesPipes,
         sleep,
       });
       expect(res).toMatchObject({ sealed: 1, unavailable: 0 });
@@ -348,18 +352,16 @@ describe("sealing with excused windows", () => {
     });
   });
 
-  test("a month whose runs are all excused is sealed without a judgement, keeping its windows", async () => {
+  test("a month wholly excused is sealed without a judgement, keeping its windows", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy } = await setup(tx, {
-        frozenOctober: { ok: 0, error: 6 },
-      });
-      await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
+      const { policy } = await setup(tx);
+      await excuse(tx, policy.id, at(9, 1), at(10, 1));
 
       const res = await sealMonitorSlaMonths({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
-        runsRangePipes: rangePipes(),
+        episodesPipes,
         sleep,
       });
       expect(res.sealed).toBe(1);
@@ -369,10 +371,14 @@ describe("sealing with excused windows", () => {
         .where(eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id))
         .all();
       expect(row).toMatchObject({
+        excusedOk: 4458,
         excusedError: 6,
         total: 0,
         uptime: null,
         met: null,
+        measuredMs: 0,
+        excusedMs: at(10, 1) - at(9, 1),
+        coverage: null,
       });
       expect(row?.excusedWindows).toHaveLength(1);
       expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
@@ -383,21 +389,16 @@ describe("sealing with excused windows", () => {
     });
   });
 
-  test("when the excused runs cannot be read the pair waits for the next run", async () => {
+  test("when the episodes cannot be read the pair waits for the next run", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
-      const failing = {
-        ...rangePipes(),
-        http: async () => {
-          throw new Error("tinybird down");
-        },
-      } as UptimeRunsRangePipes;
+      const failing = failingEpisodesPipes();
       const res = await sealMonitorSlaMonths({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
-        runsRangePipes: failing,
+        episodesPipes: failing,
         sleep,
       });
       expect(res).toMatchObject({ sealed: 0, unavailable: 1 });
@@ -482,7 +483,7 @@ describe("sealing while a window changes", () => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
       let added = false;
-      const racing = rangePipes();
+      const racing = { ...episodesPipes };
       const http = racing.http;
       racing.http = async (p) => {
         if (!added) {
@@ -496,7 +497,7 @@ describe("sealing while a window changes", () => {
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
-        runsRangePipes: racing,
+        episodesPipes: racing,
         sleep,
       });
       expect(first).toMatchObject({
@@ -509,7 +510,7 @@ describe("sealing while a window changes", () => {
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
-        runsRangePipes: rangePipes(),
+        episodesPipes,
         sleep,
       });
       expect(second.sealed).toBe(1);

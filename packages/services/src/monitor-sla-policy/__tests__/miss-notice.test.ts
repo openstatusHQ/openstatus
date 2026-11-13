@@ -1,6 +1,5 @@
 import { db, eq, inArray } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
@@ -13,14 +12,24 @@ import {
   createWorkspaceFixture,
   withTestTransaction,
 } from "../../../test/helpers";
-import { monthDays } from "../../frozen-uptime/compute";
+import type { SlaEpisodesPipes } from "../fetch-episodes";
 import { claimMonitorSlaMissNotices } from "../miss-notice";
 import { sealMonitorSlaMonths } from "../seal";
+import {
+  episodesPipesFrom,
+  failingEpisodesPipes,
+  runsEvery,
+} from "./fixtures/episodes-pipes";
 
 const OCT_END = Date.UTC(2026, 10, 1);
 const now = new Date(OCT_END + 4 * 24 * 3_600_000);
 const beforeOctEnd = new Date(Date.UTC(2026, 9, 10));
 const month = "2026-10-01";
+const HOUR = 3_600_000;
+// covered: Oct 10 to Nov 1
+const COVERED_HOURS = 22 * 24;
+const uptimeAfter = (downHours: number) =>
+  Math.floor(((COVERED_HOURS - downHours) * 100_000) / COVERED_HOURS);
 
 let workspaceId: number;
 let ownerEmail: string;
@@ -39,28 +48,40 @@ beforeAll(async () => {
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 type Db = Tx | typeof db;
 
-async function freeze(
-  tx: Db,
-  monitorId: number,
-  runs: { ok: number; error: number },
-) {
-  await tx.insert(frozenMonitorUptime).values({
-    workspaceId,
-    monitorId,
-    month,
-    days: monthDays(month).map((day, i) => ({
-      day,
-      requests: { ok: 10, degraded: 0, error: 0 },
-      ...(i === 0
-        ? { runs: { ok: runs.ok, degraded: 0, error: runs.error } }
-        : {}),
-    })),
+const downHoursOf = new Map<number, number>();
+
+/** Runs every 10 minutes; each monitor fails for its first `downHours` from Oct 10. */
+const runsOf = (id: string) =>
+  runsEvery(Date.UTC(2026, 9, 1), Date.UTC(2026, 10, 10), 600_000, (t) =>
+    t - beforeOctEnd.getTime() < (downHoursOf.get(Number(id)) ?? 0) * HOUR &&
+    t >= beforeOctEnd.getTime()
+      ? "error"
+      : "ok",
+  );
+const readable = episodesPipesFrom(runsOf);
+// tcp monitors' episodes cannot be read
+const tcpDown: SlaEpisodesPipes = {
+  ...readable,
+  tcp: failingEpisodesPipes().tcp,
+};
+const sleep = async () => {};
+const seal = (
+  tx: Db | undefined,
+  at: Date,
+  policyId: number,
+  episodesPipes = tcpDown,
+) =>
+  sealMonitorSlaMonths({
+    db: tx,
+    now: at,
+    policyIds: [policyId],
+    episodesPipes,
+    sleep,
   });
-}
 
 async function setup(
   tx: Db,
-  monitors: { name: string; ok: number; error: number; frozen?: false }[],
+  monitors: { name: string; downHours: number; readable?: false }[],
 ) {
   const policy = await tx
     .insert(monitorSlaPolicy)
@@ -83,17 +104,17 @@ async function setup(
         name: m.name,
         periodicity: "10m",
         regions: "ams",
-        jobType: "http",
+        jobType: m.readable === false ? "tcp" : "http",
       })
       .returning()
       .get();
     ids.push(row.id);
+    downHoursOf.set(row.id, m.downHours);
     await tx.insert(monitorSlaPolicyToMonitor).values({
       monitorSlaPolicyId: policy.id,
       monitorId: row.id,
       createdAt: beforeOctEnd,
     });
-    if (m.frozen !== false) await freeze(tx, row.id, m);
   }
   return { policy, monitorIds: ids };
 }
@@ -102,11 +123,11 @@ describe("claimMonitorSlaMissNotices", () => {
   test("one notice per policy and month, listing only the monitors that missed", async () => {
     await withTestTransaction(async (tx) => {
       const { policy, monitorIds } = await setup(tx, [
-        { name: "API", ok: 990, error: 10 },
-        { name: "Web", ok: 1000, error: 0 },
-        { name: "Auth", ok: 980, error: 20 },
+        { name: "API", downHours: 6 },
+        { name: "Web", downHours: 0 },
+        { name: "Auth", downHours: 12 },
       ]);
-      await sealMonitorSlaMonths({ db: tx, now, policyIds: [policy.id] });
+      await seal(tx, now, policy.id);
 
       const notices = await claimMonitorSlaMissNotices({
         db: tx,
@@ -122,8 +143,18 @@ describe("claimMonitorSlaMissNotices", () => {
           to: [ownerEmail],
           policy: { id: policy.id, name: "Partner contract", target: 99_500 },
           monitors: [
-            { id: monitorIds[0], name: "API", uptime: 99_000, target: 99_500 },
-            { id: monitorIds[2], name: "Auth", uptime: 98_000, target: 99_500 },
+            {
+              id: monitorIds[0],
+              name: "API",
+              uptime: uptimeAfter(6),
+              target: 99_500,
+            },
+            {
+              id: monitorIds[2],
+              name: "Auth",
+              uptime: uptimeAfter(12),
+              target: 99_500,
+            },
           ],
         },
       ]);
@@ -139,8 +170,8 @@ describe("claimMonitorSlaMissNotices", () => {
 
   test("no notice when every monitor met the target", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy } = await setup(tx, [{ name: "API", ok: 1000, error: 0 }]);
-      await sealMonitorSlaMonths({ db: tx, now, policyIds: [policy.id] });
+      const { policy } = await setup(tx, [{ name: "API", downHours: 0 }]);
+      await seal(tx, now, policy.id);
       expect(
         await claimMonitorSlaMissNotices({
           db: tx,
@@ -153,9 +184,7 @@ describe("claimMonitorSlaMissNotices", () => {
 
   test("a month missed but not sealed yet gets no notice", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy } = await setup(tx, [
-        { name: "API", ok: 900, error: 100 },
-      ]);
+      const { policy } = await setup(tx, [{ name: "API", downHours: 24 }]);
       expect(
         await claimMonitorSlaMissNotices({
           db: tx,
@@ -168,10 +197,8 @@ describe("claimMonitorSlaMissNotices", () => {
 
   test("an archived policy gets no notice", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy } = await setup(tx, [
-        { name: "API", ok: 900, error: 100 },
-      ]);
-      await sealMonitorSlaMonths({ db: tx, now, policyIds: [policy.id] });
+      const { policy } = await setup(tx, [{ name: "API", downHours: 24 }]);
+      await seal(tx, now, policy.id);
       await tx
         .update(monitorSlaPolicy)
         .set({ archivedAt: now })
@@ -186,13 +213,13 @@ describe("claimMonitorSlaMissNotices", () => {
     });
   });
 
-  test("waits while another member's month is not frozen yet, then lists every miss", async () => {
+  test("waits while another member's episodes cannot be read, then lists every miss", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy, monitorIds } = await setup(tx, [
-        { name: "API", ok: 900, error: 100 },
-        { name: "Web", ok: 900, error: 100, frozen: false },
+      const { policy } = await setup(tx, [
+        { name: "API", downHours: 24 },
+        { name: "Web", downHours: 24, readable: false },
       ]);
-      await sealMonitorSlaMonths({ db: tx, now, policyIds: [policy.id] });
+      await seal(tx, now, policy.id);
       const claim = (at: Date) =>
         claimMonitorSlaMissNotices({
           db: tx,
@@ -202,9 +229,8 @@ describe("claimMonitorSlaMissNotices", () => {
         });
       expect(await claim(now)).toEqual([]);
 
-      await freeze(tx, monitorIds[1], { ok: 900, error: 100 });
       const next = new Date(now.getTime() + 24 * 3_600_000);
-      await sealMonitorSlaMonths({ db: tx, now: next, policyIds: [policy.id] });
+      await seal(tx, next, policy.id, readable);
       const [notice] = await claim(next);
       expect(notice?.monitors.map((m) => m.name)).toEqual(["API", "Web"]);
     });
@@ -212,10 +238,8 @@ describe("claimMonitorSlaMissNotices", () => {
 
   test("waits while a member's counts could not be read", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy } = await setup(tx, [
-        { name: "API", ok: 900, error: 100 },
-      ]);
-      await sealMonitorSlaMonths({ db: tx, now, policyIds: [policy.id] });
+      const { policy } = await setup(tx, [{ name: "API", downHours: 24 }]);
+      await seal(tx, now, policy.id);
       expect(
         await claimMonitorSlaMissNotices({
           db: tx,
@@ -231,18 +255,14 @@ describe("claimMonitorSlaMissNotices", () => {
   test("on the last day of the seal window it sends with what is sealed", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx, [
-        { name: "API", ok: 900, error: 100 },
-        { name: "Web", ok: 900, error: 100, frozen: false },
+        { name: "API", downHours: 24 },
+        { name: "Web", downHours: 24, readable: false },
       ]);
       // October started Oct 1; the last daily run inside 45 days is on Nov 14
       const lastDay = new Date(
         Date.UTC(2026, 9, 1) + 45 * 86_400_000 - 3_600_000,
       );
-      await sealMonitorSlaMonths({
-        db: tx,
-        now: lastDay,
-        policyIds: [policy.id],
-      });
+      await seal(tx, lastDay, policy.id);
       const [notice] = await claimMonitorSlaMissNotices({
         db: tx,
         month,
@@ -264,10 +284,8 @@ describe("claimMonitorSlaMissNotices", () => {
       await tx
         .insert(usersToWorkspaces)
         .values({ userId: member.id, workspaceId, role: "member" });
-      const { policy } = await setup(tx, [
-        { name: "API", ok: 900, error: 100 },
-      ]);
-      await sealMonitorSlaMonths({ db: tx, now, policyIds: [policy.id] });
+      const { policy } = await setup(tx, [{ name: "API", downHours: 24 }]);
+      await seal(tx, now, policy.id);
       const [notice] = await claimMonitorSlaMissNotices({
         db: tx,
         month,
@@ -289,23 +307,20 @@ describe("claimMonitorSlaMissNotices on two machines at once", () => {
         .where(eq(monitorSlaPolicy.id, policyId));
     }
     if (monitorIds.length > 0) {
-      await db
-        .delete(frozenMonitorUptime)
-        .where(inArray(frozenMonitorUptime.monitorId, monitorIds));
       await db.delete(monitor).where(inArray(monitor.id, monitorIds));
     }
   });
 
   test("seal and claim together send one notice", async () => {
     const created = await setup(db, [
-      { name: "race-a", ok: 900, error: 100 },
-      { name: "race-b", ok: 900, error: 100 },
+      { name: "race-a", downHours: 24 },
+      { name: "race-b", downHours: 24 },
     ]);
     policyId = created.policy.id;
     monitorIds = created.monitorIds;
 
     const machine = async () => {
-      await sealMonitorSlaMonths({ now, policyIds: [created.policy.id] });
+      await seal(undefined, now, created.policy.id);
       return claimMonitorSlaMissNotices({
         month,
         policyIds: [created.policy.id],

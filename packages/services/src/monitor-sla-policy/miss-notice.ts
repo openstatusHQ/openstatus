@@ -1,6 +1,5 @@
 import { and, asc, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaMissNotice,
   monitorSlaPolicy,
@@ -53,6 +52,7 @@ export async function claimMonitorSlaMissNotices(args: {
         policyId: monitorSlaPolicy.id,
         policyName: monitorSlaPolicy.name,
         policyTarget: monitorSlaPolicy.target,
+        timeZone: monitorSlaPolicy.timeZone,
         workspaceId: monitorSlaPolicy.workspaceId,
         monitorId: monitor.id,
         monitorName: monitor.name,
@@ -110,12 +110,14 @@ export async function claimMonitorSlaMissNotices(args: {
   }
 
   // the last daily run inside the seal window sends with what is sealed
-  const lastSealRun =
-    now >= monthRange(month).start + FREEZE_CUTOFF_MS - DAY_MS;
+  const lastSealRun = (timeZone: string) =>
+    now >= monthRange(month, timeZone).start + FREEZE_CUTOFF_MS - DAY_MS;
   const waiting = await policiesAwaitingSeal({
     db,
     month,
-    policyIds: lastSealRun ? [] : [...byPolicy.keys()],
+    policyIds: [...byPolicy]
+      .filter(([, rows]) => !lastSealRun(rows[0].timeZone))
+      .map(([id]) => id),
     unavailablePolicyIds: args.unavailablePolicyIds ?? [],
   });
 
@@ -203,7 +205,7 @@ export async function claimMonitorSlaMissNotices(args: {
   });
 }
 
-/** Policies with a member whose month may still seal: counts unreadable, or not frozen yet. */
+/** Policies with a member whose month may still seal: episodes unreadable, or not sealed yet. */
 async function policiesAwaitingSeal(args: {
   db: DB;
   month: string;
@@ -216,21 +218,19 @@ async function policiesAwaitingSeal(args: {
   );
   const open = args.policyIds.filter((id) => !waiting.has(id));
   if (open.length === 0) return waiting;
-  const unfrozen = await withBusyRetry(() =>
+  const unsealed = await withBusyRetry(() =>
     db
       .select({
         policyId: monitorSlaPolicyToMonitor.monitorSlaPolicyId,
+        timeZone: monitorSlaPolicy.timeZone,
         joinedAt: monitorSlaPolicyToMonitor.createdAt,
       })
       .from(monitorSlaPolicyToMonitor)
-      .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
-      .leftJoin(
-        frozenMonitorUptime,
-        and(
-          eq(frozenMonitorUptime.monitorId, monitor.id),
-          eq(frozenMonitorUptime.month, month),
-        ),
+      .innerJoin(
+        monitorSlaPolicy,
+        eq(monitorSlaPolicy.id, monitorSlaPolicyToMonitor.monitorSlaPolicyId),
       )
+      .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
       .leftJoin(
         monitorSlaSealedMonth,
         and(
@@ -246,16 +246,16 @@ async function policiesAwaitingSeal(args: {
         and(
           inArray(monitorSlaPolicyToMonitor.monitorSlaPolicyId, open),
           isNull(monitor.deletedAt),
-          isNull(frozenMonitorUptime.monitorId),
           isNull(monitorSlaSealedMonth.id),
         ),
       )
       .all(),
   );
-  const end = monthRange(month).end;
-  for (const row of unfrozen) {
+  for (const row of unsealed) {
     // a member that joined after the month ended is never sealed for it
-    if (row.joinedAt.getTime() < end) waiting.add(row.policyId);
+    if (row.joinedAt.getTime() < monthRange(month, row.timeZone).end) {
+      waiting.add(row.policyId);
+    }
   }
   return waiting;
 }

@@ -3,6 +3,7 @@ import {
   frozenMonitorUptime,
   monitor,
   monitorSlaPolicy,
+  monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedMonth,
 } from "@openstatus/db/src/schema";
@@ -17,7 +18,12 @@ import type { ServiceContext } from "../../context";
 import { monthDays } from "../../frozen-uptime/compute";
 import { getMonitorSlaPolicy } from "../get";
 import { listMonitorSlaPolicies } from "../list";
-import { noEpisodes } from "./fixtures/episodes-pipes";
+import { rollUpMonth } from "../months";
+import {
+  episodesPipesFrom,
+  noEpisodes,
+  runsEvery,
+} from "./fixtures/episodes-pipes";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 
@@ -334,6 +340,70 @@ describe("listMonitorSlaPolicies strip", () => {
 
       expect(listed?.missed).toEqual(detail.missed);
       expect(listed?.missed).toEqual({ months: 3, previews: 2, of: 12 });
+    });
+  });
+
+  test("judges the previous month as the policy page does while its runs are kept", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, "API");
+      const policy = await insertPolicy(tx, "Pending terms", [api.id]);
+      await tx
+        .update(monitorSlaPolicyToMonitor)
+        .set({ createdAt: new Date(Date.UTC(2026, 8, 1)) })
+        .where(eq(monitorSlaPolicyToMonitor.monitorSlaPolicyId, policy.id));
+      // set in November, effective December: October keeps 99.5%
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        target: 99_950,
+        strict: false,
+        effectiveFrom: "2026-12-01",
+      });
+      // a frozen 99.5% that misses under the latest terms
+      await tx
+        .insert(frozenMonitorUptime)
+        .values(frozen(api.id, "2026-10", { ok: 1990, error: 10 }));
+      // two hours down in October: 99.731%
+      const outage = {
+        start: Date.UTC(2026, 9, 7),
+        end: Date.UTC(2026, 9, 7, 2),
+      };
+      const episodesPipes = episodesPipesFrom(() =>
+        runsEvery(Date.UTC(2026, 8, 1), Date.UTC(2026, 10, 3), 600_000, (t) =>
+          outage.start <= t && t < outage.end ? "error" : "ok",
+        ),
+      );
+      const early = new Date(Date.UTC(2026, 10, 3, 12));
+
+      const [listed] = await listMonitorSlaPolicies({
+        ctx: { ...ctx, db: tx },
+        now: early,
+        episodesPipes,
+      });
+      const detail = await getMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now: early,
+        episodesPipes,
+      });
+
+      const october = detail.monitors.flatMap((m) =>
+        m.months.filter((c) => c.month === "2026-10-01"),
+      );
+      expect(october[0]).toMatchObject({
+        state: "preview",
+        method: "time",
+        terms: { target: 99_500, strict: false },
+        uptime: 99_731,
+        met: true,
+      });
+      expect(listed?.months.at(-1)).toEqual(rollUpMonth("2026-10-01", october));
+      expect(listed?.months.at(-1)).toEqual({
+        month: "2026-10-01",
+        status: "met",
+        preview: true,
+      });
+      expect(listed?.missed).toEqual(detail.missed);
     });
   });
 });

@@ -37,6 +37,7 @@ import {
 } from "./excused";
 import {
   clipEpisodes,
+  type EpisodeMonitor,
   fetchSlaEpisodes,
   type SlaEpisodesPipes,
   slaEpisodesPipes,
@@ -150,10 +151,13 @@ type PolicyTermsRef = {
   strict: boolean;
 };
 
-/** Terms that judge `month` (YYYY-MM-01): the latest terms row in effect by then, else the policy row's. */
+/**
+ * Terms that judge `month` (YYYY-MM-01): the latest terms row in effect by then,
+ * else the policy row's as stored (callers may hold the latest terms instead).
+ */
 export async function termsForMonth(
   db: DB,
-  policy: PolicyTermsRef,
+  policy: { id: number; workspaceId: number },
   month: string,
 ): Promise<MonitorSlaTerms> {
   const row = await db
@@ -173,9 +177,22 @@ export async function termsForMonth(
     .orderBy(desc(monitorSlaPolicyTerms.effectiveFrom))
     .limit(1)
     .get();
-  return (
-    row ?? { target: policy.target, strict: policy.strict, effectiveFrom: null }
-  );
+  if (row) return row;
+  const own = await db
+    .select({
+      target: monitorSlaPolicy.target,
+      strict: monitorSlaPolicy.strict,
+    })
+    .from(monitorSlaPolicy)
+    .where(
+      and(
+        eq(monitorSlaPolicy.id, policy.id),
+        eq(monitorSlaPolicy.workspaceId, policy.workspaceId),
+      ),
+    )
+    .get();
+  if (!own) throw new NotFoundError("monitor_sla_policy", policy.id);
+  return { ...own, effectiveFrom: null };
 }
 
 /** The most recently set terms per policy, pending ones included; previews follow these. */
@@ -337,12 +354,30 @@ export async function policyExcusedSpans(
 }
 
 /**
+ * The range episodes for `months` are read over: the first month's start to
+ * now, so a month's last runs are weighed against the runs that followed.
+ * Page, list, export and seal all read it, so a preview equals its seal.
+ */
+export function episodeRange(
+  months: readonly string[],
+  timeZone: string,
+  now: Date,
+): Span {
+  return {
+    start: Math.min(...months.map((m) => monthRange(m, timeZone).start)),
+    end: now.getTime(),
+  };
+}
+
+export type FetchedEpisodes = Awaited<ReturnType<typeof fetchMonthEpisodes>>;
+
+/**
  * Episodes of `members` for `months` (all in `timeZone`), one Tinybird read
- * over [first month start, min(last month end, now)). Never throws.
+ * over `episodeRange`. Never throws.
  */
 export async function fetchMonthEpisodes(args: {
   ctx: ServiceContext;
-  members: readonly PolicyMember[];
+  members: readonly EpisodeMonitor[];
   months: readonly string[];
   timeZone: string;
   now: Date;
@@ -353,18 +388,14 @@ export async function fetchMonthEpisodes(args: {
   failed: Set<number>;
   range: Span;
 }> {
-  const ranges = args.months.map((m) => monthRange(m, args.timeZone));
-  if (ranges.length === 0 || args.members.length === 0) {
+  if (args.months.length === 0 || args.members.length === 0) {
     return {
       episodes: new Map(),
       failed: new Set(),
       range: { start: 0, end: 0 },
     };
   }
-  const range = {
-    start: Math.min(...ranges.map((r) => r.start)),
-    end: Math.min(Math.max(...ranges.map((r) => r.end)), args.now.getTime()),
-  };
+  const range = episodeRange(args.months, args.timeZone, args.now);
   const res = await fetchSlaEpisodes({
     monitors: args.members,
     fromMs: range.start,
@@ -374,6 +405,24 @@ export async function fetchMonthEpisodes(args: {
     sleep: args.sleep,
   });
   return { ...res, range };
+}
+
+/** A member's fetched episodes; one not read (no run verdicts) has the range unmeasured. */
+export function memberEpisodes(
+  memberId: number,
+  fetched: Awaited<ReturnType<typeof fetchMonthEpisodes>>,
+): Episode[] {
+  return (
+    fetched.episodes.get(memberId) ?? [
+      {
+        kind: "unmeasured",
+        startedAt: fetched.range.start,
+        endedAt: fetched.range.end,
+        runs: 0,
+        weightedMs: fetched.range.end - fetched.range.start,
+      },
+    ]
+  );
 }
 
 /** A member's month from its fetched episodes; the caller handles seals. */
@@ -393,20 +442,14 @@ export function memberTimeMonth(args: {
   }
   const covered = coveredSpan(month, timeZone, member.memberSince, args.now);
   if (!covered) return emptyMonth({ month, state: "none", timeZone });
-  // not read (no run verdicts): nothing measured
-  const episodes = fetched.episodes.get(member.id) ?? [
-    {
-      kind: "unmeasured" as const,
-      startedAt: fetched.range.start,
-      endedAt: fetched.range.end,
-      runs: 0,
-      weightedMs: fetched.range.end - fetched.range.start,
-    },
-  ];
   return timeMonth({
     month,
     state,
-    episodes: clipEpisodes(episodes, covered.start, covered.end),
+    episodes: clipEpisodes(
+      memberEpisodes(member.id, fetched),
+      covered.start,
+      covered.end,
+    ),
     covered,
     excusedSpans: args.excusedSpans,
     terms: args.terms,

@@ -261,10 +261,24 @@ describe("getMonitorSlaPolicy", () => {
           frozen(api.id, "2026-09", { ok: 1990, error: 10 }),
           frozen(api.id, "2026-10", { ok: 1990, error: 10 }),
         ]);
+      // three hours down in October
+      const outage = {
+        start: Date.UTC(2026, 9, 3),
+        end: Date.UTC(2026, 9, 3, 3),
+      };
       await sealMonitorSlaMonths({
         db: tx,
         now: new Date(Date.UTC(2026, 10, 5)),
         policyIds: [policy.id],
+        episodesPipes: episodesPipesFrom(() =>
+          runsEvery(
+            Date.UTC(2026, 8, 1),
+            Date.UTC(2026, 10, 5),
+            10 * MIN,
+            (t) => (outage.start <= t && t < outage.end ? "error" : "ok"),
+          ),
+        ),
+        sleep,
       });
       await tx
         .update(monitorSlaPolicy)
@@ -282,9 +296,11 @@ describe("getMonitorSlaPolicy", () => {
       expect(row.months.at(-2)).toMatchObject({
         month: "2026-10-01",
         state: "sealed",
-        uptime: 99_500,
+        method: "time",
+        uptime: Math.floor(((744 - 3) * 100_000) / 744),
         met: true,
-        counts: { ok: 1990, degraded: 0, error: 10 },
+        counts: { ok: 4464 - 18, degraded: 0, error: 18 },
+        downMs: 3 * HOUR,
         sealed: { target: 99_500, strict: false },
       });
       expect(row.months.at(-2)?.sealed?.at).toBeInstanceOf(Date);
