@@ -71,7 +71,7 @@ const unavailableText: Record<
     "Runs this old are no longer kept, so what used the budget cannot be shown.",
 };
 
-/** One monitor's running month under the policy, opened from the months table or the monitor sidebar. */
+/** One monitor's running month under the policy. */
 export function SlaMonitorMonthSheet({
   policy,
   monitor,

@@ -134,11 +134,8 @@ export function sealedEpisodes(
 }
 
 /**
- * Seals each policy's previous month in its time zone, SEAL_DELAY_MS after the
- * month ended there, for pairs that existed before it ended. Judged on episodes
- * exactly as the policy page previews it. Write-once per (policy, monitor,
- * month), so overlapping runs seal each pair once and older seals stay.
- * No audit row: a system job on a write-once table, like the freeze.
+ * Seals each policy's previous month in its zone SEAL_DELAY_MS after it ended,
+ * judged as its preview. Write-once per (policy, monitor, month); no audit row.
  */
 export async function sealMonitorSlaMonths(
   args: {
@@ -467,7 +464,7 @@ async function policyWindows(
   return out;
 }
 
-/** Episodes per time zone over `episodeRange`, as the policy page reads them. */
+/** Episodes per time zone over `episodeRange`. */
 async function fetchZoneEpisodes(args: {
   pairs: Pair[];
   month: string;

@@ -34,11 +34,8 @@ import {
 import { ListMonitorSlaPoliciesInput } from "./schemas";
 
 /**
- * Policies with a twelve-month strip; `target`/`strict` are the latest terms
- * set, `liveTerms`/`pendingTerms` what judges the running month and what follows. Sealed months as stored; the previous
- * month while its runs are kept is judged on episodes exactly as the policy
- * page does (one Tinybird read per time zone); older unsealed months are
- * frozen previews that ignore excused windows.
+ * Policies with a twelve-month strip, judged as `getMonitorSlaPolicy` does. `target`/`strict`
+ * are the latest terms set; `liveTerms` judge the running month, `pendingTerms` follow.
  */
 export async function listMonitorSlaPolicies(args: {
   ctx: ServiceContext;

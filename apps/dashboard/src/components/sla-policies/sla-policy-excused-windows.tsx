@@ -35,7 +35,11 @@ export function SlaPolicyExcusedWindows({
 }) {
   const archived = policy.archivedAt !== null;
   const readOnly = archived || !canEdit;
-  const columns = useMemo(() => getColumns({ readOnly }), [readOnly]);
+  const { timeZone } = policy;
+  const columns = useMemo(
+    () => getColumns({ readOnly, timeZone }),
+    [readOnly, timeZone],
+  );
   const windows = policy.excusedWindows;
 
   return (

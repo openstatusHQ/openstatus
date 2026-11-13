@@ -151,10 +151,7 @@ type PolicyTermsRef = {
   strict: boolean;
 };
 
-/**
- * Terms that judge `month` (YYYY-MM-01): the latest terms row in effect by then,
- * else the policy row's as stored (callers may hold the latest terms instead).
- */
+/** Terms judging `month` (YYYY-MM-01): the latest terms row in effect by then, else the policy row's. */
 export async function termsForMonth(
   db: DB,
   policy: { id: number; workspaceId: number },
@@ -459,11 +456,7 @@ export async function policyExcusedSpans(
   );
 }
 
-/**
- * The range episodes for `months` are read over: the first month's start to
- * now, so a month's last runs are weighed against the runs that followed.
- * Page, list, export and seal all read it, so a preview equals its seal.
- */
+/** First month's start to now: a month's last runs weigh against the runs after it, so a preview equals its seal. */
 export function episodeRange(
   months: readonly string[],
   timeZone: string,
@@ -564,10 +557,8 @@ export function memberTimeMonth(args: {
 }
 
 /**
- * Each member's state per month (YYYY-MM-01 in the policy zone, ascending).
- * The running and previous month are judged on episodes under the terms they
- * started with; older unsealed months are run-count previews under the latest
- * terms (UTC only). Without `live`, the running month is not read.
+ * Each member's months (policy zone, ascending): running and previous month on
+ * episodes under their own terms, older unsealed ones as UTC run-count previews.
  */
 export async function judgePolicyMonths(args: {
   ctx: ServiceContext;

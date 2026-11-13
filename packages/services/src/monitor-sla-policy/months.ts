@@ -206,7 +206,7 @@ function judged(args: {
       met: null,
     };
   }
-  // too old to count: judged without its windows, like the list's preview
+  // too old to count: judged without its windows
   const excused = args.excused === "expired" ? null : (args.excused ?? NO_RUNS);
   const { met, uptime } = evaluateSlaMonth({
     counts,

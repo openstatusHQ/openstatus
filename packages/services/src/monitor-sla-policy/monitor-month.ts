@@ -180,9 +180,8 @@ async function loadMonitorMaintenances(
 }
 
 /**
- * One member's month in the policy zone: the month cell as the policy page
- * shows it, the down-time budget, the non-ok episodes newest first with how
- * each entered the result, and continue-mode maintenances not excused.
+ * One member's month in the policy zone: its month cell, down-time budget,
+ * non-ok episodes newest first with their treatment, and unexcused continue-mode maintenances.
  */
 export async function getMonitorSlaMonitorMonth(args: {
   ctx: ServiceContext;

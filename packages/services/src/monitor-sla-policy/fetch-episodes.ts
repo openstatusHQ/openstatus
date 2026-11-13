@@ -57,10 +57,8 @@ export type EpisodeMonitor = {
 };
 
 /**
- * Episodes per monitor over [fromMs, toMs), batched by job type and cadence,
- * chunked and retried. Never throws: failed chunks land in `failed`. Monitors
- * without run verdicts (no cloud regions, no runs pipe) are in neither.
- * Only ranges inside the 47-day TTL are meaningful: older runs read as unmeasured.
+ * Episodes per monitor over [fromMs, toMs). Never throws: failed chunks land in
+ * `failed`; monitors without run verdicts are in neither. Runs past the TTL read as unmeasured.
  */
 export async function fetchSlaEpisodes(
   args: Omit<FetchOptions, "monitorIdsByJobType"> & {

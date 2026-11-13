@@ -17,8 +17,8 @@ import { completeMonths, monthOf } from "./months";
 import { GetMonitorSlaPolicyInput } from "./schemas";
 
 /**
- * The status page maintenances that touched a policy's monitors in the same
- * months as `getMonitorSlaPolicy`, and whether each monitor pauses checks during one. Windows that have not started yet are left out.
+ * Started status-page maintenances on a policy's monitors in the months
+ * `getMonitorSlaPolicy` shows, and whether each monitor pauses checks during one.
  */
 export async function listMonitorSlaPolicyMaintenances(args: {
   ctx: ServiceContext;

@@ -30,16 +30,19 @@ const kindVariant: Record<
 
 export function getColumns({
   readOnly,
+  timeZone,
 }: {
   readOnly: boolean;
+  /** the policy's zone: windows read in the months they excuse */
+  timeZone: string;
 }): ColumnDef<ExcusedWindow>[] {
   return [
     {
       id: "window",
-      header: "Window (UTC)",
+      header: `Window (${timeZone})`,
       cell: ({ row }) => (
         <span className="font-mono text-sm whitespace-nowrap tabular-nums">
-          {formatExcusedWindow(row.original.from, row.original.to)}
+          {formatExcusedWindow(row.original.from, row.original.to, timeZone)}
         </span>
       ),
     },
