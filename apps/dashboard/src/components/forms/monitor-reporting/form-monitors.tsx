@@ -77,8 +77,8 @@ export function FormMonitors({
           <FormCardHeader>
             <FormCardTitle>Monitors</FormCardTitle>
             <FormCardDescription>
-              Each one is judged on its own. A monitor can be under several
-              policies.
+              Each one is judged on its own. A monitor can be in several
+              reportings.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>

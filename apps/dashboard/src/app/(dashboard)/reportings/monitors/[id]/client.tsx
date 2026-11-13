@@ -281,7 +281,7 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <div className="text-sm">
-          Uptime over the last{" "}
+          Uptime this month and over the last{" "}
           <Select
             value={String(months)}
             onValueChange={(value) => setMonths(Number(value) as 12 | 24)}

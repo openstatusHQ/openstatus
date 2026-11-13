@@ -53,6 +53,14 @@ const kindLabels: Record<Episode["kind"], string> = {
   unmeasured: "No checks",
 };
 
+// the row already names the kind, so the treatment reads without it
+const rowTreatmentLabels: Record<SlaTreatment, string> = {
+  counted: "counted",
+  lenient: "counted as up",
+  excused: "excused",
+  unmeasured: "not measured",
+};
+
 const treatmentText: Record<SlaTreatment, string> = {
   counted: "text-destructive",
   lenient: "text-muted-foreground",
@@ -373,7 +381,7 @@ function EpisodeRow({
           {kindLabels[e.kind]}
           {" · "}
           <span className={treatmentText[e.treatment]}>
-            {slaTreatmentLabels[e.treatment].toLowerCase()}
+            {rowTreatmentLabels[e.treatment]}
           </span>
         </span>
         <span className="text-muted-foreground truncate font-mono text-xs">

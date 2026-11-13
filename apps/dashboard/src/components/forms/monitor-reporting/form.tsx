@@ -159,8 +159,8 @@ export function FormMonitorReporting({
               <FormItem>
                 <FormLabel>Monitors</FormLabel>
                 <FormDescription>
-                  Each one is judged on its own. A monitor can be under several
-                  policies.
+                  Each one is judged on its own. A monitor can be in several
+                  reportings.
                 </FormDescription>
                 <SlaMonitorsField
                   monitors={monitors}
