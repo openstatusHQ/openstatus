@@ -23,6 +23,7 @@ import { getMonitorSlaPolicy } from "../get";
 import {
   type EpisodesCall,
   episodesPipesFrom,
+  failingEpisodesPipes,
   noEpisodes,
   runsEvery,
 } from "./fixtures/episodes-pipes";
@@ -322,6 +323,33 @@ describe("exportMonitorSlaPolicy", () => {
     });
   });
 
+  test("the method states the gap rule the episodes use", () => {
+    expect(MONITOR_SLA_METHOD).toContain(
+      "more than twice the longer of the gaps before and after it",
+    );
+    expect(MONITOR_SLA_METHOD).not.toContain("twice the check interval");
+  });
+
+  test("runs that could not be loaded are named for a complete month too", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const res = await exportMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, from: "2026-10", to: "2026-10" },
+        now: new Date(Date.UTC(2026, 10, 10)),
+        episodesPipes: failingEpisodesPipes(),
+        sleep,
+      });
+      const { comments, rows } = parse(res.csv);
+      expect(rows[0].split(",")[13]).toBe("");
+      expect(comments[1]).toContain(
+        "Runs could not be loaded for some monitors and months; those months have no judgement.",
+      );
+      expect(comments[1]).not.toContain("recent months are empty");
+    });
+  });
+
   test("a non-UTC policy exports months in its zone", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
@@ -429,9 +457,9 @@ describe("exportMonitorSlaPolicy", () => {
       ).rejects.toBeInstanceOf(ValidationError);
       await expect(run({ from: "2026-13" })).rejects.toThrow();
       // Date.UTC reads years 0-99 as 1900-1999
-      await expect(
-        run({ from: "0050-01", to: "0050-02" }),
-      ).rejects.toThrow(/YYYY-MM/);
+      await expect(run({ from: "0050-01", to: "0050-02" })).rejects.toThrow(
+        /YYYY-MM/,
+      );
       const ok = await run({ from: "2021-11", to: "2026-10" });
       expect(parse(ok.csv).rows).toEqual([]);
     });
