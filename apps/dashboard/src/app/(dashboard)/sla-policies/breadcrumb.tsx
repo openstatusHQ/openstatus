@@ -16,17 +16,18 @@ export function Breadcrumb() {
   const root = NAV.slaPolicies;
   const tab = SLA_POLICY_TABS.find((t) => pathname.startsWith(t.href));
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const onPolicy =
+    workspace?.limits["monitor-sla"] === true &&
+    !!id &&
+    tab?.value === "monitors";
   const { data: policies } = useQuery({
     ...trpc.monitorSlaPolicy.list.queryOptions(),
-    enabled:
-      workspace?.limits["monitor-sla"] === true &&
-      !!id &&
-      tab?.value === "monitors",
+    enabled: onPolicy,
   });
   const active = id ? policies?.find((p) => String(p.id) === id) : undefined;
   const { data: archived } = useQuery({
     ...trpc.monitorSlaPolicy.list.queryOptions({ archived: true }),
-    enabled: !!policies && !active,
+    enabled: onPolicy && !!policies && !active,
   });
   const policy = active ?? archived?.find((p) => String(p.id) === id);
   const editing = pathname.endsWith("/edit");
