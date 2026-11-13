@@ -7,6 +7,13 @@ import {
 } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 import { z } from "zod";
 
+import { isValidTimeZone } from "./months";
+
+const timeZone = z
+  .string()
+  .trim()
+  .refine(isValidTimeZone, "Expected an IANA time zone, e.g. Europe/Berlin.");
+
 export const CreateMonitorSlaPolicyInput = z.object({
   name: z.string().trim().min(1).max(256),
   /** Thousandths of a percent: 99.5% is 99500. */
@@ -16,18 +23,21 @@ export const CreateMonitorSlaPolicyInput = z.object({
     .min(MONITOR_SLA_TARGET_MIN)
     .max(MONITOR_SLA_TARGET_MAX),
   strict: z.boolean().default(false),
+  /** IANA zone whose calendar months the policy judges; locked once a month is sealed. */
+  timeZone: timeZone.default("UTC"),
   monitorIds: z.array(z.number().int()).default([]),
 });
 export type CreateMonitorSlaPolicyInput = z.input<
   typeof CreateMonitorSlaPolicyInput
 >;
 
-/** Omitted fields stay as they are; `monitorIds` replaces the whole set. */
+/** Omitted fields stay as they are; `monitorIds` replaces the whole set; new terms apply from next month. */
 export const UpdateMonitorSlaPolicyInput = z.object({
   id: z.number().int().positive(),
   name: CreateMonitorSlaPolicyInput.shape.name.optional(),
   target: CreateMonitorSlaPolicyInput.shape.target.optional(),
   strict: z.boolean().optional(),
+  timeZone: timeZone.optional(),
   monitorIds: z.array(z.number().int()).optional(),
 });
 export type UpdateMonitorSlaPolicyInput = z.input<

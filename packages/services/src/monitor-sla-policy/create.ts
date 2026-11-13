@@ -34,6 +34,7 @@ export async function createMonitorSlaPolicy(args: {
         name: input.name,
         target: input.target,
         strict: input.strict,
+        timeZone: input.timeZone,
       })
       .returning()
       .get();

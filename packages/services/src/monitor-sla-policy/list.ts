@@ -11,7 +11,7 @@ import {
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { sumMonthRuns } from "./evaluate";
-import { assertMonitorSlaLimit } from "./internal";
+import { assertMonitorSlaLimit, withLatestTerms } from "./internal";
 import {
   completeMonths,
   LAST_TWELVE,
@@ -37,7 +37,7 @@ export async function listMonitorSlaPolicies(args: {
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
 
-  const policies = await db
+  const rows = await db
     .select()
     .from(monitorSlaPolicy)
     .where(
@@ -50,7 +50,8 @@ export async function listMonitorSlaPolicies(args: {
     )
     .orderBy(asc(monitorSlaPolicy.id))
     .all();
-  if (policies.length === 0) return [];
+  if (rows.length === 0) return [];
+  const policies = await withLatestTerms(db, ctx.workspace.id, rows);
 
   const links = await db
     .select({
