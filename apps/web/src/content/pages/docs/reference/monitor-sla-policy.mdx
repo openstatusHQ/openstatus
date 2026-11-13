@@ -15,6 +15,7 @@ Find them in the dashboard under [**SLA Policies > Monitors**](https://app.opens
 | Name | Required. Shown in the list, the policy page, the export and the email. |
 | Monthly uptime target | A percentage with up to three decimals, for example `99.9`. Presets: `99`, `99.5`, `99.9`, `99.95`, `99.99`. The form shows how much downtime the target allows in a 30-day month. One target per policy, the same for every monitor in it. |
 | Count slow responses as downtime | Off by default. See [strict mode](#strict-mode). |
+| Time zone | `UTC` by default. The zone the policy's months start and end in. It can be changed only until the first month is sealed. |
 | Monitors | The monitors the policy covers. A monitor can be in several policies. |
 
 Owners and admins can create, edit, archive and delete policies, and add or remove [excused windows](#excused-windows). Every workspace member can view them and download the export. Each change is recorded in the audit log, with the values before and after an edit.
@@ -30,13 +31,13 @@ A policy judges run verdicts (see [method](#method)), so it accepts only monitor
 
 ## What is judged
 
-One monitor, one calendar month in UTC. There is no combined figure across a policy's monitors: a policy with three monitors produces three results per month, each met or missed against the same target.
+One monitor, one calendar month in the policy's time zone. There is no combined figure across a policy's monitors: a policy with three monitors produces three results per month, each met or missed against the same target.
 
-Months start and end at midnight UTC, on the page, in the export, when sealed and in the email. A failed run at 23:30 UTC on October 31 belongs to October.
+Months start and end at local midnight in the policy's [time zone](#properties), on the page, in the export, when sealed and in the email. With the default `UTC`, a failed run at 23:30 UTC on October 31 belongs to October.
 
 ### Method
 
-The figure counts **runs**, not requests. A run is one scheduled check of a monitor, carried out by every cloud region the monitor is set to. Each run gets one verdict from the regions that reported it:
+The figure weighs **time**, not requests. A run is one scheduled check of a monitor, carried out by every cloud region the monitor is set to. Each run gets one verdict from the regions that reported it:
 
 | Verdict | When |
 |---|---|
@@ -46,26 +47,29 @@ The figure counts **runs**, not requests. A run is one scheduled check of a moni
 
 So one slow or failing region out of three is a normal run. Choosing the regions is up to you: regions close to your users make the majority mean something.
 
+A verdict stands until the next run, so each run weighs the time up to the next one, and a change of check frequency mid-month changes nothing. When the gap between two runs is more than twice the longer of the gaps before and after it, the earlier verdict covers only that longer gap and the rest of the gap is **unmeasured**. The time before the first run and after the last follow the same rule. Unmeasured time is neither up nor down: paused monitors, [paused checks during a maintenance](#maintenance) and scheduler outages leave the month instead of counting against it. **Coverage** is the share of the month's non-excused time that was measured.
+
 On-demand checks and private locations never count. They are requests outside the schedule, or outside the cloud regions.
 
 ### Monthly uptime
 
 ```
-total  = (OK + slow + failed runs) − (OK + slow + failed excused runs)
-up     = (OK runs − excused OK runs) + (slow runs − excused slow runs)
-up     = (OK runs − excused OK runs)                      in strict mode
-uptime = up / total
+measured = OK time + slow time + failed time      (excused time cut out)
+down     = failed time + slow time                in strict mode
+down     = failed time                            otherwise
+uptime   = (measured − down) / measured
 ```
 
-Excused runs are the runs inside the policy's [excused windows](#excused-windows). They drop from both sides of the fraction.
+Excused time is the time inside the policy's [excused windows](#excused-windows), cut out at the millisecond. It drops from both sides of the fraction.
 
-- A month is **met** when its uptime is at or above the target. A month exactly at the target is met. The comparison is exact, on whole run counts.
+- A month is **met** when its uptime is at or above the target. A month exactly at the target is met. The comparison is exact, on whole milliseconds.
 - Uptime is shown with three decimals, **rounded down**, so a missed month never displays as its target.
-- A month without runs has no judgement. It shows an em dash (`—`): never 100%, never a miss. The same holds for a month whose runs were all excused.
+- A month without measured time has no judgement. It shows an em dash (`—`): never 100%, never a miss. The same holds for a month whose time was all excused.
+- Months sealed before time weighting, and older unsealed months in a `UTC` policy, are judged by **run count** the same way, with runs in place of time. The page and the export say so (method `runs`).
 
 ### Strict mode
 
-With **Count slow responses as downtime** on, slow runs count as down instead of up. A check is slow when it takes longer than its own monitor's degraded threshold (for example the HTTP monitor's [degraded](/docs/reference/http-monitor#degraded) setting). A monitor without a degraded threshold is never slow, so strict mode changes nothing for it; the form flags such monitors.
+With **Count slow responses as downtime** on, slow time counts as down instead of up. A check is slow when it takes longer than its own monitor's degraded threshold (for example the HTTP monitor's [degraded](/docs/reference/http-monitor#degraded) setting), as recorded when it ran. A monitor without a degraded threshold is never slow, so strict mode changes nothing for it; the form flags such monitors.
 
 ## Month states
 
@@ -145,7 +149,7 @@ The **Export** button on a policy's page downloads its months as a CSV file, one
 - Live months are left out unless you tick **Include live months**. They are then marked `live (provisional)`.
 - The figures equal the ones on the page. Sealed rows carry the target and strict setting they were sealed with.
 
-The first line states the method. The second says when the file was generated, that months are UTC calendar months, that excused runs are left out of both sides, and that uptime is floored to three decimals. Then the columns:
+The first line states the method. The second says when the file was generated, which time zone the calendar months are in, that excused runs are left out of both sides, and that uptime is floored to three decimals. Then the columns:
 
 | Column | Description |
 |---|---|
@@ -160,6 +164,10 @@ The first line states the method. The second says when the file was generated, t
 | `uptime` | Percent, floored to three decimals. Empty without runs, or when every run was excused. |
 | `met` | `yes`, `no`, or empty without runs or when every run was excused. |
 | `sealed_at` | ISO timestamp, sealed rows only. |
+| `method` | `time` or `runs`, see [method](#method). |
+| `time_zone` | The zone the month is in. |
+| `measured_ms`, `down_ms`, `excused_ms`, `unmeasured_ms` | Time in milliseconds, method `time` only. |
+| `coverage` | Measured share of the non-excused time, in percent; method `time` only. |
 
 ## Maintenance
 
