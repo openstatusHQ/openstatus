@@ -88,7 +88,12 @@ describe("getMonitorSlaExcusedWindow", () => {
         to: oct(20, 23),
         createdBy: ownerId,
         createdAt: window.createdAt,
-        policy: { id: policy.id, name: "Partner", archivedAt: null },
+        policy: {
+          id: policy.id,
+          name: "Partner",
+          archivedAt: null,
+          timeZone: "UTC",
+        },
       });
     });
   });
