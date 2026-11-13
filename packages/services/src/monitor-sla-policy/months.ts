@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import type { monitorSlaSealedMonth } from "@openstatus/db/src/schema";
 
 import { monthRange } from "../frozen-uptime/compute";
@@ -27,15 +28,30 @@ function monthKey(year: number, monthIndex: number): string {
   return new Date(Date.UTC(year, monthIndex, 1)).toISOString().slice(0, 10);
 }
 
-/** YYYY-MM-01 of the UTC month holding the instant `at`. */
-export function monthOf(at: number | Date): string {
-  const d = new Date(typeof at === "number" ? at : at.getTime());
-  return monthKey(d.getUTCFullYear(), d.getUTCMonth());
+/** Whether `timeZone` is an IANA zone this runtime knows. */
+export function isValidTimeZone(timeZone: string): boolean {
+  if (!timeZone) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-/** The `count` complete UTC months before `now`, oldest first, YYYY-MM-01. */
-export function completeMonths(now: Date, count: number): string[] {
-  const [year, mo] = monthOf(now).split("-").map(Number);
+/** YYYY-MM-01 of the month in `timeZone` holding the instant `at`. */
+export function monthOf(at: number | Date, timeZone = "UTC"): string {
+  const d = new TZDate(typeof at === "number" ? at : at.getTime(), timeZone);
+  return monthKey(d.getFullYear(), d.getMonth());
+}
+
+/** The `count` complete months in `timeZone` before `now`, oldest first, YYYY-MM-01. */
+export function completeMonths(
+  now: Date,
+  count: number,
+  timeZone = "UTC",
+): string[] {
+  const [year, mo] = monthOf(now, timeZone).split("-").map(Number);
   return Array.from({ length: count }, (_, i) =>
     monthKey(year, mo - 1 - count + i),
   );
@@ -56,16 +72,17 @@ export function monthCellKey(monitorId: number | string, month: string) {
   return `${monitorId}:${month}`;
 }
 
-/** [from, to) cut at UTC month boundaries, in order. */
+/** [from, to) cut at month boundaries in `timeZone`, in order. */
 export function splitByMonth(
   from: number,
   to: number,
+  timeZone = "UTC",
 ): { month: string; start: number; end: number }[] {
   const parts: { month: string; start: number; end: number }[] = [];
   let start = from;
   while (start < to) {
-    const month = monthOf(start);
-    const end = Math.min(monthRange(month).end, to);
+    const month = monthOf(start, timeZone);
+    const end = Math.min(monthRange(month, timeZone).end, to);
     parts.push({ month, start, end });
     start = end;
   }
@@ -73,11 +90,15 @@ export function splitByMonth(
 }
 
 /** Whether `month` is the previous month and its runs are still kept: live until it is frozen. */
-export function liveUntilFrozen(month: string, now: Date): boolean {
-  const [previous] = completeMonths(now, 1);
+export function liveUntilFrozen(
+  month: string,
+  now: Date,
+  timeZone = "UTC",
+): boolean {
+  const [previous] = completeMonths(now, 1, timeZone);
   return (
     month === previous &&
-    now.getTime() - monthRange(month).start < FREEZE_CUTOFF_MS
+    now.getTime() - monthRange(month, timeZone).start < FREEZE_CUTOFF_MS
   );
 }
 
