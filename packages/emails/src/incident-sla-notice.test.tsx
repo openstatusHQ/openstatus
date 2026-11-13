@@ -80,8 +80,26 @@ describe("sendIncidentSlaNotice", () => {
       replyTo: "ping@openstatus.dev",
     });
     expect(send.mock.calls[0][1]).toEqual({
-      idempotencyKey: "incident-sla-notice:1:response:warning:1",
+      idempotencyKey: "incident-sla-notice:1:response:warning:1:0",
     });
+  });
+
+  test("chunks recipients to Resend's 50 per email, one key per chunk", async () => {
+    const to = Array.from({ length: 120 }, (_, i) => `m${i}@acme.dev`);
+    const id = await sendIncidentSlaNotice({
+      ...props,
+      to,
+      idempotencyKey: "k",
+    });
+    expect(id).toBe("email_1");
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(send.mock.calls.map((c) => c[0].to.length)).toEqual([50, 50, 20]);
+    expect(send.mock.calls.flatMap((c) => c[0].to)).toEqual(to);
+    expect(send.mock.calls.map((c) => c[1])).toEqual([
+      { idempotencyKey: "k:0" },
+      { idempotencyKey: "k:1" },
+      { idempotencyKey: "k:2" },
+    ]);
   });
 
   test("a Resend error throws so the caller does not count it as sent", async () => {
