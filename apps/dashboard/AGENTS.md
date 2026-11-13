@@ -20,10 +20,11 @@ whether something should exist) still go to a human, with the screenshot
 attached. `pnpm verify` and the test suites remain the evidence for everything
 that is not visual.
 
-When a dashboard already runs in this tree, run beside it rather than copying
-the app: `dev-stack.mjs` builds into `.next-agent`, so
-`node scripts/dev-stack.mjs up --port 3009 --db-port 8111` gets its own server
-and its own seeded database.
+When a regular `pnpm dev` dashboard already runs in this tree, run beside it
+rather than copying the app: `dev-stack.mjs` builds into `.next-agent`, so
+`node scripts/dev-stack.mjs up --port 3009 --db-port 8111` gets its own server.
+Not beside another `dev-stack.mjs`: every instance shares the database and
+state under `.screenshots/stack`.
 
 ## Runtimes
 
