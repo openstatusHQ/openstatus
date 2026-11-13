@@ -1,0 +1,127 @@
+TOKEN "endpoint__http_sla_episodes_range__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+-- SPEC "Weight and unmeasured time" over [fromDate, toDate) in epoch ms, quorum as endpoint__http_runs_range__v0.
+-- Must match episodesFromRuns; expected output: packages/services/src/monitor-sla-policy/__tests__/fixtures/episodes.json
+WITH
+    toInt64({{ Int64(fromDate, 1730419200000, required=True) }}) AS fromMs,
+    toInt64({{ Int64(toDate, 1733011200000, required=True) }}) AS toMs,
+    toInt64({{ Int64(fallbackIntervalMs, 60000, required=True) }}) AS fallbackMs,
+    judged AS (
+        SELECT
+            monitorId,
+            cronTimestamp,
+            multiIf(e * 2 >= n, 'error', (e + d) * 2 >= n, 'degraded', 'ok') AS kind
+        FROM (
+            SELECT
+                monitorId,
+                cronTimestamp,
+                uniqExactMerge(regions) AS n,
+                uniqExactMerge(errorRegions) AS e,
+                uniqExactMerge(degradedRegions) AS d
+            FROM mv__http_runs_45d__v0
+            WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+                AND time >= toStartOfDay(toDateTime(intDiv(fromMs, 1000), 'UTC'))
+                AND time < fromUnixTimestamp64Milli(toInt64(toMs), 'UTC')
+                AND cronTimestamp >= fromMs
+                AND cronTimestamp < toMs
+            GROUP BY monitorId, cronTimestamp
+        )
+    )
+SELECT monitorId, kind, startedAt, endedAt, runs, weightedMs
+FROM (
+    SELECT
+        monitorId,
+        any(segment.1) AS kind,
+        min(segment.2) AS startedAt,
+        max(segment.3) AS endedAt,
+        sum(segment.4) AS runs,
+        sum(segment.5) AS weightedMs
+    FROM (
+        SELECT
+            monitorId,
+            -- (kind, startedAt, endedAt, runs, weightedMs, episode, part); a run, its trailing unmeasured gap, the head gap
+            arrayJoin(arrayConcat(
+                [(kind, if(headWeighted, fromMs, t), t + weightMs, toUInt64(1), weightMs + if(headWeighted, headGapMs, 0), episode, 'run')],
+                if(unmeasuredMs > 0, [('unmeasured', t + weightMs, t + g, toUInt64(0), unmeasuredMs, episode, 'gap')], []),
+                if(i = 1 AND NOT headWeighted, [('unmeasured', fromMs, t, toUInt64(0), headGapMs, toUInt64(0), 'head')], [])
+            )) AS segment
+        FROM (
+            SELECT
+                monitorId,
+                t,
+                kind,
+                i,
+                g,
+                weightMs,
+                unmeasuredMs,
+                headGapMs,
+                headWeighted,
+                sum(toUInt64(i = 1 OR kind != prevKind OR prevUnmeasuredMs > 0)) OVER (
+                    PARTITION BY monitorId ORDER BY t ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS episode
+            FROM (
+                SELECT
+                    monitorId,
+                    t,
+                    kind,
+                    i,
+                    g,
+                    weightMs,
+                    unmeasuredMs,
+                    headGapMs,
+                    headWeighted,
+                    lagInFrame(kind, 1) OVER byTime AS prevKind,
+                    lagInFrame(unmeasuredMs, 1) OVER byTime AS prevUnmeasuredMs
+                FROM (
+                    SELECT
+                        monitorId,
+                        t,
+                        kind,
+                        i,
+                        if(i = k, toMs - t, next1 - t) AS g,
+                        multiIf(
+                            i = k AND k = 1, fallbackMs,
+                            i = k, t - prev1,
+                            greatest(if(i = 1, g, t - prev1), if(i + 1 = k, g, next2 - next1))
+                        ) AS c,
+                        if(g <= 2 * c, g, c) AS weightMs,
+                        g - weightMs AS unmeasuredMs,
+                        t - fromMs AS headGapMs,
+                        (i = 1 AND headGapMs <= 2 * if(k = 1, fallbackMs, next1 - t)) AS headWeighted
+                    FROM (
+                        SELECT
+                            monitorId,
+                            cronTimestamp AS t,
+                            kind,
+                            row_number() OVER byTime AS i,
+                            count() OVER byTime AS k,
+                            lagInFrame(cronTimestamp, 1) OVER byTime AS prev1,
+                            leadInFrame(cronTimestamp, 1) OVER byTime AS next1,
+                            leadInFrame(cronTimestamp, 2) OVER byTime AS next2
+                        FROM judged
+                        WINDOW byTime AS (PARTITION BY monitorId ORDER BY cronTimestamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+                    )
+                )
+                WINDOW byTime AS (PARTITION BY monitorId ORDER BY t ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+            )
+        )
+    )
+    GROUP BY monitorId, segment.6, segment.7
+    UNION ALL
+    SELECT
+        monitorId,
+        'unmeasured' AS kind,
+        fromMs AS startedAt,
+        toMs AS endedAt,
+        toUInt64(0) AS runs,
+        toMs - fromMs AS weightedMs
+    FROM (SELECT arrayJoin({{ Array(monitorIds, 'String', '1,666') }}) AS monitorId)
+    WHERE monitorId NOT IN (SELECT monitorId FROM judged)
+)
+ORDER BY monitorId, startedAt
+
+TYPE endpoint
