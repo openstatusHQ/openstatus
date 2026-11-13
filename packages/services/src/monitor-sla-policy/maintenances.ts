@@ -34,8 +34,12 @@ export async function listMonitorSlaPolicyMaintenances(args: {
   const policy = await findPolicy(db, ctx, input.id);
 
   const now = args.now ?? new Date();
-  const months = [...completeMonths(now, input.months), monthOf(now)];
-  const rangeStart = new Date(monthRange(months[0]).start);
+  const { timeZone } = policy;
+  const months = [
+    ...completeMonths(now, input.months, timeZone),
+    monthOf(now, timeZone),
+  ];
+  const rangeStart = new Date(monthRange(months[0], timeZone).start);
 
   const members = await db
     .select({
@@ -125,10 +129,10 @@ export async function listMonitorSlaPolicyMaintenances(args: {
     const window = windows.get(row.id) ?? {
       ...rest,
       monitorIds: [],
-      month: row.from < rangeStart ? months[0] : monthOf(row.from),
+      month: row.from < rangeStart ? months[0] : monthOf(row.from, timeZone),
       excusable:
         policy.archivedAt === null &&
-        excusedWindowLock(row, { now, sealed }) === null,
+        excusedWindowLock(row, { now, sealed, timeZone }) === null,
     };
     if (!window.monitorIds.includes(monitorId)) {
       window.monitorIds.push(monitorId);

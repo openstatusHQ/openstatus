@@ -6,10 +6,8 @@ import {
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { ValidationError } from "../errors";
-import type {
-  UptimeRunsPipes,
-  UptimeRunsRangePipes,
-} from "../frozen-uptime/run";
+import type { UptimeRunsRangePipes } from "../frozen-uptime/run";
+import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
   judgePolicyMonths,
@@ -19,7 +17,7 @@ import { completeMonths, LAST_TWELVE, monthOf, monthsBetween } from "./months";
 import { ExportMonitorSlaPolicyInput } from "./schemas";
 
 export const MONITOR_SLA_METHOD =
-  "Method: one run verdict per scheduled check across the cloud regions that reported it; request counts are not used. A run counts as slow only when at least half of the regions that reported it were slow or failed, and as failed only when at least half failed.";
+  "Method: one run verdict per scheduled check across the cloud regions that reported it; request counts are not used. A run counts as slow only when at least half of the regions that reported it were slow or failed, and as failed only when at least half failed. Months with method time weigh each verdict by the time until the next check; gaps longer than twice the check interval are unmeasured and count neither way. Months with method runs were judged by run count.";
 
 const COLUMNS = [
   "policy",
@@ -37,6 +35,13 @@ const COLUMNS = [
   "uptime",
   "met",
   "sealed_at",
+  "method",
+  "time_zone",
+  "measured_ms",
+  "down_ms",
+  "excused_ms",
+  "unmeasured_ms",
+  "coverage",
 ];
 
 // quotes when needed; a leading formula character is neutralised for spreadsheets
@@ -55,7 +60,7 @@ export async function exportMonitorSlaPolicy(args: {
   ctx: ServiceContext;
   input: ExportMonitorSlaPolicyInput;
   now?: Date;
-  runsPipes?: UptimeRunsPipes;
+  episodesPipes?: SlaEpisodesPipes;
   runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{ filename: string; csv: string }> {
@@ -66,13 +71,14 @@ export async function exportMonitorSlaPolicy(args: {
   const now = args.now ?? new Date();
   const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
 
-  const defaults = completeMonths(now, LAST_TWELVE);
+  const { timeZone } = policy;
+  const defaults = completeMonths(now, LAST_TWELVE, timeZone);
   const from = input.from ?? defaults[0].slice(0, 7);
   const to = input.to ?? defaults[LAST_TWELVE - 1].slice(0, 7);
   if (from > to) {
     throw new ValidationError("The first month must not be after the last.");
   }
-  if (`${to}-01` > monthOf(now)) {
+  if (`${to}-01` > monthOf(now, timeZone)) {
     throw new ValidationError("The last month must not be in the future.");
   }
   const months = monthsBetween(from, to);
@@ -89,14 +95,18 @@ export async function exportMonitorSlaPolicy(args: {
     months,
     now,
     live: input.includeLive,
-    runsPipes: args.runsPipes,
+    episodesPipes: args.episodesPipes,
     runsRangePipes: args.runsRangePipes,
     sleep: args.sleep,
   });
 
   const lines = [
     `# ${MONITOR_SLA_METHOD}`,
-    `# Generated ${now.toISOString()} by openstatus. Months are UTC calendar months. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement.${
+    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement.${
+      judged.monitors.some((m) => m.months.some((mm) => mm.unavailable))
+        ? ` Unsealed months older than 45 days cannot be judged in ${timeZone}: their runs are kept per UTC day only.`
+        : ""
+    }${
       judged.excusedExpired
         ? " Some unsealed months are judged without their excused windows: the runs inside them are older than 45 days and can no longer be counted."
         : ""
@@ -106,7 +116,7 @@ export async function exportMonitorSlaPolicy(args: {
         : "Live months are not included."
     }${
       judged.liveIncomplete && input.includeLive
-        ? " Live counts could not be loaded for some monitors; their live months are empty."
+        ? " Runs could not be loaded for some monitors; their recent months are empty."
         : ""
     }`,
     COLUMNS.join(","),
@@ -114,7 +124,7 @@ export async function exportMonitorSlaPolicy(args: {
   for (const m of judged.monitors) {
     for (const mm of m.months) {
       if (mm.state === "live" && !input.includeLive) continue;
-      const terms = mm.sealed ?? policy;
+      const terms = mm.terms ?? policy;
       lines.push(
         [
           cell(policy.name),
@@ -136,6 +146,13 @@ export async function exportMonitorSlaPolicy(args: {
           cell(mm.uptime === null ? null : formatSlaUptime(mm.uptime)),
           cell(mm.met === null ? null : mm.met ? "yes" : "no"),
           cell(mm.sealed?.at.toISOString() ?? null),
+          cell(mm.method),
+          cell(mm.timeZone),
+          cell(mm.measuredMs),
+          cell(mm.downMs),
+          cell(mm.excusedMs),
+          cell(mm.unmeasuredMs),
+          cell(mm.coverage === null ? null : formatSlaUptime(mm.coverage)),
         ].join(","),
       );
     }

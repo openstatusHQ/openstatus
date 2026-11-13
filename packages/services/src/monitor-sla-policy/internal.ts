@@ -21,29 +21,37 @@ import {
   PreconditionFailedError,
   ValidationError,
 } from "../errors";
+import { monthRange } from "../frozen-uptime/compute";
 import {
-  addCounts,
-  type Counts,
-  type RunsByDay,
-} from "../frozen-uptime/quorum";
-import {
-  fetchRunsByDay,
   type UptimeRunsPipes,
   type UptimeRunsRangePipes,
-  uptimeRunsPipes,
   uptimeRunsRangePipes,
 } from "../frozen-uptime/run";
+import type { Episode } from "./episodes";
 import { sumMonthRuns } from "./evaluate";
-import { excusedWindowLock, fetchExcusedCounts, mergeSpans } from "./excused";
+import {
+  excusedWindowLock,
+  fetchExcusedCounts,
+  mergeSpans,
+  type Span,
+} from "./excused";
+import {
+  clipEpisodes,
+  fetchSlaEpisodes,
+  type SlaEpisodesPipes,
+  slaEpisodesPipes,
+} from "./fetch-episodes";
 import {
   type CellExcused,
   completeMonths,
-  countedMonth,
+  coveredSpan,
+  emptyMonth,
   liveUntilFrozen,
   type MonitorSlaMonth,
   monthCellKey,
   monthOf,
   storedMonth,
+  timeMonth,
 } from "./months";
 
 // fails tsc when the run-verdict pipes and the eligible types drift apart
@@ -238,13 +246,14 @@ export async function sealedMonthsOf(
 
 export async function assertExcusedWindowOpen(
   tx: DB,
-  policy: { id: number; workspaceId: number },
+  policy: { id: number; workspaceId: number; timeZone?: string },
   window: { from: Date; to: Date },
   now: Date,
 ): Promise<void> {
   const lock = excusedWindowLock(window, {
     now,
     sealed: await sealedMonthsOf(tx, policy),
+    timeZone: policy.timeZone,
   });
   if (lock === "sealed") {
     throw new PreconditionFailedError(
@@ -256,37 +265,6 @@ export async function assertExcusedWindowOpen(
       "Windows can only be added or removed in the current and the previous month.",
     );
   }
-}
-
-/** Live run verdicts summed per monitor and month; never throws. */
-async function fetchLiveMonths(args: {
-  monitors: { id: number; jobType: string; regions: string }[];
-  pipes: () => UptimeRunsPipes;
-  sleep?: (ms: number) => Promise<void>;
-}): Promise<{ counts: Map<string, Counts>; failed: Set<number> }> {
-  let runs: RunsByDay;
-  let failedIds: Set<string>;
-  try {
-    ({ runs, failedMonitorIds: failedIds } = await fetchRunsByDay({
-      monitors: args.monitors,
-      pipes: args.pipes(),
-      throttleMs: 0,
-      sleep: args.sleep,
-    }));
-  } catch (e) {
-    console.warn("monitor sla live runs unavailable", e);
-    return {
-      counts: new Map(),
-      failed: new Set(args.monitors.map((m) => m.id)),
-    };
-  }
-  const counts = new Map<string, Counts>();
-  for (const [monitorId, byDay] of runs) {
-    for (const [day, c] of byDay) {
-      addCounts(counts, monthCellKey(monitorId, `${day.slice(0, 7)}-01`), c);
-    }
-  }
-  return { counts, failed: new Set([...failedIds].map(Number)) };
 }
 
 /** The policy and its current members (non-deleted monitors), by monitor id. */
@@ -302,6 +280,8 @@ export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
       url: monitor.url,
       jobType: monitor.jobType,
       regions: monitor.regions,
+      periodicity: monitor.periodicity,
+      memberSince: monitorSlaPolicyToMonitor.createdAt,
     })
     .from(monitorSlaPolicyToMonitor)
     .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
@@ -317,59 +297,178 @@ export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
   return { policy, monitors };
 }
 
+export type PolicyMember = Awaited<
+  ReturnType<typeof loadPolicyMembers>
+>["monitors"][number];
+
+/** The running month (live) and the previous one while its runs are kept (preview): the months judged on episodes. */
+export function episodeMonths(
+  now: Date,
+  timeZone: string,
+): Map<string, "live" | "preview"> {
+  const months = new Map<string, "live" | "preview">([
+    [monthOf(now, timeZone), "live"],
+  ]);
+  const [previous] = completeMonths(now, 1, timeZone);
+  if (liveUntilFrozen(previous, now, timeZone)) months.set(previous, "preview");
+  return months;
+}
+
+/** Excused windows of the policy, merged. */
+export async function policyExcusedSpans(
+  db: DB,
+  policy: { id: number; workspaceId: number },
+): Promise<Span[]> {
+  return mergeSpans(
+    await db
+      .select({
+        from: monitorSlaExcusedWindow.from,
+        to: monitorSlaExcusedWindow.to,
+      })
+      .from(monitorSlaExcusedWindow)
+      .where(
+        and(
+          eq(monitorSlaExcusedWindow.monitorSlaPolicyId, policy.id),
+          eq(monitorSlaExcusedWindow.workspaceId, policy.workspaceId),
+        ),
+      )
+      .all(),
+  );
+}
+
 /**
- * Each member's state per month (YYYY-MM-01, ascending).
- * Without `live`, live months carry no counts.
+ * Episodes of `members` for `months` (all in `timeZone`), one Tinybird read
+ * over [first month start, min(last month end, now)). Never throws.
+ */
+export async function fetchMonthEpisodes(args: {
+  ctx: ServiceContext;
+  members: readonly PolicyMember[];
+  months: readonly string[];
+  timeZone: string;
+  now: Date;
+  pipes?: SlaEpisodesPipes;
+  sleep?: (ms: number) => Promise<void>;
+}): Promise<{
+  episodes: Map<number, Episode[]>;
+  failed: Set<number>;
+  range: Span;
+}> {
+  const ranges = args.months.map((m) => monthRange(m, args.timeZone));
+  if (ranges.length === 0 || args.members.length === 0) {
+    return {
+      episodes: new Map(),
+      failed: new Set(),
+      range: { start: 0, end: 0 },
+    };
+  }
+  const range = {
+    start: Math.min(...ranges.map((r) => r.start)),
+    end: Math.min(Math.max(...ranges.map((r) => r.end)), args.now.getTime()),
+  };
+  const res = await fetchSlaEpisodes({
+    monitors: args.members,
+    fromMs: range.start,
+    toMs: range.end,
+    pipes: () => args.pipes ?? slaEpisodesPipes(args.ctx.tb ?? defaultTb),
+    throttleMs: 0,
+    sleep: args.sleep,
+  });
+  return { ...res, range };
+}
+
+/** A member's month from its fetched episodes; the caller handles seals. */
+export function memberTimeMonth(args: {
+  month: string;
+  state: "live" | "preview";
+  member: Pick<PolicyMember, "id" | "memberSince">;
+  fetched: Awaited<ReturnType<typeof fetchMonthEpisodes>>;
+  excusedSpans: readonly Span[];
+  terms: { target: number; strict: boolean };
+  timeZone: string;
+  now: Date;
+}): MonitorSlaMonth {
+  const { month, state, member, fetched, timeZone } = args;
+  if (fetched.failed.has(member.id)) {
+    return emptyMonth({ month, state, timeZone, method: "time" });
+  }
+  const covered = coveredSpan(month, timeZone, member.memberSince, args.now);
+  if (!covered) return emptyMonth({ month, state: "none", timeZone });
+  // not read (no run verdicts): nothing measured
+  const episodes = fetched.episodes.get(member.id) ?? [
+    {
+      kind: "unmeasured" as const,
+      startedAt: fetched.range.start,
+      endedAt: fetched.range.end,
+      runs: 0,
+      weightedMs: fetched.range.end - fetched.range.start,
+    },
+  ];
+  return timeMonth({
+    month,
+    state,
+    episodes: clipEpisodes(episodes, covered.start, covered.end),
+    covered,
+    excusedSpans: args.excusedSpans,
+    terms: args.terms,
+    timeZone,
+  });
+}
+
+/**
+ * Each member's state per month (YYYY-MM-01 in the policy zone, ascending).
+ * The running and previous month are judged on episodes under the terms they
+ * started with; older unsealed months are run-count previews under the latest
+ * terms (UTC only). Without `live`, the running month is not read.
  */
 export async function judgePolicyMonths(args: {
   ctx: ServiceContext;
-  policy: { id: number; target: number; strict: boolean };
-  monitors: Awaited<ReturnType<typeof loadPolicyMembers>>["monitors"];
+  policy: {
+    id: number;
+    workspaceId: number;
+    target: number;
+    strict: boolean;
+    timeZone: string;
+  };
+  monitors: PolicyMember[];
   months: string[];
   now: Date;
   live: boolean;
-  runsPipes?: UptimeRunsPipes;
+  episodesPipes?: SlaEpisodesPipes;
   runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx, policy, monitors, months, now } = args;
+  const { timeZone } = policy;
   const db = getReadDb(ctx);
-  const liveMonths = new Set([monthOf(now)]);
-  const [previousMonth] = completeMonths(now, 1);
-  if (liveUntilFrozen(previousMonth, now)) liveMonths.add(previousMonth);
   const first = months[0];
   const last = months.at(-1);
   if (monitors.length === 0 || !first || !last) {
     return { monitors: [], liveIncomplete: false, excusedExpired: false };
   }
+  const timeMonths = episodeMonths(now, timeZone);
 
-  const frozenRows = await db
-    .select({
-      monitorId: frozenMonitorUptime.monitorId,
-      month: frozenMonitorUptime.month,
-      days: frozenMonitorUptime.days,
-    })
-    .from(frozenMonitorUptime)
-    .where(
-      and(
-        eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
-        inArray(
-          frozenMonitorUptime.monitorId,
-          monitors.map((m) => m.id),
-        ),
-        gte(frozenMonitorUptime.month, first),
-        lte(frozenMonitorUptime.month, last),
-      ),
-    )
-    .all();
-  const live =
-    args.live && months.some((m) => liveMonths.has(m))
-      ? await fetchLiveMonths({
-          monitors,
-          pipes: () => args.runsPipes ?? uptimeRunsPipes(ctx.tb ?? defaultTb),
-          sleep: args.sleep,
-        })
-      : { counts: new Map<string, Counts>(), failed: new Set<number>() };
+  const frozenRows =
+    timeZone === "UTC"
+      ? await db
+          .select({
+            monitorId: frozenMonitorUptime.monitorId,
+            month: frozenMonitorUptime.month,
+            days: frozenMonitorUptime.days,
+          })
+          .from(frozenMonitorUptime)
+          .where(
+            and(
+              eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
+              inArray(
+                frozenMonitorUptime.monitorId,
+                monitors.map((m) => m.id),
+              ),
+              gte(frozenMonitorUptime.month, first),
+              lte(frozenMonitorUptime.month, last),
+            ),
+          )
+          .all()
+      : [];
   const sealedRows = await db
     .select()
     .from(monitorSlaSealedMonth)
@@ -391,33 +490,41 @@ export async function judgePolicyMonths(args: {
       sumMonthRuns(frozenMonitorUptimeDaySchema.array().parse(r.days)),
     ]),
   );
-  // a live cell without `live` is dropped, so its excused runs are not read
-  const shown = (m: { id: number }, month: string) => {
-    const key = monthCellKey(m.id, month);
-    return (
-      !sealed.has(key) &&
-      (args.live || !liveMonths.has(month) || frozen.has(key))
-    );
-  };
+  const unsealedIn = (month: string) =>
+    monitors.some((m) => !sealed.has(monthCellKey(m.id, month)));
+
+  const spans = await policyExcusedSpans(db, policy);
+  const readMonths = months.filter(
+    (month) =>
+      timeMonths.has(month) &&
+      (args.live || timeMonths.get(month) !== "live") &&
+      unsealedIn(month),
+  );
+  const fetched = await fetchMonthEpisodes({
+    ctx,
+    members: monitors,
+    months: readMonths,
+    timeZone,
+    now,
+    pipes: args.episodesPipes,
+    sleep: args.sleep,
+  });
+  const termsOf = new Map(
+    await Promise.all(
+      readMonths.map(
+        async (month) =>
+          [month, await termsForMonth(db, policy, month)] as const,
+      ),
+    ),
+  );
 
   const excused = await fetchExcusedCounts({
     monitors,
-    spans: mergeSpans(
-      await db
-        .select({
-          from: monitorSlaExcusedWindow.from,
-          to: monitorSlaExcusedWindow.to,
-        })
-        .from(monitorSlaExcusedWindow)
-        .where(
-          and(
-            eq(monitorSlaExcusedWindow.monitorSlaPolicyId, policy.id),
-            eq(monitorSlaExcusedWindow.workspaceId, ctx.workspace.id),
-          ),
-        )
-        .all(),
-    ),
-    months: months.filter((month) => monitors.some((m) => shown(m, month))),
+    spans,
+    months:
+      timeZone === "UTC"
+        ? months.filter((month) => !timeMonths.has(month) && unsealedIn(month))
+        : [],
     now,
     pipes: () =>
       args.runsRangePipes ?? uptimeRunsRangePipes(ctx.tb ?? defaultTb),
@@ -430,34 +537,43 @@ export async function judgePolicyMonths(args: {
         ? "expired"
         : excused.counts.get(key);
 
-  const rows = monitors.map(({ regions: _regions, ...m }) => ({
-    ...m,
-    months: months.map((month): MonitorSlaMonth => {
-      const key = monthCellKey(m.id, month);
-      const seal = sealed.get(key);
-      const counts = frozen.get(key);
-      if (seal) return storedMonth({ month, seal, frozen: counts, policy });
-      if (!counts && liveMonths.has(month)) {
-        return countedMonth({
+  const rows = monitors.map(
+    ({ regions: _r, periodicity: _p, memberSince, ...m }) => ({
+      ...m,
+      months: months.map((month): MonitorSlaMonth => {
+        const key = monthCellKey(m.id, month);
+        const seal = sealed.get(key);
+        if (seal) {
+          return storedMonth({ month, seal, frozen: undefined, policy });
+        }
+        const state = timeMonths.get(month);
+        const terms = termsOf.get(month);
+        if (state && !terms) return emptyMonth({ month, state, timeZone });
+        if (state && terms) {
+          return memberTimeMonth({
+            month,
+            state,
+            member: { id: m.id, memberSince },
+            fetched,
+            excusedSpans: spans,
+            terms,
+            timeZone,
+            now,
+          });
+        }
+        return storedMonth({
           month,
-          state: "live",
-          counts: live.failed.has(m.id) ? undefined : live.counts.get(key),
+          seal: undefined,
+          frozen: frozen.get(key),
           excused: excusedFor(key),
           policy,
         });
-      }
-      return storedMonth({
-        month,
-        seal,
-        frozen: counts,
-        excused: excusedFor(key),
-        policy,
-      });
+      }),
     }),
-  }));
+  );
   return {
     monitors: rows,
-    liveIncomplete: live.failed.size > 0 || excused.failed.size > 0,
+    liveIncomplete: fetched.failed.size > 0 || excused.failed.size > 0,
     /** some month's excused runs are older than Tinybird keeps: those cells are judged without their windows */
     excusedExpired: excused.expired.size > 0,
   };

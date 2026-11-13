@@ -143,6 +143,38 @@ describe("fetchExcusedCounts", () => {
 describe("excusedWindowLock", () => {
   const now = new Date(Date.UTC(2026, 10, 10));
 
+  test("months follow the policy zone", () => {
+    // 00:30 on Dec 1 in Berlin; the window is 23:30 on Oct 31 there
+    const berlinDec = new Date(Date.UTC(2026, 10, 30, 23, 30));
+    const window = w(
+      Date.UTC(2026, 9, 31, 22, 30),
+      Date.UTC(2026, 9, 31, 22, 45),
+    );
+    expect(
+      excusedWindowLock(window, { now: berlinDec, sealed: [] }),
+    ).toBeNull();
+    expect(
+      excusedWindowLock(window, {
+        now: berlinDec,
+        sealed: [],
+        timeZone: "Europe/Berlin",
+      }),
+    ).toBe("closed");
+    expect(
+      excusedWindowLock(window, {
+        now: berlinDec,
+        sealed: [{ month: "2026-11-01" }],
+      }),
+    ).toBeNull();
+    expect(
+      spansInMonth(
+        [{ start: window.from.getTime(), end: window.to.getTime() }],
+        "2026-11-01",
+        "Europe/Berlin",
+      ),
+    ).toEqual([]);
+  });
+
   test("a window in the current or previous month is open", () => {
     expect(excusedWindowLock(w(at(5), at(6)), { now, sealed: [] })).toBeNull();
   });

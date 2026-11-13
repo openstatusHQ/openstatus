@@ -15,16 +15,13 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import type { ComputeCountRow } from "../../frozen-uptime/compute";
 import { monthDays } from "../../frozen-uptime/compute";
-import type {
-  UptimeRunsPipes,
-  UptimeRunsRangePipes,
-} from "../../frozen-uptime/run";
+import type { UptimeRunsRangePipes } from "../../frozen-uptime/run";
 import { exportMonitorSlaPolicy } from "../export";
 import { getMonitorSlaPolicy } from "../get";
 import { listMonitorSlaPolicies } from "../list";
 import { sealMonitorSlaMonths } from "../seal";
+import { episodesPipesFrom, runsEvery } from "./fixtures/episodes-pipes";
 
 const MIN = 60_000;
 const at = (month: number, d: number, h = 0, m = 0) =>
@@ -69,21 +66,12 @@ function rangePipes(
   return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
 }
 
-// November so far as daily rows: Nov 1 had the outage
-const runsPipes: UptimeRunsPipes = (() => {
-  const pipe = async ({ monitorIds }: { monitorIds: string[] }) => ({
-    data: monitorIds.flatMap((monitorId) =>
-      Array.from({ length: 14 }, (_, i): ComputeCountRow => ({
-        monitorId,
-        day: new Date(at(10, i + 1)).toISOString(),
-        ok: i === 0 ? 138 : 144,
-        degraded: 0,
-        error: i === 0 ? 6 : 0,
-      })),
-    ),
-  });
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
-})();
+// the same runs as episodes, for the months judged on time
+const episodesPipes = episodesPipesFrom(() =>
+  runsEvery(at(9, 1), at(11, 31), STEP, (t) =>
+    OUTAGES.some((o) => o.start <= t && t < o.end) ? "error" : "ok",
+  ),
+);
 const sleep = async () => {};
 
 let ctx: ServiceContext;
@@ -164,7 +152,7 @@ function get(tx: Tx, id: number, at = now) {
     ctx: { ...ctx, db: tx },
     input: { id },
     now: at,
-    runsPipes,
+    episodesPipes,
     runsRangePipes: rangePipes(),
     sleep,
   });
@@ -224,8 +212,11 @@ describe("excused windows in a month's figure", () => {
       });
       expect(cell(detail, "2026-11-01")).toMatchObject({
         state: "live",
-        counts: { ok: 2010, degraded: 0, error: 6 },
+        method: "time",
+        counts: { ok: 2082, degraded: 0, error: 6 },
         excused: { ok: 0, degraded: 0, error: 6 },
+        excusedMs: 60 * MIN,
+        downMs: 0,
         uptime: 100_000,
       });
     });
@@ -289,7 +280,7 @@ describe("excused windows in a month's figure", () => {
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now,
-        runsPipes,
+        episodesPipes,
         runsRangePipes: rangePipes(),
         sleep,
       });
@@ -426,7 +417,7 @@ describe("excused windows too old to count", () => {
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: december,
-        runsPipes,
+        episodesPipes,
         runsRangePipes: rangePipes(calls),
         sleep,
       });
@@ -444,7 +435,7 @@ describe("excused windows too old to count", () => {
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now: december,
-        runsPipes,
+        episodesPipes,
         runsRangePipes: rangePipes(),
         sleep,
       });
@@ -467,19 +458,20 @@ describe("export without live months", () => {
   test("reads no excused runs for the live months it leaves out", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
-      // November is the unfrozen previous month on Dec 5: live, so dropped
+      // November on Dec 5 is a preview judged on episodes; December is left out
       await excuse(tx, policy.id, at(10, 2), at(10, 2, 1));
       const calls: { fromDate: number; toDate: number }[] = [];
       const { csv } = await exportMonitorSlaPolicy({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-11" },
         now: new Date(at(11, 5)),
-        runsPipes,
+        episodesPipes,
         runsRangePipes: rangePipes(calls),
         sleep,
       });
       expect(calls).toEqual([]);
-      expect(csv).not.toContain("2026-11,live");
+      expect(csv).toContain("2026-11,preview");
+      expect(csv).not.toContain("live");
     });
   });
 });

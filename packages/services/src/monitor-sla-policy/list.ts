@@ -78,8 +78,12 @@ export async function listMonitorSlaPolicies(args: {
     .all();
 
   const now = args.now ?? new Date();
-  const months = completeMonths(now, LAST_TWELVE);
-  const firstMonth = months[0];
+  const monthsOf = new Map(
+    policies.map((p) => [p.id, completeMonths(now, LAST_TWELVE, p.timeZone)]),
+  );
+  const firstMonth = [...monthsOf.values()]
+    .map((months) => months[0])
+    .reduce((a, b) => (a < b ? a : b));
   const monitorIds = [...new Set(links.map((l) => l.id))];
   const frozenRows =
     monitorIds.length === 0
@@ -157,7 +161,7 @@ export async function listMonitorSlaPolicies(args: {
     );
     // the current month is live (Tinybird) and stays off the list; so does an
     // unfrozen previous month, which reads as none here
-    const strip = months.map((month) =>
+    const strip = (monthsOf.get(policy.id) ?? []).map((month) =>
       rollUpMonth(
         month,
         members.map((m) => {

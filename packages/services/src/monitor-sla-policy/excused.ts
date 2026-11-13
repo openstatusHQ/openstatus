@@ -27,8 +27,12 @@ export function mergeSpans(
 }
 
 /** The parts of `spans` inside the month. */
-export function spansInMonth(spans: readonly Span[], month: string): Span[] {
-  const bounds = monthRange(month);
+export function spansInMonth(
+  spans: readonly Span[],
+  month: string,
+  timeZone = "UTC",
+): Span[] {
+  const bounds = monthRange(month, timeZone);
   return spans
     .map((s) => ({
       start: Math.max(s.start, bounds.start),
@@ -89,16 +93,21 @@ export async function fetchExcusedCounts(args: {
 /** Why a window can no longer be added or removed: it touches a sealed month or a month before the previous one. */
 export function excusedWindowLock(
   window: { from: Date; to: Date },
-  args: { now: Date; sealed: readonly { month: string }[] },
+  args: {
+    now: Date;
+    sealed: readonly { month: string }[];
+    timeZone?: string;
+  },
 ): "sealed" | "closed" | null {
+  const { timeZone = "UTC" } = args;
   const from = window.from.getTime();
   const to = window.to.getTime();
   for (const s of args.sealed) {
-    const { start, end } = monthRange(s.month);
+    const { start, end } = monthRange(s.month, timeZone);
     if (from < end && start < to) return "sealed";
   }
-  const [previous] = completeMonths(args.now, 1);
-  if (splitByMonth(from, to).some((p) => p.month < previous)) {
+  const [previous] = completeMonths(args.now, 1, timeZone);
+  if (splitByMonth(from, to, timeZone).some((p) => p.month < previous)) {
     return "closed";
   }
   return null;

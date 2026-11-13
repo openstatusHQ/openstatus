@@ -22,20 +22,12 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { monthDays } from "../../frozen-uptime/compute";
-import type { UptimeRunsPipes } from "../../frozen-uptime/run";
 import { createMonitorSlaPolicy } from "../create";
 import { getMonitorSlaPolicy } from "../get";
 import { updateMonitorSlaPolicy } from "../update";
+import { noEpisodes } from "./fixtures/episodes-pipes";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
-const noRunsPipe = async () => ({ data: [] });
-const noRuns: UptimeRunsPipes = {
-  http: noRunsPipe,
-  tcp: noRunsPipe,
-  dns: noRunsPipe,
-  icmp: noRunsPipe,
-  grpc: noRunsPipe,
-};
 
 let ownerCtx: ServiceContext;
 let adminCtx: ServiceContext;
@@ -163,7 +155,7 @@ describe("updateMonitorSlaPolicy", () => {
           ctx,
           input: { id: policy.id },
           now,
-          runsPipes: noRuns,
+          episodesPipes: noEpisodes,
         });
       expect((await read()).monitors[0]?.months.at(-2)).toMatchObject({
         uptime: 99_800,
@@ -211,7 +203,7 @@ describe("updateMonitorSlaPolicy", () => {
         ctx,
         input: { id: policy.id },
         now,
-        runsPipes: noRuns,
+        episodesPipes: noEpisodes,
       });
       const web = res.monitors.find((m) => m.id === webId);
       expect(web?.months.find((m) => m.month === "2026-03-01")).toMatchObject({

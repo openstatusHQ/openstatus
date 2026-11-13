@@ -4,11 +4,9 @@ import { monitorSlaExcusedWindow } from "@openstatus/db/src/schema";
 import { loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import type {
-  UptimeRunsPipes,
-  UptimeRunsRangePipes,
-} from "../frozen-uptime/run";
+import type { UptimeRunsRangePipes } from "../frozen-uptime/run";
 import { excusedWindowLock } from "./excused";
+import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
   judgePolicyMonths,
@@ -21,7 +19,7 @@ import { GetMonitorSlaPolicyInput, MonitorSlaPolicyIdInput } from "./schemas";
 /** The policy's excused windows, newest first, with the months they touch and whether they are locked. */
 async function loadExcusedWindows(
   ctx: ServiceContext,
-  policy: { id: number; workspaceId: number },
+  policy: { id: number; workspaceId: number; timeZone: string },
   now: Date,
 ) {
   const db = getReadDb(ctx);
@@ -48,8 +46,10 @@ async function loadExcusedWindows(
   return rows.map(({ workspaceId: _, createdBy, ...w }) => ({
     ...w,
     createdBy: createdBy === null ? null : (users.get(createdBy) ?? null),
-    months: splitByMonth(w.from.getTime(), w.to.getTime()).map((p) => p.month),
-    locked: excusedWindowLock(w, { now, sealed }),
+    months: splitByMonth(w.from.getTime(), w.to.getTime(), policy.timeZone).map(
+      (p) => p.month,
+    ),
+    locked: excusedWindowLock(w, { now, sealed, timeZone: policy.timeZone }),
   }));
 }
 
@@ -65,19 +65,21 @@ export async function getMonitorSlaPolicySummary(args: {
   const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
   return {
     ...policy,
-    monitors: monitors.map(({ regions: _, ...m }) => m),
+    monitors: monitors.map(
+      ({ regions: _r, periodicity: _p, memberSince: _m, ...m }) => m,
+    ),
   };
 }
 
 /**
- * A policy with each monitor's months judged against today's terms, plus the
- * running month (and the previous one until it is frozen) as live months.
+ * A policy with each monitor's months in its time zone: sealed months as
+ * stored, the running and previous month on episodes, older ones as previews.
  */
 export async function getMonitorSlaPolicy(args: {
   ctx: ServiceContext;
   input: GetMonitorSlaPolicyInput;
   now?: Date;
-  runsPipes?: UptimeRunsPipes;
+  episodesPipes?: SlaEpisodesPipes;
   runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
@@ -88,8 +90,8 @@ export async function getMonitorSlaPolicy(args: {
   const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
 
   const now = args.now ?? new Date();
-  const complete = completeMonths(now, input.months);
-  const months = [...complete, monthOf(now)];
+  const complete = completeMonths(now, input.months, policy.timeZone);
+  const months = [...complete, monthOf(now, policy.timeZone)];
   const lastTwelve = new Set(complete.slice(-LAST_TWELVE));
   const judged = await judgePolicyMonths({
     ctx,
@@ -98,7 +100,7 @@ export async function getMonitorSlaPolicy(args: {
     months,
     now,
     live: true,
-    runsPipes: args.runsPipes,
+    episodesPipes: args.episodesPipes,
     runsRangePipes: args.runsRangePipes,
     sleep: args.sleep,
   });
@@ -129,7 +131,7 @@ export async function getMonitorSlaPolicy(args: {
     months,
     monitors: rows,
     excusedWindows: await loadExcusedWindows(ctx, policy, now),
-    /** run counts failed to load for some monitor: recent months may be incomplete */
+    /** episodes failed to load for some monitor: recent months may be incomplete */
     liveIncomplete: judged.liveIncomplete,
     excusedExpired: judged.excusedExpired,
     missed: {

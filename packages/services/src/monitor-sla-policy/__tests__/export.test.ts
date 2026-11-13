@@ -17,25 +17,20 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
-import type { ComputeCountRow } from "../../frozen-uptime/compute";
 import { monthDays } from "../../frozen-uptime/compute";
-import type { UptimeRunsPipes } from "../../frozen-uptime/run";
 import { exportMonitorSlaPolicy, MONITOR_SLA_METHOD } from "../export";
 import { getMonitorSlaPolicy } from "../get";
+import {
+  type EpisodesCall,
+  episodesPipesFrom,
+  noEpisodes,
+  runsEvery,
+} from "./fixtures/episodes-pipes";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
-
-function runsPipesOf(
-  impl: (monitorIds: string[]) => Promise<{ data: ComputeCountRow[] }>,
-): UptimeRunsPipes {
-  const pipe = ({ monitorIds }: { monitorIds: string[] }) => impl(monitorIds);
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
-}
-
-const noRuns = runsPipesOf(async () => ({ data: [] }));
-const throwingRuns = runsPipesOf(async () => {
-  throw new Error("Tinybird must not be asked");
-});
+const MIN = 60_000;
+const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
 const sleep = async () => {};
 
 let ctx: ServiceContext;
@@ -90,6 +85,7 @@ async function insertPolicy(
       monitorIds.map((monitorId) => ({
         monitorSlaPolicyId: policy.id,
         monitorId,
+        createdAt: new Date(Date.UTC(2025, 0, 1)),
       })),
     );
   }
@@ -140,12 +136,15 @@ describe("exportMonitorSlaPolicy", () => {
           frozen(api.id, "2026-10", { ok: 1984, degraded: 5, error: 11 }),
         ]);
 
+      const calls: EpisodesCall[] = [];
       const res = await exportMonitorSlaPolicy({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
-        runsPipes: throwingRuns,
+        episodesPipes: episodesPipesFrom(() => [], calls),
       });
+      // neither the running month nor an October older than 45 days is read
+      expect(calls).toEqual([]);
 
       expect(res.filename).toBe("sla-partner-contract-2025-11-to-2026-10.csv");
       const { comments, header, rows } = parse(res.csv);
@@ -153,17 +152,17 @@ describe("exportMonitorSlaPolicy", () => {
       expect(comments[1]).toContain(`Generated ${now.toISOString()}`);
       expect(comments[1]).toContain("Live months are not included.");
       expect(header).toBe(
-        "policy,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at",
+        "policy,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
       );
       expect(rows).toHaveLength(12);
       expect(rows[0]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,,,,,,UTC,,,,,`,
       );
       expect(rows[10]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,preview,1990,0,10,0,99.500,yes,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,preview,1990,0,10,0,99.500,yes,,runs,UTC,,,,,`,
       );
       expect(rows[11]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,preview,1984,5,11,0,99.450,no,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,preview,1984,5,11,0,99.450,no,,runs,UTC,,,,,`,
       );
     });
   });
@@ -200,7 +199,7 @@ describe("exportMonitorSlaPolicy", () => {
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
-        runsPipes: noRuns,
+        episodesPipes: noEpisodes,
       });
       const res = await exportMonitorSlaPolicy({
         ctx: { ...ctx, db: tx },
@@ -247,6 +246,13 @@ describe("exportMonitorSlaPolicy", () => {
         "90.000",
         "no",
         "2026-10-04T05:47:00.000Z",
+        "runs",
+        "UTC",
+        "",
+        "",
+        "",
+        "",
+        "",
       ]);
       const strictPreview = cells.find(
         (c) => c[3] === String(a.id) && c[6] === "2026-08",
@@ -260,22 +266,23 @@ describe("exportMonitorSlaPolicy", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      const runsPipes = runsPipesOf(async (ids) => ({
-        data: ids.map((monitorId) => ({
-          monitorId,
-          day: "2026-11-01T00:00:00.000Z",
-          ok: 990,
-          degraded: 0,
-          error: 10,
-        })),
-      }));
+      const outage = Date.UTC(2026, 10, 10);
+      const calls: EpisodesCall[] = [];
+      const episodesPipes = episodesPipesFrom(
+        () =>
+          runsEvery(Date.UTC(2026, 9, 1), now.getTime(), 10 * MIN, (t) =>
+            t >= outage && t < outage + HOUR ? "error" : "ok",
+          ),
+        calls,
+      );
 
       const without = await exportMonitorSlaPolicy({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-11" },
         now,
-        runsPipes: throwingRuns,
+        episodesPipes,
       });
+      expect(calls).toEqual([]);
       expect(parse(without.csv).rows.map((r) => r.split(",")[6])).toEqual([
         "2026-10",
       ]);
@@ -289,7 +296,7 @@ describe("exportMonitorSlaPolicy", () => {
           includeLive: true,
         },
         now,
-        runsPipes,
+        episodesPipes,
         sleep,
       });
       const { comments, rows } = parse(withLive.csv);
@@ -297,13 +304,91 @@ describe("exportMonitorSlaPolicy", () => {
       expect(rows.at(-1)?.split(",").slice(6)).toEqual([
         "2026-11",
         "live (provisional)",
-        "990",
+        "2082",
         "0",
-        "10",
+        "6",
         "0",
-        "99.000",
-        "no",
+        "99.712",
+        "yes",
         "",
+        "time",
+        "UTC",
+        String(14.5 * DAY),
+        String(HOUR),
+        "0",
+        "0",
+        "100.000",
+      ]);
+    });
+  });
+
+  test("a non-UTC policy exports months in its zone", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id], {
+        timeZone: "America/New_York",
+      });
+      await tx
+        .insert(frozenMonitorUptime)
+        .values(frozen(api.id, "2026-10", { ok: 1990, error: 10 }));
+      const calls: EpisodesCall[] = [];
+      const episodesPipes = episodesPipesFrom(
+        () => runsEvery(Date.UTC(2026, 9, 1), now.getTime(), 10 * MIN),
+        calls,
+      );
+
+      const res = await exportMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: {
+          id: policy.id,
+          from: "2026-10",
+          to: "2026-11",
+          includeLive: true,
+        },
+        now,
+        episodesPipes,
+        sleep,
+      });
+      const { comments, rows } = parse(res.csv);
+      expect(comments[1]).toContain(
+        "Months are calendar months in America/New_York.",
+      );
+      expect(comments[1]).toContain(
+        "Unsealed months older than 45 days cannot be judged in America/New_York",
+      );
+      // midnight Nov 1 in New York is still EDT: the zone falls back at 2am
+      expect(calls).toEqual([
+        {
+          monitorIds: [String(api.id)],
+          fromDate: Date.UTC(2026, 10, 1, 4),
+          toDate: now.getTime(),
+          fallbackIntervalMs: 10 * MIN,
+        },
+      ]);
+      const cells = rows.map((r) => r.split(","));
+      expect(cells[0].slice(6)).toEqual([
+        "2026-10",
+        "none",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "America/New_York",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
+      expect(cells[1].slice(6, 8)).toEqual(["2026-11", "live (provisional)"]);
+      expect(cells[1].slice(15, 18)).toEqual([
+        "time",
+        "America/New_York",
+        String(14 * DAY + 8 * HOUR),
       ]);
     });
   });
@@ -319,7 +404,7 @@ describe("exportMonitorSlaPolicy", () => {
       });
       expect(res.filename).toBe("sla-eu-prod-2026-10-to-2026-10.csv");
       expect(parse(res.csv).rows[0]).toBe(
-        `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,,,,`,
+        `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,,,,,,UTC,,,,,`,
       );
     });
   });

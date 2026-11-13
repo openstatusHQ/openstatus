@@ -24,7 +24,7 @@ import {
   runsByMonitorDay,
 } from "./quorum";
 
-type PipeFn<Row> = (params: {
+export type PipeFn<Row> = (params: {
   monitorIds: string[];
 }) => Promise<{ data: Row[] }>;
 
@@ -63,7 +63,7 @@ const JOB_TYPES_WITHOUT_QUORUM = [
   "ssl",
 ] as const satisfies readonly MonitorJobType[];
 
-type UptimeQuorumJobType = Exclude<
+export type UptimeQuorumJobType = Exclude<
   MonitorJobType,
   (typeof JOB_TYPES_WITHOUT_QUORUM)[number]
 >;
@@ -90,7 +90,7 @@ const RUNS_JOB_TYPES = {
   grpc: true,
 } satisfies Record<UptimeQuorumJobType, true>;
 
-function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
+export function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
   return Object.hasOwn(RUNS_JOB_TYPES, jobType);
 }
 
@@ -131,7 +131,7 @@ function hasStatusPipe(
   return Object.hasOwn(pipes, jobType);
 }
 
-type FetchOptions = {
+export type FetchOptions = {
   monitorIdsByJobType: Map<string, Set<string>>;
   chunkSize?: number;
   attempts?: number;
@@ -140,7 +140,7 @@ type FetchOptions = {
   onChunkFailure?: (failure: ChunkFailure) => void;
 };
 
-async function fetchChunked<Row>(
+export async function fetchChunked<Row>(
   args: FetchOptions & {
     kind: FreezePipeKind;
     pipeFor: (jobType: string) => PipeFn<Row> | undefined;

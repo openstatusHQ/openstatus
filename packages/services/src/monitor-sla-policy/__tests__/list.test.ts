@@ -1,3 +1,4 @@
+import { eq } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   monitor,
@@ -14,18 +15,11 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { monthDays } from "../../frozen-uptime/compute";
-import type { UptimeRunsPipes } from "../../frozen-uptime/run";
 import { getMonitorSlaPolicy } from "../get";
 import { listMonitorSlaPolicies } from "../list";
+import { noEpisodes } from "./fixtures/episodes-pipes";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
-const noRuns: UptimeRunsPipes = {
-  http: async () => ({ data: [] }),
-  tcp: async () => ({ data: [] }),
-  dns: async () => ({ data: [] }),
-  icmp: async () => ({ data: [] }),
-  grpc: async () => ({ data: [] }),
-};
 
 // any property read on the Tinybird client fails the test
 const noTinybird = new Proxy(
@@ -122,6 +116,46 @@ function sealedRow(
 }
 
 describe("listMonitorSlaPolicies strip", () => {
+  test("a non-UTC policy strips months in its zone, sealed months only", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, "API");
+      const policy = await insertPolicy(tx, "Tokyo", [api.id]);
+      await tx
+        .update(monitorSlaPolicy)
+        .set({ timeZone: "Asia/Tokyo" })
+        .where(eq(monitorSlaPolicy.id, policy.id));
+      await tx
+        .insert(frozenMonitorUptime)
+        .values([
+          frozen(api.id, "2026-09", { ok: 1900, error: 100 }),
+          frozen(api.id, "2026-08", { ok: 1900, error: 100 }),
+        ]);
+      await tx.insert(monitorSlaSealedMonth).values({
+        ...sealedRow(policy.id, api.id, "2026-08", false),
+        method: "time",
+        timeZone: "Asia/Tokyo",
+      });
+
+      // 05:00 on Nov 1 in Tokyo: October is complete there, not yet in UTC
+      const [listed] = await listMonitorSlaPolicies({
+        ctx: { ...ctx, db: tx, tb: noTinybird },
+        now: new Date(Date.UTC(2026, 9, 31, 20)),
+      });
+      expect(listed?.timeZone).toBe("Asia/Tokyo");
+      expect(listed?.months.map((m) => m.month).slice(-3)).toEqual([
+        "2026-08-01",
+        "2026-09-01",
+        "2026-10-01",
+      ]);
+      // UTC-day counts are not re-cut: September has no preview
+      expect(listed?.months.slice(-3)).toEqual([
+        { month: "2026-08-01", status: "missed", preview: false },
+        { month: "2026-09-01", status: "none", preview: false },
+        { month: "2026-10-01", status: "none", preview: false },
+      ]);
+    });
+  });
+
   test("rolls the last twelve complete months up across monitors", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, "API");
@@ -295,7 +329,7 @@ describe("listMonitorSlaPolicies strip", () => {
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
-        runsPipes: noRuns,
+        episodesPipes: noEpisodes,
       });
 
       expect(listed?.missed).toEqual(detail.missed);
