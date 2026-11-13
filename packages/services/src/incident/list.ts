@@ -41,11 +41,14 @@ const incidentListWith = {
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
 
-// only open, tracked incidents can have an active update cadence
+// activity only moves the cadence's start, never whether it runs
 async function withUpdateActivity<T extends Incident>(db: DB, rows: T[]) {
+  const now = new Date();
   const activity = await loadIncidentUpdateActivity(
     db,
-    rows.filter((row) => row.slaSnapshot !== null && row.closedAt === null),
+    rows.filter(
+      (row) => incidentUpdateCadence(row, noUpdateActivity(row), now) !== null,
+    ),
   );
   return rows.map((row) => ({
     ...toIncidentView(row),

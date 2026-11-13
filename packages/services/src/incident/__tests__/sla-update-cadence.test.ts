@@ -20,6 +20,7 @@ import {
   declareIncident,
   getIncident,
   linkIncidentStatusReport,
+  listIncidents,
   setIncidentStatus,
 } from "../index";
 
@@ -160,6 +161,34 @@ describe("the update cadence on the incident read", () => {
     await withTestTransaction(async (tx) => {
       const { id } = await declare(tx, "minor");
       expect((await read(tx, id))?.updateCadence).toBeNull();
+    });
+  });
+});
+
+describe("the update activity on the incident list", () => {
+  test("is loaded only where a cadence can run", async () => {
+    await withTestTransaction(async (tx) => {
+      const running = await declare(tx);
+      const stopped = await declare(tx);
+      for (const { id, at } of [running, stopped]) {
+        await addIncidentNote({
+          ctx: owner(tx),
+          input: { id, message: "Rolled back", createdAt: at(250) },
+        });
+      }
+      await setIncidentStatus({
+        ctx: apiKey(tx),
+        input: { id: stopped.id, status: "mitigated" },
+      });
+      const { items } = await listIncidents({ ctx: owner(tx) });
+      const byId = new Map(items.map((i) => [i.id, i.updateActivity]));
+      expect(byId.get(running.id)?.notedAt).toEqual(running.at(250));
+      expect(byId.get(stopped.id)).toEqual({
+        reportLinked: false,
+        reportUpdatedAt: null,
+        statusChangedAt: null,
+        notedAt: null,
+      });
     });
   });
 });
