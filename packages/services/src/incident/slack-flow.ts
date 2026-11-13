@@ -100,13 +100,15 @@ export function incidentChannelName(
   const date = incident.declaredAt.toISOString().slice(0, 10);
   const suffix = attempt > 1 ? `-${attempt}` : "";
   const prefix = `inc-${date}-`;
-  const slug = incident.title
+  // split + join instead of trimming dashes with `-+$`, which backtracks polynomially
+  const cut = incident.title
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, CHANNEL_NAME_MAX - prefix.length - suffix.length)
-    .replace(/-+$/g, "");
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .join("-")
+    .slice(0, CHANNEL_NAME_MAX - prefix.length - suffix.length);
+  const slug = cut.endsWith("-") ? cut.slice(0, -1) : cut;
   return `${prefix}${slug || "incident"}${suffix}`;
 }
 

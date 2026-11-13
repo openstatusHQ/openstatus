@@ -139,6 +139,17 @@ describe("incidentChannelName", () => {
       "inc-2026-09-28-incident",
     );
   });
+
+  test("separator runs collapse, and a cut never ends on a dash", () => {
+    expect(
+      incidentChannelName({ title: `--a${"!".repeat(50_000)}b--`, declaredAt }),
+    ).toBe("inc-2026-09-28-a-b");
+    const name = incidentChannelName({
+      title: `${"a".repeat(64)} b`,
+      declaredAt,
+    });
+    expect(name.endsWith("-")).toBe(false);
+  });
 });
 
 describe("openIncidentSlackChannel", () => {
