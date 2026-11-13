@@ -616,7 +616,7 @@
               }
             ],
             "title": "sla",
-            "description": "SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones)."
+            "description": "SLA targets (unset for incidents declared without an incident reporting, and for canceled ones)."
           },
           "reportedAt": {
             "type": ["string", "null"],
@@ -935,7 +935,7 @@
               }
             ],
             "title": "sla",
-            "description": "SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones)."
+            "description": "SLA targets (unset for incidents declared without an incident reporting, and for canceled ones)."
           },
           "reportedAt": {
             "type": ["string", "null"],

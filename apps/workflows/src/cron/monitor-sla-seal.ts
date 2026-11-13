@@ -4,7 +4,7 @@ import {
   claimMonitorSlaMissNotices,
   type SealMonitorSlaMonthsResult,
   sealMonitorSlaMonths,
-} from "@openstatus/services/monitor-sla-policy";
+} from "@openstatus/services/monitor-reporting";
 
 import { env } from "../env";
 
@@ -38,7 +38,7 @@ export async function runMonitorSlaSealTick(
           month: notice.month,
           workspaceName: notice.workspaceName,
           monitors: notice.monitors,
-          url: `${baseUrl}/sla-policies/monitors/${notice.policy.id}`,
+          url: `${baseUrl}/reportings/monitors/${notice.policy.id}`,
         });
         if (id) notified++;
       } catch (err) {

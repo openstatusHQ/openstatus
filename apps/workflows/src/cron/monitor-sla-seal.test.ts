@@ -149,7 +149,7 @@ describe("monitor-sla-seal miss email", () => {
         monitors: [
           { id: m.id, name: "Checkout API", uptime: UPTIME, target: 99_500 },
         ],
-        url: `https://app.test/sla-policies/monitors/${policy.id}`,
+        url: `https://app.test/reportings/monitors/${policy.id}`,
       },
     ]);
 

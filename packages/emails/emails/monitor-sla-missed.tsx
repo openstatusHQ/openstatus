@@ -85,7 +85,7 @@ MonitorSlaMissedEmail.PreviewProps = {
     { name: "Checkout API", uptime: 99_120, target: 99_500 },
     { name: "Auth", uptime: 98_004, target: 99_500 },
   ],
-  url: "https://app.openstatus.dev/sla-policies/monitors/1",
+  url: "https://app.openstatus.dev/reportings/monitors/1",
 } satisfies MonitorSlaMissedProps;
 
 export default MonitorSlaMissedEmail;

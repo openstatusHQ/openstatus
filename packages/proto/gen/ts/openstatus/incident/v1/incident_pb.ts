@@ -322,7 +322,7 @@ export type IncidentSummary = Message<"openstatus.incident.v1.IncidentSummary"> 
   acknowledgedBy?: IncidentUser | undefined;
 
   /**
-   * SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones).
+   * SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
    *
    * @generated from field: optional openstatus.incident.v1.IncidentSla sla = 15;
    */
@@ -507,7 +507,7 @@ export type Incident = Message<"openstatus.incident.v1.Incident"> & {
   acknowledgedBy?: IncidentUser | undefined;
 
   /**
-   * SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones).
+   * SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
    *
    * @generated from field: optional openstatus.incident.v1.IncidentSla sla = 23;
    */

@@ -196,7 +196,7 @@ message IncidentSummary {
   // Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
   optional IncidentUser acknowledged_by = 14;
 
-  // SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones).
+  // SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
   optional IncidentSla sla = 15;
 
   // Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
@@ -274,7 +274,7 @@ message Incident {
   // Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
   optional IncidentUser acknowledged_by = 22;
 
-  // SLA targets (unset for incidents declared without an incident SLA policy, and for canceled ones).
+  // SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
   optional IncidentSla sla = 23;
 
   // Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).

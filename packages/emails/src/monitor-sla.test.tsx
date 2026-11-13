@@ -43,7 +43,7 @@ describe("monitor SLA missed email", () => {
     expect(html).toContain("target 99.5%");
     expect(html).toContain("TARGET MISSED");
     expect(html).toContain(
-      'href="https://app.openstatus.dev/sla-policies/monitors/1"',
+      'href="https://app.openstatus.dev/reportings/monitors/1"',
     );
     expect(html).toContain("You get this because you own this workspace.");
     expect(html).toContain("max-width:600px");
