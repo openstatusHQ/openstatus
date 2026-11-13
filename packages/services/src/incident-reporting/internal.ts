@@ -14,12 +14,12 @@ export function assertIncidentSlaLimit(ctx: ServiceContext): void {
 export function assertNotKeyActor(ctx: ServiceContext): void {
   if (ctx.actor.type === "apiKey" || ctx.actor.type === "mcp") {
     throw new ForbiddenError(
-      "The incident SLA policy can only be changed by a person.",
+      "The incident reporting can only be changed by a person.",
     );
   }
 }
 
-export async function findIncidentSlaPolicy(db: DB, workspaceId: number) {
+export async function findIncidentReporting(db: DB, workspaceId: number) {
   const row = await db
     .select()
     .from(incidentSlaPolicy)

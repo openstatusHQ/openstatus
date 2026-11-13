@@ -14,13 +14,13 @@ import {
   loadPolicyMembers,
 } from "./internal";
 import { completeMonths, LAST_TWELVE, monthOf, monthsBetween } from "./months";
-import { ExportMonitorSlaPolicyInput } from "./schemas";
+import { ExportMonitorReportingInput } from "./schemas";
 
 export const MONITOR_SLA_METHOD =
   "Method: one run verdict per scheduled check across the cloud regions that reported it; request counts are not used. A run counts as slow only when at least half of the regions that reported it were slow or failed, and as failed only when at least half failed. Months with method time weigh each verdict by the time until the next check. When a gap between two checks is more than twice the longer of the gaps before and after it, the earlier verdict covers only that longer gap and the rest is unmeasured; the time before the first check and after the last follow the same rule. Unmeasured time counts neither way. Months with method runs were judged by run count.";
 
 const COLUMNS = [
-  "policy",
+  "reporting",
   "target",
   "strict",
   "monitor_id",
@@ -54,11 +54,11 @@ function cell(value: string | number | null): string {
 
 /**
  * A policy's months as CSV, one row per monitor and month, from the same
- * month states as `getMonitorSlaPolicy`. Live months only with `includeLive`.
+ * month states as `getMonitorReporting`. Live months only with `includeLive`.
  */
-export async function exportMonitorSlaPolicy(args: {
+export async function exportMonitorReporting(args: {
   ctx: ServiceContext;
-  input: ExportMonitorSlaPolicyInput;
+  input: ExportMonitorReportingInput;
   now?: Date;
   episodesPipes?: SlaEpisodesPipes;
   runsRangePipes?: UptimeRunsRangePipes;
@@ -66,7 +66,7 @@ export async function exportMonitorSlaPolicy(args: {
 }): Promise<{ filename: string; csv: string }> {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = ExportMonitorSlaPolicyInput.parse(args.input);
+  const input = ExportMonitorReportingInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const now = args.now ?? new Date();
   const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
@@ -162,7 +162,7 @@ export async function exportMonitorSlaPolicy(args: {
     policy.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || `policy-${policy.id}`;
+      .replace(/^-|-$/g, "") || `reporting-${policy.id}`;
   return {
     filename: `sla-${slug}-${from}-to-${to}.csv`,
     csv: `${lines.join("\r\n")}\r\n`,

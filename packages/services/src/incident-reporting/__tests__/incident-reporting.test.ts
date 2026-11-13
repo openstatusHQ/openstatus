@@ -17,9 +17,9 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
-import { deleteIncidentSlaPolicy } from "../delete";
-import { getIncidentSlaPolicy } from "../get";
-import { upsertIncidentSlaPolicy } from "../upsert";
+import { deleteIncidentReporting } from "../delete";
+import { getIncidentReporting } from "../get";
+import { upsertIncidentReporting } from "../upsert";
 
 let ownerCtx: ServiceContext;
 let adminCtx: ServiceContext;
@@ -66,11 +66,11 @@ const input = {
   resolutionStop: "mitigated" as const,
 };
 
-describe("upsertIncidentSlaPolicy", () => {
+describe("upsertIncidentReporting", () => {
   test("the first save creates the policy, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await upsertIncidentSlaPolicy({ ctx, input });
+      const policy = await upsertIncidentReporting({ ctx, input });
 
       expect(policy).toMatchObject({
         workspaceId: ctx.workspace.id,
@@ -90,8 +90,8 @@ describe("upsertIncidentSlaPolicy", () => {
   test("saving twice updates the one policy, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...adminCtx, db: tx };
-      const first = await upsertIncidentSlaPolicy({ ctx, input });
-      const second = await upsertIncidentSlaPolicy({
+      const first = await upsertIncidentReporting({ ctx, input });
+      const second = await upsertIncidentReporting({
         ctx,
         input: {
           targets: { critical: { responseMinutes: 30 }, minor: {} },
@@ -104,7 +104,7 @@ describe("upsertIncidentSlaPolicy", () => {
         targets: { critical: { responseMinutes: 30 } },
         resolutionStop: "resolved",
       });
-      expect(await getIncidentSlaPolicy({ ctx })).toMatchObject({
+      expect(await getIncidentReporting({ ctx })).toMatchObject({
         id: first.id,
         targets: { critical: { responseMinutes: 30 } },
       });
@@ -120,7 +120,7 @@ describe("upsertIncidentSlaPolicy", () => {
 
   test("a cleared field is stored as off, not as zero", async () => {
     await withTestTransaction(async (tx) => {
-      const policy = await upsertIncidentSlaPolicy({
+      const policy = await upsertIncidentReporting({
         ctx: { ...ownerCtx, db: tx },
         input: {
           targets: {
@@ -139,7 +139,7 @@ describe("upsertIncidentSlaPolicy", () => {
 
   test("a member cannot save", async () => {
     await expect(
-      upsertIncidentSlaPolicy({ ctx: memberCtx, input }),
+      upsertIncidentReporting({ ctx: memberCtx, input }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -150,7 +150,7 @@ describe("upsertIncidentSlaPolicy", () => {
       scopes: ["read"],
     });
     await expect(
-      upsertIncidentSlaPolicy({ ctx, input }),
+      upsertIncidentReporting({ ctx, input }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -160,19 +160,19 @@ describe("upsertIncidentSlaPolicy", () => {
       scopes: ["incidents:write"],
     });
     await expect(
-      upsertIncidentSlaPolicy({ ctx, input }),
+      upsertIncidentReporting({ ctx, input }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   test("refused without the incident-sla limit", async () => {
     await expect(
-      upsertIncidentSlaPolicy({ ctx: freeCtx, input }),
+      upsertIncidentReporting({ ctx: freeCtx, input }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   test("rejects a policy without any target", async () => {
     await expect(
-      upsertIncidentSlaPolicy({
+      upsertIncidentReporting({
         ctx: ownerCtx,
         input: {
           targets: { critical: { responseMinutes: null }, major: {} },
@@ -184,7 +184,7 @@ describe("upsertIncidentSlaPolicy", () => {
 
   test("rejects a response target longer than the resolution target, by field", async () => {
     await expect(
-      upsertIncidentSlaPolicy({
+      upsertIncidentReporting({
         ctx: ownerCtx,
         input: {
           targets: {
@@ -202,7 +202,7 @@ describe("upsertIncidentSlaPolicy", () => {
 
   test("rejects a value outside 5 minutes to 30 days, by field", async () => {
     await expect(
-      upsertIncidentSlaPolicy({
+      upsertIncidentReporting({
         ctx: ownerCtx,
         input: {
           targets: { minor: { updateMinutes: 4 } },
@@ -215,7 +215,7 @@ describe("upsertIncidentSlaPolicy", () => {
       ),
     );
     await expect(
-      upsertIncidentSlaPolicy({
+      upsertIncidentReporting({
         ctx: ownerCtx,
         input: {
           targets: { critical: { resolutionMinutes: 30 * 24 * 60 + 1 } },
@@ -229,7 +229,7 @@ describe("upsertIncidentSlaPolicy", () => {
 
   test("the boundaries 5 minutes and 30 days are accepted", async () => {
     await withTestTransaction(async (tx) => {
-      const policy = await upsertIncidentSlaPolicy({
+      const policy = await upsertIncidentReporting({
         ctx: { ...ownerCtx, db: tx },
         input: {
           targets: {
@@ -243,18 +243,18 @@ describe("upsertIncidentSlaPolicy", () => {
   });
 });
 
-describe("getIncidentSlaPolicy", () => {
+describe("getIncidentReporting", () => {
   test("null without a policy", async () => {
-    expect(await getIncidentSlaPolicy({ ctx: ownerCtx })).toBeNull();
+    expect(await getIncidentReporting({ ctx: ownerCtx })).toBeNull();
   });
 
   test("a member can read the policy", async () => {
     await withTestTransaction(async (tx) => {
-      const saved = await upsertIncidentSlaPolicy({
+      const saved = await upsertIncidentReporting({
         ctx: { ...ownerCtx, db: tx },
         input,
       });
-      const read = await getIncidentSlaPolicy({
+      const read = await getIncidentReporting({
         ctx: { ...memberCtx, db: tx },
       });
       expect(read?.id).toBe(saved.id);
@@ -266,24 +266,24 @@ describe("getIncidentSlaPolicy", () => {
       keyId: "k",
       scopes: ["monitors:read"],
     });
-    await expect(getIncidentSlaPolicy({ ctx })).rejects.toBeInstanceOf(
+    await expect(getIncidentReporting({ ctx })).rejects.toBeInstanceOf(
       ForbiddenError,
     );
   });
 });
 
-describe("deleteIncidentSlaPolicy", () => {
+describe("deleteIncidentReporting", () => {
   test("turning off removes the policy, audited, even without the limit", async () => {
     await withTestTransaction(async (tx) => {
-      const saved = await upsertIncidentSlaPolicy({
+      const saved = await upsertIncidentReporting({
         ctx: { ...ownerCtx, db: tx },
         input,
       });
       const ctx = withoutLimit({ ...ownerCtx, db: tx });
 
-      await deleteIncidentSlaPolicy({ ctx });
+      await deleteIncidentReporting({ ctx });
 
-      expect(await getIncidentSlaPolicy({ ctx })).toBeNull();
+      expect(await getIncidentReporting({ ctx })).toBeNull();
       await expectAuditRow({
         workspaceId: ctx.workspace.id,
         action: "incident_sla_policy.delete",
@@ -296,15 +296,15 @@ describe("deleteIncidentSlaPolicy", () => {
 
   test("not found when there is no policy", async () => {
     await expect(
-      deleteIncidentSlaPolicy({ ctx: ownerCtx }),
+      deleteIncidentReporting({ ctx: ownerCtx }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   test("a member cannot turn it off", async () => {
     await withTestTransaction(async (tx) => {
-      await upsertIncidentSlaPolicy({ ctx: { ...ownerCtx, db: tx }, input });
+      await upsertIncidentReporting({ ctx: { ...ownerCtx, db: tx }, input });
       await expect(
-        deleteIncidentSlaPolicy({ ctx: { ...memberCtx, db: tx } }),
+        deleteIncidentReporting({ ctx: { ...memberCtx, db: tx } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
@@ -314,7 +314,7 @@ describe("deleteIncidentSlaPolicy", () => {
       keyId: "k",
       scopes: ["read"],
     });
-    await expect(deleteIncidentSlaPolicy({ ctx })).rejects.toBeInstanceOf(
+    await expect(deleteIncidentReporting({ ctx })).rejects.toBeInstanceOf(
       ForbiddenError,
     );
   });

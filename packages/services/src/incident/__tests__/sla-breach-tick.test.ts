@@ -14,7 +14,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentSlaPolicy } from "../../incident-sla-policy";
+import { upsertIncidentReporting } from "../../incident-reporting";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
@@ -53,7 +53,7 @@ const minutesAfter = (date: Date, minutes: number) =>
   new Date(date.getTime() + minutes * 60_000);
 
 async function policy(tx: DB, resolutionStop: "mitigated" | "resolved") {
-  await upsertIncidentSlaPolicy({
+  await upsertIncidentReporting({
     ctx: owner(tx),
     input: {
       targets: {

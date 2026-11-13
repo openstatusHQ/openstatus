@@ -31,22 +31,22 @@ import {
   rollUpMonth,
   storedMonth,
 } from "./months";
-import { ListMonitorSlaPoliciesInput } from "./schemas";
+import { ListMonitorReportingsInput } from "./schemas";
 
 /**
- * Policies with a twelve-month strip, judged as `getMonitorSlaPolicy` does. `target`/`strict`
+ * Policies with a twelve-month strip, judged as `getMonitorReporting` does. `target`/`strict`
  * are the latest terms set; `liveTerms` judge the running month, `pendingTerms` follow.
  */
-export async function listMonitorSlaPolicies(args: {
+export async function listMonitorReportings(args: {
   ctx: ServiceContext;
-  input?: ListMonitorSlaPoliciesInput;
+  input?: ListMonitorReportingsInput;
   now?: Date;
   episodesPipes?: SlaEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = ListMonitorSlaPoliciesInput.parse(args.input ?? {});
+  const input = ListMonitorReportingsInput.parse(args.input ?? {});
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
 
@@ -288,6 +288,6 @@ export async function listMonitorSlaPolicies(args: {
   });
 }
 
-export type MonitorSlaPolicyListItem = Awaited<
-  ReturnType<typeof listMonitorSlaPolicies>
+export type MonitorReportingListItem = Awaited<
+  ReturnType<typeof listMonitorReportings>
 >[number];

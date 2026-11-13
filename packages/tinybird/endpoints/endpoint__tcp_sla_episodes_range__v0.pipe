@@ -5,7 +5,7 @@ SQL >
 
 %
 -- SPEC "Weight and unmeasured time" over [fromDate, toDate) in epoch ms, quorum as endpoint__tcp_runs_range__v0.
--- Must match episodesFromRuns; expected output: packages/services/src/monitor-sla-policy/__tests__/fixtures/episodes.json
+-- Must match episodesFromRuns; expected output: packages/services/src/monitor-reporting/__tests__/fixtures/episodes.json
 WITH
     toInt64({{ Int64(fromDate, 1730419200000, required=True) }}) AS fromMs,
     toInt64({{ Int64(toDate, 1733011200000, required=True) }}) AS toMs,

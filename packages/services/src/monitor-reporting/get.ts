@@ -21,9 +21,9 @@ import {
 } from "./internal";
 import { completeMonths, LAST_TWELVE, monthOf, splitByMonth } from "./months";
 import {
-  GetMonitorSlaPolicyInput,
-  ListMonitorSlaPoliciesForMonitorInput,
-  MonitorSlaPolicyIdInput,
+  GetMonitorReportingInput,
+  ListMonitorReportingsForMonitorInput,
+  MonitorReportingIdInput,
 } from "./schemas";
 
 /** The policy's excused windows, newest first, with the months they touch and whether they are locked. */
@@ -67,14 +67,14 @@ async function loadExcusedWindows(
  * A policy's latest terms and current members, archived or not; no months, no
  * Tinybird. `liveTerms` judge the running month `liveMonth`; `pendingTerms` follow.
  */
-export async function getMonitorSlaPolicySummary(args: {
+export async function getMonitorReportingSummary(args: {
   ctx: ServiceContext;
-  input: MonitorSlaPolicyIdInput;
+  input: MonitorReportingIdInput;
   now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = MonitorSlaPolicyIdInput.parse(args.input);
+  const input = MonitorReportingIdInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
   const { policy, monitors, history } = await loadPolicyMembers(ctx, input.id);
@@ -93,9 +93,9 @@ export async function getMonitorSlaPolicySummary(args: {
  * A policy with each monitor's months in its time zone: sealed months as
  * stored, the running and previous month on episodes, older ones as previews.
  */
-export async function getMonitorSlaPolicy(args: {
+export async function getMonitorReporting(args: {
   ctx: ServiceContext;
-  input: GetMonitorSlaPolicyInput;
+  input: GetMonitorReportingInput;
   now?: Date;
   episodesPipes?: SlaEpisodesPipes;
   runsRangePipes?: UptimeRunsRangePipes;
@@ -103,7 +103,7 @@ export async function getMonitorSlaPolicy(args: {
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = GetMonitorSlaPolicyInput.parse(args.input);
+  const input = GetMonitorReportingInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const { policy, monitors, history } = await loadPolicyMembers(ctx, input.id);
 
@@ -161,19 +161,19 @@ export async function getMonitorSlaPolicy(args: {
   };
 }
 
-export type MonitorSlaPolicyDetail = Awaited<
-  ReturnType<typeof getMonitorSlaPolicy>
+export type MonitorReportingDetail = Awaited<
+  ReturnType<typeof getMonitorReporting>
 >;
 
 /** Active policies covering a monitor with their running and pending terms; no months, no Tinybird. */
-export async function listMonitorSlaPoliciesForMonitor(args: {
+export async function listMonitorReportingsForMonitor(args: {
   ctx: ServiceContext;
-  input: ListMonitorSlaPoliciesForMonitorInput;
+  input: ListMonitorReportingsForMonitorInput;
   now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = ListMonitorSlaPoliciesForMonitorInput.parse(args.input);
+  const input = ListMonitorReportingsForMonitorInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
   const rows = await db

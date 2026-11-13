@@ -14,9 +14,9 @@ import {
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
 import {
-  getIncidentSlaPolicy,
-  upsertIncidentSlaPolicy,
-} from "../../incident-sla-policy";
+  getIncidentReporting,
+  upsertIncidentReporting,
+} from "../../incident-reporting";
 import { addStatusReportUpdate } from "../../status-report";
 import type { Workspace } from "../../types";
 import {
@@ -53,7 +53,7 @@ function savePolicy(
   tx: DB,
   responseMet: "acknowledged" | "status_report" = "status_report",
 ) {
-  return upsertIncidentSlaPolicy({
+  return upsertIncidentReporting({
     ctx: owner(tx),
     input: { targets, resolutionStop: "resolved", responseMet },
   });
@@ -104,13 +104,13 @@ function postUpdate(tx: DB, statusReportId: number, date?: Date) {
 describe("the policy choice", () => {
   test("defaults to acknowledgement and is saved with the policy", async () => {
     await withTestTransaction(async (tx) => {
-      const created = await upsertIncidentSlaPolicy({
+      const created = await upsertIncidentReporting({
         ctx: owner(tx),
         input: { targets },
       });
       expect(created.responseMet).toBe("acknowledged");
       await savePolicy(tx);
-      const saved = await getIncidentSlaPolicy({ ctx: owner(tx) });
+      const saved = await getIncidentReporting({ ctx: owner(tx) });
       expect(saved?.responseMet).toBe("status_report");
     });
   });

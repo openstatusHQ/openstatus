@@ -28,7 +28,7 @@ import {
   tryGetActorUserId,
 } from "../context";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
-import { findIncidentSlaPolicy } from "../incident-sla-policy/internal";
+import { findIncidentReporting } from "../incident-reporting/internal";
 import { getMembership } from "../member/membership";
 
 export const incidentUserColumns = {
@@ -129,7 +129,7 @@ export async function slaSnapshotAtDeclare(
   ctx: ServiceContext,
 ): Promise<IncidentSlaSnapshot | null> {
   if (!ctx.workspace.limits["incident-sla"]) return null;
-  const policy = await findIncidentSlaPolicy(tx, ctx.workspace.id);
+  const policy = await findIncidentReporting(tx, ctx.workspace.id);
   if (!policy) return null;
   return {
     targets: policy.targets,

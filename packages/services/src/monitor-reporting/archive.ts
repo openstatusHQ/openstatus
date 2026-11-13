@@ -6,16 +6,16 @@ import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
 import { findPolicy, withLatestTerms } from "./internal";
-import { MonitorSlaPolicyIdInput } from "./schemas";
+import { MonitorReportingIdInput } from "./schemas";
 
 /** Read-only from now on and no longer sealed. No limit check: a downgraded workspace must be able to tidy up. */
-export async function archiveMonitorSlaPolicy(args: {
+export async function archiveMonitorReporting(args: {
   ctx: ServiceContext;
-  input: MonitorSlaPolicyIdInput;
+  input: MonitorReportingIdInput;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:write");
-  const input = MonitorSlaPolicyIdInput.parse(args.input);
+  const input = MonitorReportingIdInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
     await requireRole(tx, ctx, ["owner", "admin"]);

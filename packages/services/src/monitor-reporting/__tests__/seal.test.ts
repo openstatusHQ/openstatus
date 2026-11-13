@@ -15,7 +15,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { getMonitorSlaPolicy } from "../get";
+import { getMonitorReporting } from "../get";
 import { SEAL_DELAY_MS, sealMonitorSlaMonths } from "../seal";
 import {
   episodesPipesFrom,
@@ -150,7 +150,7 @@ describe("sealMonitorSlaMonths on episodes", () => {
         ]),
       );
 
-      const preview = await getMonitorSlaPolicy({
+      const preview = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,

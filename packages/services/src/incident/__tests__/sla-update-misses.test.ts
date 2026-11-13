@@ -13,7 +13,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentSlaPolicy } from "../../incident-sla-policy";
+import { upsertIncidentReporting } from "../../incident-reporting";
 import type { Workspace } from "../../types";
 import {
   addIncidentNote,
@@ -43,7 +43,7 @@ const apiKey = (tx: DB) => withDb(makeApiKeyCtx(team, { keyId: "k_miss" }), tx);
 const MINUTE = 60_000;
 
 async function policy(tx: DB) {
-  await upsertIncidentSlaPolicy({
+  await upsertIncidentReporting({
     ctx: owner(tx),
     input: {
       targets: {

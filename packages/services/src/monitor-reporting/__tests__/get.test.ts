@@ -20,7 +20,7 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { monthDays } from "../../frozen-uptime/compute";
-import { getMonitorSlaPolicy, getMonitorSlaPolicySummary } from "../get";
+import { getMonitorReporting, getMonitorReportingSummary } from "../get";
 import { sealMonitorSlaMonths } from "../seal";
 import {
   type EpisodesCall,
@@ -120,7 +120,7 @@ function frozen(
   };
 }
 
-describe("getMonitorSlaPolicy", () => {
+describe("getMonitorReporting", () => {
   test("judges each monitor per month over the last twelve complete months", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
@@ -134,7 +134,7 @@ describe("getMonitorSlaPolicy", () => {
           frozen(web.id, "2026-10", { ok: 2000, error: 0 }),
         ]);
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -183,7 +183,7 @@ describe("getMonitorSlaPolicy", () => {
         .insert(frozenMonitorUptime)
         .values(frozen(api.id, "2026-10", null));
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -207,7 +207,7 @@ describe("getMonitorSlaPolicy", () => {
         .insert(frozenMonitorUptime)
         .values(frozen(api.id, "2025-06", { ok: 900, error: 100 }));
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, months: 24 },
         now,
@@ -235,7 +235,7 @@ describe("getMonitorSlaPolicy", () => {
           frozen(b.id, "2026-08", { ok: 90, error: 10 }),
         ]);
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -285,7 +285,7 @@ describe("getMonitorSlaPolicy", () => {
         .set({ target: 99_900 })
         .where(eq(monitorSlaPolicy.id, policy.id));
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -343,7 +343,7 @@ describe("getMonitorSlaPolicy", () => {
         met: false,
       });
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -375,7 +375,7 @@ describe("getMonitorSlaPolicy", () => {
         met: true,
       });
 
-      const hidden = await getMonitorSlaPolicy({
+      const hidden = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -386,7 +386,7 @@ describe("getMonitorSlaPolicy", () => {
       await tx
         .insert(monitorSlaPolicyToMonitor)
         .values({ monitorSlaPolicyId: policy.id, monitorId: api.id });
-      const back = await getMonitorSlaPolicy({
+      const back = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -416,7 +416,7 @@ describe("getMonitorSlaPolicy", () => {
         calls,
       );
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -477,7 +477,7 @@ describe("getMonitorSlaPolicy", () => {
         ),
       );
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -514,7 +514,7 @@ describe("getMonitorSlaPolicy", () => {
         ),
       );
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -549,7 +549,7 @@ describe("getMonitorSlaPolicy", () => {
         ),
       );
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -593,7 +593,7 @@ describe("getMonitorSlaPolicy", () => {
         ),
       );
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -633,7 +633,7 @@ describe("getMonitorSlaPolicy", () => {
         calls,
       );
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: early,
@@ -704,7 +704,7 @@ describe("getMonitorSlaPolicy", () => {
       );
       const early = new Date(Date.UTC(2026, 10, 3));
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: early,
@@ -733,7 +733,7 @@ describe("getMonitorSlaPolicy", () => {
       });
       expect(res.missed).toEqual({ months: 1, previews: 1, of: 12 });
 
-      const late = await getMonitorSlaPolicy({
+      const late = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: new Date(Date.UTC(2026, 10, 15, 1)),
@@ -760,7 +760,7 @@ describe("getMonitorSlaPolicy", () => {
         .insert(frozenMonitorUptime)
         .values(frozen(api.id, "2026-09", { ok: 90, error: 10 }));
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -812,7 +812,7 @@ describe("getMonitorSlaPolicy", () => {
         coverage: 100_000,
       });
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -839,7 +839,7 @@ describe("getMonitorSlaPolicy", () => {
       const policy = await insertPolicy(tx, [api.id], {
         archivedAt: new Date(),
       });
-      const res = await getMonitorSlaPolicySummary({
+      const res = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx, tb: undefined },
         input: { id: policy.id },
       });
@@ -851,7 +851,7 @@ describe("getMonitorSlaPolicy", () => {
         monitors: [{ id: api.id, name: "API", jobType: "http" }],
       });
       await expect(
-        getMonitorSlaPolicySummary({
+        getMonitorReportingSummary({
           ctx: { ...freeCtx, db: tx },
           input: { id: policy.id },
         }),
@@ -870,7 +870,7 @@ describe("getMonitorSlaPolicy", () => {
         strict: true,
         effectiveFrom: "2026-12-01",
       });
-      const before = await getMonitorSlaPolicySummary({
+      const before = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -897,7 +897,7 @@ describe("getMonitorSlaPolicy", () => {
         uptime: 100_000,
         met: true,
       });
-      const after = await getMonitorSlaPolicySummary({
+      const after = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -911,7 +911,7 @@ describe("getMonitorSlaPolicy", () => {
       const api = await insertMonitor(tx);
       const gone = await insertMonitor(tx, { deletedAt: new Date() });
       const policy = await insertPolicy(tx, [api.id, gone.id]);
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -934,7 +934,7 @@ describe("getMonitorSlaPolicy", () => {
         tx.select().from(frozenMonitorUptime).all(),
       ]);
 
-      await getMonitorSlaPolicy({
+      await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -959,7 +959,7 @@ describe("getMonitorSlaPolicy", () => {
         workspaceId: otherWorkspaceId,
       });
       await expect(
-        getMonitorSlaPolicy({
+        getMonitorReporting({
           ctx: { ...ctx, db: tx },
           input: { id: foreign.id },
           now,
@@ -971,7 +971,7 @@ describe("getMonitorSlaPolicy", () => {
 
   test("refused without the limit", async () => {
     await expect(
-      getMonitorSlaPolicy({ ctx: freeCtx, input: { id: 1 }, now }),
+      getMonitorReporting({ ctx: freeCtx, input: { id: 1 }, now }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -981,7 +981,7 @@ describe("getMonitorSlaPolicy", () => {
       scopes: ["pages:read"],
     });
     await expect(
-      getMonitorSlaPolicy({ ctx: key, input: { id: 1 }, now }),
+      getMonitorReporting({ ctx: key, input: { id: 1 }, now }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -992,7 +992,7 @@ describe("getMonitorSlaPolicy", () => {
         keyId: "k",
         scopes: ["read"],
       });
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx: { ...key, db: tx },
         input: { id: policy.id },
         now,

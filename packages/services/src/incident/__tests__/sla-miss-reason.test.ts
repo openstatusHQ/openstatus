@@ -15,7 +15,7 @@ import {
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
 import { ForbiddenError, PreconditionFailedError } from "../../errors";
-import { upsertIncidentSlaPolicy } from "../../incident-sla-policy";
+import { upsertIncidentReporting } from "../../incident-reporting";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
@@ -49,7 +49,7 @@ const apiKey = (tx: DB, scopes?: ("incidents:read" | "incidents:write")[]) =>
 
 async function declare(tx: DB, tracked = true) {
   if (tracked) {
-    await upsertIncidentSlaPolicy({
+    await upsertIncidentReporting({
       ctx: owner(tx),
       input: {
         targets: {

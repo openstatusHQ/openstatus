@@ -11,16 +11,16 @@ import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
 import { PreconditionFailedError } from "../errors";
 import { findPolicy, withLatestTerms } from "./internal";
-import { MonitorSlaPolicyIdInput } from "./schemas";
+import { MonitorReportingIdInput } from "./schemas";
 
 /** Only for a policy never sealed; a sealed month is a record and keeps its policy (archive instead). */
-export async function deleteMonitorSlaPolicy(args: {
+export async function deleteMonitorReporting(args: {
   ctx: ServiceContext;
-  input: MonitorSlaPolicyIdInput;
+  input: MonitorReportingIdInput;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:write");
-  const input = MonitorSlaPolicyIdInput.parse(args.input);
+  const input = MonitorReportingIdInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
     await requireRole(tx, ctx, ["owner", "admin"]);
@@ -40,7 +40,7 @@ export async function deleteMonitorSlaPolicy(args: {
       .get();
     if (sealed) {
       throw new PreconditionFailedError(
-        "This SLA policy has sealed months and cannot be deleted. Archive it instead.",
+        "This reporting has sealed months and cannot be deleted. Archive it instead.",
       );
     }
 

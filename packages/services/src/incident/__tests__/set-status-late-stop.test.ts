@@ -9,7 +9,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentSlaPolicy } from "../../incident-sla-policy";
+import { upsertIncidentReporting } from "../../incident-reporting";
 import type { Workspace } from "../../types";
 import {
   declareIncident,
@@ -53,7 +53,7 @@ const withDb = (ctx: ServiceContext, tx: DB): ServiceContext => ({
 describe("a stop racing the cron's miss stamp", () => {
   test("lands as a late stop and keeps the stamped miss, once", async () => {
     await withTestTransaction(async (tx) => {
-      await upsertIncidentSlaPolicy({
+      await upsertIncidentReporting({
         ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
         input: {
           targets: {

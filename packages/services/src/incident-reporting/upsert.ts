@@ -13,18 +13,18 @@ import { ValidationError } from "../errors";
 import {
   assertIncidentSlaLimit,
   assertNotKeyActor,
-  findIncidentSlaPolicy,
+  findIncidentReporting,
 } from "./internal";
-import { UpsertIncidentSlaPolicyInput } from "./schemas";
+import { UpsertIncidentReportingInput } from "./schemas";
 
 /** Creates the workspace's one policy, or replaces it. Declared incidents keep their own copy. */
-export async function upsertIncidentSlaPolicy(args: {
+export async function upsertIncidentReporting(args: {
   ctx: ServiceContext;
-  input: UpsertIncidentSlaPolicyInput;
+  input: UpsertIncidentReportingInput;
 }) {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
-  const input = UpsertIncidentSlaPolicyInput.parse(args.input);
+  const input = UpsertIncidentReportingInput.parse(args.input);
   assertNotKeyActor(ctx);
   assertIncidentSlaLimit(ctx);
 
@@ -34,7 +34,7 @@ export async function upsertIncidentSlaPolicy(args: {
 
   return withTransaction(ctx, async (tx) => {
     await requireRole(tx, ctx, ["owner", "admin"]);
-    const before = await findIncidentSlaPolicy(tx, ctx.workspace.id);
+    const before = await findIncidentReporting(tx, ctx.workspace.id);
 
     if (!before) {
       const row = await tx
@@ -79,7 +79,7 @@ export async function upsertIncidentSlaPolicy(args: {
 }
 
 function compactTargets(
-  targets: UpsertIncidentSlaPolicyInput["targets"],
+  targets: UpsertIncidentReportingInput["targets"],
 ): IncidentSlaTargets {
   const out: IncidentSlaTargets = {};
   for (const [severity, kinds] of Object.entries(targets) as [

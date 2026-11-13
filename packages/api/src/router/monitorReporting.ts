@@ -2,50 +2,50 @@ import { Events } from "@openstatus/analytics";
 import {
   AddMonitorSlaExcusedWindowInput,
   addMonitorSlaExcusedWindow,
-  archiveMonitorSlaPolicy,
-  CreateMonitorSlaPolicyInput,
-  createMonitorSlaPolicy,
-  deleteMonitorSlaPolicy,
-  ExportMonitorSlaPolicyInput,
-  exportMonitorSlaPolicy,
+  archiveMonitorReporting,
+  CreateMonitorReportingInput,
+  createMonitorReporting,
+  deleteMonitorReporting,
+  ExportMonitorReportingInput,
+  exportMonitorReporting,
   GetMonitorSlaExcusedWindowInput,
   GetMonitorSlaMonitorMonthInput,
-  GetMonitorSlaPolicyInput,
+  GetMonitorReportingInput,
   getMonitorSlaExcusedWindow,
   getMonitorSlaMonitorMonth,
-  getMonitorSlaPolicy,
-  getMonitorSlaPolicySummary,
-  ListMonitorSlaPoliciesForMonitorInput,
-  ListMonitorSlaPoliciesInput,
-  listMonitorSlaPolicies,
-  listMonitorSlaPoliciesForMonitor,
-  listMonitorSlaPolicyMaintenances,
-  MonitorSlaPolicyIdInput,
+  getMonitorReporting,
+  getMonitorReportingSummary,
+  ListMonitorReportingsForMonitorInput,
+  ListMonitorReportingsInput,
+  listMonitorReportings,
+  listMonitorReportingsForMonitor,
+  listMonitorReportingMaintenances,
+  MonitorReportingIdInput,
   RemoveMonitorSlaExcusedWindowInput,
   removeMonitorSlaExcusedWindow,
-  UpdateMonitorSlaPolicyInput,
-  updateMonitorSlaPolicy,
-} from "@openstatus/services/monitor-sla-policy";
+  UpdateMonitorReportingInput,
+  updateMonitorReporting,
+} from "@openstatus/services/monitor-reporting";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-export const monitorSlaPolicyRouter = createTRPCRouter({
+export const monitorReportingRouter = createTRPCRouter({
   list: protectedProcedure
-    .input(ListMonitorSlaPoliciesInput.optional())
+    .input(ListMonitorReportingsInput.optional())
     .query(async ({ ctx, input }) => {
       try {
-        return await listMonitorSlaPolicies({ ctx: toServiceCtx(ctx), input });
+        return await listMonitorReportings({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   listForMonitor: protectedProcedure
-    .input(ListMonitorSlaPoliciesForMonitorInput)
+    .input(ListMonitorReportingsForMonitorInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await listMonitorSlaPoliciesForMonitor({
+        return await listMonitorReportingsForMonitor({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -55,20 +55,20 @@ export const monitorSlaPolicyRouter = createTRPCRouter({
     }),
 
   get: protectedProcedure
-    .input(GetMonitorSlaPolicyInput)
+    .input(GetMonitorReportingInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await getMonitorSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await getMonitorReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   summary: protectedProcedure
-    .input(MonitorSlaPolicyIdInput)
+    .input(MonitorReportingIdInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await getMonitorSlaPolicySummary({
+        return await getMonitorReportingSummary({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -104,10 +104,10 @@ export const monitorSlaPolicyRouter = createTRPCRouter({
     }),
 
   maintenances: protectedProcedure
-    .input(GetMonitorSlaPolicyInput)
+    .input(GetMonitorReportingInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await listMonitorSlaPolicyMaintenances({
+        return await listMonitorReportingMaintenances({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -117,54 +117,54 @@ export const monitorSlaPolicyRouter = createTRPCRouter({
     }),
 
   export: protectedProcedure
-    .input(ExportMonitorSlaPolicyInput)
+    .input(ExportMonitorReportingInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await exportMonitorSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await exportMonitorReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   create: protectedProcedure
-    .meta({ track: Events.CreateMonitorSlaPolicy })
-    .input(CreateMonitorSlaPolicyInput)
+    .meta({ track: Events.CreateMonitorReporting })
+    .input(CreateMonitorReportingInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await createMonitorSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await createMonitorReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   update: protectedProcedure
-    .meta({ track: Events.UpdateMonitorSlaPolicy })
-    .input(UpdateMonitorSlaPolicyInput)
+    .meta({ track: Events.UpdateMonitorReporting })
+    .input(UpdateMonitorReportingInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await updateMonitorSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await updateMonitorReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   archive: protectedProcedure
-    .meta({ track: Events.ArchiveMonitorSlaPolicy })
-    .input(MonitorSlaPolicyIdInput)
+    .meta({ track: Events.ArchiveMonitorReporting })
+    .input(MonitorReportingIdInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await archiveMonitorSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await archiveMonitorReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   delete: protectedProcedure
-    .meta({ track: Events.DeleteMonitorSlaPolicy })
-    .input(MonitorSlaPolicyIdInput)
+    .meta({ track: Events.DeleteMonitorReporting })
+    .input(MonitorReportingIdInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await deleteMonitorSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await deleteMonitorReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

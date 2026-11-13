@@ -20,20 +20,20 @@ import {
   validatePolicyMonitorIds,
 } from "./internal";
 import { monthOf } from "./months";
-import { UpdateMonitorSlaPolicyInput } from "./schemas";
+import { UpdateMonitorReportingInput } from "./schemas";
 
 /**
  * New target/strict apply from the next month in the policy's zone; previews
  * follow at once. Kept memberships keep their start for sealing.
  */
-export async function updateMonitorSlaPolicy(args: {
+export async function updateMonitorReporting(args: {
   ctx: ServiceContext;
-  input: UpdateMonitorSlaPolicyInput;
+  input: UpdateMonitorReportingInput;
   now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:write");
-  const input = UpdateMonitorSlaPolicyInput.parse(args.input);
+  const input = UpdateMonitorReportingInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const now = args.now ?? new Date();
 

@@ -20,7 +20,7 @@ import {
   postOnlySlackClient,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentSlaPolicy } from "../../incident-sla-policy";
+import { upsertIncidentReporting } from "../../incident-reporting";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
 import {
@@ -59,7 +59,7 @@ async function declare(
     targets?: Record<string, Record<string, number>>;
   },
 ) {
-  await upsertIncidentSlaPolicy({
+  await upsertIncidentReporting({
     ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
     input: {
       targets: args.targets ?? {
@@ -249,7 +249,7 @@ describe("email when Slack cannot deliver", () => {
       await withTestTransaction(async (tx) => {
         const admin = await member(tx, "admin");
         const creator = await member(tx, "member");
-        await upsertIncidentSlaPolicy({
+        await upsertIncidentReporting({
           ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
           input: {
             targets: {

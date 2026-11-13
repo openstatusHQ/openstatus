@@ -18,8 +18,8 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { deleteMonitor, deleteMonitors } from "../../monitor/delete";
-import { createMonitorSlaPolicy } from "../create";
-import { listMonitorSlaPolicies } from "../list";
+import { createMonitorReporting } from "../create";
+import { listMonitorReportings } from "../list";
 
 let ownerCtx: ServiceContext;
 let adminCtx: ServiceContext;
@@ -71,11 +71,11 @@ afterAll(async () => {
   }
 });
 
-describe("createMonitorSlaPolicy", () => {
+describe("createMonitorReporting", () => {
   test("an owner creates a policy over eligible monitors, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: {
           name: "Enterprise",
@@ -102,7 +102,7 @@ describe("createMonitorSlaPolicy", () => {
 
   test("an admin can create too", async () => {
     await withTestTransaction(async (tx) => {
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx: { ...adminCtx, db: tx },
         input: { name: "Admin's", target: 99_000, monitorIds: [apiId] },
       });
@@ -112,7 +112,7 @@ describe("createMonitorSlaPolicy", () => {
 
   test("a member cannot create", async () => {
     await expect(
-      createMonitorSlaPolicy({
+      createMonitorReporting({
         ctx: memberCtx,
         input: { name: "Nope", target: 99_000, monitorIds: [apiId] },
       }),
@@ -126,7 +126,7 @@ describe("createMonitorSlaPolicy", () => {
       scopes: ["read"],
     });
     await expect(
-      createMonitorSlaPolicy({
+      createMonitorReporting({
         ctx,
         input: { name: "Nope", target: 99_000, monitorIds: [apiId] },
       }),
@@ -139,7 +139,7 @@ describe("createMonitorSlaPolicy", () => {
       scopes: ["pages:write"],
     });
     await expect(
-      createMonitorSlaPolicy({
+      createMonitorReporting({
         ctx,
         input: { name: "Nope", target: 99_000, monitorIds: [apiId] },
       }),
@@ -148,7 +148,7 @@ describe("createMonitorSlaPolicy", () => {
 
   test("refused without the monitor-sla limit", async () => {
     await expect(
-      createMonitorSlaPolicy({
+      createMonitorReporting({
         ctx: freeCtx,
         input: { name: "Nope", target: 99_000, monitorIds: [] },
       }),
@@ -157,7 +157,7 @@ describe("createMonitorSlaPolicy", () => {
 
   test("an ineligible monitor is rejected by name and reason", async () => {
     await expect(
-      createMonitorSlaPolicy({
+      createMonitorReporting({
         ctx: ownerCtx,
         input: {
           name: "Bad",
@@ -167,23 +167,23 @@ describe("createMonitorSlaPolicy", () => {
       }),
     ).rejects.toThrow(
       new ValidationError(
-        'Monitor "Cron" cannot be under an SLA policy: heartbeat monitors have no run verdicts.',
+        'Monitor "Cron" cannot be under a reporting: heartbeat monitors have no run verdicts.',
       ),
     );
     await expect(
-      createMonitorSlaPolicy({
+      createMonitorReporting({
         ctx: ownerCtx,
         input: { name: "Bad", target: 99_000, monitorIds: [privateOnlyId] },
       }),
     ).rejects.toThrow(
-      'Monitor "Intranet" cannot be under an SLA policy: it runs from private locations only.',
+      'Monitor "Intranet" cannot be under a reporting: it runs from private locations only.',
     );
   });
 
   test("deleted and foreign monitors are not found", async () => {
     for (const id of [deletedId, foreignId]) {
       await expect(
-        createMonitorSlaPolicy({
+        createMonitorReporting({
           ctx: ownerCtx,
           input: { name: "Bad", target: 99_000, monitorIds: [id] },
         }),
@@ -194,7 +194,7 @@ describe("createMonitorSlaPolicy", () => {
   test("the target is thousandths of a percent, above 0 and up to 100%", async () => {
     for (const target of [0, 100_001, 99.5]) {
       await expect(
-        createMonitorSlaPolicy({
+        createMonitorReporting({
           ctx: ownerCtx,
           input: { name: "Bad", target, monitorIds: [] },
         }),
@@ -203,20 +203,20 @@ describe("createMonitorSlaPolicy", () => {
   });
 });
 
-describe("listMonitorSlaPolicies", () => {
+describe("listMonitorReportings", () => {
   test("a workspace has many policies and a monitor can be in several", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const a = await createMonitorSlaPolicy({
+      const a = await createMonitorReporting({
         ctx,
         input: { name: "A", target: 99_900, monitorIds: [apiId, webId] },
       });
-      const b = await createMonitorSlaPolicy({
+      const b = await createMonitorReporting({
         ctx,
         input: { name: "B", target: 99_000, monitorIds: [apiId] },
       });
 
-      const policies = await listMonitorSlaPolicies({
+      const policies = await listMonitorReportings({
         ctx: { ...memberCtx, db: tx },
       });
 
@@ -233,7 +233,7 @@ describe("listMonitorSlaPolicies", () => {
 
   test("reads are refused without the limit", async () => {
     await expect(
-      listMonitorSlaPolicies({ ctx: freeCtx }),
+      listMonitorReportings({ ctx: freeCtx }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -242,7 +242,7 @@ describe("listMonitorSlaPolicies", () => {
       keyId: "k",
       scopes: ["pages:read"],
     });
-    await expect(listMonitorSlaPolicies({ ctx })).rejects.toBeInstanceOf(
+    await expect(listMonitorReportings({ ctx })).rejects.toBeInstanceOf(
       ForbiddenError,
     );
   });
@@ -250,14 +250,14 @@ describe("listMonitorSlaPolicies", () => {
   test("deleting a monitor removes it from its policies", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Del", target: 99_000, monitorIds: [apiId, webId] },
       });
 
       await deleteMonitor({ ctx, input: { id: webId } });
 
-      const [listed] = await listMonitorSlaPolicies({ ctx });
+      const [listed] = await listMonitorReportings({ ctx });
       expect(listed?.id).toBe(policy.id);
       expect(listed?.monitors.map((m) => m.id)).toEqual([apiId]);
     });
@@ -266,14 +266,14 @@ describe("listMonitorSlaPolicies", () => {
   test("bulk-deleting monitors removes them from their policies", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      await createMonitorSlaPolicy({
+      await createMonitorReporting({
         ctx,
         input: { name: "Bulk", target: 99_000, monitorIds: [apiId, webId] },
       });
 
       await deleteMonitors({ ctx, input: { ids: [apiId, webId] } });
 
-      const [listed] = await listMonitorSlaPolicies({ ctx });
+      const [listed] = await listMonitorReportings({ ctx });
       expect(listed?.monitors).toEqual([]);
     });
   });

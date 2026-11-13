@@ -168,37 +168,37 @@ export const Events = {
     name: "private_location_deleted",
     channel: "private_location",
   },
-  CreateMonitorSlaPolicy: {
-    name: "monitor_sla_policy_created",
-    channel: "sla_policy",
+  CreateMonitorReporting: {
+    name: "monitor_reporting_created",
+    channel: "reporting",
   },
-  UpdateMonitorSlaPolicy: {
-    name: "monitor_sla_policy_updated",
-    channel: "sla_policy",
+  UpdateMonitorReporting: {
+    name: "monitor_reporting_updated",
+    channel: "reporting",
   },
-  ArchiveMonitorSlaPolicy: {
-    name: "monitor_sla_policy_archived",
-    channel: "sla_policy",
+  ArchiveMonitorReporting: {
+    name: "monitor_reporting_archived",
+    channel: "reporting",
   },
-  DeleteMonitorSlaPolicy: {
-    name: "monitor_sla_policy_deleted",
-    channel: "sla_policy",
+  DeleteMonitorReporting: {
+    name: "monitor_reporting_deleted",
+    channel: "reporting",
   },
   AddMonitorSlaExcusedWindow: {
     name: "monitor_sla_excused_window_added",
-    channel: "sla_policy",
+    channel: "reporting",
   },
   RemoveMonitorSlaExcusedWindow: {
     name: "monitor_sla_excused_window_removed",
-    channel: "sla_policy",
+    channel: "reporting",
   },
-  SaveIncidentSlaPolicy: {
-    name: "incident_sla_policy_saved",
-    channel: "sla_policy",
+  SaveIncidentReporting: {
+    name: "incident_reporting_saved",
+    channel: "reporting",
   },
-  DeleteIncidentSlaPolicy: {
-    name: "incident_sla_policy_deleted",
-    channel: "sla_policy",
+  DeleteIncidentReporting: {
+    name: "incident_reporting_deleted",
+    channel: "reporting",
   },
   AcknowledgeIncident: {
     name: "incident_acknowledged",

@@ -8,15 +8,15 @@ import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
 import { assertMonitorSlaLimit, validatePolicyMonitorIds } from "./internal";
-import { CreateMonitorSlaPolicyInput } from "./schemas";
+import { CreateMonitorReportingInput } from "./schemas";
 
-export async function createMonitorSlaPolicy(args: {
+export async function createMonitorReporting(args: {
   ctx: ServiceContext;
-  input: CreateMonitorSlaPolicyInput;
+  input: CreateMonitorReportingInput;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:write");
-  const input = CreateMonitorSlaPolicyInput.parse(args.input);
+  const input = CreateMonitorReportingInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
 
   return withTransaction(ctx, async (tx) => {

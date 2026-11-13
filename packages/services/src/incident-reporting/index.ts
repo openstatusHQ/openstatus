@@ -3,7 +3,7 @@ export {
   type IncidentSlaAttainmentCount,
   type IncidentSlaAttainmentMonth,
 } from "./attainment";
-export { deleteIncidentSlaPolicy } from "./delete";
-export { getIncidentSlaPolicy } from "./get";
-export { UpsertIncidentSlaPolicyInput } from "./schemas";
-export { upsertIncidentSlaPolicy } from "./upsert";
+export { deleteIncidentReporting } from "./delete";
+export { getIncidentReporting } from "./get";
+export { UpsertIncidentReportingInput } from "./schemas";
+export { upsertIncidentReporting } from "./upsert";

@@ -14,20 +14,20 @@ import { monthRange } from "../frozen-uptime/compute";
 import { excusedWindowLock } from "./excused";
 import { assertMonitorSlaLimit, findPolicy, sealedMonthsOf } from "./internal";
 import { completeMonths, monthOf } from "./months";
-import { GetMonitorSlaPolicyInput } from "./schemas";
+import { GetMonitorReportingInput } from "./schemas";
 
 /**
  * Started status-page maintenances on a policy's monitors in the months
- * `getMonitorSlaPolicy` shows, and whether each monitor pauses checks during one.
+ * `getMonitorReporting` shows, and whether each monitor pauses checks during one.
  */
-export async function listMonitorSlaPolicyMaintenances(args: {
+export async function listMonitorReportingMaintenances(args: {
   ctx: ServiceContext;
-  input: GetMonitorSlaPolicyInput;
+  input: GetMonitorReportingInput;
   now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = GetMonitorSlaPolicyInput.parse(args.input);
+  const input = GetMonitorReportingInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
 
@@ -154,6 +154,6 @@ export async function listMonitorSlaPolicyMaintenances(args: {
   };
 }
 
-export type MonitorSlaPolicyMaintenances = Awaited<
-  ReturnType<typeof listMonitorSlaPolicyMaintenances>
+export type MonitorReportingMaintenances = Awaited<
+  ReturnType<typeof listMonitorReportingMaintenances>
 >;

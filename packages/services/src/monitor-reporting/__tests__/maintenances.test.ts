@@ -17,7 +17,7 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
-import { listMonitorSlaPolicyMaintenances } from "../maintenances";
+import { listMonitorReportingMaintenances } from "../maintenances";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 
@@ -150,7 +150,7 @@ async function insertMaintenance(
 const utc = (y: number, m: number, d: number, h = 0) =>
   new Date(Date.UTC(y, m - 1, d, h));
 
-describe("listMonitorSlaPolicyMaintenances", () => {
+describe("listMonitorReportingMaintenances", () => {
   test("finds windows through the monitors' status page components, once per window", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
@@ -207,7 +207,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
         componentIds: [main.components.get(api.id) ?? 0],
       });
 
-      const res = await listMonitorSlaPolicyMaintenances({
+      const res = await listMonitorReportingMaintenances({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -261,7 +261,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
       const api = await insertMonitor(tx, { name: "API" });
       const policy = await insertPolicy(tx, [api.id]);
 
-      const res = await listMonitorSlaPolicyMaintenances({
+      const res = await listMonitorReportingMaintenances({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -286,7 +286,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
         componentIds: [main.components.get(api.id) ?? 0],
       });
 
-      const res = await listMonitorSlaPolicyMaintenances({
+      const res = await listMonitorReportingMaintenances({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -311,13 +311,13 @@ describe("listMonitorSlaPolicyMaintenances", () => {
         componentIds: [main.components.get(api.id) ?? 0],
       });
 
-      const twelve = await listMonitorSlaPolicyMaintenances({
+      const twelve = await listMonitorReportingMaintenances({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
       });
       expect(twelve.windows).toEqual([]);
-      const wide = await listMonitorSlaPolicyMaintenances({
+      const wide = await listMonitorReportingMaintenances({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, months: 24 },
         now,
@@ -339,7 +339,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
         componentIds: [main.components.get(api.id) ?? 0],
       });
 
-      const res = await listMonitorSlaPolicyMaintenances({
+      const res = await listMonitorReportingMaintenances({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -353,7 +353,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
     await withTestTransaction(async (tx) => {
       const policy = await insertPolicy(tx, []);
       await expect(
-        listMonitorSlaPolicyMaintenances({
+        listMonitorReportingMaintenances({
           ctx: { ...otherCtx, db: tx },
           input: { id: policy.id },
           now,
@@ -364,7 +364,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
 
   test("needs the monitor-sla limit", async () => {
     await expect(
-      listMonitorSlaPolicyMaintenances({ ctx: freeCtx, input: { id: 1 }, now }),
+      listMonitorReportingMaintenances({ ctx: freeCtx, input: { id: 1 }, now }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -374,7 +374,7 @@ describe("listMonitorSlaPolicyMaintenances", () => {
       scopes: ["incidents:read"],
     });
     await expect(
-      listMonitorSlaPolicyMaintenances({ ctx: key, input: { id: 1 }, now }),
+      listMonitorReportingMaintenances({ ctx: key, input: { id: 1 }, now }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

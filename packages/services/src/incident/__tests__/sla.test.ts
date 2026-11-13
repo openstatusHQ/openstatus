@@ -14,9 +14,9 @@ import {
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
 import {
-  deleteIncidentSlaPolicy,
-  upsertIncidentSlaPolicy,
-} from "../../incident-sla-policy";
+  deleteIncidentReporting,
+  upsertIncidentReporting,
+} from "../../incident-reporting";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
@@ -59,7 +59,7 @@ const targets = {
 };
 
 function savePolicy(tx: DB) {
-  return upsertIncidentSlaPolicy({
+  return upsertIncidentReporting({
     ctx: owner(tx),
     input: { targets, resolutionStop: "resolved" },
   });
@@ -129,11 +129,11 @@ describe("the snapshot at declare", () => {
     await withTestTransaction(async (tx) => {
       await savePolicy(tx);
       const declared = await declareByKey(tx);
-      await upsertIncidentSlaPolicy({
+      await upsertIncidentReporting({
         ctx: owner(tx),
         input: { targets: { critical: { responseMinutes: 5 } } },
       });
-      await deleteIncidentSlaPolicy({ ctx: owner(tx) });
+      await deleteIncidentReporting({ ctx: owner(tx) });
       const row = await view(tx, declared.id);
       expect(row.slaSnapshot).toEqual({
         targets,

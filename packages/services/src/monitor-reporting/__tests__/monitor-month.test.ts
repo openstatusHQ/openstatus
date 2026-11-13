@@ -21,7 +21,7 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import type { Verdict } from "../episodes";
-import { getMonitorSlaPolicy } from "../get";
+import { getMonitorReporting } from "../get";
 import { getMonitorSlaMonitorMonth } from "../monitor-month";
 import {
   episodesPipesFrom,
@@ -244,7 +244,7 @@ describe("getMonitorSlaMonitorMonth", () => {
       ]);
 
       // same figures as the policy page
-      const detail = await getMonitorSlaPolicy({
+      const detail = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,

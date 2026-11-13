@@ -26,8 +26,8 @@ import {
   PreconditionFailedError,
 } from "../../errors";
 import { addMonitorSlaExcusedWindow } from "../add-excused-window";
-import { archiveMonitorSlaPolicy } from "../archive";
-import { createMonitorSlaPolicy } from "../create";
+import { archiveMonitorReporting } from "../archive";
+import { createMonitorReporting } from "../create";
 import { removeMonitorSlaExcusedWindow } from "../remove-excused-window";
 
 const HOUR = 3_600_000;
@@ -66,7 +66,7 @@ afterAll(async () => {
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 
 async function policyIn(tx: Tx) {
-  return createMonitorSlaPolicy({
+  return createMonitorReporting({
     ctx: { ...ownerCtx, db: tx },
     input: { name: "Partner", target: 99_500, monitorIds: [apiId] },
   });
@@ -267,7 +267,7 @@ describe("addMonitorSlaExcusedWindow", () => {
           now,
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
-      await archiveMonitorSlaPolicy({
+      await archiveMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { id: policy.id },
       });

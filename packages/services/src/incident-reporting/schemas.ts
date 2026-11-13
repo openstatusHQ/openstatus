@@ -15,11 +15,11 @@ const severityTargets = z.object({
   updateMinutes: minutes,
 });
 
-export const UpsertIncidentSlaPolicyInput = z.object({
+export const UpsertIncidentReportingInput = z.object({
   targets: z.partialRecord(z.enum(incidentSeverity), severityTargets),
   resolutionStop: z.enum(incidentSlaResolutionStops).default("mitigated"),
   responseMet: z.enum(incidentSlaResponseMets).default("acknowledged"),
 });
-export type UpsertIncidentSlaPolicyInput = z.input<
-  typeof UpsertIncidentSlaPolicyInput
+export type UpsertIncidentReportingInput = z.input<
+  typeof UpsertIncidentReportingInput
 >;

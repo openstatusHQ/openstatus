@@ -6,13 +6,13 @@ import { externalServiceRouter } from "./router/externalService";
 import { feedbackRouter } from "./router/feedback";
 import { importRouter } from "./router/import";
 import { incidentRouter } from "./router/incident";
-import { incidentSlaPolicyRouter } from "./router/incidentSlaPolicy";
+import { incidentReportingRouter } from "./router/incidentReporting";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
 import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
 import { monitorIncidentRouter } from "./router/monitorIncident";
-import { monitorSlaPolicyRouter } from "./router/monitorSlaPolicy";
+import { monitorReportingRouter } from "./router/monitorReporting";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
 import { oauthRouter } from "./router/oauth";
@@ -45,8 +45,8 @@ export const edgeRouter = createTRPCRouter({
   pageSubscriber: pageSubscriberRouter,
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,
-  monitorSlaPolicy: monitorSlaPolicyRouter,
-  incidentSlaPolicy: incidentSlaPolicyRouter,
+  monitorReporting: monitorReportingRouter,
+  incidentReporting: incidentReportingRouter,
   maintenance: maintenanceRouter,
   member: memberRouter,
   checker: checkerRouter,

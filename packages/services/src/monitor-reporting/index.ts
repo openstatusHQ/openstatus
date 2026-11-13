@@ -1,16 +1,16 @@
 export { addMonitorSlaExcusedWindow } from "./add-excused-window";
-export { archiveMonitorSlaPolicy } from "./archive";
-export { createMonitorSlaPolicy } from "./create";
-export { deleteMonitorSlaPolicy } from "./delete";
-export { exportMonitorSlaPolicy } from "./export";
+export { archiveMonitorReporting } from "./archive";
+export { createMonitorReporting } from "./create";
+export { deleteMonitorReporting } from "./delete";
+export { exportMonitorReporting } from "./export";
 export { getMonitorSlaExcusedWindow } from "./get-excused-window";
 export {
-  getMonitorSlaPolicy,
-  getMonitorSlaPolicySummary,
-  listMonitorSlaPoliciesForMonitor,
+  getMonitorReporting,
+  getMonitorReportingSummary,
+  listMonitorReportingsForMonitor,
 } from "./get";
-export { listMonitorSlaPolicies } from "./list";
-export { listMonitorSlaPolicyMaintenances } from "./maintenances";
+export { listMonitorReportings } from "./list";
+export { listMonitorReportingMaintenances } from "./maintenances";
 export { claimMonitorSlaMissNotices } from "./miss-notice";
 export {
   getMonitorSlaMonitorMonth,
@@ -19,17 +19,17 @@ export {
 } from "./monitor-month";
 export { type SealMonitorSlaMonthsResult, sealMonitorSlaMonths } from "./seal";
 export { removeMonitorSlaExcusedWindow } from "./remove-excused-window";
-export { updateMonitorSlaPolicy } from "./update";
+export { updateMonitorReporting } from "./update";
 export {
   AddMonitorSlaExcusedWindowInput,
-  CreateMonitorSlaPolicyInput,
-  ExportMonitorSlaPolicyInput,
+  CreateMonitorReportingInput,
+  ExportMonitorReportingInput,
   GetMonitorSlaExcusedWindowInput,
   GetMonitorSlaMonitorMonthInput,
-  GetMonitorSlaPolicyInput,
-  ListMonitorSlaPoliciesForMonitorInput,
-  ListMonitorSlaPoliciesInput,
-  MonitorSlaPolicyIdInput,
+  GetMonitorReportingInput,
+  ListMonitorReportingsForMonitorInput,
+  ListMonitorReportingsInput,
+  MonitorReportingIdInput,
   RemoveMonitorSlaExcusedWindowInput,
-  UpdateMonitorSlaPolicyInput,
+  UpdateMonitorReportingInput,
 } from "./schemas";

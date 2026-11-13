@@ -17,9 +17,9 @@ import {
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
 import { PreconditionFailedError } from "../../errors";
-import { createMonitorSlaPolicy } from "../create";
+import { createMonitorReporting } from "../create";
 import { termsForMonth } from "../internal";
-import { updateMonitorSlaPolicy } from "../update";
+import { updateMonitorReporting } from "../update";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 
@@ -74,12 +74,12 @@ describe("policy time zone", () => {
   test("defaults to UTC and accepts an IANA zone", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const utc = await createMonitorSlaPolicy({
+      const utc = await createMonitorReporting({
         ctx,
         input: { name: "UTC", target: 99_500 },
       });
       expect(utc.timeZone).toBe("UTC");
-      const berlin = await createMonitorSlaPolicy({
+      const berlin = await createMonitorReporting({
         ctx,
         input: { name: "Berlin", target: 99_500, timeZone: "Europe/Berlin" },
       });
@@ -90,18 +90,18 @@ describe("policy time zone", () => {
   test("zones are stored canonical; UTC aliases become UTC", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const etc = await createMonitorSlaPolicy({
+      const etc = await createMonitorReporting({
         ctx,
         input: { name: "Etc", target: 99_500, timeZone: "Etc/UTC" },
       });
       expect(etc.timeZone).toBe("UTC");
-      const lower = await createMonitorSlaPolicy({
+      const lower = await createMonitorReporting({
         ctx,
         input: { name: "Lower", target: 99_500, timeZone: "europe/berlin" },
       });
       expect(lower.timeZone).toBe("Europe/Berlin");
       await expect(
-        createMonitorSlaPolicy({
+        createMonitorReporting({
           ctx,
           input: { name: "Offset", target: 99_500, timeZone: "+05:00" },
         }),
@@ -109,7 +109,7 @@ describe("policy time zone", () => {
 
       await seal(tx, etc.id);
       // an alias of the stored zone is no zone change, so the seal lock does not trip
-      const same = await updateMonitorSlaPolicy({
+      const same = await updateMonitorReporting({
         ctx,
         input: { id: etc.id, timeZone: "Zulu", name: "Still UTC" },
         now,
@@ -122,17 +122,17 @@ describe("policy time zone", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       await expect(
-        createMonitorSlaPolicy({
+        createMonitorReporting({
           ctx,
           input: { name: "Bad", target: 99_500, timeZone: "Mars/Olympus" },
         }),
       ).rejects.toThrow();
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Ok", target: 99_500 },
       });
       await expect(
-        updateMonitorSlaPolicy({
+        updateMonitorReporting({
           ctx,
           input: { id: policy.id, timeZone: "Nowhere" },
           now,
@@ -144,11 +144,11 @@ describe("policy time zone", () => {
   test("changes while nothing is sealed, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Move", target: 99_500 },
       });
-      const updated = await updateMonitorSlaPolicy({
+      const updated = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, timeZone: "America/New_York" },
         now,
@@ -169,20 +169,20 @@ describe("policy time zone", () => {
   test("is locked once a month is sealed", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Locked", target: 99_500, monitorIds: [apiId] },
       });
       await seal(tx, policy.id);
       await expect(
-        updateMonitorSlaPolicy({
+        updateMonitorReporting({
           ctx,
           input: { id: policy.id, timeZone: "Asia/Tokyo" },
           now,
         }),
       ).rejects.toBeInstanceOf(PreconditionFailedError);
       // resending the same zone is not a change
-      const same = await updateMonitorSlaPolicy({
+      const same = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, timeZone: "UTC", name: "Still UTC" },
         now,
@@ -196,11 +196,11 @@ describe("terms in effect", () => {
   test("a new target applies from next month; this month keeps its terms", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Next", target: 99_500 },
       });
-      const updated = await updateMonitorSlaPolicy({
+      const updated = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_900, strict: true },
         now,
@@ -249,12 +249,12 @@ describe("terms in effect", () => {
   test("next month is taken in the policy's zone", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Tokyo", target: 99_500, timeZone: "Asia/Tokyo" },
       });
       // 2026-11-30 20:00 UTC is already 1 December in Tokyo
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_000 },
         now: new Date(Date.UTC(2026, 10, 30, 20)),
@@ -268,17 +268,17 @@ describe("terms in effect", () => {
   test("a zone change keeps pending terms set before their month starts there", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Auckland", target: 99_500 },
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_900 },
         now: new Date(Date.UTC(2026, 10, 10)),
       });
       // 14:00 UTC on 30 November is already 1 December in Auckland
-      const moved = await updateMonitorSlaPolicy({
+      const moved = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, timeZone: "Pacific/Auckland" },
         now: new Date(Date.UTC(2026, 10, 30, 14)),
@@ -297,17 +297,17 @@ describe("terms in effect", () => {
   test("a zone change moves pending terms set after their month started there", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Late", target: 99_500 },
       });
       // set at 12:00 UTC on 30 November, after December began in Auckland (11:00 UTC)
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_900 },
         now: new Date(Date.UTC(2026, 10, 30, 12)),
       });
-      const moved = await updateMonitorSlaPolicy({
+      const moved = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, timeZone: "Pacific/Auckland" },
         now: new Date(Date.UTC(2026, 10, 30, 14)),
@@ -325,11 +325,11 @@ describe("terms in effect", () => {
   test("a zone change to an earlier zone keeps pending terms", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "West", target: 99_500, timeZone: "Asia/Tokyo" },
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, strict: true },
         now,
@@ -339,7 +339,7 @@ describe("terms in effect", () => {
       expect(await termsForMonth(tx, policy, "2026-12-01")).toMatchObject({
         strict: true,
       });
-      const moved = await updateMonitorSlaPolicy({
+      const moved = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, timeZone: "America/Los_Angeles" },
         now: boundary,
@@ -358,16 +358,16 @@ describe("terms in effect", () => {
   test("edits in one month upsert one row; reverting drops it", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Upsert", target: 99_500 },
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_900 },
         now,
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, strict: true },
         now,
@@ -376,7 +376,7 @@ describe("terms in effect", () => {
         { target: 99_900, strict: true, effectiveFrom: "2026-12-01" },
       ]);
 
-      const reverted = await updateMonitorSlaPolicy({
+      const reverted = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_500, strict: false },
         now,
@@ -393,16 +393,16 @@ describe("terms in effect", () => {
   test("a save with the pending terms changes nothing", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Pending", target: 99_500 },
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_900 },
         now,
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, target: 99_900, name: "Pending" },
         now,
@@ -420,7 +420,7 @@ describe("terms in effect", () => {
   test("termsForMonth picks the latest row in effect, else the policy row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "History", target: 99_000 },
       });
@@ -449,7 +449,7 @@ describe("terms in effect", () => {
       expect(await at("2027-02-01")).toBe(99_900);
 
       // a live-month edit stacks on the June terms, not the policy row
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, strict: false },
         now,

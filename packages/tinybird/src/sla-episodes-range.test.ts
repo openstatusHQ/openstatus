@@ -127,7 +127,7 @@ describe.each(types)("%s sla episodes range", (type) => {
 
   test("points at the shared fixture", () => {
     expect(episodes).toContain(
-      "packages/services/src/monitor-sla-policy/__tests__/fixtures/episodes.json",
+      "packages/services/src/monitor-reporting/__tests__/fixtures/episodes.json",
     );
   });
 

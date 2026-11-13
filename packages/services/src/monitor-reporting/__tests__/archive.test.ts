@@ -25,11 +25,11 @@ import {
   NotFoundError,
   PreconditionFailedError,
 } from "../../errors";
-import { archiveMonitorSlaPolicy } from "../archive";
-import { createMonitorSlaPolicy } from "../create";
-import { deleteMonitorSlaPolicy } from "../delete";
-import { listMonitorSlaPolicies } from "../list";
-import { updateMonitorSlaPolicy } from "../update";
+import { archiveMonitorReporting } from "../archive";
+import { createMonitorReporting } from "../create";
+import { deleteMonitorReporting } from "../delete";
+import { listMonitorReportings } from "../list";
+import { updateMonitorReporting } from "../update";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 
@@ -90,16 +90,16 @@ async function seal(tx: Tx, policyId: number) {
   });
 }
 
-describe("deleteMonitorSlaPolicy", () => {
+describe("deleteMonitorReporting", () => {
   test("a policy never sealed is deleted with its memberships, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx,
         input: { name: "Mistake", target: 99_500, monitorIds: [apiId] },
       });
 
-      await deleteMonitorSlaPolicy({ ctx, input: { id: created.id } });
+      await deleteMonitorReporting({ ctx, input: { id: created.id } });
 
       const left = await tx
         .select()
@@ -108,7 +108,7 @@ describe("deleteMonitorSlaPolicy", () => {
         .all();
       expect(left).toEqual([]);
       expect(
-        await listMonitorSlaPolicies({ ctx, now }).then((l) =>
+        await listMonitorReportings({ ctx, now }).then((l) =>
           l.map((p) => p.id),
         ),
       ).not.toContain(created.id);
@@ -129,13 +129,13 @@ describe("deleteMonitorSlaPolicy", () => {
   test("a policy with a sealed month is refused with a message to archive", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx,
         input: { name: "Partner", target: 99_500, monitorIds: [apiId] },
       });
       await seal(tx, created.id);
 
-      const res = deleteMonitorSlaPolicy({ ctx, input: { id: created.id } });
+      const res = deleteMonitorReporting({ ctx, input: { id: created.id } });
       await expect(res).rejects.toBeInstanceOf(PreconditionFailedError);
       await expect(res).rejects.toThrow(/archive/i);
     });
@@ -144,11 +144,11 @@ describe("deleteMonitorSlaPolicy", () => {
   test("the list tells which policies have a sealed month, however old", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const fresh = await createMonitorSlaPolicy({
+      const fresh = await createMonitorReporting({
         ctx,
         input: { name: "Fresh", target: 99_500, monitorIds: [apiId] },
       });
-      const old = await createMonitorSlaPolicy({
+      const old = await createMonitorReporting({
         ctx,
         input: { name: "Old", target: 99_500 },
       });
@@ -168,7 +168,7 @@ describe("deleteMonitorSlaPolicy", () => {
         met: true,
       });
 
-      const list = await listMonitorSlaPolicies({ ctx, now });
+      const list = await listMonitorReportings({ ctx, now });
       expect(
         list
           .filter((p) => [fresh.id, old.id].includes(p.id))
@@ -182,11 +182,11 @@ describe("deleteMonitorSlaPolicy", () => {
 
   test("works with the limit off", async () => {
     await withTestTransaction(async (tx) => {
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { name: "Old plan", target: 99_500 },
       });
-      await deleteMonitorSlaPolicy({
+      await deleteMonitorReporting({
         ctx: { ...withoutLimit(ownerCtx), db: tx },
         input: { id: created.id },
       });
@@ -201,18 +201,18 @@ describe("deleteMonitorSlaPolicy", () => {
 
   test("a member cannot delete; another workspace's policy is not found", async () => {
     await withTestTransaction(async (tx) => {
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { name: "Partner", target: 99_500 },
       });
       await expect(
-        deleteMonitorSlaPolicy({
+        deleteMonitorReporting({
           ctx: { ...memberCtx, db: tx },
           input: { id: created.id },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
       await expect(
-        deleteMonitorSlaPolicy({
+        deleteMonitorReporting({
           ctx: { ...otherCtx, db: tx },
           input: { id: created.id },
         }),
@@ -221,25 +221,25 @@ describe("deleteMonitorSlaPolicy", () => {
   });
 });
 
-describe("archiveMonitorSlaPolicy", () => {
+describe("archiveMonitorReporting", () => {
   test("hides the policy from the default list and shows it under archived, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx,
         input: { name: "Partner", target: 99_500, monitorIds: [apiId] },
       });
       await seal(tx, created.id);
 
-      const archived = await archiveMonitorSlaPolicy({
+      const archived = await archiveMonitorReporting({
         ctx,
         input: { id: created.id },
       });
 
       expect(archived.archivedAt).toBeInstanceOf(Date);
-      const active = await listMonitorSlaPolicies({ ctx, now });
+      const active = await listMonitorReportings({ ctx, now });
       expect(active.map((p) => p.id)).not.toContain(created.id);
-      const onlyArchived = await listMonitorSlaPolicies({
+      const onlyArchived = await listMonitorReportings({
         ctx,
         now,
         input: { archived: true },
@@ -263,28 +263,28 @@ describe("archiveMonitorSlaPolicy", () => {
   test("archive and delete report the latest terms set, not the policy row's", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const kept = await createMonitorSlaPolicy({
+      const kept = await createMonitorReporting({
         ctx,
         input: { name: "Kept", target: 99_500 },
       });
-      const gone = await createMonitorSlaPolicy({
+      const gone = await createMonitorReporting({
         ctx,
         input: { name: "Gone", target: 99_500 },
       });
       for (const p of [kept, gone]) {
-        await updateMonitorSlaPolicy({
+        await updateMonitorReporting({
           ctx,
           input: { id: p.id, target: 99_900, strict: true },
           now,
         });
       }
 
-      const archived = await archiveMonitorSlaPolicy({
+      const archived = await archiveMonitorReporting({
         ctx,
         input: { id: kept.id },
       });
       expect(archived).toMatchObject({ target: 99_900, strict: true });
-      await deleteMonitorSlaPolicy({ ctx, input: { id: gone.id } });
+      await deleteMonitorReporting({ ctx, input: { id: gone.id } });
 
       for (const [id, action] of [
         [kept.id, "monitor_sla_policy.update"],
@@ -305,15 +305,15 @@ describe("archiveMonitorSlaPolicy", () => {
   test("archiving twice keeps the first date and writes one audit row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx,
         input: { name: "Partner", target: 99_500 },
       });
-      const first = await archiveMonitorSlaPolicy({
+      const first = await archiveMonitorReporting({
         ctx,
         input: { id: created.id },
       });
-      const second = await archiveMonitorSlaPolicy({
+      const second = await archiveMonitorReporting({
         ctx,
         input: { id: created.id },
       });
@@ -333,14 +333,14 @@ describe("archiveMonitorSlaPolicy", () => {
   test("an archived policy cannot be edited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx,
         input: { name: "Partner", target: 99_500 },
       });
-      await archiveMonitorSlaPolicy({ ctx, input: { id: created.id } });
+      await archiveMonitorReporting({ ctx, input: { id: created.id } });
 
       await expect(
-        updateMonitorSlaPolicy({
+        updateMonitorReporting({
           ctx,
           input: { id: created.id, target: 99_900 },
         }),
@@ -350,17 +350,17 @@ describe("archiveMonitorSlaPolicy", () => {
 
   test("works with the limit off; a member cannot archive", async () => {
     await withTestTransaction(async (tx) => {
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { name: "Partner", target: 99_500 },
       });
       await expect(
-        archiveMonitorSlaPolicy({
+        archiveMonitorReporting({
           ctx: { ...memberCtx, db: tx },
           input: { id: created.id },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
-      const archived = await archiveMonitorSlaPolicy({
+      const archived = await archiveMonitorReporting({
         ctx: { ...withoutLimit(ownerCtx), db: tx },
         input: { id: created.id },
       });

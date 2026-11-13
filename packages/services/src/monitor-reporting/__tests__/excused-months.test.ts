@@ -17,9 +17,9 @@ import {
 import type { ServiceContext } from "../../context";
 import { monthDays } from "../../frozen-uptime/compute";
 import type { UptimeRunsRangePipes } from "../../frozen-uptime/run";
-import { exportMonitorSlaPolicy } from "../export";
-import { getMonitorSlaPolicy } from "../get";
-import { listMonitorSlaPolicies } from "../list";
+import { exportMonitorReporting } from "../export";
+import { getMonitorReporting } from "../get";
+import { listMonitorReportings } from "../list";
 import { sealMonitorSlaMonths } from "../seal";
 import {
   episodesPipesFrom,
@@ -152,7 +152,7 @@ async function excuse(tx: Tx, policyId: number, from: number, to: number) {
 }
 
 function get(tx: Tx, id: number, at = now) {
-  return getMonitorSlaPolicy({
+  return getMonitorReporting({
     ctx: { ...ctx, db: tx },
     input: { id },
     now: at,
@@ -238,7 +238,7 @@ describe("excused windows in a month's figure", () => {
           },
         },
       ) as NonNullable<ServiceContext["tb"]>;
-      const list = await listMonitorSlaPolicies({
+      const list = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now,
       });
@@ -264,7 +264,7 @@ describe("excused windows in a month's figure", () => {
         episodesPipes,
         sleep,
       });
-      const list = await listMonitorSlaPolicies({
+      const list = await listMonitorReportings({
         ctx: { ...ctx, db: tx },
         now,
       });
@@ -280,7 +280,7 @@ describe("excused windows in a month's figure", () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
-      const { csv } = await exportMonitorSlaPolicy({
+      const { csv } = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now,
@@ -414,7 +414,7 @@ describe("excused windows too old to count", () => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
       const calls: { fromDate: number; toDate: number }[] = [];
-      const detail = await getMonitorSlaPolicy({
+      const detail = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: december,
@@ -432,7 +432,7 @@ describe("excused windows too old to count", () => {
       expect(detail.excusedExpired).toBe(true);
       expect(calls).toEqual([]);
 
-      const { csv } = await exportMonitorSlaPolicy({
+      const { csv } = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now: december,
@@ -462,7 +462,7 @@ describe("export without live months", () => {
       // November on Dec 5 is a preview judged on episodes; December is left out
       await excuse(tx, policy.id, at(10, 2), at(10, 2, 1));
       const calls: { fromDate: number; toDate: number }[] = [];
-      const { csv } = await exportMonitorSlaPolicy({
+      const { csv } = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-11" },
         now: new Date(at(11, 5)),

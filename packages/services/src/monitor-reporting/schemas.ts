@@ -21,7 +21,7 @@ const timeZone = z.string().transform((value, ctx) => {
   return zone;
 });
 
-export const CreateMonitorSlaPolicyInput = z.object({
+export const CreateMonitorReportingInput = z.object({
   name: z.string().trim().min(1).max(256),
   /** Thousandths of a percent: 99.5% is 99500. */
   target: z
@@ -34,48 +34,48 @@ export const CreateMonitorSlaPolicyInput = z.object({
   timeZone: timeZone.default("UTC"),
   monitorIds: z.array(z.number().int()).default([]),
 });
-export type CreateMonitorSlaPolicyInput = z.input<
-  typeof CreateMonitorSlaPolicyInput
+export type CreateMonitorReportingInput = z.input<
+  typeof CreateMonitorReportingInput
 >;
 
 /** Omitted fields stay as they are; `monitorIds` replaces the whole set; new terms apply from next month. */
-export const UpdateMonitorSlaPolicyInput = z.object({
+export const UpdateMonitorReportingInput = z.object({
   id: z.number().int().positive(),
-  name: CreateMonitorSlaPolicyInput.shape.name.optional(),
-  target: CreateMonitorSlaPolicyInput.shape.target.optional(),
+  name: CreateMonitorReportingInput.shape.name.optional(),
+  target: CreateMonitorReportingInput.shape.target.optional(),
   strict: z.boolean().optional(),
   timeZone: timeZone.optional(),
   monitorIds: z.array(z.number().int()).optional(),
 });
-export type UpdateMonitorSlaPolicyInput = z.input<
-  typeof UpdateMonitorSlaPolicyInput
+export type UpdateMonitorReportingInput = z.input<
+  typeof UpdateMonitorReportingInput
 >;
 
-export const MonitorSlaPolicyIdInput = z.object({
+export const MonitorReportingIdInput = z.object({
   id: z.number().int().positive(),
 });
-export type MonitorSlaPolicyIdInput = z.input<typeof MonitorSlaPolicyIdInput>;
+export type MonitorReportingIdInput = z.input<typeof MonitorReportingIdInput>;
 
-export const ListMonitorSlaPoliciesInput = z.object({
+export const ListMonitorReportingsInput = z.object({
   /** true lists only archived policies; the default list leaves them out. */
   archived: z.boolean().default(false),
 });
-export type ListMonitorSlaPoliciesInput = z.input<
-  typeof ListMonitorSlaPoliciesInput
+export type ListMonitorReportingsInput = z.input<
+  typeof ListMonitorReportingsInput
 >;
 
-export const ListMonitorSlaPoliciesForMonitorInput = z.object({
+export const ListMonitorReportingsForMonitorInput = z.object({
   monitorId: z.number().int().positive(),
 });
-export type ListMonitorSlaPoliciesForMonitorInput = z.input<
-  typeof ListMonitorSlaPoliciesForMonitorInput
+export type ListMonitorReportingsForMonitorInput = z.input<
+  typeof ListMonitorReportingsForMonitorInput
 >;
 
-export const GetMonitorSlaPolicyInput = z.object({
+export const GetMonitorReportingInput = z.object({
   id: z.number().int().positive(),
   months: z.union([z.literal(12), z.literal(24)]).default(12),
 });
-export type GetMonitorSlaPolicyInput = z.input<typeof GetMonitorSlaPolicyInput>;
+export type GetMonitorReportingInput = z.input<typeof GetMonitorReportingInput>;
 
 const yearMonth = z
   .string()
@@ -93,14 +93,14 @@ export type GetMonitorSlaMonitorMonthInput = z.input<
 >;
 
 /** Inclusive month range; defaults to the last twelve complete months. */
-export const ExportMonitorSlaPolicyInput = z.object({
+export const ExportMonitorReportingInput = z.object({
   id: z.number().int().positive(),
   from: yearMonth.optional(),
   to: yearMonth.optional(),
   includeLive: z.boolean().default(false),
 });
-export type ExportMonitorSlaPolicyInput = z.input<
-  typeof ExportMonitorSlaPolicyInput
+export type ExportMonitorReportingInput = z.input<
+  typeof ExportMonitorReportingInput
 >;
 
 // `z.coerce.date()` turns `null` into 1970-01-01; reject it before coercing

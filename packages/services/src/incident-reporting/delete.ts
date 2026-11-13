@@ -6,17 +6,17 @@ import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
-import { assertNotKeyActor, findIncidentSlaPolicy } from "./internal";
+import { assertNotKeyActor, findIncidentReporting } from "./internal";
 
 /** Turns the policy off. No limit check: a downgraded workspace must be able to remove it. */
-export async function deleteIncidentSlaPolicy(args: { ctx: ServiceContext }) {
+export async function deleteIncidentReporting(args: { ctx: ServiceContext }) {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
   assertNotKeyActor(ctx);
 
   await withTransaction(ctx, async (tx) => {
     await requireRole(tx, ctx, ["owner", "admin"]);
-    const before = await findIncidentSlaPolicy(tx, ctx.workspace.id);
+    const before = await findIncidentReporting(tx, ctx.workspace.id);
     if (!before) throw new NotFoundError("incident_sla_policy");
 
     await tx

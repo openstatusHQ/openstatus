@@ -1,19 +1,19 @@
 import { Events } from "@openstatus/analytics";
 import {
-  UpsertIncidentSlaPolicyInput,
-  deleteIncidentSlaPolicy,
+  UpsertIncidentReportingInput,
+  deleteIncidentReporting,
   getIncidentSlaAttainment,
-  getIncidentSlaPolicy,
-  upsertIncidentSlaPolicy,
-} from "@openstatus/services/incident-sla-policy";
+  getIncidentReporting,
+  upsertIncidentReporting,
+} from "@openstatus/services/incident-reporting";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-export const incidentSlaPolicyRouter = createTRPCRouter({
+export const incidentReportingRouter = createTRPCRouter({
   get: protectedProcedure.query(async ({ ctx }) => {
     try {
-      return await getIncidentSlaPolicy({ ctx: toServiceCtx(ctx) });
+      return await getIncidentReporting({ ctx: toServiceCtx(ctx) });
     } catch (err) {
       toTRPCError(err);
     }
@@ -28,21 +28,21 @@ export const incidentSlaPolicyRouter = createTRPCRouter({
   }),
 
   upsert: protectedProcedure
-    .meta({ track: Events.SaveIncidentSlaPolicy })
-    .input(UpsertIncidentSlaPolicyInput)
+    .meta({ track: Events.SaveIncidentReporting })
+    .input(UpsertIncidentReportingInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await upsertIncidentSlaPolicy({ ctx: toServiceCtx(ctx), input });
+        return await upsertIncidentReporting({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
   delete: protectedProcedure
-    .meta({ track: Events.DeleteIncidentSlaPolicy })
+    .meta({ track: Events.DeleteIncidentReporting })
     .mutation(async ({ ctx }) => {
       try {
-        return await deleteIncidentSlaPolicy({ ctx: toServiceCtx(ctx) });
+        return await deleteIncidentReporting({ ctx: toServiceCtx(ctx) });
       } catch (err) {
         toTRPCError(err);
       }

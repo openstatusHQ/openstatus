@@ -1,5 +1,5 @@
 {
-  "$comment": "Reference cases for SLA episodes: episodesFromRuns (packages/services/src/monitor-sla-policy/episodes.ts) and endpoint__<type>_sla_episodes_range__v0 must both produce `expected` from `input`. Times are ms epoch, ranges half-open.",
+  "$comment": "Reference cases for SLA episodes: episodesFromRuns (packages/services/src/monitor-reporting/episodes.ts) and endpoint__<type>_sla_episodes_range__v0 must both produce `expected` from `input`. Times are ms epoch, ranges half-open.",
   "cases": [
     {
       "name": "steady-30s",

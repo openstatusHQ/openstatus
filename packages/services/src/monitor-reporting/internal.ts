@@ -64,7 +64,7 @@ const _sameJobTypes: Exact<
 
 export function assertMonitorSlaLimit(ctx: ServiceContext): void {
   if (!ctx.workspace.limits["monitor-sla"]) {
-    throw new ForbiddenError("SLA policies are not enabled on this plan.");
+    throw new ForbiddenError("Reportings are not enabled on this plan.");
   }
 }
 
@@ -99,7 +99,7 @@ export async function validatePolicyMonitorIds(args: {
     const reason = monitorSlaIneligibleReason(row);
     if (reason) {
       throw new ValidationError(
-        `Monitor "${row.name}" cannot be under an SLA policy: ${reason}.`,
+        `Monitor "${row.name}" cannot be under a reporting: ${reason}.`,
       );
     }
   }
@@ -131,7 +131,7 @@ export async function getWritablePolicy(
   const row = await findPolicy(tx, ctx, id);
   if (row.archivedAt) {
     throw new PreconditionFailedError(
-      "This SLA policy is archived and can no longer be edited.",
+      "This reporting is archived and can no longer be edited.",
     );
   }
   return row;

@@ -18,8 +18,8 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { monthDays } from "../../frozen-uptime/compute";
-import { exportMonitorSlaPolicy, MONITOR_SLA_METHOD } from "../export";
-import { getMonitorSlaPolicy } from "../get";
+import { exportMonitorReporting, MONITOR_SLA_METHOD } from "../export";
+import { getMonitorReporting } from "../get";
 import {
   type EpisodesCall,
   episodesPipesFrom,
@@ -125,7 +125,7 @@ function parse(csv: string) {
   return { comments, header, rows };
 }
 
-describe("exportMonitorSlaPolicy", () => {
+describe("exportMonitorReporting", () => {
   test("one row per monitor and month over the last twelve complete months, without live months", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
@@ -138,7 +138,7 @@ describe("exportMonitorSlaPolicy", () => {
         ]);
 
       const calls: EpisodesCall[] = [];
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -153,7 +153,7 @@ describe("exportMonitorSlaPolicy", () => {
       expect(comments[1]).toContain(`Generated ${now.toISOString()}`);
       expect(comments[1]).toContain("Live months are not included.");
       expect(header).toBe(
-        "policy,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
+        "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
       );
       expect(rows).toHaveLength(12);
       expect(rows[0]).toBe(
@@ -196,13 +196,13 @@ describe("exportMonitorSlaPolicy", () => {
         sealedAt: new Date(Date.UTC(2026, 9, 4, 5, 47)),
       });
 
-      const page = await getMonitorSlaPolicy({
+      const page = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
         episodesPipes: noEpisodes,
       });
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -277,7 +277,7 @@ describe("exportMonitorSlaPolicy", () => {
         calls,
       );
 
-      const without = await exportMonitorSlaPolicy({
+      const without = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-11" },
         now,
@@ -288,7 +288,7 @@ describe("exportMonitorSlaPolicy", () => {
         "2026-10",
       ]);
 
-      const withLive = await exportMonitorSlaPolicy({
+      const withLive = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: {
           id: policy.id,
@@ -334,7 +334,7 @@ describe("exportMonitorSlaPolicy", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now: new Date(Date.UTC(2026, 10, 10)),
@@ -365,7 +365,7 @@ describe("exportMonitorSlaPolicy", () => {
         calls,
       );
 
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: {
           id: policy.id,
@@ -425,7 +425,7 @@ describe("exportMonitorSlaPolicy", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: '=HYPERLINK("x"), API' });
       const policy = await insertPolicy(tx, [api.id], { name: "EU, prod" });
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now,
@@ -441,7 +441,7 @@ describe("exportMonitorSlaPolicy", () => {
     await withTestTransaction(async (tx) => {
       const policy = await insertPolicy(tx, []);
       const run = (input: { from?: string; to?: string }) =>
-        exportMonitorSlaPolicy({
+        exportMonitorReporting({
           ctx: { ...ctx, db: tx },
           input: { id: policy.id, ...input },
           now,
@@ -479,7 +479,7 @@ describe("exportMonitorSlaPolicy", () => {
       });
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...makeUserCtx(ctx.workspace, { userId: member.id }), db: tx },
         input: { id: policy.id },
         now,
@@ -495,7 +495,7 @@ describe("exportMonitorSlaPolicy", () => {
         keyId: "k",
         scopes: ["read"],
       });
-      const res = await exportMonitorSlaPolicy({
+      const res = await exportMonitorReporting({
         ctx: { ...key, db: tx },
         input: { id: policy.id },
         now,
@@ -506,7 +506,7 @@ describe("exportMonitorSlaPolicy", () => {
 
   test("refused without the limit", async () => {
     await expect(
-      exportMonitorSlaPolicy({ ctx: freeCtx, input: { id: 1 }, now }),
+      exportMonitorReporting({ ctx: freeCtx, input: { id: 1 }, now }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -517,7 +517,7 @@ describe("exportMonitorSlaPolicy", () => {
         workspaceId: other.workspace.id,
       });
       await expect(
-        exportMonitorSlaPolicy({
+        exportMonitorReporting({
           ctx: { ...ctx, db: tx },
           input: { id: policy.id },
           now,

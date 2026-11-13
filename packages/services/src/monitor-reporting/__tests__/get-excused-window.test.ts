@@ -13,8 +13,8 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { addMonitorSlaExcusedWindow } from "../add-excused-window";
-import { archiveMonitorSlaPolicy } from "../archive";
-import { createMonitorSlaPolicy } from "../create";
+import { archiveMonitorReporting } from "../archive";
+import { createMonitorReporting } from "../create";
 import { getMonitorSlaExcusedWindow } from "../get-excused-window";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
@@ -52,7 +52,7 @@ type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 
 async function windowIn(tx: Tx) {
   const ctx = { ...ownerCtx, db: tx };
-  const policy = await createMonitorSlaPolicy({
+  const policy = await createMonitorReporting({
     ctx,
     input: { name: "Partner", target: 99_500, monitorIds: [apiId] },
   });
@@ -101,7 +101,7 @@ describe("getMonitorSlaExcusedWindow", () => {
   test("resolves a window of an archived policy", async () => {
     await withTestTransaction(async (tx) => {
       const { policy, window } = await windowIn(tx);
-      await archiveMonitorSlaPolicy({
+      await archiveMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { id: policy.id },
       });

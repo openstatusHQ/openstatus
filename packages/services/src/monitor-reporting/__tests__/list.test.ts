@@ -17,11 +17,11 @@ import {
 import type { ServiceContext } from "../../context";
 import { monthDays } from "../../frozen-uptime/compute";
 import {
-  getMonitorSlaPolicy,
-  getMonitorSlaPolicySummary,
-  listMonitorSlaPoliciesForMonitor,
+  getMonitorReporting,
+  getMonitorReportingSummary,
+  listMonitorReportingsForMonitor,
 } from "../get";
-import { listMonitorSlaPolicies } from "../list";
+import { listMonitorReportings } from "../list";
 import { rollUpMonth } from "../months";
 import {
   episodesPipesFrom,
@@ -125,7 +125,7 @@ function sealedRow(
   };
 }
 
-describe("listMonitorSlaPolicies strip", () => {
+describe("listMonitorReportings strip", () => {
   test("a non-UTC policy strips months in its zone, sealed months only", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, "API");
@@ -147,7 +147,7 @@ describe("listMonitorSlaPolicies strip", () => {
       });
 
       // 05:00 on Nov 1 in Tokyo: October is complete there, not yet in UTC
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now: new Date(Date.UTC(2026, 9, 31, 20)),
       });
@@ -184,7 +184,7 @@ describe("listMonitorSlaPolicies strip", () => {
         frozen(api.id, "2026-07", null),
       ]);
 
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now,
       });
@@ -248,7 +248,7 @@ describe("listMonitorSlaPolicies strip", () => {
         // web Oct stays a preview miss
       ]);
 
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now,
       });
@@ -287,7 +287,7 @@ describe("listMonitorSlaPolicies strip", () => {
           sealedRow(policy.id, api.id, "2026-10", true),
         ]);
 
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now,
       });
@@ -303,7 +303,7 @@ describe("listMonitorSlaPolicies strip", () => {
     await withTestTransaction(async (tx) => {
       await insertPolicy(tx, "Empty", []);
 
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now,
       });
@@ -331,11 +331,11 @@ describe("listMonitorSlaPolicies strip", () => {
         .insert(monitorSlaSealedMonth)
         .values([sealedRow(policy.id, api.id, "2026-06", false)]);
 
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         now,
       });
-      const detail = await getMonitorSlaPolicy({
+      const detail = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -379,12 +379,12 @@ describe("listMonitorSlaPolicies strip", () => {
       );
       const early = new Date(Date.UTC(2026, 10, 3, 12));
 
-      const [listed] = await listMonitorSlaPolicies({
+      const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx },
         now: early,
         episodesPipes,
       });
-      const detail = await getMonitorSlaPolicy({
+      const detail = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: early,
@@ -431,7 +431,7 @@ describe("listMonitorSlaPolicies strip", () => {
           effectiveFrom: "2026-12-01",
         },
       };
-      const listed = await listMonitorSlaPolicies({
+      const listed = await listMonitorReportings({
         ctx: { ...ctx, db: tx },
         now,
         episodesPipes: noEpisodes,
@@ -441,13 +441,13 @@ describe("listMonitorSlaPolicies strip", () => {
         strict: true,
         ...expected,
       });
-      const summary = await getMonitorSlaPolicySummary({
+      const summary = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
       });
       expect(summary).toMatchObject(expected);
-      const detail = await getMonitorSlaPolicy({
+      const detail = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
@@ -456,7 +456,7 @@ describe("listMonitorSlaPolicies strip", () => {
       expect(detail).toMatchObject(expected);
 
       // once December runs, nothing is pending
-      const december = await getMonitorSlaPolicySummary({
+      const december = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now: new Date(Date.UTC(2026, 11, 2)),
@@ -470,7 +470,7 @@ describe("listMonitorSlaPolicies strip", () => {
   });
 });
 
-describe("listMonitorSlaPoliciesForMonitor", () => {
+describe("listMonitorReportingsForMonitor", () => {
   test("active policies covering the monitor, terms only, without Tinybird", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, "API");
@@ -491,7 +491,7 @@ describe("listMonitorSlaPoliciesForMonitor", () => {
         effectiveFrom: "2026-12-01",
       });
 
-      const res = await listMonitorSlaPoliciesForMonitor({
+      const res = await listMonitorReportingsForMonitor({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         input: { monitorId: api.id },
         now,
@@ -528,7 +528,7 @@ describe("listMonitorSlaPoliciesForMonitor", () => {
       const api = await insertMonitor(tx, "API");
       await insertPolicy(tx, "A", [api.id]);
       expect(
-        await listMonitorSlaPoliciesForMonitor({
+        await listMonitorReportingsForMonitor({
           ctx: { ...otherCtx, db: tx },
           input: { monitorId: api.id },
           now,

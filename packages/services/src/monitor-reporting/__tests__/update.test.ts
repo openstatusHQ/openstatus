@@ -22,9 +22,9 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { monthDays } from "../../frozen-uptime/compute";
-import { createMonitorSlaPolicy } from "../create";
-import { getMonitorSlaPolicy } from "../get";
-import { updateMonitorSlaPolicy } from "../update";
+import { createMonitorReporting } from "../create";
+import { getMonitorReporting } from "../get";
+import { updateMonitorReporting } from "../update";
 import { noEpisodes } from "./fixtures/episodes-pipes";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
@@ -90,16 +90,16 @@ function frozen(
   };
 }
 
-describe("updateMonitorSlaPolicy", () => {
+describe("updateMonitorReporting", () => {
   test("an owner changes name, target and strict, audited with before and after", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const created = await createMonitorSlaPolicy({
+      const created = await createMonitorReporting({
         ctx,
         input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
       });
 
-      const updated = await updateMonitorSlaPolicy({
+      const updated = await updateMonitorReporting({
         ctx,
         input: {
           id: created.id,
@@ -141,7 +141,7 @@ describe("updateMonitorSlaPolicy", () => {
   test("strict turns a met month into a miss when slow runs count as down", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Strict", target: 99_500, monitorIds: [apiId] },
       });
@@ -151,7 +151,7 @@ describe("updateMonitorSlaPolicy", () => {
         .values(frozen(apiId, "2026-10", { ok: 994, degraded: 4, error: 2 }));
 
       const read = () =>
-        getMonitorSlaPolicy({
+        getMonitorReporting({
           ctx,
           input: { id: policy.id },
           now,
@@ -162,7 +162,7 @@ describe("updateMonitorSlaPolicy", () => {
         met: true,
       });
 
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, strict: true },
       });
@@ -180,7 +180,7 @@ describe("updateMonitorSlaPolicy", () => {
   test("adding a monitor shows its earlier months as previews, removing keeps the others' start", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Members", target: 99_000, monitorIds: [apiId] },
       });
@@ -193,13 +193,13 @@ describe("updateMonitorSlaPolicy", () => {
         .insert(frozenMonitorUptime)
         .values(frozen(webId, "2026-03", { ok: 100, degraded: 0, error: 0 }));
 
-      const added = await updateMonitorSlaPolicy({
+      const added = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, monitorIds: [webId, apiId] },
       });
       expect(added.monitorIds).toEqual([apiId, webId].sort((a, b) => a - b));
 
-      const res = await getMonitorSlaPolicy({
+      const res = await getMonitorReporting({
         ctx,
         input: { id: policy.id },
         now,
@@ -220,7 +220,7 @@ describe("updateMonitorSlaPolicy", () => {
         longAgo,
       );
 
-      const removed = await updateMonitorSlaPolicy({
+      const removed = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, monitorIds: [apiId] },
       });
@@ -237,18 +237,18 @@ describe("updateMonitorSlaPolicy", () => {
   test("an ineligible monitor cannot be added", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Bad", target: 99_000, monitorIds: [apiId] },
       });
       await expect(
-        updateMonitorSlaPolicy({
+        updateMonitorReporting({
           ctx,
           input: { id: policy.id, monitorIds: [apiId, heartbeatId] },
         }),
       ).rejects.toThrow(
         new ValidationError(
-          'Monitor "Cron" cannot be under an SLA policy: heartbeat monitors have no run verdicts.',
+          'Monitor "Cron" cannot be under a reporting: heartbeat monitors have no run verdicts.',
         ),
       );
     });
@@ -257,11 +257,11 @@ describe("updateMonitorSlaPolicy", () => {
   test("a save without changes writes no audit row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx,
         input: { name: "Same", target: 99_000, monitorIds: [apiId] },
       });
-      await updateMonitorSlaPolicy({
+      await updateMonitorReporting({
         ctx,
         input: { id: policy.id, name: "Same", monitorIds: [apiId] },
       });
@@ -277,17 +277,17 @@ describe("updateMonitorSlaPolicy", () => {
 
   test("an admin can edit, a member cannot", async () => {
     await withTestTransaction(async (tx) => {
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { name: "Roles", target: 99_000, monitorIds: [] },
       });
-      const updated = await updateMonitorSlaPolicy({
+      const updated = await updateMonitorReporting({
         ctx: { ...adminCtx, db: tx },
         input: { id: policy.id, name: "Admin's" },
       });
       expect(updated.name).toBe("Admin's");
       await expect(
-        updateMonitorSlaPolicy({
+        updateMonitorReporting({
           ctx: { ...memberCtx, db: tx },
           input: { id: policy.id, name: "Nope" },
         }),
@@ -297,12 +297,12 @@ describe("updateMonitorSlaPolicy", () => {
 
   test("a policy of another workspace is not found", async () => {
     await withTestTransaction(async (tx) => {
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { name: "Mine", target: 99_000, monitorIds: [] },
       });
       await expect(
-        updateMonitorSlaPolicy({
+        updateMonitorReporting({
           ctx: { ...otherCtx, db: tx },
           input: { id: policy.id, name: "Theirs" },
         }),
@@ -312,7 +312,7 @@ describe("updateMonitorSlaPolicy", () => {
 
   test("refused without the limit, for read-only and other-group keys", async () => {
     await expect(
-      updateMonitorSlaPolicy({ ctx: freeCtx, input: { id: 1, name: "x" } }),
+      updateMonitorReporting({ ctx: freeCtx, input: { id: 1, name: "x" } }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     for (const scopes of [["read"], ["pages:write"]]) {
       const ctx = makeApiKeyCtx(ownerCtx.workspace, {
@@ -320,16 +320,16 @@ describe("updateMonitorSlaPolicy", () => {
         scopes,
       });
       await expect(
-        updateMonitorSlaPolicy({ ctx, input: { id: 1, name: "x" } }),
+        updateMonitorReporting({ ctx, input: { id: 1, name: "x" } }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     }
   });
 });
 
-describe("createMonitorSlaPolicy strict", () => {
+describe("createMonitorReporting strict", () => {
   test("a policy can be created strict", async () => {
     await withTestTransaction(async (tx) => {
-      const policy = await createMonitorSlaPolicy({
+      const policy = await createMonitorReporting({
         ctx: { ...ownerCtx, db: tx },
         input: { name: "Strict", target: 99_000, strict: true, monitorIds: [] },
       });
