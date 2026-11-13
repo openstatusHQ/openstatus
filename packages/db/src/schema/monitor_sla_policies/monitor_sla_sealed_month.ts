@@ -9,8 +9,12 @@ import {
 
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
-import type { MonitorSlaExcusedWindowKind } from "./constants";
+import {
+  type MonitorSlaExcusedWindowKind,
+  monitorSlaMethods,
+} from "./constants";
 import { monitorSlaPolicy } from "./monitor_sla_policy";
+import { monitorSlaSealedEpisode } from "./monitor_sla_sealed_episode";
 
 export type MonitorSlaSealedWindow = {
   id: number;
@@ -35,8 +39,12 @@ export const monitorSlaSealedMonth = sqliteTable(
     monitorId: integer("monitor_id")
       .notNull()
       .references(() => monitor.id, { onDelete: "cascade" }),
-    // first of the UTC month, YYYY-MM-01
+    // first of the month in time_zone, YYYY-MM-01
     month: text("month").notNull(),
+    method: text("method", { enum: monitorSlaMethods })
+      .notNull()
+      .default("runs"),
+    timeZone: text("time_zone").notNull().default("UTC"),
 
     target: integer("target").notNull(),
     strict: integer("strict", { mode: "boolean" }).notNull(),
@@ -58,6 +66,13 @@ export const monitorSlaSealedMonth = sqliteTable(
     // thousandths of a percent, floored; null when every run was excused
     uptime: integer("uptime"),
     met: integer("met", { mode: "boolean" }),
+    // method "time" only; null on run-count rows
+    measuredMs: integer("measured_ms"),
+    downMs: integer("down_ms"),
+    excusedMs: integer("excused_ms"),
+    unmeasuredMs: integer("unmeasured_ms"),
+    // thousandths of a percent, floored
+    coverage: integer("coverage"),
 
     sealedAt: integer("sealed_at", { mode: "timestamp" })
       .notNull()
@@ -77,7 +92,7 @@ export const monitorSlaSealedMonth = sqliteTable(
 
 export const monitorSlaSealedMonthRelations = relations(
   monitorSlaSealedMonth,
-  ({ one }) => ({
+  ({ one, many }) => ({
     policy: one(monitorSlaPolicy, {
       fields: [monitorSlaSealedMonth.monitorSlaPolicyId],
       references: [monitorSlaPolicy.id],
@@ -86,5 +101,6 @@ export const monitorSlaSealedMonthRelations = relations(
       fields: [monitorSlaSealedMonth.monitorId],
       references: [monitor.id],
     }),
+    episodes: many(monitorSlaSealedEpisode),
   }),
 );
