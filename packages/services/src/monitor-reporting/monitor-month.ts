@@ -14,7 +14,6 @@ import { requireScope } from "../auth";
 import { type DB, defaultTb, getReadDb, type ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
-import type { UptimeRunsRangePipes } from "../frozen-uptime/run";
 import { cutExcused, type Episode, slaBudget } from "./episodes";
 import { mergeSpans, type Span } from "./excused";
 import {
@@ -28,7 +27,6 @@ import {
   episodeMonths,
   type FetchedEpisodes,
   fetchMonthEpisodes,
-  judgePolicyMonths,
   loadPolicyMembers,
   loadTermsHistory,
   memberEpisodes,
@@ -201,15 +199,12 @@ async function loadMonitorMaintenances(
   return { mode: row?.maintenanceMode ?? "pause", windows };
 }
 
-/** `target`/`strict` are the latest terms set, as older previews follow them. */
 type MonthPolicy = {
   id: number;
   workspaceId: number;
   name: string;
   timeZone: string;
   archivedAt: Date | null;
-  target: number;
-  strict: boolean;
 };
 
 /**
@@ -226,7 +221,6 @@ async function memberMonth(args: {
   maintenances: MonitorMaintenances;
   fetched?: FetchedEpisodes;
   episodesPipes?: SlaEpisodesPipes;
-  runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx, db, policy, member, month, now, maintenances } = args;
@@ -253,12 +247,11 @@ async function memberMonth(args: {
   let spans: Span[];
   let budget: ReturnType<typeof monthBudget> | null = null;
   let episodes: MonitorReportingMonthEpisode[] | null = null;
-  /** runs: judged by run count; failed: episodes could not be read; expired: runs no longer kept; time-zone: old month in a non-UTC zone */
-  let episodesUnavailable: "runs" | "failed" | "expired" | "time-zone" | null =
-    null;
+  /** runs: a legacy run-count seal; failed: episodes could not be read; expired: older than the previous month and never sealed */
+  let episodesUnavailable: "runs" | "failed" | "expired" | null = null;
 
   if (seal) {
-    cell = storedMonth({ month, seal, frozen: undefined, policy });
+    cell = storedMonth({ month, seal, timeZone });
     spans = mergeSpans(
       seal.excusedWindows.map((w) => ({
         from: new Date(w.from),
@@ -378,19 +371,8 @@ async function memberMonth(args: {
         });
       }
     } else {
-      const judged = await judgePolicyMonths({
-        ctx,
-        policy,
-        monitors: [member],
-        months: [month],
-        now,
-        live: false,
-        runsRangePipes: args.runsRangePipes,
-        sleep: args.sleep,
-      });
-      cell = judged.monitors[0].months[0];
-      episodesUnavailable =
-        cell.unavailable === "time-zone" ? "time-zone" : "expired";
+      cell = storedMonth({ month, seal: undefined, timeZone });
+      episodesUnavailable = "expired";
     }
   }
 
@@ -437,7 +419,6 @@ export async function getMonitorReportingMonth(args: {
   input: GetMonitorReportingMonthInput;
   now?: Date;
   episodesPipes?: SlaEpisodesPipes;
-  runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;
@@ -470,7 +451,6 @@ export async function getMonitorReportingMonth(args: {
     now,
     maintenances,
     episodesPipes: args.episodesPipes,
-    runsRangePipes: args.runsRangePipes,
     sleep: args.sleep,
   });
 }
@@ -561,7 +541,7 @@ export async function listMonitorReportingMonths(args: {
       month: await memberMonth({
         ctx,
         db,
-        policy: { ...policy, ...history.latest(policy.id) },
+        policy,
         member,
         month: monthOf(now, policy.timeZone),
         now,

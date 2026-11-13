@@ -271,7 +271,6 @@ describe("getMonitorReportingMonth", () => {
         excusedMs: res.excusedMs,
         unmeasuredMs: res.unmeasuredMs,
         coverage: res.coverage,
-        unavailable: res.unavailable,
         sealed: res.sealed,
       });
     });
@@ -611,7 +610,7 @@ describe("getMonitorReportingMonth", () => {
     });
   });
 
-  test("an old month of a non-UTC policy says it is the zone, not expiry", async () => {
+  test("an old month of a non-UTC policy is past its runs like any other", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id], {
@@ -625,8 +624,8 @@ describe("getMonitorReportingMonth", () => {
       });
       expect(res).toMatchObject({
         state: "none",
-        unavailable: "time-zone",
-        episodesUnavailable: "time-zone",
+        timeZone: "Europe/Berlin",
+        episodesUnavailable: "expired",
       });
     });
   });

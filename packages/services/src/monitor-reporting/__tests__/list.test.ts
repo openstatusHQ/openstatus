@@ -1,6 +1,5 @@
 import { eq } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaPolicy,
   monitorSlaPolicyTerms,
@@ -15,7 +14,6 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { monthDays } from "../../frozen-uptime/compute";
 import {
   getMonitorReporting,
   getMonitorReportingSummary,
@@ -77,29 +75,26 @@ async function insertPolicy(tx: Tx, name: string, monitorIds: number[]) {
       monitorIds.map((monitorId) => ({
         monitorSlaPolicyId: policy.id,
         monitorId,
+        createdAt: new Date(Date.UTC(2025, 0, 1)),
       })),
     );
   }
   return policy;
 }
 
-function frozen(
-  monitorId: number,
-  month: string,
-  runs: { ok: number; error: number } | null,
-) {
-  return {
-    workspaceId: ctx.workspace.id,
-    monitorId,
-    month: `${month}-01`,
-    days: monthDays(`${month}-01`).map((day, i) => ({
-      day,
-      requests: { ok: 10, degraded: 0, error: 0 },
-      ...(runs && i === 0
-        ? { runs: { ok: runs.ok, degraded: 0, error: runs.error } }
-        : {}),
-    })),
-  };
+// October is still judged on episodes: before its seal, within the runs kept
+const early = new Date(Date.UTC(2026, 10, 3, 12));
+
+/** Runs every 10 minutes from Oct 1; the monitors in `down` fail all of Oct 20. */
+function octoberOutage(down: number[]) {
+  const outage = Date.UTC(2026, 9, 20);
+  return episodesPipesFrom((monitorId) =>
+    runsEvery(Date.UTC(2026, 9, 1), early.getTime(), 600_000, (t) =>
+      down.includes(Number(monitorId)) && t >= outage && t < outage + 86_400_000
+        ? "error"
+        : "ok",
+    ),
+  );
 }
 
 function sealedRow(
@@ -134,12 +129,6 @@ describe("listMonitorReportings strip", () => {
         .update(monitorSlaPolicy)
         .set({ timeZone: "Asia/Tokyo" })
         .where(eq(monitorSlaPolicy.id, policy.id));
-      await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(api.id, "2026-09", { ok: 1900, error: 100 }),
-          frozen(api.id, "2026-08", { ok: 1900, error: 100 }),
-        ]);
       await tx.insert(monitorSlaSealedMonth).values({
         ...sealedRow(policy.id, api.id, "2026-08", false),
         method: "time",
@@ -157,7 +146,7 @@ describe("listMonitorReportings strip", () => {
         "2026-09-01",
         "2026-10-01",
       ]);
-      // UTC-day counts are not re-cut: September has no preview
+      // September was never sealed: no judgement
       expect(listed?.months.slice(-3)).toEqual([
         { month: "2026-08-01", status: "missed", preview: false },
         { month: "2026-09-01", status: "none", preview: false },
@@ -171,17 +160,15 @@ describe("listMonitorReportings strip", () => {
       const api = await insertMonitor(tx, "API");
       const web = await insertMonitor(tx, "Web");
       const policy = await insertPolicy(tx, "Partner", [api.id, web.id]);
-      await tx.insert(frozenMonitorUptime).values([
+      await tx.insert(monitorSlaSealedMonth).values([
         // Sep: API met, Web missed -> missed
-        frozen(api.id, "2026-09", { ok: 2000, error: 0 }),
-        frozen(web.id, "2026-09", { ok: 1900, error: 100 }),
+        sealedRow(policy.id, api.id, "2026-09", true),
+        sealedRow(policy.id, web.id, "2026-09", false),
         // Oct: both met -> met
-        frozen(api.id, "2026-10", { ok: 1990, error: 10 }),
-        frozen(web.id, "2026-10", { ok: 2000, error: 0 }),
-        // Aug: only Web judged, met -> met
-        frozen(web.id, "2026-08", { ok: 2000, error: 0 }),
-        // Jul: frozen without run verdicts -> no data
-        frozen(api.id, "2026-07", null),
+        sealedRow(policy.id, api.id, "2026-10", true),
+        sealedRow(policy.id, web.id, "2026-10", true),
+        // Aug: only Web judged, met -> met; Jul: nothing sealed -> no data
+        sealedRow(policy.id, web.id, "2026-08", true),
       ]);
 
       const [listed] = await listMonitorReportings({
@@ -210,20 +197,20 @@ describe("listMonitorReportings strip", () => {
           status: "none",
           preview: false,
         },
-        { month: "2026-08-01", status: "met", preview: true },
+        { month: "2026-08-01", status: "met", preview: false },
         {
           month: "2026-09-01",
           status: "missed",
-          preview: true,
+          preview: false,
         },
-        { month: "2026-10-01", status: "met", preview: true },
+        { month: "2026-10-01", status: "met", preview: false },
       ]);
       expect(listed?.months[0]).toEqual({
         month: "2025-11-01",
         status: "none",
         preview: false,
       });
-      expect(listed?.missed).toEqual({ months: 1, previews: 1, of: 12 });
+      expect(listed?.missed).toEqual({ months: 1, previews: 0, of: 12 });
     });
   });
 
@@ -232,16 +219,7 @@ describe("listMonitorReportings strip", () => {
       const api = await insertMonitor(tx, "API");
       const web = await insertMonitor(tx, "Web");
       const policy = await insertPolicy(tx, "Sealed", [api.id, web.id]);
-      await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(api.id, "2026-09", { ok: 2000, error: 0 }),
-          frozen(web.id, "2026-09", { ok: 2000, error: 0 }),
-          frozen(api.id, "2026-10", { ok: 1900, error: 100 }),
-          frozen(web.id, "2026-10", { ok: 1900, error: 100 }),
-        ]);
       await tx.insert(monitorSlaSealedMonth).values([
-        // sealed under a stricter reading: the seal wins over the preview
         sealedRow(policy.id, api.id, "2026-09", false),
         sealedRow(policy.id, web.id, "2026-09", true),
         sealedRow(policy.id, api.id, "2026-10", true),
@@ -250,7 +228,8 @@ describe("listMonitorReportings strip", () => {
 
       const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
-        now,
+        now: early,
+        episodesPipes: octoberOutage([web.id]),
       });
 
       expect(listed?.months.slice(-2)).toEqual([
@@ -275,21 +254,17 @@ describe("listMonitorReportings strip", () => {
       const web = await insertMonitor(tx, "Web");
       const policy = await insertPolicy(tx, "Mixed", [api.id, web.id]);
       await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(api.id, "2026-09", { ok: 2000, error: 0 }),
-          frozen(web.id, "2026-10", { ok: 2000, error: 0 }),
-        ]);
-      await tx
         .insert(monitorSlaSealedMonth)
         .values([
           sealedRow(policy.id, api.id, "2026-09", true),
           sealedRow(policy.id, api.id, "2026-10", true),
         ]);
 
+      // web's October is a met preview on episodes
       const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
-        now,
+        now: early,
+        episodesPipes: octoberOutage([]),
       });
 
       expect(listed?.months.slice(-2)).toEqual([
@@ -320,30 +295,28 @@ describe("listMonitorReportings strip", () => {
       const web = await insertMonitor(tx, "Web");
       const policy = await insertPolicy(tx, "Same", [api.id, web.id]);
       await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(api.id, "2026-03", { ok: 1900, error: 100 }),
-          frozen(web.id, "2026-03", { ok: 1900, error: 100 }),
-          frozen(api.id, "2026-06", { ok: 2000, error: 0 }),
-          frozen(web.id, "2026-09", { ok: 1990, error: 11 }),
-        ]);
-      await tx
         .insert(monitorSlaSealedMonth)
-        .values([sealedRow(policy.id, api.id, "2026-06", false)]);
+        .values([
+          sealedRow(policy.id, api.id, "2026-03", false),
+          sealedRow(policy.id, web.id, "2026-03", false),
+          sealedRow(policy.id, api.id, "2026-06", false),
+        ]);
+      const episodesPipes = octoberOutage([web.id]);
 
       const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx, tb: noTinybird },
-        now,
+        now: early,
+        episodesPipes,
       });
       const detail = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
-        now,
-        episodesPipes: noEpisodes,
+        now: early,
+        episodesPipes,
       });
 
       expect(listed?.missed).toEqual(detail.missed);
-      expect(listed?.missed).toEqual({ months: 3, previews: 2, of: 12 });
+      expect(listed?.missed).toEqual({ months: 3, previews: 1, of: 12 });
     });
   });
 
@@ -363,10 +336,6 @@ describe("listMonitorReportings strip", () => {
         strict: false,
         effectiveFrom: "2026-12-01",
       });
-      // a frozen 99.5% that misses under the latest terms
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-10", { ok: 1990, error: 10 }));
       // two hours down in October: 99.731%
       const outage = {
         start: Date.UTC(2026, 9, 7),
@@ -377,8 +346,6 @@ describe("listMonitorReportings strip", () => {
           outage.start <= t && t < outage.end ? "error" : "ok",
         ),
       );
-      const early = new Date(Date.UTC(2026, 10, 3, 12));
-
       const [listed] = await listMonitorReportings({
         ctx: { ...ctx, db: tx },
         now: early,

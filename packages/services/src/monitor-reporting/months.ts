@@ -6,7 +6,6 @@ import { monthRange } from "../frozen-uptime/compute";
 import { type Counts, NO_RUNS } from "../frozen-uptime/quorum";
 import { FREEZE_CUTOFF_MS } from "../frozen-uptime/run";
 import { cutExcused, type Episode, evaluateSlaPeriod } from "./episodes";
-import { evaluateSlaMonth } from "./evaluate";
 import type { Span } from "./excused";
 
 export const LAST_TWELVE = 12;
@@ -14,11 +13,11 @@ export const LAST_TWELVE = 12;
 export type MonitorSlaMonth = {
   month: string;
   /**
-   * sealed: stored with the terms that applied; preview: complete, not sealed
-   * yet; live: the running month, provisional; none: nothing to judge
+   * sealed: stored with the terms that applied; preview: the previous month,
+   * not sealed yet; live: the running month, provisional; none: nothing to judge
    */
   state: "sealed" | "preview" | "live" | "none";
-  /** time: judged on time-weighted episodes; runs: on run counts; null without a judgement basis */
+  /** time: judged on time-weighted episodes; runs: on run counts (legacy seals); null without a judgement */
   method: MonitorSlaMethod | null;
   /** IANA zone the month boundaries are in */
   timeZone: string;
@@ -26,7 +25,7 @@ export type MonitorSlaMonth = {
   terms: { target: number; strict: boolean } | null;
   /** run verdicts; null without any, or when the excused runs could not be read */
   counts: Counts | null;
-  /** run verdicts inside excused windows, dropped from both sides; null with `counts` or when too old to count */
+  /** run verdicts inside excused windows, dropped from both sides; null with `counts` */
   excused: Counts | null;
   uptime: number | null;
   met: boolean | null;
@@ -37,8 +36,6 @@ export type MonitorSlaMonth = {
   unmeasuredMs: number | null;
   /** measured share of the covered, non-excused time; thousandths of a percent */
   coverage: number | null;
-  /** time-zone: an unsealed month in a non-UTC zone older than the runs Tinybird keeps */
-  unavailable: "time-zone" | null;
   sealed: { at: Date; target: number; strict: boolean } | null;
 };
 
@@ -174,64 +171,12 @@ export function coveredSpan(
   return start < end ? { start, end } : null;
 }
 
-/** Excused runs for a cell: counts, nothing to excuse, not readable, or too old to count. */
-export type CellExcused = Counts | "unavailable" | "expired" | undefined;
-
-function judged(args: {
-  month: string;
-  state: "preview" | "live";
-  counts: Counts;
-  excused: CellExcused;
-  policy: { target: number; strict: boolean };
-  timeZone: string;
-}): MonitorSlaMonth {
-  const { month, state, counts, timeZone } = args;
-  const runs = counts.ok + counts.degraded + counts.error;
-  const base = {
-    month,
-    state,
-    method: "runs",
-    timeZone,
-    ...NO_TIME,
-    unavailable: null,
-    sealed: null,
-  } as const;
-  if (runs === 0 || args.excused === "unavailable") {
-    return {
-      ...base,
-      method: null,
-      terms: null,
-      counts: null,
-      excused: null,
-      uptime: null,
-      met: null,
-    };
-  }
-  // too old to count: judged without its windows
-  const excused = args.excused === "expired" ? null : (args.excused ?? NO_RUNS);
-  const { met, uptime } = evaluateSlaMonth({
-    counts,
-    excused: excused ?? undefined,
-    target: args.policy.target,
-    strict: args.policy.strict,
-  });
-  return {
-    ...base,
-    terms: { target: args.policy.target, strict: args.policy.strict },
-    counts,
-    excused,
-    uptime,
-    met,
-  };
-}
-
 /** A month with nothing to judge. */
 export function emptyMonth(args: {
   month: string;
   state: MonitorSlaMonth["state"];
   timeZone: string;
   method?: MonitorSlaMethod | null;
-  unavailable?: MonitorSlaMonth["unavailable"];
 }): MonitorSlaMonth {
   return {
     month: args.month,
@@ -244,7 +189,6 @@ export function emptyMonth(args: {
     uptime: null,
     met: null,
     ...NO_TIME,
-    unavailable: args.unavailable ?? null,
     sealed: null,
   };
 }
@@ -316,65 +260,40 @@ export function timeMonth(args: {
     excusedMs: result.excusedMs,
     unmeasuredMs: result.unmeasuredMs,
     coverage: result.coverage,
-    unavailable: null,
     sealed: null,
   };
 }
 
-/**
- * A month from what is stored: the seal wins, else the frozen counts under
- * `policy` terms. Frozen days are UTC days, so a non-UTC zone has no preview.
- */
+/** A month from its seal, with the terms that applied; nothing to judge without one. */
 export function storedMonth(args: {
   month: string;
   seal: typeof monitorSlaSealedMonth.$inferSelect | undefined;
-  frozen: Counts | undefined;
-  excused?: CellExcused;
-  policy: { target: number; strict: boolean; timeZone?: string };
+  timeZone: string;
 }): MonitorSlaMonth {
-  const { month, seal, frozen, policy } = args;
-  const timeZone = policy.timeZone ?? "UTC";
-  if (seal) {
-    return {
-      month,
-      state: "sealed",
-      method: seal.method,
-      timeZone: seal.timeZone,
-      terms: { target: seal.target, strict: seal.strict },
-      counts: { ok: seal.ok, degraded: seal.degraded, error: seal.error },
-      excused: {
-        ok: seal.excusedOk,
-        degraded: seal.excusedDegraded,
-        error: seal.excusedError,
-      },
-      uptime: seal.uptime,
-      met: seal.met,
-      measuredMs: seal.measuredMs,
-      downMs: seal.downMs,
-      excusedMs: seal.excusedMs,
-      unmeasuredMs: seal.unmeasuredMs,
-      coverage: seal.coverage,
-      unavailable: null,
-      sealed: { at: seal.sealedAt, target: seal.target, strict: seal.strict },
-    };
-  }
-  if (timeZone !== "UTC") {
-    return emptyMonth({
-      month,
-      state: "none",
-      timeZone,
-      unavailable: "time-zone",
-    });
-  }
-  if (!frozen) return emptyMonth({ month, state: "none", timeZone });
-  return judged({
+  const { month, seal } = args;
+  if (!seal)
+    return emptyMonth({ month, state: "none", timeZone: args.timeZone });
+  return {
     month,
-    state: "preview",
-    counts: frozen,
-    excused: args.excused,
-    policy,
-    timeZone,
-  });
+    state: "sealed",
+    method: seal.method,
+    timeZone: seal.timeZone,
+    terms: { target: seal.target, strict: seal.strict },
+    counts: { ok: seal.ok, degraded: seal.degraded, error: seal.error },
+    excused: {
+      ok: seal.excusedOk,
+      degraded: seal.excusedDegraded,
+      error: seal.excusedError,
+    },
+    uptime: seal.uptime,
+    met: seal.met,
+    measuredMs: seal.measuredMs,
+    downMs: seal.downMs,
+    excusedMs: seal.excusedMs,
+    unmeasuredMs: seal.unmeasuredMs,
+    coverage: seal.coverage,
+    sealed: { at: seal.sealedAt, target: seal.target, strict: seal.strict },
+  };
 }
 
 export type MonitorSlaStripMonth = {

@@ -1,9 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import {
-  frozenMonitorUptime,
-  monitor,
-  monitorSlaPolicyToMonitor,
-} from "@openstatus/db/src/schema";
+import { monitor, monitorSlaPolicyToMonitor } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createMonitor,
@@ -21,11 +17,14 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
-import { monthDays } from "../../frozen-uptime/compute";
 import { createMonitorReporting } from "../create";
 import { getMonitorReporting } from "../get";
 import { updateMonitorReporting } from "../update";
-import { noEpisodes } from "./fixtures/episodes-pipes";
+import {
+  episodesPipesFrom,
+  noEpisodes,
+  runsEvery,
+} from "./fixtures/episodes-pipes";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 
@@ -71,24 +70,6 @@ afterAll(async () => {
     await db.delete(monitor).where(eq(monitor.workspaceId, id));
   }
 });
-
-/** A frozen month with its run verdicts on the first day. */
-function frozen(
-  monitorId: number,
-  month: string,
-  runs: { ok: number; degraded: number; error: number },
-) {
-  return {
-    workspaceId: ownerCtx.workspace.id,
-    monitorId,
-    month: `${month}-01`,
-    days: monthDays(`${month}-01`).map((day, i) => ({
-      day,
-      requests: { ok: 10, degraded: 0, error: 0 },
-      ...(i === 0 ? { runs } : {}),
-    })),
-  };
-}
 
 describe("updateMonitorReporting", () => {
   test("an owner changes name, target and strict, audited with before and after", async () => {
@@ -138,27 +119,36 @@ describe("updateMonitorReporting", () => {
     });
   });
 
-  test("strict turns a met month into a miss when slow runs count as down", async () => {
+  test("strict applies from the next month: the previous one keeps counting slow time as up", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await createMonitorReporting({
         ctx,
         input: { name: "Strict", target: 99_500, monitorIds: [apiId] },
       });
-      // 1000 runs, 4 slow, 2 failed: 99.8% lenient, 99.4% strict
       await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(apiId, "2026-10", { ok: 994, degraded: 4, error: 2 }));
+        .update(monitorSlaPolicyToMonitor)
+        .set({ createdAt: new Date(Date.UTC(2026, 0, 1)) })
+        .where(eq(monitorSlaPolicyToMonitor.monitorSlaPolicyId, policy.id));
+      // October is still judged on episodes; all of Oct 20 slow
+      const early = new Date(Date.UTC(2026, 10, 3, 12));
+      const slow = Date.UTC(2026, 9, 20);
+      const episodesPipes = episodesPipesFrom(() =>
+        runsEvery(Date.UTC(2026, 9, 1), early.getTime(), 600_000, (t) =>
+          t >= slow && t < slow + 86_400_000 ? "degraded" : "ok",
+        ),
+      );
 
       const read = () =>
         getMonitorReporting({
           ctx,
           input: { id: policy.id },
-          now,
-          episodesPipes: noEpisodes,
+          now: early,
+          episodesPipes,
         });
       expect((await read()).monitors[0]?.months.at(-2)).toMatchObject({
-        uptime: 99_800,
+        state: "preview",
+        uptime: 100_000,
         met: true,
       });
 
@@ -168,16 +158,18 @@ describe("updateMonitorReporting", () => {
       });
 
       const after = await read();
+      expect(after.strict).toBe(true);
       expect(after.monitors[0]?.months.at(-2)).toMatchObject({
         state: "preview",
-        uptime: 99_400,
-        met: false,
+        terms: { strict: false },
+        uptime: 100_000,
+        met: true,
       });
-      expect(after.missed.months).toBe(1);
+      expect(after.missed.months).toBe(0);
     });
   });
 
-  test("adding a monitor shows its earlier months as previews, removing keeps the others' start", async () => {
+  test("an added monitor is covered from when it joined, removing keeps the others' start", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await createMonitorReporting({
@@ -189,10 +181,6 @@ describe("updateMonitorReporting", () => {
         .update(monitorSlaPolicyToMonitor)
         .set({ createdAt: longAgo })
         .where(eq(monitorSlaPolicyToMonitor.monitorId, apiId));
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(webId, "2026-03", { ok: 100, degraded: 0, error: 0 }));
-
       const added = await updateMonitorReporting({
         ctx,
         input: { id: policy.id, monitorIds: [webId, apiId] },
@@ -207,8 +195,8 @@ describe("updateMonitorReporting", () => {
       });
       const web = res.monitors.find((m) => m.id === webId);
       expect(web?.months.find((m) => m.month === "2026-03-01")).toMatchObject({
-        state: "preview",
-        met: true,
+        state: "none",
+        met: null,
       });
 
       const memberships = await tx

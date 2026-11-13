@@ -85,13 +85,6 @@ export function ReportingExcusedWindows({
           </DataTableEmpty>
         }
       />
-      {!archived && policy.excusedExpired ? (
-        <p className="text-warning text-sm">
-          Some months not sealed are shown without their excused windows: the
-          checks inside them are older than 45 days and can no longer be
-          counted.
-        </p>
-      ) : null}
     </Section>
   );
 }

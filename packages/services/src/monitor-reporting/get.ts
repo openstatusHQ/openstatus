@@ -8,7 +8,6 @@ import {
 import { loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import type { UptimeRunsRangePipes } from "../frozen-uptime/run";
 import { excusedWindowLock } from "./excused";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
@@ -91,14 +90,13 @@ export async function getMonitorReportingSummary(args: {
 
 /**
  * A policy with each monitor's months in its time zone: sealed months as
- * stored, the running and previous month on episodes, older ones as previews.
+ * stored, the running and previous month on episodes, older ones empty.
  */
 export async function getMonitorReporting(args: {
   ctx: ServiceContext;
   input: GetMonitorReportingInput;
   now?: Date;
   episodesPipes?: SlaEpisodesPipes;
-  runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;
@@ -119,7 +117,6 @@ export async function getMonitorReporting(args: {
     now,
     live: true,
     episodesPipes: args.episodesPipes,
-    runsRangePipes: args.runsRangePipes,
     sleep: args.sleep,
   });
 
@@ -152,7 +149,6 @@ export async function getMonitorReporting(args: {
     excusedWindows: await loadExcusedWindows(ctx, policy, now),
     /** episodes failed to load for some monitor: recent months may be incomplete */
     liveIncomplete: judged.liveIncomplete,
-    excusedExpired: judged.excusedExpired,
     missed: {
       months: missedMonths.size,
       previews: missedMonths.size - sealedMissMonths.size,

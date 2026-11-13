@@ -6,7 +6,6 @@ import {
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { ValidationError } from "../errors";
-import type { UptimeRunsRangePipes } from "../frozen-uptime/run";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
@@ -61,7 +60,6 @@ export async function exportMonitorReporting(args: {
   input: ExportMonitorReportingInput;
   now?: Date;
   episodesPipes?: SlaEpisodesPipes;
-  runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{ filename: string; csv: string }> {
   const { ctx } = args;
@@ -96,23 +94,14 @@ export async function exportMonitorReporting(args: {
     now,
     live: input.includeLive,
     episodesPipes: args.episodesPipes,
-    runsRangePipes: args.runsRangePipes,
     sleep: args.sleep,
   });
 
   const lines = [
     `# ${MONITOR_SLA_METHOD}`,
-    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement.${
-      judged.monitors.some((m) => m.months.some((mm) => mm.unavailable))
-        ? ` Unsealed months older than 45 days cannot be judged in ${timeZone}: their runs are kept per UTC day only.`
-        : ""
-    }${
-      judged.excusedExpired
-        ? " Some unsealed months are judged without their excused windows: the runs inside them are older than 45 days and can no longer be counted."
-        : ""
-    } Uptime is in percent, floored to three decimals. ${
+    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement. Months before the previous one that were never sealed have no judgement. Uptime is in percent, floored to three decimals. ${
       input.includeLive
-        ? "Live months are provisional: they are not frozen or sealed yet and will change."
+        ? "Live months are provisional: they are not sealed yet and will change."
         : "Live months are not included."
     }${
       judged.liveIncomplete

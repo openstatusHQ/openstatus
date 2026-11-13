@@ -25,7 +25,7 @@ function runsNote(m: PolicyMonth): string | null {
   return excused > 0 ? `${total} runs, ${excused} excused` : `${total} runs`;
 }
 
-/** How the month was judged: run count (legacy seals, UTC previews) or time, with coverage. */
+/** How the month was judged: run count (legacy seals) or time, with coverage. */
 function basisNote(m: PolicyMonth): string | null {
   if (m.method === "runs") {
     const runs = runsNote(m);
@@ -46,9 +46,6 @@ function basisNote(m: PolicyMonth): string | null {
 
 function monthTitle(m: PolicyMonth): string {
   const label = `${formatSlaMonth(m.month, { year: true })} (${m.timeZone})`;
-  if (m.unavailable === "time-zone") {
-    return `${label}: unavailable in this time zone. Runs older than 45 days are only kept per UTC day, so the month cannot be cut at local midnight.`;
-  }
   const basis = basisNote(m);
   const suffix = basis ? ` (${basis})` : "";
   if (m.uptime === null && m.counts !== null) {
@@ -77,9 +74,7 @@ function monthTitle(m: PolicyMonth): string {
     return `${result}, sealed ${at} against ${formatSlaTarget(m.sealed.target)}%, ${slow}${suffix}`;
   }
   const terms = m.terms ? ` against ${formatSlaTarget(m.terms.target)}%` : "";
-  return m.method === "runs"
-    ? `${result}, preview under today's terms${terms}${suffix}`
-    : `${result}, preview until sealed${terms}${suffix}`;
+  return `${result}, preview until sealed${terms}${suffix}`;
 }
 
 function MonthCell({ month }: { month: PolicyMonth }) {

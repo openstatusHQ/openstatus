@@ -1,5 +1,4 @@
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
@@ -17,7 +16,6 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
-import { monthDays } from "../../frozen-uptime/compute";
 import { exportMonitorReporting, MONITOR_SLA_METHOD } from "../export";
 import { getMonitorReporting } from "../get";
 import {
@@ -93,31 +91,6 @@ async function insertPolicy(
   return policy;
 }
 
-function frozen(
-  monitorId: number,
-  month: string,
-  runs: { ok: number; degraded?: number; error: number },
-) {
-  return {
-    workspaceId: ctx.workspace.id,
-    monitorId,
-    month: `${month}-01`,
-    days: monthDays(`${month}-01`).map((day, i) => ({
-      day,
-      requests: { ok: 10, degraded: 0, error: 0 },
-      ...(i === 0
-        ? {
-            runs: {
-              ok: runs.ok,
-              degraded: runs.degraded ?? 0,
-              error: runs.error,
-            },
-          }
-        : {}),
-    })),
-  };
-}
-
 function parse(csv: string) {
   const lines = csv.trimEnd().split("\r\n");
   const comments = lines.filter((l) => l.startsWith("#"));
@@ -130,12 +103,23 @@ describe("exportMonitorReporting", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
       const policy = await insertPolicy(tx, [api.id]);
-      await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(api.id, "2026-09", { ok: 1990, error: 10 }),
-          frozen(api.id, "2026-10", { ok: 1984, degraded: 5, error: 11 }),
-        ]);
+      await tx.insert(monitorSlaSealedMonth).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        monitorId: api.id,
+        month: "2026-09-01",
+        method: "time",
+        target: 99_500,
+        strict: false,
+        ok: 1990,
+        degraded: 0,
+        error: 10,
+        total: 2000,
+        up: 1990,
+        uptime: 99_500,
+        met: true,
+        sealedAt: new Date(Date.UTC(2026, 9, 4)),
+      });
 
       const calls: EpisodesCall[] = [];
       const res = await exportMonitorReporting({
@@ -152,6 +136,9 @@ describe("exportMonitorReporting", () => {
       expect(comments[0]).toBe(`# ${MONITOR_SLA_METHOD}`);
       expect(comments[1]).toContain(`Generated ${now.toISOString()}`);
       expect(comments[1]).toContain("Live months are not included.");
+      expect(comments[1]).toContain(
+        "Months before the previous one that were never sealed have no judgement.",
+      );
       expect(header).toBe(
         "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
       );
@@ -160,10 +147,10 @@ describe("exportMonitorReporting", () => {
         `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,,,,,,UTC,,,,,`,
       );
       expect(rows[10]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,preview,1990,0,10,0,99.500,yes,,runs,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,sealed,1990,0,10,0,99.500,yes,2026-10-04T00:00:00.000Z,time,UTC,,,,,`,
       );
       expect(rows[11]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,preview,1984,5,11,0,99.450,no,,runs,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,none,,,,,,,,,UTC,,,,,`,
       );
     });
   });
@@ -173,12 +160,6 @@ describe("exportMonitorReporting", () => {
       const a = await insertMonitor(tx, { name: "A" });
       const b = await insertMonitor(tx, { name: "B", jobType: "tcp" });
       const policy = await insertPolicy(tx, [a.id, b.id], { strict: true });
-      await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(a.id, "2026-08", { ok: 990, degraded: 7, error: 3 }),
-          frozen(b.id, "2026-10", { ok: 2000, degraded: 1, error: 0 }),
-        ]);
       await tx.insert(monitorSlaSealedMonth).values({
         workspaceId: ctx.workspace.id,
         monitorSlaPolicyId: policy.id,
@@ -255,11 +236,6 @@ describe("exportMonitorReporting", () => {
         "",
         "",
       ]);
-      const strictPreview = cells.find(
-        (c) => c[3] === String(a.id) && c[6] === "2026-08",
-      );
-      expect(strictPreview?.slice(1, 3)).toEqual(["99.500", "yes"]);
-      expect(strictPreview?.[12]).toBe("99.000");
     });
   });
 
@@ -356,9 +332,6 @@ describe("exportMonitorReporting", () => {
       const policy = await insertPolicy(tx, [api.id], {
         timeZone: "America/New_York",
       });
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-10", { ok: 1990, error: 10 }));
       const calls: EpisodesCall[] = [];
       const episodesPipes = episodesPipesFrom(
         () => runsEvery(Date.UTC(2026, 9, 1), now.getTime(), 10 * MIN),
@@ -380,9 +353,6 @@ describe("exportMonitorReporting", () => {
       const { comments, rows } = parse(res.csv);
       expect(comments[1]).toContain(
         "Months are calendar months in America/New_York.",
-      );
-      expect(comments[1]).toContain(
-        "Unsealed months older than 45 days cannot be judged in America/New_York",
       );
       // midnight Nov 1 in New York is still EDT: the zone falls back at 2am
       expect(calls).toEqual([

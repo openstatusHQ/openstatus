@@ -1,6 +1,5 @@
 import { eq } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaExcusedWindow,
   monitorSlaPolicy,
@@ -15,8 +14,6 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { monthDays } from "../../frozen-uptime/compute";
-import type { UptimeRunsRangePipes } from "../../frozen-uptime/run";
 import { exportMonitorReporting } from "../export";
 import { getMonitorReporting } from "../get";
 import { listMonitorReportings } from "../list";
@@ -31,6 +28,8 @@ const MIN = 60_000;
 const at = (month: number, d: number, h = 0, m = 0) =>
   Date.UTC(2026, month, d, h, m);
 const now = new Date(at(10, 15, 12));
+// October is still judged on episodes: before its seal, within the runs kept
+const previewNow = new Date(at(10, 3, 12));
 const sealNow = new Date(at(10, 5));
 
 // one run every 10 minutes from Oct 1; runs inside an outage failed
@@ -40,37 +39,6 @@ const OUTAGES = [
 ];
 const STEP = 10 * MIN;
 
-function runsIn(from: number, to: number) {
-  let ok = 0;
-  let error = 0;
-  const first = Math.max(Math.ceil((from - at(9, 1)) / STEP), 0);
-  for (let t = at(9, 1) + first * STEP; t < to; t += STEP) {
-    if (OUTAGES.some((o) => o.start <= t && t < o.end)) error++;
-    else ok++;
-  }
-  return { ok, degraded: 0, error };
-}
-
-function rangePipes(
-  calls: { fromDate: number; toDate: number }[] = [],
-): UptimeRunsRangePipes {
-  const pipe = async (p: {
-    monitorIds: string[];
-    fromDate: number;
-    toDate: number;
-  }) => {
-    calls.push({ fromDate: p.fromDate, toDate: p.toDate });
-    return {
-      data: p.monitorIds.map((monitorId) => ({
-        monitorId,
-        ...runsIn(p.fromDate, p.toDate),
-      })),
-    };
-  };
-  return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
-}
-
-// the same runs as episodes, for the months judged on time
 const episodesPipes = episodesPipesFrom(() =>
   runsEvery(at(9, 1), at(11, 31), STEP, (t) =>
     OUTAGES.some((o) => o.start <= t && t < o.end) ? "error" : "ok",
@@ -87,12 +55,7 @@ beforeAll(async () => {
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 
-async function setup(
-  tx: Tx,
-  opts: {
-    frozenOctober?: { ok: number; error: number };
-  } = {},
-) {
+async function setup(tx: Tx) {
   const api = await tx
     .insert(monitor)
     .values({
@@ -121,18 +84,6 @@ async function setup(
     monitorId: api.id,
     createdAt: new Date(at(9, 1)),
   });
-  // October: 4464 runs, the six of the Oct 20 outage failed
-  const runs = opts.frozenOctober ?? { ok: 4458, error: 6 };
-  await tx.insert(frozenMonitorUptime).values({
-    workspaceId: ctx.workspace.id,
-    monitorId: api.id,
-    month: "2026-10-01",
-    days: monthDays("2026-10-01").map((day, i) => ({
-      day,
-      requests: { ok: 10, degraded: 0, error: 0 },
-      ...(i === 0 ? { runs: { ...runs, degraded: 0 } } : {}),
-    })),
-  });
   return { api, policy };
 }
 
@@ -151,13 +102,12 @@ async function excuse(tx: Tx, policyId: number, from: number, to: number) {
     .get();
 }
 
-function get(tx: Tx, id: number, at = now) {
+function get(tx: Tx, id: number, at = previewNow) {
   return getMonitorReporting({
     ctx: { ...ctx, db: tx },
     input: { id },
     now: at,
     episodesPipes,
-    runsRangePipes: rangePipes(),
     sleep,
   });
 }
@@ -217,7 +167,7 @@ describe("excused windows in a month's figure", () => {
       expect(cell(detail, "2026-11-01")).toMatchObject({
         state: "live",
         method: "time",
-        counts: { ok: 2082, degraded: 0, error: 6 },
+        counts: { ok: 354, degraded: 0, error: 6 },
         excused: { ok: 0, degraded: 0, error: 6 },
         excusedMs: 60 * MIN,
         downMs: 0,
@@ -226,7 +176,7 @@ describe("excused windows in a month's figure", () => {
     });
   });
 
-  test("the list asks no Tinybird: an unsealed month with a window is a preview of its frozen counts", async () => {
+  test("the list asks no Tinybird for a month past its runs: never sealed, it has no judgement", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
@@ -243,13 +193,12 @@ describe("excused windows in a month's figure", () => {
         now,
       });
       const item = list.find((p) => p.id === policy.id);
-      // 4458 of 4464 is below 99.9% before the window is applied
       expect(item?.months.at(-1)).toEqual({
         month: "2026-10-01",
-        status: "missed",
-        preview: true,
+        status: "none",
+        preview: false,
       });
-      expect(item?.missed).toEqual({ months: 1, previews: 1, of: 12 });
+      expect(item?.missed).toEqual({ months: 0, previews: 0, of: 12 });
     });
   });
 
@@ -283,9 +232,8 @@ describe("excused windows in a month's figure", () => {
       const { csv } = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
-        now,
+        now: previewNow,
         episodesPipes,
-        runsRangePipes: rangePipes(),
         sleep,
       });
       const [header, row] = csv.trim().split("\r\n").slice(2);
@@ -406,71 +354,56 @@ describe("sealing with excused windows", () => {
   });
 });
 
-describe("excused windows too old to count", () => {
+describe("months past the runs kept", () => {
   const december = new Date(at(11, 10, 12));
 
-  test("an unsealed month falls back to a preview of its frozen counts, on the page and in the export", async () => {
+  test("a month never sealed has no judgement, on the page and in the export", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
-      const calls: { fromDate: number; toDate: number }[] = [];
-      const detail = await getMonitorReporting({
-        ctx: { ...ctx, db: tx },
-        input: { id: policy.id },
-        now: december,
-        episodesPipes,
-        runsRangePipes: rangePipes(calls),
-        sleep,
-      });
+      const detail = await get(tx, policy.id, december);
       expect(cell(detail, "2026-10-01")).toMatchObject({
-        state: "preview",
-        counts: { ok: 4458, degraded: 0, error: 6 },
-        excused: null,
-        met: false,
-        uptime: 99_865,
+        state: "none",
+        method: null,
+        counts: null,
+        met: null,
+        uptime: null,
       });
-      expect(detail.excusedExpired).toBe(true);
-      expect(calls).toEqual([]);
 
       const { csv } = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now: december,
         episodesPipes,
-        runsRangePipes: rangePipes(),
         sleep,
       });
       const [, comment, header, row] = csv.trim().split("\r\n");
       expect(comment).toContain(
-        "Some unsealed months are judged without their excused windows",
+        "Months before the previous one that were never sealed have no judgement.",
       );
       const columns = header.split(",");
       const values = row.split(",");
       const value = (name: string) => values[columns.indexOf(name)];
-      expect(value("state")).toBe("preview");
-      expect(value("excused_runs")).toBe("");
-      expect(value("uptime")).toBe("99.865");
-      expect(value("met")).toBe("no");
+      expect(value("state")).toBe("none");
+      expect(value("uptime")).toBe("");
+      expect(value("met")).toBe("");
     });
   });
 });
 
 describe("export without live months", () => {
-  test("reads no excused runs for the live months it leaves out", async () => {
+  test("leaves the live month out", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       // November on Dec 5 is a preview judged on episodes; December is left out
       await excuse(tx, policy.id, at(10, 2), at(10, 2, 1));
-      const calls: { fromDate: number; toDate: number }[] = [];
       const { csv } = await exportMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, from: "2026-10", to: "2026-11" },
         now: new Date(at(11, 5)),
         episodesPipes,
-        runsRangePipes: rangePipes(calls),
         sleep,
       });
-      expect(calls).toEqual([]);
       expect(csv).toContain("2026-11,preview");
       expect(csv).not.toContain("live");
     });

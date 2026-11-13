@@ -1,7 +1,5 @@
 import { and, asc, eq, gte, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
-  frozenMonitorUptimeDaySchema,
   monitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
@@ -10,7 +8,6 @@ import {
 
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import { sumMonthRuns } from "./evaluate";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
@@ -104,24 +101,6 @@ export async function listMonitorReportings(args: {
     .map((months) => months[0])
     .reduce((a, b) => (a < b ? a : b));
   const monitorIds = [...new Set(links.map((l) => l.id))];
-  const frozenRows =
-    monitorIds.length === 0
-      ? []
-      : await db
-          .select({
-            monitorId: frozenMonitorUptime.monitorId,
-            month: frozenMonitorUptime.month,
-            days: frozenMonitorUptime.days,
-          })
-          .from(frozenMonitorUptime)
-          .where(
-            and(
-              eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
-              inArray(frozenMonitorUptime.monitorId, monitorIds),
-              gte(frozenMonitorUptime.month, firstMonth),
-            ),
-          )
-          .all();
   const sealedRows =
     monitorIds.length === 0
       ? []
@@ -156,12 +135,6 @@ export async function listMonitorReportings(args: {
         )
         .all()
     ).map((r) => r.id),
-  );
-  const frozen = new Map(
-    frozenRows.map((r) => [
-      monthCellKey(r.monitorId, r.month),
-      sumMonthRuns(frozenMonitorUptimeDaySchema.array().parse(r.days)),
-    ]),
   );
   const sealed = new Map(
     sealedRows.map((r) => [
@@ -265,8 +238,7 @@ export async function listMonitorReportings(args: {
             storedMonth({
               month,
               seal: sealed.get(key),
-              frozen: frozen.get(monthCellKey(m.id, month)),
-              policy,
+              timeZone: policy.timeZone,
             })
           );
         }),

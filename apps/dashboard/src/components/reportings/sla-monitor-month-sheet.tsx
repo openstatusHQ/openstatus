@@ -76,9 +76,7 @@ const unavailableText: Record<
   failed:
     "The checks of this month could not be loaded. Try again in a minute.",
   expired:
-    "Runs this old are no longer kept, so what used the budget cannot be shown.",
-  "time-zone":
-    "After 45 days runs are kept per UTC day only, so this month cannot be judged in the reporting's time zone.",
+    "This month was never sealed and its checks are no longer kept, so it has no judgement.",
 };
 
 /** One monitor's running month under the reporting. */

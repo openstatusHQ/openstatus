@@ -251,29 +251,18 @@ describe("timeMonth", () => {
 });
 
 describe("storedMonth", () => {
-  const policy = { target: 99_000, strict: false };
-  test("no judgement basis carries no method", () => {
-    const noRuns = storedMonth({
-      month: "2026-01-01",
-      seal: undefined,
-      frozen: { ok: 0, degraded: 0, error: 0 },
-      policy,
-    });
-    expect(noRuns).toMatchObject({ method: null, met: null, counts: null });
-    const unreadable = storedMonth({
-      month: "2026-01-01",
-      seal: undefined,
-      frozen: { ok: 10, degraded: 0, error: 0 },
-      excused: "unavailable",
-      policy,
-    });
-    expect(unreadable).toMatchObject({ method: null, met: null });
-    const judged = storedMonth({
-      month: "2026-01-01",
-      seal: undefined,
-      frozen: { ok: 10, degraded: 0, error: 0 },
-      policy,
-    });
-    expect(judged).toMatchObject({ method: "runs", met: true });
+  test("a month never sealed has nothing to judge, whatever its zone", () => {
+    for (const timeZone of ["UTC", "Europe/Berlin"]) {
+      expect(
+        storedMonth({ month: "2026-01-01", seal: undefined, timeZone }),
+      ).toMatchObject({
+        state: "none",
+        method: null,
+        met: null,
+        uptime: null,
+        counts: null,
+        timeZone,
+      });
+    }
   });
 });

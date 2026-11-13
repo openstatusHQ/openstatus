@@ -65,7 +65,7 @@ Excused time is the time inside the reporting's [excused windows](#excused-windo
 - A month is **met** when its uptime is at or above the target. A month exactly at the target is met. The comparison is exact, on whole milliseconds.
 - Uptime is shown with three decimals, **rounded down**, so a missed month never displays as its target.
 - A month without measured time has no judgement. It shows an em dash (`—`): never 100%, never a miss. The same holds for a month whose time was all excused.
-- Months sealed before time weighting, and older unsealed months in a `UTC` reporting, are judged by **run count** the same way, with runs in place of time. The page and the export say so (method `runs`).
+- Months sealed before time weighting are judged by **run count** the same way, with runs in place of time. The page and the export say so (method `runs`).
 
 ### Strict mode
 
@@ -78,28 +78,24 @@ The reporting page shows a table of its monitors against the last 12 or 24 month
 | State | When | Figures from | Target and strict mode |
 |---|---|---|---|
 | Sealed | The month was sealed for this monitor and reporting. | The counts stored at sealing. | The ones stored at sealing. |
-| Preview | The month is over, its run counts are frozen and it was not sealed. | The frozen run counts. | The reporting's current ones. |
-| Live, provisional | The running month, and the previous month while its run counts are not frozen yet (at most 45 days after it began). | Run counts so far. | The reporting's current ones. |
-| None | No figures exist for the month. | — | — |
+| Preview | The previous month, over and not sealed yet (at most 45 days after it began). | Its checks. | The ones that will seal it. |
+| Live, provisional | The running month. | Its checks so far. | The ones in effect this month. |
+| None | Any other month: before the reporting or the monitor's membership, or never sealed. | — | — |
 
 - Sealed cells are filled; preview cells have a dashed border; live cells use a distinct tone. Hover a sealed cell for its seal date and stored terms.
-- Previews follow every edit of the reporting and reach back before the reporting existed, so you can see how a target would have fared.
+- Months are only judged from their own checks or their seal. A month older than the previous one that was never sealed has no figure.
 - A live month below target is a miss in progress, not a result. If recent counts cannot be loaded, the page still renders and says the recent weeks may be incomplete.
-
-### Freezing
-
-After a month ends, openstatus freezes each monitor's run counts for it. This is retried daily until it succeeds. Daily run counts are only available for the last 45 days, so a month that is not frozen within 45 days of its start can never get a figure and shows none.
 
 ### Sealing
 
-A daily task seals the previous month. For each monitor in a reporting it seals the month when all of these hold:
+A task seals the previous month. For each monitor in a reporting it seals the month when all of these hold:
 
-- At least 72 hours have passed since the month ended, so a reporting can still be corrected or deleted.
+- At least 72 hours have passed since the month ended in the reporting's time zone, so a reporting can still be corrected or deleted. Checks are kept for 45 days, so a month not sealed within 45 days of its start is never sealed.
 - The reporting, and the monitor's membership in it, both existed before the month ended. A reporting created on November 5 is first sealed for November, never for October.
-- The month has runs, its run counts are frozen and the runs inside its excused windows load. If not, the next day tries again.
+- The month's checks load. If not, the next run tries again.
 - The reporting is not archived, the monitor is not deleted and the workspace's plan includes reportings.
 
-Sealing stores the run counts, the excused run counts, the excused windows that applied, the target and the strict setting of that moment, and never changes afterwards. A month whose runs were all excused is sealed without a judgement and keeps its windows. A month that is still unsealed when it stops being the previous month stays a preview for good.
+Sealing stores the measured, down, excused and unmeasured time, the run counts, the excused windows that applied, the target and the strict setting of that moment, and the stretches that used the budget. It never changes afterwards. A month whose time was all excused is sealed without a judgement and keeps its windows. A month that is still unsealed when it stops being the previous month shows no figure.
 
 ### Missed months
 
@@ -108,7 +104,7 @@ Sealing stores the run counts, the excused run counts, the excused windows that 
 - **Per monitor:** how many of those months it missed.
 - **Per reporting:** how many of those months had at least one monitor miss. This is the number a "three missed months in twelve" clause reads.
 
-Both count sealed and preview months, and say how many of the misses are previews. Live months never count. The reporting list shows the same twelve months as a strip per reporting: a month is missed when any monitor missed it, met when at least one monitor was judged and none missed, and empty otherwise. The list does not apply excused windows to unsealed months: it shows them as previews of the frozen counts, and the reporting page has the excused figure.
+Both count sealed and preview months, and say how many of the misses are previews. Live months never count. The reporting list shows the same twelve months as a strip per reporting: a month is missed when any monitor missed it, met when at least one monitor was judged and none missed, and empty otherwise.
 
 When a sealed month misses its target, the workspace owners get one email per reporting and month, listing the monitors that missed and linking to the reporting.
 
@@ -130,12 +126,10 @@ An excused window is a stretch of time whose runs count for no monitor in the re
 - The add dialog shows when the last window of the same kind started and how many of the last two complete months had a miss. It refuses nothing on that account: contract rules about which windows qualify, such as notice periods or weekly limits, are not checked.
 - Adding and removing a window are recorded in the audit log.
 
-The runs inside a window are counted from the same run verdicts as the month. openstatus keeps them at that resolution for about 45 days; a month is normally sealed well within that. If a month is still unsealed when its excused runs are older than that, for example for a monitor added to the reporting afterwards, its cell shows the month's figure without its excused windows, as a preview like the list, and the page and the export say so.
-
 ## Editing, archiving and deleting
 
-- Editing the name, target, strict setting or monitors updates previews and live months at once. Sealed months keep the terms they were sealed with.
-- Adding a monitor shows its earlier months as previews.
+- A new target or strict setting applies from the next month in the reporting's time zone. Sealed months keep the terms they were sealed with.
+- Adding a monitor judges it from the moment it joined; earlier months show none.
 - Removing a monitor keeps its sealed months. They are hidden until the monitor is added back.
 - Deleting a monitor removes it from every reporting.
 - A reporting without a sealed month can be deleted.

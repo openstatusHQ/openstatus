@@ -1,7 +1,5 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lte } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
-  frozenMonitorUptimeDaySchema,
   monitor,
   monitorSlaExcusedWindow,
   monitorSlaPolicy,
@@ -22,19 +20,9 @@ import {
   ValidationError,
 } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
-import {
-  type UptimeRunsPipes,
-  type UptimeRunsRangePipes,
-  uptimeRunsRangePipes,
-} from "../frozen-uptime/run";
+import type { UptimeRunsPipes } from "../frozen-uptime/run";
 import type { Episode } from "./episodes";
-import { sumMonthRuns } from "./evaluate";
-import {
-  excusedWindowLock,
-  fetchExcusedCounts,
-  mergeSpans,
-  type Span,
-} from "./excused";
+import { excusedWindowLock, mergeSpans, type Span } from "./excused";
 import {
   clipEpisodes,
   type EpisodeMonitor,
@@ -43,7 +31,6 @@ import {
   slaEpisodesPipes,
 } from "./fetch-episodes";
 import {
-  type CellExcused,
   completeMonths,
   coveredSpan,
   emptyMonth,
@@ -557,24 +544,17 @@ export function memberTimeMonth(args: {
 }
 
 /**
- * Each member's months (policy zone, ascending): running and previous month on
- * episodes under their own terms, older unsealed ones as UTC run-count previews.
+ * Each member's months (policy zone, ascending): sealed ones as stored, the
+ * running and previous month on episodes under their own terms, older ones empty.
  */
 export async function judgePolicyMonths(args: {
   ctx: ServiceContext;
-  policy: {
-    id: number;
-    workspaceId: number;
-    target: number;
-    strict: boolean;
-    timeZone: string;
-  };
+  policy: { id: number; workspaceId: number; timeZone: string };
   monitors: PolicyMember[];
   months: string[];
   now: Date;
   live: boolean;
   episodesPipes?: SlaEpisodesPipes;
-  runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx, policy, monitors, months, now } = args;
@@ -583,138 +563,78 @@ export async function judgePolicyMonths(args: {
   const first = months[0];
   const last = months.at(-1);
   if (monitors.length === 0 || !first || !last) {
-    return { monitors: [], liveIncomplete: false, excusedExpired: false };
+    return { monitors: [], liveIncomplete: false };
   }
   const timeMonths = episodeMonths(now, timeZone);
 
-  const frozenRows =
-    timeZone === "UTC"
-      ? await db
-          .select({
-            monitorId: frozenMonitorUptime.monitorId,
-            month: frozenMonitorUptime.month,
-            days: frozenMonitorUptime.days,
-          })
-          .from(frozenMonitorUptime)
-          .where(
-            and(
-              eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
-              inArray(
-                frozenMonitorUptime.monitorId,
-                monitors.map((m) => m.id),
-              ),
-              gte(frozenMonitorUptime.month, first),
-              lte(frozenMonitorUptime.month, last),
-            ),
-          )
-          .all()
-      : [];
-  const sealedRows = await db
-    .select()
-    .from(monitorSlaSealedMonth)
-    .where(
-      and(
-        eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id),
-        eq(monitorSlaSealedMonth.workspaceId, ctx.workspace.id),
-        gte(monitorSlaSealedMonth.month, first),
-        lte(monitorSlaSealedMonth.month, last),
-      ),
-    )
-    .all();
+  const [sealedRows, spans] = await Promise.all([
+    db
+      .select()
+      .from(monitorSlaSealedMonth)
+      .where(
+        and(
+          eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id),
+          eq(monitorSlaSealedMonth.workspaceId, ctx.workspace.id),
+          gte(monitorSlaSealedMonth.month, first),
+          lte(monitorSlaSealedMonth.month, last),
+        ),
+      )
+      .all(),
+    policyExcusedSpans(db, policy),
+  ]);
   const sealed = new Map(
     sealedRows.map((r) => [monthCellKey(r.monitorId, r.month), r]),
-  );
-  const frozen = new Map(
-    frozenRows.map((r) => [
-      monthCellKey(r.monitorId, r.month),
-      sumMonthRuns(frozenMonitorUptimeDaySchema.array().parse(r.days)),
-    ]),
   );
   const unsealedIn = (month: string) =>
     monitors.some((m) => !sealed.has(monthCellKey(m.id, month)));
 
-  const spans = await policyExcusedSpans(db, policy);
   const readMonths = months.filter(
     (month) =>
       timeMonths.has(month) &&
       (args.live || timeMonths.get(month) !== "live") &&
       unsealedIn(month),
   );
-  const fetched = await fetchMonthEpisodes({
-    ctx,
-    members: monitors,
-    months: readMonths,
-    timeZone,
-    now,
-    pipes: args.episodesPipes,
-    sleep: args.sleep,
-  });
-  const termsOf = new Map(
-    await Promise.all(
+  const [fetched, termsOf] = await Promise.all([
+    fetchMonthEpisodes({
+      ctx,
+      members: monitors,
+      months: readMonths,
+      timeZone,
+      now,
+      pipes: args.episodesPipes,
+      sleep: args.sleep,
+    }),
+    Promise.all(
       readMonths.map(
         async (month) =>
           [month, await termsForMonth(db, policy, month)] as const,
       ),
-    ),
-  );
-
-  const excused = await fetchExcusedCounts({
-    monitors,
-    spans,
-    months:
-      timeZone === "UTC"
-        ? months.filter((month) => !timeMonths.has(month) && unsealedIn(month))
-        : [],
-    now,
-    pipes: () =>
-      args.runsRangePipes ?? uptimeRunsRangePipes(ctx.tb ?? defaultTb),
-    sleep: args.sleep,
-  });
-  const excusedFor = (key: string): CellExcused =>
-    excused.failed.has(key) || excused.unreadable.has(key)
-      ? "unavailable"
-      : excused.expired.has(key)
-        ? "expired"
-        : excused.counts.get(key);
+    ).then((entries) => new Map(entries)),
+  ]);
 
   const rows = monitors.map(
     ({ regions: _r, periodicity: _p, memberSince, ...m }) => ({
       ...m,
       months: months.map((month): MonitorSlaMonth => {
-        const key = monthCellKey(m.id, month);
-        const seal = sealed.get(key);
-        if (seal) {
-          return storedMonth({ month, seal, frozen: undefined, policy });
-        }
+        const seal = sealed.get(monthCellKey(m.id, month));
+        if (seal) return storedMonth({ month, seal, timeZone });
         const state = timeMonths.get(month);
         const terms = termsOf.get(month);
-        if (state && !terms) return emptyMonth({ month, state, timeZone });
-        if (state && terms) {
-          return memberTimeMonth({
-            month,
-            state,
-            member: { id: m.id, memberSince },
-            fetched,
-            excusedSpans: spans,
-            terms,
-            timeZone,
-            now,
-          });
+        if (!state || !terms) {
+          return emptyMonth({ month, state: state ?? "none", timeZone });
         }
-        return storedMonth({
+        return memberTimeMonth({
           month,
-          seal: undefined,
-          frozen: frozen.get(key),
-          excused: excusedFor(key),
-          policy,
+          state,
+          member: { id: m.id, memberSince },
+          fetched,
+          excusedSpans: spans,
+          terms,
+          timeZone,
+          now,
         });
       }),
     }),
   );
-  return {
-    monitors: rows,
-    liveIncomplete: fetched.failed.size > 0 || excused.failed.size > 0,
-    /** some month's excused runs are older than Tinybird keeps: those cells are judged without their windows */
-    excusedExpired: excused.expired.size > 0,
-  };
+  return { monitors: rows, liveIncomplete: fetched.failed.size > 0 };
 }

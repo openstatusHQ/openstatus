@@ -23,8 +23,8 @@ import { monthOf } from "./months";
 import { UpdateMonitorReportingInput } from "./schemas";
 
 /**
- * Target/strict apply from the next month in the policy zone. The previous month
- * keeps the terms it seals with; older, never-sealed previews follow at once.
+ * Target/strict apply from the next month in the policy zone; the previous month
+ * keeps the terms it seals with.
  */
 export async function updateMonitorReporting(args: {
   ctx: ServiceContext;

@@ -1,6 +1,5 @@
 import { eq } from "@openstatus/db";
 import {
-  frozenMonitorUptime,
   monitor,
   monitorSlaExcusedWindow,
   monitorSlaPolicy,
@@ -19,7 +18,6 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
-import { monthDays } from "../../frozen-uptime/compute";
 import { getMonitorReporting, getMonitorReportingSummary } from "../get";
 import { sealMonitorSlaMonths } from "../seal";
 import {
@@ -99,25 +97,45 @@ async function insertPolicy(
   return policy;
 }
 
-/** A frozen month with `ok`/`error` runs spread over its first day. */
-function frozen(
+/** A sealed month of `ok`/`error` runs under the default terms. */
+function sealedRow(
+  policyId: number,
   monitorId: number,
   month: string,
-  runs: { ok: number; error: number } | null,
-  workspaceId = ctx.workspace.id,
+  runs: { ok: number; error: number },
 ) {
+  const total = runs.ok + runs.error;
+  const uptime = Math.floor((runs.ok * 100_000) / total);
   return {
-    workspaceId,
+    workspaceId: ctx.workspace.id,
+    monitorSlaPolicyId: policyId,
     monitorId,
     month: `${month}-01`,
-    days: monthDays(`${month}-01`).map((day, i) => ({
-      day,
-      requests: { ok: 10, degraded: 0, error: 0 },
-      ...(runs && i === 0
-        ? { runs: { ok: runs.ok, degraded: 0, error: runs.error } }
-        : {}),
-    })),
+    target: 99_500,
+    strict: false,
+    ok: runs.ok,
+    degraded: 0,
+    error: runs.error,
+    total,
+    up: runs.ok,
+    uptime,
+    met: uptime >= 99_500,
   };
+}
+
+// October is still judged on episodes: before its seal, within the runs kept
+const early = new Date(Date.UTC(2026, 10, 3, 12));
+
+/** Runs every 10 minutes from Oct 1; the monitors in `down` fail all of Oct 20. */
+function octoberOutage(down: number[]) {
+  const outage = Date.UTC(2026, 9, 20);
+  return episodesPipesFrom((monitorId) =>
+    runsEvery(Date.UTC(2026, 9, 1), early.getTime(), 10 * MIN, (t) =>
+      down.includes(Number(monitorId)) && t >= outage && t < outage + DAY
+        ? "error"
+        : "ok",
+    ),
+  );
 }
 
 describe("getMonitorReporting", () => {
@@ -127,11 +145,11 @@ describe("getMonitorReporting", () => {
       const web = await insertMonitor(tx, { name: "Web", jobType: "tcp" });
       const policy = await insertPolicy(tx, [api.id, web.id]);
       await tx
-        .insert(frozenMonitorUptime)
+        .insert(monitorSlaSealedMonth)
         .values([
-          frozen(api.id, "2026-09", { ok: 1990, error: 10 }),
-          frozen(api.id, "2026-10", { ok: 1989, error: 11 }),
-          frozen(web.id, "2026-10", { ok: 2000, error: 0 }),
+          sealedRow(policy.id, api.id, "2026-09", { ok: 1990, error: 10 }),
+          sealedRow(policy.id, api.id, "2026-10", { ok: 1989, error: 11 }),
+          sealedRow(policy.id, web.id, "2026-10", { ok: 2000, error: 0 }),
         ]);
 
       const res = await getMonitorReporting({
@@ -150,18 +168,18 @@ describe("getMonitorReporting", () => {
       const [apiRow, webRow] = res.monitors;
       expect(apiRow.months.at(-3)).toMatchObject({
         month: "2026-09-01",
-        state: "preview",
+        state: "sealed",
         uptime: 99_500,
         met: true,
       });
       expect(apiRow.months.at(-2)).toMatchObject({
         month: "2026-10-01",
-        state: "preview",
+        state: "sealed",
         uptime: 99_450,
         met: false,
         counts: { ok: 1989, degraded: 0, error: 11 },
       });
-      expect(apiRow.missed).toEqual({ months: 1, previews: 1 });
+      expect(apiRow.missed).toEqual({ months: 1, previews: 0 });
 
       expect(webRow.months.at(-3)).toMatchObject({
         month: "2026-09-01",
@@ -171,30 +189,35 @@ describe("getMonitorReporting", () => {
       });
       expect(webRow.missed).toEqual({ months: 0, previews: 0 });
 
-      expect(res.missed).toEqual({ months: 1, previews: 1, of: 12 });
+      expect(res.missed).toEqual({ months: 1, previews: 0, of: 12 });
     });
   });
 
-  test("a frozen month without run verdicts has no judgement", async () => {
+  test("a month before the previous one that was never sealed has no judgement", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-10", null));
+      const calls: EpisodesCall[] = [];
 
       const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
         now,
-        episodesPipes: noEpisodes,
+        episodesPipes: episodesPipesFrom(() => [], calls),
+        sleep,
       });
-      expect(res.monitors[0].months.at(-2)).toMatchObject({
-        state: "preview",
-        counts: null,
-        uptime: null,
-        met: null,
-      });
+      for (const month of res.monitors[0].months.slice(0, -1)) {
+        expect(month).toMatchObject({
+          state: "none",
+          method: null,
+          counts: null,
+          uptime: null,
+          met: null,
+        });
+      }
+      expect(calls.every((c) => c.fromDate >= Date.UTC(2026, 10, 1))).toBe(
+        true,
+      );
       expect(res.missed.months).toBe(0);
     });
   });
@@ -204,8 +227,10 @@ describe("getMonitorReporting", () => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2025-06", { ok: 900, error: 100 }));
+        .insert(monitorSlaSealedMonth)
+        .values(
+          sealedRow(policy.id, api.id, "2025-06", { ok: 900, error: 100 }),
+        );
 
       const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
@@ -228,24 +253,23 @@ describe("getMonitorReporting", () => {
       const b = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [a.id, b.id]);
       await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(a.id, "2026-10", { ok: 90, error: 10 }),
-          frozen(b.id, "2026-10", { ok: 90, error: 10 }),
-          frozen(b.id, "2026-08", { ok: 90, error: 10 }),
-        ]);
+        .insert(monitorSlaSealedMonth)
+        .values(sealedRow(policy.id, b.id, "2026-08", { ok: 90, error: 10 }));
 
       const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
-        now,
-        episodesPipes: noEpisodes,
+        now: early,
+        episodesPipes: octoberOutage([a.id, b.id]),
+        sleep,
       });
-      expect(res.missed).toEqual({ months: 2, previews: 2, of: 12 });
+      expect(res.monitors[0].missed).toEqual({ months: 1, previews: 1 });
+      expect(res.monitors[1].missed).toEqual({ months: 2, previews: 1 });
+      expect(res.missed).toEqual({ months: 2, previews: 1, of: 12 });
     });
   });
 
-  test("a sealed month wins over a preview and keeps its own terms after an edit", async () => {
+  test("a sealed month keeps its own terms after an edit", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id], {
@@ -255,12 +279,6 @@ describe("getMonitorReporting", () => {
         .update(monitorSlaPolicyToMonitor)
         .set({ createdAt: new Date(Date.UTC(2026, 8, 1)) })
         .where(eq(monitorSlaPolicyToMonitor.monitorSlaPolicyId, policy.id));
-      await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozen(api.id, "2026-09", { ok: 1990, error: 10 }),
-          frozen(api.id, "2026-10", { ok: 1990, error: 10 }),
-        ]);
       // three hours down in October
       const outage = {
         start: Date.UTC(2026, 9, 3),
@@ -304,54 +322,40 @@ describe("getMonitorReporting", () => {
         sealed: { target: 99_500, strict: false },
       });
       expect(row.months.at(-2)?.sealed?.at).toBeInstanceOf(Date);
+      // September was past its runs when the seal first ran
       expect(row.months.at(-3)).toMatchObject({
         month: "2026-09-01",
-        state: "preview",
-        met: false,
+        state: "none",
+        met: null,
         sealed: null,
       });
-      expect(row.missed).toEqual({ months: 1, previews: 1 });
-      expect(res.missed).toEqual({ months: 1, previews: 1, of: 12 });
+      expect(row.missed).toEqual({ months: 0, previews: 0 });
+      expect(res.missed).toEqual({ months: 0, previews: 0, of: 12 });
     });
   });
 
-  test("previews count only months whose misses are all previews", async () => {
+  test("a month with any sealed miss is not a preview miss", async () => {
     await withTestTransaction(async (tx) => {
       const a = await insertMonitor(tx);
       const b = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [a.id, b.id]);
       await tx
-        .insert(frozenMonitorUptime)
+        .insert(monitorSlaSealedMonth)
         .values([
-          frozen(a.id, "2026-10", { ok: 90, error: 10 }),
-          frozen(b.id, "2026-10", { ok: 90, error: 10 }),
-          frozen(b.id, "2026-08", { ok: 90, error: 10 }),
+          sealedRow(policy.id, a.id, "2026-10", { ok: 90, error: 10 }),
+          sealedRow(policy.id, b.id, "2026-08", { ok: 90, error: 10 }),
         ]);
-      await tx.insert(monitorSlaSealedMonth).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: policy.id,
-        monitorId: a.id,
-        month: "2026-10-01",
-        target: 99_500,
-        strict: false,
-        ok: 90,
-        degraded: 0,
-        error: 10,
-        total: 100,
-        up: 90,
-        uptime: 90_000,
-        met: false,
-      });
 
       const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
-        now,
-        episodesPipes: noEpisodes,
+        now: early,
+        episodesPipes: octoberOutage([b.id]),
+        sleep,
       });
       expect(res.monitors[0].missed).toEqual({ months: 1, previews: 0 });
-      expect(res.monitors[1].missed).toEqual({ months: 2, previews: 2 });
-      expect(res.missed).toEqual({ months: 2, previews: 1, of: 12 });
+      expect(res.monitors[1].missed).toEqual({ months: 2, previews: 1 });
+      expect(res.missed).toEqual({ months: 2, previews: 0, of: 12 });
     });
   });
 
@@ -403,9 +407,6 @@ describe("getMonitorReporting", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-10", { ok: 100, error: 0 }));
       const outage = Date.UTC(2026, 10, 10);
       const calls: EpisodesCall[] = [];
       const episodesPipes = episodesPipesFrom(
@@ -436,9 +437,9 @@ describe("getMonitorReporting", () => {
       expect(res.liveIncomplete).toBe(false);
       const [row] = res.monitors;
       expect(row.months.at(-2)).toMatchObject({
-        state: "preview",
-        method: "runs",
-        met: true,
+        state: "none",
+        method: null,
+        met: null,
       });
       expect(row.months.at(-1)).toEqual({
         month: "2026-11-01",
@@ -455,7 +456,6 @@ describe("getMonitorReporting", () => {
         coverage: 100_000,
         uptime: 99_712,
         met: true,
-        unavailable: null,
         sealed: null,
       });
       // a miss in progress is not a missed month yet
@@ -617,10 +617,6 @@ describe("getMonitorReporting", () => {
       const policy = await insertPolicy(tx, [api.id], {
         timeZone: "Europe/Berlin",
       });
-      // run counts per UTC day cannot be re-cut into Berlin months
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-09", { ok: 100, error: 0 }));
       const early = new Date(Date.UTC(2026, 10, 3, 12));
       // 23:00 to midnight on Oct 31 in Berlin (CET, after the DST change)
       const outage = Date.UTC(2026, 9, 31, 22);
@@ -657,7 +653,6 @@ describe("getMonitorReporting", () => {
         state: "none",
         method: null,
         timeZone: "Europe/Berlin",
-        unavailable: "time-zone",
         met: null,
       });
       // 31 days and the hour won back when DST ended
@@ -668,7 +663,6 @@ describe("getMonitorReporting", () => {
         timeZone: "Europe/Berlin",
         measuredMs: 31 * DAY + HOUR,
         downMs: HOUR,
-        unavailable: null,
       });
       expect(row.months.at(-1)).toMatchObject({
         month: "2026-11-01",
@@ -680,16 +674,13 @@ describe("getMonitorReporting", () => {
     });
   });
 
-  test("the previous month is judged on episodes until 45 days after its start, frozen or not", async () => {
+  test("the previous month is judged on episodes until 45 days after its start", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const web = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id, web.id], {
         target: 99_900,
       });
-      await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(web.id, "2026-10", { ok: 100, error: 0 }));
       const outage = Date.UTC(2026, 9, 20);
       const episodesPipes = episodesPipesFrom((monitorId) =>
         runsEvery(
@@ -745,9 +736,8 @@ describe("getMonitorReporting", () => {
         uptime: null,
       });
       expect(late.monitors[1].months.at(-2)).toMatchObject({
-        state: "preview",
-        method: "runs",
-        uptime: 100_000,
+        state: "none",
+        uptime: null,
       });
     });
   });
@@ -757,8 +747,8 @@ describe("getMonitorReporting", () => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-09", { ok: 90, error: 10 }));
+        .insert(monitorSlaSealedMonth)
+        .values(sealedRow(policy.id, api.id, "2026-09", { ok: 90, error: 10 }));
 
       const res = await getMonitorReporting({
         ctx: { ...ctx, db: tx },
@@ -777,7 +767,7 @@ describe("getMonitorReporting", () => {
         met: null,
       });
       expect(res.monitors[0].months.at(-3)).toMatchObject({
-        state: "preview",
+        state: "sealed",
         met: false,
       });
     });
@@ -828,7 +818,6 @@ describe("getMonitorReporting", () => {
         measuredMs: 30 * DAY,
         downMs: 100 * MIN,
         coverage: 100_000,
-        unavailable: null,
       });
     });
   });
@@ -926,12 +915,12 @@ describe("getMonitorReporting", () => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       await tx
-        .insert(frozenMonitorUptime)
-        .values(frozen(api.id, "2026-10", { ok: 10, error: 0 }));
+        .insert(monitorSlaSealedMonth)
+        .values(sealedRow(policy.id, api.id, "2026-10", { ok: 10, error: 0 }));
       const before = await Promise.all([
         tx.select().from(monitorSlaPolicy).all(),
         tx.select().from(monitorSlaPolicyToMonitor).all(),
-        tx.select().from(frozenMonitorUptime).all(),
+        tx.select().from(monitorSlaSealedMonth).all(),
       ]);
 
       await getMonitorReporting({
@@ -944,7 +933,7 @@ describe("getMonitorReporting", () => {
       const after = await Promise.all([
         tx.select().from(monitorSlaPolicy).all(),
         tx.select().from(monitorSlaPolicyToMonitor).all(),
-        tx.select().from(frozenMonitorUptime).all(),
+        tx.select().from(monitorSlaSealedMonth).all(),
       ]);
       expect(after).toEqual(before);
       expect(

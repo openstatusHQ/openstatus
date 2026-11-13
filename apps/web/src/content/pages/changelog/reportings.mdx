@@ -13,7 +13,7 @@ The reporting page shows each monitor against the last 12 or 24 months, green wh
 
 - **Judged per monitor, per month.** There is no blended figure across monitors.
 - **Runs, not requests.** Each scheduled check gets one verdict across its cloud regions: it fails only when at least half of the reporting regions failed, so one bad region out of three is not an outage.
-- **Sealed months.** After a month ends and its counts are frozen, the result is sealed with the target that applied, and later edits never rewrite it. Earlier months show as previews under today's terms.
+- **Sealed months.** Three days after a month ends, the result is sealed with the target that applied, and later edits never rewrite it.
 - **Strict mode.** Turn on **Count slow responses as downtime** to count checks over the monitor's degraded threshold as down.
 - **Maintenance.** By default a monitor is not checked during a status page maintenance on a component it is linked to, so that time is not counted at all. A monitor can now keep checking without alerting, so a maintenance that overruns counts against its uptime.
 - **CSV export.** Download a range of months with the run counts, uptime, target and whether each month is sealed. The file states the method, ready to send to a customer.
