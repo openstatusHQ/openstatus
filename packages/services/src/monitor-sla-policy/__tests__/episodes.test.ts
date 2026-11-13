@@ -167,6 +167,41 @@ describe("cutExcused", () => {
     expect([...kept, ...excused].reduce((s, e) => s + e.runs, 0)).toBe(1);
   });
 
+  test("runs go to the piece their estimated timestamp falls in", () => {
+    // 3 runs over [0, 100) sit at 0, 33 and 66
+    const ep: Episode = {
+      kind: "error",
+      startedAt: 0,
+      endedAt: 100,
+      runs: 3,
+      weightedMs: 100,
+    };
+    const { kept, excused } = cutExcused([ep], [{ start: 34, end: 90 }]);
+    expect(kept.map((e) => [e.startedAt, e.runs, e.weightedMs])).toEqual([
+      [0, 2, 34],
+      [90, 0, 10],
+    ]);
+    expect(excused.map((e) => [e.startedAt, e.runs, e.weightedMs])).toEqual([
+      [34, 1, 56],
+    ]);
+  });
+
+  test("a narrow span between two runs takes none of them", () => {
+    const ep: Episode = {
+      kind: "ok",
+      startedAt: 0,
+      endedAt: 600_000,
+      runs: 10,
+      weightedMs: 600_000,
+    };
+    const { kept, excused } = cutExcused(
+      [ep],
+      [{ start: 61_000, end: 119_000 }],
+    );
+    expect(excused[0].runs).toBe(0);
+    expect(kept.reduce((s, e) => s + e.runs, 0)).toBe(10);
+  });
+
   test("overlapping and unsorted spans excuse time once", () => {
     const { excused } = cutExcused(eps, [
       { start: from + 400_000, end: from + 500_000 },

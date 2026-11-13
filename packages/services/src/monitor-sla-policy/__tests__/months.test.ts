@@ -9,6 +9,7 @@ import {
   monthOf,
   monthsBetween,
   splitByMonth,
+  timeMonth,
 } from "../months";
 
 describe("UTC month boundaries", () => {
@@ -191,5 +192,35 @@ describe("time-zoned month boundaries", () => {
     for (const bad of ["+05:00", "-0800", "+05", "Mars/Olympus", ""]) {
       expect(canonicalTimeZone(bad), bad).toBeNull();
     }
+  });
+});
+
+describe("timeMonth", () => {
+  test("measured time always carries run counts", () => {
+    // the month opens on the tail of a run from the month before
+    const month = timeMonth({
+      month: "2026-11-01",
+      state: "live",
+      episodes: [
+        {
+          kind: "error",
+          startedAt: Date.UTC(2026, 10, 1),
+          endedAt: Date.UTC(2026, 10, 1) + 30_000,
+          runs: 0,
+          weightedMs: 30_000,
+        },
+      ],
+      covered: {
+        start: Date.UTC(2026, 10, 1),
+        end: Date.UTC(2026, 10, 1) + 30_000,
+      },
+      excusedSpans: [],
+      terms: { target: 99_000, strict: false },
+      timeZone: "UTC",
+    });
+    expect(month.measuredMs).toBe(30_000);
+    expect(month.counts).toEqual({ ok: 0, degraded: 0, error: 1 });
+    expect(month.excused).toEqual({ ok: 0, degraded: 0, error: 0 });
+    expect(month.uptime).toBe(0);
   });
 });

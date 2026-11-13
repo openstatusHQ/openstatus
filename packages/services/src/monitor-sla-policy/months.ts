@@ -254,6 +254,17 @@ function runsByKind(episodes: readonly Episode[]): Counts {
   return sum;
 }
 
+function dominantVerdict(episodes: readonly Episode[]): keyof Counts {
+  const ms: Counts = { ...NO_RUNS };
+  for (const e of episodes)
+    if (e.kind !== "unmeasured") ms[e.kind] += e.weightedMs;
+  return ms.error >= ms.degraded && ms.error >= ms.ok
+    ? "error"
+    : ms.degraded >= ms.ok
+      ? "degraded"
+      : "ok";
+}
+
 /**
  * One monitor's unsealed month from its episodes, already clipped to the
  * covered range (month ∩ membership, capped at now).
@@ -275,7 +286,18 @@ export function timeMonth(args: {
     strict: terms.strict,
     coveredMs: Math.max(args.covered.end - args.covered.start, 0),
   });
-  const all = runsByKind(args.episodes);
+  const cut = cutExcused(args.episodes, args.excusedSpans);
+  const kept = runsByKind(cut.kept);
+  const excused = runsByKind(cut.excused);
+  if (result.measuredMs > 0 && kept.ok + kept.degraded + kept.error === 0) {
+    // a measured slice with no run estimated inside it still stands for one
+    kept[dominantVerdict(cut.kept)] += 1;
+  }
+  const all = {
+    ok: kept.ok + excused.ok,
+    degraded: kept.degraded + excused.degraded,
+    error: kept.error + excused.error,
+  };
   const anyRuns = all.ok + all.degraded + all.error > 0;
   return {
     month: args.month,
@@ -284,9 +306,7 @@ export function timeMonth(args: {
     timeZone: args.timeZone,
     terms: { target: terms.target, strict: terms.strict },
     counts: anyRuns ? all : null,
-    excused: anyRuns
-      ? runsByKind(cutExcused(args.episodes, args.excusedSpans).excused)
-      : null,
+    excused: anyRuns ? excused : null,
     uptime: result.uptime,
     met: result.met,
     measuredMs: result.measuredMs,

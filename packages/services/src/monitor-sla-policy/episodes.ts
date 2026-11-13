@@ -142,7 +142,17 @@ function prorate(total: number, lengths: readonly number[]): number[] {
   return shares;
 }
 
-/** Splits episodes at the edges of `spans` (ms-precise); weights and runs are prorated by overlap. */
+// runs of `e` at offsets below `offset`, run i of n sitting at floor(i × length / n)
+function runsBefore(e: Episode, offset: number): number {
+  const length = e.endedAt - e.startedAt;
+  if (offset <= 0 || e.runs === 0) return 0;
+  if (offset >= length) return e.runs;
+  const n = BigInt(e.runs);
+  const at = (BigInt(offset) * n + BigInt(length) - 1n) / BigInt(length);
+  return Number(at < n ? at : n);
+}
+
+/** Splits episodes at the edges of `spans` (ms-precise); weights are prorated by overlap, runs go where they sit. */
 export function cutExcused(
   episodes: readonly Episode[],
   spans: readonly Span[],
@@ -169,15 +179,18 @@ export function cutExcused(
       (pieces[0].excused ? excused : kept).push(e);
       continue;
     }
-    const lengths = pieces.map((p) => p.end - p.start);
-    const weights = prorate(e.weightedMs, lengths);
-    const runs = prorate(e.runs, lengths);
+    const weights = prorate(
+      e.weightedMs,
+      pieces.map((p) => p.end - p.start),
+    );
     pieces.forEach((p, i) => {
       (p.excused ? excused : kept).push({
         kind: e.kind,
         startedAt: p.start,
         endedAt: p.end,
-        runs: runs[i],
+        runs:
+          runsBefore(e, p.end - e.startedAt) -
+          runsBefore(e, p.start - e.startedAt),
         weightedMs: weights[i],
       });
     });
