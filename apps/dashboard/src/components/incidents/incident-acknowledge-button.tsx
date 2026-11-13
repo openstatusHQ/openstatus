@@ -11,6 +11,7 @@ import { useInvalidateIncident } from "./use-invalidate-incident";
 
 export function IncidentAcknowledgeButton({
   incidentId,
+  disabled,
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "onClick" | "children"> & {
   incidentId: number;
@@ -30,9 +31,9 @@ export function IncidentAcknowledgeButton({
   return (
     <Button
       size="sm"
-      disabled={acknowledge.isPending}
-      onClick={() => acknowledge.mutate({ id: incidentId })}
       {...props}
+      disabled={disabled || acknowledge.isPending}
+      onClick={() => acknowledge.mutate({ id: incidentId })}
     >
       Acknowledge
     </Button>
