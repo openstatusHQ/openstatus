@@ -334,14 +334,24 @@ describe("terms in effect", () => {
         input: { id: policy.id, strict: true },
         now,
       });
-      await updateMonitorSlaPolicy({
+      // 20:00 UTC on 30 November: December in Tokyo, still November in Los Angeles
+      const boundary = new Date(Date.UTC(2026, 10, 30, 20));
+      expect(await termsForMonth(tx, policy, "2026-12-01")).toMatchObject({
+        strict: true,
+      });
+      const moved = await updateMonitorSlaPolicy({
         ctx,
         input: { id: policy.id, timeZone: "America/Los_Angeles" },
-        now,
+        now: boundary,
       });
       expect(await termsRows(tx, policy.id)).toEqual([
         { target: 99_500, strict: true, effectiveFrom: "2026-12-01" },
       ]);
+      expect(moved.termsEffectiveFrom).toBe("2026-12-01");
+      const after = { ...policy, timeZone: "America/Los_Angeles" };
+      expect(await termsForMonth(tx, after, "2026-11-01")).toMatchObject({
+        strict: false,
+      });
     });
   });
 
