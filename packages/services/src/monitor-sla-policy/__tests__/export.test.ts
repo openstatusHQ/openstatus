@@ -428,6 +428,10 @@ describe("exportMonitorSlaPolicy", () => {
         run({ from: "2021-10", to: "2026-10" }),
       ).rejects.toBeInstanceOf(ValidationError);
       await expect(run({ from: "2026-13" })).rejects.toThrow();
+      // Date.UTC reads years 0-99 as 1900-1999
+      await expect(
+        run({ from: "0050-01", to: "0050-02" }),
+      ).rejects.toThrow(/YYYY-MM/);
       const ok = await run({ from: "2021-11", to: "2026-10" });
       expect(parse(ok.csv).rows).toEqual([]);
     });

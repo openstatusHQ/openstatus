@@ -79,7 +79,8 @@ export type GetMonitorSlaPolicyInput = z.input<typeof GetMonitorSlaPolicyInput>;
 
 const yearMonth = z
   .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected a month as YYYY-MM");
+  // years below 0100 are refused: Date.UTC maps 0-99 to 1900-1999
+  .regex(/^(?!00)\d{4}-(0[1-9]|1[0-2])$/, "Expected a month as YYYY-MM");
 
 /** One policy member's month (YYYY-MM in the policy zone); defaults to the running month. */
 export const GetMonitorSlaMonitorMonthInput = z.object({
