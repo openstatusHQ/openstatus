@@ -14,21 +14,27 @@ export function parseSlaTarget(value: string): number | null {
   return target > 0 && target <= 100_000 ? target : null;
 }
 
-/** A duration to the minute once it reaches an hour, else to the second: `"3h 36m"`, `"43m 12s"`; the sign is dropped. */
-export function formatSlaDuration(ms: number): string {
+/** A duration to the minute once it reaches an hour (to the second with `exact`), else to the second: `"3h 36m"`, `"43m 12s"`; the sign is dropped. */
+export function formatSlaDuration(
+  ms: number,
+  options: { exact?: boolean } = {},
+): string {
   const seconds = Math.floor(Math.abs(ms) / 1000);
   if (seconds === 0) return "0s";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  const parts = h > 0 ? [`${h}h`, m > 0 ? `${m}m` : null] : [`${m}m`, `${s}s`];
+  const parts =
+    h > 0
+      ? [`${h}h`, `${m}m`, options.exact ? `${s}s` : null]
+      : [`${m}m`, `${s}s`];
   return parts.filter((p) => p !== null && p !== "0m" && p !== "0s").join(" ");
 }
 
-/** Downtime a target allows in a 30-day month, e.g. `"3h 36m"`. */
+/** Downtime a target allows in a 30-day month, to the second, e.g. `"6h 18m 52s"`. */
 export function allowedDowntime(target: number): string {
   const seconds = Math.round((MONTH_SECONDS * (100_000 - target)) / 100_000);
-  return formatSlaDuration(seconds * 1000);
+  return formatSlaDuration(seconds * 1000, { exact: true });
 }
 
 /** `"12m left"`, or `"4m over"` once the budget is spent past zero. */
@@ -53,6 +59,17 @@ export function formatSlaCoverage(coverage: number): string {
 export function nextSlaMonth(month: string): string {
   const [y, m] = month.split("-").map(Number);
   return new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+}
+
+/** The month `date` falls in, in `timeZone`, as `"2026-11-01"`. */
+export function slaMonthOf(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value;
+  return `${get("year")}-${get("month")}-01`;
 }
 
 /** `"2026-01-01"` → `"Jan"`, or `"Jan 2026"` with `year`. */
