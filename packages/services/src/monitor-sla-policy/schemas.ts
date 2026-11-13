@@ -7,12 +7,19 @@ import {
 } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 import { z } from "zod";
 
-import { isValidTimeZone } from "./months";
+import { canonicalTimeZone } from "./months";
 
-const timeZone = z
-  .string()
-  .trim()
-  .refine(isValidTimeZone, "Expected an IANA time zone, e.g. Europe/Berlin.");
+const timeZone = z.string().transform((value, ctx) => {
+  const zone = canonicalTimeZone(value);
+  if (zone === null) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Expected an IANA time zone, e.g. Europe/Berlin.",
+    });
+    return z.NEVER;
+  }
+  return zone;
+});
 
 export const CreateMonitorSlaPolicyInput = z.object({
   name: z.string().trim().min(1).max(256),

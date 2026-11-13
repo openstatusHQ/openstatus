@@ -54,15 +54,48 @@ function monthKey(year: number, monthIndex: number): string {
   return new Date(Date.UTC(year, monthIndex, 1)).toISOString().slice(0, 10);
 }
 
+// runtimes disagree on which alias resolvedOptions() reports, so fold them here
+const UTC_ALIASES = new Set([
+  "utc",
+  "etc/utc",
+  "uct",
+  "etc/uct",
+  "gmt",
+  "etc/gmt",
+  "gmt0",
+  "etc/gmt0",
+  "gmt+0",
+  "etc/gmt+0",
+  "gmt-0",
+  "etc/gmt-0",
+  "greenwich",
+  "etc/greenwich",
+  "universal",
+  "etc/universal",
+  "zulu",
+  "etc/zulu",
+]);
+
+/** The IANA name this runtime resolves `timeZone` to, UTC aliases as "UTC"; null when unknown or a raw offset. */
+export function canonicalTimeZone(timeZone: string): string | null {
+  const input = timeZone.trim();
+  if (!input) return null;
+  if (UTC_ALIASES.has(input.toLowerCase())) return "UTC";
+  let resolved: string;
+  try {
+    resolved = new Intl.DateTimeFormat("en-US", {
+      timeZone: input,
+    }).resolvedOptions().timeZone;
+  } catch {
+    return null;
+  }
+  if (/^[+-]/.test(resolved) || /^[+-]/.test(input)) return null;
+  return UTC_ALIASES.has(resolved.toLowerCase()) ? "UTC" : resolved;
+}
+
 /** Whether `timeZone` is an IANA zone this runtime knows. */
 export function isValidTimeZone(timeZone: string): boolean {
-  if (!timeZone) return false;
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone });
-    return true;
-  } catch {
-    return false;
-  }
+  return canonicalTimeZone(timeZone) !== null;
 }
 
 /** YYYY-MM-01 of the month in `timeZone` holding the instant `at`. */

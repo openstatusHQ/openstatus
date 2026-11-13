@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { monthRange } from "../../frozen-uptime/compute";
 import {
   completeMonths,
+  canonicalTimeZone,
   isValidTimeZone,
   liveUntilFrozen,
   monthOf,
@@ -163,5 +164,32 @@ describe("time-zoned month boundaries", () => {
     expect(isValidTimeZone("Pacific/Chatham")).toBe(true);
     expect(isValidTimeZone("Mars/Olympus")).toBe(false);
     expect(isValidTimeZone("")).toBe(false);
+    expect(isValidTimeZone("+05:00")).toBe(false);
+  });
+
+  test("canonicalTimeZone folds aliases and rejects raw offsets", () => {
+    for (const alias of [
+      "UTC",
+      "Etc/UTC",
+      "GMT",
+      "Etc/GMT",
+      "Etc/UCT",
+      "UCT",
+      "Zulu",
+      "Universal",
+      "utc",
+      "etc/utc",
+      "gmt",
+      "zulu",
+    ]) {
+      expect(canonicalTimeZone(alias), alias).toBe("UTC");
+    }
+    expect(canonicalTimeZone("europe/berlin")).toBe("Europe/Berlin");
+    expect(canonicalTimeZone(" Europe/Berlin ")).toBe("Europe/Berlin");
+    expect(canonicalTimeZone("US/Pacific")).toBe("America/Los_Angeles");
+    expect(canonicalTimeZone("Etc/GMT+12")).toBe("Etc/GMT+12");
+    for (const bad of ["+05:00", "-0800", "+05", "Mars/Olympus", ""]) {
+      expect(canonicalTimeZone(bad), bad).toBeNull();
+    }
   });
 });

@@ -87,6 +87,37 @@ describe("policy time zone", () => {
     });
   });
 
+  test("zones are stored canonical; UTC aliases become UTC", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const etc = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "Etc", target: 99_500, timeZone: "Etc/UTC" },
+      });
+      expect(etc.timeZone).toBe("UTC");
+      const lower = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "Lower", target: 99_500, timeZone: "europe/berlin" },
+      });
+      expect(lower.timeZone).toBe("Europe/Berlin");
+      await expect(
+        createMonitorSlaPolicy({
+          ctx,
+          input: { name: "Offset", target: 99_500, timeZone: "+05:00" },
+        }),
+      ).rejects.toThrow();
+
+      await seal(tx, etc.id);
+      // an alias of the stored zone is no zone change, so the seal lock does not trip
+      const same = await updateMonitorSlaPolicy({
+        ctx,
+        input: { id: etc.id, timeZone: "Zulu", name: "Still UTC" },
+        now,
+      });
+      expect(same).toMatchObject({ name: "Still UTC", timeZone: "UTC" });
+    });
+  });
+
   test("an unknown zone is rejected on create and update", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
