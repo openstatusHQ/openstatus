@@ -6,6 +6,7 @@ import {
   excusedWindowContext,
   formatBudgetLeft,
   formatExcusedWindow,
+  formatPendingTerms,
   formatSlaCoverage,
   formatSlaDuration,
   formatSlaMonth,
@@ -187,5 +188,13 @@ describe("slaTreatmentTotals", () => {
       { treatment: "counted", ms: 30 },
       { treatment: "excused", ms: 5 },
     ]);
+  });
+});
+
+describe("formatPendingTerms", () => {
+  test("names the new target and the month it starts", () => {
+    expect(
+      formatPendingTerms({ target: 99_950, effectiveFrom: "2026-12-01" }),
+    ).toBe("→ 99.95% from Dec 2026");
   });
 });

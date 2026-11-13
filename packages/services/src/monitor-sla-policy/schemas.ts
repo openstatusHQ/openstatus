@@ -64,6 +64,13 @@ export type ListMonitorSlaPoliciesInput = z.input<
   typeof ListMonitorSlaPoliciesInput
 >;
 
+export const ListMonitorSlaPoliciesForMonitorInput = z.object({
+  monitorId: z.number().int().positive(),
+});
+export type ListMonitorSlaPoliciesForMonitorInput = z.input<
+  typeof ListMonitorSlaPoliciesForMonitorInput
+>;
+
 export const GetMonitorSlaPolicyInput = z.object({
   id: z.number().int().positive(),
   months: z.union([z.literal(12), z.literal(24)]).default(12),

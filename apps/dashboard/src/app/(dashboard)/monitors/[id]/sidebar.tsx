@@ -63,16 +63,13 @@ export function Sidebar() {
     trpc.monitor.get.queryOptions({ id: monitorId }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: slaPolicies } = useQuery({
-    ...trpc.monitorSlaPolicy.list.queryOptions(),
+  const { data: covering = [] } = useQuery({
+    ...trpc.monitorSlaPolicy.listForMonitor.queryOptions({ monitorId }),
     enabled: workspace?.limits["monitor-sla"] === true,
   });
 
   if (!monitor) return null;
 
-  const covering = (slaPolicies ?? []).filter((p) =>
-    p.monitors.some((m) => m.id === monitorId),
-  );
   const sla: SidebarMetadataProps[] =
     covering.length > 0
       ? [

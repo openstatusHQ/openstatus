@@ -9,6 +9,7 @@ import NextLink from "next/link";
 import {
   budgetShare,
   formatBudgetLeft,
+  formatPendingTerms,
   formatSlaDuration,
   formatSlaTarget,
 } from "@/data/sla-policies.client";
@@ -78,7 +79,12 @@ export function SlaMonitorSidebarEntry({
   policy,
   monitorId,
 }: {
-  policy: { id: number; name: string; target: number };
+  policy: {
+    id: number;
+    name: string;
+    liveTerms: { target: number };
+    pendingTerms: { target: number; effectiveFrom: string } | null;
+  };
   monitorId: number;
 }) {
   const trpc = useTRPC();
@@ -98,7 +104,10 @@ export function SlaMonitorSidebarEntry({
       <span className="flex min-w-0 items-baseline gap-2">
         <span className="truncate">{policy.name}</span>
         <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-          {formatSlaTarget(policy.target)}%
+          {formatSlaTarget(policy.liveTerms.target)}%
+          {policy.pendingTerms ? (
+            <span> {formatPendingTerms(policy.pendingTerms)}</span>
+          ) : null}
         </span>
       </span>
       {data || isError ? (

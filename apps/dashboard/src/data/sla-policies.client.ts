@@ -67,6 +67,14 @@ export function formatSlaMonth(
   });
 }
 
+/** `"→ 99.95% from Dec 2026"`: terms set to start in a later month. */
+export function formatPendingTerms(pending: {
+  target: number;
+  effectiveFrom: string;
+}): string {
+  return `→ ${formatSlaTarget(pending.target)}% from ${formatSlaMonth(pending.effectiveFrom, { year: true })}`;
+}
+
 export const excusedKindLabels: Record<MonitorSlaExcusedWindowKind, string> = {
   maintenance: "Maintenance",
   emergency: "Emergency",

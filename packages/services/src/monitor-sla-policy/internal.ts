@@ -195,40 +195,112 @@ export async function termsForMonth(
   return { ...own, effectiveFrom: null };
 }
 
+export type MonitorSlaTermsState = {
+  /** YYYY-MM-01 of the running month in the policy zone */
+  liveMonth: string;
+  /** the terms judging the running month */
+  liveTerms: { target: number; strict: boolean };
+  /** terms set to apply from a later month; null when none are */
+  pendingTerms: {
+    target: number;
+    strict: boolean;
+    effectiveFrom: string;
+  } | null;
+};
+
+type DatedTerms = MonitorSlaTerms & { effectiveFrom: string };
+
+/** Every terms row of `policies`, one query; the policy row's own terms apply before the first. */
+export async function loadTermsHistory(
+  db: DB,
+  workspaceId: number,
+  policies: ReadonlyArray<PolicyTermsRef>,
+) {
+  const rows =
+    policies.length === 0
+      ? []
+      : await db
+          .select({
+            policyId: monitorSlaPolicyTerms.monitorSlaPolicyId,
+            target: monitorSlaPolicyTerms.target,
+            strict: monitorSlaPolicyTerms.strict,
+            effectiveFrom: monitorSlaPolicyTerms.effectiveFrom,
+          })
+          .from(monitorSlaPolicyTerms)
+          .where(
+            and(
+              eq(monitorSlaPolicyTerms.workspaceId, workspaceId),
+              inArray(
+                monitorSlaPolicyTerms.monitorSlaPolicyId,
+                policies.map((p) => p.id),
+              ),
+            ),
+          )
+          .orderBy(asc(monitorSlaPolicyTerms.effectiveFrom))
+          .all();
+  const own = new Map(policies.map((p) => [p.id, p]));
+  const byPolicy = new Map<number, DatedTerms[]>();
+  for (const { policyId, ...terms } of rows) {
+    const list = byPolicy.get(policyId) ?? [];
+    list.push(terms);
+    byPolicy.set(policyId, list);
+  }
+  const base = (policyId: number): MonitorSlaTerms => {
+    const p = own.get(policyId);
+    if (!p) throw new NotFoundError("monitor_sla_policy", policyId);
+    return { target: p.target, strict: p.strict, effectiveFrom: null };
+  };
+  const rowsOf = (policyId: number) => byPolicy.get(policyId) ?? [];
+  return {
+    /** the terms judging `month`, as termsForMonth */
+    at(policyId: number, month: string): MonitorSlaTerms {
+      return (
+        rowsOf(policyId).findLast((t) => t.effectiveFrom <= month) ??
+        base(policyId)
+      );
+    },
+    /** the last terms set to start after `month` */
+    after(policyId: number, month: string): DatedTerms | null {
+      return rowsOf(policyId).findLast((t) => t.effectiveFrom > month) ?? null;
+    },
+    latest(policyId: number): MonitorSlaTerms {
+      return rowsOf(policyId).at(-1) ?? base(policyId);
+    },
+  };
+}
+
+export type TermsHistory = Awaited<ReturnType<typeof loadTermsHistory>>;
+
+/** The running month's terms and any pending ones, from a loaded history. */
+export function termsStateOf(
+  history: TermsHistory,
+  policy: { id: number; timeZone: string },
+  now: Date,
+): MonitorSlaTermsState {
+  const liveMonth = monthOf(now, policy.timeZone);
+  const live = history.at(policy.id, liveMonth);
+  const pending = history.after(policy.id, liveMonth);
+  return {
+    liveMonth,
+    liveTerms: { target: live.target, strict: live.strict },
+    pendingTerms: pending
+      ? {
+          target: pending.target,
+          strict: pending.strict,
+          effectiveFrom: pending.effectiveFrom,
+        }
+      : null,
+  };
+}
+
 /** The most recently set terms per policy, pending ones included; previews follow these. */
 export async function latestTermsOf(
   db: DB,
   workspaceId: number,
   policies: ReadonlyArray<PolicyTermsRef>,
 ): Promise<Map<number, MonitorSlaTerms>> {
-  const latest = new Map<number, MonitorSlaTerms>(
-    policies.map((p) => [
-      p.id,
-      { target: p.target, strict: p.strict, effectiveFrom: null },
-    ]),
-  );
-  if (policies.length === 0) return latest;
-  const rows = await db
-    .select({
-      policyId: monitorSlaPolicyTerms.monitorSlaPolicyId,
-      target: monitorSlaPolicyTerms.target,
-      strict: monitorSlaPolicyTerms.strict,
-      effectiveFrom: monitorSlaPolicyTerms.effectiveFrom,
-    })
-    .from(monitorSlaPolicyTerms)
-    .where(
-      and(
-        eq(monitorSlaPolicyTerms.workspaceId, workspaceId),
-        inArray(
-          monitorSlaPolicyTerms.monitorSlaPolicyId,
-          policies.map((p) => p.id),
-        ),
-      ),
-    )
-    .orderBy(asc(monitorSlaPolicyTerms.effectiveFrom))
-    .all();
-  for (const { policyId, ...terms } of rows) latest.set(policyId, terms);
-  return latest;
+  const history = await loadTermsHistory(db, workspaceId, policies);
+  return new Map(policies.map((p) => [p.id, history.latest(p.id)]));
 }
 
 /** Policies as callers see them: `target`/`strict` are the latest terms set. */
@@ -284,12 +356,13 @@ export async function assertExcusedWindowOpen(
   }
 }
 
-/** The policy and its current members (non-deleted monitors), by monitor id. */
+/** The policy (latest terms) and its current members (non-deleted monitors), by monitor id. */
 export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
   const db = getReadDb(ctx);
-  const [policy] = await withLatestTerms(db, ctx.workspace.id, [
-    await findPolicy(db, ctx, id),
-  ]);
+  const row = await findPolicy(db, ctx, id);
+  const history = await loadTermsHistory(db, ctx.workspace.id, [row]);
+  const latest = history.latest(row.id);
+  const policy = { ...row, target: latest.target, strict: latest.strict };
   const monitors = await db
     .select({
       id: monitor.id,
@@ -311,7 +384,7 @@ export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
     )
     .orderBy(asc(monitor.id))
     .all();
-  return { policy, monitors };
+  return { policy, monitors, history };
 }
 
 export type PolicyMember = Awaited<
@@ -329,6 +402,39 @@ export function episodeMonths(
   const [previous] = completeMonths(now, 1, timeZone);
   if (liveUntilFrozen(previous, now, timeZone)) months.set(previous, "preview");
   return months;
+}
+
+/** Excused windows per policy, merged, one query. */
+export async function policiesExcusedSpans(
+  db: DB,
+  workspaceId: number,
+  policyIds: readonly number[],
+): Promise<Map<number, Span[]>> {
+  const rows =
+    policyIds.length === 0
+      ? []
+      : await db
+          .select({
+            policyId: monitorSlaExcusedWindow.monitorSlaPolicyId,
+            from: monitorSlaExcusedWindow.from,
+            to: monitorSlaExcusedWindow.to,
+          })
+          .from(monitorSlaExcusedWindow)
+          .where(
+            and(
+              eq(monitorSlaExcusedWindow.workspaceId, workspaceId),
+              inArray(monitorSlaExcusedWindow.monitorSlaPolicyId, [
+                ...policyIds,
+              ]),
+            ),
+          )
+          .all();
+  return new Map(
+    policyIds.map((id) => [
+      id,
+      mergeSpans(rows.filter((r) => r.policyId === id)),
+    ]),
+  );
 }
 
 /** Excused windows of the policy, merged. */

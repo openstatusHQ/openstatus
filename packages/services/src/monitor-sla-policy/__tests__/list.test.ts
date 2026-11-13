@@ -16,7 +16,11 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { monthDays } from "../../frozen-uptime/compute";
-import { getMonitorSlaPolicy } from "../get";
+import {
+  getMonitorSlaPolicy,
+  getMonitorSlaPolicySummary,
+  listMonitorSlaPoliciesForMonitor,
+} from "../get";
 import { listMonitorSlaPolicies } from "../list";
 import { rollUpMonth } from "../months";
 import {
@@ -404,6 +408,132 @@ describe("listMonitorSlaPolicies strip", () => {
         preview: true,
       });
       expect(listed?.missed).toEqual(detail.missed);
+    });
+  });
+
+  test("exposes the running month's terms and the pending ones", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, "API");
+      const policy = await insertPolicy(tx, "Terms", [api.id]);
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        target: 99_950,
+        strict: true,
+        effectiveFrom: "2026-12-01",
+      });
+      const expected = {
+        liveMonth: "2026-11-01",
+        liveTerms: { target: 99_500, strict: false },
+        pendingTerms: {
+          target: 99_950,
+          strict: true,
+          effectiveFrom: "2026-12-01",
+        },
+      };
+      const listed = await listMonitorSlaPolicies({
+        ctx: { ...ctx, db: tx },
+        now,
+        episodesPipes: noEpisodes,
+      });
+      expect(listed.find((p) => p.id === policy.id)).toMatchObject({
+        target: 99_950,
+        strict: true,
+        ...expected,
+      });
+      const summary = await getMonitorSlaPolicySummary({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+      });
+      expect(summary).toMatchObject(expected);
+      const detail = await getMonitorSlaPolicy({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+        episodesPipes: noEpisodes,
+      });
+      expect(detail).toMatchObject(expected);
+
+      // once December runs, nothing is pending
+      const december = await getMonitorSlaPolicySummary({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now: new Date(Date.UTC(2026, 11, 2)),
+      });
+      expect(december).toMatchObject({
+        liveMonth: "2026-12-01",
+        liveTerms: { target: 99_950, strict: true },
+        pendingTerms: null,
+      });
+    });
+  });
+});
+
+describe("listMonitorSlaPoliciesForMonitor", () => {
+  test("active policies covering the monitor, terms only, without Tinybird", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, "API");
+      const web = await insertMonitor(tx, "Web");
+      const a = await insertPolicy(tx, "A", [api.id, web.id]);
+      const b = await insertPolicy(tx, "B", [api.id]);
+      await insertPolicy(tx, "Web only", [web.id]);
+      const archived = await insertPolicy(tx, "Old", [api.id]);
+      await tx
+        .update(monitorSlaPolicy)
+        .set({ archivedAt: now })
+        .where(eq(monitorSlaPolicy.id, archived.id));
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: b.id,
+        target: 99_000,
+        strict: false,
+        effectiveFrom: "2026-12-01",
+      });
+
+      const res = await listMonitorSlaPoliciesForMonitor({
+        ctx: { ...ctx, db: tx, tb: noTinybird },
+        input: { monitorId: api.id },
+        now,
+      });
+      expect(res).toEqual([
+        {
+          id: a.id,
+          name: "A",
+          timeZone: "UTC",
+          liveMonth: "2026-11-01",
+          liveTerms: { target: 99_500, strict: false },
+          pendingTerms: null,
+        },
+        {
+          id: b.id,
+          name: "B",
+          timeZone: "UTC",
+          liveMonth: "2026-11-01",
+          liveTerms: { target: 99_500, strict: false },
+          pendingTerms: {
+            target: 99_000,
+            strict: false,
+            effectiveFrom: "2026-12-01",
+          },
+        },
+      ]);
+    });
+  });
+
+  test("another workspace's monitor lists nothing", async () => {
+    const other = await createWorkspaceFixture("team");
+    const otherCtx = makeUserCtx(other.workspace, { userId: other.userId });
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, "API");
+      await insertPolicy(tx, "A", [api.id]);
+      expect(
+        await listMonitorSlaPoliciesForMonitor({
+          ctx: { ...otherCtx, db: tx },
+          input: { monitorId: api.id },
+          now,
+        }),
+      ).toEqual([]);
     });
   });
 });

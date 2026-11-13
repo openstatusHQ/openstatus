@@ -59,12 +59,12 @@ key form read it.
 
 ## Service verbs by scope
 
-Generated from `requireScope` calls on 2026-11-12. Regenerate with
+Generated from `requireScope` calls on 2026-11-13. Regenerate with
 `grep -rn 'requireScope(ctx, "' packages/services/src --include='*.ts' | grep -v __tests__`.
 
 | Scope | Verbs |
 | --- | --- |
-| `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getMonitorIncident, listMonitorIncidents, getUptimeHistory, listMonitorSlaPolicies, getMonitorSlaPolicy, getMonitorSlaPolicySummary, exportMonitorSlaPolicy, listMonitorSlaPolicyMaintenances, getMonitorSlaMonitorMonth, getMonitorSlaExcusedWindow |
+| `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getMonitorIncident, listMonitorIncidents, getUptimeHistory, listMonitorSlaPolicies, listMonitorSlaPoliciesForMonitor, getMonitorSlaPolicy, getMonitorSlaPolicySummary, exportMonitorSlaPolicy, listMonitorSlaPolicyMaintenances, getMonitorSlaMonitorMonth, getMonitorSlaExcusedWindow |
 | `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorMaintenanceMode, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, acknowledgeMonitorIncident, resolveMonitorIncident, deleteMonitorIncident, freezeMonitorMonth, createMonitorSlaPolicy, updateMonitorSlaPolicy, archiveMonitorSlaPolicy, deleteMonitorSlaPolicy, addMonitorSlaExcusedWindow, removeMonitorSlaExcusedWindow, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `pages:read` | listPages, getPage, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponentDailySummary, listPageComponentGroups, previewImport |
 | `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |

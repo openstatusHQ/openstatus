@@ -53,7 +53,11 @@ import { SlaPolicyMaintenance } from "@/components/sla-policies/sla-policy-maint
 import { SlaPolicyPaywall } from "@/components/sla-policies/sla-policy-paywall";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
-import { allowedDowntime, formatSlaTarget } from "@/data/sla-policies.client";
+import {
+  allowedDowntime,
+  formatPendingTerms,
+  formatSlaTarget,
+} from "@/data/sla-policies.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -82,10 +86,6 @@ export function Client() {
   const { data: workspaceMonitors } = useQuery({
     ...trpc.monitor.list.queryOptions(),
     enabled: allowed && policy?.strict === true && !policy.archivedAt,
-  });
-  const { data: policies } = useQuery({
-    ...trpc.monitorSlaPolicy.list.queryOptions(),
-    enabled: allowed && selected !== null,
   });
   const columns = useMemo(
     () =>
@@ -124,7 +124,7 @@ export function Client() {
   const selectedMonitor =
     policy.monitors.find((m) => m.id === selected) ?? null;
   const canEdit = role === "owner" || role === "admin";
-  const { missed } = policy;
+  const { missed, liveTerms, pendingTerms } = policy;
   const currentMonth = policy.months.at(-1);
   let lowest: { name: string; uptime: number; met: boolean } | null = null;
   for (const m of policy.monitors) {
@@ -153,10 +153,21 @@ export function Client() {
           <SectionHeader>
             <SectionTitle>{policy.name}</SectionTitle>
             <SectionDescription>
-              {formatSlaTarget(policy.target)}% monthly uptime per monitor ·{" "}
-              {policy.strict
+              {formatSlaTarget(liveTerms.target)}% monthly uptime per monitor ·{" "}
+              {liveTerms.strict
                 ? "slow responses count as down"
                 : "slow responses count as up"}
+              {pendingTerms ? (
+                <>
+                  {" "}
+                  · {formatPendingTerms(pendingTerms)}
+                  {pendingTerms.strict !== liveTerms.strict
+                    ? pendingTerms.strict
+                      ? ", slow responses counting as down"
+                      : ", slow responses counting as up"
+                    : null}
+                </>
+              ) : null}
               {policy.archivedAt ? (
                 <>
                   {" "}
@@ -183,9 +194,10 @@ export function Client() {
               <MetricCardTitle className="uppercase">Target</MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {formatSlaTarget(policy.target)}%{" "}
+              {formatSlaTarget(liveTerms.target)}%{" "}
               <span className="text-muted-foreground text-sm font-normal">
-                {allowedDowntime(policy.target)} per month
+                {allowedDowntime(liveTerms.target)} per month
+                {pendingTerms ? ` · ${formatPendingTerms(pendingTerms)}` : null}
               </span>
             </MetricCardValue>
           </MetricCard>
@@ -342,11 +354,6 @@ export function Client() {
       <SlaMonitorMonthSheet
         policy={policy}
         monitor={selectedMonitor}
-        alsoCoveredBy={(policies ?? []).filter(
-          (p) =>
-            p.id !== policy.id &&
-            p.monitors.some((m) => m.id === selectedMonitor?.id),
-        )}
         onClose={() => void setSelected(null)}
         onExcuse={
           policy.archivedAt || !canEdit

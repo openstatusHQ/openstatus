@@ -17,10 +17,10 @@ import {
   episodeMonths,
   type FetchedEpisodes,
   fetchMonthEpisodes,
+  loadTermsHistory,
   memberTimeMonth,
-  policyExcusedSpans,
-  termsForMonth,
-  withLatestTerms,
+  policiesExcusedSpans,
+  termsStateOf,
 } from "./internal";
 import {
   completeMonths,
@@ -34,7 +34,8 @@ import {
 import { ListMonitorSlaPoliciesInput } from "./schemas";
 
 /**
- * Policies with a twelve-month strip. Sealed months as stored; the previous
+ * Policies with a twelve-month strip; `target`/`strict` are the latest terms
+ * set, `liveTerms`/`pendingTerms` what judges the running month and what follows. Sealed months as stored; the previous
  * month while its runs are kept is judged on episodes exactly as the policy
  * page does (one Tinybird read per time zone); older unsealed months are
  * frozen previews that ignore excused windows.
@@ -66,7 +67,11 @@ export async function listMonitorSlaPolicies(args: {
     .orderBy(asc(monitorSlaPolicy.id))
     .all();
   if (rows.length === 0) return [];
-  const policies = await withLatestTerms(db, ctx.workspace.id, rows);
+  const history = await loadTermsHistory(db, ctx.workspace.id, rows);
+  const policies = rows.map((p) => {
+    const latest = history.latest(p.id);
+    return { ...p, target: latest.target, strict: latest.strict };
+  });
 
   const links = await db
     .select({
@@ -216,12 +221,15 @@ export async function listMonitorSlaPolicies(args: {
     );
   }
   const previewCells = new Map<string, MonitorSlaMonth>();
+  const spansOf = await policiesExcusedSpans(db, ctx.workspace.id, [
+    ...previews.keys(),
+  ]);
   for (const policy of policies) {
     const preview = previews.get(policy.id);
     const fetched = fetchedByZone.get(policy.timeZone);
     if (!preview || !fetched) continue;
-    const terms = await termsForMonth(db, policy, preview.month);
-    const excusedSpans = await policyExcusedSpans(db, policy);
+    const terms = history.at(policy.id, preview.month);
+    const excusedSpans = spansOf.get(policy.id) ?? [];
     for (const m of preview.members) {
       previewCells.set(
         `${policy.id}:${monthCellKey(m.id, preview.month)}`,
@@ -270,6 +278,7 @@ export async function listMonitorSlaPolicies(args: {
     const missed = strip.filter((m) => m.status === "missed");
     return {
       ...policy,
+      ...termsStateOf(history, policy, now),
       monitors: members,
       sealed: everSealed.has(policy.id),
       months: strip,

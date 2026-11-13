@@ -4,7 +4,11 @@ export { createMonitorSlaPolicy } from "./create";
 export { deleteMonitorSlaPolicy } from "./delete";
 export { exportMonitorSlaPolicy } from "./export";
 export { getMonitorSlaExcusedWindow } from "./get-excused-window";
-export { getMonitorSlaPolicy, getMonitorSlaPolicySummary } from "./get";
+export {
+  getMonitorSlaPolicy,
+  getMonitorSlaPolicySummary,
+  listMonitorSlaPoliciesForMonitor,
+} from "./get";
 export { listMonitorSlaPolicies } from "./list";
 export { listMonitorSlaPolicyMaintenances } from "./maintenances";
 export { claimMonitorSlaMissNotices } from "./miss-notice";
@@ -23,6 +27,7 @@ export {
   GetMonitorSlaExcusedWindowInput,
   GetMonitorSlaMonitorMonthInput,
   GetMonitorSlaPolicyInput,
+  ListMonitorSlaPoliciesForMonitorInput,
   ListMonitorSlaPoliciesInput,
   MonitorSlaPolicyIdInput,
   RemoveMonitorSlaExcusedWindowInput,

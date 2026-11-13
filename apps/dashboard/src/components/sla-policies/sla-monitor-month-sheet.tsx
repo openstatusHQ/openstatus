@@ -29,6 +29,7 @@ import {
 import {
   formatBudgetLeft,
   formatExcusedWindow,
+  formatPendingTerms,
   formatSlaCoverage,
   formatSlaDuration,
   formatSlaMonth,
@@ -74,13 +75,11 @@ const unavailableText: Record<
 export function SlaMonitorMonthSheet({
   policy,
   monitor,
-  alsoCoveredBy,
   onClose,
   onExcuse,
 }: {
-  policy: { id: number; name: string; target: number; timeZone: string };
+  policy: { id: number; name: string; timeZone: string };
   monitor: { id: number; name: string } | null;
-  alsoCoveredBy: { id: number; name: string; target: number }[];
   onClose: () => void;
   /** absent when the viewer cannot add excused windows */
   onExcuse?: (prefill: ExcusedWindowPrefill | null) => void;
@@ -97,12 +96,7 @@ export function SlaMonitorMonthSheet({
     >
       <DataTableSheetContent className="flex flex-col sm:max-w-md">
         {shown ? (
-          <SheetBody
-            policy={policy}
-            monitor={shown}
-            alsoCoveredBy={alsoCoveredBy}
-            onExcuse={onExcuse}
-          />
+          <SheetBody policy={policy} monitor={shown} onExcuse={onExcuse} />
         ) : null}
       </DataTableSheetContent>
     </DataTableSheet>
@@ -112,15 +106,19 @@ export function SlaMonitorMonthSheet({
 function SheetBody({
   policy,
   monitor,
-  alsoCoveredBy,
   onExcuse,
 }: {
-  policy: { id: number; name: string; target: number; timeZone: string };
+  policy: { id: number; name: string; timeZone: string };
   monitor: { id: number; name: string };
-  alsoCoveredBy: { id: number; name: string; target: number }[];
   onExcuse?: (prefill: ExcusedWindowPrefill | null) => void;
 }) {
   const trpc = useTRPC();
+  const { data: covering } = useQuery(
+    trpc.monitorSlaPolicy.listForMonitor.queryOptions({
+      monitorId: monitor.id,
+    }),
+  );
+  const alsoCoveredBy = (covering ?? []).filter((p) => p.id !== policy.id);
   const { data, isError } = useQuery(
     trpc.monitorSlaPolicy.monitorMonth.queryOptions({
       id: policy.id,
@@ -174,7 +172,10 @@ function SheetBody({
                     {p.name}
                   </Link>
                   <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                    {formatSlaTarget(p.target)}%
+                    {formatSlaTarget(p.liveTerms.target)}%
+                    {p.pendingTerms ? (
+                      <span> {formatPendingTerms(p.pendingTerms)}</span>
+                    ) : null}
                   </span>
                 </li>
               ))}

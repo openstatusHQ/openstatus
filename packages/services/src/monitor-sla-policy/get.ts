@@ -1,5 +1,9 @@
-import { and, desc, eq } from "@openstatus/db";
-import { monitorSlaExcusedWindow } from "@openstatus/db/src/schema";
+import { and, asc, desc, eq, isNull } from "@openstatus/db";
+import {
+  monitorSlaExcusedWindow,
+  monitorSlaPolicy,
+  monitorSlaPolicyToMonitor,
+} from "@openstatus/db/src/schema";
 
 import { loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
@@ -11,11 +15,16 @@ import {
   assertMonitorSlaLimit,
   judgePolicyMonths,
   loadPolicyMembers,
+  loadTermsHistory,
   sealedMonthsOf,
-  termsForMonth,
+  termsStateOf,
 } from "./internal";
 import { completeMonths, LAST_TWELVE, monthOf, splitByMonth } from "./months";
-import { GetMonitorSlaPolicyInput, MonitorSlaPolicyIdInput } from "./schemas";
+import {
+  GetMonitorSlaPolicyInput,
+  ListMonitorSlaPoliciesForMonitorInput,
+  MonitorSlaPolicyIdInput,
+} from "./schemas";
 
 /** The policy's excused windows, newest first, with the months they touch and whether they are locked. */
 async function loadExcusedWindows(
@@ -56,7 +65,7 @@ async function loadExcusedWindows(
 
 /**
  * A policy's latest terms and current members, archived or not; no months, no
- * Tinybird. `liveTerms` judge the running month `liveMonth`.
+ * Tinybird. `liveTerms` judge the running month `liveMonth`; `pendingTerms` follow.
  */
 export async function getMonitorSlaPolicySummary(args: {
   ctx: ServiceContext;
@@ -68,13 +77,10 @@ export async function getMonitorSlaPolicySummary(args: {
   const input = MonitorSlaPolicyIdInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
-  const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
-  const liveMonth = monthOf(args.now ?? new Date(), policy.timeZone);
-  const live = await termsForMonth(db, policy, liveMonth);
+  const { policy, monitors, history } = await loadPolicyMembers(ctx, input.id);
   return {
     ...policy,
-    liveMonth,
-    liveTerms: { target: live.target, strict: live.strict },
+    ...termsStateOf(history, policy, args.now ?? new Date()),
     /** the time zone is locked once any month is sealed */
     sealed: (await sealedMonthsOf(db, policy)).length > 0,
     monitors: monitors.map(
@@ -99,7 +105,7 @@ export async function getMonitorSlaPolicy(args: {
   requireScope(ctx, "monitors:read");
   const input = GetMonitorSlaPolicyInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
-  const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
+  const { policy, monitors, history } = await loadPolicyMembers(ctx, input.id);
 
   const now = args.now ?? new Date();
   const complete = completeMonths(now, input.months, policy.timeZone);
@@ -140,6 +146,7 @@ export async function getMonitorSlaPolicy(args: {
 
   return {
     ...policy,
+    ...termsStateOf(history, policy, now),
     months,
     monitors: rows,
     excusedWindows: await loadExcusedWindows(ctx, policy, now),
@@ -157,3 +164,47 @@ export async function getMonitorSlaPolicy(args: {
 export type MonitorSlaPolicyDetail = Awaited<
   ReturnType<typeof getMonitorSlaPolicy>
 >;
+
+/** Active policies covering a monitor with their running and pending terms; no months, no Tinybird. */
+export async function listMonitorSlaPoliciesForMonitor(args: {
+  ctx: ServiceContext;
+  input: ListMonitorSlaPoliciesForMonitorInput;
+  now?: Date;
+}) {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = ListMonitorSlaPoliciesForMonitorInput.parse(args.input);
+  assertMonitorSlaLimit(ctx);
+  const db = getReadDb(ctx);
+  const rows = await db
+    .select({
+      id: monitorSlaPolicy.id,
+      workspaceId: monitorSlaPolicy.workspaceId,
+      name: monitorSlaPolicy.name,
+      timeZone: monitorSlaPolicy.timeZone,
+      target: monitorSlaPolicy.target,
+      strict: monitorSlaPolicy.strict,
+    })
+    .from(monitorSlaPolicyToMonitor)
+    .innerJoin(
+      monitorSlaPolicy,
+      eq(monitorSlaPolicy.id, monitorSlaPolicyToMonitor.monitorSlaPolicyId),
+    )
+    .where(
+      and(
+        eq(monitorSlaPolicyToMonitor.monitorId, input.monitorId),
+        eq(monitorSlaPolicy.workspaceId, ctx.workspace.id),
+        isNull(monitorSlaPolicy.archivedAt),
+      ),
+    )
+    .orderBy(asc(monitorSlaPolicy.id))
+    .all();
+  const history = await loadTermsHistory(db, ctx.workspace.id, rows);
+  const now = args.now ?? new Date();
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    timeZone: p.timeZone,
+    ...termsStateOf(history, p, now),
+  }));
+}

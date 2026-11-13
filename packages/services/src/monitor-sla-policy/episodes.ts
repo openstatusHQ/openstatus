@@ -148,7 +148,7 @@ function runsBefore(e: Episode, offset: number): number {
   if (offset <= 0 || e.runs === 0) return 0;
   if (offset >= length) return e.runs;
   const n = BigInt(e.runs);
-  const at = (BigInt(offset) * n + BigInt(length) - 1n) / BigInt(length);
+  const at = (BigInt(offset) * n + BigInt(length) - BigInt(1)) / BigInt(length);
   return Number(at < n ? at : n);
 }
 
