@@ -21,6 +21,12 @@ const variant = {
   breached: "destructive",
 } as const satisfies Record<IncidentSlaTimerStatus, StatusVariant>;
 
+// sm sits in a line of text; md leads a property value like the Status dot.
+const dotSize = {
+  sm: "mr-1.5 mb-px size-1.5",
+  md: "mr-2 mb-px",
+} as const;
+
 const tone = {
   running: "",
   at_risk: "text-warning",
@@ -33,10 +39,12 @@ export function IncidentSlaBadge({
   timer,
   kind,
   now,
+  size = "sm",
   className,
   ...props
 }: Omit<React.ComponentProps<"span">, "children"> & {
   timer: IncidentSlaTimer;
+  size?: keyof typeof dotSize;
   /** Prefix naming the timer; omit where a label already names it. */
   kind?: string;
   now: Date;
@@ -54,7 +62,7 @@ export function IncidentSlaBadge({
     >
       <StatusDot
         variant={variant[timer.status]}
-        className="mr-1.5 mb-px size-1.5 align-middle"
+        className={cn(dotSize[size], "align-middle")}
       />
       {kind ? <span data-slot="incident-sla-kind">{kind} </span> : null}
       {slaTimerPhrase(timer, now)}
@@ -79,10 +87,12 @@ export function IncidentUpdateBadge({
   cadence,
   kind,
   now,
+  size = "sm",
   className,
   ...props
 }: Omit<React.ComponentProps<"span">, "children"> & {
   cadence: IncidentUpdateCadence;
+  size?: keyof typeof dotSize;
   kind?: string;
   now: Date;
 }) {
@@ -98,7 +108,7 @@ export function IncidentUpdateBadge({
     >
       <StatusDot
         variant={cadenceVariant[cadence.status]}
-        className="mr-1.5 mb-px size-1.5 align-middle"
+        className={cn(dotSize[size], "align-middle")}
       />
       {kind ? <span data-slot="incident-sla-kind">{kind} </span> : null}
       {updateCadencePhrase(cadence, now)}

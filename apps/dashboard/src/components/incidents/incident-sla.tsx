@@ -5,16 +5,17 @@ import type {
   IncidentSlaTimer,
   IncidentSlaTimerKind,
 } from "@openstatus/db/src/schema/incident_sla_policies/state";
-import { format } from "date-fns";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
-import { Link } from "@/components/common/link";
+import { StatusDot } from "@/components/common/status-dot";
 import {
   Property,
   PropertyLabel,
   PropertyList,
+  PropertyMeta,
   PropertyValue,
 } from "@/components/content/property-list";
+import { statusConfig } from "@/data/managed-incidents.client";
 
 import { IncidentSlaBadge, IncidentUpdateBadge } from "./incident-sla-badge";
 import { IncidentSlaMissReason } from "./incident-sla-miss-reason";
@@ -35,56 +36,32 @@ function TimerProperty({
   return (
     <Property>
       <PropertyLabel>{label}</PropertyLabel>
-      <PropertyValue className="flex-col items-start gap-0.5 py-1.5">
-        <IncidentSlaBadge timer={timer} now={now} />
-        <span className="text-muted-foreground text-xs">
-          {formatIncidentSlaMinutes(timer.targetMinutes)} target
-          {timer.metAt ? null : (
-            <>
-              {" · "}
-              <HoverCardTimestamp date={timer.dueAt} side="left">
-                <span>{format(timer.dueAt, "HH:mm")}</span>
-              </HoverCardTimestamp>
-            </>
-          )}
-        </span>
-        {timer.breachDueAt ? (
+      <PropertyValue>
+        <HoverCardTimestamp date={timer.metAt ?? timer.dueAt} side="left">
+          <IncidentSlaBadge
+            timer={timer}
+            now={now}
+            size="md"
+            className="truncate"
+          />
+        </HoverCardTimestamp>
+        <PropertyMeta>
+          {formatIncidentSlaMinutes(timer.targetMinutes)}
+        </PropertyMeta>
+      </PropertyValue>
+      {timer.breachDueAt ? (
+        <div className="col-start-2">
           <IncidentSlaMissReason
             incidentId={incidentId}
             kind={kind}
             reason={timer.missReason}
           />
-        ) : null}
-      </PropertyValue>
+        </div>
+      ) : null}
     </Property>
   );
 }
 
-function CadenceProperty({
-  cadence,
-  now,
-}: {
-  cadence: IncidentUpdateCadence;
-  now: Date;
-}) {
-  return (
-    <Property>
-      <PropertyLabel>Next update</PropertyLabel>
-      <PropertyValue className="flex-col items-start gap-0.5 py-1.5">
-        <IncidentUpdateBadge cadence={cadence} now={now} />
-        <span className="text-muted-foreground text-xs">
-          every {formatIncidentSlaMinutes(cadence.intervalMinutes)}
-          {" · "}
-          <HoverCardTimestamp date={cadence.dueAt} side="left">
-            <span>{format(cadence.dueAt, "HH:mm")}</span>
-          </HoverCardTimestamp>
-        </span>
-      </PropertyValue>
-    </Property>
-  );
-}
-
-/** Aside block: both timers, the update cadence and the resolution stop, against the reporting fixed at declare. */
 export function IncidentSla({
   incidentId,
   state,
@@ -96,41 +73,67 @@ export function IncidentSla({
   cadence: IncidentUpdateCadence | null;
   now: Date;
 }) {
+  const hasTargets = state.response || state.resolution || cadence;
   return (
-    <div className="flex flex-col gap-1">
-      <PropertyList>
-        {state.response ? (
-          <TimerProperty
-            incidentId={incidentId}
-            kind="response"
-            label="Response"
-            timer={state.response}
-            now={now}
-          />
-        ) : null}
-        {state.resolution ? (
-          <TimerProperty
-            incidentId={incidentId}
-            kind="resolution"
-            label="Resolution"
-            timer={state.resolution}
-            now={now}
-          />
-        ) : null}
-        {cadence ? <CadenceProperty cadence={cadence} now={now} /> : null}
-      </PropertyList>
-      <p className="text-muted-foreground pt-1 text-xs">
-        {state.response || state.resolution || cadence
-          ? null
-          : "No targets for this severity. "}
-        {state.responseMet === "status_report"
-          ? "Response is met by the first status report update. "
-          : null}
-        Resolution stops at{" "}
-        <span className="text-foreground">{state.resolutionStop}</span>. Targets
-        were fixed when the incident was declared.{" "}
-        <Link href="/reportings/incidents">Edit reporting</Link>
-      </p>
-    </div>
+    <PropertyList>
+      {state.response ? (
+        <TimerProperty
+          incidentId={incidentId}
+          kind="response"
+          label="Response"
+          timer={state.response}
+          now={now}
+        />
+      ) : null}
+      {state.resolution ? (
+        <TimerProperty
+          incidentId={incidentId}
+          kind="resolution"
+          label="Resolution"
+          timer={state.resolution}
+          now={now}
+        />
+      ) : null}
+      {cadence ? (
+        <Property>
+          <PropertyLabel>Next update</PropertyLabel>
+          <PropertyValue>
+            <HoverCardTimestamp date={cadence.dueAt} side="left">
+              <IncidentUpdateBadge
+                cadence={cadence}
+                now={now}
+                size="md"
+                className="truncate"
+              />
+            </HoverCardTimestamp>
+            <PropertyMeta>
+              every {formatIncidentSlaMinutes(cadence.intervalMinutes)}
+            </PropertyMeta>
+          </PropertyValue>
+        </Property>
+      ) : null}
+      {hasTargets ? null : (
+        <Property>
+          <PropertyLabel>Targets</PropertyLabel>
+          <PropertyValue className="text-muted-foreground">
+            None for this severity
+          </PropertyValue>
+        </Property>
+      )}
+      {state.response && state.responseMet === "status_report" ? (
+        <Property>
+          <PropertyLabel>Response by</PropertyLabel>
+          <PropertyValue>First report update</PropertyValue>
+        </Property>
+      ) : null}
+      {/* frozen at declare: later policy edits don't apply here */}
+      <Property>
+        <PropertyLabel>Stops at</PropertyLabel>
+        <PropertyValue>
+          <StatusDot variant={statusConfig[state.resolutionStop].variant} />
+          {statusConfig[state.resolutionStop].label}
+        </PropertyValue>
+      </Property>
+    </PropertyList>
   );
 }

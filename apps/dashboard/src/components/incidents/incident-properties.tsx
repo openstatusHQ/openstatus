@@ -32,6 +32,7 @@ import {
   PropertyDateTimePicker,
   PropertyLabel,
   PropertyList,
+  PropertyMeta,
   PropertySelectTrigger,
   PropertyValue,
 } from "@/components/content/property-list";
@@ -89,7 +90,13 @@ export function IncidentProperties({
   const status = statusConfig[incident.status];
   const commander = personName(incident.commander);
   const endedAt = incidentEndedAt(incident);
+  const declaredBy = personName(incident.declaredByUser);
   const acknowledgedBy = personName(incident.acknowledgedByUser);
+  const acknowledgedAtLabel = !incident.acknowledgedAt
+    ? null
+    : incident.acknowledgedAt.getTime() === incident.declaredAt.getTime()
+      ? "at declare"
+      : format(incident.acknowledgedAt, "LLL dd, HH:mm");
 
   return (
     <PropertyList>
@@ -288,13 +295,13 @@ export function IncidentProperties({
       <Property>
         <PropertyLabel>Duration</PropertyLabel>
         <PropertyValue>
-          {formatDistanceStrict(incident.startedAt, endedAt ?? new Date())}
           {endedAt ? null : (
             <>
-              <StatusDot variant="destructive" className="size-1.5" />
+              <StatusDot variant="destructive" />
               <span className="sr-only">ongoing</span>
             </>
           )}
+          {formatDistanceStrict(incident.startedAt, endedAt ?? new Date())}
         </PropertyValue>
       </Property>
       {lastUpdateAt ? (
@@ -312,9 +319,17 @@ export function IncidentProperties({
       <Property>
         <PropertyLabel>Declared by</PropertyLabel>
         <PropertyValue>
-          <span className="truncate">
-            {personName(incident.declaredByUser) ?? "System"}
-          </span>
+          {declaredBy ? (
+            <>
+              <UserAvatar
+                name={declaredBy}
+                src={incident.declaredByUser?.photoUrl}
+              />
+              <span className="truncate">{declaredBy}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">System</span>
+          )}
         </PropertyValue>
       </Property>
       <Property>
@@ -332,18 +347,11 @@ export function IncidentProperties({
                 </>
               ) : null}
               <HoverCardTimestamp date={incident.acknowledgedAt} side="left">
-                <span
-                  className={
-                    acknowledgedBy
-                      ? "text-muted-foreground shrink-0"
-                      : undefined
-                  }
-                >
-                  {incident.acknowledgedAt.getTime() ===
-                  incident.declaredAt.getTime()
-                    ? "at declare"
-                    : format(incident.acknowledgedAt, "LLL dd, HH:mm")}
-                </span>
+                {acknowledgedBy ? (
+                  <PropertyMeta>{acknowledgedAtLabel}</PropertyMeta>
+                ) : (
+                  <span>{acknowledgedAtLabel}</span>
+                )}
               </HoverCardTimestamp>
             </>
           ) : (
