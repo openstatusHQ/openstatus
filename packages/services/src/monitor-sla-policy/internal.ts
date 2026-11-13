@@ -376,6 +376,24 @@ export async function fetchMonthEpisodes(args: {
   return { ...res, range };
 }
 
+/** A member's fetched episodes; one not read (no run verdicts) has the range unmeasured. */
+export function memberEpisodes(
+  memberId: number,
+  fetched: Awaited<ReturnType<typeof fetchMonthEpisodes>>,
+): Episode[] {
+  return (
+    fetched.episodes.get(memberId) ?? [
+      {
+        kind: "unmeasured",
+        startedAt: fetched.range.start,
+        endedAt: fetched.range.end,
+        runs: 0,
+        weightedMs: fetched.range.end - fetched.range.start,
+      },
+    ]
+  );
+}
+
 /** A member's month from its fetched episodes; the caller handles seals. */
 export function memberTimeMonth(args: {
   month: string;
@@ -393,20 +411,14 @@ export function memberTimeMonth(args: {
   }
   const covered = coveredSpan(month, timeZone, member.memberSince, args.now);
   if (!covered) return emptyMonth({ month, state: "none", timeZone });
-  // not read (no run verdicts): nothing measured
-  const episodes = fetched.episodes.get(member.id) ?? [
-    {
-      kind: "unmeasured" as const,
-      startedAt: fetched.range.start,
-      endedAt: fetched.range.end,
-      runs: 0,
-      weightedMs: fetched.range.end - fetched.range.start,
-    },
-  ];
   return timeMonth({
     month,
     state,
-    episodes: clipEpisodes(episodes, covered.start, covered.end),
+    episodes: clipEpisodes(
+      memberEpisodes(member.id, fetched),
+      covered.start,
+      covered.end,
+    ),
     covered,
     excusedSpans: args.excusedSpans,
     terms: args.terms,

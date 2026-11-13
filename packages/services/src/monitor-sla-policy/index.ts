@@ -8,6 +8,11 @@ export { getMonitorSlaPolicy, getMonitorSlaPolicySummary } from "./get";
 export { listMonitorSlaPolicies } from "./list";
 export { listMonitorSlaPolicyMaintenances } from "./maintenances";
 export { claimMonitorSlaMissNotices } from "./miss-notice";
+export {
+  getMonitorSlaMonitorMonth,
+  type MonitorSlaMonitorMonth,
+  type MonitorSlaMonthEpisode,
+} from "./monitor-month";
 export { type SealMonitorSlaMonthsResult, sealMonitorSlaMonths } from "./seal";
 export { removeMonitorSlaExcusedWindow } from "./remove-excused-window";
 export { updateMonitorSlaPolicy } from "./update";
@@ -16,6 +21,7 @@ export {
   CreateMonitorSlaPolicyInput,
   ExportMonitorSlaPolicyInput,
   GetMonitorSlaExcusedWindowInput,
+  GetMonitorSlaMonitorMonthInput,
   GetMonitorSlaPolicyInput,
   ListMonitorSlaPoliciesInput,
   MonitorSlaPolicyIdInput,

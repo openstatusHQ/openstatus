@@ -9,8 +9,10 @@ import {
   ExportMonitorSlaPolicyInput,
   exportMonitorSlaPolicy,
   GetMonitorSlaExcusedWindowInput,
+  GetMonitorSlaMonitorMonthInput,
   GetMonitorSlaPolicyInput,
   getMonitorSlaExcusedWindow,
+  getMonitorSlaMonitorMonth,
   getMonitorSlaPolicy,
   getMonitorSlaPolicySummary,
   ListMonitorSlaPoliciesInput,
@@ -52,6 +54,19 @@ export const monitorSlaPolicyRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         return await getMonitorSlaPolicySummary({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  monitorMonth: protectedProcedure
+    .input(GetMonitorSlaMonitorMonthInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getMonitorSlaMonitorMonth({
           ctx: toServiceCtx(ctx),
           input,
         });
