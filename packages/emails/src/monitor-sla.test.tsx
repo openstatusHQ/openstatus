@@ -81,8 +81,21 @@ describe("sendMonitorSlaMissed", () => {
       replyTo: "ping@openstatus.dev",
     });
     expect(send.mock.calls[0][1]).toEqual({
-      idempotencyKey: "monitor-sla-miss:1:2026-10-01",
+      idempotencyKey: "monitor-sla-miss:1:2026-10-01:0",
     });
+  });
+
+  test("more than 50 owners go out in sorted chunks with one key each", async () => {
+    const to = Array.from({ length: 120 }, (_, i) => `o${119 - i}@acme.dev`);
+    await sendMonitorSlaMissed({ ...props, to, idempotencyKey: "k" });
+    expect(send.mock.calls.map((c) => c[0].to.length)).toEqual([50, 50, 20]);
+    expect(send.mock.calls.map((c) => c[1])).toEqual([
+      { idempotencyKey: "k:0" },
+      { idempotencyKey: "k:1" },
+      { idempotencyKey: "k:2" },
+    ]);
+    const sorted = [...to].sort();
+    expect(send.mock.calls.flatMap((c) => c[0].to)).toEqual(sorted);
   });
 
   test("a Resend error throws so the caller does not count it as sent", async () => {
