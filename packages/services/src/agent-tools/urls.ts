@@ -1,3 +1,5 @@
+import { getStatusPageBaseUrl } from "@openstatus/utils";
+
 import { resolveDashboardUrl } from "../incident/effects";
 
 export function dashboardUrl(path: string): string {
@@ -8,6 +10,9 @@ export function dashboardUrl(path: string): string {
   return `${base}${path}`;
 }
 
-export function statusPageUrl(slug: string): string {
-  return `https://${slug}.openstatus.dev`;
+export function statusPageUrl(
+  slug: string,
+  customDomain?: string | null,
+): string {
+  return getStatusPageBaseUrl({ slug, customDomain });
 }

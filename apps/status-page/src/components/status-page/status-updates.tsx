@@ -38,10 +38,12 @@ function getUpdateLink(
   type: "rss" | "json" | "atom",
   page?: Page | null,
   password?: string,
+  baseUrlOverride?: string,
 ) {
   const baseUrl = getBaseUrl({
     slug: page?.slug,
     customDomain: page?.customDomain,
+    override: baseUrlOverride,
   });
 
   return `${baseUrl}/feed/${type}${
@@ -53,12 +55,14 @@ function getUpdateLink(
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   page?: Page | null;
+  baseUrlOverride?: string;
   onSubscribe?: (values: FormValues) => Promise<void> | void;
 }
 
 export function StatusUpdates({
   className,
   page,
+  baseUrlOverride,
   onSubscribe,
   ...props
 }: StatusUpdatesProps) {
@@ -73,9 +77,9 @@ export function StatusUpdates({
   const types = page?.statusUpdateTypes ?? [];
   if (types.length === 0) return null;
 
-  const rssUrl = getUpdateLink("rss", page, password);
-  const atomUrl = getUpdateLink("atom", page, password);
-  const jsonUrl = getUpdateLink("json", page, password);
+  const rssUrl = getUpdateLink("rss", page, password, baseUrlOverride);
+  const atomUrl = getUpdateLink("atom", page, password, baseUrlOverride);
+  const jsonUrl = getUpdateLink("json", page, password, baseUrlOverride);
 
   return (
     <BlockStatusUpdates>

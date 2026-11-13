@@ -1,15 +1,37 @@
+import {
+  getConfiguredStatusPageBaseUrl,
+  getStatusPageBaseUrl,
+} from "@openstatus/utils";
+
 export function getBaseUrl({
   slug,
   customDomain,
+  override,
 }: {
   slug?: string;
-  customDomain?: string;
+  customDomain?: string | null;
+  override?: string;
 }) {
-  if (process.env.NODE_ENV === "development") {
-    return `http://localhost:3000/${slug}`;
+  const configuredOverride =
+    override?.trim() || getConfiguredStatusPageBaseUrl();
+
+  if (
+    typeof window !== "undefined" &&
+    window.location?.origin &&
+    !configuredOverride
+  ) {
+    if (customDomain) {
+      return customDomain.startsWith("http://") ||
+        customDomain.startsWith("https://")
+        ? customDomain
+        : `https://${customDomain}`;
+    }
+    return window.location.origin;
   }
-  if (customDomain) {
-    return `https://${customDomain}`;
-  }
-  return `https://${slug}.openstatus.dev`;
+
+  return getStatusPageBaseUrl({
+    slug,
+    customDomain,
+    override: configuredOverride,
+  });
 }
