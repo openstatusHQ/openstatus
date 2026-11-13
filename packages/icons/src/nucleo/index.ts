@@ -91,6 +91,7 @@ export { Refresh } from "./refresh";
 export { Region } from "./region";
 export { Remove } from "./remove";
 export { Report } from "./report";
+export { Reporting } from "./reporting";
 export { Reset } from "./reset";
 export { Resolved } from "./resolved";
 export { Restricted } from "./restricted";
