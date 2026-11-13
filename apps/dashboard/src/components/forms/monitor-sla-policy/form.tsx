@@ -30,6 +30,7 @@ import {
   SlaMonitorsField,
   SlaStrictField,
   SlaTargetField,
+  SlaTimeZoneField,
   slaTargetSchemaError,
 } from "./fields";
 
@@ -39,6 +40,7 @@ const schema = z.object({
     error: slaTargetSchemaError,
   }),
   strict: z.boolean(),
+  timeZone: z.string().min(1),
   monitorIds: z.array(z.number()),
 });
 
@@ -59,6 +61,7 @@ export function FormMonitorSlaPolicy({
       name: "",
       target: "99.9",
       strict: false,
+      timeZone: "UTC",
       monitorIds: [],
     },
   });
@@ -124,6 +127,16 @@ export function FormMonitorSlaPolicy({
             name="target"
             render={({ field }) => (
               <SlaTargetField value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent>
+          <FormField
+            control={form.control}
+            name="timeZone"
+            render={({ field }) => (
+              <SlaTimeZoneField value={field.value} onChange={field.onChange} />
             )}
           />
         </FormCardContent>

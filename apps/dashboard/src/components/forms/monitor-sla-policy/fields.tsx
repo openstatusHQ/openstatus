@@ -23,6 +23,7 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 
+import { TimeZoneCombobox } from "@/components/common/time-zone-combobox";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -120,6 +121,34 @@ export function SlaStrictField({
       <FormControl>
         <Switch checked={value} onCheckedChange={onChange} />
       </FormControl>
+    </FormItem>
+  );
+}
+
+export function SlaTimeZoneField({
+  value,
+  onChange,
+  locked,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  /** a month is sealed: its edges are fixed in this zone */
+  locked?: boolean;
+  className?: string;
+}) {
+  return (
+    <FormItem className={className}>
+      <FormLabel>Time zone</FormLabel>
+      <FormControl>
+        <TimeZoneCombobox value={value} onChange={onChange} disabled={locked} />
+      </FormControl>
+      <FormDescription>
+        {locked
+          ? "Locked: a month has been sealed in this zone, and sealed months keep their edges."
+          : "Months run from midnight on the 1st in this zone. It locks once a month is sealed."}
+      </FormDescription>
+      <FormMessage />
     </FormItem>
   );
 }

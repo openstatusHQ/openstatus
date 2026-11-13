@@ -44,7 +44,10 @@ export function FormMonitorSlaPolicyUpdate() {
           name: policy.name,
           target: formatSlaTarget(policy.target),
           strict: policy.strict,
+          timeZone: policy.timeZone,
         }}
+        live={{ month: policy.liveMonth, ...policy.liveTerms }}
+        timeZoneLocked={policy.sealed}
         onSubmit={async (values) => {
           const target = parseSlaTarget(values.target);
           if (target === null) return;
@@ -53,6 +56,7 @@ export function FormMonitorSlaPolicyUpdate() {
             name: values.name,
             target,
             strict: values.strict,
+            timeZone: values.timeZone,
           });
         }}
       />

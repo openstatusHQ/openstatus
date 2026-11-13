@@ -13,7 +13,7 @@ import { SelectTrigger } from "@radix-ui/react-select";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { parseAsNumberLiteral, useQueryState } from "nuqs";
+import { parseAsInteger, parseAsNumberLiteral, useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 
 import {
@@ -43,6 +43,7 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
+import { SlaMonitorMonthSheet } from "@/components/sla-policies/sla-monitor-month-sheet";
 import {
   SlaMonthLegend,
   SlaMonthLegendItem,
@@ -63,6 +64,7 @@ export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const [months, setMonths] = useQueryState("months", parseMonths);
+  const [selected, setSelected] = useQueryState("monitor", parseAsInteger);
   const [excuse, setExcuse] = useState<{
     prefill: ExcusedWindowPrefill | null;
   } | null>(null);
@@ -81,9 +83,19 @@ export function Client() {
     ...trpc.monitor.list.queryOptions(),
     enabled: allowed && policy?.strict === true && !policy.archivedAt,
   });
+  const { data: policies } = useQuery({
+    ...trpc.monitorSlaPolicy.list.queryOptions(),
+    enabled: allowed && selected !== null,
+  });
   const columns = useMemo(
-    () => (policy ? getColumns(policy.months) : []),
-    [policy],
+    () =>
+      policy
+        ? getColumns(policy.months, {
+            timeZone: policy.timeZone,
+            onSelect: (monitorId) => void setSelected(monitorId),
+          })
+        : [],
+    [policy, setSelected],
   );
 
   if (!workspace) return null;
@@ -109,6 +121,8 @@ export function Client() {
   if (!policy) return null;
 
   const role = members?.find((m) => m.user.id === user?.id)?.role;
+  const selectedMonitor =
+    policy.monitors.find((m) => m.id === selected) ?? null;
   const canEdit = role === "owner" || role === "admin";
   const { missed } = policy;
   const currentMonth = policy.months.at(-1);
@@ -223,12 +237,12 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Months</SectionTitle>
           <SectionDescription>
-            Each monitor is judged on its own, from its run verdicts. A month is
-            sealed with the terms that applied once it has closed and its uptime
-            is frozen. Months before the first seal are previews under
-            today&apos;s terms and follow every change to the policy. The
-            running month is live and provisional until it closes; a live month
-            below target is a miss in progress, not a missed month.
+            Each monitor is judged on its own, on the time it was up. Months run
+            from midnight on the 1st in {policy.timeZone}. A month is sealed
+            with the terms it started with once it has closed. The running month
+            is live and provisional until it closes; a live month below target
+            is a miss in progress, not a missed month. Pick a monitor to see
+            what used its budget.
           </SectionDescription>
         </SectionHeader>
         <div className="text-sm">
@@ -258,6 +272,7 @@ export function Client() {
         <DataTable
           columns={columns}
           data={policy.monitors}
+          onRowClick={(row) => void setSelected(row.original.id)}
           defaultPagination={{
             pageIndex: 0,
             pageSize: policy.monitors.length || 1,
@@ -283,10 +298,11 @@ export function Client() {
             Live, provisional
           </SlaMonthLegendItem>
           <SlaMonthLegendItem swatch="border-muted-foreground border border-dashed">
-            Preview, today&apos;s terms
+            Preview, not sealed yet
           </SlaMonthLegendItem>
-          <span>Filled: sealed, hover for its terms</span>
-          <span>— no checks</span>
+          <span>Filled: sealed, hover for its terms and method</span>
+          <span>— no checks, or unavailable in this time zone</span>
+          <span>Months in {policy.timeZone}</span>
           <span>
             Uptime in %, after excused downtime, floored to three decimals
           </span>
@@ -321,6 +337,24 @@ export function Client() {
           policy.archivedAt || !canEdit
             ? undefined
             : (prefill) => setExcuse({ prefill })
+        }
+      />
+      <SlaMonitorMonthSheet
+        policy={policy}
+        monitor={selectedMonitor}
+        alsoCoveredBy={(policies ?? []).filter(
+          (p) =>
+            p.id !== policy.id &&
+            p.monitors.some((m) => m.id === selectedMonitor?.id),
+        )}
+        onClose={() => void setSelected(null)}
+        onExcuse={
+          policy.archivedAt || !canEdit
+            ? undefined
+            : (prefill) => {
+                void setSelected(null);
+                setExcuse({ prefill });
+              }
         }
       />
       <DialogExcusedWindow

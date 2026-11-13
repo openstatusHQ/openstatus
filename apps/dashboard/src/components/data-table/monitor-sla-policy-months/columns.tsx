@@ -5,31 +5,63 @@ import { formatSlaUptime } from "@openstatus/db/src/schema/monitor_sla_policies/
 import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { formatSlaMonth, formatSlaTarget } from "@/data/sla-policies.client";
+import {
+  formatSlaCoverage,
+  formatSlaDuration,
+  formatSlaMonth,
+  formatSlaTarget,
+} from "@/data/sla-policies.client";
 
 type PolicyMonitor =
   RouterOutputs["monitorSlaPolicy"]["get"]["monitors"][number];
 type PolicyMonth = PolicyMonitor["months"][number];
 
+function runsNote(m: PolicyMonth): string | null {
+  if (!m.counts) return null;
+  const excused = m.excused
+    ? m.excused.ok + m.excused.degraded + m.excused.error
+    : 0;
+  const total = m.counts.ok + m.counts.degraded + m.counts.error;
+  return excused > 0 ? `${total} runs, ${excused} excused` : `${total} runs`;
+}
+
+/** How the month was judged: run count (legacy seals, UTC previews) or time, with coverage. */
+function basisNote(m: PolicyMonth): string | null {
+  if (m.method === "runs") {
+    const runs = runsNote(m);
+    return runs ? `judged by run count, ${runs}` : "judged by run count";
+  }
+  if (m.method === "time") {
+    const parts = ["judged on time"];
+    if (m.coverage !== null) {
+      parts.push(`${formatSlaCoverage(m.coverage)}% of the time measured`);
+    }
+    if (m.downMs !== null && m.downMs > 0) {
+      parts.push(`${formatSlaDuration(m.downMs)} down`);
+    }
+    return parts.join(", ");
+  }
+  return null;
+}
+
 function monthTitle(m: PolicyMonth): string {
-  const label = formatSlaMonth(m.month, { year: true });
+  const label = `${formatSlaMonth(m.month, { year: true })} (${m.timeZone})`;
+  if (m.unavailable === "time-zone") {
+    return `${label}: unavailable in this time zone. Runs older than 45 days are only kept per UTC day, so the month cannot be cut at local midnight.`;
+  }
+  const basis = basisNote(m);
+  const suffix = basis ? ` (${basis})` : "";
   if (m.uptime === null && m.counts !== null) {
     return `${label}: every run excused, no judgement`;
   }
-  if (m.uptime === null || m.counts === null) {
+  if (m.uptime === null) {
     if (m.state === "live") return `${label}: no checks yet, provisional`;
     return m.state === "none"
       ? `${label}: no data`
       : `${label}: no checks, no judgement`;
   }
-  const excused = m.excused
-    ? m.excused.ok + m.excused.degraded + m.excused.error
-    : 0;
-  const total = m.counts.ok + m.counts.degraded + m.counts.error;
-  const runs =
-    excused > 0 ? `${total} runs, ${excused} excused` : `${total} runs`;
   if (m.state === "live") {
-    return `${label}: ${formatSlaUptime(m.uptime)}% so far, ${m.met ? "on target" : "miss in progress"}, provisional under today's terms (${runs})`;
+    return `${label}: ${formatSlaUptime(m.uptime)}% so far, ${m.met ? "on target" : "miss in progress"}, provisional${suffix}`;
   }
   const result = `${label}: ${formatSlaUptime(m.uptime)}%, ${m.met ? "met" : "missed"}`;
   if (m.sealed) {
@@ -42,9 +74,12 @@ function monthTitle(m: PolicyMonth): string {
     const slow = m.sealed.strict
       ? "slow counted as down"
       : "slow counted as up";
-    return `${result}, sealed ${at} against ${formatSlaTarget(m.sealed.target)}%, ${slow} (${runs})`;
+    return `${result}, sealed ${at} against ${formatSlaTarget(m.sealed.target)}%, ${slow}${suffix}`;
   }
-  return `${result}, preview under today's terms (${runs})`;
+  const terms = m.terms ? ` against ${formatSlaTarget(m.terms.target)}%` : "";
+  return m.method === "runs"
+    ? `${result}, preview under today's terms${terms}${suffix}`
+    : `${result}, preview until sealed${terms}${suffix}`;
 }
 
 function MonthCell({ month }: { month: PolicyMonth }) {
@@ -77,15 +112,31 @@ function MonthCell({ month }: { month: PolicyMonth }) {
 }
 
 /** One column per month, oldest first, between the monitor and its miss count. */
-export function getColumns(months: string[]): ColumnDef<PolicyMonitor>[] {
+export function getColumns(
+  months: string[],
+  {
+    timeZone,
+    onSelect,
+  }: { timeZone: string; onSelect?: (monitorId: number) => void },
+): ColumnDef<PolicyMonitor>[] {
   const current = months.at(-1);
   return [
     {
       accessorKey: "name",
       header: "Monitor",
       cell: ({ row }) => (
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">{row.original.name}</span>
+        <div className="flex min-w-0 flex-col items-start">
+          {onSelect ? (
+            <button
+              type="button"
+              onClick={() => onSelect(row.original.id)}
+              className="decoration-muted-foreground/50 max-w-full truncate text-left font-medium underline-offset-2 hover:underline hover:decoration-dashed"
+            >
+              {row.original.name}
+            </button>
+          ) : (
+            <span className="truncate font-medium">{row.original.name}</span>
+          )}
           <span className="text-muted-foreground truncate text-xs">
             {row.original.url}
           </span>
@@ -99,8 +150,8 @@ export function getColumns(months: string[]): ColumnDef<PolicyMonitor>[] {
         <span
           title={
             month === current
-              ? `${formatSlaMonth(month, { year: true })}, so far (provisional)`
-              : formatSlaMonth(month, { year: true })
+              ? `${formatSlaMonth(month, { year: true })} in ${timeZone}, so far (provisional)`
+              : `${formatSlaMonth(month, { year: true })} in ${timeZone}`
           }
           className={cn(
             "flex flex-col leading-tight",

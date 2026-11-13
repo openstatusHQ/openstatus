@@ -843,6 +843,53 @@ describe("getMonitorSlaPolicy", () => {
     });
   });
 
+  test("the summary tells the running month's terms from pending ones and whether a month is sealed", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        target: 99_990,
+        strict: true,
+        effectiveFrom: "2026-12-01",
+      });
+      const before = await getMonitorSlaPolicySummary({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+      });
+      expect(before).toMatchObject({
+        target: 99_990,
+        strict: true,
+        liveMonth: "2026-11-01",
+        liveTerms: { target: 99_500, strict: false },
+        sealed: false,
+      });
+      await tx.insert(monitorSlaSealedMonth).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        monitorId: api.id,
+        month: "2026-10-01",
+        target: 99_500,
+        strict: false,
+        ok: 100,
+        degraded: 0,
+        error: 0,
+        total: 100,
+        up: 100,
+        uptime: 100_000,
+        met: true,
+      });
+      const after = await getMonitorSlaPolicySummary({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+      });
+      expect(after.sealed).toBe(true);
+    });
+  });
+
   test("leaves out deleted monitors", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);

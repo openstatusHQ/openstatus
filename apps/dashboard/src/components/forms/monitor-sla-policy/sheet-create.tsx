@@ -61,6 +61,7 @@ export function FormSheetMonitorSlaPolicyCreate({
                   name: values.name,
                   target,
                   strict: values.strict,
+                  timeZone: values.timeZone,
                   monitorIds: values.monitorIds,
                 });
                 setOpen(false);

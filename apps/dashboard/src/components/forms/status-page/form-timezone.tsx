@@ -1,16 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Expand, Lock } from "@openstatus/icons";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@openstatus/ui/components/ui/command";
 import {
   Form,
   FormControl,
@@ -20,20 +12,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@openstatus/ui/components/ui/popover";
-import { cn } from "@openstatus/ui/lib/utils";
-import { timeZoneShortName } from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { TimeZoneCombobox } from "@/components/common/time-zone-combobox";
 import {
   FormCard,
   FormCardContent,
@@ -45,23 +31,12 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
-import {
-  timeZoneSearchKeywords,
-  timeZoneSearchScore,
-} from "@/components/forms/status-page/timezone-search";
 
 const schema = z.object({
   defaultTimezone: z.string().min(1),
 });
 
 type FormValues = z.infer<typeof schema>;
-
-// "Asia/Tokyo (GMT+9)": the short name the public page appends to its
-// timestamps (in English), so what is picked here is what readers will see.
-function zoneLabel(timeZone: string) {
-  const name = timeZoneShortName(timeZone);
-  return name === timeZone ? timeZone : `${timeZone} (${name})`;
-}
 
 export function FormTimezone({
   defaultValues,
@@ -73,24 +48,6 @@ export function FormTimezone({
   locked?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
-  // Built on first open, not on mount: the search keywords take ~100 ms.
-  const [opened, setOpened] = useState(false);
-  if (open && !opened) setOpened(true);
-  const zones = useMemo(
-    () =>
-      opened
-        ? // some engines list UTC themselves, others do not
-          [...new Set(["UTC", ...Intl.supportedValuesOf("timeZone")])].map(
-            (zone) => ({
-              zone,
-              label: zoneLabel(zone),
-              keywords: timeZoneSearchKeywords(zone),
-            }),
-          )
-        : [],
-    [opened],
-  );
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { defaultTimezone: "UTC" },
@@ -139,53 +96,14 @@ export function FormTimezone({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Time zone</FormLabel>
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={open}
-                          disabled={locked}
-                          className="w-full justify-between font-normal sm:max-w-md"
-                        >
-                          {zoneLabel(field.value)}
-                          <Expand className="ml-2 size-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-                      <Command filter={timeZoneSearchScore}>
-                        <CommandInput placeholder="Search time zone..." />
-                        <CommandList>
-                          <CommandEmpty>No time zone found.</CommandEmpty>
-                          <CommandGroup>
-                            {zones.map(({ zone, label, keywords }) => (
-                              <CommandItem
-                                key={zone}
-                                value={zone}
-                                keywords={keywords}
-                                onSelect={() => {
-                                  field.onChange(zone);
-                                  setOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 size-4",
-                                    zone === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                                {label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <TimeZoneCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={locked}
+                      className="sm:max-w-md"
+                    />
+                  </FormControl>
                   <FormDescription>
                     Days on the status bars start at midnight in this zone.
                   </FormDescription>

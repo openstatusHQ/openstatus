@@ -9,9 +9,11 @@ import { excusedWindowLock } from "./excused";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
+  findPolicy,
   judgePolicyMonths,
   loadPolicyMembers,
   sealedMonthsOf,
+  termsForMonth,
 } from "./internal";
 import { completeMonths, LAST_TWELVE, monthOf, splitByMonth } from "./months";
 import { GetMonitorSlaPolicyInput, MonitorSlaPolicyIdInput } from "./schemas";
@@ -53,18 +55,31 @@ async function loadExcusedWindows(
   }));
 }
 
-/** A policy's terms and current members, archived or not; no months, no Tinybird. */
+/**
+ * A policy's latest terms and current members, archived or not; no months, no
+ * Tinybird. `liveTerms` judge the running month `liveMonth`.
+ */
 export async function getMonitorSlaPolicySummary(args: {
   ctx: ServiceContext;
   input: MonitorSlaPolicyIdInput;
+  now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
   const input = MonitorSlaPolicyIdInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
+  const db = getReadDb(ctx);
   const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
+  // the row's own target/strict, not the latest terms loadPolicyMembers merged in
+  const row = await findPolicy(db, ctx, input.id);
+  const liveMonth = monthOf(args.now ?? new Date(), row.timeZone);
+  const live = await termsForMonth(db, row, liveMonth);
   return {
     ...policy,
+    liveMonth,
+    liveTerms: { target: live.target, strict: live.strict },
+    /** the time zone is locked once any month is sealed */
+    sealed: (await sealedMonthsOf(db, row)).length > 0,
     monitors: monitors.map(
       ({ regions: _r, periodicity: _p, memberSince: _m, ...m }) => m,
     ),

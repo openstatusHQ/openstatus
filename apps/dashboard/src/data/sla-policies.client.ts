@@ -14,15 +14,45 @@ export function parseSlaTarget(value: string): number | null {
   return target > 0 && target <= 100_000 ? target : null;
 }
 
-/** Downtime a target allows in a 30-day month, e.g. `"3h 36m"`. */
-export function allowedDowntime(target: number): string {
-  const seconds = Math.round((MONTH_SECONDS * (100_000 - target)) / 100_000);
+/** A duration to the minute once it reaches an hour, else to the second: `"3h 36m"`, `"43m 12s"`; the sign is dropped. */
+export function formatSlaDuration(ms: number): string {
+  const seconds = Math.floor(Math.abs(ms) / 1000);
   if (seconds === 0) return "0s";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   const parts = h > 0 ? [`${h}h`, m > 0 ? `${m}m` : null] : [`${m}m`, `${s}s`];
-  return parts.filter((p) => p !== null && p !== "0m").join(" ");
+  return parts.filter((p) => p !== null && p !== "0m" && p !== "0s").join(" ");
+}
+
+/** Downtime a target allows in a 30-day month, e.g. `"3h 36m"`. */
+export function allowedDowntime(target: number): string {
+  const seconds = Math.round((MONTH_SECONDS * (100_000 - target)) / 100_000);
+  return formatSlaDuration(seconds * 1000);
+}
+
+/** `"12m left"`, or `"4m over"` once the budget is spent past zero. */
+export function formatBudgetLeft(leftMs: number): string {
+  return leftMs < 0
+    ? `${formatSlaDuration(leftMs)} over`
+    : `${formatSlaDuration(leftMs)} left`;
+}
+
+/** Share of the budget in `ms`, 0 to 1; any down time spends a zero budget whole. */
+export function budgetShare(ms: number, budgetMs: number): number {
+  if (budgetMs <= 0) return ms > 0 ? 1 : 0;
+  return Math.min(Math.max(ms / budgetMs, 0), 1);
+}
+
+/** Coverage in thousandths of a percent → `"99.8"`, floored to one decimal. */
+export function formatSlaCoverage(coverage: number): string {
+  return (Math.floor(coverage / 100) / 10).toFixed(1);
+}
+
+/** `"2026-12-01"` → `"2027-01-01"`. */
+export function nextSlaMonth(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
 }
 
 /** `"2026-01-01"` → `"Jan"`, or `"Jan 2026"` with `year`. */
@@ -46,9 +76,9 @@ export const excusedKindLabels: Record<MonitorSlaExcusedWindowKind, string> = {
   other: "Other",
 };
 
-function utc(date: Date) {
+function inZone(date: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "UTC",
+    timeZone,
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -62,10 +92,14 @@ function utc(date: Date) {
   };
 }
 
-/** `"Nov 4, 22:00 – 23:00"` in UTC; both dates when it spans days. */
-export function formatExcusedWindow(from: Date, to: Date): string {
-  const a = utc(from);
-  const b = utc(to);
+/** `"Nov 4, 22:00 – 23:00"` in `timeZone` (UTC by default); both dates when it spans days. */
+export function formatExcusedWindow(
+  from: Date,
+  to: Date,
+  timeZone = "UTC",
+): string {
+  const a = inZone(from, timeZone);
+  const b = inZone(to, timeZone);
   return a.day === b.day
     ? `${a.day}, ${a.time} – ${b.time}`
     : `${a.day}, ${a.time} – ${b.day}, ${b.time}`;
@@ -100,4 +134,27 @@ export function excusedWindowContext(
       .map((w) => w.from)
       .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
   return { missed, months, lastOfKind };
+}
+
+export type SlaTreatment = "counted" | "lenient" | "excused" | "unmeasured";
+
+export const slaTreatmentLabels: Record<SlaTreatment, string> = {
+  counted: "Counted",
+  lenient: "Slow, counted as up",
+  excused: "Excused",
+  unmeasured: "Not measured",
+};
+
+/** Weighted ms per treatment, in label order, leaving out treatments with none. */
+export function slaTreatmentTotals(
+  episodes: readonly { treatment: SlaTreatment; weightedMs: number }[],
+): { treatment: SlaTreatment; ms: number }[] {
+  const sums = new Map<SlaTreatment, number>();
+  for (const e of episodes) {
+    sums.set(e.treatment, (sums.get(e.treatment) ?? 0) + e.weightedMs);
+  }
+  return (Object.keys(slaTreatmentLabels) as SlaTreatment[]).flatMap((t) => {
+    const ms = sums.get(t) ?? 0;
+    return ms > 0 ? [{ treatment: t, ms }] : [];
+  });
 }

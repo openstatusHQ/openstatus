@@ -9,7 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import type { SidebarMetadataProps } from "@/components/nav/sidebar-metadata";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { SlaMonitorSidebarEntry } from "@/components/sla-policies/sla-budget";
 import {
   type HeartbeatHealth,
   getHeartbeatHealth,
@@ -56,11 +58,37 @@ export function Sidebar() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const monitorId = Number.parseInt(id);
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
+    trpc.monitor.get.queryOptions({ id: monitorId }),
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: slaPolicies } = useQuery({
+    ...trpc.monitorSlaPolicy.list.queryOptions(),
+    enabled: workspace?.limits["monitor-sla"] === true,
+  });
 
   if (!monitor) return null;
+
+  const covering = (slaPolicies ?? []).filter((p) =>
+    p.monitors.some((m) => m.id === monitorId),
+  );
+  const sla: SidebarMetadataProps[] =
+    covering.length > 0
+      ? [
+          {
+            label: "SLA",
+            type: "content",
+            children: covering.map((policy) => (
+              <SlaMonitorSidebarEntry
+                key={policy.id}
+                policy={policy}
+                monitorId={monitorId}
+              />
+            )),
+          },
+        ]
+      : [];
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
   const type = monitorTypes.find((type) => type.id === monitor.jobType);
@@ -164,6 +192,7 @@ export function Sidebar() {
             },
           ],
         },
+        ...sla,
         {
           label: "Configuration",
           items: isHeartbeat

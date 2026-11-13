@@ -13,7 +13,7 @@ import {
 import { Input } from "@openstatus/ui/components/ui/input";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -27,9 +27,19 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { parseSlaTarget } from "@/data/sla-policies.client";
+import {
+  formatSlaMonth,
+  formatSlaTarget,
+  nextSlaMonth,
+  parseSlaTarget,
+} from "@/data/sla-policies.client";
 
-import { SlaStrictField, SlaTargetField, slaTargetSchemaError } from "./fields";
+import {
+  SlaStrictField,
+  SlaTargetField,
+  SlaTimeZoneField,
+  slaTargetSchemaError,
+} from "./fields";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -37,22 +47,35 @@ const schema = z.object({
     error: slaTargetSchemaError,
   }),
   strict: z.boolean(),
+  timeZone: z.string().min(1),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export function FormCommitment({
   defaultValues,
+  live,
+  timeZoneLocked,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues: FormValues;
+  /** the running month (YYYY-MM-01) and the terms it started with */
+  live: { month: string; target: number; strict: boolean };
+  timeZoneLocked: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   });
+  const [target, strict] = useWatch({
+    control: form.control,
+    name: ["target", "strict"],
+  });
+  const parsed = parseSlaTarget(target);
+  const termsDiffer =
+    parsed !== null && (parsed !== live.target || strict !== live.strict);
   const [isPending, startTransition] = useTransition();
 
   function submitAction(values: FormValues) {
@@ -81,9 +104,9 @@ export function FormCommitment({
           <FormCardHeader>
             <FormCardTitle>Commitment</FormCardTitle>
             <FormCardDescription>
-              The monthly uptime each monitor in this policy has to reach.
-              Changes apply from the next unsealed month; sealed months keep the
-              terms they were judged with.
+              The monthly uptime each monitor in this policy has to reach. A
+              change applies from next month: the running month keeps the terms
+              it started with.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent className="grid gap-4 sm:grid-cols-2">
@@ -118,9 +141,36 @@ export function FormCommitment({
               )}
             />
           </FormCardContent>
+          <FormCardSeparator />
+          <FormCardContent>
+            <FormField
+              control={form.control}
+              name="timeZone"
+              render={({ field }) => (
+                <SlaTimeZoneField
+                  value={field.value}
+                  onChange={field.onChange}
+                  locked={timeZoneLocked}
+                  className="sm:max-w-md"
+                />
+              )}
+            />
+          </FormCardContent>
           <FormCardFooter>
-            <FormCardFooterInfo>
-              Uptime counts each scheduled check once across its regions.
+            <FormCardFooterInfo role="status">
+              {termsDiffer ? (
+                <>
+                  Changes apply from{" "}
+                  <span className="text-foreground font-medium">
+                    {formatSlaMonth(nextSlaMonth(live.month), { year: true })}
+                  </span>
+                  . {formatSlaMonth(live.month)} keeps{" "}
+                  {formatSlaTarget(live.target)}%, slow counted as{" "}
+                  {live.strict ? "down" : "up"}.
+                </>
+              ) : (
+                "Uptime counts each scheduled check once across its regions."
+              )}
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}

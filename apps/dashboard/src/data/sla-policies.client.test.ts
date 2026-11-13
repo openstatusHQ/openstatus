@@ -2,10 +2,16 @@ import { describe, expect, test } from "vitest";
 
 import {
   allowedDowntime,
+  budgetShare,
   excusedWindowContext,
+  formatBudgetLeft,
   formatExcusedWindow,
+  formatSlaCoverage,
+  formatSlaDuration,
   formatSlaMonth,
+  nextSlaMonth,
   parseSlaTarget,
+  slaTreatmentTotals,
 } from "./sla-policies.client";
 
 describe("allowedDowntime", () => {
@@ -18,6 +24,54 @@ describe("allowedDowntime", () => {
     [100_000, "0s"],
   ])("%i allows %s in 30 days", (target, expected) => {
     expect(allowedDowntime(target)).toBe(expected);
+  });
+});
+
+describe("formatSlaDuration", () => {
+  test.each([
+    [0, "0s"],
+    [999, "0s"],
+    [30_000, "30s"],
+    [5 * 60_000, "5m"],
+    [(43 * 60 + 12) * 1000, "43m 12s"],
+    [(3 * 3600 + 36 * 60 + 59) * 1000, "3h 36m"],
+    [72 * 3600_000, "72h"],
+    [-4 * 60_000, "4m"],
+  ])("%i ms → %s", (ms, expected) => {
+    expect(formatSlaDuration(ms)).toBe(expected);
+  });
+});
+
+describe("formatBudgetLeft", () => {
+  test("left while there is budget, over once it is spent past zero", () => {
+    expect(formatBudgetLeft(12 * 60_000)).toBe("12m left");
+    expect(formatBudgetLeft(0)).toBe("0s left");
+    expect(formatBudgetLeft(-4 * 60_000)).toBe("4m over");
+  });
+});
+
+describe("budgetShare", () => {
+  test("clamps to the bar and spends a zero budget whole", () => {
+    expect(budgetShare(15, 60)).toBe(0.25);
+    expect(budgetShare(90, 60)).toBe(1);
+    expect(budgetShare(-5, 60)).toBe(0);
+    expect(budgetShare(0, 0)).toBe(0);
+    expect(budgetShare(1, 0)).toBe(1);
+  });
+});
+
+describe("formatSlaCoverage", () => {
+  test("floors to one decimal", () => {
+    expect(formatSlaCoverage(100_000)).toBe("100.0");
+    expect(formatSlaCoverage(99_899)).toBe("99.8");
+    expect(formatSlaCoverage(0)).toBe("0.0");
+  });
+});
+
+describe("nextSlaMonth", () => {
+  test("rolls over the year", () => {
+    expect(nextSlaMonth("2026-11-01")).toBe("2026-12-01");
+    expect(nextSlaMonth("2026-12-01")).toBe("2027-01-01");
   });
 });
 
@@ -59,6 +113,16 @@ describe("formatExcusedWindow", () => {
         new Date(Date.UTC(2026, 10, 1, 1)),
       ),
     ).toBe("Oct 31, 23:00 – Nov 1, 01:00");
+  });
+
+  test("reads in the given time zone", () => {
+    expect(
+      formatExcusedWindow(
+        new Date(Date.UTC(2026, 10, 4, 22)),
+        new Date(Date.UTC(2026, 10, 4, 23)),
+        "Europe/Berlin",
+      ),
+    ).toBe("Nov 4, 23:00 – Nov 5, 00:00");
   });
 });
 
@@ -107,5 +171,21 @@ describe("excusedWindowContext", () => {
       new Date(Date.UTC(2026, 9, 20)),
     );
     expect(excusedWindowContext(policy, "other").lastOfKind).toBeNull();
+  });
+});
+
+describe("slaTreatmentTotals", () => {
+  test("sums per treatment in label order and drops empty ones", () => {
+    expect(
+      slaTreatmentTotals([
+        { treatment: "excused", weightedMs: 5 },
+        { treatment: "counted", weightedMs: 10 },
+        { treatment: "counted", weightedMs: 20 },
+        { treatment: "unmeasured", weightedMs: 0 },
+      ]),
+    ).toEqual([
+      { treatment: "counted", ms: 30 },
+      { treatment: "excused", ms: 5 },
+    ]);
   });
 });
