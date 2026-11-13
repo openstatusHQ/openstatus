@@ -25,10 +25,10 @@ import {
   NotFoundError,
   PreconditionFailedError,
 } from "../../errors";
-import { addMonitorSlaExcusedWindow } from "../add-excused-window";
+import { addMonitorReportingExcusedWindow } from "../add-excused-window";
 import { archiveMonitorReporting } from "../archive";
 import { createMonitorReporting } from "../create";
-import { removeMonitorSlaExcusedWindow } from "../remove-excused-window";
+import { removeMonitorReportingExcusedWindow } from "../remove-excused-window";
 
 const HOUR = 3_600_000;
 const now = new Date(Date.UTC(2026, 10, 15, 12));
@@ -97,13 +97,13 @@ const window = {
   to: oct(20, 23),
 };
 
-describe("addMonitorSlaExcusedWindow", () => {
+describe("addMonitorReportingExcusedWindow", () => {
   test("stores the window with who added it, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
 
-      const row = await addMonitorSlaExcusedWindow({
+      const row = await addMonitorReportingExcusedWindow({
         ctx,
         input: { policyId: policy.id, ...window },
         now,
@@ -139,7 +139,7 @@ describe("addMonitorSlaExcusedWindow", () => {
         "force_majeure",
         "other",
       ] as const) {
-        await addMonitorSlaExcusedWindow({
+        await addMonitorReportingExcusedWindow({
           ctx,
           input: { policyId: policy.id, ...window, kind },
           now,
@@ -159,7 +159,7 @@ describe("addMonitorSlaExcusedWindow", () => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
       const add = (patch: Partial<typeof window>) =>
-        addMonitorSlaExcusedWindow({
+        addMonitorReportingExcusedWindow({
           ctx,
           input: { policyId: policy.id, ...window, ...patch },
           now,
@@ -185,7 +185,7 @@ describe("addMonitorSlaExcusedWindow", () => {
       const policy = await policyIn(tx);
       await sealOctober(tx, policy.id);
 
-      const res = addMonitorSlaExcusedWindow({
+      const res = addMonitorReportingExcusedWindow({
         ctx,
         input: {
           policyId: policy.id,
@@ -198,7 +198,7 @@ describe("addMonitorSlaExcusedWindow", () => {
       await expect(res).rejects.toBeInstanceOf(PreconditionFailedError);
       await expect(res).rejects.toThrow(/sealed/);
       // November is open
-      await addMonitorSlaExcusedWindow({
+      await addMonitorReportingExcusedWindow({
         ctx,
         input: {
           policyId: policy.id,
@@ -215,7 +215,7 @@ describe("addMonitorSlaExcusedWindow", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
-      const res = addMonitorSlaExcusedWindow({
+      const res = addMonitorReportingExcusedWindow({
         ctx,
         input: {
           policyId: policy.id,
@@ -234,7 +234,7 @@ describe("addMonitorSlaExcusedWindow", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
-      const res = addMonitorSlaExcusedWindow({
+      const res = addMonitorReportingExcusedWindow({
         ctx,
         input: {
           policyId: policy.id,
@@ -254,14 +254,14 @@ describe("addMonitorSlaExcusedWindow", () => {
       const policy = await policyIn(tx);
       const input = { policyId: policy.id, ...window };
       await expect(
-        addMonitorSlaExcusedWindow({
+        addMonitorReportingExcusedWindow({
           ctx: { ...memberCtx, db: tx },
           input,
           now,
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
       await expect(
-        addMonitorSlaExcusedWindow({
+        addMonitorReportingExcusedWindow({
           ctx: { ...otherCtx, db: tx },
           input,
           now,
@@ -272,7 +272,7 @@ describe("addMonitorSlaExcusedWindow", () => {
         input: { id: policy.id },
       });
       await expect(
-        addMonitorSlaExcusedWindow({
+        addMonitorReportingExcusedWindow({
           ctx: { ...ownerCtx, db: tx },
           input,
           now,
@@ -287,26 +287,33 @@ describe("addMonitorSlaExcusedWindow", () => {
       scopes: ["monitors:read"],
     });
     await expect(
-      addMonitorSlaExcusedWindow({ ctx, input: { policyId: 1, ...window } }),
+      addMonitorReportingExcusedWindow({
+        ctx,
+        input: { policyId: 1, ...window },
+      }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     await expect(
-      removeMonitorSlaExcusedWindow({ ctx, input: { id: 1 } }),
+      removeMonitorReportingExcusedWindow({ ctx, input: { id: 1 } }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
 
-describe("removeMonitorSlaExcusedWindow", () => {
+describe("removeMonitorReportingExcusedWindow", () => {
   test("removes the window, audited", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
-      const row = await addMonitorSlaExcusedWindow({
+      const row = await addMonitorReportingExcusedWindow({
         ctx,
         input: { policyId: policy.id, ...window },
         now,
       });
 
-      await removeMonitorSlaExcusedWindow({ ctx, input: { id: row.id }, now });
+      await removeMonitorReportingExcusedWindow({
+        ctx,
+        input: { id: row.id },
+        now,
+      });
 
       const left = await tx
         .select()
@@ -331,7 +338,7 @@ describe("removeMonitorSlaExcusedWindow", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
-      const row = await addMonitorSlaExcusedWindow({
+      const row = await addMonitorReportingExcusedWindow({
         ctx,
         input: { policyId: policy.id, ...window },
         now,
@@ -339,11 +346,15 @@ describe("removeMonitorSlaExcusedWindow", () => {
       await sealOctober(tx, policy.id);
 
       await expect(
-        removeMonitorSlaExcusedWindow({ ctx, input: { id: row.id }, now }),
+        removeMonitorReportingExcusedWindow({
+          ctx,
+          input: { id: row.id },
+          now,
+        }),
       ).rejects.toBeInstanceOf(PreconditionFailedError);
       // and is closed for good once October is older than the previous month
       await expect(
-        removeMonitorSlaExcusedWindow({
+        removeMonitorReportingExcusedWindow({
           ctx,
           input: { id: row.id },
           now: new Date(Date.UTC(2026, 11, 5)),
@@ -355,13 +366,13 @@ describe("removeMonitorSlaExcusedWindow", () => {
   test("another workspace's window is not found", async () => {
     await withTestTransaction(async (tx) => {
       const policy = await policyIn(tx);
-      const row = await addMonitorSlaExcusedWindow({
+      const row = await addMonitorReportingExcusedWindow({
         ctx: { ...ownerCtx, db: tx },
         input: { policyId: policy.id, ...window },
         now,
       });
       await expect(
-        removeMonitorSlaExcusedWindow({
+        removeMonitorReportingExcusedWindow({
           ctx: { ...otherCtx, db: tx },
           input: { id: row.id },
           now,

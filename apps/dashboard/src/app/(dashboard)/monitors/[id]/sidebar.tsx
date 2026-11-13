@@ -64,7 +64,7 @@ export function Sidebar() {
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: covering = [] } = useQuery({
-    ...trpc.monitorReporting.listForMonitor.queryOptions({ monitorId }),
+    ...trpc.monitorReporting.monitorMonths.queryOptions({ monitorId }),
     enabled: workspace?.limits["monitor-sla"] === true,
   });
 
@@ -76,10 +76,10 @@ export function Sidebar() {
           {
             label: "SLA",
             type: "content",
-            children: covering.map((policy) => (
+            children: covering.map((reporting) => (
               <SlaMonitorSidebarEntry
-                key={policy.id}
-                policy={policy}
+                key={reporting.id}
+                reporting={reporting}
                 monitorId={monitorId}
               />
             )),

@@ -22,8 +22,12 @@ import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import type { Verdict } from "../episodes";
 import { getMonitorReporting } from "../get";
-import { getMonitorSlaMonitorMonth } from "../monitor-month";
 import {
+  getMonitorReportingMonth,
+  listMonitorReportingMonths,
+} from "../monitor-month";
+import {
+  type EpisodesCall,
   episodesPipesFrom,
   failingEpisodesPipes,
   runsEvery,
@@ -181,14 +185,14 @@ function novemberRuns(
   );
 }
 
-describe("getMonitorSlaMonitorMonth", () => {
+describe("getMonitorReportingMonth", () => {
   test("live month on the 13th: budget, burned, left and pace", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
       const policy = await insertPolicy(tx, [api.id]);
       const episodesPipes = novemberRuns();
 
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -277,7 +281,7 @@ describe("getMonitorSlaMonitorMonth", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id], { strict: true });
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -301,7 +305,7 @@ describe("getMonitorSlaMonitorMonth", () => {
         ERROR_AT + 10 * MIN,
         ERROR_AT + 20 * MIN,
       );
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -338,7 +342,7 @@ describe("getMonitorSlaMonitorMonth", () => {
         gap,
         gap + 4 * HOUR,
       );
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -394,7 +398,7 @@ describe("getMonitorSlaMonitorMonth", () => {
       await insertExcused(tx, policy.id, covered - HOUR, covered + 2 * HOUR);
       const inside = (t: number, at: number, ms: number) =>
         t >= at && t < at + ms;
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -428,7 +432,7 @@ describe("getMonitorSlaMonitorMonth", () => {
       });
       // EDT on Nov 1 (UTC-4), EST from 2am that day: the month is 30 days and an hour
       const start = Date.UTC(2026, 10, 1, 4);
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -515,7 +519,7 @@ describe("getMonitorSlaMonitorMonth", () => {
           ep("error", oct + 20 * DAY, HOUR, "excused"),
         ]);
 
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id, month: "2026-10" },
         now,
@@ -570,7 +574,7 @@ describe("getMonitorSlaMonitorMonth", () => {
         uptime: 99_500,
         met: true,
       });
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id, month: "2026-09" },
         now,
@@ -592,7 +596,7 @@ describe("getMonitorSlaMonitorMonth", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id, month: "2026-08" },
         now,
@@ -613,7 +617,7 @@ describe("getMonitorSlaMonitorMonth", () => {
       const policy = await insertPolicy(tx, [api.id], {
         timeZone: "Europe/Berlin",
       });
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id, month: "2026-08" },
         now,
@@ -645,13 +649,57 @@ describe("getMonitorSlaMonitorMonth", () => {
         now.getTime() + 2 * HOUR,
         now.getTime() + 4 * HOUR,
       );
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
         episodesPipes: novemberRuns(),
       });
       expect(res.budget?.remainingMs).toBe(17.5 * DAY - 4 * HOUR);
+    });
+  });
+
+  test("an upcoming pause-mode maintenance is left out of the time still to come", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      await insertMaintenance(
+        tx,
+        api.id,
+        "Upgrade",
+        now.getTime() + 2 * DAY,
+        now.getTime() + 2 * DAY + 6 * HOUR,
+      );
+      const res = await getMonitorReportingMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id },
+        now,
+        episodesPipes: novemberRuns(),
+      });
+      expect(res.budget?.remainingMs).toBe(17.5 * DAY - 6 * HOUR);
+      expect(res.countedMaintenances).toEqual([]);
+    });
+  });
+
+  test("an upcoming continue-mode maintenance is not listed as counted yet", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, { maintenanceMode: "continue" });
+      const policy = await insertPolicy(tx, [api.id]);
+      await insertMaintenance(
+        tx,
+        api.id,
+        "Upgrade",
+        now.getTime() + 2 * DAY,
+        now.getTime() + 2 * DAY + 6 * HOUR,
+      );
+      const res = await getMonitorReportingMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id },
+        now,
+        episodesPipes: novemberRuns(),
+      });
+      expect(res.budget?.remainingMs).toBe(17.5 * DAY);
+      expect(res.countedMaintenances).toEqual([]);
     });
   });
 
@@ -666,7 +714,7 @@ describe("getMonitorSlaMonitorMonth", () => {
         now.getTime() - HOUR,
         now.getTime() + 3 * HOUR,
       );
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -680,7 +728,7 @@ describe("getMonitorSlaMonitorMonth", () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      const res = await getMonitorSlaMonitorMonth({
+      const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id, monitorId: api.id },
         now,
@@ -702,7 +750,7 @@ describe("getMonitorSlaMonitorMonth", () => {
       const outside = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       await expect(
-        getMonitorSlaMonitorMonth({
+        getMonitorReportingMonth({
           ctx: { ...ctx, db: tx },
           input: { id: policy.id, monitorId: outside.id },
           now,
@@ -720,7 +768,7 @@ describe("getMonitorSlaMonitorMonth", () => {
         .returning()
         .get();
       await expect(
-        getMonitorSlaMonitorMonth({
+        getMonitorReportingMonth({
           ctx: { ...ctx, db: tx },
           input: { id: foreign.id, monitorId: api.id },
           now,
@@ -734,7 +782,7 @@ describe("getMonitorSlaMonitorMonth", () => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       await expect(
-        getMonitorSlaMonitorMonth({
+        getMonitorReportingMonth({
           ctx: { ...ctx, db: tx },
           input: { id: policy.id, monitorId: api.id, month: "2026-12" },
           now,
@@ -745,7 +793,7 @@ describe("getMonitorSlaMonitorMonth", () => {
 
   test("requires the plan and a monitors scope", async () => {
     await expect(
-      getMonitorSlaMonitorMonth({
+      getMonitorReportingMonth({
         ctx: freeCtx,
         input: { id: 1, monitorId: 1 },
         now,
@@ -756,9 +804,87 @@ describe("getMonitorSlaMonitorMonth", () => {
       scopes: ["pages:read"],
     });
     await expect(
-      getMonitorSlaMonitorMonth({
+      getMonitorReportingMonth({
         ctx: key,
         input: { id: 1, monitorId: 1 },
+        now,
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+});
+
+describe("listMonitorReportingMonths", () => {
+  test("every active reporting's running month from one episodes read", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const utc = await insertPolicy(tx, [api.id], { name: "UTC" });
+      const berlin = await insertPolicy(tx, [api.id], {
+        name: "Berlin",
+        timeZone: "Europe/Berlin",
+        target: 99_500,
+      });
+      await insertPolicy(tx, [api.id], {
+        name: "Archived",
+        archivedAt: new Date(Date.UTC(2026, 9, 1)),
+      });
+      const calls: EpisodesCall[] = [];
+      const pipes = episodesPipesFrom(
+        () =>
+          runsEvery(NOV - DAY, now.getTime(), 10 * MIN, (t) =>
+            t >= ERROR_AT && t < ERROR_AT + 30 * MIN ? "error" : "ok",
+          ),
+        calls,
+      );
+      const res = await listMonitorReportingMonths({
+        ctx: { ...ctx, db: tx },
+        input: { monitorId: api.id },
+        now,
+        episodesPipes: pipes,
+      });
+      expect(calls).toHaveLength(1);
+      // Berlin's November starts an hour before UTC's
+      expect(calls[0]).toMatchObject({
+        fromDate: NOV - HOUR,
+        toDate: now.getTime(),
+      });
+      expect(res.map((r) => r.id)).toEqual([utc.id, berlin.id]);
+      for (const id of [utc.id, berlin.id]) {
+        const one = await getMonitorReportingMonth({
+          ctx: { ...ctx, db: tx },
+          input: { id, monitorId: api.id },
+          now,
+          episodesPipes: pipes,
+        });
+        const row = res.find((r) => r.id === id);
+        expect(row?.month.downMs).toBe(one.downMs);
+        expect(row?.month.budget).toEqual(one.budget);
+      }
+      expect(res[1]).toMatchObject({
+        timeZone: "Europe/Berlin",
+        liveTerms: { target: 99_500 },
+        month: { state: "live", timeZone: "Europe/Berlin" },
+      });
+    });
+  });
+
+  test("a monitor under no active reporting has none", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const res = await listMonitorReportingMonths({
+        ctx: { ...ctx, db: tx },
+        input: { monitorId: api.id },
+        now,
+        episodesPipes: failingEpisodesPipes(),
+      });
+      expect(res).toEqual([]);
+    });
+  });
+
+  test("requires the plan", async () => {
+    await expect(
+      listMonitorReportingMonths({
+        ctx: freeCtx,
+        input: { monitorId: 1 },
         now,
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);

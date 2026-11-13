@@ -184,12 +184,12 @@ export const Events = {
     name: "monitor_reporting_deleted",
     channel: "reporting",
   },
-  AddMonitorSlaExcusedWindow: {
-    name: "monitor_sla_excused_window_added",
+  AddMonitorReportingExcusedWindow: {
+    name: "monitor_reporting_excused_window_added",
     channel: "reporting",
   },
-  RemoveMonitorSlaExcusedWindow: {
-    name: "monitor_sla_excused_window_removed",
+  RemoveMonitorReportingExcusedWindow: {
+    name: "monitor_reporting_excused_window_removed",
     channel: "reporting",
   },
   SaveIncidentReporting: {

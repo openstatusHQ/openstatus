@@ -13,17 +13,17 @@ import {
   assertMonitorSlaLimit,
   getWritablePolicy,
 } from "./internal";
-import { AddMonitorSlaExcusedWindowInput } from "./schemas";
+import { AddMonitorReportingExcusedWindowInput } from "./schemas";
 
 /** Runs inside the window stop counting for every monitor of the policy. */
-export async function addMonitorSlaExcusedWindow(args: {
+export async function addMonitorReportingExcusedWindow(args: {
   ctx: ServiceContext;
-  input: AddMonitorSlaExcusedWindowInput;
+  input: AddMonitorReportingExcusedWindowInput;
   now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:write");
-  const input = AddMonitorSlaExcusedWindowInput.parse(args.input);
+  const input = AddMonitorReportingExcusedWindowInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
 
   return withTransaction(ctx, async (tx) => {

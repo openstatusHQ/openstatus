@@ -11,17 +11,17 @@ import {
   assertMonitorSlaLimit,
   getWritablePolicy,
 } from "./internal";
-import { RemoveMonitorSlaExcusedWindowInput } from "./schemas";
+import { RemoveMonitorReportingExcusedWindowInput } from "./schemas";
 
 /** Its runs count again; refused once a month it touches is sealed. */
-export async function removeMonitorSlaExcusedWindow(args: {
+export async function removeMonitorReportingExcusedWindow(args: {
   ctx: ServiceContext;
-  input: RemoveMonitorSlaExcusedWindowInput;
+  input: RemoveMonitorReportingExcusedWindowInput;
   now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:write");
-  const input = RemoveMonitorSlaExcusedWindowInput.parse(args.input);
+  const input = RemoveMonitorReportingExcusedWindowInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
 
   await withTransaction(ctx, async (tx) => {

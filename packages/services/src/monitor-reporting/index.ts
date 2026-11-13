@@ -1,9 +1,9 @@
-export { addMonitorSlaExcusedWindow } from "./add-excused-window";
+export { addMonitorReportingExcusedWindow } from "./add-excused-window";
 export { archiveMonitorReporting } from "./archive";
 export { createMonitorReporting } from "./create";
 export { deleteMonitorReporting } from "./delete";
 export { exportMonitorReporting } from "./export";
-export { getMonitorSlaExcusedWindow } from "./get-excused-window";
+export { getMonitorReportingExcusedWindow } from "./get-excused-window";
 export {
   getMonitorReporting,
   getMonitorReportingSummary,
@@ -13,23 +13,25 @@ export { listMonitorReportings } from "./list";
 export { listMonitorReportingMaintenances } from "./maintenances";
 export { claimMonitorSlaMissNotices } from "./miss-notice";
 export {
-  getMonitorSlaMonitorMonth,
-  type MonitorSlaMonitorMonth,
-  type MonitorSlaMonthEpisode,
+  getMonitorReportingMonth,
+  listMonitorReportingMonths,
+  type MonitorReportingMonth,
+  type MonitorReportingMonthEpisode,
 } from "./monitor-month";
 export { type SealMonitorSlaMonthsResult, sealMonitorSlaMonths } from "./seal";
-export { removeMonitorSlaExcusedWindow } from "./remove-excused-window";
+export { removeMonitorReportingExcusedWindow } from "./remove-excused-window";
 export { updateMonitorReporting } from "./update";
 export {
-  AddMonitorSlaExcusedWindowInput,
+  AddMonitorReportingExcusedWindowInput,
   CreateMonitorReportingInput,
   ExportMonitorReportingInput,
-  GetMonitorSlaExcusedWindowInput,
-  GetMonitorSlaMonitorMonthInput,
+  GetMonitorReportingExcusedWindowInput,
+  GetMonitorReportingMonthInput,
   GetMonitorReportingInput,
+  ListMonitorReportingMonthsInput,
   ListMonitorReportingsForMonitorInput,
   ListMonitorReportingsInput,
   MonitorReportingIdInput,
-  RemoveMonitorSlaExcusedWindowInput,
+  RemoveMonitorReportingExcusedWindowInput,
   UpdateMonitorReportingInput,
 } from "./schemas";

@@ -12,10 +12,10 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
-import { addMonitorSlaExcusedWindow } from "../add-excused-window";
+import { addMonitorReportingExcusedWindow } from "../add-excused-window";
 import { archiveMonitorReporting } from "../archive";
 import { createMonitorReporting } from "../create";
-import { getMonitorSlaExcusedWindow } from "../get-excused-window";
+import { getMonitorReportingExcusedWindow } from "../get-excused-window";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 const oct = (d: number, h = 0) => new Date(Date.UTC(2026, 9, d, h));
@@ -56,7 +56,7 @@ async function windowIn(tx: Tx) {
     ctx,
     input: { name: "Partner", target: 99_500, monitorIds: [apiId] },
   });
-  const window = await addMonitorSlaExcusedWindow({
+  const window = await addMonitorReportingExcusedWindow({
     ctx,
     input: {
       policyId: policy.id,
@@ -70,12 +70,12 @@ async function windowIn(tx: Tx) {
   return { policy, window };
 }
 
-describe("getMonitorSlaExcusedWindow", () => {
+describe("getMonitorReportingExcusedWindow", () => {
   test("returns the window with its policy", async () => {
     await withTestTransaction(async (tx) => {
       const { policy, window } = await windowIn(tx);
 
-      const res = await getMonitorSlaExcusedWindow({
+      const res = await getMonitorReportingExcusedWindow({
         ctx: { ...ownerCtx, db: tx },
         input: { id: window.id },
       });
@@ -106,7 +106,7 @@ describe("getMonitorSlaExcusedWindow", () => {
         input: { id: policy.id },
       });
 
-      const res = await getMonitorSlaExcusedWindow({
+      const res = await getMonitorReportingExcusedWindow({
         ctx: { ...ownerCtx, db: tx },
         input: { id: window.id },
       });
@@ -118,7 +118,7 @@ describe("getMonitorSlaExcusedWindow", () => {
     await withTestTransaction(async (tx) => {
       const { window } = await windowIn(tx);
       await expect(
-        getMonitorSlaExcusedWindow({
+        getMonitorReportingExcusedWindow({
           ctx: { ...otherCtx, db: tx },
           input: { id: window.id },
         }),
@@ -133,7 +133,7 @@ describe("getMonitorSlaExcusedWindow", () => {
         keyId: "k",
         scopes: ["read"],
       });
-      const res = await getMonitorSlaExcusedWindow({
+      const res = await getMonitorReportingExcusedWindow({
         ctx: { ...read, db: tx },
         input: { id: window.id },
       });
@@ -144,7 +144,7 @@ describe("getMonitorSlaExcusedWindow", () => {
         scopes: ["pages:read"],
       });
       await expect(
-        getMonitorSlaExcusedWindow({
+        getMonitorReportingExcusedWindow({
           ctx: { ...pages, db: tx },
           input: { id: window.id },
         }),
@@ -154,7 +154,7 @@ describe("getMonitorSlaExcusedWindow", () => {
 
   test("refused without the limit", async () => {
     await expect(
-      getMonitorSlaExcusedWindow({ ctx: freeCtx, input: { id: 1 } }),
+      getMonitorReportingExcusedWindow({ ctx: freeCtx, input: { id: 1 } }),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

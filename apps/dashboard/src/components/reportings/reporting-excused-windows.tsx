@@ -17,7 +17,7 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { getColumns } from "@/components/data-table/monitor-sla-excused-windows/columns";
+import { getColumns } from "@/components/data-table/monitor-reporting-excused-windows/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 

@@ -14,7 +14,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { EntityRefFallback, EntityRefHeader, lookupOptions } from "../parts";
 
-export function MonitorSlaExcusedWindowCard({ id }: { id: number }) {
+export function MonitorReportingExcusedWindowCard({ id }: { id: number }) {
   const trpc = useTRPC();
   const window = useQuery(
     trpc.monitorReporting.excusedWindow.queryOptions({ id }, lookupOptions),
@@ -49,7 +49,7 @@ export function MonitorSlaExcusedWindowCard({ id }: { id: number }) {
           </time>{" "}
           <span className="text-muted-foreground">{data.policy.timeZone}</span>
         </EntityCardRow>
-        <EntityCardRow label="Policy" title={data.policy.name}>
+        <EntityCardRow label="Reporting" title={data.policy.name}>
           {data.policy.name}
         </EntityCardRow>
       </EntityCardContent>

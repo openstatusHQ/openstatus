@@ -15,7 +15,7 @@ import { IncidentReportingCard } from "./cards/incident-reporting";
 import { MaintenanceCard } from "./cards/maintenance";
 import { MonitorCard } from "./cards/monitor";
 import { MonitorReportingCard } from "./cards/monitor-reporting";
-import { MonitorSlaExcusedWindowCard } from "./cards/monitor-sla-excused-window";
+import { MonitorReportingExcusedWindowCard } from "./cards/monitor-reporting-excused-window";
 import { NotificationCard } from "./cards/notification";
 import { PageCard } from "./cards/page";
 import { PageComponentCard } from "./cards/page-component";
@@ -32,7 +32,7 @@ const cards = {
   privateLocation: PrivateLocationCard,
   notification: NotificationCard,
   monitorReporting: MonitorReportingCard,
-  monitorSlaExcusedWindow: MonitorSlaExcusedWindowCard,
+  monitorSlaExcusedWindow: MonitorReportingExcusedWindowCard,
   incidentReporting: IncidentReportingCard,
 } satisfies Record<EntityKind, React.ComponentType<{ id: number }>>;
 

@@ -1,31 +1,42 @@
-import { and, asc, eq, gt, lt, lte } from "@openstatus/db";
+import { and, asc, eq, gt, isNull, lt } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorSlaPolicy,
+  monitorSlaPolicyToMonitor,
   monitorSlaSealedEpisode,
   monitorSlaSealedMonth,
   pageComponent,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import { type DB, getReadDb, type ServiceContext } from "../context";
+import { type DB, defaultTb, getReadDb, type ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
 import type { UptimeRunsRangePipes } from "../frozen-uptime/run";
 import { cutExcused, type Episode, slaBudget } from "./episodes";
 import { mergeSpans, type Span } from "./excused";
-import { clipEpisodes, type SlaEpisodesPipes } from "./fetch-episodes";
+import {
+  clipEpisodes,
+  fetchSlaEpisodes,
+  type SlaEpisodesPipes,
+  slaEpisodesPipes,
+} from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
   episodeMonths,
+  type FetchedEpisodes,
   fetchMonthEpisodes,
   judgePolicyMonths,
   loadPolicyMembers,
+  loadTermsHistory,
   memberEpisodes,
   memberTimeMonth,
+  type PolicyMember,
   policyExcusedSpans,
   termsForMonth,
+  termsStateOf,
 } from "./internal";
 import {
   coveredSpan,
@@ -33,22 +44,25 @@ import {
   monthOf,
   storedMonth,
 } from "./months";
-import { GetMonitorSlaMonitorMonthInput } from "./schemas";
+import {
+  GetMonitorReportingMonthInput,
+  ListMonitorReportingMonthsInput,
+} from "./schemas";
 
 /** counted: down time; lenient: degraded under a non-strict policy; excused: cut by an excused window. */
-export type MonitorSlaMonthEpisodeTreatment =
+export type MonitorReportingMonthEpisodeTreatment =
   | "counted"
   | "lenient"
   | "excused"
   | "unmeasured";
 
-export type MonitorSlaMonthEpisode = {
+export type MonitorReportingMonthEpisode = {
   kind: "degraded" | "error" | "unmeasured";
   startedAt: number;
   endedAt: number;
   runs: number;
   weightedMs: number;
-  treatment: MonitorSlaMonthEpisodeTreatment;
+  treatment: MonitorReportingMonthEpisodeTreatment;
   /** a pause-mode maintenance that overlaps an unmeasured episode */
   maintenance: { id: number; title: string } | null;
 };
@@ -67,9 +81,9 @@ function treatEpisodes(
   episodes: readonly Episode[],
   spans: readonly Span[],
   strict: boolean,
-): MonitorSlaMonthEpisode[] {
+): MonitorReportingMonthEpisode[] {
   const { kept, excused } = cutExcused(episodes, spans);
-  const out: MonitorSlaMonthEpisode[] = [];
+  const out: MonitorReportingMonthEpisode[] = [];
   for (const e of kept) {
     if (e.kind === "ok") continue;
     out.push({
@@ -92,9 +106,9 @@ function treatEpisodes(
 }
 
 function labelMaintenances(
-  episodes: MonitorSlaMonthEpisode[],
+  episodes: MonitorReportingMonthEpisode[],
   windows: readonly MonthMaintenance[],
-): MonitorSlaMonthEpisode[] {
+): MonitorReportingMonthEpisode[] {
   return episodes.map((e) => {
     if (e.treatment !== "unmeasured") return e;
     let best: { window: MonthMaintenance; ms: number } | null = null;
@@ -136,103 +150,109 @@ function monthBudget(args: {
   };
 }
 
+type MonitorMaintenances = {
+  mode: "pause" | "continue";
+  windows: MonthMaintenance[];
+};
+
+/** The monitor's maintenances touching `range`, upcoming ones included. */
 async function loadMonitorMaintenances(
   db: DB,
   workspaceId: number,
   monitorId: number,
   range: Span,
-  now: Date,
-) {
-  const row = await db
-    .select({ maintenanceMode: monitor.maintenanceMode })
-    .from(monitor)
-    .where(and(eq(monitor.id, monitorId), eq(monitor.workspaceId, workspaceId)))
-    .get();
-  const rows = await db
-    .selectDistinct({
-      id: maintenance.id,
-      title: maintenance.title,
-      from: maintenance.from,
-      to: maintenance.to,
-    })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      maintenance,
-      eq(maintenance.id, maintenancesToPageComponents.maintenanceId),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
-    )
-    .where(
-      and(
-        eq(maintenance.workspaceId, workspaceId),
-        eq(pageComponent.workspaceId, workspaceId),
-        eq(pageComponent.monitorId, monitorId),
-        lte(maintenance.from, now),
-        lt(maintenance.from, new Date(range.end)),
-        gt(maintenance.to, new Date(range.start)),
-      ),
-    )
-    .orderBy(asc(maintenance.from), asc(maintenance.id))
-    .all();
-  return { mode: row?.maintenanceMode ?? "pause", windows: rows };
+): Promise<MonitorMaintenances> {
+  const [row, windows] = await Promise.all([
+    db
+      .select({ maintenanceMode: monitor.maintenanceMode })
+      .from(monitor)
+      .where(
+        and(eq(monitor.id, monitorId), eq(monitor.workspaceId, workspaceId)),
+      )
+      .get(),
+    db
+      .selectDistinct({
+        id: maintenance.id,
+        title: maintenance.title,
+        from: maintenance.from,
+        to: maintenance.to,
+      })
+      .from(maintenancesToPageComponents)
+      .innerJoin(
+        maintenance,
+        eq(maintenance.id, maintenancesToPageComponents.maintenanceId),
+      )
+      .innerJoin(
+        pageComponent,
+        eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
+      )
+      .where(
+        and(
+          eq(maintenance.workspaceId, workspaceId),
+          eq(pageComponent.workspaceId, workspaceId),
+          eq(pageComponent.monitorId, monitorId),
+          lt(maintenance.from, new Date(range.end)),
+          gt(maintenance.to, new Date(range.start)),
+        ),
+      )
+      .orderBy(asc(maintenance.from), asc(maintenance.id))
+      .all(),
+  ]);
+  return { mode: row?.maintenanceMode ?? "pause", windows };
 }
 
+/** `target`/`strict` are the latest terms set, as older previews follow them. */
+type MonthPolicy = {
+  id: number;
+  workspaceId: number;
+  name: string;
+  timeZone: string;
+  archivedAt: Date | null;
+  target: number;
+  strict: boolean;
+};
+
 /**
- * One member's month in the policy zone: its month cell, down-time budget,
- * non-ok episodes newest first with their treatment, and unexcused continue-mode maintenances.
+ * One member's month in the policy zone, from a seal or from episodes. Reads
+ * episodes itself unless `fetched` already covers the month.
  */
-export async function getMonitorSlaMonitorMonth(args: {
+async function memberMonth(args: {
   ctx: ServiceContext;
-  input: GetMonitorSlaMonitorMonthInput;
-  now?: Date;
+  db: DB;
+  policy: MonthPolicy;
+  member: PolicyMember;
+  month: string;
+  now: Date;
+  maintenances: MonitorMaintenances;
+  fetched?: FetchedEpisodes;
   episodesPipes?: SlaEpisodesPipes;
   runsRangePipes?: UptimeRunsRangePipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
-  const { ctx } = args;
-  requireScope(ctx, "monitors:read");
-  const input = GetMonitorSlaMonitorMonthInput.parse(args.input);
-  assertMonitorSlaLimit(ctx);
-  const db = getReadDb(ctx);
-  const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
-  const member = monitors.find((m) => m.id === input.monitorId);
-  if (!member) throw new NotFoundError("monitor", input.monitorId);
-
-  const now = args.now ?? new Date();
+  const { ctx, db, policy, member, month, now, maintenances } = args;
   const { timeZone } = policy;
-  const current = monthOf(now, timeZone);
-  const month = input.month ? `${input.month}-01` : current;
-  if (month > current) {
-    throw new ValidationError("This month has not started yet.");
-  }
   const range = monthRange(month, timeZone);
-  const maintenances = await loadMonitorMaintenances(
-    db,
-    ctx.workspace.id,
-    member.id,
-    range,
-    now,
-  );
 
-  const seal = await db
-    .select()
-    .from(monitorSlaSealedMonth)
-    .where(
-      and(
-        eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id),
-        eq(monitorSlaSealedMonth.workspaceId, ctx.workspace.id),
-        eq(monitorSlaSealedMonth.monitorId, member.id),
-        eq(monitorSlaSealedMonth.month, month),
-      ),
-    )
-    .get();
+  const [seal, policySpans] = await Promise.all([
+    db
+      .select()
+      .from(monitorSlaSealedMonth)
+      .where(
+        and(
+          eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id),
+          eq(monitorSlaSealedMonth.workspaceId, ctx.workspace.id),
+          eq(monitorSlaSealedMonth.monitorId, member.id),
+          eq(monitorSlaSealedMonth.month, month),
+        ),
+      )
+      .get(),
+    policyExcusedSpans(db, policy),
+  ]);
 
   let cell: MonitorSlaMonth;
   let spans: Span[];
   let budget: ReturnType<typeof monthBudget> | null = null;
-  let episodes: MonitorSlaMonthEpisode[] | null = null;
+  let episodes: MonitorReportingMonthEpisode[] | null = null;
   /** runs: judged by run count; failed: episodes could not be read; expired: runs no longer kept; time-zone: old month in a non-UTC zone */
   let episodesUnavailable: "runs" | "failed" | "expired" | "time-zone" | null =
     null;
@@ -288,19 +308,22 @@ export async function getMonitorSlaMonitorMonth(args: {
       });
     }
   } else {
-    spans = await policyExcusedSpans(db, policy);
+    spans = policySpans;
     const state = episodeMonths(now, timeZone).get(month);
     if (state) {
-      const terms = await termsForMonth(db, policy, month);
-      const fetched = await fetchMonthEpisodes({
-        ctx,
-        members: [member],
-        months: [month],
-        timeZone,
-        now,
-        pipes: args.episodesPipes,
-        sleep: args.sleep,
-      });
+      const [terms, fetched] = await Promise.all([
+        termsForMonth(db, policy, month),
+        args.fetched ??
+          fetchMonthEpisodes({
+            ctx,
+            members: [member],
+            months: [month],
+            timeZone,
+            now,
+            pipes: args.episodesPipes,
+            sleep: args.sleep,
+          }),
+      ]);
       cell = memberTimeMonth({
         month,
         state,
@@ -372,6 +395,7 @@ export async function getMonitorSlaMonitorMonth(args: {
   }
 
   const pausing = maintenances.mode === "pause";
+  const nowMs = now.getTime();
   return {
     ...cell,
     policy: {
@@ -391,19 +415,163 @@ export async function getMonitorSlaMonitorMonth(args: {
         )
       : null,
     episodesUnavailable,
-    /** continue-mode maintenances in the month with time no excused window covers: checks ran and count */
+    /** continue-mode maintenances in the month so far with time no excused window covers: checks ran and count */
     countedMaintenances: pausing
       ? []
       : maintenances.windows.filter((w) => {
           const part = {
             start: Math.max(w.from.getTime(), range.start),
-            end: Math.min(w.to.getTime(), range.end),
+            end: Math.min(w.to.getTime(), range.end, nowMs),
           };
           return part.end - part.start > overlapMs(part, spans);
         }),
   };
 }
 
-export type MonitorSlaMonitorMonth = Awaited<
-  ReturnType<typeof getMonitorSlaMonitorMonth>
+/**
+ * One member's month in the policy zone: its month cell, down-time budget,
+ * non-ok episodes newest first with their treatment, and unexcused continue-mode maintenances.
+ */
+export async function getMonitorReportingMonth(args: {
+  ctx: ServiceContext;
+  input: GetMonitorReportingMonthInput;
+  now?: Date;
+  episodesPipes?: SlaEpisodesPipes;
+  runsRangePipes?: UptimeRunsRangePipes;
+  sleep?: (ms: number) => Promise<void>;
+}) {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = GetMonitorReportingMonthInput.parse(args.input);
+  assertMonitorSlaLimit(ctx);
+  const db = getReadDb(ctx);
+  const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
+  const member = monitors.find((m) => m.id === input.monitorId);
+  if (!member) throw new NotFoundError("monitor", input.monitorId);
+
+  const now = args.now ?? new Date();
+  const current = monthOf(now, policy.timeZone);
+  const month = input.month ? `${input.month}-01` : current;
+  if (month > current) {
+    throw new ValidationError("This month has not started yet.");
+  }
+  const maintenances = await loadMonitorMaintenances(
+    db,
+    ctx.workspace.id,
+    member.id,
+    monthRange(month, policy.timeZone),
+  );
+  return memberMonth({
+    ctx,
+    db,
+    policy,
+    member,
+    month,
+    now,
+    maintenances,
+    episodesPipes: args.episodesPipes,
+    runsRangePipes: args.runsRangePipes,
+    sleep: args.sleep,
+  });
+}
+
+/**
+ * The running month of a monitor under each active reporting covering it,
+ * from one episodes read and one maintenance read.
+ */
+export async function listMonitorReportingMonths(args: {
+  ctx: ServiceContext;
+  input: ListMonitorReportingMonthsInput;
+  now?: Date;
+  episodesPipes?: SlaEpisodesPipes;
+  sleep?: (ms: number) => Promise<void>;
+}) {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = ListMonitorReportingMonthsInput.parse(args.input);
+  assertMonitorSlaLimit(ctx);
+  const db = getReadDb(ctx);
+  const now = args.now ?? new Date();
+
+  const rows = await db
+    .select({
+      policy: monitorSlaPolicy,
+      member: {
+        id: monitor.id,
+        name: monitor.name,
+        url: monitor.url,
+        jobType: monitor.jobType,
+        regions: monitor.regions,
+        periodicity: monitor.periodicity,
+        memberSince: monitorSlaPolicyToMonitor.createdAt,
+      },
+    })
+    .from(monitorSlaPolicyToMonitor)
+    .innerJoin(
+      monitorSlaPolicy,
+      eq(monitorSlaPolicy.id, monitorSlaPolicyToMonitor.monitorSlaPolicyId),
+    )
+    .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
+    .where(
+      and(
+        eq(monitorSlaPolicyToMonitor.monitorId, input.monitorId),
+        eq(monitorSlaPolicy.workspaceId, ctx.workspace.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitorSlaPolicy.archivedAt),
+        isNull(monitor.deletedAt),
+      ),
+    )
+    .orderBy(asc(monitorSlaPolicy.id))
+    .all();
+  if (rows.length === 0) return [];
+
+  const ranges = rows.map(({ policy }) =>
+    monthRange(monthOf(now, policy.timeZone), policy.timeZone),
+  );
+  const span = {
+    start: Math.min(...ranges.map((r) => r.start)),
+    end: Math.max(...ranges.map((r) => r.end)),
+  };
+  const member = rows[0].member;
+  const fetchRange = { start: span.start, end: now.getTime() };
+  const [history, maintenances, read] = await Promise.all([
+    loadTermsHistory(
+      db,
+      ctx.workspace.id,
+      rows.map((r) => r.policy),
+    ),
+    loadMonitorMaintenances(db, ctx.workspace.id, member.id, span),
+    fetchSlaEpisodes({
+      monitors: [member],
+      fromMs: fetchRange.start,
+      toMs: fetchRange.end,
+      pipes: () => args.episodesPipes ?? slaEpisodesPipes(ctx.tb ?? defaultTb),
+      throttleMs: 0,
+      sleep: args.sleep,
+    }),
+  ]);
+  const fetched: FetchedEpisodes = { ...read, range: fetchRange };
+
+  return Promise.all(
+    rows.map(async ({ policy, member }) => ({
+      id: policy.id,
+      name: policy.name,
+      timeZone: policy.timeZone,
+      ...termsStateOf(history, policy, now),
+      month: await memberMonth({
+        ctx,
+        db,
+        policy: { ...policy, ...history.latest(policy.id) },
+        member,
+        month: monthOf(now, policy.timeZone),
+        now,
+        maintenances,
+        fetched,
+      }),
+    })),
+  );
+}
+
+export type MonitorReportingMonth = Awaited<
+  ReturnType<typeof getMonitorReportingMonth>
 >;

@@ -23,8 +23,8 @@ import { monthOf } from "./months";
 import { UpdateMonitorReportingInput } from "./schemas";
 
 /**
- * New target/strict apply from the next month in the policy's zone; previews
- * follow at once. Kept memberships keep their start for sealing.
+ * Target/strict apply from the next month in the policy zone. The previous month
+ * keeps the terms it seals with; older, never-sealed previews follow at once.
  */
 export async function updateMonitorReporting(args: {
   ctx: ServiceContext;

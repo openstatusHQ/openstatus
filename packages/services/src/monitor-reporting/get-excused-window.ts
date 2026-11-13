@@ -8,16 +8,16 @@ import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import { assertMonitorSlaLimit } from "./internal";
-import { GetMonitorSlaExcusedWindowInput } from "./schemas";
+import { GetMonitorReportingExcusedWindowInput } from "./schemas";
 
 /** One excused window with its policy, archived or not. */
-export async function getMonitorSlaExcusedWindow(args: {
+export async function getMonitorReportingExcusedWindow(args: {
   ctx: ServiceContext;
-  input: GetMonitorSlaExcusedWindowInput;
+  input: GetMonitorReportingExcusedWindowInput;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const input = GetMonitorSlaExcusedWindowInput.parse(args.input);
+  const input = GetMonitorReportingExcusedWindowInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
 
   const row = await getReadDb(ctx)

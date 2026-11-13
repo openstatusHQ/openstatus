@@ -83,13 +83,13 @@ const yearMonth = z
   .regex(/^(?!00)\d{4}-(0[1-9]|1[0-2])$/, "Expected a month as YYYY-MM");
 
 /** One policy member's month (YYYY-MM in the policy zone); defaults to the running month. */
-export const GetMonitorSlaMonitorMonthInput = z.object({
+export const GetMonitorReportingMonthInput = z.object({
   id: z.number().int().positive(),
   monitorId: z.number().int().positive(),
   month: yearMonth.optional(),
 });
-export type GetMonitorSlaMonitorMonthInput = z.input<
-  typeof GetMonitorSlaMonitorMonthInput
+export type GetMonitorReportingMonthInput = z.input<
+  typeof GetMonitorReportingMonthInput
 >;
 
 /** Inclusive month range; defaults to the last twelve complete months. */
@@ -108,7 +108,7 @@ const instant = z
   .union([z.string(), z.number(), z.date()])
   .pipe(z.coerce.date());
 
-export const AddMonitorSlaExcusedWindowInput = z
+export const AddMonitorReportingExcusedWindowInput = z
   .object({
     policyId: z.number().int().positive(),
     kind: z.enum(monitorSlaExcusedWindowKinds),
@@ -125,20 +125,28 @@ export const AddMonitorSlaExcusedWindowInput = z
       w.to.getTime() - w.from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS,
     { message: "A window lasts at most 7 days.", path: ["to"] },
   );
-export type AddMonitorSlaExcusedWindowInput = z.input<
-  typeof AddMonitorSlaExcusedWindowInput
+export type AddMonitorReportingExcusedWindowInput = z.input<
+  typeof AddMonitorReportingExcusedWindowInput
 >;
 
-export const GetMonitorSlaExcusedWindowInput = z.object({
+export const GetMonitorReportingExcusedWindowInput = z.object({
   id: z.number().int().positive(),
 });
-export type GetMonitorSlaExcusedWindowInput = z.input<
-  typeof GetMonitorSlaExcusedWindowInput
+export type GetMonitorReportingExcusedWindowInput = z.input<
+  typeof GetMonitorReportingExcusedWindowInput
 >;
 
-export const RemoveMonitorSlaExcusedWindowInput = z.object({
+export const RemoveMonitorReportingExcusedWindowInput = z.object({
   id: z.number().int().positive(),
 });
-export type RemoveMonitorSlaExcusedWindowInput = z.input<
-  typeof RemoveMonitorSlaExcusedWindowInput
+export type RemoveMonitorReportingExcusedWindowInput = z.input<
+  typeof RemoveMonitorReportingExcusedWindowInput
+>;
+
+/** A monitor's running month under each active reporting covering it. */
+export const ListMonitorReportingMonthsInput = z.object({
+  monitorId: z.number().int().positive(),
+});
+export type ListMonitorReportingMonthsInput = z.input<
+  typeof ListMonitorReportingMonthsInput
 >;

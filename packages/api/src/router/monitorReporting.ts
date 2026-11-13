@@ -1,28 +1,30 @@
 import { Events } from "@openstatus/analytics";
 import {
-  AddMonitorSlaExcusedWindowInput,
-  addMonitorSlaExcusedWindow,
+  AddMonitorReportingExcusedWindowInput,
+  addMonitorReportingExcusedWindow,
   archiveMonitorReporting,
   CreateMonitorReportingInput,
   createMonitorReporting,
   deleteMonitorReporting,
   ExportMonitorReportingInput,
   exportMonitorReporting,
-  GetMonitorSlaExcusedWindowInput,
-  GetMonitorSlaMonitorMonthInput,
+  GetMonitorReportingExcusedWindowInput,
+  GetMonitorReportingMonthInput,
   GetMonitorReportingInput,
-  getMonitorSlaExcusedWindow,
-  getMonitorSlaMonitorMonth,
+  getMonitorReportingExcusedWindow,
+  getMonitorReportingMonth,
   getMonitorReporting,
   getMonitorReportingSummary,
   ListMonitorReportingsForMonitorInput,
   ListMonitorReportingsInput,
   listMonitorReportings,
   listMonitorReportingsForMonitor,
+  ListMonitorReportingMonthsInput,
+  listMonitorReportingMonths,
   listMonitorReportingMaintenances,
   MonitorReportingIdInput,
-  RemoveMonitorSlaExcusedWindowInput,
-  removeMonitorSlaExcusedWindow,
+  RemoveMonitorReportingExcusedWindowInput,
+  removeMonitorReportingExcusedWindow,
   UpdateMonitorReportingInput,
   updateMonitorReporting,
 } from "@openstatus/services/monitor-reporting";
@@ -78,10 +80,23 @@ export const monitorReportingRouter = createTRPCRouter({
     }),
 
   monitorMonth: protectedProcedure
-    .input(GetMonitorSlaMonitorMonthInput)
+    .input(GetMonitorReportingMonthInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await getMonitorSlaMonitorMonth({
+        return await getMonitorReportingMonth({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  monitorMonths: protectedProcedure
+    .input(ListMonitorReportingMonthsInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        return await listMonitorReportingMonths({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -91,10 +106,10 @@ export const monitorReportingRouter = createTRPCRouter({
     }),
 
   excusedWindow: protectedProcedure
-    .input(GetMonitorSlaExcusedWindowInput)
+    .input(GetMonitorReportingExcusedWindowInput)
     .query(async ({ ctx, input }) => {
       try {
-        return await getMonitorSlaExcusedWindow({
+        return await getMonitorReportingExcusedWindow({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -171,11 +186,11 @@ export const monitorReportingRouter = createTRPCRouter({
     }),
 
   addExcusedWindow: protectedProcedure
-    .meta({ track: Events.AddMonitorSlaExcusedWindow })
-    .input(AddMonitorSlaExcusedWindowInput)
+    .meta({ track: Events.AddMonitorReportingExcusedWindow })
+    .input(AddMonitorReportingExcusedWindowInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await addMonitorSlaExcusedWindow({
+        return await addMonitorReportingExcusedWindow({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -185,11 +200,11 @@ export const monitorReportingRouter = createTRPCRouter({
     }),
 
   removeExcusedWindow: protectedProcedure
-    .meta({ track: Events.RemoveMonitorSlaExcusedWindow })
-    .input(RemoveMonitorSlaExcusedWindowInput)
+    .meta({ track: Events.RemoveMonitorReportingExcusedWindow })
+    .input(RemoveMonitorReportingExcusedWindowInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await removeMonitorSlaExcusedWindow({
+        return await removeMonitorReportingExcusedWindow({
           ctx: toServiceCtx(ctx),
           input,
         });
