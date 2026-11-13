@@ -141,7 +141,12 @@ describe("claimMonitorSlaMissNotices", () => {
           workspaceId,
           workspaceName: expect.any(String),
           to: [ownerEmail],
-          policy: { id: policy.id, name: "Partner contract", target: 99_500 },
+          policy: {
+            id: policy.id,
+            name: "Partner contract",
+            target: 99_500,
+            strict: false,
+          },
           monitors: [
             {
               id: monitorIds[0],
@@ -165,6 +170,23 @@ describe("claimMonitorSlaMissNotices", () => {
           policyIds: [policy.id],
         }),
       ).toEqual([]);
+    });
+  });
+
+  test("reports the terms the month was sealed with, not the policy row's", async () => {
+    await withTestTransaction(async (tx) => {
+      const { policy } = await setup(tx, [{ name: "API", downHours: 6 }]);
+      await seal(tx, now, policy.id);
+      await tx
+        .update(monitorSlaPolicy)
+        .set({ target: 90_000, strict: true })
+        .where(eq(monitorSlaPolicy.id, policy.id));
+      const [notice] = await claimMonitorSlaMissNotices({
+        db: tx,
+        month,
+        policyIds: [policy.id],
+      });
+      expect(notice?.policy).toMatchObject({ target: 99_500, strict: false });
     });
   });
 

@@ -23,7 +23,8 @@ export type MonitorSlaMissNotice = {
   workspaceName: string;
   /** workspace owners */
   to: string[];
-  policy: { id: number; name: string; target: number };
+  /** the terms the month was sealed with */
+  policy: { id: number; name: string; target: number; strict: boolean };
   /** sealed misses of current members, by monitor id */
   monitors: { id: number; name: string; uptime: number; target: number }[];
 };
@@ -51,13 +52,13 @@ export async function claimMonitorSlaMissNotices(args: {
       .select({
         policyId: monitorSlaPolicy.id,
         policyName: monitorSlaPolicy.name,
-        policyTarget: monitorSlaPolicy.target,
         timeZone: monitorSlaPolicy.timeZone,
         workspaceId: monitorSlaPolicy.workspaceId,
         monitorId: monitor.id,
         monitorName: monitor.name,
         uptime: monitorSlaSealedMonth.uptime,
         target: monitorSlaSealedMonth.target,
+        strict: monitorSlaSealedMonth.strict,
       })
       .from(monitorSlaSealedMonth)
       .innerJoin(
@@ -187,7 +188,8 @@ export async function claimMonitorSlaMissNotices(args: {
       policy: {
         id: first.policyId,
         name: first.policyName,
-        target: first.policyTarget,
+        target: first.target,
+        strict: first.strict,
       },
       monitors: rows.flatMap((r) =>
         r.uptime === null

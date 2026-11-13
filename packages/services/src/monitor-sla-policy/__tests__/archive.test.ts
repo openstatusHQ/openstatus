@@ -260,6 +260,48 @@ describe("archiveMonitorSlaPolicy", () => {
     });
   });
 
+  test("archive and delete report the latest terms set, not the policy row's", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const kept = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "Kept", target: 99_500 },
+      });
+      const gone = await createMonitorSlaPolicy({
+        ctx,
+        input: { name: "Gone", target: 99_500 },
+      });
+      for (const p of [kept, gone]) {
+        await updateMonitorSlaPolicy({
+          ctx,
+          input: { id: p.id, target: 99_900, strict: true },
+          now,
+        });
+      }
+
+      const archived = await archiveMonitorSlaPolicy({
+        ctx,
+        input: { id: kept.id },
+      });
+      expect(archived).toMatchObject({ target: 99_900, strict: true });
+      await deleteMonitorSlaPolicy({ ctx, input: { id: gone.id } });
+
+      for (const [id, action] of [
+        [kept.id, "monitor_sla_policy.update"],
+        [gone.id, "monitor_sla_policy.delete"],
+      ] as const) {
+        const [row] = await readAuditLog({
+          workspaceId: ctx.workspace.id,
+          entityType: "monitor_sla_policy",
+          entityId: id,
+          db: tx,
+        });
+        expect(row?.action).toBe(action);
+        expect(row?.before).toMatchObject({ target: 99_900, strict: true });
+      }
+    });
+  });
+
   test("archiving twice keeps the first date and writes one audit row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
