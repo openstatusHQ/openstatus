@@ -4,6 +4,11 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Lock, Shield } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
@@ -84,8 +89,8 @@ export function Client() {
   const [view, setView] = useQueryState("view", parseView);
   const archived = view === "archived";
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: user } = useQuery(trpc.user.get.queryOptions());
-  const { data: members } = useQuery(trpc.member.list.queryOptions());
+  const userQuery = useQuery(trpc.user.get.queryOptions());
+  const membersQuery = useQuery(trpc.member.list.queryOptions());
   const allowed = workspace?.limits["monitor-sla"] === true;
   const { data: policies } = useQuery({
     ...trpc.monitorSlaPolicy.list.queryOptions({ archived }),
@@ -98,17 +103,33 @@ export function Client() {
 
   if (!workspace) return null;
 
-  const role = members?.find((m) => m.user.id === user?.id)?.role;
+  const role = membersQuery.data?.find(
+    (m) => m.user.id === userQuery.data?.id,
+  )?.role;
   const canEdit = role === "owner" || role === "admin";
-  const create = !canEdit ? (
-    <Button
-      data-section="action"
-      size="sm"
-      disabled
-      title="Only owners and admins can create a policy."
-    >
+  const roleError = userQuery.isError || membersQuery.isError;
+  const roleLoading = !roleError && (!userQuery.data || !membersQuery.data);
+  const disabledCreate = (
+    <Button data-section="action" size="sm" disabled>
       Create policy
     </Button>
+  );
+  const create = roleLoading ? (
+    disabledCreate
+  ) : !canEdit ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* a disabled button gets no pointer events, so the wrapper takes the hover */}
+        <span tabIndex={0} className="inline-flex">
+          {disabledCreate}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        {roleError
+          ? "Could not check your role. Reload to try again."
+          : "Only owners and admins can create a policy."}
+      </TooltipContent>
+    </Tooltip>
   ) : (
     <FormSheetMonitorSlaPolicyCreate monitors={monitors ?? []}>
       <Button data-section="action" size="sm">
@@ -211,7 +232,7 @@ export function Client() {
             </BillingOverlay>
           </BillingOverlayContainer>
         )}
-        {policies && policies.length > 0 ? (
+        {!allowed || (policies && policies.length > 0) ? (
           <SlaMonthStripLegend>
             <span>
               A month is missed when any monitor in the policy missed it.

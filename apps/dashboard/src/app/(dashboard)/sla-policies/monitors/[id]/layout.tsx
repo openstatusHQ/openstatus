@@ -16,7 +16,7 @@ export default async function Layout({
 }) {
   const { id } = await params;
   const policyId = Number(id);
-  if (!Number.isInteger(policyId)) notFound();
+  if (!Number.isInteger(policyId) || policyId <= 0) notFound();
 
   const workspace = await getQueryClient().fetchQuery(
     trpc.workspace.get.queryOptions(),
