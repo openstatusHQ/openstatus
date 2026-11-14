@@ -1,13 +1,9 @@
 import { eq } from "@openstatus/db";
-import {
-  monitorMaintenanceWindow,
-  monitorMaintenanceWindowToMonitor,
-} from "@openstatus/db/src/schema";
+import { monitorMaintenanceWindow } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import {
-  type DB,
   type ServiceContext,
   tryGetActorUserId,
   withTransaction,
@@ -15,6 +11,7 @@ import {
 import { ConflictError } from "../errors";
 import {
   getMaintenanceWindowInWorkspace,
+  monitorIdsOf,
   replaceWindowMonitors,
   validateWindowMonitorIds,
 } from "./internal";
@@ -22,20 +19,6 @@ import {
   EndMaintenanceWindowInput,
   UpdateMaintenanceWindowInput,
 } from "./schemas";
-
-async function monitorIdsOf(tx: DB, windowId: number) {
-  const rows = await tx
-    .select({ id: monitorMaintenanceWindowToMonitor.monitorId })
-    .from(monitorMaintenanceWindowToMonitor)
-    .where(
-      eq(
-        monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
-        windowId,
-      ),
-    )
-    .all();
-  return rows.map((r) => r.id);
-}
 
 export async function updateMaintenanceWindow(args: {
   ctx: ServiceContext;
@@ -113,7 +96,8 @@ export async function endMaintenanceWindow(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    if (existing.from > now || existing.to <= now) {
+    // from === now would leave an empty [from, to) range
+    if (existing.from >= now || existing.to <= now) {
       throw new ConflictError(
         "Only a running maintenance window can be ended.",
       );

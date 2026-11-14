@@ -1,4 +1,11 @@
-import { and, db as defaultDb, desc, eq, inArray } from "@openstatus/db";
+import {
+  and,
+  db as defaultDb,
+  desc,
+  eq,
+  inArray,
+  isNull,
+} from "@openstatus/db";
 import {
   monitor,
   monitorMaintenanceWindow,
@@ -24,6 +31,7 @@ export type MaintenanceWindowWithRelations = WindowRow & {
 
 async function enrich(
   db: DB,
+  workspaceId: number,
   rows: WindowRow[],
 ): Promise<MaintenanceWindowWithRelations[]> {
   if (rows.length === 0) return [];
@@ -36,7 +44,11 @@ async function enrich(
     .from(monitorMaintenanceWindowToMonitor)
     .innerJoin(
       monitor,
-      eq(monitor.id, monitorMaintenanceWindowToMonitor.monitorId),
+      and(
+        eq(monitor.id, monitorMaintenanceWindowToMonitor.monitorId),
+        eq(monitor.workspaceId, workspaceId),
+        isNull(monitor.deletedAt),
+      ),
     )
     .where(
       inArray(
@@ -103,7 +115,7 @@ export async function listMaintenanceWindows(args: {
     )
     .orderBy(desc(monitorMaintenanceWindow.from))
     .all();
-  return enrich(db, rows);
+  return enrich(db, ctx.workspace.id, rows);
 }
 
 export async function getMaintenanceWindow(args: {
@@ -119,6 +131,6 @@ export async function getMaintenanceWindow(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  const [enriched] = await enrich(db, [row]);
+  const [enriched] = await enrich(db, ctx.workspace.id, [row]);
   return enriched;
 }

@@ -31,12 +31,15 @@ export function MaintenanceWindowRowActions({
   const deleteMutation = useMutation(
     trpc.maintenanceWindow.delete.mutationOptions({ onSuccess: invalidate }),
   );
-  const running = getMaintenanceStatus(window) === "in-progress";
+  const now = new Date();
+  const completed = getMaintenanceStatus(window, now) === "completed";
+  // strict on both ends: the server refuses `from >= now` and `to <= now`
+  const running = window.from < now && now < window.to;
 
   return (
     <QuickActions
       actions={getMaintenanceWindowActions({
-        edit: onEdit,
+        edit: completed ? undefined : onEdit,
         end: running
           ? async () => {
               const promise = endMutation.mutateAsync({ id: window.id });
@@ -45,7 +48,11 @@ export function MaintenanceWindowRowActions({
                 success: "Maintenance window ended",
                 error: (error) => errorMessage(error, "Failed to end"),
               });
-              await promise;
+              try {
+                await promise;
+              } catch (error) {
+                console.error(error);
+              }
             }
           : undefined,
       })}

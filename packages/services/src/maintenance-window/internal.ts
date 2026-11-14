@@ -72,3 +72,17 @@ export async function replaceWindowMonitors(args: {
     })),
   );
 }
+
+export async function monitorIdsOf(tx: DB, windowId: number) {
+  const rows = await tx
+    .select({ id: monitorMaintenanceWindowToMonitor.monitorId })
+    .from(monitorMaintenanceWindowToMonitor)
+    .where(
+      eq(
+        monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+        windowId,
+      ),
+    )
+    .all();
+  return rows.map((r) => r.id);
+}
