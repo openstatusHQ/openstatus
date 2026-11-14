@@ -1,0 +1,1818 @@
+{
+  "$comment": "Reference cases for SLA episodes: episodesFromRuns (packages/services/src/monitor-reporting/episodes.ts) and endpoint__<type>_sla_episodes_range__v0 must both produce `expected` from `input`. Times are ms epoch, ranges half-open.",
+  "cases": [
+    {
+      "name": "steady-30s",
+      "description": "30s cadence, all ok: one episode, no unmeasured time",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767225900000,
+        "fallbackIntervalMs": 30000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225630000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225690000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225750000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225810000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225870000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225900000,
+          "runs": 10,
+          "weightedMs": 300000
+        }
+      ]
+    },
+    {
+      "name": "pause-2h",
+      "description": "30s cadence, a 2h pause, 30s cadence again: the run before the pause keeps one cadence, the rest is unmeasured",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767233370000,
+        "fallbackIntervalMs": 30000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225630000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225690000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225750000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225810000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225870000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233070000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233100000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233130000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233160000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233190000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233220000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233250000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233280000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233310000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233340000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225900000,
+          "runs": 10,
+          "weightedMs": 300000
+        },
+        {
+          "kind": "unmeasured",
+          "startedAt": 1767225900000,
+          "endedAt": 1767233070000,
+          "runs": 0,
+          "weightedMs": 7170000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767233070000,
+          "endedAt": 1767233370000,
+          "runs": 10,
+          "weightedMs": 300000
+        }
+      ]
+    },
+    {
+      "name": "switch-30s-to-10m",
+      "description": "30s cadence then 10m cadence, a 1h outage in each half costs 1h either way, no unmeasured time",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767243600000,
+        "fallbackIntervalMs": 600000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225630000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225690000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225750000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225810000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225870000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225900000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225930000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225960000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225990000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226050000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226080000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226110000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226140000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226170000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226200000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226230000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226260000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226290000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226320000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226350000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226380000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226410000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226440000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226470000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226500000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226530000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226560000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226590000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226620000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226650000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226680000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226710000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226740000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226770000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226800000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226830000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226860000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226890000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226920000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226950000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226980000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227010000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227040000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227070000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227100000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227130000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227160000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227190000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227220000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227250000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227280000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227310000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227340000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227370000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767227400000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227430000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227460000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227490000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227520000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227550000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227580000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227610000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227640000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227670000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227700000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227730000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227760000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227790000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227820000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227850000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227880000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227910000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227940000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767227970000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228000000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228030000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228060000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228090000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228120000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228150000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228180000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228210000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228240000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228270000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228300000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228330000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228360000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228390000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228420000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228450000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228480000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228510000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228540000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228570000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228600000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228630000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228660000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228690000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228720000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228750000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228780000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228810000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228840000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228870000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228900000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228930000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228960000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767228990000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229020000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229050000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229080000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229110000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229140000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229170000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229200000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229230000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229260000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229290000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229320000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229350000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229380000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229410000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229440000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229470000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229500000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229530000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229560000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229590000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229620000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229650000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229680000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229710000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229740000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229770000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229800000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229830000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229860000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229890000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229920000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229950000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767229980000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230010000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230040000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230070000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230100000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230130000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230160000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230190000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230220000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230250000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230280000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230310000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230340000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230370000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230400000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230430000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230460000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230490000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230520000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230550000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230580000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230610000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230640000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230670000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230700000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230730000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230760000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230790000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230820000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230850000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230880000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230910000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230940000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767230970000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767231000000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231030000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231060000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231090000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231120000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231150000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231180000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231210000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231240000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231270000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231300000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231330000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231360000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231390000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231420000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231450000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231480000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231510000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231540000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231570000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231630000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231690000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231750000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231810000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231870000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231900000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231930000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231960000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767231990000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232050000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232080000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232110000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232140000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232170000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232200000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232230000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232260000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232290000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232320000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232350000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232380000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232410000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232440000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232470000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232500000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232530000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232560000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232590000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232620000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232650000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232680000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232710000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232740000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232770000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767232800000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767233400000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767234000000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767234600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767235200000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767235800000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767236400000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767237000000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767237600000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767238200000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767238800000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767239400000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767240000000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767240600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767241200000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767241800000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767242400000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767243000000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767227400000,
+          "runs": 60,
+          "weightedMs": 1800000
+        },
+        {
+          "kind": "error",
+          "startedAt": 1767227400000,
+          "endedAt": 1767231000000,
+          "runs": 120,
+          "weightedMs": 3600000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767231000000,
+          "endedAt": 1767236400000,
+          "runs": 66,
+          "weightedMs": 5400000
+        },
+        {
+          "kind": "error",
+          "startedAt": 1767236400000,
+          "endedAt": 1767240000000,
+          "runs": 6,
+          "weightedMs": 3600000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767240000000,
+          "endedAt": 1767243600000,
+          "runs": 6,
+          "weightedMs": 3600000
+        }
+      ]
+    },
+    {
+      "name": "jitter-20pct",
+      "description": "60s cadence, each interval off by up to 20%: no unmeasured time",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767226320000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225648000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225768000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225900000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225972000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226086000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226140000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226212000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226260000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767226320000,
+          "runs": 12,
+          "weightedMs": 720000
+        }
+      ]
+    },
+    {
+      "name": "error-burst",
+      "description": "60s cadence with three failing runs in a row",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767226200000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767225900000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767225960000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226080000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226140000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225780000,
+          "runs": 3,
+          "weightedMs": 180000
+        },
+        {
+          "kind": "error",
+          "startedAt": 1767225780000,
+          "endedAt": 1767225960000,
+          "runs": 3,
+          "weightedMs": 180000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767225960000,
+          "endedAt": 1767226200000,
+          "runs": 4,
+          "weightedMs": 240000
+        }
+      ]
+    },
+    {
+      "name": "degraded-mixed",
+      "description": "degraded runs: down under strict, up under lenient",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767226200000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "degraded"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "degraded"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "degraded"
+          },
+          {
+            "cronTimestamp": 1767225900000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767225960000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226080000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226140000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225720000,
+          "runs": 2,
+          "weightedMs": 120000
+        },
+        {
+          "kind": "degraded",
+          "startedAt": 1767225720000,
+          "endedAt": 1767225900000,
+          "runs": 3,
+          "weightedMs": 180000
+        },
+        {
+          "kind": "error",
+          "startedAt": 1767225900000,
+          "endedAt": 1767225960000,
+          "runs": 1,
+          "weightedMs": 60000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767225960000,
+          "endedAt": 1767226200000,
+          "runs": 4,
+          "weightedMs": 240000
+        }
+      ]
+    },
+    {
+      "name": "lone-run",
+      "description": "a single run: the head is weighted to it, the tail beyond one fallback interval is unmeasured",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767225930000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225630000,
+            "verdict": "error"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "error",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225690000,
+          "runs": 1,
+          "weightedMs": 90000
+        },
+        {
+          "kind": "unmeasured",
+          "startedAt": 1767225690000,
+          "endedAt": 1767225930000,
+          "runs": 0,
+          "weightedMs": 240000
+        }
+      ]
+    },
+    {
+      "name": "lone-run-short-tail",
+      "description": "a single run whose tail is within two fallback intervals",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767225720000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225630000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225720000,
+          "runs": 1,
+          "weightedMs": 120000
+        }
+      ]
+    },
+    {
+      "name": "no-runs",
+      "description": "no runs at all: the whole range is unmeasured",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767229200000,
+        "fallbackIntervalMs": 60000,
+        "runs": []
+      },
+      "expected": [
+        {
+          "kind": "unmeasured",
+          "startedAt": 1767225600000,
+          "endedAt": 1767229200000,
+          "runs": 0,
+          "weightedMs": 3600000
+        }
+      ]
+    },
+    {
+      "name": "head-gap",
+      "description": "first run long after the range starts: the head is unmeasured",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767229200000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767228600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767228660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767228720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767228780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767228840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767228900000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767228960000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767229020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767229080000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767229140000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "unmeasured",
+          "startedAt": 1767225600000,
+          "endedAt": 1767228600000,
+          "runs": 0,
+          "weightedMs": 3000000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767228600000,
+          "endedAt": 1767229200000,
+          "runs": 10,
+          "weightedMs": 600000
+        }
+      ]
+    },
+    {
+      "name": "head-short",
+      "description": "first run within two cadences of the range start: the head takes its verdict",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767226290000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225690000,
+            "verdict": "degraded"
+          },
+          {
+            "cronTimestamp": 1767225750000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225810000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225870000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225930000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225990000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226050000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226110000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226170000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226230000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "degraded",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225750000,
+          "runs": 1,
+          "weightedMs": 150000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767225750000,
+          "endedAt": 1767226290000,
+          "runs": 9,
+          "weightedMs": 540000
+        }
+      ]
+    },
+    {
+      "name": "tail-gap",
+      "description": "monitor stops reporting: the last run keeps one cadence, the rest is unmeasured",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767229740000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225720000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225900000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225960000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226020000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226080000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767226140000,
+            "verdict": "error"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767226140000,
+          "runs": 9,
+          "weightedMs": 540000
+        },
+        {
+          "kind": "error",
+          "startedAt": 1767226140000,
+          "endedAt": 1767226200000,
+          "runs": 1,
+          "weightedMs": 60000
+        },
+        {
+          "kind": "unmeasured",
+          "startedAt": 1767226200000,
+          "endedAt": 1767229740000,
+          "runs": 0,
+          "weightedMs": 3540000
+        }
+      ]
+    },
+    {
+      "name": "gap-at-boundary",
+      "description": "a gap of exactly twice the cadence is still measured",
+      "input": {
+        "fromMs": 1767225600000,
+        "toMs": 1767225960000,
+        "fallbackIntervalMs": 60000,
+        "runs": [
+          {
+            "cronTimestamp": 1767225600000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225660000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225780000,
+            "verdict": "ok"
+          },
+          {
+            "cronTimestamp": 1767225840000,
+            "verdict": "error"
+          },
+          {
+            "cronTimestamp": 1767225900000,
+            "verdict": "ok"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "kind": "ok",
+          "startedAt": 1767225600000,
+          "endedAt": 1767225840000,
+          "runs": 3,
+          "weightedMs": 240000
+        },
+        {
+          "kind": "error",
+          "startedAt": 1767225840000,
+          "endedAt": 1767225900000,
+          "runs": 1,
+          "weightedMs": 60000
+        },
+        {
+          "kind": "ok",
+          "startedAt": 1767225900000,
+          "endedAt": 1767225960000,
+          "runs": 1,
+          "weightedMs": 60000
+        }
+      ]
+    }
+  ]
+}

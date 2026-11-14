@@ -42,10 +42,11 @@ Exception: after get_doc_page or get_content_page, DO synthesize an answer from 
   const incidentSection = `
 
 Managed incidents (internal):
-- Three different things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, set_incident_status, add_incident_note) is the team's INTERNAL record: severity, commander, timeline. A status report is PUBLIC communication on a status page. Monitor downtime (activeIncidentCount on monitors) is detected automatically.
+- Three different things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, set_incident_status, add_incident_note, acknowledge_incident) is the team's INTERNAL record: severity, commander, timeline. A status report is PUBLIC communication on a status page. Monitor downtime (activeIncidentCount on monitors) is detected automatically.
 - "declare an incident", "open an incident", "we have a SEV" → declare_incident. It publishes nothing. Offer to create a status report afterwards and pass incidentId to create_status_report to link them.
 - Before referencing a managed incident: call list_incidents. Never guess its id.
 - "note that…", "add to the timeline", "log that…" → add_incident_note (internal, runs without confirmation).
+- "I'm on it", "ack", "acknowledge the incident" → acknowledge_incident (internal, runs without confirmation).
 - "the incident is fixed/resolved" with a managed incident in play → resolve_incident; if its linked status report is still open, ask whether to resolve that too (resolve_status_report).
 - "mitigated", "the bleeding stopped" → set_incident_status mitigated; "false alarm", "declared by mistake" → set_incident_status canceled (this closes it).
 - Postmortems: get_postmortem reads it; draft_postmortem saves a draft you wrote from get_incident and the conversation (resolved incidents only, never invent facts); approve_postmortem signs it off and by default closes the incident.
@@ -61,16 +62,16 @@ Managed incidents (internal):
   // surfaces describe their own approval UX in `preamble`.
   const approvalSection =
     opts.surface === "dashboard"
-      ? `How approval works here (every write tool except add_incident_note):
+      ? `How approval works here (every write tool except add_incident_note and acknowledge_incident):
 Calling a write tool (every create_*, update_*, add_*, resolve_*, delete_*, declare_incident, set_incident_status, draft_postmortem, approve_postmortem) does NOT execute it. The dashboard renders an approval card with Apply / Cancel showing what will change, and nothing changes until the user clicks Apply. The card is how you ask.
 - Call the tool as soon as you have the ids and values it needs (after the read calls the rules above require).
 - NEVER write the draft out as text, and NEVER end your turn with "Should I apply it?" or otherwise ask for Apply / Cancel confirmation in text. The card already asks. The only yes/no question you may ask in text is the notify decision, and only when the notify rule below calls for it.
 - Ask in text only when you cannot build the call: an ambiguous status page, an unclear component impact, a missing date or slug, or the notify decision (see below).
 - Before the call, write at most one short line of context (e.g. "Renaming the page back to test-slack:"). Don't repeat the fields; the card shows them.
-- add_incident_note runs immediately with no card.
+- add_incident_note and acknowledge_incident run immediately with no card.
 ${notifyRule}
 - Subscriber notifications dispatch only on the call that creates the update — there is no retroactive notify path.`
-      : `Write tools (every write tool except add_incident_note, which logs immediately):
+      : `Write tools (every write tool except add_incident_note and acknowledge_incident, which run immediately):
 - Build the full change (title, status, message, time window, affected components and their impact levels) before calling the tool.
 ${notifyRule}
 - Subscriber notifications dispatch only on the call that creates the update — there is no retroactive notify path.`;
@@ -217,7 +218,7 @@ Confirm every write before calling it. Do not count on the client showing its ow
 ${notifyRule}
 - Call the tool only after the user explicitly approves that specific change in their latest message. A request to make a change ("post an update", "resolve it") is not approval of wording you drafted — show the draft first.
 - Each write needs its own confirmation. Approval of one call never carries over to the next. If the user changes the draft, show the revised version and confirm again.
-- add_incident_note is the exception: it is internal-only and runs without confirmation.
+- add_incident_note and acknowledge_incident are the exception: they are internal-only and each runs without confirmation.
 
 Never guess ids: read them from list_status_pages, list_status_reports, list_maintenances, list_incidents, list_page_components or list_monitors first.`;
 }

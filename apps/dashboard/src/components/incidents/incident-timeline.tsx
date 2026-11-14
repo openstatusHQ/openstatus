@@ -2,6 +2,10 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  parseIncidentSlaBreachMessage,
+  parseIncidentUpdateMissedMessage,
+} from "@openstatus/db/src/schema/incident_sla_policies/events";
+import {
   type IncidentSeverity,
   type IncidentStatus,
   incidentSeverity,
@@ -9,6 +13,7 @@ import {
 } from "@openstatus/db/src/schema/incidents/constants";
 import {
   Account,
+  Acknowledge,
   Api,
   Chat,
   Check,
@@ -23,6 +28,7 @@ import {
   Lock,
   Plug,
   Unlinked,
+  Warning,
 } from "@openstatus/icons";
 import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 import { personName } from "@openstatus/utils";
@@ -58,6 +64,7 @@ const TRANSITION = /^\w+ changed from \w+ to (\w+)(?:\n\n([\s\S]+))?$/;
 const DECLARED = /^Declared as (\w+): /;
 const COMMANDER = /^Commander set to (.+)$/;
 const STARTED_AT = /^Start time changed to (\S+)$/;
+const REPORTED_AT = /^Reported at changed to (\S+)$/;
 const REPORT = /^(?:Linked|Unlinked) status report #(\d+)$/;
 const CHANNEL = /<#([A-Z0-9]+)>/;
 // Events without a user come from the service itself.
@@ -180,6 +187,27 @@ function parseEvent(event: Event): Parsed {
         message: null,
       };
     }
+    case "reported_at_changed": {
+      const iso = message ? REPORTED_AT.exec(message)?.[1] : undefined;
+      const date = iso ? new Date(iso) : null;
+      return {
+        icon: Clock,
+        phrase:
+          date && !Number.isNaN(date.getTime()) ? (
+            <>
+              changed the reported time to{" "}
+              <TimelineHighlight>
+                {format(date, "LLL dd, HH:mm")}
+              </TimelineHighlight>
+            </>
+          ) : message === "Reported at cleared" ? (
+            "cleared the reported time"
+          ) : (
+            "changed the reported time"
+          ),
+        message: null,
+      };
+    }
     case "status_report_linked":
     case "status_report_unlinked": {
       const id = message ? REPORT.exec(message)?.[1] : undefined;
@@ -234,6 +262,89 @@ function parseEvent(event: Event): Parsed {
     }
     case "closed":
       return { icon: Lock, phrase: "closed the incident", message: null };
+    case "acknowledged": {
+      // compact rows drop the avatar badge, so the source goes into the sentence
+      const source = eventSource(event);
+      return {
+        icon: Acknowledge,
+        phrase: source
+          ? `acknowledged the incident via ${source.label}`
+          : "acknowledged the incident",
+        message: null,
+      };
+    }
+    case "sla_response_breached":
+    case "sla_resolution_breached": {
+      const breach = parseIncidentSlaBreachMessage(message);
+      return {
+        icon: Warning,
+        phrase: (
+          <>
+            recorded a missed{" "}
+            <TimelineHighlight className="text-destructive">
+              {event.type === "sla_response_breached"
+                ? "response target"
+                : "resolution target"}
+            </TimelineHighlight>
+            {breach ? (
+              <>
+                {" "}
+                of {breach.target} due{" "}
+                <TimelineHighlight>
+                  {format(breach.dueAt, "LLL dd, HH:mm")}
+                </TimelineHighlight>
+              </>
+            ) : null}
+          </>
+        ),
+        message: null,
+      };
+    }
+    // the message is the reason as written; none means it was cleared
+    case "sla_response_miss_explained":
+    case "sla_resolution_miss_explained": {
+      const target = (
+        <TimelineHighlight className="text-destructive">
+          {event.type === "sla_response_miss_explained"
+            ? "response target"
+            : "resolution target"}
+        </TimelineHighlight>
+      );
+      return {
+        icon: Chat,
+        phrase: message ? (
+          <>explained the missed {target}</>
+        ) : (
+          <>cleared the reason for the missed {target}</>
+        ),
+        message: message || null,
+      };
+    }
+    case "sla_update_missed": {
+      const missed = parseIncidentUpdateMissedMessage(message);
+      return {
+        icon: Clock,
+        phrase: (
+          <>
+            recorded a missed{" "}
+            <TimelineHighlight className="text-warning">
+              update
+            </TimelineHighlight>
+            {missed ? (
+              <>
+                {" "}
+                due{" "}
+                <TimelineHighlight>
+                  {format(missed.dueAt, "LLL dd, HH:mm")}
+                </TimelineHighlight>{" "}
+                (every {missed.interval})
+              </>
+            ) : null}
+          </>
+        ),
+        message: null,
+      };
+    }
   }
 }
 

@@ -1,4 +1,9 @@
 import {
+  type IncidentSlaState,
+  type IncidentSlaTimer,
+  incidentSlaTimerIso,
+} from "@openstatus/db/src/schema/incident_sla_policies/state";
+import {
   incidentSeverity,
   incidentStatus,
 } from "@openstatus/db/src/schema/incidents/constants";
@@ -9,6 +14,7 @@ import { requireScope } from "../auth";
 import { tryGetActorUserId } from "../context";
 import { NotFoundError } from "../errors";
 import {
+  acknowledgeIncident,
   addIncidentNote,
   approvePostmortem,
   declareIncident,
@@ -28,6 +34,49 @@ const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);
 const note = z.string().trim().min(1).max(10_000);
 
+const IncidentSlaTimerSchema = z
+  .object({
+    targetMinutes: z.number().int(),
+    dueAt: z.string(),
+    metAt: z.string().nullable(),
+    missedAt: z
+      .string()
+      .nullable()
+      .describe("The due time recorded as missed; never cleared once set."),
+    missReason: z
+      .string()
+      .nullable()
+      .describe("Why the target was missed, as written by a member."),
+    status: z.enum(["running", "at_risk", "met", "breached"]),
+  })
+  .nullable();
+
+const IncidentSlaSchema = z
+  .object({
+    response: IncidentSlaTimerSchema,
+    resolution: IncidentSlaTimerSchema,
+  })
+  .nullable()
+  .describe(
+    "Response and resolution targets; null when the incident is untracked or canceled.",
+  );
+
+function toSlaTimer(
+  timer: IncidentSlaTimer | null,
+): z.infer<typeof IncidentSlaTimerSchema> {
+  return timer ? incidentSlaTimerIso(timer) : null;
+}
+
+function toSla(
+  state: IncidentSlaState | null,
+): z.infer<typeof IncidentSlaSchema> {
+  if (!state) return null;
+  return {
+    response: toSlaTimer(state.response),
+    resolution: toSlaTimer(state.resolution),
+  };
+}
+
 const IncidentSummary = z.object({
   id: z.number().int(),
   title: z.string(),
@@ -37,9 +86,34 @@ const IncidentSummary = z.object({
   commander: attributedUserSchema.nullable(),
   declaredAt: z.string(),
   startedAt: z.string(),
+  reportedAt: z.string().nullable(),
   statusReportId: z.number().int().nullable(),
   slackChannelId: z.string().nullable(),
+  acknowledgedAt: z.string().nullable(),
+  acknowledgedBy: attributedUserSchema.nullable(),
+  sla: IncidentSlaSchema,
 });
+
+function toIncidentSummary(
+  row: Awaited<ReturnType<typeof listIncidents>>["items"][number],
+): z.infer<typeof IncidentSummary> {
+  return {
+    id: row.id,
+    title: row.title,
+    severity: row.severity,
+    status: row.status,
+    closed: row.closedAt !== null,
+    commander: toAttributedUser(row.commander),
+    declaredAt: row.declaredAt.toISOString(),
+    startedAt: row.startedAt.toISOString(),
+    reportedAt: row.reportedAt?.toISOString() ?? null,
+    statusReportId: row.statusReportId,
+    slackChannelId: row.slackChannelId,
+    acknowledgedAt: row.acknowledgedAt?.toISOString() ?? null,
+    acknowledgedBy: toAttributedUser(row.acknowledgedByUser),
+    sla: toSla(row.sla),
+  };
+}
 
 const ListIncidentsInput = z.object({
   status: z
@@ -57,7 +131,7 @@ export const listIncidentsTool: AgentTool<
 > = {
   name: "list_incidents",
   description:
-    "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones.",
+    "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones. `sla` shows each response and resolution target; `at_risk` means past 75% of it and about to miss.",
   scope: "incidents:read",
   destructive: false,
   inputSchema: ListIncidentsInput,
@@ -68,18 +142,7 @@ export const listIncidentsTool: AgentTool<
       input: { status: input.status, limit: input.limit },
     });
     return {
-      items: rows.map((row) => ({
-        id: row.id,
-        title: row.title,
-        severity: row.severity,
-        status: row.status,
-        closed: row.closedAt !== null,
-        commander: toAttributedUser(row.commander),
-        declaredAt: row.declaredAt.toISOString(),
-        startedAt: row.startedAt.toISOString(),
-        statusReportId: row.statusReportId,
-        slackChannelId: row.slackChannelId,
-      })),
+      items: rows.map(toIncidentSummary),
     };
   },
 };
@@ -123,16 +186,7 @@ export const getIncidentTool: AgentTool<
       input: { id: input.id, limit: 50 },
     });
     return {
-      id: row.id,
-      title: row.title,
-      severity: row.severity,
-      status: row.status,
-      closed: row.closedAt !== null,
-      commander: toAttributedUser(row.commander),
-      declaredAt: row.declaredAt.toISOString(),
-      startedAt: row.startedAt.toISOString(),
-      statusReportId: row.statusReportId,
-      slackChannelId: row.slackChannelId,
+      ...toIncidentSummary(row),
       summary: row.summary,
       declaredBy: toAttributedUser(row.declaredByUser),
       statusReport: row.statusReport
@@ -192,6 +246,12 @@ const DeclareIncidentInput = z.object({
     .datetime()
     .optional()
     .describe("When the impact began, ISO 8601. Omit for now."),
+  reportedAt: z.iso
+    .datetime()
+    .optional()
+    .describe(
+      "When the request reached the team (email, phone), if before now, ISO 8601. SLA timers start here. At most 30 days ago.",
+    ),
   statusReportId: z
     .number()
     .int()
@@ -219,6 +279,7 @@ export const declareIncidentTool: AgentTool<
         ...optionalLines([
           ["Summary", input.summary],
           ["Started at", input.startedAt],
+          ["Reported at", input.reportedAt],
           [
             "Commander",
             input.commanderId ? `#${input.commanderId}` : undefined,
@@ -241,6 +302,7 @@ export const declareIncidentTool: AgentTool<
         summary: input.summary,
         commanderId: input.commanderId ?? tryGetActorUserId(ctx.actor),
         startedAt: input.startedAt ? new Date(input.startedAt) : undefined,
+        reportedAt: input.reportedAt ? new Date(input.reportedAt) : undefined,
         statusReportId: input.statusReportId,
       },
     });
@@ -259,6 +321,12 @@ const UpdateIncidentInput = z.object({
     .nullish()
     .describe("New commander's user id, or null to unassign."),
   startedAt: z.iso.datetime().optional().describe("Corrected start, ISO 8601."),
+  reportedAt: z.iso
+    .datetime()
+    .nullish()
+    .describe(
+      "When the request reached the team, ISO 8601, between 30 days before the declare and the declare; null clears it. Moves running SLA timers.",
+    ),
 });
 
 export const updateIncidentTool: AgentTool<
@@ -267,7 +335,7 @@ export const updateIncidentTool: AgentTool<
 > = {
   name: "update_incident",
   description:
-    "Change a managed incident's title, severity, summary, commander or start time. Internal only.",
+    "Change a managed incident's title, severity, summary, commander, start time or report time. Internal only.",
   scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateIncidentInput,
@@ -284,6 +352,7 @@ export const updateIncidentTool: AgentTool<
           summary: i.summary,
           commanderId: i.commanderId,
           startedAt: i.startedAt,
+          reportedAt: i.reportedAt,
         });
       },
     },
@@ -302,6 +371,10 @@ export const updateIncidentTool: AgentTool<
               : undefined,
         ],
         ["Started at", input.startedAt],
+        [
+          "Reported at",
+          input.reportedAt === null ? "(cleared)" : input.reportedAt,
+        ],
       ]),
     }),
     verb: "updated",
@@ -316,6 +389,12 @@ export const updateIncidentTool: AgentTool<
         summary: input.summary,
         commanderId: input.commanderId,
         startedAt: input.startedAt ? new Date(input.startedAt) : undefined,
+        reportedAt:
+          input.reportedAt === null
+            ? null
+            : input.reportedAt
+              ? new Date(input.reportedAt)
+              : undefined,
       },
     });
     return writeOutput(row);
@@ -423,6 +502,35 @@ export const addIncidentNoteTool: AgentTool<
   async run({ ctx, input }) {
     const event = await addIncidentNote({ ctx, input });
     return { incidentId: input.id, eventId: event.id };
+  },
+};
+
+const AcknowledgeIncidentInput = z.object({
+  id: z.number().int().describe("Incident id, from list_incidents."),
+});
+
+const AcknowledgeIncidentOutput = IncidentWriteOutput.extend({
+  acknowledgedAt: z.string(),
+});
+
+export const acknowledgeIncidentTool: AgentTool<
+  z.infer<typeof AcknowledgeIncidentInput>,
+  z.infer<typeof AcknowledgeIncidentOutput>
+> = {
+  name: "acknowledge_incident",
+  description:
+    "Acknowledge a managed incident: record that someone is on it. Internal; fails when it is already acknowledged or closed.",
+  scope: "incidents:write",
+  destructive: false,
+  inputSchema: AcknowledgeIncidentInput,
+  outputSchema: AcknowledgeIncidentOutput,
+  async run({ ctx, input }) {
+    const row = await acknowledgeIncident({ ctx, input });
+    return {
+      ...writeOutput(row),
+      // safe: acknowledgeIncident only returns the row its update stamped
+      acknowledgedAt: (row.acknowledgedAt ?? new Date()).toISOString(),
+    };
   },
 };
 

@@ -3,8 +3,10 @@ import { sendIncidentCommander } from "@openstatus/emails";
 import type { IncidentService } from "@openstatus/proto/incident/v1";
 import { NotFoundError, type ServiceContext } from "@openstatus/services";
 import {
+  acknowledgeIncident,
   actorDisplayName,
   addIncidentNote,
+  afterIncidentAcknowledged,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -67,6 +69,10 @@ function parseDate(value: string): Date {
   return parseRpcDate(value, () => invalidDateFormatError(value));
 }
 
+function parseOptionalDate(value: string | undefined): Date | undefined {
+  return value === undefined ? undefined : parseDate(value);
+}
+
 async function resolveCommander(
   ctx: ServiceContext,
   email: string,
@@ -126,8 +132,8 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
             req.commanderEmail === undefined
               ? null
               : await resolveCommander(sCtx, req.commanderEmail),
-          startedAt:
-            req.startedAt === undefined ? undefined : parseDate(req.startedAt),
+          startedAt: parseOptionalDate(req.startedAt),
+          reportedAt: parseOptionalDate(req.reportedAt),
           statusReportId:
             req.statusReportId === undefined
               ? undefined
@@ -188,6 +194,9 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
       if (req.commanderEmail !== undefined && req.clearCommander) {
         throw conflictingFieldsError("commander_email", "clear_commander");
       }
+      if (req.reportedAt !== undefined && req.clearReportedAt) {
+        throw conflictingFieldsError("reported_at", "clear_reported_at");
+      }
       const before = await getIncidentOrThrow({ ctx: sCtx, input: { id } });
       const after = await updateIncident({
         ctx: sCtx,
@@ -204,8 +213,10 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
             : req.commanderEmail === undefined
               ? undefined
               : await resolveCommander(sCtx, req.commanderEmail),
-          startedAt:
-            req.startedAt === undefined ? undefined : parseDate(req.startedAt),
+          startedAt: parseOptionalDate(req.startedAt),
+          reportedAt: req.clearReportedAt
+            ? null
+            : parseOptionalDate(req.reportedAt),
         },
       });
       afterResponse(sCtx, "update", id, (effects) =>
@@ -234,6 +245,20 @@ export const incidentServiceImpl: ServiceImpl<typeof IncidentService> = {
           status: row.status,
           note,
         }),
+      );
+      return { incident: await readIncident(sCtx, id) };
+    } catch (err) {
+      toIncidentError(err, req.id);
+    }
+  },
+
+  async acknowledgeIncident(req, ctx) {
+    try {
+      const sCtx = toServiceCtx(getRpcContext(ctx));
+      const id = parseId("id", req.id);
+      await acknowledgeIncident({ ctx: sCtx, input: { id } });
+      afterResponse(sCtx, "acknowledge", id, (effects) =>
+        afterIncidentAcknowledged({ ctx: sCtx, effects, incidentId: id }),
       );
       return { incident: await readIncident(sCtx, id) };
     } catch (err) {

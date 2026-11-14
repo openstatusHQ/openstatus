@@ -11,13 +11,17 @@ import {
   DraftPostmortemInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
+  SetIncidentSlaMissReasonInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
+  acknowledgeIncident,
   addIncidentNote,
   approvePostmortem,
   draftPostmortem,
   generatePostmortemDraft,
   getPostmortem,
+  afterIncidentAcknowledged,
+  afterIncidentSlaMissExplained,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -32,6 +36,7 @@ import {
   getIncidentForStatusReport,
   getIncidentOrThrow,
   linkIncidentStatusReport,
+  setIncidentSlaMissReason,
   listIncidentEvents,
   listAllIncidents,
   listIncidents,
@@ -206,6 +211,58 @@ export const incidentRouter = createTRPCRouter({
             note: input.note,
           }),
         );
+        return row;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  acknowledge: protectedProcedure
+    .meta({ track: Events.AcknowledgeManagedIncident })
+    .input(IncidentIdInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const row = await acknowledgeIncident({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+        afterResponse(() =>
+          afterIncidentAcknowledged({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incidentId: row.id,
+          }),
+        );
+        return row;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  setSlaMissReason: protectedProcedure
+    .meta({ track: Events.UpdateManagedIncident })
+    .input(SetIncidentSlaMissReasonInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const before = await getIncident({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+        const row = await setIncidentSlaMissReason({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+        if (before) {
+          afterResponse(() =>
+            afterIncidentSlaMissExplained({
+              ctx: toServiceCtx(ctx),
+              effects: effectsFor(ctx),
+              before,
+              after: row,
+              kind: input.kind,
+            }),
+          );
+        }
         return row;
       } catch (err) {
         toTRPCError(err);

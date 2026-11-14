@@ -1,0 +1,82 @@
+---
+category: Guides
+title: Track a contractual SLA
+description: "Turn an availability and support commitment from a contract into reportings: monitors, a monthly target, slow-as-down, excused maintenance and support targets, then read and export each month."
+---
+
+This guide sets up openstatus to measure and prove a commitment like this one:
+
+> 99.5% monthly availability, excluding excused downtime. A response slower than one second counts as unavailable. Support requests get a response, updates and a resolution within set times per severity.
+
+You need a workspace on the Pro or Scale plan, and the owner or admin role. Everything happens in the dashboard; reportings are not available over the API, the CLI or the MCP server.
+
+## 1. Monitor what the contract covers
+
+Create one monitor per contractually relevant part of the product, for example the checkout, the partner API and the customer portal. For each one:
+
+- Pick cloud regions close to the people who use it. A run's verdict comes from the majority of its regions, so one slow region out of three is a normal run.
+- Set the **degraded** threshold to the contract's latency limit, here `1000` ms. Without it, a check is never slow and the next step changes nothing. See the [HTTP monitor reference](/docs/reference/http-monitor#degraded).
+- Choose the check frequency. Uptime weighs time, so any frequency works; a shorter one finds an outage sooner and costs less budget per failed check.
+
+A failed check counts as down until the next run, so one failed check costs one interval. The shorter the interval, the tighter a target you can hold through a single blip. For a 30-day month:
+
+| Frequency | Uptime with one failed check | Failed checks within 99.9% | Failed checks within 99.99% |
+|---|---|---|---|
+| 1h | 99.861% | 0 | 0 |
+| 30m | 99.930% | 1 | 0 |
+| 10m | 99.976% | 4 | 0 |
+| 5m | 99.988% | 8 | 0 |
+| 1m | 99.997% | 43 | 4 |
+| 30s | 99.998% | 86 | 8 |
+
+At 99.99% the month allows 4 minutes and 19 seconds of downtime, which a single failed 5-minute check already exceeds. For a target of 99.99% or tighter, check every minute or every 30 seconds.
+
+Heartbeat monitors and monitors that only run from private locations cannot join a reporting.
+
+## 2. Create the reporting
+
+Under [**Reportings > Monitors**](https://app.openstatus.dev/reportings/monitors), create a reporting:
+
+- **Name**: the commitment, for example `Partner contract`.
+- **Monthly uptime target**: `99.5`.
+- **Count slow responses as downtime**: on, because the contract treats a slow response as unavailable.
+- **Time zone**: the one the contract's months are in. It is locked once the first month is sealed.
+- **Monitors**: the ones from step 1.
+
+A monitor is judged from the moment it joins. The first full month is the one after the reporting is created.
+
+## 3. Set the support targets
+
+Under [**Reportings > Incidents**](https://app.openstatus.dev/reportings/incidents#targets), fill in the response, resolution and update targets per severity from the contract. Map the contract's severities onto `critical`, `major` and `minor`.
+
+When a support request comes in, declare the incident at the severity the customer assigned and set **Reported at** to when the request arrived, so the clock starts where the contract says. Requests handled only in another ticketing tool are not counted. See [incident reporting](/docs/reference/incident-management#reporting).
+
+## 4. Excuse what the contract excludes
+
+When downtime falls under an exclusion, such as an announced maintenance, add an **excused window** from the reporting page with a kind and a reason. Status page maintenances that touched the reporting's monitors are listed on the page, and **Excuse** turns one into a window with its times prefilled.
+
+Windows can be added or removed in the current and the previous month only, until that month is sealed. openstatus does not check your contract's rules for what qualifies, so keep the reason specific: it is stored with the sealed month.
+
+## 5. Watch the month
+
+The reporting page shows every monitor against the last 12 or 24 months. Select a month cell to open its detail:
+
+- **Budget left** and the **Budget left by day** chart show how fast the month's allowance is going, and whether down or slow time is spending it.
+- **What used the budget** lists each stretch with how it was treated.
+
+"Months with a miss" in the header counts the last twelve complete months, the number a "three missed months in twelve" termination clause reads. Owners get an email when a sealed month misses its target.
+
+## 6. Send the month's evidence
+
+A few days after a month ends it is sealed and no longer changes. Use **Export** on the reporting page to download the months as CSV, with uptime, coverage, excused time, and the terms each month was sealed with.
+
+## What openstatus does not do yet
+
+- There is no printable monthly report yet; the CSV export is the evidence.
+- openstatus does not compute service credits; work them out from the exported figures.
+
+## Related resources
+
+- **[Understanding SLA uptime and budgets](/docs/concept/sla-uptime-and-budgets)**: the ideas behind the figures.
+- **[Monitor reporting reference](/docs/reference/monitor-reporting)**: every rule in detail.
+- **[Incident management reference](/docs/reference/incident-management#reporting)**: support targets and misses.

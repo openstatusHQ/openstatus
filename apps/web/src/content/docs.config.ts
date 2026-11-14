@@ -68,6 +68,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Latency vs Response Time",
       },
       {
+        slug: "concept/sla-uptime-and-budgets",
+        label: "Understanding SLA Uptime and Budgets",
+      },
+      {
         slug: "concept/response-logs-and-retention",
         label: "Response Logs and Data Retention",
       },
@@ -178,6 +182,10 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Set Up SAML Single Sign-On",
       },
       {
+        slug: "guides/how-to-track-a-contractual-sla",
+        label: "How to Track a Contractual SLA",
+      },
+      {
         slug: "guides/self-hosting-openstatus",
         label: "How to Self-Host openstatus",
       },
@@ -264,6 +272,10 @@ export const docsNav: DocsNavSection[] = [
       { slug: "reference/http-monitor", label: "HTTP Monitor Reference" },
       { slug: "reference/icmp-monitor", label: "ICMP Monitor Reference" },
       { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
+      {
+        slug: "reference/monitor-reporting",
+        label: "Monitor Reporting Reference",
+      },
       {
         slug: "reference/notification",
         label: "Notification Channels Reference",

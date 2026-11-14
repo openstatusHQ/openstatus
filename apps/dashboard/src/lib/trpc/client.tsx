@@ -5,7 +5,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCClient } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { makeQueryClient } from "@/lib/trpc/query-client";
 import { endingLink, sentryLoggerLink } from "@/lib/trpc/shared";
@@ -45,8 +46,29 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+        <RefreshRouterOnMutation queryClient={queryClient} />
         {children}
       </TRPCProvider>
     </QueryClientProvider>
   );
+}
+
+// Router-cached RSC payloads (staleTimes.dynamic) carry server-prefetched data
+// that predates a mutation; hydrating them would undo the invalidation.
+function RefreshRouterOnMutation({
+  queryClient,
+}: {
+  queryClient: QueryClient;
+}) {
+  const router = useRouter();
+  useEffect(
+    () =>
+      queryClient.getMutationCache().subscribe((event) => {
+        if (event.type === "updated" && event.action.type === "success") {
+          router.refresh();
+        }
+      }),
+    [queryClient, router],
+  );
+  return null;
 }

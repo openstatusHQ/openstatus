@@ -49,6 +49,11 @@ const data = {
     },
     { name: "Monitors", url: NAV.monitors.href, icon: NAV.monitors.icon },
     {
+      name: NAV.reportings.label,
+      url: NAV.reportings.href,
+      icon: NAV.reportings.icon,
+    },
+    {
       name: "Notifications",
       url: NAV.notifications.href,
       icon: NAV.notifications.icon,

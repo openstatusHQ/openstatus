@@ -4,7 +4,7 @@ title: Incident Service
 description: "Declare and run incidents with the openstatus Node.js SDK: lifecycle, timeline, status report link and postmortem"
 ---
 
-Declare and run incidents: move them through their lifecycle, keep a timeline, link the public status report and write the postmortem. The Incident Service provides 13 RPC methods.
+Declare and run incidents: move them through their lifecycle, keep a timeline, link the public status report and write the postmortem. The Incident Service provides 14 RPC methods.
 
 The `IncidentService` is live on the API (`/rpc/openstatus.incident.v1.IncidentService/*`, see the [API reference](https://api.openstatus.dev/openapi)). The examples below use the SDK client shape it will ship with in an upcoming release.
 
@@ -28,6 +28,7 @@ console.log(`Incident #${incident?.id} declared`);
 
 - `commanderEmail` must belong to a member of your workspace. Without it the incident has no commander. A newly assigned commander gets an email, unless they created the API key.
 - `startedAt` defaults to now. Set it in the past to declare an outage after the fact.
+- `reportedAt` is when the request reached your team, by email or phone, before anyone declared it. It must lie between 30 days before now and now. SLA timers start there instead of at the declare.
 - `openSlackChannel` creates a dedicated Slack channel when the Slack integration is connected. It defaults to `false`.
 - `statusReportId` links an existing status report right away.
 
@@ -73,6 +74,19 @@ const { event } = await client.incident.v1.IncidentService.addIncidentNote({
 });
 ```
 
+### Acknowledge an Incident
+
+```typescript
+const { incident } = await client.incident.v1.IncidentService
+  .acknowledgeIncident({ id: "42" });
+
+console.log(incident?.acknowledgedAt, incident?.acknowledgedBy?.email);
+```
+
+Acknowledging records that someone is on the incident. It works on every incident. Incidents declared by a person in the dashboard or in Slack are acknowledged at declare; incidents declared through the API or MCP stay unacknowledged until someone acknowledges them, even when the API key belongs to a member. The key's creator is recorded as the acknowledger (nobody for a key without one), and the timeline shows that the acknowledgement came from the API. Acknowledging twice, or a closed incident, fails with `failed_precondition`.
+
+Every incident and incident summary carries `acknowledgedAt` and `acknowledgedBy`, both unset until it is acknowledged.
+
 ## Get and List Incidents
 
 ```typescript
@@ -100,6 +114,29 @@ Incidents are listed by most recently declared. Combine `statuses: [RESOLVED]` w
 
 How long an incident lasted is `startedAt` to `resolvedAt` (or `closedAt` when canceled), or to now while it is ongoing.
 
+### SLA Targets
+
+```typescript
+import { IncidentSlaTimerStatus } from "@openstatus/sdk-node";
+
+const atRisk = incidents.filter((incident) =>
+  [incident.sla?.response, incident.sla?.resolution].some(
+    (timer) => timer?.status === IncidentSlaTimerStatus.AT_RISK,
+  ),
+);
+```
+
+Incidents declared while the workspace has an [incident reporting](/docs/reference/incident-management#reporting) carry `sla` on both `getIncident` and `listIncidents`. It is unset for incidents declared without a reporting and for canceled ones. `sla.response` and `sla.resolution` are each unset when the incident's severity has no such target, otherwise:
+
+| Field | Description |
+|-------|-------------|
+| `targetMinutes` | The target for the incident's current severity, from the reporting snapshot fixed on the incident at declare. A severity change can change it. |
+| `dueAt` | When the target is due, counted from `reportedAt` when set, else from `declaredAt`. A severity or `reportedAt` change moves it while the target is still open. |
+| `metAt` | When the target was met. The response: when the incident was acknowledged, or, when the reporting counts the first status report update as the response, when the linked status report got an update; in both cases at the latest when the incident was resolved. The resolution: when the incident entered the reporting's stop state. Unset while open. |
+| `missedAt` | The due time recorded as missed. Once set it never clears, not even on reopen or a severity downgrade. |
+| `missReason` | Why the target was missed, written by a member in the dashboard. Unset without a recorded miss or a reason. |
+| `status` | `RUNNING`, `AT_RISK` (past 75% of the target), `MET` or `BREACHED` (past the due time, or met late). |
+
 ## Update an Incident
 
 ```typescript
@@ -116,7 +153,9 @@ await client.incident.v1.IncidentService.updateIncident({
 });
 ```
 
-Fields you leave out are kept. Use `clearCommander` and `clearSummary` to remove a value. Sending a value together with its clear flag is rejected.
+Fields you leave out are kept. Use `clearCommander`, `clearSummary` and `clearReportedAt` to remove a value. Sending a value together with its clear flag is rejected.
+
+A new `reportedAt` must lie between 30 days before the declare and the declare. It moves the due time of SLA targets that are still open; met and missed targets keep their verdict. The update interval keeps counting from the declare.
 
 ## Link a Status Report
 

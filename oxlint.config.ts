@@ -157,9 +157,9 @@ export default defineConfig({
       // Shape-triggered: an exported list/get/search/stream/preview verb in
       // one of the five scope groups must check `<group>:read`.
       files: [
-        "packages/services/src/{monitor,monitor-tag,private-location,monitor-incident,frozen-uptime}/*.ts",
+        "packages/services/src/{monitor,monitor-tag,private-location,monitor-incident,frozen-uptime,monitor-reporting}/*.ts",
         "packages/services/src/{page,page-component,page-component-group,import}/*.ts",
-        "packages/services/src/{status-report,incident,maintenance}/*.ts",
+        "packages/services/src/{status-report,incident,maintenance,incident-reporting}/*.ts",
         "packages/services/src/notification/*.ts",
         "packages/services/src/page-subscriber/*.ts",
       ],

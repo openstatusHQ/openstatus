@@ -9,6 +9,7 @@ import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import {
   grpcTlsModes,
   monitorJobTypes,
+  monitorMaintenanceModes,
   monitorMethods,
 } from "@openstatus/db/src/schema/monitors/constants";
 import {
@@ -19,7 +20,13 @@ import {
 } from "@openstatus/utils";
 import { z } from "zod";
 
-export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
+export {
+  grpcTlsModes,
+  monitorJobTypes,
+  monitorMaintenanceModes,
+  monitorMethods,
+  monitorPeriodicity,
+};
 
 const headerPair = headerPairSchema;
 // deduped, not rejected: existing API clients may send a region twice
@@ -200,6 +207,14 @@ export const UpdateMonitorFollowRedirectsInput = z.object({
 });
 export type UpdateMonitorFollowRedirectsInput = z.infer<
   typeof UpdateMonitorFollowRedirectsInput
+>;
+
+export const UpdateMonitorMaintenanceModeInput = z.object({
+  id: z.number().int(),
+  maintenanceMode: z.enum(monitorMaintenanceModes),
+});
+export type UpdateMonitorMaintenanceModeInput = z.infer<
+  typeof UpdateMonitorMaintenanceModeInput
 >;
 
 export const UpdateMonitorOtelInput = z.object({

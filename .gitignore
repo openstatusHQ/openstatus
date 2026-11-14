@@ -10,6 +10,7 @@ coverage
 
 # next.js
 .next/
+.next-agent/
 out/
 build
 

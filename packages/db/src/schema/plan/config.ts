@@ -68,7 +68,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       sso: false,
       regions: [...FREE_FLY_REGIONS],
       "private-locations": false,
+      "monitor-sla": false,
       "slack-agent": false,
+      "incident-sla": false,
     },
   },
   starter: {
@@ -180,7 +182,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       sso: false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": false,
+      "monitor-sla": false,
       "slack-agent": true,
+      "incident-sla": false,
     },
   },
   team: {
@@ -284,7 +288,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       sso: false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": true,
+      "monitor-sla": true,
       "slack-agent": true,
+      "incident-sla": true,
     },
   },
   scale: {
@@ -361,7 +367,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       sso: false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": true,
+      "monitor-sla": true,
       "slack-agent": true,
+      "incident-sla": true,
     },
   },
 };

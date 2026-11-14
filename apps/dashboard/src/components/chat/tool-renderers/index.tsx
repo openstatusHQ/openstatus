@@ -379,6 +379,9 @@ export const toolRenderers: ToolRendererRegistry = {
   add_incident_note: {
     summary: (o) => `note added to incident ${o.incidentId}`,
   },
+  acknowledge_incident: {
+    summary: (o) => `acknowledged · ID ${o.id}`,
+  },
   list_monitors: {
     renderResult: ({ output }) => (
       <ResultTable {...listMonitorsTable(output)} />

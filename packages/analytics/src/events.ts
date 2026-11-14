@@ -168,6 +168,38 @@ export const Events = {
     name: "private_location_deleted",
     channel: "private_location",
   },
+  CreateMonitorReporting: {
+    name: "monitor_reporting_created",
+    channel: "reporting",
+  },
+  UpdateMonitorReporting: {
+    name: "monitor_reporting_updated",
+    channel: "reporting",
+  },
+  ArchiveMonitorReporting: {
+    name: "monitor_reporting_archived",
+    channel: "reporting",
+  },
+  DeleteMonitorReporting: {
+    name: "monitor_reporting_deleted",
+    channel: "reporting",
+  },
+  AddMonitorReportingExcusedWindow: {
+    name: "monitor_reporting_excused_window_added",
+    channel: "reporting",
+  },
+  RemoveMonitorReportingExcusedWindow: {
+    name: "monitor_reporting_excused_window_removed",
+    channel: "reporting",
+  },
+  SaveIncidentReporting: {
+    name: "incident_reporting_saved",
+    channel: "reporting",
+  },
+  DeleteIncidentReporting: {
+    name: "incident_reporting_deleted",
+    channel: "reporting",
+  },
   AcknowledgeIncident: {
     name: "incident_acknowledged",
     channel: "incident",
@@ -194,6 +226,10 @@ export const Events = {
   },
   ChangeManagedIncidentStatus: {
     name: "incident_status_changed",
+    channel: "incident_management",
+  },
+  AcknowledgeManagedIncident: {
+    name: "managed_incident_acknowledged",
     channel: "incident_management",
   },
   AddManagedIncidentNote: {

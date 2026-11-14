@@ -4,10 +4,12 @@ import { Cause, Effect, Fiber, Schedule } from "effect";
 
 import { runSentryCron } from "../lib/sentry";
 import { handleHeartbeatSweepCron } from "./heartbeat-sweep";
-import { runIncidentRemindersTick } from "./incident-reminders";
+import { runIncidentSlaAndRemindersTick } from "./incident-reminders";
+import { runMonitorSlaSealTick } from "./monitor-sla-seal";
 import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
 import { handleStatusDriftCron } from "./status-drift";
+import { runUptimeFreezeTick } from "./uptime-freeze";
 
 const logger = getLogger(["workflow"]);
 
@@ -28,11 +30,13 @@ type ScheduledTask = {
 };
 
 /**
- * Internal maintenance only, so it runs in-process rather than needing a
- * schedule added outside this repo. Every task is safe to run on both machines
- * at once: the outbox claim is atomic, drift repair is guarded by the same
- * compare-and-swap as a live check, retention deletes are idempotent, and each
- * incident reminder window is claimed in Redis before it is sent.
+ * Internal maintenance, run in-process. Every task is safe on both machines at once:
+ * - outbox-drain: atomic claim; status-drift: the live check's compare-and-swap
+ * - heartbeat-sweep: deterministic transitions under one dedup key
+ * - outbox-retention, oauth-prune: idempotent deletes of expired rows
+ * - incident-reminders: Redis-claimed windows, conditional miss stamps, claimed notices
+ * - uptime-freeze-daily: one write-once row per monitor and month
+ * - monitor-sla-seal: write-once per pair, miss notices by a unique claim row
  */
 export const SCHEDULED_TASKS: ScheduledTask[] = [
   {
@@ -65,8 +69,25 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
   },
   {
     name: "incident-reminders",
-    expression: "*/10 * * * *",
-    run: runIncidentRemindersTick,
+    expression: "*/5 * * * *",
+    run: runIncidentSlaAndRemindersTick,
+    // A hung Slack or Resend call must not skip the next miss scan.
+    timeoutMs: 4 * 60_000,
+  },
+  {
+    name: "uptime-freeze-daily",
+    expression: "29 4 * * *",
+    run: () => runUptimeFreezeTick(),
+    // A month not frozen within 45 days of its start is lost for good.
+    timeoutMs: 30 * 60_000,
+    checkIn: true,
+  },
+  {
+    name: "monitor-sla-seal",
+    expression: "47 5 * * *",
+    run: () => runMonitorSlaSealTick(),
+    timeoutMs: 10 * 60_000,
+    checkIn: true,
   },
 ];
 

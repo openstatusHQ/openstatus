@@ -1,34 +1,60 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
 import {
   type Incident,
+  type IncidentSlaState,
   type IncidentStatus,
   incident,
+  incidentSlaState,
+  incidentUpdateCadence,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import { type ServiceContext, getReadDb } from "../context";
+import { type DB, type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { isDeletable } from "./delete";
 import { allowedTransitions, incidentUserColumns } from "./internal";
 import { IncidentIdInput, ListIncidentsInput } from "./schemas";
+import {
+  loadIncidentUpdateActivity,
+  noUpdateActivity,
+} from "./update-activity";
 
 export function toIncidentView<T extends Incident>(
   row: T,
+  now: Date = new Date(),
 ): T & {
   allowedTransitions: ReadonlyArray<IncidentStatus>;
   deletable: boolean;
+  sla: IncidentSlaState | null;
 } {
   return {
     ...row,
     allowedTransitions: allowedTransitions(row),
     deletable: isDeletable(row),
+    sla: incidentSlaState(row, now),
   };
 }
 
 const incidentListWith = {
   commander: { columns: incidentUserColumns },
+  acknowledgedByUser: { columns: incidentUserColumns },
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
+
+// activity only moves the cadence's start, never whether it runs
+async function withUpdateActivity<T extends Incident>(db: DB, rows: T[]) {
+  const now = new Date();
+  const activity = await loadIncidentUpdateActivity(
+    db,
+    rows.filter(
+      (row) => incidentUpdateCadence(row, noUpdateActivity(row), now) !== null,
+    ),
+  );
+  return rows.map((row) => ({
+    ...toIncidentView(row),
+    updateActivity: activity.get(row.id) ?? noUpdateActivity(row),
+  }));
+}
 
 function listWhere(
   ctx: ServiceContext,
@@ -56,15 +82,16 @@ export async function listIncidents(args: {
   const db = getReadDb(ctx);
 
   const where = listWhere(ctx, input);
-  const items = (
+  const items = await withUpdateActivity(
+    db,
     await db.query.incident.findMany({
       where,
       orderBy: [desc(incident.declaredAt), desc(incident.id)],
       limit: input.limit,
       offset: input.offset,
       with: incidentListWith,
-    })
-  ).map(toIncidentView);
+    }),
+  );
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;
@@ -88,12 +115,13 @@ export async function listAllIncidents(args: {
   input?: Pick<ListIncidentsInput, "status" | "closed">;
 }) {
   requireScope(args.ctx, "incidents:read");
-  const rows = await getReadDb(args.ctx).query.incident.findMany({
+  const db = getReadDb(args.ctx);
+  const rows = await db.query.incident.findMany({
     where: listWhere(args.ctx, args.input ?? {}),
     orderBy: [desc(incident.declaredAt), desc(incident.id)],
     with: incidentListWith,
   });
-  return rows.map(toIncidentView);
+  return withUpdateActivity(db, rows);
 }
 
 export async function getIncident(args: {
@@ -103,7 +131,8 @@ export async function getIncident(args: {
   const { ctx } = args;
   requireScope(ctx, "incidents:read");
   const input = IncidentIdInput.parse(args.input);
-  const row = await getReadDb(ctx).query.incident.findFirst({
+  const db = getReadDb(ctx);
+  const row = await db.query.incident.findFirst({
     where: and(
       eq(incident.id, input.id),
       eq(incident.workspaceId, ctx.workspace.id),
@@ -112,12 +141,22 @@ export async function getIncident(args: {
       commander: { columns: incidentUserColumns },
       declaredByUser: { columns: incidentUserColumns },
       resolvedByUser: { columns: incidentUserColumns },
+      acknowledgedByUser: { columns: incidentUserColumns },
       statusReport: {
         columns: { id: true, title: true, status: true, pageId: true },
       },
     },
   });
-  return row ? toIncidentView(row) : undefined;
+  if (!row) return undefined;
+  const now = new Date();
+  const updateActivity =
+    (await loadIncidentUpdateActivity(db, [row])).get(row.id) ??
+    noUpdateActivity(row);
+  return {
+    ...toIncidentView(row, now),
+    updateActivity,
+    updateCadence: incidentUpdateCadence(row, updateActivity, now),
+  };
 }
 
 export async function getIncidentOrThrow(args: {

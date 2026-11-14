@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
+  monitorSlaPolicyToMonitor,
   monitorTagsToMonitors,
   notificationsToMonitors,
   pageComponent,
@@ -50,6 +51,9 @@ export async function deleteMonitor(args: {
     await tx
       .delete(monitorTagsToMonitors)
       .where(eq(monitorTagsToMonitors.monitorId, existing.id));
+    await tx
+      .delete(monitorSlaPolicyToMonitor)
+      .where(eq(monitorSlaPolicyToMonitor.monitorId, existing.id));
     await tx
       .delete(notificationsToMonitors)
       .where(eq(notificationsToMonitors.monitorId, existing.id));
@@ -130,6 +134,9 @@ export async function deleteMonitors(args: {
     await tx
       .delete(monitorTagsToMonitors)
       .where(inArray(monitorTagsToMonitors.monitorId, ids));
+    await tx
+      .delete(monitorSlaPolicyToMonitor)
+      .where(inArray(monitorSlaPolicyToMonitor.monitorId, ids));
     await tx
       .delete(notificationsToMonitors)
       .where(inArray(notificationsToMonitors.monitorId, ids));

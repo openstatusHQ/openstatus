@@ -25,6 +25,13 @@ export const incidentEventType = [
   "postmortem_updated",
   "postmortem_approved",
   "closed",
+  "acknowledged",
+  "sla_response_breached",
+  "sla_resolution_breached",
+  "sla_update_missed",
+  "reported_at_changed",
+  "sla_response_miss_explained",
+  "sla_resolution_miss_explained",
 ] as const;
 
 // `source_ref` by source: slack → message permalink (null for slash commands
@@ -49,3 +56,20 @@ export const postmortemAuthor = ["agent", "user"] as const;
 
 export type PostmortemStatus = (typeof postmortemStatus)[number];
 export type PostmortemAuthor = (typeof postmortemAuthor)[number];
+
+export const INCIDENT_REPORTED_AT_MAX_BEFORE_MS = 30 * 24 * 60 * 60 * 1000;
+export const INCIDENT_REPORTED_AT_ERROR =
+  "Reported at must be between 30 days before the declare and the declare itself";
+
+/** A report time is allowed from 30 days before the declare up to the declare. */
+export function isAllowedIncidentReportedAt(
+  reportedAt: Date,
+  declaredAt: Date,
+): boolean {
+  const ms = reportedAt.getTime();
+  return (
+    Number.isFinite(ms) &&
+    ms <= declaredAt.getTime() &&
+    ms >= declaredAt.getTime() - INCIDENT_REPORTED_AT_MAX_BEFORE_MS
+  );
+}

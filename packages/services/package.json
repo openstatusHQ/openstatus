@@ -49,6 +49,14 @@
       "import": "./src/frozen-uptime/index.ts",
       "types": "./src/frozen-uptime/index.ts"
     },
+    "./incident-reporting": {
+      "import": "./src/incident-reporting/index.ts",
+      "types": "./src/incident-reporting/index.ts"
+    },
+    "./monitor-reporting": {
+      "import": "./src/monitor-reporting/index.ts",
+      "types": "./src/monitor-reporting/index.ts"
+    },
     "./workspace": {
       "import": "./src/workspace/index.ts",
       "types": "./src/workspace/index.ts"

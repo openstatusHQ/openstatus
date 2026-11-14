@@ -2,28 +2,13 @@ import { PubSub, type Topic } from "@google-cloud/pubsub";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
+import { inArray } from "@openstatus/db";
 import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  ne,
-  notInArray,
-} from "@openstatus/db";
-import {
-  maintenance,
-  monitor,
   monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import {
-  maintenancesToPageComponents,
-  pageComponent,
-} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
 import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
@@ -37,6 +22,7 @@ import {
   buildCronCheckerPayload,
   publishCheckerTasks,
 } from "./checker-payload";
+import { listMonitorsToCheck } from "./monitors-to-check";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
@@ -112,39 +98,7 @@ export async function sendCheckerTasks(
 
   const timestamp = Date.now();
 
-  const currentMaintenance = db
-    .select({ id: maintenance.id })
-    .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
-    .as("currentMaintenance");
-
-  const currentMaintenanceMonitors = db
-    .select({ id: pageComponent.monitorId })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      currentMaintenance,
-      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(isNotNull(pageComponent.monitorId));
-
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        ne(monitor.jobType, "heartbeat"),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
-    )
-    .all();
+  const result = await listMonitorsToCheck(db, periodicity);
 
   logger.info("Starting cron job", {
     periodicity,

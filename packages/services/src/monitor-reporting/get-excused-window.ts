@@ -1,0 +1,53 @@
+import { and, eq } from "@openstatus/db";
+import {
+  monitorSlaExcusedWindow,
+  monitorSlaPolicy,
+} from "@openstatus/db/src/schema";
+
+import { requireScope } from "../auth";
+import { getReadDb, type ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
+import { assertMonitorSlaLimit } from "./internal";
+import { GetMonitorReportingExcusedWindowInput } from "./schemas";
+
+/** One excused window with its policy, archived or not. */
+export async function getMonitorReportingExcusedWindow(args: {
+  ctx: ServiceContext;
+  input: GetMonitorReportingExcusedWindowInput;
+}) {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = GetMonitorReportingExcusedWindowInput.parse(args.input);
+  assertMonitorSlaLimit(ctx);
+
+  const row = await getReadDb(ctx)
+    .select({
+      id: monitorSlaExcusedWindow.id,
+      kind: monitorSlaExcusedWindow.kind,
+      reason: monitorSlaExcusedWindow.reason,
+      from: monitorSlaExcusedWindow.from,
+      to: monitorSlaExcusedWindow.to,
+      createdBy: monitorSlaExcusedWindow.createdBy,
+      createdAt: monitorSlaExcusedWindow.createdAt,
+      policy: {
+        id: monitorSlaPolicy.id,
+        name: monitorSlaPolicy.name,
+        timeZone: monitorSlaPolicy.timeZone,
+        archivedAt: monitorSlaPolicy.archivedAt,
+      },
+    })
+    .from(monitorSlaExcusedWindow)
+    .innerJoin(
+      monitorSlaPolicy,
+      eq(monitorSlaPolicy.id, monitorSlaExcusedWindow.monitorSlaPolicyId),
+    )
+    .where(
+      and(
+        eq(monitorSlaExcusedWindow.id, input.id),
+        eq(monitorSlaExcusedWindow.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .get();
+  if (!row) throw new NotFoundError("monitor_sla_excused_window", input.id);
+  return row;
+}

@@ -76,6 +76,23 @@ export function PropertyValue({
   );
 }
 
+// Muted text pinned to the row's end; pr-2 lines it up with chevrons and link arrows.
+export function PropertyMeta({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="property-meta"
+      className={cn("text-muted-foreground ml-auto shrink-0 pr-2", className)}
+      {...props}
+    >
+      {children}
+    </span>
+  );
+}
+
 // pr-2 lines the arrow up with select chevrons on sibling rows.
 export function PropertyLink({
   children,
@@ -167,6 +184,7 @@ export function PropertyDateTimePicker({
 }: React.ComponentProps<typeof DateTimePicker>) {
   return (
     <DateTimePicker
+      commitOnClose
       className={cn(
         propertyControlClassName,
         // the outline variant re-adds a border and tint in dark mode

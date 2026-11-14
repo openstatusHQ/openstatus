@@ -20,6 +20,12 @@ whether something should exist) still go to a human, with the screenshot
 attached. `pnpm verify` and the test suites remain the evidence for everything
 that is not visual.
 
+When a regular `pnpm dev` dashboard already runs in this tree, run beside it
+rather than copying the app: `dev-stack.mjs` builds into `.next-agent`, so
+`node scripts/dev-stack.mjs up --port 3009 --db-port 8111` gets its own server.
+Not beside another `dev-stack.mjs`: every instance shares the database and
+state under `.screenshots/stack`.
+
 ## Runtimes
 
 The whole tRPC surface is served from
@@ -36,6 +42,14 @@ the browser bundle. Import the specific sub-path instead
 (`@openstatus/db/src/schema/page_components/constants`), or split the pure-zod
 part into a sibling file. `import type` from the barrel is fine; types erase.
 
+## Data and tables
+
+Pages call `useQuery(trpc.x.queryOptions())` inline; a custom query hook only
+hides the router call. A `DataTable`'s columns live in
+`components/data-table/<name>/columns.tsx`, row actions beside them in
+`data-table-row-actions.tsx`. Compose pages from the existing `FormCard`,
+`Section`, `TableCell*` and sheet parts before adding a primitive.
+
 ## Links
 
 `@/components/common/link` is the inline text link: dashed hover underline,
@@ -47,8 +61,9 @@ file also has text links, and pass `target`/`rel` yourself for external hrefs.
 
 ## Anchor ids on cards and sections
 
-Every `FormCard` and `Section` on a page carries an `id`, the kebab-cased
-title (`<FormCard id="retry-policy">`), unique on its page. Cross-links,
+Every `FormCard` and `Section` on a page carries an `id`, unique on its page:
+the kebab-cased title for a new card (`<FormCard id="retry-policy">`). Never
+rename a shipped id; links already point at it. Cross-links,
 ⌘K entries and docs point at them (`/settings/general#api-keys`).
 `useScrollToHash` scrolls once the element mounts and marks it
 `data-hash-target`, which shows a short ring (`app/globals.css`). Both

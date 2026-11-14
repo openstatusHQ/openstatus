@@ -15,4 +15,14 @@ describe("SCHEDULED_TASKS", () => {
     const names = SCHEDULED_TASKS.map((task) => task.name);
     expect(new Set(names).size).toBe(names.length);
   });
+
+  test("incident reminders and SLA misses run every five minutes", () => {
+    const task = SCHEDULED_TASKS.find((t) => t.name === "incident-reminders");
+    expect(task?.expression).toBe("*/5 * * * *");
+  });
+
+  test("a hung incident tick is abandoned before the next one is due", () => {
+    const task = SCHEDULED_TASKS.find((t) => t.name === "incident-reminders");
+    expect(task?.timeoutMs).toBeLessThan(5 * 60_000);
+  });
 });

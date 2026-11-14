@@ -1,6 +1,12 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { incidentUpdateCadence } from "@openstatus/db/src/schema/incident_sla_policies/cadence";
+import {
+  incidentAwaitsAcknowledgement,
+  incidentSlaHeadline,
+  incidentSlaState,
+} from "@openstatus/db/src/schema/incident_sla_policies/state";
 import { Acknowledge, Check, Close, Reset } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { personName } from "@openstatus/utils";
@@ -28,6 +34,7 @@ import {
   severityLevels,
   statusConfig,
 } from "@/data/managed-incidents.client";
+import { useNow } from "@/hooks/use-now";
 import {
   formatClockOrDay,
   formatDurationShort,
@@ -38,6 +45,8 @@ import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
+import { IncidentAcknowledgeButton } from "./incident-acknowledge-button";
+import { IncidentSlaBadge, IncidentUpdateBadge } from "./incident-sla-badge";
 import { ResolveReportDialog } from "./resolve-report-dialog";
 
 type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
@@ -120,6 +129,7 @@ export function IncidentRow({
           (endedAt ?? new Date()).getTime() - incident.startedAt.getTime(),
         );
   const allowed = new Set(incident.allowedTransitions);
+  const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
   // canceling closes the incident for good; ask first
   const transition = (next: IncidentStatus) =>
     next === "canceled"
@@ -142,6 +152,8 @@ export function IncidentRow({
           {incident.title}
         </EventRowTitle>
         <EventRowMeta>
+          {/* first, so it is the item that survives a narrow row */}
+          {incident.slaSnapshot ? <IncidentRowSla incident={incident} /> : null}
           {meta
             .filter((item) => item !== null)
             .map((item) => (
@@ -150,8 +162,12 @@ export function IncidentRow({
         </EventRowMeta>
       </EventRowContent>
       <EventRowActions>
+        {awaitsAcknowledgement ? (
+          <IncidentAcknowledgeButton incidentId={incident.id} className="h-7" />
+        ) : null}
+        {/* the row menu still carries the transitions */}
         {(["mitigated", "resolved"] as const)
-          .filter((next) => allowed.has(next))
+          .filter((next) => !awaitsAcknowledgement && allowed.has(next))
           .map((next) => (
             <Button
               key={next}
@@ -214,5 +230,35 @@ export function IncidentRow({
         />
       ) : null}
     </EventRow>
+  );
+}
+
+// its own component so only tracked rows tick
+function IncidentRowSla({ incident }: { incident: Incident }) {
+  const now = useNow(30_000);
+  const sla = incidentSlaState(incident, now);
+  const headline = sla ? incidentSlaHeadline(sla) : null;
+  const cadence = incidentUpdateCadence(incident, incident.updateActivity, now);
+  // folded, the row keeps the time and drops the name
+  const folded = "@max-3xl:[&>[data-slot=incident-sla-kind]]:hidden";
+  return (
+    <>
+      {headline ? (
+        <IncidentSlaBadge
+          timer={headline.timer}
+          kind={headline.kind}
+          now={now}
+          className={folded}
+        />
+      ) : null}
+      {cadence?.status === "overdue" ? (
+        <IncidentUpdateBadge
+          cadence={cadence}
+          kind="update"
+          now={now}
+          className={folded}
+        />
+      ) : null}
+    </>
   );
 }

@@ -1,7 +1,11 @@
 import { and, eq } from "@openstatus/db";
 import {
+  INCIDENT_REPORTED_AT_ERROR,
   type Incident,
   incident,
+  incidentResponsePatch,
+  incidentSlaResponseMet,
+  isAllowedIncidentReportedAt,
   monitorIncidentTable,
   statusReport,
 } from "@openstatus/db/src/schema";
@@ -14,8 +18,16 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { NotFoundError } from "../errors";
-import { appendIncidentEvent, assertMember } from "./internal";
+import { NotFoundError, ValidationError } from "../errors";
+import {
+  appendIncidentEvent,
+  appendIncidentSlaBreaches,
+  assertMember,
+  meetResponseByStatusReport,
+  personUserId,
+  slaSnapshotAtDeclare,
+  withAcknowledgement,
+} from "./internal";
 import { assertStatusReportLinkable } from "./link-status-report";
 import { DeclareIncidentInput } from "./schemas";
 
@@ -72,10 +84,35 @@ export async function declareIncident(args: {
     }
 
     const declaredAt = new Date();
+    const reportedAt = input.reportedAt ?? null;
+    if (reportedAt && !isAllowedIncidentReportedAt(reportedAt, declaredAt)) {
+      throw new ValidationError(INCIDENT_REPORTED_AT_ERROR);
+    }
     const startedAt =
       input.startedAt ??
       (await sourceStartedAt(tx, ctx.workspace.id, input.source)) ??
       declaredAt;
+    const acknowledgedBy = personUserId(ctx.actor);
+    const slaSnapshot = await slaSnapshotAtDeclare(tx, ctx);
+    const acknowledgedAt = acknowledgedBy === null ? null : declaredAt;
+    const unmet = {
+      status: "open",
+      severity: input.severity,
+      declaredAt,
+      reportedAt,
+      slaSnapshot,
+      responseMetAt: null,
+      responseBreachDueAt: null,
+      resolutionStoppedAt: null,
+      resolutionBreachDueAt: null,
+    } as const;
+    // an acknowledgement at declare can already be late against the report time
+    const responsePatch =
+      acknowledgedAt &&
+      slaSnapshot &&
+      incidentSlaResponseMet(slaSnapshot) === "acknowledged"
+        ? incidentResponsePatch(unmet, acknowledgedAt)
+        : {};
 
     const record = await tx
       .insert(incident)
@@ -88,7 +125,13 @@ export async function declareIncident(args: {
         declaredBy: tryGetActorUserId(ctx.actor),
         declaredAt,
         startedAt,
+        reportedAt,
         statusReportId: input.statusReportId ?? null,
+        acknowledgedAt,
+        acknowledgedBy,
+        slaSnapshot,
+        responseMetAt: responsePatch.responseMetAt ?? null,
+        responseBreachDueAt: responsePatch.responseBreachDueAt ?? null,
       })
       .returning()
       .get();
@@ -109,12 +152,26 @@ export async function declareIncident(args: {
       message: `Declared as ${input.severity}: ${input.title}`,
       createdAt: declaredAt,
     });
+    await appendIncidentSlaBreaches(
+      tx,
+      ctx,
+      { ...unmet, id: record.id },
+      responsePatch,
+      declaredAt,
+    );
     if (input.statusReportId !== undefined) {
       await appendIncidentEvent(tx, ctx, {
         incidentId: record.id,
         type: "status_report_linked",
         message: `Linked status report #${input.statusReportId}`,
       });
+      await meetResponseByStatusReport(
+        tx,
+        ctx,
+        input.statusReportId,
+        new Date(),
+      );
+      return withAcknowledgement(tx, record);
     }
     return record;
   });

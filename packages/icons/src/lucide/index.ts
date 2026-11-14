@@ -92,6 +92,7 @@ export {
   MapPin as Region,
   Minus as Remove,
   Megaphone as Report,
+  FileChartColumn as Reporting,
   RotateCcw as Reset,
   SearchCheck as Resolved,
   ShieldAlert as Restricted,

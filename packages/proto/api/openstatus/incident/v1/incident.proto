@@ -43,6 +43,18 @@ enum IncidentEventType {
   INCIDENT_EVENT_TYPE_POSTMORTEM_UPDATED = 14;
   INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED = 15;
   INCIDENT_EVENT_TYPE_CLOSED = 16;
+  INCIDENT_EVENT_TYPE_ACKNOWLEDGED = 17;
+  // Written by the system at the due time of a missed response target.
+  INCIDENT_EVENT_TYPE_SLA_RESPONSE_BREACHED = 18;
+  // Written by the system at the due time of a missed resolution target.
+  INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED = 19;
+  // Written by the system at the due time of each update interval that passed without an update.
+  INCIDENT_EVENT_TYPE_SLA_UPDATE_MISSED = 20;
+  INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED = 21;
+  // A member wrote, edited or cleared (empty message) why the response target was missed.
+  INCIDENT_EVENT_TYPE_SLA_RESPONSE_MISS_EXPLAINED = 22;
+  // A member wrote, edited or cleared (empty message) why the resolution target was missed.
+  INCIDENT_EVENT_TYPE_SLA_RESOLUTION_MISS_EXPLAINED = 23;
 }
 
 // PostmortemStatus is the review state of a postmortem.
@@ -57,6 +69,49 @@ enum PostmortemAuthor {
   POSTMORTEM_AUTHOR_UNSPECIFIED = 0;
   POSTMORTEM_AUTHOR_AGENT = 1;
   POSTMORTEM_AUTHOR_USER = 2;
+}
+
+// IncidentSlaTimerStatus is the state of one SLA target.
+enum IncidentSlaTimerStatus {
+  INCIDENT_SLA_TIMER_STATUS_UNSPECIFIED = 0;
+  // Running, before the warning point.
+  INCIDENT_SLA_TIMER_STATUS_RUNNING = 1;
+  // Past 75% of the target and not yet met.
+  INCIDENT_SLA_TIMER_STATUS_AT_RISK = 2;
+  // Met on time.
+  INCIDENT_SLA_TIMER_STATUS_MET = 3;
+  // Missed: past the due time, or met late.
+  INCIDENT_SLA_TIMER_STATUS_BREACHED = 4;
+}
+
+// IncidentSlaTimer is the state of one SLA target of an incident.
+message IncidentSlaTimer {
+  // Target in minutes, from the policy fixed on the incident at declare.
+  int32 target_minutes = 1;
+
+  // Timestamp when the target is due (RFC 3339 format).
+  string due_at = 2;
+
+  // Timestamp when the target was met (RFC 3339 format, unset while open).
+  optional string met_at = 3;
+
+  // Due time recorded as missed (RFC 3339 format, unset until the miss is recorded; never cleared).
+  optional string missed_at = 4;
+
+  // Current state of the target.
+  IncidentSlaTimerStatus status = 5;
+
+  // Why the target was missed, written by a member (unset without a recorded miss or a reason).
+  optional string miss_reason = 6;
+}
+
+// IncidentSla is the SLA state of a tracked incident.
+message IncidentSla {
+  // Response target (unset when the severity has none).
+  optional IncidentSlaTimer response = 1;
+
+  // Resolution target (unset when the severity has none).
+  optional IncidentSlaTimer resolution = 2;
 }
 
 // IncidentUser is a workspace member referenced by an incident.
@@ -138,6 +193,19 @@ message IncidentSummary {
 
   // Timestamp when the incident was last updated (RFC 3339 format).
   string updated_at = 12;
+
+  // Timestamp when the incident was acknowledged (RFC 3339 format, unset until acknowledged).
+  optional string acknowledged_at = 13;
+
+  // Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
+  optional IncidentUser acknowledged_by = 14;
+
+  // SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
+  optional IncidentSla sla = 15;
+
+  // Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
+  // SLA timers start here instead of at declared_at.
+  optional string reported_at = 16;
 }
 
 // Incident is a managed incident with full details.
@@ -202,6 +270,20 @@ message Incident {
 
   // Timestamp when the incident was last updated (RFC 3339 format).
   string updated_at = 20;
+
+  // Timestamp when the incident was acknowledged (RFC 3339 format, unset until acknowledged).
+  // Incidents declared by a person are acknowledged at declare.
+  optional string acknowledged_at = 21;
+
+  // Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
+  optional IncidentUser acknowledged_by = 22;
+
+  // SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
+  optional IncidentSla sla = 23;
+
+  // Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
+  // SLA timers start here instead of at declared_at.
+  optional string reported_at = 24;
 }
 
 // Postmortem is the review written after an incident is resolved.

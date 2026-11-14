@@ -9,7 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import type { SidebarMetadataProps } from "@/components/nav/sidebar-metadata";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { SlaMonitorSidebarEntry } from "@/components/reportings/sla-budget";
 import {
   type HeartbeatHealth,
   getHeartbeatHealth,
@@ -56,11 +58,47 @@ export function Sidebar() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const monitorId = Number.parseInt(id);
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
+    trpc.monitor.get.queryOptions({ id: monitorId }),
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const slaEnabled = workspace?.limits["monitor-sla"] === true;
+  const { data: covering = [] } = useQuery({
+    ...trpc.monitorReporting.listForMonitor.queryOptions({ monitorId }),
+    enabled: slaEnabled,
+  });
+  // names render at once; the months need Tinybird and fill in after
+  const { data: months, isError: monthsFailed } = useQuery({
+    ...trpc.monitorReporting.monitorMonths.queryOptions({ monitorId }),
+    enabled: slaEnabled && covering.length > 0,
+  });
 
   if (!monitor) return null;
+
+  const sla: SidebarMetadataProps[] =
+    covering.length > 0
+      ? [
+          {
+            label: "SLA",
+            type: "content",
+            children: covering.map((reporting) => (
+              <SlaMonitorSidebarEntry
+                key={reporting.id}
+                reporting={reporting}
+                month={
+                  months
+                    ? (months.find((m) => m.id === reporting.id)?.month ?? null)
+                    : monthsFailed
+                      ? null
+                      : undefined
+                }
+                monitorId={monitorId}
+              />
+            )),
+          },
+        ]
+      : [];
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
   const type = monitorTypes.find((type) => type.id === monitor.jobType);
@@ -164,6 +202,7 @@ export function Sidebar() {
             },
           ],
         },
+        ...sla,
         {
           label: "Configuration",
           items: isHeartbeat

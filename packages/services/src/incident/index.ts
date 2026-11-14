@@ -1,12 +1,15 @@
+export { acknowledgeIncident } from "./acknowledge";
 export { addIncidentNote } from "./add-note";
 export { closeIncident, closeIncidentInTx } from "./close";
 export { declareIncident } from "./declare";
 export { deleteIncident, isDeletable } from "./delete";
 export {
   actorDisplayName,
+  afterIncidentAcknowledged,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
+  afterIncidentSlaMissExplained,
   afterIncidentStatusChanged,
   afterIncidentUpdated,
   afterPostmortemApproved,
@@ -23,6 +26,7 @@ export { displayName, toAttributedUserDetail } from "../attribution";
 export { allowedTransitions } from "./internal";
 export {
   linkIncidentStatusReport,
+  meetIncidentResponseByStatusReport,
   unlinkIncidentFromStatusReport,
   unlinkIncidentStatusReport,
 } from "./link-status-report";
@@ -35,6 +39,18 @@ export {
   type ReminderResult,
   STALE_AFTER,
 } from "./reminders";
+export { recordIncidentSlaBreaches } from "./sla-breaches";
+export {
+  INCIDENT_SLA_NOTICE_ACKNOWLEDGE,
+  incidentSlaNoticeBlocks,
+  parseIncidentSlaNoticeButtonValue,
+  sendIncidentSlaNotices,
+} from "./sla-notices";
+export {
+  emailIncidentSlaNotices,
+  type IncidentSlaNoticeEmail,
+} from "./sla-notice-emails";
+export { recordIncidentMissedUpdates } from "./update-misses";
 export {
   getIncident,
   getIncidentBySlackChannel,
@@ -70,9 +86,15 @@ export {
   LinkIncidentStatusReportInput,
   ListIncidentEventsInput,
   ListIncidentsInput,
+  SetIncidentSlaMissReasonInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
 } from "./schemas";
+export {
+  INCIDENT_REPORTED_AT_ERROR,
+  isAllowedIncidentReportedAt,
+} from "@openstatus/db/src/schema/incidents/constants";
+export { setIncidentSlaMissReason } from "./set-miss-reason";
 export { setIncidentStatus } from "./set-status";
 export {
   bindIncidentSlackChannel,

@@ -242,6 +242,8 @@ const FOLDER_GROUP = {
   "private-location": "monitors",
   "monitor-incident": "monitors",
   "frozen-uptime": "monitors",
+  "monitor-reporting": "monitors",
+  "incident-reporting": "incidents",
   page: "pages",
   "page-component": "pages",
   "page-component-group": "pages",

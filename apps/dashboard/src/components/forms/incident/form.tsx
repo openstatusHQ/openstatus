@@ -1,7 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { incidentSeverity } from "@openstatus/db/src/schema/incidents/constants";
+import {
+  INCIDENT_REPORTED_AT_ERROR,
+  INCIDENT_REPORTED_AT_MAX_BEFORE_MS,
+  incidentSeverity,
+  isAllowedIncidentReportedAt,
+} from "@openstatus/db/src/schema/incidents/constants";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
@@ -53,6 +59,13 @@ const schema = z.object({
       (value) => value <= new Date(),
       "Start time cannot be in the future.",
     ),
+  reportedAt: z
+    .date()
+    .nullable()
+    .refine(
+      (value) => !value || isAllowedIncidentReportedAt(value, new Date()),
+      INCIDENT_REPORTED_AT_ERROR,
+    ),
   statusReportId: z.string(),
   openSlackChannel: z.boolean(),
 });
@@ -65,6 +78,7 @@ export type DeclareIncidentValues = {
   summary?: string;
   commanderId: number | null;
   startedAt: Date;
+  reportedAt?: Date;
   statusReportId?: number;
   openSlackChannel: boolean;
 };
@@ -97,6 +111,7 @@ export function FormDeclareIncident({
       // before the sheet can mount and the default is never NONE for members.
       commanderId: user ? String(user.id) : NONE,
       startedAt: new Date(),
+      reportedAt: null,
       statusReportId: NONE,
       openSlackChannel: slack === "ready",
       ...defaultValues,
@@ -121,6 +136,7 @@ export function FormDeclareIncident({
           commanderId:
             values.commanderId === NONE ? null : Number(values.commanderId),
           startedAt: values.startedAt,
+          reportedAt: values.reportedAt ?? undefined,
           statusReportId:
             values.statusReportId === NONE
               ? undefined
@@ -249,6 +265,51 @@ export function FormDeclareIncident({
                 <FormDescription>
                   When the impact began. Set it in the past to record an
                   incident after the fact.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="reportedAt"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reported at</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <DateTimePicker
+                      value={field.value ?? new Date()}
+                      onChange={field.onChange}
+                      min={
+                        new Date(
+                          Date.now() - INCIDENT_REPORTED_AT_MAX_BEFORE_MS,
+                        )
+                      }
+                      max={new Date()}
+                      className="w-[240px]"
+                    >
+                      {field.value ? undefined : (
+                        <span className="text-muted-foreground">
+                          At declare
+                        </span>
+                      )}
+                    </DateTimePicker>
+                  </FormControl>
+                  {field.value ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => field.onChange(null)}
+                    >
+                      Clear
+                    </Button>
+                  ) : null}
+                </div>
+                <FormDescription>
+                  When the request reached you, by email or phone, if before
+                  now. SLA timers start here. Up to 30 days back.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

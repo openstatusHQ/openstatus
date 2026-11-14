@@ -1,4 +1,5 @@
 import { integration } from "@openstatus/db/src/schema";
+import { createIncidentEvent } from "@openstatus/db/src/test/factories";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -318,6 +319,36 @@ describe("generatePostmortemDraft", () => {
       });
       expect(draft.sourceTranscript).toBeNull();
       expect(draft.content).toContain("had no Slack channel");
+    });
+  });
+
+  test("missed updates are left out of the prompt; breaches and acknowledgements stay", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...makeUserCtx(workspace, { userId }), db: tx };
+      const row = await resolvedIncident(tx, ctx, false);
+      for (const type of [
+        "sla_update_missed",
+        "sla_response_breached",
+        "acknowledged",
+      ] as const) {
+        await createIncidentEvent(
+          row.id,
+          { type, message: `${type} text` },
+          tx,
+        );
+      }
+      const prompts: string[] = [];
+      await generatePostmortemDraft({
+        ctx,
+        incidentId: row.id,
+        generate: async ({ prompt }) => {
+          prompts.push(prompt);
+          return "## Summary";
+        },
+      });
+      expect(prompts[0]).not.toContain("sla_update_missed");
+      expect(prompts[0]).toContain("sla_response_breached text");
+      expect(prompts[0]).toContain("acknowledged text");
     });
   });
 

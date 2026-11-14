@@ -18,6 +18,7 @@ import {
   DetailTitle,
   DetailTitleRow,
 } from "@/components/content/detail";
+import { EventGroupCount } from "@/components/content/event-group";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
 import { MaintenanceActions } from "@/components/maintenances/maintenance-actions";
@@ -103,9 +104,9 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
           <DetailSection>
             <DetailSectionTitle variant="heading">
               Updates
-              <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+              <EventGroupCount className="ml-2 align-middle">
                 {updates.length}
-              </span>
+              </EventGroupCount>
             </DetailSectionTitle>
             <Timeline>
               <MaintenanceUpdateComposer

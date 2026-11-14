@@ -11,6 +11,7 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
+import { meetResponseByStatusReport } from "../incident/internal";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import { recomputeReportStatus } from "./derive-status";
 import {
@@ -131,6 +132,7 @@ export async function addStatusReportUpdate(args: {
       after: withComponentImpacts(newUpdate, writtenImpacts),
       metadata: { statusReportId: report.id },
     });
+    await meetResponseByStatusReport(tx, ctx, report.id, new Date());
 
     return { statusReport: updatedReport, statusReportUpdate: newUpdate };
   });

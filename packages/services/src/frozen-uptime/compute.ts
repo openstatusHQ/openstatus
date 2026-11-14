@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
 import type { Counts } from "./quorum";
@@ -17,12 +18,15 @@ export function previousMonth(now: Date): string {
   return `${d.getUTCFullYear()}-${mm}-01`;
 }
 
-// [start of month, start of next month) in UTC ms
-export function monthRange(month: string): { start: number; end: number } {
+// [local midnight on the 1st, local midnight on the next 1st) in `timeZone`, as UTC ms
+export function monthRange(
+  month: string,
+  timeZone = "UTC",
+): { start: number; end: number } {
   const [year, mo] = month.split("-").map(Number);
   return {
-    start: Date.UTC(year, mo - 1, 1),
-    end: Date.UTC(year, mo, 1),
+    start: new TZDate(year, mo - 1, 1, timeZone).getTime(),
+    end: new TZDate(year, mo, 1, timeZone).getTime(),
   };
 }
 

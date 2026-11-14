@@ -21,6 +21,7 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import {
+  AcknowledgeIncidentResponseSchema,
   AddIncidentNoteResponseSchema,
   ApprovePostmortemResponseSchema,
   CloseIncidentResponseSchema,
@@ -30,6 +31,7 @@ import {
   GetPostmortemResponseSchema,
   IncidentEventType,
   IncidentSeverity,
+  IncidentSlaTimerStatus,
   IncidentStatus,
   LinkStatusReportResponseSchema,
   ListIncidentsResponseSchema,
@@ -131,14 +133,17 @@ let member: Auth;
 // Dev keys resolve to the workspace with no creator behind them.
 let keyWithoutCreator: Auth;
 
-async function tokenFor(userId: number): Promise<Auth> {
+async function tokenFor(
+  userId: number,
+  scope: (typeof oauthGrant.$inferInsert)["scope"] = ["write"],
+): Promise<Auth> {
   const token = `os_oat_${crypto.randomUUID().replaceAll("-", "")}`;
   const later = new Date(Date.now() + 60 * 60 * 1000);
   await db.insert(oauthGrant).values({
     clientId,
     userId,
     workspaceId,
-    scope: ["write"],
+    scope,
     accessTokenHash: await sha256Hex(token),
     accessTokenExpiresAt: later,
     refreshTokenHash: await sha256Hex(`${token}-refresh`),
@@ -283,6 +288,7 @@ const ID_METHODS: Array<[string, JsonObject]> = [
   ["UpdateIncident", { title: "x" }],
   ["SetIncidentStatus", { status: "INCIDENT_STATUS_MITIGATED" }],
   ["AddIncidentNote", { message: "x" }],
+  ["AcknowledgeIncident", {}],
   ["LinkStatusReport", { statusReportId: "1" }],
   ["UnlinkStatusReport", {}],
   ["CloseIncident", { skipPostmortem: true }],
@@ -525,6 +531,229 @@ describe("IncidentService: lifecycle", () => {
         await rpcError(
           "UpdateIncident",
           { id, summary: "x", clearSummary: true },
+          owner,
+        )
+      ).code,
+    ).toBe("invalid_argument");
+  });
+});
+
+describe("IncidentService: acknowledge", () => {
+  test("an API declare stays unacknowledged until AcknowledgeIncident", async () => {
+    const id = await declare();
+    expect((await get(id)).acknowledgedAt).toBeUndefined();
+
+    const res = await rpc(
+      AcknowledgeIncidentResponseSchema,
+      "AcknowledgeIncident",
+      { id },
+      member,
+    );
+    expect(res.incident?.acknowledgedAt).toBeDefined();
+    expect(res.incident?.acknowledgedBy?.email).toBe(memberEmail);
+
+    const full = await get(id);
+    expect(full.acknowledgedBy?.email).toBe(memberEmail);
+    expect(full.events[0]?.type).toBe(IncidentEventType.ACKNOWLEDGED);
+    expect(full.events[0]?.createdBy?.email).toBe(memberEmail);
+
+    const list = await rpc(
+      ListIncidentsResponseSchema,
+      "ListIncidents",
+      { limit: 100 },
+      owner,
+    );
+    const summary = list.incidents.find((i) => i.id === id);
+    expect(summary?.acknowledgedAt).toBe(res.incident?.acknowledgedAt);
+    expect(summary?.acknowledgedBy?.email).toBe(memberEmail);
+  });
+
+  test("a second acknowledge and a closed incident are failed_precondition", async () => {
+    const id = await declare();
+    await rpc(
+      AcknowledgeIncidentResponseSchema,
+      "AcknowledgeIncident",
+      { id },
+      owner,
+    );
+    expect((await rpcError("AcknowledgeIncident", { id }, owner)).code).toBe(
+      "failed_precondition",
+    );
+
+    const canceled = await declare();
+    await setStatus(canceled, "INCIDENT_STATUS_CANCELED");
+    expect(
+      (await rpcError("AcknowledgeIncident", { id: canceled }, owner)).code,
+    ).toBe("failed_precondition");
+  });
+
+  test("a key without a creator acknowledges with nobody recorded", async () => {
+    const id = await declare(keyWithoutCreator);
+    const res = await rpc(
+      AcknowledgeIncidentResponseSchema,
+      "AcknowledgeIncident",
+      { id },
+      keyWithoutCreator,
+    );
+    expect(res.incident?.acknowledgedAt).toBeDefined();
+    expect(res.incident?.acknowledgedBy).toBeUndefined();
+  });
+
+  test("a read-only key cannot acknowledge", async () => {
+    const id = await declare();
+    const reader = await createUser();
+    await addUserToWorkspace(reader.id, workspaceId, "member");
+    const readOnly = await tokenFor(reader.id, ["incidents:read"]);
+    expect((await rpcError("AcknowledgeIncident", { id }, readOnly)).code).toBe(
+      "permission_denied",
+    );
+    expect((await get(id)).acknowledgedAt).toBeUndefined();
+  });
+
+  test("announces in the bound Slack channel", async () => {
+    const id = await declare();
+    await bindChannel(id);
+    await rpc(
+      AcknowledgeIncidentResponseSchema,
+      "AcknowledgeIncident",
+      { id },
+      owner,
+    );
+    await settleBackgroundTasks();
+    const posted = slackCalls("postMessage");
+    expect(posted).toHaveLength(1);
+    expect(String(posted[0]?.args.text)).toContain("acknowledged the incident");
+  });
+});
+
+describe("IncidentService: SLA", () => {
+  async function listed(id: string) {
+    const list = await rpc(
+      ListIncidentsResponseSchema,
+      "ListIncidents",
+      { limit: 100 },
+      owner,
+    );
+    return list.incidents.find((i) => i.id === id);
+  }
+
+  test("an untracked incident has no sla", async () => {
+    const id = await declare();
+    expect((await get(id)).sla).toBeUndefined();
+    expect((await listed(id))?.sla).toBeUndefined();
+  });
+
+  test("reports response and resolution state on get and list", async () => {
+    const minute = 60_000;
+    const declaredAt = new Date(
+      Math.floor(Date.now() / 1000) * 1000 - 90 * minute,
+    );
+    const at = (minutes: number) =>
+      new Date(declaredAt.getTime() + minutes * minute);
+    const row = await createIncident(workspaceId, {
+      title: `${TEST_PREFIX} tracked`,
+      severity: "critical",
+      declaredAt,
+      startedAt: declaredAt,
+      slaSnapshot: {
+        targets: { critical: { responseMinutes: 60, resolutionMinutes: 100 } },
+        resolutionStop: "mitigated",
+      },
+      acknowledgedAt: at(70),
+      responseMetAt: at(70),
+      responseBreachDueAt: at(60),
+      responseMissReason: "Pager rotation gap",
+    });
+    const id = String(row.id);
+
+    for (const incident of [await get(id), await listed(id)]) {
+      expect(incident?.sla?.response).toMatchObject({
+        targetMinutes: 60,
+        dueAt: at(60).toISOString(),
+        metAt: at(70).toISOString(),
+        missedAt: at(60).toISOString(),
+        missReason: "Pager rotation gap",
+        status: IncidentSlaTimerStatus.BREACHED,
+      });
+      expect(incident?.sla?.resolution).toMatchObject({
+        targetMinutes: 100,
+        dueAt: at(100).toISOString(),
+        status: IncidentSlaTimerStatus.AT_RISK,
+      });
+      expect(incident?.sla?.resolution?.metAt).toBeUndefined();
+      expect(incident?.sla?.resolution?.missedAt).toBeUndefined();
+      expect(incident?.sla?.resolution?.missReason).toBeUndefined();
+    }
+  });
+
+  test("a severity without targets has a tracked sla with no timers", async () => {
+    const row = await createIncident(workspaceId, {
+      title: `${TEST_PREFIX} minor tracked`,
+      severity: "minor",
+      slaSnapshot: {
+        targets: { critical: { responseMinutes: 60 } },
+        resolutionStop: "mitigated",
+      },
+    });
+    const sla = (await get(String(row.id))).sla;
+    expect(sla).toBeDefined();
+    expect(sla?.response).toBeUndefined();
+    expect(sla?.resolution).toBeUndefined();
+  });
+});
+
+describe("IncidentService: reported at", () => {
+  test("is set at declare, changed and cleared on update, and read back", async () => {
+    const reportedAt = new Date(
+      Math.floor(Date.now() / 1000) * 1000 - 30 * 60_000,
+    ).toISOString();
+    const id = await declare(owner, { reportedAt });
+    expect((await get(id)).reportedAt).toBe(reportedAt);
+    const list = await rpc(
+      ListIncidentsResponseSchema,
+      "ListIncidents",
+      { limit: 100 },
+      owner,
+    );
+    expect(list.incidents.find((i) => i.id === id)?.reportedAt).toBe(
+      reportedAt,
+    );
+
+    const cleared = await rpc(
+      UpdateIncidentResponseSchema,
+      "UpdateIncident",
+      { id, clearReportedAt: true },
+      owner,
+    );
+    expect(cleared.incident?.reportedAt).toBeUndefined();
+    const types = (await get(id)).events.map((e) => e.type);
+    expect(types).toContain(IncidentEventType.REPORTED_AT_CHANGED);
+  });
+
+  test("rejects a time after the declare, or both fields at once", async () => {
+    expect(
+      (
+        await rpcError(
+          "DeclareIncident",
+          {
+            title: `${TEST_PREFIX} future`,
+            severity: "INCIDENT_SEVERITY_MAJOR",
+            reportedAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+          },
+          owner,
+        )
+      ).code,
+    ).toBe("invalid_argument");
+    const id = await declare();
+    expect(
+      (
+        await rpcError(
+          "UpdateIncident",
+          {
+            id,
+            reportedAt: "2026-01-01T00:00:00Z",
+            clearReportedAt: true,
+          },
           owner,
         )
       ).code,

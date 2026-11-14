@@ -149,6 +149,14 @@ The OTLP endpoint URL where metrics are exported. gRPC monitors export the total
 
 Custom headers to include when sending metrics to your OTLP endpoint, commonly used for authentication or tenant identification.
 
+### Maintenance
+
+**Type:** Enum (optional)
+**Options:** `pause`, `continue`
+**Default:** `pause`
+
+What happens while a status page maintenance covers this monitor. `pause` stops cloud checks for the window, so it is left out of uptime. `continue` keeps checking and records results as usual, so failures count against uptime, but the status does not change and no incident or notification is triggered. See [checks during maintenance](/docs/reference/maintenance#checks-during-maintenance).
+
 ## Checking with grpcurl
 
 Every monitor configuration maps onto a [`grpcurl`](https://github.com/fullstorydev/grpcurl) command, so you can confirm a target answers before creating the monitor — and reproduce a failing check from your own terminal.
@@ -174,3 +182,4 @@ If `grpcurl` succeeds and the monitor does not, the difference is almost always 
 
 - **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
 - **[CLI reference](/docs/reference/cli-reference)** — manage monitors programmatically from the command line.
+- **[Monitor reporting reference](/docs/reference/monitor-reporting)** — hold this monitor to a monthly uptime target and export the sealed months.

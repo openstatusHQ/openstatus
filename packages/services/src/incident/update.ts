@@ -1,19 +1,26 @@
 import { eq } from "@openstatus/db";
-import { type Incident, incident } from "@openstatus/db/src/schema";
+import {
+  INCIDENT_REPORTED_AT_ERROR,
+  type Incident,
+  incident,
+  isAllowedIncidentReportedAt,
+} from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { ValidationError } from "../errors";
 import {
   appendIncidentEvent,
   assertMember,
   assertNotClosed,
   getIncidentInWorkspace,
   userDisplayName,
+  withAcknowledgement,
 } from "./internal";
 import { UpdateIncidentInput } from "./schemas";
 
-/** Edits title, severity, summary, commander and start time. */
+/** Edits title, severity, summary, commander, start time and report time. */
 export async function updateIncident(args: {
   ctx: ServiceContext;
   input: UpdateIncidentInput;
@@ -55,6 +62,18 @@ export async function updateIncident(args: {
     ) {
       patch.startedAt = input.startedAt;
     }
+    if (
+      input.reportedAt !== undefined &&
+      input.reportedAt?.getTime() !== existing.reportedAt?.getTime()
+    ) {
+      if (
+        input.reportedAt &&
+        !isAllowedIncidentReportedAt(input.reportedAt, existing.declaredAt)
+      ) {
+        throw new ValidationError(INCIDENT_REPORTED_AT_ERROR);
+      }
+      patch.reportedAt = input.reportedAt;
+    }
     if (Object.keys(patch).length === 0) return existing;
 
     const updated = await tx
@@ -94,6 +113,15 @@ export async function updateIncident(args: {
         message: `Start time changed to ${updated.startedAt.toISOString()}`,
       });
     }
-    return updated;
+    if (patch.reportedAt !== undefined) {
+      await appendIncidentEvent(tx, ctx, {
+        incidentId: updated.id,
+        type: "reported_at_changed",
+        message: updated.reportedAt
+          ? `Reported at changed to ${updated.reportedAt.toISOString()}`
+          : "Reported at cleared",
+      });
+    }
+    return withAcknowledgement(tx, updated);
   });
 }

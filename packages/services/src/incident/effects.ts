@@ -222,6 +222,28 @@ export async function afterIncidentUpdated(
   });
 }
 
+/** Posts a written or edited miss reason; a cleared or unchanged one, or a closed (archived) channel, posts nothing. */
+export async function afterIncidentSlaMissExplained(
+  args: EffectArgs & {
+    before: Pick<Incident, "responseMissReason" | "resolutionMissReason">;
+    after: Incident;
+    kind: "response" | "resolution";
+  },
+): Promise<void> {
+  const { ctx, effects, before, after, kind } = args;
+  const column =
+    kind === "response" ? "responseMissReason" : "resolutionMissReason";
+  const reason = after[column];
+  if (!reason || reason === before[column] || after.closedAt) return;
+  await announceInChannel({
+    ctx,
+    incident: after,
+    text: `${effects.actorLabel} explained the missed ${kind} target:${quoteNote(reason)}`,
+    clientFor: effects.clientFor,
+    dashboardUrl: effects.dashboardUrl,
+  });
+}
+
 export async function afterIncidentStatusChanged(
   args: EffectArgs & {
     incidentId: number;
@@ -238,6 +260,19 @@ export async function afterIncidentStatusChanged(
     clientFor: effects.clientFor,
     dashboardUrl: effects.dashboardUrl,
     archive: args.archive ?? status === "canceled",
+  });
+}
+
+export async function afterIncidentAcknowledged(
+  args: EffectArgs & { incidentId: number },
+): Promise<void> {
+  const { ctx, effects } = args;
+  await announceIncidentChange({
+    ctx,
+    incidentId: args.incidentId,
+    text: `${effects.actorLabel} acknowledged the incident.`,
+    clientFor: effects.clientFor,
+    dashboardUrl: effects.dashboardUrl,
   });
 }
 

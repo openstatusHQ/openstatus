@@ -98,7 +98,16 @@ Custom headers to include when sending metrics to your OTLP endpoint, commonly u
 Authorization: Bearer <your_token>
 ```
 
+### Maintenance
+
+**Type:** Enum (optional)
+**Options:** `pause`, `continue`
+**Default:** `pause`
+
+What happens while a status page maintenance covers this monitor. `pause` stops cloud checks for the window, so it is left out of uptime. `continue` keeps checking and records results as usual, so failures count against uptime, but the status does not change and no incident or notification is triggered. See [checks during maintenance](/docs/reference/maintenance#checks-during-maintenance).
+
 ## Related resources
 
 - **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
 - **[CLI reference](/docs/reference/cli-reference)** — manage monitors programmatically from the command line.
+- **[Monitor reporting reference](/docs/reference/monitor-reporting)** — hold this monitor to a monthly uptime target and export the sealed months.

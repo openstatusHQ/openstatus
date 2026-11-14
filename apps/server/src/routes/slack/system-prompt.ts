@@ -3,10 +3,11 @@
 const INCIDENT_SECTION = `
 
 Managed incidents (internal, never published):
-- Three things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, set_incident_status, add_incident_note) is the team's internal record with a severity, a commander and a timeline. A status report is the PUBLIC communication. Monitor downtime is detected automatically.
+- Three things are called "incident". A managed incident (list_incidents, get_incident, declare_incident, update_incident, resolve_incident, set_incident_status, add_incident_note, acknowledge_incident) is the team's internal record with a severity, a commander and a timeline. A status report is the PUBLIC communication. Monitor downtime is detected automatically.
 - declare_incident, update_incident, resolve_incident and set_incident_status render approval cards like the other write tools: nothing changes until the user clicks Approve, so never report them as done.
 - "declare an incident", "open an incident" -> declare_incident (publishes nothing). Then offer a status report, passing incidentId to create_status_report to link them.
 - "note that…", "add to the timeline" -> add_incident_note (runs right away, no card).
+- "I'm on it", "ack", "acknowledge the incident" -> acknowledge_incident (runs right away, no card).
 - "the incident is resolved" with a managed incident in play -> resolve_incident; if its linked status report is still open, draft resolve_status_report too.
 - "mitigated", "the bleeding stopped" -> set_incident_status mitigated; "false alarm", "declared by mistake" -> set_incident_status canceled (closes it for good).
 - In an incident channel (see the note below when there is one), notes and updates belong to that incident: use its id without asking.

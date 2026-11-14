@@ -173,8 +173,9 @@ Write GitHub-flavored markdown with exactly these sections, in order:
 ## Action items
 Use only the facts given. Where a section has no facts, say what is unknown instead of guessing. The timeline is a bullet list ("- HH:MM UTC - ...") of the key moments only (detection, escalation, decisions, mitigation, resolution); state the date once above the list when the incident spans one day, otherwise use "- YYYY-MM-DD HH:MM UTC - ...". Never mention internal IDs (Slack channel IDs, status report numbers). Action items are a checklist ("- [ ] ...") with an owner placeholder when none is known. No preamble, no closing remarks.`;
 
-/** Events that record wiring, not what happened during the incident. */
+/** Events that record wiring or routine misses, not what happened during the incident. */
 const BOOKKEEPING = new Set<IncidentEventType>([
+  "sla_update_missed",
   "status_report_linked",
   "status_report_unlinked",
   "slack_channel_bound",

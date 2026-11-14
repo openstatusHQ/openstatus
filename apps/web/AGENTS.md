@@ -23,6 +23,10 @@ Content pages are MDX prose built from the existing components (`Grid`,
 Never link out to a competitor. Name them as plain text — an external link
 donates domain authority and leaks the conversion.
 
+New positioning copy and new page metadata say "incident response", not
+"incident management". Existing pages keep their slugs and metadata until they
+are renamed together.
+
 A dashboard location is a link, not just a bold path:
 `[**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys)`.
 For a monitor or status page, put `_` where the id goes

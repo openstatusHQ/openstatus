@@ -30,6 +30,7 @@ describe("navigationGroup", () => {
         "/overview",
         "/incidents",
         "/monitors",
+        "/reportings",
         "/status-pages",
         "/notifications",
         "/chat",

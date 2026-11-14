@@ -12,7 +12,91 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/incident/v1/incident.proto.
  */
 export const file_openstatus_incident_v1_incident: GenFile = /*@__PURE__*/
-  fileDesc("CiVvcGVuc3RhdHVzL2luY2lkZW50L3YxL2luY2lkZW50LnByb3RvEhZvcGVuc3RhdHVzLmluY2lkZW50LnYxIisKDEluY2lkZW50VXNlchINCgVlbWFpbBgBIAEoCRIMCgRuYW1lGAIgASgJIoMBChRJbmNpZGVudFN0YXR1c1JlcG9ydBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRI/CgZzdGF0dXMYAyABKA4yLy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3RhdHVzEg8KB3BhZ2VfaWQYBCABKAkixwEKDUluY2lkZW50RXZlbnQSCgoCaWQYASABKAkSNwoEdHlwZRgCIAEoDjIpLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRFdmVudFR5cGUSDwoHbWVzc2FnZRgDIAEoCRI9CgpjcmVhdGVkX2J5GAQgASgLMiQub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFVzZXJIAIgBARISCgpjcmVhdGVkX2F0GAUgASgJQg0KC19jcmVhdGVkX2J5IukDCg9JbmNpZGVudFN1bW1hcnkSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSOgoIc2V2ZXJpdHkYAyABKA4yKC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U2V2ZXJpdHkSNgoGc3RhdHVzGAQgASgOMiYub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFN0YXR1cxI8Cgljb21tYW5kZXIYBSABKAsyJC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50VXNlckgAiAEBEhMKC2RlY2xhcmVkX2F0GAYgASgJEhIKCnN0YXJ0ZWRfYXQYByABKAkSGAoLcmVzb2x2ZWRfYXQYCCABKAlIAYgBARIWCgljbG9zZWRfYXQYCSABKAlIAogBARJICg1zdGF0dXNfcmVwb3J0GAogASgLMiwub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFN0YXR1c1JlcG9ydEgDiAEBEhIKCmNyZWF0ZWRfYXQYCyABKAkSEgoKdXBkYXRlZF9hdBgMIAEoCUIMCgpfY29tbWFuZGVyQg4KDF9yZXNvbHZlZF9hdEIMCgpfY2xvc2VkX2F0QhAKDl9zdGF0dXNfcmVwb3J0IpUHCghJbmNpZGVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRI6CghzZXZlcml0eRgDIAEoDjIoLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRTZXZlcml0eRI2CgZzdGF0dXMYBCABKA4yJi5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U3RhdHVzEhQKB3N1bW1hcnkYBSABKAlIAIgBARI8Cgljb21tYW5kZXIYBiABKAsyJC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50VXNlckgBiAEBEj4KC2RlY2xhcmVkX2J5GAcgASgLMiQub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFVzZXJIAogBARI+CgtyZXNvbHZlZF9ieRgIIAEoCzIkLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRVc2VySAOIAQESEwoLZGVjbGFyZWRfYXQYCSABKAkSEgoKc3RhcnRlZF9hdBgKIAEoCRIZCgxtaXRpZ2F0ZWRfYXQYCyABKAlIBIgBARIYCgtyZXNvbHZlZF9hdBgMIAEoCUgFiAEBEhYKCWNsb3NlZF9hdBgNIAEoCUgGiAEBEkgKDXN0YXR1c19yZXBvcnQYDiABKAsyLC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U3RhdHVzUmVwb3J0SAeIAQESHgoRc2xhY2tfY2hhbm5lbF91cmwYDyABKAlICIgBARJDChNhbGxvd2VkX3RyYW5zaXRpb25zGBAgAygOMiYub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFN0YXR1cxIRCglkZWxldGFibGUYESABKAgSNQoGZXZlbnRzGBIgAygLMiUub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudEV2ZW50EhIKCmNyZWF0ZWRfYXQYEyABKAkSEgoKdXBkYXRlZF9hdBgUIAEoCUIKCghfc3VtbWFyeUIMCgpfY29tbWFuZGVyQg4KDF9kZWNsYXJlZF9ieUIOCgxfcmVzb2x2ZWRfYnlCDwoNX21pdGlnYXRlZF9hdEIOCgxfcmVzb2x2ZWRfYXRCDAoKX2Nsb3NlZF9hdEIQCg5fc3RhdHVzX3JlcG9ydEIUChJfc2xhY2tfY2hhbm5lbF91cmwizAIKClBvc3Rtb3J0ZW0SEwoLaW5jaWRlbnRfaWQYASABKAkSOAoGc3RhdHVzGAIgASgOMigub3BlbnN0YXR1cy5pbmNpZGVudC52MS5Qb3N0bW9ydGVtU3RhdHVzEg8KB2NvbnRlbnQYAyABKAkSPAoKZHJhZnRlZF9ieRgEIAEoDjIoLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuUG9zdG1vcnRlbUF1dGhvchI+CgthcHByb3ZlZF9ieRgFIAEoCzIkLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRVc2VySACIAQESGAoLYXBwcm92ZWRfYXQYBiABKAlIAYgBARISCgpjcmVhdGVkX2F0GAcgASgJEhIKCnVwZGF0ZWRfYXQYCCABKAlCDgoMX2FwcHJvdmVkX2J5Qg4KDF9hcHByb3ZlZF9hdCqPAQoQSW5jaWRlbnRTZXZlcml0eRIhCh1JTkNJREVOVF9TRVZFUklUWV9VTlNQRUNJRklFRBAAEh4KGklOQ0lERU5UX1NFVkVSSVRZX0NSSVRJQ0FMEAESGwoXSU5DSURFTlRfU0VWRVJJVFlfTUFKT1IQAhIbChdJTkNJREVOVF9TRVZFUklUWV9NSU5PUhADKqYBCg5JbmNpZGVudFN0YXR1cxIfChtJTkNJREVOVF9TVEFUVVNfVU5TUEVDSUZJRUQQABIYChRJTkNJREVOVF9TVEFUVVNfT1BFThABEh0KGUlOQ0lERU5UX1NUQVRVU19NSVRJR0FURUQQAhIcChhJTkNJREVOVF9TVEFUVVNfUkVTT0xWRUQQAxIcChhJTkNJREVOVF9TVEFUVVNfQ0FOQ0VMRUQQBCrEBQoRSW5jaWRlbnRFdmVudFR5cGUSIwofSU5DSURFTlRfRVZFTlRfVFlQRV9VTlNQRUNJRklFRBAAEiAKHElOQ0lERU5UX0VWRU5UX1RZUEVfREVDTEFSRUQQARIoCiRJTkNJREVOVF9FVkVOVF9UWVBFX1NFVkVSSVRZX0NIQU5HRUQQAhImCiJJTkNJREVOVF9FVkVOVF9UWVBFX1NUQVRVU19DSEFOR0VEEAMSKQolSU5DSURFTlRfRVZFTlRfVFlQRV9DT01NQU5ERVJfQ0hBTkdFRBAEEioKJklOQ0lERU5UX0VWRU5UX1RZUEVfU1RBUlRFRF9BVF9DSEFOR0VEEAUSHAoYSU5DSURFTlRfRVZFTlRfVFlQRV9OT1RFEAYSLAooSU5DSURFTlRfRVZFTlRfVFlQRV9TVEFUVVNfUkVQT1JUX0xJTktFRBAHEi4KKklOQ0lERU5UX0VWRU5UX1RZUEVfU1RBVFVTX1JFUE9SVF9VTkxJTktFRBAIEisKJ0lOQ0lERU5UX0VWRU5UX1RZUEVfU0xBQ0tfQ0hBTk5FTF9CT1VORBAJEi0KKUlOQ0lERU5UX0VWRU5UX1RZUEVfU0xBQ0tfQ0hBTk5FTF9VTkJPVU5EEAoSIAocSU5DSURFTlRfRVZFTlRfVFlQRV9SRVNPTFZFRBALEiAKHElOQ0lERU5UX0VWRU5UX1RZUEVfQ0FOQ0VMRUQQDBIqCiZJTkNJREVOVF9FVkVOVF9UWVBFX1BPU1RNT1JURU1fRFJBRlRFRBANEioKJklOQ0lERU5UX0VWRU5UX1RZUEVfUE9TVE1PUlRFTV9VUERBVEVEEA4SKwonSU5DSURFTlRfRVZFTlRfVFlQRV9QT1NUTU9SVEVNX0FQUFJPVkVEEA8SHgoaSU5DSURFTlRfRVZFTlRfVFlQRV9DTE9TRUQQECpyChBQb3N0bW9ydGVtU3RhdHVzEiEKHVBPU1RNT1JURU1fU1RBVFVTX1VOU1BFQ0lGSUVEEAASGwoXUE9TVE1PUlRFTV9TVEFUVVNfRFJBRlQQARIeChpQT1NUTU9SVEVNX1NUQVRVU19BUFBST1ZFRBACKm4KEFBvc3Rtb3J0ZW1BdXRob3ISIQodUE9TVE1PUlRFTV9BVVRIT1JfVU5TUEVDSUZJRUQQABIbChdQT1NUTU9SVEVNX0FVVEhPUl9BR0VOVBABEhoKFlBPU1RNT1JURU1fQVVUSE9SX1VTRVIQAkJVWlNnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvaW5jaWRlbnQvdjE7aW5jaWRlbnR2MWIGcHJvdG8z", [file_openstatus_status_report_v1_status_report]);
+  fileDesc("CiVvcGVuc3RhdHVzL2luY2lkZW50L3YxL2luY2lkZW50LnByb3RvEhZvcGVuc3RhdHVzLmluY2lkZW50LnYxIuoBChBJbmNpZGVudFNsYVRpbWVyEhYKDnRhcmdldF9taW51dGVzGAEgASgFEg4KBmR1ZV9hdBgCIAEoCRITCgZtZXRfYXQYAyABKAlIAIgBARIWCgltaXNzZWRfYXQYBCABKAlIAYgBARI+CgZzdGF0dXMYBSABKA4yLi5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U2xhVGltZXJTdGF0dXMSGAoLbWlzc19yZWFzb24YBiABKAlIAogBAUIJCgdfbWV0X2F0QgwKCl9taXNzZWRfYXRCDgoMX21pc3NfcmVhc29uIq0BCgtJbmNpZGVudFNsYRI/CghyZXNwb25zZRgBIAEoCzIoLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRTbGFUaW1lckgAiAEBEkEKCnJlc29sdXRpb24YAiABKAsyKC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U2xhVGltZXJIAYgBAUILCglfcmVzcG9uc2VCDQoLX3Jlc29sdXRpb24iKwoMSW5jaWRlbnRVc2VyEg0KBWVtYWlsGAEgASgJEgwKBG5hbWUYAiABKAkigwEKFEluY2lkZW50U3RhdHVzUmVwb3J0EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEj8KBnN0YXR1cxgDIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXMSDwoHcGFnZV9pZBgEIAEoCSLHAQoNSW5jaWRlbnRFdmVudBIKCgJpZBgBIAEoCRI3CgR0eXBlGAIgASgOMikub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudEV2ZW50VHlwZRIPCgdtZXNzYWdlGAMgASgJEj0KCmNyZWF0ZWRfYnkYBCABKAsyJC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50VXNlckgAiAEBEhIKCmNyZWF0ZWRfYXQYBSABKAlCDQoLX2NyZWF0ZWRfYnki3AUKD0luY2lkZW50U3VtbWFyeRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRI6CghzZXZlcml0eRgDIAEoDjIoLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRTZXZlcml0eRI2CgZzdGF0dXMYBCABKA4yJi5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U3RhdHVzEjwKCWNvbW1hbmRlchgFIAEoCzIkLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRVc2VySACIAQESEwoLZGVjbGFyZWRfYXQYBiABKAkSEgoKc3RhcnRlZF9hdBgHIAEoCRIYCgtyZXNvbHZlZF9hdBgIIAEoCUgBiAEBEhYKCWNsb3NlZF9hdBgJIAEoCUgCiAEBEkgKDXN0YXR1c19yZXBvcnQYCiABKAsyLC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U3RhdHVzUmVwb3J0SAOIAQESEgoKY3JlYXRlZF9hdBgLIAEoCRISCgp1cGRhdGVkX2F0GAwgASgJEhwKD2Fja25vd2xlZGdlZF9hdBgNIAEoCUgEiAEBEkIKD2Fja25vd2xlZGdlZF9ieRgOIAEoCzIkLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRVc2VySAWIAQESNQoDc2xhGA8gASgLMiMub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFNsYUgGiAEBEhgKC3JlcG9ydGVkX2F0GBAgASgJSAeIAQFCDAoKX2NvbW1hbmRlckIOCgxfcmVzb2x2ZWRfYXRCDAoKX2Nsb3NlZF9hdEIQCg5fc3RhdHVzX3JlcG9ydEISChBfYWNrbm93bGVkZ2VkX2F0QhIKEF9hY2tub3dsZWRnZWRfYnlCBgoEX3NsYUIOCgxfcmVwb3J0ZWRfYXQiiAkKCEluY2lkZW50EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEjoKCHNldmVyaXR5GAMgASgOMigub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFNldmVyaXR5EjYKBnN0YXR1cxgEIAEoDjImLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRTdGF0dXMSFAoHc3VtbWFyeRgFIAEoCUgAiAEBEjwKCWNvbW1hbmRlchgGIAEoCzIkLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRVc2VySAGIAQESPgoLZGVjbGFyZWRfYnkYByABKAsyJC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50VXNlckgCiAEBEj4KC3Jlc29sdmVkX2J5GAggASgLMiQub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFVzZXJIA4gBARITCgtkZWNsYXJlZF9hdBgJIAEoCRISCgpzdGFydGVkX2F0GAogASgJEhkKDG1pdGlnYXRlZF9hdBgLIAEoCUgEiAEBEhgKC3Jlc29sdmVkX2F0GAwgASgJSAWIAQESFgoJY2xvc2VkX2F0GA0gASgJSAaIAQESSAoNc3RhdHVzX3JlcG9ydBgOIAEoCzIsLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRTdGF0dXNSZXBvcnRIB4gBARIeChFzbGFja19jaGFubmVsX3VybBgPIAEoCUgIiAEBEkMKE2FsbG93ZWRfdHJhbnNpdGlvbnMYECADKA4yJi5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50U3RhdHVzEhEKCWRlbGV0YWJsZRgRIAEoCBI1CgZldmVudHMYEiADKAsyJS5vcGVuc3RhdHVzLmluY2lkZW50LnYxLkluY2lkZW50RXZlbnQSEgoKY3JlYXRlZF9hdBgTIAEoCRISCgp1cGRhdGVkX2F0GBQgASgJEhwKD2Fja25vd2xlZGdlZF9hdBgVIAEoCUgJiAEBEkIKD2Fja25vd2xlZGdlZF9ieRgWIAEoCzIkLm9wZW5zdGF0dXMuaW5jaWRlbnQudjEuSW5jaWRlbnRVc2VySAqIAQESNQoDc2xhGBcgASgLMiMub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFNsYUgLiAEBEhgKC3JlcG9ydGVkX2F0GBggASgJSAyIAQFCCgoIX3N1bW1hcnlCDAoKX2NvbW1hbmRlckIOCgxfZGVjbGFyZWRfYnlCDgoMX3Jlc29sdmVkX2J5Qg8KDV9taXRpZ2F0ZWRfYXRCDgoMX3Jlc29sdmVkX2F0QgwKCl9jbG9zZWRfYXRCEAoOX3N0YXR1c19yZXBvcnRCFAoSX3NsYWNrX2NoYW5uZWxfdXJsQhIKEF9hY2tub3dsZWRnZWRfYXRCEgoQX2Fja25vd2xlZGdlZF9ieUIGCgRfc2xhQg4KDF9yZXBvcnRlZF9hdCLMAgoKUG9zdG1vcnRlbRITCgtpbmNpZGVudF9pZBgBIAEoCRI4CgZzdGF0dXMYAiABKA4yKC5vcGVuc3RhdHVzLmluY2lkZW50LnYxLlBvc3Rtb3J0ZW1TdGF0dXMSDwoHY29udGVudBgDIAEoCRI8CgpkcmFmdGVkX2J5GAQgASgOMigub3BlbnN0YXR1cy5pbmNpZGVudC52MS5Qb3N0bW9ydGVtQXV0aG9yEj4KC2FwcHJvdmVkX2J5GAUgASgLMiQub3BlbnN0YXR1cy5pbmNpZGVudC52MS5JbmNpZGVudFVzZXJIAIgBARIYCgthcHByb3ZlZF9hdBgGIAEoCUgBiAEBEhIKCmNyZWF0ZWRfYXQYByABKAkSEgoKdXBkYXRlZF9hdBgIIAEoCUIOCgxfYXBwcm92ZWRfYnlCDgoMX2FwcHJvdmVkX2F0Ko8BChBJbmNpZGVudFNldmVyaXR5EiEKHUlOQ0lERU5UX1NFVkVSSVRZX1VOU1BFQ0lGSUVEEAASHgoaSU5DSURFTlRfU0VWRVJJVFlfQ1JJVElDQUwQARIbChdJTkNJREVOVF9TRVZFUklUWV9NQUpPUhACEhsKF0lOQ0lERU5UX1NFVkVSSVRZX01JTk9SEAMqpgEKDkluY2lkZW50U3RhdHVzEh8KG0lOQ0lERU5UX1NUQVRVU19VTlNQRUNJRklFRBAAEhgKFElOQ0lERU5UX1NUQVRVU19PUEVOEAESHQoZSU5DSURFTlRfU1RBVFVTX01JVElHQVRFRBACEhwKGElOQ0lERU5UX1NUQVRVU19SRVNPTFZFRBADEhwKGElOQ0lERU5UX1NUQVRVU19DQU5DRUxFRBAEKo4IChFJbmNpZGVudEV2ZW50VHlwZRIjCh9JTkNJREVOVF9FVkVOVF9UWVBFX1VOU1BFQ0lGSUVEEAASIAocSU5DSURFTlRfRVZFTlRfVFlQRV9ERUNMQVJFRBABEigKJElOQ0lERU5UX0VWRU5UX1RZUEVfU0VWRVJJVFlfQ0hBTkdFRBACEiYKIklOQ0lERU5UX0VWRU5UX1RZUEVfU1RBVFVTX0NIQU5HRUQQAxIpCiVJTkNJREVOVF9FVkVOVF9UWVBFX0NPTU1BTkRFUl9DSEFOR0VEEAQSKgomSU5DSURFTlRfRVZFTlRfVFlQRV9TVEFSVEVEX0FUX0NIQU5HRUQQBRIcChhJTkNJREVOVF9FVkVOVF9UWVBFX05PVEUQBhIsCihJTkNJREVOVF9FVkVOVF9UWVBFX1NUQVRVU19SRVBPUlRfTElOS0VEEAcSLgoqSU5DSURFTlRfRVZFTlRfVFlQRV9TVEFUVVNfUkVQT1JUX1VOTElOS0VEEAgSKwonSU5DSURFTlRfRVZFTlRfVFlQRV9TTEFDS19DSEFOTkVMX0JPVU5EEAkSLQopSU5DSURFTlRfRVZFTlRfVFlQRV9TTEFDS19DSEFOTkVMX1VOQk9VTkQQChIgChxJTkNJREVOVF9FVkVOVF9UWVBFX1JFU09MVkVEEAsSIAocSU5DSURFTlRfRVZFTlRfVFlQRV9DQU5DRUxFRBAMEioKJklOQ0lERU5UX0VWRU5UX1RZUEVfUE9TVE1PUlRFTV9EUkFGVEVEEA0SKgomSU5DSURFTlRfRVZFTlRfVFlQRV9QT1NUTU9SVEVNX1VQREFURUQQDhIrCidJTkNJREVOVF9FVkVOVF9UWVBFX1BPU1RNT1JURU1fQVBQUk9WRUQQDxIeChpJTkNJREVOVF9FVkVOVF9UWVBFX0NMT1NFRBAQEiQKIElOQ0lERU5UX0VWRU5UX1RZUEVfQUNLTk9XTEVER0VEEBESLQopSU5DSURFTlRfRVZFTlRfVFlQRV9TTEFfUkVTUE9OU0VfQlJFQUNIRUQQEhIvCitJTkNJREVOVF9FVkVOVF9UWVBFX1NMQV9SRVNPTFVUSU9OX0JSRUFDSEVEEBMSKQolSU5DSURFTlRfRVZFTlRfVFlQRV9TTEFfVVBEQVRFX01JU1NFRBAUEisKJ0lOQ0lERU5UX0VWRU5UX1RZUEVfUkVQT1JURURfQVRfQ0hBTkdFRBAVEjMKL0lOQ0lERU5UX0VWRU5UX1RZUEVfU0xBX1JFU1BPTlNFX01JU1NfRVhQTEFJTkVEEBYSNQoxSU5DSURFTlRfRVZFTlRfVFlQRV9TTEFfUkVTT0xVVElPTl9NSVNTX0VYUExBSU5FRBAXKnIKEFBvc3Rtb3J0ZW1TdGF0dXMSIQodUE9TVE1PUlRFTV9TVEFUVVNfVU5TUEVDSUZJRUQQABIbChdQT1NUTU9SVEVNX1NUQVRVU19EUkFGVBABEh4KGlBPU1RNT1JURU1fU1RBVFVTX0FQUFJPVkVEEAIqbgoQUG9zdG1vcnRlbUF1dGhvchIhCh1QT1NUTU9SVEVNX0FVVEhPUl9VTlNQRUNJRklFRBAAEhsKF1BPU1RNT1JURU1fQVVUSE9SX0FHRU5UEAESGgoWUE9TVE1PUlRFTV9BVVRIT1JfVVNFUhACKtwBChZJbmNpZGVudFNsYVRpbWVyU3RhdHVzEikKJUlOQ0lERU5UX1NMQV9USU1FUl9TVEFUVVNfVU5TUEVDSUZJRUQQABIlCiFJTkNJREVOVF9TTEFfVElNRVJfU1RBVFVTX1JVTk5JTkcQARIlCiFJTkNJREVOVF9TTEFfVElNRVJfU1RBVFVTX0FUX1JJU0sQAhIhCh1JTkNJREVOVF9TTEFfVElNRVJfU1RBVFVTX01FVBADEiYKIklOQ0lERU5UX1NMQV9USU1FUl9TVEFUVVNfQlJFQUNIRUQQBEJVWlNnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvaW5jaWRlbnQvdjE7aW5jaWRlbnR2MWIGcHJvdG8z", [file_openstatus_status_report_v1_status_report]);
+
+/**
+ * IncidentSlaTimer is the state of one SLA target of an incident.
+ *
+ * @generated from message openstatus.incident.v1.IncidentSlaTimer
+ */
+export type IncidentSlaTimer = Message<"openstatus.incident.v1.IncidentSlaTimer"> & {
+  /**
+   * Target in minutes, from the policy fixed on the incident at declare.
+   *
+   * @generated from field: int32 target_minutes = 1;
+   */
+  targetMinutes: number;
+
+  /**
+   * Timestamp when the target is due (RFC 3339 format).
+   *
+   * @generated from field: string due_at = 2;
+   */
+  dueAt: string;
+
+  /**
+   * Timestamp when the target was met (RFC 3339 format, unset while open).
+   *
+   * @generated from field: optional string met_at = 3;
+   */
+  metAt?: string | undefined;
+
+  /**
+   * Due time recorded as missed (RFC 3339 format, unset until the miss is recorded; never cleared).
+   *
+   * @generated from field: optional string missed_at = 4;
+   */
+  missedAt?: string | undefined;
+
+  /**
+   * Current state of the target.
+   *
+   * @generated from field: openstatus.incident.v1.IncidentSlaTimerStatus status = 5;
+   */
+  status: IncidentSlaTimerStatus;
+
+  /**
+   * Why the target was missed, written by a member (unset without a recorded miss or a reason).
+   *
+   * @generated from field: optional string miss_reason = 6;
+   */
+  missReason?: string | undefined;
+};
+
+/**
+ * Describes the message openstatus.incident.v1.IncidentSlaTimer.
+ * Use `create(IncidentSlaTimerSchema)` to create a new message.
+ */
+export const IncidentSlaTimerSchema: GenMessage<IncidentSlaTimer> = /*@__PURE__*/
+  messageDesc(file_openstatus_incident_v1_incident, 0);
+
+/**
+ * IncidentSla is the SLA state of a tracked incident.
+ *
+ * @generated from message openstatus.incident.v1.IncidentSla
+ */
+export type IncidentSla = Message<"openstatus.incident.v1.IncidentSla"> & {
+  /**
+   * Response target (unset when the severity has none).
+   *
+   * @generated from field: optional openstatus.incident.v1.IncidentSlaTimer response = 1;
+   */
+  response?: IncidentSlaTimer | undefined;
+
+  /**
+   * Resolution target (unset when the severity has none).
+   *
+   * @generated from field: optional openstatus.incident.v1.IncidentSlaTimer resolution = 2;
+   */
+  resolution?: IncidentSlaTimer | undefined;
+};
+
+/**
+ * Describes the message openstatus.incident.v1.IncidentSla.
+ * Use `create(IncidentSlaSchema)` to create a new message.
+ */
+export const IncidentSlaSchema: GenMessage<IncidentSla> = /*@__PURE__*/
+  messageDesc(file_openstatus_incident_v1_incident, 1);
 
 /**
  * IncidentUser is a workspace member referenced by an incident.
@@ -40,7 +124,7 @@ export type IncidentUser = Message<"openstatus.incident.v1.IncidentUser"> & {
  * Use `create(IncidentUserSchema)` to create a new message.
  */
 export const IncidentUserSchema: GenMessage<IncidentUser> = /*@__PURE__*/
-  messageDesc(file_openstatus_incident_v1_incident, 0);
+  messageDesc(file_openstatus_incident_v1_incident, 2);
 
 /**
  * IncidentStatusReport is the public status report linked to an incident.
@@ -82,7 +166,7 @@ export type IncidentStatusReport = Message<"openstatus.incident.v1.IncidentStatu
  * Use `create(IncidentStatusReportSchema)` to create a new message.
  */
 export const IncidentStatusReportSchema: GenMessage<IncidentStatusReport> = /*@__PURE__*/
-  messageDesc(file_openstatus_incident_v1_incident, 1);
+  messageDesc(file_openstatus_incident_v1_incident, 3);
 
 /**
  * IncidentEvent is one entry of an incident timeline.
@@ -131,7 +215,7 @@ export type IncidentEvent = Message<"openstatus.incident.v1.IncidentEvent"> & {
  * Use `create(IncidentEventSchema)` to create a new message.
  */
 export const IncidentEventSchema: GenMessage<IncidentEvent> = /*@__PURE__*/
-  messageDesc(file_openstatus_incident_v1_incident, 2);
+  messageDesc(file_openstatus_incident_v1_incident, 4);
 
 /**
  * IncidentSummary is the metadata of an incident (used in list responses).
@@ -222,6 +306,35 @@ export type IncidentSummary = Message<"openstatus.incident.v1.IncidentSummary"> 
    * @generated from field: string updated_at = 12;
    */
   updatedAt: string;
+
+  /**
+   * Timestamp when the incident was acknowledged (RFC 3339 format, unset until acknowledged).
+   *
+   * @generated from field: optional string acknowledged_at = 13;
+   */
+  acknowledgedAt?: string | undefined;
+
+  /**
+   * Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
+   *
+   * @generated from field: optional openstatus.incident.v1.IncidentUser acknowledged_by = 14;
+   */
+  acknowledgedBy?: IncidentUser | undefined;
+
+  /**
+   * SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
+   *
+   * @generated from field: optional openstatus.incident.v1.IncidentSla sla = 15;
+   */
+  sla?: IncidentSla | undefined;
+
+  /**
+   * Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
+   * SLA timers start here instead of at declared_at.
+   *
+   * @generated from field: optional string reported_at = 16;
+   */
+  reportedAt?: string | undefined;
 };
 
 /**
@@ -229,7 +342,7 @@ export type IncidentSummary = Message<"openstatus.incident.v1.IncidentSummary"> 
  * Use `create(IncidentSummarySchema)` to create a new message.
  */
 export const IncidentSummarySchema: GenMessage<IncidentSummary> = /*@__PURE__*/
-  messageDesc(file_openstatus_incident_v1_incident, 3);
+  messageDesc(file_openstatus_incident_v1_incident, 5);
 
 /**
  * Incident is a managed incident with full details.
@@ -377,6 +490,36 @@ export type Incident = Message<"openstatus.incident.v1.Incident"> & {
    * @generated from field: string updated_at = 20;
    */
   updatedAt: string;
+
+  /**
+   * Timestamp when the incident was acknowledged (RFC 3339 format, unset until acknowledged).
+   * Incidents declared by a person are acknowledged at declare.
+   *
+   * @generated from field: optional string acknowledged_at = 21;
+   */
+  acknowledgedAt?: string | undefined;
+
+  /**
+   * Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
+   *
+   * @generated from field: optional openstatus.incident.v1.IncidentUser acknowledged_by = 22;
+   */
+  acknowledgedBy?: IncidentUser | undefined;
+
+  /**
+   * SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
+   *
+   * @generated from field: optional openstatus.incident.v1.IncidentSla sla = 23;
+   */
+  sla?: IncidentSla | undefined;
+
+  /**
+   * Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
+   * SLA timers start here instead of at declared_at.
+   *
+   * @generated from field: optional string reported_at = 24;
+   */
+  reportedAt?: string | undefined;
 };
 
 /**
@@ -384,7 +527,7 @@ export type Incident = Message<"openstatus.incident.v1.Incident"> & {
  * Use `create(IncidentSchema)` to create a new message.
  */
 export const IncidentSchema: GenMessage<Incident> = /*@__PURE__*/
-  messageDesc(file_openstatus_incident_v1_incident, 4);
+  messageDesc(file_openstatus_incident_v1_incident, 6);
 
 /**
  * Postmortem is the review written after an incident is resolved.
@@ -454,7 +597,7 @@ export type Postmortem = Message<"openstatus.incident.v1.Postmortem"> & {
  * Use `create(PostmortemSchema)` to create a new message.
  */
 export const PostmortemSchema: GenMessage<Postmortem> = /*@__PURE__*/
-  messageDesc(file_openstatus_incident_v1_incident, 5);
+  messageDesc(file_openstatus_incident_v1_incident, 7);
 
 /**
  * IncidentSeverity is how bad an incident is.
@@ -618,6 +761,51 @@ export enum IncidentEventType {
    * @generated from enum value: INCIDENT_EVENT_TYPE_CLOSED = 16;
    */
   CLOSED = 16,
+
+  /**
+   * @generated from enum value: INCIDENT_EVENT_TYPE_ACKNOWLEDGED = 17;
+   */
+  ACKNOWLEDGED = 17,
+
+  /**
+   * Written by the system at the due time of a missed response target.
+   *
+   * @generated from enum value: INCIDENT_EVENT_TYPE_SLA_RESPONSE_BREACHED = 18;
+   */
+  SLA_RESPONSE_BREACHED = 18,
+
+  /**
+   * Written by the system at the due time of a missed resolution target.
+   *
+   * @generated from enum value: INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED = 19;
+   */
+  SLA_RESOLUTION_BREACHED = 19,
+
+  /**
+   * Written by the system at the due time of each update interval that passed without an update.
+   *
+   * @generated from enum value: INCIDENT_EVENT_TYPE_SLA_UPDATE_MISSED = 20;
+   */
+  SLA_UPDATE_MISSED = 20,
+
+  /**
+   * @generated from enum value: INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED = 21;
+   */
+  REPORTED_AT_CHANGED = 21,
+
+  /**
+   * A member wrote, edited or cleared (empty message) why the response target was missed.
+   *
+   * @generated from enum value: INCIDENT_EVENT_TYPE_SLA_RESPONSE_MISS_EXPLAINED = 22;
+   */
+  SLA_RESPONSE_MISS_EXPLAINED = 22,
+
+  /**
+   * A member wrote, edited or cleared (empty message) why the resolution target was missed.
+   *
+   * @generated from enum value: INCIDENT_EVENT_TYPE_SLA_RESOLUTION_MISS_EXPLAINED = 23;
+   */
+  SLA_RESOLUTION_MISS_EXPLAINED = 23,
 }
 
 /**
@@ -681,4 +869,50 @@ export enum PostmortemAuthor {
  */
 export const PostmortemAuthorSchema: GenEnum<PostmortemAuthor> = /*@__PURE__*/
   enumDesc(file_openstatus_incident_v1_incident, 4);
+
+/**
+ * IncidentSlaTimerStatus is the state of one SLA target.
+ *
+ * @generated from enum openstatus.incident.v1.IncidentSlaTimerStatus
+ */
+export enum IncidentSlaTimerStatus {
+  /**
+   * @generated from enum value: INCIDENT_SLA_TIMER_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Running, before the warning point.
+   *
+   * @generated from enum value: INCIDENT_SLA_TIMER_STATUS_RUNNING = 1;
+   */
+  RUNNING = 1,
+
+  /**
+   * Past 75% of the target and not yet met.
+   *
+   * @generated from enum value: INCIDENT_SLA_TIMER_STATUS_AT_RISK = 2;
+   */
+  AT_RISK = 2,
+
+  /**
+   * Met on time.
+   *
+   * @generated from enum value: INCIDENT_SLA_TIMER_STATUS_MET = 3;
+   */
+  MET = 3,
+
+  /**
+   * Missed: past the due time, or met late.
+   *
+   * @generated from enum value: INCIDENT_SLA_TIMER_STATUS_BREACHED = 4;
+   */
+  BREACHED = 4,
+}
+
+/**
+ * Describes the enum openstatus.incident.v1.IncidentSlaTimerStatus.
+ */
+export const IncidentSlaTimerStatusSchema: GenEnum<IncidentSlaTimerStatus> = /*@__PURE__*/
+  enumDesc(file_openstatus_incident_v1_incident, 5);
 

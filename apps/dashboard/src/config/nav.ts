@@ -6,6 +6,7 @@ import {
   Monitor,
   Notification,
   Overview,
+  Reporting,
   Settings,
   StatusPage,
   Terminal,
@@ -40,6 +41,12 @@ export const NAV = {
     href: "/monitors",
     icon: Monitor,
     keywords: ["checks", "uptime"],
+  },
+  reportings: {
+    label: "Reportings",
+    href: "/reportings",
+    icon: Reporting,
+    keywords: ["sla", "policy", "uptime target", "availability", "commitment"],
   },
   statusPages: {
     label: "Status Pages",
@@ -89,6 +96,7 @@ export const NAV = {
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
   NAV.monitors,
+  NAV.reportings,
   NAV.statusPages,
   NAV.notifications,
   NAV.chat,
