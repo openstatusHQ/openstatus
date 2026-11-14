@@ -91,7 +91,7 @@ export const entityKinds = {
     icon: Reporting,
     fields: ["monitorSlaPolicyId"],
     auditType: "monitor_sla_policy",
-    href: (policy: { id: number }) => `/reportings/monitors/${policy.id}`,
+    href: (policy: { id: number }) => `/reportings/${policy.id}/overview`,
   },
   monitorSlaExcusedWindow: {
     label: "Excused window",
@@ -99,14 +99,24 @@ export const entityKinds = {
     fields: [],
     auditType: "monitor_sla_excused_window",
     href: (window: { policy: { id: number } }) =>
-      `/reportings/monitors/${window.policy.id}`,
+      `/reportings/${window.policy.id}/overview`,
+  },
+  maintenanceWindow: {
+    label: "Maintenance window",
+    icon: Maintenance,
+    fields: ["monitorMaintenanceWindowId"],
+    auditType: "monitor_maintenance_window",
+    href: (window: { monitorIds: number[] }) =>
+      window.monitorIds[0] === undefined
+        ? "/monitors"
+        : `/monitors/${window.monitorIds[0]}/maintenance`,
   },
   incidentReporting: {
     label: "Incident reporting",
     icon: Reporting,
     fields: [],
     auditType: "incident_sla_policy",
-    href: () => "/reportings/incidents",
+    href: () => "/incidents/sla",
   },
 } as const satisfies Record<string, EntityKindConfig>;
 

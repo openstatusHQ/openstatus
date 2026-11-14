@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { IncidentCard } from "./cards/incident";
 import { IncidentReportingCard } from "./cards/incident-reporting";
 import { MaintenanceCard } from "./cards/maintenance";
+import { MaintenanceWindowCard } from "./cards/maintenance-window";
 import { MonitorCard } from "./cards/monitor";
 import { MonitorReportingCard } from "./cards/monitor-reporting";
 import { MonitorReportingExcusedWindowCard } from "./cards/monitor-reporting-excused-window";
@@ -33,6 +34,7 @@ const cards = {
   notification: NotificationCard,
   monitorReporting: MonitorReportingCard,
   monitorSlaExcusedWindow: MonitorReportingExcusedWindowCard,
+  maintenanceWindow: MaintenanceWindowCard,
   incidentReporting: IncidentReportingCard,
 } satisfies Record<EntityKind, React.ComponentType<{ id: number }>>;
 

@@ -256,6 +256,24 @@ const monitorSlaPolicyActions = [
   ),
 ] as const;
 
+const monitorMaintenanceWindowActions = [
+  action(
+    "monitor_maintenance_window.create",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.update",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.delete",
+    "monitor_maintenance_window",
+    intId,
+  ),
+] as const;
+
 const incidentSlaPolicyActions = [
   action("incident_sla_policy.create", "incident_sla_policy", intId),
   action("incident_sla_policy.update", "incident_sla_policy", intId),
@@ -312,6 +330,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorTagActions,
   ...privateLocationActions,
   ...monitorSlaPolicyActions,
+  ...monitorMaintenanceWindowActions,
   ...incidentSlaPolicyActions,
   ...ssoActions,
 ]);

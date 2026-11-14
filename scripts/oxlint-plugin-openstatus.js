@@ -243,6 +243,7 @@ const FOLDER_GROUP = {
   "monitor-incident": "monitors",
   "frozen-uptime": "monitors",
   "monitor-reporting": "monitors",
+  "maintenance-window": "monitors",
   "incident-reporting": "incidents",
   page: "pages",
   "page-component": "pages",
