@@ -7,7 +7,6 @@ import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
-import { Tabs } from "./tabs";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,7 +20,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <NavActions />
         </AppHeaderActions>
       </AppHeader>
-      <Tabs />
       <main className="w-full flex-1">{children}</main>
     </div>
   );

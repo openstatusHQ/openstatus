@@ -47,11 +47,6 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "/reportings",
-        destination: "/reportings/monitors",
-        permanent: false,
-      },
-      {
         source: "/private-locations",
         destination: "/settings/private-locations",
         permanent: false,
@@ -60,11 +55,6 @@ const nextConfig: NextConfig = {
         source: "/audit-logs",
         destination: "/settings/audit-logs",
         permanent: false,
-      },
-      {
-        source: "/sla-policies/:path*",
-        destination: "/reportings/:path*",
-        permanent: true,
       },
     ];
   },

@@ -107,7 +107,10 @@ export function Client() {
               What your team is responding to.
             </SectionDescription>
           </SectionHeader>
-          <div>
+          <div className="flex items-center gap-2">
+            <Button data-section="action" size="sm" variant="outline" asChild>
+              <Link href="/incidents/sla">SLA</Link>
+            </Button>
             <DeclareIncidentButton>
               <Button data-section="action" size="sm">
                 Declare incident

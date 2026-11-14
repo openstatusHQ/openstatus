@@ -7,6 +7,8 @@ import {
   trpc,
 } from "@/lib/trpc/server";
 
+import { Tabs } from "./tabs";
+
 export default async function Layout({
   children,
   params,
@@ -30,5 +32,10 @@ export default async function Layout({
     );
   }
 
-  return <HydrateClient>{children}</HydrateClient>;
+  return (
+    <HydrateClient>
+      <Tabs />
+      {children}
+    </HydrateClient>
+  );
 }

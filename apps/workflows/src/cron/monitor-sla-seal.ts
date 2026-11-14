@@ -38,7 +38,7 @@ export async function runMonitorSlaSealTick(
           month: notice.month,
           workspaceName: notice.workspaceName,
           monitors: notice.monitors,
-          url: `${baseUrl}/reportings/monitors/${notice.policy.id}`,
+          url: `${baseUrl}/reportings/${notice.policy.id}/overview`,
         });
         if (id) notified++;
       } catch (err) {

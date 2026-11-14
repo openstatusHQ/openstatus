@@ -22,7 +22,7 @@ export const columns: ColumnDef<MonitorReporting>[] = [
     cell: ({ row }) => (
       <TableCellLink
         value={row.original.name}
-        href={`/reportings/monitors/${row.original.id}`}
+        href={`/reportings/${row.original.id}/overview`}
         className="font-medium"
       />
     ),

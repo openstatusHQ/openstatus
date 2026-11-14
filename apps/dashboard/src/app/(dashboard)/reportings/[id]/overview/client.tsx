@@ -16,7 +16,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   parseAsInteger,
@@ -224,13 +223,6 @@ export function Client() {
           </SectionHeader>
           <div className="flex items-center gap-2">
             <MonitorSlaExportPopover policyId={policy.id} />
-            {policy.archivedAt ? null : (
-              <Button size="sm" variant="outline" asChild>
-                <Link href={`/reportings/monitors/${policy.id}/edit`}>
-                  Settings
-                </Link>
-              </Button>
-            )}
           </div>
         </SectionHeaderRow>
         <MetricCardGroup className="md:grid-cols-4 lg:grid-cols-4">

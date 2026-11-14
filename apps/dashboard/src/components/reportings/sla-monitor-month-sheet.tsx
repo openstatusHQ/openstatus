@@ -203,7 +203,7 @@ function SheetBody({
               {alsoCoveredBy.map((p) => (
                 <li key={p.id} className="flex min-w-0 items-baseline gap-2">
                   <Link
-                    href={`/reportings/monitors/${p.id}?monitor=${monitor.id}`}
+                    href={`/reportings/${p.id}/overview?monitor=${monitor.id}`}
                     className="truncate"
                   >
                     {p.name}

@@ -35,7 +35,7 @@ Heartbeat monitors and monitors that only run from private locations cannot join
 
 ## 2. Create the reporting
 
-Under [**Reportings > Monitors**](https://app.openstatus.dev/reportings/monitors), create a reporting:
+Under [**Reportings**](https://app.openstatus.dev/reportings), create a reporting:
 
 - **Name**: the commitment, for example `Partner contract`.
 - **Monthly uptime target**: `99.5`.
@@ -47,7 +47,7 @@ A monitor is judged from the moment it joins. The first full month is the one af
 
 ## 3. Set the support targets
 
-Under [**Reportings > Incidents**](https://app.openstatus.dev/reportings/incidents#targets), fill in the response, resolution and update targets per severity from the contract. Map the contract's severities onto `critical`, `major` and `minor`.
+Under [**Incidents > SLA**](https://app.openstatus.dev/incidents/sla#targets), fill in the response, resolution and update targets per severity from the contract. Map the contract's severities onto `critical`, `major` and `minor`.
 
 When a support request comes in, declare the incident at the severity the customer assigned and set **Reported at** to when the request arrived, so the clock starts where the contract says. Requests handled only in another ticketing tool are not counted. See [incident reporting](/docs/reference/incident-management#reporting).
 

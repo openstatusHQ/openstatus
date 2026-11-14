@@ -92,7 +92,7 @@ export function SlaMonitorSidebarEntry({
 
   return (
     <NextLink
-      href={`/reportings/monitors/${reporting.id}?monitor=${monitorId}`}
+      href={`/reportings/${reporting.id}/overview?monitor=${monitorId}`}
       className="hover:bg-sidebar-accent focus-visible:ring-ring flex flex-col gap-1.5 border-b px-2 py-2 text-sm transition-colors duration-150 ease-[ease] outline-none last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset"
     >
       <span className="flex min-w-0 items-baseline gap-2">
