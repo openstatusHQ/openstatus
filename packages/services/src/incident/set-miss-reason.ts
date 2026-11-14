@@ -12,11 +12,14 @@ import { PreconditionFailedError } from "../errors";
 import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
 import { SetIncidentSlaMissReasonInput } from "./schemas";
 
-/** Writes, replaces or clears why a recorded response or resolution miss happened. */
+/**
+ * Writes, replaces or clears why a recorded response or resolution miss happened.
+ * `before` is the row read inside the write, so callers diff against it.
+ */
 export async function setIncidentSlaMissReason(args: {
   ctx: ServiceContext;
   input: SetIncidentSlaMissReasonInput;
-}): Promise<Incident> {
+}): Promise<{ before: Incident; after: Incident }> {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
   const input = SetIncidentSlaMissReasonInput.parse(args.input);
@@ -37,7 +40,9 @@ export async function setIncidentSlaMissReason(args: {
     const column =
       input.kind === "response" ? "responseMissReason" : "resolutionMissReason";
     const reason = input.reason || null;
-    if (existing[column] === reason) return existing;
+    if (existing[column] === reason) {
+      return { before: existing, after: existing };
+    }
 
     const updated = await tx
       .update(incident)
@@ -62,6 +67,6 @@ export async function setIncidentSlaMissReason(args: {
           : "sla_resolution_miss_explained",
       message: reason,
     });
-    return updated;
+    return { before: existing, after: updated };
   });
 }

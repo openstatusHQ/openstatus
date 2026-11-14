@@ -244,26 +244,20 @@ export const incidentRouter = createTRPCRouter({
     .input(SetIncidentSlaMissReasonInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        const before = await getIncident({
-          ctx: toServiceCtx(ctx),
-          input: { id: input.id },
-        });
-        const row = await setIncidentSlaMissReason({
+        const { before, after } = await setIncidentSlaMissReason({
           ctx: toServiceCtx(ctx),
           input,
         });
-        if (before) {
-          afterResponse(() =>
-            afterIncidentSlaMissExplained({
-              ctx: toServiceCtx(ctx),
-              effects: effectsFor(ctx),
-              before,
-              after: row,
-              kind: input.kind,
-            }),
-          );
-        }
-        return row;
+        afterResponse(() =>
+          afterIncidentSlaMissExplained({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            before,
+            after,
+            kind: input.kind,
+          }),
+        );
+        return after;
       } catch (err) {
         toTRPCError(err);
       }

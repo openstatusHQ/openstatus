@@ -22,6 +22,7 @@ import {
   closeIncident,
   declareIncident,
   getIncident,
+  recordIncidentSlaBreaches,
   setIncidentSlaMissReason,
   setIncidentStatus,
 } from "../index";
@@ -97,7 +98,10 @@ describe("setIncidentSlaMissReason", () => {
           reason: "  Pager rotation gap overnight ",
         },
       });
-      expect(updated.responseMissReason).toBe("Pager rotation gap overnight");
+      expect(updated.after.responseMissReason).toBe(
+        "Pager rotation gap overnight",
+      );
+      expect(updated.before.responseMissReason).toBeNull();
       expect((await sla(tx, declared.id))?.response?.missReason).toBe(
         "Pager rotation gap overnight",
       );
@@ -170,6 +174,38 @@ describe("setIncidentSlaMissReason", () => {
     });
   });
 
+  test("explaining a recorded miss neither acknowledges nor meets the response", async () => {
+    await withTestTransaction(async (tx) => {
+      const declared = await declare(tx);
+      await declaredMinutesAgo(tx, declared.id, 90);
+      await recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id] });
+      const { after } = await setIncidentSlaMissReason({
+        ctx: member(tx),
+        input: { id: declared.id, kind: "response", reason: "Nobody on call" },
+      });
+      expect(after.acknowledgedAt).toBeNull();
+      expect(after.responseMetAt).toBeNull();
+      const response = (await sla(tx, declared.id))?.response;
+      expect(response?.metAt).toBeNull();
+      expect(response?.missReason).toBe("Nobody on call");
+    });
+  });
+
+  test("an unchanged save returns the row it read as both before and after", async () => {
+    await withTestTransaction(async (tx) => {
+      const declared = await lateResponse(tx);
+      const write = () =>
+        setIncidentSlaMissReason({
+          ctx: member(tx),
+          input: { id: declared.id, kind: "response", reason: "Same" },
+        });
+      await write();
+      const again = await write();
+      expect(again.before.responseMissReason).toBe("Same");
+      expect(again.after).toBe(again.before);
+    });
+  });
+
   test("explains a missed resolution, also after the incident is closed", async () => {
     await withTestTransaction(async (tx) => {
       const declared = await declare(tx);
@@ -237,7 +273,7 @@ describe("setIncidentSlaMissReason", () => {
         ctx: apiKey(tx, ["incidents:write"]),
         input: { id: declared.id, kind: "response", reason: "Holiday" },
       });
-      expect(updated.responseMissReason).toBe("Holiday");
+      expect(updated.after.responseMissReason).toBe("Holiday");
     });
   });
 
