@@ -166,6 +166,10 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
       return IncidentEventType.SLA_UPDATE_MISSED;
     case "reported_at_changed":
       return IncidentEventType.REPORTED_AT_CHANGED;
+    case "sla_response_miss_explained":
+      return IncidentEventType.SLA_RESPONSE_MISS_EXPLAINED;
+    case "sla_resolution_miss_explained":
+      return IncidentEventType.SLA_RESOLUTION_MISS_EXPLAINED;
   }
 }
 

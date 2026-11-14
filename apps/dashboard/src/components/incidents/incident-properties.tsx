@@ -285,7 +285,7 @@ export function IncidentProperties({
                     update.mutate({ id: incident.id, reportedAt: null })
                   }
                 >
-                  <Close />
+                  <Close className="opacity-50" />
                 </Button>
               ) : null}
             </>

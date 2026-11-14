@@ -9,7 +9,7 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { PreconditionFailedError } from "../errors";
-import { getIncidentInWorkspace } from "./internal";
+import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
 import { SetIncidentSlaMissReasonInput } from "./schemas";
 
 /** Writes, replaces or clears why a recorded response or resolution miss happened. */
@@ -52,6 +52,15 @@ export async function setIncidentSlaMissReason(args: {
       entityId: updated.id,
       before: existing,
       after: updated,
+    });
+    // the column holds the current reason; the event keeps who wrote each version
+    await appendIncidentEvent(tx, ctx, {
+      incidentId: updated.id,
+      type:
+        input.kind === "response"
+          ? "sla_response_miss_explained"
+          : "sla_resolution_miss_explained",
+      message: reason,
     });
     return updated;
   });

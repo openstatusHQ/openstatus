@@ -300,6 +300,26 @@ function parseEvent(event: Event): Parsed {
         message: null,
       };
     }
+    // the message is the reason as written; none means it was cleared
+    case "sla_response_miss_explained":
+    case "sla_resolution_miss_explained": {
+      const target = (
+        <TimelineHighlight className="text-destructive">
+          {event.type === "sla_response_miss_explained"
+            ? "response target"
+            : "resolution target"}
+        </TimelineHighlight>
+      );
+      return {
+        icon: Chat,
+        phrase: message ? (
+          <>explained the missed {target}</>
+        ) : (
+          <>cleared the reason for the missed {target}</>
+        ),
+        message: message || null,
+      };
+    }
     case "sla_update_missed": {
       const missed = parseIncidentUpdateMissedMessage(message);
       return {

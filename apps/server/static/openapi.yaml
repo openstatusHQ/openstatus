@@ -562,6 +562,8 @@ components:
         - INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED
         - INCIDENT_EVENT_TYPE_SLA_UPDATE_MISSED
         - INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED
+        - INCIDENT_EVENT_TYPE_SLA_RESPONSE_MISS_EXPLAINED
+        - INCIDENT_EVENT_TYPE_SLA_RESOLUTION_MISS_EXPLAINED
       description: IncidentEventType is the kind of entry in an incident timeline.
     openstatus.incident.v1.IncidentSeverity:
       type: string

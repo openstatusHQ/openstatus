@@ -34,31 +34,31 @@ function TimerProperty({
   now: Date;
 }) {
   return (
-    <Property>
-      <PropertyLabel>{label}</PropertyLabel>
-      <PropertyValue>
-        <HoverCardTimestamp date={timer.metAt ?? timer.dueAt} side="left">
-          <IncidentSlaBadge
-            timer={timer}
-            now={now}
-            size="md"
-            className="truncate"
-          />
-        </HoverCardTimestamp>
-        <PropertyMeta>
-          {formatIncidentSlaMinutes(timer.targetMinutes)}
-        </PropertyMeta>
-      </PropertyValue>
+    <>
+      <Property>
+        <PropertyLabel>{label}</PropertyLabel>
+        <PropertyValue>
+          <HoverCardTimestamp date={timer.metAt ?? timer.dueAt} side="left">
+            <IncidentSlaBadge
+              timer={timer}
+              now={now}
+              size="md"
+              className="truncate"
+            />
+          </HoverCardTimestamp>
+          <PropertyMeta>
+            {formatIncidentSlaMinutes(timer.targetMinutes)}
+          </PropertyMeta>
+        </PropertyValue>
+      </Property>
       {timer.breachDueAt ? (
-        <div className="col-start-2">
-          <IncidentSlaMissReason
-            incidentId={incidentId}
-            kind={kind}
-            reason={timer.missReason}
-          />
-        </div>
+        <IncidentSlaMissReason
+          incidentId={incidentId}
+          kind={kind}
+          reason={timer.missReason}
+        />
       ) : null}
-    </Property>
+    </>
   );
 }
 

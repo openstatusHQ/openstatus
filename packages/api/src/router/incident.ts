@@ -21,6 +21,7 @@ import {
   generatePostmortemDraft,
   getPostmortem,
   afterIncidentAcknowledged,
+  afterIncidentSlaMissExplained,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -243,10 +244,26 @@ export const incidentRouter = createTRPCRouter({
     .input(SetIncidentSlaMissReasonInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await setIncidentSlaMissReason({
+        const before = await getIncident({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+        const row = await setIncidentSlaMissReason({
           ctx: toServiceCtx(ctx),
           input,
         });
+        if (before) {
+          afterResponse(() =>
+            afterIncidentSlaMissExplained({
+              ctx: toServiceCtx(ctx),
+              effects: effectsFor(ctx),
+              before,
+              after: row,
+              kind: input.kind,
+            }),
+          );
+        }
+        return row;
       } catch (err) {
         toTRPCError(err);
       }

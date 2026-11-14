@@ -51,6 +51,10 @@ enum IncidentEventType {
   // Written by the system at the due time of each update interval that passed without an update.
   INCIDENT_EVENT_TYPE_SLA_UPDATE_MISSED = 20;
   INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED = 21;
+  // A member wrote, edited or cleared (empty message) why the response target was missed.
+  INCIDENT_EVENT_TYPE_SLA_RESPONSE_MISS_EXPLAINED = 22;
+  // A member wrote, edited or cleared (empty message) why the resolution target was missed.
+  INCIDENT_EVENT_TYPE_SLA_RESOLUTION_MISS_EXPLAINED = 23;
 }
 
 // PostmortemStatus is the review state of a postmortem.

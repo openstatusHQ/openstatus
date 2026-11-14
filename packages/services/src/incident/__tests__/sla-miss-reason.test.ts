@@ -1,5 +1,5 @@
-import { eq } from "@openstatus/db";
-import { incident } from "@openstatus/db/src/schema";
+import { and, asc, eq, like } from "@openstatus/db";
+import { incident, incidentEvent } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createUser,
@@ -130,6 +130,43 @@ describe("setIncidentSlaMissReason", () => {
       await write("Back again");
       await write(null);
       expect((await sla(tx, declared.id))?.response?.missReason).toBeNull();
+    });
+  });
+
+  test("each change appends an event with its author; an unchanged save does not", async () => {
+    await withTestTransaction(async (tx) => {
+      const declared = await lateResponse(tx);
+      const write = (reason: string | null) =>
+        setIncidentSlaMissReason({
+          ctx: member(tx),
+          input: { id: declared.id, kind: "response", reason },
+        });
+      await write("Pager rotation gap");
+      await write("Pager rotation gap");
+      await write("Escalation policy pointed at a deleted user");
+      await write("");
+      const events = await tx
+        .select()
+        .from(incidentEvent)
+        .where(
+          and(
+            eq(incidentEvent.incidentId, declared.id),
+            like(incidentEvent.type, "sla_%_miss_explained"),
+          ),
+        )
+        .orderBy(asc(incidentEvent.id))
+        .all();
+      expect(events.map((e) => [e.type, e.message, e.createdBy])).toStrictEqual(
+        [
+          ["sla_response_miss_explained", "Pager rotation gap", memberId],
+          [
+            "sla_response_miss_explained",
+            "Escalation policy pointed at a deleted user",
+            memberId,
+          ],
+          ["sla_response_miss_explained", null, memberId],
+        ],
+      );
     });
   });
 

@@ -14,12 +14,18 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  Property,
+  PropertyLabel,
+  PropertyMenuTrigger,
+  PropertyValue,
+} from "@/components/content/property-list";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
 import { useInvalidateIncident } from "./use-invalidate-incident";
 
-/** Reason under a recorded miss, with a popover to write, edit or clear it. */
+/** Row under a recorded miss: its reason, with a popover to write, edit or clear it. */
 export function IncidentSlaMissReason({
   incidentId,
   kind,
@@ -53,64 +59,65 @@ export function IncidentSlaMissReason({
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col items-start gap-0.5 pb-1">
-      {reason ? (
-        <p className="text-foreground font-sans text-xs whitespace-pre-wrap">
-          {reason}
-        </p>
-      ) : null}
-      <Popover
-        open={open}
-        onOpenChange={(next) => {
-          if (next) setDraft(reason ?? "");
-          setOpen(next);
-        }}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            variant="link"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground h-6 px-0 font-sans text-xs"
-          >
-            {reason ? "Edit reason" : "Explain miss"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="flex w-80 flex-col gap-2">
-          <Label htmlFor={id}>Why was the {kind} target missed?</Label>
-          <Textarea
-            id={id}
-            rows={4}
-            maxLength={2000}
-            value={draft}
-            placeholder="On-call handover gap, upstream outage, ..."
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-          />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground text-xs">
-              {reason ? "Empty clears it." : "Shown under the target."}
-            </span>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                disabled={unchanged || save.isPending}
-                onClick={submit}
-              >
-                {save.isPending ? <Spinner /> : null}
-                Save
-              </Button>
+    <Property>
+      <PropertyLabel>Reason</PropertyLabel>
+      <PropertyValue>
+        <Popover
+          open={open}
+          onOpenChange={(next) => {
+            if (next) setDraft(reason ?? "");
+            setOpen(next);
+          }}
+        >
+          <PopoverTrigger asChild>
+            <PropertyMenuTrigger
+              aria-label={`Why the ${kind} target was missed`}
+              className={reason ? undefined : "text-muted-foreground"}
+            >
+              <span className="truncate">{reason ?? "Explain miss"}</span>
+            </PropertyMenuTrigger>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="flex w-80 flex-col gap-2">
+            <Label htmlFor={id}>Why was the {kind} target missed?</Label>
+            <Textarea
+              id={id}
+              rows={4}
+              maxLength={2000}
+              value={draft}
+              placeholder="On-call handover gap, upstream outage, ..."
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground text-xs">
+                {reason ? "Empty clears it." : "Shown under the target."}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={unchanged || save.isPending}
+                  onClick={submit}
+                >
+                  {save.isPending ? <Spinner /> : null}
+                  Save
+                </Button>
+              </div>
             </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
+          </PopoverContent>
+        </Popover>
+      </PropertyValue>
+    </Property>
   );
 }

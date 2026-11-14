@@ -9,6 +9,7 @@ export {
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
+  afterIncidentSlaMissExplained,
   afterIncidentStatusChanged,
   afterIncidentUpdated,
   afterPostmortemApproved,
