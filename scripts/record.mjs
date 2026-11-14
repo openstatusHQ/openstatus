@@ -88,19 +88,11 @@ if (
   (!external && !available.includes(names[0]))
 ) {
   console.error(
-    `usage: record.mjs <tutorial | update | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--app dashboard|status-page] [--base url] [--status-page url] [--width 1440 --height 900] [--speed 1] [--api url] [--tinybird-port 3098] [--export steps --name out --clock ISO]\ntutorials: ${tutorials.join(", ")}\nupdates: ${updates.join(", ")}`,
+    `usage: record.mjs <tutorial | update | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--app dashboard|status-page] [--base url] [--status-page url] [--width 1440 --height 900] [--speed 1] [--api url] [--export steps --name out --clock ISO]\ntutorials: ${tutorials.join(", ")}\nupdates: ${updates.join(", ")}`,
   );
   process.exit(flags.list ? 0 : 2);
 }
-for (const key of [
-  "export",
-  "name",
-  "clock",
-  "app",
-  "status-page",
-  "api",
-  "tinybird-port",
-])
+for (const key of ["export", "name", "clock", "app", "status-page", "api"])
   if (flags[key] === true) fail(`--${key} needs a value`);
 const name = flags.name ?? basename(names[0], ".mjs");
 if (!/^[\w-]+$/.test(name))
@@ -213,12 +205,12 @@ if (tutorial.meta.requires?.includes("api")) {
     );
 }
 
-// A script's `tinybird` rows answer the dashboard's pipes (point its
-// TINYBIRD_URL here); read per request, so rows a step pushes show up.
+// A script's `tinybird` rows answer the dashboard's pipes on the port
+// `dev-stack.mjs up --fake-tinybird` points TINYBIRD_URL at; read per request, so rows a step pushes show up.
 // A cut's clip (--export) runs while this one still serves.
 let tinybird = null;
 if (tutorial.tinybird && !flags.export) {
-  const port = Number(flags["tinybird-port"] ?? 3098);
+  const port = 3098;
   tinybird = createServer((req, res) => {
     const pipe = req.url?.match(/\/v0\/pipes\/([\w-]+)\.json/)?.[1];
     const data = tutorial.tinybird[pipe] ?? [];
