@@ -80,8 +80,8 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Incident reporting</SectionTitle>
           <SectionDescription>
-            One reporting for the workspace. It applies to every incident
-            declared after it is saved.
+            The response times you committed to, judged per incident. One set of
+            targets covers the whole workspace.
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>

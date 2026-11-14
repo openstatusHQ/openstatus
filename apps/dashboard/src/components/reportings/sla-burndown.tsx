@@ -29,7 +29,7 @@ type MonitorMonth = RouterOutputs["monitorReporting"]["monitorMonth"];
 type Point = {
   day: number;
   left?: number | null;
-  ideal?: number;
+  ideal?: number | null;
   projected?: number | null;
   /** sqrt-scaled share of the worst day, stacked */
   down?: number;
@@ -133,6 +133,12 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
 
   const projectedEnd =
     live && budget.paceMs !== null ? budgetMs - budget.paceMs : null;
+  // monthMs is the covered span, which ends with the month: a member added mid-month earns budget from then
+  const coveredStart =
+    budget.monthMs > 0
+      ? Math.max(month.range.start, month.range.end - budget.monthMs)
+      : month.range.start;
+  const coveredMs = month.range.end - coveredStart;
   const peak = Math.max(...days.map((d) => d.downMs + d.slowMs), 0);
   // sqrt: one long outage would otherwise flatten every other day
   const barHeight = (ms: number) => (peak > 0 ? Math.sqrt(ms / peak) : 0);
@@ -142,11 +148,13 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
     const total = d.downMs + d.slowMs;
     const h = barHeight(total);
     const running = live && d.start < cutoff && d.end > cutoff;
+    const covered = d.end > coveredStart;
+    const mid = Math.max((d.start + d.end) / 2, coveredStart);
     return {
       day: d.day,
       // budget left at the end of the day; the running day holds the burn so far
-      left: d.start < cutoff ? d.leftMs : null,
-      ideal: budgetMs * (1 - (d.day - 0.5) / dayCount),
+      left: covered && d.start < cutoff ? d.leftMs : null,
+      ideal: covered ? (budgetMs * (month.range.end - mid)) / coveredMs : null,
       projected: running
         ? d.leftMs
         : live && d.day === dayCount
@@ -156,6 +164,13 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
       slow: total > 0 ? (h * d.slowMs) / total : undefined,
     };
   });
+
+  // on the last day the projection shares the running day's x, so a line has no length
+  const lastDay = days[dayCount - 1];
+  const projectedDot =
+    projectedEnd !== null && lastDay && lastDay.start < cutoff
+      ? projectedEnd
+      : null;
 
   const lowest = Math.min(
     0,
@@ -316,6 +331,15 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
               activeDot={false}
               connectNulls
               isAnimationActive={false}
+            />
+          ) : null}
+          {projectedDot !== null ? (
+            <ReferenceDot
+              x={dayCount}
+              y={projectedDot}
+              r={2.5}
+              fill="var(--color-projected)"
+              stroke="var(--color-background)"
             />
           ) : null}
           <Line

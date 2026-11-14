@@ -35,7 +35,6 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import {
-  keepPreviousData,
   skipToken,
   useMutation,
   useQuery,
@@ -177,12 +176,12 @@ function ExcusedWindowForm({
     to instanceof Date &&
     from < to &&
     to.getTime() - from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS;
-  const { data: preview } = useQuery({
-    ...trpc.monitorReporting.excusedWindowPreview.queryOptions(
+  // no placeholder: the previous window's runs would describe the wrong range
+  const { data: preview } = useQuery(
+    trpc.monitorReporting.excusedWindowPreview.queryOptions(
       validWindow ? { policyId: policy.id, from, to } : skipToken,
     ),
-    placeholderData: keepPreviousData,
-  });
+  );
   const known = validWindow
     ? (preview?.monitors.filter((m) => m.runs !== null) ?? [])
     : [];

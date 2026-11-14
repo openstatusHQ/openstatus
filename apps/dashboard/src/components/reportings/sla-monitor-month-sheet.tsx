@@ -203,7 +203,7 @@ function SheetBody({
               {alsoCoveredBy.map((p) => (
                 <li key={p.id} className="flex min-w-0 items-baseline gap-2">
                   <Link
-                    href={`/reportings/${p.id}/overview?monitor=${monitor.id}`}
+                    href={`/reportings/${p.id}/overview?monitor=${monitor.id}${month ? `&month=${month}` : ""}`}
                     className="truncate"
                   >
                     {p.name}
@@ -277,7 +277,11 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
             {month.coverage === null
               ? month.episodesUnavailable === "failed"
                 ? "checks could not be loaded"
-                : "nothing measured yet"
+                : month.episodesUnavailable === "expired"
+                  ? "checks are no longer kept"
+                  : month.state === "live"
+                    ? "nothing measured yet"
+                    : "nothing measured"
               : `${formatSlaCoverage(month.coverage)}% of the time measured`}
           </p>
         </MetricCard>
@@ -310,7 +314,7 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           <SlaBudgetBar
             burnedMs={budget.burnedMs}
             budgetMs={budget.budgetMs}
-            paceMs={budget.paceMs}
+            paceMs={month.state === "live" ? budget.paceMs : null}
           />
           <p className="text-muted-foreground text-xs">
             <span className="text-foreground font-mono">

@@ -53,6 +53,9 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Probes and analytics events write nothing a server component prefetches.
+const NO_REFRESH_ROUTERS = new Set(["checker", "track"]);
+
 // Router-cached RSC payloads (staleTimes.dynamic) carry server-prefetched data
 // that predates a mutation; hydrating them would undo the invalidation.
 function RefreshRouterOnMutation({
@@ -64,9 +67,13 @@ function RefreshRouterOnMutation({
   useEffect(
     () =>
       queryClient.getMutationCache().subscribe((event) => {
-        if (event.type === "updated" && event.action.type === "success") {
-          router.refresh();
+        if (event.type !== "updated" || event.action.type !== "success") {
+          return;
         }
+        // tRPC mutation keys are [[router, procedure]]
+        const [path] = event.mutation.options.mutationKey ?? [];
+        if (Array.isArray(path) && NO_REFRESH_ROUTERS.has(path[0])) return;
+        router.refresh();
       }),
     [queryClient, router],
   );
