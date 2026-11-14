@@ -238,7 +238,7 @@ function alive(pid) {
 function groupMembers(pgid) {
   // Full command lines, so a group can be told apart by what it runs.
   // `ps` rather than `pgrep -a`, which lists only pids on macOS.
-  const r = spawnSync("ps", ["-A", "-o", "pgid=,command="], {
+  const r = spawnSync("ps", ["-ww", "-A", "-o", "pgid=,command="], {
     encoding: "utf8",
   });
   // Guessing "empty" would make `down` drop the state while the stack runs.

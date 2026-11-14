@@ -2,7 +2,7 @@
 // needs to run. The recorder checks it and copies it into the timeline.
 // A product update (scripts/updates) sets `format: "update"` and needs only a
 // title and a tagline.
-export const REQUIREMENTS = ["checker"];
+export const REQUIREMENTS = ["checker", "api"];
 
 // Feed copy: the title is read in under a second, so it stays short.
 export const UPDATE_TITLE_MAX = 40;

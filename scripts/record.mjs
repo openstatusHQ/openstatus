@@ -40,6 +40,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -87,11 +88,19 @@ if (
   (!external && !available.includes(names[0]))
 ) {
   console.error(
-    `usage: record.mjs <tutorial | update | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--app dashboard|status-page] [--base url] [--status-page url] [--width 1440 --height 900] [--speed 1] [--export steps --name out --clock ISO]\ntutorials: ${tutorials.join(", ")}\nupdates: ${updates.join(", ")}`,
+    `usage: record.mjs <tutorial | update | path.mjs> [--theme light|dark] [--remotion] [--scale 1] [--no-cursor] [--app dashboard|status-page] [--base url] [--status-page url] [--width 1440 --height 900] [--speed 1] [--api url] [--tinybird-port 3098] [--export steps --name out --clock ISO]\ntutorials: ${tutorials.join(", ")}\nupdates: ${updates.join(", ")}`,
   );
   process.exit(flags.list ? 0 : 2);
 }
-for (const key of ["export", "name", "clock", "app", "status-page"])
+for (const key of [
+  "export",
+  "name",
+  "clock",
+  "app",
+  "status-page",
+  "api",
+  "tinybird-port",
+])
   if (flags[key] === true) fail(`--${key} needs a value`);
 const name = flags.name ?? basename(names[0], ".mjs");
 if (!/^[\w-]+$/.test(name))
@@ -112,6 +121,9 @@ const base = (flags.base ?? APPS[app].base).replace(/\/$/, "");
 const db = flags.db ?? "http://127.0.0.1:8080";
 if (!["localhost", "127.0.0.1"].includes(new URL(db).hostname))
   fail(`refusing non-local database ${db}: tutorials delete their own rows`);
+const api = (flags.api ?? "http://localhost:3000").replace(/\/$/, "");
+if (!["localhost", "127.0.0.1"].includes(new URL(api).hostname))
+  fail(`refusing non-local API ${api}: scripts send it requests`);
 const theme = flags.theme ?? "light";
 if (theme !== "light" && theme !== "dark")
   fail(`--theme must be light or dark, got ${theme}`);
@@ -189,6 +201,41 @@ if (tutorial.meta.requires?.includes("checker")) {
     fail(
       `${name} needs the checker, nothing answers at ${checker}: run apps/checker and start the dashboard with CHECKER_URL and CRON_SECRET (see the screenshot skill)`,
     );
+}
+
+if (tutorial.meta.requires?.includes("api")) {
+  const ping = await fetch(`${api}/ping`, {
+    signal: AbortSignal.timeout(2000),
+  }).catch(() => null);
+  if (ping?.status !== 200)
+    fail(
+      `${name} needs the API, nothing healthy answers at ${api}: run node scripts/dev-stack.mjs up --api`,
+    );
+}
+
+// A script's `tinybird` rows answer the dashboard's pipes (point its
+// TINYBIRD_URL here); read per request, so rows a step pushes show up.
+// A cut's clip (--export) runs while this one still serves.
+let tinybird = null;
+if (tutorial.tinybird && !flags.export) {
+  const port = Number(flags["tinybird-port"] ?? 3098);
+  tinybird = createServer((req, res) => {
+    const pipe = req.url?.match(/\/v0\/pipes\/([\w-]+)\.json/)?.[1];
+    const data = tutorial.tinybird[pipe] ?? [];
+    res.setHeader("content-type", "application/json");
+    res.end(
+      JSON.stringify({
+        meta: [],
+        data,
+        rows: data.length,
+        statistics: { elapsed: 0, rows_read: 0, bytes_read: 0 },
+      }),
+    );
+  });
+  await new Promise((done, failed) => {
+    tinybird.once("error", failed);
+    tinybird.listen(port, "127.0.0.1", done);
+  }).catch((e) => fail(`port ${port} for the Tinybird fake: ${e.message}`));
 }
 
 const probe = await fetch(`${base}${APPS[app].probe ?? ""}`).catch(() => null);
@@ -433,6 +480,7 @@ async function settle() {
 const rec = {
   page,
   sql,
+  api,
   wait,
   moveTo,
   settle,
@@ -514,6 +562,8 @@ const rec = {
         ...(typeof clipBase === "string" ? ["--base", clipBase] : []),
         "--db",
         db,
+        "--api",
+        api,
         "--width",
         String(viewport?.width ?? width),
         "--height",
@@ -572,6 +622,7 @@ await cdp.send("Page.stopScreencast").catch(() => {});
 const endAt = rec.cutAt ?? now();
 await context.close();
 await browser.close();
+tinybird?.close();
 
 if (failed) {
   rmSync(tmp, { recursive: true, force: true });
