@@ -41,6 +41,7 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 
 import { SlaBudgetBar } from "./sla-budget";
+import { SlaBurndown } from "./sla-burndown";
 
 type MonitorMonth = RouterOutputs["monitorReporting"]["monitorMonth"];
 type Episode = NonNullable<MonitorMonth["episodes"]>[number];
@@ -339,6 +340,8 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           </p>
         </section>
       ) : null}
+
+      <SlaBurndown month={month} />
 
       <section className="grid gap-2">
         <h3 className="text-sm font-medium">
