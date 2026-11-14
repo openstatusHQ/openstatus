@@ -104,7 +104,7 @@ function MonthCell({
   );
 }
 
-/** One column per month, oldest first, between the monitor and its miss count. */
+/** One column per month, oldest first, after the monitor. */
 export function getColumns(
   months: string[],
   {
@@ -173,23 +173,5 @@ export function getColumns(
         cellClassName: "p-1",
       },
     })),
-    {
-      id: "missed",
-      accessorFn: (row) => row.missed.months,
-      header: () => <span title="Months missed in the last 12">Missed</span>,
-      cell: ({ row }) => (
-        <span
-          className={cn(
-            "block text-right font-mono tabular-nums",
-            row.original.missed.months > 0
-              ? "text-destructive"
-              : "text-muted-foreground",
-          )}
-        >
-          {row.original.missed.months}
-        </span>
-      ),
-      meta: { headerClassName: "text-right" },
-    },
   ];
 }
