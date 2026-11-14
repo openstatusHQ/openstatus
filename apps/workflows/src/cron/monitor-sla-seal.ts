@@ -2,6 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import { sendMonitorSlaMissed } from "@openstatus/emails";
 import {
   claimMonitorSlaMissNotices,
+  releaseMonitorSlaMissNotice,
   type SealMonitorSlaMonthsResult,
   sealMonitorSlaMonths,
 } from "@openstatus/services/monitor-reporting";
@@ -21,7 +22,7 @@ export async function runMonitorSlaSealTick(
   let notified = 0;
   if (res.skipped === null) {
     const baseUrl = dashboardUrl ?? env().DASHBOARD_URL;
-    // Claimed before sending: a failed send is lost rather than sent twice.
+    // Claimed before sending so overlapping runs send once; a failed send releases its claim.
     const notices = await claimMonitorSlaMissNotices({
       db: sealOptions.db,
       month: res.month,
@@ -45,6 +46,16 @@ export async function runMonitorSlaSealTick(
         logger.error(
           "monitor-sla-seal: miss email for policy {policyId} failed: {err}",
           { policyId: notice.policy.id, err: String(err) },
+        );
+        await releaseMonitorSlaMissNotice({
+          db: sealOptions.db,
+          policyId: notice.policy.id,
+          month: notice.month,
+        }).catch((releaseErr) =>
+          logger.error(
+            "monitor-sla-seal: release of miss notice for policy {policyId} failed: {err}",
+            { policyId: notice.policy.id, err: String(releaseErr) },
+          ),
         );
       }
     }

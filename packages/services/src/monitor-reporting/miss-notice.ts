@@ -207,6 +207,25 @@ export async function claimMonitorSlaMissNotices(args: {
   });
 }
 
+/** Drops a claim whose email failed, so the next run inside the seal window sends it again. */
+export async function releaseMonitorSlaMissNotice(args: {
+  db?: DB;
+  policyId: number;
+  month: string;
+}) {
+  const db = args.db ?? defaultDb;
+  await withBusyRetry(() =>
+    db
+      .delete(monitorSlaMissNotice)
+      .where(
+        and(
+          eq(monitorSlaMissNotice.monitorSlaPolicyId, args.policyId),
+          eq(monitorSlaMissNotice.month, args.month),
+        ),
+      ),
+  );
+}
+
 /** Policies with a member whose month may still seal: episodes unreadable, or not sealed yet. */
 async function policiesAwaitingSeal(args: {
   db: DB;

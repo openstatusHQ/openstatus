@@ -157,7 +157,7 @@ describe("monitor-sla-seal miss email", () => {
     expect(sent).toHaveLength(1);
   });
 
-  test("a failed or skipped send is not counted, and is never retried", async () => {
+  test("a failed send is not counted, and the next run retries it", async () => {
     const { policy } = await missedPolicy();
     let calls = 0;
     const tick = (send: typeof sendMonitorSlaMissed) =>
@@ -180,8 +180,8 @@ describe("monitor-sla-seal miss email", () => {
       calls++;
       return "email_1";
     });
-    expect(again.notified).toBe(0);
-    expect(calls).toBe(1);
+    expect(again.notified).toBe(1);
+    expect(calls).toBe(2);
   });
 
   test("a send that returns no id (outside production) is not counted", async () => {

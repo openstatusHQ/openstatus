@@ -11,7 +11,10 @@ export {
 } from "./get";
 export { listMonitorReportings } from "./list";
 export { listMonitorReportingMaintenances } from "./maintenances";
-export { claimMonitorSlaMissNotices } from "./miss-notice";
+export {
+  claimMonitorSlaMissNotices,
+  releaseMonitorSlaMissNotice,
+} from "./miss-notice";
 export {
   getMonitorReportingMonth,
   type MonitorReportingMonth,
