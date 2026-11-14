@@ -65,7 +65,7 @@ a reason.
 
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
-monitor-incident, frozen-uptime, monitor-reporting), `pages` (page, page-component,
+monitor-incident, frozen-uptime, monitor-reporting, maintenance-window), `pages` (page, page-component,
 page-component-group, import), `incidents` (status-report, incident,
 maintenance, incident-reporting), `notifications` and `subscribers` (page-subscriber). Workspace,
 billing, members, invitations, API keys, OAuth, SSO and integrations require

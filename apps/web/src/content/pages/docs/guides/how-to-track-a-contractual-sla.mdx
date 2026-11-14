@@ -18,7 +18,7 @@ Create one monitor per contractually relevant part of the product, for example t
 - Set the **degraded** threshold to the contract's latency limit, here `1000` ms. Without it, a check is never slow and the next step changes nothing. See the [HTTP monitor reference](/docs/reference/http-monitor#degraded).
 - Choose the check frequency. Uptime weighs time, so any frequency works; a shorter one finds an outage sooner and costs less budget per failed check.
 
-A failed check counts as down until the next run, so one failed check costs one interval. The shorter the interval, the tighter a target you can hold through a single blip. For a 30-day month:
+A failed check counts as down until the next run, so one failed check costs one interval. If the next run comes more than two intervals later, only one interval counts as down and the rest is [unmeasured](/docs/reference/monitor-reporting#method). The shorter the interval, the tighter a target you can hold through a single blip. For a 30-day month:
 
 | Frequency | Uptime with one failed check | Failed checks within 99.9% | Failed checks within 99.99% |
 |---|---|---|---|
@@ -29,7 +29,7 @@ A failed check counts as down until the next run, so one failed check costs one 
 | 1m | 99.997% | 43 | 4 |
 | 30s | 99.998% | 86 | 8 |
 
-At 99.99% the month allows 4 minutes and 19 seconds of downtime, which a single failed 5-minute check already exceeds. For a target of 99.99% or tighter, check every minute or every 30 seconds.
+At 99.99% the month allows 4 minutes and 19 seconds of downtime, which a single failed 5-minute check already exceeds. For a target of 99.99%, check every minute or every 30 seconds. At 99.999% the month allows under 26 seconds, less than one failed 30-second check, so a single failed check misses it at any frequency.
 
 Heartbeat monitors and monitors that only run from private locations cannot join a reporting.
 
@@ -68,7 +68,7 @@ The reporting page shows every monitor against the last 12 or 24 months. Select 
 
 ## 6. Send the month's evidence
 
-A few days after a month ends it is sealed and no longer changes. Use **Export** on the reporting page to download the months as CSV, with uptime, coverage, excused time, and the terms each month was sealed with.
+About three days after a month ends it is sealed and no longer changes. If its checks cannot be loaded, the next run tries again; a month still unsealed 45 days after it began is never sealed and shows no figure. See [sealing](/docs/reference/monitor-reporting#sealing). Use **Export** on the reporting page to download the months as CSV, with uptime, coverage, excused time, and the terms each month was sealed with.
 
 ## What openstatus does not do yet
 

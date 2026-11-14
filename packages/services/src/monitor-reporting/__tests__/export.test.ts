@@ -228,7 +228,7 @@ describe("exportMonitorReporting", () => {
         "90.000",
         "no",
         "2026-10-04T05:47:00.000Z",
-        "runs",
+        "time",
         "UTC",
         "",
         "",

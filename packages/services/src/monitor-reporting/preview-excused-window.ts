@@ -11,7 +11,7 @@ import { PreviewMonitorReportingExcusedWindowInput } from "./schemas";
 
 /**
  * Per monitor of the policy, the scheduled runs recorded inside a past window.
- * `runs` is null when it cannot be told: the window has not ended, the read failed, or the monitor has no runs.
+ * `runs` is null when it cannot be told: the window has not ended, the read failed, or the monitor's type records no run verdicts; 0 when none landed.
  */
 export async function previewMonitorReportingExcusedWindow(args: {
   ctx: ServiceContext;

@@ -152,7 +152,7 @@ function runsBefore(e: Episode, offset: number): number {
   return Number(at < n ? at : n);
 }
 
-/** Splits episodes at the edges of `spans` (ms-precise); weights are prorated by overlap, runs go where they sit. */
+/** Splits episodes at the edges of `spans` (ms-precise); weights are prorated by overlap, runs by their estimated positions (see runsBefore). */
 export function cutExcused(
   episodes: readonly Episode[],
   spans: readonly Span[],

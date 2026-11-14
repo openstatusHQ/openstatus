@@ -94,7 +94,7 @@ Select any month cell to open that monitor's month in a side sheet. The month is
 | Uptime | The month's figure and its coverage. A live month reads **So far**. |
 | Budget left | The downtime the target allows in the month minus the time already counted as down. Negative once the month is over budget. |
 | Budget left by day | A chart of the budget left at the end of each day, against an even burn from the full budget to zero, with each day's down and slow time as bars underneath. Where the budget ran out, a marker names the moment. A live month projects its current pace to the end of the month. |
-| What used the budget | Every down, slow, unmeasured and excused stretch of the month, newest first, with how it was treated: counted, counted as up, excused or not measured. |
+| What used the budget | The month's down, slow, unmeasured and excused stretches, newest first, with how each was treated: counted, counted as up, excused or not measured. It lists the latest 50 and says how many older ones there are. |
 
 - The header says whether the month is sealed, a preview or live.
 - Sealed months read from what was stored at sealing, so the detail of a month stays available after its checks expire.
@@ -172,10 +172,10 @@ The first line states the method. The second says when the file was generated, w
 | `uptime` | Percent, floored to three decimals. Empty without runs, or when every run was excused. |
 | `met` | `yes`, `no`, or empty without runs or when every run was excused. |
 | `sealed_at` | ISO timestamp, sealed rows only. |
-| `method` | `time` or `runs`, see [method](#method). |
+| `method` | `time`, see [method](#method). Empty for `none` rows. |
 | `time_zone` | The zone the month is in. |
-| `measured_ms`, `down_ms`, `excused_ms`, `unmeasured_ms` | Time in milliseconds, method `time` only. |
-| `coverage` | Measured share of the non-excused time, in percent; method `time` only. |
+| `measured_ms`, `down_ms`, `excused_ms`, `unmeasured_ms` | Time in milliseconds. |
+| `coverage` | Measured share of the non-excused time, in percent. |
 
 ## Maintenance
 
