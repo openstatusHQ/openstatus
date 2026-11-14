@@ -68,6 +68,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Latency vs Response Time",
       },
       {
+        slug: "concept/sla-uptime-budgets-and-credits",
+        label: "Understanding SLA Uptime, Budgets and Credits",
+      },
+      {
         slug: "concept/response-logs-and-retention",
         label: "Response Logs and Data Retention",
       },
@@ -176,6 +180,10 @@ export const docsNav: DocsNavSection[] = [
       {
         slug: "guides/how-to-set-up-saml-sso",
         label: "How to Set Up SAML Single Sign-On",
+      },
+      {
+        slug: "guides/how-to-track-a-contractual-sla",
+        label: "How to Track a Contractual SLA",
       },
       {
         slug: "guides/self-hosting-openstatus",

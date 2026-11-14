@@ -1,0 +1,87 @@
+---
+category: Concepts
+title: Understanding SLA Uptime, Budgets and Credits
+description: "How a monthly uptime commitment is measured, why openstatus weighs time instead of requests, how a downtime budget burns, why months are sealed, and how a missed month turns into a service credit."
+seo:
+  title: "SLA Uptime, Downtime Budgets and Service Credits Explained"
+---
+
+An availability commitment in a contract reads simple: "99.5% monthly uptime, 3% of fees back per 0.25% below." Turning that sentence into a number you can defend takes a few decisions: what counts as down, how time is weighed, what is excused, and when a month's result stops changing. This page explains the decisions openstatus makes, so the figures in a [reporting](/docs/reference/monitor-reporting) read the way your contract does.
+
+## Uptime is time, not requests
+
+A monitor checks on a schedule, from several regions. Counting checks would make a minute of downtime weigh more or less depending on how often you checked in it: change the interval mid-month, or lose a region for an hour, and the figure moves although nothing happened to your service.
+
+openstatus weighs **time** instead. Each scheduled run gets one verdict from its regions (OK, slow or failed, by majority), and that verdict stands until the next run. A five-minute outage costs five minutes, whether you check every 30 seconds or every minute.
+
+When there is no data, for a paused monitor, paused checks during a maintenance or a gap in scheduling, that time is **unmeasured**. It is neither up nor down; it lowers **coverage** instead. Coverage tells a reader how much of the month the figure is built on.
+
+```
+uptime = (measured time − down time) / measured time
+```
+
+## What counts as down
+
+Failed time always counts as down. Slow time depends on your contract:
+
+- Many contracts treat a response above a threshold, say one second, as unavailable. Turn on **Count slow responses as downtime** (strict mode) and slow time counts as down. A check is slow when it exceeds its monitor's own degraded threshold.
+- Otherwise slow time counts as up, and shows as a lenient stretch in the month's detail.
+
+## Excused downtime
+
+Contracts exclude some downtime: announced maintenance, outages the customer caused, failures of a provider the contract names. In openstatus you add these as **excused windows** with a kind and a reason. Time inside them leaves both sides of the fraction, so it neither helps nor hurts the month.
+
+Excusing is deliberate and manual. openstatus shows context, such as when the last window of the same kind was, but it does not check your contract's rules about notice periods or weekly limits. Whoever owns the contract decides what qualifies.
+
+## The downtime budget
+
+A target is also a budget. At 99.9% a 30-day month allows 43 minutes and 12 seconds of downtime; at 99.5%, 3 hours and 36 minutes. The month's detail shows the budget as it burns:
+
+- **Budget left** is what remains after the time already counted as down.
+- **Budget left by day** plots that remainder at the end of every day, against an even burn from the full budget to zero. A line above the even burn is ahead of plan; a line below it is spending faster than the month allows.
+- Bars under the line show each day's down and slow time, so you can tell an outage problem from a latency problem at a glance.
+- In the running month, the dashed line projects the current pace to the end of the month.
+
+The budget answers "how close are we", which a single uptime figure hides until it is too late.
+
+## Sealing: a month that no longer changes
+
+A figure you send to a customer must not move afterwards. openstatus **seals** each month for each monitor a few days after it ends: the measured, down, excused and unmeasured time, the down and slow stretches, the excused windows that applied, and the target and strict setting of that moment are stored and never recomputed.
+
+Until then, the previous month is a **preview** and the running month is **live and provisional**. A live month below target is a miss in progress, not a missed month. Changing a target or a credit schedule always applies from the next month, so a sealed month keeps the terms it started with.
+
+## From a missed month to a service credit
+
+A credit schedule turns a shortfall into a share of the fees:
+
+```
+shortfall = target − uptime
+steps     = shortfall / step size, rounded up
+credit    = min(steps × credit per step, cap)
+```
+
+With a 99.5% target, steps of 0.25 points and 3% per step:
+
+| Month's uptime | Shortfall | Steps | Credit |
+|---|---|---|---|
+| 99.500% | 0 | 0 | 0% (met) |
+| 99.400% | 0.10 | 1 | 3% |
+| 99.120% | 0.38 | 2 | 6% |
+| 98.000% | 1.50 | 6 | 18% |
+| 91.000% | 8.50 | 34 | 100% (capped) |
+
+A started step counts as a full one, and the shortfall is taken from the exact time, not from the rounded figure on screen. Each sealed month stores the credit it earned with the schedule that applied.
+
+Credits stay a percentage. openstatus does not know what your customer pays, and it does not invoice anything; it gives you a figure you can check and pass on.
+
+## Support credits
+
+Contracts often add credits for support: a share of the fees for every missed first response, update or resolution. The [incident reporting](/docs/reference/incident-management#support-credits) counts those misses per month and multiplies them by a **support credit per miss**. Linking it to a monitor reporting as its **support terms** keeps both kinds of credit with one commitment.
+
+Only incidents declared in openstatus count. Support requests handled only in a ticketing tool are not seen, so declare incidents at the customer's severity and record when the request arrived.
+
+## Related resources
+
+- **[Monitor reporting reference](/docs/reference/monitor-reporting)**: every rule behind the figures, the month detail, credits and the export.
+- **[Incident management reference](/docs/reference/incident-management#reporting)**: response, resolution and update targets, and support credits.
+- **[How to track a contractual SLA](/docs/guides/how-to-track-a-contractual-sla)**: the setup, step by step.
