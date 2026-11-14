@@ -9,12 +9,22 @@ import {
   SelectItem,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
 import { SelectTrigger } from "@radix-ui/react-select";
-import { useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { parseAsInteger, useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import {
+  parseAsInteger,
+  parseAsString,
+  useQueryState,
+  useQueryStates,
+} from "nuqs";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   EmptyStateActions,
@@ -67,11 +77,18 @@ import { MONTH_RANGES, searchParamsParsers } from "./search-params";
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [months, setMonths] = useQueryState(
     "months",
     searchParamsParsers.months,
   );
-  const [selected, setSelected] = useQueryState("monitor", parseAsInteger);
+  const [{ monitor: selected, month: selectedMonth }, setSelection] =
+    useQueryStates({ monitor: parseAsInteger, month: parseAsString });
+  const setSelected = useCallback(
+    (monitor: number | null, month: string | null = null) =>
+      void setSelection({ monitor, month: monitor ? month : null }),
+    [setSelection],
+  );
   const [excuse, setExcuse] = useState<{
     prefill: ExcusedWindowPrefill | null;
   } | null>(null);
@@ -84,12 +101,15 @@ export function Client() {
     error,
     refetch,
     isRefetching,
+    isPlaceholderData,
   } = useQuery({
     ...trpc.monitorReporting.get.queryOptions({
       id: Number.parseInt(id),
       months,
     }),
     enabled: allowed,
+    // a range switch is a shallow URL change: keep the current months on screen
+    placeholderData: keepPreviousData,
   });
   const { data: workspaceMonitors } = useQuery({
     ...trpc.monitor.list.queryOptions(),
@@ -100,7 +120,7 @@ export function Client() {
       policy
         ? getColumns(policy.months, {
             timeZone: policy.timeZone,
-            onSelect: (monitorId) => void setSelected(monitorId),
+            onSelect: setSelected,
           })
         : [],
     [policy, setSelected],
@@ -278,8 +298,8 @@ export function Client() {
             from midnight on the 1st in {policy.timeZone}. A month is sealed
             with the terms it started with once it has closed. The running month
             is live and provisional until it closes; a live month below target
-            is a miss in progress, not a missed month. Pick a monitor to see
-            what used its budget.
+            is a miss in progress, not a missed month. Pick a month to see what
+            used its budget.
           </SectionDescription>
         </SectionHeader>
         <div className="text-sm">
@@ -287,6 +307,18 @@ export function Client() {
           <Select
             value={String(months)}
             onValueChange={(value) => setMonths(Number(value) as 12 | 24)}
+            onOpenChange={(open) => {
+              if (!open) return;
+              for (const n of MONTH_RANGES) {
+                if (n === months) continue;
+                void queryClient.prefetchQuery(
+                  trpc.monitorReporting.get.queryOptions({
+                    id: Number.parseInt(id),
+                    months: n,
+                  }),
+                );
+              }
+            }}
           >
             <SelectTrigger asChild aria-label="Months shown">
               <Button
@@ -306,26 +338,33 @@ export function Client() {
             </SelectContent>
           </Select>
         </div>
-        <DataTable
-          columns={columns}
-          data={policy.monitors}
-          onRowClick={(row) => void setSelected(row.original.id)}
-          defaultPagination={{
-            pageIndex: 0,
-            pageSize: policy.monitors.length || 1,
-          }}
-          emptyState={
-            <DataTableEmpty>
-              <EmptyStateMedia>
-                <Shield />
-              </EmptyStateMedia>
-              <EmptyStateTitle>No monitors</EmptyStateTitle>
-              <EmptyStateDescription>
-                This reporting covers no monitors yet.
-              </EmptyStateDescription>
-            </DataTableEmpty>
-          }
-        />
+        <div
+          aria-busy={isPlaceholderData}
+          className={cn(
+            "transition-opacity",
+            isPlaceholderData && "opacity-60",
+          )}
+        >
+          <DataTable
+            columns={columns}
+            data={policy.monitors}
+            defaultPagination={{
+              pageIndex: 0,
+              pageSize: policy.monitors.length || 1,
+            }}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <Shield />
+                </EmptyStateMedia>
+                <EmptyStateTitle>No monitors</EmptyStateTitle>
+                <EmptyStateDescription>
+                  This reporting covers no monitors yet.
+                </EmptyStateDescription>
+              </DataTableEmpty>
+            }
+          />
+        </div>
         <SlaMonthLegend>
           <SlaMonthLegendItem swatch="bg-success/30">Met</SlaMonthLegendItem>
           <SlaMonthLegendItem swatch="bg-destructive/30">
@@ -379,12 +418,13 @@ export function Client() {
       <SlaMonitorMonthSheet
         policy={policy}
         monitor={selectedMonitor}
-        onClose={() => void setSelected(null)}
+        month={selectedMonth}
+        onClose={() => setSelected(null)}
         onExcuse={
           policy.archivedAt || !canEdit
             ? undefined
             : (prefill) => {
-                void setSelected(null);
+                setSelected(null);
                 setExcuse({ prefill });
               }
         }

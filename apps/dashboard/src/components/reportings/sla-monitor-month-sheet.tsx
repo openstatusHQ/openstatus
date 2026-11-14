@@ -68,6 +68,13 @@ const treatmentText: Record<SlaTreatment, string> = {
   unmeasured: "text-muted-foreground",
 };
 
+const monthStateNote: Record<MonitorMonth["state"], string> = {
+  live: "",
+  sealed: " · sealed",
+  preview: " · preview, not sealed yet",
+  none: "",
+};
+
 const unavailableText: Record<
   NonNullable<MonitorMonth["episodesUnavailable"]>,
   string
@@ -79,22 +86,30 @@ const unavailableText: Record<
     "This month was never sealed and its checks are no longer kept, so it has no judgement.",
 };
 
-/** One monitor's running month under the reporting. */
+/** One monitor's month under the reporting, the running one by default. */
 export function SlaMonitorMonthSheet({
   policy,
   monitor,
+  month,
   onClose,
   onExcuse,
 }: {
   policy: { id: number; name: string; timeZone: string };
   monitor: { id: number; name: string } | null;
+  /** YYYY-MM; null for the running month */
+  month?: string | null;
   onClose: () => void;
   /** absent when the viewer cannot add excused windows */
   onExcuse?: (prefill: ExcusedWindowPrefill | null) => void;
 }) {
   // keeps the body while the sheet slides out
-  const [shown, setShown] = useState(monitor);
-  if (monitor && monitor.id !== shown?.id) setShown(monitor);
+  const [shown, setShown] = useState(monitor ? { monitor, month } : null);
+  if (
+    monitor &&
+    (monitor.id !== shown?.monitor.id || (month ?? null) !== shown.month)
+  ) {
+    setShown({ monitor, month: month ?? null });
+  }
   return (
     <DataTableSheet
       open={monitor !== null}
@@ -104,7 +119,12 @@ export function SlaMonitorMonthSheet({
     >
       <DataTableSheetContent className="flex flex-col sm:max-w-md">
         {shown ? (
-          <SheetBody policy={policy} monitor={shown} onExcuse={onExcuse} />
+          <SheetBody
+            policy={policy}
+            monitor={shown.monitor}
+            month={shown.month ?? null}
+            onExcuse={onExcuse}
+          />
         ) : null}
       </DataTableSheetContent>
     </DataTableSheet>
@@ -114,10 +134,12 @@ export function SlaMonitorMonthSheet({
 function SheetBody({
   policy,
   monitor,
+  month,
   onExcuse,
 }: {
   policy: { id: number; name: string; timeZone: string };
   monitor: { id: number; name: string };
+  month: string | null;
   onExcuse?: (prefill: ExcusedWindowPrefill | null) => void;
 }) {
   const trpc = useTRPC();
@@ -131,9 +153,14 @@ function SheetBody({
     trpc.monitorReporting.monitorMonth.queryOptions({
       id: policy.id,
       monitorId: monitor.id,
+      ...(month ? { month } : {}),
     }),
   );
   const latestCounted = data?.episodes?.find((e) => e.treatment === "counted");
+  // windows lock once their month is sealed or older than the previous one
+  const canExcuse = data
+    ? data.state === "live" || data.state === "preview"
+    : month === null;
 
   return (
     <>
@@ -143,8 +170,10 @@ function SheetBody({
         </DataTableSheetTitle>
         <DataTableSheetDescription>
           {data
-            ? `${formatSlaMonth(data.month, { year: true })} so far in ${data.timeZone}`
-            : `This month so far in ${policy.timeZone}`}
+            ? `${formatSlaMonth(data.month, { year: true })}${data.state === "live" ? " so far" : ""} in ${data.timeZone}${monthStateNote[data.state]}`
+            : month
+              ? `${formatSlaMonth(`${month}-01`, { year: true })} in ${policy.timeZone}`
+              : `This month so far in ${policy.timeZone}`}
           {data?.terms
             ? ` · ${formatSlaTarget(data.terms.target)}% target`
             : null}
@@ -197,7 +226,7 @@ function SheetBody({
             Open monitor
           </NextLink>
         </Button>
-        {onExcuse ? (
+        {onExcuse && canExcuse ? (
           <Button
             size="sm"
             onClick={() =>
@@ -227,13 +256,19 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
       <MetricCardGroup className="grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
         <MetricCard>
           <MetricCardHeader>
-            <MetricCardTitle className="uppercase">So far</MetricCardTitle>
+            <MetricCardTitle className="uppercase">
+              {month.state === "live" ? "So far" : "Uptime"}
+            </MetricCardTitle>
           </MetricCardHeader>
           <MetricCardValue
             className={cn(
               "font-mono tabular-nums",
               month.uptime !== null &&
-                (month.met === false ? "text-destructive" : "text-info"),
+                (month.met === false
+                  ? "text-destructive"
+                  : month.state === "live"
+                    ? "text-info"
+                    : "text-success"),
             )}
           >
             {month.uptime === null ? "—" : `${formatSlaUptime(month.uptime)}%`}
@@ -266,7 +301,7 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           </MetricCardValue>
           <p className="text-muted-foreground text-xs">
             {budget
-              ? `of ${formatSlaDuration(budget.budgetMs)} this month`
+              ? `of ${formatSlaDuration(budget.budgetMs)} ${month.state === "live" ? "this month" : "that month"}`
               : "no budget for this month"}
           </p>
         </MetricCard>
@@ -284,7 +319,7 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
               {formatSlaDuration(budget.burnedMs)}
             </span>{" "}
             burned, {formatBudgetLeft(budget.leftMs)}
-            {budget.paceMs !== null ? (
+            {budget.paceMs !== null && month.state === "live" ? (
               <>
                 {" "}
                 · on pace for{" "}
@@ -342,7 +377,9 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           </ol>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Nothing yet: every check this month was up.
+            {month.state === "live"
+              ? "Nothing yet: every check this month was up."
+              : "Nothing: every check that month was up."}
           </p>
         )}
         {episodes && episodes.length > EPISODES_SHOWN ? (

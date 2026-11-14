@@ -77,13 +77,24 @@ function monthTitle(m: PolicyMonth): string {
   return `${result}, preview until sealed${terms}${suffix}`;
 }
 
-function MonthCell({ month }: { month: PolicyMonth }) {
+function MonthCell({
+  month,
+  onSelect,
+}: {
+  month: PolicyMonth;
+  onSelect?: () => void;
+}) {
   const title = monthTitle(month);
+  const Comp = onSelect ? "button" : "span";
   return (
-    <span
+    <Comp
+      type={onSelect ? "button" : undefined}
       title={title}
+      onClick={onSelect}
       className={cn(
-        "block rounded-md border px-1 py-1.5 text-center font-mono text-xs tabular-nums",
+        "block w-full rounded-md border px-1 py-1.5 text-center font-mono text-xs tabular-nums",
+        onSelect &&
+          "focus-visible:ring-ring/50 cursor-pointer outline-none hover:brightness-125 focus-visible:ring-[3px]",
         month.state === "preview" && "border-dashed",
         month.met === true && "border-success/40 text-success",
         month.met === false && "border-destructive/40 text-destructive",
@@ -102,7 +113,7 @@ function MonthCell({ month }: { month: PolicyMonth }) {
         {month.uptime === null ? "—" : formatSlaUptime(month.uptime)}
       </span>
       <span className="sr-only">{title}</span>
-    </span>
+    </Comp>
   );
 }
 
@@ -112,7 +123,11 @@ export function getColumns(
   {
     timeZone,
     onSelect,
-  }: { timeZone: string; onSelect?: (monitorId: number) => void },
+  }: {
+    timeZone: string;
+    /** `month` as YYYY-MM, null for the running month */
+    onSelect?: (monitorId: number, month?: string | null) => void;
+  },
 ): ColumnDef<PolicyMonitor>[] {
   const current = months.at(-1);
   return [
@@ -121,17 +136,7 @@ export function getColumns(
       header: "Monitor",
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col items-start">
-          {onSelect ? (
-            <button
-              type="button"
-              onClick={() => onSelect(row.original.id)}
-              className="decoration-muted-foreground/50 max-w-full truncate text-left font-medium underline-offset-2 hover:underline hover:decoration-dashed"
-            >
-              {row.original.name}
-            </button>
-          ) : (
-            <span className="truncate font-medium">{row.original.name}</span>
-          )}
+          <span className="truncate font-medium">{row.original.name}</span>
           <span className="text-muted-foreground truncate text-xs">
             {row.original.url}
           </span>
@@ -159,7 +164,23 @@ export function getColumns(
           </span>
         </span>
       ),
-      cell: ({ row }) => <MonthCell month={row.original.months[i]} />,
+      cell: ({ row }) => {
+        const cell = row.original.months[i];
+        return (
+          <MonthCell
+            month={cell}
+            onSelect={
+              onSelect && cell.state !== "none"
+                ? () =>
+                    onSelect(
+                      row.original.id,
+                      month === current ? null : month.slice(0, 7),
+                    )
+                : undefined
+            }
+          />
+        );
+      },
       meta: {
         headerClassName: "px-1 text-center font-mono text-xs",
         cellClassName: "p-1",
