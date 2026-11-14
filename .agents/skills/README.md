@@ -15,7 +15,7 @@ mkdir -p .claude/skills && for d in .agents/skills/*/; do n=$(basename "$d"); ln
 | Skill | Source | License |
 |---|---|---|
 | `screenshot` | this repo, wraps `scripts/screenshot.mjs` | AGPL-3.0 (repo) |
-| `grill-me`, `codebase-design` | github.com/mattpocock/skills | MIT |
+| `grill-me`, `grilling`, `codebase-design` | github.com/mattpocock/skills | MIT |
 
 To ship another one: install it, add `!.agents/skills/<name>/` to
 `.gitignore`, and a row here with its license. Only self-contained skills
