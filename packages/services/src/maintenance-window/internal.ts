@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "@openstatus/db";
+import { and, asc, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorMaintenanceWindow,
@@ -33,7 +33,8 @@ export async function validateWindowMonitorIds(args: {
   workspaceId: number;
   monitorIds: ReadonlyArray<number>;
 }): Promise<number[]> {
-  const ids = Array.from(new Set(args.monitorIds));
+  // sorted like monitorIdsOf, so audit diffs ignore request order
+  const ids = Array.from(new Set(args.monitorIds)).sort((a, b) => a - b);
   const rows = await args.tx
     .select({ id: monitor.id })
     .from(monitor)
@@ -83,6 +84,7 @@ export async function monitorIdsOf(tx: DB, windowId: number) {
         windowId,
       ),
     )
+    .orderBy(asc(monitorMaintenanceWindowToMonitor.monitorId))
     .all();
   return rows.map((r) => r.id);
 }

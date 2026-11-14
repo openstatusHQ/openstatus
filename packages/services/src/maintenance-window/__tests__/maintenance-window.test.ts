@@ -16,7 +16,7 @@ import { ConflictError } from "../../errors";
 import { createMaintenanceWindow } from "../create";
 import { deleteMaintenanceWindow } from "../delete";
 import { getMaintenanceWindow } from "../list";
-import { endMaintenanceWindow } from "../update";
+import { endMaintenanceWindow, updateMaintenanceWindow } from "../update";
 
 let ctx: ServiceContext;
 let otherCtx: ServiceContext;
@@ -144,6 +144,37 @@ describe("maintenance windows", () => {
         now: new Date(from.getTime() + 1000),
       });
       expect(ended.to.getTime()).toBeGreaterThan(ended.from.getTime());
+    });
+  });
+  test("reordering monitors is not an audit change", async () => {
+    await withTestTransaction(async (tx) => {
+      const a = await insertMonitor(tx, ctx.workspace.id);
+      const b = await insertMonitor(tx, ctx.workspace.id);
+      const now = Date.now();
+      const window = await createMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: {
+          title: "Upgrade",
+          from: new Date(now + hour),
+          to: new Date(now + 2 * hour),
+          monitorIds: [a.id, b.id],
+        },
+      });
+      await updateMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: { id: window.id, monitorIds: [b.id, a.id] },
+      });
+      const row = await tx
+        .select({ before: auditLog.before, after: auditLog.after })
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.action, "monitor_maintenance_window.update"),
+            eq(auditLog.entityId, String(window.id)),
+          ),
+        )
+        .get();
+      expect(row?.after?.monitorIds).toEqual(row?.before?.monitorIds);
     });
   });
 });
