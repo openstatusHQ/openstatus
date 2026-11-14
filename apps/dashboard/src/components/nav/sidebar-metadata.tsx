@@ -69,11 +69,10 @@ export type SidebarMetadataListItem = {
 };
 
 /**
- * Metadata section in `SidebarRight`. Three shapes:
+ * Metadata section in `SidebarRight`. Two shapes:
  *  - `type: "table"` (default) — label/value rows with copy-on-tap.
  *  - `type: "list"` — clickable rows with optional active state, leading
  *    icon, trailing meta and a hover-revealed action.
- *  - `type: "content"` — the caller's own rows, for entries taller than a list row.
  */
 export type SidebarMetadataProps =
   | {
@@ -88,12 +87,6 @@ export type SidebarMetadataProps =
       type: "list";
       items?: SidebarMetadataListItem[];
       /** Shown when `items` is empty. Defaults to "None". */
-      emptyMessage?: string;
-    }
-  | {
-      label: string;
-      type: "content";
-      children: React.ReactNode;
       emptyMessage?: string;
     };
 
@@ -113,9 +106,7 @@ export function SidebarMetadata(props: SidebarMetadataProps) {
         </SidebarGroupLabel>
         <CollapsibleContent>
           <SidebarGroupContent className="border-t">
-            {props.type === "content" ? (
-              props.children
-            ) : props.type === "list" ? (
+            {props.type === "list" ? (
               <SidebarMetadataList
                 items={props.items ?? []}
                 emptyMessage={emptyMessage}

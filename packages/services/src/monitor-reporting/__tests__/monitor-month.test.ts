@@ -24,12 +24,8 @@ import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import type { Verdict } from "../episodes";
 import { getMonitorReporting } from "../get";
+import { getMonitorReportingMonth } from "../monitor-month";
 import {
-  getMonitorReportingMonth,
-  listMonitorReportingMonths,
-} from "../monitor-month";
-import {
-  type EpisodesCall,
   episodesPipesFrom,
   failingEpisodesPipes,
   runsEvery,
@@ -836,84 +832,6 @@ describe("getMonitorReportingMonth", () => {
       getMonitorReportingMonth({
         ctx: key,
         input: { id: 1, monitorId: 1 },
-        now,
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-  });
-});
-
-describe("listMonitorReportingMonths", () => {
-  test("every active reporting's running month from one episodes read", async () => {
-    await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx);
-      const utc = await insertPolicy(tx, [api.id], { name: "UTC" });
-      const berlin = await insertPolicy(tx, [api.id], {
-        name: "Berlin",
-        timeZone: "Europe/Berlin",
-        target: 99_500,
-      });
-      await insertPolicy(tx, [api.id], {
-        name: "Archived",
-        archivedAt: new Date(Date.UTC(2026, 9, 1)),
-      });
-      const calls: EpisodesCall[] = [];
-      const pipes = episodesPipesFrom(
-        () =>
-          runsEvery(NOV - DAY, now.getTime(), 10 * MIN, (t) =>
-            t >= ERROR_AT && t < ERROR_AT + 30 * MIN ? "error" : "ok",
-          ),
-        calls,
-      );
-      const res = await listMonitorReportingMonths({
-        ctx: { ...ctx, db: tx },
-        input: { monitorId: api.id },
-        now,
-        episodesPipes: pipes,
-      });
-      expect(calls).toHaveLength(1);
-      // Berlin's November starts an hour before UTC's
-      expect(calls[0]).toMatchObject({
-        fromDate: NOV - HOUR,
-        toDate: now.getTime(),
-      });
-      expect(res.map((r) => r.id)).toEqual([utc.id, berlin.id]);
-      for (const id of [utc.id, berlin.id]) {
-        const one = await getMonitorReportingMonth({
-          ctx: { ...ctx, db: tx },
-          input: { id, monitorId: api.id },
-          now,
-          episodesPipes: pipes,
-        });
-        const row = res.find((r) => r.id === id);
-        expect(row?.month.downMs).toBe(one.downMs);
-        expect(row?.month.budget).toEqual(one.budget);
-      }
-      expect(res[1]).toMatchObject({
-        timeZone: "Europe/Berlin",
-        liveTerms: { target: 99_500 },
-        month: { state: "live", timeZone: "Europe/Berlin" },
-      });
-    });
-  });
-
-  test("a monitor under no active reporting has none", async () => {
-    await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx);
-      const res = await listMonitorReportingMonths({
-        ctx: { ...ctx, db: tx },
-        input: { monitorId: api.id },
-        now,
-        episodesPipes: failingEpisodesPipes(),
-      });
-      expect(res).toEqual([]);
-    });
-  });
-
-  test("requires the plan", async () => {
-    await expect(
-      listMonitorReportingMonths({
-        ctx: freeCtx,
-        input: { monitorId: 1 },
         now,
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);

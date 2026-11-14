@@ -161,11 +161,3 @@ export const RemoveMonitorReportingExcusedWindowInput = z.object({
 export type RemoveMonitorReportingExcusedWindowInput = z.input<
   typeof RemoveMonitorReportingExcusedWindowInput
 >;
-
-/** A monitor's running month under each active reporting covering it. */
-export const ListMonitorReportingMonthsInput = z.object({
-  monitorId: z.number().int().positive(),
-});
-export type ListMonitorReportingMonthsInput = z.input<
-  typeof ListMonitorReportingMonthsInput
->;

@@ -14,7 +14,6 @@ export { listMonitorReportingMaintenances } from "./maintenances";
 export { claimMonitorSlaMissNotices } from "./miss-notice";
 export {
   getMonitorReportingMonth,
-  listMonitorReportingMonths,
   type MonitorReportingMonth,
   type MonitorReportingMonthEpisode,
 } from "./monitor-month";
@@ -29,7 +28,6 @@ export {
   GetMonitorReportingExcusedWindowInput,
   GetMonitorReportingMonthInput,
   GetMonitorReportingInput,
-  ListMonitorReportingMonthsInput,
   ListMonitorReportingsForMonitorInput,
   ListMonitorReportingsInput,
   MonitorReportingIdInput,

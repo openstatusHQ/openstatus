@@ -1,42 +1,31 @@
-import { and, asc, eq, gt, isNull, lt } from "@openstatus/db";
+import { and, eq, gt, lt } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
-  monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
-  monitorSlaPolicy,
-  monitorSlaPolicyToMonitor,
   monitorSlaSealedEpisode,
   monitorSlaSealedMonth,
   pageComponent,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import { type DB, defaultTb, getReadDb, type ServiceContext } from "../context";
+import { type DB, getReadDb, type ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
 import { cutExcused, type Episode, slaBudget } from "./episodes";
 import { mergeSpans, type Span } from "./excused";
-import {
-  clipEpisodes,
-  fetchSlaEpisodes,
-  type SlaEpisodesPipes,
-  slaEpisodesPipes,
-} from "./fetch-episodes";
+import { clipEpisodes, type SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
   episodeMonths,
-  type FetchedEpisodes,
   fetchMonthEpisodes,
   loadPolicyMembers,
-  loadTermsHistory,
   memberEpisodes,
   memberTimeMonth,
   type PolicyMember,
   policyExcusedSpans,
   termsForMonth,
-  termsStateOf,
 } from "./internal";
 import {
   coveredSpan,
@@ -44,10 +33,7 @@ import {
   monthOf,
   storedMonth,
 } from "./months";
-import {
-  GetMonitorReportingMonthInput,
-  ListMonitorReportingMonthsInput,
-} from "./schemas";
+import { GetMonitorReportingMonthInput } from "./schemas";
 
 /** counted: down time; lenient: degraded under a non-strict policy; excused: cut by an excused window. */
 export type MonitorReportingMonthEpisodeTreatment =
@@ -244,8 +230,7 @@ type MonthPolicy = {
 };
 
 /**
- * One member's month in the policy zone, from a seal or from episodes. Reads
- * episodes itself unless `fetched` already covers the month.
+ * One member's month in the policy zone, from a seal or from episodes.
  */
 async function memberMonth(args: {
   ctx: ServiceContext;
@@ -255,7 +240,6 @@ async function memberMonth(args: {
   month: string;
   now: Date;
   maintenances: MonthMaintenance[];
-  fetched?: FetchedEpisodes;
   episodesPipes?: SlaEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
@@ -339,16 +323,15 @@ async function memberMonth(args: {
     if (state) {
       const [terms, fetched] = await Promise.all([
         termsForMonth(db, policy, month),
-        args.fetched ??
-          fetchMonthEpisodes({
-            ctx,
-            members: [member],
-            months: [month],
-            timeZone,
-            now,
-            pipes: args.episodesPipes,
-            sleep: args.sleep,
-          }),
+        fetchMonthEpisodes({
+          ctx,
+          members: [member],
+          months: [month],
+          timeZone,
+          now,
+          pipes: args.episodesPipes,
+          sleep: args.sleep,
+        }),
       ]);
       cell = memberTimeMonth({
         month,
@@ -480,103 +463,6 @@ export async function getMonitorReportingMonth(args: {
     episodesPipes: args.episodesPipes,
     sleep: args.sleep,
   });
-}
-
-/**
- * The running month of a monitor under each active reporting covering it,
- * from one episodes read and one maintenance read.
- */
-export async function listMonitorReportingMonths(args: {
-  ctx: ServiceContext;
-  input: ListMonitorReportingMonthsInput;
-  now?: Date;
-  episodesPipes?: SlaEpisodesPipes;
-  sleep?: (ms: number) => Promise<void>;
-}) {
-  const { ctx } = args;
-  requireScope(ctx, "monitors:read");
-  const input = ListMonitorReportingMonthsInput.parse(args.input);
-  assertMonitorSlaLimit(ctx);
-  const db = getReadDb(ctx);
-  const now = args.now ?? new Date();
-
-  const rows = await db
-    .select({
-      policy: monitorSlaPolicy,
-      member: {
-        id: monitor.id,
-        name: monitor.name,
-        url: monitor.url,
-        jobType: monitor.jobType,
-        regions: monitor.regions,
-        periodicity: monitor.periodicity,
-        memberSince: monitorSlaPolicyToMonitor.createdAt,
-      },
-    })
-    .from(monitorSlaPolicyToMonitor)
-    .innerJoin(
-      monitorSlaPolicy,
-      eq(monitorSlaPolicy.id, monitorSlaPolicyToMonitor.monitorSlaPolicyId),
-    )
-    .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
-    .where(
-      and(
-        eq(monitorSlaPolicyToMonitor.monitorId, input.monitorId),
-        eq(monitorSlaPolicy.workspaceId, ctx.workspace.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitorSlaPolicy.archivedAt),
-        isNull(monitor.deletedAt),
-      ),
-    )
-    .orderBy(asc(monitorSlaPolicy.id))
-    .all();
-  if (rows.length === 0) return [];
-
-  const ranges = rows.map(({ policy }) =>
-    monthRange(monthOf(now, policy.timeZone), policy.timeZone),
-  );
-  const span = {
-    start: Math.min(...ranges.map((r) => r.start)),
-    end: Math.max(...ranges.map((r) => r.end)),
-  };
-  const member = rows[0].member;
-  const fetchRange = { start: span.start, end: now.getTime() };
-  const [history, maintenances, read] = await Promise.all([
-    loadTermsHistory(
-      db,
-      ctx.workspace.id,
-      rows.map((r) => r.policy),
-    ),
-    loadMonitorMaintenances(db, ctx.workspace.id, member.id, span),
-    fetchSlaEpisodes({
-      monitors: [member],
-      fromMs: fetchRange.start,
-      toMs: fetchRange.end,
-      pipes: () => args.episodesPipes ?? slaEpisodesPipes(ctx.tb ?? defaultTb),
-      throttleMs: 0,
-      sleep: args.sleep,
-    }),
-  ]);
-  const fetched: FetchedEpisodes = { ...read, range: fetchRange };
-
-  return Promise.all(
-    rows.map(async ({ policy, member }) => ({
-      id: policy.id,
-      name: policy.name,
-      timeZone: policy.timeZone,
-      ...termsStateOf(history, policy, now),
-      month: await memberMonth({
-        ctx,
-        db,
-        policy,
-        member,
-        month: monthOf(now, policy.timeZone),
-        now,
-        maintenances,
-        fetched,
-      }),
-    })),
-  );
 }
 
 export type MonitorReportingMonth = Awaited<
