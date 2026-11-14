@@ -25,5 +25,5 @@ CREATE TABLE `monitor_maintenance_window_to_monitor` (
 );
 --> statement-breakpoint
 CREATE INDEX `monitor_maintenance_window_to_monitor_monitor_id_idx` ON `monitor_maintenance_window_to_monitor` (`monitor_id`);--> statement-breakpoint
-ALTER TABLE `monitor_sla_excused_window` ADD `monitor_maintenance_window_id` integer REFERENCES monitor_maintenance_window(id);--> statement-breakpoint
+ALTER TABLE `monitor_sla_excused_window` ADD `monitor_maintenance_window_id` integer REFERENCES monitor_maintenance_window(id) ON DELETE set null;--> statement-breakpoint
 ALTER TABLE `monitor` DROP COLUMN `maintenance_mode`;
