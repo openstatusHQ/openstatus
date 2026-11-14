@@ -3,6 +3,8 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   monitorSlaPolicyToMonitor,
   page,
   pageComponent,
@@ -17,8 +19,8 @@ import { completeMonths, monthOf } from "./months";
 import { GetMonitorReportingInput } from "./schemas";
 
 /**
- * Started status-page maintenances on a policy's monitors in the months
- * `getMonitorReporting` shows, and whether each monitor pauses checks during one.
+ * Started status-page maintenances and maintenance windows on a policy's
+ * monitors in the months `getMonitorReporting` shows, each with its mode.
  */
 export async function listMonitorReportingMaintenances(args: {
   ctx: ServiceContext;
@@ -45,7 +47,6 @@ export async function listMonitorReportingMaintenances(args: {
     .select({
       id: monitor.id,
       name: monitor.name,
-      maintenanceMode: monitor.maintenanceMode,
     })
     .from(monitorSlaPolicyToMonitor)
     .innerJoin(monitor, eq(monitor.id, monitorSlaPolicyToMonitor.monitorId))
@@ -78,43 +79,74 @@ export async function listMonitorReportingMaintenances(args: {
     .orderBy(asc(page.id))
     .all();
 
-  const touched = await db
-    .select({
-      id: maintenance.id,
-      title: maintenance.title,
-      from: maintenance.from,
-      to: maintenance.to,
-      pageId: maintenance.pageId,
-      pageTitle: page.title,
-      monitorId: pageComponent.monitorId,
-    })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      maintenance,
-      eq(maintenance.id, maintenancesToPageComponents.maintenanceId),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
-    )
-    .leftJoin(page, eq(page.id, maintenance.pageId))
-    .where(
-      and(
-        eq(maintenance.workspaceId, ctx.workspace.id),
-        inArray(pageComponent.monitorId, memberIds),
-        lte(maintenance.from, now),
-        gt(maintenance.to, rangeStart),
-      ),
-    )
-    .all();
+  const [touched, windowRows] = await Promise.all([
+    db
+      .select({
+        id: maintenance.id,
+        title: maintenance.title,
+        from: maintenance.from,
+        to: maintenance.to,
+        pageId: maintenance.pageId,
+        pageTitle: page.title,
+        monitorId: pageComponent.monitorId,
+      })
+      .from(maintenancesToPageComponents)
+      .innerJoin(
+        maintenance,
+        eq(maintenance.id, maintenancesToPageComponents.maintenanceId),
+      )
+      .innerJoin(
+        pageComponent,
+        eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
+      )
+      .leftJoin(page, eq(page.id, maintenance.pageId))
+      .where(
+        and(
+          eq(maintenance.workspaceId, ctx.workspace.id),
+          inArray(pageComponent.monitorId, memberIds),
+          lte(maintenance.from, now),
+          gt(maintenance.to, rangeStart),
+        ),
+      )
+      .all(),
+    db
+      .select({
+        id: monitorMaintenanceWindow.id,
+        title: monitorMaintenanceWindow.title,
+        mode: monitorMaintenanceWindow.mode,
+        from: monitorMaintenanceWindow.from,
+        to: monitorMaintenanceWindow.to,
+        monitorId: monitorMaintenanceWindowToMonitor.monitorId,
+      })
+      .from(monitorMaintenanceWindowToMonitor)
+      .innerJoin(
+        monitorMaintenanceWindow,
+        eq(
+          monitorMaintenanceWindow.id,
+          monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+        ),
+      )
+      .where(
+        and(
+          eq(monitorMaintenanceWindow.workspaceId, ctx.workspace.id),
+          inArray(monitorMaintenanceWindowToMonitor.monitorId, memberIds),
+          lte(monitorMaintenanceWindow.from, now),
+          gt(monitorMaintenanceWindow.to, rangeStart),
+        ),
+      )
+      .all(),
+  ]);
 
   type Window = {
+    /** page: a status-page maintenance, which pauses checks. window: a maintenance window. */
+    kind: "page" | "window";
     id: number;
     title: string;
     from: Date;
     to: Date;
     pageId: number | null;
     pageTitle: string | null;
+    mode: "pause" | "continue";
     monitorIds: number[];
     /** Listed once, under the month it started in, or the first month shown. */
     month: string;
@@ -122,12 +154,14 @@ export async function listMonitorReportingMaintenances(args: {
     excusable: boolean;
   };
   const sealed = await sealedMonthsOf(db, policy);
-  const windows = new Map<number, Window>();
-  for (const row of touched) {
-    if (row.monitorId === null) continue;
-    const { monitorId, ...rest } = row;
-    const window = windows.get(row.id) ?? {
-      ...rest,
+  const windows = new Map<string, Window>();
+  const add = (
+    key: string,
+    row: Omit<Window, "monitorIds" | "month" | "excusable">,
+    monitorId: number,
+  ) => {
+    const window = windows.get(key) ?? {
+      ...row,
       monitorIds: [],
       month: row.from < rangeStart ? months[0] : monthOf(row.from, timeZone),
       excusable:
@@ -137,7 +171,18 @@ export async function listMonitorReportingMaintenances(args: {
     if (!window.monitorIds.includes(monitorId)) {
       window.monitorIds.push(monitorId);
     }
-    windows.set(row.id, window);
+    windows.set(key, window);
+  };
+  for (const { monitorId, ...row } of touched) {
+    if (monitorId === null) continue;
+    add(`page:${row.id}`, { ...row, kind: "page", mode: "pause" }, monitorId);
+  }
+  for (const { monitorId, ...row } of windowRows) {
+    add(
+      `window:${row.id}`,
+      { ...row, kind: "window", pageId: null, pageTitle: null },
+      monitorId,
+    );
   }
 
   return {

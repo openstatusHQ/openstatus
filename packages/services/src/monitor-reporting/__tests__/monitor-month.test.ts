@@ -2,6 +2,8 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   monitorSlaExcusedWindow,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
@@ -164,6 +166,31 @@ async function insertMaintenance(
     .insert(maintenancesToPageComponents)
     .values({ maintenanceId: m.id, pageComponentId: c.id });
   return m;
+}
+
+async function insertWindow(
+  tx: Tx,
+  monitorId: number,
+  title: string,
+  from: number,
+  to: number,
+  mode: "pause" | "continue",
+) {
+  const w = await tx
+    .insert(monitorMaintenanceWindow)
+    .values({
+      workspaceId: ctx.workspace.id,
+      title,
+      mode,
+      from: new Date(from),
+      to: new Date(to),
+    })
+    .returning()
+    .get();
+  await tx
+    .insert(monitorMaintenanceWindowToMonitor)
+    .values({ monitorMaintenanceWindowId: w.id, monitorId });
+  return w;
 }
 
 const ERROR_AT = Date.UTC(2026, 10, 5, 10);
@@ -351,7 +378,6 @@ describe("getMonitorReportingMonth", () => {
           ),
         ),
       });
-      expect(res.maintenanceMode).toBe("pause");
       expect(res.episodes).toEqual([
         {
           kind: "unmeasured",
@@ -360,7 +386,7 @@ describe("getMonitorReportingMonth", () => {
           runs: 0,
           weightedMs: 4 * HOUR,
           treatment: "unmeasured",
-          maintenance: { id: upgrade.id, title: "DB upgrade" },
+          maintenance: { kind: "page", id: upgrade.id, title: "DB upgrade" },
         },
       ]);
       // the unmeasured gap does not grow the budget
@@ -374,25 +400,59 @@ describe("getMonitorReportingMonth", () => {
     });
   });
 
+  test("a pause-mode maintenance window on a monitor without a status page names its gap", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const gap = Date.UTC(2026, 10, 8);
+      const deploy = await insertWindow(
+        tx,
+        api.id,
+        "Deploy slot",
+        gap,
+        gap + 2 * HOUR,
+        "pause",
+      );
+      const res = await getMonitorReportingMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id },
+        now,
+        episodesPipes: episodesPipesFrom(() =>
+          runsEvery(NOV, now.getTime(), 10 * MIN).filter(
+            (r) => r.cronTimestamp < gap || r.cronTimestamp >= gap + 2 * HOUR,
+          ),
+        ),
+      });
+      expect(res.episodes?.[0]?.maintenance).toEqual({
+        kind: "window",
+        id: deploy.id,
+        title: "Deploy slot",
+      });
+      expect(res.countedMaintenances).toEqual([]);
+    });
+  });
+
   test("continue-mode maintenances count unless an excused window covers them", async () => {
     await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx, { maintenanceMode: "continue" });
+      const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       const counted = Date.UTC(2026, 10, 9);
       const covered = Date.UTC(2026, 10, 10);
-      const live = await insertMaintenance(
+      const live = await insertWindow(
         tx,
         api.id,
         "Failover drill",
         counted,
         counted + 2 * HOUR,
+        "continue",
       );
-      await insertMaintenance(
+      await insertWindow(
         tx,
         api.id,
         "Excused drill",
         covered,
         covered + HOUR,
+        "continue",
       );
       await insertExcused(tx, policy.id, covered - HOUR, covered + 2 * HOUR);
       const inside = (t: number, at: number, ms: number) =>
@@ -407,11 +467,12 @@ describe("getMonitorReportingMonth", () => {
             : null,
         ),
       });
-      expect(res.maintenanceMode).toBe("continue");
       expect(res.countedMaintenances).toEqual([
         {
+          kind: "window",
           id: live.id,
           title: "Failover drill",
+          mode: "continue",
           from: new Date(counted),
           to: new Date(counted + 2 * HOUR),
         },
@@ -535,7 +596,11 @@ describe("getMonitorReportingMonth", () => {
         res.episodes?.map((e) => [e.kind, e.treatment, e.maintenance]),
       ).toEqual([
         ["error", "excused", null],
-        ["unmeasured", "unmeasured", { id: upgrade.id, title: "Kernel patch" }],
+        [
+          "unmeasured",
+          "unmeasured",
+          { kind: "page", id: upgrade.id, title: "Kernel patch" },
+        ],
         ["degraded", "lenient", null],
         ["error", "counted", null],
       ]);
@@ -645,14 +710,15 @@ describe("getMonitorReportingMonth", () => {
 
   test("an upcoming continue-mode maintenance is not listed as counted yet", async () => {
     await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx, { maintenanceMode: "continue" });
+      const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      await insertMaintenance(
+      await insertWindow(
         tx,
         api.id,
         "Upgrade",
         now.getTime() + 2 * DAY,
         now.getTime() + 2 * DAY + 6 * HOUR,
+        "continue",
       );
       const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
@@ -667,14 +733,15 @@ describe("getMonitorReportingMonth", () => {
 
   test("a continue-mode maintenance still counts in the time to come", async () => {
     await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx, { maintenanceMode: "continue" });
+      const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      await insertMaintenance(
+      await insertWindow(
         tx,
         api.id,
         "Migration",
         now.getTime() - HOUR,
         now.getTime() + 3 * HOUR,
+        "continue",
       );
       const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },

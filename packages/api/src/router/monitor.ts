@@ -11,7 +11,6 @@ import { getMonitorUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
   type CreateMonitorInput,
   type UpdateMonitorGeneralInput,
-  UpdateMonitorMaintenanceModeInput,
   bulkUpdateMonitors,
   cloneMonitor,
   createMonitor,
@@ -28,7 +27,6 @@ import {
   regenerateHeartbeatToken,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
-  updateMonitorMaintenanceMode,
   updateMonitorNotifiers,
   updateMonitorOtel,
   updateMonitorPublic,
@@ -236,20 +234,6 @@ export const monitorRouter = createTRPCRouter({
             id: input.id,
             followRedirects: input.followRedirects,
           },
-        });
-      } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  updateMaintenanceMode: protectedProcedure
-    .meta({ track: Events.UpdateMonitor })
-    .input(UpdateMonitorMaintenanceModeInput)
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await updateMonitorMaintenanceMode({
-          ctx: toServiceCtx(ctx),
-          input,
         });
       } catch (err) {
         toTRPCError(err);

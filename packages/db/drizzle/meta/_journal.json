@@ -694,6 +694,13 @@
       "when": 1794555953702,
       "tag": "0098_wise_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "6",
+      "when": 1794686806345,
+      "tag": "0099_fixed_apocalypse",
+      "breakpoints": true
     }
   ]
 }

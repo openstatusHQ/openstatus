@@ -25,24 +25,6 @@ export const columns: ColumnDef<PolicyMonitor>[] = [
     meta: { cellClassName: "max-w-56 min-w-36" },
   },
   {
-    accessorKey: "maintenanceMode",
-    header: "During maintenance",
-    cell: ({ row }) =>
-      row.original.maintenanceMode === "pause" ? (
-        <span className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-warning">Checks pause</span>
-          <Link
-            href={`/monitors/${row.original.id}/edit#maintenance`}
-            className="text-muted-foreground text-xs"
-          >
-            Change
-          </Link>
-        </span>
-      ) : (
-        <span>Checks continue</span>
-      ),
-  },
-  {
     id: "statusPages",
     header: "Status pages",
     cell: ({ row }) => {

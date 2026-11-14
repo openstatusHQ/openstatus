@@ -33,3 +33,4 @@ export * from "./slack_users";
 export * from "./monitor_heartbeat_state";
 export * from "./monitor_sla_policies";
 export * from "./incident_sla_policies";
+export * from "./monitor_maintenance_windows";

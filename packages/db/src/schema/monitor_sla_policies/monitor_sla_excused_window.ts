@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { monitorMaintenanceWindow } from "../monitor_maintenance_windows/monitor_maintenance_window";
 import { user } from "../users";
 import { workspace } from "../workspaces/workspace";
 import { monitorSlaExcusedWindowKinds } from "./constants";
@@ -21,6 +22,10 @@ export const monitorSlaExcusedWindow = sqliteTable(
     reason: text("reason").notNull(),
     from: integer("from", { mode: "timestamp" }).notNull(),
     to: integer("to", { mode: "timestamp" }).notNull(),
+    // provenance only: the excused window keeps its own from/to
+    monitorMaintenanceWindowId: integer(
+      "monitor_maintenance_window_id",
+    ).references(() => monitorMaintenanceWindow.id, { onDelete: "set null" }),
     createdBy: integer("created_by").references(() => user.id, {
       onDelete: "set null",
     }),

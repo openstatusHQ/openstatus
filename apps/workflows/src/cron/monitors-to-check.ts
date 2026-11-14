@@ -1,17 +1,15 @@
-import { type db as defaultDb, and, eq, ne, notInArray } from "@openstatus/db";
+import { type db as defaultDb, and, eq, ne, not } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
 
-import { monitorsInMaintenance } from "../checker/maintenance";
+import { monitorInMaintenance } from "../checker/maintenance";
 
-/** Monitors the cron dispatches for a periodicity; maintenance pauses only those set to "pause". */
+/** Monitors the cron dispatches for a periodicity, minus those in a pause-mode maintenance. */
 export function listMonitorsToCheck(
   db: Pick<typeof defaultDb, "select">,
   periodicity: MonitorPeriodicity,
   now: Date = new Date(),
 ) {
-  const pausedMonitors = monitorsInMaintenance(db, { at: now, mode: "pause" });
-
   return db
     .select()
     .from(monitor)
@@ -20,7 +18,7 @@ export function listMonitorsToCheck(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
         ne(monitor.jobType, "heartbeat"),
-        notInArray(monitor.id, pausedMonitors),
+        not(monitorInMaintenance(db, { at: now, mode: "pause" })),
       ),
     )
     .all();

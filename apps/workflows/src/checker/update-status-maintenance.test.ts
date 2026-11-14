@@ -4,6 +4,8 @@ import {
   maintenancesToPageComponents,
   monitor,
   monitorIncidentTable,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   monitorStatusTable,
   notificationOutbox,
   notificationTrigger,
@@ -33,7 +35,7 @@ import {
 import { env } from "../env";
 import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { checkerRoute } from "./index";
-import { monitorsInMaintenance } from "./maintenance";
+import { isInContinuedMaintenance } from "./maintenance";
 import { providerToFunction } from "./utils";
 
 const HOUR_MS = 3_600_000;
@@ -95,6 +97,10 @@ afterAll(async () => {
     .where(eq(maintenance.workspaceId, workspaceId))
     .run();
   await db
+    .delete(monitorMaintenanceWindow)
+    .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+    .run();
+  await db
     .delete(pageComponent)
     .where(eq(pageComponent.workspaceId, workspaceId))
     .run();
@@ -102,36 +108,61 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
-async function monitorUnderMaintenance(maintenanceMode: "pause" | "continue") {
+/** continue: a maintenance window. pause: a status page maintenance, which always pauses. */
+async function monitorUnderMaintenance(mode: "pause" | "continue") {
   const row = await createMonitor(workspaceId, {
     regions: "ams",
     status: "active",
     active: true,
-    maintenanceMode,
   });
   await linkNotificationToMonitor(notificationId, row.id);
+  const now = Date.now();
+  const from = new Date(now - HOUR_MS);
+  const to = new Date(now + HOUR_MS);
+
+  if (mode === "continue") {
+    const [window] = await db
+      .insert(monitorMaintenanceWindow)
+      .values({ title: "db upgrade", mode, from, to, workspaceId })
+      .returning();
+    if (!window) throw new Error("window insert returned no row");
+    await db
+      .insert(monitorMaintenanceWindowToMonitor)
+      .values({ monitorMaintenanceWindowId: window.id, monitorId: row.id })
+      .run();
+    return {
+      monitorId: row.id,
+      endAt: (end: Date) =>
+        db
+          .update(monitorMaintenanceWindow)
+          .set({ to: end })
+          .where(eq(monitorMaintenanceWindow.id, window.id))
+          .run(),
+    };
+  }
+
   const component = await createPageComponent(workspaceId, pageId, {
     type: "monitor",
     monitorId: row.id,
   });
-  const now = Date.now();
-  const [window] = await db
+  const [m] = await db
     .insert(maintenance)
-    .values({
-      title: "db upgrade",
-      message: "",
-      from: new Date(now - HOUR_MS),
-      to: new Date(now + HOUR_MS),
-      workspaceId,
-      pageId,
-    })
+    .values({ title: "db upgrade", message: "", from, to, workspaceId, pageId })
     .returning();
-  if (!window) throw new Error("maintenance insert returned no row");
+  if (!m) throw new Error("maintenance insert returned no row");
   await db
     .insert(maintenancesToPageComponents)
-    .values({ maintenanceId: window.id, pageComponentId: component.id })
+    .values({ maintenanceId: m.id, pageComponentId: component.id })
     .run();
-  return { monitorId: row.id, maintenanceId: window.id };
+  return {
+    monitorId: row.id,
+    endAt: (end: Date) =>
+      db
+        .update(maintenance)
+        .set({ to: end })
+        .where(eq(maintenance.id, m.id))
+        .run(),
+  };
 }
 
 function postError(monitorId: number, cronTimestamp = Date.now()) {
@@ -185,15 +216,10 @@ describe("updateStatus for a monitor that keeps checking during maintenance", ()
   });
 
   test("a failure that persists after the window opens the incident then", async () => {
-    const { monitorId, maintenanceId } =
-      await monitorUnderMaintenance("continue");
+    const { monitorId, endAt } = await monitorUnderMaintenance("continue");
     await postError(monitorId);
 
-    await db
-      .update(maintenance)
-      .set({ to: new Date(Date.now() - 1000) })
-      .where(eq(maintenance.id, maintenanceId))
-      .run();
+    await endAt(new Date(Date.now() - 1000));
     const res = await postError(monitorId);
 
     expect(res.status).toBe(200);
@@ -204,14 +230,9 @@ describe("updateStatus for a monitor that keeps checking during maintenance", ()
   });
 
   test("a check that ran inside the window but arrives after it changes nothing", async () => {
-    const { monitorId, maintenanceId } =
-      await monitorUnderMaintenance("continue");
+    const { monitorId, endAt } = await monitorUnderMaintenance("continue");
     const ranAt = Date.now() - 2000;
-    await db
-      .update(maintenance)
-      .set({ to: new Date(Date.now() - 1000) })
-      .where(eq(maintenance.id, maintenanceId))
-      .run();
+    await endAt(new Date(Date.now() - 1000));
 
     const res = await postError(monitorId, ranAt);
 
@@ -236,29 +257,20 @@ describe("updateStatus for a monitor that pauses during maintenance", () => {
   });
 });
 
-describe("monitorsInMaintenance window end", () => {
-  async function inMaintenanceAt(at: Date, monitorId: number) {
-    const row = await monitorsInMaintenance(db, {
-      at,
-      mode: "continue",
-      where: eq(monitor.id, monitorId),
-    }).get();
-    return row !== undefined;
-  }
-
+describe("isInContinuedMaintenance window end", () => {
   test("the end instant is outside the window, the instant before is inside", async () => {
-    const { monitorId, maintenanceId } =
-      await monitorUnderMaintenance("continue");
+    const { monitorId, endAt } = await monitorUnderMaintenance("continue");
     const to = new Date(Math.floor(Date.now() / 1000) * 1000 + HOUR_MS);
-    await db
-      .update(maintenance)
-      .set({ to })
-      .where(eq(maintenance.id, maintenanceId))
-      .run();
+    await endAt(to);
 
-    expect(await inMaintenanceAt(to, monitorId)).toBe(false);
-    expect(await inMaintenanceAt(new Date(to.getTime() - 1), monitorId)).toBe(
-      true,
-    );
+    expect(await isInContinuedMaintenance(monitorId, to)).toBe(false);
+    expect(
+      await isInContinuedMaintenance(monitorId, new Date(to.getTime() - 1)),
+    ).toBe(true);
+  });
+
+  test("a status page maintenance is never a continued one", async () => {
+    const { monitorId } = await monitorUnderMaintenance("pause");
+    expect(await isInContinuedMaintenance(monitorId, new Date())).toBe(false);
   });
 });

@@ -45,7 +45,6 @@ const monitor: Monitor = {
   heartbeatGrace: null,
   heartbeatCron: null,
   heartbeatTz: null,
-  maintenanceMode: "pause",
 };
 
 const notification: Notification = {

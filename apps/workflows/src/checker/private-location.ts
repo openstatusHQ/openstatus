@@ -9,7 +9,7 @@ import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
 import { findOpenIncident, resolveIncident } from "./incident-utils";
-import { maintenanceActiveAt } from "./maintenance";
+import { monitorInMaintenance } from "./maintenance";
 
 const logger = getLogger(["workflow"]);
 
@@ -76,27 +76,14 @@ export async function updateStatusPrivate(c: Context<Env>) {
     }
 
     const now = new Date();
+    // private-location checks cannot be stopped from here, so either mode only ignores the result
     const activeMaintenance = await db
-      .select({ id: schema.maintenance.id })
-      .from(schema.maintenance)
-      .innerJoin(
-        schema.maintenancesToPageComponents,
-        eq(
-          schema.maintenancesToPageComponents.maintenanceId,
-          schema.maintenance.id,
-        ),
-      )
-      .innerJoin(
-        schema.pageComponent,
-        eq(
-          schema.pageComponent.id,
-          schema.maintenancesToPageComponents.pageComponentId,
-        ),
-      )
+      .select({ id: schema.monitor.id })
+      .from(schema.monitor)
       .where(
         and(
-          maintenanceActiveAt(now),
-          eq(schema.pageComponent.monitorId, monitorIdNumber),
+          eq(schema.monitor.id, monitorIdNumber),
+          monitorInMaintenance(db, { at: now, mode: "any" }),
         ),
       )
       .get();

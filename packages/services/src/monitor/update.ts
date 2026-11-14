@@ -20,7 +20,6 @@ import {
   UpdateMonitorConfigInput,
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
-  UpdateMonitorMaintenanceModeInput,
   UpdateMonitorOtelInput,
   UpdateMonitorPublicInput,
   UpdateMonitorResponseTimeInput,
@@ -264,35 +263,6 @@ export async function updateMonitorFollowRedirects(args: {
     const updated = await tx
       .update(monitor)
       .set({ followRedirects: input.followRedirects, updatedAt: new Date() })
-      .where(eq(monitor.id, existing.id))
-      .returning()
-      .get();
-    await emitAudit(tx, ctx, {
-      action: "monitor.update",
-      entityType: "monitor",
-      entityId: existing.id,
-      before: await monitorAuditSnapshot(existing),
-      after: await monitorAuditSnapshot(updated),
-    });
-  });
-}
-
-export async function updateMonitorMaintenanceMode(args: {
-  ctx: ServiceContext;
-  input: UpdateMonitorMaintenanceModeInput;
-}): Promise<void> {
-  const { ctx } = args;
-  requireScope(ctx, "monitors:write");
-  const input = UpdateMonitorMaintenanceModeInput.parse(args.input);
-  await withTransaction(ctx, async (tx) => {
-    const existing = await getMonitorInWorkspace({
-      tx,
-      id: input.id,
-      workspaceId: ctx.workspace.id,
-    });
-    const updated = await tx
-      .update(monitor)
-      .set({ maintenanceMode: input.maintenanceMode, updatedAt: new Date() })
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();

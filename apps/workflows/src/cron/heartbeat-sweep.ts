@@ -1,17 +1,12 @@
 import { getLogger } from "@logtape/logtape";
 import { db, sql } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
-import {
-  maintenance,
-  maintenancesToPageComponents,
-  monitor,
-  monitorHeartbeatState,
-  pageComponent,
-} from "@openstatus/db/src/schema";
+import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
 import { HEARTBEAT_REGION, formatHeartbeatSeconds } from "@openstatus/utils";
 
 import { triggerNotifications } from "../checker/alerting";
+import { monitorInMaintenance } from "../checker/maintenance";
 import { enqueueOutbox } from "../checker/outbox";
 import {
   EVENT_TYPE,
@@ -69,14 +64,7 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
             AND ${monitor.status} = 'error'
           )
         )
-        AND ${monitor.id} NOT IN (
-          SELECT ${pageComponent.monitorId} FROM ${maintenancesToPageComponents}
-          JOIN ${maintenance} ON ${maintenance.id} = ${maintenancesToPageComponents.maintenanceId}
-          JOIN ${pageComponent} ON ${pageComponent.id} = ${maintenancesToPageComponents.pageComponentId}
-          WHERE ${maintenance.from} <= ${Math.floor(now / 1000)}
-            AND ${maintenance.to} > ${Math.floor(now / 1000)}
-            AND ${pageComponent.monitorId} IS NOT NULL
-        )
+        AND NOT ${monitorInMaintenance(db, { at: new Date(now), mode: "any" })}
       LIMIT ${CANDIDATE_LIMIT}
     `),
   );

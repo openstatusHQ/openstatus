@@ -3,6 +3,8 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedEpisode,
@@ -62,10 +64,18 @@ export type MonitorReportingMonthEpisode = {
   weightedMs: number;
   treatment: MonitorReportingMonthEpisodeTreatment;
   /** a pause-mode maintenance that overlaps an unmeasured episode */
-  maintenance: { id: number; title: string } | null;
+  maintenance: Pick<MonthMaintenance, "kind" | "id" | "title"> | null;
 };
 
-type MonthMaintenance = { id: number; title: string; from: Date; to: Date };
+/** page: a status-page maintenance, which pauses checks. window: a maintenance window. */
+type MonthMaintenance = {
+  kind: "page" | "window";
+  id: number;
+  title: string;
+  mode: "pause" | "continue";
+  from: Date;
+  to: Date;
+};
 
 function overlapMs(a: Span, spans: readonly Span[]): number {
   let sum = 0;
@@ -117,7 +127,14 @@ function labelMaintenances(
       if (ms > 0 && (!best || ms > best.ms)) best = { window: w, ms };
     }
     return best
-      ? { ...e, maintenance: { id: best.window.id, title: best.window.title } }
+      ? {
+          ...e,
+          maintenance: {
+            kind: best.window.kind,
+            id: best.window.id,
+            title: best.window.title,
+          },
+        }
       : e;
   });
 }
@@ -148,26 +165,14 @@ function monthBudget(args: {
   };
 }
 
-type MonitorMaintenances = {
-  mode: "pause" | "continue";
-  windows: MonthMaintenance[];
-};
-
 /** The monitor's maintenances touching `range`, upcoming ones included. */
 async function loadMonitorMaintenances(
   db: DB,
   workspaceId: number,
   monitorId: number,
   range: Span,
-): Promise<MonitorMaintenances> {
-  const [row, windows] = await Promise.all([
-    db
-      .select({ maintenanceMode: monitor.maintenanceMode })
-      .from(monitor)
-      .where(
-        and(eq(monitor.id, monitorId), eq(monitor.workspaceId, workspaceId)),
-      )
-      .get(),
+): Promise<MonthMaintenance[]> {
+  const [pages, windows] = await Promise.all([
     db
       .selectDistinct({
         id: maintenance.id,
@@ -193,10 +198,41 @@ async function loadMonitorMaintenances(
           gt(maintenance.to, new Date(range.start)),
         ),
       )
-      .orderBy(asc(maintenance.from), asc(maintenance.id))
+      .all(),
+    db
+      .select({
+        id: monitorMaintenanceWindow.id,
+        title: monitorMaintenanceWindow.title,
+        mode: monitorMaintenanceWindow.mode,
+        from: monitorMaintenanceWindow.from,
+        to: monitorMaintenanceWindow.to,
+      })
+      .from(monitorMaintenanceWindowToMonitor)
+      .innerJoin(
+        monitorMaintenanceWindow,
+        eq(
+          monitorMaintenanceWindow.id,
+          monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+        ),
+      )
+      .where(
+        and(
+          eq(monitorMaintenanceWindow.workspaceId, workspaceId),
+          eq(monitorMaintenanceWindowToMonitor.monitorId, monitorId),
+          lt(monitorMaintenanceWindow.from, new Date(range.end)),
+          gt(monitorMaintenanceWindow.to, new Date(range.start)),
+        ),
+      )
       .all(),
   ]);
-  return { mode: row?.maintenanceMode ?? "pause", windows };
+  return [
+    ...pages.map((m) => ({
+      ...m,
+      kind: "page" as const,
+      mode: "pause" as const,
+    })),
+    ...windows.map((w) => ({ ...w, kind: "window" as const })),
+  ].sort((a, b) => a.from.getTime() - b.from.getTime() || a.id - b.id);
 }
 
 type MonthPolicy = {
@@ -218,12 +254,13 @@ async function memberMonth(args: {
   member: PolicyMember;
   month: string;
   now: Date;
-  maintenances: MonitorMaintenances;
+  maintenances: MonthMaintenance[];
   fetched?: FetchedEpisodes;
   episodesPipes?: SlaEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx, db, policy, member, month, now, maintenances } = args;
+  const pausing = maintenances.filter((m) => m.mode === "pause");
   const { timeZone } = policy;
   const range = monthRange(month, timeZone);
 
@@ -344,16 +381,13 @@ async function memberMonth(args: {
           end: whole.end,
         };
         // checks pause under a pause-mode maintenance, so its time ahead goes unmeasured
-        const notAhead =
-          maintenances.mode === "pause"
-            ? mergeSpans([
-                ...spans.map((x) => ({
-                  from: new Date(x.start),
-                  to: new Date(x.end),
-                })),
-                ...maintenances.windows,
-              ])
-            : spans;
+        const notAhead = mergeSpans([
+          ...spans.map((x) => ({
+            from: new Date(x.start),
+            to: new Date(x.end),
+          })),
+          ...pausing,
+        ]);
         budget = monthBudget({
           monthMs: whole.end - whole.start,
           excusedMs: overlapMs(whole, spans),
@@ -372,7 +406,6 @@ async function memberMonth(args: {
     }
   }
 
-  const pausing = maintenances.mode === "pause";
   const nowMs = now.getTime();
   return {
     ...cell,
@@ -384,25 +417,23 @@ async function memberMonth(args: {
     },
     monitor: { id: member.id, name: member.name },
     range,
-    maintenanceMode: maintenances.mode,
     budget,
     episodes: episodes
       ? labelMaintenances(
           episodes.sort((a, b) => b.startedAt - a.startedAt),
-          pausing ? maintenances.windows : [],
+          pausing,
         )
       : null,
     episodesUnavailable,
     /** continue-mode maintenances in the month so far with time no excused window covers: checks ran and count */
-    countedMaintenances: pausing
-      ? []
-      : maintenances.windows.filter((w) => {
-          const part = {
-            start: Math.max(w.from.getTime(), range.start),
-            end: Math.min(w.to.getTime(), range.end, nowMs),
-          };
-          return part.end - part.start > overlapMs(part, spans);
-        }),
+    countedMaintenances: maintenances.filter((w) => {
+      if (w.mode !== "continue") return false;
+      const part = {
+        start: Math.max(w.from.getTime(), range.start),
+        end: Math.min(w.to.getTime(), range.end, nowMs),
+      };
+      return part.end - part.start > overlapMs(part, spans);
+    }),
   };
 }
 

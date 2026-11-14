@@ -2,6 +2,8 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
   page,
@@ -147,6 +149,36 @@ async function insertMaintenance(
   return m;
 }
 
+async function insertWindow(
+  tx: Tx,
+  args: {
+    title: string;
+    mode: "pause" | "continue";
+    from: Date;
+    to: Date;
+    monitorIds: number[];
+  },
+) {
+  const w = await tx
+    .insert(monitorMaintenanceWindow)
+    .values({
+      workspaceId: ctx.workspace.id,
+      title: args.title,
+      mode: args.mode,
+      from: args.from,
+      to: args.to,
+    })
+    .returning()
+    .get();
+  await tx.insert(monitorMaintenanceWindowToMonitor).values(
+    args.monitorIds.map((monitorId) => ({
+      monitorMaintenanceWindowId: w.id,
+      monitorId,
+    })),
+  );
+  return w;
+}
+
 const utc = (y: number, m: number, d: number, h = 0) =>
   new Date(Date.UTC(y, m - 1, d, h));
 
@@ -154,10 +186,7 @@ describe("listMonitorReportingMaintenances", () => {
   test("finds windows through the monitors' status page components, once per window", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
-      const web = await insertMonitor(tx, {
-        name: "Web",
-        maintenanceMode: "continue",
-      });
+      const web = await insertMonitor(tx, { name: "Web" });
       const outside = await insertMonitor(tx, { name: "Not in policy" });
       const policy = await insertPolicy(tx, [api.id, web.id]);
       const main = await insertPage(tx, "Main", [api.id, web.id, outside.id]);
@@ -220,6 +249,8 @@ describe("listMonitorReportingMaintenances", () => {
         "Network move",
       ]);
       expect(res.windows[0]).toMatchObject({
+        kind: "page",
+        mode: "pause",
         id: both.id,
         pageId: main.page.id,
         pageTitle: "Main",
@@ -240,7 +271,6 @@ describe("listMonitorReportingMaintenances", () => {
         {
           id: api.id,
           name: "API",
-          maintenanceMode: "pause",
           statusPages: [
             { id: main.page.id, title: "Main" },
             { id: partner.page.id, title: "Partner" },
@@ -249,7 +279,6 @@ describe("listMonitorReportingMaintenances", () => {
         {
           id: web.id,
           name: "Web",
-          maintenanceMode: "continue",
           statusPages: [{ id: main.page.id, title: "Main" }],
         },
       ]);
@@ -268,8 +297,51 @@ describe("listMonitorReportingMaintenances", () => {
       });
       expect(res.windows).toEqual([]);
       expect(res.monitors).toEqual([
-        { id: api.id, name: "API", maintenanceMode: "pause", statusPages: [] },
+        { id: api.id, name: "API", statusPages: [] },
       ]);
+    });
+  });
+
+  test("lists maintenance windows with their own mode, without a status page", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, { name: "API" });
+      const web = await insertMonitor(tx, { name: "Web" });
+      const policy = await insertPolicy(tx, [api.id, web.id]);
+      const main = await insertPage(tx, "Main", [api.id]);
+      await insertMaintenance(tx, {
+        pageId: main.page.id,
+        title: "Page maintenance",
+        from: utc(2026, 11, 2),
+        to: utc(2026, 11, 2, 1),
+        componentIds: [main.components.get(api.id) ?? 0],
+      });
+      const window = await insertWindow(tx, {
+        title: "Contract migration",
+        mode: "continue",
+        from: utc(2026, 11, 4),
+        to: utc(2026, 11, 4, 2),
+        monitorIds: [api.id, web.id],
+      });
+
+      const res = await listMonitorReportingMaintenances({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+      });
+
+      expect(
+        res.windows.map((w) => [w.kind, w.title, w.mode, w.monitorIds]),
+      ).toEqual([
+        ["window", "Contract migration", "continue", [api.id, web.id]],
+        ["page", "Page maintenance", "pause", [api.id]],
+      ]);
+      expect(res.windows[0]).toMatchObject({
+        id: window.id,
+        pageId: null,
+        pageTitle: null,
+        month: "2026-11-01",
+        excusable: true,
+      });
     });
   });
 

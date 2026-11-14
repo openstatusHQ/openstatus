@@ -41,7 +41,7 @@ import { formatSlaMonth } from "@/data/reportings.client";
 import { formatDurationShort, formatWindow } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-/** Status page maintenances that touched a reporting's monitors, newest month first. */
+/** Maintenance windows and status page maintenances that touched a reporting's monitors, newest month first. */
 export function ReportingMaintenance({
   policyId,
   months,
@@ -58,12 +58,7 @@ export function ReportingMaintenance({
   );
   if (!data) return null;
 
-  const names = new Map(
-    data.monitors.map((m) => [
-      m.id,
-      m.maintenanceMode === "pause" ? `${m.name} (paused)` : m.name,
-    ]),
-  );
+  const names = new Map(data.monitors.map((m) => [m.id, m.name]));
   const groups = [...data.months]
     .reverse()
     .map((month) => ({
@@ -77,11 +72,12 @@ export function ReportingMaintenance({
       <SectionHeader>
         <SectionTitle>Maintenance</SectionTitle>
         <SectionDescription>
-          Status page maintenance windows that touched this reporting&apos;s
-          monitors. While a window is active, a monitor set to pause is not
-          checked at all: that time is left out of both sides of its uptime and
-          is never counted. A monitor set to continue is checked as usual, and
-          the window counts like any other time unless you excuse it.
+          Maintenance windows and status page maintenances that touched this
+          reporting&apos;s monitors. While one that pauses checks is active, its
+          monitors are not checked at all: that time is left out of both sides
+          of their uptime and is never counted. Under one that keeps checking,
+          monitors are checked as usual and the time counts like any other
+          unless you excuse it. Status page maintenances always pause checks.
         </SectionDescription>
       </SectionHeader>
       {data.monitors.length > 0 ? (
@@ -101,8 +97,8 @@ export function ReportingMaintenance({
           </EmptyStateMedia>
           <EmptyStateTitle>No maintenance windows</EmptyStateTitle>
           <EmptyStateDescription>
-            None of the status pages showing these monitors had a maintenance in
-            the last {months} months.
+            None of these monitors had a maintenance in the last {months}{" "}
+            months.
           </EmptyStateDescription>
         </EmptyStateContainer>
       ) : (
@@ -117,16 +113,20 @@ export function ReportingMaintenance({
               </EventGroupHeader>
               <EventList>
                 {windows.map((w) => (
-                  <EventRow key={w.id}>
+                  <EventRow key={`${w.kind}:${w.id}`}>
                     <EventRowDate date={w.from} />
                     <EventRowStatus>
                       <StatusDot variant="info" />
-                      <span>{w.pageTitle ?? "Maintenance"}</span>
+                      <span>
+                        {w.kind === "window"
+                          ? "Maintenance window"
+                          : (w.pageTitle ?? "Maintenance")}
+                      </span>
                     </EventRowStatus>
                     <EventRowContent>
                       <EventRowTitle
                         href={
-                          w.pageId
+                          w.kind === "page" && w.pageId
                             ? `/status-pages/${w.pageId}/maintenances/${w.id}`
                             : undefined
                         }
@@ -140,6 +140,11 @@ export function ReportingMaintenance({
                             .join(", ")}
                         </span>
                         <span>{formatWindow(w.from, w.to)}</span>
+                        <span>
+                          {w.mode === "pause"
+                            ? "Checks paused"
+                            : "Checks continued"}
+                        </span>
                       </EventRowMeta>
                     </EventRowContent>
                     <EventRowDuration>
