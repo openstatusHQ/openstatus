@@ -18,10 +18,6 @@ export {
   type MonitorReportingMonth,
   type MonitorReportingMonthEpisode,
 } from "./monitor-month";
-export {
-  getMonitorReportingReport,
-  type MonitorReportingReport,
-} from "./report";
 export { type SealMonitorSlaMonthsResult, sealMonitorSlaMonths } from "./seal";
 export { previewMonitorReportingExcusedWindow } from "./preview-excused-window";
 export { removeMonitorReportingExcusedWindow } from "./remove-excused-window";
@@ -32,7 +28,6 @@ export {
   ExportMonitorReportingInput,
   GetMonitorReportingExcusedWindowInput,
   GetMonitorReportingMonthInput,
-  GetMonitorReportingReportInput,
   GetMonitorReportingInput,
   ListMonitorReportingMonthsInput,
   ListMonitorReportingsForMonitorInput,

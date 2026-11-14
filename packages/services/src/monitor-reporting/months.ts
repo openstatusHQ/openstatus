@@ -1,11 +1,6 @@
 import { TZDate } from "@date-fns/tz";
 import type { monitorSlaSealedMonth } from "@openstatus/db/src/schema";
-import {
-  type MonitorSlaCredit,
-  type MonitorSlaCreditSchedule,
-  type MonitorSlaMethod,
-  slaCredit,
-} from "@openstatus/db/src/schema/monitor_sla_policies/constants";
+import type { MonitorSlaMethod } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 
 import { monthRange } from "../frozen-uptime/compute";
 import { type Counts, NO_RUNS } from "../frozen-uptime/quorum";
@@ -14,12 +9,6 @@ import { cutExcused, type Episode, evaluateSlaPeriod } from "./episodes";
 import type { Span } from "./excused";
 
 export const LAST_TWELVE = 12;
-
-export type SlaTerms = {
-  target: number;
-  strict: boolean;
-  creditSchedule: MonitorSlaCreditSchedule | null;
-};
 
 export type MonitorSlaMonth = {
   month: string;
@@ -33,7 +22,7 @@ export type MonitorSlaMonth = {
   /** IANA zone the month boundaries are in */
   timeZone: string;
   /** the terms that judged the month; null with no judgement */
-  terms: SlaTerms | null;
+  terms: { target: number; strict: boolean } | null;
   /** run verdicts; null without any, or when the excused runs could not be read */
   counts: Counts | null;
   /** run verdicts inside excused windows, dropped from both sides; null with `counts` */
@@ -47,8 +36,6 @@ export type MonitorSlaMonth = {
   unmeasuredMs: number | null;
   /** measured share of the covered, non-excused time; thousandths of a percent */
   coverage: number | null;
-  /** computed under the terms' schedule, provisional until sealed; null without a schedule or a judgement */
-  credit: MonitorSlaCredit | null;
   sealed: { at: Date; target: number; strict: boolean } | null;
 };
 
@@ -202,7 +189,6 @@ export function emptyMonth(args: {
     uptime: null,
     met: null,
     ...NO_TIME,
-    credit: null,
     sealed: null,
   };
 }
@@ -234,7 +220,7 @@ export function timeMonth(args: {
   episodes: readonly Episode[];
   covered: Span;
   excusedSpans: readonly Span[];
-  terms: SlaTerms;
+  terms: { target: number; strict: boolean };
   timeZone: string;
 }): MonitorSlaMonth {
   const { terms } = args;
@@ -264,11 +250,7 @@ export function timeMonth(args: {
     state: args.state,
     method: "time",
     timeZone: args.timeZone,
-    terms: {
-      target: terms.target,
-      strict: terms.strict,
-      creditSchedule: terms.creditSchedule,
-    },
+    terms: { target: terms.target, strict: terms.strict },
     counts: anyRuns ? all : null,
     excused: anyRuns ? excused : null,
     uptime: result.uptime,
@@ -278,12 +260,6 @@ export function timeMonth(args: {
     excusedMs: result.excusedMs,
     unmeasuredMs: result.unmeasuredMs,
     coverage: result.coverage,
-    credit: slaCredit({
-      up: result.measuredMs - result.downMs,
-      total: result.measuredMs,
-      target: terms.target,
-      schedule: terms.creditSchedule,
-    }),
     sealed: null,
   };
 }
@@ -302,11 +278,7 @@ export function storedMonth(args: {
     state: "sealed",
     method: seal.method,
     timeZone: seal.timeZone,
-    terms: {
-      target: seal.target,
-      strict: seal.strict,
-      creditSchedule: seal.creditSchedule,
-    },
+    terms: { target: seal.target, strict: seal.strict },
     counts: { ok: seal.ok, degraded: seal.degraded, error: seal.error },
     excused: {
       ok: seal.excusedOk,
@@ -320,10 +292,6 @@ export function storedMonth(args: {
     excusedMs: seal.excusedMs,
     unmeasuredMs: seal.unmeasuredMs,
     coverage: seal.coverage,
-    credit:
-      seal.creditSteps === null || seal.creditPct === null
-        ? null
-        : { steps: seal.creditSteps, pct: seal.creditPct },
     sealed: { at: seal.sealedAt, target: seal.target, strict: seal.strict },
   };
 }

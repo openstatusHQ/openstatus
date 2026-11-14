@@ -1,4 +1,3 @@
-import { incidentSlaPolicy } from "@openstatus/db/src/schema";
 import type { IncidentSlaSnapshot } from "@openstatus/db/src/schema/incident_sla_policies/constants";
 import {
   createIncident,
@@ -74,8 +73,6 @@ describe("getIncidentSlaAttainment", () => {
         response: empty,
         resolution: empty,
         missedUpdates: 0,
-        misses: 0,
-        creditPct: null,
       });
     });
   });
@@ -208,8 +205,6 @@ describe("getIncidentSlaAttainment", () => {
         // past due without a stamp yet: still open until the miss is recorded
         resolution: { within: 1, missed: 0, open: 1, total: 2 },
         missedUpdates: 2,
-        misses: 3,
-        creditPct: null,
       });
       expect(byMonth["2026-11-01"]).toEqual({
         month: "2026-11-01",
@@ -217,8 +212,6 @@ describe("getIncidentSlaAttainment", () => {
         response: { within: 1, missed: 0, open: 1, total: 2 },
         resolution: { within: 0, missed: 0, open: 2, total: 2 },
         missedUpdates: 0,
-        misses: 0,
-        creditPct: null,
       });
       expect(byMonth["2025-12-01"]?.incidents).toBe(0);
     });
@@ -265,117 +258,6 @@ describe("getIncidentSlaAttainment", () => {
       await expect(
         getIncidentSlaAttainment({ ctx: freeCtx, now: NOW }),
       ).rejects.toBeInstanceOf(ForbiddenError);
-    });
-  });
-
-  test("support credit per month: every recorded miss times the current credit per miss, explained or not", async () => {
-    await withTestTransaction(async (tx) => {
-      const ws = team.id;
-      await tx.insert(incidentSlaPolicy).values({
-        workspaceId: ws,
-        targets: snapshot.targets,
-        creditPerMissPct: 5,
-      });
-      // response and resolution both missed, one explained; one missed update
-      const missed = await createIncident(
-        ws,
-        {
-          severity: "critical",
-          status: "resolved",
-          declaredAt: at("2026-09-02T10:00:00Z"),
-          startedAt: at("2026-09-02T10:00:00Z"),
-          slaSnapshot: snapshot,
-          responseMetAt: at("2026-09-02T12:00:00Z"),
-          responseBreachDueAt: at("2026-09-02T11:00:00Z"),
-          responseMissReason: "Paged the wrong rotation",
-          resolutionStoppedAt: at("2026-09-02T16:00:00Z"),
-          resolutionBreachDueAt: at("2026-09-02T14:00:00Z"),
-        },
-        tx,
-      );
-      await createIncidentEvent(
-        missed.id,
-        {
-          type: "sla_update_missed",
-          source: "system",
-          createdAt: at("2026-09-02T12:00:00Z"),
-          message: "Update due 2026-09-02T12:00:00.000Z missed (every 2h)",
-        },
-        tx,
-      );
-      // met in time: earns nothing
-      await createIncident(
-        ws,
-        {
-          severity: "critical",
-          status: "resolved",
-          declaredAt: at("2026-08-02T10:00:00Z"),
-          startedAt: at("2026-08-02T10:00:00Z"),
-          slaSnapshot: snapshot,
-          responseMetAt: at("2026-08-02T10:10:00Z"),
-          resolutionStoppedAt: at("2026-08-02T11:00:00Z"),
-        },
-        tx,
-      );
-      // canceled with a miss: earns nothing
-      await createIncident(
-        ws,
-        {
-          severity: "critical",
-          status: "canceled",
-          declaredAt: at("2026-09-05T10:00:00Z"),
-          startedAt: at("2026-09-05T10:00:00Z"),
-          slaSnapshot: snapshot,
-          responseBreachDueAt: at("2026-09-05T11:00:00Z"),
-        },
-        tx,
-      );
-
-      const { months } = await getIncidentSlaAttainment({
-        ctx: owner(tx),
-        now: NOW,
-      });
-      const byMonth = Object.fromEntries(months.map((m) => [m.month, m]));
-      expect(byMonth["2026-09-01"]).toMatchObject({ misses: 3, creditPct: 15 });
-      expect(byMonth["2026-08-01"]).toMatchObject({ misses: 0, creditPct: 0 });
-      // an empty month earns no credit rather than zero
-      expect(byMonth["2026-07-01"]).toMatchObject({
-        incidents: 0,
-        misses: 0,
-        creditPct: null,
-      });
-    });
-  });
-
-  test("credits are summed without float drift", async () => {
-    await withTestTransaction(async (tx) => {
-      const ws = team.id;
-      await tx.insert(incidentSlaPolicy).values({
-        workspaceId: ws,
-        targets: snapshot.targets,
-        creditPerMissPct: 0.1,
-      });
-      for (const day of ["01", "02", "03"]) {
-        await createIncident(
-          ws,
-          {
-            severity: "critical",
-            status: "resolved",
-            declaredAt: at(`2026-09-${day}T10:00:00Z`),
-            startedAt: at(`2026-09-${day}T10:00:00Z`),
-            slaSnapshot: snapshot,
-            responseMetAt: at(`2026-09-${day}T10:10:00Z`),
-            resolutionStoppedAt: at(`2026-09-${day}T16:00:00Z`),
-            resolutionBreachDueAt: at(`2026-09-${day}T14:00:00Z`),
-          },
-          tx,
-        );
-      }
-      const { months } = await getIncidentSlaAttainment({
-        ctx: owner(tx),
-        now: NOW,
-      });
-      expect(months.find((m) => m.month === "2026-09-01")?.creditPct).toBe(0.3);
     });
   });
 });

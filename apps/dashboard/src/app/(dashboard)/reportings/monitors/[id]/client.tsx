@@ -223,11 +223,6 @@ export function Client() {
             </SectionDescription>
           </SectionHeader>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/reportings/monitors/${policy.id}/report`}>
-                Report
-              </Link>
-            </Button>
             <MonitorSlaExportPopover policyId={policy.id} />
             {policy.archivedAt ? null : (
               <Button size="sm" variant="outline" asChild>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Settings } from "@openstatus/icons";
+import { Settings } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 
@@ -32,7 +32,6 @@ export function Breadcrumb() {
   });
   const policy = active ?? archived?.find((p) => String(p.id) === id);
   const editing = pathname.endsWith("/edit");
-  const reporting = pathname.endsWith("/report");
 
   return (
     <NavBreadcrumb
@@ -46,24 +45,18 @@ export function Breadcrumb() {
                 icon: tab.icon,
                 href: tab.href,
               },
-              ...(editing || reporting
+              ...(editing
                 ? [
                     {
                       type: "link" as const,
                       label: policy.name,
                       href: `${tab.href}/${policy.id}`,
                     },
-                    editing
-                      ? {
-                          type: "page" as const,
-                          label: "Settings",
-                          icon: Settings,
-                        }
-                      : {
-                          type: "page" as const,
-                          label: "Report",
-                          icon: FileText,
-                        },
+                    {
+                      type: "page" as const,
+                      label: "Settings",
+                      icon: Settings,
+                    },
                   ]
                 : [{ type: "page" as const, label: policy.name }]),
             ]

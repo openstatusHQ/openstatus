@@ -29,15 +29,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@openstatus/ui/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -66,7 +59,6 @@ import {
 } from "@/components/forms/form-card";
 import { parseSlaDuration } from "@/data/incident-sla.client";
 import { severityConfig } from "@/data/managed-incidents.client";
-import { parseSlaPercent, SLA_PERCENT_MESSAGE } from "@/data/reportings.client";
 
 const COLUMNS = [
   { key: "responseMinutes", label: "First response" },
@@ -89,11 +81,6 @@ const schema = z.object({
   targets: z.object({ critical: row, major: row, minor: row }),
   resolutionStop: z.enum(["mitigated", "resolved"]),
   responseMet: z.enum(["acknowledged", "status_report"]),
-  creditPerMissPct: z
-    .string()
-    .refine((v) => v.trim() === "" || parseSlaPercent(v) !== null, {
-      error: SLA_PERCENT_MESSAGE,
-    }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -102,7 +89,6 @@ export type IncidentReportingValues = {
   targets: IncidentSlaTargets;
   resolutionStop: IncidentSlaResolutionStop;
   responseMet: IncidentSlaResponseMet;
-  creditPerMissPct: number | null;
 };
 
 function toFormValues(policy: IncidentReportingValues): FormValues {
@@ -124,8 +110,6 @@ function toFormValues(policy: IncidentReportingValues): FormValues {
     },
     resolutionStop: policy.resolutionStop,
     responseMet: policy.responseMet,
-    creditPerMissPct:
-      policy.creditPerMissPct === null ? "" : String(policy.creditPerMissPct),
   };
 }
 
@@ -199,7 +183,6 @@ export function FormIncidentReporting({
             targets,
             resolutionStop: values.resolutionStop,
             responseMet: values.responseMet,
-            creditPerMissPct: parseSlaPercent(values.creditPerMissPct),
           }),
           {
             loading: "Saving...",
@@ -404,40 +387,6 @@ export function FormIncidentReporting({
               {stop === "mitigated"
                 ? "The clock stops when customer impact ends. Cleanup after mitigation does not count against the target."
                 : "The clock runs until the incident is marked resolved, including cleanup after mitigation."}
-            </p>
-          </FormCardContent>
-          <FormCardSeparator />
-          <FormCardContent
-            className={cn("grid gap-4 sm:grid-cols-3", off && "opacity-50")}
-          >
-            <FormField
-              control={form.control}
-              name="creditPerMissPct"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Support credit per miss</FormLabel>
-                  <FormControl>
-                    <InputGroup>
-                      <InputGroupInput
-                        {...field}
-                        inputMode="decimal"
-                        placeholder="None"
-                        className="font-mono"
-                        disabled={disabled}
-                      />
-                      <InputGroupAddon align="inline-end">
-                        <InputGroupText>% of fees</InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <p className="text-muted-foreground self-end text-sm sm:col-span-2">
-              Optional. Each missed response, resolution or update target earns
-              this share of monthly fees, explained or not. Covers incidents
-              declared in openstatus, not support requests tracked elsewhere.
             </p>
           </FormCardContent>
           <FormCardFooter>

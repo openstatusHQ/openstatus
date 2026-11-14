@@ -2,7 +2,6 @@ import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
-  real,
   sqliteTable,
   text,
   unique,
@@ -11,7 +10,6 @@ import {
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
 import {
-  type MonitorSlaCreditSchedule,
   type MonitorSlaExcusedWindowKind,
   monitorSlaMethods,
 } from "./constants";
@@ -50,10 +48,6 @@ export const monitorSlaSealedMonth = sqliteTable(
 
     target: integer("target").notNull(),
     strict: integer("strict", { mode: "boolean" }).notNull(),
-    // the credit schedule it was judged with; null without one
-    creditSchedule: text("credit_schedule", {
-      mode: "json",
-    }).$type<MonitorSlaCreditSchedule>(),
 
     ok: integer("ok").notNull(),
     degraded: integer("degraded").notNull(),
@@ -79,9 +73,6 @@ export const monitorSlaSealedMonth = sqliteTable(
     unmeasuredMs: integer("unmeasured_ms"),
     // thousandths of a percent, floored
     coverage: integer("coverage"),
-    // percent of monthly fees; null without a schedule or a judgement
-    creditPct: real("credit_pct"),
-    creditSteps: integer("credit_steps"),
 
     sealedAt: integer("sealed_at", { mode: "timestamp" })
       .notNull()

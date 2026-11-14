@@ -1,12 +1,12 @@
 ---
 category: Concepts
-title: Understanding SLA Uptime, Budgets and Credits
-description: "How a monthly uptime commitment is measured, why openstatus weighs time instead of requests, how a downtime budget burns, why months are sealed, and how a missed month turns into a service credit."
+title: Understanding SLA Uptime and Budgets
+description: "How a monthly uptime commitment is measured, why openstatus weighs time instead of requests, how a downtime budget burns, and why months are sealed."
 seo:
-  title: "SLA Uptime, Downtime Budgets and Service Credits Explained"
+  title: "SLA Uptime and Downtime Budgets Explained"
 ---
 
-An availability commitment in a contract reads simple: "99.5% monthly uptime, 3% of fees back per 0.25% below." Turning that sentence into a number you can defend takes a few decisions: what counts as down, how time is weighed, what is excused, and when a month's result stops changing. This page explains the decisions openstatus makes, so the figures in a [reporting](/docs/reference/monitor-reporting) read the way your contract does.
+An availability commitment in a contract reads simple: "99.5% monthly uptime." Turning that sentence into a number you can defend takes a few decisions: what counts as down, how time is weighed, what is excused, and when a month's result stops changing. This page explains the decisions openstatus makes, so the figures in a [reporting](/docs/reference/monitor-reporting) read the way your contract does.
 
 ## Uptime is time, not requests
 
@@ -48,40 +48,10 @@ The budget answers "how close are we", which a single uptime figure hides until 
 
 A figure you send to a customer must not move afterwards. openstatus **seals** each month for each monitor a few days after it ends: the measured, down, excused and unmeasured time, the down and slow stretches, the excused windows that applied, and the target and strict setting of that moment are stored and never recomputed.
 
-Until then, the previous month is a **preview** and the running month is **live and provisional**. A live month below target is a miss in progress, not a missed month. Changing a target or a credit schedule always applies from the next month, so a sealed month keeps the terms it started with.
-
-## From a missed month to a service credit
-
-A credit schedule turns a shortfall into a share of the fees:
-
-```
-shortfall = target − uptime
-steps     = shortfall / step size, rounded up
-credit    = min(steps × credit per step, cap)
-```
-
-With a 99.5% target, steps of 0.25 points and 3% per step:
-
-| Month's uptime | Shortfall | Steps | Credit |
-|---|---|---|---|
-| 99.500% | 0 | 0 | 0% (met) |
-| 99.400% | 0.10 | 1 | 3% |
-| 99.120% | 0.38 | 2 | 6% |
-| 98.000% | 1.50 | 6 | 18% |
-| 91.000% | 8.50 | 34 | 100% (capped) |
-
-A started step counts as a full one, and the shortfall is taken from the exact time, not from the rounded figure on screen. Each sealed month stores the credit it earned with the schedule that applied.
-
-Credits stay a percentage. openstatus does not know what your customer pays, and it does not invoice anything; it gives you a figure you can check and pass on.
-
-## Support credits
-
-Contracts often add credits for support: a share of the fees for every missed first response, update or resolution. The [incident reporting](/docs/reference/incident-management#support-credits) counts those misses per month and multiplies them by a **support credit per miss**. Linking it to a monitor reporting as its **support terms** keeps both kinds of credit with one commitment.
-
-Only incidents declared in openstatus count. Support requests handled only in a ticketing tool are not seen, so declare incidents at the customer's severity and record when the request arrived.
+Until then, the previous month is a **preview** and the running month is **live and provisional**. A live month below target is a miss in progress, not a missed month. Changing a target always applies from the next month, so a sealed month keeps the terms it started with.
 
 ## Related resources
 
-- **[Monitor reporting reference](/docs/reference/monitor-reporting)**: every rule behind the figures, the month detail, credits and the export.
-- **[Incident management reference](/docs/reference/incident-management#reporting)**: response, resolution and update targets, and support credits.
+- **[Monitor reporting reference](/docs/reference/monitor-reporting)**: every rule behind the figures, the month detail and the export.
+- **[Incident management reference](/docs/reference/incident-management#reporting)**: response, resolution and update targets.
 - **[How to track a contractual SLA](/docs/guides/how-to-track-a-contractual-sla)**: the setup, step by step.

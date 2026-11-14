@@ -44,7 +44,6 @@ export async function upsertIncidentReporting(args: {
           targets,
           resolutionStop: input.resolutionStop,
           responseMet: input.responseMet,
-          creditPerMissPct: input.creditPerMissPct ?? null,
         })
         .returning()
         .get();
@@ -63,10 +62,6 @@ export async function upsertIncidentReporting(args: {
         targets,
         resolutionStop: input.resolutionStop,
         responseMet: input.responseMet,
-        creditPerMissPct:
-          input.creditPerMissPct === undefined
-            ? before.creditPerMissPct
-            : input.creditPerMissPct,
         updatedAt: new Date(),
       })
       .where(eq(incidentSlaPolicy.id, before.id))

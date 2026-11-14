@@ -27,12 +27,7 @@ export async function archiveMonitorReporting(args: {
     const [after] = await withLatestTerms(tx, ctx.workspace.id, [
       await tx
         .update(monitorSlaPolicy)
-        // an archived policy is read-only, so it must not keep the one link
-        .set({
-          archivedAt: new Date(),
-          incidentSlaPolicyId: null,
-          updatedAt: new Date(),
-        })
+        .set({ archivedAt: new Date(), updatedAt: new Date() })
         .where(eq(monitorSlaPolicy.id, before.id))
         .returning()
         .get(),

@@ -14,16 +14,6 @@ export function parseSlaTarget(value: string): number | null {
   return target > 0 && target <= 100_000 ? target : null;
 }
 
-export const SLA_PERCENT_MESSAGE =
-  "Enter a percentage above 0, up to 100, with at most 3 decimals.";
-
-/** A credit percentage above 0, up to 100, with at most three decimals, or `null`. */
-export function parseSlaPercent(value: string): number | null {
-  if (!/^\d{1,3}(\.\d{1,3})?$/.test(value.trim())) return null;
-  const n = Number(value);
-  return n > 0 && n <= 100 ? n : null;
-}
-
 /** A duration to the minute once it reaches an hour (to the second with `exact`), else to the second: `"3h 36m"`, `"43m 12s"`; the sign is dropped. */
 export function formatSlaDuration(
   ms: number,
@@ -191,37 +181,5 @@ export function slaTreatmentTotals(
   return (Object.keys(slaTreatmentLabels) as SlaTreatment[]).flatMap((t) => {
     const ms = sums.get(t) ?? 0;
     return ms > 0 ? [{ treatment: t, ms }] : [];
-  });
-}
-
-/** `"2026-11-01"`, -1 → `"2026-10-01"`. */
-export function shiftSlaMonth(month: string, by: number): string {
-  const [y, m] = month.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1 + by, 1)).toISOString().slice(0, 10);
-}
-
-/** The `count` complete months before `now` in `timeZone`, newest first, as `"2026-10-01"`. */
-export function completeSlaMonths(
-  timeZone: string,
-  count: number,
-  now = new Date(),
-): string[] {
-  const current = slaMonthOf(now, timeZone);
-  return Array.from({ length: count }, (_, i) =>
-    shiftSlaMonth(current, -1 - i),
-  );
-}
-
-/** `"Nov 4, 2026, 14:05 UTC"` in `timeZone`, for printed documents. */
-export function formatSlaInstant(date: Date, timeZone: string): string {
-  return new Date(date).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-    timeZone,
-    timeZoneName: "short",
   });
 }

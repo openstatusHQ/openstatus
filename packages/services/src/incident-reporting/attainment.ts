@@ -9,7 +9,7 @@ import {
 
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import { assertIncidentSlaLimit, findIncidentReporting } from "./internal";
+import { assertIncidentSlaLimit } from "./internal";
 
 const MONTHS = 12;
 // a reported-at time may precede the declare by up to 30 days
@@ -30,10 +30,6 @@ export type IncidentSlaAttainmentMonth = {
   response: IncidentSlaAttainmentCount;
   resolution: IncidentSlaAttainmentCount;
   missedUpdates: number;
-  /** Recorded breaches of response, resolution and update targets; an explained miss still counts. */
-  misses: number;
-  /** misses × the policy's current credit per miss, uncapped; null without one or without incidents */
-  creditPct: number | null;
 };
 
 function monthKey(date: Date) {
@@ -77,8 +73,6 @@ export async function getIncidentSlaAttainment(args: {
       response: { within: 0, missed: 0, open: 0, total: 0 },
       resolution: { within: 0, missed: 0, open: 0, total: 0 },
       missedUpdates: 0,
-      misses: 0,
-      creditPct: null,
     });
   }
 
@@ -89,8 +83,7 @@ export async function getIncidentSlaAttainment(args: {
     gte(incident.declaredAt, from),
     lt(incident.declaredAt, new Date(to.getTime() + CLOCK_START_LEAD_MS)),
   );
-  const [policy, rows, misses] = await Promise.all([
-    findIncidentReporting(db, ctx.workspace.id),
+  const [rows, misses] = await Promise.all([
     db.select().from(incident).where(inWindow).all(),
     db
       .select({ incidentId: incidentEvent.incidentId, missed: count() })
@@ -110,16 +103,6 @@ export async function getIncidentSlaAttainment(args: {
     tally(month.response, state.response);
     tally(month.resolution, state.resolution);
     month.missedUpdates += missedByIncident.get(row.id) ?? 0;
-  }
-
-  const perMiss = policy?.creditPerMissPct ?? null;
-  for (const month of months.values()) {
-    month.misses =
-      month.response.missed + month.resolution.missed + month.missedUpdates;
-    if (perMiss !== null && month.incidents > 0) {
-      // in thousandths so 3 × 0.1 stays 0.3
-      month.creditPct = (month.misses * Math.round(perMiss * 1000)) / 1000;
-    }
   }
 
   return { months: [...months.values()] };

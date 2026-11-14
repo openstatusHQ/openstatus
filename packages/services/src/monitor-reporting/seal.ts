@@ -311,7 +311,6 @@ export async function sealMonitorSlaMonths(
           timeZone,
           target: terms.target,
           strict: terms.strict,
-          creditSchedule: terms.creditSchedule,
           ...counts,
           excusedOk: excused.ok,
           excusedDegraded: excused.degraded,
@@ -326,8 +325,6 @@ export async function sealMonitorSlaMonths(
           excusedMs: judged.excusedMs,
           unmeasuredMs: judged.unmeasuredMs,
           coverage: judged.coverage,
-          creditPct: judged.credit?.pct ?? null,
-          creditSteps: judged.credit?.steps ?? null,
         },
         episodes: sealedEpisodes(
           clipEpisodes(

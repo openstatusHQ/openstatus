@@ -1,7 +1,7 @@
 ---
 category: Reference
 title: Monitor Reporting Reference
-description: Technical specification for monitor reportings - what a reporting judges, how monthly uptime is computed from run verdicts, sealed and preview months, the month detail and downtime budget, strict mode, excused windows, service credits, the CSV export and maintenance.
+description: Technical specification for monitor reportings - what a reporting judges, how monthly uptime is computed from run verdicts, sealed and preview months, the month detail and downtime budget, strict mode, excused windows, the CSV export and maintenance.
 ---
 
 A reporting is a named availability commitment: a monthly uptime target applied to a set of monitors. openstatus judges every monitor in the reporting on its own, month by month, and seals each month once it is over, so the result you show a customer no longer changes.
@@ -95,7 +95,6 @@ Select any month cell to open that monitor's month in a side sheet. The month is
 | Budget left | The downtime the target allows in the month minus the time already counted as down. Negative once the month is over budget. |
 | Budget left by day | A chart of the budget left at the end of each day, against an even burn from the full budget to zero, with each day's down and slow time as bars underneath. Where the budget ran out, a marker names the moment. A live month projects its current pace to the end of the month. |
 | What used the budget | Every down, slow, unmeasured and excused stretch of the month, newest first, with how it was treated: counted, counted as up, excused or not measured. |
-| Service credit | The month's [credit](#service-credits), when the reporting has a schedule. |
 
 - The header says whether the month is sealed, a preview or live.
 - Sealed months read from what was stored at sealing, so the detail of a month stays available after its checks expire.
@@ -141,44 +140,9 @@ An excused window is a stretch of time whose runs count for no monitor in the re
 - The add dialog shows when the last window of the same kind started and how many of the last two complete months had a miss. It refuses nothing on that account: contract rules about which windows qualify, such as notice periods or weekly limits, are not checked.
 - Adding and removing a window are recorded in the audit log.
 
-## Service credits
-
-A reporting can carry a credit schedule: the share of the monthly fees a customer gets back when a month misses its target. Add one under [**Service credits**](https://app.openstatus.dev/reportings/monitors) on the reporting's edit page with **Add a credit schedule**.
-
-| Field | Description |
-|---|---|
-| Credit per step | Percent of fees credited for each step below the target, for example `3`. |
-| Step below target | The size of one step in uptime percentage points, for example `0.25`. |
-| Cap | The most a month can earn, in percent of fees, for example `100`. |
-
-Each value is above 0 and at most 100, with up to three decimals. The card shows a worked example for the reporting's target.
-
-```
-shortfall = target − uptime                      (exact, not the rounded display)
-steps     = shortfall / step, rounded up
-credit    = min(steps × credit per step, cap)
-```
-
-- A started step counts as a full one. With a 99.5% target, 0.25 points per step and 3% per step, a month at 99.12% is 0.38 points short: 2 steps, a credit of 6%.
-- A month at or above its target earns 0%. A month without a judgement earns nothing and shows an em dash.
-- The shortfall is computed from the exact measured and down time, so a month whose uptime displays as `99.249` is judged on its real value.
-- Credits are a percentage only. openstatus stores no fee or currency and shows no amount; what the percentage applies to is settled when you invoice it. It is a computed figure, not a billing action, and claims or payouts are not tracked.
-
-The schedule is versioned with the target: adding, changing or removing it applies from the next month, and a sealed month keeps the schedule it was sealed with and the credit it earned. Months sealed before a schedule existed have no credit. The [month detail](#month-detail) shows the month's credit, labelled provisional for the live and the preview month, and the [export](#export) carries it.
-
-Each monitor's month earns its own credit. openstatus does not yet add credits across a reporting's monitors, or add support credits to them under the cap.
-
-### Support terms
-
-Under [**Support terms**](https://app.openstatus.dev/reportings/monitors) on the edit page, **Use the incident policy** links the workspace's [incident reporting](/docs/reference/incident-management#reporting) to this reporting, so its [support credits](/docs/reference/incident-management#support-credits) belong to the same commitment.
-
-- A workspace has one incident reporting, so only one monitor reporting can link it. The card names the reporting that holds the link, and saving a second link is refused with the same name.
-- Turning the incident reporting off, or archiving the monitor reporting, removes the link. Both are recorded in the audit log.
-- Support credits cover incidents declared in openstatus, not support requests tracked in another tool.
-
 ## Editing, archiving and deleting
 
-- A new target, strict setting or credit schedule applies from the next month in the reporting's time zone. Sealed months keep the terms they were sealed with.
+- A new target or strict setting applies from the next month in the reporting's time zone. Sealed months keep the terms they were sealed with.
 - Adding a monitor judges it from the moment it joined; earlier months show none.
 - Removing a monitor keeps its sealed months. They are hidden until the monitor is added back.
 - Deleting a monitor removes it from every reporting.
@@ -212,8 +176,6 @@ The first line states the method. The second says when the file was generated, w
 | `time_zone` | The zone the month is in. |
 | `measured_ms`, `down_ms`, `excused_ms`, `unmeasured_ms` | Time in milliseconds, method `time` only. |
 | `coverage` | Measured share of the non-excused time, in percent; method `time` only. |
-| `credit_pct` | The month's [service credit](#service-credits) in percent of fees, three decimals. Empty without a schedule or a judgement. |
-| `credit_steps` | Started steps below the target. Empty without a schedule or a judgement. |
 
 ## Maintenance
 
@@ -228,9 +190,9 @@ The reporting page lists, per month, the maintenance windows that touched its mo
 
 ## Related resources
 
-- **[Understanding SLA uptime, budgets and credits](/docs/concept/sla-uptime-budgets-and-credits)**: why the figure weighs time, how the budget burns and how a credit is reached.
-- **[How to track a contractual SLA](/docs/guides/how-to-track-a-contractual-sla)**: set up a reporting, credits and support terms step by step.
-- **[Incident management reference](/docs/reference/incident-management#reporting)**: response, resolution and update targets, and support credits.
+- **[Understanding SLA uptime and budgets](/docs/concept/sla-uptime-and-budgets)**: why the figure weighs time and how the budget burns.
+- **[How to track a contractual SLA](/docs/guides/how-to-track-a-contractual-sla)**: set up a reporting and support targets step by step.
+- **[Incident management reference](/docs/reference/incident-management#reporting)**: response, resolution and update targets.
 
 - **[Maintenance reference](/docs/reference/maintenance)** — maintenance windows and what happens to checks during them.
 - **[Location reference](/docs/reference/location)** — the cloud regions a run is checked from.

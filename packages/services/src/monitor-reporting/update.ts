@@ -4,23 +4,16 @@ import {
   monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
 } from "@openstatus/db/src/schema";
-import { sameCreditSchedule } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type DB, type ServiceContext, withTransaction } from "../context";
-import {
-  ConflictError,
-  NotFoundError,
-  PreconditionFailedError,
-} from "../errors";
+import { PreconditionFailedError } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
-import { findIncidentReporting } from "../incident-reporting/internal";
 import {
   assertMonitorSlaLimit,
   getWritablePolicy,
-  incidentLinkHolder,
   latestTermsOf,
   sealedMonthsOf,
   termsForMonth,
@@ -30,7 +23,7 @@ import { monthOf } from "./months";
 import { UpdateMonitorReportingInput } from "./schemas";
 
 /**
- * Target/strict/credit schedule apply from the next month in the policy zone; the previous month
+ * Target/strict apply from the next month in the policy zone; the previous month
  * keeps the terms it seals with.
  */
 export async function updateMonitorReporting(args: {
@@ -57,19 +50,13 @@ export async function updateMonitorReporting(args: {
     )
       .map((r) => r.monitorId)
       .sort((a, b) => a - b);
-    const termsOf = async () =>
-      (await latestTermsOf(tx, row.workspaceId, [row])).get(row.id) ?? {
-        target: row.target,
-        strict: row.strict,
-        creditSchedule: null,
-        effectiveFrom: null,
-      };
-    const latest = await termsOf();
+    const latest = (await latestTermsOf(tx, row.workspaceId, [row])).get(
+      row.id,
+    ) ?? { target: row.target, strict: row.strict, effectiveFrom: null };
     const before = {
       ...row,
       target: latest.target,
       strict: latest.strict,
-      creditSchedule: latest.creditSchedule,
       termsEffectiveFrom: latest.effectiveFrom,
       monitorIds: currentIds,
     };
@@ -90,25 +77,12 @@ export async function updateMonitorReporting(args: {
     const timeZone = input.timeZone ?? row.timeZone;
     const target = input.target ?? latest.target;
     const strict = input.strict ?? latest.strict;
-    const creditSchedule =
-      input.creditSchedule === undefined
-        ? latest.creditSchedule
-        : input.creditSchedule;
-    const termsChanged =
-      target !== latest.target ||
-      strict !== latest.strict ||
-      !sameCreditSchedule(creditSchedule, latest.creditSchedule);
-    const incidentSlaPolicyId =
-      input.incidentSlaPolicyId === undefined
-        ? row.incidentSlaPolicyId
-        : input.incidentSlaPolicyId;
-    const linkChanged = incidentSlaPolicyId !== row.incidentSlaPolicyId;
+    const termsChanged = target !== latest.target || strict !== latest.strict;
     const zoneChanged = timeZone !== row.timeZone;
     const unchanged =
       name === row.name &&
       !zoneChanged &&
       !termsChanged &&
-      !linkChanged &&
       added.length === 0 &&
       removed.length === 0;
     if (unchanged) return before;
@@ -118,8 +92,6 @@ export async function updateMonitorReporting(args: {
         "The time zone is locked once a month is sealed.",
       );
     }
-
-    if (linkChanged) await setIncidentLink(tx, row, incidentSlaPolicyId);
 
     if (zoneChanged) {
       await reanchorPendingTerms(tx, row, row.timeZone, timeZone, now);
@@ -137,11 +109,7 @@ export async function updateMonitorReporting(args: {
           ),
         );
       const live = await termsForMonth(tx, row, liveMonth);
-      if (
-        live.target === target &&
-        live.strict === strict &&
-        sameCreditSchedule(live.creditSchedule, creditSchedule)
-      ) {
+      if (live.target === target && live.strict === strict) {
         await tx
           .delete(monitorSlaPolicyTerms)
           .where(
@@ -158,7 +126,6 @@ export async function updateMonitorReporting(args: {
             monitorSlaPolicyId: row.id,
             target,
             strict,
-            creditSchedule,
             effectiveFrom: nextMonth,
             createdAt: now,
           })
@@ -168,11 +135,13 @@ export async function updateMonitorReporting(args: {
               monitorSlaPolicyTerms.effectiveFrom,
             ],
             // created_at is when the terms were last set
-            set: { target, strict, creditSchedule, createdAt: now },
+            set: { target, strict, createdAt: now },
           });
       }
     }
-    const terms = await termsOf();
+    const terms = (await latestTermsOf(tx, row.workspaceId, [row])).get(
+      row.id,
+    ) ?? { target: row.target, strict: row.strict, effectiveFrom: null };
 
     // target/strict on the row stay the terms before any terms row
     const updated = await tx
@@ -204,7 +173,6 @@ export async function updateMonitorReporting(args: {
       ...updated,
       target: terms.target,
       strict: terms.strict,
-      creditSchedule: terms.creditSchedule,
       termsEffectiveFrom: terms.effectiveFrom,
       monitorIds: nextIds,
     };
@@ -217,45 +185,6 @@ export async function updateMonitorReporting(args: {
     });
     return after;
   });
-}
-
-/** Sets or clears the link; the unique index refuses a second holder, also in a race. */
-async function setIncidentLink(
-  tx: DB,
-  policy: { id: number; workspaceId: number },
-  incidentSlaPolicyId: number | null,
-) {
-  if (incidentSlaPolicyId !== null) {
-    const incident = await findIncidentReporting(tx, policy.workspaceId);
-    if (incident?.id !== incidentSlaPolicyId) {
-      throw new NotFoundError("incident_sla_policy", incidentSlaPolicyId);
-    }
-  }
-  try {
-    await tx
-      .update(monitorSlaPolicy)
-      .set({ incidentSlaPolicyId })
-      .where(eq(monitorSlaPolicy.id, policy.id));
-  } catch (error) {
-    if (!isIncidentLinkTaken(error)) throw error;
-    const holder = await incidentLinkHolder(tx, policy);
-    throw new ConflictError(
-      `The incident policy is already linked to "${holder?.name ?? "another reporting"}". Unlink it there first.`,
-    );
-  }
-}
-
-function isIncidentLinkTaken(error: unknown): boolean {
-  for (let e = error; e instanceof Error; e = e.cause) {
-    if (
-      e.message.includes(
-        "UNIQUE constraint failed: monitor_sla_policy.incident_sla_policy_id",
-      )
-    ) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function nextMonthOf(now: Date, timeZone: string): string {

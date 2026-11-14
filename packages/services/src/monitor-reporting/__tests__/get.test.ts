@@ -446,7 +446,7 @@ describe("getMonitorReporting", () => {
         state: "live",
         method: "time",
         timeZone: "UTC",
-        terms: { target: 99_500, strict: false, creditSchedule: null },
+        terms: { target: 99_500, strict: false },
         counts: { ok: 2082, degraded: 0, error: 6 },
         excused: { ok: 0, degraded: 0, error: 0 },
         measuredMs: 14.5 * DAY,
@@ -456,7 +456,6 @@ describe("getMonitorReporting", () => {
         coverage: 100_000,
         uptime: 99_712,
         met: true,
-        credit: null,
         sealed: null,
       });
       // a miss in progress is not a missed month yet

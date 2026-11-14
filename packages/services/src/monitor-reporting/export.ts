@@ -1,5 +1,4 @@
 import {
-  formatSlaCreditPct,
   formatSlaUptime,
   MONITOR_SLA_EXPORT_MAX_MONTHS,
 } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
@@ -42,8 +41,6 @@ const COLUMNS = [
   "excused_ms",
   "unmeasured_ms",
   "coverage",
-  "credit_pct",
-  "credit_steps",
 ];
 
 // quotes when needed; a leading formula character is neutralised for spreadsheets
@@ -102,7 +99,7 @@ export async function exportMonitorReporting(args: {
 
   const lines = [
     `# ${MONITOR_SLA_METHOD}`,
-    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement. Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement. Uptime is in percent, floored to three decimals. credit_pct is a computed share of monthly fees, not a billing action; it is filled only under a credit schedule, and each started step below target counts as a full one. ${
+    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement. Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement. Uptime is in percent, floored to three decimals. ${
       input.includeLive
         ? "Live months are provisional: they are not sealed yet and will change."
         : "Live months are not included."
@@ -145,8 +142,6 @@ export async function exportMonitorReporting(args: {
           cell(mm.excusedMs),
           cell(mm.unmeasuredMs),
           cell(mm.coverage === null ? null : formatSlaUptime(mm.coverage)),
-          cell(mm.credit === null ? null : formatSlaCreditPct(mm.credit.pct)),
-          cell(mm.credit?.steps ?? null),
         ].join(","),
       );
     }

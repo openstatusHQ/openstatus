@@ -77,26 +77,4 @@ export const columns: ColumnDef<Month>[] = [
       );
     },
   },
-  {
-    id: "credit",
-    header: "Support credit",
-    cell: ({ row }) => {
-      const { creditPct, misses } = row.original;
-      if (creditPct === null) {
-        return <TableCellEmpty className="font-mono">—</TableCellEmpty>;
-      }
-      return (
-        <div className="font-mono tabular-nums">
-          <span className={misses > 0 ? "text-destructive" : "text-foreground"}>
-            {creditPct}%
-          </span>
-          {misses > 0 ? (
-            <span className="text-muted-foreground block text-xs">
-              {misses} {misses === 1 ? "miss" : "misses"}
-            </span>
-          ) : null}
-        </div>
-      );
-    },
-  },
 ];

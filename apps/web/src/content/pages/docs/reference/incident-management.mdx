@@ -88,7 +88,6 @@ A workspace has one reporting. Each severity has three optional targets:
 - Durations are entered as `30m`, `4h`, `3d` or a combination like `1d 4h`, from 5 minutes to 30 days. An empty field turns that timer off for the severity.
 - **Response is met by**: `Acknowledgement` (default) or `First status report update`. See [response](#response).
 - **Resolution target stops at**: `Mitigated` (default) or `Resolved`. See [resolution stop](#resolution-stop).
-- **Support credit per miss**: optional, in percent of fees. See [support credits](#support-credits).
 
 Owners and admins can save the reporting or turn it off. Every workspace member can view it. Each change is recorded in the audit log. The reporting is managed in the dashboard only; it is not available over the API, the CLI or the MCP server.
 
@@ -222,29 +221,12 @@ The **Monthly attainment** table under the reporting shows the last twelve month
 | Responded within target | Incidents that met their response target, of those whose severity has one, plus how many are still open. |
 | Resolved within target | The same for the resolution target. |
 | Missed updates | Missed updates recorded on that month's incidents. |
-| Support credit | The month's [support credits](#support-credits) and how many misses earned them. Shown only when the reporting has a support credit per miss. |
 
 - A target counts as missed once its miss is recorded. Past due but not recorded yet, it still counts as open.
 - A target that is still running counts as open, never as met.
 - Canceled and untracked incidents are left out. An empty month or a column without targets shows an em dash (`—`).
 
 Every member can view the table. Without the plan it shows example rows.
-
-### Support credits
-
-Contracts often credit the customer a share of the fees for each missed support target. With **Support credit per miss** set, for example `5`, the [monthly attainment](#monthly-attainment) shows what each month earned:
-
-```
-misses         = recorded response misses + recorded resolution misses + missed updates
-support credit = misses × support credit per miss
-```
-
-- One miss is one missed requirement. An incident that missed its response and its resolution and two updates counts four.
-- An [explained miss](#explain-a-miss) still counts. The reason is context, not an exemption.
-- A month is the one the incident's timers started in, as in the table. Canceled and untracked incidents earn nothing, and a month without incidents shows an em dash.
-- The figure is uncapped here and uses the current value of the field. A [monitor reporting](/docs/reference/monitor-reporting#support-terms) can link this reporting as its support terms, so both kinds of credit belong to one commitment.
-- Only incidents declared in openstatus count. A support request handled only in another ticketing tool is not seen, so the figure can be lower than what a contract owes. Declare at the severity the customer assigned and set [reported at](#reported-at) to when the request arrived, so the clock matches the contract.
-- Credits are a percentage only, never an amount, and openstatus does not invoice them. Changing the field is recorded in the audit log.
 
 ### API and agents
 

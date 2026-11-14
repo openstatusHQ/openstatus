@@ -68,8 +68,8 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Latency vs Response Time",
       },
       {
-        slug: "concept/sla-uptime-budgets-and-credits",
-        label: "Understanding SLA Uptime, Budgets and Credits",
+        slug: "concept/sla-uptime-and-budgets",
+        label: "Understanding SLA Uptime and Budgets",
       },
       {
         slug: "concept/response-logs-and-retention",
