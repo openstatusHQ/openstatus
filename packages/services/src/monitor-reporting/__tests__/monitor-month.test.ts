@@ -621,43 +621,6 @@ describe("getMonitorReportingMonth", () => {
     });
   });
 
-  test("a month sealed by run count has no episodes", async () => {
-    await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx);
-      const policy = await insertPolicy(tx, [api.id]);
-      await tx.insert(monitorSlaSealedMonth).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: policy.id,
-        monitorId: api.id,
-        month: "2026-09-01",
-        target: 99_500,
-        strict: false,
-        ok: 1990,
-        degraded: 0,
-        error: 10,
-        total: 2000,
-        up: 1990,
-        uptime: 99_500,
-        met: true,
-      });
-      const res = await getMonitorReportingMonth({
-        ctx: { ...ctx, db: tx },
-        input: { id: policy.id, monitorId: api.id, month: "2026-09" },
-        now,
-        episodesPipes: failingEpisodesPipes(),
-      });
-      expect(res).toMatchObject({
-        state: "sealed",
-        method: "runs",
-        uptime: 99_500,
-        met: true,
-        budget: null,
-        episodes: null,
-        episodesUnavailable: "runs",
-      });
-    });
-  });
-
   test("an unsealed month past the runs Tinybird keeps has no episodes", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);

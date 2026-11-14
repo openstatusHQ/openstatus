@@ -16,21 +16,8 @@ type PolicyMonitor =
   RouterOutputs["monitorReporting"]["get"]["monitors"][number];
 type PolicyMonth = PolicyMonitor["months"][number];
 
-function runsNote(m: PolicyMonth): string | null {
-  if (!m.counts) return null;
-  const excused = m.excused
-    ? m.excused.ok + m.excused.degraded + m.excused.error
-    : 0;
-  const total = m.counts.ok + m.counts.degraded + m.counts.error;
-  return excused > 0 ? `${total} runs, ${excused} excused` : `${total} runs`;
-}
-
-/** How the month was judged: run count (legacy seals) or time, with coverage. */
+/** How the month was judged, with coverage. */
 function basisNote(m: PolicyMonth): string | null {
-  if (m.method === "runs") {
-    const runs = runsNote(m);
-    return runs ? `judged by run count, ${runs}` : "judged by run count";
-  }
   if (m.method === "time") {
     const parts = ["judged on time"];
     if (m.coverage !== null) {

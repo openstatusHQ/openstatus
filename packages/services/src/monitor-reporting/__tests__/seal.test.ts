@@ -540,45 +540,6 @@ describe("sealMonitorSlaMonths on episodes", () => {
     });
   });
 
-  test("a month already sealed on run counts is left as it is", async () => {
-    await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx);
-      const policy = await insertPolicy(tx, [api.id]);
-      const legacy = await tx
-        .insert(monitorSlaSealedMonth)
-        .values({
-          workspaceId: teamWorkspaceId,
-          monitorSlaPolicyId: policy.id,
-          monitorId: api.id,
-          month: "2026-10-01",
-          target: 99_500,
-          strict: false,
-          ok: 1990,
-          degraded: 0,
-          error: 10,
-          total: 2000,
-          up: 1990,
-          uptime: 99_500,
-          met: true,
-        })
-        .returning()
-        .get();
-
-      const res = await sealMonitorSlaMonths({
-        db: tx,
-        now,
-        policyIds: [policy.id],
-        episodesPipes: pipesFor(new Map([[api.id, runs(() => "error")]])),
-        sleep,
-      });
-
-      expect(res.sealed).toBe(0);
-      expect(await sealedRows(tx, policy.id)).toEqual([legacy]);
-      expect(legacy).toMatchObject({ method: "runs", measuredMs: null });
-      expect(await sealedEpisodeRows(tx, legacy.id)).toEqual([]);
-    });
-  });
-
   test("a month with no runs seals as unmeasured", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);

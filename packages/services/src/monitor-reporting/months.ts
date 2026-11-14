@@ -28,7 +28,7 @@ export type MonitorSlaMonth = {
    * not sealed yet; live: the running month, provisional; none: nothing to judge
    */
   state: "sealed" | "preview" | "live" | "none";
-  /** time: judged on time-weighted episodes; runs: on run counts (legacy seals); null without a judgement */
+  /** time: judged on time-weighted episodes; null without a judgement */
   method: MonitorSlaMethod | null;
   /** IANA zone the month boundaries are in */
   timeZone: string;

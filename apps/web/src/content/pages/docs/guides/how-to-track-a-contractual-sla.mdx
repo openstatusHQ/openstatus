@@ -16,7 +16,20 @@ Create one monitor per contractually relevant part of the product, for example t
 
 - Pick cloud regions close to the people who use it. A run's verdict comes from the majority of its regions, so one slow region out of three is a normal run.
 - Set the **degraded** threshold to the contract's latency limit, here `1000` ms. Without it, a check is never slow and the next step changes nothing. See the [HTTP monitor reference](/docs/reference/http-monitor#degraded).
-- Choose the check frequency. Uptime weighs time, so any frequency works; a shorter one finds an outage sooner.
+- Choose the check frequency. Uptime weighs time, so any frequency works; a shorter one finds an outage sooner and costs less budget per failed check.
+
+A failed check counts as down until the next run, so one failed check costs one interval. The shorter the interval, the tighter a target you can hold through a single blip. For a 30-day month:
+
+| Frequency | Uptime with one failed check | Failed checks within 99.9% | Failed checks within 99.99% |
+|---|---|---|---|
+| 1h | 99.861% | 0 | 0 |
+| 30m | 99.930% | 1 | 0 |
+| 10m | 99.976% | 4 | 0 |
+| 5m | 99.988% | 8 | 0 |
+| 1m | 99.997% | 43 | 4 |
+| 30s | 99.998% | 86 | 8 |
+
+At 99.99% the month allows 4 minutes and 19 seconds of downtime, which a single failed 5-minute check already exceeds. For a target of 99.99% or tighter, check every minute or every 30 seconds.
 
 Heartbeat monitors and monitors that only run from private locations cannot join a reporting.
 

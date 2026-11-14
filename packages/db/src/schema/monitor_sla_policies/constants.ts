@@ -54,8 +54,8 @@ export type MonitorSlaExcusedWindowKind =
 export const MONITOR_SLA_EXCUSED_WINDOW_MAX_MS = 7 * 24 * 3_600_000;
 export const MONITOR_SLA_EXCUSED_REASON_MAX = 1_000;
 
-/** How a sealed month was judged: legacy run counts, or time-weighted episodes. */
-export const monitorSlaMethods = ["runs", "time"] as const;
+/** How a sealed month was judged: time-weighted episodes. */
+export const monitorSlaMethods = ["time"] as const;
 export type MonitorSlaMethod = (typeof monitorSlaMethods)[number];
 
 export const monitorSlaEpisodeKinds = [

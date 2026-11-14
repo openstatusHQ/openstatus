@@ -184,6 +184,7 @@ export function PropertyDateTimePicker({
 }: React.ComponentProps<typeof DateTimePicker>) {
   return (
     <DateTimePicker
+      commitOnClose
       className={cn(
         propertyControlClassName,
         // the outline variant re-adds a border and tint in dark mode

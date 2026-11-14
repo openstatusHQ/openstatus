@@ -248,8 +248,8 @@ async function memberMonth(args: {
   let spans: Span[];
   let budget: ReturnType<typeof monthBudget> | null = null;
   let episodes: MonitorReportingMonthEpisode[] | null = null;
-  /** runs: a legacy run-count seal; failed: episodes could not be read; expired: older than the previous month and never sealed */
-  let episodesUnavailable: "runs" | "failed" | "expired" | null = null;
+  /** failed: episodes could not be read; expired: older than the previous month and never sealed */
+  let episodesUnavailable: "failed" | "expired" | null = null;
   let creditSchedule: MonitorSlaCreditSchedule | null;
 
   if (seal) {
@@ -261,48 +261,44 @@ async function memberMonth(args: {
         to: new Date(w.to),
       })),
     );
-    if (seal.method === "runs") {
-      episodesUnavailable = "runs";
-    } else {
-      const rows = await db
-        .select()
-        .from(monitorSlaSealedEpisode)
-        .where(
-          and(
-            eq(monitorSlaSealedEpisode.sealedMonthId, seal.id),
-            eq(monitorSlaSealedEpisode.workspaceId, ctx.workspace.id),
-          ),
-        )
-        .all();
-      episodes = rows.flatMap(({ kind, treatment, ...e }) =>
-        kind === "ok"
-          ? []
-          : [
-              {
-                kind,
-                startedAt: e.startedAt,
-                endedAt: e.endedAt,
-                runs: e.runs,
-                weightedMs: e.weightedMs,
-                treatment:
-                  kind === "unmeasured" && treatment !== "excused"
-                    ? "unmeasured"
-                    : treatment,
-                maintenance: null,
-              },
-            ],
-      );
-      const excusedMs = seal.excusedMs ?? 0;
-      budget = monthBudget({
-        // the sealed episodes tile the covered month
-        monthMs: (seal.measuredMs ?? 0) + (seal.unmeasuredMs ?? 0) + excusedMs,
-        excusedMs,
-        remainingMs: 0,
-        target: seal.target,
-        downMs: seal.downMs,
-        measuredMs: seal.measuredMs,
-      });
-    }
+    const rows = await db
+      .select()
+      .from(monitorSlaSealedEpisode)
+      .where(
+        and(
+          eq(monitorSlaSealedEpisode.sealedMonthId, seal.id),
+          eq(monitorSlaSealedEpisode.workspaceId, ctx.workspace.id),
+        ),
+      )
+      .all();
+    episodes = rows.flatMap(({ kind, treatment, ...e }) =>
+      kind === "ok"
+        ? []
+        : [
+            {
+              kind,
+              startedAt: e.startedAt,
+              endedAt: e.endedAt,
+              runs: e.runs,
+              weightedMs: e.weightedMs,
+              treatment:
+                kind === "unmeasured" && treatment !== "excused"
+                  ? "unmeasured"
+                  : treatment,
+              maintenance: null,
+            },
+          ],
+    );
+    const excusedMs = seal.excusedMs ?? 0;
+    budget = monthBudget({
+      // the sealed episodes tile the covered month
+      monthMs: (seal.measuredMs ?? 0) + (seal.unmeasuredMs ?? 0) + excusedMs,
+      excusedMs,
+      remainingMs: 0,
+      target: seal.target,
+      downMs: seal.downMs,
+      measuredMs: seal.measuredMs,
+    });
   } else {
     spans = policySpans;
     const state = episodeMonths(now, timeZone).get(month);

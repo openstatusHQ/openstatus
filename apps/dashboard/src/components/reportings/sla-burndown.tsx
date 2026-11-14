@@ -290,7 +290,6 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
             stackId="day"
             fill="var(--color-slow)"
             fillOpacity={0.85}
-            radius={[1, 1, 0, 0]}
             isAnimationActive={false}
           />
           {/* recharts only renders reference elements as direct children, no fragments */}

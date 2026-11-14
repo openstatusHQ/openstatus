@@ -7750,7 +7750,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'runs'"
+          "default": "'time'"
         },
         "time_zone": {
           "name": "time_zone",

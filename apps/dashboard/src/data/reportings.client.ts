@@ -193,3 +193,35 @@ export function slaTreatmentTotals(
     return ms > 0 ? [{ treatment: t, ms }] : [];
   });
 }
+
+/** `"2026-11-01"`, -1 → `"2026-10-01"`. */
+export function shiftSlaMonth(month: string, by: number): string {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1 + by, 1)).toISOString().slice(0, 10);
+}
+
+/** The `count` complete months before `now` in `timeZone`, newest first, as `"2026-10-01"`. */
+export function completeSlaMonths(
+  timeZone: string,
+  count: number,
+  now = new Date(),
+): string[] {
+  const current = slaMonthOf(now, timeZone);
+  return Array.from({ length: count }, (_, i) =>
+    shiftSlaMonth(current, -1 - i),
+  );
+}
+
+/** `"Nov 4, 2026, 14:05 UTC"` in `timeZone`, for printed documents. */
+export function formatSlaInstant(date: Date, timeZone: string): string {
+  return new Date(date).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone,
+    timeZoneName: "short",
+  });
+}

@@ -104,6 +104,15 @@ export type GetMonitorReportingMonthInput = z.input<
   typeof GetMonitorReportingMonthInput
 >;
 
+/** A reporting's report for one complete month (YYYY-MM in the policy zone). */
+export const GetMonitorReportingReportInput = z.object({
+  id: z.number().int().positive(),
+  month: yearMonth,
+});
+export type GetMonitorReportingReportInput = z.input<
+  typeof GetMonitorReportingReportInput
+>;
+
 /** Inclusive month range; defaults to the last twelve complete months. */
 export const ExportMonitorReportingInput = z.object({
   id: z.number().int().positive(),

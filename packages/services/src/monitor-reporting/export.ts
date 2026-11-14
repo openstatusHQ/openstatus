@@ -17,7 +17,7 @@ import { completeMonths, LAST_TWELVE, monthOf, monthsBetween } from "./months";
 import { ExportMonitorReportingInput } from "./schemas";
 
 export const MONITOR_SLA_METHOD =
-  "Method: one run verdict per scheduled check across the cloud regions that reported it; request counts are not used. A run counts as slow only when at least half of the regions that reported it were slow or failed, and as failed only when at least half failed. Months with method time weigh each verdict by the time until the next check. When a gap between two checks is more than twice the longer of the gaps before and after it, the earlier verdict covers only that longer gap and the rest is unmeasured; the time before the first check and after the last follow the same rule. Unmeasured time counts neither way. Months with method runs were judged by run count.";
+  "Method: one run verdict per scheduled check across the cloud regions that reported it; request counts are not used. A run counts as slow only when at least half of the regions that reported it were slow or failed, and as failed only when at least half failed. Each verdict is weighted by the time until the next check. When a gap between two checks is more than twice the longer of the gaps before and after it, the earlier verdict covers only that longer gap and the rest is unmeasured; the time before the first check and after the last follow the same rule. Unmeasured time counts neither way.";
 
 const COLUMNS = [
   "reporting",

@@ -65,7 +65,6 @@ Excused time is the time inside the reporting's [excused windows](#excused-windo
 - A month is **met** when its uptime is at or above the target. A month exactly at the target is met. The comparison is exact, on whole milliseconds.
 - Uptime is shown with three decimals, **rounded down**, so a missed month never displays as its target.
 - A month without measured time has no judgement. It shows an em dash (`—`): never 100%, never a miss. The same holds for a month whose time was all excused.
-- Months sealed before time weighting are judged by **run count** the same way, with runs in place of time. The page and the export say so (method `runs`).
 
 ### Strict mode
 
@@ -99,7 +98,7 @@ Select any month cell to open that monitor's month in a side sheet. The month is
 | Service credit | The month's [credit](#service-credits), when the reporting has a schedule. |
 
 - The header says whether the month is sealed, a preview or live.
-- Sealed months read from what was stored at sealing, so the detail of a month stays available after its checks expire. Months judged by run count keep no stretches, and the sheet says so.
+- Sealed months read from what was stored at sealing, so the detail of a month stays available after its checks expire.
 - **Excuse a window** opens the [excused window](#excused-windows) dialog prefilled with the latest counted stretch. It is offered for the live and the preview month only, since older and sealed months are locked.
 
 ### Sealing

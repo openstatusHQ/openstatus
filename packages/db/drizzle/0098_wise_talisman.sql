@@ -28,7 +28,7 @@ CREATE TABLE `monitor_sla_sealed_episode` (
 --> statement-breakpoint
 CREATE INDEX `monitor_sla_sealed_episode_sealed_month_id_idx` ON `monitor_sla_sealed_episode` (`sealed_month_id`);--> statement-breakpoint
 ALTER TABLE `monitor_sla_policy` ADD `time_zone` text DEFAULT 'UTC' NOT NULL;--> statement-breakpoint
-ALTER TABLE `monitor_sla_sealed_month` ADD `method` text DEFAULT 'runs' NOT NULL;--> statement-breakpoint
+ALTER TABLE `monitor_sla_sealed_month` ADD `method` text DEFAULT 'time' NOT NULL;--> statement-breakpoint
 ALTER TABLE `monitor_sla_sealed_month` ADD `time_zone` text DEFAULT 'UTC' NOT NULL;--> statement-breakpoint
 ALTER TABLE `monitor_sla_sealed_month` ADD `measured_ms` integer;--> statement-breakpoint
 ALTER TABLE `monitor_sla_sealed_month` ADD `down_ms` integer;--> statement-breakpoint

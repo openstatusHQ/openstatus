@@ -45,7 +45,7 @@ export const monitorSlaSealedMonth = sqliteTable(
     month: text("month").notNull(),
     method: text("method", { enum: monitorSlaMethods })
       .notNull()
-      .default("runs"),
+      .default("time"),
     timeZone: text("time_zone").notNull().default("UTC"),
 
     target: integer("target").notNull(),

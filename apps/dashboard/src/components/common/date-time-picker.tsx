@@ -13,7 +13,7 @@ import {
 import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { cn } from "@openstatus/ui/lib/utils";
 import { format, startOfDay } from "date-fns";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 type DateTimePickerProps = {
   value: Date;
@@ -21,6 +21,8 @@ type DateTimePickerProps = {
   /** Bounds, inclusive; a picked time is clamped into them. */
   min?: Date;
   max?: Date;
+  /** Hold edits in a draft and report once, when the popover closes. */
+  commitOnClose?: boolean;
 } & Omit<React.ComponentProps<typeof Button>, "value" | "onChange">;
 
 /**
@@ -34,6 +36,7 @@ export function DateTimePicker({
   onChange,
   min,
   max,
+  commitOnClose,
   className,
   size = "sm",
   children,
@@ -41,17 +44,28 @@ export function DateTimePicker({
 }: DateTimePickerProps) {
   const mobile = useIsMobile();
   const id = useId();
+  const [draft, setDraft] = useState<Date | null>(null);
+  const current = draft ?? value;
 
   /** Clamps into the bounds and reports a change; returns what was applied. */
   function commit(next: Date) {
     if (Number.isNaN(next.getTime())) return null;
     const clamped = min && next < min ? min : max && next > max ? max : next;
-    if (clamped.getTime() !== value.getTime()) onChange(clamped);
+    if (clamped.getTime() !== current.getTime()) {
+      if (commitOnClose) setDraft(clamped);
+      else onChange(clamped);
+    }
     return clamped;
   }
 
+  function handleOpenChange(open: boolean) {
+    if (open || !commitOnClose) return;
+    if (draft && draft.getTime() !== value.getTime()) onChange(draft);
+    setDraft(null);
+  }
+
   return (
-    <Popover modal>
+    <Popover modal onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -71,16 +85,16 @@ export function DateTimePicker({
       >
         <Calendar
           mode="single"
-          selected={value}
-          defaultMonth={value}
+          selected={current}
+          defaultMonth={current}
           onSelect={(day) => {
             if (!day) return;
             const next = new Date(day);
             next.setHours(
-              value.getHours(),
-              value.getMinutes(),
-              value.getSeconds(),
-              value.getMilliseconds(),
+              current.getHours(),
+              current.getMinutes(),
+              current.getSeconds(),
+              current.getMilliseconds(),
             );
             commit(next);
           }}
@@ -103,7 +117,7 @@ export function DateTimePicker({
                 // "" while a segment is cleared
                 if (!e.target.value) return;
                 const [hours, minutes] = e.target.value.split(":").map(Number);
-                const next = new Date(value);
+                const next = new Date(current);
                 next.setHours(hours, minutes);
                 const applied = commit(next);
                 // show the clamped time instead of what was typed

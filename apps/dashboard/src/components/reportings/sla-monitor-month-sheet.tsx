@@ -80,7 +80,6 @@ const unavailableText: Record<
   NonNullable<MonitorMonth["episodesUnavailable"]>,
   string
 > = {
-  runs: "This month was judged by run count, so it keeps no record of what used the budget.",
   failed:
     "The checks of this month could not be loaded. Try again in a minute.",
   expired:
@@ -276,11 +275,9 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           </MetricCardValue>
           <p className="text-muted-foreground text-xs">
             {month.coverage === null
-              ? month.method === "runs"
-                ? "judged by run count"
-                : month.episodesUnavailable === "failed"
-                  ? "checks could not be loaded"
-                  : "nothing measured yet"
+              ? month.episodesUnavailable === "failed"
+                ? "checks could not be loaded"
+                : "nothing measured yet"
               : `${formatSlaCoverage(month.coverage)}% of the time measured`}
           </p>
         </MetricCard>
