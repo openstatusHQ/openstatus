@@ -40,6 +40,8 @@ const EXAMPLE_MONTHS = Array.from({ length: 6 }, (_, i) => {
     response: count,
     resolution: count,
     missedUpdates: missed * 2,
+    misses: missed * 4,
+    creditPct: null,
   };
 });
 
@@ -73,6 +75,11 @@ export function Client() {
   const role = members.find((m) => m.user.id === user.id)?.role;
   const canEdit = role === "owner" || role === "admin";
   const locked = workspace.limits["incident-sla"] !== true;
+  const creditPerMiss = policy?.creditPerMissPct ?? null;
+  const columns =
+    creditPerMiss === null
+      ? attainmentColumns.filter((c) => c.id !== "credit")
+      : attainmentColumns;
 
   return (
     <SectionGroup>
@@ -93,6 +100,7 @@ export function Client() {
                 targets: defaultIncidentSlaTargets,
                 resolutionStop: "mitigated",
                 responseMet: "acknowledged",
+                creditPerMissPct: null,
               }
             }
             saved={!!policy}
@@ -120,11 +128,14 @@ export function Client() {
             Tracked incidents of the last twelve months, by the month their
             clock started (UTC). A target still running counts as open, not as
             met. Canceled incidents are left out.
+            {creditPerMiss === null
+              ? null
+              : ` Support credit is every recorded miss times ${creditPerMiss}% of monthly fees, uncapped and at the current rate; explaining a miss does not remove it.`}
           </SectionDescription>
         </SectionHeader>
         {locked ? (
           <BillingOverlayContainer>
-            <DataTable columns={attainmentColumns} data={EXAMPLE_MONTHS} />
+            <DataTable columns={columns} data={EXAMPLE_MONTHS} />
             <BillingOverlay>
               <BillingOverlayButton
                 data-track="paywall_viewed"
@@ -142,7 +153,7 @@ export function Client() {
           </BillingOverlayContainer>
         ) : attainment ? (
           <DataTable
-            columns={attainmentColumns}
+            columns={columns}
             data={[...attainment.months].reverse()}
             defaultPagination={{ pageIndex: 0, pageSize: 12 }}
           />

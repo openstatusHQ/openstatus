@@ -8,9 +8,10 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import { workspace } from "../workspaces/workspace";
+import type { MonitorSlaCreditSchedule } from "./constants";
 import { monitorSlaPolicy } from "./monitor_sla_policy";
 
-/** Target and strictness that apply from `effective_from` until the next row. */
+/** Target, strictness and credit schedule that apply from `effective_from` until the next row. */
 export const monitorSlaPolicyTerms = sqliteTable(
   "monitor_sla_policy_terms",
   {
@@ -24,6 +25,10 @@ export const monitorSlaPolicyTerms = sqliteTable(
     // thousandths of a percent, as on the policy
     target: integer("target").notNull(),
     strict: integer("strict", { mode: "boolean" }).notNull(),
+    // null: no credit schedule
+    creditSchedule: text("credit_schedule", {
+      mode: "json",
+    }).$type<MonitorSlaCreditSchedule>(),
     // first of the month in the policy's time zone, YYYY-MM-01
     effectiveFrom: text("effective_from").notNull(),
 

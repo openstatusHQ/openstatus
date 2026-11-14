@@ -14,6 +14,16 @@ export function parseSlaTarget(value: string): number | null {
   return target > 0 && target <= 100_000 ? target : null;
 }
 
+export const SLA_PERCENT_MESSAGE =
+  "Enter a percentage above 0, up to 100, with at most 3 decimals.";
+
+/** A credit percentage above 0, up to 100, with at most three decimals, or `null`. */
+export function parseSlaPercent(value: string): number | null {
+  if (!/^\d{1,3}(\.\d{1,3})?$/.test(value.trim())) return null;
+  const n = Number(value);
+  return n > 0 && n <= 100 ? n : null;
+}
+
 /** A duration to the minute once it reaches an hour (to the second with `exact`), else to the second: `"3h 36m"`, `"43m 12s"`; the sign is dropped. */
 export function formatSlaDuration(
   ms: number,

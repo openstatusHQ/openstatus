@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   integer,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -32,6 +33,8 @@ export const incidentSlaPolicy = sqliteTable(
     responseMet: text("response_met", { enum: incidentSlaResponseMets })
       .notNull()
       .default("acknowledged"),
+    // percent of monthly fees per missed target; null: no support credits
+    creditPerMissPct: real("credit_per_miss_pct"),
 
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()

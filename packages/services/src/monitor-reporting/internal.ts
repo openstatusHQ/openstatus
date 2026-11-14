@@ -1,4 +1,15 @@
-import { and, asc, desc, eq, gte, inArray, isNull, lte } from "@openstatus/db";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  ne,
+} from "@openstatus/db";
 import {
   monitor,
   monitorSlaExcusedWindow,
@@ -38,6 +49,7 @@ import {
   type MonitorSlaMonth,
   monthCellKey,
   monthOf,
+  type SlaTerms,
   storedMonth,
   timeMonth,
 } from "./months";
@@ -124,9 +136,27 @@ export async function getWritablePolicy(
   return row;
 }
 
-export type MonitorSlaTerms = {
-  target: number;
-  strict: boolean;
+/** Another policy of the workspace holding the incident policy link; one holds it at most. */
+export async function incidentLinkHolder(
+  db: DB,
+  policy: { id: number; workspaceId: number },
+) {
+  return (
+    (await db
+      .select({ id: monitorSlaPolicy.id, name: monitorSlaPolicy.name })
+      .from(monitorSlaPolicy)
+      .where(
+        and(
+          eq(monitorSlaPolicy.workspaceId, policy.workspaceId),
+          isNotNull(monitorSlaPolicy.incidentSlaPolicyId),
+          ne(monitorSlaPolicy.id, policy.id),
+        ),
+      )
+      .get()) ?? null
+  );
+}
+
+export type MonitorSlaTerms = SlaTerms & {
   /** YYYY-MM-01 of the terms row; null when the policy row's own terms apply */
   effectiveFrom: string | null;
 };
@@ -138,7 +168,7 @@ type PolicyTermsRef = {
   strict: boolean;
 };
 
-/** Terms judging `month` (YYYY-MM-01): the latest terms row in effect by then, else the policy row's. */
+/** Terms judging `month` (YYYY-MM-01): the latest terms row in effect by then, else the policy row's (no credit schedule). */
 export async function termsForMonth(
   db: DB,
   policy: { id: number; workspaceId: number },
@@ -148,6 +178,7 @@ export async function termsForMonth(
     .select({
       target: monitorSlaPolicyTerms.target,
       strict: monitorSlaPolicyTerms.strict,
+      creditSchedule: monitorSlaPolicyTerms.creditSchedule,
       effectiveFrom: monitorSlaPolicyTerms.effectiveFrom,
     })
     .from(monitorSlaPolicyTerms)
@@ -176,20 +207,16 @@ export async function termsForMonth(
     )
     .get();
   if (!own) throw new NotFoundError("monitor_sla_policy", policy.id);
-  return { ...own, effectiveFrom: null };
+  return { ...own, creditSchedule: null, effectiveFrom: null };
 }
 
 export type MonitorSlaTermsState = {
   /** YYYY-MM-01 of the running month in the policy zone */
   liveMonth: string;
   /** the terms judging the running month */
-  liveTerms: { target: number; strict: boolean };
+  liveTerms: SlaTerms;
   /** terms set to apply from a later month; null when none are */
-  pendingTerms: {
-    target: number;
-    strict: boolean;
-    effectiveFrom: string;
-  } | null;
+  pendingTerms: (SlaTerms & { effectiveFrom: string }) | null;
 };
 
 type DatedTerms = MonitorSlaTerms & { effectiveFrom: string };
@@ -208,6 +235,7 @@ export async function loadTermsHistory(
             policyId: monitorSlaPolicyTerms.monitorSlaPolicyId,
             target: monitorSlaPolicyTerms.target,
             strict: monitorSlaPolicyTerms.strict,
+            creditSchedule: monitorSlaPolicyTerms.creditSchedule,
             effectiveFrom: monitorSlaPolicyTerms.effectiveFrom,
           })
           .from(monitorSlaPolicyTerms)
@@ -232,7 +260,12 @@ export async function loadTermsHistory(
   const base = (policyId: number): MonitorSlaTerms => {
     const p = own.get(policyId);
     if (!p) throw new NotFoundError("monitor_sla_policy", policyId);
-    return { target: p.target, strict: p.strict, effectiveFrom: null };
+    return {
+      target: p.target,
+      strict: p.strict,
+      creditSchedule: null,
+      effectiveFrom: null,
+    };
   };
   const rowsOf = (policyId: number) => byPolicy.get(policyId) ?? [];
   return {
@@ -266,11 +299,16 @@ export function termsStateOf(
   const pending = history.after(policy.id, liveMonth);
   return {
     liveMonth,
-    liveTerms: { target: live.target, strict: live.strict },
+    liveTerms: {
+      target: live.target,
+      strict: live.strict,
+      creditSchedule: live.creditSchedule,
+    },
     pendingTerms: pending
       ? {
           target: pending.target,
           strict: pending.strict,
+          creditSchedule: pending.creditSchedule,
           effectiveFrom: pending.effectiveFrom,
         }
       : null,
@@ -346,7 +384,12 @@ export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
   const row = await findPolicy(db, ctx, id);
   const history = await loadTermsHistory(db, ctx.workspace.id, [row]);
   const latest = history.latest(row.id);
-  const policy = { ...row, target: latest.target, strict: latest.strict };
+  const policy = {
+    ...row,
+    target: latest.target,
+    strict: latest.strict,
+    creditSchedule: latest.creditSchedule,
+  };
   const monitors = await db
     .select({
       id: monitor.id,
@@ -518,7 +561,7 @@ export function memberTimeMonth(args: {
   member: Pick<PolicyMember, "id" | "memberSince">;
   fetched: Awaited<ReturnType<typeof fetchMonthEpisodes>>;
   excusedSpans: readonly Span[];
-  terms: { target: number; strict: boolean };
+  terms: SlaTerms;
   timeZone: string;
   now: Date;
 }): MonitorSlaMonth {

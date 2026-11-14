@@ -1,6 +1,7 @@
 import {
   monitor,
   monitorSlaPolicy,
+  monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedMonth,
   user,
@@ -140,17 +141,17 @@ describe("exportMonitorReporting", () => {
         "Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement.",
       );
       expect(header).toBe(
-        "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
+        "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage,credit_pct,credit_steps",
       );
       expect(rows).toHaveLength(12);
       expect(rows[0]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,,,,,,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,,,,,,UTC,,,,,,,`,
       );
       expect(rows[10]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,sealed,1990,0,10,0,99.500,yes,2026-10-04T00:00:00.000Z,time,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,sealed,1990,0,10,0,99.500,yes,2026-10-04T00:00:00.000Z,time,UTC,,,,,,,`,
       );
       expect(rows[11]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,none,,,,,,,,,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,none,,,,,,,,,UTC,,,,,,,`,
       );
     });
   });
@@ -235,6 +236,8 @@ describe("exportMonitorReporting", () => {
         "",
         "",
         "",
+        "",
+        "",
       ]);
     });
   });
@@ -295,7 +298,70 @@ describe("exportMonitorReporting", () => {
         "0",
         "0",
         "100.000",
+        "",
+        "",
       ]);
+    });
+  });
+
+  test("a sealed month exports its stored credit, a live month a provisional one", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const schedule = { stepPct: 0.25, creditPct: 3, capPct: 100 };
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        target: 99_900,
+        strict: false,
+        creditSchedule: schedule,
+        effectiveFrom: "2026-11-01",
+      });
+      await tx.insert(monitorSlaSealedMonth).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        monitorId: api.id,
+        month: "2026-09-01",
+        method: "time",
+        target: 99_500,
+        strict: false,
+        creditSchedule: schedule,
+        ok: 990,
+        degraded: 0,
+        error: 10,
+        total: 1000,
+        up: 990,
+        uptime: 99_000,
+        met: false,
+        creditPct: 6,
+        creditSteps: 2,
+        sealedAt: new Date(Date.UTC(2026, 9, 4)),
+      });
+      const outage = Date.UTC(2026, 10, 10);
+      const res = await exportMonitorReporting({
+        ctx: { ...ctx, db: tx },
+        input: {
+          id: policy.id,
+          from: "2026-09",
+          to: "2026-11",
+          includeLive: true,
+        },
+        now,
+        episodesPipes: episodesPipesFrom(() =>
+          runsEvery(Date.UTC(2026, 9, 1), now.getTime(), 10 * MIN, (t) =>
+            t >= outage && t < outage + HOUR ? "error" : "ok",
+          ),
+        ),
+        sleep,
+      });
+      const { comments, rows } = parse(res.csv);
+      expect(comments[1]).toContain(
+        "credit_pct is a computed share of monthly fees, not a billing action",
+      );
+      const tail = (row: string | undefined) => row?.split(",").slice(-2);
+      expect(tail(rows[0])).toEqual(["6.000", "2"]);
+      // 99.712% under 99.9% is 0.188 below: one started step
+      expect(tail(rows.at(-1))).toEqual(["3.000", "1"]);
     });
   });
 
@@ -381,6 +447,8 @@ describe("exportMonitorReporting", () => {
         "",
         "",
         "",
+        "",
+        "",
       ]);
       expect(cells[1].slice(6, 8)).toEqual(["2026-11", "live (provisional)"]);
       expect(cells[1].slice(15, 18)).toEqual([
@@ -402,7 +470,7 @@ describe("exportMonitorReporting", () => {
       });
       expect(res.filename).toBe("sla-eu-prod-2026-10-to-2026-10.csv");
       expect(parse(res.csv).rows[0]).toBe(
-        `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,,,,,,UTC,,,,,`,
+        `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,,,,,,UTC,,,,,,,`,
       );
     });
   });

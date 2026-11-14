@@ -4,6 +4,7 @@ import {
   monitor,
   monitorSlaExcusedWindow,
   monitorSlaPolicy,
+  monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedEpisode,
   monitorSlaSealedMonth,
@@ -271,8 +272,74 @@ describe("getMonitorReportingMonth", () => {
         excusedMs: res.excusedMs,
         unmeasuredMs: res.unmeasuredMs,
         coverage: res.coverage,
+        credit: res.credit,
         sealed: res.sealed,
       });
+    });
+  });
+
+  test("a live month under a credit schedule carries its provisional credit", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, { name: "API" });
+      const plain = await insertPolicy(tx, [api.id]);
+      const credited = await insertPolicy(tx, [api.id]);
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: credited.id,
+        target: 99_900,
+        strict: false,
+        creditSchedule: { stepPct: 0.25, creditPct: 3, capPct: 100 },
+        effectiveFrom: "2026-11-01",
+      });
+      const month = (id: number) =>
+        getMonitorReportingMonth({
+          ctx: { ...ctx, db: tx },
+          input: { id, monitorId: api.id },
+          now,
+          episodesPipes: novemberRuns(),
+          sleep,
+        });
+
+      // 30 min down in 12.5 days: 99.833%, a started step below 99.9%
+      expect(await month(credited.id)).toMatchObject({
+        state: "live",
+        met: false,
+        credit: { steps: 1, pct: 3 },
+      });
+      expect((await month(plain.id)).credit).toBeNull();
+    });
+  });
+
+  test("a month without a judgement still names its credit schedule", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const schedule = { stepPct: 0.25, creditPct: 3, capPct: 100 };
+      await tx.insert(monitorSlaPolicyTerms).values({
+        workspaceId: ctx.workspace.id,
+        monitorSlaPolicyId: policy.id,
+        target: 99_900,
+        strict: false,
+        creditSchedule: schedule,
+        effectiveFrom: "2026-08-01",
+      });
+      const month = (m?: string) =>
+        getMonitorReportingMonth({
+          ctx: { ...ctx, db: tx },
+          input: { id: policy.id, monitorId: api.id, month: m },
+          now,
+          episodesPipes: failingEpisodesPipes(),
+          sleep,
+        });
+
+      for (const res of [await month("2026-08"), await month()]) {
+        expect(res).toMatchObject({
+          terms: null,
+          credit: null,
+          creditSchedule: schedule,
+        });
+      }
+      expect((await month("2026-07")).creditSchedule).toBeNull();
     });
   });
 

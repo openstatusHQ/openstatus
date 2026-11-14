@@ -8,7 +8,9 @@ import { formatSlaTarget, parseSlaTarget } from "@/data/reportings.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { FormCommitment } from "./form-commitment";
+import { FormCredits } from "./form-credits";
 import { FormMonitors } from "./form-monitors";
+import { FormSupportTerms } from "./form-support-terms";
 
 export function FormMonitorReportingUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +21,9 @@ export function FormMonitorReportingUpdate() {
     trpc.monitorReporting.summary.queryOptions({ id: policyId }),
   );
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: incidentPolicy, isPending: incidentPending } = useQuery(
+    trpc.incidentReporting.get.queryOptions(),
+  );
   const updateMutation = useMutation(
     trpc.monitorReporting.update.mutationOptions({
       onSuccess: () =>
@@ -28,7 +33,7 @@ export function FormMonitorReportingUpdate() {
     }),
   );
 
-  if (!policy || !monitors) return null;
+  if (!policy || !monitors || incidentPending) return null;
 
   return (
     <FormCardGroup>
@@ -61,6 +66,33 @@ export function FormMonitorReportingUpdate() {
           await updateMutation.mutateAsync({
             id: policyId,
             monitorIds: values.monitorIds,
+          });
+        }}
+      />
+      <FormCredits
+        schedule={policy.creditSchedule}
+        slaTarget={policy.target}
+        live={{
+          month: policy.liveMonth,
+          creditSchedule: policy.liveTerms.creditSchedule,
+        }}
+        onSubmit={async (creditSchedule) => {
+          await updateMutation.mutateAsync({ id: policyId, creditSchedule });
+        }}
+      />
+      <FormSupportTerms
+        // remount so the switch follows a link made or lost elsewhere
+        key={`${policy.incidentSlaPolicyId}-${incidentPolicy?.id}`}
+        incidentPolicy={incidentPolicy ?? null}
+        linked={
+          policy.incidentSlaPolicyId !== null &&
+          policy.incidentSlaPolicyId === incidentPolicy?.id
+        }
+        holder={policy.incidentLinkHolder}
+        onSubmit={async (incidentSlaPolicyId) => {
+          await updateMutation.mutateAsync({
+            id: policyId,
+            incidentSlaPolicyId,
           });
         }}
       />

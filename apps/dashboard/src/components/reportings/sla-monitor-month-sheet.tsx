@@ -341,6 +341,10 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
         </section>
       ) : null}
 
+      {month.credit || month.creditSchedule ? (
+        <SlaCreditRow month={month} />
+      ) : null}
+
       <SlaBurndown month={month} />
 
       <section className="grid gap-2">
@@ -437,5 +441,49 @@ function EpisodeRow({
         {formatSlaDuration(e.weightedMs)}
       </span>
     </li>
+  );
+}
+
+function SlaCreditRow({ month }: { month: MonitorMonth }) {
+  const { credit } = month;
+  const provisional = month.state === "live" || month.state === "preview";
+  return (
+    <section className="grid gap-1">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-medium">
+          Service credit
+          {provisional ? (
+            <span className="text-muted-foreground font-normal">
+              {" "}
+              · provisional
+            </span>
+          ) : null}
+        </h3>
+        <span
+          className={cn(
+            "font-mono text-sm tabular-nums",
+            credit && credit.pct > 0 && "text-destructive",
+          )}
+        >
+          {credit ? `${credit.pct}% of fees` : "—"}
+        </span>
+      </div>
+      <p className="text-muted-foreground text-xs">
+        {credit === null
+          ? "No judgement, so no credit."
+          : credit.steps === 0
+            ? "Target met, nothing owed."
+            : `${credit.steps} started ${credit.steps === 1 ? "step" : "steps"} below target`}
+        {credit && month.coverage !== null
+          ? ` · ${formatSlaCoverage(month.coverage)}% of the time measured`
+          : null}
+        {provisional
+          ? " · fixed when the month seals."
+          : month.state === "sealed"
+            ? " · stored when the month sealed."
+            : "."}{" "}
+        A computed figure, not a billing action.
+      </p>
+    </section>
   );
 }

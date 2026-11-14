@@ -12,6 +12,7 @@ import { excusedWindowLock } from "./excused";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
+  incidentLinkHolder,
   judgePolicyMonths,
   loadPolicyMembers,
   loadTermsHistory,
@@ -82,6 +83,8 @@ export async function getMonitorReportingSummary(args: {
     ...termsStateOf(history, policy, args.now ?? new Date()),
     /** the time zone is locked once any month is sealed */
     sealed: (await sealedMonthsOf(db, policy)).length > 0,
+    /** another policy holding the incident policy link, which this one then cannot take */
+    incidentLinkHolder: await incidentLinkHolder(db, policy),
     monitors: monitors.map(
       ({ regions: _r, periodicity: _p, memberSince: _m, ...m }) => m,
     ),

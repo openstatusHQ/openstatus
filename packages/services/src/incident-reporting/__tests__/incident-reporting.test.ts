@@ -13,6 +13,7 @@ import {
   expectAuditRow,
   makeApiKeyCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
@@ -239,6 +240,59 @@ describe("upsertIncidentReporting", () => {
         },
       });
       expect(policy.targets.critical?.resolutionMinutes).toBe(43_200);
+    });
+  });
+
+  test("a support credit per miss is optional, kept when omitted, cleared with null, audited", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const first = await upsertIncidentReporting({ ctx, input });
+      expect(first.creditPerMissPct).toBeNull();
+
+      const withCredit = await upsertIncidentReporting({
+        ctx,
+        input: { ...input, creditPerMissPct: 5 },
+      });
+      expect(withCredit.creditPerMissPct).toBe(5);
+      const [audit] = await readAuditLog({
+        workspaceId: ctx.workspace.id,
+        entityType: "incident_sla_policy",
+        entityId: first.id,
+        db: tx,
+      });
+      expect(audit).toMatchObject({
+        action: "incident_sla_policy.update",
+        before: { creditPerMissPct: null },
+        after: { creditPerMissPct: 5 },
+      });
+
+      const kept = await upsertIncidentReporting({ ctx, input });
+      expect(kept.creditPerMissPct).toBe(5);
+
+      const cleared = await upsertIncidentReporting({
+        ctx,
+        input: { ...input, creditPerMissPct: null },
+      });
+      expect(cleared.creditPerMissPct).toBeNull();
+    });
+  });
+
+  test("a support credit above 0, up to 100, with at most three decimals", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      for (const creditPerMissPct of [0, -1, 100.5, 1.2345]) {
+        await expect(
+          upsertIncidentReporting({
+            ctx,
+            input: { ...input, creditPerMissPct },
+          }),
+        ).rejects.toThrow();
+      }
+      const policy = await upsertIncidentReporting({
+        ctx,
+        input: { ...input, creditPerMissPct: 0.125 },
+      });
+      expect(policy.creditPerMissPct).toBe(0.125);
     });
   });
 });

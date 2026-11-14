@@ -9,6 +9,7 @@ import {
   monitorSlaSealedMonth,
   pageComponent,
 } from "@openstatus/db/src/schema";
+import type { MonitorSlaCreditSchedule } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 
 import { requireScope } from "../auth";
 import { type DB, defaultTb, getReadDb, type ServiceContext } from "../context";
@@ -249,9 +250,11 @@ async function memberMonth(args: {
   let episodes: MonitorReportingMonthEpisode[] | null = null;
   /** runs: a legacy run-count seal; failed: episodes could not be read; expired: older than the previous month and never sealed */
   let episodesUnavailable: "runs" | "failed" | "expired" | null = null;
+  let creditSchedule: MonitorSlaCreditSchedule | null;
 
   if (seal) {
     cell = storedMonth({ month, seal, timeZone });
+    creditSchedule = seal.creditSchedule;
     spans = mergeSpans(
       seal.excusedWindows.map((w) => ({
         from: new Date(w.from),
@@ -317,6 +320,7 @@ async function memberMonth(args: {
             sleep: args.sleep,
           }),
       ]);
+      creditSchedule = terms.creditSchedule;
       cell = memberTimeMonth({
         month,
         state,
@@ -372,6 +376,7 @@ async function memberMonth(args: {
       }
     } else {
       cell = storedMonth({ month, seal: undefined, timeZone });
+      creditSchedule = (await termsForMonth(db, policy, month)).creditSchedule;
       episodesUnavailable = "expired";
     }
   }
@@ -387,6 +392,8 @@ async function memberMonth(args: {
       archivedAt: policy.archivedAt,
     },
     monitor: { id: member.id, name: member.name },
+    /** the schedule of the terms for this month, also when the month has no judgement */
+    creditSchedule,
     range,
     maintenanceMode: maintenances.mode,
     budget,

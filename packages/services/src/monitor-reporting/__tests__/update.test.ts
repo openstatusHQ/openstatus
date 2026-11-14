@@ -1,5 +1,10 @@
 import { db, eq } from "@openstatus/db";
-import { monitor, monitorSlaPolicyToMonitor } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  monitorSlaPolicy,
+  monitorSlaPolicyToMonitor,
+} from "@openstatus/db/src/schema";
+import { defaultIncidentSlaTargets } from "@openstatus/db/src/schema/incident_sla_policies/constants";
 import {
   addUserToWorkspace,
   createMonitor,
@@ -16,9 +21,17 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../../errors";
+import { deleteIncidentReporting } from "../../incident-reporting/delete";
+import { upsertIncidentReporting } from "../../incident-reporting/upsert";
+import { archiveMonitorReporting } from "../archive";
 import { createMonitorReporting } from "../create";
-import { getMonitorReporting } from "../get";
+import { getMonitorReporting, getMonitorReportingSummary } from "../get";
 import { updateMonitorReporting } from "../update";
 import {
   episodesPipesFrom,
@@ -322,6 +335,246 @@ describe("createMonitorReporting strict", () => {
         input: { name: "Strict", target: 99_000, strict: true, monitorIds: [] },
       });
       expect(policy.strict).toBe(true);
+    });
+  });
+});
+
+describe("support terms: the linked incident policy", () => {
+  const incidentInput = {
+    targets: defaultIncidentSlaTargets,
+    resolutionStop: "mitigated" as const,
+    creditPerMissPct: 5,
+  };
+
+  test("a policy links the workspace's incident policy and unlinks it with null, audited", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const incident = await upsertIncidentReporting({
+        ctx,
+        input: incidentInput,
+      });
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
+      });
+      expect(policy.incidentSlaPolicyId).toBeNull();
+
+      const linked = await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, incidentSlaPolicyId: incident.id },
+        now,
+      });
+      expect(linked.incidentSlaPolicyId).toBe(incident.id);
+      const [row] = await readAuditLog({
+        workspaceId: ctx.workspace.id,
+        entityType: "monitor_sla_policy",
+        entityId: policy.id,
+        db: tx,
+      });
+      expect(row?.before).toMatchObject({ incidentSlaPolicyId: null });
+      expect(row?.after).toMatchObject({ incidentSlaPolicyId: incident.id });
+
+      const unlinked = await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, incidentSlaPolicyId: null },
+        now,
+      });
+      expect(unlinked.incidentSlaPolicyId).toBeNull();
+    });
+  });
+
+  test("a second policy cannot link it; the refusal names the holder", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const incident = await upsertIncidentReporting({
+        ctx,
+        input: incidentInput,
+      });
+      const holder = await createMonitorReporting({
+        ctx,
+        input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
+      });
+      const other = await createMonitorReporting({
+        ctx,
+        input: { name: "Partner", target: 99_000, monitorIds: [webId] },
+      });
+      await updateMonitorReporting({
+        ctx,
+        input: { id: holder.id, incidentSlaPolicyId: incident.id },
+        now,
+      });
+
+      const refused = updateMonitorReporting({
+        ctx,
+        input: { id: other.id, incidentSlaPolicyId: incident.id },
+        now,
+      });
+      await expect(refused).rejects.toBeInstanceOf(ConflictError);
+      await expect(refused).rejects.toThrow(/"Enterprise"/);
+
+      // saving the holder again is not a second link
+      await expect(
+        updateMonitorReporting({
+          ctx,
+          input: {
+            id: holder.id,
+            incidentSlaPolicyId: incident.id,
+            name: "Ent",
+          },
+          now,
+        }),
+      ).resolves.toMatchObject({ incidentSlaPolicyId: incident.id });
+      const summary = await getMonitorReportingSummary({
+        ctx,
+        input: { id: other.id },
+        now,
+      });
+      expect(summary.incidentLinkHolder).toEqual({
+        id: holder.id,
+        name: "Ent",
+      });
+    });
+  });
+
+  test("a link taken by a concurrent save is refused by the index, naming the holder", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const incident = await upsertIncidentReporting({
+        ctx,
+        input: incidentInput,
+      });
+      const holder = await createMonitorReporting({
+        ctx,
+        input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
+      });
+      const other = await createMonitorReporting({
+        ctx,
+        input: { name: "Partner", target: 99_000, monitorIds: [webId] },
+      });
+      await tx
+        .update(monitorSlaPolicy)
+        .set({ incidentSlaPolicyId: incident.id })
+        .where(eq(monitorSlaPolicy.id, holder.id));
+
+      const refused = updateMonitorReporting({
+        ctx,
+        input: { id: other.id, incidentSlaPolicyId: incident.id },
+        now,
+      });
+      await expect(refused).rejects.toBeInstanceOf(ConflictError);
+      await expect(refused).rejects.toThrow(
+        'The incident policy is already linked to "Enterprise". Unlink it there first.',
+      );
+    });
+  });
+
+  test("turning the incident policy off audits the unlink on the holder", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const incident = await upsertIncidentReporting({
+        ctx,
+        input: incidentInput,
+      });
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
+      });
+      await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, incidentSlaPolicyId: incident.id },
+        now,
+      });
+      await clearAuditLog(ctx.workspace.id, { db: tx });
+
+      await deleteIncidentReporting({ ctx });
+      const rows = await readAuditLog({
+        workspaceId: ctx.workspace.id,
+        entityType: "monitor_sla_policy",
+        entityId: policy.id,
+        db: tx,
+      });
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        action: "monitor_sla_policy.update",
+        before: { incidentSlaPolicyId: incident.id, target: 99_500 },
+        after: { incidentSlaPolicyId: null, target: 99_500 },
+      });
+    });
+  });
+
+  test("another workspace's incident policy is not found", async () => {
+    await withTestTransaction(async (tx) => {
+      const foreign = await upsertIncidentReporting({
+        ctx: { ...otherCtx, db: tx },
+        input: incidentInput,
+      });
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
+      });
+      await expect(
+        updateMonitorReporting({
+          ctx,
+          input: { id: policy.id, incidentSlaPolicyId: foreign.id },
+          now,
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("turning the incident policy off unlinks it; archiving a holder frees the link", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const incident = await upsertIncidentReporting({
+        ctx,
+        input: incidentInput,
+      });
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Enterprise", target: 99_500, monitorIds: [apiId] },
+      });
+      await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, incidentSlaPolicyId: incident.id },
+        now,
+      });
+      await deleteIncidentReporting({ ctx });
+      expect(
+        (
+          await getMonitorReportingSummary({
+            ctx,
+            input: { id: policy.id },
+            now,
+          })
+        ).incidentSlaPolicyId,
+      ).toBeNull();
+
+      const again = await upsertIncidentReporting({
+        ctx,
+        input: incidentInput,
+      });
+      await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, incidentSlaPolicyId: again.id },
+        now,
+      });
+      const archived = await archiveMonitorReporting({
+        ctx,
+        input: { id: policy.id },
+      });
+      expect(archived.incidentSlaPolicyId).toBeNull();
+      const next = await createMonitorReporting({
+        ctx,
+        input: { name: "Partner", target: 99_000, monitorIds: [webId] },
+      });
+      await expect(
+        updateMonitorReporting({
+          ctx,
+          input: { id: next.id, incidentSlaPolicyId: again.id },
+          now,
+        }),
+      ).resolves.toMatchObject({ incidentSlaPolicyId: again.id });
     });
   });
 });

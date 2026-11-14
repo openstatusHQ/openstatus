@@ -5,8 +5,10 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { incidentSlaPolicy } from "../incident_sla_policies/incident_sla_policy";
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
 import { monitorSlaPolicyTerms } from "./monitor_sla_policy_terms";
@@ -27,6 +29,11 @@ export const monitorSlaPolicy = sqliteTable(
     timeZone: text("time_zone").notNull().default("UTC"),
     // set = read-only, no more sealing, hidden from the default list
     archivedAt: integer("archived_at", { mode: "timestamp" }),
+    // the workspace's incident policy as support terms; held by one policy at most
+    incidentSlaPolicyId: integer("incident_sla_policy_id").references(
+      () => incidentSlaPolicy.id,
+      { onDelete: "set null" },
+    ),
 
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
@@ -35,7 +42,12 @@ export const monitorSlaPolicy = sqliteTable(
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),
   },
-  (t) => [index("monitor_sla_policy_workspace_id_idx").on(t.workspaceId)],
+  (t) => [
+    index("monitor_sla_policy_workspace_id_idx").on(t.workspaceId),
+    uniqueIndex("monitor_sla_policy_incident_sla_policy_id_idx").on(
+      t.incidentSlaPolicyId,
+    ),
+  ],
 );
 
 export const monitorSlaPolicyToMonitor = sqliteTable(
@@ -64,6 +76,10 @@ export const monitorSlaPolicyRelations = relations(
     workspace: one(workspace, {
       fields: [monitorSlaPolicy.workspaceId],
       references: [workspace.id],
+    }),
+    incidentSlaPolicy: one(incidentSlaPolicy, {
+      fields: [monitorSlaPolicy.incidentSlaPolicyId],
+      references: [incidentSlaPolicy.id],
     }),
     monitors: many(monitorSlaPolicyToMonitor),
     terms: many(monitorSlaPolicyTerms),

@@ -391,7 +391,7 @@ describe("listMonitorReportings strip", () => {
       });
       const expected = {
         liveMonth: "2026-11-01",
-        liveTerms: { target: 99_500, strict: false },
+        liveTerms: { target: 99_500, strict: false, creditSchedule: null },
         pendingTerms: {
           target: 99_950,
           strict: true,
@@ -469,7 +469,7 @@ describe("listMonitorReportingsForMonitor", () => {
           name: "A",
           timeZone: "UTC",
           liveMonth: "2026-11-01",
-          liveTerms: { target: 99_500, strict: false },
+          liveTerms: { target: 99_500, strict: false, creditSchedule: null },
           pendingTerms: null,
         },
         {
@@ -477,10 +477,11 @@ describe("listMonitorReportingsForMonitor", () => {
           name: "B",
           timeZone: "UTC",
           liveMonth: "2026-11-01",
-          liveTerms: { target: 99_500, strict: false },
+          liveTerms: { target: 99_500, strict: false, creditSchedule: null },
           pendingTerms: {
             target: 99_000,
             strict: false,
+            creditSchedule: null,
             effectiveFrom: "2026-12-01",
           },
         },

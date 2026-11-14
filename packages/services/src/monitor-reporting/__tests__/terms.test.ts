@@ -18,6 +18,7 @@ import {
 import type { DB, ServiceContext } from "../../context";
 import { PreconditionFailedError } from "../../errors";
 import { createMonitorReporting } from "../create";
+import { getMonitorReportingSummary } from "../get";
 import { termsForMonth } from "../internal";
 import { updateMonitorReporting } from "../update";
 
@@ -223,11 +224,13 @@ describe("terms in effect", () => {
       expect(await termsForMonth(tx, policy, "2026-11-01")).toEqual({
         target: 99_500,
         strict: false,
+        creditSchedule: null,
         effectiveFrom: null,
       });
       expect(await termsForMonth(tx, policy, "2026-12-01")).toEqual({
         target: 99_900,
         strict: true,
+        creditSchedule: null,
         effectiveFrom: "2026-12-01",
       });
 
@@ -457,9 +460,106 @@ describe("terms in effect", () => {
       expect(await termsForMonth(tx, policy, "2026-12-01")).toEqual({
         target: 99_900,
         strict: false,
+        creditSchedule: null,
         effectiveFrom: "2026-12-01",
       });
       expect(await at("2026-11-01")).toBe(99_900);
+    });
+  });
+});
+
+describe("credit schedule", () => {
+  const schedule = { stepPct: 0.25, creditPct: 3, capPct: 100 };
+
+  test("is optional, added on update, and starts with next month's terms", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Credits", target: 99_500 },
+      });
+      const before = await getMonitorReportingSummary({
+        ctx,
+        input: { id: policy.id },
+        now,
+      });
+      expect(before.creditSchedule).toBeNull();
+
+      await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, creditSchedule: schedule },
+        now,
+      });
+      const after = await getMonitorReportingSummary({
+        ctx,
+        input: { id: policy.id },
+        now,
+      });
+      expect(after.creditSchedule).toEqual(schedule);
+      expect(after.liveTerms.creditSchedule).toBeNull();
+      expect(after.pendingTerms).toEqual({
+        target: 99_500,
+        strict: false,
+        creditSchedule: schedule,
+        effectiveFrom: "2026-12-01",
+      });
+      expect(
+        (await termsForMonth(tx, policy, "2026-12-01")).creditSchedule,
+      ).toEqual(schedule);
+
+      const [audit] = await readAuditLog({
+        workspaceId,
+        entityType: "monitor_sla_policy",
+        entityId: policy.id,
+        db: tx,
+      });
+      expect(audit?.action).toBe("monitor_sla_policy.update");
+      expect(audit?.before).toMatchObject({ creditSchedule: null });
+      expect(audit?.after).toMatchObject({ creditSchedule: schedule });
+    });
+  });
+
+  test("removing it again before next month drops the pending terms", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Undo", target: 99_500 },
+      });
+      await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, creditSchedule: schedule },
+        now,
+      });
+      await updateMonitorReporting({
+        ctx,
+        input: { id: policy.id, creditSchedule: null },
+        now,
+      });
+      expect(await termsRows(tx, policy.id)).toEqual([]);
+    });
+  });
+
+  test("a schedule with a zero or overlong step is refused", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await createMonitorReporting({
+        ctx,
+        input: { name: "Bad", target: 99_500 },
+      });
+      for (const creditSchedule of [
+        { ...schedule, stepPct: 0 },
+        { ...schedule, creditPct: 0.0001 },
+        { ...schedule, capPct: 101 },
+      ]) {
+        await expect(
+          updateMonitorReporting({
+            ctx,
+            input: { id: policy.id, creditSchedule },
+            now,
+          }),
+        ).rejects.toThrow();
+      }
     });
   });
 });

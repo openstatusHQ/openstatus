@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 import { z } from "zod";
 
+import { SlaPercentInput } from "../schemas";
 import { canonicalTimeZone } from "./months";
 
 const timeZone = z.string().transform((value, ctx) => {
@@ -19,6 +20,13 @@ const timeZone = z.string().transform((value, ctx) => {
     return z.NEVER;
   }
   return zone;
+});
+
+/** Each started `stepPct` below target earns `creditPct` of monthly fees, up to `capPct`. */
+export const MonitorSlaCreditScheduleInput = z.object({
+  stepPct: SlaPercentInput,
+  creditPct: SlaPercentInput,
+  capPct: SlaPercentInput,
 });
 
 export const CreateMonitorReportingInput = z.object({
@@ -38,13 +46,17 @@ export type CreateMonitorReportingInput = z.input<
   typeof CreateMonitorReportingInput
 >;
 
-/** Omitted fields stay as they are; `monitorIds` replaces the whole set; new terms apply from next month. */
+/** Omitted fields stay as they are; `monitorIds` replaces the whole set; new terms (target, strict, creditSchedule) apply from next month. */
 export const UpdateMonitorReportingInput = z.object({
   id: z.number().int().positive(),
   name: CreateMonitorReportingInput.shape.name.optional(),
   target: CreateMonitorReportingInput.shape.target.optional(),
   strict: z.boolean().optional(),
   timeZone: timeZone.optional(),
+  /** null removes the schedule; versioned with target and strict */
+  creditSchedule: MonitorSlaCreditScheduleInput.nullable().optional(),
+  /** the workspace's incident policy as support terms; null unlinks, not versioned */
+  incidentSlaPolicyId: z.number().int().positive().nullable().optional(),
   monitorIds: z.array(z.number().int()).optional(),
 });
 export type UpdateMonitorReportingInput = z.input<
