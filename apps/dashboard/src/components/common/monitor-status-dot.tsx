@@ -13,6 +13,7 @@ import {
 
 const dotColor = {
   inactive: "bg-muted-foreground/70",
+  maintenance: "bg-info",
   active: "bg-success",
   degraded: "bg-warning",
   error: "bg-destructive",

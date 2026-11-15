@@ -15,6 +15,8 @@ import {
   Delete,
 } from "@openstatus/icons";
 
+import type { StatusVariant } from "@/components/common/status-dot";
+
 export const monitorTypes = [
   {
     id: "http",
@@ -114,18 +116,46 @@ export const getActions = (
 type MonitorStatus = (typeof monitorStatus)[number];
 
 export const monitorHealthConfig = {
-  inactive: { label: "Inactive" },
-  active: { label: "Normal" },
-  degraded: { label: "Degraded" },
-  error: { label: "Failing" },
-} as const satisfies Record<MonitorStatus | "inactive", { label: string }>;
+  inactive: { label: "Inactive", variant: "default" },
+  maintenance: { label: "Maintenance", variant: "info" },
+  active: { label: "Normal", variant: "success" },
+  degraded: { label: "Degraded", variant: "warning" },
+  error: { label: "Failing", variant: "destructive" },
+} as const satisfies Record<
+  MonitorStatus | "inactive" | "maintenance",
+  { label: string; variant: StatusVariant }
+>;
 
 export type MonitorHealth = keyof typeof monitorHealthConfig;
 
-/** A paused monitor reads as inactive whatever its last check said. */
-export function getMonitorHealth(monitor: {
+type MonitorHealthInput = {
   active: boolean | null;
   status: MonitorStatus;
-}): MonitorHealth {
-  return monitor.active ? monitor.status : "inactive";
+  maintenance?: { until: Date } | null;
+};
+
+const monitorHealthOrder = [
+  "error",
+  "degraded",
+  "maintenance",
+  "active",
+  "inactive",
+] as const satisfies readonly MonitorHealth[];
+
+/** Default order of every monitor list: what needs attention first, then by name. */
+export function compareMonitorHealth(
+  a: MonitorHealthInput & { name: string },
+  b: MonitorHealthInput & { name: string },
+): number {
+  return (
+    monitorHealthOrder.indexOf(getMonitorHealth(a)) -
+      monitorHealthOrder.indexOf(getMonitorHealth(b)) ||
+    a.name.localeCompare(b.name)
+  );
+}
+
+/** Paused wins over maintenance; maintenance wins over the status it holds. */
+export function getMonitorHealth(monitor: MonitorHealthInput): MonitorHealth {
+  if (!monitor.active) return "inactive";
+  return monitor.maintenance ? "maintenance" : monitor.status;
 }

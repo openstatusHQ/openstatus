@@ -11,6 +11,7 @@ const variants = {
   success: "bg-success",
   warning: "bg-warning",
   destructive: "bg-destructive",
+  info: "bg-info",
   muted: "bg-muted-foreground",
 } as const;
 

@@ -18,7 +18,7 @@ import {
 import { monitorTypes } from "@/data/monitors.client";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useNow } from "@/hooks/use-now";
-import { formatMilliseconds } from "@/lib/formatter";
+import { formatClockOrDay, formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
@@ -81,6 +81,11 @@ export function Sidebar() {
               label: "Status",
               value: isHeartbeat ? (
                 <HeartbeatStatus monitor={monitor} />
+              ) : monitor.maintenance ? (
+                <span className="text-info">
+                  Maintenance until{" "}
+                  {formatClockOrDay(monitor.maintenance.until)}
+                </span>
               ) : (
                 <span
                   className={

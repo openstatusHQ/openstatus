@@ -2,6 +2,7 @@ import { and, eq } from "@openstatus/db";
 import {
   auditLog,
   monitor,
+  monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
 } from "@openstatus/db/src/schema";
 import { beforeAll, describe, expect, test } from "vitest";
@@ -13,6 +14,7 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ConflictError } from "../../errors";
+import { listMonitors } from "../../monitor/list";
 import { createMaintenanceWindow } from "../create";
 import { deleteMaintenanceWindow } from "../delete";
 import { getMaintenanceWindow } from "../list";
@@ -175,6 +177,56 @@ describe("maintenance windows", () => {
         )
         .get();
       expect(row?.after?.monitorIds).toEqual(row?.before?.monitorIds);
+    });
+  });
+});
+
+describe("listMonitors maintenance", () => {
+  test("reports the active window, continue over pause, latest end", async () => {
+    await withTestTransaction(async (tx) => {
+      const both = await insertMonitor(tx, ctx.workspace.id);
+      const paused = await insertMonitor(tx, ctx.workspace.id);
+      const later = await insertMonitor(tx, ctx.workspace.id);
+      const now = Date.now();
+      const window = async (
+        mode: "pause" | "continue",
+        from: number,
+        to: number,
+        monitorIds: number[],
+      ) => {
+        const w = await tx
+          .insert(monitorMaintenanceWindow)
+          .values({
+            workspaceId: ctx.workspace.id,
+            title: mode,
+            mode,
+            from: new Date(from),
+            to: new Date(to),
+          })
+          .returning()
+          .get();
+        await tx.insert(monitorMaintenanceWindowToMonitor).values(
+          monitorIds.map((monitorId) => ({
+            monitorMaintenanceWindowId: w.id,
+            monitorId,
+          })),
+        );
+      };
+      await window("pause", now - hour, now + 3 * hour, [both.id, paused.id]);
+      await window("continue", now - hour, now + hour, [both.id]);
+      await window("pause", now + hour, now + 2 * hour, [later.id]);
+
+      const { items } = await listMonitors({
+        ctx: { ...ctx, db: tx },
+        input: { limit: 100, offset: 0, order: "asc" },
+      });
+      const of = (id: number) => items.find((m) => m.id === id)?.maintenance;
+      expect(of(both.id)?.mode).toBe("continue");
+      expect(of(both.id)?.until.getTime()).toBe(
+        Math.floor((now + hour) / 1000) * 1000,
+      );
+      expect(of(paused.id)?.mode).toBe("pause");
+      expect(of(later.id)).toBeNull();
     });
   });
 });
