@@ -104,6 +104,8 @@ Two things can put a monitor in maintenance:
 
 **Announce on status page** on a window creates a maintenance that announces it. That maintenance changes nothing by itself: its times follow the window and the window's setting applies to the window's monitors. To announce work without losing measured time, create a window set to **Keep checking** and announce it. A window cannot be deleted while a maintenance announces it; unlink the maintenance (it then pauses its components' monitors again) or delete it first.
 
+**No alerts are sent during any maintenance**, whichever setting applies: a check that ran inside the window never changes the monitor's status, opens an incident or notifies anyone. A check that ran before the window still counts, even if its result arrives a little later.
+
 When several windows or maintenances cover a monitor at once, **Keep checking** wins over **Pause checks**, so measured time is never lost.
 
 Private locations keep checking during any maintenance and ignore status changes while it is active. Heartbeat monitors are never evaluated during maintenance.

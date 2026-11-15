@@ -3,6 +3,8 @@ import {
   notificationOutbox,
   monitorIncidentTable,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   monitorStatusTable,
 } from "@openstatus/db/src/schema";
 import {
@@ -54,6 +56,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
+  await db
+    .delete(monitorMaintenanceWindow)
+    .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+    .run();
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
@@ -140,6 +146,50 @@ describe("handleStatusDriftCron", () => {
         region: "ams",
         status: "error",
         cronTimestamp: Date.now(),
+      })
+      .run();
+
+    await handleStatusDriftCron();
+
+    const after = await db
+      .select({ status: monitor.status })
+      .from(monitor)
+      .where(eq(monitor.id, monitorRow.id))
+      .all();
+    expect(after[0]?.status).toBe("active");
+  });
+
+  test("a monitor in maintenance is left alone until the window ends", async () => {
+    const monitorRow = await createMonitor(workspaceId, {
+      regions: "ams",
+      active: true,
+    });
+    const now = Date.now();
+    const window = await db
+      .insert(monitorMaintenanceWindow)
+      .values({
+        workspaceId,
+        title: "deploy",
+        mode: "pause",
+        from: new Date(now - 60 * 60_000),
+        to: new Date(now + 60 * 60_000),
+      })
+      .returning()
+      .get();
+    await db
+      .insert(monitorMaintenanceWindowToMonitor)
+      .values({
+        monitorMaintenanceWindowId: window.id,
+        monitorId: monitorRow.id,
+      })
+      .run();
+    await db
+      .insert(monitorStatusTable)
+      .values({
+        monitorId: monitorRow.id,
+        region: "ams",
+        status: "error",
+        cronTimestamp: now,
       })
       .run();
 

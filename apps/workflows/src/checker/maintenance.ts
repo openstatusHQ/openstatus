@@ -1,8 +1,8 @@
 import { and, db as defaultDb, eq, schema } from "@openstatus/db";
 import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 
-/** True when the monitor was under a `continue` maintenance when its check ran. */
-export async function isInContinuedMaintenance(
+/** True when the monitor was in any maintenance when its check ran: no status change, no alert. */
+export async function isInMaintenance(
   monitorId: number,
   ranAt: Date,
 ): Promise<boolean> {
@@ -12,7 +12,7 @@ export async function isInContinuedMaintenance(
     .where(
       and(
         eq(schema.monitor.id, monitorId),
-        monitorInMaintenance(defaultDb, { at: ranAt, mode: "continue" }),
+        monitorInMaintenance(defaultDb, { at: ranAt, mode: "any" }),
       ),
     )
     .get();

@@ -8,7 +8,7 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
-import { isInContinuedMaintenance } from "./maintenance";
+import { isInMaintenance } from "./maintenance";
 import { enqueueOutbox } from "./outbox";
 import { updateStatusPrivate } from "./private-location";
 import { EVENT_TYPE, applyStatusTransition, isStaleCheck } from "./transition";
@@ -132,11 +132,9 @@ checkerRoute.post("/updateStatus", async (c) => {
     return c.json({ success: true }, 200);
   }
 
-  // Leaving monitor_status untouched makes the next check after the window
-  // report again, so a failure that outlasts the maintenance still alerts.
-  if (
-    await isInContinuedMaintenance(monitorIdNumber, new Date(cronTimestamp))
-  ) {
+  // No alerts during maintenance. Leaving monitor_status untouched makes the
+  // next check after the window report again, so a lasting failure still alerts.
+  if (await isInMaintenance(monitorIdNumber, new Date(cronTimestamp))) {
     statusUpdate.maintenance_skipped = true;
     return c.json({ success: true }, 200);
   }

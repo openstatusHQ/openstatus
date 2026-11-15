@@ -35,7 +35,7 @@ import {
 import { env } from "../env";
 import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { checkerRoute } from "./index";
-import { isInContinuedMaintenance } from "./maintenance";
+import { isInMaintenance } from "./maintenance";
 import { providerToFunction } from "./utils";
 
 const HOUR_MS = 3_600_000;
@@ -137,6 +137,12 @@ async function monitorUnderMaintenance(mode: "pause" | "continue" | "linked") {
     const id = windowId;
     return {
       monitorId: row.id,
+      startAt: (start: Date) =>
+        db
+          .update(monitorMaintenanceWindow)
+          .set({ from: start })
+          .where(eq(monitorMaintenanceWindow.id, id))
+          .run(),
       endAt: (end: Date) =>
         db
           .update(monitorMaintenanceWindow)
@@ -169,6 +175,12 @@ async function monitorUnderMaintenance(mode: "pause" | "continue" | "linked") {
     .run();
   return {
     monitorId: row.id,
+    startAt: (start: Date) =>
+      db
+        .update(maintenance)
+        .set({ from: start })
+        .where(eq(maintenance.id, m.id))
+        .run(),
     endAt: (end: Date) =>
       db
         .update(maintenance)
@@ -270,10 +282,24 @@ describe("updateStatus for a monitor that keeps checking during maintenance", ()
 });
 
 describe("updateStatus for a monitor that pauses during maintenance", () => {
-  test("a late status update is processed as before", async () => {
+  test("a result from a check that ran inside the window alerts nobody", async () => {
     const { monitorId } = await monitorUnderMaintenance("pause");
 
     await postError(monitorId);
+
+    const state = await stateOf(monitorId);
+    expect(state.status).toBe("active");
+    expect(state.incidents).toHaveLength(0);
+    expect(sendAlert).not.toHaveBeenCalled();
+  });
+
+  test("a result from a check that ran before the window is processed as usual", async () => {
+    const { monitorId, startAt } = await monitorUnderMaintenance("pause");
+    const now = Date.now();
+    await startAt(new Date(now - 60_000));
+
+    // still fresh (under the stale cutoff), but stamped before the window
+    await postError(monitorId, now - 5 * 60_000);
 
     const state = await stateOf(monitorId);
     expect(state.status).toBe("error");
@@ -282,25 +308,25 @@ describe("updateStatus for a monitor that pauses during maintenance", () => {
   });
 });
 
-describe("isInContinuedMaintenance window end", () => {
+describe("isInMaintenance", () => {
   test("the end instant is outside the window, the instant before is inside", async () => {
     const { monitorId, endAt } = await monitorUnderMaintenance("continue");
     const to = new Date(Math.floor(Date.now() / 1000) * 1000 + HOUR_MS);
     await endAt(to);
 
-    expect(await isInContinuedMaintenance(monitorId, to)).toBe(false);
-    expect(
-      await isInContinuedMaintenance(monitorId, new Date(to.getTime() - 1)),
-    ).toBe(true);
+    expect(await isInMaintenance(monitorId, to)).toBe(false);
+    expect(await isInMaintenance(monitorId, new Date(to.getTime() - 1))).toBe(
+      true,
+    );
   });
 
-  test("a pausing status page maintenance is not a continued one", async () => {
+  test("a pausing status page maintenance counts", async () => {
     const { monitorId } = await monitorUnderMaintenance("pause");
-    expect(await isInContinuedMaintenance(monitorId, new Date())).toBe(false);
+    expect(await isInMaintenance(monitorId, new Date())).toBe(true);
   });
 
-  test("an announced continue window is a continued one", async () => {
+  test("an announced continue window counts", async () => {
     const { monitorId } = await monitorUnderMaintenance("linked");
-    expect(await isInContinuedMaintenance(monitorId, new Date())).toBe(true);
+    expect(await isInMaintenance(monitorId, new Date())).toBe(true);
   });
 });
