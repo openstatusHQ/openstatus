@@ -38,6 +38,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getMonitorListMetrics } from "@/data/metrics.client";
+import { compareMonitorHealth } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateMonitorButton } from "./create-monitor-button";
@@ -206,7 +207,7 @@ export function Client() {
       <Section id="monitors-table">
         <DataTable
           columns={columns}
-          data={monitors.map((monitor) => ({
+          data={[...monitors].sort(compareMonitorHealth).map((monitor) => ({
             ...monitor,
             globalMetrics: isLoadingMetrics
               ? undefined

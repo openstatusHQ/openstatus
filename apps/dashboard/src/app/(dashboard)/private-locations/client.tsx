@@ -24,6 +24,7 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/private-locations/columns";
@@ -74,16 +75,40 @@ export function Client() {
 
   if (!privateLocations || !workspace) return null;
 
+  const locked = workspace.limits["private-locations"] === false;
+
   return (
     <SectionGroup>
-      <SectionHeader>
-        <SectionTitle>Private Locations</SectionTitle>
-        <SectionDescription>
-          Create and manage your private locations.
-        </SectionDescription>
-      </SectionHeader>
+      <SectionHeaderRow>
+        <SectionHeader>
+          <SectionTitle>Private Locations</SectionTitle>
+          <SectionDescription>
+            Create and manage your private locations.
+          </SectionDescription>
+        </SectionHeader>
+        <div>
+          {locked ? (
+            <Button
+              data-section="action"
+              data-track="paywall_viewed"
+              data-limit="private-locations"
+              size="sm"
+              onClick={() => setOpenDialog(true)}
+            >
+              <Lock />
+              Create private location
+            </Button>
+          ) : (
+            <FormSheetPrivateLocationCreate monitors={monitors ?? []}>
+              <Button data-section="action" size="sm">
+                Create private location
+              </Button>
+            </FormSheetPrivateLocationCreate>
+          )}
+        </div>
+      </SectionHeaderRow>
       <Section id="private-locations-table">
-        {workspace.limits["private-locations"] === false ? (
+        {locked ? (
           <BillingOverlayContainer>
             <DataTable
               paginationComponent={DataTablePaginationSimple}

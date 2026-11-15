@@ -9,6 +9,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarSeparator,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
 import {
@@ -19,74 +20,57 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import * as React from "react";
 
-import { NavMonitors } from "@/components/nav/nav-monitors";
-import { NavOverview } from "@/components/nav/nav-overview";
-import { NavStatusPages } from "@/components/nav/nav-status-pages";
+import { NavGroup, NavGroupDefaultItem } from "@/components/nav/nav-group";
+import { NavMonitorsItem } from "@/components/nav/nav-monitors";
+import { NavSearch } from "@/components/nav/nav-search";
+import { NavStatusPagesItem } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
-import { NAV } from "@/config/nav";
+import { NAV, NAV_GROUPS, type NavItem } from "@/config/nav";
 
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "[";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "mxkaske",
-    email: "max@openstatus.dev",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  overview: [
-    { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
-    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
-    { name: "Agents", url: NAV.agents.href, icon: NAV.agents.icon },
-    {
-      name: "Status Pages",
-      url: NAV.statusPages.href,
-      icon: NAV.statusPages.icon,
-    },
-    { name: "Monitors", url: NAV.monitors.href, icon: NAV.monitors.icon },
-    {
-      name: NAV.reportings.label,
-      url: NAV.reportings.href,
-      icon: NAV.reportings.icon,
-    },
-    {
-      name: "Notifications",
-      url: NAV.notifications.href,
-      icon: NAV.notifications.icon,
-    },
-    { name: "Settings", url: NAV.settings.href, icon: NAV.settings.icon },
-  ],
-};
+// items that peek at their entities on hover; the rest render from config
+const PEEK_ITEMS = new Map<NavItem, React.ComponentType>([
+  [NAV.monitors, NavMonitorsItem],
+  [NAV.statusPages, NavStatusPagesItem],
+]);
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const overview = [
-    ...data.overview.slice(0, 3),
-    {
-      name: NAV.incidents.label,
-      url: NAV.incidents.href,
-      icon: NAV.incidents.icon,
-      badge: "New",
-    },
-    ...data.overview.slice(3),
-  ];
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
-      <SidebarContent>
-        <NavOverview items={overview} />
-        <NavStatusPages />
-        <NavMonitors />
+      {/* no gap: NavGroup's py-1 alone keeps groups on the 36px row grid */}
+      <SidebarContent className="gap-0">
+        <NavGroup>
+          <NavSearch />
+          <NavGroupDefaultItem item={NAV.overview} />
+        </NavGroup>
+        {NAV_GROUPS.map((group) => (
+          <NavGroup key={group.label} label={group.label}>
+            {group.items.map((item) => {
+              const Peek = PEEK_ITEMS.get(item);
+              return Peek ? (
+                <Peek key={item.label} />
+              ) : (
+                <NavGroupDefaultItem key={item.label} item={item} />
+              );
+            })}
+          </NavGroup>
+        ))}
         <div className="mt-auto px-2">
           <NavBanner />
         </div>
-        <NavHelp />
+        <SidebarSeparator className="mx-0" />
+        <NavGroup>
+          <NavGroupDefaultItem item={NAV.settings} />
+          <NavHelp />
+        </NavGroup>
       </SidebarContent>
       <SidebarFooter className="flex h-14 flex-col justify-center gap-0 border-t p-0">
         <NavUser />

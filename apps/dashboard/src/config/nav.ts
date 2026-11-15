@@ -1,8 +1,10 @@
 import {
   Agent,
   Chat,
+  Globe,
   type IconType,
   Incident,
+  Maintenance,
   Monitor,
   Notification,
   Overview,
@@ -10,6 +12,7 @@ import {
   Settings,
   StatusPage,
   Terminal,
+  Trend,
 } from "@openstatus/icons";
 import { ModelContextProtocolIcon } from "@openstatus/icons/brand";
 
@@ -18,6 +21,9 @@ export type NavItem = {
   href: string;
   icon: IconType;
   keywords?: string[];
+  badge?: string;
+  /** Shown but not navigable, e.g. a section that has not shipped yet. */
+  disabled?: boolean;
 };
 
 // Single source of truth for primary destinations. Consumed by the sidebar
@@ -35,6 +41,7 @@ export const NAV = {
     href: "/incidents",
     icon: Incident,
     keywords: ["declare", "outage", "postmortem", "commander"],
+    badge: "New",
   },
   monitors: {
     label: "Monitors",
@@ -42,11 +49,39 @@ export const NAV = {
     icon: Monitor,
     keywords: ["checks", "uptime"],
   },
-  reportings: {
-    label: "Reportings",
+  maintenanceWindows: {
+    label: "Maintenance Windows",
+    href: "/maintenance-windows",
+    icon: Maintenance,
+    keywords: ["maintenance", "window", "pause", "downtime"],
+  },
+  privateLocations: {
+    label: "Private Locations",
+    href: "/private-locations",
+    icon: Globe,
+    keywords: ["probes", "regions", "self-hosted"],
+  },
+  slas: {
+    label: "SLAs",
     href: "/reportings",
     icon: Reporting,
-    keywords: ["sla", "policy", "uptime target", "availability", "commitment"],
+    keywords: [
+      "sla",
+      "policy",
+      "uptime target",
+      "availability",
+      "commitment",
+      "reporting",
+      "report",
+    ],
+  },
+  insights: {
+    label: "Insights",
+    href: "/insights",
+    icon: Trend,
+    keywords: ["mttr", "mtta", "analytics"],
+    badge: "Soon",
+    disabled: true,
   },
   statusPages: {
     label: "Status Pages",
@@ -61,10 +96,10 @@ export const NAV = {
     keywords: ["notifiers", "alerts", "channels"],
   },
   chat: {
-    label: "Chat",
+    label: "Assistant",
     href: "/chat",
     icon: Chat,
-    keywords: ["assistant", "ai"],
+    keywords: ["chat", "ai"],
   },
   agents: {
     label: "Agents",
@@ -92,13 +127,31 @@ export const NAV = {
   },
 } satisfies Record<string, NavItem>;
 
-// Command-menu "Navigation" group order.
+// Sidebar groups, in order. Overview sits above them, Settings below.
+export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Monitor",
+    items: [
+      NAV.monitors,
+      NAV.maintenanceWindows,
+      NAV.notifications,
+      NAV.privateLocations,
+    ],
+  },
+  { label: "Communicate", items: [NAV.incidents, NAV.statusPages] },
+  { label: "Report", items: [NAV.slas, NAV.insights] },
+  { label: "AI", items: [NAV.chat, NAV.agents] },
+];
+
+// Command-menu "Navigation" group order; disabled items are left out.
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
   NAV.monitors,
-  NAV.reportings,
-  NAV.statusPages,
+  NAV.maintenanceWindows,
   NAV.notifications,
+  NAV.privateLocations,
+  NAV.statusPages,
+  NAV.slas,
   NAV.chat,
   NAV.agents,
   NAV.cli,

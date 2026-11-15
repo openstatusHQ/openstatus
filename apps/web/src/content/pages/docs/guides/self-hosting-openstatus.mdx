@@ -232,7 +232,7 @@ Now that the services are running, you can access the dashboard and perform the 
 
     The self-hosted version relies on private locations to perform checks. The ingest server is already running from Part 1 — what you deploy here is the **probe**.
 
-    -   In the dashboard, navigate to **Settings > Private Locations** and create a new one.
+    -   In the dashboard, navigate to **Private Locations** and create a new one.
     -   Copy the generated key.
     -   Run the probe wherever you want to check from:
 
@@ -477,7 +477,7 @@ Or simply `docker compose up -d db-migrate`, since the step is idempotent.
 
 **Probe runs but nothing appears in the dashboard** — check, in order:
 1. `OPENSTATUS_INGEST_URL` points at port **8081** (the ingest server), not 3001.
-2. `OPENSTATUS_KEY` matches the key shown in **Settings > Private Locations**.
+2. `OPENSTATUS_KEY` matches the key shown in **Private Locations**.
 3. The ingest server logs show `IngestHTTP` requests arriving — `docker compose logs private-location`.
 4. Those log lines show `tinybird.success=true`. If not, revisit step 7.
 

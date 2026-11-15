@@ -30,15 +30,22 @@ describe("navigationGroup", () => {
         "/overview",
         "/incidents",
         "/monitors",
-        "/reportings",
-        "/status-pages",
+        "/maintenance-windows",
         "/notifications",
+        "/private-locations",
+        "/status-pages",
+        "/reportings",
         "/chat",
         "/agents/slack",
         "/agents/cli",
         "/agents/mcp",
       ].map((href) => ({ type: "navigate", href })),
     );
+  });
+
+  it("leaves out disabled items", () => {
+    const labels = navigationGroup().items.map((i) => i.label);
+    expect(labels).not.toContain("Insights");
   });
 
   it("keeps values unique", () => {
@@ -110,6 +117,12 @@ describe("settingsGroup", () => {
       type: "navigate",
       href: "/settings/general#api-keys",
     });
+  });
+
+  it("finds every item by typing settings", () => {
+    for (const item of settingsGroup().items) {
+      expect(item.keywords).toContain("settings");
+    }
   });
 
   it("keeps values unique", () => {

@@ -26,6 +26,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
+import { compareStatusPages } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateStatusPageButton } from "./create-status-page-button";
@@ -61,7 +62,7 @@ export function Client() {
         </SectionHeaderRow>
         <DataTable
           columns={columns}
-          data={statusPages}
+          data={[...statusPages].sort(compareStatusPages)}
           paginationComponent={DataTablePaginationSimple}
           emptyState={
             <DataTableEmpty>

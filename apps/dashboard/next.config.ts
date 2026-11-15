@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
-  // moved under /settings — keep old links working
+  // moved routes — keep old links working
   async redirects() {
     return [
       {
@@ -47,9 +47,9 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "/private-locations",
-        destination: "/settings/private-locations",
-        permanent: false,
+        source: "/settings/private-locations",
+        destination: "/private-locations",
+        permanent: true,
       },
       {
         source: "/audit-logs",

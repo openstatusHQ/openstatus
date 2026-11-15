@@ -41,7 +41,7 @@ export function SectionHeaderRow({
     <div
       data-slot="section-header-row"
       className={cn(
-        "flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between",
+        "flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-6",
         className,
       )}
       {...props}
@@ -60,7 +60,7 @@ export function SectionDescription({
     <p
       data-slot="section-description"
       className={cn(
-        "font-commit-mono text-muted-foreground text-sm tracking-tight",
+        "font-commit-mono text-muted-foreground text-sm tracking-tight text-balance",
         className,
       )}
       {...props}

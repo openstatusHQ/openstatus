@@ -33,7 +33,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type MaintenanceWindow = RouterOutputs["maintenanceWindow"]["list"][number];
 
-/** `kind` labels the row by type for a mixed list, like `MaintenanceRow`. */
+/** `kind` labels the row by type for a mixed list and links it to the windows page. */
 export function MaintenanceWindowRow({
   window,
   monitors,
@@ -104,7 +104,9 @@ export function MaintenanceWindowRow({
         <span>{kind ? "Window" : maintenanceStatusConfig[status].label}</span>
       </EventRowStatus>
       <EventRowContent>
-        <EventRowTitle>{window.title}</EventRowTitle>
+        <EventRowTitle href={kind ? "/maintenance-windows" : undefined}>
+          {window.title}
+        </EventRowTitle>
         <EventRowMeta>
           {meta.map((item) => (
             <span key={item}>{item}</span>

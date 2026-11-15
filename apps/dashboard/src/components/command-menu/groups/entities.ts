@@ -1,5 +1,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 
+import { compareMonitorHealth } from "@/data/monitors.client";
+import { compareStatusPages } from "@/data/status-pages.client";
+
 import type { CommandMenuGroup } from "../types";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
@@ -38,7 +41,7 @@ export function monitorsGroup(
   return {
     heading: "Monitors",
     idleLimit: 5,
-    items: monitors.map((m) => ({
+    items: [...monitors].sort(compareMonitorHealth).map((m) => ({
       value: `monitor-${m.id}`,
       label: m.name,
       description: m.url,
@@ -58,7 +61,7 @@ export function statusPagesGroup(
   return {
     heading: "Status Pages",
     idleLimit: 5,
-    items: statusPages.map((p) => ({
+    items: [...statusPages].sort(compareStatusPages).map((p) => ({
       value: `status-page-${p.id}`,
       label: p.title,
       description: p.slug,

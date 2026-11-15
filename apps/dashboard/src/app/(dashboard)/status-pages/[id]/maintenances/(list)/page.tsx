@@ -174,8 +174,7 @@ export default function Page() {
           <SectionHeader>
             <SectionTitle>{statusPage.title}</SectionTitle>
             <SectionDescription>
-              Scheduled maintenance windows shown on this status page. Looking
-              for{" "}
+              Scheduled maintenances shown on this status page. Looking for{" "}
               <Link href={`/status-pages/${id}/status-reports`}>
                 status reports
               </Link>

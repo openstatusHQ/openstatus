@@ -6,7 +6,6 @@ import {
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
-import { Tabs } from "../tabs";
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 
@@ -29,7 +28,6 @@ export default async function Layout({
             <NavActions />
           </AppHeaderActions>
         </AppHeader>
-        <Tabs />
         <main className="w-full flex-1">{children}</main>
       </div>
     </HydrateClient>

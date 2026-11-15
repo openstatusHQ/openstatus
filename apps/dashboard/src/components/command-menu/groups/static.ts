@@ -202,6 +202,7 @@ const SETTINGS_ANCHORS: CommandMenuItem[] = [
 export function settingsGroup(): CommandMenuGroup {
   return {
     heading: "Settings",
+    // cmdk never matches the heading, so "settings" lives on every item
     items: [
       ...SETTINGS_TABS.map((tab) => ({
         value: tab.label,
@@ -211,7 +212,10 @@ export function settingsGroup(): CommandMenuGroup {
         action: { type: "navigate" as const, href: tab.href },
       })),
       ...SETTINGS_ANCHORS,
-    ],
+    ].map((item) => ({
+      ...item,
+      keywords: ["settings", ...(item.keywords ?? [])],
+    })),
   };
 }
 
