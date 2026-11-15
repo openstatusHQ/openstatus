@@ -40,22 +40,12 @@ Cross-workspace system jobs (`runUptimeFreeze`, `sealMonitorSlaMonths`,
 
 ## Audit log
 
-`emitAudit(tx, ctx, entry)` runs inside the same transaction as the mutation.
-Fail-closed: a failed audit insert rolls the mutation back.
+`AUDIT-LOGS.md` at the repo root covers the entry shape, snapshot rules, every
+entity's verbs, and the steps for adding an audited mutation. Read it before
+writing an `emitAudit` call.
 
-- Updates pass both `before` (pre-mutation snapshot) and `after` (the
-  `.returning()` row); `changed_fields` is diffed automatically and no-op updates
-  are skipped. Creates pass only `after`, deletes only `before`.
-- **Strip secrets from snapshots** — credentials, bot tokens, raw API keys.
-- Action names are `{entity}.{verb}`; new variants go in the discriminated union
-  at `packages/db/src/schema/audit_logs/validation.ts`.
-- An entity type the dashboard can show also gets an `entityKinds` entry in
-  `apps/dashboard/src/data/entity-refs.client.ts`. Its `auditType` resolves the
-  audit row's entity cell; its `fields` resolve diff fields by name. These are
-  separate: list every `*Id`/`*Ids` field, or diffs show raw ids. A new `*Id`/`*Ids` field in an agent-tool schema fails
-  `entity-refs.coverage.test.ts` until it is mapped there or listed as not a ref.
-
-A missing `emitAudit` or `requireScope` is a defect, not a style nit. Both are
+`emitAudit(tx, ctx, entry)` runs inside the mutation's transaction and is
+fail-closed: a failed audit insert rolls the mutation back. A missing `emitAudit` or `requireScope` is a defect, not a style nit. Both are
 lint-enforced; if a verb genuinely needs neither, the inline disable must carry
 a reason.
 
@@ -114,12 +104,8 @@ workspace, and assert the audit side-effect with `expectAuditRow(...)` from
 `'rejects read-only actor'` case built with `makeApiKeyCtx(...)`; `requireScope`
 fires before any DB lookup, so fake ids are fine there.
 
-**Audit rows outlive the entities they describe.** A suite that creates entities
-through a service on the committed db and deletes them in cleanup must also call
-`clearAuditLogFor(...)` — SQLite recycles `INTEGER PRIMARY KEY` ids after
-deletes, so a later test's freshly-inserted entity can land on the orphan's id
-and inherit its actor attribution. The failure surfaces in an unrelated suite,
-which is what makes it expensive.
+A suite that deletes the entities it created must also call
+`clearAuditLogFor(...)`; the reason is in `AUDIT-LOGS.md` under Tests.
 
 ## Uptime weights
 

@@ -46,12 +46,14 @@ export function MaintenanceEditSheet({
         statusPage?.pageComponents ?? [],
         statusPage?.pageComponentGroups ?? [],
       )}
+      components={statusPage?.pageComponents ?? []}
       defaultValues={{
         title: maintenance.title,
         startDate: maintenance.from,
         endDate: maintenance.to,
         pageComponents: maintenance.pageComponents?.map((c) => c.id) ?? [],
       }}
+      window={maintenance.window}
       onSubmit={async (values) => {
         await update.mutateAsync({
           id: maintenance.id,

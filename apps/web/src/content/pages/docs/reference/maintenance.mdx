@@ -16,7 +16,7 @@ While a maintenance window is active (the current time is between `from` and `to
 - A higher-priority event overrides it: an active incident (error) or an unresolved status report (degraded) takes precedence, so the component shows that status instead. Maintenance only outranks the default operational status.
 - The maintenance is reflected in the historical status bars for the days it overlaps.
 
-What happens to the checks of a monitor-linked component depends on that monitor's [maintenance setting](#checks-during-maintenance). By default its cloud checks pause, so the window is absent from its uptime.
+The monitors behind the affected components pause while it is active, so the window is absent from their uptime, unless the maintenance announces a [maintenance window](#maintenance-window), which then decides instead. See [Checks during maintenance](#checks-during-maintenance).
 
 When a maintenance is created, status page subscribers can be notified that it has been scheduled (see [Notify](#notify)). Updating a maintenance never re-notifies.
 
@@ -68,6 +68,12 @@ The ids of the page components that should display the Under Maintenance status 
 
 In the v1 REST API these are passed as `monitorIds`, which accepts monitor components only and is retained for backward compatibility. Static components can be targeted through the dashboard.
 
+### Maintenance window
+
+**Type:** Integer (optional, dashboard only)
+
+The [maintenance window](#checks-during-maintenance) this maintenance announces. Set by **Announce on status page** on a window; a maintenance created on the status page has none. While set, the maintenance's `from` and `to` follow the window and cannot be changed on the maintenance itself, and the window alone decides what happens to checks. Internal: never shown on the status page, in feeds or in subscriber emails.
+
 ### Notify
 
 **Type:** Boolean (optional)
@@ -89,12 +95,18 @@ A maintenance always keeps at least one update: deleting the last one is rejecte
 
 ## Checks during maintenance
 
-Each monitor chooses what happens while an active maintenance covers one of its page components. Set it in the dashboard under the monitor's settings, card **Maintenance**.
+Two things can put a monitor in maintenance:
 
-- **Pause checks** (default) — cloud regions do not check the monitor at all. The window is absent from both sides of its uptime and can never count as downtime, whatever happened during it.
-- **Keep checking without alerting** — cloud checks run and are stored as usual, with their real outcome, so failures during the window count against uptime. The monitor's status does not change, no monitor incident opens and no notification is sent. When the window ends, normal behaviour resumes with the next check: a failure that is still there then opens its incident and notifies.
+- **A maintenance window** on the monitor (dashboard, monitor's **Maintenance** tab). It needs no status page and has a setting:
+  - **Pause checks** (default): cloud regions do not check the monitor at all. The window is absent from both sides of its uptime and can never count as downtime, whatever happened during it.
+  - **Keep checking**: cloud checks run and are stored as usual, with their real outcome, so failures during the window count against uptime. The monitor's status does not change, no monitor incident opens and no notification is sent. When the window ends, normal behaviour resumes with the next check: a failure that is still there then opens its incident and notifies.
+- **A status page maintenance** that does not announce a window pauses the monitors behind its affected components.
 
-Private locations always keep checking during maintenance and ignore status changes while it is active, whatever the setting. Heartbeat monitors are never evaluated during maintenance.
+**Announce on status page** on a window creates a maintenance that announces it. That maintenance changes nothing by itself: its times follow the window and the window's setting applies to the window's monitors. To announce work without losing measured time, create a window set to **Keep checking** and announce it. A window cannot be deleted while a maintenance announces it; unlink the maintenance (it then pauses its components' monitors again) or delete it first.
+
+When several windows or maintenances cover a monitor at once, **Keep checking** wins over **Pause checks**, so measured time is never lost.
+
+Private locations keep checking during any maintenance and ignore status changes while it is active. Heartbeat monitors are never evaluated during maintenance.
 
 For what this means for a monthly uptime target, see the [monitor reporting reference](/docs/reference/monitor-reporting#maintenance).
 

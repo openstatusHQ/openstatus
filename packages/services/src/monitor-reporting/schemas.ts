@@ -120,6 +120,8 @@ export const AddMonitorReportingExcusedWindowInput = z
       .array(z.number().int().positive())
       .min(1, "Pick at least one monitor.")
       .transform((ids) => [...new Set(ids)].sort((a, b) => a - b)),
+    /** provenance only: the maintenance window it was prefilled from */
+    monitorMaintenanceWindowId: z.number().int().positive().optional(),
   })
   .refine((w) => w.from < w.to, {
     message: "The window must end after it starts.",

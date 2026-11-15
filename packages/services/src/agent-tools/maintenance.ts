@@ -67,6 +67,16 @@ const MaintenanceItemOutput = z.object({
   to: z.string(),
   pageId: z.number().int().nullable(),
   pageComponentIds: z.array(z.number().int()),
+  maintenanceWindowId: z
+    .number()
+    .int()
+    .nullable()
+    .describe(
+      "Window this maintenance announces; its times and checks follow that window.",
+    ),
+  affectedMonitors: z.array(
+    z.object({ id: z.number().int(), name: z.string() }),
+  ),
   updates: z.array(
     z.object({
       id: z.number().int(),
@@ -89,6 +99,8 @@ function toMaintenanceItem(
     to: m.to.toISOString(),
     pageId: m.pageId,
     pageComponentIds: m.pageComponentIds,
+    maintenanceWindowId: m.monitorMaintenanceWindowId,
+    affectedMonitors: m.affectedMonitors,
     updates: m.updates.map((u) => ({
       id: u.id,
       message: u.message,

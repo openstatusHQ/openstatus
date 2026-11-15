@@ -25,12 +25,16 @@ export function FormSheetMaintenance({
   defaultValues,
   onSubmit,
   items,
+  components,
+  window,
   open: controlledOpen,
   onOpenChange,
   ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
-  defaultValues?: FormValues;
+  defaultValues?: React.ComponentProps<typeof FormMaintenance>["defaultValues"];
   items: CheckboxTreeItem[];
+  components: React.ComponentProps<typeof FormMaintenance>["components"];
+  window?: React.ComponentProps<typeof FormMaintenance>["window"];
   onSubmit: (values: FormValues) => Promise<void>;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -60,6 +64,8 @@ export function FormSheetMaintenance({
           <FormCard className="overflow-auto rounded-none border-none">
             <FormMaintenance
               items={items}
+              components={components}
+              window={window}
               onSubmit={async (values) => {
                 await onSubmit(values);
                 setOpen(false);

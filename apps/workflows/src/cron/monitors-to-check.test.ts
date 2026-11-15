@@ -46,14 +46,27 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
-async function putUnderMaintenance(monitorId: number, from: Date, to: Date) {
+async function putUnderMaintenance(
+  monitorId: number,
+  from: Date,
+  to: Date,
+  monitorMaintenanceWindowId?: number,
+) {
   const component = await createPageComponent(workspaceId, pageId, {
     type: "monitor",
     monitorId,
   });
   const [window] = await db
     .insert(maintenance)
-    .values({ title: "db upgrade", message: "", from, to, workspaceId, pageId })
+    .values({
+      title: "db upgrade",
+      message: "",
+      from,
+      to,
+      monitorMaintenanceWindowId,
+      workspaceId,
+      pageId,
+    })
     .returning();
   if (!window) throw new Error("maintenance insert returned no row");
   await db
@@ -77,6 +90,7 @@ async function putUnderWindow(
     .insert(monitorMaintenanceWindowToMonitor)
     .values({ monitorMaintenanceWindowId: window.id, monitorId })
     .run();
+  return window;
 }
 
 async function dispatchedIds(now: Date) {
@@ -128,5 +142,30 @@ describe("listMonitorsToCheck during maintenance", () => {
     await putUnderWindow(m.id, "continue", from, to);
 
     expect(await dispatchedIds(new Date(now))).toContain(m.id);
+  });
+
+  test("a maintenance announcing a continue window keeps its monitor checked", async () => {
+    const m = await createMonitor(workspaceId, base);
+    const now = Date.now();
+    const from = new Date(now - HOUR_MS);
+    const to = new Date(now + HOUR_MS);
+    const window = await putUnderWindow(m.id, "continue", from, to);
+    await putUnderMaintenance(m.id, from, to, window.id);
+
+    expect(await dispatchedIds(new Date(now))).toContain(m.id);
+  });
+
+  test("a linked maintenance pauses nothing outside its window", async () => {
+    const inWindow = await createMonitor(workspaceId, base);
+    const announcedOnly = await createMonitor(workspaceId, base);
+    const now = Date.now();
+    const from = new Date(now - HOUR_MS);
+    const to = new Date(now + HOUR_MS);
+    const window = await putUnderWindow(inWindow.id, "pause", from, to);
+    await putUnderMaintenance(announcedOnly.id, from, to, window.id);
+
+    const during = await dispatchedIds(new Date(now));
+    expect(during).not.toContain(inWindow.id);
+    expect(during).toContain(announcedOnly.id);
   });
 });

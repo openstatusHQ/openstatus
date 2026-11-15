@@ -7,12 +7,16 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
   sql,
 } from "@openstatus/db";
 import {
   maintenance,
   maintenanceUpdate,
   maintenancesToPageComponents,
+  monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   pageComponent,
   selectPageComponentSchema,
 } from "@openstatus/db/src/schema";
@@ -54,6 +58,10 @@ export type MaintenanceWithRelations = Maintenance & {
   updates: MaintenanceUpdateWithRelations[];
   pageComponents: PageComponent[];
   pageComponentIds: number[];
+  /** Monitors whose checks change during it: the window's when linked, else those behind its components (paused). */
+  affectedMonitors: { id: number; name: string }[];
+  /** The window it announces; its times and checks follow this window. */
+  window: { id: number; title: string; mode: "pause" | "continue" } | null;
   createdByUser: AttributedUserDetail | null;
   updatedByUser: AttributedUserDetail | null;
 };
@@ -99,6 +107,65 @@ async function enrichMaintenancesBatch(
     .where(inArray(maintenancesToPageComponents.maintenanceId, ids))
     .all();
 
+  const windowIds = [
+    ...new Set(
+      rows.flatMap((r) =>
+        r.monitorMaintenanceWindowId == null
+          ? []
+          : [r.monitorMaintenanceWindowId],
+      ),
+    ),
+  ];
+  const [windowRows, windowLinks] =
+    windowIds.length === 0
+      ? [[], []]
+      : await Promise.all([
+          db
+            .select({
+              id: monitorMaintenanceWindow.id,
+              title: monitorMaintenanceWindow.title,
+              mode: monitorMaintenanceWindow.mode,
+            })
+            .from(monitorMaintenanceWindow)
+            .where(inArray(monitorMaintenanceWindow.id, windowIds))
+            .all(),
+          db
+            .select({
+              windowId:
+                monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+              monitorId: monitorMaintenanceWindowToMonitor.monitorId,
+            })
+            .from(monitorMaintenanceWindowToMonitor)
+            .where(
+              inArray(
+                monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+                windowIds,
+              ),
+            )
+            .all(),
+        ]);
+  const windowById = new Map(windowRows.map((w) => [w.id, w]));
+
+  const monitorIds = [
+    ...new Set([
+      ...assocRows.flatMap((r) =>
+        r.component.monitorId == null ? [] : [r.component.monitorId],
+      ),
+      ...windowLinks.map((l) => l.monitorId),
+    ]),
+  ];
+  const monitorRows =
+    monitorIds.length === 0
+      ? []
+      : await db
+          .select({ id: monitor.id, name: monitor.name })
+          .from(monitor)
+          .where(
+            and(inArray(monitor.id, monitorIds), isNull(monitor.deletedAt)),
+          )
+          .all();
+  const monitorById = new Map(monitorRows.map((m) => [m.id, m]));
+
   const users = await loadAttributedUsers(db, [
     ...rows.flatMap((r) => [r.createdBy, r.updatedBy]),
     ...allUpdates.flatMap((u) => [u.createdBy, u.updatedBy]),
@@ -142,6 +209,24 @@ async function enrichMaintenancesBatch(
       updates,
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
+      window:
+        r.monitorMaintenanceWindowId == null
+          ? null
+          : (windowById.get(r.monitorMaintenanceWindowId) ?? null),
+      affectedMonitors: [
+        ...new Map(
+          (r.monitorMaintenanceWindowId != null
+            ? windowLinks
+                .filter((l) => l.windowId === r.monitorMaintenanceWindowId)
+                .map((l) => ({ monitorId: l.monitorId }))
+            : components
+          ).flatMap((c) => {
+            const m =
+              c.monitorId == null ? undefined : monitorById.get(c.monitorId);
+            return m ? [[m.id, m] as const] : [];
+          }),
+        ).values(),
+      ].sort((a, b) => a.id - b.id),
       ...attributed(r),
     };
   });
@@ -162,6 +247,21 @@ export async function listMaintenances(args: {
   }
   if (input.period !== undefined) {
     conditions.push(gte(maintenance.createdAt, periodToSince(input.period)));
+  }
+  if (input.monitorId !== undefined) {
+    conditions.push(
+      inArray(
+        maintenance.id,
+        db
+          .select({ id: maintenancesToPageComponents.maintenanceId })
+          .from(maintenancesToPageComponents)
+          .innerJoin(
+            pageComponent,
+            eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
+          )
+          .where(eq(pageComponent.monitorId, input.monitorId)),
+      ),
+    );
   }
   const whereClause = and(...conditions);
 

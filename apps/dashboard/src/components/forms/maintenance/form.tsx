@@ -18,11 +18,11 @@ import { TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { addDays } from "date-fns";
 import React, { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -41,6 +41,7 @@ import {
   CheckboxTree,
   type CheckboxTreeItem,
 } from "@/components/ui/checkbox-tree";
+import { maintenanceWindowModeLabels } from "@/data/maintenance-windows.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z
@@ -51,6 +52,7 @@ const schema = z
     startDate: z.date(),
     endDate: z.date(),
     pageComponents: z.array(z.number()),
+    monitorMaintenanceWindowId: z.number().optional(),
     notifySubscribers: z.boolean().optional(),
   })
   .refine((data) => data.endDate > data.startDate, {
@@ -65,26 +67,56 @@ export function FormMaintenance({
   onSubmit,
   className,
   items,
+  components,
+  prefill,
+  window,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormValues;
+  /** Edit: the maintenance as stored; hides the create-only fields. */
+  defaultValues?: Partial<FormValues> &
+    Pick<FormValues, "title" | "startDate" | "endDate" | "pageComponents">;
+  /** Create: values to start from, e.g. a window being announced. */
+  prefill?: Partial<FormValues>;
   items: CheckboxTreeItem[];
+  /** The page's components, to name the monitors a maintenance affects. */
+  components: { id: number; monitorId: number | null }[];
+  /** The window it announces: its times and checks follow that window. */
+  window?: { title: string; mode: "pause" | "continue" } | null;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ?? {
-      title: "",
-      message: "",
-      startDate: new Date(),
-      endDate: addDays(new Date(), 1),
-      pageComponents: [],
-      notifySubscribers: !!workspace?.limits["status-subscribers"],
-    },
+    defaultValues: defaultValues
+      ? defaultValues
+      : {
+          title: "",
+          message: "",
+          startDate: new Date(),
+          endDate: addDays(new Date(), 1),
+          pageComponents: [],
+          notifySubscribers: !!workspace?.limits["status-subscribers"],
+          ...prefill,
+        },
   });
+  const selected = useWatch({ control: form.control, name: "pageComponents" });
+  const affected = affectedMonitors(selected ?? [], components, monitors ?? []);
+  const reportingsOf = useQueries({
+    queries:
+      workspace?.limits["monitor-sla"] && !window
+        ? affected.map((m) =>
+            trpc.monitorReporting.listForMonitor.queryOptions({
+              monitorId: m.id,
+            }),
+          )
+        : [],
+  });
+  const underReporting = affected.filter(
+    (_, i) => (reportingsOf[i]?.data?.length ?? 0) > 0,
+  );
 
   const watchEndDate = form.watch("endDate");
   const watchMessage = form.watch("message");
@@ -154,6 +186,7 @@ export function FormMaintenance({
                   <DateTimePicker
                     value={field.value}
                     className="w-[240px]"
+                    disabled={!!window}
                     onChange={(date) => {
                       // a start moved past the end drags the end along,
                       // keeping the duration
@@ -170,6 +203,9 @@ export function FormMaintenance({
                   />
                 </FormControl>
                 <FormDescription>
+                  {window
+                    ? `Follows the window ${window.title}; change it there. `
+                    : null}
                   When the maintenance starts. Shown in your timezone (
                   <code className="font-commit-mono text-foreground/70">
                     {timezone}
@@ -198,6 +234,7 @@ export function FormMaintenance({
                     value={field.value}
                     onChange={field.onChange}
                     className="w-[240px]"
+                    disabled={!!window}
                   />
                 </FormControl>
                 <FormDescription>
@@ -286,6 +323,40 @@ export function FormMaintenance({
             )}
           />
         </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent>
+          <div className="grid gap-2">
+            <Label>Checks</Label>
+            {window ? (
+              <p className="text-muted-foreground text-sm">
+                Follow the window{" "}
+                <span className="text-foreground">{window.title}</span>:{" "}
+                {maintenanceWindowModeLabels[window.mode]}. Its times and
+                monitors decide what happens to checks; this announcement
+                changes nothing by itself.
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {affected.length
+                  ? `Pauses ${affected.map((m) => m.name).join(", ")}, the monitors behind the selected components.`
+                  : selected?.length
+                    ? "None of the selected components has a monitor, so no checks change."
+                    : "Pauses the monitors behind the selected components."}{" "}
+                To keep checking, create a maintenance window on the monitor and
+                announce it from there.
+              </p>
+            )}
+            {underReporting.length ? (
+              <p className="text-warning text-sm">
+                {underReporting.map((m) => m.name).join(", ")}{" "}
+                {underReporting.length === 1 ? "is" : "are"} in a reporting.
+                Paused time is unmeasured, so it can never count against the
+                target. Use a maintenance window set to keep checking and
+                announce it instead.
+              </p>
+            ) : null}
+          </div>
+        </FormCardContent>
         {!defaultValues && workspace?.limits["status-subscribers"] ? (
           <>
             <FormCardSeparator />
@@ -321,4 +392,18 @@ export function FormMaintenance({
       </form>
     </Form>
   );
+}
+
+/** Distinct monitors behind the selected components, in monitor order. */
+function affectedMonitors(
+  selected: number[],
+  components: { id: number; monitorId: number | null }[],
+  monitors: { id: number; name: string }[],
+) {
+  const ids = new Set(
+    components
+      .filter((c) => selected.includes(c.id) && c.monitorId !== null)
+      .map((c) => c.monitorId),
+  );
+  return monitors.filter((m) => ids.has(m.id));
 }

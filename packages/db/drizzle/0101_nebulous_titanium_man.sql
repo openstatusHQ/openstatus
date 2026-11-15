@@ -1,0 +1,1 @@
+ALTER TABLE `maintenance` ADD `mode` text DEFAULT 'pause' NOT NULL;

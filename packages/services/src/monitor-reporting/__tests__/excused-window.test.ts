@@ -1,6 +1,7 @@
 import { db, eq } from "@openstatus/db";
 import {
   monitor,
+  monitorMaintenanceWindow,
   monitorSlaExcusedWindow,
   monitorSlaExcusedWindowToMonitor,
   monitorSlaSealedMonth,
@@ -174,6 +175,49 @@ describe("addMonitorReportingExcusedWindow", () => {
           now,
         }),
       ).rejects.toThrow(/at least one monitor/);
+    });
+  });
+
+  test("records the maintenance window it was prefilled from", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...ownerCtx, db: tx };
+      const policy = await policyIn(tx);
+      const mw = await tx
+        .insert(monitorMaintenanceWindow)
+        .values({
+          workspaceId: ownerCtx.workspace.id,
+          title: "DB upgrade",
+          mode: "continue",
+          from: window.from,
+          to: window.to,
+        })
+        .returning()
+        .get();
+
+      const row = await addMonitorReportingExcusedWindow({
+        ctx,
+        input: {
+          policyId: policy.id,
+          ...window,
+          monitorIds: [apiId],
+          monitorMaintenanceWindowId: mw.id,
+        },
+        now,
+      });
+      expect(row.monitorMaintenanceWindowId).toBe(mw.id);
+
+      await expect(
+        addMonitorReportingExcusedWindow({
+          ctx: { ...otherCtx, db: tx },
+          input: {
+            policyId: policy.id,
+            ...window,
+            monitorIds: [apiId],
+            monitorMaintenanceWindowId: mw.id,
+          },
+          now,
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 

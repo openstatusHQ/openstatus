@@ -1,27 +1,14 @@
 import { CloudTasksClient, type protos } from "@google-cloud/tasks";
-import {
-  and,
-  db,
-  eq,
-  gt,
-  isNotNull,
-  lte,
-  ne,
-  notInArray,
-} from "@openstatus/db";
+import { and, db, eq, ne, not } from "@openstatus/db";
+import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
-  maintenance,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import {
-  maintenancesToPageComponents,
-  pageComponent,
-} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
 import {
   type httpPayloadSchema,
@@ -66,27 +53,6 @@ export const cron = async ({
 
   const timestamp = Date.now();
 
-  const currentMaintenance = db
-    .select({ id: maintenance.id })
-    .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gt(maintenance.to, new Date())),
-    )
-    .as("currentMaintenance");
-
-  const currentMaintenanceMonitors = db
-    .select({ id: pageComponent.monitorId })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      currentMaintenance,
-      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(isNotNull(pageComponent.monitorId));
-
   const result = await db
     .select()
     .from(monitor)
@@ -95,7 +61,7 @@ export const cron = async ({
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
         ne(monitor.jobType, "heartbeat"),
-        notInArray(monitor.id, currentMaintenanceMonitors),
+        not(monitorInMaintenance(db, { at: new Date(), mode: "pause" })),
       ),
     )
     .all();

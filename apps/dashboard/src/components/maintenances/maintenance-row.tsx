@@ -18,6 +18,7 @@ import {
   EventRowTitle,
 } from "@/components/content/event-list";
 import { MaintenanceRowActions } from "@/components/data-table/maintenances/data-table-row-actions";
+import { maintenanceWindowModeLabels } from "@/data/maintenance-windows.client";
 import { maintenanceStatusConfig } from "@/data/overview-events.client";
 import {
   formatClockOrDay,
@@ -78,7 +79,13 @@ export function MaintenanceRow({
           {maintenance.title}
         </EventRowTitle>
         <EventRowMeta>
-          {meta
+          {[
+            ...meta,
+            // only an announced window can keep checking
+            maintenance.window
+              ? `Window: ${maintenanceWindowModeLabels[maintenance.window.mode]}`
+              : null,
+          ]
             .filter((item) => item !== null)
             .map((item) => (
               <span key={item}>{item}</span>

@@ -124,15 +124,16 @@ When a sealed month misses its target, the workspace owners get one email per re
 
 ## Excused windows
 
-An excused window is a stretch of time whose runs count for no monitor in the reporting: a planned maintenance, an outage caused by the customer, a provider failure your contract excludes. Add one from the **Excused downtime** section of the reporting page with **Add window**.
+An excused window is a stretch of time whose runs do not count for the monitors it names: a planned maintenance, an outage caused by the customer, a provider failure your contract excludes. Add one from the **Excused downtime** section of the reporting page with **Add window**.
 
 | Field | Description |
 |---|---|
 | From, To | The window, at most 7 days long. Entered in your browser's timezone; the list shows windows in UTC. |
 | Kind | `Maintenance`, `Emergency`, `Third party`, `Customer caused`, `Force majeure` or `Other`. A label for the record; it changes nothing in the calculation. |
 | Reason | Required. Shown in the list and kept with the sealed month. |
+| Monitors | At least one monitor of the reporting. Every member is selected by default; excusing from a maintenance selects that maintenance's monitors. |
 
-- A window applies to every monitor in the reporting, including monitors added later.
+- A window applies only to the monitors it names. A monitor added to the reporting later is not covered by existing windows.
 - Runs inside it are left out of both sides of the month: neither up nor down.
 - Overlapping windows excuse a run once.
 - A window across a month boundary is split there. Each month drops only its own part.
@@ -179,14 +180,14 @@ The first line states the method. The second says when the file was generated, w
 
 ## Maintenance
 
-What a status page [maintenance](/docs/reference/maintenance) does to the figure depends on each monitor's [maintenance setting](/docs/reference/maintenance#checks-during-maintenance):
+What a maintenance does to the figure depends on [what puts the monitor in maintenance](/docs/reference/maintenance#checks-during-maintenance): a maintenance window's setting, or pausing for a status page maintenance that announces no window:
 
-- **Pause checks** (default): cloud regions do not check the monitor while the maintenance is active. That time is left out of both sides of the fraction. It never counts as downtime, whatever happened during it.
-- **Keep checking without alerting:** checks run as usual and their real outcome counts. A failure during the maintenance counts against uptime like any other time; it just does not change the monitor's status, open an incident or notify anyone.
+- **Pause checks** (default): cloud regions do not check the monitor while it is active. That time is left out of both sides of the fraction. It never counts as downtime, whatever happened during it.
+- **Keep checking:** checks run as usual and their real outcome counts. A failure during the maintenance counts against uptime like any other time; it just does not change the monitor's status, open an incident or notify anyone.
 
-To leave a maintenance out of the figure for such a monitor, excuse it: **Excuse** next to a maintenance window on the reporting page opens the [excused window](#excused-windows) dialog with its times and title prefilled. Edit the times first if the maintenance overran and the overrun should count. Excusing is a separate step on purpose, so an overrun can be left to count. Excusing a maintenance for a monitor whose checks pause is allowed but changes nothing, since that time is not counted anyway; the dialog says so.
+To leave a maintenance out of the figure for such a monitor, excuse it: **Excuse** next to a maintenance window on the reporting page opens the [excused window](#excused-windows) dialog with its times and title prefilled. Edit the times first if the maintenance overran and the overrun should count. Excusing is a separate step on purpose, so an overrun can be left to count. Excusing a maintenance whose checks pause leaves the uptime unchanged, since that time is not counted anyway, but turns the unmeasured time into excused time, which raises coverage.
 
-The reporting page lists, per month, the maintenance windows that touched its monitors, found through the status page components they are linked to. It also shows for each monitor whether its checks pause or continue, with a link to [change the setting](https://app.openstatus.dev/monitors/_/edit#maintenance).
+The reporting page lists, per month, the maintenance windows and status page maintenances that touched its monitors, each with its checks setting. A window and the maintenances announcing it are one row ("announced on …"). Excusing from a window records it with the excused window, and the dialog shows when the work was announced and how far ahead, as notice evidence; it refuses nothing.
 
 ## Related resources
 

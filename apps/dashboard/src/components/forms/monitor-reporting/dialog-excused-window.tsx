@@ -55,7 +55,7 @@ import {
   formatSlaMonth,
   slaMonthOf,
 } from "@/data/reportings.client";
-import { formatDate } from "@/lib/formatter";
+import { formatDate, formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Policy = RouterOutputs["monitorReporting"]["get"];
@@ -67,6 +67,10 @@ export type ExcusedWindowPrefill = {
   reason?: string;
   /** preselected; members of the policy only */
   monitorIds?: number[];
+  /** provenance: the maintenance window it was prefilled from */
+  monitorMaintenanceWindowId?: number;
+  /** status-page announcements of the prefilled maintenance, as notice evidence */
+  announcements?: { pageTitle: string | null; createdAt: Date | null }[];
 };
 
 function makeSchema(timeZone: string) {
@@ -203,6 +207,7 @@ function ExcusedWindowForm({
       const promise = addMutation.mutateAsync({
         policyId: policy.id,
         ...values,
+        monitorMaintenanceWindowId: prefill?.monitorMaintenanceWindowId,
       });
       toast.promise(promise, {
         loading: "Saving...",
@@ -360,6 +365,9 @@ function ExcusedWindowForm({
           )}
         />
         <ul className="text-muted-foreground list-disc space-y-1 pl-4 text-sm">
+          {prefill?.announcements ? (
+            <li>{noticeLine(prefill.announcements, prefill.from)}</li>
+          ) : null}
           <li>
             {context.lastOfKind
               ? `The last ${excusedKindLabels[kind].toLowerCase()} window started ${formatDate(context.lastOfKind)}.`
@@ -385,4 +393,24 @@ function ExcusedWindowForm({
       </form>
     </Form>
   );
+}
+
+/** How far ahead the maintenance was announced; informs, refuses nothing. */
+function noticeLine(
+  announcements: { pageTitle: string | null; createdAt: Date | null }[],
+  startsAt: Date | undefined,
+) {
+  const dated = announcements.filter(
+    (a): a is { pageTitle: string | null; createdAt: Date } =>
+      a.createdAt !== null,
+  );
+  if (dated.length === 0) return "Not announced on a status page.";
+  const first = dated.reduce((a, b) => (b.createdAt < a.createdAt ? b : a));
+  const pages = [
+    ...new Set(dated.map((a) => a.pageTitle ?? "a status page")),
+  ].join(", ");
+  const ahead = startsAt ? startsAt.getTime() - first.createdAt.getTime() : 0;
+  return ahead > 0
+    ? `Announced on ${pages}, ${formatDurationShort(ahead)} ahead.`
+    : `Announced on ${pages} after it started.`;
 }

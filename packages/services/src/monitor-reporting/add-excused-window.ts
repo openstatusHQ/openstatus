@@ -14,6 +14,7 @@ import {
   withTransaction,
 } from "../context";
 import { ValidationError } from "../errors";
+import { getMaintenanceWindowInWorkspace } from "../maintenance-window/internal";
 import {
   assertExcusedWindowOpen,
   assertMonitorSlaLimit,
@@ -49,6 +50,13 @@ export async function addMonitorReportingExcusedWindow(args: {
     if (members.length !== input.monitorIds.length) {
       throw new ValidationError("Every monitor must be part of the reporting.");
     }
+    if (input.monitorMaintenanceWindowId !== undefined) {
+      await getMaintenanceWindowInWorkspace({
+        tx,
+        id: input.monitorMaintenanceWindowId,
+        workspaceId: ctx.workspace.id,
+      });
+    }
 
     const row = await tx
       .insert(monitorSlaExcusedWindow)
@@ -59,6 +67,7 @@ export async function addMonitorReportingExcusedWindow(args: {
         reason: input.reason,
         from: input.from,
         to: input.to,
+        monitorMaintenanceWindowId: input.monitorMaintenanceWindowId ?? null,
         createdBy: tryGetActorUserId(ctx.actor),
       })
       .returning()

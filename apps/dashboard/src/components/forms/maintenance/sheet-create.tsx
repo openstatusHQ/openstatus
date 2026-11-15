@@ -42,12 +42,21 @@ export function FormSheetMaintenanceCreate({
   open: controlledOpen,
   onOpenChange,
   defaultPageId,
+  prefill,
+  pageIds,
+  window,
 }: {
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /** Pre-scopes the sheet to a page and hides the selector. */
   defaultPageId?: number;
+  /** Values the form starts from; components outside the chosen page are dropped. */
+  prefill?: React.ComponentProps<typeof FormMaintenance>["prefill"];
+  /** Limits the page selector to these pages. */
+  pageIds?: number[];
+  /** The window being announced; `prefill` should carry its id. */
+  window?: React.ComponentProps<typeof FormMaintenance>["window"];
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -58,7 +67,10 @@ export function FormSheetMaintenanceCreate({
   const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: pages } = useQuery(trpc.page.list.queryOptions());
+  const { data: allPages } = useQuery(trpc.page.list.queryOptions());
+  const pages = pageIds
+    ? allPages?.filter((p) => pageIds.includes(p.id))
+    : allPages;
 
   const pageId =
     defaultPageId ??
@@ -90,6 +102,11 @@ export function FormSheetMaintenanceCreate({
         queryClient.invalidateQueries({
           queryKey: trpc.maintenance.list.queryKey(),
         });
+        if (maintenance.monitorMaintenanceWindowId !== null) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.maintenanceWindow.list.queryKey(),
+          });
+        }
       },
     }),
   );
@@ -140,6 +157,16 @@ export function FormSheetMaintenanceCreate({
                   page?.pageComponents ?? [],
                   page?.pageComponentGroups ?? [],
                 )}
+                components={page?.pageComponents ?? []}
+                window={window}
+                prefill={
+                  prefill && {
+                    ...prefill,
+                    pageComponents: prefill.pageComponents?.filter((cid) =>
+                      page?.pageComponents.some((c) => c.id === cid),
+                    ),
+                  }
+                }
                 onSubmit={async (values) => {
                   await createMaintenanceMutation.mutateAsync({
                     pageId,
@@ -148,6 +175,8 @@ export function FormSheetMaintenanceCreate({
                     startDate: values.startDate,
                     endDate: values.endDate,
                     pageComponents: values.pageComponents,
+                    monitorMaintenanceWindowId:
+                      values.monitorMaintenanceWindowId,
                     notifySubscribers: values.notifySubscribers,
                   });
                   setOpen(false);

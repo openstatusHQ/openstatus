@@ -1,5 +1,5 @@
 import type { MonitorMaintenanceWindowMode } from "@openstatus/db/src/schema/monitor_maintenance_windows/constants";
-import { Delete, Settings, Stop } from "@openstatus/icons";
+import { Delete, Settings, StatusPage, Stop } from "@openstatus/icons";
 
 export const maintenanceWindowModeLabels: Record<
   MonitorMaintenanceWindowMode,
@@ -22,11 +22,19 @@ export const maintenanceWindowModeDescriptions: Record<
 const actions = [
   { id: "edit", label: "Settings", icon: Settings, variant: "default" },
   { id: "end", label: "End now", icon: Stop, variant: "default" },
+  {
+    id: "announce",
+    label: "Announce on status page",
+    icon: StatusPage,
+    variant: "default",
+  },
   { id: "delete", label: "Delete", icon: Delete, variant: "destructive" },
 ] as const;
 
 export function getMaintenanceWindowActions(
-  props: Partial<Record<"edit" | "end", () => Promise<void> | void>>,
+  props: Partial<
+    Record<"edit" | "end" | "announce", () => Promise<void> | void>
+  >,
 ) {
   return actions
     .filter((action) => action.id === "delete" || props[action.id])

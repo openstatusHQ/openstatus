@@ -1,5 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, isNull, schema, sql } from "@openstatus/db";
+import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -9,7 +10,6 @@ import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
 import { findOpenIncident, resolveIncident } from "./incident-utils";
-import { monitorInMaintenance } from "./maintenance";
 
 const logger = getLogger(["workflow"]);
 

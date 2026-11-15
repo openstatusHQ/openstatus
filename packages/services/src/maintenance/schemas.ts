@@ -33,12 +33,14 @@ export const CreateMaintenanceInput = z
     to: coercedDate,
     pageId: z.number().int(),
     pageComponentIds: z.array(z.number().int()).default([]),
+    /** Announces this window: times follow it and it decides the checks. */
+    monitorMaintenanceWindowId: z.number().int().optional(),
   })
   .refine((v) => v.from < v.to, {
     path: ["to"],
     error: "End date must be after start date.",
   });
-export type CreateMaintenanceInput = z.infer<typeof CreateMaintenanceInput>;
+export type CreateMaintenanceInput = z.input<typeof CreateMaintenanceInput>;
 
 export const UpdateMaintenanceInput = z.object({
   id: z.number().int(),
@@ -88,6 +90,11 @@ export type GetMaintenanceUpdateInput = z.infer<
   typeof GetMaintenanceUpdateInput
 >;
 
+export const UnlinkMaintenanceWindowInput = z.object({ id: z.number().int() });
+export type UnlinkMaintenanceWindowInput = z.infer<
+  typeof UnlinkMaintenanceWindowInput
+>;
+
 export const DeleteMaintenanceInput = z.object({ id: z.number().int() });
 export type DeleteMaintenanceInput = z.infer<typeof DeleteMaintenanceInput>;
 
@@ -100,6 +107,8 @@ export const ListMaintenancesInput = z.object({
   limit: z.number().int().min(1).default(50),
   offset: z.number().int().min(0).default(0),
   pageId: z.number().int().optional(),
+  /** Maintenances reaching this monitor through one of their components. */
+  monitorId: z.number().int().optional(),
   period: maintenanceListPeriodSchema.optional(),
   order: z.enum(["asc", "desc"]).default("desc"),
 });

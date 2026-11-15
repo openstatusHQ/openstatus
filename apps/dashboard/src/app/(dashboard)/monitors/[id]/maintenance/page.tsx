@@ -13,9 +13,15 @@ export default async function Page({
   const monitorId = Number.parseInt(id);
   if (Number.isNaN(monitorId)) notFound();
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
-    trpc.maintenanceWindow.list.queryOptions({ monitorId }),
-  );
+  await Promise.all([
+    queryClient.prefetchQuery(
+      trpc.maintenanceWindow.list.queryOptions({ monitorId }),
+    ),
+    queryClient.prefetchQuery(
+      trpc.maintenance.list.queryOptions({ monitorId }),
+    ),
+    queryClient.prefetchQuery(trpc.pageComponent.list.queryOptions()),
+  ]);
 
   return (
     <HydrateClient>

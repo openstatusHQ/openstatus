@@ -108,8 +108,8 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
-/** continue: a maintenance window. pause: a status page maintenance, which always pauses. */
-async function monitorUnderMaintenance(mode: "pause" | "continue") {
+/** continue: a maintenance window. pause: a status page maintenance. linked: a continue window and its announcement. */
+async function monitorUnderMaintenance(mode: "pause" | "continue" | "linked") {
   const row = await createMonitor(workspaceId, {
     regions: "ams",
     status: "active",
@@ -120,23 +120,28 @@ async function monitorUnderMaintenance(mode: "pause" | "continue") {
   const from = new Date(now - HOUR_MS);
   const to = new Date(now + HOUR_MS);
 
-  if (mode === "continue") {
+  let windowId: number | undefined;
+  if (mode === "continue" || mode === "linked") {
     const [window] = await db
       .insert(monitorMaintenanceWindow)
-      .values({ title: "db upgrade", mode, from, to, workspaceId })
+      .values({ title: "db upgrade", mode: "continue", from, to, workspaceId })
       .returning();
     if (!window) throw new Error("window insert returned no row");
     await db
       .insert(monitorMaintenanceWindowToMonitor)
       .values({ monitorMaintenanceWindowId: window.id, monitorId: row.id })
       .run();
+    windowId = window.id;
+  }
+  if (mode === "continue" && windowId !== undefined) {
+    const id = windowId;
     return {
       monitorId: row.id,
       endAt: (end: Date) =>
         db
           .update(monitorMaintenanceWindow)
           .set({ to: end })
-          .where(eq(monitorMaintenanceWindow.id, window.id))
+          .where(eq(monitorMaintenanceWindow.id, id))
           .run(),
     };
   }
@@ -147,7 +152,15 @@ async function monitorUnderMaintenance(mode: "pause" | "continue") {
   });
   const [m] = await db
     .insert(maintenance)
-    .values({ title: "db upgrade", message: "", from, to, workspaceId, pageId })
+    .values({
+      title: "db upgrade",
+      message: "",
+      from,
+      to,
+      monitorMaintenanceWindowId: windowId,
+      workspaceId,
+      pageId,
+    })
     .returning();
   if (!m) throw new Error("maintenance insert returned no row");
   await db
@@ -215,6 +228,18 @@ describe("updateStatus for a monitor that keeps checking during maintenance", ()
     expect(sendAlert).not.toHaveBeenCalled();
   });
 
+  test("a failure under an announced continue window changes nothing", async () => {
+    const { monitorId } = await monitorUnderMaintenance("linked");
+
+    const res = await postError(monitorId);
+
+    expect(res.status).toBe(200);
+    const state = await stateOf(monitorId);
+    expect(state.status).toBe("active");
+    expect(state.incidents).toHaveLength(0);
+    expect(sendAlert).not.toHaveBeenCalled();
+  });
+
   test("a failure that persists after the window opens the incident then", async () => {
     const { monitorId, endAt } = await monitorUnderMaintenance("continue");
     await postError(monitorId);
@@ -269,8 +294,13 @@ describe("isInContinuedMaintenance window end", () => {
     ).toBe(true);
   });
 
-  test("a status page maintenance is never a continued one", async () => {
+  test("a pausing status page maintenance is not a continued one", async () => {
     const { monitorId } = await monitorUnderMaintenance("pause");
     expect(await isInContinuedMaintenance(monitorId, new Date())).toBe(false);
+  });
+
+  test("an announced continue window is a continued one", async () => {
+    const { monitorId } = await monitorUnderMaintenance("linked");
+    expect(await isInContinuedMaintenance(monitorId, new Date())).toBe(true);
   });
 });

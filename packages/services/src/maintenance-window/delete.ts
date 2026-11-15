@@ -4,10 +4,14 @@ import { monitorMaintenanceWindow } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { getMaintenanceWindowInWorkspace, monitorIdsOf } from "./internal";
+import {
+  assertNoLinkedMaintenances,
+  getMaintenanceWindowInWorkspace,
+  monitorIdsOf,
+} from "./internal";
 import { DeleteMaintenanceWindowInput } from "./schemas";
 
-/** Cascade removes the monitor links; excused windows keep their times, the link is nulled. */
+/** Refused while announced; cascade removes the monitor links; excused windows keep their times, the link is nulled. */
 export async function deleteMaintenanceWindow(args: {
   ctx: ServiceContext;
   input: DeleteMaintenanceWindowInput;
@@ -22,6 +26,7 @@ export async function deleteMaintenanceWindow(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    await assertNoLinkedMaintenances(tx, existing.id);
     const monitorIds = await monitorIdsOf(tx, existing.id);
     await tx
       .delete(monitorMaintenanceWindow)

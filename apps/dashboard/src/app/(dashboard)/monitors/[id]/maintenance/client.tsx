@@ -30,6 +30,7 @@ import {
 } from "@/components/content/section";
 import { FormSheetMaintenanceWindow } from "@/components/forms/maintenance-window/sheet";
 import { MaintenanceWindowRow } from "@/components/maintenance-windows/maintenance-window-row";
+import { MaintenanceRow } from "@/components/maintenances/maintenance-row";
 import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { getMaintenanceStatus } from "@/data/overview-events.client";
 import { usePaged } from "@/hooks/use-paged";
@@ -45,6 +46,9 @@ export function Client() {
     trpc.maintenanceWindow.list.queryOptions({ monitorId }),
   );
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: announced } = useQuery(
+    trpc.maintenance.list.queryOptions({ monitorId }),
+  );
   const createMutation = useMutation(
     trpc.maintenanceWindow.create.mutationOptions({
       onSuccess: () =>
@@ -54,7 +58,7 @@ export function Client() {
     }),
   );
 
-  useMaintenanceTick(windows ?? []);
+  useMaintenanceTick([...(windows ?? []), ...(announced ?? [])]);
   const now = new Date();
   const current = (windows ?? [])
     .filter((w) => getMaintenanceStatus(w, now) !== "completed")
@@ -64,7 +68,7 @@ export function Client() {
   );
   const paged = usePaged(past);
 
-  if (!windows || !monitors) return null;
+  if (!windows || !monitors || !announced) return null;
 
   const options = monitors.map((m) => ({ id: m.id, name: m.name, url: m.url }));
   const create = (
@@ -156,6 +160,34 @@ export function Client() {
               </EventList>
             </EventGroup>
           </div>
+        )}
+      </Section>
+      <Section id="status-page-maintenances">
+        <SectionHeader>
+          <SectionTitle>Status page maintenances</SectionTitle>
+          <SectionDescription>
+            Announced on a status page through a component of this monitor. One
+            that announces a window follows that window; any other pauses the
+            monitor while it is active.
+          </SectionDescription>
+        </SectionHeader>
+        {announced.length === 0 ? (
+          <EmptyStateContainer>
+            <EmptyStateMedia>
+              <Maintenance />
+            </EmptyStateMedia>
+            <EmptyStateTitle>No status page maintenances</EmptyStateTitle>
+            <EmptyStateDescription>
+              None of this monitor&apos;s status page components has had a
+              maintenance.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
+        ) : (
+          <EventList>
+            {announced.map((m) => (
+              <MaintenanceRow key={m.id} maintenance={m} />
+            ))}
+          </EventList>
         )}
       </Section>
     </SectionGroup>

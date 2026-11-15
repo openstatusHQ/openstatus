@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   db as defaultDb,
   desc,
   eq,
@@ -7,9 +8,11 @@ import {
   isNull,
 } from "@openstatus/db";
 import {
+  maintenance,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
+  page,
 } from "@openstatus/db/src/schema";
 
 import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
@@ -26,6 +29,14 @@ type WindowRow = typeof monitorMaintenanceWindow.$inferSelect;
 export type MaintenanceWindowWithRelations = WindowRow & {
   monitors: { id: number; name: string }[];
   monitorIds: number[];
+  /** Status-page maintenances announcing this window. */
+  announcements: {
+    id: number;
+    title: string;
+    pageId: number | null;
+    pageTitle: string | null;
+    createdAt: Date | null;
+  }[];
   createdByUser: AttributedUserDetail | null;
 };
 
@@ -57,6 +68,28 @@ async function enrich(
       ),
     )
     .all();
+  const announced = await db
+    .select({
+      windowId: maintenance.monitorMaintenanceWindowId,
+      id: maintenance.id,
+      title: maintenance.title,
+      pageId: maintenance.pageId,
+      pageTitle: page.title,
+      createdAt: maintenance.createdAt,
+    })
+    .from(maintenance)
+    .leftJoin(page, eq(page.id, maintenance.pageId))
+    .where(
+      and(
+        eq(maintenance.workspaceId, workspaceId),
+        inArray(
+          maintenance.monitorMaintenanceWindowId,
+          rows.map((r) => r.id),
+        ),
+      ),
+    )
+    .orderBy(asc(maintenance.id))
+    .all();
   const users = await loadAttributedUsers(
     db,
     rows.map((r) => r.createdBy),
@@ -73,6 +106,9 @@ async function enrich(
       ...r,
       monitors,
       monitorIds: monitors.map((m) => m.id),
+      announcements: announced
+        .filter((a) => a.windowId === r.id)
+        .map(({ windowId: _, ...a }) => a),
       createdByUser:
         r.createdBy != null ? (users.get(r.createdBy) ?? null) : null,
     };

@@ -2,6 +2,8 @@ import { db, eq, inArray } from "@openstatus/db";
 import {
   maintenanceUpdate,
   maintenancesToPageComponents,
+  monitor,
+  selectMaintenancePageSchema,
   page,
   pageComponent,
 } from "@openstatus/db/src/schema";
@@ -23,13 +25,23 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  PreconditionFailedError,
+} from "../../errors";
+import { createMaintenanceWindow } from "../../maintenance-window/create";
+import { deleteMaintenanceWindow } from "../../maintenance-window/delete";
+import { updateMaintenanceWindow } from "../../maintenance-window/update";
+import { getStatusPageContent } from "../../page/get-content";
 import { addMaintenanceUpdate } from "../add-update";
 import { createMaintenance } from "../create";
 import { deleteMaintenance } from "../delete";
 import { deleteMaintenanceUpdate } from "../delete-update";
 import { getMaintenance, listMaintenances } from "../list";
 import { notifyMaintenance } from "../notify";
+import { unlinkMaintenanceWindow } from "../unlink-window";
 import { updateMaintenance } from "../update";
 import { updateMaintenanceUpdate } from "../update-update";
 
@@ -127,6 +139,22 @@ afterAll(async () => {
 beforeEach(() => {
   subscriptionSpies?.dispatchMaintenanceUpdate.mockClear();
 });
+
+type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
+
+async function insertMonitorIn(tx: Tx, name: string) {
+  return tx
+    .insert(monitor)
+    .values({
+      workspaceId: teamCtx.workspace.id,
+      name: `${TEST_PREFIX}-${name}`,
+      url: "https://example.com",
+      regions: "ams",
+      active: true,
+    })
+    .returning()
+    .get();
+}
 
 function futureRange(startIn = 60 * 60 * 1000) {
   const now = Date.now();
@@ -576,6 +604,199 @@ describe("list / get", () => {
         testPageComponentId,
       ]);
       expect(full.pageComponentIds).toEqual([testPageComponentId]);
+    });
+  });
+
+  test("a maintenance announcing a window follows its times", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorIn(tx, "linked-api");
+      const window = await createMaintenanceWindow({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-window`,
+          mode: "continue",
+          ...futureRange(),
+          monitorIds: [api.id],
+        },
+      });
+      const { maintenance: linked } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-announce`,
+          message: "m",
+          // ignored: a linked maintenance takes the window's times
+          ...futureRange(5 * 60 * 60 * 1000),
+          pageId: testPageId,
+          pageComponentIds: [],
+          monitorMaintenanceWindowId: window.id,
+        },
+      });
+      expect(linked.monitorMaintenanceWindowId).toBe(window.id);
+      expect(linked.from).toEqual(window.from);
+      expect(linked.to).toEqual(window.to);
+
+      const full = await getMaintenance({ ctx, input: { id: linked.id } });
+      expect(full.window).toEqual({
+        id: window.id,
+        title: `${TEST_PREFIX}-window`,
+        mode: "continue",
+      });
+      expect(full.affectedMonitors.map((m) => m.id)).toEqual([api.id]);
+
+      await expect(
+        updateMaintenance({
+          ctx,
+          input: { id: linked.id, to: new Date(window.to.getTime() + 60_000) },
+        }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      // unchanged times are fine; the dashboard always sends them
+      await updateMaintenance({
+        ctx,
+        input: {
+          id: linked.id,
+          title: "renamed",
+          from: window.from,
+          to: window.to,
+        },
+      });
+
+      const moved = new Date(window.to.getTime() + 30 * 60 * 1000);
+      await updateMaintenanceWindow({
+        ctx,
+        input: { id: window.id, to: moved },
+      });
+      const synced = await getMaintenance({ ctx, input: { id: linked.id } });
+      expect(synced.to).toEqual(moved);
+    });
+  });
+
+  test("a window cannot be deleted while announced; unlinking frees it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorIn(tx, "unlink-api");
+      const window = await createMaintenanceWindow({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-window-delete`,
+          ...futureRange(),
+          monitorIds: [api.id],
+        },
+      });
+      const { maintenance: linked } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-announce-delete`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+          monitorMaintenanceWindowId: window.id,
+        },
+      });
+
+      await expect(
+        deleteMaintenanceWindow({ ctx, input: { id: window.id } }),
+      ).rejects.toThrow(/announce-delete/);
+
+      const unlinked = await unlinkMaintenanceWindow({
+        ctx,
+        input: { id: linked.id },
+      });
+      expect(unlinked.monitorMaintenanceWindowId).toBeNull();
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance.update",
+        entityType: "maintenance",
+        entityId: linked.id,
+        db: tx,
+      });
+      await deleteMaintenanceWindow({ ctx, input: { id: window.id } });
+    });
+  });
+
+  test("the window link stays out of public status-page content", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-public`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      const content = await getStatusPageContent({ ctx, pageId: testPageId });
+      const shown = content.maintenances.find((m) => m.id === record.id);
+      expect(shown).toBeDefined();
+      expect(shown).not.toHaveProperty("monitorMaintenanceWindowId");
+      expect(selectMaintenancePageSchema.parse(record)).not.toHaveProperty(
+        "monitorMaintenanceWindowId",
+      );
+    });
+  });
+
+  test("lists the monitors behind its components and filters by monitor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-api`,
+          url: "https://example.com",
+          regions: "ams",
+          active: true,
+        })
+        .returning()
+        .get();
+      const component = await tx
+        .insert(pageComponent)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          pageId: testPageId,
+          name: `${TEST_PREFIX}-api-component`,
+          type: "monitor",
+          monitorId: api.id,
+        })
+        .returning()
+        .get();
+      const { maintenance: withMonitor } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-affected`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [component.id, testPageComponentId],
+        },
+      });
+      const { maintenance: staticOnly } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-static-only`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      const full = await getMaintenance({ ctx, input: { id: withMonitor.id } });
+      expect(full.affectedMonitors).toEqual([
+        { id: api.id, name: `${TEST_PREFIX}-api` },
+      ]);
+      const none = await getMaintenance({ ctx, input: { id: staticOnly.id } });
+      expect(none.affectedMonitors).toEqual([]);
+
+      const { items } = await listMaintenances({
+        ctx,
+        input: { limit: 100, offset: 0, monitorId: api.id, order: "desc" },
+      });
+      expect(items.map((m) => m.id)).toEqual([withMonitor.id]);
     });
   });
 });

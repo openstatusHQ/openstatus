@@ -187,6 +187,7 @@ export default function Page() {
               open={openCreate}
               onOpenChange={setOpenCreate}
               items={items}
+              components={statusPage.pageComponents}
               onSubmit={createMaintenance}
             >
               <Button data-section="action" size="sm">

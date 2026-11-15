@@ -15,9 +15,12 @@ type MaintenanceWindow = RouterOutputs["maintenanceWindow"]["list"][number];
 export function MaintenanceWindowRowActions({
   window,
   onEdit,
+  onAnnounce,
 }: {
   window: MaintenanceWindow;
   onEdit: () => void;
+  /** absent when no status page shows any of the window's monitors */
+  onAnnounce?: () => void;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -40,6 +43,7 @@ export function MaintenanceWindowRowActions({
     <QuickActions
       actions={getMaintenanceWindowActions({
         edit: completed ? undefined : onEdit,
+        announce: completed ? undefined : onAnnounce,
         end: running
           ? async () => {
               const promise = endMutation.mutateAsync({ id: window.id });

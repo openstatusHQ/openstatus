@@ -1,11 +1,24 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation } from "@tanstack/react-query";
 import { formatDistanceStrict } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Link } from "@/components/common/link";
 import { StatusDot } from "@/components/common/status-dot";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
@@ -17,12 +30,16 @@ import {
   PropertyValue,
 } from "@/components/content/property-list";
 import { distinctEditor } from "@/data/attribution.client";
+import { maintenanceWindowModeLabels } from "@/data/maintenance-windows.client";
 import {
   type MaintenanceStatus,
   maintenanceStatusConfig,
 } from "@/data/overview-events.client";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useTRPC } from "@/lib/trpc/client";
+import { errorMessage } from "@/lib/trpc/error";
 
+import { useInvalidateMaintenance } from "./use-invalidate-maintenance";
 import { useUpdateMaintenance } from "./use-update-maintenance";
 
 type Maintenance = NonNullable<RouterOutputs["maintenance"]["get"]>;
@@ -75,6 +92,18 @@ export function MaintenanceProperties({
     (from.getTime() !== maintenance.from.getTime() ||
       to.getTime() !== maintenance.to.getTime());
   const invalid = to <= from;
+  const trpc = useTRPC();
+  const invalidate = useInvalidateMaintenance(maintenance.id);
+  const unlink = useMutation(
+    trpc.maintenance.unlinkWindow.mutationOptions({
+      onSuccess: async () => {
+        await invalidate();
+        toast.success("Unlinked from the window");
+      },
+      onError: (error) => toast.error(errorMessage(error, "Failed to unlink")),
+    }),
+  );
+  const linked = maintenance.window;
   const author = maintenance.createdByUser;
   const editor = distinctEditor(maintenance);
 
@@ -99,6 +128,7 @@ export function MaintenanceProperties({
           {hydrated ? (
             <PropertyDateTimePicker
               aria-label="From"
+              disabled={!!linked}
               value={from}
               onChange={(date) => setDraft({ from: date, to })}
             />
@@ -113,6 +143,7 @@ export function MaintenanceProperties({
           {hydrated ? (
             <PropertyDateTimePicker
               aria-label="To"
+              disabled={!!linked}
               value={to}
               onChange={(date) => setDraft({ from, to: date })}
             />
@@ -145,6 +176,65 @@ export function MaintenanceProperties({
               ) : null}
             </div>
           ) : null}
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Checks</PropertyLabel>
+        <PropertyValue className="flex-wrap">
+          {linked ? (
+            <>
+              <span className="truncate">
+                Window {linked.title}:{" "}
+                {maintenanceWindowModeLabels[linked.mode]}
+              </span>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-7">
+                    Unlink
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Unlink from the window?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The times stop following {linked.title}, and while it is
+                      active this maintenance pauses the monitors behind its
+                      components.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => unlink.mutate({ id: maintenance.id })}
+                    >
+                      Unlink
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          ) : (
+            <span className="truncate">
+              {maintenanceWindowModeLabels.pause}
+            </span>
+          )}
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Monitors</PropertyLabel>
+        <PropertyValue>
+          {maintenance.affectedMonitors.length ? (
+            <span className="truncate">
+              {maintenance.affectedMonitors.map((m, i) => (
+                <span key={m.id}>
+                  {i > 0 ? ", " : null}
+                  <Link href={`/monitors/${m.id}/maintenance`}>{m.name}</Link>
+                </span>
+              ))}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">None</span>
+          )}
         </PropertyValue>
       </Property>
       <Property>

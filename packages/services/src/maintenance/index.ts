@@ -11,6 +11,7 @@ export {
   type MaintenanceWithRelations,
 } from "./list";
 export { notifyMaintenance } from "./notify";
+export { unlinkMaintenanceWindow } from "./unlink-window";
 export { updateMaintenance } from "./update";
 export { updateMaintenanceUpdate } from "./update-update";
 export { latestMaintenanceUpdate } from "./utils";
@@ -27,6 +28,7 @@ export {
   maintenanceListPeriodSchema,
   maintenanceListPeriods,
   NotifyMaintenanceInput,
+  UnlinkMaintenanceWindowInput,
   UpdateMaintenanceInput,
   UpdateMaintenanceUpdateInput,
 } from "./schemas";

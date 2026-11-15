@@ -1,12 +1,13 @@
 import { and, asc, eq, inArray, isNull } from "@openstatus/db";
 import {
+  maintenance,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
-import { NotFoundError } from "../errors";
+import { NotFoundError, PreconditionFailedError } from "../errors";
 
 export async function getMaintenanceWindowInWorkspace(args: {
   tx: DB;
@@ -87,4 +88,31 @@ export async function monitorIdsOf(tx: DB, windowId: number) {
     .orderBy(asc(monitorMaintenanceWindowToMonitor.monitorId))
     .all();
   return rows.map((r) => r.id);
+}
+
+/** Linked status-page maintenances follow their window's times; editing one never re-notifies. */
+export async function syncLinkedMaintenances(
+  tx: DB,
+  window: { id: number; from: Date; to: Date },
+): Promise<void> {
+  await tx
+    .update(maintenance)
+    .set({ from: window.from, to: window.to, updatedAt: new Date() })
+    .where(eq(maintenance.monitorMaintenanceWindowId, window.id));
+}
+
+/** A window cannot be deleted while a status-page maintenance announces it. */
+export async function assertNoLinkedMaintenances(
+  tx: DB,
+  windowId: number,
+): Promise<void> {
+  const linked = await tx
+    .select({ id: maintenance.id, title: maintenance.title })
+    .from(maintenance)
+    .where(eq(maintenance.monitorMaintenanceWindowId, windowId))
+    .all();
+  if (linked.length === 0) return;
+  throw new PreconditionFailedError(
+    `This window is announced by ${linked.map((m) => `"${m.title}"`).join(", ")}. Unlink or delete the announcement first.`,
+  );
 }

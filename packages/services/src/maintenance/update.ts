@@ -9,7 +9,11 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ConflictError, InternalServiceError } from "../errors";
+import {
+  ConflictError,
+  InternalServiceError,
+  PreconditionFailedError,
+} from "../errors";
 import type { Maintenance } from "../types";
 import {
   getMaintenanceInWorkspace,
@@ -49,6 +53,15 @@ export async function updateMaintenance(args: {
     if (input.title !== undefined) updateValues.title = input.title;
     if (input.from !== undefined) updateValues.from = input.from;
     if (input.to !== undefined) updateValues.to = input.to;
+    if (
+      existing.monitorMaintenanceWindowId !== null &&
+      (effectiveFrom.getTime() !== existing.from.getTime() ||
+        effectiveTo.getTime() !== existing.to.getTime())
+    ) {
+      throw new PreconditionFailedError(
+        "This maintenance follows a maintenance window; change the times on the window, or unlink it first.",
+      );
+    }
 
     if (input.pageComponentIds !== undefined) {
       const validated = await validatePageComponentIds({

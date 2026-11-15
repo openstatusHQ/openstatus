@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { monitorMaintenanceWindow } from "../monitor_maintenance_windows/monitor_maintenance_window";
 import { maintenancesToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { user } from "../users";
@@ -17,6 +18,10 @@ export const maintenance = sqliteTable(
 
     from: integer("from", { mode: "timestamp" }).notNull(),
     to: integer("to", { mode: "timestamp" }).notNull(),
+    // internal: set when announced from a window, whose times and checks it follows
+    monitorMaintenanceWindowId: integer(
+      "monitor_maintenance_window_id",
+    ).references(() => monitorMaintenanceWindow.id, { onDelete: "set null" }),
 
     workspaceId: integer("workspace_id").references(() => workspace.id),
     pageId: integer("page_id").references(() => page.id, {
@@ -68,6 +73,10 @@ export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
   page: one(page, {
     fields: [maintenance.pageId],
     references: [page.id],
+  }),
+  window: one(monitorMaintenanceWindow, {
+    fields: [maintenance.monitorMaintenanceWindowId],
+    references: [monitorMaintenanceWindow.id],
   }),
   workspace: one(workspace, {
     fields: [maintenance.workspaceId],

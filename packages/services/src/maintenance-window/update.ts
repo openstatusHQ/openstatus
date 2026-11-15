@@ -13,6 +13,7 @@ import {
   getMaintenanceWindowInWorkspace,
   monitorIdsOf,
   replaceWindowMonitors,
+  syncLinkedMaintenances,
   validateWindowMonitorIds,
 } from "./internal";
 import {
@@ -68,6 +69,7 @@ export async function updateMaintenanceWindow(args: {
       .where(eq(monitorMaintenanceWindow.id, existing.id))
       .returning()
       .get();
+    await syncLinkedMaintenances(tx, updated);
     await emitAudit(tx, ctx, {
       action: "monitor_maintenance_window.update",
       entityType: "monitor_maintenance_window",
@@ -112,6 +114,7 @@ export async function endMaintenanceWindow(args: {
       .where(eq(monitorMaintenanceWindow.id, existing.id))
       .returning()
       .get();
+    await syncLinkedMaintenances(tx, updated);
     await emitAudit(tx, ctx, {
       action: "monitor_maintenance_window.update",
       entityType: "monitor_maintenance_window",

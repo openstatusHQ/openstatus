@@ -708,6 +708,20 @@
       "when": 1794732910102,
       "tag": "0100_vengeful_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "6",
+      "when": 1794736896244,
+      "tag": "0101_nebulous_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "6",
+      "when": 1794739510717,
+      "tag": "0102_right_thunderball",
+      "breakpoints": true
     }
   ]
 }

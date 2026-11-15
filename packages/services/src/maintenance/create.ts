@@ -8,6 +8,7 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError } from "../errors";
+import { getMaintenanceWindowInWorkspace } from "../maintenance-window/internal";
 import type { Maintenance, MaintenanceUpdate } from "../types";
 import {
   assertPageInWorkspace,
@@ -49,6 +50,16 @@ export async function createMaintenance(args: {
       );
     }
 
+    // a linked maintenance takes the window's times, so the two never disagree
+    const window =
+      input.monitorMaintenanceWindowId === undefined
+        ? null
+        : await getMaintenanceWindowInWorkspace({
+            tx,
+            id: input.monitorMaintenanceWindowId,
+            workspaceId: ctx.workspace.id,
+          });
+
     const record = await tx
       .insert(maintenance)
       .values({
@@ -57,8 +68,9 @@ export async function createMaintenance(args: {
         title: input.title,
         // deprecated column: mirrors the first update until it is dropped
         message: input.message,
-        from: input.from,
-        to: input.to,
+        from: window?.from ?? input.from,
+        to: window?.to ?? input.to,
+        monitorMaintenanceWindowId: window?.id ?? null,
         createdBy: actorUserId,
         updatedBy: actorUserId,
       })

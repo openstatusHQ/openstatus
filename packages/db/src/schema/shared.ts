@@ -66,8 +66,9 @@ export const selectStatusReportPageSchema = selectStatusReportSchema
       .prefault([]),
   });
 
+// the window link is internal: which window drives the maintenance's checks
 export const selectMaintenancePageSchema = selectMaintenanceSchema
-  .omit(authorColumns)
+  .omit({ ...authorColumns, monitorMaintenanceWindowId: true })
   .extend({
     maintenanceUpdates: z
       .array(selectMaintenanceUpdateSchema.omit(authorColumns))

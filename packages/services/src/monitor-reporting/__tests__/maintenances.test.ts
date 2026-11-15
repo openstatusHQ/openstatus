@@ -124,6 +124,7 @@ async function insertMaintenance(
     to: Date;
     componentIds: number[];
     workspaceId?: number;
+    monitorMaintenanceWindowId?: number;
   },
 ) {
   const m = await tx
@@ -135,6 +136,7 @@ async function insertMaintenance(
       message: "",
       from: args.from,
       to: args.to,
+      monitorMaintenanceWindowId: args.monitorMaintenanceWindowId,
     })
     .returning()
     .get();
@@ -328,6 +330,45 @@ describe("listMonitorReportingMaintenances", () => {
         pageTitle: null,
         month: "2026-11-01",
         excusable: true,
+      });
+    });
+  });
+
+  test("a maintenance announcing a window is listed with that window", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx, { name: "API" });
+      const policy = await insertPolicy(tx, [api.id]);
+      const main = await insertPage(tx, "Main", [api.id]);
+      const window = await insertWindow(tx, {
+        title: "Contract migration",
+        mode: "continue",
+        from: utc(2026, 11, 2),
+        to: utc(2026, 11, 2, 1),
+        monitorIds: [api.id],
+      });
+      const announcement = await insertMaintenance(tx, {
+        pageId: main.page.id,
+        title: "Contract migration",
+        from: utc(2026, 11, 2),
+        to: utc(2026, 11, 2, 1),
+        componentIds: [main.components.get(api.id) ?? 0],
+        monitorMaintenanceWindowId: window.id,
+      });
+
+      const res = await listMonitorReportingMaintenances({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+      });
+
+      expect(res.windows).toHaveLength(1);
+      expect(res.windows[0]).toMatchObject({
+        kind: "window",
+        id: window.id,
+        mode: "continue",
+        announcements: [
+          { id: announcement.id, pageId: main.page.id, pageTitle: "Main" },
+        ],
       });
     });
   });

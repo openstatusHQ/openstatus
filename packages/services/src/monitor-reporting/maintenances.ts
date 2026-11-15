@@ -71,6 +71,7 @@ export async function listMonitorReportingMaintenances(args: {
         to: maintenance.to,
         pageId: maintenance.pageId,
         pageTitle: page.title,
+        createdAt: maintenance.createdAt,
         monitorId: pageComponent.monitorId,
       })
       .from(maintenancesToPageComponents)
@@ -86,6 +87,8 @@ export async function listMonitorReportingMaintenances(args: {
       .where(
         and(
           eq(maintenance.workspaceId, ctx.workspace.id),
+          // a linked maintenance is listed with its window
+          isNull(maintenance.monitorMaintenanceWindowId),
           inArray(pageComponent.monitorId, memberIds),
           lte(maintenance.from, now),
           gt(maintenance.to, rangeStart),
@@ -120,8 +123,37 @@ export async function listMonitorReportingMaintenances(args: {
       .all(),
   ]);
 
+  const windowIds = [...new Set(windowRows.map((w) => w.id))];
+  const announced =
+    windowIds.length === 0
+      ? []
+      : await db
+          .select({
+            windowId: maintenance.monitorMaintenanceWindowId,
+            id: maintenance.id,
+            pageId: maintenance.pageId,
+            pageTitle: page.title,
+            createdAt: maintenance.createdAt,
+          })
+          .from(maintenance)
+          .leftJoin(page, eq(page.id, maintenance.pageId))
+          .where(
+            and(
+              eq(maintenance.workspaceId, ctx.workspace.id),
+              inArray(maintenance.monitorMaintenanceWindowId, windowIds),
+            ),
+          )
+          .orderBy(asc(maintenance.id))
+          .all();
+
+  type Announcement = {
+    id: number;
+    pageId: number | null;
+    pageTitle: string | null;
+    createdAt: Date | null;
+  };
   type Window = {
-    /** page: a status-page maintenance, which pauses checks. window: a maintenance window. */
+    /** page: an unlinked status-page maintenance, pausing monitors through its components. window: a maintenance window. */
     kind: "page" | "window";
     id: number;
     title: string;
@@ -130,6 +162,8 @@ export async function listMonitorReportingMaintenances(args: {
     pageId: number | null;
     pageTitle: string | null;
     mode: "pause" | "continue";
+    /** The announcements on status pages: for a page row itself, for a window those linked to it. */
+    announcements: Announcement[];
     monitorIds: number[];
     /** Listed once, under the month it started in, or the first month shown. */
     month: string;
@@ -156,14 +190,38 @@ export async function listMonitorReportingMaintenances(args: {
     }
     windows.set(key, window);
   };
-  for (const { monitorId, ...row } of touched) {
+  for (const { monitorId, createdAt, ...row } of touched) {
     if (monitorId === null) continue;
-    add(`page:${row.id}`, { ...row, kind: "page", mode: "pause" }, monitorId);
+    add(
+      `page:${row.id}`,
+      {
+        ...row,
+        kind: "page",
+        mode: "pause",
+        announcements: [
+          {
+            id: row.id,
+            pageId: row.pageId,
+            pageTitle: row.pageTitle,
+            createdAt,
+          },
+        ],
+      },
+      monitorId,
+    );
   }
   for (const { monitorId, ...row } of windowRows) {
     add(
       `window:${row.id}`,
-      { ...row, kind: "window", pageId: null, pageTitle: null },
+      {
+        ...row,
+        kind: "window",
+        pageId: null,
+        pageTitle: null,
+        announcements: announced
+          .filter((a) => a.windowId === row.id)
+          .map(({ windowId: _, ...a }) => a),
+      },
       monitorId,
     );
   }

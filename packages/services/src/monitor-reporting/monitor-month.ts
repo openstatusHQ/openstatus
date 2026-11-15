@@ -1,4 +1,4 @@
-import { and, eq, gt, lt } from "@openstatus/db";
+import { and, eq, gt, isNull, lt } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -53,7 +53,7 @@ export type MonitorReportingMonthEpisode = {
   maintenance: Pick<MonthMaintenance, "kind" | "id" | "title"> | null;
 };
 
-/** page: a status-page maintenance, which pauses checks. window: a maintenance window. */
+/** page: an unlinked status-page maintenance, pausing the monitor through a component. window: a maintenance window. */
 type MonthMaintenance = {
   kind: "page" | "window";
   id: number;
@@ -178,6 +178,8 @@ async function loadMonitorMaintenances(
       .where(
         and(
           eq(maintenance.workspaceId, workspaceId),
+          // a linked maintenance follows its window, loaded below
+          isNull(maintenance.monitorMaintenanceWindowId),
           eq(pageComponent.workspaceId, workspaceId),
           eq(pageComponent.monitorId, monitorId),
           lt(maintenance.from, new Date(range.end)),

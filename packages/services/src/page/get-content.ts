@@ -33,7 +33,10 @@ export type StatusReportContent = ReportRow & {
   >;
 };
 
-export type MaintenanceContent = MaintenanceRow & {
+export type MaintenanceContent = Omit<
+  MaintenanceRow,
+  "monitorMaintenanceWindowId"
+> & {
   pageComponentIds: number[];
   maintenanceUpdates: MaintenanceUpdateRow[];
 };
@@ -180,15 +183,18 @@ export async function getStatusPageContent(args: {
       : Promise.resolve([] as MaintenanceUpdateRow[]),
   ]);
 
-  const maintenances: MaintenanceContent[] = pageMaintenances.map((m) => ({
-    ...m,
-    pageComponentIds: maintenanceComponents
-      .filter((mc) => mc.maintenanceId === m.id)
-      .map((mc) => mc.pageComponentId),
-    maintenanceUpdates: maintenanceUpdates.filter(
-      (u) => u.maintenanceId === m.id,
-    ),
-  }));
+  // the window link is internal and this content reaches public status pages
+  const maintenances: MaintenanceContent[] = pageMaintenances.map(
+    ({ monitorMaintenanceWindowId: _window, ...m }) => ({
+      ...m,
+      pageComponentIds: maintenanceComponents
+        .filter((mc) => mc.maintenanceId === m.id)
+        .map((mc) => mc.pageComponentId),
+      maintenanceUpdates: maintenanceUpdates.filter(
+        (u) => u.maintenanceId === m.id,
+      ),
+    }),
+  );
 
   return { components, groups, statusReports, maintenances };
 }

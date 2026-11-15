@@ -53,7 +53,9 @@ When a support request comes in, declare the incident at the severity the custom
 
 ## 4. Excuse what the contract excludes
 
-When downtime falls under an exclusion, such as an announced maintenance, add an **excused window** from the reporting page with a kind and a reason. Status page maintenances that touched the reporting's monitors are listed on the page, and **Excuse** turns one into a window with its times prefilled.
+When downtime falls under an exclusion, such as an announced maintenance, add an **excused window** from the reporting page with a kind, a reason and the monitors it covers. Maintenances that touched the reporting's monitors are listed on the page, and **Excuse** turns one into a window with its times and monitors prefilled.
+
+For contract-relevant work, create a maintenance window on the monitors set to **Keep checking**, then **Announce on status page** from it. Pausing leaves the time unmeasured, so it can never count against the target. When you excuse the window later, the dialog shows how far ahead it was announced.
 
 Windows can be added or removed in the current and the previous month only, until that month is sealed. openstatus does not check your contract's rules for what qualifies, so keep the reason specific: it is stored with the sealed month.
 

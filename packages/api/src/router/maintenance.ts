@@ -7,6 +7,8 @@ import {
   deleteMaintenanceUpdate,
   getMaintenance,
   listMaintenances,
+  UnlinkMaintenanceWindowInput,
+  unlinkMaintenanceWindow,
   updateMaintenance,
   updateMaintenanceUpdate,
 } from "@openstatus/services/maintenance";
@@ -98,6 +100,7 @@ export const maintenanceRouter = createTRPCRouter({
         .object({
           period: z.enum(periods).optional(),
           pageId: z.number().optional(),
+          monitorId: z.number().optional(),
           order: z.enum(["asc", "desc"]).optional(),
         })
         .optional(),
@@ -108,6 +111,7 @@ export const maintenanceRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: {
             pageId: input?.pageId,
+            monitorId: input?.monitorId,
             period: input?.period,
             order: input?.order ?? "desc",
             // tRPC callers (dashboard) want the full set — see
@@ -132,6 +136,7 @@ export const maintenanceRouter = createTRPCRouter({
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         pageComponents: z.array(z.number()).optional(),
+        monitorMaintenanceWindowId: z.number().optional(),
         notifySubscribers: z.boolean().nullish(),
       }),
     )
@@ -146,6 +151,7 @@ export const maintenanceRouter = createTRPCRouter({
             to: input.endDate,
             pageId: input.pageId,
             pageComponentIds: input.pageComponents ?? [],
+            monitorMaintenanceWindowId: input.monitorMaintenanceWindowId,
           },
         });
         // subscriberNotification.maintenance is keyed by update id
@@ -182,6 +188,16 @@ export const maintenanceRouter = createTRPCRouter({
             pageComponentIds: input.pageComponents,
           },
         });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  unlinkWindow: protectedProcedure
+    .input(UnlinkMaintenanceWindowInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await unlinkMaintenanceWindow({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

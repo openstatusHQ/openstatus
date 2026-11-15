@@ -117,8 +117,13 @@ export function ReportingMaintenance({
                         {w.title}
                       </EventRowTitle>
                       <EventRowMeta>
-                        {w.kind === "page" && w.pageTitle ? (
-                          <span>{w.pageTitle}</span>
+                        {w.announcements.length ? (
+                          <span>
+                            {w.kind === "window" ? "announced on " : null}
+                            {w.announcements
+                              .map((a) => a.pageTitle ?? "a status page")
+                              .join(", ")}
+                          </span>
                         ) : null}
                         <span>
                           {w.monitorIds
@@ -149,6 +154,9 @@ export function ReportingMaintenance({
                               kind: "maintenance",
                               reason: w.title,
                               monitorIds: w.monitorIds,
+                              monitorMaintenanceWindowId:
+                                w.kind === "window" ? w.id : undefined,
+                              announcements: w.announcements,
                             })
                           }
                         >
