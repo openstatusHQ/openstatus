@@ -54,6 +54,8 @@ export interface DataTableProps<TData, TValue> {
   /** First-run body when `data` is empty, a `DataTableEmpty` so it covers the ghost rows; a filter mismatch has its own row. */
   emptyState?: React.ReactNode;
   onRowClick?: (row: Row<TData>) => void;
+  /** Stable ids keep a selection on its row when `data` re-sorts. */
+  getRowId?: (row: TData) => string;
   defaultSorting?: SortingState;
   defaultColumnVisibility?: VisibilityState;
   defaultColumnFilters?: ColumnFiltersState;
@@ -80,6 +82,7 @@ export function DataTable<TData, TValue>({
   paginationComponent,
   emptyState,
   onRowClick,
+  getRowId,
   defaultSorting = [],
   defaultColumnVisibility = {},
   defaultColumnFilters = [],
@@ -120,6 +123,7 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
+    getRowId: getRowId ? (row) => getRowId(row) : undefined,
     initialState: { pagination: defaultPagination },
     state: {
       sorting: sortingState,

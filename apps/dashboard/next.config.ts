@@ -52,6 +52,21 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/sla-policies",
+        destination: "/reportings",
+        permanent: true,
+      },
+      {
+        source: "/sla-policies/incidents",
+        destination: "/incidents/sla",
+        permanent: true,
+      },
+      {
+        source: "/sla-policies/monitors/:path*",
+        destination: "/reportings/:path*",
+        permanent: true,
+      },
+      {
         source: "/audit-logs",
         destination: "/settings/audit-logs",
         permanent: false,

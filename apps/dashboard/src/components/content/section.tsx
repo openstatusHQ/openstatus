@@ -60,7 +60,7 @@ export function SectionDescription({
     <p
       data-slot="section-description"
       className={cn(
-        "font-commit-mono text-muted-foreground text-sm tracking-tight text-balance",
+        "font-commit-mono text-muted-foreground text-sm tracking-tight text-balance [&.truncate]:text-nowrap",
         className,
       )}
       {...props}

@@ -30,7 +30,7 @@ export function MaintenanceWindowCard({ id }: { id: number }) {
     <EntityCard>
       <EntityRefHeader
         kind="maintenanceWindow"
-        href={entityKinds.maintenanceWindow.href(data)}
+        href={entityKinds.maintenanceWindow.href()}
       >
         {data.title}
       </EntityRefHeader>

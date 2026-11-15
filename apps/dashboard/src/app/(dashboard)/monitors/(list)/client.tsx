@@ -207,6 +207,7 @@ export function Client() {
       <Section id="monitors-table">
         <DataTable
           columns={columns}
+          getRowId={(row) => String(row.id)}
           data={[...monitors].sort(compareMonitorHealth).map((monitor) => ({
             ...monitor,
             globalMetrics: isLoadingMetrics

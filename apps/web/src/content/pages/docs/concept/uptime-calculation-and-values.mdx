@@ -85,18 +85,17 @@ In this mode, all displayed uptime values and statuses come from your shared rep
 
 In simple terms: `uptime = (total duration - weighted status report duration) / total duration`
 
-How much a report counts against uptime depends on the [component impact](/docs/reference/status-report#component-impacts) each update sets — see [how impacts count](#how-status-report-impacts-count).
+How much a report counts against uptime depends on the [component impacts](/docs/reference/status-report#component-impacts) its updates declare — see [how impacts count](#how-status-report-impacts-count).
 
 > **Legacy behavior:** reports without impact levels (created before component impacts existed, or via clients that don't send them) count their full duration as downtime — `uptime = (total duration - status report duration) / total duration`.
 
 ## How status report impacts count
 
-With **Reports only**, or **Monitor checks** with **Time per status**, each status report update sets an impact per component. The impact decides how much of that period counts against uptime:
+With **Reports only**, or **Monitor checks** with **Time per status**, status report updates may declare an impact per component. The impact decides how much of that period counts against uptime:
 
 | Status | Meaning | Counts against uptime |
 |--------|---------|-----------------------|
 | Operational | Everything works | 0% |
-| Under maintenance | Planned maintenance is running | 0% |
 | Degraded performance | Slow, but working | 0% |
 | Partial outage | Some functionality is unavailable | 50% |
 | Major outage | The component is down | 100% |

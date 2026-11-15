@@ -49,10 +49,11 @@ export function NavPeek({ children }: { children: React.ReactNode }) {
     setDismissed(true);
     close();
   };
-  // a navigation never leaves the card open behind
+  // a navigation never leaves the card open behind, nor dismissed for good
   useEffect(() => {
     setHover(false);
     setFocus(false);
+    setDismissed(false);
   }, [pathname]);
   return (
     <NavPeekContext.Provider
@@ -89,6 +90,7 @@ export function NavPeekTrigger({
   onPointerDown,
   onPointerLeave,
   onKeyDown,
+  onBlur,
   ...props
 }: React.ComponentProps<typeof HoverCardTrigger>) {
   const { dismiss, setDismissed, setFocus, triggerRef, inputRef } =
@@ -107,7 +109,8 @@ export function NavPeekTrigger({
         onPointerDown?.(e);
       }}
       onClick={(e) => {
-        dismiss();
+        // a keyboard click (detail 0) gets no pointerleave to undo the dismissal
+        if (e.detail > 0) dismiss();
         onClick?.(e);
       }}
       // not on enter: the browser re-fires enter on a still cursor when the
@@ -115,6 +118,10 @@ export function NavPeekTrigger({
       onPointerLeave={(e) => {
         setDismissed(false);
         onPointerLeave?.(e);
+      }}
+      onBlur={(e) => {
+        setDismissed(false);
+        onBlur?.(e);
       }}
       onKeyDown={(e) => {
         if (e.key === "ArrowRight") {
@@ -143,7 +150,7 @@ export function NavPeekContent({
   /** accessible name of the combobox, e.g. "Monitors" */
   label: string;
 }) {
-  const { setFocus, close, triggerRef } = useNavPeek();
+  const { setFocus, dismiss, triggerRef } = useNavPeek();
   const { isMobile } = useSidebar();
   // mobile: the sidebar is a modal sheet, and a card portaled outside it sits
   // behind the focus trap; render it inside the sheet instead
@@ -180,7 +187,8 @@ export function NavPeekContent({
       }}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
-          close();
+          // dismissed first, or focusing the trigger reopens the card
+          dismiss();
           triggerRef.current?.focus();
         }
         onKeyDown?.(e);

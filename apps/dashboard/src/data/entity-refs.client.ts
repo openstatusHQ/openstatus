@@ -104,12 +104,9 @@ export const entityKinds = {
   maintenanceWindow: {
     label: "Maintenance window",
     icon: Maintenance,
-    fields: ["monitorMaintenanceWindowId"],
+    fields: ["monitorMaintenanceWindowId", "maintenanceWindowId"],
     auditType: "monitor_maintenance_window",
-    href: (window: { monitorIds: number[] }) =>
-      window.monitorIds[0] === undefined
-        ? "/monitors"
-        : `/monitors/${window.monitorIds[0]}/maintenance`,
+    href: () => "/maintenance-windows",
   },
   incidentReporting: {
     label: "Incident reporting",

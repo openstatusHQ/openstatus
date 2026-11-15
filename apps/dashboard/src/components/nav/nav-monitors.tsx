@@ -4,6 +4,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { useQuery } from "@tanstack/react-query";
 
 import type { StatusVariant } from "@/components/common/status-dot";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { NAV } from "@/config/nav";
 import {
   type MonitorHealth,
@@ -48,21 +49,31 @@ function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
 export function NavMonitorsItem() {
   const trpc = useTRPC();
   const { data: monitors = [] } = useQuery(trpc.monitor.list.queryOptions());
+  useMaintenanceTick(
+    monitors.flatMap((m) =>
+      m.maintenance
+        ? [{ from: m.maintenance.until, to: m.maintenance.until }]
+        : [],
+    ),
+  );
   const now = new Date();
 
   const rows = [...monitors]
     .sort(compareMonitorHealth)
-    .map((m) => ({ m, health: getMonitorHealth(m) }));
+    .map((m) => ({ m, health: getMonitorHealth(m, now) }));
   const failing = rows.filter(
     (r) => r.health === "error" || r.health === "degraded",
   ).length;
+  const paused = rows.filter((r) => r.health === "inactive").length;
   const worst: StatusVariant = rows.some((r) => r.health === "error")
     ? "destructive"
     : failing
       ? "warning"
       : rows.some((r) => r.health === "maintenance")
         ? "info"
-        : "success";
+        : paused === rows.length
+          ? "default"
+          : "success";
 
   return (
     <NavGroupItem>
@@ -107,7 +118,9 @@ export function NavMonitorsItem() {
           label={
             failing
               ? `${failing} ${failing === 1 ? "monitor needs" : "monitors need"} attention`
-              : "All monitors normal"
+              : paused
+                ? `${paused} paused, the rest normal`
+                : "All monitors normal"
           }
         />
       ) : null}

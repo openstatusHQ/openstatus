@@ -21,13 +21,20 @@ describe("getMonitorHealth", () => {
   });
 
   it("reads as maintenance over the held status, but not when paused", () => {
-    const maintenance = { until: new Date() };
+    const maintenance = { until: new Date(Date.now() + 60_000) };
     expect(
       getMonitorHealth({ active: true, status: "error", maintenance }),
     ).toBe("maintenance");
     expect(
       getMonitorHealth({ active: false, status: "active", maintenance }),
     ).toBe("inactive");
+  });
+
+  it("drops maintenance once it has ended", () => {
+    const ended = { until: new Date(Date.now() - 1) };
+    expect(
+      getMonitorHealth({ active: true, status: "error", maintenance: ended }),
+    ).toBe("error");
   });
 });
 
@@ -51,7 +58,9 @@ describe("compareMonitorHealth", () => {
     const sorted = [
       monitor("paused", { active: false, status: "error" }),
       monitor("b-normal"),
-      monitor("maintenance", { maintenance: { until: new Date() } }),
+      monitor("maintenance", {
+        maintenance: { until: new Date(Date.now() + 60_000) },
+      }),
       monitor("a-normal"),
       monitor("degraded", { status: "degraded" }),
       monitor("down", { status: "error" }),

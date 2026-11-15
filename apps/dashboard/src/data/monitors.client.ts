@@ -155,7 +155,12 @@ export function compareMonitorHealth(
 }
 
 /** Paused wins over maintenance; maintenance wins over the status it holds. */
-export function getMonitorHealth(monitor: MonitorHealthInput): MonitorHealth {
+export function getMonitorHealth(
+  monitor: MonitorHealthInput,
+  now = new Date(),
+): MonitorHealth {
   if (!monitor.active) return "inactive";
-  return monitor.maintenance ? "maintenance" : monitor.status;
+  return monitor.maintenance && monitor.maintenance.until > now
+    ? "maintenance"
+    : monitor.status;
 }
