@@ -178,46 +178,55 @@ export function MaintenanceProperties({
           ) : null}
         </PropertyValue>
       </Property>
+      {linked ? (
+        <Property>
+          <PropertyLabel>Window</PropertyLabel>
+          <PropertyValue>
+            <PropertyLink
+              href={
+                maintenance.affectedMonitors[0]
+                  ? `/monitors/${maintenance.affectedMonitors[0].id}/maintenance`
+                  : "/monitors"
+              }
+            >
+              {linked.title}
+            </PropertyLink>
+          </PropertyValue>
+        </Property>
+      ) : null}
       <Property>
         <PropertyLabel>Checks</PropertyLabel>
-        <PropertyValue className="flex-wrap">
+        <PropertyValue className="justify-between">
+          <span className="truncate">
+            {maintenanceWindowModeLabels[linked ? linked.mode : "pause"]}
+          </span>
           {linked ? (
-            <>
-              <span className="truncate">
-                Window {linked.title}:{" "}
-                {maintenanceWindowModeLabels[linked.mode]}
-              </span>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost" className="h-7">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-7 shrink-0">
+                  Unlink
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Unlink from the window?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    The times stop following {linked.title}, and while it is
+                    active this maintenance pauses the monitors behind its
+                    components.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => unlink.mutate({ id: maintenance.id })}
+                  >
                     Unlink
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Unlink from the window?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      The times stop following {linked.title}, and while it is
-                      active this maintenance pauses the monitors behind its
-                      components.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => unlink.mutate({ id: maintenance.id })}
-                    >
-                      Unlink
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          ) : (
-            <span className="truncate">
-              {maintenanceWindowModeLabels.pause}
-            </span>
-          )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
         </PropertyValue>
       </Property>
       <Property>

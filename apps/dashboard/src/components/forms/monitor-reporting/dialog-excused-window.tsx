@@ -370,8 +370,8 @@ function ExcusedWindowForm({
           ) : null}
           <li>
             {context.lastOfKind
-              ? `The last ${excusedKindLabels[kind].toLowerCase()} window started ${formatDate(context.lastOfKind)}.`
-              : `No ${excusedKindLabels[kind].toLowerCase()} window yet.`}
+              ? `The last excused window of kind ${excusedKindLabels[kind]} started ${formatDate(context.lastOfKind)}.`
+              : `No excused window of kind ${excusedKindLabels[kind]} yet.`}
           </li>
           <li>
             {context.missed} of the last {context.months.length} complete months

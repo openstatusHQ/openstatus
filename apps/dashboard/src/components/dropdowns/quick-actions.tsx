@@ -120,7 +120,11 @@ export function QuickActions({
             </Button>
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align={align} side={side} className="w-36">
+        <DropdownMenuContent
+          align={align}
+          side={side}
+          className="w-max min-w-36"
+        >
           <DropdownMenuLabel className="sr-only">
             Quick Actions
           </DropdownMenuLabel>
