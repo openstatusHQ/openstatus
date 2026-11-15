@@ -40,16 +40,16 @@ export default function Page() {
           <SectionTitle>{policy.name}</SectionTitle>
           <SectionDescription>
             {policy.archivedAt
-              ? "This reporting is archived. Its terms and monitors are read-only."
+              ? "This uptime target is archived. Its terms and monitors are read-only."
               : canEdit
                 ? "Previews follow every change. Sealed months keep the terms they were judged with."
-                : "Only owners and admins can change the reporting."}
+                : "Only owners and admins can change the uptime target."}
           </SectionDescription>
         </SectionHeader>
         <fieldset
           disabled={!!policy.archivedAt || !canEdit}
           className="contents"
-          aria-label="Reporting settings"
+          aria-label="Uptime target settings"
         >
           <FormMonitorReportingUpdate />
         </fieldset>

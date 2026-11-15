@@ -22,7 +22,7 @@ export function ReportingPaywall() {
         <EmptyStateMedia>
           <Lock />
         </EmptyStateMedia>
-        <EmptyStateTitle>Reportings are not on your plan</EmptyStateTitle>
+        <EmptyStateTitle>Uptime targets are not on your plan</EmptyStateTitle>
         <EmptyStateDescription>
           Upgrade to see how each monitor did against its target, month by
           month.

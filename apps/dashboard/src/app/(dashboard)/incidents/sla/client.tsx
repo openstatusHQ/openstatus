@@ -78,7 +78,7 @@ export function Client() {
     <SectionGroup>
       <Section id="incident-reporting">
         <SectionHeader>
-          <SectionTitle>Incident reporting</SectionTitle>
+          <SectionTitle>Response targets</SectionTitle>
           <SectionDescription>
             The response times you committed to, judged per incident. One set of
             targets covers the whole workspace.

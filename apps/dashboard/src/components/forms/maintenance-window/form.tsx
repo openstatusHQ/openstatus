@@ -200,8 +200,8 @@ export function FormMaintenanceWindow({
               <FormItem>
                 <FormLabel>Checks</FormLabel>
                 <FormDescription>
-                  Monitors under a reporting usually want to keep checking, so
-                  the time can still be judged or excused.
+                  Monitors under an uptime target usually want to keep checking,
+                  so the time can still be judged or excused.
                 </FormDescription>
                 <FormControl>
                   <RadioGroup

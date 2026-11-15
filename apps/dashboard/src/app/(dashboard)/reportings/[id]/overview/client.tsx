@@ -138,7 +138,9 @@ export function Client() {
             <Shield />
           </EmptyStateMedia>
           <EmptyStateTitle>
-            {notFound ? "Reporting not found" : "Could not load the reporting"}
+            {notFound
+              ? "Uptime target not found"
+              : "Could not load the uptime target"}
           </EmptyStateTitle>
           <EmptyStateDescription>
             {notFound
@@ -351,7 +353,7 @@ export function Client() {
                 </EmptyStateMedia>
                 <EmptyStateTitle>No monitors</EmptyStateTitle>
                 <EmptyStateDescription>
-                  This reporting covers no monitors yet.
+                  This uptime target covers no monitors yet.
                 </EmptyStateDescription>
               </DataTableEmpty>
             }

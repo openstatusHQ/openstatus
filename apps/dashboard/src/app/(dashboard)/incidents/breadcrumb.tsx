@@ -28,7 +28,7 @@ export function Breadcrumb() {
             icon: Incident,
             href: "/incidents",
           },
-          { type: "page", label: "SLA" },
+          { type: "page", label: "Response targets" },
         ]}
       />
     );

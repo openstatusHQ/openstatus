@@ -83,8 +83,8 @@ export const config: Record<
   report: {
     label: "Report",
     features: [
-      { value: "monitor-sla", label: "Monitor SLAs" },
-      { value: "incident-sla", label: "Incident SLAs" },
+      { value: "monitor-sla", label: "Uptime targets" },
+      { value: "incident-sla", label: "Incident response targets" },
     ],
   },
   workspace: {

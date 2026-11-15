@@ -31,7 +31,7 @@ export function IncidentReportingCard({ id }: { id: number }) {
         kind="incidentReporting"
         href={entityKinds.incidentReporting.href()}
       >
-        Incident reporting
+        Response targets
       </EntityRefHeader>
       <EntityCardContent>
         <EntityCardRow label="Response met by">

@@ -61,7 +61,7 @@ export const NAV = {
     keywords: ["probes", "regions", "self-hosted"],
   },
   slas: {
-    label: "SLAs",
+    label: "Uptime targets",
     href: "/reportings",
     icon: Reporting,
     keywords: [

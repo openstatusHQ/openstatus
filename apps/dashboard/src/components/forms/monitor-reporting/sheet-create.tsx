@@ -45,9 +45,9 @@ export function FormSheetMonitorReportingCreate({
       <FormSheetTrigger asChild>{children}</FormSheetTrigger>
       <FormSheetContent>
         <FormSheetHeader>
-          <FormSheetTitle>Reporting</FormSheetTitle>
+          <FormSheetTitle>Uptime target</FormSheetTitle>
           <FormSheetDescription>
-            The monthly uptime each monitor in the reporting has to reach.
+            The monthly uptime each monitor in the uptime target has to reach.
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">

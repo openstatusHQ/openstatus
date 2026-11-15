@@ -392,9 +392,9 @@ export function FormIncidentReporting({
           <FormCardFooter>
             <FormCardFooterInfo>
               {readOnly && !locked
-                ? "Only owners and admins can change the reporting."
+                ? "Only owners and admins can change the response targets."
                 : off
-                  ? "The reporting is off: incidents are declared without targets. Turn it on to review these defaults and save them."
+                  ? "Response targets are off: incidents are declared without targets. Turn it on to review these defaults and save them."
                   : "A notice goes out at 75% of each target and again when it is missed: in Slack, or by email to the commander and declarer when Slack cannot deliver."}
             </FormCardFooterInfo>
             <div className="flex shrink-0 items-center gap-2">

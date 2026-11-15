@@ -126,7 +126,7 @@ export function Client() {
       <TooltipContent>
         {roleError
           ? "Could not check your role. Reload to try again."
-          : "Only owners and admins can create a reporting."}
+          : "Only owners and admins can create an uptime target."}
       </TooltipContent>
     </Tooltip>
   ) : (
@@ -142,7 +142,7 @@ export function Client() {
       <Section id="reportings">
         <SectionHeaderRow>
           <SectionHeader>
-            <SectionTitle>Reportings</SectionTitle>
+            <SectionTitle>Uptime targets</SectionTitle>
             <SectionDescription>
               The uptime you committed to, judged per monitor and month.
             </SectionDescription>
@@ -190,7 +190,9 @@ export function Client() {
                     <EmptyStateMedia>
                       <Shield />
                     </EmptyStateMedia>
-                    <EmptyStateTitle>No archived reportings</EmptyStateTitle>
+                    <EmptyStateTitle>
+                      No archived uptime targets
+                    </EmptyStateTitle>
                     <EmptyStateDescription>
                       A reporting with sealed months is archived instead of
                       deleted, and kept here read-only.
@@ -201,7 +203,7 @@ export function Client() {
                     <EmptyStateMedia>
                       <Shield />
                     </EmptyStateMedia>
-                    <EmptyStateTitle>No reportings</EmptyStateTitle>
+                    <EmptyStateTitle>No uptime targets</EmptyStateTitle>
                     <EmptyStateDescription>
                       Set a monthly uptime target for the monitors a contract
                       covers. Each monitor is judged against it month by month.
@@ -234,7 +236,7 @@ export function Client() {
         {!allowed || (policies && policies.length > 0) ? (
           <SlaMonthStripLegend>
             <span>
-              A month is missed when any monitor in the reporting missed it.
+              A month is missed when any monitor in the uptime target missed it.
             </span>
           </SlaMonthStripLegend>
         ) : null}

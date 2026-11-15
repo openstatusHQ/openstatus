@@ -109,7 +109,7 @@ export const entityKinds = {
     href: () => "/maintenance-windows",
   },
   incidentReporting: {
-    label: "Incident reporting",
+    label: "Response targets",
     icon: Reporting,
     fields: [],
     auditType: "incident_sla_policy",

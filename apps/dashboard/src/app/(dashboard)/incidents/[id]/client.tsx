@@ -216,7 +216,7 @@ export function Client({ id }: { id: number }) {
           </DetailSection>
           {sla ? (
             <DetailSection id="sla">
-              <DetailSectionTitle>SLA</DetailSectionTitle>
+              <DetailSectionTitle>Response targets</DetailSectionTitle>
               <IncidentSla
                 incidentId={incident.id}
                 state={sla}
