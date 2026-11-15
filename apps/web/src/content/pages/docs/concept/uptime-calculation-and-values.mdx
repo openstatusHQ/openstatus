@@ -44,7 +44,7 @@ In simple terms: `uptime = (total time - downtime) / total time`
 This means uptime is based on how long something was down, not how many checks failed. Downtime combines:
 
 - **Incidents**, which count fully.
-- **Status report impacts**, weighted by severity: a major outage counts fully, a partial outage counts half, and degraded performance not at all. Reports without per-component impacts are ignored in this mode.
+- **Status report impacts**, weighted by severity (see [how impacts count](#how-status-report-impacts-count)). Reports without per-component impacts are ignored in this mode.
 - **Probe errors**, only for monitors that run exclusively from [private locations](/docs/concept/private-locations).
 
 Overlapping periods are merged, so an incident and a status report describing the same outage count once.
@@ -85,17 +85,25 @@ In this mode, all displayed uptime values and statuses come from your shared rep
 
 In simple terms: `uptime = (total duration - weighted status report duration) / total duration`
 
-How much a report counts against uptime depends on the [component impact](/docs/reference/status-report#component-impacts) each update sets:
-
-| Impact | Downtime weight |
-|--------|-----------------|
-| `operational` / `degraded_performance` | 0 |
-| `partial_outage` | 0.5 |
-| `major_outage` | 1 |
-
-A report that goes `major_outage` → `partial_outage` → `operational` across its updates counts each interval at its own weight.
+How much a report counts against uptime depends on the [component impact](/docs/reference/status-report#component-impacts) each update sets — see [how impacts count](#how-status-report-impacts-count).
 
 > **Legacy behavior:** reports without impact levels (created before component impacts existed, or via clients that don't send them) count their full duration as downtime — `uptime = (total duration - status report duration) / total duration`.
+
+## How status report impacts count
+
+With **Reports only**, or **Monitor checks** with **Time per status**, each status report update sets an impact per component. The impact decides how much of that period counts against uptime:
+
+| Status | Meaning | Counts against uptime |
+|--------|---------|-----------------------|
+| Operational | Everything works | 0% |
+| Under maintenance | Planned maintenance is running | 0% |
+| Degraded performance | Slow, but working | 0% |
+| Partial outage | Some functionality is unavailable | 50% |
+| Major outage | The component is down | 100% |
+
+For example, a one-hour partial outage counts as 30 minutes of downtime. A report that goes from major outage to partial outage to operational across its updates counts each period at its own weight. Maintenances never count against uptime.
+
+In the API, the impacts are `operational`, `degraded_performance`, `partial_outage` and `major_outage`.
 
 ## Heartbeat monitors
 
