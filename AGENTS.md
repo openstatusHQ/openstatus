@@ -36,6 +36,18 @@ workflows pin the same node. Never float one back to `@latest` or
   assertion evaluation, region codes — must be changed on both sides in one PR.
 - **Shared UI comes from `@openstatus/ui`.** Do not fork a primitive into an app.
 
+## Prefetch every query a page renders from
+
+In `apps/dashboard` and `apps/status-page`, a client component that does
+`if (!data) return null` renders blank until the query settles. The server
+`page.tsx` (or the route's `layout.tsx`) must `prefetchQuery` the same
+`trpc.x.queryOptions(input)` from `@/lib/trpc/server` and wrap the client in
+`<HydrateClient>`; the input has to match the client's exactly, or the cache
+misses. Queries the `(dashboard)/layout.tsx` already prefetches
+(`monitor.list`, `workspace.get`, ...) need nothing. A new `"use client"`
+`page.tsx` with `useQuery` and no server parent that prefetches is a defect:
+split it into `page.tsx` (prefetch) and `client.tsx`.
+
 ## Tests
 
 - CI gives every DB-touching package its own database (the matrix in
