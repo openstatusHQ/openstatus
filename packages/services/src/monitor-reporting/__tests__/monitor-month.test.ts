@@ -1,3 +1,4 @@
+import { eq } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -5,6 +6,7 @@ import {
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
   monitorSlaExcusedWindow,
+  monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedEpisode,
@@ -107,14 +109,29 @@ async function insertExcused(
   from: number,
   to: number,
 ) {
-  await tx.insert(monitorSlaExcusedWindow).values({
-    workspaceId: ctx.workspace.id,
-    monitorSlaPolicyId: policyId,
-    kind: "maintenance",
-    reason: "Planned",
-    from: new Date(from),
-    to: new Date(to),
-  });
+  const row = await tx
+    .insert(monitorSlaExcusedWindow)
+    .values({
+      workspaceId: ctx.workspace.id,
+      monitorSlaPolicyId: policyId,
+      kind: "maintenance",
+      reason: "Planned",
+      from: new Date(from),
+      to: new Date(to),
+    })
+    .returning()
+    .get();
+  const members = await tx
+    .select({ id: monitorSlaPolicyToMonitor.monitorId })
+    .from(monitorSlaPolicyToMonitor)
+    .where(eq(monitorSlaPolicyToMonitor.monitorSlaPolicyId, policyId))
+    .all();
+  await tx.insert(monitorSlaExcusedWindowToMonitor).values(
+    members.map((m) => ({
+      monitorSlaExcusedWindowId: row.id,
+      monitorId: m.id,
+    })),
+  );
 }
 
 async function insertMaintenance(

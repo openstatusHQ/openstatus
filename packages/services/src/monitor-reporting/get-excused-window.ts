@@ -7,7 +7,7 @@ import {
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
-import { assertMonitorSlaLimit } from "./internal";
+import { assertMonitorSlaLimit, excusedWindowMonitorIds } from "./internal";
 import { GetMonitorReportingExcusedWindowInput } from "./schemas";
 
 /** One excused window with its policy, archived or not. */
@@ -49,5 +49,6 @@ export async function getMonitorReportingExcusedWindow(args: {
     )
     .get();
   if (!row) throw new NotFoundError("monitor_sla_excused_window", input.id);
-  return row;
+  const monitorsOf = await excusedWindowMonitorIds(getReadDb(ctx), [row.id]);
+  return { ...row, monitorIds: monitorsOf.get(row.id) ?? [] };
 }

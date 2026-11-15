@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte, inArray, isNull, lte } from "@openstatus/db";
 import {
   monitor,
   monitorSlaExcusedWindow,
+  monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
@@ -388,22 +389,45 @@ export function episodeMonths(
   return months;
 }
 
-/** Excused windows per policy, merged, one query. */
+/** Spans per monitor, merged, from (monitorId, from, to) rows. */
+function spansByMonitor(
+  rows: readonly { monitorId: number; from: Date; to: Date }[],
+): Map<number, Span[]> {
+  const grouped = new Map<number, { from: Date; to: Date }[]>();
+  for (const r of rows) {
+    const list = grouped.get(r.monitorId);
+    if (list) list.push(r);
+    else grouped.set(r.monitorId, [r]);
+  }
+  return new Map(
+    [...grouped].map(([id, windows]) => [id, mergeSpans(windows)]),
+  );
+}
+
+/** Excused spans per policy, then per monitor, merged; one query. */
 export async function policiesExcusedSpans(
   db: DB,
   workspaceId: number,
   policyIds: readonly number[],
-): Promise<Map<number, Span[]>> {
+): Promise<Map<number, Map<number, Span[]>>> {
   const rows =
     policyIds.length === 0
       ? []
       : await db
           .select({
             policyId: monitorSlaExcusedWindow.monitorSlaPolicyId,
+            monitorId: monitorSlaExcusedWindowToMonitor.monitorId,
             from: monitorSlaExcusedWindow.from,
             to: monitorSlaExcusedWindow.to,
           })
           .from(monitorSlaExcusedWindow)
+          .innerJoin(
+            monitorSlaExcusedWindowToMonitor,
+            eq(
+              monitorSlaExcusedWindowToMonitor.monitorSlaExcusedWindowId,
+              monitorSlaExcusedWindow.id,
+            ),
+          )
           .where(
             and(
               eq(monitorSlaExcusedWindow.workspaceId, workspaceId),
@@ -416,31 +440,46 @@ export async function policiesExcusedSpans(
   return new Map(
     policyIds.map((id) => [
       id,
-      mergeSpans(rows.filter((r) => r.policyId === id)),
+      spansByMonitor(rows.filter((r) => r.policyId === id)),
     ]),
   );
 }
 
-/** Excused windows of the policy, merged. */
+/** Excused spans of the policy per monitor, merged. */
 export async function policyExcusedSpans(
   db: DB,
   policy: { id: number; workspaceId: number },
-): Promise<Span[]> {
-  return mergeSpans(
-    await db
-      .select({
-        from: monitorSlaExcusedWindow.from,
-        to: monitorSlaExcusedWindow.to,
-      })
-      .from(monitorSlaExcusedWindow)
-      .where(
-        and(
-          eq(monitorSlaExcusedWindow.monitorSlaPolicyId, policy.id),
-          eq(monitorSlaExcusedWindow.workspaceId, policy.workspaceId),
-        ),
-      )
-      .all(),
-  );
+): Promise<Map<number, Span[]>> {
+  const spans = await policiesExcusedSpans(db, policy.workspaceId, [policy.id]);
+  return spans.get(policy.id) ?? new Map();
+}
+
+/** Monitors each excused window applies to. */
+export async function excusedWindowMonitorIds(
+  db: DB,
+  windowIds: readonly number[],
+): Promise<Map<number, number[]>> {
+  if (windowIds.length === 0) return new Map();
+  const rows = await db
+    .select({
+      windowId: monitorSlaExcusedWindowToMonitor.monitorSlaExcusedWindowId,
+      monitorId: monitorSlaExcusedWindowToMonitor.monitorId,
+    })
+    .from(monitorSlaExcusedWindowToMonitor)
+    .where(
+      inArray(monitorSlaExcusedWindowToMonitor.monitorSlaExcusedWindowId, [
+        ...windowIds,
+      ]),
+    )
+    .orderBy(asc(monitorSlaExcusedWindowToMonitor.monitorId))
+    .all();
+  const out = new Map<number, number[]>();
+  for (const r of rows) {
+    const list = out.get(r.windowId);
+    if (list) list.push(r.monitorId);
+    else out.set(r.windowId, [r.monitorId]);
+  }
+  return out;
 }
 
 /** First month's start to now: a month's last runs weigh against the runs after it, so a preview equals its seal. */
@@ -628,7 +667,7 @@ export async function judgePolicyMonths(args: {
           state,
           member: { id: m.id, memberSince },
           fetched,
-          excusedSpans: spans,
+          excusedSpans: spans.get(m.id) ?? [],
           terms,
           timeZone,
           now,

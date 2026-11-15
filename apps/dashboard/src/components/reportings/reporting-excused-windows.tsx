@@ -38,8 +38,13 @@ export function ReportingExcusedWindows({
   const readOnly = archived || !canEdit;
   const { timeZone } = policy;
   const columns = useMemo(
-    () => getColumns({ readOnly, timeZone }),
-    [readOnly, timeZone],
+    () =>
+      getColumns({
+        readOnly,
+        timeZone,
+        monitorNames: new Map(policy.monitors.map((m) => [m.id, m.name])),
+      }),
+    [readOnly, timeZone, policy.monitors],
   );
   const windows = policy.excusedWindows;
 
@@ -55,9 +60,9 @@ export function ReportingExcusedWindows({
           </SectionTitle>
           <SectionDescription>
             Checks inside these windows are left out of both sides of the month
-            for every monitor in the reporting; overlapping windows excuse a
-            check once. A window is locked once a month it touches is sealed, or
-            is older than the previous month.
+            for the monitors each one names; overlapping windows excuse a check
+            once. A window is locked once a month it touches is sealed, or is
+            older than the previous month.
           </SectionDescription>
         </SectionHeader>
         {readOnly ? null : (

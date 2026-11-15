@@ -9,6 +9,7 @@ import {
   monitorSlaExcusedWindowKinds,
 } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
+import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -59,10 +61,12 @@ import { useTRPC } from "@/lib/trpc/client";
 type Policy = RouterOutputs["monitorReporting"]["get"];
 
 export type ExcusedWindowPrefill = {
-  from: Date;
-  to: Date;
+  from?: Date;
+  to?: Date;
   kind?: MonitorSlaExcusedWindowKind;
   reason?: string;
+  /** preselected; members of the policy only */
+  monitorIds?: number[];
 };
 
 function makeSchema(timeZone: string) {
@@ -76,6 +80,7 @@ function makeSchema(timeZone: string) {
         .trim()
         .min(1, "A reason is required")
         .max(MONITOR_SLA_EXCUSED_REASON_MAX),
+      monitorIds: z.array(z.number()).min(1, "Pick at least one monitor."),
     })
     .refine((v) => v.from < v.to, {
       message: "The window must end after it starts.",
@@ -123,9 +128,9 @@ export function DialogExcusedWindow({
         <DialogHeader>
           <DialogTitle>Excuse a window</DialogTitle>
           <DialogDescription>
-            Checks inside the window are left out of both sides of the month,
-            for every monitor in {policy.name}. Once its month is sealed, the
-            window can no longer be removed.
+            Checks inside the window are left out of both sides of the month for
+            the monitors you pick. Once its month is sealed, the window can no
+            longer be removed.
           </DialogDescription>
         </DialogHeader>
         {open ? (
@@ -160,12 +165,17 @@ function ExcusedWindowForm({
         }),
     }),
   );
+  const memberIds = new Set(policy.monitors.map((m) => m.id));
+  const prefilled = prefill?.monitorIds?.filter((id) => memberIds.has(id));
   const form = useForm<FormValues>({
     resolver: zodResolver(makeSchema(policy.timeZone)),
     defaultValues: {
-      ...(prefill ?? defaultWindow()),
+      ...(prefill?.from && prefill.to
+        ? { from: prefill.from, to: prefill.to }
+        : defaultWindow()),
       kind: prefill?.kind ?? "maintenance",
       reason: prefill?.reason ?? "",
+      monitorIds: prefilled?.length ? prefilled : [...memberIds],
     },
   });
   const kind = useWatch({ control: form.control, name: "kind" });
@@ -182,11 +192,9 @@ function ExcusedWindowForm({
       validWindow ? { policyId: policy.id, from, to } : skipToken,
     ),
   );
-  const known = validWindow
-    ? (preview?.monitors.filter((m) => m.runs !== null) ?? [])
-    : [];
-  const idle = known.filter((m) => m.runs === 0).map((m) => m.name);
-  const checked = known.filter((m) => m.runs !== 0).map((m) => m.name);
+  const runsOf = new Map(
+    validWindow ? (preview?.monitors.map((m) => [m.id, m.runs]) ?? []) : [],
+  );
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   function submitAction(values: FormValues) {
@@ -260,6 +268,55 @@ function ExcusedWindowForm({
         </p>
         <FormField
           control={form.control}
+          name="monitorIds"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Monitors</FormLabel>
+              <div className="grid gap-2">
+                {policy.monitors.map((monitor) => {
+                  const id = `excused-monitor-${monitor.id}`;
+                  const runs = runsOf.get(monitor.id);
+                  return (
+                    <Label
+                      key={monitor.id}
+                      htmlFor={id}
+                      className="hover:bg-muted/50 has-aria-checked:bg-muted/50 flex min-w-0 items-start gap-3 rounded-lg border p-3 font-normal"
+                    >
+                      <Checkbox
+                        id={id}
+                        checked={field.value.includes(monitor.id)}
+                        onCheckedChange={(next) =>
+                          field.onChange(
+                            next === true
+                              ? [...field.value, monitor.id]
+                              : field.value.filter((v) => v !== monitor.id),
+                          )
+                        }
+                      />
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span className="font-medium">{monitor.name}</span>
+                        {runs === 0 ? (
+                          <span className="text-warning text-xs">
+                            No checks ran in this window; excusing it changes
+                            nothing for this monitor.
+                          </span>
+                        ) : runs ? (
+                          <span className="text-muted-foreground text-xs">
+                            {runs} {runs === 1 ? "check" : "checks"} in this
+                            window
+                          </span>
+                        ) : null}
+                      </span>
+                    </Label>
+                  );
+                })}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="kind"
           render={({ field }) => (
             <FormItem>
@@ -320,13 +377,6 @@ function ExcusedWindowForm({
             Contract rules about which windows qualify are not checked here.
           </li>
         </ul>
-        {idle.length ? (
-          <p className="text-warning text-sm">
-            {checked.length
-              ? `No checks ran in this window for ${idle.join(", ")}, so excusing it changes nothing for ${idle.length === 1 ? "it" : "them"}. It does change the month for ${checked.join(", ")}.`
-              : `No checks ran in this window for any monitor in ${policy.name}, so excusing it changes nothing.`}
-          </p>
-        ) : null}
         <DialogFooter>
           <Button type="submit" size="sm" disabled={isPending}>
             {isPending ? "Saving..." : "Excuse window"}

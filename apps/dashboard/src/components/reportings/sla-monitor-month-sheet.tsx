@@ -230,14 +230,15 @@ function SheetBody({
           <Button
             size="sm"
             onClick={() =>
-              onExcuse(
-                latestCounted
+              onExcuse({
+                monitorIds: [monitor.id],
+                ...(latestCounted
                   ? {
                       from: new Date(latestCounted.startedAt),
                       to: new Date(latestCounted.endedAt),
                     }
-                  : null,
-              )
+                  : {}),
+              })
             }
           >
             Excuse a window

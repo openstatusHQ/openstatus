@@ -62,23 +62,6 @@ export async function listMonitorReportingMaintenances(args: {
   if (members.length === 0) return { months, monitors: [], windows: [] };
   const memberIds = members.map((m) => m.id);
 
-  const components = await db
-    .select({
-      monitorId: pageComponent.monitorId,
-      pageId: page.id,
-      pageTitle: page.title,
-    })
-    .from(pageComponent)
-    .innerJoin(page, eq(page.id, pageComponent.pageId))
-    .where(
-      and(
-        eq(pageComponent.workspaceId, ctx.workspace.id),
-        inArray(pageComponent.monitorId, memberIds),
-      ),
-    )
-    .orderBy(asc(page.id))
-    .all();
-
   const [touched, windowRows] = await Promise.all([
     db
       .select({
@@ -187,12 +170,7 @@ export async function listMonitorReportingMaintenances(args: {
 
   return {
     months,
-    monitors: members.map((m) => ({
-      ...m,
-      statusPages: components
-        .filter((c) => c.monitorId === m.id)
-        .map((c) => ({ id: c.pageId, title: c.pageTitle })),
-    })),
+    monitors: members,
     windows: [...windows.values()]
       .map((w) => ({ ...w, monitorIds: w.monitorIds.sort((a, b) => a - b) }))
       .sort((a, b) => b.from.getTime() - a.from.getTime() || b.id - a.id),

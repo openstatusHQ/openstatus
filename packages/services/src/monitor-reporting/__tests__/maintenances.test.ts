@@ -268,24 +268,13 @@ describe("listMonitorReportingMaintenances", () => {
       });
 
       expect(res.monitors).toEqual([
-        {
-          id: api.id,
-          name: "API",
-          statusPages: [
-            { id: main.page.id, title: "Main" },
-            { id: partner.page.id, title: "Partner" },
-          ],
-        },
-        {
-          id: web.id,
-          name: "Web",
-          statusPages: [{ id: main.page.id, title: "Main" }],
-        },
+        { id: api.id, name: "API" },
+        { id: web.id, name: "Web" },
       ]);
     });
   });
 
-  test("a monitor on no status page shows none", async () => {
+  test("a monitor without maintenances lists no windows", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
       const policy = await insertPolicy(tx, [api.id]);
@@ -296,9 +285,7 @@ describe("listMonitorReportingMaintenances", () => {
         now,
       });
       expect(res.windows).toEqual([]);
-      expect(res.monitors).toEqual([
-        { id: api.id, name: "API", statusPages: [] },
-      ]);
+      expect(res.monitors).toEqual([{ id: api.id, name: "API" }]);
     });
   });
 

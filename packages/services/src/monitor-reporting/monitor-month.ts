@@ -318,7 +318,7 @@ async function memberMonth(args: {
       measuredMs: seal.measuredMs,
     });
   } else {
-    spans = policySpans;
+    spans = policySpans.get(member.id) ?? [];
     const state = episodeMonths(now, timeZone).get(month);
     if (state) {
       const [terms, fetched] = await Promise.all([

@@ -31,10 +31,13 @@ const kindVariant: Record<
 export function getColumns({
   readOnly,
   timeZone,
+  monitorNames,
 }: {
   readOnly: boolean;
   /** the reporting's zone: windows read in the months they excuse */
   timeZone: string;
+  /** current members; a window may name a monitor that has since left */
+  monitorNames: Map<number, string>;
 }): ColumnDef<ExcusedWindow>[] {
   return [
     {
@@ -53,6 +56,17 @@ export function getColumns({
         <StatusBadge variant={kindVariant[row.original.kind]}>
           {excusedKindLabels[row.original.kind]}
         </StatusBadge>
+      ),
+    },
+    {
+      id: "monitors",
+      header: "Monitors",
+      cell: ({ row }) => (
+        <TableCellText
+          value={row.original.monitorIds
+            .map((id) => monitorNames.get(id) ?? `#${id}`)
+            .join(", ")}
+        />
       ),
     },
     {

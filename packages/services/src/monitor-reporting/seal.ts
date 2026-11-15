@@ -34,6 +34,7 @@ import {
   slaEpisodesPipes,
 } from "./fetch-episodes";
 import {
+  excusedWindowMonitorIds,
   type FetchedEpisodes,
   memberEpisodes,
   memberTimeMonth,
@@ -254,6 +255,12 @@ export async function sealMonitorSlaMonths(
     byPolicy.set(p.policyId, own);
   }
   const windowsOf = await policyWindows(db, [...byPolicy.values()], windowOf);
+  const monitorsOfWindow = await withBusyRetry(() =>
+    excusedWindowMonitorIds(
+      db,
+      [...windowsOf.values()].flat().map((w) => w.id),
+    ),
+  );
   const fetched = await fetchZoneEpisodes({
     pairs: sealable,
     month,
@@ -268,9 +275,6 @@ export async function sealMonitorSlaMonths(
     const { workspaceId, timeZone } = pairs[0];
     const range = windowOf(timeZone);
     const own = windowsOf.get(policyId) ?? [];
-    const spans = mergeSpans(
-      own.map((w) => ({ from: new Date(w.from), to: new Date(w.to) })),
-    );
     const terms = await withBusyRetry(() =>
       termsForMonth(db, { id: policyId, workspaceId }, month),
     );
@@ -287,6 +291,12 @@ export async function sealMonitorSlaMonths(
         continue;
       }
       if (!covered) continue;
+      const applied = own.filter((w) =>
+        monitorsOfWindow.get(w.id)?.includes(p.monitorId),
+      );
+      const spans = mergeSpans(
+        applied.map((w) => ({ from: new Date(w.from), to: new Date(w.to) })),
+      );
       const judged = memberTimeMonth({
         month,
         state: "preview",
@@ -315,7 +325,7 @@ export async function sealMonitorSlaMonths(
           excusedOk: excused.ok,
           excusedDegraded: excused.degraded,
           excusedError: excused.error,
-          excusedWindows: own,
+          excusedWindows: applied,
           total: ok + degraded + counts.error - excused.error,
           up: ok + (terms.strict ? 0 : degraded),
           uptime: judged.uptime,

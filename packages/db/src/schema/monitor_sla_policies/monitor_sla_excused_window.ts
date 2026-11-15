@@ -1,13 +1,20 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 import { monitorMaintenanceWindow } from "../monitor_maintenance_windows/monitor_maintenance_window";
+import { monitor } from "../monitors/monitor";
 import { user } from "../users";
 import { workspace } from "../workspaces/workspace";
 import { monitorSlaExcusedWindowKinds } from "./constants";
 import { monitorSlaPolicy } from "./monitor_sla_policy";
 
-/** [from, to) whose runs count for no monitor of the policy. */
+/** [from, to) whose runs count for none of its monitors. */
 export const monitorSlaExcusedWindow = sqliteTable(
   "monitor_sla_excused_window",
   {
@@ -39,9 +46,29 @@ export const monitorSlaExcusedWindow = sqliteTable(
   ],
 );
 
+/** The policy members a window excuses, fixed when it is added. */
+export const monitorSlaExcusedWindowToMonitor = sqliteTable(
+  "monitor_sla_excused_window_to_monitor",
+  {
+    monitorSlaExcusedWindowId: integer("monitor_sla_excused_window_id")
+      .notNull()
+      .references(() => monitorSlaExcusedWindow.id, { onDelete: "cascade" }),
+    monitorId: integer("monitor_id")
+      .notNull()
+      .references(() => monitor.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.monitorSlaExcusedWindowId, t.monitorId] }),
+    index("monitor_sla_excused_window_to_monitor_monitor_id_idx").on(
+      t.monitorId,
+    ),
+  ],
+);
+
 export const monitorSlaExcusedWindowRelations = relations(
   monitorSlaExcusedWindow,
-  ({ one }) => ({
+  ({ one, many }) => ({
+    monitors: many(monitorSlaExcusedWindowToMonitor),
     policy: one(monitorSlaPolicy, {
       fields: [monitorSlaExcusedWindow.monitorSlaPolicyId],
       references: [monitorSlaPolicy.id],
@@ -49,6 +76,20 @@ export const monitorSlaExcusedWindowRelations = relations(
     createdByUser: one(user, {
       fields: [monitorSlaExcusedWindow.createdBy],
       references: [user.id],
+    }),
+  }),
+);
+
+export const monitorSlaExcusedWindowToMonitorRelations = relations(
+  monitorSlaExcusedWindowToMonitor,
+  ({ one }) => ({
+    window: one(monitorSlaExcusedWindow, {
+      fields: [monitorSlaExcusedWindowToMonitor.monitorSlaExcusedWindowId],
+      references: [monitorSlaExcusedWindow.id],
+    }),
+    monitor: one(monitor, {
+      fields: [monitorSlaExcusedWindowToMonitor.monitorId],
+      references: [monitor.id],
     }),
   }),
 );

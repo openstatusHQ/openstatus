@@ -2,6 +2,7 @@ import { db, eq, inArray } from "@openstatus/db";
 import {
   monitor,
   monitorSlaExcusedWindow,
+  monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedEpisode,
@@ -261,6 +262,10 @@ describe("sealMonitorSlaMonths on episodes", () => {
         })
         .returning()
         .get();
+      await tx.insert(monitorSlaExcusedWindowToMonitor).values({
+        monitorSlaExcusedWindowId: window.id,
+        monitorId: api.id,
+      });
       const episodesPipes = pipesFor(
         new Map([
           [

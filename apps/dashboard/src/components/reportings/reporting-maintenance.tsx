@@ -34,9 +34,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/monitor-reporting-maintenance/columns";
 import type { ExcusedWindowPrefill } from "@/components/forms/monitor-reporting/dialog-excused-window";
-import { DataTable } from "@/components/ui/data-table/data-table";
 import { formatSlaMonth } from "@/data/reportings.client";
 import { formatDurationShort, formatWindow } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
@@ -72,24 +70,11 @@ export function ReportingMaintenance({
       <SectionHeader>
         <SectionTitle>Maintenance</SectionTitle>
         <SectionDescription>
-          Maintenance windows and status page maintenances that touched this
-          reporting&apos;s monitors. While one that pauses checks is active, its
-          monitors are not checked at all: that time is left out of both sides
-          of their uptime and is never counted. Under one that keeps checking,
-          monitors are checked as usual and the time counts like any other
-          unless you excuse it. Status page maintenances always pause checks.
+          Planned work on this reporting&apos;s monitors. Paused time is never
+          counted; time under a window that keeps checking counts unless you
+          excuse it.
         </SectionDescription>
       </SectionHeader>
-      {data.monitors.length > 0 ? (
-        <DataTable
-          columns={columns}
-          data={data.monitors}
-          defaultPagination={{
-            pageIndex: 0,
-            pageSize: data.monitors.length,
-          }}
-        />
-      ) : null}
       {groups.length === 0 ? (
         <EmptyStateContainer>
           <EmptyStateMedia>
@@ -118,9 +103,7 @@ export function ReportingMaintenance({
                     <EventRowStatus>
                       <StatusDot variant="info" />
                       <span>
-                        {w.kind === "window"
-                          ? "Maintenance window"
-                          : (w.pageTitle ?? "Maintenance")}
+                        {w.kind === "window" ? "Window" : "Status page"}
                       </span>
                     </EventRowStatus>
                     <EventRowContent>
@@ -134,6 +117,9 @@ export function ReportingMaintenance({
                         {w.title}
                       </EventRowTitle>
                       <EventRowMeta>
+                        {w.kind === "page" && w.pageTitle ? (
+                          <span>{w.pageTitle}</span>
+                        ) : null}
                         <span>
                           {w.monitorIds
                             .map((id) => names.get(id) ?? "")
@@ -162,6 +148,7 @@ export function ReportingMaintenance({
                               to: w.to,
                               kind: "maintenance",
                               reason: w.title,
+                              monitorIds: w.monitorIds,
                             })
                           }
                         >

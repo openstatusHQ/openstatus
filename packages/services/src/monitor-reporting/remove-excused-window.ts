@@ -8,6 +8,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
 import {
   assertExcusedWindowOpen,
+  excusedWindowMonitorIds,
   assertMonitorSlaLimit,
   getWritablePolicy,
 } from "./internal";
@@ -39,6 +40,7 @@ export async function removeMonitorReportingExcusedWindow(args: {
     if (!row) throw new NotFoundError("monitor_sla_excused_window", input.id);
     const policy = await getWritablePolicy(tx, ctx, row.monitorSlaPolicyId);
     await assertExcusedWindowOpen(tx, policy, row, args.now ?? new Date());
+    const monitorsOf = await excusedWindowMonitorIds(tx, [row.id]);
 
     await tx
       .delete(monitorSlaExcusedWindow)
@@ -47,7 +49,7 @@ export async function removeMonitorReportingExcusedWindow(args: {
       action: "monitor_sla_excused_window.delete",
       entityType: "monitor_sla_excused_window",
       entityId: row.id,
-      before: row,
+      before: { ...row, monitorIds: monitorsOf.get(row.id) ?? [] },
     });
   });
 }

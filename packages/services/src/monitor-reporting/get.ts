@@ -12,6 +12,7 @@ import { excusedWindowLock } from "./excused";
 import type { SlaEpisodesPipes } from "./fetch-episodes";
 import {
   assertMonitorSlaLimit,
+  excusedWindowMonitorIds,
   judgePolicyMonths,
   loadPolicyMembers,
   loadTermsHistory,
@@ -47,13 +48,20 @@ async function loadExcusedWindows(
     )
     .all();
   if (rows.length === 0) return [];
-  const sealed = await sealedMonthsOf(db, policy);
-  const users = await loadAttributedUsers(
-    db,
-    rows.map((r) => r.createdBy),
-  );
+  const [sealed, users, monitorsOf] = await Promise.all([
+    sealedMonthsOf(db, policy),
+    loadAttributedUsers(
+      db,
+      rows.map((r) => r.createdBy),
+    ),
+    excusedWindowMonitorIds(
+      db,
+      rows.map((r) => r.id),
+    ),
+  ]);
   return rows.map(({ workspaceId: _, createdBy, ...w }) => ({
     ...w,
+    monitorIds: monitorsOf.get(w.id) ?? [],
     createdBy: createdBy === null ? null : (users.get(createdBy) ?? null),
     months: splitByMonth(w.from.getTime(), w.to.getTime(), policy.timeZone).map(
       (p) => p.month,

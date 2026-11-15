@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import {
   monitor,
   monitorSlaExcusedWindow,
+  monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
@@ -500,13 +501,21 @@ describe("getMonitorReporting", () => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
       const outage = Date.UTC(2026, 10, 10);
-      await tx.insert(monitorSlaExcusedWindow).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: policy.id,
-        kind: "maintenance",
-        reason: "Database upgrade",
-        from: new Date(outage + 30 * MIN),
-        to: new Date(outage + 2 * HOUR),
+      const excused = await tx
+        .insert(monitorSlaExcusedWindow)
+        .values({
+          workspaceId: ctx.workspace.id,
+          monitorSlaPolicyId: policy.id,
+          kind: "maintenance",
+          reason: "Database upgrade",
+          from: new Date(outage + 30 * MIN),
+          to: new Date(outage + 2 * HOUR),
+        })
+        .returning()
+        .get();
+      await tx.insert(monitorSlaExcusedWindowToMonitor).values({
+        monitorSlaExcusedWindowId: excused.id,
+        monitorId: api.id,
       });
       const episodesPipes = episodesPipesFrom(() =>
         runsEvery(Date.UTC(2026, 10, 1), now.getTime(), 10 * MIN, (t) =>
@@ -530,6 +539,59 @@ describe("getMonitorReporting", () => {
         uptime: 99_855,
         met: true,
       });
+    });
+  });
+
+  test("an excused window counts only for the monitors it names", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const web = await insertMonitor(tx, { name: "svc-sla-get-web" });
+      const policy = await insertPolicy(tx, [api.id, web.id]);
+      const outage = Date.UTC(2026, 10, 10);
+      const excused = await tx
+        .insert(monitorSlaExcusedWindow)
+        .values({
+          workspaceId: ctx.workspace.id,
+          monitorSlaPolicyId: policy.id,
+          kind: "maintenance",
+          reason: "API database upgrade",
+          from: new Date(outage),
+          to: new Date(outage + HOUR),
+        })
+        .returning()
+        .get();
+      await tx.insert(monitorSlaExcusedWindowToMonitor).values({
+        monitorSlaExcusedWindowId: excused.id,
+        monitorId: api.id,
+      });
+      const episodesPipes = episodesPipesFrom(() =>
+        runsEvery(Date.UTC(2026, 10, 1), now.getTime(), 10 * MIN, (t) =>
+          t >= outage && t < outage + HOUR ? "error" : "ok",
+        ),
+      );
+
+      const res = await getMonitorReporting({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id },
+        now,
+        episodesPipes,
+        sleep,
+      });
+      const month = (id: number) =>
+        res.monitors.find((m) => m.id === id)?.months.at(-1);
+      expect(month(api.id)).toMatchObject({
+        excused: { error: 6 },
+        downMs: 0,
+        excusedMs: HOUR,
+      });
+      expect(month(web.id)).toMatchObject({
+        excused: { error: 0 },
+        downMs: HOUR,
+        excusedMs: 0,
+      });
+      expect(res.excusedWindows).toMatchObject([
+        { id: excused.id, monitorIds: [api.id] },
+      ]);
     });
   });
 

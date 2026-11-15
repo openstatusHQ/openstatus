@@ -115,6 +115,11 @@ export const AddMonitorReportingExcusedWindowInput = z
     reason: z.string().trim().min(1).max(MONITOR_SLA_EXCUSED_REASON_MAX),
     from: instant,
     to: instant,
+    /** policy members to excuse */
+    monitorIds: z
+      .array(z.number().int().positive())
+      .min(1, "Pick at least one monitor.")
+      .transform((ids) => [...new Set(ids)].sort((a, b) => a - b)),
   })
   .refine((w) => w.from < w.to, {
     message: "The window must end after it starts.",

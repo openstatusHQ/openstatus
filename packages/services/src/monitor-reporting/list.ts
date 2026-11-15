@@ -199,7 +199,7 @@ export async function listMonitorReportings(args: {
     const fetched = fetchedByZone.get(policy.timeZone);
     if (!preview || !fetched) continue;
     const terms = history.at(policy.id, preview.month);
-    const excusedSpans = spansOf.get(policy.id) ?? [];
+    const spans = spansOf.get(policy.id);
     for (const m of preview.members) {
       previewCells.set(
         `${policy.id}:${monthCellKey(m.id, preview.month)}`,
@@ -208,7 +208,7 @@ export async function listMonitorReportings(args: {
           state: "preview",
           member: m,
           fetched,
-          excusedSpans,
+          excusedSpans: spans?.get(m.id) ?? [],
           terms,
           timeZone: policy.timeZone,
           now,

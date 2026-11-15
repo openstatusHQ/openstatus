@@ -701,6 +701,13 @@
       "when": 1794686806345,
       "tag": "0099_fixed_apocalypse",
       "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "6",
+      "when": 1794732910102,
+      "tag": "0100_vengeful_loa",
+      "breakpoints": true
     }
   ]
 }

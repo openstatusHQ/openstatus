@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import {
   monitor,
   monitorSlaExcusedWindow,
+  monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedMonth,
@@ -99,7 +100,21 @@ async function excuse(tx: Tx, policyId: number, from: number, to: number) {
       to: new Date(to),
     })
     .returning()
-    .get();
+    .get()
+    .then(async (row) => {
+      const members = await tx
+        .select({ id: monitorSlaPolicyToMonitor.monitorId })
+        .from(monitorSlaPolicyToMonitor)
+        .where(eq(monitorSlaPolicyToMonitor.monitorSlaPolicyId, policyId))
+        .all();
+      await tx.insert(monitorSlaExcusedWindowToMonitor).values(
+        members.map((m) => ({
+          monitorSlaExcusedWindowId: row.id,
+          monitorId: m.id,
+        })),
+      );
+      return row;
+    });
 }
 
 function get(tx: Tx, id: number, at = previewNow) {

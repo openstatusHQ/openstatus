@@ -64,6 +64,7 @@ async function windowIn(tx: Tx) {
       reason: "Upstream DNS outage",
       from: oct(20, 22),
       to: oct(20, 23),
+      monitorIds: [apiId],
     },
     now,
   });
@@ -88,6 +89,7 @@ describe("getMonitorReportingExcusedWindow", () => {
         to: oct(20, 23),
         createdBy: ownerId,
         createdAt: window.createdAt,
+        monitorIds: [apiId],
         policy: {
           id: policy.id,
           name: "Partner",
