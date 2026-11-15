@@ -40,6 +40,7 @@ import {
   visitorFromCtx,
 } from "../lib/page-access";
 import { sendSubscriberVerification } from "../lib/subscriber-verification";
+import { cachedPipe } from "../tb-cache";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -62,6 +63,11 @@ import {
   getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
+
+// Matches the status page's client staleTime; every viewer shares one read.
+const PUBLIC_STATUS_TTL = 60;
+// 7-day charts barely move within a few minutes.
+const PUBLIC_METRICS_TTL = 300;
 
 // NOTE: publicProcedure is used to get the status page
 // TODO: improve performance of SQL query (make a single query with joins)
@@ -113,7 +119,11 @@ async function fetchStatusDays(
   const readUtc = async () => ({
     timeZone: "UTC",
     rows: await fetchByJobType(monitors, (type) =>
-      getStatusProcedure("45d", type),
+      cachedPipe(
+        `status45d:${type}`,
+        getStatusProcedure("45d", type),
+        PUBLIC_STATUS_TTL,
+      ),
     ),
   });
   // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
@@ -123,7 +133,11 @@ async function fetchStatusDays(
       monitors,
       (type) =>
         ({ monitorIds }) =>
-          getStatusInTimeZoneProcedure(type)({
+          cachedPipe(
+            `status15m:${type}`,
+            getStatusInTimeZoneProcedure(type),
+            PUBLIC_STATUS_TTL,
+          )({
             monitorIds,
             timezone: timeZone,
           }),
@@ -1158,7 +1172,11 @@ export const statusPageRouter = createTRPCRouter({
         fetchByJobType(publicMonitors, (type) =>
           type === "heartbeat"
             ? null
-            : getMetricsLatencyMultiProcedure("1d", type),
+            : cachedPipe(
+                `latency1dMulti:${type}`,
+                getMetricsLatencyMultiProcedure("1d", type),
+                PUBLIC_STATUS_TTL,
+              ),
         ),
       );
       const metricsDataByMonitorId = metrics.data ?? new Map<string, never[]>();
@@ -1217,29 +1235,89 @@ export const statusPageRouter = createTRPCRouter({
 
       const proceduresByType = {
         http: {
-          latency: getMetricsLatencyProcedure("7d", "http"),
-          regions: getMetricsRegionsProcedure("7d", "http"),
-          uptime: getUptimeProcedure("7d", "http"),
+          latency: cachedPipe(
+            "latency7d:http",
+            getMetricsLatencyProcedure("7d", "http"),
+            PUBLIC_METRICS_TTL,
+          ),
+          regions: cachedPipe(
+            "regions7d:http",
+            getMetricsRegionsProcedure("7d", "http"),
+            PUBLIC_METRICS_TTL,
+          ),
+          uptime: cachedPipe(
+            "uptime7d:http",
+            getUptimeProcedure("7d", "http"),
+            PUBLIC_METRICS_TTL,
+          ),
         },
         tcp: {
-          latency: getMetricsLatencyProcedure("7d", "tcp"),
-          regions: getMetricsRegionsProcedure("7d", "tcp"),
-          uptime: getUptimeProcedure("7d", "tcp"),
+          latency: cachedPipe(
+            "latency7d:tcp",
+            getMetricsLatencyProcedure("7d", "tcp"),
+            PUBLIC_METRICS_TTL,
+          ),
+          regions: cachedPipe(
+            "regions7d:tcp",
+            getMetricsRegionsProcedure("7d", "tcp"),
+            PUBLIC_METRICS_TTL,
+          ),
+          uptime: cachedPipe(
+            "uptime7d:tcp",
+            getUptimeProcedure("7d", "tcp"),
+            PUBLIC_METRICS_TTL,
+          ),
         },
         dns: {
-          latency: getMetricsLatencyProcedure("7d", "dns"),
-          regions: getMetricsRegionsProcedure("7d", "dns"),
-          uptime: getUptimeProcedure("7d", "dns"),
+          latency: cachedPipe(
+            "latency7d:dns",
+            getMetricsLatencyProcedure("7d", "dns"),
+            PUBLIC_METRICS_TTL,
+          ),
+          regions: cachedPipe(
+            "regions7d:dns",
+            getMetricsRegionsProcedure("7d", "dns"),
+            PUBLIC_METRICS_TTL,
+          ),
+          uptime: cachedPipe(
+            "uptime7d:dns",
+            getUptimeProcedure("7d", "dns"),
+            PUBLIC_METRICS_TTL,
+          ),
         },
         icmp: {
-          latency: getMetricsLatencyProcedure("7d", "icmp"),
-          regions: getMetricsRegionsProcedure("7d", "icmp"),
-          uptime: getUptimeProcedure("7d", "icmp"),
+          latency: cachedPipe(
+            "latency7d:icmp",
+            getMetricsLatencyProcedure("7d", "icmp"),
+            PUBLIC_METRICS_TTL,
+          ),
+          regions: cachedPipe(
+            "regions7d:icmp",
+            getMetricsRegionsProcedure("7d", "icmp"),
+            PUBLIC_METRICS_TTL,
+          ),
+          uptime: cachedPipe(
+            "uptime7d:icmp",
+            getUptimeProcedure("7d", "icmp"),
+            PUBLIC_METRICS_TTL,
+          ),
         },
         grpc: {
-          latency: getMetricsLatencyProcedure("7d", "grpc"),
-          regions: getMetricsRegionsProcedure("7d", "grpc"),
-          uptime: getUptimeProcedure("7d", "grpc"),
+          latency: cachedPipe(
+            "latency7d:grpc",
+            getMetricsLatencyProcedure("7d", "grpc"),
+            PUBLIC_METRICS_TTL,
+          ),
+          regions: cachedPipe(
+            "regions7d:grpc",
+            getMetricsRegionsProcedure("7d", "grpc"),
+            PUBLIC_METRICS_TTL,
+          ),
+          uptime: cachedPipe(
+            "uptime7d:grpc",
+            getUptimeProcedure("7d", "grpc"),
+            PUBLIC_METRICS_TTL,
+          ),
         },
       };
 

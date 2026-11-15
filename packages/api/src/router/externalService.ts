@@ -28,7 +28,11 @@ import { z } from "zod";
 
 import { env } from "../env";
 import { toTRPCError } from "../service-adapter";
-import { tb } from "../tb";
+import {
+  cachedExternalStatusComponentHistory,
+  cachedExternalStatusHistory,
+  cachedExternalStatusLatest,
+} from "../tb-cache";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   REPORT_THRESHOLD,
@@ -287,7 +291,7 @@ async function summarizeServices(services: ServiceRow[], limitRead = false) {
   const ids = services.flatMap((s) => [s.slug, ...aliasesOf(s)]);
   const [latestRows, reportRows] = await Promise.all([
     safeData(
-      tb.externalStatusLatest(limitRead ? { ids } : {}),
+      cachedExternalStatusLatest(limitRead ? { ids } : {}),
       "externalStatusLatest (summaries)",
     ),
     safeRows(
@@ -449,11 +453,11 @@ export const externalServiceRouter = createTRPCRouter({
       const [latestRows, historyRows, reportRows, overlayIncidentRows] =
         await Promise.all([
           safeData(
-            tb.externalStatusLatest({ ids: slugChain }),
+            cachedExternalStatusLatest({ ids: slugChain }),
             "externalStatusLatest",
           ),
           safeData(
-            tb.externalStatusHistory({ ids: slugChain, days }),
+            cachedExternalStatusHistory({ ids: slugChain, days }),
             "externalStatusHistory",
           ),
           safeRows(
@@ -567,7 +571,7 @@ export const externalServiceRouter = createTRPCRouter({
         const componentIds = components.map((c) => String(c.id));
         const [historyRows, serviceIncidents, reportRows] = await Promise.all([
           safeData(
-            tb.externalStatusComponentHistory({
+            cachedExternalStatusComponentHistory({
               component_ids: componentIds,
               days,
             }),
@@ -673,7 +677,7 @@ export const externalServiceRouter = createTRPCRouter({
         const [historyRows, incidents, reportRows, overlayServiceIncidents] =
           await Promise.all([
             safeData(
-              tb.externalStatusComponentHistory({
+              cachedExternalStatusComponentHistory({
                 component_ids: [String(component.id)],
                 days,
               }),
