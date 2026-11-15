@@ -51,6 +51,22 @@ describe("getMaintenanceStatus", () => {
 });
 
 describe("buildOverviewData", () => {
+  it("lists maintenance windows with planned work, not as needing attention", () => {
+    const upcoming = { id: 1, from: daysAgo(-1), to: daysAgo(-2) };
+    const done = { id: 2, from: daysAgo(3), to: daysAgo(2) };
+    const data = buildOverviewData(
+      input({ maintenanceWindows: [upcoming, done] }),
+      now,
+    );
+    expect(data.needsAttention).toEqual([]);
+    expect(data.upcomingMaintenances).toEqual([
+      { type: "maintenanceWindow", window: upcoming },
+    ]);
+    expect(data.recentlyResolved).toEqual([
+      { type: "maintenanceWindow", window: done },
+    ]);
+  });
+
   it("splits monitor incidents into open and recently resolved", () => {
     const open = { startedAt: daysAgo(1), resolvedAt: null };
     const recent = { startedAt: daysAgo(3), resolvedAt: daysAgo(2) };

@@ -70,6 +70,7 @@ import {
   eventKey,
   getResolvedAt,
   getStartedAt,
+  isPlanned,
 } from "@/data/overview-events.client";
 import { reportActivity, reportSpan } from "@/data/status-reports.client";
 import { useHydrated } from "@/hooks/use-hydrated";
@@ -81,7 +82,10 @@ import { CreateEventButtonGroup } from "./create-event-button-group";
 import { OverviewEventRow } from "./overview-event-row";
 
 type Downtime = Extract<OverviewEvent, { type: "incident" }>;
-type Maintenance = Extract<OverviewEvent, { type: "maintenance" }>;
+type Planned = Extract<
+  OverviewEvent,
+  { type: "maintenance" } | { type: "maintenanceWindow" }
+>;
 type DayEntry = ActivityMark & { lead: string; name: string };
 
 // failures outrank planned work, anything real outranks a hatched mark
@@ -97,9 +101,7 @@ function rank(mark: ActivityMark) {
 function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
   const entries: DayEntry[] = [];
   const downtime = items.filter((e): e is Downtime => e.type === "incident");
-  const maintenance = items.filter(
-    (e): e is Maintenance => e.type === "maintenance",
-  );
+  const maintenance = items.filter(isPlanned);
   for (const event of items) {
     if (event.type === "managedIncident") {
       const { label, ...mark } = incidentActivity(event.incident);
@@ -134,13 +136,19 @@ function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
       ...maintenanceActivity(planned),
       lead: `${formatDurationShort(planned)} · ${
         maintenance.length === 1
-          ? maintenance[0].maintenance.title
+          ? plannedTitle(maintenance[0])
           : `${maintenance.length} maintenances`
       }`,
       name: "Maintenance",
     });
   }
   return entries.sort((a, b) => rank(b) - rank(a));
+}
+
+function plannedTitle(event: Planned) {
+  return event.type === "maintenance"
+    ? event.maintenance.title
+    : event.window.title;
 }
 
 /** Same type labels as the list rows below the calendar. */
@@ -169,6 +177,13 @@ function linkOf(event: OverviewEvent): ActivityLink {
         href: `/status-pages/${event.maintenance.pageId}/maintenances/${event.maintenance.id}`,
         title: event.maintenance.title,
         kind: "Maintenance",
+      };
+    case "maintenanceWindow":
+      return {
+        // a window can span monitors; the first one's tab lists it
+        href: `/monitors/${event.window.monitorIds[0] ?? "_"}/maintenance`,
+        title: event.window.title,
+        kind: "Window",
       };
   }
 }
@@ -217,6 +232,9 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({}),
   );
   const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
+  const { data: maintenanceWindows } = useQuery(
+    trpc.maintenanceWindow.list.queryOptions(),
+  );
   const { data: openIncidents, isPending: openIncidentsPending } = useQuery(
     trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
   );
@@ -225,12 +243,13 @@ export default function Page() {
   );
 
   // a window starting or ending moves it between Scheduled, Open and Resolved
-  useMaintenanceTick(maintenances ?? []);
+  useMaintenanceTick([...(maintenances ?? []), ...(maintenanceWindows ?? [])]);
   const now = new Date();
   const data =
     monitorIncidents &&
     statusReports &&
     maintenances &&
+    maintenanceWindows &&
     // wait for the incident queries; a failed one still renders (see below)
     !openIncidentsPending &&
     !endedIncidentsPending
@@ -239,6 +258,7 @@ export default function Page() {
             monitorIncidents,
             statusReports,
             maintenances,
+            maintenanceWindows,
             // undefined on a failed query; the rest still renders
             managedIncidents: openIncidents,
             endedIncidents,
@@ -250,7 +270,14 @@ export default function Page() {
     data ? data.allResolved.slice(data.recentlyResolved.length) : [],
   );
 
-  if (!data || !pages || !statusReports || !maintenances || !monitorIncidents)
+  if (
+    !data ||
+    !pages ||
+    !statusReports ||
+    !maintenances ||
+    !maintenanceWindows ||
+    !monitorIncidents
+  )
     return null;
 
   const {
@@ -262,7 +289,7 @@ export default function Page() {
   } = data;
 
   // looks ahead as far as the last scheduled window ends, capped
-  const until = maintenances
+  const until = [...maintenances, ...maintenanceWindows]
     .map((m) => m.to)
     .reduce<Date | undefined>(
       (max, to) => (!max || to > max ? to : max),
@@ -273,9 +300,7 @@ export default function Page() {
     if (items.length === 0) return { date };
     const [lead, ...others] = dayEntries(items, date, now);
     // dashed only when the day holds nothing but maintenance still ahead
-    const upcoming = items.every(
-      (e) => e.type === "maintenance" && e.maintenance.from > now,
-    );
+    const upcoming = items.every((e) => isPlanned(e) && getStartedAt(e) > now);
     return {
       date,
       scale: lead.scale,

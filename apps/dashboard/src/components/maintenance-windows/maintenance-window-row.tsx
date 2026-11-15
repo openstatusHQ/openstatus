@@ -32,12 +32,15 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type MaintenanceWindow = RouterOutputs["maintenanceWindow"]["list"][number];
 
+/** `kind` labels the row by type for a mixed list, like `MaintenanceRow`. */
 export function MaintenanceWindowRow({
   window,
   monitors,
   currentMonitorId,
+  kind = false,
 }: {
   window: MaintenanceWindow;
+  kind?: boolean;
   monitors: React.ComponentProps<typeof FormSheetMaintenanceWindow>["monitors"];
   /** left out of the monitor names, the page already says which */
   currentMonitorId?: number;
@@ -73,8 +76,10 @@ export function MaintenanceWindowRow({
     <EventRow>
       <EventRowDate date={from} />
       <EventRowStatus>
-        <StatusDot variant={maintenanceStatusConfig[status].variant} />
-        <span>{maintenanceStatusConfig[status].label}</span>
+        <StatusDot
+          variant={kind ? "info" : maintenanceStatusConfig[status].variant}
+        />
+        <span>{kind ? "Window" : maintenanceStatusConfig[status].label}</span>
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle>{window.title}</EventRowTitle>

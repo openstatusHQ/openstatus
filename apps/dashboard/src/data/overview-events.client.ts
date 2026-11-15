@@ -17,18 +17,21 @@ type MonitorIncident = RouterOutputs["monitorIncident"]["list"][number];
 type ManagedIncident = NonNullable<RouterOutputs["incident"]["list"]>[number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
+type MaintenanceWindow = RouterOutputs["maintenanceWindow"]["list"][number];
 
 export type OverviewEvent =
   | { type: "incident"; incident: MonitorIncident }
   | { type: "managedIncident"; incident: ManagedIncident }
   | { type: "report"; report: StatusReport }
-  | { type: "maintenance"; maintenance: Maintenance };
+  | { type: "maintenance"; maintenance: Maintenance }
+  | { type: "maintenanceWindow"; window: MaintenanceWindow };
 
 export const eventTypeConfig = {
   incident: { label: "Downtime", icon: CloudOff },
   managedIncident: { label: "Incident", icon: IncidentIcon },
   report: { label: "Status Report", icon: Report },
   maintenance: { label: "Maintenance", icon: MaintenanceIcon },
+  maintenanceWindow: { label: "Window", icon: MaintenanceIcon },
 } as const;
 
 export type OverviewEventType = keyof typeof eventTypeConfig;
@@ -87,6 +90,8 @@ export function getStartedAt(event: OverviewEvent): Date {
       return reportStartedAt(event.report);
     case "maintenance":
       return event.maintenance.from;
+    case "maintenanceWindow":
+      return event.window.from;
   }
 }
 
@@ -100,6 +105,8 @@ export function getResolvedAt(event: OverviewEvent): Date | null {
       return reportResolvedAt(event.report);
     case "maintenance":
       return event.maintenance.to;
+    case "maintenanceWindow":
+      return event.window.to;
   }
 }
 
@@ -116,7 +123,19 @@ function isOpen(event: OverviewEvent, now: Date): boolean {
       return event.report.status !== "resolved";
     case "maintenance":
       return event.maintenance.to >= now;
+    case "maintenanceWindow":
+      return event.window.to >= now;
   }
+}
+
+/** Planned work: a status-page maintenance or a monitor maintenance window. */
+export function isPlanned(
+  event: OverviewEvent,
+): event is Extract<
+  OverviewEvent,
+  { type: "maintenance" } | { type: "maintenanceWindow" }
+> {
+  return event.type === "maintenance" || event.type === "maintenanceWindow";
 }
 
 export function buildOverviewData(
@@ -124,6 +143,7 @@ export function buildOverviewData(
     monitorIncidents,
     statusReports,
     maintenances,
+    maintenanceWindows = [],
     managedIncidents,
     endedIncidents,
   }: {
@@ -134,6 +154,7 @@ export function buildOverviewData(
     endedIncidents?: RouterOutputs["incident"]["list"];
     statusReports: StatusReport[];
     maintenances: Maintenance[];
+    maintenanceWindows?: MaintenanceWindow[];
   },
   now = new Date(),
 ) {
@@ -149,6 +170,10 @@ export function buildOverviewData(
       type: "maintenance" as const,
       maintenance,
     })),
+    ...maintenanceWindows.map((window) => ({
+      type: "maintenanceWindow" as const,
+      window,
+    })),
     ...monitorIncidents.map((incident) => ({
       type: "incident" as const,
       incident,
@@ -158,11 +183,11 @@ export function buildOverviewData(
   const byStart = (a: OverviewEvent, b: OverviewEvent) =>
     getStartedAt(b).getTime() - getStartedAt(a).getTime();
   const needsAttention = events
-    .filter((event) => event.type !== "maintenance" && isOpen(event, now))
+    .filter((event) => !isPlanned(event) && isOpen(event, now))
     .sort(byStart);
   // calendar, not triage — scheduled/in-progress maintenance gets its own section
   const upcomingMaintenances = events
-    .filter((event) => event.type === "maintenance" && isOpen(event, now))
+    .filter((event) => isPlanned(event) && isOpen(event, now))
     .sort((a, b) => byStart(b, a));
   // newest end first; `recentlyResolved` is the head of `allResolved`
   const allResolved = events
@@ -194,5 +219,7 @@ export function eventKey(event: OverviewEvent): string {
       return `report-${event.report.id}`;
     case "maintenance":
       return `maintenance-${event.maintenance.id}`;
+    case "maintenanceWindow":
+      return `maintenance-window-${event.window.id}`;
   }
 }

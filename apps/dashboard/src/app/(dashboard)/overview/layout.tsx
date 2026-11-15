@@ -20,6 +20,7 @@ export default async function Layout({
     queryClient.prefetchQuery(trpc.monitorIncident.list.queryOptions()),
     queryClient.prefetchQuery(trpc.statusReport.list.queryOptions({})),
     queryClient.prefetchQuery(trpc.maintenance.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.maintenanceWindow.list.queryOptions()),
     queryClient.prefetchQuery(
       trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
     ),
