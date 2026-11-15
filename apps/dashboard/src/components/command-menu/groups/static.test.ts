@@ -31,21 +31,18 @@ describe("navigationGroup", () => {
         "/incidents",
         "/monitors",
         "/maintenance-windows",
-        "/notifications",
         "/private-locations",
+        "/notifications",
+        "/on-call",
         "/status-pages",
         "/reportings",
+        "/insights",
         "/chat",
         "/agents/slack",
         "/agents/cli",
         "/agents/mcp",
       ].map((href) => ({ type: "navigate", href })),
     );
-  });
-
-  it("leaves out disabled items", () => {
-    const labels = navigationGroup().items.map((i) => i.label);
-    expect(labels).not.toContain("Insights");
   });
 
   it("keeps values unique", () => {

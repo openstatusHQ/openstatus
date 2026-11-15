@@ -55,7 +55,6 @@ export function NavGroupItem(
   return <SidebarMenuItem data-slot="nav-group-item" {...props} />;
 }
 
-/** The item's link, or a muted button with a "coming soon" tooltip when `item.disabled`. */
 export function NavGroupButton({
   item,
   tooltip = true,
@@ -68,25 +67,6 @@ export function NavGroupButton({
 }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  if (item.disabled) {
-    return (
-      <SidebarMenuButton
-        data-slot="nav-group-button"
-        aria-disabled
-        // keep pointer events so the collapsed tooltip can open
-        className={cn(
-          "font-commit-mono text-muted-foreground hover:text-muted-foreground active:text-muted-foreground tracking-tight hover:bg-transparent active:bg-transparent aria-disabled:pointer-events-auto aria-disabled:cursor-default aria-disabled:opacity-100",
-          className,
-        )}
-        // like every sidebar tooltip, only when collapsed: expanded, the badge says it
-        tooltip={`${item.label} is coming soon`}
-        {...props}
-      >
-        <item.icon />
-        <span>{item.label}</span>
-      </SidebarMenuButton>
-    );
-  }
   const current = topSegment(pathname);
   return (
     <SidebarMenuButton
@@ -118,8 +98,6 @@ function NavGroupBadge({
       data-slot="nav-group-badge"
       className={cn(
         "font-commit-mono text-muted-foreground gap-1.5",
-        // a disabled item's badge stays muted when its button is hovered
-        "peer-aria-disabled/menu-button:peer-hover/menu-button:text-muted-foreground",
         className,
       )}
       {...props}

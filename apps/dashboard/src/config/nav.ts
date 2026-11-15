@@ -9,6 +9,7 @@ import {
   Notification,
   Overview,
   Reporting,
+  Schedule,
   Settings,
   StatusPage,
   Terminal,
@@ -22,8 +23,6 @@ export type NavItem = {
   icon: IconType;
   keywords?: string[];
   badge?: string;
-  /** Shown but not navigable, e.g. a section that has not shipped yet. */
-  disabled?: boolean;
 };
 
 // Single source of truth for primary destinations. Consumed by the sidebar
@@ -81,7 +80,13 @@ export const NAV = {
     icon: Trend,
     keywords: ["mttr", "mtta", "analytics"],
     badge: "Soon",
-    disabled: true,
+  },
+  onCall: {
+    label: "On-call",
+    href: "/on-call",
+    icon: Schedule,
+    keywords: ["rotation", "schedule", "escalation", "pager"],
+    badge: "Soon",
   },
   statusPages: {
     label: "Status Pages",
@@ -131,27 +136,25 @@ export const NAV = {
 export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Monitor",
-    items: [
-      NAV.monitors,
-      NAV.maintenanceWindows,
-      NAV.notifications,
-      NAV.privateLocations,
-    ],
+    items: [NAV.monitors, NAV.maintenanceWindows, NAV.privateLocations],
   },
+  { label: "Alerting", items: [NAV.notifications, NAV.onCall] },
   { label: "Communicate", items: [NAV.incidents, NAV.statusPages] },
   { label: "Report", items: [NAV.slas, NAV.insights] },
   { label: "AI", items: [NAV.chat, NAV.agents] },
 ];
 
-// Command-menu "Navigation" group order; disabled items are left out.
+// Command-menu "Navigation" group order.
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
   NAV.monitors,
   NAV.maintenanceWindows,
-  NAV.notifications,
   NAV.privateLocations,
+  NAV.notifications,
+  NAV.onCall,
   NAV.statusPages,
   NAV.slas,
+  NAV.insights,
   NAV.chat,
   NAV.agents,
   NAV.cli,
