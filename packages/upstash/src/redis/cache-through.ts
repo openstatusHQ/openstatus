@@ -21,6 +21,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 /**
  * Read `key`, or run `load` and store its result for `ttlSeconds`. Fails open:
  * a slow or failing Redis falls through to `load`, and `load` errors are not cached.
+ * `T` must be JSON-safe (no `Date`, `Map`, …): a hit returns the JSON round-trip.
  */
 export async function cacheThrough<T>(
   client: Pick<Redis, "get" | "set">,
