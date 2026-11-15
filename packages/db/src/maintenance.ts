@@ -108,6 +108,7 @@ export type ActiveMaintenance = {
  */
 export async function activeMaintenanceByMonitor(
   db: Db,
+  workspaceId: number,
   monitorIds: readonly number[],
   at: Date,
 ): Promise<Map<number, ActiveMaintenance>> {
@@ -122,6 +123,7 @@ export async function activeMaintenanceByMonitor(
       .innerJoin(w, eq(w.id, link.monitorMaintenanceWindowId))
       .where(
         and(
+          eq(w.workspaceId, workspaceId),
           inArray(link.monitorId, [...monitorIds]),
           lte(w.from, at),
           gt(w.to, at),
@@ -150,6 +152,8 @@ export async function activeMaintenanceByMonitor(
       .where(
         and(
           maintenanceActiveAt(at),
+          eq(schema.maintenance.workspaceId, workspaceId),
+          eq(schema.pageComponent.workspaceId, workspaceId),
           isNull(schema.maintenance.monitorMaintenanceWindowId),
           inArray(schema.pageComponent.monitorId, [...monitorIds]),
         ),

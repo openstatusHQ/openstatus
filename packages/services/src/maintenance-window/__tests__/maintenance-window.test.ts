@@ -214,6 +214,7 @@ describe("listMonitors maintenance", () => {
       };
       await window("pause", now - hour, now + 3 * hour, [both.id, paused.id]);
       await window("continue", now - hour, now + hour, [both.id]);
+      await window("continue", now - hour, now + 2 * hour, [both.id]);
       await window("pause", now + hour, now + 2 * hour, [later.id]);
 
       const { items } = await listMonitors({
@@ -223,7 +224,7 @@ describe("listMonitors maintenance", () => {
       const of = (id: number) => items.find((m) => m.id === id)?.maintenance;
       expect(of(both.id)?.mode).toBe("continue");
       expect(of(both.id)?.until.getTime()).toBe(
-        Math.floor((now + hour) / 1000) * 1000,
+        Math.floor((now + 2 * hour) / 1000) * 1000,
       );
       expect(of(paused.id)?.mode).toBe("pause");
       expect(of(later.id)).toBeNull();

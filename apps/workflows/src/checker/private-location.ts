@@ -75,7 +75,6 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    const now = new Date();
     // private-location checks cannot be stopped from here, so either mode only ignores the result
     const activeMaintenance = await db
       .select({ id: schema.monitor.id })
@@ -83,7 +82,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
       .where(
         and(
           eq(schema.monitor.id, monitorIdNumber),
-          monitorInMaintenance(db, { at: now, mode: "any" }),
+          monitorInMaintenance(db, {
+            at: new Date(cronTimestamp),
+            mode: "any",
+          }),
         ),
       )
       .get();

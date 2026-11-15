@@ -153,7 +153,7 @@ async function enrichMonitorsBatch(
             )
             .all()
         : Promise.resolve([]),
-      activeMaintenanceByMonitor(db, ids, new Date()),
+      activeMaintenanceByMonitor(db, workspaceId, ids, new Date()),
     ]);
 
   const tagsByMonitor = new Map<number, MonitorTag[]>();

@@ -453,28 +453,24 @@ describe("updateStatusPrivate", () => {
       .values({ maintenanceId: window.id, pageComponentId: component.id })
       .run();
 
-    vi.useFakeTimers({ toFake: ["Date"] });
     try {
-      vi.setSystemTime(to.getTime() - 1);
       await post({
         monitorId: String(TEST_MONITOR_ID),
         privateLocationId: String(TEST_LOCATION_ID),
         status: "error",
-        cronTimestamp: 9300050,
+        cronTimestamp: to.getTime() - 1,
       });
       expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
       expect(await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID)).toBeUndefined();
 
-      vi.setSystemTime(to);
       await post({
         monitorId: String(TEST_MONITOR_ID),
         privateLocationId: String(TEST_LOCATION_ID),
         status: "error",
-        cronTimestamp: 9300051,
+        cronTimestamp: to.getTime(),
       });
       expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     } finally {
-      vi.useRealTimers();
       await db
         .delete(maintenance)
         .where(eq(maintenance.workspaceId, workspaceId))
