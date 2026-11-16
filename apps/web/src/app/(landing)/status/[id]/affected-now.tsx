@@ -72,6 +72,7 @@ export function AffectedNow({
         <div className="border-border bg-border [&>*]:bg-background grid grid-cols-1 gap-px border bg-clip-padding">
           {affected.slice(0, AFFECTED_SHOWN).map((c) => (
             <Link
+              prefetch={false}
               key={c.id}
               href={`/status/${slug}/${c.slug}`}
               className={cn(ROW)}

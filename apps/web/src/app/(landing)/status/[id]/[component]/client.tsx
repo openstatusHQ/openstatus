@@ -82,6 +82,7 @@ function OtherComponents({
       count={String(others.length)}
       aside={
         <Link
+          prefetch={false}
           href={`/status/${serviceSlug}#components`}
           className="text-foreground underline underline-offset-4"
         >
@@ -94,6 +95,7 @@ function OtherComponents({
       >
         {others.slice(0, SIBLINGS_SHOWN).map((c) => (
           <Link
+            prefetch={false}
             key={c.slug}
             href={`/status/${serviceSlug}/${c.slug}`}
             className={cn(
@@ -166,7 +168,9 @@ export function ComponentDetail({
           <h1 className="mb-1!">Is {fullName} down?</h1>
           <p className="text-muted-foreground m-0! text-sm">
             Part of{" "}
-            <Link href={`/status/${service.slug}`}>{service.name} status</Link>
+            <Link prefetch={false} href={`/status/${service.slug}`}>
+              {service.name} status
+            </Link>
             {component.groupName ? <> · {component.groupName}</> : null}
           </p>
         </div>

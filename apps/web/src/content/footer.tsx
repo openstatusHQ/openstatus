@@ -14,6 +14,7 @@ export function Footer() {
               {section.items.map((item) => (
                 <li key={item.href}>
                   <Link
+                    prefetch={false}
                     href={item.href}
                     className="hover:bg-muted block w-full truncate"
                   >
@@ -27,6 +28,7 @@ export function Footer() {
       </div>
       <div className="border-border bg-border [&>*]:bg-background grid gap-px border border-t-0 bg-clip-padding sm:grid-cols-2 md:grid-cols-3">
         <Link
+          prefetch={false}
           href="/cal"
           className="hover:bg-muted flex w-full items-center gap-2 px-3 py-2"
         >
