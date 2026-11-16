@@ -1,5 +1,7 @@
 // Test double for @openstatus/upstash, swapped in via test.importmap.json.
 // Keeps tests off a real Upstash Redis instance.
+export { cacheThrough } from "@openstatus/upstash/src/redis/cache-through";
+
 // Counters written by `incrWithTtl` expire like Redis keys and are readable
 // through `get`, so rate limiters built on them behave as against Redis. A
 // client other than this double is passed through, so tests can inject one.
