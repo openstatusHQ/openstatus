@@ -12,7 +12,7 @@ export { default as StatusPageMagicLinkEmail } from "../emails/status-page-magic
 export { default as DashboardMagicLinkEmail } from "../emails/dashboard-magic-link";
 
 export { monitorDeactivationEmail, monitorPausedEmail } from "./render";
-export { statusPageFrom } from "./sender";
+export { senderFrom, senderReplyTo, statusPageFrom } from "./sender";
 export {
   cancelScheduledEmail,
   sendEmail,

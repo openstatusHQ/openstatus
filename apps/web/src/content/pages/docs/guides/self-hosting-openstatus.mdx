@@ -67,7 +67,7 @@ This guide is divided into three parts: launching the services, setting up analy
     ```bash
     cp .env.docker.example .env.docker
     ```
-    Open `.env.docker` in a text editor. Four values are marked `[REQUIRED]` and must be set: `AUTH_SECRET`, `RESEND_API_KEY` (magic-link login won't work without it), `SELF_HOST`, and `NEXT_PUBLIC_URL`. For a complete setup, review the file for other variables like OAuth providers or email services.
+    Open `.env.docker` in a text editor. Four values are marked `[REQUIRED]` and must be set: `AUTH_SECRET`, `RESEND_API_KEY` (magic-link login won't work without it), `SELF_HOST`, and `NEXT_PUBLIC_URL`. For a complete setup, review the file for other variables like OAuth providers or email services, and set `EMAIL_FROM` to an address on your own Resend domain (see [Email sender](#email-sender)).
 
     Two values matter for the rest of this guide — set them now:
     ```env
@@ -376,6 +376,22 @@ helm install openstatus ./charts/openstatus -n openstatus --create-namespace \
 
 The chart creates ClusterIP Services only, so expose the dashboard and status page with your own Ingress or Gateway. Workspace limits (step 9) and the probe (step 10) are still manual; the [chart README](https://github.com/openstatusHQ/openstatus/blob/main/charts/openstatus/README.md) has the commands.
 
+## Email sender
+
+openstatus sends every email through [Resend](https://resend.com): magic-link logins, team invitations, monitor alerts and status page notifications. Resend only delivers from domains verified in the account that owns `RESEND_API_KEY`. Without further configuration the senders are openstatus' own `openstatus.dev` addresses, so a self-hosted instance gets every email rejected with `The mail.openstatus.dev domain is not verified`.
+
+[Verify a domain](https://resend.com/docs/dashboard/domains/introduction) in your Resend account and set one sender in `.env.docker`:
+
+```env
+EMAIL_FROM="openstatus <noreply@status.example.com>"
+```
+
+- `EMAIL_FROM` replaces all openstatus senders, including the personal ones (welcome and billing emails).
+- Status page emails keep the page title as the display name and use the address of `EMAIL_FROM`, e.g. `"Acme" <noreply@status.example.com>`.
+- With `EMAIL_FROM` set, the openstatus support reply-to addresses are dropped, so replies go to `EMAIL_FROM`.
+
+On Kubernetes, pass it through the chart: `--set env.EMAIL_FROM="openstatus <noreply@status.example.com>"`.
+
 ## Configuring the AI assistant (optional)
 
 openstatus ships an in-dashboard AI assistant. It is **off by default** when self-hosting — the chat endpoint returns `503 "Chat is not configured"` until you point it at a model provider. Configure **one** of the two options below in your `.env.docker` (root) — or `apps/dashboard/.env` for a manual setup — then restart the dashboard.
@@ -451,6 +467,8 @@ The **probe** is not in this table — it runs outside the stack, wherever you w
 - Created your first self-hosted monitor
 
 ## Troubleshooting
+
+**No emails arrive and the logs show `The ... domain is not verified`** — `EMAIL_FROM` is unset or its domain is not verified in the Resend account of `RESEND_API_KEY`. See [Email sender](#email-sender).
 
 **Containers won't start** — check Docker logs with `docker compose logs [service-name]`.
 

@@ -5,7 +5,7 @@ import {
 } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { type User, user } from "@openstatus/db/src/schema";
-import { WelcomeEmail, sendEmail } from "@openstatus/emails";
+import { WelcomeEmail, senderFrom, sendEmail } from "@openstatus/emails";
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 import { headers } from "next/headers";
@@ -66,7 +66,7 @@ async function onNewUser(
   if (newUser.tenantId) return;
 
   await sendEmail({
-    from: "Thibault from openstatus <thibault@openstatus.dev>",
+    from: senderFrom("Thibault from openstatus <thibault@openstatus.dev>"),
     subject: "Welcome to openstatus.",
     to: [newUser.email],
     react: WelcomeEmail(),

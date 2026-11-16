@@ -1,7 +1,7 @@
 import { and, gte, lte } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { user } from "@openstatus/db/src/schema";
-import { FeedbackEmail, sendEmail } from "@openstatus/emails";
+import { FeedbackEmail, senderFrom, sendEmail } from "@openstatus/emails";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (!u.email || u.email.trim() === "") continue;
 
     await sendEmail({
-      from: "Thibault from openstatus <thibault@openstatus.dev>",
+      from: senderFrom("Thibault from openstatus <thibault@openstatus.dev>"),
       subject: "One quick question",
       to: [u.email],
       react: FeedbackEmail(),

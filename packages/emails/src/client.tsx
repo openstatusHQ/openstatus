@@ -26,7 +26,7 @@ import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link"
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { env } from "./env";
-import { statusPageFrom } from "./sender";
+import { senderFrom, senderReplyTo, statusPageFrom } from "./sender";
 
 export function pageUpdateSubject(req: {
   status: PageUpdateProps["status"];
@@ -38,9 +38,22 @@ export function pageUpdateSubject(req: {
   return req.reportTitle;
 }
 
-const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
-const ACCOUNT_FROM = "openstatus <notifications@mail.openstatus.dev>";
-const SUPPORT_EMAIL = "ping@openstatus.dev";
+const SYSTEM_FROM = senderFrom(
+  "openstatus <notifications@notifications.openstatus.dev>",
+);
+const ACCOUNT_FROM = senderFrom(
+  "openstatus <notifications@mail.openstatus.dev>",
+);
+const SUPPORT_EMAIL = senderReplyTo("ping@openstatus.dev");
+const WELCOME_FROM = senderFrom(
+  "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
+);
+const FOUNDER_FROM = senderFrom(
+  "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+);
+const FOUNDER_REPLY_TO = senderReplyTo(
+  "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+);
 
 // Deterministic Resend rejections: retrying the identical request can never
 // succeed (e.g. 409 invalid_idempotent_request when a key is reused with a
@@ -84,8 +97,8 @@ export class EmailClient {
     try {
       const html = await render(<FollowUpEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
-        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: WELCOME_FROM,
+        replyTo: FOUNDER_REPLY_TO,
         subject: "How's it going with openstatus?",
         to: req.to,
         html,
@@ -111,7 +124,7 @@ export class EmailClient {
     const html = await render(<FollowUpEmail />);
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: FOUNDER_FROM,
         subject: "How's it going with openstatus?",
         to: subscriber,
         html,
@@ -142,8 +155,8 @@ export class EmailClient {
     try {
       const html = await render(<SlackFeedbackEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: FOUNDER_FROM,
+        replyTo: FOUNDER_REPLY_TO,
         subject: "How's the Slack app working for you?",
         to: req.to,
         html,
@@ -169,7 +182,7 @@ export class EmailClient {
     const html = await render(<SlackFeedbackEmail />);
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: FOUNDER_FROM,
         subject: "How's the Slack app working for you?",
         to: subscriber,
         html,
