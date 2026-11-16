@@ -231,11 +231,23 @@ export function mapReportToStatusReport(
       new Date(b.attributes.published_at).getTime(),
   );
 
+  const resourceStatuses = new Map<string, StatusReportStatus>();
   const mappedUpdates = sortedUpdates.map((u) => {
+    for (const resource of u.attributes.affected_resources) {
+      resourceStatuses.set(
+        resource.status_page_resource_id,
+        mapReportAggregateState(resource.status),
+      );
+    }
+    const statuses = [...resourceStatuses.values()];
+    const priority: StatusReportStatus[] = [
+      "investigating",
+      "identified",
+      "monitoring",
+      "resolved",
+    ];
     const aggregateStatus =
-      u.attributes.affected_resources.length > 0
-        ? mapReportAggregateState(u.attributes.affected_resources[0].status)
-        : "investigating";
+      priority.find((status) => statuses.includes(status)) ?? "investigating";
     return {
       status: aggregateStatus,
       message: u.attributes.message ?? "",
