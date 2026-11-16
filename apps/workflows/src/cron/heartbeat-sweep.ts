@@ -129,6 +129,8 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
       region: HEARTBEAT_REGION,
       status: failed || overdue ? "error" : "active",
       cronTimestamp: overdue ? row.next_due_at : row.last_ping_at,
+      // a deadline missed inside a maintenance is still missed once it ends
+      observedAt: now,
       message: failed
         ? failedPingMessage(row)
         : overdue

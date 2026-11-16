@@ -1,5 +1,8 @@
-import { pageComponentImpactSchema } from "@openstatus/db/src/schema/page_components/validation";
-import { statusReportStatusSchema } from "@openstatus/db/src/schema/status_reports/validation";
+// deep imports of the validation files evaluate the schema in an order that hits its import cycles
+import {
+  pageComponentImpactSchema,
+  statusReportStatusSchema,
+} from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 /** Bump on any breaking change — external consumers (statuspage-socials-notifier) pin to this version. */

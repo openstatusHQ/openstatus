@@ -38,6 +38,8 @@ export type TransitionInput = {
   region: string;
   status: MonitorStatus;
   cronTimestamp: number;
+  /** When the signal was observed, if later than `cronTimestamp`; the maintenance guard reads this. */
+  observedAt?: number;
   statusCode?: number;
   message?: string;
   latency?: number;
@@ -284,7 +286,7 @@ export async function evaluateTransition(
     regionsJson,
     regionCount,
   })} AND NOT ${monitorInMaintenance(db, {
-    at: new Date(input.cronTimestamp),
+    at: new Date(input.observedAt ?? input.cronTimestamp),
     mode: "any",
   })})`;
   const journal = journalStatement(input, regionsJson, regionCount, guard);
