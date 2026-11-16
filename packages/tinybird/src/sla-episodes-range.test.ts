@@ -118,10 +118,9 @@ describe.each(types)("%s sla episodes range", (type) => {
     expect(episodes).toContain("WHERE monitorId NOT IN (");
   });
 
-  test("returns episode rows ordered per monitor", () => {
-    expect(episodes).toContain(
-      "SELECT monitorId, kind, startedAt, endedAt, runs, weightedMs",
-    );
+  test("returns episode rows ordered per monitor, without run counts or weights", () => {
+    expect(episodes).toContain("SELECT monitorId, kind, startedAt, endedAt\n");
+    expect(episodes).not.toMatch(/ AS (runs|weightedMs)\b/);
     expect(episodes).toContain("ORDER BY monitorId, startedAt");
   });
 
@@ -167,8 +166,6 @@ describe("slaEpisodesRangeShape", () => {
       kind: "unmeasured",
       startedAt: 1_761_955_200_000,
       endedAt: 1_761_962_400_000,
-      runs: 0,
-      weightedMs: 7_200_000,
     };
     expect(slaEpisodesRangeShape.parse(row)).toEqual(row);
   });
@@ -180,8 +177,6 @@ describe("slaEpisodesRangeShape", () => {
         kind: "success",
         startedAt: 0,
         endedAt: 1,
-        runs: 1,
-        weightedMs: 1,
       }).success,
     ).toBe(false);
   });

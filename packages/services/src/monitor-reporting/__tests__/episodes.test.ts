@@ -46,8 +46,6 @@ describe("episodesFromRuns fixture", () => {
         expect(eps[i].startedAt).toBe(eps[i - 1].endedAt);
         expect(eps[i].kind).not.toBe(eps[i - 1].kind);
       }
-      const runs = eps.reduce((s, e) => s + e.runs, 0);
-      expect(runs).toBe(c.input.runs.length);
     },
   );
 
@@ -60,8 +58,7 @@ describe("episodesFromRuns", () => {
   test("a 1h outage costs the same down time before and after a frequency switch", () => {
     const eps = episodesFromRuns(byName("switch-30s-to-10m").input);
     const errors = eps.filter((e) => e.kind === "error");
-    expect(errors.map((e) => e.weightedMs)).toEqual([HOUR, HOUR]);
-    expect(errors.map((e) => e.runs)).toEqual([120, 6]);
+    expect(errors.map((e) => e.endedAt - e.startedAt)).toEqual([HOUR, HOUR]);
     expect(eps.some((e) => e.kind === "unmeasured")).toBe(false);
   });
 
@@ -69,7 +66,7 @@ describe("episodesFromRuns", () => {
     const eps = episodesFromRuns(byName("pause-2h").input);
     const unmeasured = eps
       .filter((e) => e.kind === "unmeasured")
-      .reduce((s, e) => s + e.weightedMs, 0);
+      .reduce((s, e) => s + e.endedAt - e.startedAt, 0);
     expect(unmeasured).toBe(2 * HOUR - 30_000);
   });
 
@@ -97,15 +94,11 @@ describe("episodesFromRuns", () => {
         kind: "error",
         startedAt: c.input.fromMs,
         endedAt: c.input.fromMs + 30_000,
-        runs: 1,
-        weightedMs: 30_000,
       },
       {
         kind: "ok",
         startedAt: c.input.fromMs + 30_000,
         endedAt: c.input.toMs,
-        runs: 9,
-        weightedMs: 270_000,
       },
     ]);
   });
@@ -147,59 +140,9 @@ describe("cutExcused", () => {
       ["error", 330_000, 360_000],
       ["ok", 360_000, 600_000],
     ]);
-    const total = (xs: Episode[]) => xs.reduce((s, e) => s + e.weightedMs, 0);
+    const total = (xs: Episode[]) =>
+      xs.reduce((s, e) => s + e.endedAt - e.startedAt, 0);
     expect(total(kept) + total(excused)).toBe(total(eps));
-    const runs = (xs: Episode[]) => xs.reduce((s, e) => s + e.runs, 0);
-    expect(runs(kept) + runs(excused)).toBe(runs(eps));
-  });
-
-  test("prorated weights floor and give the remainder to the last piece", () => {
-    const odd: Episode = {
-      kind: "error",
-      startedAt: 0,
-      endedAt: 3,
-      runs: 1,
-      weightedMs: 10,
-    };
-    const { kept, excused } = cutExcused([odd], [{ start: 1, end: 2 }]);
-    expect(kept.map((e) => e.weightedMs)).toEqual([3, 4]);
-    expect(excused.map((e) => e.weightedMs)).toEqual([3]);
-    expect([...kept, ...excused].reduce((s, e) => s + e.runs, 0)).toBe(1);
-  });
-
-  test("runs go to the piece their estimated timestamp falls in", () => {
-    // 3 runs over [0, 100) sit at 0, 33 and 66
-    const ep: Episode = {
-      kind: "error",
-      startedAt: 0,
-      endedAt: 100,
-      runs: 3,
-      weightedMs: 100,
-    };
-    const { kept, excused } = cutExcused([ep], [{ start: 34, end: 90 }]);
-    expect(kept.map((e) => [e.startedAt, e.runs, e.weightedMs])).toEqual([
-      [0, 2, 34],
-      [90, 0, 10],
-    ]);
-    expect(excused.map((e) => [e.startedAt, e.runs, e.weightedMs])).toEqual([
-      [34, 1, 56],
-    ]);
-  });
-
-  test("a narrow span between two runs takes none of them", () => {
-    const ep: Episode = {
-      kind: "ok",
-      startedAt: 0,
-      endedAt: 600_000,
-      runs: 10,
-      weightedMs: 600_000,
-    };
-    const { kept, excused } = cutExcused(
-      [ep],
-      [{ start: 61_000, end: 119_000 }],
-    );
-    expect(excused[0].runs).toBe(0);
-    expect(kept.reduce((s, e) => s + e.runs, 0)).toBe(10);
   });
 
   test("overlapping and unsorted spans excuse time once", () => {
@@ -261,15 +204,11 @@ describe("evaluateSlaPeriod", () => {
         kind: "ok",
         startedAt: 0,
         endedAt: 199_999,
-        runs: 1,
-        weightedMs: 199_999,
       },
       {
         kind: "error",
         startedAt: 199_999,
         endedAt: 200_000,
-        runs: 1,
-        weightedMs: 1,
       },
     ];
     const res = evaluateSlaPeriod({
@@ -422,15 +361,11 @@ describe("slaBudget", () => {
                 kind: "ok",
                 startedAt: 0,
                 endedAt: measuredMs - downMs,
-                runs: 1,
-                weightedMs: measuredMs - downMs,
               },
               {
                 kind: "error",
                 startedAt: measuredMs - downMs,
                 endedAt: measuredMs,
-                runs: 1,
-                weightedMs: downMs,
               },
             ],
             excusedSpans: [],

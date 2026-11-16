@@ -12,34 +12,25 @@ import {
   monitorSlaExcusedWindow,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
-  monitorSlaSealedEpisode,
   type MonitorSlaSealedWindow,
   monitorSlaSealedMonth,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
-import type { MonitorSlaEpisodeTreatment } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 
-import { type DB, defaultTb } from "../context";
+import type { DB } from "../context";
 import { monthRange } from "../frozen-uptime/compute";
-import { NO_RUNS } from "../frozen-uptime/quorum";
 import { FREEZE_CUTOFF_MS } from "../frozen-uptime/run";
 import { withBusyRetry } from "../retry";
-import { cutExcused, type Episode } from "./episodes";
+import type { Episode } from "./episodes";
 import { mergeSpans, type Span } from "./excused";
-import {
-  clipEpisodes,
-  fetchSlaEpisodes,
-  type SlaEpisodesPipes,
-  slaEpisodesPipes,
-} from "./fetch-episodes";
 import {
   excusedWindowMonitorIds,
   type FetchedEpisodes,
-  memberEpisodes,
   memberTimeMonth,
 } from "./internal";
 import { completeMonths, coveredSpan } from "./months";
+import { storedEpisodes } from "./seal-uptime";
 
 /** A closed month stays open to policy corrections this long before it seals. */
 export const SEAL_DELAY_MS = 72 * 3_600_000;
@@ -48,15 +39,13 @@ export const SEAL_DELAY_MS = 72 * 3_600_000;
 const EARLIEST_ZONE = "Pacific/Kiritimati";
 const LATEST_ZONE = "Etc/GMT+12";
 
-const EPISODE_INSERT_CHUNK = 500;
-
 export type SealMonitorSlaMonthsResult = {
   /** the month sealed, YYYY-MM-01; the same label in every zone that can seal */
   month: string;
   sealed: number;
   /** why no zone could seal; null when some could */
   skipped: "correction-window" | "past-cutoff" | null;
-  /** pairs left for the next run because their episodes could not be read */
+  /** pairs left for the next run because their monitor's checks are not stored up to the month's end yet */
   unavailable: number;
   /** policies of those pairs */
   unavailablePolicyIds: number[];
@@ -101,42 +90,12 @@ type Pair = {
   target: number;
   strict: boolean;
   monitorId: number;
-  jobType: string;
-  regions: string;
-  periodicity: string;
   memberSince: Date;
 };
 
-type SealedEpisodeRow = Episode & { treatment: MonitorSlaEpisodeTreatment };
-
-/**
- * The episodes a sealed month keeps: every one that is not ok, and the excused
- * parts of ok ones. Unmeasured time is "counted" as unmeasured, lowering coverage.
- */
-export function sealedEpisodes(
-  episodes: readonly Episode[],
-  excusedSpans: readonly Span[],
-  strict: boolean,
-): SealedEpisodeRow[] {
-  const { kept, excused } = cutExcused(episodes, excusedSpans);
-  const rows: SealedEpisodeRow[] = [
-    ...kept
-      .filter((e) => e.kind !== "ok")
-      .map((e) => ({
-        ...e,
-        treatment:
-          e.kind === "degraded" && !strict
-            ? ("lenient" as const)
-            : ("counted" as const),
-      })),
-    ...excused.map((e) => ({ ...e, treatment: "excused" as const })),
-  ];
-  return rows.sort((a, b) => a.startedAt - b.startedAt);
-}
-
 /**
  * Seals each policy's previous month in its zone SEAL_DELAY_MS after it ended,
- * judged as its preview. Write-once per (policy, monitor, month); no audit row.
+ * judged on its monitors' stored episodes. Write-once per (policy, monitor, month); no audit row.
  */
 export async function sealMonitorSlaMonths(
   args: {
@@ -144,8 +103,6 @@ export async function sealMonitorSlaMonths(
     now?: Date;
     // scope a run (tests, manual retries); default all policies
     policyIds?: number[];
-    episodesPipes?: SlaEpisodesPipes;
-    sleep?: (ms: number) => Promise<void>;
   } = {},
 ): Promise<SealMonitorSlaMonthsResult> {
   const db = args.db ?? defaultDb;
@@ -172,9 +129,6 @@ export async function sealMonitorSlaMonths(
         strict: monitorSlaPolicy.strict,
         policyCreatedAt: monitorSlaPolicy.createdAt,
         monitorId: monitor.id,
-        jobType: monitor.jobType,
-        regions: monitor.regions,
-        periodicity: monitor.periodicity,
         memberSince: monitorSlaPolicyToMonitor.createdAt,
       })
       .from(monitorSlaPolicyToMonitor)
@@ -264,13 +218,7 @@ export async function sealMonitorSlaMonths(
       [...windowsOf.values()].flat().map((w) => w.id),
     ),
   );
-  const fetched = await fetchZoneEpisodes({
-    pairs: sealable,
-    month,
-    now: nowDate,
-    pipes: () => args.episodesPipes ?? slaEpisodesPipes(defaultTb),
-    sleep: args.sleep,
-  });
+  const stored = await storedZoneEpisodes(db, sealable, windowOf);
 
   const unavailable: number[] = [];
   let sealed = 0;
@@ -279,12 +227,9 @@ export async function sealMonitorSlaMonths(
     const terms = { target, strict };
     const range = windowOf(timeZone);
     const own = windowsOf.get(policyId) ?? [];
-    const zone = fetched.get(timeZone);
+    const zone = stored.get(timeZone);
 
-    const rows: {
-      month: typeof monitorSlaSealedMonth.$inferInsert;
-      episodes: SealedEpisodeRow[];
-    }[] = [];
+    const rows: (typeof monitorSlaSealedMonth.$inferInsert)[] = [];
     for (const p of pairs) {
       const covered = coveredSpan(month, timeZone, p.memberSince, now);
       if (!zone || zone.failed.has(p.monitorId)) {
@@ -308,47 +253,32 @@ export async function sealMonitorSlaMonths(
         timeZone,
         now: nowDate,
       });
-      const counts = judged.counts ?? NO_RUNS;
-      const excused = judged.excused ?? NO_RUNS;
-      const ok = counts.ok - excused.ok;
-      const degraded = counts.degraded - excused.degraded;
+      if (
+        judged.measuredMs === null ||
+        judged.downMs === null ||
+        judged.excusedMs === null ||
+        judged.unmeasuredMs === null
+      ) {
+        continue;
+      }
       rows.push({
-        month: {
-          workspaceId,
-          monitorSlaPolicyId: policyId,
-          monitorId: p.monitorId,
-          month,
-          method: "time",
-          timeZone,
-          target: terms.target,
-          strict: terms.strict,
-          ...counts,
-          excusedOk: excused.ok,
-          excusedDegraded: excused.degraded,
-          excusedError: excused.error,
-          excusedWindows: applied,
-          total: ok + degraded + counts.error - excused.error,
-          up: ok + (terms.strict ? 0 : degraded),
-          uptime: judged.uptime,
-          met: judged.met,
-          measuredMs: judged.measuredMs,
-          downMs: judged.downMs,
-          excusedMs: judged.excusedMs,
-          unmeasuredMs: judged.unmeasuredMs,
-          coverage: judged.coverage,
-        },
-        episodes: sealedEpisodes(
-          clipEpisodes(
-            memberEpisodes(p.monitorId, zone),
-            covered.start,
-            covered.end,
-          ),
-          spans,
-          terms.strict,
-        ),
+        workspaceId,
+        monitorSlaPolicyId: policyId,
+        monitorId: p.monitorId,
+        month,
+        timeZone,
+        target: terms.target,
+        strict: terms.strict,
+        excusedWindows: applied,
+        uptime: judged.uptime,
+        met: judged.met,
+        measuredMs: judged.measuredMs,
+        downMs: judged.downMs,
+        excusedMs: judged.excusedMs,
+        unmeasuredMs: judged.unmeasuredMs,
+        coverage: judged.coverage,
       });
     }
-    // one transaction per pair keeps each write short under thousands of episodes
     for (const row of rows) {
       const inserted = await withBusyRetry(() =>
         db.transaction(async (tx) => {
@@ -372,9 +302,9 @@ export async function sealMonitorSlaMonths(
           ) {
             return null;
           }
-          const [month] = await tx
+          const written = await tx
             .insert(monitorSlaSealedMonth)
-            .values(row.month)
+            .values(row)
             .onConflictDoNothing({
               target: [
                 monitorSlaSealedMonth.monitorSlaPolicyId,
@@ -383,18 +313,7 @@ export async function sealMonitorSlaMonths(
               ],
             })
             .returning({ id: monitorSlaSealedMonth.id });
-          if (!month) return 0;
-          const episodes = row.episodes.map((e) => ({
-            workspaceId,
-            sealedMonthId: month.id,
-            ...e,
-          }));
-          for (let i = 0; i < episodes.length; i += EPISODE_INSERT_CHUNK) {
-            await tx
-              .insert(monitorSlaSealedEpisode)
-              .values(episodes.slice(i, i + EPISODE_INSERT_CHUNK));
-          }
-          return 1;
+          return written.length;
         }),
       );
       if (inserted === null) {
@@ -407,7 +326,7 @@ export async function sealMonitorSlaMonths(
   }
   if (unavailable.length > 0) {
     console.warn(
-      `monitor-sla seal: episodes unavailable for ${unavailable.length} pairs in ${month}; retried next run`,
+      `monitor-sla seal: checks not stored yet for ${unavailable.length} pairs in ${month}; retried next run`,
     );
   }
   return {
@@ -474,43 +393,28 @@ async function policyWindows(
   return out;
 }
 
-/** Episodes per time zone from the month start to now: the runs after the month weigh its last ones, as in the preview. */
-async function fetchZoneEpisodes(args: {
-  pairs: Pair[];
-  month: string;
-  now: Date;
-  pipes: () => SlaEpisodesPipes;
-  sleep?: (ms: number) => Promise<void>;
-}): Promise<Map<string, FetchedEpisodes>> {
+/** Per time zone, its monitors' stored episodes over the month; one whose store does not reach the month's end is `failed`. */
+async function storedZoneEpisodes(
+  db: DB,
+  pairs: Pair[],
+  windowOf: (timeZone: string) => SealWindow,
+): Promise<Map<string, FetchedEpisodes>> {
   const out = new Map<string, FetchedEpisodes>();
-  for (const timeZone of new Set(args.pairs.map((p) => p.timeZone))) {
-    const monitors = [
-      ...new Map(
-        args.pairs
-          .filter((p) => p.timeZone === timeZone)
-          .map((p) => [
-            p.monitorId,
-            {
-              id: p.monitorId,
-              jobType: p.jobType,
-              regions: p.regions,
-              periodicity: p.periodicity,
-            },
-          ]),
-      ).values(),
-    ];
-    const range = {
-      start: monthRange(args.month, timeZone).start,
-      end: args.now.getTime(),
-    };
-    const res = await fetchSlaEpisodes({
-      monitors,
-      fromMs: range.start,
-      toMs: range.end,
-      pipes: args.pipes,
-      sleep: args.sleep,
-    });
-    out.set(timeZone, { ...res, range });
+  for (const timeZone of new Set(pairs.map((p) => p.timeZone))) {
+    const { start, end } = windowOf(timeZone);
+    const stored = await storedEpisodes(
+      db,
+      pairs.filter((p) => p.timeZone === timeZone).map((p) => p.monitorId),
+      start,
+      end,
+    );
+    const episodes = new Map<number, Episode[]>();
+    const failed = new Set<number>();
+    for (const [id, list] of stored) {
+      if (list) episodes.set(id, list);
+      else failed.add(id);
+    }
+    out.set(timeZone, { episodes, failed, range: { start, end } });
   }
   return out;
 }

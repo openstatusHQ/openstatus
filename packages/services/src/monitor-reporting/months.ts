@@ -1,11 +1,9 @@
 import { TZDate } from "@date-fns/tz";
 import type { monitorSlaSealedMonth } from "@openstatus/db/src/schema";
-import type { MonitorSlaMethod } from "@openstatus/db/src/schema/monitor_sla_policies/constants";
 
 import { monthRange } from "../frozen-uptime/compute";
-import { type Counts, NO_RUNS } from "../frozen-uptime/quorum";
 import { FREEZE_CUTOFF_MS } from "../frozen-uptime/run";
-import { cutExcused, type Episode, evaluateSlaPeriod } from "./episodes";
+import { type Episode, evaluateSlaPeriod } from "./episodes";
 import type { Span } from "./excused";
 
 export const LAST_TWELVE = 12;
@@ -17,19 +15,13 @@ export type MonitorSlaMonth = {
    * not sealed yet; live: the running month, provisional; none: nothing to judge
    */
   state: "sealed" | "preview" | "live" | "none";
-  /** time: judged on time-weighted episodes; null without a judgement */
-  method: MonitorSlaMethod | null;
   /** IANA zone the month boundaries are in */
   timeZone: string;
   /** the terms that judged the month; null with no judgement */
   terms: { target: number; strict: boolean } | null;
-  /** run verdicts; null without any, or when the excused runs could not be read */
-  counts: Counts | null;
-  /** run verdicts inside excused windows, dropped from both sides; null with `counts` */
-  excused: Counts | null;
   uptime: number | null;
   met: boolean | null;
-  /** method "time" only, all ms */
+  /** all ms; null without a judgement */
   measuredMs: number | null;
   downMs: number | null;
   excusedMs: number | null;
@@ -176,38 +168,17 @@ export function emptyMonth(args: {
   month: string;
   state: MonitorSlaMonth["state"];
   timeZone: string;
-  method?: MonitorSlaMethod | null;
 }): MonitorSlaMonth {
   return {
     month: args.month,
     state: args.state,
-    method: args.method ?? null,
     timeZone: args.timeZone,
     terms: null,
-    counts: null,
-    excused: null,
     uptime: null,
     met: null,
     ...NO_TIME,
     sealed: null,
   };
-}
-
-function runsByKind(episodes: readonly Episode[]): Counts {
-  const sum = { ...NO_RUNS };
-  for (const e of episodes) if (e.kind !== "unmeasured") sum[e.kind] += e.runs;
-  return sum;
-}
-
-function dominantVerdict(episodes: readonly Episode[]): keyof Counts {
-  const ms: Counts = { ...NO_RUNS };
-  for (const e of episodes)
-    if (e.kind !== "unmeasured") ms[e.kind] += e.weightedMs;
-  return ms.error >= ms.degraded && ms.error >= ms.ok
-    ? "error"
-    : ms.degraded >= ms.ok
-      ? "degraded"
-      : "ok";
 }
 
 /**
@@ -231,28 +202,11 @@ export function timeMonth(args: {
     strict: terms.strict,
     coveredMs: Math.max(args.covered.end - args.covered.start, 0),
   });
-  const cut = cutExcused(args.episodes, args.excusedSpans);
-  const kept = runsByKind(cut.kept);
-  const excused = runsByKind(cut.excused);
-  const runsIn = (c: Counts) => c.ok + c.degraded + c.error;
-  if (result.measuredMs > 0 && runsIn(kept) + runsIn(excused) === 0) {
-    // a measured slice with no run estimated inside it still stands for one
-    kept[dominantVerdict(cut.kept)] += 1;
-  }
-  const all = {
-    ok: kept.ok + excused.ok,
-    degraded: kept.degraded + excused.degraded,
-    error: kept.error + excused.error,
-  };
-  const anyRuns = all.ok + all.degraded + all.error > 0;
   return {
     month: args.month,
     state: args.state,
-    method: "time",
     timeZone: args.timeZone,
     terms: { target: terms.target, strict: terms.strict },
-    counts: anyRuns ? all : null,
-    excused: anyRuns ? excused : null,
     uptime: result.uptime,
     met: result.met,
     measuredMs: result.measuredMs,
@@ -276,15 +230,8 @@ export function storedMonth(args: {
   return {
     month,
     state: "sealed",
-    method: seal.method,
     timeZone: seal.timeZone,
     terms: { target: seal.target, strict: seal.strict },
-    counts: { ok: seal.ok, degraded: seal.degraded, error: seal.error },
-    excused: {
-      ok: seal.excusedOk,
-      degraded: seal.excusedDegraded,
-      error: seal.excusedError,
-    },
     uptime: seal.uptime,
     met: seal.met,
     measuredMs: seal.measuredMs,

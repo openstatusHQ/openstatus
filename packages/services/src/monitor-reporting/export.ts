@@ -27,14 +27,9 @@ const COLUMNS = [
   "monitor_url",
   "month",
   "state",
-  "ok_runs",
-  "degraded_runs",
-  "failed_runs",
-  "excused_runs",
   "uptime",
   "met",
   "sealed_at",
-  "method",
   "time_zone",
   "measured_ms",
   "down_ms",
@@ -99,7 +94,7 @@ export async function exportMonitorReporting(args: {
 
   const lines = [
     `# ${MONITOR_SLA_METHOD}`,
-    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Runs inside the policy's excused windows are left out of both sides of the uptime; excused_runs counts them, and a month whose runs were all excused has no judgement. Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement. Uptime is in percent, floored to three decimals. ${
+    `# Generated ${now.toISOString()} by openstatus. Months are calendar months in ${timeZone}. Time inside the policy's excused windows is left out of both sides of the uptime; excused_ms holds it, and a month that was excused entirely has no judgement. Durations are in milliseconds: measured_ms is the judged time with a check verdict, down_ms the part of it that counts against the target, unmeasured_ms the judged time without one. Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement. Uptime is in percent, floored to three decimals. ${
       input.includeLive
         ? "Live months are provisional: they are not sealed yet and will change."
         : "Live months are not included."
@@ -124,18 +119,9 @@ export async function exportMonitorReporting(args: {
           cell(m.url),
           cell(mm.month.slice(0, 7)),
           cell(mm.state === "live" ? "live (provisional)" : mm.state),
-          cell(mm.counts?.ok ?? null),
-          cell(mm.counts?.degraded ?? null),
-          cell(mm.counts?.error ?? null),
-          cell(
-            mm.excused
-              ? mm.excused.ok + mm.excused.degraded + mm.excused.error
-              : null,
-          ),
           cell(mm.uptime === null ? null : formatSlaUptime(mm.uptime)),
           cell(mm.met === null ? null : mm.met ? "yes" : "no"),
           cell(mm.sealed?.at.toISOString() ?? null),
-          cell(mm.method),
           cell(mm.timeZone),
           cell(mm.measuredMs),
           cell(mm.downMs),

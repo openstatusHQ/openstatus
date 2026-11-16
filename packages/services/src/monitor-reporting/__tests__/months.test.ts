@@ -197,8 +197,7 @@ describe("time-zoned month boundaries", () => {
 });
 
 describe("timeMonth", () => {
-  test("measured time always carries run counts", () => {
-    // the month opens on the tail of a run from the month before
+  test("a month opening on the tail of an outage is judged on that time", () => {
     const month = timeMonth({
       month: "2026-11-01",
       state: "live",
@@ -207,8 +206,6 @@ describe("timeMonth", () => {
           kind: "error",
           startedAt: Date.UTC(2026, 10, 1),
           endedAt: Date.UTC(2026, 10, 1) + 30_000,
-          runs: 0,
-          weightedMs: 30_000,
         },
       ],
       covered: {
@@ -220,12 +217,12 @@ describe("timeMonth", () => {
       timeZone: "UTC",
     });
     expect(month.measuredMs).toBe(30_000);
-    expect(month.counts).toEqual({ ok: 0, degraded: 0, error: 1 });
-    expect(month.excused).toEqual({ ok: 0, degraded: 0, error: 0 });
+    expect(month.downMs).toBe(30_000);
+    expect(month.excusedMs).toBe(0);
     expect(month.uptime).toBe(0);
   });
 
-  test("a run cut into an excused window is not counted again as kept", () => {
+  test("an outage cut by an excused window counts only its part outside it", () => {
     const start = Date.UTC(2026, 10, 2);
     const month = timeMonth({
       month: "2026-11-01",
@@ -235,8 +232,6 @@ describe("timeMonth", () => {
           kind: "error",
           startedAt: start,
           endedAt: start + 60_000,
-          runs: 1,
-          weightedMs: 60_000,
         },
       ],
       covered: { start, end: start + 60_000 },
@@ -245,8 +240,8 @@ describe("timeMonth", () => {
       timeZone: "UTC",
     });
     expect(month.measuredMs).toBe(50_000);
-    expect(month.counts).toEqual({ ok: 0, degraded: 0, error: 1 });
-    expect(month.excused).toEqual({ ok: 0, degraded: 0, error: 1 });
+    expect(month.downMs).toBe(50_000);
+    expect(month.excusedMs).toBe(10_000);
   });
 });
 
@@ -257,10 +252,9 @@ describe("storedMonth", () => {
         storedMonth({ month: "2026-01-01", seal: undefined, timeZone }),
       ).toMatchObject({
         state: "none",
-        method: null,
         met: null,
         uptime: null,
-        counts: null,
+        measuredMs: null,
         timeZone,
       });
     }

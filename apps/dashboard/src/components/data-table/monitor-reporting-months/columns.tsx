@@ -16,27 +16,24 @@ type PolicyMonitor =
   RouterOutputs["monitorReporting"]["get"]["monitors"][number];
 type PolicyMonth = PolicyMonitor["months"][number];
 
-/** How the month was judged, with coverage. */
+/** The month's coverage and down time. */
 function basisNote(m: PolicyMonth): string | null {
-  if (m.method === "time") {
-    const parts = ["judged on time"];
-    if (m.coverage !== null) {
-      parts.push(`${formatSlaCoverage(m.coverage)}% of the time measured`);
-    }
-    if (m.downMs !== null && m.downMs > 0) {
-      parts.push(`${formatSlaDuration(m.downMs)} down`);
-    }
-    return parts.join(", ");
+  const parts: string[] = [];
+  if (m.coverage !== null) {
+    parts.push(`${formatSlaCoverage(m.coverage)}% of the time measured`);
   }
-  return null;
+  if (m.downMs !== null && m.downMs > 0) {
+    parts.push(`${formatSlaDuration(m.downMs)} down`);
+  }
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 function monthTitle(m: PolicyMonth): string {
   const label = `${formatSlaMonth(m.month, { year: true })} (${m.timeZone})`;
   const basis = basisNote(m);
   const suffix = basis ? ` (${basis})` : "";
-  if (m.uptime === null && m.counts !== null) {
-    return `${label}: every run excused, no judgement`;
+  if (m.uptime === null && m.excusedMs !== null && m.excusedMs > 0) {
+    return `${label}: all measured time excused, no judgement`;
   }
   if (m.uptime === null) {
     if (m.state === "live") return `${label}: no checks yet, provisional`;

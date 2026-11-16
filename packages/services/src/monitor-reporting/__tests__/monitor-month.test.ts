@@ -9,8 +9,9 @@ import {
   monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
-  monitorSlaSealedEpisode,
   monitorSlaSealedMonth,
+  monitorUptimeEpisode,
+  monitorUptimeWatermark,
   page,
   pageComponent,
 } from "@openstatus/db/src/schema";
@@ -244,7 +245,6 @@ describe("getMonitorReportingMonth", () => {
       expect(res).toMatchObject({
         month: "2026-11-01",
         state: "live",
-        method: "time",
         timeZone: "UTC",
         terms: { target: 99_900, strict: false },
         measuredMs: measured,
@@ -271,8 +271,6 @@ describe("getMonitorReportingMonth", () => {
           kind: "degraded",
           startedAt: DEGRADED_AT,
           endedAt: DEGRADED_AT + 20 * MIN,
-          runs: 2,
-          weightedMs: 20 * MIN,
           treatment: "lenient",
           maintenance: null,
         },
@@ -280,8 +278,6 @@ describe("getMonitorReportingMonth", () => {
           kind: "error",
           startedAt: ERROR_AT,
           endedAt: ERROR_AT + 30 * MIN,
-          runs: 3,
-          weightedMs: 30 * MIN,
           treatment: "counted",
           maintenance: null,
         },
@@ -299,11 +295,8 @@ describe("getMonitorReportingMonth", () => {
       expect(live).toEqual({
         month: res.month,
         state: res.state,
-        method: res.method,
         timeZone: res.timeZone,
         terms: res.terms,
-        counts: res.counts,
-        excused: res.excused,
         uptime: res.uptime,
         met: res.met,
         measuredMs: res.measuredMs,
@@ -396,8 +389,6 @@ describe("getMonitorReportingMonth", () => {
           kind: "unmeasured",
           startedAt: gap,
           endedAt: gap + 4 * HOUR,
-          runs: 0,
-          weightedMs: 4 * HOUR,
           treatment: "unmeasured",
           maintenance: { kind: "page", id: upgrade.id, title: "DB upgrade" },
         },
@@ -526,12 +517,79 @@ describe("getMonitorReportingMonth", () => {
     });
   });
 
-  test("a sealed month reads its stored episodes", async () => {
+  const OCT = Date.UTC(2026, 9, 1);
+
+  async function sealOctober(
+    tx: Tx,
+    policyId: number,
+    monitorId: number,
+    overrides: Partial<typeof monitorSlaSealedMonth.$inferInsert> = {},
+  ) {
+    await tx.insert(monitorSlaSealedMonth).values({
+      workspaceId: ctx.workspace.id,
+      monitorSlaPolicyId: policyId,
+      monitorId,
+      month: "2026-10-01",
+      timeZone: "UTC",
+      target: 99_500,
+      strict: false,
+      uptime: 99_000,
+      met: false,
+      measuredMs: 31 * DAY - 2 * HOUR,
+      downMs: HOUR,
+      excusedMs: HOUR,
+      unmeasuredMs: HOUR,
+      coverage: 99_800,
+      sealedAt: new Date(Date.UTC(2026, 10, 4)),
+      ...overrides,
+    });
+  }
+
+  /** The monitor's store from Sep 20 to Nov 3: `episodes` in order, ok in between. */
+  async function storeOctober(
+    tx: Tx,
+    monitorId: number,
+    episodes: ["degraded" | "error" | "unmeasured", number, number][],
+  ) {
+    const sealedFrom = OCT - 11 * DAY;
+    const sealedUntil = OCT + 33 * DAY;
+    await tx.insert(monitorUptimeWatermark).values({
+      workspaceId: ctx.workspace.id,
+      monitorId,
+      sealedFrom,
+      sealedUntil,
+    });
+    const rows: (typeof monitorUptimeEpisode.$inferInsert)[] = [];
+    let cursor = sealedFrom;
+    const add = (
+      kind: "ok" | "degraded" | "error" | "unmeasured",
+      startedAt: number,
+      endedAt: number,
+    ) => {
+      if (endedAt > startedAt) {
+        rows.push({
+          workspaceId: ctx.workspace.id,
+          monitorId,
+          kind,
+          startedAt,
+          endedAt,
+        });
+      }
+    };
+    for (const [kind, startedAt, ms] of episodes) {
+      add("ok", cursor, startedAt);
+      add(kind, startedAt, startedAt + ms);
+      cursor = startedAt + ms;
+    }
+    add("ok", cursor, sealedUntil);
+    await tx.insert(monitorUptimeEpisode).values(rows);
+  }
+
+  test("a sealed month derives its episodes and their treatment from the store", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id], { target: 99_000 });
-      const oct = Date.UTC(2026, 9, 1);
-      const gapAt = oct + 10 * DAY;
+      const gapAt = OCT + 10 * DAY;
       const upgrade = await insertMaintenance(
         tx,
         api.id,
@@ -539,58 +597,25 @@ describe("getMonitorReportingMonth", () => {
         gapAt,
         gapAt + HOUR,
       );
-      const seal = await tx
-        .insert(monitorSlaSealedMonth)
-        .values({
-          workspaceId: ctx.workspace.id,
-          monitorSlaPolicyId: policy.id,
-          monitorId: api.id,
-          month: "2026-10-01",
-          method: "time",
-          timeZone: "UTC",
-          target: 99_500,
-          strict: false,
-          ok: 4000,
-          degraded: 3,
-          error: 6,
-          excusedError: 1,
-          total: 4009,
-          up: 4003,
-          uptime: 99_000,
-          met: false,
-          measuredMs: 31 * DAY - 2 * HOUR,
-          downMs: HOUR,
-          excusedMs: HOUR,
-          unmeasuredMs: HOUR,
-          coverage: 99_800,
-          sealedAt: new Date(Date.UTC(2026, 10, 2)),
-        })
-        .returning()
-        .get();
-      const ep = (
-        kind: "ok" | "degraded" | "error" | "unmeasured",
-        startedAt: number,
-        ms: number,
-        treatment: "counted" | "excused" | "lenient",
-      ) => ({
-        workspaceId: ctx.workspace.id,
-        sealedMonthId: seal.id,
-        kind,
-        startedAt,
-        endedAt: startedAt + ms,
-        runs: kind === "unmeasured" ? 0 : Math.max(1, ms / (10 * MIN)),
-        weightedMs: ms,
-        treatment,
+      await sealOctober(tx, policy.id, api.id, {
+        excusedWindows: [
+          {
+            id: 1,
+            kind: "third_party",
+            reason: "Upstream outage",
+            from: OCT + 20 * DAY,
+            to: OCT + 20 * DAY + HOUR,
+          },
+        ],
       });
-      await tx
-        .insert(monitorSlaSealedEpisode)
-        .values([
-          ep("ok", oct, 2 * DAY, "counted"),
-          ep("error", oct + 2 * DAY, HOUR, "counted"),
-          ep("degraded", oct + 5 * DAY, 30 * MIN, "lenient"),
-          ep("unmeasured", gapAt, HOUR, "counted"),
-          ep("error", oct + 20 * DAY, HOUR, "excused"),
-        ]);
+      await storeOctober(tx, api.id, [
+        ["error", OCT - 2 * DAY, HOUR],
+        ["error", OCT + 2 * DAY, HOUR],
+        ["degraded", OCT + 5 * DAY, 30 * MIN],
+        ["unmeasured", gapAt, HOUR],
+        ["error", OCT + 20 * DAY, HOUR],
+        ["error", OCT + 32 * DAY, HOUR],
+      ]);
 
       const res = await getMonitorReportingMonth({
         ctx: { ...ctx, db: tx },
@@ -601,7 +626,6 @@ describe("getMonitorReportingMonth", () => {
       expect(res).toMatchObject({
         month: "2026-10-01",
         state: "sealed",
-        method: "time",
         terms: { target: 99_500, strict: false },
         episodesUnavailable: null,
       });
@@ -629,6 +653,111 @@ describe("getMonitorReportingMonth", () => {
         measuredMs: measured,
         remainingMs: 0,
       });
+    });
+  });
+
+  test("the seal's own terms and windows decide the treatment, cut at the window's edge", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      // the policy turned lenient and lost its window after the month sealed
+      const policy = await insertPolicy(tx, [api.id]);
+      const outage = OCT + 20 * DAY;
+      await sealOctober(tx, policy.id, api.id, {
+        strict: true,
+        excusedMs: 30 * MIN,
+        unmeasuredMs: 0,
+        measuredMs: 31 * DAY - 30 * MIN,
+        excusedWindows: [
+          {
+            id: 1,
+            kind: "maintenance",
+            reason: "Database upgrade",
+            from: outage + 30 * MIN,
+            to: outage + 2 * HOUR,
+          },
+        ],
+      });
+      await storeOctober(tx, api.id, [
+        ["degraded", OCT + 5 * DAY, 30 * MIN],
+        ["error", outage, HOUR],
+      ]);
+
+      const res = await getMonitorReportingMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id, month: "2026-10" },
+        now,
+        episodesPipes: failingEpisodesPipes(),
+      });
+      expect(
+        res.episodes?.map((e) => [
+          e.kind,
+          e.treatment,
+          e.startedAt,
+          e.endedAt - e.startedAt,
+        ]),
+      ).toEqual([
+        ["error", "excused", outage + 30 * MIN, 30 * MIN],
+        ["error", "counted", outage, 30 * MIN],
+        ["degraded", "counted", OCT + 5 * DAY, 30 * MIN],
+      ]);
+    });
+  });
+
+  test("a member that joined mid-month shows only its covered part", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      // sealed over the last 15 days of October
+      await sealOctober(tx, policy.id, api.id, {
+        measuredMs: 15 * DAY - HOUR,
+        downMs: HOUR,
+        excusedMs: 0,
+        unmeasuredMs: HOUR,
+      });
+      await storeOctober(tx, api.id, [
+        ["error", OCT + 2 * DAY, HOUR],
+        ["unmeasured", OCT + 16 * DAY - 30 * MIN, HOUR],
+        ["error", OCT + 20 * DAY, HOUR],
+      ]);
+
+      const res = await getMonitorReportingMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id, month: "2026-10" },
+        now,
+        episodesPipes: failingEpisodesPipes(),
+      });
+      expect(
+        res.episodes?.map((e) => [e.kind, e.startedAt, e.endedAt]),
+      ).toEqual([
+        ["error", OCT + 20 * DAY, OCT + 20 * DAY + HOUR],
+        ["unmeasured", OCT + 16 * DAY, OCT + 16 * DAY + 30 * MIN],
+      ]);
+      expect(res.budget?.monthMs).toBe(15 * DAY);
+    });
+  });
+
+  test("a sealed month whose checks are not stored keeps its figures, without episodes", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      await sealOctober(tx, policy.id, api.id);
+
+      const res = await getMonitorReportingMonth({
+        ctx: { ...ctx, db: tx },
+        input: { id: policy.id, monitorId: api.id, month: "2026-10" },
+        now,
+        episodesPipes: failingEpisodesPipes(),
+      });
+      expect(res).toMatchObject({
+        state: "sealed",
+        measuredMs: 31 * DAY - 2 * HOUR,
+        downMs: HOUR,
+        uptime: 99_000,
+        met: false,
+        episodes: null,
+        episodesUnavailable: "expired",
+      });
+      expect(res.budget).toMatchObject({ burnedMs: HOUR, monthMs: 31 * DAY });
     });
   });
 

@@ -76,14 +76,14 @@ The reporting page shows a table of its monitors against the last 12 or 24 month
 
 | State | When | Figures from | Target and strict mode |
 |---|---|---|---|
-| Sealed | The month was sealed for this monitor and reporting. | The counts stored at sealing. | The ones stored at sealing. |
+| Sealed | The month was sealed for this monitor and reporting. | The times stored at sealing. | The ones stored at sealing. |
 | Preview | The previous month, over and not sealed yet (at most 45 days after it began). | Its checks. | The ones that will seal it. |
 | Live, provisional | The running month. | Its checks so far. | The ones in effect this month. |
 | None | Any other month: before the reporting or the monitor's membership, or never sealed. | — | — |
 
 - Sealed cells are filled; preview cells have a dashed border; live cells use a distinct tone. Hover a sealed cell for its seal date and stored terms.
 - Months are only judged from their own checks or their seal. A month older than the previous one that was never sealed has no figure.
-- A live month below target is a miss in progress, not a result. If recent counts cannot be loaded, the page still renders and says the recent weeks may be incomplete.
+- A live month below target is a miss in progress, not a result. If recent checks cannot be loaded, the page still renders and says the recent weeks may be incomplete.
 
 ### Month detail
 
@@ -97,19 +97,23 @@ Select any month cell to open that monitor's month in a side sheet. The month is
 | What used the budget | The month's down, slow, unmeasured and excused stretches, newest first, with how each was treated: counted, counted as up, excused or not measured. It lists the latest 50 and says how many older ones there are. |
 
 - The header says whether the month is sealed, a preview or live.
-- Sealed months read from what was stored at sealing, so the detail of a month stays available after its checks expire.
+- A sealed month lists its stretches from the monitor's [stored checks](#sealing), cut by the excused windows and the strict setting it was sealed with, so what used the budget stays visible after the raw checks expire.
 - **Excuse a window** opens the [excused window](#excused-windows) dialog prefilled with the latest counted stretch. It is offered for the live and the preview month only, since older and sealed months are locked.
 
 ### Sealing
 
-A task seals the previous month. For each monitor in a reporting it seals the month when all of these hold:
+Sealing works in two steps, both run by a daily task.
+
+First, the checks of every monitor in a reporting that is not archived are stored a day behind, as its up, slow, down and unmeasured stretches. They are stored once per monitor, so a monitor in two reportings is measured once and both seal from the same record. A monitor that is in no reporting is not stored; when it joins one, its record starts with the checks still kept, at most 40 days back.
+
+Then the previous month is sealed from that store. For each monitor in a reporting the task seals the month when all of these hold:
 
 - At least 72 hours have passed since the month ended in the reporting's time zone, so a reporting can still be corrected or deleted. Checks are kept for 45 days, so a month not sealed within 45 days of its start is never sealed.
 - The reporting, and the monitor's membership in it, both existed before the month ended. A reporting created on November 5 is first sealed for November, never for October.
-- The month's checks load. If not, the next run tries again.
+- The monitor's checks are stored up to the end of the month. If not, the next run tries again.
 - The reporting is not archived, the monitor is not deleted and the workspace's plan includes reportings.
 
-Sealing stores the measured, down, excused and unmeasured time, the run counts, the excused windows that applied, the target and the strict setting of that moment, and the month's episodes: down, slow, unmeasured and excused stretches. It never changes afterwards. A month whose time was all excused is sealed without a judgement and keeps its windows. A month that is still unsealed when it stops being the previous month shows no figure.
+Sealing stores the measured, down, excused and unmeasured time, the excused windows that applied, and the target and the strict setting of that moment. It never changes afterwards. The stretches behind the figure stay in the monitor's stored checks. A month whose time was all excused is sealed without a judgement and keeps its windows. A month that is still unsealed when it stops being the previous month shows no figure.
 
 ### Missed months
 
@@ -124,7 +128,7 @@ When a sealed month misses its target, the workspace owners get one email per re
 
 ## Excused windows
 
-An excused window is a stretch of time whose runs do not count for the monitors it names: a planned maintenance, an outage caused by the customer, a provider failure your contract excludes. Add one from the **Excused downtime** section of the reporting page with **Add window**.
+An excused window is a stretch of time that does not count for the monitors it names: a planned maintenance, an outage caused by the customer, a provider failure your contract excludes. Add one from the **Excused downtime** section of the reporting page with **Add window**.
 
 | Field | Description |
 |---|---|
@@ -158,7 +162,7 @@ The **Export** button on a reporting's page downloads its months as a CSV file, 
 - Live months are left out unless you tick **Include live months**. They are then marked `live (provisional)`.
 - The figures equal the ones on the page. Sealed rows carry the target and strict setting they were sealed with.
 
-The first line states the method. The second says when the file was generated, which time zone the calendar months are in, that excused runs are left out of both sides, and that uptime is floored to three decimals. Then the columns:
+The first line states the method. The second says when the file was generated, which time zone the calendar months are in, that excused time is left out of both sides, that durations are in milliseconds, and that uptime is floored to three decimals. Then the columns:
 
 | Column | Description |
 |---|---|
@@ -168,14 +172,14 @@ The first line states the method. The second says when the file was generated, w
 | `monitor_id`, `monitor_name`, `monitor_url` | The monitor. |
 | `month` | `YYYY-MM`. |
 | `state` | `sealed`, `preview`, `live (provisional)` or `none`. |
-| `ok_runs`, `degraded_runs`, `failed_runs` | Run counts by verdict; slow runs are `degraded_runs`. |
-| `excused_runs` | Runs inside the reporting's [excused windows](#excused-windows), left out of both sides of the uptime. `0` without windows. Empty without runs. |
-| `uptime` | Percent, floored to three decimals. Empty without runs, or when every run was excused. |
-| `met` | `yes`, `no`, or empty without runs or when every run was excused. |
+| `uptime` | Percent, floored to three decimals. Empty when nothing was measured, or when all of it was excused. |
+| `met` | `yes`, `no`, or empty when nothing was measured or all of it was excused. |
 | `sealed_at` | ISO timestamp, sealed rows only. |
-| `method` | `time`, see [method](#method). Empty for `none` rows. |
 | `time_zone` | The zone the month is in. |
-| `measured_ms`, `down_ms`, `excused_ms`, `unmeasured_ms` | Time in milliseconds. |
+| `measured_ms` | Time with a check verdict, outside the [excused windows](#excused-windows), in milliseconds. See [method](#method). |
+| `down_ms` | The part of the measured time that counts against the target, in milliseconds. |
+| `excused_ms` | Time inside the excused windows, left out of both sides of the uptime, in milliseconds. `0` without windows. |
+| `unmeasured_ms` | Time outside the excused windows without a check verdict, in milliseconds. |
 | `coverage` | Measured share of the non-excused time, in percent. |
 
 ## Maintenance

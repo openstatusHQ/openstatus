@@ -183,10 +183,10 @@ describe("slaTreatmentTotals", () => {
   test("sums per treatment in label order and drops empty ones", () => {
     expect(
       slaTreatmentTotals([
-        { treatment: "excused", weightedMs: 5 },
-        { treatment: "counted", weightedMs: 10 },
-        { treatment: "counted", weightedMs: 20 },
-        { treatment: "unmeasured", weightedMs: 0 },
+        { treatment: "excused", startedAt: 0, endedAt: 5 },
+        { treatment: "counted", startedAt: 10, endedAt: 20 },
+        { treatment: "counted", startedAt: 40, endedAt: 60 },
+        { treatment: "unmeasured", startedAt: 60, endedAt: 60 },
       ]),
     ).toEqual([
       { treatment: "counted", ms: 30 },

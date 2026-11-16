@@ -352,7 +352,7 @@ export function Client() {
           <SlaMonthLegendItem swatch="border-muted-foreground border border-dashed">
             Preview, not sealed yet
           </SlaMonthLegendItem>
-          <span>Filled: sealed, hover for its terms and method</span>
+          <span>Filled: sealed, hover for its terms</span>
           <span>— no checks, or unavailable in this time zone</span>
           <span>Months in {policy.timeZone}</span>
           <span>
@@ -361,7 +361,7 @@ export function Client() {
         </SlaMonthLegend>
         {live && policy.liveIncomplete ? (
           <p className="text-warning text-sm">
-            Recent counts could not be loaded, so the recent weeks may be
+            Recent checks could not be loaded, so the recent weeks may be
             incomplete. Sealed months are not affected.
           </p>
         ) : null}

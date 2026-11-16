@@ -21,6 +21,13 @@ export {
   type MonitorReportingMonthEpisode,
 } from "./monitor-month";
 export { type SealMonitorSlaMonthsResult, sealMonitorSlaMonths } from "./seal";
+export {
+  type SealMonitorUptimeResult,
+  sealMonitorUptime,
+  UPTIME_SEAL_LAG_MS,
+  UPTIME_SEAL_MARGIN_MS,
+  UPTIME_SEAL_MAX_RANGE_MS,
+} from "./seal-uptime";
 export { previewMonitorReportingExcusedWindow } from "./preview-excused-window";
 export { removeMonitorReportingExcusedWindow } from "./remove-excused-window";
 export { updateMonitorReporting } from "./update";

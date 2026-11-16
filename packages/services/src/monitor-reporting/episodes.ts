@@ -2,13 +2,11 @@ import type { Span } from "./excused";
 
 export type Verdict = "ok" | "degraded" | "error";
 
-/** Half-open [startedAt, endedAt) in ms epoch; unmeasured episodes have runs = 0. */
+/** Half-open [startedAt, endedAt) in ms epoch. */
 export type Episode = {
   kind: Verdict | "unmeasured";
   startedAt: number;
   endedAt: number;
-  runs: number;
-  weightedMs: number;
 };
 
 export type SlaPeriodResult = {
@@ -53,32 +51,19 @@ export function episodesFromRuns(args: {
   const { fromMs, toMs, fallbackIntervalMs } = args;
   if (toMs <= fromMs) return [];
   const out: Episode[] = [];
-  const emit = (
-    kind: Episode["kind"],
-    start: number,
-    end: number,
-    runs: number,
-  ) => {
-    if (end <= start && runs === 0) return;
+  const emit = (kind: Episode["kind"], start: number, end: number) => {
+    if (end <= start) return;
     const last = out.at(-1);
     if (last && last.kind === kind && last.endedAt === start) {
       last.endedAt = end;
-      last.runs += runs;
-      last.weightedMs += end - start;
     } else {
-      out.push({
-        kind,
-        startedAt: start,
-        endedAt: end,
-        runs,
-        weightedMs: end - start,
-      });
+      out.push({ kind, startedAt: start, endedAt: end });
     }
   };
 
   const runs = uniqueRuns(args.runs, fromMs, toMs);
   if (runs.length === 0) {
-    emit("unmeasured", fromMs, toMs, 0);
+    emit("unmeasured", fromMs, toMs);
     return out;
   }
   const gap = (i: number) => runs[i + 1].at - runs[i].at;
@@ -90,7 +75,6 @@ export function episodesFromRuns(args: {
     head <= 2 * headCadence ? runs[0].verdict : "unmeasured",
     fromMs,
     runs[0].at,
-    0,
   );
 
   for (let i = 0; i < n; i++) {
@@ -107,10 +91,10 @@ export function episodesFromRuns(args: {
       c = n > 1 ? gap(n - 2) : fallbackIntervalMs;
     }
     if (g <= 2 * c) {
-      emit(verdict, at, at + g, 1);
+      emit(verdict, at, at + g);
     } else {
-      emit(verdict, at, at + c, 1);
-      emit("unmeasured", at + c, at + g, 0);
+      emit(verdict, at, at + c);
+      emit("unmeasured", at + c, at + g);
     }
   }
   return out;
@@ -129,30 +113,7 @@ function normalizeSpans(spans: readonly Span[]): Span[] {
   return merged;
 }
 
-// floor shares, remainder to the last piece, so the pieces sum to `total` exactly
-function prorate(total: number, lengths: readonly number[]): number[] {
-  const whole = lengths.reduce((s, l) => s + l, 0);
-  if (whole <= 0)
-    return lengths.map((_, i) => (i === lengths.length - 1 ? total : 0));
-  const shares = lengths.map((l) =>
-    Number((BigInt(total) * BigInt(l)) / BigInt(whole)),
-  );
-  shares[shares.length - 1] =
-    total - shares.slice(0, -1).reduce((s, x) => s + x, 0);
-  return shares;
-}
-
-// runs of `e` at offsets below `offset`, run i of n sitting at floor(i × length / n)
-function runsBefore(e: Episode, offset: number): number {
-  const length = e.endedAt - e.startedAt;
-  if (offset <= 0 || e.runs === 0) return 0;
-  if (offset >= length) return e.runs;
-  const n = BigInt(e.runs);
-  const at = (BigInt(offset) * n + BigInt(length) - BigInt(1)) / BigInt(length);
-  return Number(at < n ? at : n);
-}
-
-/** Splits episodes at the edges of `spans` (ms-precise); weights are prorated by overlap, runs by their estimated positions (see runsBefore). */
+/** Splits episodes at the edges of `spans`: the parts outside them are kept, the parts inside excused. */
 export function cutExcused(
   episodes: readonly Episode[],
   spans: readonly Span[],
@@ -175,25 +136,13 @@ export function cutExcused(
     if (cursor < e.endedAt || pieces.length === 0) {
       pieces.push({ start: cursor, end: e.endedAt, excused: false });
     }
-    if (pieces.length === 1) {
-      (pieces[0].excused ? excused : kept).push(e);
-      continue;
-    }
-    const weights = prorate(
-      e.weightedMs,
-      pieces.map((p) => p.end - p.start),
-    );
-    pieces.forEach((p, i) => {
+    for (const p of pieces) {
       (p.excused ? excused : kept).push({
         kind: e.kind,
         startedAt: p.start,
         endedAt: p.end,
-        runs:
-          runsBefore(e, p.end - e.startedAt) -
-          runsBefore(e, p.start - e.startedAt),
-        weightedMs: weights[i],
       });
-    });
+    }
   }
   return { kept, excused };
 }
@@ -211,13 +160,14 @@ export function evaluateSlaPeriod(args: {
   let downMs = 0;
   let unmeasuredMs = 0;
   for (const e of kept) {
+    const ms = e.endedAt - e.startedAt;
     if (e.kind === "unmeasured") {
-      unmeasuredMs += e.weightedMs;
+      unmeasuredMs += ms;
       continue;
     }
-    measuredMs += e.weightedMs;
+    measuredMs += ms;
     if (e.kind === "error" || (args.strict && e.kind === "degraded")) {
-      downMs += e.weightedMs;
+      downMs += ms;
     }
   }
   const excusedMs = excused.reduce((s, e) => s + e.endedAt - e.startedAt, 0);

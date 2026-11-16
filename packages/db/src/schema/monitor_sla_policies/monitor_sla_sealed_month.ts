@@ -9,12 +9,8 @@ import {
 
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
-import {
-  type MonitorSlaExcusedWindowKind,
-  monitorSlaMethods,
-} from "./constants";
+import type { MonitorSlaExcusedWindowKind } from "./constants";
 import { monitorSlaPolicy } from "./monitor_sla_policy";
-import { monitorSlaSealedEpisode } from "./monitor_sla_sealed_episode";
 
 export type MonitorSlaSealedWindow = {
   id: number;
@@ -41,36 +37,23 @@ export const monitorSlaSealedMonth = sqliteTable(
       .references(() => monitor.id, { onDelete: "cascade" }),
     // first of the month in time_zone, YYYY-MM-01
     month: text("month").notNull(),
-    method: text("method", { enum: monitorSlaMethods })
-      .notNull()
-      .default("time"),
     timeZone: text("time_zone").notNull().default("UTC"),
 
     target: integer("target").notNull(),
     strict: integer("strict", { mode: "boolean" }).notNull(),
 
-    ok: integer("ok").notNull(),
-    degraded: integer("degraded").notNull(),
-    error: integer("error").notNull(),
-    // run verdicts inside the excused windows, dropped from both sides
-    excusedOk: integer("excused_ok").notNull().default(0),
-    excusedDegraded: integer("excused_degraded").notNull().default(0),
-    excusedError: integer("excused_error").notNull().default(0),
     // the windows that applied, as they were when the month sealed
     excusedWindows: text("excused_windows", { mode: "json" })
       .$type<MonitorSlaSealedWindow[]>()
       .notNull()
       .default(sql`'[]'`),
-    total: integer("total").notNull(),
-    up: integer("up").notNull(),
-    // thousandths of a percent, floored; null when every run was excused
+    // thousandths of a percent, floored; null when nothing was measured
     uptime: integer("uptime"),
     met: integer("met", { mode: "boolean" }),
-    // method "time" only; null on run-count rows
-    measuredMs: integer("measured_ms"),
-    downMs: integer("down_ms"),
-    excusedMs: integer("excused_ms"),
-    unmeasuredMs: integer("unmeasured_ms"),
+    measuredMs: integer("measured_ms").notNull(),
+    downMs: integer("down_ms").notNull(),
+    excusedMs: integer("excused_ms").notNull(),
+    unmeasuredMs: integer("unmeasured_ms").notNull(),
     // thousandths of a percent, floored
     coverage: integer("coverage"),
 
@@ -92,7 +75,7 @@ export const monitorSlaSealedMonth = sqliteTable(
 
 export const monitorSlaSealedMonthRelations = relations(
   monitorSlaSealedMonth,
-  ({ one, many }) => ({
+  ({ one }) => ({
     policy: one(monitorSlaPolicy, {
       fields: [monitorSlaSealedMonth.monitorSlaPolicyId],
       references: [monitorSlaPolicy.id],
@@ -101,6 +84,5 @@ export const monitorSlaSealedMonthRelations = relations(
       fields: [monitorSlaSealedMonth.monitorId],
       references: [monitor.id],
     }),
-    episodes: many(monitorSlaSealedEpisode),
   }),
 );

@@ -4,7 +4,6 @@ import {
   maintenancesToPageComponents,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
-  monitorSlaSealedEpisode,
   monitorSlaSealedMonth,
   pageComponent,
 } from "@openstatus/db/src/schema";
@@ -33,6 +32,7 @@ import {
   storedMonth,
 } from "./months";
 import { GetMonitorReportingMonthInput } from "./schemas";
+import { storedEpisodes } from "./seal-uptime";
 
 /** counted: down time; lenient: degraded under a non-strict policy; excused: cut by an excused window. */
 export type MonitorReportingMonthEpisodeTreatment =
@@ -45,8 +45,6 @@ export type MonitorReportingMonthEpisode = {
   kind: "degraded" | "error" | "unmeasured";
   startedAt: number;
   endedAt: number;
-  runs: number;
-  weightedMs: number;
   treatment: MonitorReportingMonthEpisodeTreatment;
   /** a pause-mode maintenance that overlaps an unmeasured episode */
   maintenance: Pick<MonthMaintenance, "kind" | "id" | "title"> | null;
@@ -271,7 +269,7 @@ async function memberMonth(args: {
   let spans: Span[];
   let budget: ReturnType<typeof monthBudget> | null = null;
   let episodes: MonitorReportingMonthEpisode[] | null = null;
-  /** failed: episodes could not be read; expired: older than the previous month and never sealed */
+  /** failed: episodes could not be read; expired: never sealed and older than the previous month, or sealed with its checks no longer stored */
   let episodesUnavailable: "failed" | "expired" | null = null;
 
   if (seal) {
@@ -282,38 +280,17 @@ async function memberMonth(args: {
         to: new Date(w.to),
       })),
     );
-    const rows = await db
-      .select()
-      .from(monitorSlaSealedEpisode)
-      .where(
-        and(
-          eq(monitorSlaSealedEpisode.sealedMonthId, seal.id),
-          eq(monitorSlaSealedEpisode.workspaceId, ctx.workspace.id),
-        ),
-      )
-      .all();
-    episodes = rows.flatMap(({ kind, treatment, ...e }) =>
-      kind === "ok"
-        ? []
-        : [
-            {
-              kind,
-              startedAt: e.startedAt,
-              endedAt: e.endedAt,
-              runs: e.runs,
-              weightedMs: e.weightedMs,
-              treatment:
-                kind === "unmeasured" && treatment !== "excused"
-                  ? "unmeasured"
-                  : treatment,
-              maintenance: null,
-            },
-          ],
-    );
-    const excusedMs = seal.excusedMs ?? 0;
+    const { excusedMs } = seal;
+    // the sealed figures tile the member's part of the month, which ends with it
+    const coveredMs = seal.measuredMs + seal.unmeasuredMs + excusedMs;
+    const coveredEnd = monthRange(month, seal.timeZone).end;
+    const stored = (
+      await storedEpisodes(db, [member.id], coveredEnd - coveredMs, coveredEnd)
+    ).get(member.id);
+    if (stored) episodes = treatEpisodes(stored, spans, seal.strict);
+    else episodesUnavailable = "expired";
     budget = monthBudget({
-      // the sealed episodes tile the covered month
-      monthMs: (seal.measuredMs ?? 0) + (seal.unmeasuredMs ?? 0) + excusedMs,
+      monthMs: coveredMs,
       excusedMs,
       remainingMs: 0,
       target: seal.target,

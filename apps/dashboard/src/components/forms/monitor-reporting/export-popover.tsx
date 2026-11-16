@@ -134,8 +134,9 @@ export function MonitorSlaExportPopover({ policyId }: { policyId: number }) {
           </Label>
         </div>
         <p className="text-muted-foreground text-xs">
-          One row per monitor and month, with the run counts, uptime and whether
-          the month is sealed or a preview. The file states the method.
+          One row per monitor and month, with the measured and down time, uptime
+          and whether the month is sealed or a preview. The file states the
+          method.
         </p>
         {invalid ? (
           <p className="text-destructive text-xs">

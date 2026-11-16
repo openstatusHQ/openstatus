@@ -1,8 +1,9 @@
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
   monitor,
   monitorSlaPolicy,
   monitorSlaPolicyToMonitor,
+  monitorUptimeEpisode,
 } from "@openstatus/db/src/schema";
 import {
   createMonitor,
@@ -36,12 +37,7 @@ const pipe: EpisodesPipes["http"] = async ({
   ];
   return {
     data: monitorIds.flatMap((monitorId) =>
-      parts.map((p) => ({
-        monitorId,
-        ...p,
-        runs: (p.endedAt - p.startedAt) / 600_000,
-        weightedMs: p.endedAt - p.startedAt,
-      })),
+      parts.map((p) => ({ monitorId, ...p })),
     ),
   };
 };
@@ -66,6 +62,7 @@ describe("monitor-sla-seal", () => {
     const res = await runMonitorSlaSealTick({
       now: new Date(Date.UTC(2026, 10, 3, 9)),
       policyIds: [],
+      monitorIds: [],
     });
     expect(res).toEqual({
       month: "2026-10-01",
@@ -74,6 +71,7 @@ describe("monitor-sla-seal", () => {
       unavailable: 0,
       unavailablePolicyIds: [],
       notified: 0,
+      uptime: { sealed: 0, failed: 0, skipped: 0 },
     });
   });
 });
@@ -98,6 +96,8 @@ describe("monitor-sla-seal miss email", () => {
       jobType: "http",
       regions: "ams",
       periodicity: "10m",
+      // before the month the ticks seal
+      createdAt: new Date(Date.UTC(2026, 0, 1)),
     });
     monitorIds.push(m.id);
     const policy = await db
@@ -131,6 +131,7 @@ describe("monitor-sla-seal miss email", () => {
       runMonitorSlaSealTick({
         now,
         policyIds: [policy.id],
+        monitorIds: [m.id],
         episodesPipes,
         sleep: async () => {},
         send,
@@ -139,6 +140,30 @@ describe("monitor-sla-seal miss email", () => {
     const results = await Promise.all([tick(), tick()]);
 
     expect(results.map((r) => r.notified).sort()).toEqual([0, 1]);
+    // the monitor's checks are stored once, by whichever machine got there first
+    expect(results.map((r) => r.uptime.sealed).sort()).toEqual([0, 1]);
+    expect(
+      await db
+        .select({
+          kind: monitorUptimeEpisode.kind,
+          startedAt: monitorUptimeEpisode.startedAt,
+          endedAt: monitorUptimeEpisode.endedAt,
+        })
+        .from(monitorUptimeEpisode)
+        .where(
+          and(
+            eq(monitorUptimeEpisode.monitorId, m.id),
+            eq(monitorUptimeEpisode.kind, "error"),
+          ),
+        )
+        .all(),
+    ).toEqual([
+      {
+        kind: "error",
+        startedAt: beforeOctEnd.getTime(),
+        endedAt: beforeOctEnd.getTime() + 6 * HOUR,
+      },
+    ]);
     expect(sent).toEqual([
       {
         to: [user.email],
@@ -158,12 +183,13 @@ describe("monitor-sla-seal miss email", () => {
   });
 
   test("a failed send is not counted, and the next run retries it", async () => {
-    const { policy } = await missedPolicy();
+    const { m, policy } = await missedPolicy();
     let calls = 0;
     const tick = (send: typeof sendMonitorSlaMissed) =>
       runMonitorSlaSealTick({
         now,
         policyIds: [policy.id],
+        monitorIds: [m.id],
         episodesPipes,
         sleep: async () => {},
         send,
@@ -185,10 +211,11 @@ describe("monitor-sla-seal miss email", () => {
   });
 
   test("a send that returns no id (outside production) is not counted", async () => {
-    const { policy } = await missedPolicy();
+    const { m, policy } = await missedPolicy();
     const res = await runMonitorSlaSealTick({
       now,
       policyIds: [policy.id],
+      monitorIds: [m.id],
       episodesPipes,
       sleep: async () => {},
       send: async () => undefined,

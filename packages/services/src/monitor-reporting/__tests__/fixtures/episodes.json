@@ -55,9 +55,7 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767225900000,
-          "runs": 10,
-          "weightedMs": 300000
+          "endedAt": 1767225900000
         }
       ]
     },
@@ -155,23 +153,17 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767225900000,
-          "runs": 10,
-          "weightedMs": 300000
+          "endedAt": 1767225900000
         },
         {
           "kind": "unmeasured",
           "startedAt": 1767225900000,
-          "endedAt": 1767233070000,
-          "runs": 0,
-          "weightedMs": 7170000
+          "endedAt": 1767233070000
         },
         {
           "kind": "ok",
           "startedAt": 1767233070000,
-          "endedAt": 1767233370000,
-          "runs": 10,
-          "weightedMs": 300000
+          "endedAt": 1767233370000
         }
       ]
     },
@@ -1221,37 +1213,27 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767227400000,
-          "runs": 60,
-          "weightedMs": 1800000
+          "endedAt": 1767227400000
         },
         {
           "kind": "error",
           "startedAt": 1767227400000,
-          "endedAt": 1767231000000,
-          "runs": 120,
-          "weightedMs": 3600000
+          "endedAt": 1767231000000
         },
         {
           "kind": "ok",
           "startedAt": 1767231000000,
-          "endedAt": 1767236400000,
-          "runs": 66,
-          "weightedMs": 5400000
+          "endedAt": 1767236400000
         },
         {
           "kind": "error",
           "startedAt": 1767236400000,
-          "endedAt": 1767240000000,
-          "runs": 6,
-          "weightedMs": 3600000
+          "endedAt": 1767240000000
         },
         {
           "kind": "ok",
           "startedAt": 1767240000000,
-          "endedAt": 1767243600000,
-          "runs": 6,
-          "weightedMs": 3600000
+          "endedAt": 1767243600000
         }
       ]
     },
@@ -1317,9 +1299,7 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767226320000,
-          "runs": 12,
-          "weightedMs": 720000
+          "endedAt": 1767226320000
         }
       ]
     },
@@ -1377,23 +1357,17 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767225780000,
-          "runs": 3,
-          "weightedMs": 180000
+          "endedAt": 1767225780000
         },
         {
           "kind": "error",
           "startedAt": 1767225780000,
-          "endedAt": 1767225960000,
-          "runs": 3,
-          "weightedMs": 180000
+          "endedAt": 1767225960000
         },
         {
           "kind": "ok",
           "startedAt": 1767225960000,
-          "endedAt": 1767226200000,
-          "runs": 4,
-          "weightedMs": 240000
+          "endedAt": 1767226200000
         }
       ]
     },
@@ -1451,30 +1425,22 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767225720000,
-          "runs": 2,
-          "weightedMs": 120000
+          "endedAt": 1767225720000
         },
         {
           "kind": "degraded",
           "startedAt": 1767225720000,
-          "endedAt": 1767225900000,
-          "runs": 3,
-          "weightedMs": 180000
+          "endedAt": 1767225900000
         },
         {
           "kind": "error",
           "startedAt": 1767225900000,
-          "endedAt": 1767225960000,
-          "runs": 1,
-          "weightedMs": 60000
+          "endedAt": 1767225960000
         },
         {
           "kind": "ok",
           "startedAt": 1767225960000,
-          "endedAt": 1767226200000,
-          "runs": 4,
-          "weightedMs": 240000
+          "endedAt": 1767226200000
         }
       ]
     },
@@ -1496,16 +1462,12 @@
         {
           "kind": "error",
           "startedAt": 1767225600000,
-          "endedAt": 1767225690000,
-          "runs": 1,
-          "weightedMs": 90000
+          "endedAt": 1767225690000
         },
         {
           "kind": "unmeasured",
           "startedAt": 1767225690000,
-          "endedAt": 1767225930000,
-          "runs": 0,
-          "weightedMs": 240000
+          "endedAt": 1767225930000
         }
       ]
     },
@@ -1527,9 +1489,7 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767225720000,
-          "runs": 1,
-          "weightedMs": 120000
+          "endedAt": 1767225720000
         }
       ]
     },
@@ -1546,9 +1506,7 @@
         {
           "kind": "unmeasured",
           "startedAt": 1767225600000,
-          "endedAt": 1767229200000,
-          "runs": 0,
-          "weightedMs": 3600000
+          "endedAt": 1767229200000
         }
       ]
     },
@@ -1606,16 +1564,12 @@
         {
           "kind": "unmeasured",
           "startedAt": 1767225600000,
-          "endedAt": 1767228600000,
-          "runs": 0,
-          "weightedMs": 3000000
+          "endedAt": 1767228600000
         },
         {
           "kind": "ok",
           "startedAt": 1767228600000,
-          "endedAt": 1767229200000,
-          "runs": 10,
-          "weightedMs": 600000
+          "endedAt": 1767229200000
         }
       ]
     },
@@ -1673,16 +1627,12 @@
         {
           "kind": "degraded",
           "startedAt": 1767225600000,
-          "endedAt": 1767225750000,
-          "runs": 1,
-          "weightedMs": 150000
+          "endedAt": 1767225750000
         },
         {
           "kind": "ok",
           "startedAt": 1767225750000,
-          "endedAt": 1767226290000,
-          "runs": 9,
-          "weightedMs": 540000
+          "endedAt": 1767226290000
         }
       ]
     },
@@ -1740,23 +1690,17 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767226140000,
-          "runs": 9,
-          "weightedMs": 540000
+          "endedAt": 1767226140000
         },
         {
           "kind": "error",
           "startedAt": 1767226140000,
-          "endedAt": 1767226200000,
-          "runs": 1,
-          "weightedMs": 60000
+          "endedAt": 1767226200000
         },
         {
           "kind": "unmeasured",
           "startedAt": 1767226200000,
-          "endedAt": 1767229740000,
-          "runs": 0,
-          "weightedMs": 3540000
+          "endedAt": 1767229740000
         }
       ]
     },
@@ -1794,23 +1738,17 @@
         {
           "kind": "ok",
           "startedAt": 1767225600000,
-          "endedAt": 1767225840000,
-          "runs": 3,
-          "weightedMs": 240000
+          "endedAt": 1767225840000
         },
         {
           "kind": "error",
           "startedAt": 1767225840000,
-          "endedAt": 1767225900000,
-          "runs": 1,
-          "weightedMs": 60000
+          "endedAt": 1767225900000
         },
         {
           "kind": "ok",
           "startedAt": 1767225900000,
-          "endedAt": 1767225960000,
-          "runs": 1,
-          "weightedMs": 60000
+          "endedAt": 1767225960000
         }
       ]
     }

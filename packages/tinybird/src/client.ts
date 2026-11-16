@@ -388,8 +388,6 @@ export const slaEpisodesRangeShape = z.object({
   kind: z.enum(["ok", "degraded", "error", "unmeasured"]),
   startedAt: z.number(),
   endedAt: z.number(),
-  runs: z.number(),
-  weightedMs: z.number(),
 });
 
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";

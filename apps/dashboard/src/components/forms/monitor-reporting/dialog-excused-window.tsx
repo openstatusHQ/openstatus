@@ -52,6 +52,7 @@ import { DateTimePicker } from "@/components/common/date-time-picker";
 import {
   excusedKindLabels,
   excusedWindowContext,
+  formatSlaDuration,
   formatSlaMonth,
   slaMonthOf,
 } from "@/data/reportings.client";
@@ -190,14 +191,16 @@ function ExcusedWindowForm({
     to instanceof Date &&
     from < to &&
     to.getTime() - from.getTime() <= MONITOR_SLA_EXCUSED_WINDOW_MAX_MS;
-  // no placeholder: the previous window's runs would describe the wrong range
+  // no placeholder: the previous window's figures would describe the wrong range
   const { data: preview } = useQuery(
     trpc.monitorReporting.excusedWindowPreview.queryOptions(
       validWindow ? { policyId: policy.id, from, to } : skipToken,
     ),
   );
-  const runsOf = new Map(
-    validWindow ? (preview?.monitors.map((m) => [m.id, m.runs]) ?? []) : [],
+  const measuredOf = new Map(
+    validWindow
+      ? (preview?.monitors.map((m) => [m.id, m.measuredMs]) ?? [])
+      : [],
   );
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -280,7 +283,7 @@ function ExcusedWindowForm({
               <div className="grid gap-2">
                 {policy.monitors.map((monitor) => {
                   const id = `excused-monitor-${monitor.id}`;
-                  const runs = runsOf.get(monitor.id);
+                  const measuredMs = measuredOf.get(monitor.id);
                   return (
                     <Label
                       key={monitor.id}
@@ -300,14 +303,14 @@ function ExcusedWindowForm({
                       />
                       <span className="flex min-w-0 flex-col gap-1">
                         <span className="font-medium">{monitor.name}</span>
-                        {runs === 0 ? (
+                        {measuredMs === 0 ? (
                           <span className="text-warning text-xs">
                             No checks ran in this window; excusing it changes
                             nothing for this monitor.
                           </span>
-                        ) : runs ? (
+                        ) : measuredMs ? (
                           <span className="text-muted-foreground text-xs">
-                            {runs} {runs === 1 ? "check" : "checks"} in this
+                            {formatSlaDuration(measuredMs)} measured in this
                             window
                           </span>
                         ) : null}

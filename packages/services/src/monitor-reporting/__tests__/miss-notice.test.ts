@@ -14,12 +14,12 @@ import {
 } from "../../../test/helpers";
 import type { SlaEpisodesPipes } from "../fetch-episodes";
 import { claimMonitorSlaMissNotices } from "../miss-notice";
-import { sealMonitorSlaMonths } from "../seal";
 import {
   episodesPipesFrom,
   failingEpisodesPipes,
   runsEvery,
 } from "./fixtures/episodes-pipes";
+import { sealFromChecks } from "./fixtures/uptime-store";
 
 const OCT_END = Date.UTC(2026, 10, 1);
 const now = new Date(OCT_END + 4 * 24 * 3_600_000);
@@ -71,7 +71,7 @@ const seal = (
   policyId: number,
   episodesPipes = tcpDown,
 ) =>
-  sealMonitorSlaMonths({
+  sealFromChecks({
     db: tx,
     now: at,
     policyIds: [policyId],

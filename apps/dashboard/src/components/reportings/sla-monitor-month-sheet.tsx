@@ -84,6 +84,8 @@ const unavailableText: Record<
   expired:
     "This month was never sealed and its checks are no longer kept, so it has no judgement.",
 };
+const sealedWithoutChecksText =
+  "This month is sealed, but the checks behind it are no longer kept, so what used the budget cannot be listed.";
 
 /** One monitor's month under the reporting, the running one by default. */
 export function SlaMonitorMonthSheet({
@@ -364,7 +366,9 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
         ) : null}
         {month.episodesUnavailable ? (
           <p className="text-muted-foreground text-sm">
-            {unavailableText[month.episodesUnavailable]}
+            {month.state === "sealed"
+              ? sealedWithoutChecksText
+              : unavailableText[month.episodesUnavailable]}
           </p>
         ) : episodes && episodes.length > 0 ? (
           <ol className="divide-y text-sm">
@@ -432,7 +436,7 @@ function EpisodeRow({
         </span>
       </div>
       <span className="shrink-0 font-mono text-xs tabular-nums">
-        {formatSlaDuration(e.weightedMs)}
+        {formatSlaDuration(e.endedAt - e.startedAt)}
       </span>
     </li>
   );

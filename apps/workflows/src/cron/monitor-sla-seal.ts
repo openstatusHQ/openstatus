@@ -4,7 +4,9 @@ import {
   claimMonitorSlaMissNotices,
   releaseMonitorSlaMissNotice,
   type SealMonitorSlaMonthsResult,
+  type SealMonitorUptimeResult,
   sealMonitorSlaMonths,
+  sealMonitorUptime,
 } from "@openstatus/services/monitor-reporting";
 
 import { env } from "../env";
@@ -12,12 +14,37 @@ import { env } from "../env";
 const logger = getLogger(["workflow", "monitor-sla-seal"]);
 
 export async function runMonitorSlaSealTick(
-  options: Parameters<typeof sealMonitorSlaMonths>[0] & {
-    send?: typeof sendMonitorSlaMissed;
-    dashboardUrl?: string;
-  } = {},
-): Promise<SealMonitorSlaMonthsResult & { notified: number }> {
-  const { send = sendMonitorSlaMissed, dashboardUrl, ...sealOptions } = options;
+  options: Parameters<typeof sealMonitorSlaMonths>[0] &
+    Parameters<typeof sealMonitorUptime>[0] & {
+      send?: typeof sendMonitorSlaMissed;
+      dashboardUrl?: string;
+    } = {},
+): Promise<
+  SealMonitorSlaMonthsResult & {
+    notified: number;
+    uptime: SealMonitorUptimeResult;
+  }
+> {
+  const {
+    send = sendMonitorSlaMissed,
+    dashboardUrl,
+    monitorIds,
+    episodesPipes,
+    sleep,
+    ...sealOptions
+  } = options;
+  // first: a month seals from what this stored
+  const uptime = await sealMonitorUptime({
+    db: sealOptions.db,
+    now: sealOptions.now,
+    monitorIds,
+    episodesPipes,
+    sleep,
+  });
+  logger.info(
+    "monitor-uptime-seal complete: sealed={sealed} failed={failed} skipped={skipped}",
+    uptime,
+  );
   const res = await sealMonitorSlaMonths(sealOptions);
   let notified = 0;
   if (res.skipped === null) {
@@ -70,5 +97,5 @@ export async function runMonitorSlaSealTick(
       skipped: res.skipped ?? "no",
     },
   );
-  return { ...res, notified };
+  return { ...res, notified, uptime };
 }

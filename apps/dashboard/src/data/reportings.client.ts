@@ -156,13 +156,20 @@ export const slaTreatmentLabels: Record<SlaTreatment, string> = {
   unmeasured: "Not measured",
 };
 
-/** Weighted ms per treatment, in label order, leaving out treatments with none. */
+/** Time per treatment, in label order, leaving out treatments with none. */
 export function slaTreatmentTotals(
-  episodes: readonly { treatment: SlaTreatment; weightedMs: number }[],
+  episodes: readonly {
+    treatment: SlaTreatment;
+    startedAt: number;
+    endedAt: number;
+  }[],
 ): { treatment: SlaTreatment; ms: number }[] {
   const sums = new Map<SlaTreatment, number>();
   for (const e of episodes) {
-    sums.set(e.treatment, (sums.get(e.treatment) ?? 0) + e.weightedMs);
+    sums.set(
+      e.treatment,
+      (sums.get(e.treatment) ?? 0) + e.endedAt - e.startedAt,
+    );
   }
   return (Object.keys(slaTreatmentLabels) as SlaTreatment[]).flatMap((t) => {
     const ms = sums.get(t) ?? 0;

@@ -19,7 +19,6 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { getMonitorReporting, getMonitorReportingSummary } from "../get";
-import { sealMonitorSlaMonths } from "../seal";
 import {
   type EpisodesCall,
   episodesPipesFrom,
@@ -27,6 +26,7 @@ import {
   noEpisodes,
   runsEvery,
 } from "./fixtures/episodes-pipes";
+import { sealFromChecks } from "./fixtures/uptime-store";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
 const MIN = 60_000;
@@ -97,15 +97,15 @@ async function insertPolicy(
   return policy;
 }
 
-/** A sealed month of `ok`/`error` runs under the default terms. */
+/** A sealed month of `ok`/`error` minutes under the default terms. */
 function sealedRow(
   policyId: number,
   monitorId: number,
   month: string,
-  runs: { ok: number; error: number },
+  minutes: { ok: number; error: number },
 ) {
-  const total = runs.ok + runs.error;
-  const uptime = Math.floor((runs.ok * 100_000) / total);
+  const total = minutes.ok + minutes.error;
+  const uptime = Math.floor((minutes.ok * 100_000) / total);
   return {
     workspaceId: ctx.workspace.id,
     monitorSlaPolicyId: policyId,
@@ -113,11 +113,10 @@ function sealedRow(
     month: `${month}-01`,
     target: 99_500,
     strict: false,
-    ok: runs.ok,
-    degraded: 0,
-    error: runs.error,
-    total,
-    up: runs.ok,
+    measuredMs: total * MIN,
+    downMs: minutes.error * MIN,
+    excusedMs: 0,
+    unmeasuredMs: 0,
     uptime,
     met: uptime >= 99_500,
   };
@@ -177,7 +176,8 @@ describe("getMonitorReporting", () => {
         state: "sealed",
         uptime: 99_450,
         met: false,
-        counts: { ok: 1989, degraded: 0, error: 11 },
+        measuredMs: 2000 * MIN,
+        downMs: 11 * MIN,
       });
       expect(apiRow.missed).toEqual({ months: 1, previews: 0 });
 
@@ -209,8 +209,7 @@ describe("getMonitorReporting", () => {
       for (const month of res.monitors[0].months.slice(0, -1)) {
         expect(month).toMatchObject({
           state: "none",
-          method: null,
-          counts: null,
+          measuredMs: null,
           uptime: null,
           met: null,
         });
@@ -284,7 +283,7 @@ describe("getMonitorReporting", () => {
         start: Date.UTC(2026, 9, 3),
         end: Date.UTC(2026, 9, 3, 3),
       };
-      await sealMonitorSlaMonths({
+      await sealFromChecks({
         db: tx,
         now: new Date(Date.UTC(2026, 10, 5)),
         policyIds: [policy.id],
@@ -314,10 +313,9 @@ describe("getMonitorReporting", () => {
       expect(row.months.at(-2)).toMatchObject({
         month: "2026-10-01",
         state: "sealed",
-        method: "time",
         uptime: Math.floor(((744 - 3) * 100_000) / 744),
         met: true,
-        counts: { ok: 4464 - 18, degraded: 0, error: 18 },
+        measuredMs: 31 * DAY,
         downMs: 3 * HOUR,
         sealed: { target: 99_500, strict: false },
       });
@@ -370,11 +368,10 @@ describe("getMonitorReporting", () => {
         month: "2026-10-01",
         target: 99_000,
         strict: true,
-        ok: 100,
-        degraded: 0,
-        error: 0,
-        total: 100,
-        up: 100,
+        measuredMs: 100 * 60_000,
+        downMs: 0,
+        excusedMs: 0,
+        unmeasuredMs: 0,
         uptime: 100_000,
         met: true,
       });
@@ -438,17 +435,13 @@ describe("getMonitorReporting", () => {
       const [row] = res.monitors;
       expect(row.months.at(-2)).toMatchObject({
         state: "none",
-        method: null,
         met: null,
       });
       expect(row.months.at(-1)).toEqual({
         month: "2026-11-01",
         state: "live",
-        method: "time",
         timeZone: "UTC",
         terms: { target: 99_500, strict: false },
-        counts: { ok: 2082, degraded: 0, error: 6 },
-        excused: { ok: 0, degraded: 0, error: 0 },
         measuredMs: 14.5 * DAY,
         downMs: HOUR,
         excusedMs: 0,
@@ -530,7 +523,6 @@ describe("getMonitorReporting", () => {
         sleep,
       });
       expect(res.monitors[0].months.at(-1)).toMatchObject({
-        excused: { ok: 6, degraded: 0, error: 3 },
         measuredMs: 14.5 * DAY - 90 * MIN,
         downMs: 30 * MIN,
         excusedMs: 90 * MIN,
@@ -579,12 +571,10 @@ describe("getMonitorReporting", () => {
       const month = (id: number) =>
         res.monitors.find((m) => m.id === id)?.months.at(-1);
       expect(month(api.id)).toMatchObject({
-        excused: { error: 6 },
         downMs: 0,
         excusedMs: HOUR,
       });
       expect(month(web.id)).toMatchObject({
-        excused: { error: 0 },
         downMs: HOUR,
         excusedMs: 0,
       });
@@ -618,7 +608,6 @@ describe("getMonitorReporting", () => {
         sleep,
       });
       expect(res.monitors[0].months.at(-1)).toMatchObject({
-        counts: { ok: 792, degraded: 0, error: 0 },
         measuredMs: now.getTime() - joined,
         downMs: 0,
         coverage: 100_000,
@@ -699,7 +688,6 @@ describe("getMonitorReporting", () => {
       expect(row.months.at(-3)).toMatchObject({
         month: "2026-09-01",
         state: "none",
-        method: null,
         timeZone: "Europe/Berlin",
         met: null,
       });
@@ -707,7 +695,6 @@ describe("getMonitorReporting", () => {
       expect(row.months.at(-2)).toMatchObject({
         month: "2026-10-01",
         state: "preview",
-        method: "time",
         timeZone: "Europe/Berlin",
         measuredMs: 31 * DAY + HOUR,
         downMs: HOUR,
@@ -715,7 +702,6 @@ describe("getMonitorReporting", () => {
       expect(row.months.at(-1)).toMatchObject({
         month: "2026-11-01",
         state: "live",
-        method: "time",
         measuredMs: early.getTime() - Date.UTC(2026, 9, 31, 23),
         downMs: 0,
       });
@@ -754,7 +740,6 @@ describe("getMonitorReporting", () => {
       expect(apiRow.months.at(-2)).toMatchObject({
         month: "2026-10-01",
         state: "preview",
-        method: "time",
         measuredMs: 31 * DAY,
         downMs: HOUR,
         uptime: 99_865,
@@ -762,7 +747,6 @@ describe("getMonitorReporting", () => {
       });
       expect(webRow.months.at(-2)).toMatchObject({
         state: "preview",
-        method: "time",
         uptime: 100_000,
       });
       expect(apiRow.months.at(-1)).toMatchObject({
@@ -808,8 +792,6 @@ describe("getMonitorReporting", () => {
       expect(res.liveIncomplete).toBe(true);
       expect(res.monitors[0].months.at(-1)).toMatchObject({
         state: "live",
-        method: "time",
-        counts: null,
         measuredMs: null,
         uptime: null,
         met: null,
@@ -821,7 +803,7 @@ describe("getMonitorReporting", () => {
     });
   });
 
-  test("a sealed month comes back with its method, zone and time figures", async () => {
+  test("a sealed month comes back with its zone and time figures", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id], {
@@ -832,15 +814,9 @@ describe("getMonitorReporting", () => {
         monitorSlaPolicyId: policy.id,
         monitorId: api.id,
         month: "2026-09-01",
-        method: "time",
         timeZone: "Europe/Berlin",
         target: 99_500,
         strict: false,
-        ok: 4310,
-        degraded: 0,
-        error: 10,
-        total: 4320,
-        up: 4310,
         uptime: 99_768,
         met: true,
         measuredMs: 30 * DAY,
@@ -860,7 +836,6 @@ describe("getMonitorReporting", () => {
       expect(res.monitors[0].months.at(-3)).toMatchObject({
         month: "2026-09-01",
         state: "sealed",
-        method: "time",
         timeZone: "Europe/Berlin",
         terms: { target: 99_500, strict: false },
         measuredMs: 30 * DAY,
@@ -916,11 +891,10 @@ describe("getMonitorReporting", () => {
         month: "2026-10-01",
         target: 99_500,
         strict: false,
-        ok: 100,
-        degraded: 0,
-        error: 0,
-        total: 100,
-        up: 100,
+        measuredMs: 100 * 60_000,
+        downMs: 0,
+        excusedMs: 0,
+        unmeasuredMs: 0,
         uptime: 100_000,
         met: true,
       });

@@ -22,8 +22,6 @@ const ok = (monitorId: string, startedAt: number, endedAt: number) => ({
   kind: "ok" as const,
   startedAt,
   endedAt,
-  runs: 1,
-  weightedMs: endedAt - startedAt,
 });
 
 describe("fetchSlaEpisodes", () => {
@@ -80,15 +78,11 @@ describe("fetchSlaEpisodes", () => {
         kind: "ok",
         startedAt: FROM,
         endedAt: FROM + 1000,
-        runs: 1,
-        weightedMs: 1000,
       },
       {
         kind: "ok",
         startedAt: FROM + 1000,
         endedAt: TO,
-        runs: 1,
-        weightedMs: TO - FROM - 1000,
       },
     ]);
     expect(res.failed.size).toBe(0);
@@ -157,20 +151,18 @@ describe("periodicityMs", () => {
 });
 
 describe("clipEpisodes", () => {
-  test("keeps the parts inside the range, prorating weight and runs", () => {
+  test("keeps the parts inside the range, split at its edges", () => {
     const episodes: Episode[] = [
-      { kind: "ok", startedAt: 0, endedAt: 100, runs: 10, weightedMs: 100 },
+      { kind: "ok", startedAt: 0, endedAt: 100 },
       {
         kind: "error",
         startedAt: 100,
         endedAt: 200,
-        runs: 10,
-        weightedMs: 100,
       },
     ];
     expect(clipEpisodes(episodes, 50, 150)).toEqual([
-      { kind: "ok", startedAt: 50, endedAt: 100, runs: 5, weightedMs: 50 },
-      { kind: "error", startedAt: 100, endedAt: 150, runs: 5, weightedMs: 50 },
+      { kind: "ok", startedAt: 50, endedAt: 100 },
+      { kind: "error", startedAt: 100, endedAt: 150 },
     ]);
     expect(clipEpisodes(episodes, 150, 150)).toEqual([]);
   });

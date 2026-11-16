@@ -31,15 +31,13 @@ WITH
             GROUP BY monitorId, cronTimestamp
         )
     )
-SELECT monitorId, kind, startedAt, endedAt, runs, weightedMs
+SELECT monitorId, kind, startedAt, endedAt
 FROM (
     SELECT
         monitorId,
         any(segment.1) AS kind,
         min(segment.2) AS startedAt,
-        max(segment.3) AS endedAt,
-        sum(segment.4) AS runs,
-        sum(segment.5) AS weightedMs
+        max(segment.3) AS endedAt
     FROM (
         SELECT
             monitorId,
@@ -116,9 +114,7 @@ FROM (
         monitorId,
         'unmeasured' AS kind,
         fromMs AS startedAt,
-        toMs AS endedAt,
-        toUInt64(0) AS runs,
-        toMs - fromMs AS weightedMs
+        toMs AS endedAt
     FROM (SELECT arrayJoin({{ Array(monitorIds, 'String', '4433') }}) AS monitorId)
     WHERE monitorId NOT IN (SELECT monitorId FROM judged)
 )

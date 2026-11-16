@@ -73,7 +73,7 @@ function policyIn(tx: Tx) {
 }
 
 describe("previewMonitorReportingExcusedWindow", () => {
-  test("counts the runs each monitor recorded inside the window", async () => {
+  test("tells the time each monitor measured inside the window", async () => {
     await withTestTransaction(async (tx) => {
       const policy = await policyIn(tx);
       // API ran through the window; Web was paused for it
@@ -94,8 +94,8 @@ describe("previewMonitorReportingExcusedWindow", () => {
       });
 
       expect(res.monitors).toEqual([
-        { id: apiId, name: "API", runs: 24 * 60 },
-        { id: webId, name: "Web", runs: 0 },
+        { id: apiId, name: "API", measuredMs: 24 * 60 * MIN },
+        { id: webId, name: "Web", measuredMs: 0 },
       ]);
     });
   });
@@ -112,7 +112,7 @@ describe("previewMonitorReportingExcusedWindow", () => {
         episodesPipes: episodesPipesFrom(() => [], calls),
       });
 
-      expect(res.monitors.map((m) => m.runs)).toEqual([null, null]);
+      expect(res.monitors.map((m) => m.measuredMs)).toEqual([null, null]);
       expect(calls).toHaveLength(0);
     });
   });
@@ -129,7 +129,7 @@ describe("previewMonitorReportingExcusedWindow", () => {
         sleep: async () => {},
       });
 
-      expect(res.monitors.map((m) => m.runs)).toEqual([null, null]);
+      expect(res.monitors.map((m) => m.measuredMs)).toEqual([null, null]);
     });
   });
 

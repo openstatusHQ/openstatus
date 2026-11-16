@@ -39,7 +39,7 @@ export async function claimMonitorSlaMissNotices(args: {
   month: string;
   now?: Date;
   policyIds?: number[];
-  /** policies the seal run left pairs unsealed for because their counts could not be read */
+  /** policies the seal run left pairs unsealed for because their checks were not stored yet */
   unavailablePolicyIds?: readonly number[];
 }): Promise<MonitorSlaMissNotice[]> {
   const db = args.db ?? defaultDb;

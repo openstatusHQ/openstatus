@@ -78,25 +78,22 @@ function burnDays(month: MonitorMonth, budgetMs: number, cutoff: number) {
     .filter((e) => e.treatment === "counted" && e.kind !== "unmeasured")
     .sort((a, b) => a.startedAt - b.startedAt);
   for (const e of counted) {
-    const span = Math.max(e.endedAt - e.startedAt, 1);
     for (const d of days) {
       const overlap =
         Math.min(d.end, e.endedAt) - Math.max(d.start, e.startedAt);
       if (overlap <= 0) continue;
-      // weightedMs can differ from wall time; spread it by the overlap
-      const ms = (e.weightedMs * overlap) / span;
-      if (e.kind === "degraded") d.slowMs += ms;
-      else d.downMs += ms;
+      if (e.kind === "degraded") d.slowMs += overlap;
+      else d.downMs += overlap;
     }
   }
   let burned = 0;
   let exhaustedAt: number | null = null;
   for (const e of counted) {
-    if (exhaustedAt === null && burned + e.weightedMs > budgetMs) {
-      const share = (budgetMs - burned) / e.weightedMs;
-      exhaustedAt = e.startedAt + (e.endedAt - e.startedAt) * share;
+    const ms = e.endedAt - e.startedAt;
+    if (exhaustedAt === null && burned + ms > budgetMs) {
+      exhaustedAt = e.startedAt + (budgetMs - burned);
     }
-    burned += e.weightedMs;
+    burned += ms;
   }
   let total = 0;
   for (const d of days) {

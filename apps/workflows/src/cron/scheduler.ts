@@ -36,7 +36,7 @@ type ScheduledTask = {
  * - outbox-retention, oauth-prune: idempotent deletes of expired rows
  * - incident-reminders: Redis-claimed windows, conditional miss stamps, claimed notices
  * - uptime-freeze-daily: one write-once row per monitor and month
- * - monitor-sla-seal: write-once per pair, miss notices by a unique claim row
+ * - monitor-sla-seal: a watermark per monitor advanced under a guard, write-once per pair, miss notices by a unique claim row
  */
 export const SCHEDULED_TASKS: ScheduledTask[] = [
   {

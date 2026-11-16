@@ -363,8 +363,6 @@ export function memberEpisodes(
         kind: "unmeasured",
         startedAt: fetched.range.start,
         endedAt: fetched.range.end,
-        runs: 0,
-        weightedMs: fetched.range.end - fetched.range.start,
       },
     ]
   );
@@ -383,7 +381,7 @@ export function memberTimeMonth(args: {
 }): MonitorSlaMonth {
   const { month, state, member, fetched, timeZone } = args;
   if (fetched.failed.has(member.id)) {
-    return emptyMonth({ month, state, timeZone, method: "time" });
+    return emptyMonth({ month, state, timeZone });
   }
   const covered = coveredSpan(month, timeZone, member.memberSince, args.now);
   if (!covered) return emptyMonth({ month, state: "none", timeZone });

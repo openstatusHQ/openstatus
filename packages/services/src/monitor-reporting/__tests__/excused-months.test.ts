@@ -24,6 +24,7 @@ import {
   failingEpisodesPipes,
   runsEvery,
 } from "./fixtures/episodes-pipes";
+import { sealFromChecks, storeUptime } from "./fixtures/uptime-store";
 
 const MIN = 60_000;
 const at = (month: number, d: number, h = 0, m = 0) =>
@@ -132,7 +133,7 @@ function cell(detail: Awaited<ReturnType<typeof get>>, month: string) {
 }
 
 describe("excused windows in a month's figure", () => {
-  test("excused runs drop from both sides of the fraction", async () => {
+  test("excused time drops from both sides of the fraction", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
@@ -146,23 +147,25 @@ describe("excused windows in a month's figure", () => {
 
       expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
         state: "preview",
-        counts: { ok: 4458, degraded: 0, error: 6 },
-        excused: { ok: 0, degraded: 0, error: 6 },
+        measuredMs: at(10, 1) - at(9, 1) - 60 * MIN,
+        downMs: 0,
+        excusedMs: 60 * MIN,
         met: true,
         uptime: 100_000,
       });
     });
   });
 
-  test("overlapping windows excuse a run once", async () => {
+  test("overlapping windows excuse time once", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 21), at(9, 20, 22, 40));
       await excuse(tx, policy.id, at(9, 20, 22, 20), at(9, 20, 23));
 
-      // 21:00 to 23:00: six ok runs, six failed
+      // 21:00 to 23:00: an hour up, an hour down
       expect(cell(await get(tx, policy.id), "2026-10-01")).toMatchObject({
-        excused: { ok: 6, degraded: 0, error: 6 },
+        excusedMs: 120 * MIN,
+        downMs: 0,
         uptime: 100_000,
       });
     });
@@ -174,16 +177,9 @@ describe("excused windows in a month's figure", () => {
       await excuse(tx, policy.id, at(9, 31, 23), at(10, 1, 1));
 
       const detail = await get(tx, policy.id);
-      expect(cell(detail, "2026-10-01")?.excused).toEqual({
-        ok: 6,
-        degraded: 0,
-        error: 0,
-      });
+      expect(cell(detail, "2026-10-01")?.excusedMs).toBe(60 * MIN);
       expect(cell(detail, "2026-11-01")).toMatchObject({
         state: "live",
-        method: "time",
-        counts: { ok: 354, degraded: 0, error: 6 },
-        excused: { ok: 0, degraded: 0, error: 6 },
         excusedMs: 60 * MIN,
         downMs: 0,
         uptime: 100_000,
@@ -221,7 +217,7 @@ describe("excused windows in a month's figure", () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
-      await sealMonitorSlaMonths({
+      await sealFromChecks({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
@@ -240,7 +236,7 @@ describe("excused windows in a month's figure", () => {
     });
   });
 
-  test("the export counts excused runs", async () => {
+  test("the export states the excused time", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
@@ -255,7 +251,7 @@ describe("excused windows in a month's figure", () => {
       const columns = header.split(",");
       const values = row.split(",");
       const value = (name: string) => values[columns.indexOf(name)];
-      expect(value("excused_runs")).toBe("6");
+      expect(value("excused_ms")).toBe(String(60 * MIN));
       expect(value("uptime")).toBe("100.000");
       expect(value("met")).toBe("yes");
     });
@@ -263,14 +259,14 @@ describe("excused windows in a month's figure", () => {
 });
 
 describe("sealing with excused windows", () => {
-  test("a sealed month records its excused runs and the windows that applied", async () => {
+  test("a sealed month records its excused time and the windows that applied", async () => {
     await withTestTransaction(async (tx) => {
       const { policy } = await setup(tx);
       const w = await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
       // a November window is not October's
       await excuse(tx, policy.id, at(10, 2), at(10, 2, 1));
 
-      const res = await sealMonitorSlaMonths({
+      const res = await sealFromChecks({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
@@ -285,13 +281,10 @@ describe("sealing with excused windows", () => {
         .where(eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id))
         .all();
       expect(row).toMatchObject({
-        ok: 4458,
-        error: 6,
-        excusedOk: 0,
-        excusedDegraded: 0,
-        excusedError: 6,
-        total: 4458,
-        up: 4458,
+        measuredMs: at(10, 1) - at(9, 1) - 60 * MIN,
+        downMs: 0,
+        excusedMs: 60 * MIN,
+        unmeasuredMs: 0,
         uptime: 100_000,
         met: true,
         excusedWindows: [
@@ -308,7 +301,7 @@ describe("sealing with excused windows", () => {
       const detail = await get(tx, policy.id);
       expect(cell(detail, "2026-10-01")).toMatchObject({
         state: "sealed",
-        excused: { ok: 0, degraded: 0, error: 6 },
+        excusedMs: 60 * MIN,
       });
       const locks = detail.excusedWindows.map((x) => [x.id, x.locked]);
       expect(locks).toContainEqual([w.id, "sealed"]);
@@ -320,7 +313,7 @@ describe("sealing with excused windows", () => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 1), at(10, 1));
 
-      const res = await sealMonitorSlaMonths({
+      const res = await sealFromChecks({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
@@ -334,9 +327,6 @@ describe("sealing with excused windows", () => {
         .where(eq(monitorSlaSealedMonth.monitorSlaPolicyId, policy.id))
         .all();
       expect(row).toMatchObject({
-        excusedOk: 4458,
-        excusedError: 6,
-        total: 0,
         uptime: null,
         met: null,
         measuredMs: 0,
@@ -357,7 +347,7 @@ describe("sealing with excused windows", () => {
       const { policy } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
       const failing = failingEpisodesPipes();
-      const res = await sealMonitorSlaMonths({
+      const res = await sealFromChecks({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],
@@ -379,8 +369,7 @@ describe("months past the runs kept", () => {
       const detail = await get(tx, policy.id, december);
       expect(cell(detail, "2026-10-01")).toMatchObject({
         state: "none",
-        method: null,
-        counts: null,
+        measuredMs: null,
         met: null,
         uptime: null,
       });
@@ -428,25 +417,37 @@ describe("export without live months", () => {
 describe("sealing while a window changes", () => {
   test("a window added while the month is counted defers the policy to the next run", async () => {
     await withTestTransaction(async (tx) => {
-      const { policy } = await setup(tx);
+      const { policy, api } = await setup(tx);
       await excuse(tx, policy.id, at(9, 20, 22), at(9, 20, 23));
-      let added = false;
-      const racing = { ...episodesPipes };
-      const http = racing.http;
-      racing.http = async (p) => {
-        if (!added) {
-          added = true;
-          await excuse(tx, policy.id, at(9, 5), at(9, 5, 1));
-        }
-        return http(p);
-      };
-
-      const first = await sealMonitorSlaMonths({
+      await storeUptime({
         db: tx,
         now: sealNow,
-        policyIds: [policy.id],
-        episodesPipes: racing,
+        monitorIds: [api.id],
+        episodesPipes,
         sleep,
+      });
+      // the seal read its windows before its first write transaction opens
+      let added = false;
+      const racing = new Proxy(tx, {
+        get(target, prop) {
+          const value = Reflect.get(target, prop);
+          if (prop !== "transaction") {
+            return typeof value === "function" ? value.bind(target) : value;
+          }
+          return async (run: Parameters<Tx["transaction"]>[0]) => {
+            if (!added) {
+              added = true;
+              await excuse(tx, policy.id, at(9, 5), at(9, 5, 1));
+            }
+            return target.transaction(run);
+          };
+        },
+      });
+
+      const first = await sealMonitorSlaMonths({
+        db: racing,
+        now: sealNow,
+        policyIds: [policy.id],
       });
       expect(first).toMatchObject({
         sealed: 0,
@@ -454,7 +455,7 @@ describe("sealing while a window changes", () => {
         unavailablePolicyIds: [policy.id],
       });
 
-      const second = await sealMonitorSlaMonths({
+      const second = await sealFromChecks({
         db: tx,
         now: sealNow,
         policyIds: [policy.id],

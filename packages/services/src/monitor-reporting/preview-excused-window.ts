@@ -10,8 +10,8 @@ import { assertMonitorSlaLimit, loadPolicyMembers } from "./internal";
 import { PreviewMonitorReportingExcusedWindowInput } from "./schemas";
 
 /**
- * Per monitor of the policy, the scheduled runs recorded inside a past window.
- * `runs` is null when it cannot be told: the window has not ended, the read failed, or the monitor's type records no run verdicts; 0 when none landed.
+ * Per monitor of the policy, the time inside a past window that checks measured.
+ * `measuredMs` is null when it cannot be told: the window has not ended, the read failed, or the monitor's type records no run verdicts; 0 when no check landed.
  */
 export async function previewMonitorReportingExcusedWindow(args: {
   ctx: ServiceContext;
@@ -30,7 +30,11 @@ export async function previewMonitorReportingExcusedWindow(args: {
   // runs can still land in a window that has not ended
   if (input.to > now) {
     return {
-      monitors: monitors.map((m) => ({ id: m.id, name: m.name, runs: null })),
+      monitors: monitors.map((m) => ({
+        id: m.id,
+        name: m.name,
+        measuredMs: null,
+      })),
     };
   }
   const fromMs = input.from.getTime();
@@ -49,12 +53,12 @@ export async function previewMonitorReportingExcusedWindow(args: {
     monitors: monitors.map((m) => {
       const list = episodes.get(m.id);
       if (failed.has(m.id) || !list) {
-        return { id: m.id, name: m.name, runs: null };
+        return { id: m.id, name: m.name, measuredMs: null };
       }
-      const runs = clipEpisodes(list, fromMs, toMs)
+      const measuredMs = clipEpisodes(list, fromMs, toMs)
         .filter((e) => e.kind !== "unmeasured")
-        .reduce((sum, e) => sum + e.runs, 0);
-      return { id: m.id, name: m.name, runs };
+        .reduce((sum, e) => sum + e.endedAt - e.startedAt, 0);
+      return { id: m.id, name: m.name, measuredMs };
     }),
   };
 }

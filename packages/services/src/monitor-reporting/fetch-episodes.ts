@@ -127,7 +127,7 @@ export async function fetchSlaEpisodes(
   return { episodes, failed: new Set([...failedMonitorIds].map(Number)) };
 }
 
-/** The parts of `episodes` inside [fromMs, toMs), split at the edges with weights prorated. */
+/** The parts of `episodes` inside [fromMs, toMs), split at the edges. */
 export function clipEpisodes(
   episodes: readonly Episode[],
   fromMs: number,

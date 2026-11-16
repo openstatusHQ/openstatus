@@ -105,11 +105,10 @@ function sealedRow(
     month: `${month}-01`,
     target: 99_500,
     strict: false,
-    ok: met ? 2000 : 1900,
-    degraded: 0,
-    error: met ? 0 : 100,
-    total: 2000,
-    up: met ? 2000 : 1900,
+    measuredMs: 2000 * 60_000,
+    downMs: (2000 - (met ? 2000 : 1900)) * 60_000,
+    excusedMs: 0,
+    unmeasuredMs: 0,
     uptime: met ? 100_000 : 95_000,
     met,
   };
@@ -126,7 +125,6 @@ describe("listMonitorReportings strip", () => {
         .where(eq(monitorSlaPolicy.id, policy.id));
       await tx.insert(monitorSlaSealedMonth).values({
         ...sealedRow(policy.id, api.id, "2026-08", false),
-        method: "time",
         timeZone: "Asia/Tokyo",
       });
 
@@ -350,7 +348,6 @@ describe("listMonitorReportings strip", () => {
       );
       expect(october[0]).toMatchObject({
         state: "preview",
-        method: "time",
         terms: { target: 99_500, strict: false },
         uptime: 99_731,
         met: true,

@@ -108,14 +108,12 @@ describe("exportMonitorReporting", () => {
         monitorSlaPolicyId: policy.id,
         monitorId: api.id,
         month: "2026-09-01",
-        method: "time",
         target: 99_500,
         strict: false,
-        ok: 1990,
-        degraded: 0,
-        error: 10,
-        total: 2000,
-        up: 1990,
+        measuredMs: 2000 * 60_000,
+        downMs: 10 * 60_000,
+        excusedMs: 0,
+        unmeasuredMs: 0,
         uptime: 99_500,
         met: true,
         sealedAt: new Date(Date.UTC(2026, 9, 4)),
@@ -140,17 +138,17 @@ describe("exportMonitorReporting", () => {
         "Months that were never sealed and are no longer the running or previous month, or whose checks are no longer kept, have no judgement.",
       );
       expect(header).toBe(
-        "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,ok_runs,degraded_runs,failed_runs,excused_runs,uptime,met,sealed_at,method,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
+        "reporting,target,strict,monitor_id,monitor_name,monitor_url,month,state,uptime,met,sealed_at,time_zone,measured_ms,down_ms,excused_ms,unmeasured_ms,coverage",
       );
       expect(rows).toHaveLength(12);
       expect(rows[0]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,,,,,,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2025-11,none,,,,UTC,,,,,`,
       );
       expect(rows[10]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,sealed,1990,0,10,0,99.500,yes,2026-10-04T00:00:00.000Z,time,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-09,sealed,99.500,yes,2026-10-04T00:00:00.000Z,UTC,120000000,600000,0,0,`,
       );
       expect(rows[11]).toBe(
-        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,none,,,,,,,,,UTC,,,,,`,
+        `Partner contract,99.500,no,${api.id},API,https://example.com,2026-10,none,,,,UTC,,,,,`,
       );
     });
   });
@@ -167,11 +165,10 @@ describe("exportMonitorReporting", () => {
         month: "2026-09-01",
         target: 99_000,
         strict: false,
-        ok: 90,
-        degraded: 0,
-        error: 10,
-        total: 100,
-        up: 90,
+        measuredMs: 100 * 60_000,
+        downMs: 10 * 60_000,
+        excusedMs: 0,
+        unmeasuredMs: 0,
         uptime: 90_000,
         met: false,
         sealedAt: new Date(Date.UTC(2026, 9, 4, 5, 47)),
@@ -197,15 +194,14 @@ describe("exportMonitorReporting", () => {
             String(m.id),
             mm.month.slice(0, 7),
             mm.state,
-            mm.counts ? String(mm.counts.ok) : "",
-            mm.counts ? String(mm.counts.degraded) : "",
-            mm.counts ? String(mm.counts.error) : "",
+            mm.measuredMs === null ? "" : String(mm.measuredMs),
+            mm.downMs === null ? "" : String(mm.downMs),
             mm.uptime === null ? "" : (mm.uptime / 1000).toFixed(3),
             mm.met === null ? "" : mm.met ? "yes" : "no",
           ]),
       );
       expect(
-        cells.map((c) => [c[3], c[6], c[7], c[8], c[9], c[10], c[12], c[13]]),
+        cells.map((c) => [c[3], c[6], c[7], c[12], c[13], c[8], c[9]]),
       ).toEqual(expected);
 
       const sealed = cells.find(
@@ -221,19 +217,14 @@ describe("exportMonitorReporting", () => {
         "https://example.com",
         "2026-09",
         "sealed",
-        "90",
-        "0",
-        "10",
-        "0",
         "90.000",
         "no",
         "2026-10-04T05:47:00.000Z",
-        "time",
         "UTC",
-        "",
-        "",
-        "",
-        "",
+        String(100 * MIN),
+        String(10 * MIN),
+        "0",
+        "0",
         "",
       ]);
     });
@@ -281,14 +272,9 @@ describe("exportMonitorReporting", () => {
       expect(rows.at(-1)?.split(",").slice(6)).toEqual([
         "2026-11",
         "live (provisional)",
-        "2082",
-        "0",
-        "6",
-        "0",
         "99.712",
         "yes",
         "",
-        "time",
         "UTC",
         String(14.5 * DAY),
         String(HOUR),
@@ -318,7 +304,7 @@ describe("exportMonitorReporting", () => {
         sleep,
       });
       const { comments, rows } = parse(res.csv);
-      expect(rows[0].split(",")[13]).toBe("");
+      expect(rows[0].split(",")[9]).toBe("");
       expect(comments[1]).toContain(
         "Runs could not be loaded for some monitors and months; those months have no judgement.",
       );
@@ -370,11 +356,6 @@ describe("exportMonitorReporting", () => {
         "",
         "",
         "",
-        "",
-        "",
-        "",
-        "",
-        "",
         "America/New_York",
         "",
         "",
@@ -383,8 +364,7 @@ describe("exportMonitorReporting", () => {
         "",
       ]);
       expect(cells[1].slice(6, 8)).toEqual(["2026-11", "live (provisional)"]);
-      expect(cells[1].slice(15, 18)).toEqual([
-        "time",
+      expect(cells[1].slice(11, 13)).toEqual([
         "America/New_York",
         String(14 * DAY + 8 * HOUR),
       ]);
@@ -402,7 +382,7 @@ describe("exportMonitorReporting", () => {
       });
       expect(res.filename).toBe("sla-eu-prod-2026-10-to-2026-10.csv");
       expect(parse(res.csv).rows[0]).toBe(
-        `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,,,,,,UTC,,,,,`,
+        `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,UTC,,,,,`,
       );
     });
   });

@@ -70,7 +70,7 @@ The reporting page shows every monitor against the last 12 or 24 months. Select 
 
 ## 6. Send the month's evidence
 
-About three days after a month ends it is sealed and no longer changes. If its checks cannot be loaded, the next run tries again; a month still unsealed 45 days after it began is never sealed and shows no figure. See [sealing](/docs/reference/monitor-reporting#sealing). Use **Export** on the reporting page to download the months as CSV, with uptime, coverage, excused time, and the terms each month was sealed with.
+The checks of each monitor in a reporting are stored a day behind. About three days after a month ends it is sealed from that store and no longer changes, and what used the budget stays visible after the raw checks expire. If the checks are not stored up to the end of the month yet, the next run tries again; a month still unsealed 45 days after it began is never sealed and shows no figure. See [sealing](/docs/reference/monitor-reporting#sealing). Use **Export** on the reporting page to download the months as CSV, with uptime, coverage, measured, down and excused time, and the terms each month was sealed with.
 
 ## What openstatus does not do yet
 
