@@ -187,3 +187,33 @@ export function updateAddonInLimits(
 
   return limitsSchema.parse(newLimits);
 }
+
+const DATA_RETENTION: Record<
+  Limits["data-retention"],
+  { unit: "days" | "months"; amount: number }
+> = {
+  "14 days": { unit: "days", amount: 14 },
+  "3 months": { unit: "months", amount: 3 },
+  "12 months": { unit: "months", amount: 12 },
+  "24 months": { unit: "months", amount: 24 },
+};
+
+export function dataRetentionCutoff(
+  retention: Limits["data-retention"],
+  now: Date = new Date(),
+): Date {
+  const { unit, amount } = DATA_RETENTION[retention];
+  const cutoff = new Date(now);
+  if (unit === "days") {
+    cutoff.setUTCDate(cutoff.getUTCDate() - amount);
+    return cutoff;
+  }
+  const day = cutoff.getUTCDate();
+  cutoff.setUTCDate(1);
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - amount);
+  const lastDay = new Date(
+    Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  cutoff.setUTCDate(Math.min(day, lastDay));
+  return cutoff;
+}

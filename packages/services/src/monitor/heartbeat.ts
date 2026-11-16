@@ -5,6 +5,7 @@ import {
   monitorHeartbeatState,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
+import { dataRetentionCutoff } from "@openstatus/db/src/schema/plan/utils";
 import { z } from "zod";
 
 import { emitAudit } from "../audit";
@@ -310,10 +311,21 @@ export async function listHeartbeatPings(args: {
   });
   assertHeartbeat(existing);
 
+  // pings have no storage TTL, so the plan's retention is enforced on read
+  const cutoff = dataRetentionCutoff(
+    ctx.workspace.limits["data-retention"],
+  ).getTime();
+  if (
+    (input.toTimestamp !== undefined && input.toTimestamp < cutoff) ||
+    (input.cursor !== undefined && input.cursor <= cutoff)
+  ) {
+    return { data: [], nextCursor: null };
+  }
+
   const tb = ctx.tb ?? defaultTb;
   const result = await tb.heartbeatList({
     monitorId: String(existing.id),
-    fromDate: input.fromTimestamp,
+    fromDate: Math.max(input.fromTimestamp ?? cutoff, cutoff),
     toDate: input.toTimestamp,
     kinds: input.kinds?.length ? input.kinds : undefined,
     cursor: input.cursor,

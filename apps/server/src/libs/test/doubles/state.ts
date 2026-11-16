@@ -1,7 +1,19 @@
 // Shared test-double state, set on globalThis so tests can assert on spies and
 // configure mock data — same interface the old bun `mock.module` preload
 // exposed. Imported (for side effect) by every double module below.
+import type { HeartbeatPing, OSTinybird } from "@openstatus/tinybird-real";
 import { vi, type Mock } from "vitest";
+
+type HeartbeatListParams = Parameters<OSTinybird["heartbeatList"]>[0];
+
+type HeartbeatPingMock = {
+  rows: HeartbeatPing[];
+  calls: HeartbeatListParams[];
+};
+
+declare global {
+  var __heartbeatPingMock: HeartbeatPingMock | undefined;
+}
 
 type Mut = Record<string, unknown>;
 const g = globalThis as Mut;
@@ -47,3 +59,7 @@ export const tinybirdMockCalls = g.__tinybirdMockCalls as {
   httpListBiweekly: unknown[];
   httpGetBiweekly: unknown[];
 };
+export const heartbeatPingMock = (globalThis.__heartbeatPingMock ??= {
+  rows: [],
+  calls: [],
+});

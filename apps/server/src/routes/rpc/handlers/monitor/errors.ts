@@ -17,6 +17,7 @@ export const ErrorReason = {
   MONITOR_TYPE_MISMATCH: "MONITOR_TYPE_MISMATCH",
   RESPONSE_LOG_NOT_FOUND: "RESPONSE_LOG_NOT_FOUND",
   RESPONSE_LOGS_NOT_ENABLED: "RESPONSE_LOGS_NOT_ENABLED",
+  CURSOR_INVALID: "CURSOR_INVALID",
   RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
 } as const;
 
@@ -116,9 +117,11 @@ export function monitorTypeMismatchError(
   monitorId: string,
   expectedType: string,
   actualType: string,
+  hint?: string,
 ): ConnectError {
+  const message = `Monitor type mismatch: expected ${expectedType}, got ${actualType}`;
   return createError(
-    `Monitor type mismatch: expected ${expectedType}, got ${actualType}`,
+    hint ? `${message}. ${hint}` : message,
     Code.InvalidArgument,
     ErrorReason.MONITOR_TYPE_MISMATCH,
     {
@@ -152,6 +155,17 @@ export function responseLogsNotEnabledError(): ConnectError {
     "Upgrade for response logs",
     Code.PermissionDenied,
     ErrorReason.RESPONSE_LOGS_NOT_ENABLED,
+  );
+}
+
+/**
+ * Creates an "invalid cursor" error for a cursor not issued by a previous response.
+ */
+export function cursorInvalidError(): ConnectError {
+  return createError(
+    "Invalid cursor: pass next_cursor from a previous response",
+    Code.InvalidArgument,
+    ErrorReason.CURSOR_INVALID,
   );
 }
 

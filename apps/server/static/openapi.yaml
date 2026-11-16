@@ -2411,11 +2411,89 @@ components:
           description: What the last ping reported, unspecified until the first one. Read-only.
           readOnly: true
           $ref: '#/components/schemas/openstatus.monitor.v1.HeartbeatPingKind'
+        nextDueAt:
+          type:
+            - string
+            - "null"
+          title: next_due_at
+          description: |-
+            Time the next ping is due (last ping + period + grace) in ISO 8601.
+             Unset until the first ping and while the monitor is paused. Read-only.
+          readOnly: true
       title: HeartbeatMonitor
       additionalProperties: false
       description: |-
         HeartbeatMonitor is pinged by your job; it goes down when a ping is missed
          or the job pings its URL followed by /fail.
+    openstatus.monitor.v1.HeartbeatPing:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Ping ID.
+        monitorId:
+          type: string
+          title: monitor_id
+          description: Monitor ID.
+        timestamp:
+          type:
+            - integer
+            - string
+          title: timestamp
+          format: int64
+          description: Time the ping arrived in Unix milliseconds.
+        kind:
+          title: kind
+          description: Whether the ping reported success or failure.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HeartbeatPingKind'
+        method:
+          type: string
+          title: method
+          description: HTTP method of the ping request.
+        ip:
+          type:
+            - string
+            - "null"
+          title: ip
+          description: Client IP address, when known.
+        userAgent:
+          type:
+            - string
+            - "null"
+          title: user_agent
+          description: User-Agent header, cut at 256 characters.
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+          description: Request headers, with sensitive values redacted.
+        body:
+          type:
+            - string
+            - "null"
+          title: body
+          description: Request body, cut at 10 KB, with secrets redacted.
+        bodyTruncated:
+          type: boolean
+          title: body_truncated
+          description: Whether the body was cut at 10 KB.
+      title: HeartbeatPing
+      additionalProperties: false
+      description: HeartbeatPing is one request your job sent to the ping URL.
+    openstatus.monitor.v1.HeartbeatPing.HeadersEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: HeadersEntry
+      additionalProperties: false
     openstatus.monitor.v1.HeartbeatPingKind:
       type: string
       title: HeartbeatPingKind
@@ -2587,6 +2665,74 @@ components:
       title: ListMonitorHTTPResponseLogsResponse
       additionalProperties: false
       description: ListMonitorHTTPResponseLogsResponse is the response containing response logs.
+    openstatus.monitor.v1.ListMonitorHeartbeatPingsRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to list pings for (required).
+        fromTimestamp:
+          type:
+            - integer
+            - string
+            - "null"
+          title: from_timestamp
+          format: int64
+          description: Start of the window as Unix milliseconds, clamped to the plan's data retention.
+        toTimestamp:
+          type:
+            - integer
+            - string
+            - "null"
+          title: to_timestamp
+          format: int64
+          description: End of the window as Unix milliseconds.
+        kinds:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HeartbeatPingKind'
+          title: kinds
+          maxItems: 2
+          description: Only return pings of these kinds. Empty returns every kind.
+        cursor:
+          type:
+            - string
+            - "null"
+          title: cursor
+          maxLength: 64
+          description: Cursor from a previous response's next_cursor.
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of pings to return (1-100, defaults to 50).
+      title: ListMonitorHeartbeatPingsRequest
+      additionalProperties: false
+      description: ListMonitorHeartbeatPingsRequest is the request to list the pings of a heartbeat monitor.
+    openstatus.monitor.v1.ListMonitorHeartbeatPingsResponse:
+      type: object
+      properties:
+        pings:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HeartbeatPing'
+          title: pings
+          description: Pings, newest first.
+        nextCursor:
+          type:
+            - string
+            - "null"
+          title: next_cursor
+          description: Cursor for the next page, unset on the last page.
+      title: ListMonitorHeartbeatPingsResponse
+      additionalProperties: false
+      description: ListMonitorHeartbeatPingsResponse is the response containing heartbeat pings.
     openstatus.monitor.v1.ListMonitorsRequest:
       type: object
       properties:
@@ -2805,6 +2951,27 @@ components:
         - RECORD_COMPARATOR_CONTAINS
         - RECORD_COMPARATOR_NOT_CONTAINS
       description: RecordComparator defines comparison operations for DNS records.
+    openstatus.monitor.v1.RegenerateHeartbeatTokenRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to regenerate the ping URL for (required).
+      title: RegenerateHeartbeatTokenRequest
+      additionalProperties: false
+      description: RegenerateHeartbeatTokenRequest is the request to replace a heartbeat monitor's ping URL.
+    openstatus.monitor.v1.RegenerateHeartbeatTokenResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The monitor with its new ping URL.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HeartbeatMonitor'
+      title: RegenerateHeartbeatTokenResponse
+      additionalProperties: false
+      description: RegenerateHeartbeatTokenResponse is the response containing the monitor with its new ping URL.
     openstatus.monitor.v1.Region:
       type: string
       title: Region
@@ -7596,6 +7763,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/ListMonitorHeartbeatPings:
+    get:
+      tags:
+        - MonitorService
+      summary: ListMonitorHeartbeatPings
+      description: Returns the pings a heartbeat monitor received, newest first, with their method, headers and body. Pings older than the plan's data retention are not returned. Requires the response logs feature on the workspace plan. Page through results by passing next_cursor back as cursor.
+      operationId: MonitorService_ListMonitorHeartbeatPings.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHeartbeatPingsRequest'
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHeartbeatPingsResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: ListMonitorHeartbeatPings
+      description: Returns the pings a heartbeat monitor received, newest first, with their method, headers and body. Pings older than the plan's data retention are not returned. Requires the response logs feature on the workspace plan. Page through results by passing next_cursor back as cursor.
+      operationId: MonitorService_ListMonitorHeartbeatPings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHeartbeatPingsRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHeartbeatPingsResponse'
   /rpc/openstatus.monitor.v1.MonitorService/ListMonitors:
     get:
       tags:
@@ -7652,6 +7875,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/RegenerateHeartbeatToken:
+    post:
+      tags:
+        - MonitorService
+      summary: RegenerateHeartbeatToken
+      description: Generates a new ping URL for a heartbeat monitor. The previous ping URL stops working immediately, so update your jobs with the returned ping_url.
+      operationId: MonitorService_RegenerateHeartbeatToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.RegenerateHeartbeatTokenRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.RegenerateHeartbeatTokenResponse'
   /rpc/openstatus.monitor.v1.MonitorService/TriggerMonitor:
     post:
       tags:
