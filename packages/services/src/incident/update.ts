@@ -5,6 +5,7 @@ import {
   incident,
   isAllowedIncidentReportedAt,
 } from "@openstatus/db/src/schema";
+import { incidentSeverityChangePatch } from "@openstatus/db/src/schema/incident_response_targets/state";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -12,6 +13,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { ValidationError } from "../errors";
 import {
   appendIncidentEvent,
+  appendIncidentTargetBreaches,
   assertMember,
   assertNotClosed,
   getIncidentInWorkspace,
@@ -76,9 +78,15 @@ export async function updateIncident(args: {
     }
     if (Object.keys(patch).length === 0) return existing;
 
+    const now = new Date();
+    const missed =
+      patch.severity === undefined
+        ? {}
+        : incidentSeverityChangePatch(existing, patch.severity, now);
+
     const updated = await tx
       .update(incident)
-      .set({ ...patch, updatedAt: new Date() })
+      .set({ ...patch, ...missed, updatedAt: now })
       .where(eq(incident.id, existing.id))
       .returning()
       .get();
@@ -97,6 +105,13 @@ export async function updateIncident(args: {
         type: "severity_changed",
         message: `Severity changed from ${existing.severity} to ${updated.severity}`,
       });
+      await appendIncidentTargetBreaches(
+        tx,
+        ctx,
+        { ...existing, severity: updated.severity },
+        missed,
+        now,
+      );
     }
     if (patch.commanderId !== undefined) {
       const name = await userDisplayName(tx, updated.commanderId);

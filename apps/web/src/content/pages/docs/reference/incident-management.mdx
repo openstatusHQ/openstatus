@@ -113,7 +113,7 @@ Every timer starts at the [reported at](#reported-at) time when one is set, othe
 
 - "Met in 4m" and similar durations are measured from the start of the timer. A target met by the declare itself reads "met at declare".
 - A severity change moves the due time of timers that are still running. A severity upgrade can make a timer due at once.
-- Met and missed timers keep their verdict. A met timer is never compared with a new due time.
+- Met and missed timers keep their verdict. A met timer is not compared with a new due time, with one exception: a target that only exists under the new severity is judged once against the response or stop time already recorded, and a time past the new due time is recorded as a miss at the change.
 
 ### Acknowledgement
 

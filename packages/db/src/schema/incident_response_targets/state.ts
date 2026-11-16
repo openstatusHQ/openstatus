@@ -212,6 +212,37 @@ export function incidentResponsePatch(
   return { responseMetAt: at };
 }
 
+/**
+ * The misses a change to `severity` records: a target that only exists under
+ * the new severity is judged once against the time already stored for it. A
+ * target the old severity had keeps its verdict.
+ */
+export function incidentSeverityChangePatch(
+  incident: IncidentTargetFields,
+  severity: IncidentSeverity,
+  at: Date,
+): { responseBreachDueAt?: Date; resolutionBreachDueAt?: Date } {
+  const before = incidentTargetState(incident, at);
+  const after = incidentTargetState({ ...incident, severity }, at);
+  if (!after) return {};
+  const patch: { responseBreachDueAt?: Date; resolutionBreachDueAt?: Date } =
+    {};
+  const late = (kind: IncidentTargetTimerKind) => {
+    const timer = after[kind];
+    return !before?.[kind] &&
+      timer?.metAt &&
+      !timer.breachDueAt &&
+      timer.metAt.getTime() > timer.dueAt.getTime()
+      ? timer.dueAt
+      : undefined;
+  };
+  const response = late("response");
+  const resolution = late("resolution");
+  if (response) patch.responseBreachDueAt = response;
+  if (resolution) patch.resolutionBreachDueAt = resolution;
+  return patch;
+}
+
 /** Whether `status` stops the resolution clock under the snapshot's stop setting. */
 export function incidentTargetStopsResolution(
   stop: IncidentTargetSnapshot["resolutionStop"],

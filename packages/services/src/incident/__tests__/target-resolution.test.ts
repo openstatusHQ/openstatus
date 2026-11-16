@@ -11,7 +11,13 @@ import {
 import type { DB, ServiceContext } from "../../context";
 import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import type { Workspace } from "../../types";
-import { declareIncident, getIncident, setIncidentStatus } from "../index";
+import {
+  declareIncident,
+  getIncident,
+  listIncidentEvents,
+  setIncidentStatus,
+  updateIncident,
+} from "../index";
 
 let team: Workspace;
 let ownerId: number;
@@ -139,6 +145,53 @@ describe("the resolution clock", () => {
       expect(reopened.resolutionBreachDueAt).toEqual(
         resolved.resolutionBreachDueAt,
       );
+    });
+  });
+
+  test("raising the severity to one with a target judges the stop already stored, once", async () => {
+    await withTestTransaction(async (tx) => {
+      await upsertIncidentResponseTarget({
+        ctx: owner(tx),
+        input: {
+          targets: {
+            critical: { responseMinutes: 60, resolutionMinutes: 240 },
+          },
+          resolutionStop: "mitigated",
+        },
+      });
+      const declared = await declareIncident({
+        ctx: apiKey(tx),
+        input: { title: "Slow search", severity: "minor" },
+      });
+      const declaredAt = await declaredMinutesAgo(tx, declared.id, 300);
+      const mitigated = await move(tx, declared.id, "mitigated");
+      expect(mitigated.resolutionBreachDueAt).toBeNull();
+      expect(await resolution(tx, declared.id)).toBeNull();
+
+      const raised = await updateIncident({
+        ctx: owner(tx),
+        input: { id: declared.id, severity: "critical" },
+      });
+      const dueAt = new Date(declaredAt.getTime() + 240 * 60_000);
+      expect(raised.resolutionBreachDueAt).toEqual(dueAt);
+      expect((await resolution(tx, declared.id))?.status).toBe("breached");
+      const events = await listIncidentEvents({
+        ctx: owner(tx),
+        input: { id: declared.id },
+      });
+      expect(
+        events.filter((e) => e.type === "resolution_target_breached"),
+      ).toHaveLength(1);
+
+      await updateIncident({
+        ctx: owner(tx),
+        input: { id: declared.id, severity: "minor" },
+      });
+      const again = await updateIncident({
+        ctx: owner(tx),
+        input: { id: declared.id, severity: "critical" },
+      });
+      expect(again.resolutionBreachDueAt).toEqual(dueAt);
     });
   });
 

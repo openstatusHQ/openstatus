@@ -6,6 +6,7 @@ import {
   incidentAwaitsAcknowledgement,
   incidentResolutionPatch,
   incidentResponsePatch,
+  incidentSeverityChangePatch,
   incidentTargetHeadline,
   incidentTargetState,
 } from "./state";
@@ -481,5 +482,89 @@ describe("reported at", () => {
     expect(
       response({ reportedAt: at(-90), responseMetAt: at(10) }, at(20))?.status,
     ).toBe("met");
+  });
+});
+
+describe("incidentSeverityChangePatch", () => {
+  it("judges a response met before the severity had a response target", () => {
+    expect(
+      incidentSeverityChangePatch(
+        { ...base, severity: "minor", responseMetAt: at(90) },
+        "critical",
+        at(100),
+      ),
+    ).toEqual({ responseBreachDueAt: at(60) });
+  });
+
+  it("records nothing when the stored time is within the new target", () => {
+    expect(
+      incidentSeverityChangePatch(
+        { ...base, severity: "minor", responseMetAt: at(30) },
+        "critical",
+        at(100),
+      ),
+    ).toEqual({});
+  });
+
+  it("judges a resolution stopped while the severity had no targets", () => {
+    expect(
+      incidentSeverityChangePatch(
+        {
+          ...base,
+          severity: "major",
+          status: "mitigated",
+          resolutionStoppedAt: at(300),
+        },
+        "critical",
+        at(310),
+      ),
+    ).toEqual({ resolutionBreachDueAt: at(240) });
+  });
+
+  it("keeps the verdict of a target the old severity already had", () => {
+    expect(
+      incidentSeverityChangePatch(
+        {
+          ...base,
+          severity: "minor",
+          status: "mitigated",
+          resolutionStoppedAt: at(300),
+        },
+        "critical",
+        at(310),
+      ),
+    ).toEqual({});
+  });
+
+  it("leaves a target that is still open to its timer", () => {
+    expect(
+      incidentSeverityChangePatch(
+        { ...base, severity: "minor" },
+        "critical",
+        at(100),
+      ),
+    ).toEqual({});
+  });
+
+  it("records nothing for an untracked or canceled incident", () => {
+    expect(
+      incidentSeverityChangePatch(
+        { ...base, severity: "minor", targetSnapshot: null },
+        "critical",
+        at(100),
+      ),
+    ).toEqual({});
+    expect(
+      incidentSeverityChangePatch(
+        {
+          ...base,
+          severity: "minor",
+          status: "canceled",
+          responseMetAt: at(90),
+        },
+        "critical",
+        at(100),
+      ),
+    ).toEqual({});
   });
 });

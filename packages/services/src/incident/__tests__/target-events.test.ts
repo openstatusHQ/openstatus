@@ -250,10 +250,10 @@ describe("severity changes", () => {
     });
   });
 
-  test("an upgrade after the response was met does not turn it into a miss", async () => {
+  test("an upgrade that brings a response target judges the response already met, once", async () => {
     await withTestTransaction(async (tx) => {
       const declared = await declare(tx, { severity: "minor" });
-      await declaredMinutesAgo(tx, declared.id, 90);
+      const declaredAt = await declaredMinutesAgo(tx, declared.id, 90);
       await acknowledgeIncident({
         ctx: member(tx),
         input: { id: declared.id },
@@ -262,13 +262,38 @@ describe("severity changes", () => {
         ctx: member(tx),
         input: { id: declared.id, severity: "critical" },
       });
-      expect(await breaches(tx, declared.id)).toEqual([]);
+      const found = await breaches(tx, declared.id);
+      expect(found.map((e) => e.type)).toEqual(["response_target_breached"]);
       const row = await getIncident({
         ctx: member(tx),
         input: { id: declared.id },
       });
-      expect(row?.targets?.response?.status).toBe("met");
-      expect(row?.responseBreachDueAt).toBeNull();
+      expect(row?.targets?.response?.status).toBe("breached");
+      expect(row?.responseBreachDueAt).toEqual(minutesAfter(declaredAt, 60));
+    });
+  });
+
+  test("an upgrade keeps the verdict of a target the old severity already had", async () => {
+    await withTestTransaction(async (tx) => {
+      const declared = await declare(tx, {
+        severity: "minor",
+        resolutionStop: "mitigated",
+      });
+      await declaredMinutesAgo(tx, declared.id, 300);
+      await setIncidentStatus({
+        ctx: member(tx),
+        input: { id: declared.id, status: "mitigated" },
+      });
+      await updateIncident({
+        ctx: member(tx),
+        input: { id: declared.id, severity: "critical" },
+      });
+      const row = await getIncident({
+        ctx: member(tx),
+        input: { id: declared.id },
+      });
+      expect(row?.targets?.resolution?.status).toBe("met");
+      expect(row?.resolutionBreachDueAt).toBeNull();
     });
   });
 });
