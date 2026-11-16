@@ -23,7 +23,7 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import {
-  bindIncidentTargetckChannel,
+  bindIncidentTargetsckChannel,
   declareIncident,
 } from "@openstatus/services/incident";
 import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
@@ -55,7 +55,7 @@ import {
   isSlackChannel,
   offersRelink,
   relinkNoticeBlocks,
-} from "./incident-targetck";
+} from "./incident-slack";
 import { handleSlackInteraction } from "./interactions";
 import { postReportFollowUp } from "./report-follow-up";
 import { verifySlackSignature } from "./verify";
@@ -2418,7 +2418,7 @@ describe("link this channel instead", () => {
       ctx,
       input: { title: `Relink ${crypto.randomUUID()}`, severity: "major" },
     });
-    await bindIncidentTargetckChannel({
+    await bindIncidentTargetsckChannel({
       ctx,
       input: { id: created.id, teamId: "T_KNOWN", channelId },
     });

@@ -3,7 +3,7 @@ import type { IncidentTargetTimer } from "@openstatus/db/src/schema/incident_res
 import { formatDurationShort } from "@/lib/formatter";
 
 /** `"4h"` → 240 minutes; empty means the timer is off. Units in order, each at most once. */
-export function parseSlaDuration(
+export function parseUptimeDuration(
   value: string,
 ): { ok: true; minutes: number | undefined } | { ok: false } {
   const v = value.trim().toLowerCase().replace(/\s+/g, "");
@@ -20,7 +20,10 @@ export function parseSlaDuration(
 const MINUTE = 60_000;
 
 /** "due in 35m", "breached 2h ago", "met at declare", "met in 4m", "met 3h late". */
-export function slaTimerPhrase(timer: IncidentTargetTimer, now: Date): string {
+export function targetTimerPhrase(
+  timer: IncidentTargetTimer,
+  now: Date,
+): string {
   if (timer.metAt) {
     const took = timer.metAt.getTime() - timer.startsAt.getTime();
     if (took <= 0) return "met at declare";

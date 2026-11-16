@@ -1,6 +1,6 @@
 "use client";
 
-import { formatSlaUptime } from "@openstatus/db/src/schema/uptime_targets/constants";
+import { formatUptimePercent } from "@openstatus/db/src/schema/uptime_targets/constants";
 import { Shield } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -53,17 +53,17 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { SlaMonitorMonthSheet } from "@/components/reports/sla-monitor-month-sheet";
+import { UptimeMonitorMonthSheet } from "@/components/reports/uptime-monitor-month-sheet";
 import {
-  SlaMonthLegend,
-  SlaMonthLegendItem,
-} from "@/components/reports/sla-month-strip";
+  UptimeMonthLegend,
+  UptimeMonthLegendItem,
+} from "@/components/reports/uptime-month-strip";
 import { UptimeTargetExcusedWindows } from "@/components/reports/uptime-target-excused-windows";
 import { UptimeTargetMaintenance } from "@/components/reports/uptime-target-maintenance";
 import { UptimeTargetPaywall } from "@/components/reports/uptime-target-paywall";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
-import { allowedDowntime, formatSlaTarget } from "@/data/reports.client";
+import { allowedDowntime, formatUptimeTarget } from "@/data/reports.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -90,7 +90,7 @@ export function Client() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  const allowed = workspace?.limits["monitor-sla"] === true;
+  const allowed = workspace?.limits["uptime-targets"] === true;
   const {
     data: policy,
     error,
@@ -195,7 +195,7 @@ export function Client() {
           <SectionHeader>
             <SectionTitle>{policy.name}</SectionTitle>
             <SectionDescription>
-              {formatSlaTarget(policy.target)}% monthly uptime per monitor ·{" "}
+              {formatUptimeTarget(policy.target)}% monthly uptime per monitor ·{" "}
               {policy.strict
                 ? "slow responses count as down"
                 : "slow responses count as up"}
@@ -218,7 +218,7 @@ export function Client() {
               <MetricCardTitle className="uppercase">Target</MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {formatSlaTarget(policy.target)}%{" "}
+              {formatUptimeTarget(policy.target)}%{" "}
               <span className="text-muted-foreground text-sm font-normal">
                 {allowedDowntime(policy.target)} per month
               </span>
@@ -239,7 +239,7 @@ export function Client() {
               </MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {lowest === null ? "—" : `${formatSlaUptime(lowest.uptime)}%`}{" "}
+              {lowest === null ? "—" : `${formatUptimePercent(lowest.uptime)}%`}{" "}
               <span
                 className="text-muted-foreground text-sm font-normal"
                 title={lowest?.name}
@@ -343,24 +343,26 @@ export function Client() {
             }
           />
         </div>
-        <SlaMonthLegend>
-          <SlaMonthLegendItem swatch="bg-success/30">Met</SlaMonthLegendItem>
-          <SlaMonthLegendItem swatch="bg-destructive/30">
+        <UptimeMonthLegend>
+          <UptimeMonthLegendItem swatch="bg-success/30">
+            Met
+          </UptimeMonthLegendItem>
+          <UptimeMonthLegendItem swatch="bg-destructive/30">
             Missed
-          </SlaMonthLegendItem>
-          <SlaMonthLegendItem swatch="bg-info/30">
+          </UptimeMonthLegendItem>
+          <UptimeMonthLegendItem swatch="bg-info/30">
             Live, provisional
-          </SlaMonthLegendItem>
-          <SlaMonthLegendItem swatch="border-muted-foreground border border-dashed">
+          </UptimeMonthLegendItem>
+          <UptimeMonthLegendItem swatch="border-muted-foreground border border-dashed">
             Preview, not sealed yet
-          </SlaMonthLegendItem>
+          </UptimeMonthLegendItem>
           <span>Filled: sealed, hover for its terms</span>
           <span>— no checks, or unavailable in this time zone</span>
           <span>Months in {policy.timeZone}</span>
           <span>
             Uptime in %, after excused downtime, floored to three decimals
           </span>
-        </SlaMonthLegend>
+        </UptimeMonthLegend>
         {live && policy.liveIncomplete ? (
           <p className="text-warning text-sm">
             Recent checks could not be loaded, so the recent weeks may be
@@ -393,7 +395,7 @@ export function Client() {
             : (prefill) => setExcuse({ prefill })
         }
       />
-      <SlaMonitorMonthSheet
+      <UptimeMonitorMonthSheet
         policy={policy}
         monitor={selectedMonitor}
         month={selectedMonth}

@@ -57,19 +57,19 @@ const IncidentTargetSchema = z
     "Response and resolution targets; null when the incident is untracked or canceled.",
   );
 
-function toSlaTimer(
+function toTargetTimer(
   timer: IncidentTargetTimer | null,
 ): z.infer<typeof IncidentTargetTimerSchema> {
   return timer ? incidentTargetTimerIso(timer) : null;
 }
 
-function toSla(
+function toTargets(
   state: IncidentTargetState | null,
 ): z.infer<typeof IncidentTargetSchema> {
   if (!state) return null;
   return {
-    response: toSlaTimer(state.response),
-    resolution: toSlaTimer(state.resolution),
+    response: toTargetTimer(state.response),
+    resolution: toTargetTimer(state.resolution),
   };
 }
 
@@ -87,7 +87,7 @@ const IncidentSummary = z.object({
   slackChannelId: z.string().nullable(),
   acknowledgedAt: z.string().nullable(),
   acknowledgedBy: attributedUserSchema.nullable(),
-  sla: IncidentTargetSchema,
+  targets: IncidentTargetSchema,
 });
 
 function toIncidentSummary(
@@ -107,7 +107,7 @@ function toIncidentSummary(
     slackChannelId: row.slackChannelId,
     acknowledgedAt: row.acknowledgedAt?.toISOString() ?? null,
     acknowledgedBy: toAttributedUser(row.acknowledgedByUser),
-    sla: toSla(row.sla),
+    targets: toTargets(row.targets),
   };
 }
 
@@ -127,7 +127,7 @@ export const listIncidentsTool: AgentTool<
 > = {
   name: "list_incidents",
   description:
-    "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones. `sla` shows each response and resolution target; `at_risk` means past 75% of it and about to miss.",
+    "List managed incidents in this workspace (declared by the team, not monitor downtime), newest declared first. Filter by `status` to see only open ones. `targets` shows each response and resolution target; `at_risk` means past 75% of it and about to miss.",
   scope: "incidents:read",
   destructive: false,
   inputSchema: ListIncidentsInput,
@@ -246,7 +246,7 @@ const DeclareIncidentInput = z.object({
     .datetime()
     .optional()
     .describe(
-      "When the request reached the team (email, phone), if before now, ISO 8601. SLA timers start here. At most 30 days ago.",
+      "When the request reached the team (email, phone), if before now, ISO 8601. Response targets start here. At most 30 days ago.",
     ),
   statusReportId: z
     .number()
@@ -321,7 +321,7 @@ const UpdateIncidentInput = z.object({
     .datetime()
     .nullish()
     .describe(
-      "When the request reached the team, ISO 8601, between 30 days before the declare and the declare; null clears it. Moves running SLA timers.",
+      "When the request reached the team, ISO 8601, between 30 days before the declare and the declare; null clears it. Moves running target timers.",
     ),
 });
 

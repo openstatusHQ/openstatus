@@ -34,7 +34,7 @@ export const incident = sqliteTable(
     declaredBy: integer("declared_by").references(() => user.id),
     declaredAt: integer("declared_at", { mode: "timestamp" }).notNull(),
     startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
-    // when the request arrived, if before the declare; SLA timers start here
+    // when the request arrived, if before the declare; response targets start here
     reportedAt: integer("reported_at", { mode: "timestamp" }),
     mitigatedAt: integer("mitigated_at", { mode: "timestamp" }),
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
@@ -42,7 +42,7 @@ export const incident = sqliteTable(
     closedAt: integer("closed_at", { mode: "timestamp" }),
     acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
     acknowledgedBy: integer("acknowledged_by").references(() => user.id),
-    // null = untracked: no policy or no `incident-sla` limit at declare
+    // null = untracked: no policy or no `incident-targets` limit at declare
     targetSnapshot: text("target_snapshot", {
       mode: "json",
     }).$type<IncidentTargetSnapshot>(),

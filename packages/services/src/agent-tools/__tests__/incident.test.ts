@@ -184,7 +184,7 @@ describe("incident agent tools", () => {
     });
   });
 
-  test("list and get carry the SLA state of tracked incidents only", async () => {
+  test("list and get carry the target state of tracked incidents only", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...makeUserCtx(workspace, { userId }), db: tx };
       const declared = await declareIncidentTool.run({
@@ -198,7 +198,7 @@ describe("incident agent tools", () => {
         ctx,
         input: { id: declared.id },
       });
-      expect(untracked.sla).toBeNull();
+      expect(untracked.targets).toBeNull();
 
       const minute = 60_000;
       const declaredAt = new Date(
@@ -241,14 +241,14 @@ describe("incident agent tools", () => {
         ctx,
         input: { id: declared.id },
       });
-      expect(detail.sla).toEqual(expected);
+      expect(detail.targets).toEqual(expected);
       expect(getIncidentTool.outputSchema.parse(detail)).toBeDefined();
 
       const list = await listIncidentsTool.run({
         ctx,
         input: listIncidentsTool.inputSchema.parse({}),
       });
-      expect(list.items.find((i) => i.id === declared.id)?.sla).toEqual(
+      expect(list.items.find((i) => i.id === declared.id)?.targets).toEqual(
         expected,
       );
       expect(listIncidentsTool.outputSchema.parse(list)).toBeDefined();

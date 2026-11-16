@@ -67,7 +67,7 @@ function withoutLimit(ctx: ServiceContext): ServiceContext {
     ...ctx,
     workspace: {
       ...ctx.workspace,
-      limits: { ...ctx.workspace.limits, "monitor-sla": false },
+      limits: { ...ctx.workspace.limits, "uptime-targets": false },
     },
   };
 }

@@ -9,7 +9,7 @@ export const UPTIME_TARGET_TARGET_MIN = 1;
 export const UPTIME_TARGET_TARGET_MAX = 100_000;
 
 /** Floored uptime in thousandths of a percent → `"99.450"`, never rounded up. */
-export function formatSlaUptime(uptime: number): string {
+export function formatUptimePercent(uptime: number): string {
   return `${Math.floor(uptime / 1000)}.${String(uptime % 1000).padStart(3, "0")}`;
 }
 

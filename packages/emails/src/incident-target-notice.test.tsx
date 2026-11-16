@@ -14,7 +14,7 @@ import { stubResendSend } from "./test-resend";
 
 const props = IncidentTargetNoticeEmail.PreviewProps;
 
-describe("incident SLA notice email", () => {
+describe("incident target notice email", () => {
   test("subject is the headline and the incident title", () => {
     expect(incidentTargetNoticeSubject(props)).toBe(
       "Response due soon: Checkout is failing",

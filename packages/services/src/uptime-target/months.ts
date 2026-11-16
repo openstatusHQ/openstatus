@@ -3,7 +3,7 @@ import type { uptimeTargetSealedMonth } from "@openstatus/db/src/schema";
 
 import { monthRange } from "../frozen-uptime/compute";
 import { FREEZE_CUTOFF_MS } from "../frozen-uptime/run";
-import { type Episode, evaluateSlaPeriod } from "./episodes";
+import { type Episode, evaluateUptimePeriod } from "./episodes";
 import type { Span } from "./excused";
 
 export const LAST_TWELVE = 12;
@@ -195,7 +195,7 @@ export function timeMonth(args: {
   timeZone: string;
 }): UptimeTargetMonth {
   const { terms } = args;
-  const result = evaluateSlaPeriod({
+  const result = evaluateUptimePeriod({
     episodes: args.episodes,
     excusedSpans: args.excusedSpans,
     target: terms.target,

@@ -8,7 +8,7 @@ import {
 
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import type { SlaEpisodesPipes } from "./fetch-episodes";
+import type { UptimeEpisodesPipes } from "./fetch-episodes";
 import {
   assertUptimeTargetLimit,
   episodeMonths,
@@ -33,7 +33,7 @@ export async function listUptimeTargets(args: {
   ctx: ServiceContext;
   input?: ListUptimeTargetsInput;
   now?: Date;
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;

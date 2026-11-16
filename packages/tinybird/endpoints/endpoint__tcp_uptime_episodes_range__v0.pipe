@@ -1,10 +1,10 @@
-TOKEN "endpoint__grpc_sla_episodes_range__v0_endpoint_read" READ
+TOKEN "endpoint__tcp_uptime_episodes_range__v0_endpoint_read" READ
 
 NODE endpoint
 SQL >
 
 %
--- SPEC "Weight and unmeasured time" over [fromDate, toDate) in epoch ms, quorum as endpoint__grpc_runs_range__v0.
+-- SPEC "Weight and unmeasured time" over [fromDate, toDate) in epoch ms, quorum as endpoint__tcp_runs_range__v0.
 -- Must match episodesFromRuns; expected output: packages/services/src/uptime-target/__tests__/fixtures/episodes.json
 WITH
     toInt64({{ Int64(fromDate, 1730419200000, required=True) }}) AS fromMs,
@@ -22,7 +22,7 @@ WITH
                 uniqExactMerge(regions) AS n,
                 uniqExactMerge(errorRegions) AS e,
                 uniqExactMerge(degradedRegions) AS d
-            FROM mv__grpc_runs_45d__v0
+            FROM mv__tcp_runs_45d__v0
             WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
                 AND time >= toStartOfDay(toDateTime(intDiv(fromMs, 1000), 'UTC'))
                 AND time < fromUnixTimestamp64Milli(toInt64(toMs), 'UTC')

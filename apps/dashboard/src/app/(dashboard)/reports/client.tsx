@@ -36,7 +36,7 @@ import {
 import { columns } from "@/components/data-table/uptime-targets/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetUptimeTargetCreate } from "@/components/forms/uptime-target/sheet-create";
-import { SlaMonthStripLegend } from "@/components/reports/sla-month-strip";
+import { UptimeMonthStripLegend } from "@/components/reports/uptime-month-strip";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
@@ -87,7 +87,7 @@ export function Client() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const userQuery = useQuery(trpc.user.get.queryOptions());
   const membersQuery = useQuery(trpc.member.list.queryOptions());
-  const allowed = workspace?.limits["monitor-sla"] === true;
+  const allowed = workspace?.limits["uptime-targets"] === true;
   const { data: policies } = useQuery({
     ...trpc.uptimeTarget.list.queryOptions({ archived }),
     enabled: allowed,
@@ -165,7 +165,7 @@ export function Client() {
               <Button
                 data-section="action"
                 data-track="paywall_viewed"
-                data-limit="monitor-sla"
+                data-limit="uptime-targets"
                 size="sm"
                 onClick={() => setOpenDialog(true)}
               >
@@ -217,7 +217,7 @@ export function Client() {
             <BillingOverlay>
               <BillingOverlayButton
                 data-track="paywall_viewed"
-                data-limit="monitor-sla"
+                data-limit="uptime-targets"
                 onClick={() => setOpenDialog(true)}
               >
                 <Lock />
@@ -231,16 +231,16 @@ export function Client() {
           </BillingOverlayContainer>
         )}
         {!allowed || (policies && policies.length > 0) ? (
-          <SlaMonthStripLegend>
+          <UptimeMonthStripLegend>
             <span>
               A month is missed when any monitor in the uptime target missed it.
             </span>
-          </SlaMonthStripLegend>
+          </UptimeMonthStripLegend>
         ) : null}
         <UpgradeDialog
           open={openDialog}
           onOpenChange={setOpenDialog}
-          limit="monitor-sla"
+          limit="uptime-targets"
         />
       </Section>
     </SectionGroup>

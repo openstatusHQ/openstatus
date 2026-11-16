@@ -22,7 +22,7 @@ import {
   type SlackIncidentClient,
   updateIncident,
 } from "../index";
-import { incidentTargetNoticeCopy } from "../sla-notice-copy";
+import { incidentTargetNoticeCopy } from "../target-notice-copy";
 
 let team: Workspace;
 let ownerId: number;
@@ -89,7 +89,7 @@ async function declare(
         ? {}
         : {
             slackTeamId: args.teamId,
-            slackChannelId: args.channel ?? "C_SLA",
+            slackChannelId: args.channel ?? "C_TARGETS",
           }),
     })
     .where(eq(incident.id, declared.id));
@@ -97,7 +97,7 @@ async function declare(
 }
 
 async function connect(tx: DB) {
-  const teamId = `T_SLA_${crypto.randomUUID()}`;
+  const teamId = `T_TARGETS_${crypto.randomUUID()}`;
   await tx.insert(integration).values({
     name: "slack-agent",
     workspaceId: team.id,
@@ -168,7 +168,7 @@ describe("warnings", () => {
       ]);
       expect(summary(await notices(tx, client))).toEqual([]);
       expect(sent).toHaveLength(1);
-      expect(sent[0]?.channel).toBe("C_SLA");
+      expect(sent[0]?.channel).toBe("C_TARGETS");
       expect(sent[0]?.text).toBe("Response due soon: Checkout &lt;down&gt;");
       const blocks = JSON.stringify(sent[0]?.blocks);
       expect(blocks).toContain("*Checkout &lt;down&gt;* (critical)");

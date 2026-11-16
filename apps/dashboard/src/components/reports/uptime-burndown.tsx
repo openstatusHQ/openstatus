@@ -22,7 +22,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { formatSlaDuration } from "@/data/reports.client";
+import { formatUptimeDuration } from "@/data/reports.client";
 
 type MonitorMonth = RouterOutputs["uptimeTarget"]["monitorMonth"];
 
@@ -112,7 +112,7 @@ function shortTick(v: number) {
 }
 
 /** When the month's down-time budget went: budget left per day over the day's down and slow time. */
-export function SlaBurndown({ month }: { month: MonitorMonth }) {
+export function UptimeBurndown({ month }: { month: MonitorMonth }) {
   const [now] = useState(Date.now);
   const { budget } = month;
   if (!budget || !month.episodes) return null;
@@ -212,7 +212,7 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
         >
           <defs>
             <linearGradient
-              id="sla-burndown-stroke"
+              id="uptime-burndown-stroke"
               x1="0"
               y1="0"
               x2="0"
@@ -269,16 +269,16 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
                   {day.elapsed ? (
                     <>
                       <TooltipRow label="Down" dot="bg-destructive">
-                        {formatSlaDuration(day.downMs)}
+                        {formatUptimeDuration(day.downMs)}
                       </TooltipRow>
                       <TooltipRow label="Slow" dot="bg-warning">
-                        {formatSlaDuration(day.slowMs)}
+                        {formatUptimeDuration(day.slowMs)}
                       </TooltipRow>
                       <TooltipRow
                         label={day.leftMs < 0 ? "Over" : "Left"}
                         className={cn(day.leftMs < 0 && "text-destructive")}
                       >
-                        {formatSlaDuration(day.leftMs)}
+                        {formatUptimeDuration(day.leftMs)}
                       </TooltipRow>
                     </>
                   ) : (
@@ -343,7 +343,9 @@ export function SlaBurndown({ month }: { month: MonitorMonth }) {
             dataKey="left"
             type="stepAfter"
             stroke={
-              lowestLeft < 0 ? "url(#sla-burndown-stroke)" : "var(--color-left)"
+              lowestLeft < 0
+                ? "url(#uptime-burndown-stroke)"
+                : "var(--color-left)"
             }
             strokeWidth={1.5}
             dot={false}

@@ -4,7 +4,7 @@ import {
   addIncidentNote,
   getIncidentBySlackChannel,
   isAllowedNoteCreatedAt,
-  unbindIncidentTargetckChannel,
+  unbindIncidentTargetsckChannel,
 } from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
 
@@ -439,7 +439,7 @@ export async function handleChannelGone(args: {
         slack: new WebClient(resolved.botToken),
       })
     : null;
-  await unbindIncidentTargetckChannel({
+  await unbindIncidentTargetsckChannel({
     ctx: actor ? { workspace: resolved.workspace, actor } : system(resolved),
     input: { id: bound.id },
   });

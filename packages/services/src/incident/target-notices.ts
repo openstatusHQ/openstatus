@@ -27,13 +27,13 @@ import {
   reminderConnection,
   reminderTarget,
 } from "./reminders";
-import type { IncidentTargetBreachRecord } from "./sla-breaches";
-import { incidentTargetNoticeCopy } from "./sla-notice-copy";
 import {
   type SlackClientFactory,
   type SlackIncidentBlock,
   escapeMrkdwn,
 } from "./slack-flow";
+import type { IncidentTargetBreachRecord } from "./target-breaches";
+import { incidentTargetNoticeCopy } from "./target-notice-copy";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -287,7 +287,7 @@ function slackTime(date: Date): string {
 }
 
 /**
- * Block Kit of an SLA notice. Response notices carry an Acknowledge button in
+ * Block Kit of a target notice. Response notices carry an Acknowledge button in
  * acknowledgement mode until `acknowledgedBy` is given.
  */
 export function incidentTargetNoticeBlocks(args: {
@@ -435,7 +435,7 @@ export async function sendIncidentTargetNotices(args: {
         .then(
           (): IncidentTargetNoticeOutcome => "sent",
           async (error): Promise<IncidentTargetNoticeOutcome> => {
-            console.warn("incident sla notice failed", {
+            console.warn("incident target notice failed", {
               incidentId: item.incident.id,
               kind: item.kind,
               notice: item.notice,
@@ -448,7 +448,7 @@ export async function sendIncidentTargetNotices(args: {
         );
       results.push({ ...item, target, outcome });
     } catch (error) {
-      console.warn("incident sla notice not sent", {
+      console.warn("incident target notice not sent", {
         incidentId: item.incident.id,
         kind: item.kind,
         notice: item.notice,

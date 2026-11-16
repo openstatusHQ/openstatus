@@ -4,7 +4,7 @@ import { incident, integration, workspace } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type DB, type ServiceContext, withTransaction } from "../context";
-import { unbindIncidentTargetckChannel } from "../incident/slack-channel";
+import { unbindIncidentTargetsckChannel } from "../incident/slack-channel";
 import { parseWorkspaceForContext } from "../page-subscriber/internal";
 import { removeSlackTeamSubscribers } from "../page-subscriber/slack";
 import { deleteSlackUserMappings } from "../slack-user/internal";
@@ -60,7 +60,7 @@ export async function uninstallSlackAgent(args: {
       )
       .all();
     for (const row of bound) {
-      await unbindIncidentTargetckChannel({
+      await unbindIncidentTargetsckChannel({
         ctx: { ...ctx, db: tx },
         input: { id: row.id },
       });

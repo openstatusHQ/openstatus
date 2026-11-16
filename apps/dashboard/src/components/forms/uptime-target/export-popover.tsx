@@ -22,7 +22,7 @@ import { isTRPCClientError } from "@trpc/client";
 import { useId, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { formatSlaMonth } from "@/data/reports.client";
+import { formatUptimeMonth } from "@/data/reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 /** YYYY-MM for the UTC month `offset` months from now. */
@@ -101,7 +101,7 @@ export function UptimeTargetExportPopover({ policyId }: { policyId: number }) {
               <SelectContent>
                 {options.map((m) => (
                   <SelectItem key={m} value={m}>
-                    {formatSlaMonth(`${m}-01`, { year: true })}
+                    {formatUptimeMonth(`${m}-01`, { year: true })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -116,7 +116,7 @@ export function UptimeTargetExportPopover({ policyId }: { policyId: number }) {
               <SelectContent>
                 {options.map((m) => (
                   <SelectItem key={m} value={m}>
-                    {formatSlaMonth(`${m}-01`, { year: true })}
+                    {formatUptimeMonth(`${m}-01`, { year: true })}
                   </SelectItem>
                 ))}
               </SelectContent>

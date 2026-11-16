@@ -123,12 +123,12 @@ function actorSourceRef(actor: Actor): string | null {
   }
 }
 
-/** The policy fixed on a new incident; only with a policy and the `incident-sla` limit on. */
+/** The policy fixed on a new incident; only with a policy and the `incident-targets` limit on. */
 export async function targetSnapshotAtDeclare(
   tx: DB,
   ctx: ServiceContext,
 ): Promise<IncidentTargetSnapshot | null> {
-  if (!ctx.workspace.limits["incident-sla"]) return null;
+  if (!ctx.workspace.limits["incident-targets"]) return null;
   const policy = await findIncidentResponseTarget(tx, ctx.workspace.id);
   if (!policy) return null;
   return {

@@ -3,7 +3,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { formatSlaMonth } from "@/data/reports.client";
+import { formatUptimeMonth } from "@/data/reports.client";
 
 import { TableCellEmpty } from "../table-cell-empty";
 import { TableCellNumber } from "../table-cell-number";
@@ -39,7 +39,7 @@ export const columns: ColumnDef<Month>[] = [
     header: "Month",
     cell: ({ row }) => (
       <div className="font-medium">
-        {formatSlaMonth(row.original.month, { year: true })}
+        {formatUptimeMonth(row.original.month, { year: true })}
       </div>
     ),
   },

@@ -113,7 +113,7 @@ export function incidentTargetTimerIso(timer: IncidentTargetTimer) {
   };
 }
 
-/** SLA timers of an incident at `now`; null when untracked or canceled. */
+/** target timers of an incident at `now`; null when untracked or canceled. */
 export function incidentTargetState(
   incident: IncidentTargetFields,
   now: Date,

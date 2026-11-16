@@ -60,7 +60,7 @@ async function insertMonitor(
       workspaceId: ctx.workspace.id,
       active: true,
       url: "https://example.com",
-      name: "svc-sla-get",
+      name: "svc-uptime-target-get",
       periodicity: "10m",
       regions: "ams",
       jobType: "http",
@@ -536,7 +536,9 @@ describe("getUptimeTarget", () => {
   test("an excused window counts only for the monitors it names", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
-      const web = await insertMonitor(tx, { name: "svc-sla-get-web" });
+      const web = await insertMonitor(tx, {
+        name: "svc-uptime-target-get-web",
+      });
       const policy = await insertPolicy(tx, [api.id, web.id]);
       const outage = Date.UTC(2026, 10, 10);
       const excused = await tx

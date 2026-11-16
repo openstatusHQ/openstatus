@@ -20,13 +20,13 @@ export function toIncidentView<T extends Incident>(
 ): T & {
   allowedTransitions: ReadonlyArray<IncidentStatus>;
   deletable: boolean;
-  sla: IncidentTargetState | null;
+  targets: IncidentTargetState | null;
 } {
   return {
     ...row,
     allowedTransitions: allowedTransitions(row),
     deletable: isDeletable(row),
-    sla: incidentTargetState(row, now),
+    targets: incidentTargetState(row, now),
   };
 }
 

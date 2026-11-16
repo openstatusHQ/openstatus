@@ -6,7 +6,7 @@ import {
   EntityCardRow,
 } from "@/components/common/entity-card";
 import { entityKinds } from "@/data/entity-refs.client";
-import { formatSlaTarget } from "@/data/reports.client";
+import { formatUptimeTarget } from "@/data/reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import {
@@ -37,7 +37,7 @@ export function UptimeTargetCard({ id }: { id: number }) {
       </EntityRefHeader>
       <EntityCardContent>
         <EntityCardRow label="Target">
-          {formatSlaTarget(data.target)}%
+          {formatUptimeTarget(data.target)}%
         </EntityCardRow>
         <EntityCardRow label="Monitors">{data.monitors.length}</EntityCardRow>
         {data.archivedAt ? (

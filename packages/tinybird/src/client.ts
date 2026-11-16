@@ -378,12 +378,12 @@ export const runsRangeShape = z.object({
 });
 
 // fallbackIntervalMs: the monitor's current periodicity, used when a run has no neighbour.
-export const slaEpisodesRangeParameters = runsRangeParameters.extend({
+export const uptimeEpisodesRangeParameters = runsRangeParameters.extend({
   fallbackIntervalMs: z.int(),
 });
 
 // Half-open [startedAt, endedAt) in epoch ms.
-export const slaEpisodesRangeShape = z.object({
+export const uptimeEpisodesRangeShape = z.object({
   monitorId: z.string(),
   kind: z.enum(["ok", "degraded", "error", "unmeasured"]),
   startedAt: z.number(),
@@ -957,11 +957,11 @@ export class OSTinybird {
     });
   }
 
-  public get httpSlaEpisodesRange() {
+  public get httpUptimeEpisodesRange() {
     return this.tb.buildPipe({
-      pipe: "endpoint__http_sla_episodes_range__v0",
-      parameters: slaEpisodesRangeParameters,
-      data: slaEpisodesRangeShape,
+      pipe: "endpoint__http_uptime_episodes_range__v0",
+      parameters: uptimeEpisodesRangeParameters,
+      data: uptimeEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1562,11 +1562,11 @@ export class OSTinybird {
     });
   }
 
-  public get tcpSlaEpisodesRange() {
+  public get tcpUptimeEpisodesRange() {
     return this.tb.buildPipe({
-      pipe: "endpoint__tcp_sla_episodes_range__v0",
-      parameters: slaEpisodesRangeParameters,
-      data: slaEpisodesRangeShape,
+      pipe: "endpoint__tcp_uptime_episodes_range__v0",
+      parameters: uptimeEpisodesRangeParameters,
+      data: uptimeEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2062,11 +2062,11 @@ export class OSTinybird {
     });
   }
 
-  public get icmpSlaEpisodesRange() {
+  public get icmpUptimeEpisodesRange() {
     return this.tb.buildPipe({
-      pipe: "endpoint__icmp_sla_episodes_range__v0",
-      parameters: slaEpisodesRangeParameters,
-      data: slaEpisodesRangeShape,
+      pipe: "endpoint__icmp_uptime_episodes_range__v0",
+      parameters: uptimeEpisodesRangeParameters,
+      data: uptimeEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2578,11 +2578,11 @@ export class OSTinybird {
     });
   }
 
-  public get grpcSlaEpisodesRange() {
+  public get grpcUptimeEpisodesRange() {
     return this.tb.buildPipe({
-      pipe: "endpoint__grpc_sla_episodes_range__v0",
-      parameters: slaEpisodesRangeParameters,
-      data: slaEpisodesRangeShape,
+      pipe: "endpoint__grpc_uptime_episodes_range__v0",
+      parameters: uptimeEpisodesRangeParameters,
+      data: uptimeEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3921,11 +3921,11 @@ export class OSTinybird {
     });
   }
 
-  public get dnsSlaEpisodesRange() {
+  public get dnsUptimeEpisodesRange() {
     return this.tb.buildPipe({
-      pipe: "endpoint__dns_sla_episodes_range__v0",
-      parameters: slaEpisodesRangeParameters,
-      data: slaEpisodesRangeShape,
+      pipe: "endpoint__dns_uptime_episodes_range__v0",
+      parameters: uptimeEpisodesRangeParameters,
+      data: uptimeEpisodesRangeShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

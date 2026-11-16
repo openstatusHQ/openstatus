@@ -203,7 +203,7 @@ export async function recordIncidentTargetBreaches(
       if (!record) continue;
       recorded.push(record);
     } catch (error) {
-      console.warn("incident sla breach not recorded", {
+      console.warn("incident target breach not recorded", {
         incidentId: item.incident.id,
         kind: item.kind,
         error,

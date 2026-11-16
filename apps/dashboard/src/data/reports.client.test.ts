@@ -6,12 +6,12 @@ import {
   excusedWindowContext,
   formatBudgetLeft,
   formatExcusedWindow,
-  formatSlaCoverage,
-  formatSlaDuration,
-  formatSlaMonth,
-  parseSlaTarget,
-  slaMonthOf,
-  slaTreatmentTotals,
+  formatUptimeCoverage,
+  formatUptimeDuration,
+  formatUptimeMonth,
+  parseUptimeTarget,
+  uptimeMonthOf,
+  uptimeTreatmentTotals,
 } from "./reports.client";
 
 describe("allowedDowntime", () => {
@@ -29,7 +29,7 @@ describe("allowedDowntime", () => {
   });
 });
 
-describe("formatSlaDuration", () => {
+describe("formatUptimeDuration", () => {
   test.each([
     [0, "0s"],
     [999, "0s"],
@@ -41,7 +41,7 @@ describe("formatSlaDuration", () => {
     [(3600 + 5) * 1000, "1h"],
     [-4 * 60_000, "4m"],
   ])("%i ms → %s", (ms, expected) => {
-    expect(formatSlaDuration(ms)).toBe(expected);
+    expect(formatUptimeDuration(ms)).toBe(expected);
   });
 });
 
@@ -63,15 +63,15 @@ describe("budgetShare", () => {
   });
 });
 
-describe("formatSlaCoverage", () => {
+describe("formatUptimeCoverage", () => {
   test("floors to one decimal", () => {
-    expect(formatSlaCoverage(100_000)).toBe("100.0");
-    expect(formatSlaCoverage(99_899)).toBe("99.8");
-    expect(formatSlaCoverage(0)).toBe("0.0");
+    expect(formatUptimeCoverage(100_000)).toBe("100.0");
+    expect(formatUptimeCoverage(99_899)).toBe("99.8");
+    expect(formatUptimeCoverage(0)).toBe("0.0");
   });
 });
 
-describe("parseSlaTarget", () => {
+describe("parseUptimeTarget", () => {
   test.each([
     ["99.5", 99_500],
     ["99.95", 99_950],
@@ -81,23 +81,23 @@ describe("parseSlaTarget", () => {
     ["99.9999", null],
     ["abc", null],
   ])("%s → %s", (value, expected) => {
-    expect(parseSlaTarget(value)).toBe(expected);
+    expect(parseUptimeTarget(value)).toBe(expected);
   });
 });
 
-describe("formatSlaMonth", () => {
+describe("formatUptimeMonth", () => {
   test("short month in UTC, with the year on request", () => {
-    expect(formatSlaMonth("2026-01-01")).toBe("Jan");
-    expect(formatSlaMonth("2025-12-01", { year: true })).toBe("Dec 2025");
+    expect(formatUptimeMonth("2026-01-01")).toBe("Jan");
+    expect(formatUptimeMonth("2025-12-01", { year: true })).toBe("Dec 2025");
   });
 });
 
-describe("slaMonthOf", () => {
+describe("uptimeMonthOf", () => {
   test("the month in the given zone, not in UTC", () => {
     const date = new Date(Date.UTC(2026, 10, 30, 23, 30));
-    expect(slaMonthOf(date, "UTC")).toBe("2026-11-01");
-    expect(slaMonthOf(date, "Europe/Berlin")).toBe("2026-12-01");
-    expect(slaMonthOf(date, "America/New_York")).toBe("2026-11-01");
+    expect(uptimeMonthOf(date, "UTC")).toBe("2026-11-01");
+    expect(uptimeMonthOf(date, "Europe/Berlin")).toBe("2026-12-01");
+    expect(uptimeMonthOf(date, "America/New_York")).toBe("2026-11-01");
   });
 });
 
@@ -179,10 +179,10 @@ describe("excusedWindowContext", () => {
   });
 });
 
-describe("slaTreatmentTotals", () => {
+describe("uptimeTreatmentTotals", () => {
   test("sums per treatment in label order and drops empty ones", () => {
     expect(
-      slaTreatmentTotals([
+      uptimeTreatmentTotals([
         { treatment: "excused", startedAt: 0, endedAt: 5 },
         { treatment: "counted", startedAt: 10, endedAt: 20 },
         { treatment: "counted", startedAt: 40, endedAt: 60 },

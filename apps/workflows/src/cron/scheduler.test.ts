@@ -16,7 +16,7 @@ describe("SCHEDULED_TASKS", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  test("incident reminders and SLA misses run every five minutes", () => {
+  test("incident reminders and target misses run every five minutes", () => {
     const task = SCHEDULED_TASKS.find((t) => t.name === "incident-reminders");
     expect(task?.expression).toBe("*/5 * * * *");
   });

@@ -24,7 +24,7 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-import { type MonitorOption, SlaMonitorsField } from "./fields";
+import { type MonitorOption, UptimeMonitorsField } from "./fields";
 
 const schema = z.object({
   monitorIds: z.array(z.number()),
@@ -87,7 +87,7 @@ export function FormMonitors({
               name="monitorIds"
               render={({ field }) => (
                 <FormItem>
-                  <SlaMonitorsField
+                  <UptimeMonitorsField
                     monitors={monitors}
                     value={field.value}
                     onChange={field.onChange}

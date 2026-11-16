@@ -126,7 +126,7 @@ message DeclareIncidentRequest {
   optional bool open_slack_channel = 7;
 
   // When the request reached the team, if before the declare (RFC 3339 format, optional).
-  // At most 30 days before now and never later; SLA timers start here.
+  // At most 30 days before now and never later; response targets start here.
   optional string reported_at = 8 [
     (buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$",
     (gnostic.openapi.v3.property) = {example: {yaml: "\"2024-03-15T10:10:00Z\""}}
@@ -233,10 +233,10 @@ message UpdateIncidentRequest {
   optional string started_at = 8 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
   // New report time (RFC 3339 format, optional), between 30 days before the declare and the declare.
-  // Moves the due times of running SLA timers; met and missed targets keep their verdict.
+  // Moves the due times of running target timers; met and missed targets keep their verdict.
   optional string reported_at = 9 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
-  // Set to true to remove the report time, so SLA timers start at the declare again. Cannot be combined with reported_at.
+  // Set to true to remove the report time, so target timers start at the declare again. Cannot be combined with reported_at.
   optional bool clear_reported_at = 10;
 }
 

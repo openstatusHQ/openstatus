@@ -14,7 +14,7 @@ import {
 } from "../integration/slack-connection";
 import { createSlackUserMapping } from "../slack-user/create";
 import { getIncidentInWorkspace } from "./internal";
-import { bindIncidentTargetckChannel } from "./slack-channel";
+import { bindIncidentTargetsckChannel } from "./slack-channel";
 
 type SlackText = { type: "mrkdwn" | "plain_text"; text: string };
 export type SlackIncidentBlock =
@@ -129,7 +129,7 @@ function errorCode(err: Error | string): string {
 }
 
 /** Channel automation needs the plan and a fully-scoped install. */
-export async function incidentTargetckReady(
+export async function incidentSlackReady(
   ctx: ServiceContext,
 ): Promise<SlackConnection | null> {
   if (!ctx.workspace.limits["slack-agent"]) return null;
@@ -203,14 +203,14 @@ export type OpenChannelResult =
  * invite the declarer (others join themselves), topic, pinned header card,
  * bind. If binding fails twice the channel gets a "link this channel" card.
  */
-export async function openIncidentTargetckChannel(args: {
+export async function openIncidentTargetsckChannel(args: {
   ctx: ServiceContext;
   incidentId: number;
   clientFor: SlackClientFactory;
   dashboardUrl: string;
 }): Promise<OpenChannelResult> {
   const { ctx, incidentId, clientFor, dashboardUrl } = args;
-  const connection = await incidentTargetckReady(ctx);
+  const connection = await incidentSlackReady(ctx);
   if (!connection) return { status: "skipped" };
   const incident = await getIncidentInWorkspace(
     getReadDb(ctx),
@@ -273,7 +273,7 @@ export async function openIncidentTargetckChannel(args: {
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await bindIncidentTargetckChannel({
+      await bindIncidentTargetsckChannel({
         ctx: system,
         input: { id: incident.id, teamId: connection.teamId, channelId },
       });

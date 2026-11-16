@@ -1,0 +1,1 @@
+UPDATE `workspace` SET `limits` = replace(replace(`limits`, '"monitor-sla"', '"uptime-targets"'), '"incident-sla"', '"incident-targets"') WHERE `limits` LIKE '%"monitor-sla"%' OR `limits` LIKE '%"incident-sla"%';

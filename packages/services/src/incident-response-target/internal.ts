@@ -5,7 +5,7 @@ import type { DB, ServiceContext } from "../context";
 import { ForbiddenError } from "../errors";
 
 export function assertIncidentTargetLimit(ctx: ServiceContext): void {
-  if (!ctx.workspace.limits["incident-sla"]) {
+  if (!ctx.workspace.limits["incident-targets"]) {
     throw new ForbiddenError(
       "Incident response targets are not enabled on this plan.",
     );

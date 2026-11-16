@@ -1,12 +1,12 @@
 import {
-  formatSlaUptime,
+  formatUptimePercent,
   UPTIME_TARGET_EXPORT_MAX_MONTHS,
 } from "@openstatus/db/src/schema/uptime_targets/constants";
 
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { ValidationError } from "../errors";
-import type { SlaEpisodesPipes } from "./fetch-episodes";
+import type { UptimeEpisodesPipes } from "./fetch-episodes";
 import {
   assertUptimeTargetLimit,
   judgePolicyMonths,
@@ -54,7 +54,7 @@ export async function exportUptimeTarget(args: {
   ctx: ServiceContext;
   input: ExportUptimeTargetInput;
   now?: Date;
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{ filename: string; csv: string }> {
   const { ctx } = args;
@@ -112,14 +112,14 @@ export async function exportUptimeTarget(args: {
       lines.push(
         [
           cell(policy.name),
-          cell(formatSlaUptime(terms.target)),
+          cell(formatUptimePercent(terms.target)),
           cell(terms.strict ? "yes" : "no"),
           cell(m.id),
           cell(m.name),
           cell(m.url),
           cell(mm.month.slice(0, 7)),
           cell(mm.state === "live" ? "live (provisional)" : mm.state),
-          cell(mm.uptime === null ? null : formatSlaUptime(mm.uptime)),
+          cell(mm.uptime === null ? null : formatUptimePercent(mm.uptime)),
           cell(mm.met === null ? null : mm.met ? "yes" : "no"),
           cell(mm.sealed?.at.toISOString() ?? null),
           cell(mm.timeZone),
@@ -127,7 +127,7 @@ export async function exportUptimeTarget(args: {
           cell(mm.downMs),
           cell(mm.excusedMs),
           cell(mm.unmeasuredMs),
-          cell(mm.coverage === null ? null : formatSlaUptime(mm.coverage)),
+          cell(mm.coverage === null ? null : formatUptimePercent(mm.coverage)),
         ].join(","),
       );
     }
@@ -139,7 +139,7 @@ export async function exportUptimeTarget(args: {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || `uptime-target-${policy.id}`;
   return {
-    filename: `sla-${slug}-${from}-to-${to}.csv`,
+    filename: `uptime-target-${slug}-${from}-to-${to}.csv`,
     csv: `${lines.join("\r\n")}\r\n`,
   };
 }

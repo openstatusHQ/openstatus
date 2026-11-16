@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
 import { FormCardGroup } from "@/components/forms/form-card";
-import { formatSlaTarget, parseSlaTarget } from "@/data/reports.client";
+import { formatUptimeTarget, parseUptimeTarget } from "@/data/reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { FormCommitment } from "./form-commitment";
@@ -35,13 +35,13 @@ export function FormUptimeTargetUpdate() {
       <FormCommitment
         defaultValues={{
           name: policy.name,
-          target: formatSlaTarget(policy.target),
+          target: formatUptimeTarget(policy.target),
           strict: policy.strict,
           timeZone: policy.timeZone,
         }}
         timeZoneLocked={policy.sealed}
         onSubmit={async (values) => {
-          const target = parseSlaTarget(values.target);
+          const target = parseUptimeTarget(values.target);
           if (target === null) return;
           await updateMutation.mutateAsync({
             id: policyId,

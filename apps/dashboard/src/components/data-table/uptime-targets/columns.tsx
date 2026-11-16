@@ -3,9 +3,9 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { SlaMonthStrip } from "@/components/reports/sla-month-strip";
+import { UptimeMonthStrip } from "@/components/reports/uptime-month-strip";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { formatSlaTarget } from "@/data/reports.client";
+import { formatUptimeTarget } from "@/data/reports.client";
 
 import { TableCellLink } from "../table-cell-link";
 import { TableCellNumber } from "../table-cell-number";
@@ -35,7 +35,10 @@ export const columns: ColumnDef<UptimeTarget>[] = [
       <DataTableColumnHeader column={column} title="Target" />
     ),
     cell: ({ row }) => (
-      <TableCellNumber value={formatSlaTarget(row.original.target)} unit="%" />
+      <TableCellNumber
+        value={formatUptimeTarget(row.original.target)}
+        unit="%"
+      />
     ),
     enableHiding: false,
   },
@@ -57,7 +60,7 @@ export const columns: ColumnDef<UptimeTarget>[] = [
   {
     id: "months",
     header: "Last 12 months",
-    cell: ({ row }) => <SlaMonthStrip months={row.original.months} />,
+    cell: ({ row }) => <UptimeMonthStrip months={row.original.months} />,
     enableSorting: false,
     enableHiding: false,
   },

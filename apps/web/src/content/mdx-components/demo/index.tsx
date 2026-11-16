@@ -9,7 +9,7 @@ import {
   IncidentChannelDemo,
   IncidentDeclareDemo,
   IncidentStatusDemo,
-} from "./incident-targetck";
+} from "./incident-slack";
 import { LogsDemo } from "./logs";
 import { MaintenanceDemo } from "./maintenance";
 import { MonitorDemo } from "./monitor";

@@ -12,9 +12,9 @@ import { requireScope } from "../auth";
 import { type DB, getReadDb, type ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { monthRange } from "../frozen-uptime/compute";
-import { cutExcused, type Episode, slaBudget } from "./episodes";
+import { cutExcused, type Episode, uptimeBudget } from "./episodes";
 import { mergeSpans, type Span } from "./excused";
-import { clipEpisodes, type SlaEpisodesPipes } from "./fetch-episodes";
+import { clipEpisodes, type UptimeEpisodesPipes } from "./fetch-episodes";
 import {
   assertUptimeTargetLimit,
   episodeMonths,
@@ -132,7 +132,7 @@ function monthBudget(args: {
   measuredMs: number | null;
 }) {
   const measuredMs = args.measuredMs ?? 0;
-  const budget = slaBudget({
+  const budget = uptimeBudget({
     measuredMs,
     remainingMs: args.remainingMs,
     target: args.target,
@@ -241,7 +241,7 @@ async function memberMonth(args: {
   month: string;
   now: Date;
   maintenances: MonthMaintenance[];
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx, db, policy, member, month, now, maintenances } = args;
@@ -405,7 +405,7 @@ export async function getUptimeTargetMonth(args: {
   ctx: ServiceContext;
   input: GetUptimeTargetMonthInput;
   now?: Date;
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;

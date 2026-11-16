@@ -57,7 +57,7 @@ import {
   INCIDENT_BIND_ACTION_PREFIX,
   INCIDENT_RELINK_ACTION,
   relinkIncidentChannel,
-} from "./incident-targetck";
+} from "./incident-slack";
 import { NEXT_STEP_ACTIONS, nextStepBlocks } from "./next-steps";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";

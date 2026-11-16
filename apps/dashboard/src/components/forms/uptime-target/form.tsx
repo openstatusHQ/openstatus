@@ -23,21 +23,21 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { parseSlaTarget } from "@/data/reports.client";
+import { parseUptimeTarget } from "@/data/reports.client";
 
 import {
   type MonitorOption,
-  SlaMonitorsField,
-  SlaStrictField,
-  SlaTargetField,
-  SlaTimeZoneField,
-  slaTargetSchemaError,
+  UptimeMonitorsField,
+  UptimeStrictField,
+  UptimeTargetField,
+  UptimeTimeZoneField,
+  uptimeTargetSchemaError,
 } from "./fields";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
-  target: z.string().refine((v) => parseSlaTarget(v) !== null, {
-    error: slaTargetSchemaError,
+  target: z.string().refine((v) => parseUptimeTarget(v) !== null, {
+    error: uptimeTargetSchemaError,
   }),
   strict: z.boolean(),
   timeZone: z.string().min(1),
@@ -126,7 +126,10 @@ export function FormUptimeTarget({
             control={form.control}
             name="target"
             render={({ field }) => (
-              <SlaTargetField value={field.value} onChange={field.onChange} />
+              <UptimeTargetField
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
         </FormCardContent>
@@ -136,7 +139,10 @@ export function FormUptimeTarget({
             control={form.control}
             name="timeZone"
             render={({ field }) => (
-              <SlaTimeZoneField value={field.value} onChange={field.onChange} />
+              <UptimeTimeZoneField
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
         </FormCardContent>
@@ -146,7 +152,10 @@ export function FormUptimeTarget({
             control={form.control}
             name="strict"
             render={({ field }) => (
-              <SlaStrictField value={field.value} onChange={field.onChange} />
+              <UptimeStrictField
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
         </FormCardContent>
@@ -162,7 +171,7 @@ export function FormUptimeTarget({
                   Each one is judged on its own. A monitor can be in several
                   uptime targets.
                 </FormDescription>
-                <SlaMonitorsField
+                <UptimeMonitorsField
                   monitors={monitors}
                   value={field.value}
                   onChange={field.onChange}

@@ -1,7 +1,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { cn } from "@openstatus/ui/lib/utils";
 
-import { formatSlaMonth } from "@/data/reports.client";
+import { formatUptimeMonth } from "@/data/reports.client";
 
 type StripMonth =
   RouterOutputs["uptimeTarget"]["list"][number]["months"][number];
@@ -19,11 +19,11 @@ const word = {
 } as const satisfies Record<StripMonth["status"], string>;
 
 function monthTitle(month: StripMonth): string {
-  return `${formatSlaMonth(month.month, { year: true })}: ${word[month.status]}${month.preview ? ", preview under today's terms" : ""}`;
+  return `${formatUptimeMonth(month.month, { year: true })}: ${word[month.status]}${month.preview ? ", preview under today's terms" : ""}`;
 }
 
 /** Months as one row of cells, oldest first. */
-export function SlaMonthStrip({
+export function UptimeMonthStrip({
   months,
   className,
   ...props
@@ -32,7 +32,7 @@ export function SlaMonthStrip({
 }) {
   return (
     <ol
-      data-slot="sla-month-strip"
+      data-slot="uptime-month-strip"
       className={cn("flex items-center gap-0.5", className)}
       {...props}
     >
@@ -56,13 +56,13 @@ export function SlaMonthStrip({
   );
 }
 
-export function SlaMonthLegend({
+export function UptimeMonthLegend({
   className,
   ...props
 }: React.ComponentProps<"p">) {
   return (
     <p
-      data-slot="sla-month-legend"
+      data-slot="uptime-month-legend"
       className={cn(
         "text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm",
         className,
@@ -72,7 +72,7 @@ export function SlaMonthLegend({
   );
 }
 
-export function SlaMonthLegendItem({
+export function UptimeMonthLegendItem({
   swatch,
   children,
 }: {
@@ -87,20 +87,20 @@ export function SlaMonthLegendItem({
   );
 }
 
-/** The legend of `SlaMonthStrip`. */
-export function SlaMonthStripLegend({
+/** The legend of `UptimeMonthStrip`. */
+export function UptimeMonthStripLegend({
   children,
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <SlaMonthLegend {...props}>
-      <SlaMonthLegendItem swatch={cell.met}>Met</SlaMonthLegendItem>
-      <SlaMonthLegendItem swatch={cell.missed}>Missed</SlaMonthLegendItem>
-      <SlaMonthLegendItem swatch={cell.none}>No data</SlaMonthLegendItem>
-      <SlaMonthLegendItem swatch="bg-success opacity-40">
+    <UptimeMonthLegend {...props}>
+      <UptimeMonthLegendItem swatch={cell.met}>Met</UptimeMonthLegendItem>
+      <UptimeMonthLegendItem swatch={cell.missed}>Missed</UptimeMonthLegendItem>
+      <UptimeMonthLegendItem swatch={cell.none}>No data</UptimeMonthLegendItem>
+      <UptimeMonthLegendItem swatch="bg-success opacity-40">
         Preview, today&apos;s terms
-      </SlaMonthLegendItem>
+      </UptimeMonthLegendItem>
       {children}
-    </SlaMonthLegend>
+    </UptimeMonthLegend>
   );
 }

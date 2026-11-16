@@ -10,22 +10,25 @@ import {
 } from "../frozen-uptime/run";
 import { cutExcused, type Episode } from "./episodes";
 
-export type SlaEpisodesPipeFn = (params: {
+export type UptimeEpisodesPipeFn = (params: {
   monitorIds: string[];
   fromDate: number;
   toDate: number;
   fallbackIntervalMs: number;
 }) => Promise<{ data: (Episode & { monitorId: string })[] }>;
 
-export type SlaEpisodesPipes = Record<UptimeQuorumJobType, SlaEpisodesPipeFn>;
+export type UptimeEpisodesPipes = Record<
+  UptimeQuorumJobType,
+  UptimeEpisodesPipeFn
+>;
 
-export function slaEpisodesPipes(tb: OSTinybird): SlaEpisodesPipes {
+export function uptimeEpisodesPipes(tb: OSTinybird): UptimeEpisodesPipes {
   return {
-    http: tb.httpSlaEpisodesRange,
-    tcp: tb.tcpSlaEpisodesRange,
-    dns: tb.dnsSlaEpisodesRange,
-    icmp: tb.icmpSlaEpisodesRange,
-    grpc: tb.grpcSlaEpisodesRange,
+    http: tb.httpUptimeEpisodesRange,
+    tcp: tb.tcpUptimeEpisodesRange,
+    dns: tb.dnsUptimeEpisodesRange,
+    icmp: tb.icmpUptimeEpisodesRange,
+    grpc: tb.grpcUptimeEpisodesRange,
   };
 }
 
@@ -61,12 +64,12 @@ export type EpisodeMonitor = {
  * `failed`; monitors whose type or regions give no run verdicts are in neither.
  * A read monitor without runs, or with runs past the TTL, gets unmeasured episodes.
  */
-export async function fetchSlaEpisodes(
+export async function fetchUptimeEpisodes(
   args: Omit<FetchOptions, "monitorIdsByJobType"> & {
     monitors: readonly EpisodeMonitor[];
     fromMs: number;
     toMs: number;
-    pipes: () => SlaEpisodesPipes;
+    pipes: () => UptimeEpisodesPipes;
   },
 ): Promise<{ episodes: Map<number, Episode[]>; failed: Set<number> }> {
   const episodes = new Map<number, Episode[]>();
@@ -85,11 +88,11 @@ export async function fetchSlaEpisodes(
     return { episodes, failed: new Set() };
   }
 
-  let pipes: SlaEpisodesPipes;
+  let pipes: UptimeEpisodesPipes;
   try {
     pipes = args.pipes();
   } catch (e) {
-    console.warn("monitor sla episodes unavailable", e);
+    console.warn("uptime episodes unavailable", e);
     return {
       episodes,
       failed: new Set(

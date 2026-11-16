@@ -77,8 +77,8 @@ export function Client({ id }: { id: number }) {
   };
 
   const resolved = incident.status === "resolved";
-  const sla = incidentTargetState(incident, now);
-  const slaHeadline = sla ? incidentTargetHeadline(sla) : null;
+  const targets = incidentTargetState(incident, now);
+  const targetHeadline = targets ? incidentTargetHeadline(targets) : null;
   const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
   const lastUpdateAt = events?.find(
     (event) => !isIncidentSystemEvent(event.type),
@@ -166,11 +166,11 @@ export function Client({ id }: { id: number }) {
               </span>
             </DetailMetaItem>
           )}
-          {slaHeadline ? (
+          {targetHeadline ? (
             <DetailMetaItem>
               <IncidentTargetBadge
-                timer={slaHeadline.timer}
-                kind={slaHeadline.kind}
+                timer={targetHeadline.timer}
+                kind={targetHeadline.kind}
                 now={now}
               />
             </DetailMetaItem>
@@ -194,10 +194,10 @@ export function Client({ id }: { id: number }) {
               onStatusChanged={onStatusChanged}
             />
           </DetailSection>
-          {sla ? (
-            <DetailSection id="sla">
+          {targets ? (
+            <DetailSection id="targets">
               <DetailSectionTitle>Response targets</DetailSectionTitle>
-              <IncidentTarget state={sla} now={now} />
+              <IncidentTarget state={targets} now={now} />
             </DetailSection>
           ) : null}
           <DetailSection id="communication">

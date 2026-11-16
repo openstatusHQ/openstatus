@@ -309,7 +309,7 @@ export function FormDeclareIncident({
                 </div>
                 <FormDescription>
                   When the request reached you, by email or phone, if before
-                  now. SLA timers start here. Up to 30 days back.
+                  now. Response targets start here. Up to 30 days back.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

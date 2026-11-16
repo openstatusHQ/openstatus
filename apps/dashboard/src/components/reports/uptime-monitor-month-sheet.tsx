@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { formatSlaUptime } from "@openstatus/db/src/schema/uptime_targets/constants";
+import { formatUptimePercent } from "@openstatus/db/src/schema/uptime_targets/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
@@ -29,18 +29,18 @@ import {
 import {
   formatBudgetLeft,
   formatExcusedWindow,
-  formatSlaCoverage,
-  formatSlaDuration,
-  formatSlaMonth,
-  formatSlaTarget,
-  type SlaTreatment,
-  slaTreatmentLabels,
-  slaTreatmentTotals,
+  formatUptimeCoverage,
+  formatUptimeDuration,
+  formatUptimeMonth,
+  formatUptimeTarget,
+  type UptimeTreatment,
+  uptimeTreatmentLabels,
+  uptimeTreatmentTotals,
 } from "@/data/reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { SlaBudgetBar } from "./sla-budget";
-import { SlaBurndown } from "./sla-burndown";
+import { UptimeBudgetBar } from "./uptime-budget";
+import { UptimeBurndown } from "./uptime-burndown";
 
 type MonitorMonth = RouterOutputs["uptimeTarget"]["monitorMonth"];
 type Episode = NonNullable<MonitorMonth["episodes"]>[number];
@@ -54,14 +54,14 @@ const kindLabels: Record<Episode["kind"], string> = {
 };
 
 // the row already names the kind, so the treatment reads without it
-const rowTreatmentLabels: Record<SlaTreatment, string> = {
+const rowTreatmentLabels: Record<UptimeTreatment, string> = {
   counted: "counted",
   lenient: "counted as up",
   excused: "excused",
   unmeasured: "not measured",
 };
 
-const treatmentText: Record<SlaTreatment, string> = {
+const treatmentText: Record<UptimeTreatment, string> = {
   counted: "text-destructive",
   lenient: "text-muted-foreground",
   excused: "text-muted-foreground",
@@ -88,7 +88,7 @@ const sealedWithoutChecksText =
   "This month is sealed, but the checks behind it are no longer kept, so what used the budget cannot be listed.";
 
 /** One monitor's month under the uptime target, the running one by default. */
-export function SlaMonitorMonthSheet({
+export function UptimeMonitorMonthSheet({
   policy,
   monitor,
   month,
@@ -171,12 +171,12 @@ function SheetBody({
         </DataTableSheetTitle>
         <DataTableSheetDescription>
           {data
-            ? `${formatSlaMonth(data.month, { year: true })}${data.state === "live" ? " so far" : ""} in ${data.timeZone}${monthStateNote[data.state]}`
+            ? `${formatUptimeMonth(data.month, { year: true })}${data.state === "live" ? " so far" : ""} in ${data.timeZone}${monthStateNote[data.state]}`
             : month
-              ? `${formatSlaMonth(`${month}-01`, { year: true })} in ${policy.timeZone}`
+              ? `${formatUptimeMonth(`${month}-01`, { year: true })} in ${policy.timeZone}`
               : `This month so far in ${policy.timeZone}`}
           {data?.terms
-            ? ` · ${formatSlaTarget(data.terms.target)}% target`
+            ? ` · ${formatUptimeTarget(data.terms.target)}% target`
             : null}
         </DataTableSheetDescription>
       </DataTableSheetHeader>
@@ -210,7 +210,7 @@ function SheetBody({
                     {p.name}
                   </Link>
                   <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                    {formatSlaTarget(p.target)}%
+                    {formatUptimeTarget(p.target)}%
                   </span>
                 </li>
               ))}
@@ -249,7 +249,7 @@ function SheetBody({
 
 function MonthDetail({ month }: { month: MonitorMonth }) {
   const { budget, episodes } = month;
-  const totals = episodes ? slaTreatmentTotals(episodes) : [];
+  const totals = episodes ? uptimeTreatmentTotals(episodes) : [];
   return (
     <>
       <MetricCardGroup className="grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
@@ -270,7 +270,9 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
                     : "text-success"),
             )}
           >
-            {month.uptime === null ? "—" : `${formatSlaUptime(month.uptime)}%`}
+            {month.uptime === null
+              ? "—"
+              : `${formatUptimePercent(month.uptime)}%`}
           </MetricCardValue>
           <p className="text-muted-foreground text-xs">
             {month.coverage === null
@@ -281,7 +283,7 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
                   : month.state === "live"
                     ? "nothing measured yet"
                     : "nothing measured"
-              : `${formatSlaCoverage(month.coverage)}% of the time measured`}
+              : `${formatUptimeCoverage(month.coverage)}% of the time measured`}
           </p>
         </MetricCard>
         <MetricCard>
@@ -296,13 +298,13 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           >
             {budget
               ? budget.leftMs < 0
-                ? `−${formatSlaDuration(budget.leftMs)}`
-                : formatSlaDuration(budget.leftMs)
+                ? `−${formatUptimeDuration(budget.leftMs)}`
+                : formatUptimeDuration(budget.leftMs)
               : "—"}
           </MetricCardValue>
           <p className="text-muted-foreground text-xs">
             {budget
-              ? `of ${formatSlaDuration(budget.budgetMs)} ${month.state === "live" ? "this month" : "that month"}`
+              ? `of ${formatUptimeDuration(budget.budgetMs)} ${month.state === "live" ? "this month" : "that month"}`
               : "no budget for this month"}
           </p>
         </MetricCard>
@@ -310,14 +312,14 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
 
       {budget ? (
         <section className="grid gap-2">
-          <SlaBudgetBar
+          <UptimeBudgetBar
             burnedMs={budget.burnedMs}
             budgetMs={budget.budgetMs}
             paceMs={month.state === "live" ? budget.paceMs : null}
           />
           <p className="text-muted-foreground text-xs">
             <span className="text-foreground font-mono">
-              {formatSlaDuration(budget.burnedMs)}
+              {formatUptimeDuration(budget.burnedMs)}
             </span>{" "}
             burned, {formatBudgetLeft(budget.leftMs)}
             {budget.paceMs !== null && month.state === "live" ? (
@@ -332,7 +334,7 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
                       : "text-foreground",
                   )}
                 >
-                  {formatSlaDuration(budget.paceMs)}
+                  {formatUptimeDuration(budget.paceMs)}
                 </span>{" "}
                 by month end
               </>
@@ -341,7 +343,7 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
         </section>
       ) : null}
 
-      <SlaBurndown month={month} />
+      <UptimeBurndown month={month} />
 
       <section className="grid gap-2">
         <h3 className="text-sm font-medium">
@@ -356,9 +358,9 @@ function MonthDetail({ month }: { month: MonitorMonth }) {
           <p className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-xs">
             {totals.map((t) => (
               <span key={t.treatment}>
-                {slaTreatmentLabels[t.treatment]}{" "}
+                {uptimeTreatmentLabels[t.treatment]}{" "}
                 <span className={cn("font-mono", treatmentText[t.treatment])}>
-                  {formatSlaDuration(t.ms)}
+                  {formatUptimeDuration(t.ms)}
                 </span>
               </span>
             ))}
@@ -436,7 +438,7 @@ function EpisodeRow({
         </span>
       </div>
       <span className="shrink-0 font-mono text-xs tabular-nums">
-        {formatSlaDuration(e.endedAt - e.startedAt)}
+        {formatUptimeDuration(e.endedAt - e.startedAt)}
       </span>
     </li>
   );

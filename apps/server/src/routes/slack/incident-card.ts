@@ -36,7 +36,7 @@ import {
   type ViewSubmissionPayload,
   type ViewSubmissionResponse,
 } from "./incident-modal";
-import { afterIncidentTool, who } from "./incident-targetck";
+import { afterIncidentTool, who } from "./incident-slack";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import type { ReportDraft } from "./report-draft";

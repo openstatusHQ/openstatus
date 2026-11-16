@@ -6,7 +6,7 @@ import {
 } from "@openstatus/services/incident";
 
 import type { SlackConfig } from "./config";
-import { acknowledgeFromCard } from "./incident-targetck";
+import { acknowledgeFromCard } from "./incident-slack";
 import type { SlackWorkspace } from "./workspace-resolver";
 
 /** A response notice's Acknowledge button: acknowledges like the card, then redraws the notice. */

@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { POSTAL_ADDRESS } from "../emails/_components/footer";
 import UptimeTargetMissedEmail, {
-  formatSlaTarget,
-  formatSlaUptime,
+  formatUptimeTarget,
+  formatUptimePercent,
   uptimeTargetMissedSubject,
 } from "../emails/uptime-target-missed";
 import { delivery } from "./send";
@@ -16,7 +16,7 @@ import { sendUptimeTargetMissed } from "./uptime-target";
 
 const props = UptimeTargetMissedEmail.PreviewProps;
 
-describe("monitor SLA missed email", () => {
+describe("uptime target missed email", () => {
   test("subject names the monitor when one missed, the count otherwise", () => {
     expect(uptimeTargetMissedSubject(props)).toBe(
       "2 monitors missed Partner contract in October 2026",
@@ -27,12 +27,12 @@ describe("monitor SLA missed email", () => {
   });
 
   test("uptime is floored to three decimals, targets drop trailing zeros", () => {
-    expect(formatSlaUptime(99_499)).toBe("99.499%");
-    expect(formatSlaUptime(98_004)).toBe("98.004%");
-    expect(formatSlaUptime(100_000)).toBe("100.000%");
-    expect(formatSlaTarget(99_500)).toBe("99.5%");
-    expect(formatSlaTarget(99_000)).toBe("99%");
-    expect(formatSlaTarget(99_950)).toBe("99.95%");
+    expect(formatUptimePercent(99_499)).toBe("99.499%");
+    expect(formatUptimePercent(98_004)).toBe("98.004%");
+    expect(formatUptimePercent(100_000)).toBe("100.000%");
+    expect(formatUptimeTarget(99_500)).toBe("99.5%");
+    expect(formatUptimeTarget(99_000)).toBe("99%");
+    expect(formatUptimeTarget(99_950)).toBe("99.95%");
   });
 
   test("lists each missed monitor against its target and links the uptime target", async () => {

@@ -1,15 +1,15 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { formatSlaUptime } from "@openstatus/db/src/schema/uptime_targets/constants";
+import { formatUptimePercent } from "@openstatus/db/src/schema/uptime_targets/constants";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import {
-  formatSlaCoverage,
-  formatSlaDuration,
-  formatSlaMonth,
-  formatSlaTarget,
+  formatUptimeCoverage,
+  formatUptimeDuration,
+  formatUptimeMonth,
+  formatUptimeTarget,
 } from "@/data/reports.client";
 
 type PolicyMonitor = RouterOutputs["uptimeTarget"]["get"]["monitors"][number];
@@ -19,16 +19,16 @@ type PolicyMonth = PolicyMonitor["months"][number];
 function basisNote(m: PolicyMonth): string | null {
   const parts: string[] = [];
   if (m.coverage !== null) {
-    parts.push(`${formatSlaCoverage(m.coverage)}% of the time measured`);
+    parts.push(`${formatUptimeCoverage(m.coverage)}% of the time measured`);
   }
   if (m.downMs !== null && m.downMs > 0) {
-    parts.push(`${formatSlaDuration(m.downMs)} down`);
+    parts.push(`${formatUptimeDuration(m.downMs)} down`);
   }
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
 function monthTitle(m: PolicyMonth): string {
-  const label = `${formatSlaMonth(m.month, { year: true })} (${m.timeZone})`;
+  const label = `${formatUptimeMonth(m.month, { year: true })} (${m.timeZone})`;
   const basis = basisNote(m);
   const suffix = basis ? ` (${basis})` : "";
   if (m.uptime === null && m.excusedMs !== null && m.excusedMs > 0) {
@@ -41,9 +41,9 @@ function monthTitle(m: PolicyMonth): string {
       : `${label}: no checks, no judgement`;
   }
   if (m.state === "live") {
-    return `${label}: ${formatSlaUptime(m.uptime)}% so far, ${m.met ? "on target" : "miss in progress"}, provisional${suffix}`;
+    return `${label}: ${formatUptimePercent(m.uptime)}% so far, ${m.met ? "on target" : "miss in progress"}, provisional${suffix}`;
   }
-  const result = `${label}: ${formatSlaUptime(m.uptime)}%, ${m.met ? "met" : "missed"}`;
+  const result = `${label}: ${formatUptimePercent(m.uptime)}%, ${m.met ? "met" : "missed"}`;
   if (m.sealed) {
     const at = new Date(m.sealed.at).toLocaleDateString("en-US", {
       month: "short",
@@ -54,9 +54,11 @@ function monthTitle(m: PolicyMonth): string {
     const slow = m.sealed.strict
       ? "slow counted as down"
       : "slow counted as up";
-    return `${result}, sealed ${at} against ${formatSlaTarget(m.sealed.target)}%, ${slow}${suffix}`;
+    return `${result}, sealed ${at} against ${formatUptimeTarget(m.sealed.target)}%, ${slow}${suffix}`;
   }
-  const terms = m.terms ? ` against ${formatSlaTarget(m.terms.target)}%` : "";
+  const terms = m.terms
+    ? ` against ${formatUptimeTarget(m.terms.target)}%`
+    : "";
   return `${result}, preview until sealed${terms}${suffix}`;
 }
 
@@ -93,7 +95,7 @@ function MonthCell({
       )}
     >
       <span aria-hidden="true">
-        {month.uptime === null ? "—" : formatSlaUptime(month.uptime)}
+        {month.uptime === null ? "—" : formatUptimePercent(month.uptime)}
       </span>
       <span className="sr-only">{title}</span>
     </Comp>
@@ -133,15 +135,15 @@ export function getColumns(
         <span
           title={
             month === current
-              ? `${formatSlaMonth(month, { year: true })} in ${timeZone}, so far (provisional)`
-              : `${formatSlaMonth(month, { year: true })} in ${timeZone}`
+              ? `${formatUptimeMonth(month, { year: true })} in ${timeZone}, so far (provisional)`
+              : `${formatUptimeMonth(month, { year: true })} in ${timeZone}`
           }
           className={cn(
             "flex flex-col leading-tight",
             month === current && "text-info",
           )}
         >
-          {formatSlaMonth(month)}
+          {formatUptimeMonth(month)}
           <span className="text-muted-foreground text-[10px]">
             {i === 0 || month.slice(5, 7) === "01" ? month.slice(0, 4) : null}
           </span>

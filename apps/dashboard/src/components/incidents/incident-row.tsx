@@ -153,7 +153,7 @@ export function IncidentRow({
         <EventRowMeta>
           {/* first, so it is the item that survives a narrow row */}
           {incident.targetSnapshot ? (
-            <IncidentRowSla incident={incident} />
+            <IncidentRowTargets incident={incident} />
           ) : null}
           {meta
             .filter((item) => item !== null)
@@ -235,10 +235,10 @@ export function IncidentRow({
 }
 
 // its own component so only tracked rows tick
-function IncidentRowSla({ incident }: { incident: Incident }) {
+function IncidentRowTargets({ incident }: { incident: Incident }) {
   const now = useNow(30_000);
-  const sla = incidentTargetState(incident, now);
-  const headline = sla ? incidentTargetHeadline(sla) : null;
+  const targets = incidentTargetState(incident, now);
+  const headline = targets ? incidentTargetHeadline(targets) : null;
   if (!headline) return null;
   return (
     <IncidentTargetBadge

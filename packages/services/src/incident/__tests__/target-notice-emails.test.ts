@@ -78,7 +78,7 @@ async function declare(
       commanderId: args.commanderId ?? null,
       declaredBy: args.declaredBy ?? null,
       ...(args.teamId
-        ? { slackTeamId: args.teamId, slackChannelId: "C_SLA" }
+        ? { slackTeamId: args.teamId, slackChannelId: "C_TARGETS" }
         : {}),
     })
     .where(eq(incident.id, declared.id));

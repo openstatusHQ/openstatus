@@ -57,7 +57,7 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
-import { parseSlaDuration } from "@/data/incident-target.client";
+import { parseUptimeDuration } from "@/data/incident-target.client";
 import { severityConfig } from "@/data/managed-incidents.client";
 
 const COLUMNS = [
@@ -68,7 +68,7 @@ const COLUMNS = [
   label: string;
 }[];
 
-const duration = z.string().refine((v) => parseSlaDuration(v).ok, {
+const duration = z.string().refine((v) => parseUptimeDuration(v).ok, {
   error: "Use a duration like 30m, 4h or 3d.",
 });
 const row = z.object({
@@ -114,7 +114,7 @@ function toTargets(values: FormValues): IncidentTargetTargets {
   const targets: IncidentTargetTargets = {};
   for (const severity of incidentSeverity) {
     for (const kind of incidentTargetTargetKinds) {
-      const parsed = parseSlaDuration(values.targets[severity][kind]);
+      const parsed = parseUptimeDuration(values.targets[severity][kind]);
       if (parsed.ok && parsed.minutes !== undefined) {
         targets[severity] = { ...targets[severity], [kind]: parsed.minutes };
       }
@@ -430,7 +430,7 @@ export function FormIncidentResponseTarget({
                   type="button"
                   size="sm"
                   data-track="paywall_viewed"
-                  data-limit="incident-sla"
+                  data-limit="incident-targets"
                   onClick={onUpgrade}
                 >
                   <Lock />

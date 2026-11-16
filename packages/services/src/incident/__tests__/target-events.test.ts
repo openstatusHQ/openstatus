@@ -246,7 +246,7 @@ describe("severity changes", () => {
         ctx: member(tx),
         input: { id: declared.id },
       });
-      expect(row?.sla?.response?.status).toBe("breached");
+      expect(row?.targets?.response?.status).toBe("breached");
     });
   });
 
@@ -267,7 +267,7 @@ describe("severity changes", () => {
         ctx: member(tx),
         input: { id: declared.id },
       });
-      expect(row?.sla?.response?.status).toBe("met");
+      expect(row?.targets?.response?.status).toBe("met");
       expect(row?.responseBreachDueAt).toBeNull();
     });
   });

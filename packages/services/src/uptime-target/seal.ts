@@ -196,7 +196,7 @@ export async function sealUptimeTargetMonths(
   const allowed = new Set<number>();
   for (const row of workspaceRows) {
     const parsed = selectWorkspaceSchema.safeParse(row);
-    if (parsed.success && parsed.data.limits["monitor-sla"]) {
+    if (parsed.success && parsed.data.limits["uptime-targets"]) {
       allowed.add(parsed.data.id);
     }
   }

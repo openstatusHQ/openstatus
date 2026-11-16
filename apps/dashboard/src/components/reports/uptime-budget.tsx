@@ -2,10 +2,10 @@
 
 import { cn } from "@openstatus/ui/lib/utils";
 
-import { budgetShare, formatSlaDuration } from "@/data/reports.client";
+import { budgetShare, formatUptimeDuration } from "@/data/reports.client";
 
 /** The month's down-time budget: burned so far, and where the burn is on pace to end the month. */
-export function SlaBudgetBar({
+export function UptimeBudgetBar({
   burnedMs,
   budgetMs,
   paceMs,
@@ -21,12 +21,12 @@ export function SlaBudgetBar({
   const share = budgetShare(burnedMs, budgetMs);
   const over = burnedMs > budgetMs;
   const pace = paceMs == null ? null : budgetShare(paceMs, budgetMs);
-  const text = `${formatSlaDuration(burnedMs)} of ${formatSlaDuration(budgetMs)} burned${
-    paceMs == null ? "" : `, on pace for ${formatSlaDuration(paceMs)}`
+  const text = `${formatUptimeDuration(burnedMs)} of ${formatUptimeDuration(budgetMs)} burned${
+    paceMs == null ? "" : `, on pace for ${formatUptimeDuration(paceMs)}`
   }`;
   return (
     <div
-      data-slot="sla-budget-bar"
+      data-slot="uptime-budget-bar"
       role="meter"
       aria-label="Down-time budget"
       aria-valuemin={0}

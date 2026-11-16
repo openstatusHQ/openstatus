@@ -106,7 +106,7 @@ export function FormMaintenance({
   const affected = affectedMonitors(selected ?? [], components, monitors ?? []);
   const reportsOf = useQueries({
     queries:
-      workspace?.limits["monitor-sla"] && !window
+      workspace?.limits["uptime-targets"] && !window
         ? affected.map((m) =>
             trpc.uptimeTarget.listForMonitor.queryOptions({
               monitorId: m.id,

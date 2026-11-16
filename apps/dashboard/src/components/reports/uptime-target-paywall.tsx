@@ -31,14 +31,18 @@ export function UptimeTargetPaywall() {
           <Button
             size="sm"
             data-track="paywall_viewed"
-            data-limit="monitor-sla"
+            data-limit="uptime-targets"
             onClick={() => setOpen(true)}
           >
             Upgrade
           </Button>
         </EmptyStateActions>
       </EmptyStateContainer>
-      <UpgradeDialog open={open} onOpenChange={setOpen} limit="monitor-sla" />
+      <UpgradeDialog
+        open={open}
+        onOpenChange={setOpen}
+        limit="uptime-targets"
+      />
     </SectionGroup>
   );
 }

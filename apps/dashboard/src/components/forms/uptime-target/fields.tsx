@@ -30,8 +30,8 @@ import {
 } from "@/components/content/empty-state";
 import {
   allowedDowntime,
-  formatSlaTarget,
-  parseSlaTarget,
+  formatUptimeTarget,
+  parseUptimeTarget,
 } from "@/data/reports.client";
 
 export type MonitorOption = {
@@ -43,10 +43,10 @@ export type MonitorOption = {
   degradedAfter?: number | null;
 };
 
-export const slaTargetSchemaError =
+export const uptimeTargetSchemaError =
   "Enter a percentage above 0, up to 100, with at most 3 decimals.";
 
-export function SlaTargetField({
+export function UptimeTargetField({
   value,
   onChange,
   className,
@@ -55,7 +55,7 @@ export function SlaTargetField({
   onChange: (value: string) => void;
   className?: string;
 }) {
-  const target = parseSlaTarget(value);
+  const target = parseUptimeTarget(value);
   return (
     <FormItem className={className}>
       <FormLabel>Monthly uptime target</FormLabel>
@@ -81,9 +81,9 @@ export function SlaTargetField({
             variant="outline"
             aria-pressed={target === preset}
             className="aria-pressed:bg-muted font-mono"
-            onClick={() => onChange(formatSlaTarget(preset))}
+            onClick={() => onChange(formatUptimeTarget(preset))}
           >
-            {formatSlaTarget(preset)}
+            {formatUptimeTarget(preset)}
           </Button>
         ))}
       </div>
@@ -101,7 +101,7 @@ export function SlaTargetField({
   );
 }
 
-export function SlaStrictField({
+export function UptimeStrictField({
   value,
   onChange,
 }: {
@@ -125,7 +125,7 @@ export function SlaStrictField({
   );
 }
 
-export function SlaTimeZoneField({
+export function UptimeTimeZoneField({
   value,
   onChange,
   locked,
@@ -153,7 +153,7 @@ export function SlaTimeZoneField({
   );
 }
 
-export function SlaMonitorsField({
+export function UptimeMonitorsField({
   monitors,
   value,
   onChange,
@@ -179,7 +179,7 @@ export function SlaMonitorsField({
         const reason = uptimeTargetIneligibleReason(monitor);
         const checked = value.includes(monitor.id);
         const neverSlow = strict && !reason && monitor.degradedAfter == null;
-        const id = `sla-monitor-${monitor.id}`;
+        const id = `uptime-monitor-${monitor.id}`;
         return (
           <Label
             key={monitor.id}

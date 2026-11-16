@@ -3,19 +3,19 @@ import type { UptimeTargetExcusedWindowKind } from "@openstatus/db/src/schema/up
 const MONTH_SECONDS = 30 * 24 * 60 * 60;
 
 /** `99500` → `"99.5"`; targets are stored in thousandths of a percent. */
-export function formatSlaTarget(target: number): string {
+export function formatUptimeTarget(target: number): string {
   return String(target / 1000);
 }
 
 /** `"99.5"` → `99500`, or `null` unless it is above 0 and at most 100. */
-export function parseSlaTarget(value: string): number | null {
+export function parseUptimeTarget(value: string): number | null {
   if (!/^\d{1,3}(\.\d{1,3})?$/.test(value.trim())) return null;
   const target = Math.round(Number(value) * 1000);
   return target > 0 && target <= 100_000 ? target : null;
 }
 
 /** A duration to the minute once it reaches an hour (to the second with `exact`), else to the second: `"3h 36m"`, `"43m 12s"`; the sign is dropped. */
-export function formatSlaDuration(
+export function formatUptimeDuration(
   ms: number,
   options: { exact?: boolean } = {},
 ): string {
@@ -34,14 +34,14 @@ export function formatSlaDuration(
 /** Downtime a target allows in a 30-day month, to the second, e.g. `"6h 18m 52s"`. */
 export function allowedDowntime(target: number): string {
   const seconds = Math.round((MONTH_SECONDS * (100_000 - target)) / 100_000);
-  return formatSlaDuration(seconds * 1000, { exact: true });
+  return formatUptimeDuration(seconds * 1000, { exact: true });
 }
 
 /** `"12m left"`, or `"4m over"` once the budget is spent past zero. */
 export function formatBudgetLeft(leftMs: number): string {
   return leftMs < 0
-    ? `${formatSlaDuration(leftMs)} over`
-    : `${formatSlaDuration(leftMs)} left`;
+    ? `${formatUptimeDuration(leftMs)} over`
+    : `${formatUptimeDuration(leftMs)} left`;
 }
 
 /** Share of the budget in `ms`, 0 to 1; any down time spends a zero budget whole. */
@@ -51,12 +51,12 @@ export function budgetShare(ms: number, budgetMs: number): number {
 }
 
 /** Coverage in thousandths of a percent → `"99.8"`, floored to one decimal. */
-export function formatSlaCoverage(coverage: number): string {
+export function formatUptimeCoverage(coverage: number): string {
   return (Math.floor(coverage / 100) / 10).toFixed(1);
 }
 
 /** The month `date` falls in, in `timeZone`, as `"2026-11-01"`. */
-export function slaMonthOf(date: Date, timeZone: string): string {
+export function uptimeMonthOf(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
@@ -67,7 +67,7 @@ export function slaMonthOf(date: Date, timeZone: string): string {
 }
 
 /** `"2026-01-01"` → `"Jan"`, or `"Jan 2026"` with `year`. */
-export function formatSlaMonth(
+export function formatUptimeMonth(
   month: string,
   options: { year?: boolean } = {},
 ): string {
@@ -148,9 +148,9 @@ export function excusedWindowContext(
   return { missed, months, lastOfKind };
 }
 
-export type SlaTreatment = "counted" | "lenient" | "excused" | "unmeasured";
+export type UptimeTreatment = "counted" | "lenient" | "excused" | "unmeasured";
 
-export const slaTreatmentLabels: Record<SlaTreatment, string> = {
+export const uptimeTreatmentLabels: Record<UptimeTreatment, string> = {
   counted: "Counted",
   lenient: "Slow, counted as up",
   excused: "Excused",
@@ -158,22 +158,24 @@ export const slaTreatmentLabels: Record<SlaTreatment, string> = {
 };
 
 /** Time per treatment, in label order, leaving out treatments with none. */
-export function slaTreatmentTotals(
+export function uptimeTreatmentTotals(
   episodes: readonly {
-    treatment: SlaTreatment;
+    treatment: UptimeTreatment;
     startedAt: number;
     endedAt: number;
   }[],
-): { treatment: SlaTreatment; ms: number }[] {
-  const sums = new Map<SlaTreatment, number>();
+): { treatment: UptimeTreatment; ms: number }[] {
+  const sums = new Map<UptimeTreatment, number>();
   for (const e of episodes) {
     sums.set(
       e.treatment,
       (sums.get(e.treatment) ?? 0) + e.endedAt - e.startedAt,
     );
   }
-  return (Object.keys(slaTreatmentLabels) as SlaTreatment[]).flatMap((t) => {
-    const ms = sums.get(t) ?? 0;
-    return ms > 0 ? [{ treatment: t, ms }] : [];
-  });
+  return (Object.keys(uptimeTreatmentLabels) as UptimeTreatment[]).flatMap(
+    (t) => {
+      const ms = sums.get(t) ?? 0;
+      return ms > 0 ? [{ treatment: t, ms }] : [];
+    },
+  );
 }

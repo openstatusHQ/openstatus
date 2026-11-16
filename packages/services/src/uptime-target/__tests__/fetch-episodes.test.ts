@@ -3,17 +3,17 @@ import { describe, expect, test } from "vitest";
 import type { Episode } from "../episodes";
 import {
   clipEpisodes,
-  fetchSlaEpisodes,
+  fetchUptimeEpisodes,
   periodicityMs,
-  type SlaEpisodesPipeFn,
-  type SlaEpisodesPipes,
+  type UptimeEpisodesPipeFn,
+  type UptimeEpisodesPipes,
 } from "../fetch-episodes";
 
 const sleep = async () => {};
 const FROM = Date.UTC(2026, 10, 1);
 const TO = Date.UTC(2026, 10, 2);
 
-function pipesOf(fn: SlaEpisodesPipeFn): SlaEpisodesPipes {
+function pipesOf(fn: UptimeEpisodesPipeFn): UptimeEpisodesPipes {
   return { http: fn, tcp: fn, dns: fn, icmp: fn, grpc: fn };
 }
 
@@ -24,10 +24,10 @@ const ok = (monitorId: string, startedAt: number, endedAt: number) => ({
   endedAt,
 });
 
-describe("fetchSlaEpisodes", () => {
+describe("fetchUptimeEpisodes", () => {
   test("batches by job type and cadence, passing the cadence as the fallback", async () => {
-    const calls: Parameters<SlaEpisodesPipeFn>[0][] = [];
-    const res = await fetchSlaEpisodes({
+    const calls: Parameters<UptimeEpisodesPipeFn>[0][] = [];
+    const res = await fetchUptimeEpisodes({
       monitors: [
         { id: 1, jobType: "http", regions: "ams", periodicity: "10m" },
         { id: 2, jobType: "http", regions: "ams", periodicity: "10m" },
@@ -90,7 +90,7 @@ describe("fetchSlaEpisodes", () => {
 
   test("never throws: a chunk that keeps failing reports its monitors", async () => {
     let attempts = 0;
-    const res = await fetchSlaEpisodes({
+    const res = await fetchUptimeEpisodes({
       monitors: [
         { id: 1, jobType: "http", regions: "ams", periodicity: "10m" },
         { id: 2, jobType: "tcp", regions: "ams", periodicity: "10m" },
@@ -114,7 +114,7 @@ describe("fetchSlaEpisodes", () => {
   });
 
   test("a client that cannot be built fails every monitor", async () => {
-    const res = await fetchSlaEpisodes({
+    const res = await fetchUptimeEpisodes({
       monitors: [{ id: 1, jobType: "http", regions: "ams", periodicity: "1m" }],
       fromMs: FROM,
       toMs: TO,
@@ -127,7 +127,7 @@ describe("fetchSlaEpisodes", () => {
   });
 
   test("an empty range asks nothing", async () => {
-    const res = await fetchSlaEpisodes({
+    const res = await fetchUptimeEpisodes({
       monitors: [{ id: 1, jobType: "http", regions: "ams", periodicity: "1m" }],
       fromMs: TO,
       toMs: TO,

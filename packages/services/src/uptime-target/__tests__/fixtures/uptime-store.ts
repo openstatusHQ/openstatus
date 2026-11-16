@@ -2,7 +2,7 @@ import { db as defaultDb, inArray } from "@openstatus/db";
 import { monitor, uptimeTargetToMonitor } from "@openstatus/db/src/schema";
 
 import type { DB } from "../../../context";
-import type { SlaEpisodesPipes } from "../../fetch-episodes";
+import type { UptimeEpisodesPipes } from "../../fetch-episodes";
 import { sealUptimeTargetMonths } from "../../seal";
 import { sealMonitorUptime } from "../../seal-uptime";
 
@@ -16,7 +16,7 @@ export async function storeUptime(args: {
   db?: DB;
   now: Date;
   monitorIds: number[];
-  episodesPipes: SlaEpisodesPipes;
+  episodesPipes: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const db = args.db ?? defaultDb;
@@ -38,7 +38,7 @@ export async function sealFromChecks(args: {
   db?: DB;
   now: Date;
   policyIds: number[];
-  episodesPipes: SlaEpisodesPipes;
+  episodesPipes: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const db = args.db ?? defaultDb;

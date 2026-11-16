@@ -14,7 +14,7 @@ import {
   FormSheetTrigger,
   FormSheetWithDirtyProtection,
 } from "@/components/forms/form-sheet";
-import { parseSlaTarget } from "@/data/reports.client";
+import { parseUptimeTarget } from "@/data/reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { FormUptimeTarget } from "./form";
@@ -55,7 +55,7 @@ export function FormSheetUptimeTargetCreate({
             <FormUptimeTarget
               monitors={monitors}
               onSubmit={async (values) => {
-                const target = parseSlaTarget(values.target);
+                const target = parseUptimeTarget(values.target);
                 if (target === null) return;
                 await createMutation.mutateAsync({
                   name: values.name,

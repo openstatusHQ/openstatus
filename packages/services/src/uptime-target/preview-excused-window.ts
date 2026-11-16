@@ -2,9 +2,9 @@ import { requireScope } from "../auth";
 import { defaultTb, type ServiceContext } from "../context";
 import {
   clipEpisodes,
-  fetchSlaEpisodes,
-  type SlaEpisodesPipes,
-  slaEpisodesPipes,
+  fetchUptimeEpisodes,
+  type UptimeEpisodesPipes,
+  uptimeEpisodesPipes,
 } from "./fetch-episodes";
 import { assertUptimeTargetLimit, loadPolicyMembers } from "./internal";
 import { PreviewUptimeTargetExcusedWindowInput } from "./schemas";
@@ -17,7 +17,7 @@ export async function previewUptimeTargetExcusedWindow(args: {
   ctx: ServiceContext;
   input: PreviewUptimeTargetExcusedWindowInput;
   now?: Date;
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;
@@ -40,11 +40,11 @@ export async function previewUptimeTargetExcusedWindow(args: {
   const fromMs = input.from.getTime();
   const toMs = input.to.getTime();
 
-  const { episodes, failed } = await fetchSlaEpisodes({
+  const { episodes, failed } = await fetchUptimeEpisodes({
     monitors,
     fromMs,
     toMs,
-    pipes: () => args.episodesPipes ?? slaEpisodesPipes(ctx.tb ?? defaultTb),
+    pipes: () => args.episodesPipes ?? uptimeEpisodesPipes(ctx.tb ?? defaultTb),
     throttleMs: 0,
     sleep: args.sleep,
   });

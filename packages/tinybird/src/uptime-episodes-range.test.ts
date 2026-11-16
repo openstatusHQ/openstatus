@@ -5,8 +5,8 @@ import { describe, expect, test } from "vitest";
 
 import {
   OSTinybird,
-  slaEpisodesRangeParameters,
-  slaEpisodesRangeShape,
+  uptimeEpisodesRangeParameters,
+  uptimeEpisodesRangeShape,
 } from "./client";
 
 const root = join(import.meta.dirname, "..");
@@ -28,11 +28,11 @@ const lines = (sql: string, pattern: RegExp) =>
     .filter((line) => pattern.test(line));
 
 const episodesPipe = (type: string) =>
-  read(`endpoints/endpoint__${type}_sla_episodes_range__v0.pipe`);
+  read(`endpoints/endpoint__${type}_uptime_episodes_range__v0.pipe`);
 
 // Tinybird is unreachable in CI: these assert the SQL text encodes SPEC's
 // "Weight and unmeasured time" rule; the TS reference owns the semantics.
-describe.each(types)("%s sla episodes range", (type) => {
+describe.each(types)("%s uptime episodes range", (type) => {
   const episodes = episodesPipe(type);
   const range = read(`endpoints/endpoint__${type}_runs_range__v0.pipe`);
 
@@ -141,7 +141,7 @@ describe.each(types)("%s sla episodes range", (type) => {
   });
 });
 
-describe("slaEpisodesRangeParameters", () => {
+describe("uptimeEpisodesRangeParameters", () => {
   test("requires the range and the fallback cadence in milliseconds", () => {
     const input = {
       monitorIds: ["1"],
@@ -149,9 +149,9 @@ describe("slaEpisodesRangeParameters", () => {
       toDate: 1_764_547_200_000,
       fallbackIntervalMs: 60_000,
     };
-    expect(slaEpisodesRangeParameters.parse(input)).toEqual(input);
+    expect(uptimeEpisodesRangeParameters.parse(input)).toEqual(input);
     expect(
-      slaEpisodesRangeParameters.safeParse({
+      uptimeEpisodesRangeParameters.safeParse({
         ...input,
         fallbackIntervalMs: undefined,
       }).success,
@@ -159,7 +159,7 @@ describe("slaEpisodesRangeParameters", () => {
   });
 });
 
-describe("slaEpisodesRangeShape", () => {
+describe("uptimeEpisodesRangeShape", () => {
   test("parses an episode row", () => {
     const row = {
       monitorId: "1",
@@ -167,12 +167,12 @@ describe("slaEpisodesRangeShape", () => {
       startedAt: 1_761_955_200_000,
       endedAt: 1_761_962_400_000,
     };
-    expect(slaEpisodesRangeShape.parse(row)).toEqual(row);
+    expect(uptimeEpisodesRangeShape.parse(row)).toEqual(row);
   });
 
   test("rejects an unknown kind", () => {
     expect(
-      slaEpisodesRangeShape.safeParse({
+      uptimeEpisodesRangeShape.safeParse({
         monitorId: "1",
         kind: "success",
         startedAt: 0,
@@ -182,15 +182,15 @@ describe("slaEpisodesRangeShape", () => {
   });
 });
 
-describe("sla episodes range pipes", () => {
+describe("uptime episodes range pipes", () => {
   const tb = new OSTinybird({ token: "a-token" });
 
   for (const name of [
-    "httpSlaEpisodesRange",
-    "tcpSlaEpisodesRange",
-    "dnsSlaEpisodesRange",
-    "icmpSlaEpisodesRange",
-    "grpcSlaEpisodesRange",
+    "httpUptimeEpisodesRange",
+    "tcpUptimeEpisodesRange",
+    "dnsUptimeEpisodesRange",
+    "icmpUptimeEpisodesRange",
+    "grpcUptimeEpisodesRange",
   ] as const) {
     test(`${name} resolves`, async () => {
       expect(

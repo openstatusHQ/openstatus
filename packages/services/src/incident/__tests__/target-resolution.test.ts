@@ -57,7 +57,7 @@ const move = (tx: DB, id: number, status: "open" | "mitigated" | "resolved") =>
 
 async function resolution(tx: DB, id: number) {
   const row = await getIncident({ ctx: owner(tx), input: { id } });
-  return row?.sla?.resolution ?? null;
+  return row?.targets?.resolution ?? null;
 }
 
 describe("the resolution clock", () => {

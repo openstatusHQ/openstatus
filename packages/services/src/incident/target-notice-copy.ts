@@ -49,7 +49,7 @@ function action(input: IncidentTargetNoticeCopyInput): string | null {
     : "Resolve it before then.";
 }
 
-/** The wording of every SLA notice, shared by Slack and email. */
+/** The wording of every target notice, shared by Slack and email. */
 export function incidentTargetNoticeCopy(
   input: IncidentTargetNoticeCopyInput,
   format: IncidentTargetNoticeFormat,

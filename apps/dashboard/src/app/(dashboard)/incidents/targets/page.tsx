@@ -11,7 +11,7 @@ export default async function Page() {
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
     queryClient.prefetchQuery(trpc.incidentResponseTarget.get.queryOptions()),
     // a locked plan gets a FORBIDDEN, which would land in Sentry
-    workspace.limits["incident-sla"]
+    workspace.limits["incident-targets"]
       ? queryClient.prefetchQuery(
           trpc.incidentResponseTarget.attainment.queryOptions(),
         )

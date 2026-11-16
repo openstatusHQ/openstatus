@@ -291,7 +291,7 @@ components:
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
           description: |-
             When the request reached the team, if before the declare (RFC 3339 format, optional).
-             At most 30 days before now and never later; SLA timers start here.
+             At most 30 days before now and never later; response targets start here.
       title: DeclareIncidentRequest
       additionalProperties: false
       description: DeclareIncidentRequest is the request to declare a new incident.
@@ -491,12 +491,12 @@ components:
             - type: "null"
           title: acknowledged_by
           description: Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
-        sla:
+        targets:
           oneOf:
-            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSla'
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentTargets'
             - type: "null"
-          title: sla
-          description: SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
+          title: targets
+          description: Targets (unset for incidents declared without incident response targets, and for canceled ones).
         reportedAt:
           type:
             - string
@@ -504,7 +504,7 @@ components:
           title: reported_at
           description: |-
             Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
-             SLA timers start here instead of at declared_at.
+             Response targets start here instead of at declared_at.
       title: Incident
       additionalProperties: false
       description: Incident is a managed incident with full details.
@@ -558,8 +558,8 @@ components:
         - INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED
         - INCIDENT_EVENT_TYPE_CLOSED
         - INCIDENT_EVENT_TYPE_ACKNOWLEDGED
-        - INCIDENT_EVENT_TYPE_SLA_RESPONSE_BREACHED
-        - INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED
+        - INCIDENT_EVENT_TYPE_RESPONSE_TARGET_BREACHED
+        - INCIDENT_EVENT_TYPE_RESOLUTION_TARGET_BREACHED
         - INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED
       description: IncidentEventType is the kind of entry in an incident timeline.
     openstatus.incident.v1.IncidentSeverity:
@@ -571,65 +571,6 @@ components:
         - INCIDENT_SEVERITY_MAJOR
         - INCIDENT_SEVERITY_MINOR
       description: IncidentSeverity is how bad an incident is.
-    openstatus.incident.v1.IncidentSla:
-      type: object
-      properties:
-        response:
-          oneOf:
-            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimer'
-            - type: "null"
-          title: response
-          description: Response target (unset when the severity has none).
-        resolution:
-          oneOf:
-            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimer'
-            - type: "null"
-          title: resolution
-          description: Resolution target (unset when the severity has none).
-      title: IncidentSla
-      additionalProperties: false
-      description: IncidentSla is the SLA state of a tracked incident.
-    openstatus.incident.v1.IncidentSlaTimer:
-      type: object
-      properties:
-        targetMinutes:
-          type: integer
-          title: target_minutes
-          format: int32
-          description: Target in minutes, from the policy fixed on the incident at declare.
-        dueAt:
-          type: string
-          title: due_at
-          description: Timestamp when the target is due (RFC 3339 format).
-        metAt:
-          type:
-            - string
-            - "null"
-          title: met_at
-          description: Timestamp when the target was met (RFC 3339 format, unset while open).
-        missedAt:
-          type:
-            - string
-            - "null"
-          title: missed_at
-          description: Due time recorded as missed (RFC 3339 format, unset until the miss is recorded; never cleared).
-        status:
-          title: status
-          description: Current state of the target.
-          $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimerStatus'
-      title: IncidentSlaTimer
-      additionalProperties: false
-      description: IncidentSlaTimer is the state of one SLA target of an incident.
-    openstatus.incident.v1.IncidentSlaTimerStatus:
-      type: string
-      title: IncidentSlaTimerStatus
-      enum:
-        - INCIDENT_SLA_TIMER_STATUS_UNSPECIFIED
-        - INCIDENT_SLA_TIMER_STATUS_RUNNING
-        - INCIDENT_SLA_TIMER_STATUS_AT_RISK
-        - INCIDENT_SLA_TIMER_STATUS_MET
-        - INCIDENT_SLA_TIMER_STATUS_BREACHED
-      description: IncidentSlaTimerStatus is the state of one SLA target.
     openstatus.incident.v1.IncidentStatus:
       type: string
       title: IncidentStatus
@@ -735,12 +676,12 @@ components:
             - type: "null"
           title: acknowledged_by
           description: Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
-        sla:
+        targets:
           oneOf:
-            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentSla'
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentTargets'
             - type: "null"
-          title: sla
-          description: SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
+          title: targets
+          description: Targets (unset for incidents declared without incident response targets, and for canceled ones).
         reportedAt:
           type:
             - string
@@ -748,10 +689,69 @@ components:
           title: reported_at
           description: |-
             Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
-             SLA timers start here instead of at declared_at.
+             Response targets start here instead of at declared_at.
       title: IncidentSummary
       additionalProperties: false
       description: IncidentSummary is the metadata of an incident (used in list responses).
+    openstatus.incident.v1.IncidentTargetTimer:
+      type: object
+      properties:
+        targetMinutes:
+          type: integer
+          title: target_minutes
+          format: int32
+          description: Target in minutes, from the policy fixed on the incident at declare.
+        dueAt:
+          type: string
+          title: due_at
+          description: Timestamp when the target is due (RFC 3339 format).
+        metAt:
+          type:
+            - string
+            - "null"
+          title: met_at
+          description: Timestamp when the target was met (RFC 3339 format, unset while open).
+        missedAt:
+          type:
+            - string
+            - "null"
+          title: missed_at
+          description: Due time recorded as missed (RFC 3339 format, unset until the miss is recorded; never cleared).
+        status:
+          title: status
+          description: Current state of the target.
+          $ref: '#/components/schemas/openstatus.incident.v1.IncidentTargetTimerStatus'
+      title: IncidentTargetTimer
+      additionalProperties: false
+      description: IncidentTargetTimer is the state of one target of an incident.
+    openstatus.incident.v1.IncidentTargetTimerStatus:
+      type: string
+      title: IncidentTargetTimerStatus
+      enum:
+        - INCIDENT_TARGET_TIMER_STATUS_UNSPECIFIED
+        - INCIDENT_TARGET_TIMER_STATUS_RUNNING
+        - INCIDENT_TARGET_TIMER_STATUS_AT_RISK
+        - INCIDENT_TARGET_TIMER_STATUS_MET
+        - INCIDENT_TARGET_TIMER_STATUS_BREACHED
+      description: IncidentTargetTimerStatus is the state of one target.
+    openstatus.incident.v1.IncidentTargets:
+      type: object
+      properties:
+        response:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentTargetTimer'
+            - type: "null"
+          title: response
+          description: Response target (unset when the severity has none).
+        resolution:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.incident.v1.IncidentTargetTimer'
+            - type: "null"
+          title: resolution
+          description: Resolution target (unset when the severity has none).
+      title: IncidentTargets
+      additionalProperties: false
+      description: IncidentTargets is the target state of a tracked incident.
     openstatus.incident.v1.IncidentUser:
       type: object
       properties:
@@ -1025,13 +1025,13 @@ components:
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
           description: |-
             New report time (RFC 3339 format, optional), between 30 days before the declare and the declare.
-             Moves the due times of running SLA timers; met and missed targets keep their verdict.
+             Moves the due times of running target timers; met and missed targets keep their verdict.
         clearReportedAt:
           type:
             - boolean
             - "null"
           title: clear_reported_at
-          description: Set to true to remove the report time, so SLA timers start at the declare again. Cannot be combined with reported_at.
+          description: Set to true to remove the report time, so target timers start at the declare again. Cannot be combined with reported_at.
       title: UpdateIncidentRequest
       additionalProperties: false
       description: |

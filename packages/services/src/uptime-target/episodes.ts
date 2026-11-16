@@ -9,7 +9,7 @@ export type Episode = {
   endedAt: number;
 };
 
-export type SlaPeriodResult = {
+export type UptimePeriodResult = {
   measuredMs: number;
   downMs: number;
   excusedMs: number;
@@ -148,13 +148,13 @@ export function cutExcused(
 }
 
 /** One monitor's period against a policy from its episodes, integer arithmetic only. */
-export function evaluateSlaPeriod(args: {
+export function evaluateUptimePeriod(args: {
   episodes: readonly Episode[];
   excusedSpans: readonly Span[];
   target: number;
   strict: boolean;
   coveredMs: number;
-}): SlaPeriodResult {
+}): UptimePeriodResult {
   const { kept, excused } = cutExcused(args.episodes, args.excusedSpans);
   let measuredMs = 0;
   let downMs = 0;
@@ -188,7 +188,7 @@ export function evaluateSlaPeriod(args: {
  * Down-time budget over measured time so far plus covered, non-excused time
  * still to come; pace extrapolates the burn over that same horizon.
  */
-export function slaBudget(args: {
+export function uptimeBudget(args: {
   measuredMs: number;
   remainingMs: number;
   target: number;

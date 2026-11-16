@@ -5,8 +5,8 @@ import {
   type Verdict,
   cutExcused,
   episodesFromRuns,
-  evaluateSlaPeriod,
-  slaBudget,
+  evaluateUptimePeriod,
+  uptimeBudget,
 } from "../episodes";
 import fixture from "./fixtures/episodes.json";
 
@@ -160,14 +160,14 @@ describe("cutExcused", () => {
   });
 });
 
-describe("evaluateSlaPeriod", () => {
+describe("evaluateUptimePeriod", () => {
   const c = byName("degraded-mixed");
   const episodes = episodesFromRuns(c.input);
   const coveredMs = c.input.toMs - c.input.fromMs;
 
   test("strict counts degraded time as down", () => {
     expect(
-      evaluateSlaPeriod({
+      evaluateUptimePeriod({
         episodes,
         excusedSpans: [],
         target: 60_000,
@@ -186,7 +186,7 @@ describe("evaluateSlaPeriod", () => {
   });
 
   test("lenient counts degraded time as up", () => {
-    const res = evaluateSlaPeriod({
+    const res = evaluateUptimePeriod({
       episodes,
       excusedSpans: [],
       target: 90_000,
@@ -211,7 +211,7 @@ describe("evaluateSlaPeriod", () => {
         endedAt: 200_000,
       },
     ];
-    const res = evaluateSlaPeriod({
+    const res = evaluateUptimePeriod({
       episodes: eps,
       excusedSpans: [],
       target: 100_000,
@@ -223,7 +223,7 @@ describe("evaluateSlaPeriod", () => {
   });
 
   test("excused time leaves measured and coverage", () => {
-    const res = evaluateSlaPeriod({
+    const res = evaluateUptimePeriod({
       episodes,
       excusedSpans: [
         { start: c.input.fromMs + 300_000, end: c.input.fromMs + 360_000 },
@@ -244,7 +244,7 @@ describe("evaluateSlaPeriod", () => {
 
   test("unmeasured time lowers coverage, not uptime", () => {
     const p = byName("tail-gap");
-    const res = evaluateSlaPeriod({
+    const res = evaluateUptimePeriod({
       episodes: episodesFromRuns(p.input),
       excusedSpans: [],
       target: 80_000,
@@ -264,7 +264,7 @@ describe("evaluateSlaPeriod", () => {
 
   test("nothing measured has no judgement", () => {
     const p = byName("no-runs");
-    const res = evaluateSlaPeriod({
+    const res = evaluateUptimePeriod({
       episodes: episodesFromRuns(p.input),
       excusedSpans: [],
       target: 99_000,
@@ -284,7 +284,7 @@ describe("evaluateSlaPeriod", () => {
 
   test("a fully excused period has no coverage", () => {
     const p = byName("no-runs");
-    const res = evaluateSlaPeriod({
+    const res = evaluateUptimePeriod({
       episodes: episodesFromRuns(p.input),
       excusedSpans: [{ start: p.input.fromMs, end: p.input.toMs }],
       target: 99_000,
@@ -296,12 +296,12 @@ describe("evaluateSlaPeriod", () => {
   });
 });
 
-describe("slaBudget", () => {
+describe("uptimeBudget", () => {
   const DAY = 24 * HOUR;
 
   test("99.9% over 30 days is 43.2 minutes, paced from 13 measured days", () => {
     expect(
-      slaBudget({
+      uptimeBudget({
         measuredMs: 13 * DAY,
         remainingMs: 17 * DAY,
         target: 99_900,
@@ -317,7 +317,7 @@ describe("slaBudget", () => {
 
   test("unmeasured time does not grow the budget and left may go negative", () => {
     // 20 days elapsed, 10 of them unmeasured; 10 days to come
-    const res = slaBudget({
+    const res = uptimeBudget({
       measuredMs: 10 * DAY,
       remainingMs: 10 * DAY,
       target: 99_900,
@@ -330,7 +330,7 @@ describe("slaBudget", () => {
 
   test("a closed month's budget is its measured time below target", () => {
     expect(
-      slaBudget({
+      uptimeBudget({
         measuredMs: 20 * DAY,
         remainingMs: 0,
         target: 99_000,
@@ -349,13 +349,13 @@ describe("slaBudget", () => {
         const edge = Math.floor((measuredMs * (100_000 - target)) / 100_000);
         for (const downMs of [0, edge - 1, edge, edge + 1, measuredMs]) {
           if (downMs < 0 || downMs > measuredMs) continue;
-          const { leftMs } = slaBudget({
+          const { leftMs } = uptimeBudget({
             measuredMs,
             remainingMs: 0,
             target,
             downMs,
           });
-          const { met } = evaluateSlaPeriod({
+          const { met } = evaluateUptimePeriod({
             episodes: [
               {
                 kind: "ok",
@@ -380,7 +380,7 @@ describe("slaBudget", () => {
   });
 
   test("pace stays exact beyond 2^53 intermediates", () => {
-    const res = slaBudget({
+    const res = uptimeBudget({
       measuredMs: 31 * DAY - 1,
       remainingMs: 1,
       target: 0,
@@ -391,7 +391,7 @@ describe("slaBudget", () => {
 
   test("nothing measured paces to zero", () => {
     expect(
-      slaBudget({
+      uptimeBudget({
         measuredMs: 0,
         remainingMs: 30 * DAY,
         target: 99_000,

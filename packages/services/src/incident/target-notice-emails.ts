@@ -10,11 +10,11 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
-import { incidentTargetNoticeCopy } from "./sla-notice-copy";
+import { incidentTargetNoticeCopy } from "./target-notice-copy";
 import type {
   IncidentTargetNoticeOutcome,
   IncidentTargetNoticeResult,
-} from "./sla-notices";
+} from "./target-notices";
 
 /** Matches `sendIncidentTargetNotice` in `@openstatus/emails`, which the caller injects. */
 export type IncidentTargetNoticeEmail = {
@@ -174,7 +174,7 @@ export async function emailIncidentTargetNotices(args: {
       results.push({ notice: n, to, outcome: id ? "sent" : "skipped" });
     } catch (error) {
       // The claim stays: a lost email beats a duplicate on the next tick.
-      console.warn("incident sla notice email not sent", {
+      console.warn("incident target notice email not sent", {
         incidentId: n.incident.id,
         kind: n.kind,
         notice: n.notice,

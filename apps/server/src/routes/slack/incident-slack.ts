@@ -10,13 +10,13 @@ import {
   afterIncidentStatusChanged,
   afterPostmortemApproved,
   announceIncidentChange,
-  bindIncidentTargetckChannel,
+  bindIncidentTargetsckChannel,
   getIncident,
   headerBlocks,
   type IncidentEffects,
   incidentEffects,
   type OpenChannelResult,
-  openIncidentTargetckChannel,
+  openIncidentTargetsckChannel,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
 import { type KnownBlock, WebClient } from "@slack/web-api";
@@ -239,7 +239,7 @@ export async function onIncidentDeclared(
     },
   );
   const result = (incident === undefined
-    ? await openIncidentTargetckChannel({
+    ? await openIncidentTargetsckChannel({
         ctx,
         incidentId,
         clientFor: effects.clientFor,
@@ -329,7 +329,7 @@ export async function acknowledgeFromCard(args: {
   channelId: string;
   messageTs: string;
   incidentId: number;
-  /** Redraws the clicked message as something other than the card (an SLA notice). */
+  /** Redraws the clicked message as something other than the card (a target notice). */
   redraw?: (
     current: IncidentDetail,
     acknowledgedHere: boolean,
@@ -442,7 +442,7 @@ export async function bindChannelFromButton(args: {
     return;
   }
   try {
-    await bindIncidentTargetckChannel({
+    await bindIncidentTargetsckChannel({
       ctx: { workspace: resolved.workspace, actor },
       input: { id: incidentId, teamId, channelId },
     });
@@ -525,9 +525,9 @@ export async function relinkIncidentChannel(args: {
     );
     return;
   }
-  let moved: Awaited<ReturnType<typeof bindIncidentTargetckChannel>>;
+  let moved: Awaited<ReturnType<typeof bindIncidentTargetsckChannel>>;
   try {
-    moved = await bindIncidentTargetckChannel({
+    moved = await bindIncidentTargetsckChannel({
       ctx,
       input: { id: incidentId, teamId, channelId, expectedChannelId: from },
     });

@@ -9,7 +9,7 @@ import { loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { excusedWindowLock } from "./excused";
-import type { SlaEpisodesPipes } from "./fetch-episodes";
+import type { UptimeEpisodesPipes } from "./fetch-episodes";
 import {
   assertUptimeTargetLimit,
   excusedWindowMonitorIds,
@@ -97,7 +97,7 @@ export async function getUptimeTarget(args: {
   ctx: ServiceContext;
   input: GetUptimeTargetInput;
   now?: Date;
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx } = args;

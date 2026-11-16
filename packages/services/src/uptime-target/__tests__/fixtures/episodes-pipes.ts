@@ -1,5 +1,8 @@
 import { episodesFromRuns, type Verdict } from "../../episodes";
-import type { SlaEpisodesPipeFn, SlaEpisodesPipes } from "../../fetch-episodes";
+import type {
+  UptimeEpisodesPipeFn,
+  UptimeEpisodesPipes,
+} from "../../fetch-episodes";
 
 export type Run = { cronTimestamp: number; verdict: Verdict };
 export type EpisodesCall = {
@@ -27,8 +30,8 @@ export function runsEvery(
 export function episodesPipesFrom(
   runsOf: (monitorId: string) => Run[],
   calls: EpisodesCall[] = [],
-): SlaEpisodesPipes {
-  const pipe: SlaEpisodesPipeFn = async (params) => {
+): UptimeEpisodesPipes {
+  const pipe: UptimeEpisodesPipeFn = async (params) => {
     calls.push(params);
     return {
       data: params.monitorIds.flatMap((monitorId) =>
@@ -44,8 +47,8 @@ export function episodesPipesFrom(
   return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };
 }
 
-export function failingEpisodesPipes(): SlaEpisodesPipes {
-  const pipe: SlaEpisodesPipeFn = async () => {
+export function failingEpisodesPipes(): UptimeEpisodesPipes {
+  const pipe: UptimeEpisodesPipeFn = async () => {
     throw new Error("tinybird down");
   };
   return { http: pipe, tcp: pipe, dns: pipe, icmp: pipe, grpc: pipe };

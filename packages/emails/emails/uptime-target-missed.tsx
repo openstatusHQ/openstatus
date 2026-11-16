@@ -23,21 +23,21 @@ const monthLabel = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
-export function formatSlaMonth(month: string): string {
+export function formatUptimeMonth(month: string): string {
   const date = new Date(`${month.slice(0, 10)}T00:00:00Z`);
   return Number.isNaN(date.getTime()) ? month : monthLabel.format(date);
 }
 
 /** "99.120%": floored to three decimals, so a miss never rounds up. */
-export function formatSlaUptime(thousandths: number): string {
+export function formatUptimePercent(thousandths: number): string {
   const whole = Math.floor(thousandths / 1000);
   const rest = String(thousandths % 1000).padStart(3, "0");
   return `${whole}.${rest}%`;
 }
 
 /** "99.5%": a target without trailing zeros. */
-export function formatSlaTarget(thousandths: number): string {
-  return formatSlaUptime(thousandths).replace(/\.?0+%$/, "%");
+export function formatUptimeTarget(thousandths: number): string {
+  return formatUptimePercent(thousandths).replace(/\.?0+%$/, "%");
 }
 
 function missedWho(props: Pick<UptimeTargetMissedProps, "monitors">): string {
@@ -49,11 +49,11 @@ function missedWho(props: Pick<UptimeTargetMissedProps, "monitors">): string {
 export function uptimeTargetMissedSubject(
   props: Pick<UptimeTargetMissedProps, "policyName" | "month" | "monitors">,
 ): string {
-  return `${missedWho(props)} missed ${props.policyName} in ${formatSlaMonth(props.month)}`;
+  return `${missedWho(props)} missed ${props.policyName} in ${formatUptimeMonth(props.month)}`;
 }
 
 const UptimeTargetMissedEmail = (props: UptimeTargetMissedProps) => {
-  const month = formatSlaMonth(props.month);
+  const month = formatUptimeMonth(props.month);
   return (
     <Layout
       preview={`${month} is sealed. ${plural(props.monitors.length, "monitor")} finished below target.`}
@@ -66,8 +66,8 @@ const UptimeTargetMissedEmail = (props: UptimeTargetMissedProps) => {
       <KeyValue
         rows={props.monitors.map((m) => ({
           label: m.name,
-          value: formatSlaUptime(m.uptime),
-          hint: `target ${formatSlaTarget(m.target)}`,
+          value: formatUptimePercent(m.uptime),
+          hint: `target ${formatUptimeTarget(m.target)}`,
           tone: "danger",
           mono: true,
         }))}

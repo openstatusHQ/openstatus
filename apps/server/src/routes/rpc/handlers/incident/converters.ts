@@ -2,8 +2,8 @@ import { incidentTargetTimerIso } from "@openstatus/db/src/schema/incident_respo
 import type {
   Incident,
   IncidentEvent,
-  IncidentSla,
-  IncidentSlaTimer,
+  IncidentTargets,
+  IncidentTargetTimer,
   IncidentStatusReport,
   IncidentSummary,
   IncidentUser,
@@ -12,7 +12,7 @@ import type {
 import {
   IncidentEventType,
   IncidentSeverity,
-  IncidentSlaTimerStatus,
+  IncidentTargetTimerStatus,
   IncidentStatus,
   PostmortemAuthor,
   PostmortemStatus,
@@ -38,8 +38,8 @@ type PostmortemRow = NonNullable<Awaited<ReturnType<typeof getPostmortem>>>;
 type DbSeverity = IncidentView["severity"];
 type DbStatus = IncidentView["status"];
 type DbEventType = IncidentEventRow["type"];
-type IncidentTargetState = IncidentView["sla"];
-type DbSlaTimer = NonNullable<NonNullable<IncidentTargetState>["response"]>;
+type IncidentTargetState = IncidentView["targets"];
+type DbTargetTimer = NonNullable<NonNullable<IncidentTargetState>["response"]>;
 
 type UserRow = {
   id: number;
@@ -65,7 +65,7 @@ type IncidentFields = {
   acknowledgedAt: Date | null;
   commander: UserRow | null;
   acknowledgedByUser: UserRow | null;
-  sla: IncidentTargetState;
+  targets: IncidentTargetState;
 };
 
 export function protoSeverityToDb(severity: IncidentSeverity): DbSeverity {
@@ -159,9 +159,9 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
     case "acknowledged":
       return IncidentEventType.ACKNOWLEDGED;
     case "response_target_breached":
-      return IncidentEventType.SLA_RESPONSE_BREACHED;
+      return IncidentEventType.RESPONSE_TARGET_BREACHED;
     case "resolution_target_breached":
-      return IncidentEventType.SLA_RESOLUTION_BREACHED;
+      return IncidentEventType.RESOLUTION_TARGET_BREACHED;
     case "reported_at_changed":
       return IncidentEventType.REPORTED_AT_CHANGED;
   }
@@ -213,42 +213,44 @@ function iso(date: Date | null | undefined): string | undefined {
   return date ? date.toISOString() : undefined;
 }
 
-function dbSlaStatusToProto(
-  status: DbSlaTimer["status"],
-): IncidentSlaTimerStatus {
+function dbTargetStatusToProto(
+  status: DbTargetTimer["status"],
+): IncidentTargetTimerStatus {
   switch (status) {
     case "running":
-      return IncidentSlaTimerStatus.RUNNING;
+      return IncidentTargetTimerStatus.RUNNING;
     case "at_risk":
-      return IncidentSlaTimerStatus.AT_RISK;
+      return IncidentTargetTimerStatus.AT_RISK;
     case "met":
-      return IncidentSlaTimerStatus.MET;
+      return IncidentTargetTimerStatus.MET;
     case "breached":
-      return IncidentSlaTimerStatus.BREACHED;
+      return IncidentTargetTimerStatus.BREACHED;
   }
 }
 
-function toSlaTimer(timer: DbSlaTimer | null): IncidentSlaTimer | undefined {
+function toTargetTimer(
+  timer: DbTargetTimer | null,
+): IncidentTargetTimer | undefined {
   if (!timer) return undefined;
   const t = incidentTargetTimerIso(timer);
   return {
-    $typeName: "openstatus.incident.v1.IncidentSlaTimer",
+    $typeName: "openstatus.incident.v1.IncidentTargetTimer",
     targetMinutes: t.targetMinutes,
     dueAt: t.dueAt,
     metAt: t.metAt ?? undefined,
     missedAt: t.missedAt ?? undefined,
-    status: dbSlaStatusToProto(t.status),
+    status: dbTargetStatusToProto(t.status),
   };
 }
 
 export function incidentTargetToProto(
   state: IncidentTargetState,
-): IncidentSla | undefined {
+): IncidentTargets | undefined {
   if (!state) return undefined;
   return {
-    $typeName: "openstatus.incident.v1.IncidentSla",
-    response: toSlaTimer(state.response),
-    resolution: toSlaTimer(state.resolution),
+    $typeName: "openstatus.incident.v1.IncidentTargets",
+    response: toTargetTimer(state.response),
+    resolution: toTargetTimer(state.resolution),
   };
 }
 
@@ -268,7 +270,7 @@ function summaryFields(row: IncidentFields) {
     updatedAt: row.updatedAt.toISOString(),
     acknowledgedAt: iso(row.acknowledgedAt),
     acknowledgedBy: toIncidentUser(row.acknowledgedByUser),
-    sla: incidentTargetToProto(row.sla),
+    targets: incidentTargetToProto(row.targets),
   };
 }
 

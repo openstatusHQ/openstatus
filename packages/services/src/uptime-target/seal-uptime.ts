@@ -25,9 +25,9 @@ import type { Episode } from "./episodes";
 import {
   clipEpisodes,
   type EpisodeMonitor,
-  fetchSlaEpisodes,
-  type SlaEpisodesPipes,
-  slaEpisodesPipes,
+  fetchUptimeEpisodes,
+  type UptimeEpisodesPipes,
+  uptimeEpisodesPipes,
 } from "./fetch-episodes";
 
 const HOUR_MS = 3_600_000;
@@ -211,7 +211,7 @@ export async function sealMonitorUptime(
     now?: Date;
     // scope a run (tests, manual retries); default every monitor in an uptime target
     monitorIds?: number[];
-    episodesPipes?: SlaEpisodesPipes;
+    episodesPipes?: UptimeEpisodesPipes;
     sleep?: (ms: number) => Promise<void>;
   } = {},
 ): Promise<SealMonitorUptimeResult> {
@@ -271,7 +271,7 @@ export async function sealMonitorUptime(
     );
     for (const row of rows) {
       const parsed = selectWorkspaceSchema.safeParse(row);
-      if (parsed.success && parsed.data.limits["monitor-sla"]) {
+      if (parsed.success && parsed.data.limits["uptime-targets"]) {
         allowed.add(parsed.data.id);
       }
     }
@@ -301,11 +301,11 @@ export async function sealMonitorUptime(
   }
 
   for (const [readFrom, group] of groups) {
-    const fetched = await fetchSlaEpisodes({
+    const fetched = await fetchUptimeEpisodes({
       monitors: group,
       fromMs: readFrom,
       toMs: now,
-      pipes: () => args.episodesPipes ?? slaEpisodesPipes(defaultTb),
+      pipes: () => args.episodesPipes ?? uptimeEpisodesPipes(defaultTb),
       sleep: args.sleep,
     });
     for (const m of group) {

@@ -125,7 +125,7 @@ describe("the policy choice", () => {
       await savePolicy(tx, "acknowledged");
       const row = await read(tx, declared.id);
       expect(row.targetSnapshot?.responseMet).toBe("status_report");
-      expect(row.sla?.responseMet).toBe("status_report");
+      expect(row.targets?.responseMet).toBe("status_report");
     });
   });
 
@@ -145,7 +145,7 @@ describe("the policy choice", () => {
         input: { id: declared.id },
       });
       const row = await read(tx, declared.id);
-      expect(row.sla?.responseMet).toBe("acknowledged");
+      expect(row.targets?.responseMet).toBe("acknowledged");
       expect(row.responseMetAt).not.toBeNull();
     });
   });
@@ -215,7 +215,7 @@ describe("with status_report, a report update meets the response", () => {
       );
       expect(row.updatedAt?.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(row.responseBreachDueAt).toBeNull();
-      expect(row.sla?.response?.status).toBe("met");
+      expect(row.targets?.response?.status).toBe("met");
     });
   });
 

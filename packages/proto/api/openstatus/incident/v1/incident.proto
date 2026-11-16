@@ -45,9 +45,9 @@ enum IncidentEventType {
   INCIDENT_EVENT_TYPE_CLOSED = 16;
   INCIDENT_EVENT_TYPE_ACKNOWLEDGED = 17;
   // Written by the system at the due time of a missed response target.
-  INCIDENT_EVENT_TYPE_SLA_RESPONSE_BREACHED = 18;
+  INCIDENT_EVENT_TYPE_RESPONSE_TARGET_BREACHED = 18;
   // Written by the system at the due time of a missed resolution target.
-  INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED = 19;
+  INCIDENT_EVENT_TYPE_RESOLUTION_TARGET_BREACHED = 19;
   INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED = 20;
 }
 
@@ -65,21 +65,21 @@ enum PostmortemAuthor {
   POSTMORTEM_AUTHOR_USER = 2;
 }
 
-// IncidentSlaTimerStatus is the state of one SLA target.
-enum IncidentSlaTimerStatus {
-  INCIDENT_SLA_TIMER_STATUS_UNSPECIFIED = 0;
+// IncidentTargetTimerStatus is the state of one target.
+enum IncidentTargetTimerStatus {
+  INCIDENT_TARGET_TIMER_STATUS_UNSPECIFIED = 0;
   // Running, before the warning point.
-  INCIDENT_SLA_TIMER_STATUS_RUNNING = 1;
+  INCIDENT_TARGET_TIMER_STATUS_RUNNING = 1;
   // Past 75% of the target and not yet met.
-  INCIDENT_SLA_TIMER_STATUS_AT_RISK = 2;
+  INCIDENT_TARGET_TIMER_STATUS_AT_RISK = 2;
   // Met on time.
-  INCIDENT_SLA_TIMER_STATUS_MET = 3;
+  INCIDENT_TARGET_TIMER_STATUS_MET = 3;
   // Missed: past the due time, or met late.
-  INCIDENT_SLA_TIMER_STATUS_BREACHED = 4;
+  INCIDENT_TARGET_TIMER_STATUS_BREACHED = 4;
 }
 
-// IncidentSlaTimer is the state of one SLA target of an incident.
-message IncidentSlaTimer {
+// IncidentTargetTimer is the state of one target of an incident.
+message IncidentTargetTimer {
   // Target in minutes, from the policy fixed on the incident at declare.
   int32 target_minutes = 1;
 
@@ -93,16 +93,16 @@ message IncidentSlaTimer {
   optional string missed_at = 4;
 
   // Current state of the target.
-  IncidentSlaTimerStatus status = 5;
+  IncidentTargetTimerStatus status = 5;
 }
 
-// IncidentSla is the SLA state of a tracked incident.
-message IncidentSla {
+// IncidentTargets is the target state of a tracked incident.
+message IncidentTargets {
   // Response target (unset when the severity has none).
-  optional IncidentSlaTimer response = 1;
+  optional IncidentTargetTimer response = 1;
 
   // Resolution target (unset when the severity has none).
-  optional IncidentSlaTimer resolution = 2;
+  optional IncidentTargetTimer resolution = 2;
 }
 
 // IncidentUser is a workspace member referenced by an incident.
@@ -191,11 +191,11 @@ message IncidentSummary {
   // Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
   optional IncidentUser acknowledged_by = 14;
 
-  // SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
-  optional IncidentSla sla = 15;
+  // Targets (unset for incidents declared without incident response targets, and for canceled ones).
+  optional IncidentTargets targets = 15;
 
   // Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
-  // SLA timers start here instead of at declared_at.
+  // Response targets start here instead of at declared_at.
   optional string reported_at = 16;
 }
 
@@ -269,11 +269,11 @@ message Incident {
   // Member who acknowledged the incident (unset until acknowledged, and for API keys without a creator).
   optional IncidentUser acknowledged_by = 22;
 
-  // SLA targets (unset for incidents declared without an incident reporting, and for canceled ones).
-  optional IncidentSla sla = 23;
+  // Targets (unset for incidents declared without incident response targets, and for canceled ones).
+  optional IncidentTargets targets = 23;
 
   // Timestamp when the request reached the team, before the declare (RFC 3339 format, unset when not given).
-  // SLA timers start here instead of at declared_at.
+  // Response targets start here instead of at declared_at.
   optional string reported_at = 24;
 }
 

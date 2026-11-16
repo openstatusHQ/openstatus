@@ -16,7 +16,7 @@ import {
   LINK_ACCOUNT_TEXT,
 } from "./blocks";
 import type { SlackConfig } from "./config";
-import { onIncidentDeclared } from "./incident-targetck";
+import { onIncidentDeclared } from "./incident-slack";
 import { getIncidentDashboardUrl } from "./page-urls";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import {
@@ -145,7 +145,7 @@ export function buildDeclareIncidentModal(args: {
         label: { type: "plain_text", text: "Reported at" },
         hint: {
           type: "plain_text",
-          text: "When the request reached you, if before now. SLA timers start here.",
+          text: "When the request reached you, if before now. Response targets start here.",
         },
         element: { type: "datetimepicker", action_id: "value" },
       },

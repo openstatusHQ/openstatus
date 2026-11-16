@@ -1,9 +1,12 @@
 import type { IncidentTargetTimer } from "@openstatus/db/src/schema/incident_response_targets/state";
 import { describe, expect, test } from "vitest";
 
-import { parseSlaDuration, slaTimerPhrase } from "./incident-target.client";
+import {
+  parseUptimeDuration,
+  targetTimerPhrase,
+} from "./incident-target.client";
 
-describe("parseSlaDuration", () => {
+describe("parseUptimeDuration", () => {
   test.each([
     ["30m", 30],
     ["4h", 240],
@@ -12,22 +15,22 @@ describe("parseSlaDuration", () => {
     ["1d12h", 2160],
     ["4H", 240],
   ])("%s is %i minutes", (value, minutes) => {
-    expect(parseSlaDuration(value)).toEqual({ ok: true, minutes });
+    expect(parseUptimeDuration(value)).toEqual({ ok: true, minutes });
   });
 
   test("an empty field is off", () => {
-    expect(parseSlaDuration("  ")).toEqual({ ok: true, minutes: undefined });
+    expect(parseUptimeDuration("  ")).toEqual({ ok: true, minutes: undefined });
   });
 
   test.each(["4", "h", "4x", "1.5h", "-4h", "4h4h"])(
     "%s is not a duration",
     (value) => {
-      expect(parseSlaDuration(value)).toEqual({ ok: false });
+      expect(parseUptimeDuration(value)).toEqual({ ok: false });
     },
   );
 });
 
-describe("slaTimerPhrase", () => {
+describe("targetTimerPhrase", () => {
   const startsAt = new Date("2026-11-11T12:00:00.000Z");
   const at = (minutes: number) =>
     new Date(startsAt.getTime() + minutes * 60_000);
@@ -55,6 +58,6 @@ describe("slaTimerPhrase", () => {
     ],
     ["due within the minute", { status: "at_risk" }, 59.9, "due in 1m"],
   ] as const)("%s", (_, patch, minutes, phrase) => {
-    expect(slaTimerPhrase({ ...timer, ...patch }, at(minutes))).toBe(phrase);
+    expect(targetTimerPhrase({ ...timer, ...patch }, at(minutes))).toBe(phrase);
   });
 });

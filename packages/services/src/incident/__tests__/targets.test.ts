@@ -51,7 +51,8 @@ const withDb = (ctx: ServiceContext, tx: DB): ServiceContext => ({
 });
 const owner = (tx: DB) => withDb(makeUserCtx(team, { userId: ownerId }), tx);
 const member = (tx: DB) => withDb(makeUserCtx(team, { userId: memberId }), tx);
-const apiKey = (tx: DB) => withDb(makeApiKeyCtx(team, { keyId: "k_sla" }), tx);
+const apiKey = (tx: DB) =>
+  withDb(makeApiKeyCtx(team, { keyId: "k_targets" }), tx);
 
 const targets = {
   critical: { responseMinutes: 60, resolutionMinutes: 240 },
@@ -105,7 +106,7 @@ describe("the snapshot at declare", () => {
     await withTestTransaction(async (tx) => {
       const declared = await declareByKey(tx);
       expect(declared.targetSnapshot).toBeNull();
-      expect((await view(tx, declared.id)).sla).toBeNull();
+      expect((await view(tx, declared.id)).targets).toBeNull();
     });
   });
 
@@ -140,7 +141,7 @@ describe("the snapshot at declare", () => {
         resolutionStop: "resolved",
         responseMet: "acknowledged",
       });
-      expect(row.sla?.response?.targetMinutes).toBe(60);
+      expect(row.targets?.response?.targetMinutes).toBe(60);
     });
   });
 });
@@ -155,7 +156,9 @@ describe("the response time", () => {
       });
       expect(declared.responseMetAt).toEqual(declared.declaredAt);
       expect(declared.responseMetAt).toEqual(declared.acknowledgedAt);
-      expect((await view(tx, declared.id)).sla?.response?.status).toBe("met");
+      expect((await view(tx, declared.id)).targets?.response?.status).toBe(
+        "met",
+      );
     });
   });
 
@@ -164,12 +167,12 @@ describe("the response time", () => {
       await savePolicy(tx);
       const declared = await declareByKey(tx);
       expect(declared.responseMetAt).toBeNull();
-      expect((await view(tx, declared.id)).sla?.response?.status).toBe(
+      expect((await view(tx, declared.id)).targets?.response?.status).toBe(
         "running",
       );
       const { items } = await listIncidents({ ctx: member(tx) });
       const listed = items.find((i) => i.id === declared.id);
-      expect(listed?.sla?.response?.dueAt).toEqual(
+      expect(listed?.targets?.response?.dueAt).toEqual(
         new Date(declared.declaredAt.getTime() + 60 * 60_000),
       );
     });
@@ -198,7 +201,7 @@ describe("the response time", () => {
       });
       const row = await view(tx, declared.id);
       expect(row.responseMetAt).toEqual(row.acknowledgedAt);
-      expect(row.sla?.response?.status).toBe("met");
+      expect(row.targets?.response?.status).toBe("met");
     });
   });
 
@@ -224,7 +227,7 @@ describe("the response time", () => {
         input: { id: declared.id },
       });
       expect(acked.responseMetAt).not.toBeNull();
-      expect((await view(tx, declared.id)).sla?.response).toBeNull();
+      expect((await view(tx, declared.id)).targets?.response).toBeNull();
     });
   });
 
@@ -254,7 +257,7 @@ describe("a late response", () => {
       expect(acked.responseBreachDueAt).toEqual(
         new Date(declaredAt.getTime() + 60 * 60_000),
       );
-      expect((await view(tx, declared.id)).sla?.response?.status).toBe(
+      expect((await view(tx, declared.id)).targets?.response?.status).toBe(
         "breached",
       );
     });
@@ -271,7 +274,7 @@ describe("a late response", () => {
       });
       const row = await view(tx, declared.id);
       expect(row.responseBreachDueAt).not.toBeNull();
-      expect(row.sla?.response?.status).toBe("breached");
+      expect(row.targets?.response?.status).toBe("breached");
     });
   });
 
@@ -288,7 +291,7 @@ describe("a late response", () => {
         ctx: member(tx),
         input: { id: declared.id, severity: "minor" },
       });
-      expect((await view(tx, declared.id)).sla?.response?.status).toBe(
+      expect((await view(tx, declared.id)).targets?.response?.status).toBe(
         "breached",
       );
     });
@@ -305,7 +308,7 @@ describe("a late response", () => {
         input: { id: declared.id, severity: "critical" },
       });
       expect(upgraded.responseBreachDueAt).toBeNull();
-      expect((await view(tx, declared.id)).sla?.response?.status).toBe(
+      expect((await view(tx, declared.id)).targets?.response?.status).toBe(
         "running",
       );
     });

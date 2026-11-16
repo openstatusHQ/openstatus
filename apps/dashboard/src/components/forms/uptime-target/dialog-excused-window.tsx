@@ -52,9 +52,9 @@ import { DateTimePicker } from "@/components/common/date-time-picker";
 import {
   excusedKindLabels,
   excusedWindowContext,
-  formatSlaDuration,
-  formatSlaMonth,
-  slaMonthOf,
+  formatUptimeDuration,
+  formatUptimeMonth,
+  uptimeMonthOf,
 } from "@/data/reports.client";
 import { formatDate, formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
@@ -100,8 +100,8 @@ function makeSchema(timeZone: string) {
     .refine(
       // the end is exclusive: a window ending at midnight on the 1st stays in its month
       (v) =>
-        slaMonthOf(new Date(v.to.getTime() - 1), timeZone) <=
-        slaMonthOf(new Date(), timeZone),
+        uptimeMonthOf(new Date(v.to.getTime() - 1), timeZone) <=
+        uptimeMonthOf(new Date(), timeZone),
       {
         message: "A window cannot reach into a future month.",
         path: ["to"],
@@ -311,7 +311,7 @@ function ExcusedWindowForm({
                           </span>
                         ) : measuredMs ? (
                           <span className="text-muted-foreground text-xs">
-                            {formatSlaDuration(measuredMs)} measured in this
+                            {formatUptimeDuration(measuredMs)} measured in this
                             window
                           </span>
                         ) : null}
@@ -381,7 +381,7 @@ function ExcusedWindowForm({
             {context.missed} of the last {context.months.length} complete months
             had a miss
             {context.months.length > 0
-              ? ` (${context.months.map((m) => formatSlaMonth(m)).join(", ")})`
+              ? ` (${context.months.map((m) => formatUptimeMonth(m)).join(", ")})`
               : ""}
             .
           </li>

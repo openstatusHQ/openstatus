@@ -26,7 +26,7 @@ import {
 import {
   dueIncidentTargetBreaches,
   stampIncidentTargetBreach,
-} from "../sla-breaches";
+} from "../target-breaches";
 
 let team: Workspace;
 let ownerId: number;
@@ -87,10 +87,10 @@ describe("reported at, at declare", () => {
         input: { title: "Down", severity: "critical", reportedAt },
       });
       expect(declared.reportedAt).toEqual(reportedAt);
-      const { sla } = await view(tx, declared.id);
-      expect(sla?.response?.dueAt).toEqual(minutesAfter(reportedAt, 60));
-      expect(sla?.response?.status).toBe("running");
-      expect(sla?.resolution?.dueAt).toEqual(minutesAfter(reportedAt, 240));
+      const { targets } = await view(tx, declared.id);
+      expect(targets?.response?.dueAt).toEqual(minutesAfter(reportedAt, 60));
+      expect(targets?.response?.status).toBe("running");
+      expect(targets?.resolution?.dueAt).toEqual(minutesAfter(reportedAt, 240));
     });
   });
 
@@ -102,7 +102,7 @@ describe("reported at, at declare", () => {
         input: { title: "Down", severity: "critical" },
       });
       expect(declared.reportedAt).toBeNull();
-      expect((await view(tx, declared.id)).sla?.response?.dueAt).toEqual(
+      expect((await view(tx, declared.id)).targets?.response?.dueAt).toEqual(
         minutesAfter(declared.declaredAt, 60),
       );
     });
@@ -135,7 +135,7 @@ describe("reported at, at declare", () => {
       const due = minutesAfter(reportedAt, 60);
       expect(declared.responseMetAt).toEqual(declared.declaredAt);
       expect(declared.responseBreachDueAt).toEqual(due);
-      expect((await view(tx, declared.id)).sla?.response?.status).toBe(
+      expect((await view(tx, declared.id)).targets?.response?.status).toBe(
         "breached",
       );
       const breach = (await events(tx, declared.id)).filter(
@@ -163,7 +163,7 @@ describe("editing reported at", () => {
       });
       expect(updated.reportedAt).toEqual(reportedAt);
       expect(updated.acknowledgedAt).toBeNull();
-      expect((await view(tx, declared.id)).sla?.response?.dueAt).toEqual(
+      expect((await view(tx, declared.id)).targets?.response?.dueAt).toEqual(
         minutesAfter(reportedAt, 60),
       );
       const changed = (await events(tx, declared.id)).filter(
@@ -192,7 +192,7 @@ describe("editing reported at", () => {
       });
       const row = await view(tx, declared.id);
       expect(row.reportedAt).toBeNull();
-      expect(row.sla?.response?.dueAt).toEqual(
+      expect(row.targets?.response?.dueAt).toEqual(
         minutesAfter(declared.declaredAt, 60),
       );
       expect(
@@ -216,7 +216,7 @@ describe("editing reported at", () => {
       });
       const row = await view(tx, declared.id);
       expect(row.responseBreachDueAt).toBeNull();
-      expect(row.sla?.response?.status).toBe("met");
+      expect(row.targets?.response?.status).toBe("met");
       expect(
         (await events(tx, declared.id)).some(
           (e) => e.type === "response_target_breached",
@@ -237,7 +237,7 @@ describe("editing reported at", () => {
         ctx: member(tx),
         input: { id: declared.id, reportedAt: null },
       });
-      const response = (await view(tx, declared.id)).sla?.response;
+      const response = (await view(tx, declared.id)).targets?.response;
       expect(response?.status).toBe("breached");
       expect(response?.dueAt).toEqual(minutesAfter(reportedAt, 60));
     });

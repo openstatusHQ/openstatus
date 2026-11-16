@@ -64,7 +64,7 @@ async function setup(tx: Tx) {
       workspaceId: ctx.workspace.id,
       active: true,
       url: "https://example.com",
-      name: "svc-sla-excused",
+      name: "svc-uptime-target-excused",
       periodicity: "10m",
       regions: "ams",
       jobType: "http",

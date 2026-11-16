@@ -35,7 +35,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import type { ExcusedWindowPrefill } from "@/components/forms/uptime-target/dialog-excused-window";
-import { formatSlaMonth } from "@/data/reports.client";
+import { formatUptimeMonth } from "@/data/reports.client";
 import { formatDurationShort, formatWindow } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -92,7 +92,7 @@ export function UptimeTargetMaintenance({
             <EventGroup key={month}>
               <EventGroupHeader>
                 <EventGroupTitle>
-                  {formatSlaMonth(month, { year: true })}
+                  {formatUptimeMonth(month, { year: true })}
                   <EventGroupCount>{windows.length}</EventGroupCount>
                 </EventGroupTitle>
               </EventGroupHeader>

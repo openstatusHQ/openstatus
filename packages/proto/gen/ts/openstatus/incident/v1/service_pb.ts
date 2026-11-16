@@ -73,7 +73,7 @@ export type DeclareIncidentRequest = Message<"openstatus.incident.v1.DeclareInci
 
   /**
    * When the request reached the team, if before the declare (RFC 3339 format, optional).
-   * At most 30 days before now and never later; SLA timers start here.
+   * At most 30 days before now and never later; response targets start here.
    *
    * @generated from field: optional string reported_at = 8;
    */
@@ -284,14 +284,14 @@ export type UpdateIncidentRequest = Message<"openstatus.incident.v1.UpdateIncide
 
   /**
    * New report time (RFC 3339 format, optional), between 30 days before the declare and the declare.
-   * Moves the due times of running SLA timers; met and missed targets keep their verdict.
+   * Moves the due times of running target timers; met and missed targets keep their verdict.
    *
    * @generated from field: optional string reported_at = 9;
    */
   reportedAt?: string | undefined;
 
   /**
-   * Set to true to remove the report time, so SLA timers start at the declare again. Cannot be combined with reported_at.
+   * Set to true to remove the report time, so target timers start at the declare again. Cannot be combined with reported_at.
    *
    * @generated from field: optional bool clear_reported_at = 10;
    */

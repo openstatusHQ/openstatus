@@ -14,7 +14,7 @@ export function Breadcrumb() {
   const trpc = useTRPC();
   const root = NAV.reports;
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const onPolicy = workspace?.limits["monitor-sla"] === true && !!id;
+  const onPolicy = workspace?.limits["uptime-targets"] === true && !!id;
   const { data: policies } = useQuery({
     ...trpc.uptimeTarget.list.queryOptions(),
     enabled: onPolicy,

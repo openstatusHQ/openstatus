@@ -67,7 +67,7 @@ async function insertMonitor(
       workspaceId: ctx.workspace.id,
       active: true,
       url: "https://example.com",
-      name: "svc-sla-monitor-month",
+      name: "svc-uptime-monitor-month",
       periodicity: "10m",
       regions: "ams",
       jobType: "http",
@@ -148,7 +148,7 @@ async function insertMaintenance(
       workspaceId: ctx.workspace.id,
       title: "Main",
       description: "",
-      slug: `svc-sla-mm-${crypto.randomUUID().slice(0, 8)}`,
+      slug: `svc-uptime-target-mm-${crypto.randomUUID().slice(0, 8)}`,
       customDomain: "",
     })
     .returning()

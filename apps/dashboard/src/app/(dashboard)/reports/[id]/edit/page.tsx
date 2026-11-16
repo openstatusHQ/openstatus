@@ -20,7 +20,7 @@ export default function Page() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
   const { data: members } = useQuery(trpc.member.list.queryOptions());
-  const allowed = workspace?.limits["monitor-sla"] === true;
+  const allowed = workspace?.limits["uptime-targets"] === true;
   const { data: policy } = useQuery({
     ...trpc.uptimeTarget.summary.queryOptions({ id: Number.parseInt(id) }),
     enabled: allowed,

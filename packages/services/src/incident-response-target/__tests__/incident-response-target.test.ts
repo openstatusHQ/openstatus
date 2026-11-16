@@ -56,7 +56,7 @@ function withoutLimit(ctx: ServiceContext): ServiceContext {
     ...ctx,
     workspace: {
       ...ctx.workspace,
-      limits: { ...ctx.workspace.limits, "incident-sla": false },
+      limits: { ...ctx.workspace.limits, "incident-targets": false },
     },
   };
 }

@@ -54,7 +54,7 @@ async function insertMonitor(
       workspaceId: ctx.workspace.id,
       active: true,
       url: "https://example.com",
-      name: "svc-sla-export",
+      name: "svc-uptime-target-export",
       periodicity: "10m",
       regions: "ams",
       jobType: "http",
@@ -129,7 +129,9 @@ describe("exportUptimeTarget", () => {
       // neither the running month nor an October older than 45 days is read
       expect(calls).toEqual([]);
 
-      expect(res.filename).toBe("sla-partner-contract-2025-11-to-2026-10.csv");
+      expect(res.filename).toBe(
+        "uptime-target-partner-contract-2025-11-to-2026-10.csv",
+      );
       const { comments, header, rows } = parse(res.csv);
       expect(comments[0]).toBe(`# ${UPTIME_TARGET_METHOD}`);
       expect(comments[1]).toContain(`Generated ${now.toISOString()}`);
@@ -380,7 +382,7 @@ describe("exportUptimeTarget", () => {
         input: { id: policy.id, from: "2026-10", to: "2026-10" },
         now,
       });
-      expect(res.filename).toBe("sla-eu-prod-2026-10-to-2026-10.csv");
+      expect(res.filename).toBe("uptime-target-eu-prod-2026-10-to-2026-10.csv");
       expect(parse(res.csv).rows[0]).toBe(
         `"EU, prod",99.500,no,${api.id},"'=HYPERLINK(""x""), API",https://example.com,2026-10,none,,,,UTC,,,,,`,
       );
@@ -419,7 +421,9 @@ describe("exportUptimeTarget", () => {
     await withTestTransaction(async (tx) => {
       const member = await tx
         .insert(user)
-        .values({ email: `sla-export-member-${Date.now()}@openstatus.dev` })
+        .values({
+          email: `uptime-target-export-member-${Date.now()}@openstatus.dev`,
+        })
         .returning()
         .get();
       await tx.insert(usersToWorkspaces).values({

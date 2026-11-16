@@ -12,7 +12,7 @@ import {
   createWorkspaceFixture,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { SlaEpisodesPipes } from "../fetch-episodes";
+import type { UptimeEpisodesPipes } from "../fetch-episodes";
 import { claimUptimeTargetMissNotices } from "../miss-notice";
 import {
   episodesPipesFrom,
@@ -60,7 +60,7 @@ const runsOf = (id: string) =>
   );
 const readable = episodesPipesFrom(runsOf);
 // tcp monitors' episodes cannot be read
-const tcpDown: SlaEpisodesPipes = {
+const tcpDown: UptimeEpisodesPipes = {
   ...readable,
   tcp: failingEpisodesPipes().tcp,
 };
@@ -300,7 +300,7 @@ describe("claimUptimeTargetMissNotices", () => {
     await withTestTransaction(async (tx) => {
       const member = await tx
         .insert(user)
-        .values({ email: `sla-member-${Date.now()}@openstatus.dev` })
+        .values({ email: `uptime-target-member-${Date.now()}@openstatus.dev` })
         .returning()
         .get();
       await tx

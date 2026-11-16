@@ -31,7 +31,7 @@ import {
   GetPostmortemResponseSchema,
   IncidentEventType,
   IncidentSeverity,
-  IncidentSlaTimerStatus,
+  IncidentTargetTimerStatus,
   IncidentStatus,
   LinkStatusReportResponseSchema,
   ListIncidentsResponseSchema,
@@ -626,7 +626,7 @@ describe("IncidentService: acknowledge", () => {
   });
 });
 
-describe("IncidentService: SLA", () => {
+describe("IncidentService: targets", () => {
   async function listed(id: string) {
     const list = await rpc(
       ListIncidentsResponseSchema,
@@ -637,10 +637,10 @@ describe("IncidentService: SLA", () => {
     return list.incidents.find((i) => i.id === id);
   }
 
-  test("an untracked incident has no sla", async () => {
+  test("an untracked incident has no targets", async () => {
     const id = await declare();
-    expect((await get(id)).sla).toBeUndefined();
-    expect((await listed(id))?.sla).toBeUndefined();
+    expect((await get(id)).targets).toBeUndefined();
+    expect((await listed(id))?.targets).toBeUndefined();
   });
 
   test("reports response and resolution state on get and list", async () => {
@@ -666,24 +666,24 @@ describe("IncidentService: SLA", () => {
     const id = String(row.id);
 
     for (const incident of [await get(id), await listed(id)]) {
-      expect(incident?.sla?.response).toMatchObject({
+      expect(incident?.targets?.response).toMatchObject({
         targetMinutes: 60,
         dueAt: at(60).toISOString(),
         metAt: at(70).toISOString(),
         missedAt: at(60).toISOString(),
-        status: IncidentSlaTimerStatus.BREACHED,
+        status: IncidentTargetTimerStatus.BREACHED,
       });
-      expect(incident?.sla?.resolution).toMatchObject({
+      expect(incident?.targets?.resolution).toMatchObject({
         targetMinutes: 100,
         dueAt: at(100).toISOString(),
-        status: IncidentSlaTimerStatus.AT_RISK,
+        status: IncidentTargetTimerStatus.AT_RISK,
       });
-      expect(incident?.sla?.resolution?.metAt).toBeUndefined();
-      expect(incident?.sla?.resolution?.missedAt).toBeUndefined();
+      expect(incident?.targets?.resolution?.metAt).toBeUndefined();
+      expect(incident?.targets?.resolution?.missedAt).toBeUndefined();
     }
   });
 
-  test("a severity without targets has a tracked sla with no timers", async () => {
+  test("a severity without targets is tracked with no timers", async () => {
     const row = await createIncident(workspaceId, {
       title: `${TEST_PREFIX} minor tracked`,
       severity: "minor",
@@ -692,10 +692,10 @@ describe("IncidentService: SLA", () => {
         resolutionStop: "mitigated",
       },
     });
-    const sla = (await get(String(row.id))).sla;
-    expect(sla).toBeDefined();
-    expect(sla?.response).toBeUndefined();
-    expect(sla?.resolution).toBeUndefined();
+    const targets = (await get(String(row.id))).targets;
+    expect(targets).toBeDefined();
+    expect(targets?.response).toBeUndefined();
+    expect(targets?.resolution).toBeUndefined();
   });
 });
 

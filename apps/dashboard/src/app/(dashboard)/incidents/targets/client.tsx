@@ -54,7 +54,7 @@ export function Client() {
   );
   const { data: attainment } = useQuery({
     ...trpc.incidentResponseTarget.attainment.queryOptions(),
-    enabled: workspace?.limits["incident-sla"] === true,
+    enabled: workspace?.limits["incident-targets"] === true,
   });
   const invalidate = () =>
     queryClient.invalidateQueries({
@@ -75,7 +75,7 @@ export function Client() {
 
   const role = members.find((m) => m.user.id === user.id)?.role;
   const canEdit = role === "owner" || role === "admin";
-  const locked = workspace.limits["incident-sla"] !== true;
+  const locked = workspace.limits["incident-targets"] !== true;
 
   return (
     <SectionGroup>
@@ -113,7 +113,7 @@ export function Client() {
         <UpgradeDialog
           open={openDialog}
           onOpenChange={setOpenDialog}
-          limit="incident-sla"
+          limit="incident-targets"
         />
       </Section>
       <Section id="attainment">
@@ -131,7 +131,7 @@ export function Client() {
             <BillingOverlay>
               <BillingOverlayButton
                 data-track="paywall_viewed"
-                data-limit="incident-sla"
+                data-limit="incident-targets"
                 onClick={() => setOpenDialog(true)}
               >
                 <Lock />

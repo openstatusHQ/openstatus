@@ -94,10 +94,10 @@ An incident is tracked when it was declared while the workspace had incident res
 
 - Editing the targets or turning them off never changes incidents already declared. They finish with the terms they were declared with.
 - After a downgrade, tracked incidents keep their timers. New incidents are not tracked.
-- Canceled incidents and incidents declared without incident response targets have no SLA state.
+- Canceled incidents and incidents declared without incident response targets have no target state.
 - A severity without targets in the copy has no timers.
 
-On a tracked incident, the list row and the detail page show the timer that is due next, and the **Response targets** section of the detail page shows each timer with its status. Nothing about the SLA appears on the status page.
+On a tracked incident, the list row and the detail page show the timer that is due next, and the **Response targets** section of the detail page shows each timer with its status. Nothing about the targets appears on the status page.
 
 ### Timers
 
@@ -205,7 +205,7 @@ Every member can view the table. Without the plan it shows example rows.
 
 ### API and agents
 
-Tracked incidents carry their SLA state over the [Incident Service](/docs/sdk/nodejs/incident-service#sla-targets) and the `list_incidents` and `get_incident` [MCP tools](/docs/reference/mcp-server#incidents): target, due time, met time, missed time and status for the response and the resolution.
+Tracked incidents carry their target state over the [Incident Service](/docs/sdk/nodejs/incident-service#targets) and the `list_incidents` and `get_incident` [MCP tools](/docs/reference/mcp-server#incidents): target, due time, met time, missed time and status for the response and the resolution.
 
 ## Postmortem
 
@@ -273,5 +273,5 @@ Every change to an incident or its postmortem is written to the audit log with t
 - **[Understanding status reports and incidents](/docs/concept/status-reports-and-incidents)**: how the objects fit together.
 - **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)**: install Slack and run your first incident from it.
 - **[MCP server reference](/docs/reference/mcp-server#incidents)**: the incident tools for agents.
-- **[Incident Service](/docs/sdk/nodejs/incident-service)**: incidents, acknowledgement and SLA state over the API.
+- **[Incident Service](/docs/sdk/nodejs/incident-service)**: incidents, acknowledgement and target state over the API.
 - **[Uptime target reference](/docs/reference/uptime-target)**: monthly uptime targets for monitors.

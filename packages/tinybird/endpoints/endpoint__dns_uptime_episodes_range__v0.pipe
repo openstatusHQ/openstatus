@@ -1,10 +1,10 @@
-TOKEN "endpoint__http_sla_episodes_range__v0_endpoint_read" READ
+TOKEN "endpoint__dns_uptime_episodes_range__v0_endpoint_read" READ
 
 NODE endpoint
 SQL >
 
 %
--- SPEC "Weight and unmeasured time" over [fromDate, toDate) in epoch ms, quorum as endpoint__http_runs_range__v0.
+-- SPEC "Weight and unmeasured time" over [fromDate, toDate) in epoch ms, quorum as endpoint__dns_runs_range__v0.
 -- Must match episodesFromRuns; expected output: packages/services/src/uptime-target/__tests__/fixtures/episodes.json
 WITH
     toInt64({{ Int64(fromDate, 1730419200000, required=True) }}) AS fromMs,
@@ -22,8 +22,8 @@ WITH
                 uniqExactMerge(regions) AS n,
                 uniqExactMerge(errorRegions) AS e,
                 uniqExactMerge(degradedRegions) AS d
-            FROM mv__http_runs_45d__v0
-            WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+            FROM mv__dns_runs_45d__v0
+            WHERE monitorId IN {{ Array(monitorIds, 'String', '7417') }}
                 AND time >= toStartOfDay(toDateTime(intDiv(fromMs, 1000), 'UTC'))
                 AND time < fromUnixTimestamp64Milli(toInt64(toMs), 'UTC')
                 AND cronTimestamp >= fromMs
@@ -115,7 +115,7 @@ FROM (
         'unmeasured' AS kind,
         fromMs AS startedAt,
         toMs AS endedAt
-    FROM (SELECT arrayJoin({{ Array(monitorIds, 'String', '1,666') }}) AS monitorId)
+    FROM (SELECT arrayJoin({{ Array(monitorIds, 'String', '7417') }}) AS monitorId)
     WHERE monitorId NOT IN (SELECT monitorId FROM judged)
 )
 ORDER BY monitorId, startedAt

@@ -26,7 +26,7 @@ export default async function Layout({
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
   ]);
   // a locked plan gets the paywall from the page, not a 404
-  if (workspace.limits["monitor-sla"]) {
+  if (workspace.limits["uptime-targets"]) {
     await fetchQueryOrNotFound(
       trpc.uptimeTarget.summary.queryOptions({ id: policyId }),
     );

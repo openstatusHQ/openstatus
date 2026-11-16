@@ -18,7 +18,7 @@ export default async function Page({
   await Promise.all([
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
     // a locked plan gets a FORBIDDEN, which would land in Sentry
-    workspace.limits["monitor-sla"]
+    workspace.limits["uptime-targets"]
       ? queryClient.prefetchQuery(
           trpc.uptimeTarget.list.queryOptions({
             archived: view === "archived",

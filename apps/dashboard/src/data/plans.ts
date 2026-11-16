@@ -28,7 +28,7 @@ export const config: Record<
       { value: "data-retention", label: "Data retention" },
       { value: "response-logs", label: "Response Logs" },
       { value: "private-locations", label: "Private Locations" },
-      { value: "monitor-sla", label: "Uptime targets" },
+      { value: "uptime-targets", label: "Uptime targets" },
       { value: "otel", label: "OTel Exporter" },
       {
         value: "synthetic-checks",
@@ -60,7 +60,7 @@ export const config: Record<
       { value: "status-pages", label: "Number of status pages" },
       { value: "page-components", label: "Number of components" },
       { value: "maintenance", label: "Maintenance status" },
-      { value: "incident-sla", label: "Incident response targets" },
+      { value: "incident-targets", label: "Incident response targets" },
       { value: "status-subscribers", label: "Subscribers" },
       { value: "slack-agent", label: "Slack Agent" },
       {

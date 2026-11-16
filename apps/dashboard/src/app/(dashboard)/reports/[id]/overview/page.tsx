@@ -19,7 +19,7 @@ export default async function Page({
     queryClient.fetchQuery(trpc.workspace.get.queryOptions()),
   ]);
   // the layout already 404s an unknown id; a locked plan gets the paywall
-  if (workspace.limits["monitor-sla"]) {
+  if (workspace.limits["uptime-targets"]) {
     await queryClient.prefetchQuery(
       trpc.uptimeTarget.get.queryOptions({
         id: Number.parseInt(id),

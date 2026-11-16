@@ -27,7 +27,7 @@ import {
   dueIncidentTargetBreaches,
   recordIncidentTargetBreaches,
   stampIncidentTargetBreach,
-} from "../sla-breaches";
+} from "../target-breaches";
 
 let team: Workspace;
 let ownerId: number;

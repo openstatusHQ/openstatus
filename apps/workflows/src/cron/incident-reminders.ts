@@ -33,11 +33,11 @@ function countBy<T>(
   return out;
 }
 
-/** Records SLA misses and sends SLA notices, by Slack or by email when Slack cannot. */
+/** Records target misses and sends target notices, by Slack or by email when Slack cannot. */
 async function runIncidentTargetPhase(): Promise<void> {
   const breaches = await recordIncidentTargetBreaches();
   if (breaches.length > 0) {
-    logger.info("incident sla misses recorded: {breaches}", {
+    logger.info("incident target misses recorded: {breaches}", {
       breaches: breaches.length,
     });
   }
@@ -50,7 +50,7 @@ async function runIncidentTargetPhase(): Promise<void> {
   });
   if (notices.length > 0) {
     logger.info(
-      "incident sla notices sent: {sent}, retrying: {retry}, undelivered: {undelivered}",
+      "incident target notices sent: {sent}, retrying: {retry}, undelivered: {undelivered}",
       {
         sent: 0,
         retry: 0,
@@ -70,7 +70,7 @@ async function runIncidentTargetPhase(): Promise<void> {
   });
   if (emailed.length > 0) {
     logger.info(
-      "incident sla notice emails sent: {sent}, skipped: {skipped}, no recipients: {no_recipients}, failed: {failed}",
+      "incident target notice emails sent: {sent}, skipped: {skipped}, no recipients: {no_recipients}, failed: {failed}",
       {
         sent: 0,
         skipped: 0,
@@ -108,19 +108,19 @@ async function runStaleReminders(): Promise<ReminderResult[]> {
   return results;
 }
 
-/** Runs the SLA phase, then the stale reminders, which an SLA failure must not skip. */
+/** Runs the target phase, then the stale reminders, which a target failure must not skip. */
 export async function runIncidentTargetAndRemindersTick(
   phases: {
-    sla?: () => Promise<void>;
+    targets?: () => Promise<void>;
     reminders?: () => Promise<ReminderResult[]>;
   } = {},
 ): Promise<ReminderResult[]> {
-  const { sla = runIncidentTargetPhase, reminders = runStaleReminders } =
+  const { targets = runIncidentTargetPhase, reminders = runStaleReminders } =
     phases;
   try {
-    await sla();
+    await targets();
   } catch (err) {
-    logger.error("incident sla phase failed: {err}", { err: String(err) });
+    logger.error("incident target phase failed: {err}", { err: String(err) });
   }
   return reminders();
 }

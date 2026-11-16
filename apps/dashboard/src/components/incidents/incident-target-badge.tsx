@@ -5,7 +5,7 @@ import type {
 import { cn } from "@openstatus/ui/lib/utils";
 
 import { StatusDot, type StatusVariant } from "@/components/common/status-dot";
-import { slaTimerPhrase } from "@/data/incident-target.client";
+import { targetTimerPhrase } from "@/data/incident-target.client";
 
 const variant = {
   running: "default",
@@ -58,7 +58,7 @@ export function IncidentTargetBadge({
         className={cn(dotSize[size], "align-middle")}
       />
       {kind ? <span data-slot="incident-target-kind">{kind} </span> : null}
-      {slaTimerPhrase(timer, now)}
+      {targetTimerPhrase(timer, now)}
     </span>
   );
 }

@@ -26,9 +26,9 @@ import { excusedWindowLock, mergeSpans, type Span } from "./excused";
 import {
   clipEpisodes,
   type EpisodeMonitor,
-  fetchSlaEpisodes,
-  type SlaEpisodesPipes,
-  slaEpisodesPipes,
+  fetchUptimeEpisodes,
+  type UptimeEpisodesPipes,
+  uptimeEpisodesPipes,
 } from "./fetch-episodes";
 import {
   completeMonths,
@@ -50,7 +50,7 @@ const _sameJobTypes: Exact<
 > = true;
 
 export function assertUptimeTargetLimit(ctx: ServiceContext): void {
-  if (!ctx.workspace.limits["monitor-sla"]) {
+  if (!ctx.workspace.limits["uptime-targets"]) {
     throw new ForbiddenError("Uptime targets are not enabled on this plan.");
   }
 }
@@ -324,7 +324,7 @@ export async function fetchMonthEpisodes(args: {
   months: readonly string[];
   timeZone: string;
   now: Date;
-  pipes?: SlaEpisodesPipes;
+  pipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<{
   episodes: Map<number, Episode[]>;
@@ -339,11 +339,11 @@ export async function fetchMonthEpisodes(args: {
     };
   }
   const range = episodeRange(args.months, args.timeZone, args.now);
-  const res = await fetchSlaEpisodes({
+  const res = await fetchUptimeEpisodes({
     monitors: args.members,
     fromMs: range.start,
     toMs: range.end,
-    pipes: () => args.pipes ?? slaEpisodesPipes(args.ctx.tb ?? defaultTb),
+    pipes: () => args.pipes ?? uptimeEpisodesPipes(args.ctx.tb ?? defaultTb),
     throttleMs: 0,
     sleep: args.sleep,
   });
@@ -415,7 +415,7 @@ export async function judgePolicyMonths(args: {
   months: string[];
   now: Date;
   live: boolean;
-  episodesPipes?: SlaEpisodesPipes;
+  episodesPipes?: UptimeEpisodesPipes;
   sleep?: (ms: number) => Promise<void>;
 }) {
   const { ctx, policy, monitors, months, now } = args;
