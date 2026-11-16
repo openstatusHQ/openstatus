@@ -1,6 +1,11 @@
 "use client";
 
-import { More, Add } from "@openstatus/icons";
+import { Add, ChevronRight, More } from "@openstatus/icons";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@openstatus/ui/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -31,6 +36,7 @@ import { toast } from "sonner";
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { useNavGroupOpen } from "@/components/nav/use-nav-group-open";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -85,184 +91,204 @@ export function NavMonitors() {
     }),
   );
 
+  const activeId = monitors?.find((item) =>
+    pathname.startsWith(`/monitors/${item.id}/`),
+  )?.id;
+  const [open, setOpen] = useNavGroupOpen(
+    "monitors",
+    monitors?.length ?? 0,
+    activeId,
+  );
+
   if (!workspace || !monitors) return null;
 
   const limitReached = monitors.length >= workspace.limits.monitors;
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel
-        className="flex items-center justify-between pr-1"
-        style={{ paddingRight: 4 }}
+      <Collapsible
+        open={open}
+        onOpenChange={setOpen}
+        className="group/collapsible"
       >
-        <div className="flex items-center gap-1">
-          <span>Monitors</span>
-          {isLoading ? (
-            <Skeleton className="h-4 w-5 shrink-0" />
-          ) : (
-            <code className="text-muted-foreground">({monitors.length})</code>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarMenuAction
-                  data-limited={limitReached}
-                  data-track={limitReached ? "paywall_viewed" : undefined}
-                  data-limit={limitReached ? "monitors" : undefined}
-                  className="relative top-0 right-0 border data-[limited=true]:opacity-80"
-                  onClick={() => {
-                    if (limitReached) {
-                      setOpenUpgradeDialog(true);
-                      return;
-                    }
-                    router.push("/monitors/create");
-                    setOpenMobile(false);
-                  }}
-                >
-                  <Add className="text-muted-foreground" />
-                  <span className="sr-only">Create Monitor</span>
-                </SidebarMenuAction>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                {limitReached ? "Upgrade" : "Create Monitor"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {isLoading ? (
-          <SidebarMenuItem>
-            <SidebarMenuSkeleton />
-          </SidebarMenuItem>
-        ) : monitors && monitors.length > 0 ? (
-          monitors.map((item) => {
-            const isActive = pathname.startsWith(`/monitors/${item.id}/`);
-            // curl only speaks HTTP — the action is hidden for tcp/dns monitors
-            const isHttp = item.jobType === "http";
-            const hiddenAction = item.active ? "resume" : "pause";
-            const setActive = (active: boolean) => {
-              const promise = updateMonitorsMutation.mutateAsync({
-                ids: [item.id],
-                active,
-              });
-              toast.promise(promise, {
-                loading: active ? "Resuming monitor..." : "Pausing monitor...",
-                success: active ? "Monitor resumed" : "Monitor paused",
-                error: (error) => {
-                  if (isTRPCClientError(error)) {
-                    return error.message;
-                  }
-                  return active
-                    ? "Failed to resume monitor"
-                    : "Failed to pause monitor";
-                },
-              });
-            };
-            const actions = getActions({
-              edit: () => router.push(`/monitors/${item.id}/edit`),
-              pause: () => setActive(false),
-              resume: () => setActive(true),
-              "copy-id": () => {
-                navigator.clipboard.writeText(item.id.toString());
-                toast.success("Monitor ID copied to clipboard");
-              },
-              "copy-curl": isHttp
-                ? async () => {
-                    const copied = await copy(buildCurlCommand(item), {
-                      withToast: "cURL command copied to clipboard",
-                    });
-                    if (!copied) toast.error("Failed to copy cURL command");
-                  }
-                : undefined,
-              clone: () => {
-                const promise = cloneMonitorMutation.mutateAsync({
-                  id: item.id,
-                });
-                toast.promise(promise, {
-                  loading: "Cloning monitor...",
-                  success: "Monitor cloned",
-                  error: (error) => {
-                    if (isTRPCClientError(error)) {
-                      return error.message;
-                    }
-                    return "Failed to clone monitor";
-                  },
-                });
-              },
-              // export: () => setOpenDialog(true),
-            }).filter(
-              (action) =>
-                action.id !== hiddenAction &&
-                (action.id !== "copy-curl" || isHttp),
-            );
-            return (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11"
-                  isActive={isActive}
-                  asChild
-                >
-                  <Link
-                    href={`/monitors/${item.id}/overview`}
-                    onClick={() => setOpenMobile(false)}
-                    className="font-commit-mono tracking-tight"
+        <SidebarGroupLabel
+          className="flex items-center justify-between pr-1"
+          style={{ paddingRight: 4 }}
+        >
+          <CollapsibleTrigger className="focus-visible:ring-sidebar-ring flex flex-1 items-center gap-1 rounded-md text-left outline-hidden focus-visible:ring-2">
+            <span>Monitors</span>
+            {isLoading ? (
+              <Skeleton className="h-4 w-5 shrink-0" />
+            ) : (
+              <code className="text-muted-foreground">({monitors.length})</code>
+            )}
+            <ChevronRight className="size-3.5 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+          </CollapsibleTrigger>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuAction
+                    data-limited={limitReached}
+                    data-track={limitReached ? "paywall_viewed" : undefined}
+                    data-limit={limitReached ? "monitors" : undefined}
+                    className="relative top-0 right-0 border data-[limited=true]:opacity-80"
+                    onClick={() => {
+                      if (limitReached) {
+                        setOpenUpgradeDialog(true);
+                        return;
+                      }
+                      router.push("/monitors/create");
+                      setOpenMobile(false);
+                    }}
                   >
-                    <span>{item.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-                <div
-                  data-sidebar="menu-dot"
-                  className={cn(
-                    "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                    isMobile && "right-6",
-                  )}
-                >
-                  <div className="relative flex items-center justify-center">
+                    <Add className="text-muted-foreground" />
+                    <span className="sr-only">Create Monitor</span>
+                  </SidebarMenuAction>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center">
+                  {limitReached ? "Upgrade" : "Create Monitor"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </SidebarGroupLabel>
+        <CollapsibleContent>
+          <SidebarMenu>
+            {isLoading ? (
+              <SidebarMenuItem>
+                <SidebarMenuSkeleton />
+              </SidebarMenuItem>
+            ) : monitors && monitors.length > 0 ? (
+              monitors.map((item) => {
+                const isActive = pathname.startsWith(`/monitors/${item.id}/`);
+                // curl only speaks HTTP — the action is hidden for tcp/dns monitors
+                const isHttp = item.jobType === "http";
+                const hiddenAction = item.active ? "resume" : "pause";
+                const setActive = (active: boolean) => {
+                  const promise = updateMonitorsMutation.mutateAsync({
+                    ids: [item.id],
+                    active,
+                  });
+                  toast.promise(promise, {
+                    loading: active
+                      ? "Resuming monitor..."
+                      : "Pausing monitor...",
+                    success: active ? "Monitor resumed" : "Monitor paused",
+                    error: (error) => {
+                      if (isTRPCClientError(error)) {
+                        return error.message;
+                      }
+                      return active
+                        ? "Failed to resume monitor"
+                        : "Failed to pause monitor";
+                    },
+                  });
+                };
+                const actions = getActions({
+                  edit: () => router.push(`/monitors/${item.id}/edit`),
+                  pause: () => setActive(false),
+                  resume: () => setActive(true),
+                  "copy-id": () => {
+                    navigator.clipboard.writeText(item.id.toString());
+                    toast.success("Monitor ID copied to clipboard");
+                  },
+                  "copy-curl": isHttp
+                    ? async () => {
+                        const copied = await copy(buildCurlCommand(item), {
+                          withToast: "cURL command copied to clipboard",
+                        });
+                        if (!copied) toast.error("Failed to copy cURL command");
+                      }
+                    : undefined,
+                  clone: () => {
+                    const promise = cloneMonitorMutation.mutateAsync({
+                      id: item.id,
+                    });
+                    toast.promise(promise, {
+                      loading: "Cloning monitor...",
+                      success: "Monitor cloned",
+                      error: (error) => {
+                        if (isTRPCClientError(error)) {
+                          return error.message;
+                        }
+                        return "Failed to clone monitor";
+                      },
+                    });
+                  },
+                  // export: () => setOpenDialog(true),
+                }).filter(
+                  (action) =>
+                    action.id !== hiddenAction &&
+                    (action.id !== "copy-curl" || isHttp),
+                );
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11"
+                      isActive={isActive}
+                      asChild
+                    >
+                      <Link
+                        href={`/monitors/${item.id}/overview`}
+                        onClick={() => setOpenMobile(false)}
+                        className="font-commit-mono tracking-tight"
+                      >
+                        <span>{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
                     <div
+                      data-sidebar="menu-dot"
                       className={cn(
-                        "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                        STATUS[item.active ? item.status : "inactive"],
+                        "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
+                        isMobile && "right-6",
                       )}
                     >
-                      <span className="sr-only">{item.status}</span>
+                      <div className="relative flex items-center justify-center">
+                        <div
+                          className={cn(
+                            "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
+                            STATUS[item.active ? item.status : "inactive"],
+                          )}
+                        >
+                          <span className="sr-only">{item.status}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <QuickActions
-                  actions={actions}
-                  deleteAction={{
-                    confirmationValue: item.name ?? "monitor",
-                    submitAction: async () => {
-                      await deleteMonitorMutation.mutateAsync({
-                        id: item.id,
-                      });
-                      if (pathname.startsWith(`/monitors/${item.id}`)) {
-                        router.push("/monitors");
-                      }
-                    },
-                  }}
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}
-                >
-                  <SidebarMenuAction showOnHover>
-                    <More />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </QuickActions>
+                    <QuickActions
+                      actions={actions}
+                      deleteAction={{
+                        confirmationValue: item.name ?? "monitor",
+                        submitAction: async () => {
+                          await deleteMonitorMutation.mutateAsync({
+                            id: item.id,
+                          });
+                          if (pathname.startsWith(`/monitors/${item.id}`)) {
+                            router.push("/monitors");
+                          }
+                        },
+                      }}
+                      side={isMobile ? "bottom" : "right"}
+                      align={isMobile ? "end" : "start"}
+                    >
+                      <SidebarMenuAction showOnHover>
+                        <More />
+                        <span className="sr-only">More</span>
+                      </SidebarMenuAction>
+                    </QuickActions>
+                  </SidebarMenuItem>
+                );
+              })
+            ) : (
+              <SidebarMenuItem>
+                <SidebarMenuButton disabled>
+                  <span>No monitors found</span>
+                </SidebarMenuButton>
               </SidebarMenuItem>
-            );
-          })
-        ) : (
-          <SidebarMenuItem>
-            <SidebarMenuButton disabled>
-              <span>No monitors found</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        )}
-      </SidebarMenu>
+            )}
+          </SidebarMenu>
+        </CollapsibleContent>
+      </Collapsible>
       <ExportCodeDialog open={openDialog} onOpenChange={setOpenDialog} />
       <UpgradeDialog
         open={openUpgradeDialog}
