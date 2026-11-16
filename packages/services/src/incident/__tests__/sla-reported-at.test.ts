@@ -13,7 +13,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import type { Workspace } from "../../types";
 import {
   closeIncident,
@@ -24,8 +24,8 @@ import {
   updateIncident,
 } from "../index";
 import {
-  dueIncidentSlaBreaches,
-  stampIncidentSlaBreach,
+  dueIncidentTargetBreaches,
+  stampIncidentTargetBreach,
 } from "../sla-breaches";
 
 let team: Workspace;
@@ -56,7 +56,7 @@ const minutesAfter = (date: Date, minutes: number) =>
   new Date(date.getTime() + minutes * MINUTE);
 
 async function policy(tx: DB) {
-  await upsertIncidentReporting({
+  await upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: {
       targets: {
@@ -139,7 +139,7 @@ describe("reported at, at declare", () => {
         "breached",
       );
       const breach = (await events(tx, declared.id)).filter(
-        (e) => e.type === "sla_response_breached",
+        (e) => e.type === "response_target_breached",
       );
       expect(breach.map((e) => [e.createdAt, e.source])).toEqual([
         [due, "system"],
@@ -219,7 +219,7 @@ describe("editing reported at", () => {
       expect(row.sla?.response?.status).toBe("met");
       expect(
         (await events(tx, declared.id)).some(
-          (e) => e.type === "sla_response_breached",
+          (e) => e.type === "response_target_breached",
         ),
       ).toBe(false);
     });
@@ -300,7 +300,7 @@ describe("editing reported at", () => {
           reportedAt: minutesAgo(61),
         },
       });
-      const [due] = await dueIncidentSlaBreaches({
+      const [due] = await dueIncidentTargetBreaches({
         db: tx,
         now: new Date(),
         workspaceIds: [team.id],
@@ -310,7 +310,7 @@ describe("editing reported at", () => {
         ctx: apiKey(tx),
         input: { id: declared.id, reportedAt: null },
       });
-      expect(await stampIncidentSlaBreach({ db: tx, due })).toBeNull();
+      expect(await stampIncidentTargetBreach({ db: tx, due })).toBeNull();
       const row = await tx
         .select()
         .from(incident)

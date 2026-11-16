@@ -109,7 +109,7 @@ export function Client() {
           </SectionHeader>
           <div className="flex items-center gap-2">
             <Button data-section="action" size="sm" variant="outline" asChild>
-              <Link href="/incidents/sla">Response targets</Link>
+              <Link href="/incidents/targets">Response targets</Link>
             </Button>
             <DeclareIncidentButton>
               <Button data-section="action" size="sm">

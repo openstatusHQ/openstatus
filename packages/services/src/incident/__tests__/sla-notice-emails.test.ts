@@ -20,15 +20,15 @@ import {
   postOnlySlackClient,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
 import {
   declareIncident,
-  emailIncidentSlaNotices,
-  type IncidentSlaNoticeEmail,
-  recordIncidentSlaBreaches,
-  sendIncidentSlaNotices,
+  emailIncidentTargetNotices,
+  type IncidentTargetNoticeEmail,
+  recordIncidentTargetBreaches,
+  sendIncidentTargetNotices,
   type SlackIncidentClient,
 } from "../index";
 
@@ -57,7 +57,7 @@ async function declare(
     teamId?: string;
   },
 ) {
-  await upsertIncidentReporting({
+  await upsertIncidentResponseTarget({
     ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
     input: {
       targets: { critical: { responseMinutes: 60, resolutionMinutes: 240 } },
@@ -132,17 +132,17 @@ async function tick(
   opts: { client?: SlackIncidentClient; record?: boolean } = {},
 ) {
   const breaches = opts.record
-    ? await recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id] })
+    ? await recordIncidentTargetBreaches({ db: tx, workspaceIds: [team.id] })
     : [];
-  const results = await sendIncidentSlaNotices({
+  const results = await sendIncidentTargetNotices({
     db: tx,
     clientFor: () => opts.client ?? slack(),
     dashboardUrl: "https://app.test",
     workspaceIds: [team.id],
     breaches,
   });
-  const sent: IncidentSlaNoticeEmail[] = [];
-  const emailed = await emailIncidentSlaNotices({
+  const sent: IncidentTargetNoticeEmail[] = [];
+  const emailed = await emailIncidentTargetNotices({
     db: tx,
     notices: results,
     dashboardUrl: "https://app.test",
@@ -174,7 +174,7 @@ describe("email when Slack cannot deliver", () => {
       expect(sent).toHaveLength(1);
       expect(sent[0]).toMatchObject({
         to: [ownerEmail, declarer.email],
-        idempotencyKey: `incident-sla-notice:${id}:response:warning:${declaredAt.getTime() + 60 * MINUTE}`,
+        idempotencyKey: `incident-target-notice:${id}:response:warning:${declaredAt.getTime() + 60 * MINUTE}`,
         notice: "warning",
         headline: "Response due soon",
         action: "Acknowledge it before then.",
@@ -241,7 +241,7 @@ describe("email when Slack cannot deliver", () => {
       await withTestTransaction(async (tx) => {
         const admin = await member(tx, "admin");
         const creator = await member(tx, "member");
-        await upsertIncidentReporting({
+        await upsertIncidentResponseTarget({
           ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
           input: {
             targets: {
@@ -330,7 +330,7 @@ describe("email when Slack cannot deliver", () => {
   test("a rejected send is failed and never retried; a send without an id is skipped", async () => {
     await withTestTransaction(async (tx) => {
       await declare(tx, { minutesAgo: 50, commanderId: ownerId });
-      const results = await sendIncidentSlaNotices({
+      const results = await sendIncidentTargetNotices({
         db: tx,
         clientFor: () => slack(),
         dashboardUrl: "https://app.test",
@@ -338,7 +338,7 @@ describe("email when Slack cannot deliver", () => {
         breaches: [],
       });
       let calls = 0;
-      const failed = await emailIncidentSlaNotices({
+      const failed = await emailIncidentTargetNotices({
         db: tx,
         notices: results,
         dashboardUrl: "https://app.test",
@@ -348,7 +348,7 @@ describe("email when Slack cannot deliver", () => {
         },
       });
       expect(failed.map((e) => e.outcome)).toEqual(["failed"]);
-      const again = await emailIncidentSlaNotices({
+      const again = await emailIncidentTargetNotices({
         db: tx,
         notices: results,
         dashboardUrl: "https://app.test",
@@ -362,14 +362,14 @@ describe("email when Slack cannot deliver", () => {
     });
     await withTestTransaction(async (tx) => {
       await declare(tx, { minutesAgo: 50, commanderId: ownerId });
-      const results = await sendIncidentSlaNotices({
+      const results = await sendIncidentTargetNotices({
         db: tx,
         clientFor: () => slack(),
         dashboardUrl: "https://app.test",
         workspaceIds: [team.id],
         breaches: [],
       });
-      const skipped = await emailIncidentSlaNotices({
+      const skipped = await emailIncidentTargetNotices({
         db: tx,
         notices: results,
         dashboardUrl: "https://app.test",
@@ -383,8 +383,8 @@ describe("email when Slack cannot deliver", () => {
     await withTestTransaction(async (tx) => {
       await declare(tx, { minutesAgo: 50, commanderId: ownerId });
       const { results, sent } = await tick(tx);
-      const other: IncidentSlaNoticeEmail[] = [];
-      const again = await emailIncidentSlaNotices({
+      const other: IncidentTargetNoticeEmail[] = [];
+      const again = await emailIncidentTargetNotices({
         db: tx,
         notices: results,
         dashboardUrl: "https://app.test",

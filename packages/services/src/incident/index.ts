@@ -38,16 +38,16 @@ export {
   type ReminderResult,
   STALE_AFTER,
 } from "./reminders";
-export { recordIncidentSlaBreaches } from "./sla-breaches";
+export { recordIncidentTargetBreaches } from "./sla-breaches";
 export {
-  INCIDENT_SLA_NOTICE_ACKNOWLEDGE,
-  incidentSlaNoticeBlocks,
-  parseIncidentSlaNoticeButtonValue,
-  sendIncidentSlaNotices,
+  INCIDENT_TARGET_NOTICE_ACKNOWLEDGE,
+  incidentTargetNoticeBlocks,
+  parseIncidentTargetNoticeButtonValue,
+  sendIncidentTargetNotices,
 } from "./sla-notices";
 export {
-  emailIncidentSlaNotices,
-  type IncidentSlaNoticeEmail,
+  emailIncidentTargetNotices,
+  type IncidentTargetNoticeEmail,
 } from "./sla-notice-emails";
 export {
   getIncident,
@@ -78,7 +78,7 @@ export {
   ApprovePostmortemInput,
   CloseIncidentInput,
   DraftPostmortemInput,
-  BindIncidentSlackChannelInput,
+  BindIncidentTargetckChannelInput,
   DeclareIncidentInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
@@ -93,8 +93,8 @@ export {
 } from "@openstatus/db/src/schema/incidents/constants";
 export { setIncidentStatus } from "./set-status";
 export {
-  bindIncidentSlackChannel,
-  unbindIncidentSlackChannel,
+  bindIncidentTargetckChannel,
+  unbindIncidentTargetckChannel,
 } from "./slack-channel";
 export {
   announceIncidentChange,
@@ -103,9 +103,9 @@ export {
   headerBlocks,
   INCIDENT_CARD_ACTIONS,
   incidentChannelName,
-  incidentSlackReady,
+  incidentTargetckReady,
   type OpenChannelResult,
-  openIncidentSlackChannel,
+  openIncidentTargetckChannel,
   type SlackClientFactory,
   type SlackIncidentBlock,
   type SlackIncidentClient,

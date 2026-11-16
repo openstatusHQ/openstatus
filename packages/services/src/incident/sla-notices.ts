@@ -10,12 +10,12 @@ import {
 } from "@openstatus/db";
 import {
   type Incident,
-  type IncidentSlaNoticeKind,
-  type IncidentSlaNoticeType,
+  type IncidentTargetNoticeKind,
+  type IncidentTargetNoticeType,
   type Workspace,
   incident,
-  incidentSlaNotice,
-  incidentSlaState,
+  incidentTargetNotice,
+  incidentTargetState,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -27,8 +27,8 @@ import {
   reminderConnection,
   reminderTarget,
 } from "./reminders";
-import type { IncidentSlaBreachRecord } from "./sla-breaches";
-import { incidentSlaNoticeCopy } from "./sla-notice-copy";
+import type { IncidentTargetBreachRecord } from "./sla-breaches";
+import { incidentTargetNoticeCopy } from "./sla-notice-copy";
 import {
   type SlackClientFactory,
   type SlackIncidentBlock,
@@ -37,11 +37,11 @@ import {
 
 const DAY = 24 * 60 * 60 * 1000;
 
-export type DueIncidentSlaNotice = {
+export type DueIncidentTargetNotice = {
   incident: Incident;
   workspace: Workspace;
-  kind: IncidentSlaNoticeKind;
-  notice: IncidentSlaNoticeType;
+  kind: IncidentTargetNoticeKind;
+  notice: IncidentTargetNoticeType;
   targetMinutes: number;
   dueAt: Date;
 };
@@ -51,16 +51,16 @@ export type DueIncidentSlaNotice = {
  * none did and none will (email may step in). `retry`: temporary failure, the
  * next tick tries again.
  */
-export type IncidentSlaNoticeOutcome =
+export type IncidentTargetNoticeOutcome =
   | "sent"
   | "no_connection"
   | "no_target"
   | "refused"
   | "retry";
 
-export type IncidentSlaNoticeResult = DueIncidentSlaNotice & {
+export type IncidentTargetNoticeResult = DueIncidentTargetNotice & {
   target: ReminderTarget | null;
-  outcome: IncidentSlaNoticeOutcome;
+  outcome: IncidentTargetNoticeOutcome;
 };
 
 const noticeKey = (n: {
@@ -83,14 +83,14 @@ function stillUnmet(row: Incident, kind: "response" | "resolution") {
  * Unclaimed warnings and misses: misses this tick recorded plus unmet ones under a day old
  * (so a failed send is retried).
  */
-export async function dueIncidentSlaNotices(args: {
+export async function dueIncidentTargetNotices(args: {
   db: DB;
   now: Date;
-  breaches: IncidentSlaBreachRecord[];
+  breaches: IncidentTargetBreachRecord[];
   workspaceIds?: number[];
-}): Promise<DueIncidentSlaNotice[]> {
+}): Promise<DueIncidentTargetNotice[]> {
   const { db, now } = args;
-  const due = new Map<string, DueIncidentSlaNotice>();
+  const due = new Map<string, DueIncidentTargetNotice>();
   // re-read: a meet landing after the stamp drops the notice, as on retry
   const stamped =
     args.breaches.length === 0
@@ -112,7 +112,7 @@ export async function dueIncidentSlaNotices(args: {
   for (const record of args.breaches) {
     const row = stamped.get(record.incident.id);
     if (!row || !stillUnmet(row, record.kind)) continue;
-    const notice: DueIncidentSlaNotice = {
+    const notice: DueIncidentTargetNotice = {
       incident: row,
       workspace: record.workspace,
       kind: record.kind,
@@ -137,7 +137,7 @@ export async function dueIncidentSlaNotices(args: {
                 : undefined,
               inArray(incident.status, ["open", "mitigated"]),
               isNull(incident.closedAt),
-              isNotNull(incident.slaSnapshot),
+              isNotNull(incident.targetSnapshot),
               or(
                 and(
                   isNull(incident.responseMetAt),
@@ -164,12 +164,12 @@ export async function dueIncidentSlaNotices(args: {
   for (const row of candidates) {
     const ws = workspaces.get(row.workspaceId);
     if (!ws) continue;
-    const state = incidentSlaState(row, now);
+    const state = incidentTargetState(row, now);
     if (!state) continue;
     for (const kind of ["response", "resolution"] as const) {
       const timer = state[kind];
       if (!timer || timer.metAt) continue;
-      const notice: IncidentSlaNoticeType | null =
+      const notice: IncidentTargetNoticeType | null =
         timer.status === "at_risk"
           ? "warning"
           : timer.breachDueAt && timer.breachDueAt > retryAfter
@@ -192,13 +192,13 @@ export async function dueIncidentSlaNotices(args: {
 
   const claimed = await db
     .select()
-    .from(incidentSlaNotice)
+    .from(incidentTargetNotice)
     .where(
       and(
-        inArray(incidentSlaNotice.incidentId, [
+        inArray(incidentTargetNotice.incidentId, [
           ...new Set([...due.values()].map((d) => d.incident.id)),
         ]),
-        eq(incidentSlaNotice.channel, "slack"),
+        eq(incidentTargetNotice.channel, "slack"),
       ),
     )
     .all();
@@ -210,10 +210,10 @@ export async function dueIncidentSlaNotices(args: {
 
 async function claimNotice(
   db: DB,
-  notice: DueIncidentSlaNotice,
+  notice: DueIncidentTargetNotice,
 ): Promise<boolean> {
   const row = await db
-    .insert(incidentSlaNotice)
+    .insert(incidentTargetNotice)
     .values({
       incidentId: notice.incident.id,
       kind: notice.kind,
@@ -222,42 +222,42 @@ async function claimNotice(
       channel: "slack",
     })
     .onConflictDoNothing()
-    .returning({ id: incidentSlaNotice.id })
+    .returning({ id: incidentTargetNotice.id })
     .get();
   return row !== undefined;
 }
 
-async function releaseNotice(db: DB, notice: DueIncidentSlaNotice) {
+async function releaseNotice(db: DB, notice: DueIncidentTargetNotice) {
   await db
-    .delete(incidentSlaNotice)
+    .delete(incidentTargetNotice)
     .where(
       and(
-        eq(incidentSlaNotice.incidentId, notice.incident.id),
-        eq(incidentSlaNotice.kind, notice.kind),
-        eq(incidentSlaNotice.notice, notice.notice),
-        eq(incidentSlaNotice.dueAt, notice.dueAt),
-        eq(incidentSlaNotice.channel, "slack"),
+        eq(incidentTargetNotice.incidentId, notice.incident.id),
+        eq(incidentTargetNotice.kind, notice.kind),
+        eq(incidentTargetNotice.notice, notice.notice),
+        eq(incidentTargetNotice.dueAt, notice.dueAt),
+        eq(incidentTargetNotice.channel, "slack"),
       ),
     );
 }
 
 /** Action id of a notice's Acknowledge button, apart from the card's so a click redraws the notice. */
-export const INCIDENT_SLA_NOTICE_ACKNOWLEDGE =
-  "incident_sla_notice_acknowledge";
-const NOTICE_OPEN = "incident_sla_notice_open";
+export const INCIDENT_TARGET_NOTICE_ACKNOWLEDGE =
+  "incident_target_notice_acknowledge";
+const NOTICE_OPEN = "incident_target_notice_open";
 
 /** What the Acknowledge button carries, so a click can redraw the notice it was on. */
-export type IncidentSlaNoticeButtonValue = {
+export type IncidentTargetNoticeButtonValue = {
   incidentId: number;
-  notice: IncidentSlaNoticeType;
+  notice: IncidentTargetNoticeType;
   dueAt: number;
   targetMinutes: number;
   role?: "commander" | "declarer";
 };
 
-export function parseIncidentSlaNoticeButtonValue(
+export function parseIncidentTargetNoticeButtonValue(
   value: string | undefined,
-): IncidentSlaNoticeButtonValue | null {
+): IncidentTargetNoticeButtonValue | null {
   try {
     const parsed = JSON.parse(value ?? "");
     if (
@@ -290,19 +290,19 @@ function slackTime(date: Date): string {
  * Block Kit of an SLA notice. Response notices carry an Acknowledge button in
  * acknowledgement mode until `acknowledgedBy` is given.
  */
-export function incidentSlaNoticeBlocks(args: {
-  incident: Pick<Incident, "id" | "title" | "severity" | "slaSnapshot">;
-  kind: IncidentSlaNoticeKind;
-  notice: IncidentSlaNoticeType;
+export function incidentTargetNoticeBlocks(args: {
+  incident: Pick<Incident, "id" | "title" | "severity" | "targetSnapshot">;
+  kind: IncidentTargetNoticeKind;
+  notice: IncidentTargetNoticeType;
   targetMinutes: number;
   dueAt: Date;
   url: string;
   role?: "commander" | "declarer";
   acknowledgedBy?: string;
 }): { text: string; blocks: SlackIncidentBlock[] } {
-  const snapshot = args.incident.slaSnapshot;
+  const snapshot = args.incident.targetSnapshot;
   const responseMet = snapshot?.responseMet ?? "acknowledged";
-  const copy = incidentSlaNoticeCopy(
+  const copy = incidentTargetNoticeCopy(
     {
       kind: args.kind,
       notice: args.notice,
@@ -329,7 +329,7 @@ export function incidentSlaNoticeBlocks(args: {
     args.kind === "response" &&
     responseMet === "acknowledged" &&
     !args.acknowledgedBy;
-  const value: IncidentSlaNoticeButtonValue = {
+  const value: IncidentTargetNoticeButtonValue = {
     incidentId: args.incident.id,
     notice: args.notice,
     dueAt: args.dueAt.getTime(),
@@ -359,7 +359,7 @@ export function incidentSlaNoticeBlocks(args: {
                 {
                   type: "button" as const,
                   text: { type: "plain_text" as const, text: "Acknowledge" },
-                  action_id: INCIDENT_SLA_NOTICE_ACKNOWLEDGE,
+                  action_id: INCIDENT_TARGET_NOTICE_ACKNOWLEDGE,
                   value: JSON.stringify(value),
                   style: "primary" as const,
                 },
@@ -382,24 +382,24 @@ export function incidentSlaNoticeBlocks(args: {
  * commander, else to the declarer. Each notice is claimed by a write before
  * anything is sent, so it is safe on every machine at once.
  */
-export async function sendIncidentSlaNotices(args: {
-  breaches: IncidentSlaBreachRecord[];
+export async function sendIncidentTargetNotices(args: {
+  breaches: IncidentTargetBreachRecord[];
   clientFor: SlackClientFactory;
   dashboardUrl: string;
   now?: Date;
   db?: DB;
   workspaceIds?: number[];
-}): Promise<IncidentSlaNoticeResult[]> {
+}): Promise<IncidentTargetNoticeResult[]> {
   const db = args.db ?? defaultDb;
   const now = args.now ?? new Date();
-  const due = await dueIncidentSlaNotices({
+  const due = await dueIncidentTargetNotices({
     db,
     now,
     breaches: args.breaches,
     workspaceIds: args.workspaceIds,
   });
 
-  const results: IncidentSlaNoticeResult[] = [];
+  const results: IncidentTargetNoticeResult[] = [];
   const connections = new Map<number, SlackConnection | null>();
   for (const item of due) {
     let claimed = false;
@@ -420,7 +420,7 @@ export async function sendIncidentSlaNotices(args: {
         results.push({ ...item, target: null, outcome: "no_target" });
         continue;
       }
-      const message = incidentSlaNoticeBlocks({
+      const message = incidentTargetNoticeBlocks({
         ...item,
         url: `${args.dashboardUrl}/incidents/${item.incident.id}`,
         role: target.kind === "dm" ? target.role : undefined,
@@ -433,8 +433,8 @@ export async function sendIncidentSlaNotices(args: {
           ...message,
         })
         .then(
-          (): IncidentSlaNoticeOutcome => "sent",
-          async (error): Promise<IncidentSlaNoticeOutcome> => {
+          (): IncidentTargetNoticeOutcome => "sent",
+          async (error): Promise<IncidentTargetNoticeOutcome> => {
             console.warn("incident sla notice failed", {
               incidentId: item.incident.id,
               kind: item.kind,

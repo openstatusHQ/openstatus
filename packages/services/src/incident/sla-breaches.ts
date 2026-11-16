@@ -10,27 +10,27 @@ import {
 import {
   type Incident,
   type IncidentEvent,
-  type IncidentSlaTimerKind,
+  type IncidentTargetTimerKind,
   type Workspace,
   incident,
-  incidentSlaState,
+  incidentTargetState,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext, withTransaction } from "../context";
-import { appendIncidentSlaBreach } from "./internal";
+import { appendIncidentTargetBreach } from "./internal";
 
-export type DueIncidentSlaBreach = {
+export type DueIncidentTargetBreach = {
   incident: Incident;
   workspace: Workspace;
-  kind: IncidentSlaTimerKind;
+  kind: IncidentTargetTimerKind;
   targetMinutes: number;
   dueAt: Date;
 };
 
-export type IncidentSlaBreachRecord = DueIncidentSlaBreach & {
+export type IncidentTargetBreachRecord = DueIncidentTargetBreach & {
   /** The row after the stamp. */
   incident: Incident;
   event: IncidentEvent | null;
@@ -48,11 +48,11 @@ const stampColumns = {
 } as const;
 
 /** Unmet, unstamped timers of tracked incidents that are past their due time, in every workspace. */
-export async function dueIncidentSlaBreaches(args: {
+export async function dueIncidentTargetBreaches(args: {
   db: DB;
   now: Date;
   workspaceIds?: number[];
-}): Promise<DueIncidentSlaBreach[]> {
+}): Promise<DueIncidentTargetBreach[]> {
   if (args.workspaceIds?.length === 0) return [];
   const candidates = await args.db
     .select()
@@ -64,7 +64,7 @@ export async function dueIncidentSlaBreaches(args: {
           : undefined,
         inArray(incident.status, ["open", "mitigated"]),
         isNull(incident.closedAt),
-        isNotNull(incident.slaSnapshot),
+        isNotNull(incident.targetSnapshot),
         or(
           and(
             isNull(incident.responseMetAt),
@@ -93,10 +93,10 @@ export async function dueIncidentSlaBreaches(args: {
     if (parsed.success) workspaces.set(parsed.data.id, parsed.data);
   }
 
-  const due: DueIncidentSlaBreach[] = [];
+  const due: DueIncidentTargetBreach[] = [];
   for (const row of candidates) {
     const ws = workspaces.get(row.workspaceId);
-    const state = incidentSlaState(row, args.now);
+    const state = incidentTargetState(row, args.now);
     if (!ws || !state) continue;
     for (const kind of ["response", "resolution"] as const) {
       const timer = state[kind];
@@ -119,18 +119,18 @@ export async function dueIncidentSlaBreaches(args: {
  * unmet and its due time unchanged (severity and clock start as read). Only the
  * winner writes the breach event, in the same transaction. Null when it lost.
  */
-// The audit rows come from `emitAudit` here and from `appendIncidentSlaBreach`.
+// The audit rows come from `emitAudit` here and from `appendIncidentTargetBreach`.
 // oxlint-disable-next-line openstatus/services-mutation-guards
-export async function stampIncidentSlaBreach(args: {
+export async function stampIncidentTargetBreach(args: {
   db: DB;
-  due: DueIncidentSlaBreach;
-}): Promise<IncidentSlaBreachRecord | null> {
+  due: DueIncidentTargetBreach;
+}): Promise<IncidentTargetBreachRecord | null> {
   const { due } = args;
   const before = due.incident;
   const columns = stampColumns[due.kind];
   const ctx: ServiceContext = {
     workspace: due.workspace,
-    actor: { type: "system", job: "incident-sla-breaches" },
+    actor: { type: "system", job: "incident-target-breaches" },
     db: args.db,
   };
   return withTransaction(ctx, async (tx) => {
@@ -171,7 +171,7 @@ export async function stampIncidentSlaBreach(args: {
       before: prior,
       after: updated,
     });
-    const event = await appendIncidentSlaBreach(tx, ctx, {
+    const event = await appendIncidentTargetBreach(tx, ctx, {
       incidentId: updated.id,
       kind: due.kind,
       targetMinutes: due.targetMinutes,
@@ -186,20 +186,20 @@ export async function stampIncidentSlaBreach(args: {
  * without Slack. No plan-limit check: the snapshot taken at declare is the gate.
  * Safe on every machine at once: each miss is one conditional update.
  */
-export async function recordIncidentSlaBreaches(
+export async function recordIncidentTargetBreaches(
   args: { db?: DB; now?: Date; workspaceIds?: number[] } = {},
-): Promise<IncidentSlaBreachRecord[]> {
+): Promise<IncidentTargetBreachRecord[]> {
   const db = args.db ?? defaultDb;
   const now = args.now ?? new Date();
-  const due = await dueIncidentSlaBreaches({
+  const due = await dueIncidentTargetBreaches({
     db,
     now,
     workspaceIds: args.workspaceIds,
   });
-  const recorded: IncidentSlaBreachRecord[] = [];
+  const recorded: IncidentTargetBreachRecord[] = [];
   for (const item of due) {
     try {
-      const record = await stampIncidentSlaBreach({ db, due: item });
+      const record = await stampIncidentTargetBreach({ db, due: item });
       if (!record) continue;
       recorded.push(record);
     } catch (error) {

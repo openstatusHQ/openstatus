@@ -9,11 +9,11 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import type { Workspace } from "../../types";
 import {
   declareIncident,
-  recordIncidentSlaBreaches,
+  recordIncidentTargetBreaches,
   setIncidentStatus,
 } from "../index";
 
@@ -53,7 +53,7 @@ const withDb = (ctx: ServiceContext, tx: DB): ServiceContext => ({
 describe("a stop racing the cron's miss stamp", () => {
   test("lands as a late stop and keeps the stamped miss, once", async () => {
     await withTestTransaction(async (tx) => {
-      await upsertIncidentReporting({
+      await upsertIncidentResponseTarget({
         ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
         input: {
           targets: {
@@ -74,7 +74,7 @@ describe("a stop racing the cron's miss stamp", () => {
         .update(incident)
         .set({ declaredAt })
         .where(eq(incident.id, declared.id));
-      await recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id] });
+      await recordIncidentTargetBreaches({ db: tx, workspaceIds: [team.id] });
 
       stale.next = { resolutionBreachDueAt: null };
       const mitigated = await setIncidentStatus({
@@ -92,7 +92,7 @@ describe("a stop racing the cron's miss stamp", () => {
         .where(
           and(
             eq(incidentEvent.incidentId, declared.id),
-            eq(incidentEvent.type, "sla_resolution_breached"),
+            eq(incidentEvent.type, "resolution_target_breached"),
           ),
         )
         .all();

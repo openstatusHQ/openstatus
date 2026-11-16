@@ -53,17 +53,27 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/sla-policies",
-        destination: "/reportings",
+        destination: "/reports",
         permanent: true,
       },
       {
         source: "/sla-policies/incidents",
-        destination: "/incidents/sla",
+        destination: "/incidents/targets",
         permanent: true,
       },
       {
         source: "/sla-policies/monitors/:path*",
-        destination: "/reportings/:path*",
+        destination: "/reports/:path*",
+        permanent: true,
+      },
+      {
+        source: "/reportings/:path*",
+        destination: "/reports/:path*",
+        permanent: true,
+      },
+      {
+        source: "/incidents/sla",
+        destination: "/incidents/targets",
         permanent: true,
       },
       {

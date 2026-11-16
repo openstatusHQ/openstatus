@@ -1,11 +1,11 @@
 import { getLogger } from "@logtape/logtape";
-import { sendIncidentSlaNotice } from "@openstatus/emails";
+import { sendIncidentTargetNotice } from "@openstatus/emails";
 import {
-  emailIncidentSlaNotices,
+  emailIncidentTargetNotices,
   type ReminderResult,
-  recordIncidentSlaBreaches,
+  recordIncidentTargetBreaches,
   remindStaleIncidents,
-  sendIncidentSlaNotices,
+  sendIncidentTargetNotices,
 } from "@openstatus/services/incident";
 import { Redis } from "@openstatus/upstash";
 import { WebClient } from "@slack/web-api";
@@ -34,8 +34,8 @@ function countBy<T>(
 }
 
 /** Records SLA misses and sends SLA notices, by Slack or by email when Slack cannot. */
-async function runIncidentSlaPhase(): Promise<void> {
-  const breaches = await recordIncidentSlaBreaches();
+async function runIncidentTargetPhase(): Promise<void> {
+  const breaches = await recordIncidentTargetBreaches();
   if (breaches.length > 0) {
     logger.info("incident sla misses recorded: {breaches}", {
       breaches: breaches.length,
@@ -43,7 +43,7 @@ async function runIncidentSlaPhase(): Promise<void> {
   }
 
   const dashboardUrl = env().DASHBOARD_URL;
-  const notices = await sendIncidentSlaNotices({
+  const notices = await sendIncidentTargetNotices({
     breaches,
     clientFor,
     dashboardUrl,
@@ -63,9 +63,9 @@ async function runIncidentSlaPhase(): Promise<void> {
       },
     );
   }
-  const emailed = await emailIncidentSlaNotices({
+  const emailed = await emailIncidentTargetNotices({
     notices,
-    send: sendIncidentSlaNotice,
+    send: sendIncidentTargetNotice,
     dashboardUrl,
   });
   if (emailed.length > 0) {
@@ -109,13 +109,14 @@ async function runStaleReminders(): Promise<ReminderResult[]> {
 }
 
 /** Runs the SLA phase, then the stale reminders, which an SLA failure must not skip. */
-export async function runIncidentSlaAndRemindersTick(
+export async function runIncidentTargetAndRemindersTick(
   phases: {
     sla?: () => Promise<void>;
     reminders?: () => Promise<ReminderResult[]>;
   } = {},
 ): Promise<ReminderResult[]> {
-  const { sla = runIncidentSlaPhase, reminders = runStaleReminders } = phases;
+  const { sla = runIncidentTargetPhase, reminders = runStaleReminders } =
+    phases;
   try {
     await sla();
   } catch (err) {

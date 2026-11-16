@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { parseIncidentSlaBreachMessage } from "@openstatus/db/src/schema/incident_sla_policies/events";
+import { parseIncidentTargetBreachMessage } from "@openstatus/db/src/schema/incident_response_targets/events";
 import {
   type IncidentSeverity,
   type IncidentStatus,
@@ -270,16 +270,16 @@ function parseEvent(event: Event): Parsed {
         message: null,
       };
     }
-    case "sla_response_breached":
-    case "sla_resolution_breached": {
-      const breach = parseIncidentSlaBreachMessage(message);
+    case "response_target_breached":
+    case "resolution_target_breached": {
+      const breach = parseIncidentTargetBreachMessage(message);
       return {
         icon: Warning,
         phrase: (
           <>
             recorded a missed{" "}
             <TimelineHighlight className="text-destructive">
-              {event.type === "sla_response_breached"
+              {event.type === "response_target_breached"
                 ? "response target"
                 : "resolution target"}
             </TimelineHighlight>

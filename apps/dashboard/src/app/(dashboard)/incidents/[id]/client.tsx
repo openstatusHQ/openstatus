@@ -1,11 +1,11 @@
 "use client";
 
-import { isIncidentSystemEvent } from "@openstatus/db/src/schema/incident_sla_policies/events";
+import { isIncidentSystemEvent } from "@openstatus/db/src/schema/incident_response_targets/events";
 import {
   incidentAwaitsAcknowledgement,
-  incidentSlaHeadline,
-  incidentSlaState,
-} from "@openstatus/db/src/schema/incident_sla_policies/state";
+  incidentTargetHeadline,
+  incidentTargetState,
+} from "@openstatus/db/src/schema/incident_response_targets/state";
 import type { IncidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -36,8 +36,8 @@ import { IncidentComposer } from "@/components/incidents/incident-composer";
 import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
-import { IncidentSla } from "@/components/incidents/incident-sla";
-import { IncidentSlaBadge } from "@/components/incidents/incident-sla-badge";
+import { IncidentTarget } from "@/components/incidents/incident-target";
+import { IncidentTargetBadge } from "@/components/incidents/incident-target-badge";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
@@ -77,8 +77,8 @@ export function Client({ id }: { id: number }) {
   };
 
   const resolved = incident.status === "resolved";
-  const sla = incidentSlaState(incident, now);
-  const slaHeadline = sla ? incidentSlaHeadline(sla) : null;
+  const sla = incidentTargetState(incident, now);
+  const slaHeadline = sla ? incidentTargetHeadline(sla) : null;
   const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
   const lastUpdateAt = events?.find(
     (event) => !isIncidentSystemEvent(event.type),
@@ -168,7 +168,7 @@ export function Client({ id }: { id: number }) {
           )}
           {slaHeadline ? (
             <DetailMetaItem>
-              <IncidentSlaBadge
+              <IncidentTargetBadge
                 timer={slaHeadline.timer}
                 kind={slaHeadline.kind}
                 now={now}
@@ -197,7 +197,7 @@ export function Client({ id }: { id: number }) {
           {sla ? (
             <DetailSection id="sla">
               <DetailSectionTitle>Response targets</DetailSectionTitle>
-              <IncidentSla state={sla} now={now} />
+              <IncidentTarget state={sla} now={now} />
             </DetailSection>
           ) : null}
           <DetailSection id="communication">

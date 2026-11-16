@@ -1,4 +1,4 @@
-import { incidentSlaTimerIso } from "@openstatus/db/src/schema/incident_sla_policies/state";
+import { incidentTargetTimerIso } from "@openstatus/db/src/schema/incident_response_targets/state";
 import type {
   Incident,
   IncidentEvent,
@@ -38,8 +38,8 @@ type PostmortemRow = NonNullable<Awaited<ReturnType<typeof getPostmortem>>>;
 type DbSeverity = IncidentView["severity"];
 type DbStatus = IncidentView["status"];
 type DbEventType = IncidentEventRow["type"];
-type IncidentSlaState = IncidentView["sla"];
-type DbSlaTimer = NonNullable<NonNullable<IncidentSlaState>["response"]>;
+type IncidentTargetState = IncidentView["sla"];
+type DbSlaTimer = NonNullable<NonNullable<IncidentTargetState>["response"]>;
 
 type UserRow = {
   id: number;
@@ -65,7 +65,7 @@ type IncidentFields = {
   acknowledgedAt: Date | null;
   commander: UserRow | null;
   acknowledgedByUser: UserRow | null;
-  sla: IncidentSlaState;
+  sla: IncidentTargetState;
 };
 
 export function protoSeverityToDb(severity: IncidentSeverity): DbSeverity {
@@ -158,9 +158,9 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
       return IncidentEventType.CLOSED;
     case "acknowledged":
       return IncidentEventType.ACKNOWLEDGED;
-    case "sla_response_breached":
+    case "response_target_breached":
       return IncidentEventType.SLA_RESPONSE_BREACHED;
-    case "sla_resolution_breached":
+    case "resolution_target_breached":
       return IncidentEventType.SLA_RESOLUTION_BREACHED;
     case "reported_at_changed":
       return IncidentEventType.REPORTED_AT_CHANGED;
@@ -230,7 +230,7 @@ function dbSlaStatusToProto(
 
 function toSlaTimer(timer: DbSlaTimer | null): IncidentSlaTimer | undefined {
   if (!timer) return undefined;
-  const t = incidentSlaTimerIso(timer);
+  const t = incidentTargetTimerIso(timer);
   return {
     $typeName: "openstatus.incident.v1.IncidentSlaTimer",
     targetMinutes: t.targetMinutes,
@@ -241,8 +241,8 @@ function toSlaTimer(timer: DbSlaTimer | null): IncidentSlaTimer | undefined {
   };
 }
 
-export function incidentSlaToProto(
-  state: IncidentSlaState,
+export function incidentTargetToProto(
+  state: IncidentTargetState,
 ): IncidentSla | undefined {
   if (!state) return undefined;
   return {
@@ -268,7 +268,7 @@ function summaryFields(row: IncidentFields) {
     updatedAt: row.updatedAt.toISOString(),
     acknowledgedAt: iso(row.acknowledgedAt),
     acknowledgedBy: toIncidentUser(row.acknowledgedByUser),
-    sla: incidentSlaToProto(row.sla),
+    sla: incidentTargetToProto(row.sla),
   };
 }
 

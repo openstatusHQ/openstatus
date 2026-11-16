@@ -1,12 +1,12 @@
 import {
   displayName,
   escapeMrkdwn,
-  incidentSlaNoticeBlocks,
-  parseIncidentSlaNoticeButtonValue,
+  incidentTargetNoticeBlocks,
+  parseIncidentTargetNoticeButtonValue,
 } from "@openstatus/services/incident";
 
 import type { SlackConfig } from "./config";
-import { acknowledgeFromCard } from "./incident-slack";
+import { acknowledgeFromCard } from "./incident-targetck";
 import type { SlackWorkspace } from "./workspace-resolver";
 
 /** A response notice's Acknowledge button: acknowledges like the card, then redraws the notice. */
@@ -19,7 +19,7 @@ export async function acknowledgeFromNotice(args: {
   messageTs: string;
   value: string | undefined;
 }): Promise<void> {
-  const notice = parseIncidentSlaNoticeButtonValue(args.value);
+  const notice = parseIncidentTargetNoticeButtonValue(args.value);
   if (!notice) return;
   const { value: _, ...rest } = args;
   await acknowledgeFromCard({
@@ -33,7 +33,7 @@ export async function acknowledgeFromNotice(args: {
             ? escapeMrkdwn(displayName(current.acknowledgedByUser))
             : "someone else"
           : undefined;
-      return incidentSlaNoticeBlocks({
+      return incidentTargetNoticeBlocks({
         incident: current,
         kind: "response",
         notice: notice.notice,

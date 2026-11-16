@@ -98,8 +98,8 @@ Source of truth: `auditActionSchema` in
 | `monitor` | create, update, delete | monitor id | `metadata.clonedFromMonitorId` on clone |
 | `monitor_tag` | create, update, delete | tag id | |
 | `monitor_incident` | update, delete | monitor incident id | created by the checker, not a verb |
-| `monitor_sla_policy` | create, update, delete | policy id | |
-| `monitor_sla_excused_window` | create, delete | window id | |
+| `uptime_target` | create, update, delete | policy id | |
+| `uptime_target_excused_window` | create, delete | window id | |
 | `monitor_maintenance_window` | create, update, delete | window id | |
 | `private_location` | create, update, delete | location id | |
 | `page` | create, update, delete | page id | |
@@ -113,7 +113,7 @@ Source of truth: `auditActionSchema` in
 | `incident` | create, update, delete | incident id | |
 | `incident_event` | create | event id | append-only timeline |
 | `incident_postmortem` | create, update | postmortem id | |
-| `incident_sla_policy` | create, update, delete | policy id | |
+| `incident_response_target` | create, update, delete | policy id | |
 | `notification` | create, update, delete | channel id | |
 | `api_key` | create, delete | key id | revoke is `delete` |
 | `oauth_grant` | create, delete | grant id | every revocation path is `delete` |

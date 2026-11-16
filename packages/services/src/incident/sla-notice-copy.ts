@@ -1,42 +1,42 @@
 import {
   type IncidentSeverity,
-  type IncidentSlaNoticeKind,
-  type IncidentSlaNoticeType,
-  type IncidentSlaResolutionStop,
-  type IncidentSlaResponseMet,
-  formatIncidentSlaMinutes,
+  type IncidentTargetNoticeKind,
+  type IncidentTargetNoticeType,
+  type IncidentTargetResolutionStop,
+  type IncidentTargetResponseMet,
+  formatIncidentTargetMinutes,
 } from "@openstatus/db/src/schema";
 
-export type IncidentSlaNoticeCopyInput = {
-  kind: IncidentSlaNoticeKind;
-  notice: IncidentSlaNoticeType;
+export type IncidentTargetNoticeCopyInput = {
+  kind: IncidentTargetNoticeKind;
+  notice: IncidentTargetNoticeType;
   title: string;
   severity: IncidentSeverity;
   targetMinutes: number;
   dueAt: Date;
-  responseMet: IncidentSlaResponseMet;
-  resolutionStop: IncidentSlaResolutionStop;
+  responseMet: IncidentTargetResponseMet;
+  resolutionStop: IncidentTargetResolutionStop;
 };
 
 /** How a channel renders the incident title and the due time (mrkdwn and Slack dates, or plain text). */
-export type IncidentSlaNoticeFormat = {
+export type IncidentTargetNoticeFormat = {
   strong: (text: string) => string;
   time: (date: Date) => string;
 };
 
-export type IncidentSlaNoticeCopy = {
+export type IncidentTargetNoticeCopy = {
   headline: string;
   body: string;
   /** What meets the timer; null once nothing can still meet it in time. */
   action: string | null;
 };
 
-const LABEL: Record<IncidentSlaNoticeKind, string> = {
+const LABEL: Record<IncidentTargetNoticeKind, string> = {
   response: "Response",
   resolution: "Resolution",
 };
 
-function action(input: IncidentSlaNoticeCopyInput): string | null {
+function action(input: IncidentTargetNoticeCopyInput): string | null {
   const when = input.notice === "warning" ? "before then" : "now";
   if (input.kind === "response") {
     return input.responseMet === "status_report"
@@ -50,11 +50,11 @@ function action(input: IncidentSlaNoticeCopyInput): string | null {
 }
 
 /** The wording of every SLA notice, shared by Slack and email. */
-export function incidentSlaNoticeCopy(
-  input: IncidentSlaNoticeCopyInput,
-  format: IncidentSlaNoticeFormat,
-): IncidentSlaNoticeCopy {
-  const target = formatIncidentSlaMinutes(input.targetMinutes);
+export function incidentTargetNoticeCopy(
+  input: IncidentTargetNoticeCopyInput,
+  format: IncidentTargetNoticeFormat,
+): IncidentTargetNoticeCopy {
+  const target = formatIncidentTargetMinutes(input.targetMinutes);
   const kind = input.kind;
   const subject = `${format.strong(input.title)} (${input.severity})`;
   const due = format.time(input.dueAt);

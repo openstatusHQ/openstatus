@@ -28,7 +28,7 @@ export const config: Record<
       { value: "data-retention", label: "Data retention" },
       { value: "response-logs", label: "Response Logs" },
       { value: "private-locations", label: "Private Locations" },
-      { value: "monitor-sla", label: "Reports" },
+      { value: "monitor-sla", label: "Uptime targets" },
       { value: "otel", label: "OTel Exporter" },
       {
         value: "synthetic-checks",

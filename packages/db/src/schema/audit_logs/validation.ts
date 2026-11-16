@@ -240,18 +240,18 @@ const monitorTagActions = [
   action("monitor_tag.delete", "monitor_tag", intId),
 ] as const;
 
-const monitorSlaPolicyActions = [
-  action("monitor_sla_policy.create", "monitor_sla_policy", intId),
-  action("monitor_sla_policy.update", "monitor_sla_policy", intId),
-  action("monitor_sla_policy.delete", "monitor_sla_policy", intId),
+const uptimeTargetActions = [
+  action("uptime_target.create", "uptime_target", intId),
+  action("uptime_target.update", "uptime_target", intId),
+  action("uptime_target.delete", "uptime_target", intId),
   action(
-    "monitor_sla_excused_window.create",
-    "monitor_sla_excused_window",
+    "uptime_target_excused_window.create",
+    "uptime_target_excused_window",
     intId,
   ),
   action(
-    "monitor_sla_excused_window.delete",
-    "monitor_sla_excused_window",
+    "uptime_target_excused_window.delete",
+    "uptime_target_excused_window",
     intId,
   ),
 ] as const;
@@ -274,10 +274,10 @@ const monitorMaintenanceWindowActions = [
   ),
 ] as const;
 
-const incidentSlaPolicyActions = [
-  action("incident_sla_policy.create", "incident_sla_policy", intId),
-  action("incident_sla_policy.update", "incident_sla_policy", intId),
-  action("incident_sla_policy.delete", "incident_sla_policy", intId),
+const incidentResponseTargetActions = [
+  action("incident_response_target.create", "incident_response_target", intId),
+  action("incident_response_target.update", "incident_response_target", intId),
+  action("incident_response_target.delete", "incident_response_target", intId),
 ] as const;
 
 const privateLocationActions = [
@@ -329,9 +329,9 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
-  ...monitorSlaPolicyActions,
+  ...uptimeTargetActions,
   ...monitorMaintenanceWindowActions,
-  ...incidentSlaPolicyActions,
+  ...incidentResponseTargetActions,
   ...ssoActions,
 ]);
 

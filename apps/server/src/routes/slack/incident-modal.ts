@@ -16,7 +16,7 @@ import {
   LINK_ACCOUNT_TEXT,
 } from "./blocks";
 import type { SlackConfig } from "./config";
-import { onIncidentDeclared } from "./incident-slack";
+import { onIncidentDeclared } from "./incident-targetck";
 import { getIncidentDashboardUrl } from "./page-urls";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
 import {

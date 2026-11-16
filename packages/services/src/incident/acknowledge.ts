@@ -3,7 +3,7 @@ import {
   type Incident,
   incident,
   incidentResponsePatch,
-  incidentSlaResponseMet,
+  incidentTargetResponseMet,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -16,7 +16,7 @@ import {
 import { ConflictError } from "../errors";
 import {
   appendIncidentEvent,
-  appendIncidentSlaBreaches,
+  appendIncidentTargetBreaches,
   assertNotClosed,
   getIncidentInWorkspace,
   meetResponse,
@@ -43,7 +43,7 @@ export async function acknowledgeIncident(args: {
 
     const now = new Date();
     const response =
-      incidentSlaResponseMet(existing.slaSnapshot) === "acknowledged"
+      incidentTargetResponseMet(existing.targetSnapshot) === "acknowledged"
         ? incidentResponsePatch(existing, now)
         : {};
     const acknowledged = await tx
@@ -83,7 +83,8 @@ export async function acknowledgeIncident(args: {
       before: existing,
       after: met ?? acknowledged,
     });
-    if (met) await appendIncidentSlaBreaches(tx, ctx, existing, response, now);
+    if (met)
+      await appendIncidentTargetBreaches(tx, ctx, existing, response, now);
     else if (response.responseMetAt) {
       await meetResponse(tx, ctx, existing.id, now);
     }

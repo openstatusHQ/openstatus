@@ -13,7 +13,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
@@ -24,7 +24,7 @@ import {
   setIncidentStatus,
   updateIncident,
 } from "../index";
-import { appendIncidentSlaBreach } from "../internal";
+import { appendIncidentTargetBreach } from "../internal";
 
 let team: Workspace;
 let ownerId: number;
@@ -53,7 +53,7 @@ async function declare(
     severity?: "critical" | "minor";
   } = {},
 ) {
-  await upsertIncidentReporting({
+  await upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: {
       targets: {
@@ -88,8 +88,8 @@ async function events(tx: DB, id: number) {
 async function breaches(tx: DB, id: number) {
   return (await events(tx, id)).filter(
     (e) =>
-      e.type === "sla_response_breached" ||
-      e.type === "sla_resolution_breached",
+      e.type === "response_target_breached" ||
+      e.type === "resolution_target_breached",
   );
 }
 
@@ -106,10 +106,12 @@ describe("a late response writes one system event", () => {
       const timeline = await events(tx, declared.id);
       // newest first: the miss sits before the late action
       const types = timeline.map((e) => e.type);
-      expect(types.indexOf("sla_response_breached")).toBeGreaterThan(
+      expect(types.indexOf("response_target_breached")).toBeGreaterThan(
         types.indexOf("acknowledged"),
       );
-      const breach = timeline.find((e) => e.type === "sla_response_breached");
+      const breach = timeline.find(
+        (e) => e.type === "response_target_breached",
+      );
       expect(breach?.createdAt).toEqual(due);
       expect(breach?.createdBy).toBeNull();
       expect(breach?.source).toBe("system");
@@ -129,7 +131,7 @@ describe("a late response writes one system event", () => {
         input: { id: declared.id, message: "Looking" },
       });
       const found = await breaches(tx, declared.id);
-      expect(found.map((e) => e.type)).toEqual(["sla_response_breached"]);
+      expect(found.map((e) => e.type)).toEqual(["response_target_breached"]);
       expect(found[0]?.createdBy).toBeNull();
     });
   });
@@ -144,8 +146,8 @@ describe("a late response writes one system event", () => {
       });
       const found = await breaches(tx, declared.id);
       expect(found.map((e) => [e.type, e.createdAt])).toEqual([
-        ["sla_resolution_breached", minutesAfter(declaredAt, 240)],
-        ["sla_response_breached", minutesAfter(declaredAt, 60)],
+        ["resolution_target_breached", minutesAfter(declaredAt, 240)],
+        ["response_target_breached", minutesAfter(declaredAt, 60)],
       ]);
       expect(found[0]?.message).toBe(
         `Resolution target of 4h breached, due ${minutesAfter(declaredAt, 240).toISOString()}`,
@@ -183,8 +185,8 @@ describe("a late stop writes one resolution event", () => {
       }
       const found = await breaches(tx, declared.id);
       expect(found.map((e) => e.type)).toEqual([
-        "sla_resolution_breached",
-        "sla_response_breached",
+        "resolution_target_breached",
+        "response_target_breached",
       ]);
     });
   });
@@ -196,7 +198,7 @@ describe("system events", () => {
       const declared = await declare(tx);
       const dueAt = minutesAfter(declared.declaredAt, 60);
       const write = () =>
-        appendIncidentSlaBreach(tx, owner(tx), {
+        appendIncidentTargetBreach(tx, owner(tx), {
           incidentId: declared.id,
           kind: "response",
           targetMinutes: 60,
@@ -211,7 +213,7 @@ describe("system events", () => {
   test("do not acknowledge, even inside a person's write", async () => {
     await withTestTransaction(async (tx) => {
       const declared = await declare(tx);
-      await appendIncidentSlaBreach(tx, member(tx), {
+      await appendIncidentTargetBreach(tx, member(tx), {
         incidentId: declared.id,
         kind: "response",
         targetMinutes: 60,

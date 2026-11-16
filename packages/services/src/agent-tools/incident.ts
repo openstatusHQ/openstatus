@@ -1,8 +1,8 @@
 import {
-  type IncidentSlaState,
-  type IncidentSlaTimer,
-  incidentSlaTimerIso,
-} from "@openstatus/db/src/schema/incident_sla_policies/state";
+  type IncidentTargetState,
+  type IncidentTargetTimer,
+  incidentTargetTimerIso,
+} from "@openstatus/db/src/schema/incident_response_targets/state";
 import {
   incidentSeverity,
   incidentStatus,
@@ -34,7 +34,7 @@ const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);
 const note = z.string().trim().min(1).max(10_000);
 
-const IncidentSlaTimerSchema = z
+const IncidentTargetTimerSchema = z
   .object({
     targetMinutes: z.number().int(),
     dueAt: z.string(),
@@ -47,10 +47,10 @@ const IncidentSlaTimerSchema = z
   })
   .nullable();
 
-const IncidentSlaSchema = z
+const IncidentTargetSchema = z
   .object({
-    response: IncidentSlaTimerSchema,
-    resolution: IncidentSlaTimerSchema,
+    response: IncidentTargetTimerSchema,
+    resolution: IncidentTargetTimerSchema,
   })
   .nullable()
   .describe(
@@ -58,14 +58,14 @@ const IncidentSlaSchema = z
   );
 
 function toSlaTimer(
-  timer: IncidentSlaTimer | null,
-): z.infer<typeof IncidentSlaTimerSchema> {
-  return timer ? incidentSlaTimerIso(timer) : null;
+  timer: IncidentTargetTimer | null,
+): z.infer<typeof IncidentTargetTimerSchema> {
+  return timer ? incidentTargetTimerIso(timer) : null;
 }
 
 function toSla(
-  state: IncidentSlaState | null,
-): z.infer<typeof IncidentSlaSchema> {
+  state: IncidentTargetState | null,
+): z.infer<typeof IncidentTargetSchema> {
   if (!state) return null;
   return {
     response: toSlaTimer(state.response),
@@ -87,7 +87,7 @@ const IncidentSummary = z.object({
   slackChannelId: z.string().nullable(),
   acknowledgedAt: z.string().nullable(),
   acknowledgedBy: attributedUserSchema.nullable(),
-  sla: IncidentSlaSchema,
+  sla: IncidentTargetSchema,
 });
 
 function toIncidentSummary(

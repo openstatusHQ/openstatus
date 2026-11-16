@@ -2,7 +2,7 @@ import { and, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorMaintenanceWindowToMonitor,
-  monitorSlaPolicyToMonitor,
+  uptimeTargetToMonitor,
   monitorTagsToMonitors,
   notificationsToMonitors,
   pageComponent,
@@ -53,8 +53,8 @@ export async function deleteMonitor(args: {
       .delete(monitorTagsToMonitors)
       .where(eq(monitorTagsToMonitors.monitorId, existing.id));
     await tx
-      .delete(monitorSlaPolicyToMonitor)
-      .where(eq(monitorSlaPolicyToMonitor.monitorId, existing.id));
+      .delete(uptimeTargetToMonitor)
+      .where(eq(uptimeTargetToMonitor.monitorId, existing.id));
     await tx
       .delete(monitorMaintenanceWindowToMonitor)
       .where(eq(monitorMaintenanceWindowToMonitor.monitorId, existing.id));
@@ -139,8 +139,8 @@ export async function deleteMonitors(args: {
       .delete(monitorTagsToMonitors)
       .where(inArray(monitorTagsToMonitors.monitorId, ids));
     await tx
-      .delete(monitorSlaPolicyToMonitor)
-      .where(inArray(monitorSlaPolicyToMonitor.monitorId, ids));
+      .delete(uptimeTargetToMonitor)
+      .where(inArray(uptimeTargetToMonitor.monitorId, ids));
     await tx
       .delete(monitorMaintenanceWindowToMonitor)
       .where(inArray(monitorMaintenanceWindowToMonitor.monitorId, ids));

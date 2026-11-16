@@ -4,7 +4,7 @@ import {
   type Incident,
   incident,
   incidentResponsePatch,
-  incidentSlaResponseMet,
+  incidentTargetResponseMet,
   isAllowedIncidentReportedAt,
   monitorIncidentTable,
   statusReport,
@@ -21,11 +21,11 @@ import {
 import { NotFoundError, ValidationError } from "../errors";
 import {
   appendIncidentEvent,
-  appendIncidentSlaBreaches,
+  appendIncidentTargetBreaches,
   assertMember,
   meetResponseByStatusReport,
   personUserId,
-  slaSnapshotAtDeclare,
+  targetSnapshotAtDeclare,
   withAcknowledgement,
 } from "./internal";
 import { assertStatusReportLinkable } from "./link-status-report";
@@ -93,14 +93,14 @@ export async function declareIncident(args: {
       (await sourceStartedAt(tx, ctx.workspace.id, input.source)) ??
       declaredAt;
     const acknowledgedBy = personUserId(ctx.actor);
-    const slaSnapshot = await slaSnapshotAtDeclare(tx, ctx);
+    const targetSnapshot = await targetSnapshotAtDeclare(tx, ctx);
     const acknowledgedAt = acknowledgedBy === null ? null : declaredAt;
     const unmet = {
       status: "open",
       severity: input.severity,
       declaredAt,
       reportedAt,
-      slaSnapshot,
+      targetSnapshot,
       responseMetAt: null,
       responseBreachDueAt: null,
       resolutionStoppedAt: null,
@@ -109,8 +109,8 @@ export async function declareIncident(args: {
     // an acknowledgement at declare can already be late against the report time
     const responsePatch =
       acknowledgedAt &&
-      slaSnapshot &&
-      incidentSlaResponseMet(slaSnapshot) === "acknowledged"
+      targetSnapshot &&
+      incidentTargetResponseMet(targetSnapshot) === "acknowledged"
         ? incidentResponsePatch(unmet, acknowledgedAt)
         : {};
 
@@ -129,7 +129,7 @@ export async function declareIncident(args: {
         statusReportId: input.statusReportId ?? null,
         acknowledgedAt,
         acknowledgedBy,
-        slaSnapshot,
+        targetSnapshot,
         responseMetAt: responsePatch.responseMetAt ?? null,
         responseBreachDueAt: responsePatch.responseBreachDueAt ?? null,
       })
@@ -152,7 +152,7 @@ export async function declareIncident(args: {
       message: `Declared as ${input.severity}: ${input.title}`,
       createdAt: declaredAt,
     });
-    await appendIncidentSlaBreaches(
+    await appendIncidentTargetBreaches(
       tx,
       ctx,
       { ...unmet, id: record.id },

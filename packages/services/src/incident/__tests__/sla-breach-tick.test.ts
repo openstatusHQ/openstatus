@@ -14,7 +14,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
@@ -24,9 +24,9 @@ import {
   updateIncident,
 } from "../index";
 import {
-  dueIncidentSlaBreaches,
-  recordIncidentSlaBreaches,
-  stampIncidentSlaBreach,
+  dueIncidentTargetBreaches,
+  recordIncidentTargetBreaches,
+  stampIncidentTargetBreach,
 } from "../sla-breaches";
 
 let team: Workspace;
@@ -53,7 +53,7 @@ const minutesAfter = (date: Date, minutes: number) =>
   new Date(date.getTime() + minutes * 60_000);
 
 async function policy(tx: DB, resolutionStop: "mitigated" | "resolved") {
-  await upsertIncidentReporting({
+  await upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: {
       targets: {
@@ -90,7 +90,7 @@ async function declare(
 }
 
 const tick = (tx: DB) =>
-  recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id] });
+  recordIncidentTargetBreaches({ db: tx, workspaceIds: [team.id] });
 
 async function row(tx: DB, id: number) {
   const found = await tx
@@ -107,8 +107,8 @@ async function breaches(tx: DB, id: number) {
   return events
     .filter(
       (e) =>
-        e.type === "sla_response_breached" ||
-        e.type === "sla_resolution_breached",
+        e.type === "response_target_breached" ||
+        e.type === "resolution_target_breached",
     )
     .map((e) => [e.type, e.createdAt]);
 }
@@ -122,7 +122,9 @@ describe("the tick records a running timer past its due time", () => {
       expect(recorded.map((r) => [r.incident.id, r.kind, r.dueAt])).toEqual([
         [id, "response", due],
       ]);
-      expect(await breaches(tx, id)).toEqual([["sla_response_breached", due]]);
+      expect(await breaches(tx, id)).toEqual([
+        ["response_target_breached", due],
+      ]);
       const stored = await row(tx, id);
       expect(stored.responseBreachDueAt).toEqual(due);
       expect(stored.responseMetAt).toBeNull();
@@ -139,8 +141,8 @@ describe("the tick records a running timer past its due time", () => {
       });
       await tick(tx);
       expect(await breaches(tx, id)).toEqual([
-        ["sla_resolution_breached", minutesAfter(declaredAt, 240)],
-        ["sla_response_breached", minutesAfter(declaredAt, 60)],
+        ["resolution_target_breached", minutesAfter(declaredAt, 240)],
+        ["response_target_breached", minutesAfter(declaredAt, 60)],
       ]);
       expect((await row(tx, id)).resolutionBreachDueAt).toEqual(
         minutesAfter(declaredAt, 240),
@@ -165,7 +167,7 @@ describe("the tick records a running timer past its due time", () => {
       ]);
       expect(await tick(tx)).toEqual([]);
       expect(await breaches(tx, acked.id)).toEqual([
-        ["sla_resolution_breached", minutesAfter(acked.declaredAt, 240)],
+        ["resolution_target_breached", minutesAfter(acked.declaredAt, 240)],
       ]);
     });
   });
@@ -180,7 +182,7 @@ describe("the tick records a running timer past its due time", () => {
       const untracked = await declare(tx, { minutesAgo: 300 });
       await tx
         .update(incident)
-        .set({ slaSnapshot: null })
+        .set({ targetSnapshot: null })
         .where(eq(incident.id, untracked.id));
       expect(await tick(tx)).toEqual([]);
     });
@@ -217,7 +219,7 @@ describe("a change between the tick's read and its write", () => {
   test("an acknowledgement is not overwritten with a miss", async () => {
     await withTestTransaction(async (tx) => {
       const { id, declaredAt } = await declare(tx, { minutesAgo: 61 });
-      const [due] = await dueIncidentSlaBreaches({
+      const [due] = await dueIncidentTargetBreaches({
         db: tx,
         now: new Date(),
         workspaceIds: [team.id],
@@ -228,7 +230,7 @@ describe("a change between the tick's read and its write", () => {
         .update(incident)
         .set({ responseMetAt: minutesAfter(declaredAt, 30) })
         .where(eq(incident.id, id));
-      expect(await stampIncidentSlaBreach({ db: tx, due })).toBeNull();
+      expect(await stampIncidentTargetBreach({ db: tx, due })).toBeNull();
       expect(await breaches(tx, id)).toEqual([]);
       expect((await row(tx, id)).responseBreachDueAt).toBeNull();
       expect(await tick(tx)).toEqual([]);
@@ -238,7 +240,7 @@ describe("a change between the tick's read and its write", () => {
   test("a severity change is not overwritten; the next tick decides again", async () => {
     await withTestTransaction(async (tx) => {
       const { id } = await declare(tx, { minutesAgo: 61 });
-      const [due] = await dueIncidentSlaBreaches({
+      const [due] = await dueIncidentTargetBreaches({
         db: tx,
         now: new Date(),
         workspaceIds: [team.id],
@@ -248,7 +250,7 @@ describe("a change between the tick's read and its write", () => {
         ctx: apiKey(tx),
         input: { id, severity: "minor" },
       });
-      expect(await stampIncidentSlaBreach({ db: tx, due })).toBeNull();
+      expect(await stampIncidentTargetBreach({ db: tx, due })).toBeNull();
       expect(await tick(tx)).toEqual([]);
       expect(await breaches(tx, id)).toEqual([]);
     });
@@ -257,16 +259,16 @@ describe("a change between the tick's read and its write", () => {
   test("a late acknowledgement records the miss itself, once", async () => {
     await withTestTransaction(async (tx) => {
       const { id, declaredAt } = await declare(tx, { minutesAgo: 61 });
-      const [due] = await dueIncidentSlaBreaches({
+      const [due] = await dueIncidentTargetBreaches({
         db: tx,
         now: new Date(),
         workspaceIds: [team.id],
       });
       if (!due) throw new Error("expected a due breach");
       await acknowledgeIncident({ ctx: member(tx), input: { id } });
-      expect(await stampIncidentSlaBreach({ db: tx, due })).toBeNull();
+      expect(await stampIncidentTargetBreach({ db: tx, due })).toBeNull();
       expect(await breaches(tx, id)).toEqual([
-        ["sla_response_breached", minutesAfter(declaredAt, 60)],
+        ["response_target_breached", minutesAfter(declaredAt, 60)],
       ]);
     });
   });
@@ -288,7 +290,7 @@ test("a severity upgrade that puts the due time in the past is recorded on the n
       ["response", minutesAfter(declaredAt, 60)],
     ]);
     expect(await breaches(tx, id)).toEqual([
-      ["sla_response_breached", minutesAfter(declaredAt, 60)],
+      ["response_target_breached", minutesAfter(declaredAt, 60)],
     ]);
   });
 });
@@ -297,7 +299,7 @@ describe("the stamp's audit row", () => {
   test("a worker with a stale read audits against the row it actually changed", async () => {
     await withTestTransaction(async (tx) => {
       const { id, declaredAt } = await declare(tx, { minutesAgo: 241 });
-      const due = await dueIncidentSlaBreaches({
+      const due = await dueIncidentTargetBreaches({
         db: tx,
         now: new Date(),
         workspaceIds: [team.id],
@@ -306,8 +308,8 @@ describe("the stamp's audit row", () => {
       const resolution = due.find((d) => d.kind === "resolution");
       if (!response || !resolution) throw new Error("expected both dues");
       // another worker stamps the response first, from the same read
-      await stampIncidentSlaBreach({ db: tx, due: response });
-      await stampIncidentSlaBreach({ db: tx, due: resolution });
+      await stampIncidentTargetBreach({ db: tx, due: response });
+      await stampIncidentTargetBreach({ db: tx, due: resolution });
 
       const audits = (
         await readAuditLog({

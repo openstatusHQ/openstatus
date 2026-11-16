@@ -4,12 +4,12 @@ import { Cause, Effect, Fiber, Schedule } from "effect";
 
 import { runSentryCron } from "../lib/sentry";
 import { handleHeartbeatSweepCron } from "./heartbeat-sweep";
-import { runIncidentSlaAndRemindersTick } from "./incident-reminders";
-import { runMonitorSlaSealTick } from "./monitor-sla-seal";
+import { runIncidentTargetAndRemindersTick } from "./incident-reminders";
 import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
 import { handleStatusDriftCron } from "./status-drift";
 import { runUptimeFreezeTick } from "./uptime-freeze";
+import { runUptimeTargetSealTick } from "./uptime-target-seal";
 
 const logger = getLogger(["workflow"]);
 
@@ -36,7 +36,7 @@ type ScheduledTask = {
  * - outbox-retention, oauth-prune: idempotent deletes of expired rows
  * - incident-reminders: Redis-claimed windows, conditional miss stamps, claimed notices
  * - uptime-freeze-daily: one write-once row per monitor and month
- * - monitor-sla-seal: a watermark per monitor advanced under a guard, write-once per pair, miss notices by a unique claim row
+ * - uptime-target-seal: a watermark per monitor advanced under a guard, write-once per pair, miss notices by a unique claim row
  */
 export const SCHEDULED_TASKS: ScheduledTask[] = [
   {
@@ -70,7 +70,7 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
   {
     name: "incident-reminders",
     expression: "*/5 * * * *",
-    run: runIncidentSlaAndRemindersTick,
+    run: runIncidentTargetAndRemindersTick,
     // A hung Slack or Resend call must not skip the next miss scan.
     timeoutMs: 4 * 60_000,
   },
@@ -83,9 +83,9 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     checkIn: true,
   },
   {
-    name: "monitor-sla-seal",
+    name: "uptime-target-seal",
     expression: "47 5 * * *",
-    run: () => runMonitorSlaSealTick(),
+    run: () => runUptimeTargetSealTick(),
     timeoutMs: 10 * 60_000,
     checkIn: true,
   },

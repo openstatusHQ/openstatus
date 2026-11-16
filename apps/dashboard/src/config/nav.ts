@@ -61,7 +61,7 @@ export const NAV = {
   },
   reports: {
     label: "Reports",
-    href: "/reportings",
+    href: "/reports",
     icon: Reporting,
     keywords: [
       "sla",

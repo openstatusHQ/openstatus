@@ -1,26 +1,26 @@
 import { and, asc, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
 import {
   type IncidentSeverity,
-  type IncidentSlaNoticeType,
-  formatIncidentSlaMinutes,
+  type IncidentTargetNoticeType,
+  formatIncidentTargetMinutes,
   incidentEvent,
-  incidentSlaNotice,
+  incidentTargetNotice,
   user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
-import { incidentSlaNoticeCopy } from "./sla-notice-copy";
+import { incidentTargetNoticeCopy } from "./sla-notice-copy";
 import type {
-  IncidentSlaNoticeOutcome,
-  IncidentSlaNoticeResult,
+  IncidentTargetNoticeOutcome,
+  IncidentTargetNoticeResult,
 } from "./sla-notices";
 
-/** Matches `sendIncidentSlaNotice` in `@openstatus/emails`, which the caller injects. */
-export type IncidentSlaNoticeEmail = {
+/** Matches `sendIncidentTargetNotice` in `@openstatus/emails`, which the caller injects. */
+export type IncidentTargetNoticeEmail = {
   to: string[];
   idempotencyKey: string;
-  notice: IncidentSlaNoticeType;
+  notice: IncidentTargetNoticeType;
   headline: string;
   body: string;
   action: string | null;
@@ -33,14 +33,14 @@ export type IncidentSlaNoticeEmail = {
   url: string;
 };
 
-export type IncidentSlaNoticeEmailResult = {
-  notice: IncidentSlaNoticeResult;
+export type IncidentTargetNoticeEmailResult = {
+  notice: IncidentTargetNoticeResult;
   to: string[];
   /** `skipped`: the sender returned no id, e.g. outside production. */
   outcome: "sent" | "skipped" | "no_recipients" | "failed";
 };
 
-const UNDELIVERED: ReadonlySet<IncidentSlaNoticeOutcome> = new Set([
+const UNDELIVERED: ReadonlySet<IncidentTargetNoticeOutcome> = new Set([
   "no_connection",
   "no_target",
   "refused",
@@ -52,9 +52,9 @@ const dueFormat = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
-async function claimEmail(db: DB, n: IncidentSlaNoticeResult) {
+async function claimEmail(db: DB, n: IncidentTargetNoticeResult) {
   const row = await db
-    .insert(incidentSlaNotice)
+    .insert(incidentTargetNotice)
     .values({
       incidentId: n.incident.id,
       kind: n.kind,
@@ -63,13 +63,13 @@ async function claimEmail(db: DB, n: IncidentSlaNoticeResult) {
       channel: "email",
     })
     .onConflictDoNothing()
-    .returning({ id: incidentSlaNotice.id })
+    .returning({ id: incidentTargetNotice.id })
     .get();
   return row !== undefined;
 }
 
 /** The declaring user; none when an API key or MCP declared, whoever created the key. */
-async function declarer(db: DB, n: IncidentSlaNoticeResult) {
+async function declarer(db: DB, n: IncidentTargetNoticeResult) {
   if (n.incident.declaredBy === null) return null;
   const declared = await db
     .select({ source: incidentEvent.source })
@@ -87,7 +87,7 @@ async function declarer(db: DB, n: IncidentSlaNoticeResult) {
 }
 
 /** Commander and declarer, else (neither set) the owners and admins; current members with an email only. */
-async function recipients(db: DB, n: IncidentSlaNoticeResult) {
+async function recipients(db: DB, n: IncidentTargetNoticeResult) {
   const assigned = [n.incident.commanderId, await declarer(db, n)].filter(
     (id): id is number => id !== null,
   );
@@ -122,14 +122,14 @@ async function recipients(db: DB, n: IncidentSlaNoticeResult) {
  * Emails each notice Slack could not deliver, once: the `email` claim row is
  * written before sending, so it is safe on every machine at once.
  */
-export async function emailIncidentSlaNotices(args: {
-  notices: IncidentSlaNoticeResult[];
-  send: (email: IncidentSlaNoticeEmail) => Promise<string | undefined>;
+export async function emailIncidentTargetNotices(args: {
+  notices: IncidentTargetNoticeResult[];
+  send: (email: IncidentTargetNoticeEmail) => Promise<string | undefined>;
   dashboardUrl: string;
   db?: DB;
-}): Promise<IncidentSlaNoticeEmailResult[]> {
+}): Promise<IncidentTargetNoticeEmailResult[]> {
   const db = args.db ?? defaultDb;
-  const results: IncidentSlaNoticeEmailResult[] = [];
+  const results: IncidentTargetNoticeEmailResult[] = [];
   for (const n of args.notices) {
     if (!UNDELIVERED.has(n.outcome)) continue;
     let to: string[] = [];
@@ -141,8 +141,8 @@ export async function emailIncidentSlaNotices(args: {
         results.push({ notice: n, to, outcome: "no_recipients" });
         continue;
       }
-      const snapshot = n.incident.slaSnapshot;
-      const copy = incidentSlaNoticeCopy(
+      const snapshot = n.incident.targetSnapshot;
+      const copy = incidentTargetNoticeCopy(
         {
           kind: n.kind,
           notice: n.notice,
@@ -160,13 +160,13 @@ export async function emailIncidentSlaNotices(args: {
       );
       const id = await args.send({
         to,
-        idempotencyKey: `incident-sla-notice:${n.incident.id}:${n.kind}:${n.notice}:${n.dueAt.getTime()}`,
+        idempotencyKey: `incident-target-notice:${n.incident.id}:${n.kind}:${n.notice}:${n.dueAt.getTime()}`,
         notice: n.notice,
         ...copy,
         incidentTitle: n.incident.title,
         severity: n.incident.severity,
         workspaceName: n.workspace.name || n.workspace.slug,
-        target: formatIncidentSlaMinutes(n.targetMinutes),
+        target: formatIncidentTargetMinutes(n.targetMinutes),
         due: `${dueFormat.format(n.dueAt)} UTC`,
         audience: found.audience,
         url: `${args.dashboardUrl}/incidents/${n.incident.id}`,

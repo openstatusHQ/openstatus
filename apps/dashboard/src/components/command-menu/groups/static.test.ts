@@ -30,7 +30,7 @@ describe("navigationGroup", () => {
         "/overview",
         "/incidents",
         "/monitors",
-        "/reportings",
+        "/reports",
         "/maintenance-windows",
         "/private-locations",
         "/notifications",

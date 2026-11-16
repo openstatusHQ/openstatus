@@ -15,7 +15,7 @@ import {
   announceInChannel,
   announceIncidentChange,
   escapeMrkdwn,
-  openIncidentSlackChannel,
+  openIncidentTargetckChannel,
 } from "./slack-flow";
 
 export type CommanderEmail = {
@@ -157,7 +157,7 @@ export async function afterIncidentDeclared(
   const { ctx, effects, incident } = args;
   await notifyIncidentCommander({ ctx, effects, incident });
   if (!args.openSlackChannel) return undefined;
-  return openIncidentSlackChannel({
+  return openIncidentTargetckChannel({
     ctx,
     incidentId: incident.id,
     clientFor: effects.clientFor,

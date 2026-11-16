@@ -2,7 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import { ServiceError } from "@openstatus/services";
 import {
   INCIDENT_CARD_ACTIONS,
-  INCIDENT_SLA_NOTICE_ACKNOWLEDGE,
+  INCIDENT_TARGET_NOTICE_ACKNOWLEDGE,
 } from "@openstatus/services/incident";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
@@ -57,7 +57,7 @@ import {
   INCIDENT_BIND_ACTION_PREFIX,
   INCIDENT_RELINK_ACTION,
   relinkIncidentChannel,
-} from "./incident-slack";
+} from "./incident-targetck";
 import { NEXT_STEP_ACTIONS, nextStepBlocks } from "./next-steps";
 import { renderToolResult } from "./presenters";
 import { executeRegistryAction, getRegistryTool } from "./registry-runner";
@@ -523,7 +523,7 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     return c.json({ ok: true });
   }
 
-  if (action.action_id === INCIDENT_SLA_NOTICE_ACKNOWLEDGE) {
+  if (action.action_id === INCIDENT_TARGET_NOTICE_ACKNOWLEDGE) {
     onMessageAction(payload, config, "incident-notice-acknowledge", (base) =>
       acknowledgeFromNotice({ ...base, value: action.value }),
     );

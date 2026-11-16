@@ -1,10 +1,10 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
 import {
   type Incident,
-  type IncidentSlaState,
+  type IncidentTargetState,
   type IncidentStatus,
   incident,
-  incidentSlaState,
+  incidentTargetState,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -20,13 +20,13 @@ export function toIncidentView<T extends Incident>(
 ): T & {
   allowedTransitions: ReadonlyArray<IncidentStatus>;
   deletable: boolean;
-  sla: IncidentSlaState | null;
+  sla: IncidentTargetState | null;
 } {
   return {
     ...row,
     allowedTransitions: allowedTransitions(row),
     deletable: isDeletable(row),
-    sla: incidentSlaState(row, now),
+    sla: incidentTargetState(row, now),
   };
 }
 

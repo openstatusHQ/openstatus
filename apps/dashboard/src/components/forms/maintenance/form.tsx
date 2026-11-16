@@ -104,18 +104,18 @@ export function FormMaintenance({
   });
   const selected = useWatch({ control: form.control, name: "pageComponents" });
   const affected = affectedMonitors(selected ?? [], components, monitors ?? []);
-  const reportingsOf = useQueries({
+  const reportsOf = useQueries({
     queries:
       workspace?.limits["monitor-sla"] && !window
         ? affected.map((m) =>
-            trpc.monitorReporting.listForMonitor.queryOptions({
+            trpc.uptimeTarget.listForMonitor.queryOptions({
               monitorId: m.id,
             }),
           )
         : [],
   });
   const underReporting = affected.filter(
-    (_, i) => (reportingsOf[i]?.data?.length ?? 0) > 0,
+    (_, i) => (reportsOf[i]?.data?.length ?? 0) > 0,
   );
 
   const watchEndDate = form.watch("endDate");

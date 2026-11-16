@@ -9,7 +9,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import type { Workspace } from "../../types";
 import { declareIncident, getIncident, setIncidentStatus } from "../index";
 
@@ -30,7 +30,7 @@ const owner = (tx: DB) => withDb(makeUserCtx(team, { userId: ownerId }), tx);
 const apiKey = (tx: DB) => withDb(makeApiKeyCtx(team, { keyId: "k_res" }), tx);
 
 async function declare(tx: DB, resolutionStop: "mitigated" | "resolved") {
-  await upsertIncidentReporting({
+  await upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: {
       targets: { critical: { responseMinutes: 60, resolutionMinutes: 240 } },

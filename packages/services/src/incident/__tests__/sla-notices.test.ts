@@ -11,18 +11,18 @@ import {
   postOnlySlackClient,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { upsertIncidentReporting } from "../../incident-reporting";
+import { upsertIncidentResponseTarget } from "../../incident-response-target";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
   declareIncident,
-  recordIncidentSlaBreaches,
-  sendIncidentSlaNotices,
+  recordIncidentTargetBreaches,
+  sendIncidentTargetNotices,
   type SlackIncidentClient,
   updateIncident,
 } from "../index";
-import { incidentSlaNoticeCopy } from "../sla-notice-copy";
+import { incidentTargetNoticeCopy } from "../sla-notice-copy";
 
 let team: Workspace;
 let ownerId: number;
@@ -51,7 +51,7 @@ async function policy(
   tx: DB,
   responseMet: "acknowledged" | "status_report" = "acknowledged",
 ) {
-  await upsertIncidentReporting({
+  await upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: {
       targets: TARGETS,
@@ -131,7 +131,7 @@ function notices(
     breaches?: Awaited<ReturnType<typeof record>>;
   } = {},
 ) {
-  return sendIncidentSlaNotices({
+  return sendIncidentTargetNotices({
     db: tx,
     clientFor: () => client,
     dashboardUrl: "https://app.test",
@@ -142,7 +142,7 @@ function notices(
 }
 
 const record = (tx: DB, now?: Date) =>
-  recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id], now });
+  recordIncidentTargetBreaches({ db: tx, workspaceIds: [team.id], now });
 
 const summary = (results: Awaited<ReturnType<typeof notices>>) =>
   results.map((r) => [r.incident.id, r.kind, r.notice, r.outcome]);
@@ -175,7 +175,7 @@ describe("warnings", () => {
       expect(blocks).toContain(
         `<!date^${(declaredAt.getTime() + 60 * MINUTE) / 1000}^`,
       );
-      expect(blocks).toContain("incident_sla_notice_acknowledge");
+      expect(blocks).toContain("incident_target_notice_acknowledge");
       expect(blocks).not.toContain("incident_card_acknowledge");
     });
   });
@@ -222,7 +222,7 @@ describe("warnings", () => {
       ]);
       const blocks = JSON.stringify(sent[0]?.blocks);
       expect(blocks).toContain("Mitigate or resolve it before then.");
-      expect(blocks).not.toContain("incident_sla_notice_acknowledge");
+      expect(blocks).not.toContain("incident_target_notice_acknowledge");
     });
   });
 });
@@ -242,7 +242,7 @@ describe("misses", () => {
         "Response target missed: Checkout &lt;down&gt;",
       );
       expect(JSON.stringify(sent[0]?.blocks)).toContain(
-        "incident_sla_notice_acknowledge",
+        "incident_target_notice_acknowledge",
       );
     });
   });
@@ -394,7 +394,7 @@ describe("status report mode", () => {
   });
 });
 
-describe("incidentSlaNoticeCopy", () => {
+describe("incidentTargetNoticeCopy", () => {
   const plain = {
     strong: (text: string) => text,
     time: (date: Date) => date.toISOString(),
@@ -410,7 +410,7 @@ describe("incidentSlaNoticeCopy", () => {
 
   test("plain wording for email", () => {
     expect(
-      incidentSlaNoticeCopy(
+      incidentTargetNoticeCopy(
         { ...base, kind: "response", notice: "warning" },
         plain,
       ),
@@ -420,7 +420,7 @@ describe("incidentSlaNoticeCopy", () => {
       action: "Acknowledge it before then.",
     });
     expect(
-      incidentSlaNoticeCopy(
+      incidentTargetNoticeCopy(
         { ...base, kind: "resolution", notice: "miss" },
         plain,
       ),
@@ -430,13 +430,13 @@ describe("incidentSlaNoticeCopy", () => {
       action: null,
     });
     expect(
-      incidentSlaNoticeCopy(
+      incidentTargetNoticeCopy(
         { ...base, kind: "resolution", notice: "warning" },
         plain,
       ).action,
     ).toBe("Resolve it before then.");
     expect(
-      incidentSlaNoticeCopy(
+      incidentTargetNoticeCopy(
         {
           ...base,
           kind: "response",

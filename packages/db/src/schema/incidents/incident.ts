@@ -7,7 +7,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-import type { IncidentSlaSnapshot } from "../incident_sla_policies/constants";
+import type { IncidentTargetSnapshot } from "../incident_response_targets/constants";
 import { statusReport } from "../status_reports";
 import { user } from "../users";
 import { workspace } from "../workspaces";
@@ -43,9 +43,9 @@ export const incident = sqliteTable(
     acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
     acknowledgedBy: integer("acknowledged_by").references(() => user.id),
     // null = untracked: no policy or no `incident-sla` limit at declare
-    slaSnapshot: text("sla_snapshot", {
+    targetSnapshot: text("target_snapshot", {
       mode: "json",
-    }).$type<IncidentSlaSnapshot>(),
+    }).$type<IncidentTargetSnapshot>(),
     responseMetAt: integer("response_met_at", { mode: "timestamp" }),
     // the due time that was missed; set once, never cleared
     responseBreachDueAt: integer("response_breach_due_at", {
@@ -109,7 +109,7 @@ export const incidentEvent = sqliteTable(
     uniqueIndex("incident_event_system_unique_idx")
       .on(t.incidentId, t.type, t.createdAt)
       .where(
-        sql`${t.type} IN ('sla_response_breached', 'sla_resolution_breached')`,
+        sql`${t.type} IN ('response_target_breached', 'resolution_target_breached')`,
       ),
   ],
 );

@@ -31,7 +31,7 @@ export {
   stripeIdempotencyKey,
 } from "./billing";
 
-export { sendIncidentCommander, sendIncidentSlaNotice } from "./incident";
-export { sendMonitorSlaMissed } from "./monitor-sla";
+export { sendIncidentCommander, sendIncidentTargetNotice } from "./incident";
+export { sendUptimeTargetMissed } from "./uptime-target";
 
 export { EmailClient } from "./client";

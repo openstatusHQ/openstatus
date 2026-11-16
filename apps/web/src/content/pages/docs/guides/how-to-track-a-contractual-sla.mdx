@@ -1,14 +1,14 @@
 ---
 category: Guides
 title: Track a contractual SLA
-description: "Turn an availability and support commitment from a contract into reportings: monitors, a monthly target, slow-as-down, excused maintenance and support targets, then read and export each month."
+description: "Turn an availability and support commitment from a contract into an uptime target and incident response targets: monitors, a monthly target, slow-as-down, excused maintenance and support targets, then read and export each month."
 ---
 
 This guide sets up openstatus to measure and prove a commitment like this one:
 
 > 99.5% monthly availability, excluding excused downtime. A response slower than one second counts as unavailable. Support requests get a response, updates and a resolution within set times per severity.
 
-You need a workspace on the Pro or Scale plan, and the owner or admin role. Everything happens in the dashboard; reportings are not available over the API, the CLI or the MCP server.
+You need a workspace on the Pro or Scale plan, and the owner or admin role. Everything happens in the dashboard; uptime targets and incident response targets are not available over the API, the CLI or the MCP server.
 
 ## 1. Monitor what the contract covers
 
@@ -18,7 +18,7 @@ Create one monitor per contractually relevant part of the product, for example t
 - Set the **degraded** threshold to the contract's latency limit, here `1000` ms. Without it, a check is never slow and the next step changes nothing. See the [HTTP monitor reference](/docs/reference/http-monitor#degraded).
 - Choose the check frequency. Uptime weighs time, so any frequency works; a shorter one finds an outage sooner and costs less budget per failed check.
 
-A failed check counts as down until the next run, so one failed check costs one interval. If the next run comes more than two intervals later, only one interval counts as down and the rest is [unmeasured](/docs/reference/monitor-reporting#method). The shorter the interval, the tighter a target you can hold through a single blip. For a 30-day month:
+A failed check counts as down until the next run, so one failed check costs one interval. If the next run comes more than two intervals later, only one interval counts as down and the rest is [unmeasured](/docs/reference/uptime-target#method). The shorter the interval, the tighter a target you can hold through a single blip. For a 30-day month:
 
 | Frequency | Uptime with one failed check | Failed checks within 99.9% | Failed checks within 99.99% |
 |---|---|---|---|
@@ -31,11 +31,11 @@ A failed check counts as down until the next run, so one failed check costs one 
 
 At 99.99% the month allows 4 minutes and 19 seconds of downtime, which a single failed 5-minute check already exceeds. For a target of 99.99%, check every minute or every 30 seconds. At 99.999% the month allows under 26 seconds, less than one failed 30-second check, so a single failed check misses it at any frequency.
 
-Heartbeat monitors and monitors that only run from private locations cannot join a reporting.
+Heartbeat monitors and monitors that only run from private locations cannot join an uptime target.
 
-## 2. Create the reporting
+## 2. Create the uptime target
 
-Under [**Reportings**](https://app.openstatus.dev/reportings), create a reporting:
+Under [**Reports**](https://app.openstatus.dev/reports), create an uptime target:
 
 - **Name**: the commitment, for example `Partner contract`.
 - **Monthly uptime target**: `99.5`.
@@ -43,17 +43,17 @@ Under [**Reportings**](https://app.openstatus.dev/reportings), create a reportin
 - **Time zone**: the one the contract's months are in. It is locked once the first month is sealed.
 - **Monitors**: the ones from step 1.
 
-A monitor is judged from the moment it joins. The first full month is the one after the reporting is created.
+A monitor is judged from the moment it joins. The first full month is the one after the uptime target is created.
 
 ## 3. Set the support targets
 
-Under [**Incidents > SLA**](https://app.openstatus.dev/incidents/sla#targets), fill in the response, resolution and update targets per severity from the contract. Map the contract's severities onto `critical`, `major` and `minor`.
+Under [**Incidents > Response targets**](https://app.openstatus.dev/incidents/targets#targets), fill in the response, resolution and update targets per severity from the contract. Map the contract's severities onto `critical`, `major` and `minor`.
 
-When a support request comes in, declare the incident at the severity the customer assigned and set **Reported at** to when the request arrived, so the clock starts where the contract says. Requests handled only in another ticketing tool are not counted. See [incident reporting](/docs/reference/incident-management#reporting).
+When a support request comes in, declare the incident at the severity the customer assigned and set **Reported at** to when the request arrived, so the clock starts where the contract says. Requests handled only in another ticketing tool are not counted. See [incident response targets](/docs/reference/incident-management#incident-response-targets).
 
 ## 4. Excuse what the contract excludes
 
-When downtime falls under an exclusion, such as an announced maintenance, add an **excused window** from the reporting page with a kind, a reason and the monitors it covers. Maintenances that touched the reporting's monitors are listed on the page, and **Excuse** turns one into a window with its times and monitors prefilled.
+When downtime falls under an exclusion, such as an announced maintenance, add an **excused window** from the uptime target's page with a kind, a reason and the monitors it covers. Maintenances that touched the uptime target's monitors are listed on the page, and **Excuse** turns one into a window with its times and monitors prefilled.
 
 For contract-relevant work, create a maintenance window on the monitors set to **Keep checking**, then **Announce on status page** from it. Pausing leaves the time unmeasured, so it can never count against the target. When you excuse the window later, the dialog shows how far ahead it was announced.
 
@@ -61,7 +61,7 @@ Windows can be added or removed in the current and the previous month only, unti
 
 ## 5. Watch the month
 
-The reporting page shows every monitor against the last 12 or 24 months. Select a month cell to open its detail:
+The uptime target's page shows every monitor against the last 12 or 24 months. Select a month cell to open its detail:
 
 - **Budget left** and the **Budget left by day** chart show how fast the month's allowance is going, and whether down or slow time is spending it.
 - **What used the budget** lists each stretch with how it was treated.
@@ -70,7 +70,7 @@ The reporting page shows every monitor against the last 12 or 24 months. Select 
 
 ## 6. Send the month's evidence
 
-The checks of each monitor in a reporting are stored a day behind. About three days after a month ends it is sealed from that store and no longer changes, and what used the budget stays visible after the raw checks expire. If the checks are not stored up to the end of the month yet, the next run tries again; a month still unsealed 45 days after it began is never sealed and shows no figure. See [sealing](/docs/reference/monitor-reporting#sealing). Use **Export** on the reporting page to download the months as CSV, with uptime, coverage, measured, down and excused time, and the terms each month was sealed with.
+The checks of each monitor in an uptime target are stored a day behind. About three days after a month ends it is sealed from that store and no longer changes, and what used the budget stays visible after the raw checks expire. If the checks are not stored up to the end of the month yet, the next run tries again; a month still unsealed 45 days after it began is never sealed and shows no figure. See [sealing](/docs/reference/uptime-target#sealing). Use **Export** on the uptime target's page to download the months as CSV, with uptime, coverage, measured, down and excused time, and the terms each month was sealed with.
 
 ## What openstatus does not do yet
 
@@ -80,5 +80,5 @@ The checks of each monitor in a reporting are stored a day behind. About three d
 ## Related resources
 
 - **[Understanding SLA uptime and budgets](/docs/concept/sla-uptime-and-budgets)**: the ideas behind the figures.
-- **[Monitor reporting reference](/docs/reference/monitor-reporting)**: every rule in detail.
-- **[Incident management reference](/docs/reference/incident-management#reporting)**: support targets and misses.
+- **[Uptime target reference](/docs/reference/uptime-target)**: every rule in detail.
+- **[Incident management reference](/docs/reference/incident-management#incident-response-targets)**: support targets and misses.

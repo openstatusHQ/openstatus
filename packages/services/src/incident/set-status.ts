@@ -18,7 +18,7 @@ import {
 import { ConcurrentUpdateError } from "../errors";
 import {
   appendIncidentEvent,
-  appendIncidentSlaBreaches,
+  appendIncidentTargetBreaches,
   assertTransition,
   getIncidentInWorkspace,
   withAcknowledgement,
@@ -130,7 +130,7 @@ export async function setIncidentStatus(args: {
       before: existing,
       after: updated,
     });
-    await appendIncidentSlaBreaches(tx, ctx, existing, resolution, now);
+    await appendIncidentTargetBreaches(tx, ctx, existing, resolution, now);
     await appendIncidentEvent(tx, ctx, {
       incidentId: updated.id,
       ...eventFor(existing.status, input.status, input.note),

@@ -18,7 +18,7 @@ export function Breadcrumb() {
     retry: false,
   });
 
-  if (pathname === "/incidents/sla") {
+  if (pathname === "/incidents/targets") {
     return (
       <NavBreadcrumb
         items={[

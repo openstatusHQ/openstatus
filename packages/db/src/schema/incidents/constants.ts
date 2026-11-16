@@ -26,8 +26,8 @@ export const incidentEventType = [
   "postmortem_approved",
   "closed",
   "acknowledged",
-  "sla_response_breached",
-  "sla_resolution_breached",
+  "response_target_breached",
+  "resolution_target_breached",
   "reported_at_changed",
 ] as const;
 

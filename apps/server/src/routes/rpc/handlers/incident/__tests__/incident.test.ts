@@ -655,7 +655,7 @@ describe("IncidentService: SLA", () => {
       severity: "critical",
       declaredAt,
       startedAt: declaredAt,
-      slaSnapshot: {
+      targetSnapshot: {
         targets: { critical: { responseMinutes: 60, resolutionMinutes: 100 } },
         resolutionStop: "mitigated",
       },
@@ -687,7 +687,7 @@ describe("IncidentService: SLA", () => {
     const row = await createIncident(workspaceId, {
       title: `${TEST_PREFIX} minor tracked`,
       severity: "minor",
-      slaSnapshot: {
+      targetSnapshot: {
         targets: { critical: { responseMinutes: 60 } },
         resolutionStop: "mitigated",
       },

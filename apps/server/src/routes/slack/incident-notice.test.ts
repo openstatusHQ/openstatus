@@ -12,8 +12,8 @@ import {
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   declareIncident,
-  INCIDENT_SLA_NOTICE_ACKNOWLEDGE,
-  incidentSlaNoticeBlocks,
+  INCIDENT_TARGET_NOTICE_ACKNOWLEDGE,
+  incidentTargetNoticeBlocks,
 } from "@openstatus/services/incident";
 import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
 import { Hono } from "hono";
@@ -113,7 +113,7 @@ describe("Acknowledge on a response notice", () => {
     await db
       .update(incident)
       .set({
-        slaSnapshot: {
+        targetSnapshot: {
           targets: { critical: { responseMinutes: 60 } },
           resolutionStop: "mitigated",
         },
@@ -158,7 +158,7 @@ describe("Acknowledge on a response notice", () => {
       .where(eq(incident.id, incidentId))
       .get();
     if (!row) throw new Error("incident gone");
-    const { blocks } = incidentSlaNoticeBlocks({
+    const { blocks } = incidentTargetNoticeBlocks({
       incident: row,
       kind: "response",
       notice: "warning",
@@ -168,7 +168,7 @@ describe("Acknowledge on a response notice", () => {
     });
     const button = blocks
       .flatMap((block) => (block.type === "actions" ? block.elements : []))
-      .find((e) => e.action_id === INCIDENT_SLA_NOTICE_ACKNOWLEDGE);
+      .find((e) => e.action_id === INCIDENT_TARGET_NOTICE_ACKNOWLEDGE);
     if (!button) throw new Error("no Acknowledge button on the notice");
     return signAndPost(app, {
       type: "block_actions",
@@ -202,7 +202,7 @@ describe("Acknowledge on a response notice", () => {
     const blocks = JSON.stringify(update?.args.blocks);
     expect(update?.args.text).toContain("Response due soon");
     expect(blocks).toContain("Acknowledged by <@U_OWNER>");
-    expect(blocks).not.toContain("incident_sla_notice_acknowledge");
+    expect(blocks).not.toContain("incident_target_notice_acknowledge");
     expect(blocks).not.toContain("incident_card_update_status");
   });
 
@@ -218,6 +218,6 @@ describe("Acknowledge on a response notice", () => {
     expect(ephemeral?.args.text).toBe("This incident is already acknowledged.");
     const blocks = JSON.stringify(redrawn()?.args.blocks);
     expect(blocks).toContain("Acknowledged by someone else");
-    expect(blocks).not.toContain("incident_sla_notice_acknowledge");
+    expect(blocks).not.toContain("incident_target_notice_acknowledge");
   });
 });

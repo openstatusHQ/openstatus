@@ -133,7 +133,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/docs/reference/monitor-sla-policy",
-        destination: "/docs/reference/monitor-reporting",
+        destination: "/docs/reference/uptime-target",
+        permanent: true,
+      },
+      {
+        source: "/docs/reference/monitor-reporting",
+        destination: "/docs/reference/uptime-target",
         permanent: true,
       },
       {

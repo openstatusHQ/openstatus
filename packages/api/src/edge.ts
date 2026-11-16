@@ -6,14 +6,13 @@ import { externalServiceRouter } from "./router/externalService";
 import { feedbackRouter } from "./router/feedback";
 import { importRouter } from "./router/import";
 import { incidentRouter } from "./router/incident";
-import { incidentReportingRouter } from "./router/incidentReporting";
+import { incidentResponseTargetRouter } from "./router/incidentResponseTarget";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
 import { maintenanceWindowRouter } from "./router/maintenanceWindow";
 import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
 import { monitorIncidentRouter } from "./router/monitorIncident";
-import { monitorReportingRouter } from "./router/monitorReporting";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
 import { oauthRouter } from "./router/oauth";
@@ -25,6 +24,7 @@ import { statusPageRouter } from "./router/statusPage";
 import { statusReportRouter } from "./router/statusReport";
 import { tinybirdRouter } from "./router/tinybird";
 import { trackRouter } from "./router/track";
+import { uptimeTargetRouter } from "./router/uptimeTarget";
 import { userRouter } from "./router/user";
 import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
@@ -46,8 +46,8 @@ export const edgeRouter = createTRPCRouter({
   pageSubscriber: pageSubscriberRouter,
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,
-  monitorReporting: monitorReportingRouter,
-  incidentReporting: incidentReportingRouter,
+  uptimeTarget: uptimeTargetRouter,
+  incidentResponseTarget: incidentResponseTargetRouter,
   maintenance: maintenanceRouter,
   maintenanceWindow: maintenanceWindowRouter,
   member: memberRouter,

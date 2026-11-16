@@ -11,9 +11,9 @@ transaction where it needs a single atomic `db.batch()`, and a fail-closed
 `emitAudit` would roll back a real status transition because an audit insert
 failed. Do not "fix" it by routing it through a verb.
 
-Cross-workspace system jobs (`runUptimeFreeze`, `sealMonitorUptime`, `sealMonitorSlaMonths`,
-`claimMonitorSlaMissNotices`, `recordIncidentSlaBreaches`,
-`sendIncidentSlaNotices`) take an optional `db` instead of a `ctx` and skip scope checks.
+Cross-workspace system jobs (`runUptimeFreeze`, `sealMonitorUptime`, `sealUptimeTargetMonths`,
+`claimUptimeTargetMissNotices`, `recordIncidentTargetBreaches`,
+`sendIncidentTargetNotices`) take an optional `db` instead of a `ctx` and skip scope checks.
 
 ## Shape of a verb
 
@@ -55,9 +55,9 @@ a reason.
 
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
-monitor-incident, frozen-uptime, monitor-reporting, maintenance-window), `pages` (page, page-component,
+monitor-incident, frozen-uptime, uptime-target, maintenance-window), `pages` (page, page-component,
 page-component-group, import), `incidents` (status-report, incident,
-maintenance, incident-reporting), `notifications` and `subscribers` (page-subscriber). Workspace,
+maintenance, incident-response-target), `notifications` and `subscribers` (page-subscriber). Workspace,
 billing, members, invitations, API keys, OAuth, SSO and integrations require
 `admin`, which only the internal `*` token satisfies. "Write" means any DB
 mutation **or** side-effecting external call (probe, webhook, notification);

@@ -86,20 +86,20 @@ export const entityKinds = {
     // Notifiers are edited in a sheet on the list; there is no detail page.
     href: () => "/notifications",
   },
-  monitorReporting: {
-    label: "Reporting",
+  uptimeTarget: {
+    label: "Uptime target",
     icon: Reporting,
-    fields: ["monitorSlaPolicyId"],
-    auditType: "monitor_sla_policy",
-    href: (policy: { id: number }) => `/reportings/${policy.id}/overview`,
+    fields: ["uptimeTargetId"],
+    auditType: "uptime_target",
+    href: (policy: { id: number }) => `/reports/${policy.id}/overview`,
   },
-  monitorSlaExcusedWindow: {
+  uptimeTargetExcusedWindow: {
     label: "Excused window",
     icon: Shield,
     fields: [],
-    auditType: "monitor_sla_excused_window",
+    auditType: "uptime_target_excused_window",
     href: (window: { policy: { id: number } }) =>
-      `/reportings/${window.policy.id}/overview`,
+      `/reports/${window.policy.id}/overview`,
   },
   maintenanceWindow: {
     label: "Maintenance window",
@@ -108,12 +108,12 @@ export const entityKinds = {
     auditType: "monitor_maintenance_window",
     href: () => "/maintenance-windows",
   },
-  incidentReporting: {
-    label: "Response targets",
+  incidentResponseTarget: {
+    label: "Incident response targets",
     icon: Reporting,
     fields: [],
-    auditType: "incident_sla_policy",
-    href: () => "/incidents/sla",
+    auditType: "incident_response_target",
+    href: () => "/incidents/targets",
   },
 } as const satisfies Record<string, EntityKindConfig>;
 

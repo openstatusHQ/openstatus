@@ -168,37 +168,37 @@ export const Events = {
     name: "private_location_deleted",
     channel: "private_location",
   },
-  CreateMonitorReporting: {
-    name: "monitor_reporting_created",
-    channel: "reporting",
+  CreateUptimeTarget: {
+    name: "uptime_target_created",
+    channel: "uptime_target",
   },
-  UpdateMonitorReporting: {
-    name: "monitor_reporting_updated",
-    channel: "reporting",
+  UpdateUptimeTarget: {
+    name: "uptime_target_updated",
+    channel: "uptime_target",
   },
-  ArchiveMonitorReporting: {
-    name: "monitor_reporting_archived",
-    channel: "reporting",
+  ArchiveUptimeTarget: {
+    name: "uptime_target_archived",
+    channel: "uptime_target",
   },
-  DeleteMonitorReporting: {
-    name: "monitor_reporting_deleted",
-    channel: "reporting",
+  DeleteUptimeTarget: {
+    name: "uptime_target_deleted",
+    channel: "uptime_target",
   },
-  AddMonitorReportingExcusedWindow: {
-    name: "monitor_reporting_excused_window_added",
-    channel: "reporting",
+  AddUptimeTargetExcusedWindow: {
+    name: "uptime_target_excused_window_added",
+    channel: "uptime_target",
   },
-  RemoveMonitorReportingExcusedWindow: {
-    name: "monitor_reporting_excused_window_removed",
-    channel: "reporting",
+  RemoveUptimeTargetExcusedWindow: {
+    name: "uptime_target_excused_window_removed",
+    channel: "uptime_target",
   },
-  SaveIncidentReporting: {
-    name: "incident_reporting_saved",
-    channel: "reporting",
+  SaveIncidentResponseTarget: {
+    name: "incident_response_target_saved",
+    channel: "incident",
   },
-  DeleteIncidentReporting: {
-    name: "incident_reporting_deleted",
-    channel: "reporting",
+  DeleteIncidentResponseTarget: {
+    name: "incident_response_target_deleted",
+    channel: "incident",
   },
   AcknowledgeIncident: {
     name: "incident_acknowledged",

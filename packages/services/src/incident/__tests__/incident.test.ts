@@ -36,7 +36,7 @@ import type { Workspace } from "../../types";
 import {
   addIncidentNote,
   allowedTransitions,
-  bindIncidentSlackChannel,
+  bindIncidentTargetckChannel,
   closeIncident,
   declareIncident,
   deleteIncident,
@@ -47,7 +47,7 @@ import {
   listAllIncidents,
   listIncidents,
   setIncidentStatus,
-  unbindIncidentSlackChannel,
+  unbindIncidentTargetckChannel,
   unlinkIncidentStatusReport,
   toIncidentView,
   updateIncident,
@@ -617,13 +617,13 @@ describe("slack channel binding", () => {
       const ctx = as(memberId, tx);
       const first = await declare(tx);
       const second = await declare(tx);
-      const bound = await bindIncidentSlackChannel({
+      const bound = await bindIncidentTargetckChannel({
         ctx,
         input: { id: first.id, teamId: "T1", channelId: "C_INC" },
       });
       expect(bound.slackChannelId).toBe("C_INC");
       await expect(
-        bindIncidentSlackChannel({
+        bindIncidentTargetckChannel({
           ctx,
           input: { id: second.id, teamId: "T1", channelId: "C_INC" },
         }),
@@ -632,7 +632,7 @@ describe("slack channel binding", () => {
         ctx,
         input: { id: first.id, status: "canceled" },
       });
-      const unbound = await unbindIncidentSlackChannel({
+      const unbound = await unbindIncidentTargetckChannel({
         ctx,
         input: { id: first.id },
       });
@@ -647,12 +647,12 @@ describe("slack channel moves", () => {
     await withTestTransaction(async (tx) => {
       const ctx = as(memberId, tx);
       const row = await declare(tx);
-      await bindIncidentSlackChannel({
+      await bindIncidentTargetckChannel({
         ctx,
         input: { id: row.id, teamId: "T1", channelId: "C_OTHER" },
       });
       await expect(
-        bindIncidentSlackChannel({
+        bindIncidentTargetckChannel({
           ctx,
           input: {
             id: row.id,
@@ -669,11 +669,11 @@ describe("slack channel moves", () => {
     await withTestTransaction(async (tx) => {
       const ctx = as(memberId, tx);
       const row = await declare(tx);
-      await bindIncidentSlackChannel({
+      await bindIncidentTargetckChannel({
         ctx,
         input: { id: row.id, teamId: "T1", channelId: "C_NEW" },
       });
-      const moved = await bindIncidentSlackChannel({
+      const moved = await bindIncidentTargetckChannel({
         ctx,
         input: { id: row.id, teamId: "T1", channelId: "C_SOURCE" },
       });

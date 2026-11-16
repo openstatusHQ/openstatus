@@ -14,9 +14,9 @@ import {
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
 import {
-  getIncidentReporting,
-  upsertIncidentReporting,
-} from "../../incident-reporting";
+  getIncidentResponseTarget,
+  upsertIncidentResponseTarget,
+} from "../../incident-response-target";
 import { addStatusReportUpdate } from "../../status-report";
 import type { Workspace } from "../../types";
 import {
@@ -53,7 +53,7 @@ function savePolicy(
   tx: DB,
   responseMet: "acknowledged" | "status_report" = "status_report",
 ) {
-  return upsertIncidentReporting({
+  return upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: { targets, resolutionStop: "resolved", responseMet },
   });
@@ -104,13 +104,13 @@ function postUpdate(tx: DB, statusReportId: number, date?: Date) {
 describe("the policy choice", () => {
   test("defaults to acknowledgement and is saved with the policy", async () => {
     await withTestTransaction(async (tx) => {
-      const created = await upsertIncidentReporting({
+      const created = await upsertIncidentResponseTarget({
         ctx: owner(tx),
         input: { targets },
       });
       expect(created.responseMet).toBe("acknowledged");
       await savePolicy(tx);
-      const saved = await getIncidentReporting({ ctx: owner(tx) });
+      const saved = await getIncidentResponseTarget({ ctx: owner(tx) });
       expect(saved?.responseMet).toBe("status_report");
     });
   });
@@ -124,7 +124,7 @@ describe("the policy choice", () => {
       });
       await savePolicy(tx, "acknowledged");
       const row = await read(tx, declared.id);
-      expect(row.slaSnapshot?.responseMet).toBe("status_report");
+      expect(row.targetSnapshot?.responseMet).toBe("status_report");
       expect(row.sla?.responseMet).toBe("status_report");
     });
   });
@@ -138,7 +138,7 @@ describe("the policy choice", () => {
       });
       await tx
         .update(incident)
-        .set({ slaSnapshot: { targets, resolutionStop: "resolved" } })
+        .set({ targetSnapshot: { targets, resolutionStop: "resolved" } })
         .where(eq(incident.id, declared.id));
       await acknowledgeIncident({
         ctx: apiKey(tx),
@@ -362,7 +362,9 @@ describe("with status_report, a report update meets the response", () => {
         ctx: owner(tx),
         input: { id: declared.id },
       });
-      const breach = events.filter((e) => e.type === "sla_response_breached");
+      const breach = events.filter(
+        (e) => e.type === "response_target_breached",
+      );
       expect(breach.map((e) => e.createdAt)).toEqual([due]);
       expect(breach[0]?.source).toBe("system");
     });

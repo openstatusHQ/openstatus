@@ -210,7 +210,7 @@ describe("incident agent tools", () => {
         .update(incident)
         .set({
           declaredAt,
-          slaSnapshot: {
+          targetSnapshot: {
             targets: {
               critical: { responseMinutes: 60, resolutionMinutes: 100 },
             },

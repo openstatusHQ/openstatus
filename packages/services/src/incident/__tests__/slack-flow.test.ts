@@ -22,7 +22,7 @@ import {
   INCIDENT_CARD_ACTIONS,
   incidentChannelName,
   listIncidentEvents,
-  openIncidentSlackChannel,
+  openIncidentTargetckChannel,
   type SlackIncidentClient,
 } from "../index";
 
@@ -152,7 +152,7 @@ describe("incidentChannelName", () => {
   });
 });
 
-describe("openIncidentSlackChannel", () => {
+describe("openIncidentTargetckChannel", () => {
   test("creates, invites only the declarer, pins and binds", async () => {
     await withTestTransaction(async (tx) => {
       await connectSlack(tx, "T_FLOW", SLACK_BOT_SCOPES.join(","));
@@ -167,7 +167,7 @@ describe("openIncidentSlackChannel", () => {
         emails: { [ownerEmail]: "U_OWNER", [memberEmail]: "U_MEMBER" },
       });
 
-      const result = await openIncidentSlackChannel({
+      const result = await openIncidentTargetckChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -209,7 +209,7 @@ describe("openIncidentSlackChannel", () => {
         emails: { [memberEmail]: "U_MEMBER" },
       });
 
-      await openIncidentSlackChannel({
+      await openIncidentTargetckChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -231,7 +231,7 @@ describe("openIncidentSlackChannel", () => {
         input: { title: "x", severity: "minor" },
       });
       const { client, calls } = fakeSlack();
-      const result = await openIncidentSlackChannel({
+      const result = await openIncidentTargetckChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -256,7 +256,7 @@ describe("openIncidentSlackChannel", () => {
           data: { error: "restricted_action" },
         });
       };
-      const result = await openIncidentSlackChannel({
+      const result = await openIncidentTargetckChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -282,14 +282,14 @@ describe("openIncidentSlackChannel", () => {
         input: { title: "second", severity: "minor" },
       });
       const { client } = fakeSlack();
-      await openIncidentSlackChannel({
+      await openIncidentTargetckChannel({
         ctx,
         incidentId: first.id,
         clientFor: () => client,
         dashboardUrl: "https://app.test",
       });
       const { client: again, calls } = fakeSlack();
-      const result = await openIncidentSlackChannel({
+      const result = await openIncidentTargetckChannel({
         ctx,
         incidentId: second.id,
         clientFor: () => again,
@@ -313,7 +313,7 @@ describe("announceIncidentChange", () => {
       input: { title: "x", severity: "minor" },
     });
     const { client } = fakeSlack();
-    await openIncidentSlackChannel({
+    await openIncidentTargetckChannel({
       ctx,
       incidentId: inc.id,
       clientFor: () => client,
@@ -360,7 +360,7 @@ describe("announceIncidentChange", () => {
 describe("headerBlocks", () => {
   const untracked = {
     declaredAt: new Date("2026-11-11T10:00:00Z"),
-    slaSnapshot: null,
+    targetSnapshot: null,
     responseMetAt: null,
     responseBreachDueAt: null,
     acknowledgedAt: null,
@@ -373,7 +373,7 @@ describe("headerBlocks", () => {
     status: "open" as const,
     summary: null,
     closedAt: null,
-    slaSnapshot: {
+    targetSnapshot: {
       targets: { critical: { responseMinutes: 60 } },
       resolutionStop: "mitigated" as const,
     },
@@ -407,12 +407,15 @@ describe("headerBlocks", () => {
       expect(actionIdsOf(incident)).not.toContain(
         INCIDENT_CARD_ACTIONS.acknowledge,
       );
-    noAck({ ...tracked, slaSnapshot: null });
+    noAck({ ...tracked, targetSnapshot: null });
     noAck({ ...tracked, acknowledgedAt: new Date() });
     noAck({ ...tracked, status: "resolved", closedAt: new Date() });
     noAck({
       ...tracked,
-      slaSnapshot: { ...tracked.slaSnapshot, responseMet: "status_report" },
+      targetSnapshot: {
+        ...tracked.targetSnapshot,
+        responseMet: "status_report",
+      },
     });
   });
 

@@ -3,9 +3,9 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
   incidentAwaitsAcknowledgement,
-  incidentSlaHeadline,
-  incidentSlaState,
-} from "@openstatus/db/src/schema/incident_sla_policies/state";
+  incidentTargetHeadline,
+  incidentTargetState,
+} from "@openstatus/db/src/schema/incident_response_targets/state";
 import { Acknowledge, Check, Close, Reset } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { personName } from "@openstatus/utils";
@@ -45,7 +45,7 @@ import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { IncidentAcknowledgeButton } from "./incident-acknowledge-button";
-import { IncidentSlaBadge } from "./incident-sla-badge";
+import { IncidentTargetBadge } from "./incident-target-badge";
 import { ResolveReportDialog } from "./resolve-report-dialog";
 
 type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
@@ -152,7 +152,9 @@ export function IncidentRow({
         </EventRowTitle>
         <EventRowMeta>
           {/* first, so it is the item that survives a narrow row */}
-          {incident.slaSnapshot ? <IncidentRowSla incident={incident} /> : null}
+          {incident.targetSnapshot ? (
+            <IncidentRowSla incident={incident} />
+          ) : null}
           {meta
             .filter((item) => item !== null)
             .map((item) => (
@@ -235,16 +237,16 @@ export function IncidentRow({
 // its own component so only tracked rows tick
 function IncidentRowSla({ incident }: { incident: Incident }) {
   const now = useNow(30_000);
-  const sla = incidentSlaState(incident, now);
-  const headline = sla ? incidentSlaHeadline(sla) : null;
+  const sla = incidentTargetState(incident, now);
+  const headline = sla ? incidentTargetHeadline(sla) : null;
   if (!headline) return null;
   return (
-    <IncidentSlaBadge
+    <IncidentTargetBadge
       timer={headline.timer}
       kind={headline.kind}
       now={now}
       // folded, the row keeps the time and drops the name
-      className="@max-3xl:[&>[data-slot=incident-sla-kind]]:hidden"
+      className="@max-3xl:[&>[data-slot=incident-target-kind]]:hidden"
     />
   );
 }

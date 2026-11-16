@@ -1,5 +1,5 @@
 import { eq } from "@openstatus/db";
-import { incident, incidentSlaPolicy } from "@openstatus/db/src/schema";
+import { incident, incidentResponseTarget } from "@openstatus/db/src/schema";
 import {
   addUserToWorkspace,
   createUser,
@@ -14,9 +14,9 @@ import {
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
 import {
-  deleteIncidentReporting,
-  upsertIncidentReporting,
-} from "../../incident-reporting";
+  deleteIncidentResponseTarget,
+  upsertIncidentResponseTarget,
+} from "../../incident-response-target";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
@@ -59,7 +59,7 @@ const targets = {
 };
 
 function savePolicy(tx: DB) {
-  return upsertIncidentReporting({
+  return upsertIncidentResponseTarget({
     ctx: owner(tx),
     input: { targets, resolutionStop: "resolved" },
   });
@@ -93,7 +93,7 @@ describe("the snapshot at declare", () => {
     await withTestTransaction(async (tx) => {
       await savePolicy(tx);
       const declared = await declareByKey(tx);
-      expect(declared.slaSnapshot).toEqual({
+      expect(declared.targetSnapshot).toEqual({
         targets,
         resolutionStop: "resolved",
         responseMet: "acknowledged",
@@ -104,14 +104,14 @@ describe("the snapshot at declare", () => {
   test("is absent without a policy", async () => {
     await withTestTransaction(async (tx) => {
       const declared = await declareByKey(tx);
-      expect(declared.slaSnapshot).toBeNull();
+      expect(declared.targetSnapshot).toBeNull();
       expect((await view(tx, declared.id)).sla).toBeNull();
     });
   });
 
   test("is absent with the limit off, even with a policy row", async () => {
     await withTestTransaction(async (tx) => {
-      await tx.insert(incidentSlaPolicy).values({
+      await tx.insert(incidentResponseTarget).values({
         workspaceId: free.id,
         targets,
         resolutionStop: "mitigated",
@@ -120,7 +120,7 @@ describe("the snapshot at declare", () => {
         ctx: withDb(makeUserCtx(free, { userId: freeOwnerId }), tx),
         input: { title: "Down", severity: "critical" },
       });
-      expect(declared.slaSnapshot).toBeNull();
+      expect(declared.targetSnapshot).toBeNull();
       expect(declared.responseMetAt).toBeNull();
     });
   });
@@ -129,13 +129,13 @@ describe("the snapshot at declare", () => {
     await withTestTransaction(async (tx) => {
       await savePolicy(tx);
       const declared = await declareByKey(tx);
-      await upsertIncidentReporting({
+      await upsertIncidentResponseTarget({
         ctx: owner(tx),
         input: { targets: { critical: { responseMinutes: 5 } } },
       });
-      await deleteIncidentReporting({ ctx: owner(tx) });
+      await deleteIncidentResponseTarget({ ctx: owner(tx) });
       const row = await view(tx, declared.id);
-      expect(row.slaSnapshot).toEqual({
+      expect(row.targetSnapshot).toEqual({
         targets,
         resolutionStop: "resolved",
         responseMet: "acknowledged",

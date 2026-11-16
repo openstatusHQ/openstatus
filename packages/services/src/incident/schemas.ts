@@ -96,15 +96,15 @@ export type ListIncidentEventsInput = z.infer<typeof ListIncidentEventsInput>;
 export const GetIncidentEventInput = IncidentIdInput.extend({ eventId: id });
 export type GetIncidentEventInput = z.infer<typeof GetIncidentEventInput>;
 
-export const BindIncidentSlackChannelInput = z.object({
+export const BindIncidentTargetckChannelInput = z.object({
   id,
   teamId: z.string().min(1),
   channelId: z.string().min(1),
   /** Only move the incident if it is still bound to this channel. */
   expectedChannelId: z.string().min(1).optional(),
 });
-export type BindIncidentSlackChannelInput = z.infer<
-  typeof BindIncidentSlackChannelInput
+export type BindIncidentTargetckChannelInput = z.infer<
+  typeof BindIncidentTargetckChannelInput
 >;
 
 export const ListIncidentsInput = z.object({

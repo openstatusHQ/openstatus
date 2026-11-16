@@ -4,10 +4,10 @@ import IncidentCommanderEmail, {
   type IncidentCommanderProps,
   incidentCommanderSubject,
 } from "../emails/incident-commander";
-import IncidentSlaNoticeEmail, {
-  type IncidentSlaNoticeProps,
-  incidentSlaNoticeSubject,
-} from "../emails/incident-sla-notice";
+import IncidentTargetNoticeEmail, {
+  type IncidentTargetNoticeProps,
+  incidentTargetNoticeSubject,
+} from "../emails/incident-target-notice";
 import { sendEmail } from "./send";
 
 const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
@@ -32,8 +32,8 @@ export async function sendIncidentCommander(
 const RESEND_MAX_RECIPIENTS = 50;
 
 /** One email per 50 recipients; sends only in production. Returns the first Resend id, throws on a Resend error. */
-export async function sendIncidentSlaNotice(
-  req: IncidentSlaNoticeProps & { to: string[]; idempotencyKey: string },
+export async function sendIncidentTargetNotice(
+  req: IncidentTargetNoticeProps & { to: string[]; idempotencyKey: string },
 ) {
   const { to, idempotencyKey, ...props } = req;
   let first: string | undefined;
@@ -43,8 +43,8 @@ export async function sendIncidentSlaNotice(
         from: SYSTEM_FROM,
         reply_to: SUPPORT_EMAIL,
         to: to.slice(i, i + RESEND_MAX_RECIPIENTS),
-        subject: incidentSlaNoticeSubject(props),
-        react: <IncidentSlaNoticeEmail {...props} />,
+        subject: incidentTargetNoticeSubject(props),
+        react: <IncidentTargetNoticeEmail {...props} />,
       },
       {
         idempotencyKey: `${idempotencyKey}:${i / RESEND_MAX_RECIPIENTS}`,

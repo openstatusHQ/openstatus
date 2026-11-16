@@ -339,7 +339,7 @@ test("an update meets the response of an incident that counts status report upda
     .get();
   const tracked = await createIncident(workspace.id, {
     statusReportId: report.id,
-    slaSnapshot: {
+    targetSnapshot: {
       targets: { major: { responseMinutes: 60 } },
       resolutionStop: "resolved",
       responseMet: "status_report",
