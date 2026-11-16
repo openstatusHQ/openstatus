@@ -5,7 +5,7 @@ import { sendIncidentCommander } from "@openstatus/emails";
 import {
   AddIncidentNoteInput,
   ApprovePostmortemInput,
-  BindIncidentTargetsckChannelInput,
+  BindIncidentSlackChannelInput,
   CloseIncidentInput,
   DeclareIncidentInput,
   DraftPostmortemInput,
@@ -26,7 +26,7 @@ import {
   afterIncidentStatusChanged,
   afterIncidentUpdated,
   afterPostmortemApproved,
-  bindIncidentTargetsckChannel,
+  bindIncidentSlackChannel,
   closeIncident,
   declareIncident,
   deleteIncident,
@@ -42,7 +42,7 @@ import {
   incidentEffects,
   resolveDashboardUrl,
   setIncidentStatus,
-  unbindIncidentTargetsckChannel,
+  unbindIncidentSlackChannel,
   unlinkIncidentStatusReport,
   updateIncident,
 } from "@openstatus/services/incident";
@@ -276,10 +276,10 @@ export const incidentRouter = createTRPCRouter({
     }),
 
   bindSlackChannel: protectedProcedure
-    .input(BindIncidentTargetsckChannelInput)
+    .input(BindIncidentSlackChannelInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await bindIncidentTargetsckChannel({
+        return await bindIncidentSlackChannel({
           ctx: toServiceCtx(ctx),
           input,
         });
@@ -292,7 +292,7 @@ export const incidentRouter = createTRPCRouter({
     .input(IncidentIdInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await unbindIncidentTargetsckChannel({
+        return await unbindIncidentSlackChannel({
           ctx: toServiceCtx(ctx),
           input,
         });

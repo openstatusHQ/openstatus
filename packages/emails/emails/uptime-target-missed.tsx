@@ -61,7 +61,7 @@ const UptimeTargetMissedEmail = (props: UptimeTargetMissedProps) => {
       footer={<Footer reason="You get this because you own this workspace." />}
     >
       <Heading title={uptimeTargetMissedSubject(props)}>
-        {`${month} is sealed for this uptime target in ${props.workspaceName}, and ${props.monitors.length === 1 ? "this monitor" : "these monitors"} finished below target. A sealed month keeps the counts and terms it was sealed with; editing the uptime target no longer changes it.`}
+        {`${month} is sealed for this uptime target in ${props.workspaceName}, and ${props.monitors.length === 1 ? "this monitor" : "these monitors"} finished below target. A sealed month keeps the figures and terms it was sealed with; editing the uptime target no longer changes it.`}
       </Heading>
       <KeyValue
         rows={props.monitors.map((m) => ({

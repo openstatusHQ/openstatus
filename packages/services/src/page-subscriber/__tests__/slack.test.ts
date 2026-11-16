@@ -17,12 +17,12 @@ let PAGE_ID: number;
 let WORKSPACE_ID: number;
 const TEAM_ID = "T_SLACK_TEST";
 const CHANNELS = {
-  create: "C_TARGETSCK_CREATE",
-  dedup: "C_TARGETSCK_DEDUP",
-  reactivate: "C_TARGETSCK_REACTIVATE",
-  remove: "C_TARGETSCK_REMOVE",
-  list: "C_TARGETSCK_LIST",
-  protected: "C_TARGETSCK_PROTECTED",
+  create: "C_SLACK_CREATE",
+  dedup: "C_SLACK_DEDUP",
+  reactivate: "C_SLACK_REACTIVATE",
+  remove: "C_SLACK_REMOVE",
+  list: "C_SLACK_LIST",
+  protected: "C_SLACK_PROTECTED",
 };
 
 async function cleanAll() {
@@ -179,7 +179,7 @@ describe("removeSlackSubscriber", () => {
       input: {
         pageId: PAGE_ID,
         teamId: TEAM_ID,
-        channelId: "C_TARGETSCK_NEVER",
+        channelId: "C_SLACK_NEVER",
       },
     });
     expect(result.removed).toBe(false);

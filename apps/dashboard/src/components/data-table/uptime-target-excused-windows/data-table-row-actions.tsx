@@ -51,7 +51,7 @@ export function DataTableRowActions({
       deleteAction={{
         confirmationValue: "remove window",
         description:
-          "Its checks count again for every monitor in the uptime target. This cannot be undone.",
+          "Its checks count again for the monitors in this window. This cannot be undone.",
         submitAction: async () => {
           await removeMutation.mutateAsync({ id: excused.id });
         },

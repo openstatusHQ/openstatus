@@ -14,7 +14,7 @@ import {
 } from "../integration/slack-connection";
 import { createSlackUserMapping } from "../slack-user/create";
 import { getIncidentInWorkspace } from "./internal";
-import { bindIncidentTargetsckChannel } from "./slack-channel";
+import { bindIncidentSlackChannel } from "./slack-channel";
 
 type SlackText = { type: "mrkdwn" | "plain_text"; text: string };
 export type SlackIncidentBlock =
@@ -203,7 +203,7 @@ export type OpenChannelResult =
  * invite the declarer (others join themselves), topic, pinned header card,
  * bind. If binding fails twice the channel gets a "link this channel" card.
  */
-export async function openIncidentTargetsckChannel(args: {
+export async function openIncidentSlackChannel(args: {
   ctx: ServiceContext;
   incidentId: number;
   clientFor: SlackClientFactory;
@@ -273,7 +273,7 @@ export async function openIncidentTargetsckChannel(args: {
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await bindIncidentTargetsckChannel({
+      await bindIncidentSlackChannel({
         ctx: system,
         input: { id: incident.id, teamId: connection.teamId, channelId },
       });

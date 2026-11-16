@@ -17,7 +17,7 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const policyId = Number(id);
+  const policyId = Number.parseInt(id);
   if (!Number.isInteger(policyId) || policyId <= 0) notFound();
 
   const queryClient = getQueryClient();

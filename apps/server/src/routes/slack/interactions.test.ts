@@ -23,7 +23,7 @@ import {
   createUser,
 } from "@openstatus/db/src/test/factories";
 import {
-  bindIncidentTargetsckChannel,
+  bindIncidentSlackChannel,
   declareIncident,
 } from "@openstatus/services/incident";
 import { SLACK_BOT_SCOPES } from "@openstatus/services/integration";
@@ -2418,7 +2418,7 @@ describe("link this channel instead", () => {
       ctx,
       input: { title: `Relink ${crypto.randomUUID()}`, severity: "major" },
     });
-    await bindIncidentTargetsckChannel({
+    await bindIncidentSlackChannel({
       ctx,
       input: { id: created.id, teamId: "T_KNOWN", channelId },
     });

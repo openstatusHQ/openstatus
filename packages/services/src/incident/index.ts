@@ -78,7 +78,7 @@ export {
   ApprovePostmortemInput,
   CloseIncidentInput,
   DraftPostmortemInput,
-  BindIncidentTargetsckChannelInput,
+  BindIncidentSlackChannelInput,
   DeclareIncidentInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
@@ -93,8 +93,8 @@ export {
 } from "@openstatus/db/src/schema/incidents/constants";
 export { setIncidentStatus } from "./set-status";
 export {
-  bindIncidentTargetsckChannel,
-  unbindIncidentTargetsckChannel,
+  bindIncidentSlackChannel,
+  unbindIncidentSlackChannel,
 } from "./slack-channel";
 export {
   announceIncidentChange,
@@ -105,7 +105,7 @@ export {
   incidentChannelName,
   incidentSlackReady,
   type OpenChannelResult,
-  openIncidentTargetsckChannel,
+  openIncidentSlackChannel,
   type SlackClientFactory,
   type SlackIncidentBlock,
   type SlackIncidentClient,

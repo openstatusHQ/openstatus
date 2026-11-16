@@ -10,13 +10,13 @@ import {
   afterIncidentStatusChanged,
   afterPostmortemApproved,
   announceIncidentChange,
-  bindIncidentTargetsckChannel,
+  bindIncidentSlackChannel,
   getIncident,
   headerBlocks,
   type IncidentEffects,
   incidentEffects,
   type OpenChannelResult,
-  openIncidentTargetsckChannel,
+  openIncidentSlackChannel,
   type SlackClientFactory,
 } from "@openstatus/services/incident";
 import { type KnownBlock, WebClient } from "@slack/web-api";
@@ -239,7 +239,7 @@ export async function onIncidentDeclared(
     },
   );
   const result = (incident === undefined
-    ? await openIncidentTargetsckChannel({
+    ? await openIncidentSlackChannel({
         ctx,
         incidentId,
         clientFor: effects.clientFor,
@@ -442,7 +442,7 @@ export async function bindChannelFromButton(args: {
     return;
   }
   try {
-    await bindIncidentTargetsckChannel({
+    await bindIncidentSlackChannel({
       ctx: { workspace: resolved.workspace, actor },
       input: { id: incidentId, teamId, channelId },
     });
@@ -525,9 +525,9 @@ export async function relinkIncidentChannel(args: {
     );
     return;
   }
-  let moved: Awaited<ReturnType<typeof bindIncidentTargetsckChannel>>;
+  let moved: Awaited<ReturnType<typeof bindIncidentSlackChannel>>;
   try {
-    moved = await bindIncidentTargetsckChannel({
+    moved = await bindIncidentSlackChannel({
       ctx,
       input: { id: incidentId, teamId, channelId, expectedChannelId: from },
     });

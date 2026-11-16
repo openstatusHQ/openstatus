@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-/** Refetches the maintenance and every maintenance list. */
+/** Refetches the maintenance, every maintenance list and the window lists that show its link. */
 export function useInvalidateMaintenance(id: number) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -16,6 +16,9 @@ export function useInvalidateMaintenance(id: number) {
       }),
       queryClient.invalidateQueries({
         queryKey: trpc.maintenance.list.queryKey(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: trpc.maintenanceWindow.list.queryKey(),
       }),
     ]);
 }

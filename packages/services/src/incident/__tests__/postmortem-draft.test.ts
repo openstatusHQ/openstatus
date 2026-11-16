@@ -11,7 +11,7 @@ import { ConflictError, ForbiddenError } from "../../errors";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
 import {
-  bindIncidentTargetsckChannel,
+  bindIncidentSlackChannel,
   collectChannelTranscript,
   declareIncident,
   generatePostmortemDraft,
@@ -244,7 +244,7 @@ async function resolvedIncident(tx: DB, ctx: ServiceContext, bound: boolean) {
       credential: { botToken: "xoxb-test", botUserId: "UBOT" },
       data: { teamId: "T_PM", scopes: SLACK_BOT_SCOPES.join(",") },
     });
-    await bindIncidentTargetsckChannel({
+    await bindIncidentSlackChannel({
       ctx,
       input: { id: row.id, teamId: "T_PM", channelId: "C_PM" },
     });

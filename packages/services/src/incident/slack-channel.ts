@@ -10,15 +10,15 @@ import {
   assertNotClosed,
   getIncidentInWorkspace,
 } from "./internal";
-import { BindIncidentTargetsckChannelInput, IncidentIdInput } from "./schemas";
+import { BindIncidentSlackChannelInput, IncidentIdInput } from "./schemas";
 
-export async function bindIncidentTargetsckChannel(args: {
+export async function bindIncidentSlackChannel(args: {
   ctx: ServiceContext;
-  input: BindIncidentTargetsckChannelInput;
+  input: BindIncidentSlackChannelInput;
 }): Promise<Incident> {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
-  const input = BindIncidentTargetsckChannelInput.parse(args.input);
+  const input = BindIncidentSlackChannelInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getIncidentInWorkspace(
@@ -89,7 +89,7 @@ export async function bindIncidentTargetsckChannel(args: {
 }
 
 /** Allowed on a closed incident: it runs when its channel is archived. */
-export async function unbindIncidentTargetsckChannel(args: {
+export async function unbindIncidentSlackChannel(args: {
   ctx: ServiceContext;
   input: IncidentIdInput;
 }): Promise<Incident> {

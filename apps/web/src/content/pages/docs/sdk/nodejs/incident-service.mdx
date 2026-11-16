@@ -154,7 +154,7 @@ await client.incident.v1.IncidentService.updateIncident({
 
 Fields you leave out are kept. Use `clearCommander`, `clearSummary` and `clearReportedAt` to remove a value. Sending a value together with its clear flag is rejected.
 
-A new `reportedAt` must lie between 30 days before the declare and the declare. It moves the due time of targets that are still open; met and missed targets keep their verdict. The update interval keeps counting from the declare.
+A new `reportedAt` must lie between 30 days before the declare and the declare. It moves the due time of targets that are still open; met and missed targets keep their verdict.
 
 ## Link a Status Report
 

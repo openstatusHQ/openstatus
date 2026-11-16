@@ -181,7 +181,7 @@ function ExcusedWindowForm({
         : defaultWindow()),
       kind: prefill?.kind ?? "maintenance",
       reason: prefill?.reason ?? "",
-      monitorIds: prefilled?.length ? prefilled : [...memberIds],
+      monitorIds: prefilled ?? [...memberIds],
     },
   });
   const kind = useWatch({ control: form.control, name: "kind" });

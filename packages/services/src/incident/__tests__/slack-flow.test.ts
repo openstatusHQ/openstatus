@@ -22,7 +22,7 @@ import {
   INCIDENT_CARD_ACTIONS,
   incidentChannelName,
   listIncidentEvents,
-  openIncidentTargetsckChannel,
+  openIncidentSlackChannel,
   type SlackIncidentClient,
 } from "../index";
 
@@ -152,7 +152,7 @@ describe("incidentChannelName", () => {
   });
 });
 
-describe("openIncidentTargetsckChannel", () => {
+describe("openIncidentSlackChannel", () => {
   test("creates, invites only the declarer, pins and binds", async () => {
     await withTestTransaction(async (tx) => {
       await connectSlack(tx, "T_FLOW", SLACK_BOT_SCOPES.join(","));
@@ -167,7 +167,7 @@ describe("openIncidentTargetsckChannel", () => {
         emails: { [ownerEmail]: "U_OWNER", [memberEmail]: "U_MEMBER" },
       });
 
-      const result = await openIncidentTargetsckChannel({
+      const result = await openIncidentSlackChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -209,7 +209,7 @@ describe("openIncidentTargetsckChannel", () => {
         emails: { [memberEmail]: "U_MEMBER" },
       });
 
-      await openIncidentTargetsckChannel({
+      await openIncidentSlackChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -231,7 +231,7 @@ describe("openIncidentTargetsckChannel", () => {
         input: { title: "x", severity: "minor" },
       });
       const { client, calls } = fakeSlack();
-      const result = await openIncidentTargetsckChannel({
+      const result = await openIncidentSlackChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -256,7 +256,7 @@ describe("openIncidentTargetsckChannel", () => {
           data: { error: "restricted_action" },
         });
       };
-      const result = await openIncidentTargetsckChannel({
+      const result = await openIncidentSlackChannel({
         ctx,
         incidentId: inc.id,
         clientFor: () => client,
@@ -282,14 +282,14 @@ describe("openIncidentTargetsckChannel", () => {
         input: { title: "second", severity: "minor" },
       });
       const { client } = fakeSlack();
-      await openIncidentTargetsckChannel({
+      await openIncidentSlackChannel({
         ctx,
         incidentId: first.id,
         clientFor: () => client,
         dashboardUrl: "https://app.test",
       });
       const { client: again, calls } = fakeSlack();
-      const result = await openIncidentTargetsckChannel({
+      const result = await openIncidentSlackChannel({
         ctx,
         incidentId: second.id,
         clientFor: () => again,
@@ -313,7 +313,7 @@ describe("announceIncidentChange", () => {
       input: { title: "x", severity: "minor" },
     });
     const { client } = fakeSlack();
-    await openIncidentTargetsckChannel({
+    await openIncidentSlackChannel({
       ctx,
       incidentId: inc.id,
       clientFor: () => client,
