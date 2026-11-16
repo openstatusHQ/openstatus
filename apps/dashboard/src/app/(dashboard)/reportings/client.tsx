@@ -126,7 +126,7 @@ export function Client() {
       <TooltipContent>
         {roleError
           ? "Could not check your role. Reload to try again."
-          : "Only owners and admins can create an uptime target."}
+          : "Only owners and admins can create a report."}
       </TooltipContent>
     </Tooltip>
   ) : (
@@ -142,7 +142,7 @@ export function Client() {
       <Section id="reportings">
         <SectionHeaderRow>
           <SectionHeader>
-            <SectionTitle>Uptime targets</SectionTitle>
+            <SectionTitle>Reports</SectionTitle>
             <SectionDescription>
               The uptime you committed to, judged per monitor and month.
             </SectionDescription>
@@ -190,9 +190,7 @@ export function Client() {
                     <EmptyStateMedia>
                       <Shield />
                     </EmptyStateMedia>
-                    <EmptyStateTitle>
-                      No archived uptime targets
-                    </EmptyStateTitle>
+                    <EmptyStateTitle>No archived reports</EmptyStateTitle>
                     <EmptyStateDescription>
                       A reporting with sealed months is archived instead of
                       deleted, and kept here read-only.
@@ -203,7 +201,7 @@ export function Client() {
                     <EmptyStateMedia>
                       <Shield />
                     </EmptyStateMedia>
-                    <EmptyStateTitle>No uptime targets</EmptyStateTitle>
+                    <EmptyStateTitle>No reports</EmptyStateTitle>
                     <EmptyStateDescription>
                       Set a monthly uptime target for the monitors a contract
                       covers. Each monitor is judged against it month by month.
@@ -236,7 +234,7 @@ export function Client() {
         {!allowed || (policies && policies.length > 0) ? (
           <SlaMonthStripLegend>
             <span>
-              A month is missed when any monitor in the uptime target missed it.
+              A month is missed when any monitor in the report missed it.
             </span>
           </SlaMonthStripLegend>
         ) : null}

@@ -12,7 +12,7 @@ export function Breadcrumb() {
   const pathname = usePathname();
   const { id } = useParams<{ id?: string }>();
   const trpc = useTRPC();
-  const root = NAV.slas;
+  const root = NAV.reports;
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const onPolicy = workspace?.limits["monitor-sla"] === true && !!id;
   const { data: policies } = useQuery({

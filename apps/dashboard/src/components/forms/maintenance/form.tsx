@@ -349,10 +349,10 @@ export function FormMaintenance({
             {underReporting.length ? (
               <p className="text-warning text-sm">
                 {underReporting.map((m) => m.name).join(", ")}{" "}
-                {underReporting.length === 1 ? "is" : "are"} in an uptime
-                target. Paused time is unmeasured, so it can never count against
-                the target. Use a maintenance window set to keep checking and
-                announce it instead.
+                {underReporting.length === 1 ? "is" : "are"} in a report. Paused
+                time is unmeasured, so it can never count against the target.
+                Use a maintenance window set to keep checking and announce it
+                instead.
               </p>
             ) : null}
           </div>

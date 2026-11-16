@@ -28,6 +28,7 @@ export const config: Record<
       { value: "data-retention", label: "Data retention" },
       { value: "response-logs", label: "Response Logs" },
       { value: "private-locations", label: "Private Locations" },
+      { value: "monitor-sla", label: "Reports" },
       { value: "otel", label: "OTel Exporter" },
       {
         value: "synthetic-checks",
@@ -59,6 +60,7 @@ export const config: Record<
       { value: "status-pages", label: "Number of status pages" },
       { value: "page-components", label: "Number of components" },
       { value: "maintenance", label: "Maintenance status" },
+      { value: "incident-sla", label: "Incident response targets" },
       { value: "status-subscribers", label: "Subscribers" },
       { value: "slack-agent", label: "Slack Agent" },
       {
@@ -78,13 +80,6 @@ export const config: Record<
       { value: "password-protection", label: "Password Protection (Basic)" },
       { value: "email-domain-protection", label: "Magic Link (Auth)" },
       { value: "ip-restriction", label: "IP Restriction" },
-    ],
-  },
-  report: {
-    label: "Report",
-    features: [
-      { value: "monitor-sla", label: "Uptime targets" },
-      { value: "incident-sla", label: "Incident response targets" },
     ],
   },
   workspace: {

@@ -60,8 +60,8 @@ export const NAV = {
     icon: Globe,
     keywords: ["probes", "regions", "self-hosted"],
   },
-  slas: {
-    label: "Uptime targets",
+  reports: {
+    label: "Reports",
     href: "/reportings",
     icon: Reporting,
     keywords: [
@@ -136,11 +136,16 @@ export const NAV = {
 export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Monitor",
-    items: [NAV.monitors, NAV.maintenanceWindows, NAV.privateLocations],
+    items: [
+      NAV.monitors,
+      NAV.reports,
+      NAV.maintenanceWindows,
+      NAV.privateLocations,
+      NAV.insights,
+    ],
   },
   { label: "Alerting", items: [NAV.notifications, NAV.onCall] },
   { label: "Communicate", items: [NAV.incidents, NAV.statusPages] },
-  { label: "Report", items: [NAV.slas, NAV.insights] },
   { label: "AI", items: [NAV.chat, NAV.agents] },
 ];
 
@@ -148,13 +153,13 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
   NAV.monitors,
+  NAV.reports,
   NAV.maintenanceWindows,
   NAV.privateLocations,
+  NAV.insights,
   NAV.notifications,
   NAV.onCall,
   NAV.statusPages,
-  NAV.slas,
-  NAV.insights,
   NAV.chat,
   NAV.agents,
   NAV.cli,

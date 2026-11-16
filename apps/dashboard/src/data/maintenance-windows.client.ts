@@ -16,7 +16,7 @@ export const maintenanceWindowModeDescriptions: Record<
   pause:
     "No checks run. The time is unmeasured, so it never counts against uptime and can never be excused later.",
   continue:
-    "Checks run as usual, but status changes and alerts are ignored. The time counts towards uptime unless you excuse it in an uptime target.",
+    "Checks run as usual, but status changes and alerts are ignored. The time counts towards uptime unless you excuse it in a report.",
 };
 
 const actions = [
