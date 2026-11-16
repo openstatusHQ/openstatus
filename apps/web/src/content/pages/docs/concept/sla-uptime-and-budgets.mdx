@@ -48,10 +48,10 @@ The budget answers "how close are we", which a single uptime figure hides until 
 
 A figure you send to a customer must not move afterwards. openstatus **seals** each month for each monitor a few days after it ends: the measured, down, excused and unmeasured time, the down and slow stretches, the excused windows that applied, and the target and strict setting of that moment are stored and never recomputed.
 
-Until then, the previous month is a **preview** and the running month is **live and provisional**. A live month below target is a miss in progress, not a missed month. Changing a target always applies from the next month, so a sealed month keeps the terms it started with.
+Until then, the previous month is a **preview** and the running month is **live and provisional**. A live month below target is a miss in progress, not a missed month. Changing a target applies at once to every month that is not sealed yet. A sealed month keeps the terms it was sealed with.
 
 ## Related resources
 
 - **[Monitor reporting reference](/docs/reference/monitor-reporting)**: every rule behind the figures, the month detail and the export.
-- **[Incident management reference](/docs/reference/incident-management#reporting)**: response, resolution and update targets.
+- **[Incident management reference](/docs/reference/incident-management#reporting)**: response and resolution targets.
 - **[How to track a contractual SLA](/docs/guides/how-to-track-a-contractual-sla)**: the setup, step by step.

@@ -2,7 +2,6 @@ import { eq } from "@openstatus/db";
 import {
   monitor,
   monitorSlaPolicy,
-  monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedMonth,
 } from "@openstatus/db/src/schema";
@@ -14,11 +13,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import {
-  getMonitorReporting,
-  getMonitorReportingSummary,
-  listMonitorReportingsForMonitor,
-} from "../get";
+import { getMonitorReporting, listMonitorReportingsForMonitor } from "../get";
 import { listMonitorReportings } from "../list";
 import { rollUpMonth } from "../months";
 import {
@@ -323,19 +318,11 @@ describe("listMonitorReportings strip", () => {
   test("judges the previous month as the policy page does while its runs are kept", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, "API");
-      const policy = await insertPolicy(tx, "Pending terms", [api.id]);
+      const policy = await insertPolicy(tx, "Preview", [api.id]);
       await tx
         .update(monitorSlaPolicyToMonitor)
         .set({ createdAt: new Date(Date.UTC(2026, 8, 1)) })
         .where(eq(monitorSlaPolicyToMonitor.monitorSlaPolicyId, policy.id));
-      // set in November, effective December: October keeps 99.5%
-      await tx.insert(monitorSlaPolicyTerms).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: policy.id,
-        target: 99_950,
-        strict: false,
-        effectiveFrom: "2026-12-01",
-      });
       // two hours down in October: 99.731%
       const outage = {
         start: Date.UTC(2026, 9, 7),
@@ -377,64 +364,6 @@ describe("listMonitorReportings strip", () => {
       expect(listed?.missed).toEqual(detail.missed);
     });
   });
-
-  test("exposes the running month's terms and the pending ones", async () => {
-    await withTestTransaction(async (tx) => {
-      const api = await insertMonitor(tx, "API");
-      const policy = await insertPolicy(tx, "Terms", [api.id]);
-      await tx.insert(monitorSlaPolicyTerms).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: policy.id,
-        target: 99_950,
-        strict: true,
-        effectiveFrom: "2026-12-01",
-      });
-      const expected = {
-        liveMonth: "2026-11-01",
-        liveTerms: { target: 99_500, strict: false },
-        pendingTerms: {
-          target: 99_950,
-          strict: true,
-          effectiveFrom: "2026-12-01",
-        },
-      };
-      const listed = await listMonitorReportings({
-        ctx: { ...ctx, db: tx },
-        now,
-        episodesPipes: noEpisodes,
-      });
-      expect(listed.find((p) => p.id === policy.id)).toMatchObject({
-        target: 99_950,
-        strict: true,
-        ...expected,
-      });
-      const summary = await getMonitorReportingSummary({
-        ctx: { ...ctx, db: tx },
-        input: { id: policy.id },
-        now,
-      });
-      expect(summary).toMatchObject(expected);
-      const detail = await getMonitorReporting({
-        ctx: { ...ctx, db: tx },
-        input: { id: policy.id },
-        now,
-        episodesPipes: noEpisodes,
-      });
-      expect(detail).toMatchObject(expected);
-
-      // once December runs, nothing is pending
-      const december = await getMonitorReportingSummary({
-        ctx: { ...ctx, db: tx },
-        input: { id: policy.id },
-        now: new Date(Date.UTC(2026, 11, 2)),
-      });
-      expect(december).toMatchObject({
-        liveMonth: "2026-12-01",
-        liveTerms: { target: 99_950, strict: true },
-        pendingTerms: null,
-      });
-    });
-  });
 });
 
 describe("listMonitorReportingsForMonitor", () => {
@@ -450,39 +379,24 @@ describe("listMonitorReportingsForMonitor", () => {
         .update(monitorSlaPolicy)
         .set({ archivedAt: now })
         .where(eq(monitorSlaPolicy.id, archived.id));
-      await tx.insert(monitorSlaPolicyTerms).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: b.id,
-        target: 99_000,
-        strict: false,
-        effectiveFrom: "2026-12-01",
-      });
-
       const res = await listMonitorReportingsForMonitor({
         ctx: { ...ctx, db: tx, tb: noTinybird },
         input: { monitorId: api.id },
-        now,
       });
       expect(res).toEqual([
         {
           id: a.id,
           name: "A",
           timeZone: "UTC",
-          liveMonth: "2026-11-01",
-          liveTerms: { target: 99_500, strict: false },
-          pendingTerms: null,
+          target: 99_500,
+          strict: false,
         },
         {
           id: b.id,
           name: "B",
           timeZone: "UTC",
-          liveMonth: "2026-11-01",
-          liveTerms: { target: 99_500, strict: false },
-          pendingTerms: {
-            target: 99_000,
-            strict: false,
-            effectiveFrom: "2026-12-01",
-          },
+          target: 99_500,
+          strict: false,
         },
       ]);
     });

@@ -15,9 +15,7 @@ import {
   excusedWindowMonitorIds,
   judgePolicyMonths,
   loadPolicyMembers,
-  loadTermsHistory,
   sealedMonthsOf,
-  termsStateOf,
 } from "./internal";
 import { completeMonths, LAST_TWELVE, monthOf, splitByMonth } from "./months";
 import {
@@ -70,24 +68,19 @@ async function loadExcusedWindows(
   }));
 }
 
-/**
- * A policy's latest terms and current members, archived or not; no months, no
- * Tinybird. `liveTerms` judge the running month `liveMonth`; `pendingTerms` follow.
- */
+/** A policy and its current members, archived or not; no months, no Tinybird. */
 export async function getMonitorReportingSummary(args: {
   ctx: ServiceContext;
   input: MonitorReportingIdInput;
-  now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
   const input = MonitorReportingIdInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
-  const { policy, monitors, history } = await loadPolicyMembers(ctx, input.id);
+  const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
   return {
     ...policy,
-    ...termsStateOf(history, policy, args.now ?? new Date()),
     /** the time zone is locked once any month is sealed */
     sealed: (await sealedMonthsOf(db, policy)).length > 0,
     monitors: monitors.map(
@@ -111,7 +104,7 @@ export async function getMonitorReporting(args: {
   requireScope(ctx, "monitors:read");
   const input = GetMonitorReportingInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
-  const { policy, monitors, history } = await loadPolicyMembers(ctx, input.id);
+  const { policy, monitors } = await loadPolicyMembers(ctx, input.id);
 
   const now = args.now ?? new Date();
   const complete = completeMonths(now, input.months, policy.timeZone);
@@ -151,7 +144,6 @@ export async function getMonitorReporting(args: {
 
   return {
     ...policy,
-    ...termsStateOf(history, policy, now),
     months,
     monitors: rows,
     excusedWindows: await loadExcusedWindows(ctx, policy, now),
@@ -169,21 +161,19 @@ export type MonitorReportingDetail = Awaited<
   ReturnType<typeof getMonitorReporting>
 >;
 
-/** Active policies covering a monitor with their running and pending terms; no months, no Tinybird. */
+/** Active policies covering a monitor; no months, no Tinybird. */
 export async function listMonitorReportingsForMonitor(args: {
   ctx: ServiceContext;
   input: ListMonitorReportingsForMonitorInput;
-  now?: Date;
 }) {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
   const input = ListMonitorReportingsForMonitorInput.parse(args.input);
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
-  const rows = await db
+  return db
     .select({
       id: monitorSlaPolicy.id,
-      workspaceId: monitorSlaPolicy.workspaceId,
       name: monitorSlaPolicy.name,
       timeZone: monitorSlaPolicy.timeZone,
       target: monitorSlaPolicy.target,
@@ -203,12 +193,4 @@ export async function listMonitorReportingsForMonitor(args: {
     )
     .orderBy(asc(monitorSlaPolicy.id))
     .all();
-  const history = await loadTermsHistory(db, ctx.workspace.id, rows);
-  const now = args.now ?? new Date();
-  return rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    timeZone: p.timeZone,
-    ...termsStateOf(history, p, now),
-  }));
 }

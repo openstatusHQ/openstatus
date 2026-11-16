@@ -39,7 +39,6 @@ export function FormMonitorReportingUpdate() {
           strict: policy.strict,
           timeZone: policy.timeZone,
         }}
-        live={{ month: policy.liveMonth, ...policy.liveTerms }}
         timeZoneLocked={policy.sealed}
         onSubmit={async (values) => {
           const target = parseSlaTarget(values.target);

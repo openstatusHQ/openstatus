@@ -4,7 +4,6 @@ import {
   monitorSlaExcusedWindow,
   monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
-  monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedMonth,
 } from "@openstatus/db/src/schema";
@@ -628,26 +627,14 @@ describe("getMonitorReporting", () => {
     });
   });
 
-  test("the running month keeps the terms it started with", async () => {
+  test("an edit to the terms judges the running month at once", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      await tx.insert(monitorSlaPolicyTerms).values([
-        {
-          workspaceId: ctx.workspace.id,
-          monitorSlaPolicyId: policy.id,
-          target: 99_000,
-          strict: true,
-          effectiveFrom: "2026-11-01",
-        },
-        {
-          workspaceId: ctx.workspace.id,
-          monitorSlaPolicyId: policy.id,
-          target: 99_990,
-          strict: false,
-          effectiveFrom: "2026-12-01",
-        },
-      ]);
+      await tx
+        .update(monitorSlaPolicy)
+        .set({ target: 99_000, strict: true })
+        .where(eq(monitorSlaPolicy.id, policy.id));
       const slow = Date.UTC(2026, 10, 10);
       const episodesPipes = episodesPipesFrom(() =>
         runsEvery(Date.UTC(2026, 10, 1), now.getTime(), 10 * MIN, (t) =>
@@ -662,8 +649,7 @@ describe("getMonitorReporting", () => {
         episodesPipes,
         sleep,
       });
-      // the policy shows the latest terms; November is judged by its own
-      expect(res).toMatchObject({ target: 99_990, strict: false });
+      expect(res).toMatchObject({ target: 99_000, strict: true });
       expect(res.monitors[0].months.at(-1)).toMatchObject({
         terms: { target: 99_000, strict: true },
         downMs: HOUR,
@@ -910,27 +896,17 @@ describe("getMonitorReporting", () => {
     });
   });
 
-  test("the summary tells the running month's terms from pending ones and whether a month is sealed", async () => {
+  test("the summary tells whether a month is sealed", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const policy = await insertPolicy(tx, [api.id]);
-      await tx.insert(monitorSlaPolicyTerms).values({
-        workspaceId: ctx.workspace.id,
-        monitorSlaPolicyId: policy.id,
-        target: 99_990,
-        strict: true,
-        effectiveFrom: "2026-12-01",
-      });
       const before = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
-        now,
       });
       expect(before).toMatchObject({
-        target: 99_990,
-        strict: true,
-        liveMonth: "2026-11-01",
-        liveTerms: { target: 99_500, strict: false },
+        target: 99_500,
+        strict: false,
         sealed: false,
       });
       await tx.insert(monitorSlaSealedMonth).values({
@@ -951,7 +927,6 @@ describe("getMonitorReporting", () => {
       const after = await getMonitorReportingSummary({
         ctx: { ...ctx, db: tx },
         input: { id: policy.id },
-        now,
       });
       expect(after.sealed).toBe(true);
     });

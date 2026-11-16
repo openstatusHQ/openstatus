@@ -6,11 +6,9 @@ import {
   excusedWindowContext,
   formatBudgetLeft,
   formatExcusedWindow,
-  formatPendingTerms,
   formatSlaCoverage,
   formatSlaDuration,
   formatSlaMonth,
-  nextSlaMonth,
   parseSlaTarget,
   slaMonthOf,
   slaTreatmentTotals,
@@ -70,13 +68,6 @@ describe("formatSlaCoverage", () => {
     expect(formatSlaCoverage(100_000)).toBe("100.0");
     expect(formatSlaCoverage(99_899)).toBe("99.8");
     expect(formatSlaCoverage(0)).toBe("0.0");
-  });
-});
-
-describe("nextSlaMonth", () => {
-  test("rolls over the year", () => {
-    expect(nextSlaMonth("2026-11-01")).toBe("2026-12-01");
-    expect(nextSlaMonth("2026-12-01")).toBe("2027-01-01");
   });
 });
 
@@ -201,13 +192,5 @@ describe("slaTreatmentTotals", () => {
       { treatment: "counted", ms: 30 },
       { treatment: "excused", ms: 5 },
     ]);
-  });
-});
-
-describe("formatPendingTerms", () => {
-  test("names the new target and the month it starts", () => {
-    expect(
-      formatPendingTerms({ target: 99_950, effectiveFrom: "2026-12-01" }),
-    ).toBe("→ 99.95% from Dec 2026");
   });
 });

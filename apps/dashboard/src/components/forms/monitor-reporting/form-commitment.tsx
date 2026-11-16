@@ -27,12 +27,7 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import {
-  formatSlaMonth,
-  formatSlaTarget,
-  nextSlaMonth,
-  parseSlaTarget,
-} from "@/data/reportings.client";
+import { parseSlaTarget } from "@/data/reportings.client";
 
 import {
   SlaStrictField,
@@ -54,14 +49,11 @@ type FormValues = z.infer<typeof schema>;
 
 export function FormCommitment({
   defaultValues,
-  live,
   timeZoneLocked,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues: FormValues;
-  /** the running month (YYYY-MM-01) and the terms it started with */
-  live: { month: string; target: number; strict: boolean };
   timeZoneLocked: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -75,7 +67,9 @@ export function FormCommitment({
   });
   const parsed = parseSlaTarget(target);
   const termsDiffer =
-    parsed !== null && (parsed !== live.target || strict !== live.strict);
+    parsed !== null &&
+    (parsed !== parseSlaTarget(defaultValues.target) ||
+      strict !== defaultValues.strict);
   const [isPending, startTransition] = useTransition();
 
   function submitAction(values: FormValues) {
@@ -105,8 +99,8 @@ export function FormCommitment({
             <FormCardTitle>Commitment</FormCardTitle>
             <FormCardDescription>
               The monthly uptime each monitor in this reporting has to reach. A
-              change applies from next month: the running month keeps the terms
-              it started with.
+              change applies to the running month and to any month not sealed
+              yet.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent className="grid gap-4 sm:grid-cols-2">
@@ -158,19 +152,9 @@ export function FormCommitment({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo role="status">
-              {termsDiffer ? (
-                <>
-                  Changes apply from{" "}
-                  <span className="text-foreground font-medium">
-                    {formatSlaMonth(nextSlaMonth(live.month), { year: true })}
-                  </span>
-                  . {formatSlaMonth(live.month)} keeps{" "}
-                  {formatSlaTarget(live.target)}%, slow counted as{" "}
-                  {live.strict ? "down" : "up"}.
-                </>
-              ) : (
-                "Uptime counts each scheduled check once across its regions."
-              )}
+              {termsDiffer
+                ? "Changes judge the running month and any month not sealed yet. Sealed months keep their terms."
+                : "Uptime counts each scheduled check once across its regions."}
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}

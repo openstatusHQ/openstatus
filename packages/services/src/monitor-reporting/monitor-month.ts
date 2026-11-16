@@ -25,7 +25,6 @@ import {
   memberTimeMonth,
   type PolicyMember,
   policyExcusedSpans,
-  termsForMonth,
 } from "./internal";
 import {
   coveredSpan,
@@ -228,6 +227,8 @@ type MonthPolicy = {
   workspaceId: number;
   name: string;
   timeZone: string;
+  target: number;
+  strict: boolean;
   archivedAt: Date | null;
 };
 
@@ -323,25 +324,22 @@ async function memberMonth(args: {
     spans = policySpans.get(member.id) ?? [];
     const state = episodeMonths(now, timeZone).get(month);
     if (state) {
-      const [terms, fetched] = await Promise.all([
-        termsForMonth(db, policy, month),
-        fetchMonthEpisodes({
-          ctx,
-          members: [member],
-          months: [month],
-          timeZone,
-          now,
-          pipes: args.episodesPipes,
-          sleep: args.sleep,
-        }),
-      ]);
+      const fetched = await fetchMonthEpisodes({
+        ctx,
+        members: [member],
+        months: [month],
+        timeZone,
+        now,
+        pipes: args.episodesPipes,
+        sleep: args.sleep,
+      });
       cell = memberTimeMonth({
         month,
         state,
         member,
         fetched,
         excusedSpans: spans,
-        terms,
+        terms: policy,
         timeZone,
         now,
       });
@@ -359,7 +357,7 @@ async function memberMonth(args: {
             covered.end,
           ),
           spans,
-          terms.strict,
+          policy.strict,
         );
         const ahead = {
           start: Math.max(now.getTime(), whole.start),
@@ -380,7 +378,7 @@ async function memberMonth(args: {
             ahead.end > ahead.start
               ? ahead.end - ahead.start - overlapMs(ahead, notAhead)
               : 0,
-          target: terms.target,
+          target: policy.target,
           downMs: cell.downMs,
           measuredMs: cell.measuredMs,
         });

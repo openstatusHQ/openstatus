@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { SlaMonthStrip } from "@/components/reportings/sla-month-strip";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { formatPendingTerms, formatSlaTarget } from "@/data/reportings.client";
+import { formatSlaTarget } from "@/data/reportings.client";
 
 import { TableCellLink } from "../table-cell-link";
 import { TableCellNumber } from "../table-cell-number";
@@ -30,23 +30,13 @@ export const columns: ColumnDef<MonitorReporting>[] = [
   },
   {
     id: "target",
-    accessorFn: (row) => row.liveTerms.target,
+    accessorFn: (row) => row.target,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Target" />
     ),
-    cell: ({ row }) => {
-      const { liveTerms, pendingTerms } = row.original;
-      return (
-        <div className="flex items-baseline gap-1.5">
-          <TableCellNumber value={formatSlaTarget(liveTerms.target)} unit="%" />
-          {pendingTerms ? (
-            <span className="text-muted-foreground font-mono text-xs">
-              {formatPendingTerms(pendingTerms)}
-            </span>
-          ) : null}
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <TableCellNumber value={formatSlaTarget(row.original.target)} unit="%" />
+    ),
     enableHiding: false,
   },
   {

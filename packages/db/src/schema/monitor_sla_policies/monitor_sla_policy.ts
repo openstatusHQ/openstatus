@@ -9,7 +9,6 @@ import {
 
 import { monitor } from "../monitors/monitor";
 import { workspace } from "../workspaces/workspace";
-import { monitorSlaPolicyTerms } from "./monitor_sla_policy_terms";
 
 export const monitorSlaPolicy = sqliteTable(
   "monitor_sla_policy",
@@ -66,7 +65,6 @@ export const monitorSlaPolicyRelations = relations(
       references: [workspace.id],
     }),
     monitors: many(monitorSlaPolicyToMonitor),
-    terms: many(monitorSlaPolicyTerms),
   }),
 );
 

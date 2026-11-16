@@ -10,7 +10,7 @@ import { requireScope } from "../auth";
 import { requireRole } from "../auth/require-role";
 import { type ServiceContext, withTransaction } from "../context";
 import { PreconditionFailedError } from "../errors";
-import { findPolicy, withLatestTerms } from "./internal";
+import { findPolicy } from "./internal";
 import { MonitorReportingIdInput } from "./schemas";
 
 /** Only for a policy never sealed; a sealed month is a record and keeps its policy (archive instead). */
@@ -24,9 +24,7 @@ export async function deleteMonitorReporting(args: {
 
   await withTransaction(ctx, async (tx) => {
     await requireRole(tx, ctx, ["owner", "admin"]);
-    const [row] = await withLatestTerms(tx, ctx.workspace.id, [
-      await findPolicy(tx, ctx, input.id),
-    ]);
+    const row = await findPolicy(tx, ctx, input.id);
     const sealed = await tx
       .select({ id: monitorSlaSealedMonth.id })
       .from(monitorSlaSealedMonth)

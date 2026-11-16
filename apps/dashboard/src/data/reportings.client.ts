@@ -55,12 +55,6 @@ export function formatSlaCoverage(coverage: number): string {
   return (Math.floor(coverage / 100) / 10).toFixed(1);
 }
 
-/** `"2026-12-01"` → `"2027-01-01"`. */
-export function nextSlaMonth(month: string): string {
-  const [y, m] = month.split("-").map(Number);
-  return new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
-}
-
 /** The month `date` falls in, in `timeZone`, as `"2026-11-01"`. */
 export function slaMonthOf(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -82,14 +76,6 @@ export function formatSlaMonth(
     ...(options.year ? { year: "numeric" } : {}),
     timeZone: "UTC",
   });
-}
-
-/** `"→ 99.95% from Dec 2026"`: terms set to start in a later month. */
-export function formatPendingTerms(pending: {
-  target: number;
-  effectiveFrom: string;
-}): string {
-  return `→ ${formatSlaTarget(pending.target)}% from ${formatSlaMonth(pending.effectiveFrom, { year: true })}`;
 }
 
 export const excusedKindLabels: Record<MonitorSlaExcusedWindowKind, string> = {

@@ -38,7 +38,6 @@ import {
   type FetchedEpisodes,
   memberEpisodes,
   memberTimeMonth,
-  termsForMonth,
 } from "./internal";
 import { completeMonths, coveredSpan } from "./months";
 
@@ -99,6 +98,8 @@ type Pair = {
   workspaceId: number;
   policyId: number;
   timeZone: string;
+  target: number;
+  strict: boolean;
   monitorId: number;
   jobType: string;
   regions: string;
@@ -167,6 +168,8 @@ export async function sealMonitorSlaMonths(
         workspaceId: monitorSlaPolicy.workspaceId,
         policyId: monitorSlaPolicy.id,
         timeZone: monitorSlaPolicy.timeZone,
+        target: monitorSlaPolicy.target,
+        strict: monitorSlaPolicy.strict,
         policyCreatedAt: monitorSlaPolicy.createdAt,
         monitorId: monitor.id,
         jobType: monitor.jobType,
@@ -272,12 +275,10 @@ export async function sealMonitorSlaMonths(
   const unavailable: number[] = [];
   let sealed = 0;
   for (const [policyId, pairs] of byPolicy) {
-    const { workspaceId, timeZone } = pairs[0];
+    const { workspaceId, timeZone, target, strict } = pairs[0];
+    const terms = { target, strict };
     const range = windowOf(timeZone);
     const own = windowsOf.get(policyId) ?? [];
-    const terms = await withBusyRetry(() =>
-      termsForMonth(db, { id: policyId, workspaceId }, month),
-    );
     const zone = fetched.get(timeZone);
 
     const rows: {

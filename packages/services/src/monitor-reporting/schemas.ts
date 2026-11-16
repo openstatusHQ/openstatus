@@ -38,7 +38,7 @@ export type CreateMonitorReportingInput = z.input<
   typeof CreateMonitorReportingInput
 >;
 
-/** Omitted fields stay as they are; `monitorIds` replaces the whole set; new terms apply from next month. */
+/** Omitted fields stay as they are; `monitorIds` replaces the whole set. */
 export const UpdateMonitorReportingInput = z.object({
   id: z.number().int().positive(),
   name: CreateMonitorReportingInput.shape.name.optional(),

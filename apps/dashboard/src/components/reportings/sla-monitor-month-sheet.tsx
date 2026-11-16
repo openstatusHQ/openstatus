@@ -29,7 +29,6 @@ import {
 import {
   formatBudgetLeft,
   formatExcusedWindow,
-  formatPendingTerms,
   formatSlaCoverage,
   formatSlaDuration,
   formatSlaMonth,
@@ -209,10 +208,7 @@ function SheetBody({
                     {p.name}
                   </Link>
                   <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                    {formatSlaTarget(p.liveTerms.target)}%
-                    {p.pendingTerms ? (
-                      <span> {formatPendingTerms(p.pendingTerms)}</span>
-                    ) : null}
+                    {formatSlaTarget(p.target)}%
                   </span>
                 </li>
               ))}

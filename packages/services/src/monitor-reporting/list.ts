@@ -14,10 +14,8 @@ import {
   episodeMonths,
   type FetchedEpisodes,
   fetchMonthEpisodes,
-  loadTermsHistory,
   memberTimeMonth,
   policiesExcusedSpans,
-  termsStateOf,
 } from "./internal";
 import {
   completeMonths,
@@ -30,10 +28,7 @@ import {
 } from "./months";
 import { ListMonitorReportingsInput } from "./schemas";
 
-/**
- * Policies with a twelve-month strip, judged as `getMonitorReporting` does. `target`/`strict`
- * are the latest terms set; `liveTerms` judge the running month, `pendingTerms` follow.
- */
+/** Policies with a twelve-month strip, judged as `getMonitorReporting` does. */
 export async function listMonitorReportings(args: {
   ctx: ServiceContext;
   input?: ListMonitorReportingsInput;
@@ -47,7 +42,7 @@ export async function listMonitorReportings(args: {
   assertMonitorSlaLimit(ctx);
   const db = getReadDb(ctx);
 
-  const rows = await db
+  const policies = await db
     .select()
     .from(monitorSlaPolicy)
     .where(
@@ -60,12 +55,7 @@ export async function listMonitorReportings(args: {
     )
     .orderBy(asc(monitorSlaPolicy.id))
     .all();
-  if (rows.length === 0) return [];
-  const history = await loadTermsHistory(db, ctx.workspace.id, rows);
-  const policies = rows.map((p) => {
-    const latest = history.latest(p.id);
-    return { ...p, target: latest.target, strict: latest.strict };
-  });
+  if (policies.length === 0) return [];
 
   const links = await db
     .select({
@@ -198,7 +188,6 @@ export async function listMonitorReportings(args: {
     const preview = previews.get(policy.id);
     const fetched = fetchedByZone.get(policy.timeZone);
     if (!preview || !fetched) continue;
-    const terms = history.at(policy.id, preview.month);
     const spans = spansOf.get(policy.id);
     for (const m of preview.members) {
       previewCells.set(
@@ -209,7 +198,7 @@ export async function listMonitorReportings(args: {
           member: m,
           fetched,
           excusedSpans: spans?.get(m.id) ?? [],
-          terms,
+          terms: policy,
           timeZone: policy.timeZone,
           now,
         }),
@@ -247,7 +236,6 @@ export async function listMonitorReportings(args: {
     const missed = strip.filter((m) => m.status === "missed");
     return {
       ...policy,
-      ...termsStateOf(history, policy, now),
       monitors: members,
       sealed: everSealed.has(policy.id),
       months: strip,

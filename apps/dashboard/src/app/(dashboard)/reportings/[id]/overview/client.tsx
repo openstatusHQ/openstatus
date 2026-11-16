@@ -63,11 +63,7 @@ import {
 } from "@/components/reportings/sla-month-strip";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
-import {
-  allowedDowntime,
-  formatPendingTerms,
-  formatSlaTarget,
-} from "@/data/reportings.client";
+import { allowedDowntime, formatSlaTarget } from "@/data/reportings.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -112,7 +108,7 @@ export function Client() {
   });
   const { data: workspaceMonitors } = useQuery({
     ...trpc.monitor.list.queryOptions(),
-    enabled: allowed && policy?.liveTerms.strict === true && !policy.archivedAt,
+    enabled: allowed && policy?.strict === true && !policy.archivedAt,
   });
   const columns = useMemo(
     () =>
@@ -168,7 +164,7 @@ export function Client() {
   const selectedMonitor =
     policy.monitors.find((m) => m.id === selected) ?? null;
   const canEdit = role === "owner" || role === "admin";
-  const { missed, liveTerms, pendingTerms } = policy;
+  const { missed } = policy;
   const currentMonth = policy.months.at(-1);
   let lowest: { name: string; uptime: number; met: boolean } | null = null;
   for (const m of policy.monitors) {
@@ -182,7 +178,7 @@ export function Client() {
   // an archived reporting is a record: no live warnings
   const live = policy.archivedAt === null;
   const neverSlow =
-    live && liveTerms.strict
+    live && policy.strict
       ? (workspaceMonitors ?? []).filter(
           (m) =>
             m.degradedAfter == null &&
@@ -197,21 +193,10 @@ export function Client() {
           <SectionHeader>
             <SectionTitle>{policy.name}</SectionTitle>
             <SectionDescription>
-              {formatSlaTarget(liveTerms.target)}% monthly uptime per monitor ·{" "}
-              {liveTerms.strict
+              {formatSlaTarget(policy.target)}% monthly uptime per monitor ·{" "}
+              {policy.strict
                 ? "slow responses count as down"
                 : "slow responses count as up"}
-              {pendingTerms ? (
-                <>
-                  {" "}
-                  · {formatPendingTerms(pendingTerms)}
-                  {pendingTerms.strict !== liveTerms.strict
-                    ? pendingTerms.strict
-                      ? ", slow responses counting as down"
-                      : ", slow responses counting as up"
-                    : null}
-                </>
-              ) : null}
               {policy.archivedAt ? (
                 <>
                   {" "}
@@ -231,10 +216,9 @@ export function Client() {
               <MetricCardTitle className="uppercase">Target</MetricCardTitle>
             </MetricCardHeader>
             <MetricCardValue>
-              {formatSlaTarget(liveTerms.target)}%{" "}
+              {formatSlaTarget(policy.target)}%{" "}
               <span className="text-muted-foreground text-sm font-normal">
-                {allowedDowntime(liveTerms.target)} per month
-                {pendingTerms ? ` · ${formatPendingTerms(pendingTerms)}` : null}
+                {allowedDowntime(policy.target)} per month
               </span>
             </MetricCardValue>
           </MetricCard>

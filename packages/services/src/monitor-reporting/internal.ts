@@ -4,7 +4,6 @@ import {
   monitorSlaExcusedWindow,
   monitorSlaExcusedWindowToMonitor,
   monitorSlaPolicy,
-  monitorSlaPolicyTerms,
   monitorSlaPolicyToMonitor,
   monitorSlaSealedMonth,
 } from "@openstatus/db/src/schema";
@@ -125,182 +124,6 @@ export async function getWritablePolicy(
   return row;
 }
 
-export type MonitorSlaTerms = {
-  target: number;
-  strict: boolean;
-  /** YYYY-MM-01 of the terms row; null when the policy row's own terms apply */
-  effectiveFrom: string | null;
-};
-
-type PolicyTermsRef = {
-  id: number;
-  workspaceId: number;
-  target: number;
-  strict: boolean;
-};
-
-/** Terms judging `month` (YYYY-MM-01): the latest terms row in effect by then, else the policy row's. */
-export async function termsForMonth(
-  db: DB,
-  policy: { id: number; workspaceId: number },
-  month: string,
-): Promise<MonitorSlaTerms> {
-  const row = await db
-    .select({
-      target: monitorSlaPolicyTerms.target,
-      strict: monitorSlaPolicyTerms.strict,
-      effectiveFrom: monitorSlaPolicyTerms.effectiveFrom,
-    })
-    .from(monitorSlaPolicyTerms)
-    .where(
-      and(
-        eq(monitorSlaPolicyTerms.monitorSlaPolicyId, policy.id),
-        eq(monitorSlaPolicyTerms.workspaceId, policy.workspaceId),
-        lte(monitorSlaPolicyTerms.effectiveFrom, month),
-      ),
-    )
-    .orderBy(desc(monitorSlaPolicyTerms.effectiveFrom))
-    .limit(1)
-    .get();
-  if (row) return row;
-  const own = await db
-    .select({
-      target: monitorSlaPolicy.target,
-      strict: monitorSlaPolicy.strict,
-    })
-    .from(monitorSlaPolicy)
-    .where(
-      and(
-        eq(monitorSlaPolicy.id, policy.id),
-        eq(monitorSlaPolicy.workspaceId, policy.workspaceId),
-      ),
-    )
-    .get();
-  if (!own) throw new NotFoundError("monitor_sla_policy", policy.id);
-  return { ...own, effectiveFrom: null };
-}
-
-export type MonitorSlaTermsState = {
-  /** YYYY-MM-01 of the running month in the policy zone */
-  liveMonth: string;
-  /** the terms judging the running month */
-  liveTerms: { target: number; strict: boolean };
-  /** terms set to apply from a later month; null when none are */
-  pendingTerms: {
-    target: number;
-    strict: boolean;
-    effectiveFrom: string;
-  } | null;
-};
-
-type DatedTerms = MonitorSlaTerms & { effectiveFrom: string };
-
-/** Every terms row of `policies`, one query; the policy row's own terms apply before the first. */
-export async function loadTermsHistory(
-  db: DB,
-  workspaceId: number,
-  policies: ReadonlyArray<PolicyTermsRef>,
-) {
-  const rows =
-    policies.length === 0
-      ? []
-      : await db
-          .select({
-            policyId: monitorSlaPolicyTerms.monitorSlaPolicyId,
-            target: monitorSlaPolicyTerms.target,
-            strict: monitorSlaPolicyTerms.strict,
-            effectiveFrom: monitorSlaPolicyTerms.effectiveFrom,
-          })
-          .from(monitorSlaPolicyTerms)
-          .where(
-            and(
-              eq(monitorSlaPolicyTerms.workspaceId, workspaceId),
-              inArray(
-                monitorSlaPolicyTerms.monitorSlaPolicyId,
-                policies.map((p) => p.id),
-              ),
-            ),
-          )
-          .orderBy(asc(monitorSlaPolicyTerms.effectiveFrom))
-          .all();
-  const own = new Map(policies.map((p) => [p.id, p]));
-  const byPolicy = new Map<number, DatedTerms[]>();
-  for (const { policyId, ...terms } of rows) {
-    const list = byPolicy.get(policyId) ?? [];
-    list.push(terms);
-    byPolicy.set(policyId, list);
-  }
-  const base = (policyId: number): MonitorSlaTerms => {
-    const p = own.get(policyId);
-    if (!p) throw new NotFoundError("monitor_sla_policy", policyId);
-    return { target: p.target, strict: p.strict, effectiveFrom: null };
-  };
-  const rowsOf = (policyId: number) => byPolicy.get(policyId) ?? [];
-  return {
-    /** the terms judging `month`, as termsForMonth */
-    at(policyId: number, month: string): MonitorSlaTerms {
-      return (
-        rowsOf(policyId).findLast((t) => t.effectiveFrom <= month) ??
-        base(policyId)
-      );
-    },
-    /** the last terms set to start after `month` */
-    after(policyId: number, month: string): DatedTerms | null {
-      return rowsOf(policyId).findLast((t) => t.effectiveFrom > month) ?? null;
-    },
-    latest(policyId: number): MonitorSlaTerms {
-      return rowsOf(policyId).at(-1) ?? base(policyId);
-    },
-  };
-}
-
-export type TermsHistory = Awaited<ReturnType<typeof loadTermsHistory>>;
-
-/** The running month's terms and any pending ones, from a loaded history. */
-export function termsStateOf(
-  history: TermsHistory,
-  policy: { id: number; timeZone: string },
-  now: Date,
-): MonitorSlaTermsState {
-  const liveMonth = monthOf(now, policy.timeZone);
-  const live = history.at(policy.id, liveMonth);
-  const pending = history.after(policy.id, liveMonth);
-  return {
-    liveMonth,
-    liveTerms: { target: live.target, strict: live.strict },
-    pendingTerms: pending
-      ? {
-          target: pending.target,
-          strict: pending.strict,
-          effectiveFrom: pending.effectiveFrom,
-        }
-      : null,
-  };
-}
-
-/** The most recently set terms per policy, pending ones included; previews follow these. */
-export async function latestTermsOf(
-  db: DB,
-  workspaceId: number,
-  policies: ReadonlyArray<PolicyTermsRef>,
-): Promise<Map<number, MonitorSlaTerms>> {
-  const history = await loadTermsHistory(db, workspaceId, policies);
-  return new Map(policies.map((p) => [p.id, history.latest(p.id)]));
-}
-
-/** Policies as callers see them: `target`/`strict` are the latest terms set. */
-export async function withLatestTerms<T extends PolicyTermsRef>(
-  db: DB,
-  workspaceId: number,
-  policies: ReadonlyArray<T>,
-): Promise<T[]> {
-  const latest = await latestTermsOf(db, workspaceId, policies);
-  return policies.map((p) => {
-    const terms = latest.get(p.id);
-    return terms ? { ...p, target: terms.target, strict: terms.strict } : p;
-  });
-}
-
 /** Every month the policy sealed for any monitor. */
 export async function sealedMonthsOf(
   tx: DB,
@@ -341,13 +164,10 @@ export async function assertExcusedWindowOpen(
   }
 }
 
-/** The policy (latest terms) and its current members (non-deleted monitors), by monitor id. */
+/** The policy and its current members (non-deleted monitors), by monitor id. */
 export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
   const db = getReadDb(ctx);
-  const row = await findPolicy(db, ctx, id);
-  const history = await loadTermsHistory(db, ctx.workspace.id, [row]);
-  const latest = history.latest(row.id);
-  const policy = { ...row, target: latest.target, strict: latest.strict };
+  const policy = await findPolicy(db, ctx, id);
   const monitors = await db
     .select({
       id: monitor.id,
@@ -369,7 +189,7 @@ export async function loadPolicyMembers(ctx: ServiceContext, id: number) {
     )
     .orderBy(asc(monitor.id))
     .all();
-  return { policy, monitors, history };
+  return { policy, monitors };
 }
 
 export type PolicyMember = Awaited<
@@ -584,11 +404,17 @@ export function memberTimeMonth(args: {
 
 /**
  * Each member's months (policy zone, ascending): sealed ones as stored, the
- * running and previous month on episodes under their own terms, older ones empty.
+ * running and previous month on episodes older ones empty.
  */
 export async function judgePolicyMonths(args: {
   ctx: ServiceContext;
-  policy: { id: number; workspaceId: number; timeZone: string };
+  policy: {
+    id: number;
+    workspaceId: number;
+    timeZone: string;
+    target: number;
+    strict: boolean;
+  };
   monitors: PolicyMember[];
   months: string[];
   now: Date;
@@ -633,23 +459,15 @@ export async function judgePolicyMonths(args: {
       (args.live || timeMonths.get(month) !== "live") &&
       unsealedIn(month),
   );
-  const [fetched, termsOf] = await Promise.all([
-    fetchMonthEpisodes({
-      ctx,
-      members: monitors,
-      months: readMonths,
-      timeZone,
-      now,
-      pipes: args.episodesPipes,
-      sleep: args.sleep,
-    }),
-    Promise.all(
-      readMonths.map(
-        async (month) =>
-          [month, await termsForMonth(db, policy, month)] as const,
-      ),
-    ).then((entries) => new Map(entries)),
-  ]);
+  const fetched = await fetchMonthEpisodes({
+    ctx,
+    members: monitors,
+    months: readMonths,
+    timeZone,
+    now,
+    pipes: args.episodesPipes,
+    sleep: args.sleep,
+  });
 
   const rows = monitors.map(
     ({ regions: _r, periodicity: _p, memberSince, ...m }) => ({
@@ -658,8 +476,7 @@ export async function judgePolicyMonths(args: {
         const seal = sealed.get(monthCellKey(m.id, month));
         if (seal) return storedMonth({ month, seal, timeZone });
         const state = timeMonths.get(month);
-        const terms = termsOf.get(month);
-        if (!state || !terms) {
+        if (!state || !readMonths.includes(month)) {
           return emptyMonth({ month, state: state ?? "none", timeZone });
         }
         return memberTimeMonth({
@@ -668,7 +485,7 @@ export async function judgePolicyMonths(args: {
           member: { id: m.id, memberSince },
           fetched,
           excusedSpans: spans.get(m.id) ?? [],
-          terms,
+          terms: policy,
           timeZone,
           now,
         });

@@ -119,7 +119,7 @@ describe("updateMonitorReporting", () => {
     });
   });
 
-  test("strict applies from the next month: the previous one keeps counting slow time as up", async () => {
+  test("strict applies at once to a month not sealed yet", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await createMonitorReporting({
@@ -161,11 +161,12 @@ describe("updateMonitorReporting", () => {
       expect(after.strict).toBe(true);
       expect(after.monitors[0]?.months.at(-2)).toMatchObject({
         state: "preview",
-        terms: { strict: false },
-        uptime: 100_000,
-        met: true,
+        terms: { strict: true },
+        downMs: 86_400_000,
+        uptime: 96_774,
+        met: false,
       });
-      expect(after.missed.months).toBe(0);
+      expect(after.missed.months).toBe(1);
     });
   });
 
