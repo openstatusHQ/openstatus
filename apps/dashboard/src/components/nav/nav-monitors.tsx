@@ -65,11 +65,12 @@ export function NavMonitorsItem() {
     (r) => r.health === "error" || r.health === "degraded",
   ).length;
   const paused = rows.filter((r) => r.health === "inactive").length;
+  const inMaintenance = rows.filter((r) => r.health === "maintenance").length;
   const worst: StatusVariant = rows.some((r) => r.health === "error")
     ? "destructive"
     : failing
       ? "warning"
-      : rows.some((r) => r.health === "maintenance")
+      : inMaintenance
         ? "info"
         : paused === rows.length
           ? "default"
@@ -118,9 +119,11 @@ export function NavMonitorsItem() {
           label={
             failing
               ? `${failing} ${failing === 1 ? "monitor needs" : "monitors need"} attention`
-              : paused
-                ? `${paused} paused, the rest normal`
-                : "All monitors normal"
+              : inMaintenance
+                ? `${inMaintenance} in maintenance, the rest normal`
+                : paused
+                  ? `${paused} paused, the rest normal`
+                  : "All monitors normal"
           }
         />
       ) : null}

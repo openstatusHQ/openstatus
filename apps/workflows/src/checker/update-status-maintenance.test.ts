@@ -248,6 +248,7 @@ describe("updateStatus for a monitor that keeps checking during maintenance", ()
     expect(res.status).toBe(200);
     const state = await stateOf(monitorId);
     expect(state.status).toBe("active");
+    expect(state.regions).toHaveLength(0);
     expect(state.incidents).toHaveLength(0);
     expect(sendAlert).not.toHaveBeenCalled();
   });

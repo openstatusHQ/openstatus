@@ -461,6 +461,22 @@ describe("reported at", () => {
     ).toEqual({ responseMetAt: declaredAt, responseBreachDueAt: at(-30) });
   });
 
+  it("never reads negative minutes once it moves past a miss whose target was dropped", () => {
+    const timer = response(
+      {
+        severity: "minor",
+        reportedAt: at(90),
+        responseBreachDueAt: at(60),
+      },
+      at(120),
+    );
+    expect(timer).toMatchObject({
+      targetMinutes: 0,
+      dueAt: at(60),
+      status: "breached",
+    });
+  });
+
   it("never re-judges a met response it moved past", () => {
     expect(
       response({ reportedAt: at(-90), responseMetAt: at(10) }, at(20))?.status,

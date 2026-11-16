@@ -181,7 +181,10 @@ function linkOf(event: OverviewEvent): ActivityLink {
     case "maintenanceWindow":
       return {
         // a window can span monitors; the first one's tab lists it
-        href: `/monitors/${event.window.monitorIds[0] ?? "_"}/maintenance`,
+        href:
+          event.window.monitorIds[0] === undefined
+            ? "/monitors"
+            : `/monitors/${event.window.monitorIds[0]}/maintenance`,
         title: event.window.title,
         kind: "Window",
       };

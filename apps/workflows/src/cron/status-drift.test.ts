@@ -193,14 +193,25 @@ describe("handleStatusDriftCron", () => {
       })
       .run();
 
-    await handleStatusDriftCron();
+    const statusOf = async () =>
+      (
+        await db
+          .select({ status: monitor.status })
+          .from(monitor)
+          .where(eq(monitor.id, monitorRow.id))
+          .get()
+      )?.status;
 
-    const after = await db
-      .select({ status: monitor.status })
-      .from(monitor)
-      .where(eq(monitor.id, monitorRow.id))
-      .all();
-    expect(after[0]?.status).toBe("active");
+    await handleStatusDriftCron();
+    expect(await statusOf()).toBe("active");
+
+    await db
+      .update(monitorMaintenanceWindow)
+      .set({ to: new Date(Date.now() - 1000) })
+      .where(eq(monitorMaintenanceWindow.id, window.id))
+      .run();
+    await handleStatusDriftCron();
+    expect(await statusOf()).toBe("error");
   });
 
   test("a duplicated region counts once towards quorum", async () => {

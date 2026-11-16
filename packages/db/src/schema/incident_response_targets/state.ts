@@ -74,7 +74,11 @@ function timer(args: {
   const targetMinutes =
     args.targetMinutes ??
     (breachDueAt
-      ? Math.round((breachDueAt.getTime() - startsAt.getTime()) / MINUTE)
+      ? // reportedAt can move past a recorded miss
+        Math.max(
+          0,
+          Math.round((breachDueAt.getTime() - startsAt.getTime()) / MINUTE),
+        )
       : undefined);
   if (targetMinutes === undefined) return null;
   const span = targetMinutes * MINUTE;

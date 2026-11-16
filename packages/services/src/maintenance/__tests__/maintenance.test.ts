@@ -799,6 +799,45 @@ describe("list / get", () => {
       expect(items.map((m) => m.id)).toEqual([withMonitor.id]);
     });
   });
+
+  test("filters by monitor through the announced window, without a component", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorIn(tx, "window-filter-api");
+      const other = await insertMonitorIn(tx, "window-filter-other");
+      const window = await createMaintenanceWindow({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-filter-window`,
+          ...futureRange(),
+          monitorIds: [api.id],
+        },
+      });
+      const { maintenance: linked } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-filter-announce`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+          monitorMaintenanceWindowId: window.id,
+        },
+      });
+
+      const covered = await listMaintenances({
+        ctx,
+        input: { limit: 100, offset: 0, monitorId: api.id, order: "desc" },
+      });
+      expect(covered.items.map((m) => m.id)).toEqual([linked.id]);
+      expect(covered.totalSize).toBe(1);
+      const uncovered = await listMaintenances({
+        ctx,
+        input: { limit: 100, offset: 0, monitorId: other.id, order: "desc" },
+      });
+      expect(uncovered.items).toEqual([]);
+    });
+  });
 });
 
 describe("notifyMaintenance", () => {

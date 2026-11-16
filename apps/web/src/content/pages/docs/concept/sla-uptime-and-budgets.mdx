@@ -46,7 +46,7 @@ The budget answers "how close are we", which a single uptime figure hides until 
 
 ## Sealing: a month that no longer changes
 
-A figure you send to a customer must not move afterwards. The checks of every monitor in an uptime target are stored a day behind, as its up, slow, down and unmeasured stretches. About three days after a month ends, openstatus **seals** it for each monitor from that store: the measured, down, excused and unmeasured time, the excused windows that applied, and the target and strict setting of that moment are stored and never recomputed. What used the budget stays visible after the raw checks expire.
+A figure you send to a customer must not move afterwards. The checks of every monitor in an uptime target that is not archived are stored a day behind, as its up, slow, down and unmeasured stretches. About three days after a month ends, openstatus **seals** it for each monitor from that store: the measured, down, excused and unmeasured time, the excused windows that applied, and the target and strict setting of that moment are stored and never recomputed. What used the budget stays visible after the raw checks expire.
 
 Until then, the previous month is a **preview** and the running month is **live and provisional**. A live month below target is a miss in progress, not a missed month. Changing a target applies at once to every month that is not sealed yet. A sealed month keeps the terms it was sealed with.
 

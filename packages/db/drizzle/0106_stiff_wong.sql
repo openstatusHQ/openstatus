@@ -1,0 +1,1 @@
+CREATE INDEX `maintenance_monitor_maintenance_window_id_idx` ON `maintenance` (`monitor_maintenance_window_id`);

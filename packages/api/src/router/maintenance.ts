@@ -194,6 +194,7 @@ export const maintenanceRouter = createTRPCRouter({
     }),
 
   unlinkWindow: protectedProcedure
+    .meta({ track: Events.UpdateMaintenance })
     .input(UnlinkMaintenanceWindowInput)
     .mutation(async ({ ctx, input }) => {
       try {

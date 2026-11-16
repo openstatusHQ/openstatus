@@ -100,15 +100,23 @@ async function enrich(
     if (list) list.push(m);
     else byWindow.set(windowId, [m]);
   }
+  const announcedByWindow = new Map<
+    number,
+    Omit<(typeof announced)[number], "windowId">[]
+  >();
+  for (const { windowId, ...a } of announced) {
+    if (windowId == null) continue;
+    const list = announcedByWindow.get(windowId);
+    if (list) list.push(a);
+    else announcedByWindow.set(windowId, [a]);
+  }
   return rows.map((r) => {
     const monitors = byWindow.get(r.id) ?? [];
     return {
       ...r,
       monitors,
       monitorIds: monitors.map((m) => m.id),
-      announcements: announced
-        .filter((a) => a.windowId === r.id)
-        .map(({ windowId: _, ...a }) => a),
+      announcements: announcedByWindow.get(r.id) ?? [],
       createdByUser:
         r.createdBy != null ? (users.get(r.createdBy) ?? null) : null,
     };

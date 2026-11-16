@@ -370,12 +370,12 @@ function ExcusedWindowForm({
         />
         <ul className="text-muted-foreground list-disc space-y-1 pl-4 text-sm">
           {prefill?.announcements ? (
-            <li>{noticeLine(prefill.announcements, prefill.from)}</li>
+            <li>{noticeLine(prefill.announcements, from)}</li>
           ) : null}
           <li>
             {context.lastOfKind
-              ? `The last excused window of kind ${excusedKindLabels[kind]} started ${formatDate(context.lastOfKind)}.`
-              : `No excused window of kind ${excusedKindLabels[kind]} yet.`}
+              ? `The last excused window of kind ${excusedKindLabels[kind].toLowerCase()} started ${formatDate(context.lastOfKind)}.`
+              : `No excused window of kind ${excusedKindLabels[kind].toLowerCase()} yet.`}
           </li>
           <li>
             {context.missed} of the last {context.months.length} complete months
@@ -404,15 +404,18 @@ function noticeLine(
   announcements: { pageTitle: string | null; createdAt: Date | null }[],
   startsAt: Date | undefined,
 ) {
+  if (announcements.length === 0) return "Not announced on a status page.";
+  const pages = [
+    ...new Set(announcements.map((a) => a.pageTitle ?? "a status page")),
+  ].join(", ");
   const dated = announcements.filter(
     (a): a is { pageTitle: string | null; createdAt: Date } =>
       a.createdAt !== null,
   );
-  if (dated.length === 0) return "Not announced on a status page.";
+  if (dated.length === 0) {
+    return `Announced on ${pages}; the announcement date is unavailable.`;
+  }
   const first = dated.reduce((a, b) => (b.createdAt < a.createdAt ? b : a));
-  const pages = [
-    ...new Set(dated.map((a) => a.pageTitle ?? "a status page")),
-  ].join(", ");
   const ahead = startsAt ? startsAt.getTime() - first.createdAt.getTime() : 0;
   return ahead > 0
     ? `Announced on ${pages}, ${formatDurationShort(ahead)} ahead.`

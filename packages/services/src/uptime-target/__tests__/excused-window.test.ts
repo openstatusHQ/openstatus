@@ -2,6 +2,7 @@ import { db, eq } from "@openstatus/db";
 import {
   monitor,
   monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   uptimeTargetExcusedWindow,
   uptimeTargetExcusedWindowToMonitor,
   uptimeTargetSealedMonth,
@@ -43,6 +44,7 @@ let otherCtx: ServiceContext;
 let ownerId: number;
 const workspaceIds: number[] = [];
 let apiId: number;
+let webId: number;
 let outsideId: number;
 
 beforeAll(async () => {
@@ -57,6 +59,9 @@ beforeAll(async () => {
   memberCtx = makeUserCtx(team.workspace, { userId: member.id });
   apiId = (
     await createMonitor(team.workspace.id, { name: "API", regions: "fra" })
+  ).id;
+  webId = (
+    await createMonitor(team.workspace.id, { name: "Web", regions: "fra" })
   ).id;
   outsideId = (
     await createMonitor(team.workspace.id, { name: "Docs", regions: "fra" })
@@ -75,7 +80,7 @@ type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
 async function policyIn(tx: Tx) {
   return createUptimeTarget({
     ctx: { ...ownerCtx, db: tx },
-    input: { name: "Partner", target: 99_500, monitorIds: [apiId] },
+    input: { name: "Partner", target: 99_500, monitorIds: [apiId, webId] },
   });
 }
 
@@ -140,10 +145,15 @@ describe("addUptimeTargetExcusedWindow", () => {
 
       const row = await addUptimeTargetExcusedWindow({
         ctx,
-        input: { policyId: policy.id, ...window, monitorIds: [apiId, apiId] },
+        input: {
+          policyId: policy.id,
+          ...window,
+          monitorIds: [webId, apiId, apiId],
+        },
         now,
       });
-      expect(row.monitorIds).toEqual([apiId]);
+      const both = [apiId, webId].sort((a, b) => a - b);
+      expect(row.monitorIds).toEqual(both);
       const links = await tx
         .select()
         .from(uptimeTargetExcusedWindowToMonitor)
@@ -154,7 +164,7 @@ describe("addUptimeTargetExcusedWindow", () => {
           ),
         )
         .all();
-      expect(links.map((l) => l.monitorId)).toEqual([apiId]);
+      expect(links.map((l) => l.monitorId).sort((a, b) => a - b)).toEqual(both);
 
       await expect(
         addUptimeTargetExcusedWindow({
@@ -181,42 +191,60 @@ describe("addUptimeTargetExcusedWindow", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...ownerCtx, db: tx };
       const policy = await policyIn(tx);
-      const mw = await tx
-        .insert(monitorMaintenanceWindow)
-        .values({
-          workspaceId: ownerCtx.workspace.id,
-          title: "DB upgrade",
-          mode: "continue",
-          from: window.from,
-          to: window.to,
-        })
-        .returning()
-        .get();
-
-      const row = await addUptimeTargetExcusedWindow({
-        ctx,
-        input: {
-          policyId: policy.id,
-          ...window,
-          monitorIds: [apiId],
-          monitorMaintenanceWindowId: mw.id,
-        },
-        now,
-      });
-      expect(row.monitorMaintenanceWindowId).toBe(mw.id);
-
-      await expect(
+      const insertWindow = async (
+        workspaceId: number,
+        monitorIds: number[],
+        range = { from: window.from, to: window.to },
+      ) => {
+        const mw = await tx
+          .insert(monitorMaintenanceWindow)
+          .values({
+            workspaceId,
+            title: "DB upgrade",
+            mode: "continue",
+            ...range,
+          })
+          .returning()
+          .get();
+        if (monitorIds.length > 0) {
+          await tx.insert(monitorMaintenanceWindowToMonitor).values(
+            monitorIds.map((monitorId) => ({
+              monitorMaintenanceWindowId: mw.id,
+              monitorId,
+            })),
+          );
+        }
+        return mw;
+      };
+      const add = (monitorMaintenanceWindowId: number) =>
         addUptimeTargetExcusedWindow({
-          ctx: { ...otherCtx, db: tx },
+          ctx,
           input: {
             policyId: policy.id,
             ...window,
             monitorIds: [apiId],
-            monitorMaintenanceWindowId: mw.id,
+            monitorMaintenanceWindowId,
           },
           now,
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+        });
+
+      const mw = await insertWindow(ownerCtx.workspace.id, [apiId]);
+      const row = await add(mw.id);
+      expect(row.monitorMaintenanceWindowId).toBe(mw.id);
+
+      const foreign = await insertWindow(otherCtx.workspace.id, []);
+      await expect(add(foreign.id)).rejects.toBeInstanceOf(NotFoundError);
+
+      const otherMonitor = await insertWindow(ownerCtx.workspace.id, [webId]);
+      await expect(add(otherMonitor.id)).rejects.toBeInstanceOf(
+        ValidationError,
+      );
+
+      const adjacent = await insertWindow(ownerCtx.workspace.id, [apiId], {
+        from: window.to,
+        to: new Date(window.to.getTime() + HOUR),
+      });
+      await expect(add(adjacent.id)).rejects.toThrow(/must overlap/);
     });
   });
 

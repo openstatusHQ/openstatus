@@ -6,7 +6,10 @@ description: Technical specification for scheduled maintenance windows in openst
 
 A maintenance window is a scheduled period during which you expect planned disruption to one or more services — a database upgrade, a deployment, or infrastructure work. Announcing it ahead of time lets you communicate the disruption to your users instead of letting your status page register it as an unexpected outage.
 
-A maintenance belongs to a single status page and targets one or more of that page's components — monitor-linked or static.
+openstatus has two maintenance resources:
+
+- A **status page maintenance**, which this page covers first, belongs to a single status page and targets one or more of that page's components — monitor-linked or static. It is what your users see.
+- A **monitor maintenance window** belongs to one or more monitors and needs no status page. It decides whether their checks pause or keep running; see [Checks during maintenance](#checks-during-maintenance). A status page maintenance can announce one.
 
 ## Behaviour
 

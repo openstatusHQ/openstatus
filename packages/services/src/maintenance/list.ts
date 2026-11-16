@@ -8,6 +8,7 @@ import {
   gte,
   inArray,
   isNull,
+  or,
   sql,
 } from "@openstatus/db";
 import {
@@ -145,6 +146,12 @@ async function enrichMaintenancesBatch(
             .all(),
         ]);
   const windowById = new Map(windowRows.map((w) => [w.id, w]));
+  const monitorIdsByWindow = new Map<number, { monitorId: number }[]>();
+  for (const { windowId, monitorId } of windowLinks) {
+    const list = monitorIdsByWindow.get(windowId);
+    if (list) list.push({ monitorId });
+    else monitorIdsByWindow.set(windowId, [{ monitorId }]);
+  }
 
   const monitorIds = [
     ...new Set([
@@ -216,9 +223,7 @@ async function enrichMaintenancesBatch(
       affectedMonitors: [
         ...new Map(
           (r.monitorMaintenanceWindowId != null
-            ? windowLinks
-                .filter((l) => l.windowId === r.monitorMaintenanceWindowId)
-                .map((l) => ({ monitorId: l.monitorId }))
+            ? (monitorIdsByWindow.get(r.monitorMaintenanceWindowId) ?? [])
             : components
           ).flatMap((c) => {
             const m =
@@ -249,19 +254,30 @@ export async function listMaintenances(args: {
     conditions.push(gte(maintenance.createdAt, periodToSince(input.period)));
   }
   if (input.monitorId !== undefined) {
-    conditions.push(
-      inArray(
-        maintenance.id,
-        db
-          .select({ id: maintenancesToPageComponents.maintenanceId })
-          .from(maintenancesToPageComponents)
-          .innerJoin(
-            pageComponent,
-            eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
-          )
-          .where(eq(pageComponent.monitorId, input.monitorId)),
-      ),
+    const viaComponents = inArray(
+      maintenance.id,
+      db
+        .select({ id: maintenancesToPageComponents.maintenanceId })
+        .from(maintenancesToPageComponents)
+        .innerJoin(
+          pageComponent,
+          eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
+        )
+        .where(eq(pageComponent.monitorId, input.monitorId)),
     );
+    const viaWindow = inArray(
+      maintenance.monitorMaintenanceWindowId,
+      db
+        .select({
+          id: monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+        })
+        .from(monitorMaintenanceWindowToMonitor)
+        .where(
+          eq(monitorMaintenanceWindowToMonitor.monitorId, input.monitorId),
+        ),
+    );
+    const either = or(viaComponents, viaWindow);
+    if (either) conditions.push(either);
   }
   const whereClause = and(...conditions);
 

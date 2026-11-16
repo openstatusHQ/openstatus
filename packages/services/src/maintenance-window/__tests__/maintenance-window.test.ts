@@ -1,6 +1,7 @@
 import { and, eq } from "@openstatus/db";
 import {
   auditLog,
+  maintenance,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
@@ -176,7 +177,84 @@ describe("maintenance windows", () => {
           ),
         )
         .get();
-      expect(row?.after?.monitorIds).toEqual(row?.before?.monitorIds);
+      expect(row).toBeUndefined();
+      const rows = await tx
+        .select({ monitorId: monitorMaintenanceWindowToMonitor.monitorId })
+        .from(monitorMaintenanceWindowToMonitor)
+        .where(
+          eq(
+            monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+            window.id,
+          ),
+        )
+        .all();
+      expect(rows.map((r) => r.monitorId).sort((x, y) => x - y)).toEqual(
+        [a.id, b.id].sort((x, y) => x - y),
+      );
+    });
+  });
+
+  test("moving a window moves its announcements, with an audit row each", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, ctx.workspace.id);
+      const now = Date.now();
+      const from = new Date(now + hour);
+      const to = new Date(now + 2 * hour);
+      const window = await createMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: { title: "Upgrade", from, to, monitorIds: [m.id] },
+      });
+      const announcement = await tx
+        .insert(maintenance)
+        .values({
+          workspaceId: ctx.workspace.id,
+          title: "Upgrade",
+          message: "",
+          from: window.from,
+          to: window.to,
+          monitorMaintenanceWindowId: window.id,
+        })
+        .returning()
+        .get();
+      const maintenanceAudits = () =>
+        tx
+          .select({
+            before: auditLog.before,
+            after: auditLog.after,
+            actorId: auditLog.actorId,
+          })
+          .from(auditLog)
+          .where(
+            and(
+              eq(auditLog.action, "maintenance.update"),
+              eq(auditLog.entityId, String(announcement.id)),
+            ),
+          )
+          .all();
+
+      await updateMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: { id: window.id, title: "Renamed" },
+      });
+      expect(await maintenanceAudits()).toHaveLength(0);
+
+      const moved = await updateMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: { id: window.id, to: new Date(now + 3 * hour) },
+      });
+      const synced = await tx
+        .select()
+        .from(maintenance)
+        .where(eq(maintenance.id, announcement.id))
+        .get();
+      expect(synced?.to).toEqual(moved.to);
+      expect(synced?.updatedBy).toBe(moved.updatedBy);
+      expect(synced?.updatedBy).not.toBeNull();
+
+      const audits = await maintenanceAudits();
+      expect(audits).toHaveLength(1);
+      expect(audits[0]?.before?.to).not.toEqual(audits[0]?.after?.to);
+      expect(audits[0]?.after?.updatedBy).toBe(moved.updatedBy);
     });
   });
 });

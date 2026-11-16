@@ -90,15 +90,16 @@ any agent holding a `read` key. Build them like a public API response:
 ## Entities
 
 Source of truth: `auditActionSchema` in
-`packages/db/src/schema/audit_logs/validation.ts`. Generated 2026-11-15; regenerate with
-`grep -o 'action("[a-z_]*\.[a-z]*"' packages/db/src/schema/audit_logs/validation.ts`.
+`packages/db/src/schema/audit_logs/validation.ts`. Generated 2026-11-16; regenerate with
+`grep -zoE 'action\(\s*"[a-z_]+\.[a-z]+"' packages/db/src/schema/audit_logs/validation.ts | tr '\0' '\n' | grep -oE '"[^"]+"'`
+(`-z` because some `action(` calls wrap onto the next line).
 
 | Entity type | Verbs | `entityId` is | Notes |
 | --- | --- | --- | --- |
 | `monitor` | create, update, delete | monitor id | `metadata.clonedFromMonitorId` on clone |
 | `monitor_tag` | create, update, delete | tag id | |
 | `monitor_incident` | update, delete | monitor incident id | created by the checker, not a verb |
-| `uptime_target` | create, update, delete | policy id | |
+| `uptime_target` | create, update, delete | uptime target id | |
 | `uptime_target_excused_window` | create, delete | window id | |
 | `monitor_maintenance_window` | create, update, delete | window id | |
 | `private_location` | create, update, delete | location id | |
@@ -113,7 +114,7 @@ Source of truth: `auditActionSchema` in
 | `incident` | create, update, delete | incident id | |
 | `incident_event` | create | event id | append-only timeline |
 | `incident_postmortem` | create, update | postmortem id | |
-| `incident_response_target` | create, update, delete | policy id | |
+| `incident_response_target` | create, update, delete | incident response target id | |
 | `notification` | create, update, delete | channel id | |
 | `api_key` | create, delete | key id | revoke is `delete` |
 | `oauth_grant` | create, delete | grant id | every revocation path is `delete` |
@@ -154,8 +155,9 @@ Source of truth: `auditActionSchema` in
 
 - **Workspace-scoped** by `ctx.workspace.id`, newest first, sorted
   `(createdAt DESC, id DESC)`.
-- **14-day read window** (`READ_WINDOW_DAYS`). This caps what a leaked session
-  can pull; it is not retention. Rows are kept indefinitely.
+- **14-day read window** (`READ_WINDOW_DAYS`) on `listAuditLogs` only. This
+  caps what a leaked session can list; it is not retention. Rows are kept
+  indefinitely, and `getAuditLog` reads one by id whatever its age.
 - **Actor user** is a left join that excludes soft-deleted users, so a deleted
   account reads as `user: null`, the same as a system or webhook actor. Display
   falls back to `${actorType}:${actorId}`.

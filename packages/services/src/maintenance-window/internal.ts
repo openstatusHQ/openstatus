@@ -6,7 +6,8 @@ import {
   monitorMaintenanceWindowToMonitor,
 } from "@openstatus/db/src/schema";
 
-import type { DB } from "../context";
+import { emitAudit } from "../audit";
+import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
 import { NotFoundError, PreconditionFailedError } from "../errors";
 
 export async function getMaintenanceWindowInWorkspace(args: {
@@ -93,12 +94,45 @@ export async function monitorIdsOf(tx: DB, windowId: number) {
 /** Linked status-page maintenances follow their window's times; editing one never re-notifies. */
 export async function syncLinkedMaintenances(
   tx: DB,
+  ctx: ServiceContext,
   window: { id: number; from: Date; to: Date },
 ): Promise<void> {
-  await tx
-    .update(maintenance)
-    .set({ from: window.from, to: window.to, updatedAt: new Date() })
-    .where(eq(maintenance.monitorMaintenanceWindowId, window.id));
+  const linked = await tx
+    .select()
+    .from(maintenance)
+    .where(
+      and(
+        eq(maintenance.monitorMaintenanceWindowId, window.id),
+        eq(maintenance.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .all();
+  for (const existing of linked) {
+    if (
+      existing.from.getTime() === window.from.getTime() &&
+      existing.to.getTime() === window.to.getTime()
+    ) {
+      continue;
+    }
+    const updated = await tx
+      .update(maintenance)
+      .set({
+        from: window.from,
+        to: window.to,
+        updatedBy: tryGetActorUserId(ctx.actor),
+        updatedAt: new Date(),
+      })
+      .where(eq(maintenance.id, existing.id))
+      .returning()
+      .get();
+    await emitAudit(tx, ctx, {
+      action: "maintenance.update",
+      entityType: "maintenance",
+      entityId: updated.id,
+      before: existing,
+      after: updated,
+    });
+  }
 }
 
 /** A window cannot be deleted while a status-page maintenance announces it. */

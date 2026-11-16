@@ -41,6 +41,9 @@ export const maintenance = sqliteTable(
   (t) => [
     index("maintenance_page_id_idx").on(t.pageId),
     index("maintenance_workspace_id_idx").on(t.workspaceId),
+    index("maintenance_monitor_maintenance_window_id_idx").on(
+      t.monitorMaintenanceWindowId,
+    ),
   ],
 );
 

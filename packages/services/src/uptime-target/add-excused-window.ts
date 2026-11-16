@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "@openstatus/db";
 import {
+  monitorMaintenanceWindowToMonitor,
   uptimeTargetExcusedWindow,
   uptimeTargetExcusedWindowToMonitor,
   uptimeTargetToMonitor,
@@ -53,11 +54,33 @@ export async function addUptimeTargetExcusedWindow(args: {
       );
     }
     if (input.monitorMaintenanceWindowId !== undefined) {
-      await getMaintenanceWindowInWorkspace({
+      const source = await getMaintenanceWindowInWorkspace({
         tx,
         id: input.monitorMaintenanceWindowId,
         workspaceId: ctx.workspace.id,
       });
+      const shared = await tx
+        .select({ id: monitorMaintenanceWindowToMonitor.monitorId })
+        .from(monitorMaintenanceWindowToMonitor)
+        .where(
+          and(
+            eq(
+              monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+              source.id,
+            ),
+            inArray(
+              monitorMaintenanceWindowToMonitor.monitorId,
+              input.monitorIds,
+            ),
+          ),
+        )
+        .limit(1)
+        .get();
+      if (source.from >= input.to || source.to <= input.from || !shared) {
+        throw new ValidationError(
+          "The maintenance window must overlap the excused window and cover one of its monitors.",
+        );
+      }
     }
 
     const row = await tx

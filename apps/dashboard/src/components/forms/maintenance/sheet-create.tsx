@@ -146,7 +146,16 @@ export function FormSheetMaintenanceCreate({
             <Separator />
           </>
         ) : null}
-        {pageId !== undefined ? (
+        {pageId === undefined ? (
+          <EmptyStateContainer className="m-4">
+            <EmptyStateTitle>
+              {pages?.length === 0
+                ? "No status pages found"
+                : "Select a status page"}
+            </EmptyStateTitle>
+          </EmptyStateContainer>
+        ) : page ? (
+          // mounted once the page loads: the form snapshots its prefill
           <FormCardGroup className="overflow-y-auto">
             <FormCard className="overflow-auto rounded-none border-none">
               <FormMaintenance
@@ -154,16 +163,16 @@ export function FormSheetMaintenanceCreate({
                 id="maintenance-form"
                 className="my-4"
                 items={toCheckboxTreeItems(
-                  page?.pageComponents ?? [],
-                  page?.pageComponentGroups ?? [],
+                  page.pageComponents,
+                  page.pageComponentGroups,
                 )}
-                components={page?.pageComponents ?? []}
+                components={page.pageComponents}
                 window={window}
                 prefill={
                   prefill && {
                     ...prefill,
                     pageComponents: prefill.pageComponents?.filter((cid) =>
-                      page?.pageComponents.some((c) => c.id === cid),
+                      page.pageComponents.some((c) => c.id === cid),
                     ),
                   }
                 }
@@ -184,20 +193,12 @@ export function FormSheetMaintenanceCreate({
               />
             </FormCard>
           </FormCardGroup>
-        ) : (
-          <EmptyStateContainer className="m-4">
-            <EmptyStateTitle>
-              {pages?.length === 0
-                ? "No status pages found"
-                : "Select a status page"}
-            </EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
+        ) : null}
         <FormSheetFooter>
           <Button
             type="submit"
             form="maintenance-form"
-            disabled={pageId === undefined}
+            disabled={pageId === undefined || !page}
           >
             Submit
           </Button>

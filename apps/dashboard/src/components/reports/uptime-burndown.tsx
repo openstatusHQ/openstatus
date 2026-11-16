@@ -51,7 +51,10 @@ const RIGHT_MARGIN = 8;
 
 const chartConfig = {
   left: { label: "Left", color: "var(--color-info)" },
-  ideal: { label: "Even burn", color: "var(--color-muted-foreground)" },
+  ideal: {
+    label: "Even burn (calendar time)",
+    color: "var(--color-muted-foreground)",
+  },
   projected: { label: "Projected", color: "var(--color-info)" },
   down: { label: "Down", color: "var(--color-destructive)" },
   slow: { label: "Slow", color: "var(--color-warning)" },
@@ -194,7 +197,7 @@ export function UptimeBurndown({ month }: { month: MonitorMonth }) {
         <span className="flex items-center gap-3">
           <Legend swatch="bg-info h-0.5 w-3">Left</Legend>
           <Legend swatch="border-muted-foreground w-3 border-t border-dashed">
-            Even burn
+            Even burn (calendar time)
           </Legend>
           <Legend swatch="bg-destructive size-2">Down</Legend>
           <Legend swatch="bg-warning size-2">Slow</Legend>
