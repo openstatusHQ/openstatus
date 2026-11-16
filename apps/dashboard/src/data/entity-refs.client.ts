@@ -91,7 +91,7 @@ export const entityKinds = {
     icon: Reporting,
     fields: ["uptimeTargetId"],
     auditType: "uptime_target",
-    href: (policy: { id: number }) => `/reports/${policy.id}/overview`,
+    href: (policy: { id: number }) => `/uptime-targets/${policy.id}/overview`,
   },
   uptimeTargetExcusedWindow: {
     label: "Excused window",
@@ -99,7 +99,7 @@ export const entityKinds = {
     fields: [],
     auditType: "uptime_target_excused_window",
     href: (window: { policy: { id: number } }) =>
-      `/reports/${window.policy.id}/overview`,
+      `/uptime-targets/${window.policy.id}/overview`,
   },
   maintenanceWindow: {
     label: "Maintenance window",

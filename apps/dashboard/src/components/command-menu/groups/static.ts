@@ -1,8 +1,7 @@
 import { Billing, Dark, Light } from "@openstatus/icons";
-import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
+import { ModelContextProtocolIcon } from "@openstatus/icons/brand";
 import {
   AtSign,
-  KeyRound,
   Palette,
   PackagePlus,
   Pencil,
@@ -12,22 +11,15 @@ import {
 } from "lucide-react";
 
 import { HELP_ASK_AGENT, HELP_LINKS, HELP_SUPPORT } from "@/config/help";
-import { NAV, NAV_MENU_ITEMS } from "@/config/nav";
+import { NAV_MENU_ITEMS } from "@/config/nav";
 import { SETTINGS_TABS } from "@/config/settings";
 
 import type { CommandMenuGroup, CommandMenuItem } from "../types";
 
-// Unlike the sidebar, Incidents sits right below Overview: the palette is for
-// reaching the urgent thing fast.
 export function navigationGroup(): CommandMenuGroup {
-  const items = [
-    ...NAV_MENU_ITEMS.slice(0, 1),
-    NAV.incidents,
-    ...NAV_MENU_ITEMS.slice(1),
-  ];
   return {
     heading: "Navigation",
-    items: items.map((item) => ({
+    items: NAV_MENU_ITEMS.map((item) => ({
       value: item.label,
       label: item.label,
       icon: item.icon,
@@ -126,13 +118,6 @@ export function createGroup(): CommandMenuGroup {
 // they live with the command menu rather than a shared config.
 const SETTINGS_ANCHORS: CommandMenuItem[] = [
   {
-    value: "API Keys",
-    label: "API Keys",
-    icon: KeyRound,
-    keywords: ["token", "key"],
-    action: { type: "navigate", href: "/settings/general#api-keys" },
-  },
-  {
     value: "Team Members",
     label: "Team Members",
     icon: Users,
@@ -182,13 +167,6 @@ const SETTINGS_ANCHORS: CommandMenuItem[] = [
     icon: PackagePlus,
     keywords: ["addon", "extra", "limits"],
     action: { type: "navigate", href: "/settings/billing#add-ons" },
-  },
-  {
-    value: "Slack Integration",
-    label: "Slack Integration",
-    icon: SlackIcon,
-    keywords: ["slack", "agent"],
-    action: { type: "navigate", href: "/settings/integrations#slack" },
   },
   {
     value: "Connected Apps",

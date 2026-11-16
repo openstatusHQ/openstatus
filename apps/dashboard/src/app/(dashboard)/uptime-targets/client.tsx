@@ -36,10 +36,10 @@ import {
 import { columns } from "@/components/data-table/uptime-targets/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetUptimeTargetCreate } from "@/components/forms/uptime-target/sheet-create";
-import { UptimeMonthStripLegend } from "@/components/reports/uptime-month-strip";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { UptimeMonthStripLegend } from "@/components/uptime-targets/uptime-month-strip";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { VIEWS, searchParamsParsers } from "./search-params";
@@ -136,10 +136,10 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section id="reports">
+      <Section id="uptime-targets">
         <SectionHeaderRow>
           <SectionHeader>
-            <SectionTitle>Reports</SectionTitle>
+            <SectionTitle>Uptime Targets</SectionTitle>
             <SectionDescription>
               The uptime you committed to, judged per monitor and month.
             </SectionDescription>

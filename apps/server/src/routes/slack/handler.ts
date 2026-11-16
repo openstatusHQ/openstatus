@@ -532,7 +532,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
         const needsReconnect = missingSlackScopes(resolved.scopes).length > 0;
         await publishHomeView(slack, userId, {
           reconnectUrl: needsReconnect
-            ? `${config.dashboardUrl}/settings/integrations`
+            ? `${config.dashboardUrl}/agents/slack`
             : undefined,
           openIncidents: await homeIncidents({
             workspace: resolved.workspace,

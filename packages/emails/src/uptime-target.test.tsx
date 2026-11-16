@@ -43,7 +43,7 @@ describe("uptime target missed email", () => {
     expect(html).toContain("target 99.5%");
     expect(html).toContain("TARGET MISSED");
     expect(html).toContain(
-      'href="https://app.openstatus.dev/reports/1/overview"',
+      'href="https://app.openstatus.dev/uptime-targets/1/overview"',
     );
     expect(html).toContain("You get this because you own this workspace.");
     expect(html).toContain("max-width:600px");

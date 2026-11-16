@@ -1,6 +1,8 @@
 import {
   Agent,
+  ApiKey,
   Chat,
+  Code,
   Globe,
   type IconType,
   Incident,
@@ -14,7 +16,7 @@ import {
   StatusPage,
   Terminal,
 } from "@openstatus/icons";
-import { ModelContextProtocolIcon } from "@openstatus/icons/brand";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 
 export type NavItem = {
   label: string;
@@ -59,14 +61,15 @@ export const NAV = {
     icon: Globe,
     keywords: ["probes", "regions", "self-hosted"],
   },
-  reports: {
-    label: "Reports",
-    href: "/reports",
+  uptimeTargets: {
+    label: "Uptime Targets",
+    href: "/uptime-targets",
     icon: Reporting,
     keywords: [
       "sla",
       "policy",
-      "uptime target",
+      "target",
+      "slo",
       "availability",
       "commitment",
       "reporting",
@@ -102,19 +105,37 @@ export const NAV = {
     label: "Agents",
     href: "/agents/slack",
     icon: Agent,
-    keywords: ["slack", "cli", "mcp"],
+    keywords: ["slack", "mcp", "ai"],
   },
-  cli: {
-    label: "CLI",
-    href: "/agents/cli",
-    icon: Terminal,
-    keywords: ["terminal"],
+  slackAgent: {
+    label: "Slack Agent",
+    href: "/agents/slack",
+    icon: SlackIcon,
+    keywords: ["slack", "integration", "install", "bot"],
   },
   mcp: {
     label: "MCP",
     href: "/agents/mcp",
     icon: ModelContextProtocolIcon,
     keywords: ["model context protocol", "claude", "cursor"],
+  },
+  developers: {
+    label: "Developers",
+    href: "/developers/api-keys",
+    icon: Code,
+    keywords: ["api", "cli", "terraform", "sdk"],
+  },
+  apiKeys: {
+    label: "API Keys",
+    href: "/developers/api-keys",
+    icon: ApiKey,
+    keywords: ["api key", "token", "key", "terraform", "settings"],
+  },
+  cli: {
+    label: "CLI",
+    href: "/developers/cli",
+    icon: Terminal,
+    keywords: ["terminal", "command line", "github action"],
   },
   settings: {
     label: "Settings",
@@ -124,34 +145,32 @@ export const NAV = {
   },
 } satisfies Record<string, NavItem>;
 
-// Sidebar groups, in order. Overview sits above them, Settings below.
-export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+// Sidebar groups, in order. Overview and Assistant sit above them, Settings
+// below. A group without a label renders its items standalone.
+export const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   {
     label: "Monitor",
     items: [
       NAV.monitors,
-      NAV.reports,
+      NAV.uptimeTargets,
       NAV.maintenanceWindows,
       NAV.privateLocations,
     ],
   },
-  { label: "Alerting", items: [NAV.notifications, NAV.onCall] },
-  { label: "Communicate", items: [NAV.incidents, NAV.statusPages] },
-  { label: "AI", items: [NAV.chat, NAV.agents] },
+  { label: "Respond", items: [NAV.incidents, NAV.notifications, NAV.onCall] },
+  { items: [NAV.statusPages] },
+  { label: "Build", items: [NAV.agents, NAV.developers] },
 ];
 
-// Command-menu "Navigation" group order.
+// Command-menu "Navigation" group, in sidebar order plus the tabs worth a jump.
 export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.overview,
-  NAV.monitors,
-  NAV.reports,
-  NAV.maintenanceWindows,
-  NAV.privateLocations,
-  NAV.notifications,
-  NAV.onCall,
-  NAV.statusPages,
   NAV.chat,
-  NAV.agents,
-  NAV.cli,
-  NAV.mcp,
+  ...NAV_GROUPS.flatMap((group) => group.items).flatMap((item) =>
+    item === NAV.agents
+      ? [item, NAV.slackAgent, NAV.mcp]
+      : item === NAV.developers
+        ? [item, NAV.apiKeys, NAV.cli]
+        : [item],
+  ),
 ];

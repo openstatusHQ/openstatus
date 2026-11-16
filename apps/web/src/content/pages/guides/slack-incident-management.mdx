@@ -9,7 +9,7 @@ publishedAt: "2026-10-22"
 category: "education"
 faq:
   - question: "Do I need a separate Slack app for incidents?"
-    answer: "No. The openstatus Slack agent that subscribes channels to a status page is the same app that declares and runs incidents. If you installed it before incident management existed, go to Settings > Integrations and click Reconnect to grant the channel permissions."
+    answer: "No. The openstatus Slack agent that subscribes channels to a status page is the same app that declares and runs incidents. If you installed it before incident management existed, go to Agents > Slack and click Reconnect to grant the channel permissions."
   - question: "What happens to the channel after the incident?"
     answer: "The channel stays open while the incident is open, mitigated or resolved, so the postmortem can be drafted from it. It is archived when the incident is closed or canceled. Archived channels remain searchable in Slack."
   - question: "Can I link an existing channel instead of getting a new one?"
@@ -52,7 +52,7 @@ A channel per incident gives you:
 
 ## Setup
 
-1. In openstatus, go to **Settings** > **Integrations** and click **Add to Slack**.
+1. In openstatus, go to **Agents** > **Slack** and click **Add to Slack**.
    The Slack agent is available on paid plans.
 2. Invite the bot to the channel you declare incidents from, for example
    `#incidents`, with `/invite @openstatus`.
@@ -235,7 +235,7 @@ of the same record.
 
 No. The openstatus Slack agent that subscribes channels to a status page is the same
 app that declares and runs incidents. If you installed it before incident management
-existed, go to **Settings** > **Integrations** and click **Reconnect** to grant the
+existed, go to **Agents** > **Slack** and click **Reconnect** to grant the
 channel permissions.
 
 </Details>

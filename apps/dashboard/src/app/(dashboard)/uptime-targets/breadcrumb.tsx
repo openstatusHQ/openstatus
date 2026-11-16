@@ -12,7 +12,7 @@ export function Breadcrumb() {
   const pathname = usePathname();
   const { id } = useParams<{ id?: string }>();
   const trpc = useTRPC();
-  const root = NAV.reports;
+  const root = NAV.uptimeTargets;
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const onPolicy = workspace?.limits["uptime-targets"] === true && !!id;
   const { data: policies } = useQuery({

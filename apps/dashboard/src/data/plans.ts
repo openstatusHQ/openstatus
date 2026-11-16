@@ -38,8 +38,9 @@ export const config: Record<
     ],
   },
   alerting: {
-    label: "Alerting",
+    label: "Respond",
     features: [
+      { value: "incident-targets", label: "Incident response targets" },
       {
         value: "notifications",
         label: "Slack, Discord, Email, Webhook, ntfy.sh",
@@ -55,12 +56,11 @@ export const config: Record<
     ],
   },
   communicate: {
-    label: "Communicate",
+    label: "Status Pages",
     features: [
       { value: "status-pages", label: "Number of status pages" },
       { value: "page-components", label: "Number of components" },
       { value: "maintenance", label: "Maintenance status" },
-      { value: "incident-targets", label: "Incident response targets" },
       { value: "status-subscribers", label: "Subscribers" },
       { value: "slack-agent", label: "Slack Agent" },
       {

@@ -13,7 +13,7 @@ export function Tabs() {
     <NavTabs
       items={UPTIME_TARGET_TABS.map((tab) => ({
         ...tab,
-        href: `/reports/${id}/${tab.value}`,
+        href: `/uptime-targets/${id}/${tab.value}`,
       }))}
     />
   );

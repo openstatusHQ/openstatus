@@ -53,16 +53,16 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { UptimeMonitorMonthSheet } from "@/components/reports/uptime-monitor-month-sheet";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
+import { UptimeMonitorMonthSheet } from "@/components/uptime-targets/uptime-monitor-month-sheet";
 import {
   UptimeMonthLegend,
   UptimeMonthLegendItem,
-} from "@/components/reports/uptime-month-strip";
-import { UptimeTargetExcusedWindows } from "@/components/reports/uptime-target-excused-windows";
-import { UptimeTargetMaintenance } from "@/components/reports/uptime-target-maintenance";
-import { UptimeTargetPaywall } from "@/components/reports/uptime-target-paywall";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
+} from "@/components/uptime-targets/uptime-month-strip";
+import { UptimeTargetExcusedWindows } from "@/components/uptime-targets/uptime-target-excused-windows";
+import { UptimeTargetMaintenance } from "@/components/uptime-targets/uptime-target-maintenance";
+import { UptimeTargetPaywall } from "@/components/uptime-targets/uptime-target-paywall";
 import { allowedDowntime, formatUptimeTarget } from "@/data/reports.client";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";

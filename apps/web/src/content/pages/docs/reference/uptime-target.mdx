@@ -6,7 +6,7 @@ description: Technical specification for uptime targets - what an uptime target 
 
 An uptime target is a named availability commitment: a monthly uptime percentage applied to a set of monitors. openstatus judges every monitor in the uptime target on its own, month by month, and seals each month once it is over, so the result you show a customer no longer changes.
 
-Find them in the dashboard under [**Reports**](https://app.openstatus.dev/reports). Uptime targets are included in the Pro and Scale plans.
+Find them in the dashboard under [**Uptime Targets**](https://app.openstatus.dev/uptime-targets). Uptime targets are included in the Pro and Scale plans.
 
 ## Properties
 
@@ -122,7 +122,7 @@ Sealing stores the measured, down, excused and unmeasured time, the excused wind
 - **Per monitor:** how many of those months it missed.
 - **Per uptime target:** how many of those months had at least one monitor miss. This is the number a "three missed months in twelve" clause reads.
 
-Both count sealed and preview months, and say how many of the misses are previews. Live months never count. The **Reports** list shows the same twelve months as a strip per uptime target: a month is missed when any monitor missed it, met when at least one monitor was judged and none missed, and empty otherwise.
+Both count sealed and preview months, and say how many of the misses are previews. Live months never count. The **Uptime Targets** list shows the same twelve months as a strip per uptime target: a month is missed when any monitor missed it, met when at least one monitor was judged and none missed, and empty otherwise.
 
 When a sealed month misses its target, the workspace owners get one email per uptime target and month, listing the monitors that missed and linking to the uptime target.
 

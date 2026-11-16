@@ -156,7 +156,7 @@ Removing a monitor, page, component, group or maintenance window stays a dashboa
 
 ## Using an API key instead
 
-OAuth needs a browser. For CI, a remote box, or a committed config where you'd rather not sign in, pass an API key in the `x-openstatus-key` header instead. Create one in [**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys) as **Read only**, **Read & write**, or **Custom** with one `read` / `write` choice per resource group (scopes are immutable on a key), then add the header where your agent puts it:
+OAuth needs a browser. For CI, a remote box, or a committed config where you'd rather not sign in, pass an API key in the `x-openstatus-key` header instead. Create one in [**Developers > API Keys**](https://app.openstatus.dev/developers/api-keys) as **Read only**, **Read & write**, or **Custom** with one `read` / `write` choice per resource group (scopes are immutable on a key), then add the header where your agent puts it:
 
 ```bash
 # Claude Code

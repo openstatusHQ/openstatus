@@ -236,7 +236,7 @@ export function Client() {
                   <NextLink href="/monitors/create">Create monitor</NextLink>
                 </Button>
                 <Button size="sm" variant="outline" asChild>
-                  <NextLink href="/agents/cli">Import via CLI</NextLink>
+                  <NextLink href="/developers/cli">Import via CLI</NextLink>
                 </Button>
               </EmptyStateActions>
             </DataTableEmpty>

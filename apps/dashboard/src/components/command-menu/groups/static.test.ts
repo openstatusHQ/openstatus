@@ -14,33 +14,60 @@ import {
 } from "./static";
 
 describe("navigationGroup", () => {
-  it("places Incidents right after Overview", () => {
-    const labels = navigationGroup().items.map((i) => i.label);
-    expect(labels.slice(0, 2)).toEqual(["Overview", "Incidents"]);
-  });
-
-  it("lists Incidents exactly once", () => {
-    const labels = navigationGroup().items.map((i) => i.label);
-    expect(labels.filter((l) => l === "Incidents")).toHaveLength(1);
+  it("follows the sidebar order", () => {
+    expect(navigationGroup().items.map((i) => i.label)).toEqual([
+      "Overview",
+      "Assistant",
+      "Monitors",
+      "Uptime Targets",
+      "Maintenance Windows",
+      "Private Locations",
+      "Incidents",
+      "Notifications",
+      "On-call",
+      "Status Pages",
+      "Agents",
+      "Slack Agent",
+      "MCP",
+      "Developers",
+      "API Keys",
+      "CLI",
+    ]);
   });
 
   it("navigates to each item's href", () => {
     expect(navigationGroup().items.map((item) => item.action)).toEqual(
       [
         "/overview",
-        "/incidents",
+        "/chat",
         "/monitors",
-        "/reports",
+        "/uptime-targets",
         "/maintenance-windows",
         "/private-locations",
+        "/incidents",
         "/notifications",
         "/on-call",
         "/status-pages",
-        "/chat",
         "/agents/slack",
-        "/agents/cli",
+        "/agents/slack",
         "/agents/mcp",
+        "/developers/api-keys",
+        "/developers/api-keys",
+        "/developers/cli",
       ].map((href) => ({ type: "navigate", href })),
+    );
+  });
+
+  it("finds API keys and the CLI by what people type", () => {
+    const items = navigationGroup().items;
+    const keywords = (label: string) =>
+      items.find((i) => i.label === label)?.keywords ?? [];
+    expect(keywords("API Keys")).toEqual(
+      expect.arrayContaining(["api key", "token", "terraform"]),
+    );
+    expect(keywords("CLI")).toContain("terminal");
+    expect(keywords("Uptime Targets")).toEqual(
+      expect.arrayContaining(["sla", "report", "reporting", "availability"]),
     );
   });
 
@@ -108,10 +135,12 @@ describe("settingsGroup", () => {
   });
 
   it("deep-links to settings anchors", () => {
-    const apiKeys = settingsGroup().items.find((i) => i.label === "API Keys");
-    expect(apiKeys?.action).toEqual({
+    const members = settingsGroup().items.find(
+      (i) => i.label === "Team Members",
+    );
+    expect(members?.action).toEqual({
       type: "navigate",
-      href: "/settings/general#api-keys",
+      href: "/settings/general#team-members",
     });
   });
 

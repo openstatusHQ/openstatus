@@ -50,9 +50,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavGroup>
           <NavSearch />
           <NavGroupDefaultItem item={NAV.overview} />
+          <NavGroupDefaultItem item={NAV.chat} />
         </NavGroup>
         {NAV_GROUPS.map((group) => (
-          <NavGroup key={group.label} label={group.label}>
+          <NavGroup
+            key={group.label ?? group.items[0].href}
+            label={group.label}
+            standalone={!group.label}
+          >
             {group.items.map((item) => {
               const Peek = PEEK_ITEMS.get(item);
               return Peek ? (

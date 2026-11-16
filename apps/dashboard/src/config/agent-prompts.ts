@@ -8,7 +8,7 @@ export const AGENT_PROMPTS = {
 
 1. Connect
 Add the openstatus MCP server at ${MCP} (Streamable HTTP, OAuth sign-in in the browser, no key to copy). Per-agent setup for Claude Code, Codex, Cursor, opencode, Claude Desktop and ChatGPT: ${DOCS}/docs/guides/how-to-connect-openstatus-to-your-agent.md
-If you can't open a browser, ask me for an API key from https://app.openstatus.dev/settings/general#api-keys and send it as the x-openstatus-key header. Never guess a key.
+If you can't open a browser, ask me for an API key from https://app.openstatus.dev/developers/api-keys and send it as the x-openstatus-key header. Never guess a key.
 If you can't use MCP at all, use the openstatus CLI with the same key (OPENSTATUS_API_TOKEN). Install: ${DOCS}/docs/tutorial/get-started-with-openstatus-cli.md Commands: ${DOCS}/docs/reference/cli-reference.md
 
 2. Look around

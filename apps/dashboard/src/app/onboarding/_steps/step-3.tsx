@@ -221,7 +221,7 @@ function NoClickopsCard() {
         </FormCardFooterInfo>
         {hasKeys ? (
           <Button size="sm" variant="outline" asChild>
-            <Link href="/settings/general#api-keys">
+            <Link href="/developers/api-keys">
               <ApiKey />
               Manage API keys
             </Link>

@@ -15,8 +15,7 @@ const links = [
   {
     label: "Agents",
     href: `https://app.openstatus.dev/agents?${REF}`,
-    description:
-      "manage incidents from Slack, your editor via MCP, or the CLI.",
+    description: "manage incidents from Slack or your editor via MCP.",
   },
   {
     label: "Docs",

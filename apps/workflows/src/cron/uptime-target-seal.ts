@@ -66,7 +66,7 @@ export async function runUptimeTargetSealTick(
           month: notice.month,
           workspaceName: notice.workspaceName,
           monitors: notice.monitors,
-          url: `${baseUrl}/reports/${notice.policy.id}/overview`,
+          url: `${baseUrl}/uptime-targets/${notice.policy.id}/overview`,
         });
         if (id) notified++;
       } catch (err) {

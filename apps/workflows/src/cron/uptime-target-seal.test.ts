@@ -174,7 +174,7 @@ describe("uptime-target-seal miss email", () => {
         monitors: [
           { id: m.id, name: "Checkout API", uptime: UPTIME, target: 99_500 },
         ],
-        url: `https://app.test/reports/${policy.id}/overview`,
+        url: `https://app.test/uptime-targets/${policy.id}/overview`,
       },
     ]);
 

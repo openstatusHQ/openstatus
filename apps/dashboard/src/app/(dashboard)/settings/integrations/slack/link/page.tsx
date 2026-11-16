@@ -8,6 +8,6 @@ export default async function SlackLinkPage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const { token } = await searchParamsCache.parse(props.searchParams);
-  if (!token) return redirect("/settings/integrations");
+  if (!token) return redirect("/agents/slack");
   return <Client />;
 }

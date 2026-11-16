@@ -28,7 +28,7 @@ New positioning copy and new page metadata say "incident response", not
 are renamed together.
 
 A dashboard location is a link, not just a bold path:
-`[**Settings > General > API Keys**](https://app.openstatus.dev/settings/general#api-keys)`.
+`[**Developers > API Keys**](https://app.openstatus.dev/developers/api-keys)`.
 For a monitor or status page, put `_` where the id goes
 (`https://app.openstatus.dev/status-pages/_/edit#custom-domain`); the dashboard
 asks which one. Anchors are the `id`s on the dashboard's `FormCard`s and `Section`s.

@@ -85,7 +85,7 @@ UptimeTargetMissedEmail.PreviewProps = {
     { name: "Checkout API", uptime: 99_120, target: 99_500 },
     { name: "Auth", uptime: 98_004, target: 99_500 },
   ],
-  url: "https://app.openstatus.dev/reports/1/overview",
+  url: "https://app.openstatus.dev/uptime-targets/1/overview",
 } satisfies UptimeTargetMissedProps;
 
 export default UptimeTargetMissedEmail;

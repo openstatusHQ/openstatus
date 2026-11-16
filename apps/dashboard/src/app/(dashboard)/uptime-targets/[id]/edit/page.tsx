@@ -11,7 +11,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormUptimeTargetUpdate } from "@/components/forms/uptime-target/update";
-import { UptimeTargetPaywall } from "@/components/reports/uptime-target-paywall";
+import { UptimeTargetPaywall } from "@/components/uptime-targets/uptime-target-paywall";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {

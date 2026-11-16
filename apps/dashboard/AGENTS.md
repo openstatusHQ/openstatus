@@ -64,7 +64,7 @@ file also has text links, and pass `target`/`rel` yourself for external hrefs.
 Every `FormCard` and `Section` on a page carries an `id`, unique on its page:
 the kebab-cased title for a new card (`<FormCard id="retry-policy">`). Never
 rename a shipped id; links already point at it. Cross-links,
-⌘K entries and docs point at them (`/settings/general#api-keys`).
+⌘K entries and docs point at them (`/settings/general#team-members`).
 `useScrollToHash` scrolls once the element mounts and marks it
 `data-hash-target`, which shows a short ring (`app/globals.css`). Both
 components already carry `scroll-mt-28`; sheet bodies need no id.

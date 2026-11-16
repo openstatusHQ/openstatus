@@ -11,6 +11,7 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useId } from "react";
 
 import { StatusDot, type StatusVariant } from "@/components/common/status-dot";
 import type { NavItem } from "@/config/nav";
@@ -27,20 +28,32 @@ function topSegment(url: string) {
  */
 export function NavGroup({
   label,
+  standalone = false,
   children,
   className,
   ...props
-}: React.ComponentProps<typeof SidebarGroup> & { label?: string }) {
+}: React.ComponentProps<typeof SidebarGroup> & {
+  label?: string;
+  /** unlabelled, yet set apart from the group above by an empty label row */
+  standalone?: boolean;
+}) {
+  const labelId = useId();
   return (
     <SidebarGroup
       data-slot="nav-group"
+      role={label ? "group" : undefined}
+      aria-labelledby={label ? labelId : undefined}
       className={cn("py-1", className)}
       {...props}
     >
-      {label ? (
+      {label || standalone ? (
         // collapsed, the label is invisible and pulled up over the previous
         // group's last item; let the pointer through to that item
-        <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">
+        <SidebarGroupLabel
+          id={label ? labelId : undefined}
+          aria-hidden={label ? undefined : true}
+          className="group-data-[collapsible=icon]:pointer-events-none"
+        >
           {label}
         </SidebarGroupLabel>
       ) : null}

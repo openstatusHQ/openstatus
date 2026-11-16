@@ -3,8 +3,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { UptimeMonthStrip } from "@/components/reports/uptime-month-strip";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { UptimeMonthStrip } from "@/components/uptime-targets/uptime-month-strip";
 import { formatUptimeTarget } from "@/data/reports.client";
 
 import { TableCellLink } from "../table-cell-link";
@@ -22,7 +22,7 @@ export const columns: ColumnDef<UptimeTarget>[] = [
     cell: ({ row }) => (
       <TableCellLink
         value={row.original.name}
-        href={`/reports/${row.original.id}/overview`}
+        href={`/uptime-targets/${row.original.id}/overview`}
         className="font-medium"
       />
     ),

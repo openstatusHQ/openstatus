@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/sla-policies",
-        destination: "/reports",
+        destination: "/uptime-targets",
         permanent: true,
       },
       {
@@ -63,12 +63,32 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/sla-policies/monitors/:path*",
-        destination: "/reports/:path*",
+        destination: "/uptime-targets/:path*",
         permanent: true,
       },
       {
         source: "/reportings/:path*",
-        destination: "/reports/:path*",
+        destination: "/uptime-targets/:path*",
+        permanent: true,
+      },
+      {
+        source: "/reports",
+        destination: "/uptime-targets",
+        permanent: true,
+      },
+      {
+        source: "/reports/:path*",
+        destination: "/uptime-targets/:path*",
+        permanent: true,
+      },
+      {
+        source: "/agents/cli",
+        destination: "/developers/cli",
+        permanent: true,
+      },
+      {
+        source: "/cli",
+        destination: "/developers/cli",
         permanent: true,
       },
       {
