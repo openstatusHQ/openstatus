@@ -69,6 +69,28 @@ const PUBLIC_STATUS_TTL = 60;
 // 7-day charts barely move within a few minutes.
 const PUBLIC_METRICS_TTL = 300;
 
+function monitorMetricsProcedures(
+  type: "http" | "tcp" | "dns" | "icmp" | "grpc",
+) {
+  return {
+    latency: cachedPipe(
+      `latency7d:${type}`,
+      getMetricsLatencyProcedure("7d", type),
+      PUBLIC_METRICS_TTL,
+    ),
+    regions: cachedPipe(
+      `regions7d:${type}`,
+      getMetricsRegionsProcedure("7d", type),
+      PUBLIC_METRICS_TTL,
+    ),
+    uptime: cachedPipe(
+      `uptime7d:${type}`,
+      getUptimeProcedure("7d", type),
+      PUBLIC_METRICS_TTL,
+    ),
+  };
+}
+
 // NOTE: publicProcedure is used to get the status page
 // TODO: improve performance of SQL query (make a single query with joins)
 
@@ -1234,91 +1256,11 @@ export const statusPageRouter = createTRPCRouter({
       if (_monitor.deletedAt) return null;
 
       const proceduresByType = {
-        http: {
-          latency: cachedPipe(
-            "latency7d:http",
-            getMetricsLatencyProcedure("7d", "http"),
-            PUBLIC_METRICS_TTL,
-          ),
-          regions: cachedPipe(
-            "regions7d:http",
-            getMetricsRegionsProcedure("7d", "http"),
-            PUBLIC_METRICS_TTL,
-          ),
-          uptime: cachedPipe(
-            "uptime7d:http",
-            getUptimeProcedure("7d", "http"),
-            PUBLIC_METRICS_TTL,
-          ),
-        },
-        tcp: {
-          latency: cachedPipe(
-            "latency7d:tcp",
-            getMetricsLatencyProcedure("7d", "tcp"),
-            PUBLIC_METRICS_TTL,
-          ),
-          regions: cachedPipe(
-            "regions7d:tcp",
-            getMetricsRegionsProcedure("7d", "tcp"),
-            PUBLIC_METRICS_TTL,
-          ),
-          uptime: cachedPipe(
-            "uptime7d:tcp",
-            getUptimeProcedure("7d", "tcp"),
-            PUBLIC_METRICS_TTL,
-          ),
-        },
-        dns: {
-          latency: cachedPipe(
-            "latency7d:dns",
-            getMetricsLatencyProcedure("7d", "dns"),
-            PUBLIC_METRICS_TTL,
-          ),
-          regions: cachedPipe(
-            "regions7d:dns",
-            getMetricsRegionsProcedure("7d", "dns"),
-            PUBLIC_METRICS_TTL,
-          ),
-          uptime: cachedPipe(
-            "uptime7d:dns",
-            getUptimeProcedure("7d", "dns"),
-            PUBLIC_METRICS_TTL,
-          ),
-        },
-        icmp: {
-          latency: cachedPipe(
-            "latency7d:icmp",
-            getMetricsLatencyProcedure("7d", "icmp"),
-            PUBLIC_METRICS_TTL,
-          ),
-          regions: cachedPipe(
-            "regions7d:icmp",
-            getMetricsRegionsProcedure("7d", "icmp"),
-            PUBLIC_METRICS_TTL,
-          ),
-          uptime: cachedPipe(
-            "uptime7d:icmp",
-            getUptimeProcedure("7d", "icmp"),
-            PUBLIC_METRICS_TTL,
-          ),
-        },
-        grpc: {
-          latency: cachedPipe(
-            "latency7d:grpc",
-            getMetricsLatencyProcedure("7d", "grpc"),
-            PUBLIC_METRICS_TTL,
-          ),
-          regions: cachedPipe(
-            "regions7d:grpc",
-            getMetricsRegionsProcedure("7d", "grpc"),
-            PUBLIC_METRICS_TTL,
-          ),
-          uptime: cachedPipe(
-            "uptime7d:grpc",
-            getUptimeProcedure("7d", "grpc"),
-            PUBLIC_METRICS_TTL,
-          ),
-        },
+        http: monitorMetricsProcedures("http"),
+        tcp: monitorMetricsProcedures("tcp"),
+        dns: monitorMetricsProcedures("dns"),
+        icmp: monitorMetricsProcedures("icmp"),
+        grpc: monitorMetricsProcedures("grpc"),
       };
 
       // `udp` and `ssl` are monitor job types with no Tinybird pipes. Looking the
