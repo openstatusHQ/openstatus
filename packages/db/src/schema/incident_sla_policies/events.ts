@@ -1,4 +1,19 @@
+import type { IncidentEventType } from "../incidents/constants";
 import type { IncidentSlaTimerKind } from "./state";
+
+export const incidentSystemEventTypes = [
+  "sla_response_breached",
+  "sla_resolution_breached",
+] as const satisfies ReadonlyArray<IncidentEventType>;
+
+export type IncidentSystemEventType = (typeof incidentSystemEventTypes)[number];
+
+/** Events the system records for missed targets; never activity, never "Last update". */
+export function isIncidentSystemEvent(
+  type: string,
+): type is IncidentSystemEventType {
+  return incidentSystemEventTypes.some((t) => t === type);
+}
 
 const UNITS = [
   ["d", 1440],
@@ -46,24 +61,4 @@ export function parseIncidentSlaBreachMessage(
     target: match[2] ?? "",
     dueAt,
   };
-}
-
-/** `Update due <ISO> missed (every 4h)`; the dashboard parses it back. */
-export function incidentUpdateMissedMessage(args: {
-  intervalMinutes: number;
-  dueAt: Date;
-}): string {
-  return `Update due ${args.dueAt.toISOString()} missed (every ${formatIncidentSlaMinutes(args.intervalMinutes)})`;
-}
-
-const UPDATE_MISSED = /^Update due (\S+) missed \(every (.+)\)$/;
-
-export function parseIncidentUpdateMissedMessage(
-  message: string | null,
-): { interval: string; dueAt: Date } | null {
-  const match = message ? UPDATE_MISSED.exec(message) : null;
-  if (!match) return null;
-  const dueAt = new Date(match[1] ?? "");
-  if (Number.isNaN(dueAt.getTime())) return null;
-  return { interval: match[2] ?? "", dueAt };
 }

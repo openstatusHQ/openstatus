@@ -9,7 +9,6 @@ export {
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
-  afterIncidentSlaMissExplained,
   afterIncidentStatusChanged,
   afterIncidentUpdated,
   afterPostmortemApproved,
@@ -50,7 +49,6 @@ export {
   emailIncidentSlaNotices,
   type IncidentSlaNoticeEmail,
 } from "./sla-notice-emails";
-export { recordIncidentMissedUpdates } from "./update-misses";
 export {
   getIncident,
   getIncidentBySlackChannel,
@@ -86,7 +84,6 @@ export {
   LinkIncidentStatusReportInput,
   ListIncidentEventsInput,
   ListIncidentsInput,
-  SetIncidentSlaMissReasonInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
 } from "./schemas";
@@ -94,7 +91,6 @@ export {
   INCIDENT_REPORTED_AT_ERROR,
   isAllowedIncidentReportedAt,
 } from "@openstatus/db/src/schema/incidents/constants";
-export { setIncidentSlaMissReason } from "./set-miss-reason";
 export { setIncidentStatus } from "./set-status";
 export {
   bindIncidentSlackChannel,

@@ -9,17 +9,13 @@ import {
   or,
 } from "@openstatus/db";
 import {
-  INCIDENT_SLA_WARNING_RATIO,
   type Incident,
   type IncidentSlaNoticeKind,
   type IncidentSlaNoticeType,
-  type IncidentUpdateCadence,
   type Workspace,
   incident,
-  incidentEvent,
   incidentSlaNotice,
   incidentSlaState,
-  incidentUpdateCadence,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -38,18 +34,14 @@ import {
   type SlackIncidentBlock,
   escapeMrkdwn,
 } from "./slack-flow";
-import { loadIncidentUpdateActivity } from "./update-activity";
-import type { IncidentMissedUpdateRecord } from "./update-misses";
 
 const DAY = 24 * 60 * 60 * 1000;
-const MINUTE = 60_000;
 
 export type DueIncidentSlaNotice = {
   incident: Incident;
   workspace: Workspace;
   kind: IncidentSlaNoticeKind;
   notice: IncidentSlaNoticeType;
-  /** The interval for `update` notices. */
   targetMinutes: number;
   dueAt: Date;
 };
@@ -78,22 +70,6 @@ const noticeKey = (n: {
   dueAt: Date;
 }) => `${n.incident.id}:${n.kind}:${n.notice}:${n.dueAt.getTime()}`;
 
-/**
- * Per interval: the due time of the running one when it is in its last quarter,
- * and of the newest elapsed one, so a long gap gives a single overdue notice.
- */
-function updateNoticeDueTimes(cadence: IncidentUpdateCadence, now: Date) {
-  const span = cadence.intervalMinutes * MINUTE;
-  const start = cadence.startsAt.getTime();
-  const elapsed = Math.max(0, Math.ceil((now.getTime() - start) / span) - 1);
-  const warnAt = start + (elapsed + INCIDENT_SLA_WARNING_RATIO) * span;
-  return {
-    warning:
-      now.getTime() >= warnAt ? new Date(start + (elapsed + 1) * span) : null,
-    overdue: elapsed > 0 ? new Date(start + elapsed * span) : null,
-  };
-}
-
 function stillUnmet(row: Incident, kind: "response" | "resolution") {
   if (row.closedAt || (row.status !== "open" && row.status !== "mitigated")) {
     return false;
@@ -105,13 +81,12 @@ function stillUnmet(row: Incident, kind: "response" | "resolution") {
 
 /**
  * Unclaimed warnings and misses: misses this tick recorded plus unmet ones under a day old
- * (so a failed send is retried); an update miss only for the newest elapsed interval.
+ * (so a failed send is retried).
  */
 export async function dueIncidentSlaNotices(args: {
   db: DB;
   now: Date;
   breaches: IncidentSlaBreachRecord[];
-  missedUpdates?: IncidentMissedUpdateRecord[];
   workspaceIds?: number[];
 }): Promise<DueIncidentSlaNotice[]> {
   const { db, now } = args;
@@ -178,7 +153,6 @@ export async function dueIncidentSlaNotices(args: {
                     gt(incident.resolutionBreachDueAt, retryAfter),
                   ),
                 ),
-                isNull(incident.resolutionStoppedAt),
               ),
             ),
           )
@@ -186,70 +160,10 @@ export async function dueIncidentSlaNotices(args: {
   const workspaces = await loadWorkspaces(db, [
     ...new Set(candidates.map((c) => c.workspaceId)),
   ]);
-  const activity = await loadIncidentUpdateActivity(db, candidates);
-  const missedKey = (incidentId: number, dueAt: Date) =>
-    `${incidentId}:${dueAt.getTime()}`;
-  const freshMisses = new Set(
-    (args.missedUpdates ?? []).map((m) => missedKey(m.incident.id, m.dueAt)),
-  );
-  const recordedMisses =
-    candidates.length === 0
-      ? []
-      : await db
-          .select({
-            incidentId: incidentEvent.incidentId,
-            createdAt: incidentEvent.createdAt,
-          })
-          .from(incidentEvent)
-          .where(
-            and(
-              inArray(
-                incidentEvent.incidentId,
-                candidates.map((c) => c.id),
-              ),
-              eq(incidentEvent.type, "sla_update_missed"),
-              gt(incidentEvent.createdAt, retryAfter),
-            ),
-          )
-          .all();
-  const retryMisses = new Set(
-    recordedMisses.map((m) => missedKey(m.incidentId, m.createdAt)),
-  );
 
   for (const row of candidates) {
     const ws = workspaces.get(row.workspaceId);
     if (!ws) continue;
-    const rowActivity = activity.get(row.id);
-    const cadence = rowActivity
-      ? incidentUpdateCadence(row, rowActivity, now)
-      : null;
-    if (cadence) {
-      const { warning, overdue } = updateNoticeDueTimes(cadence, now);
-      const items: DueIncidentSlaNotice[] = [];
-      if (warning) {
-        items.push({
-          incident: row,
-          workspace: ws,
-          kind: "update",
-          notice: "warning",
-          targetMinutes: cadence.intervalMinutes,
-          dueAt: warning,
-        });
-      }
-      const key = overdue && missedKey(row.id, overdue);
-      if (overdue && key && (freshMisses.has(key) || retryMisses.has(key))) {
-        items.push({
-          incident: row,
-          workspace: ws,
-          kind: "update",
-          notice: "miss",
-          targetMinutes: cadence.intervalMinutes,
-          dueAt: overdue,
-        });
-      }
-      for (const item of items) due.set(noticeKey(item), item);
-    }
-
     const state = incidentSlaState(row, now);
     if (!state) continue;
     for (const kind of ["response", "resolution"] as const) {
@@ -377,10 +291,7 @@ function slackTime(date: Date): string {
  * acknowledgement mode until `acknowledgedBy` is given.
  */
 export function incidentSlaNoticeBlocks(args: {
-  incident: Pick<
-    Incident,
-    "id" | "title" | "severity" | "slaSnapshot" | "statusReportId"
-  >;
+  incident: Pick<Incident, "id" | "title" | "severity" | "slaSnapshot">;
   kind: IncidentSlaNoticeKind;
   notice: IncidentSlaNoticeType;
   targetMinutes: number;
@@ -401,7 +312,6 @@ export function incidentSlaNoticeBlocks(args: {
       dueAt: args.dueAt,
       responseMet,
       resolutionStop: snapshot?.resolutionStop ?? "mitigated",
-      reportLinked: args.incident.statusReportId !== null,
     },
     { strong: (text) => `*${escapeMrkdwn(text)}*`, time: slackTime },
   );
@@ -474,8 +384,6 @@ export function incidentSlaNoticeBlocks(args: {
  */
 export async function sendIncidentSlaNotices(args: {
   breaches: IncidentSlaBreachRecord[];
-  /** This tick's `recordIncidentMissedUpdates`, so a late record still notifies once. */
-  missedUpdates?: IncidentMissedUpdateRecord[];
   clientFor: SlackClientFactory;
   dashboardUrl: string;
   now?: Date;
@@ -488,7 +396,6 @@ export async function sendIncidentSlaNotices(args: {
     db,
     now,
     breaches: args.breaches,
-    missedUpdates: args.missedUpdates,
     workspaceIds: args.workspaceIds,
   });
 

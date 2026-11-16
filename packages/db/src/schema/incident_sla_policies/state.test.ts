@@ -58,7 +58,6 @@ describe("incidentSlaState", () => {
       warnAt: at(45),
       metAt: null,
       breachDueAt: null,
-      missReason: null,
       status: "running",
     });
   });
@@ -218,29 +217,6 @@ describe("incidentAwaitsAcknowledgement", () => {
 const resolution = (incident: Partial<IncidentSlaFields>, now: Date) =>
   incidentSlaState({ ...base, ...incident }, now)?.resolution ?? null;
 
-describe("miss reasons", () => {
-  it("carries the reason of a recorded miss on its timer", () => {
-    const state = incidentSlaState(
-      {
-        ...base,
-        responseBreachDueAt: at(60),
-        responseMissReason: "Pager rotation gap",
-        resolutionMissReason: "Vendor outage",
-        resolutionBreachDueAt: at(240),
-      },
-      at(300),
-    );
-    expect(state?.response?.missReason).toBe("Pager rotation gap");
-    expect(state?.resolution?.missReason).toBe("Vendor outage");
-  });
-
-  it("hides a reason on a timer without a recorded miss", () => {
-    expect(
-      response({ responseMissReason: "stale" }, at(90))?.missReason,
-    ).toBeNull();
-  });
-});
-
 describe("resolution timer", () => {
   it("runs against the resolution target from the clock start", () => {
     expect(resolution({}, at(10))).toEqual({
@@ -250,7 +226,6 @@ describe("resolution timer", () => {
       warnAt: at(180),
       metAt: null,
       breachDueAt: null,
-      missReason: null,
       status: "running",
     });
     expect(resolution({}, at(180))?.status).toBe("at_risk");

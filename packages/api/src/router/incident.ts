@@ -11,7 +11,6 @@ import {
   DraftPostmortemInput,
   IncidentIdInput,
   LinkIncidentStatusReportInput,
-  SetIncidentSlaMissReasonInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
   acknowledgeIncident,
@@ -21,7 +20,6 @@ import {
   generatePostmortemDraft,
   getPostmortem,
   afterIncidentAcknowledged,
-  afterIncidentSlaMissExplained,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -36,7 +34,6 @@ import {
   getIncidentForStatusReport,
   getIncidentOrThrow,
   linkIncidentStatusReport,
-  setIncidentSlaMissReason,
   listIncidentEvents,
   listAllIncidents,
   listIncidents,
@@ -234,30 +231,6 @@ export const incidentRouter = createTRPCRouter({
           }),
         );
         return row;
-      } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  setSlaMissReason: protectedProcedure
-    .meta({ track: Events.UpdateManagedIncident })
-    .input(SetIncidentSlaMissReasonInput)
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const { before, after } = await setIncidentSlaMissReason({
-          ctx: toServiceCtx(ctx),
-          input,
-        });
-        afterResponse(() =>
-          afterIncidentSlaMissExplained({
-            ctx: toServiceCtx(ctx),
-            effects: effectsFor(ctx),
-            before,
-            after,
-            kind: input.kind,
-          }),
-        );
-        return after;
       } catch (err) {
         toTRPCError(err);
       }

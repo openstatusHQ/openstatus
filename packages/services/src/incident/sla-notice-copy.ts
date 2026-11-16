@@ -12,13 +12,10 @@ export type IncidentSlaNoticeCopyInput = {
   notice: IncidentSlaNoticeType;
   title: string;
   severity: IncidentSeverity;
-  /** The update interval for `update` notices. */
   targetMinutes: number;
   dueAt: Date;
   responseMet: IncidentSlaResponseMet;
   resolutionStop: IncidentSlaResolutionStop;
-  /** With a linked status report only its updates restart the interval, not notes. */
-  reportLinked?: boolean;
 };
 
 /** How a channel renders the incident title and the due time (mrkdwn and Slack dates, or plain text). */
@@ -37,16 +34,10 @@ export type IncidentSlaNoticeCopy = {
 const LABEL: Record<IncidentSlaNoticeKind, string> = {
   response: "Response",
   resolution: "Resolution",
-  update: "Update",
 };
 
 function action(input: IncidentSlaNoticeCopyInput): string | null {
   const when = input.notice === "warning" ? "before then" : "now";
-  if (input.kind === "update") {
-    return input.reportLinked
-      ? `Post a status report update ${when}.`
-      : `Post a status report update or a note ${when}.`;
-  }
   if (input.kind === "response") {
     return input.responseMet === "status_report"
       ? `Post a status report update ${when}.`
@@ -67,19 +58,6 @@ export function incidentSlaNoticeCopy(
   const kind = input.kind;
   const subject = `${format.strong(input.title)} (${input.severity})`;
   const due = format.time(input.dueAt);
-  if (kind === "update") {
-    return input.notice === "warning"
-      ? {
-          headline: "Update due soon",
-          body: `The next update on ${subject} is due ${due} (every ${target}).`,
-          action: action(input),
-        }
-      : {
-          headline: "Update overdue",
-          body: `The update on ${subject} was due ${due} (every ${target}).`,
-          action: action(input),
-        };
-  }
   return input.notice === "warning"
     ? {
         headline: `${LABEL[kind]} due soon`,

@@ -15,8 +15,6 @@ export type IncidentSlaTimer = {
   metAt: Date | null;
   /** The due time recorded as missed; once set it never clears. */
   breachDueAt: Date | null;
-  /** Why the recorded miss happened; only ever set alongside `breachDueAt`. */
-  missReason: string | null;
   status: IncidentSlaTimerStatus;
 };
 
@@ -37,8 +35,6 @@ export type IncidentSlaFields = {
   responseBreachDueAt: Date | null;
   resolutionStoppedAt: Date | null;
   resolutionBreachDueAt: Date | null;
-  responseMissReason?: string | null;
-  resolutionMissReason?: string | null;
 };
 
 export type IncidentAcknowledgeFields = IncidentSlaFields & {
@@ -64,11 +60,9 @@ function timer(args: {
   targetMinutes: number | undefined;
   metAt: Date | null;
   breachDueAt: Date | null;
-  missReason: string | null | undefined;
   now: Date;
 }): IncidentSlaTimer | null {
   const { startsAt, metAt, breachDueAt, now } = args;
-  const missReason = breachDueAt ? (args.missReason ?? null) : null;
   // a recorded miss outlives a severity change that dropped the target
   const targetMinutes =
     args.targetMinutes ??
@@ -97,7 +91,6 @@ function timer(args: {
     warnAt,
     metAt,
     breachDueAt,
-    missReason,
     status,
   };
 }
@@ -109,7 +102,6 @@ export function incidentSlaTimerIso(timer: IncidentSlaTimer) {
     dueAt: timer.dueAt.toISOString(),
     metAt: timer.metAt?.toISOString() ?? null,
     missedAt: timer.breachDueAt?.toISOString() ?? null,
-    missReason: timer.missReason,
     status: timer.status,
   };
 }
@@ -129,7 +121,6 @@ export function incidentSlaState(
       targetMinutes: targets?.responseMinutes,
       metAt: incident.responseMetAt,
       breachDueAt: incident.responseBreachDueAt,
-      missReason: incident.responseMissReason,
       now,
     }),
     resolution: timer({
@@ -137,7 +128,6 @@ export function incidentSlaState(
       targetMinutes: targets?.resolutionMinutes,
       metAt: incident.resolutionStoppedAt,
       breachDueAt: incident.resolutionBreachDueAt,
-      missReason: incident.resolutionMissReason,
       now,
     }),
     resolutionStop: snapshot.resolutionStop,

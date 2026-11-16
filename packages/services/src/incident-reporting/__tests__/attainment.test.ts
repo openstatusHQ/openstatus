@@ -1,8 +1,5 @@
 import type { IncidentSlaSnapshot } from "@openstatus/db/src/schema/incident_sla_policies/constants";
-import {
-  createIncident,
-  createIncidentEvent,
-} from "@openstatus/db/src/test/factories";
+import { createIncident } from "@openstatus/db/src/test/factories";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -39,7 +36,6 @@ const snapshot: IncidentSlaSnapshot = {
   targets: {
     critical: { responseMinutes: 60, resolutionMinutes: 240 },
     major: { responseMinutes: 240, resolutionMinutes: 1440 },
-    minor: { updateMinutes: 720 },
   },
   resolutionStop: "mitigated",
 };
@@ -72,7 +68,6 @@ describe("getIncidentSlaAttainment", () => {
         incidents: 0,
         response: empty,
         resolution: empty,
-        missedUpdates: 0,
       });
     });
   });
@@ -94,8 +89,8 @@ describe("getIncidentSlaAttainment", () => {
         },
         tx,
       );
-      // response met late (recorded miss), resolution still running, two missed updates
-      const late = await createIncident(
+      // response met late (recorded miss), resolution still running
+      await createIncident(
         ws,
         {
           severity: "major",
@@ -108,18 +103,6 @@ describe("getIncidentSlaAttainment", () => {
         },
         tx,
       );
-      for (const due of ["2026-11-01T11:59:00Z", "2026-11-01T23:59:00Z"]) {
-        await createIncidentEvent(
-          late.id,
-          {
-            type: "sla_update_missed",
-            source: "system",
-            createdAt: at(due),
-            message: `Update due ${due} missed (every 12h)`,
-          },
-          tx,
-        );
-      }
       // severity without targets: counted as an incident, no timers
       await createIncident(
         ws,
@@ -204,14 +187,12 @@ describe("getIncidentSlaAttainment", () => {
         response: { within: 1, missed: 1, open: 0, total: 2 },
         // past due without a stamp yet: still open until the miss is recorded
         resolution: { within: 1, missed: 0, open: 1, total: 2 },
-        missedUpdates: 2,
       });
       expect(byMonth["2026-11-01"]).toEqual({
         month: "2026-11-01",
         incidents: 2,
         response: { within: 1, missed: 0, open: 1, total: 2 },
         resolution: { within: 0, missed: 0, open: 2, total: 2 },
-        missedUpdates: 0,
       });
       expect(byMonth["2025-12-01"]?.incidents).toBe(0);
     });

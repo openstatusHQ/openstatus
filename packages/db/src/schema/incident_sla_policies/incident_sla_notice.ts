@@ -8,11 +8,7 @@ import {
 
 import { incident } from "../incidents/incident";
 
-export const incidentSlaNoticeKinds = [
-  "response",
-  "resolution",
-  "update",
-] as const;
+export const incidentSlaNoticeKinds = ["response", "resolution"] as const;
 export type IncidentSlaNoticeKind = (typeof incidentSlaNoticeKinds)[number];
 export const incidentSlaNoticeTypes = ["warning", "miss"] as const;
 export type IncidentSlaNoticeType = (typeof incidentSlaNoticeTypes)[number];

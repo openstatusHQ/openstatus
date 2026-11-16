@@ -13,7 +13,6 @@ import {
   incident,
   incidentEvent,
   incidentSystemEventTypes,
-  incidentUpdateCadence,
   slackUser,
   selectWorkspaceSchema,
   workspace,
@@ -25,7 +24,6 @@ import {
   getSlackConnection,
 } from "../integration/slack-connection";
 import type { SlackClientFactory } from "./slack-flow";
-import { loadIncidentUpdateActivity } from "./update-activity";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -83,10 +81,7 @@ export function isPermanentSlackError(error: unknown): boolean {
   );
 }
 
-/**
- * Open and mitigated incidents that went quiet, regardless of delivery. An
- * active update cadence replaces this reminder; system events are not activity.
- */
+/** Open and mitigated incidents that went quiet, regardless of delivery; system events are not activity. */
 export async function dueStaleReminders(args: {
   db: DB;
   now: Date;
@@ -98,17 +93,9 @@ export async function dueStaleReminders(args: {
       .where(inArray(incident.status, ["open", "mitigated"]))
       .all()
   ).filter((row) => !row.closedAt);
-  const activity = await loadIncidentUpdateActivity(
-    args.db,
-    candidates.filter((row) => row.slaSnapshot),
-  );
 
   const due: DueReminder[] = [];
   for (const row of candidates) {
-    const rowActivity = activity.get(row.id);
-    if (rowActivity && incidentUpdateCadence(row, rowActivity, args.now)) {
-      continue;
-    }
     const last = await args.db
       .select({ id: incidentEvent.id, createdAt: incidentEvent.createdAt })
       .from(incidentEvent)

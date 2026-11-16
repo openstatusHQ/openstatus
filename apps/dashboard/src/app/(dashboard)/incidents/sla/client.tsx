@@ -39,7 +39,6 @@ const EXAMPLE_MONTHS = Array.from({ length: 6 }, (_, i) => {
     incidents,
     response: count,
     resolution: count,
-    missedUpdates: missed * 2,
   };
 });
 

@@ -1,7 +1,6 @@
-import { and, count, eq, gte, isNotNull, lt, ne } from "@openstatus/db";
+import { and, eq, gte, isNotNull, lt, ne } from "@openstatus/db";
 import {
   incident,
-  incidentEvent,
   incidentSlaClockStart,
   incidentSlaState,
   type IncidentSlaTimer,
@@ -29,7 +28,6 @@ export type IncidentSlaAttainmentMonth = {
   incidents: number;
   response: IncidentSlaAttainmentCount;
   resolution: IncidentSlaAttainmentCount;
-  missedUpdates: number;
 };
 
 function monthKey(date: Date) {
@@ -72,7 +70,6 @@ export async function getIncidentSlaAttainment(args: {
       incidents: 0,
       response: { within: 0, missed: 0, open: 0, total: 0 },
       resolution: { within: 0, missed: 0, open: 0, total: 0 },
-      missedUpdates: 0,
     });
   }
 
@@ -83,17 +80,7 @@ export async function getIncidentSlaAttainment(args: {
     gte(incident.declaredAt, from),
     lt(incident.declaredAt, new Date(to.getTime() + CLOCK_START_LEAD_MS)),
   );
-  const [rows, misses] = await Promise.all([
-    db.select().from(incident).where(inWindow).all(),
-    db
-      .select({ incidentId: incidentEvent.incidentId, missed: count() })
-      .from(incidentEvent)
-      .innerJoin(incident, eq(incidentEvent.incidentId, incident.id))
-      .where(and(inWindow, eq(incidentEvent.type, "sla_update_missed")))
-      .groupBy(incidentEvent.incidentId)
-      .all(),
-  ]);
-  const missedByIncident = new Map(misses.map((m) => [m.incidentId, m.missed]));
+  const rows = await db.select().from(incident).where(inWindow).all();
 
   for (const row of rows) {
     const month = months.get(monthKey(incidentSlaClockStart(row)));
@@ -102,7 +89,6 @@ export async function getIncidentSlaAttainment(args: {
     month.incidents++;
     tally(month.response, state.response);
     tally(month.resolution, state.resolution);
-    month.missedUpdates += missedByIncident.get(row.id) ?? 0;
   }
 
   return { months: [...months.values()] };

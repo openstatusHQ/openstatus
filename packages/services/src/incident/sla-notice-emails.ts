@@ -152,7 +152,6 @@ export async function emailIncidentSlaNotices(args: {
           dueAt: n.dueAt,
           responseMet: snapshot?.responseMet ?? "acknowledged",
           resolutionStop: snapshot?.resolutionStop ?? "mitigated",
-          reportLinked: n.incident.statusReportId !== null,
         },
         {
           strong: (text) => text,
@@ -167,10 +166,7 @@ export async function emailIncidentSlaNotices(args: {
         incidentTitle: n.incident.title,
         severity: n.incident.severity,
         workspaceName: n.workspace.name || n.workspace.slug,
-        target:
-          n.kind === "update"
-            ? `every ${formatIncidentSlaMinutes(n.targetMinutes)}`
-            : formatIncidentSlaMinutes(n.targetMinutes),
+        target: formatIncidentSlaMinutes(n.targetMinutes),
         due: `${dueFormat.format(n.dueAt)} UTC`,
         audience: found.audience,
         url: `${args.dashboardUrl}/incidents/${n.incident.id}`,

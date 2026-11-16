@@ -60,11 +60,7 @@ async function policy(tx: DB) {
     ctx: owner(tx),
     input: {
       targets: {
-        critical: {
-          responseMinutes: 60,
-          resolutionMinutes: 240,
-          updateMinutes: 120,
-        },
+        critical: { responseMinutes: 60, resolutionMinutes: 240 },
       },
       resolutionStop: "resolved",
     },
@@ -148,23 +144,6 @@ describe("reported at, at declare", () => {
       expect(breach.map((e) => [e.createdAt, e.source])).toEqual([
         [due, "system"],
       ]);
-    });
-  });
-
-  test("the update interval still counts from declare", async () => {
-    await withTestTransaction(async (tx) => {
-      await policy(tx);
-      const declared = await declareIncident({
-        ctx: apiKey(tx),
-        input: {
-          title: "Down",
-          severity: "critical",
-          reportedAt: minutesAgo(100),
-        },
-      });
-      expect((await view(tx, declared.id)).updateCadence?.dueAt).toEqual(
-        minutesAfter(declared.declaredAt, 120),
-      );
     });
   });
 });

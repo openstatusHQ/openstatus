@@ -16,9 +16,7 @@ import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
 import type { Workspace } from "../../types";
 import {
   acknowledgeIncident,
-  addIncidentNote,
   declareIncident,
-  recordIncidentMissedUpdates,
   recordIncidentSlaBreaches,
   sendIncidentSlaNotices,
   type SlackIncidentClient,
@@ -52,12 +50,11 @@ const TARGETS = {
 async function policy(
   tx: DB,
   responseMet: "acknowledged" | "status_report" = "acknowledged",
-  targets: Record<string, Record<string, number>> = TARGETS,
 ) {
   await upsertIncidentReporting({
     ctx: owner(tx),
     input: {
-      targets,
+      targets: TARGETS,
       resolutionStop: "mitigated",
       responseMet,
     },
@@ -73,10 +70,9 @@ async function declare(
     channel?: string | null;
     commanderId?: number;
     responseMet?: "acknowledged" | "status_report";
-    targets?: Record<string, Record<string, number>>;
   },
 ) {
-  await policy(tx, args.responseMet, args.targets);
+  await policy(tx, args.responseMet);
   const declared = await declareIncident({
     ctx: apiKey(tx),
     input: { title: "Checkout <down>", severity: "critical" },
@@ -133,7 +129,6 @@ function notices(
   args: {
     now?: Date;
     breaches?: Awaited<ReturnType<typeof record>>;
-    missedUpdates?: Awaited<ReturnType<typeof recordMissed>>;
   } = {},
 ) {
   return sendIncidentSlaNotices({
@@ -142,13 +137,9 @@ function notices(
     dashboardUrl: "https://app.test",
     workspaceIds: [team.id],
     breaches: args.breaches ?? [],
-    missedUpdates: args.missedUpdates,
     now: args.now,
   });
 }
-
-const recordMissed = (tx: DB, now: Date, limit?: number) =>
-  recordIncidentMissedUpdates({ db: tx, workspaceIds: [team.id], now, limit });
 
 const record = (tx: DB, now?: Date) =>
   recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id], now });
@@ -403,157 +394,6 @@ describe("status report mode", () => {
   });
 });
 
-describe("update notices", () => {
-  const updatesOnly = { critical: { updateMinutes: 60 } };
-
-  test("one warning in the last quarter of the interval, without an Acknowledge button", async () => {
-    await withTestTransaction(async (tx) => {
-      const teamId = await connect(tx);
-      const { id, declaredAt } = await declare(tx, {
-        minutesAgo: 50,
-        teamId,
-        targets: updatesOnly,
-      });
-      const { client, sent } = fakeClient();
-      const at = (m: number) => new Date(declaredAt.getTime() + m * MINUTE);
-
-      expect(summary(await notices(tx, client, { now: at(44) }))).toEqual([]);
-      expect(summary(await notices(tx, client, { now: at(50) }))).toEqual([
-        [id, "update", "warning", "sent"],
-      ]);
-      expect(summary(await notices(tx, client, { now: at(55) }))).toEqual([]);
-      expect(sent).toHaveLength(1);
-      expect(sent[0]?.text).toBe("Update due soon: Checkout &lt;down&gt;");
-      const blocks = JSON.stringify(sent[0]?.blocks);
-      expect(blocks).toContain(
-        "The next update on *Checkout &lt;down&gt;* (critical) is due",
-      );
-      expect(blocks).toContain(`<!date^${at(60).getTime() / 1000}^`);
-      expect(blocks).not.toContain("Acknowledge");
-    });
-  });
-
-  test("one overdue notice per missed interval, sent by the tick that records it", async () => {
-    await withTestTransaction(async (tx) => {
-      const teamId = await connect(tx);
-      const { id, declaredAt } = await declare(tx, {
-        minutesAgo: 70,
-        teamId,
-        targets: updatesOnly,
-      });
-      const { client, sent } = fakeClient();
-      const at = (m: number) => new Date(declaredAt.getTime() + m * MINUTE);
-
-      expect(summary(await notices(tx, client, { now: at(50) }))).toEqual([
-        [id, "update", "warning", "sent"],
-      ]);
-      const missedUpdates = await recordMissed(tx, at(61));
-      expect(
-        summary(await notices(tx, client, { now: at(61), missedUpdates })),
-      ).toEqual([[id, "update", "miss", "sent"]]);
-      expect(summary(await notices(tx, client, { now: at(66) }))).toEqual([]);
-      expect(sent[1]?.text).toBe("Update overdue: Checkout &lt;down&gt;");
-      const blocks = JSON.stringify(sent[1]?.blocks);
-      expect(blocks).toContain(
-        "The update on *Checkout &lt;down&gt;* (critical) was due",
-      );
-      expect(blocks).toContain(`<!date^${at(60).getTime() / 1000}^`);
-      expect(blocks).toContain("Post a status report update or a note now.");
-      expect(blocks).not.toContain("Acknowledge");
-
-      // the next interval warns and goes overdue on its own
-      expect(summary(await notices(tx, client, { now: at(106) }))).toEqual([
-        [id, "update", "warning", "sent"],
-      ]);
-      const next = await recordMissed(tx, at(121));
-      expect(
-        summary(
-          await notices(tx, client, { now: at(121), missedUpdates: next }),
-        ),
-      ).toEqual([[id, "update", "miss", "sent"]]);
-      expect(sent).toHaveLength(4);
-    });
-  });
-
-  test("after a long gap only the newest missed interval notifies", async () => {
-    await withTestTransaction(async (tx) => {
-      const teamId = await connect(tx);
-      const { id, declaredAt } = await declare(tx, {
-        minutesAgo: 600,
-        teamId,
-        targets: updatesOnly,
-      });
-      const { client, sent } = fakeClient();
-      const at = (m: number) => new Date(declaredAt.getTime() + m * MINUTE);
-      const now = at(270);
-
-      const first = await recordMissed(tx, now, 2);
-      expect(first.map((r) => r.dueAt)).toEqual([at(60), at(120)]);
-      expect(
-        summary(await notices(tx, client, { now, missedUpdates: first })),
-      ).toEqual([]);
-      const second = await recordMissed(tx, now, 2);
-      expect(second.map((r) => r.dueAt)).toEqual([at(180), at(240)]);
-      expect(
-        summary(await notices(tx, client, { now, missedUpdates: second })),
-      ).toEqual([[id, "update", "miss", "sent"]]);
-      expect(JSON.stringify(sent[0]?.blocks)).toContain(
-        `<!date^${at(240).getTime() / 1000}^`,
-      );
-      expect(sent).toHaveLength(1);
-    });
-  });
-
-  test("an update posted between the warning and the deadline cancels the overdue notice", async () => {
-    await withTestTransaction(async (tx) => {
-      const teamId = await connect(tx);
-      const { id, declaredAt } = await declare(tx, {
-        minutesAgo: 70,
-        teamId,
-        targets: updatesOnly,
-      });
-      const { client, sent } = fakeClient();
-      const at = (m: number) => new Date(declaredAt.getTime() + m * MINUTE);
-
-      await notices(tx, client, { now: at(50) });
-      await addIncidentNote({
-        ctx: owner(tx),
-        input: { id, message: "Rolled back", createdAt: at(55) },
-      });
-      const missedUpdates = await recordMissed(tx, at(61));
-      expect(missedUpdates).toEqual([]);
-      expect(
-        summary(await notices(tx, client, { now: at(61), missedUpdates })),
-      ).toEqual([]);
-      expect(sent).toHaveLength(1);
-    });
-  });
-
-  test("a temporary Slack failure on an overdue notice is retried on the next tick", async () => {
-    await withTestTransaction(async (tx) => {
-      const teamId = await connect(tx);
-      const { id, declaredAt } = await declare(tx, {
-        minutesAgo: 70,
-        teamId,
-        targets: updatesOnly,
-      });
-      const { client, sent } = fakeClient((call) =>
-        call === 1 ? temporary() : null,
-      );
-      const at = (m: number) => new Date(declaredAt.getTime() + m * MINUTE);
-
-      const missedUpdates = await recordMissed(tx, at(61));
-      expect(
-        summary(await notices(tx, client, { now: at(61), missedUpdates })),
-      ).toEqual([[id, "update", "miss", "retry"]]);
-      expect(summary(await notices(tx, client, { now: at(66) }))).toEqual([
-        [id, "update", "miss", "sent"],
-      ]);
-      expect(sent).toHaveLength(1);
-    });
-  });
-});
-
 describe("incidentSlaNoticeCopy", () => {
   const plain = {
     strong: (text: string) => text,
@@ -606,25 +446,5 @@ describe("incidentSlaNoticeCopy", () => {
         plain,
       ).action,
     ).toBe("Post a status report update now.");
-  });
-
-  test("update wording names the interval and what restarts it", () => {
-    expect(
-      incidentSlaNoticeCopy(
-        { ...base, kind: "update", notice: "warning", reportLinked: true },
-        plain,
-      ),
-    ).toEqual({
-      headline: "Update due soon",
-      body: "The next update on Checkout down (critical) is due 2026-11-11T20:50:00.000Z (every 1h 30m).",
-      action: "Post a status report update before then.",
-    });
-    expect(
-      incidentSlaNoticeCopy({ ...base, kind: "update", notice: "miss" }, plain),
-    ).toEqual({
-      headline: "Update overdue",
-      body: "The update on Checkout down (critical) was due 2026-11-11T20:50:00.000Z (every 1h 30m).",
-      action: "Post a status report update or a note now.",
-    });
   });
 });

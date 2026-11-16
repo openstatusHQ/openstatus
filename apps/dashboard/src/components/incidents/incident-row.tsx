@@ -1,7 +1,6 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { incidentUpdateCadence } from "@openstatus/db/src/schema/incident_sla_policies/cadence";
 import {
   incidentAwaitsAcknowledgement,
   incidentSlaHeadline,
@@ -46,7 +45,7 @@ import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
 import { IncidentAcknowledgeButton } from "./incident-acknowledge-button";
-import { IncidentSlaBadge, IncidentUpdateBadge } from "./incident-sla-badge";
+import { IncidentSlaBadge } from "./incident-sla-badge";
 import { ResolveReportDialog } from "./resolve-report-dialog";
 
 type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
@@ -238,27 +237,14 @@ function IncidentRowSla({ incident }: { incident: Incident }) {
   const now = useNow(30_000);
   const sla = incidentSlaState(incident, now);
   const headline = sla ? incidentSlaHeadline(sla) : null;
-  const cadence = incidentUpdateCadence(incident, incident.updateActivity, now);
-  // folded, the row keeps the time and drops the name
-  const folded = "@max-3xl:[&>[data-slot=incident-sla-kind]]:hidden";
+  if (!headline) return null;
   return (
-    <>
-      {headline ? (
-        <IncidentSlaBadge
-          timer={headline.timer}
-          kind={headline.kind}
-          now={now}
-          className={folded}
-        />
-      ) : null}
-      {cadence?.status === "overdue" ? (
-        <IncidentUpdateBadge
-          cadence={cadence}
-          kind="update"
-          now={now}
-          className={folded}
-        />
-      ) : null}
-    </>
+    <IncidentSlaBadge
+      timer={headline.timer}
+      kind={headline.kind}
+      now={now}
+      // folded, the row keeps the time and drops the name
+      className="@max-3xl:[&>[data-slot=incident-sla-kind]]:hidden"
+    />
   );
 }

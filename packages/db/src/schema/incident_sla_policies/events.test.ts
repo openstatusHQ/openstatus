@@ -3,9 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   formatIncidentSlaMinutes,
   incidentSlaBreachMessage,
-  incidentUpdateMissedMessage,
   parseIncidentSlaBreachMessage,
-  parseIncidentUpdateMissedMessage,
+  isIncidentSystemEvent,
 } from "./events";
 
 const dueAt = new Date("2026-11-11T13:00:00.000Z");
@@ -58,23 +57,11 @@ describe("breach messages", () => {
   });
 });
 
-describe("missed update messages", () => {
-  it("name the due time and the interval", () => {
-    expect(incidentUpdateMissedMessage({ intervalMinutes: 240, dueAt })).toBe(
-      "Update due 2026-11-11T13:00:00.000Z missed (every 4h)",
-    );
-  });
-
-  it("parse back, and an unknown shape as null", () => {
-    expect(
-      parseIncidentUpdateMissedMessage(
-        "Update due 2026-11-11T13:00:00.000Z missed (every 1h 30m)",
-      ),
-    ).toEqual({ interval: "1h 30m", dueAt });
-    expect(parseIncidentUpdateMissedMessage("Update due soon")).toBeNull();
-    expect(
-      parseIncidentUpdateMissedMessage("Update due never missed (every 4h)"),
-    ).toBeNull();
-    expect(parseIncidentUpdateMissedMessage(null)).toBeNull();
+describe("isIncidentSystemEvent", () => {
+  it("is true for the recorded misses only", () => {
+    expect(isIncidentSystemEvent("sla_response_breached")).toBe(true);
+    expect(isIncidentSystemEvent("sla_resolution_breached")).toBe(true);
+    expect(isIncidentSystemEvent("note")).toBe(false);
+    expect(isIncidentSystemEvent("acknowledged")).toBe(false);
   });
 });

@@ -12,7 +12,7 @@ transaction where it needs a single atomic `db.batch()`, and a fail-closed
 failed. Do not "fix" it by routing it through a verb.
 
 Cross-workspace system jobs (`runUptimeFreeze`, `sealMonitorSlaMonths`,
-`claimMonitorSlaMissNotices`, `recordIncidentSlaBreaches`, `recordIncidentMissedUpdates`,
+`claimMonitorSlaMissNotices`, `recordIncidentSlaBreaches`,
 `sendIncidentSlaNotices`) take an optional `db` instead of a `ctx` and skip scope checks.
 
 ## Shape of a verb

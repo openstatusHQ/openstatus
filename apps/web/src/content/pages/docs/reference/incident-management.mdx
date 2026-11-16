@@ -40,8 +40,6 @@ It is a different object from the two things it sits between:
 | `major` | Significant degradation | 4 hours |
 | `minor` | Limited impact | 24 hours |
 
-An incident tracked by a [reporting](#reporting) whose severity has an update target gets [update notices](#notices) instead of [stale reminders](#stale-reminders).
-
 ## Status
 
 | Status | Meaning | Can move to |
@@ -61,7 +59,7 @@ Closing ends the incident's life. Only a resolved incident can be closed, by an 
 
 Every change is appended to the incident's timeline with its time and the member behind it: declared, acknowledged, severity, status, commander, start-time and reported-at changes, notes, status report links, Slack channel binding, postmortem drafted and approved, closed. An acknowledgement made outside the dashboard says where it came from: via API, MCP or Slack.
 
-On a tracked incident, openstatus also writes [missed targets and missed updates](#recorded-misses) to the timeline. They are attributed to the system, not to a member.
+On a tracked incident, openstatus also writes [missed targets](#recorded-misses) to the timeline. They are attributed to the system, not to a member.
 
 Notes are internal and append-only, up to 10,000 characters each.
 
@@ -71,19 +69,18 @@ An incident can link to one status report. The two keep their own status: markin
 
 ## Reporting
 
-An incident reporting holds your incidents to response, resolution and update targets per severity. openstatus times every incident declared under it, records each target it misses, warns before a target is due and shows month by month how many incidents met their targets.
+An incident reporting holds your incidents to response and resolution targets per severity. openstatus times every incident declared under it, records each target it misses, warns before a target is due and shows month by month how many incidents met their targets.
 
 Find it in the dashboard under [**Incidents > SLA**](https://app.openstatus.dev/incidents/sla#targets). The incident reporting is included in the Pro and Scale plans. Acknowledgement is recorded on every plan.
 
 ### Targets
 
-A workspace has one reporting. Each severity has three optional targets:
+A workspace has one reporting. Each severity has two optional targets:
 
 | Target | Meaning | Default: `critical` | `major` | `minor` |
 |---|---|---|---|---|
 | First response | Time until the [response](#response). | 1h | 4h | 24h |
 | Resolution | Time until the incident reaches the [resolution stop](#resolution-stop). | 4h | 24h | 72h |
-| Update every | The longest gap between two [updates](#update-cadence). | 2h | 4h | 12h |
 
 - Durations are entered as `30m`, `4h`, `3d` or a combination like `1d 4h`, from 5 minutes to 30 days. An empty field turns that timer off for the severity.
 - **Response is met by**: `Acknowledgement` (default) or `First status report update`. See [response](#response).
@@ -149,7 +146,7 @@ In both modes, resolving an incident meets its response if it is still open.
 Set **Reported at** when the request reached you before you declared, for example a customer email that arrived an hour earlier. It is optional at declare (dashboard, Slack declare form, API, agent tools) and can be changed or cleared until the incident is closed.
 
 - It lies between 30 days before the declare and the declare; never later.
-- The response and resolution timers start there. The [update cadence](#update-cadence) still counts from the declare.
+- The response and resolution timers start there.
 - Changing it writes a timeline entry and moves the due time of running timers. Met and missed timers keep their verdict.
 - A declare whose response is met at once but was already due records the miss in the same write.
 
@@ -173,35 +170,14 @@ A miss is a stored fact holding the due time that was missed. It is recorded onc
 
 Each miss writes a system entry to the timeline, dated at the due time so it sits where the target passed: "System recorded a missed response target of 1h due Nov 11, 20:50". A miss never clears: not when the severity is lowered, not when the incident is reopened, not when the target is met later.
 
-#### Explain a miss
-
-Any member can add a reason to a recorded response or resolution miss with **Explain miss** under the timer in the **SLA** section, for example an on-call handover gap or an upstream outage. Up to 2,000 characters. It can be edited or cleared later, also after the incident is closed. Changes are recorded in the audit log, not on the timeline. The API and the MCP tools return it as `missReason`.
-
-### Update cadence
-
-With an **Update every** target, the incident needs an update at least that often. The **SLA** section shows when the next one is due.
-
-The interval runs while the incident is `open` or `mitigated`, is not closed and has not reached its resolution stop. It restarts at the latest of:
-
-- the declare (not the reported at time),
-- the newest update on the linked status report, by when it was posted, not its editable date,
-- the newest status change,
-- the newest note, only when no status report is linked.
-
-Missed targets and missed updates never count as an update.
-
-Each interval that passes without an update is one missed update, written to the timeline at its due time: "System recorded a missed update due Nov 11, 20:50 (every 4h)". After a long gap they are written oldest first, ten per incident every five minutes, until none is missing.
-
 ### Notices
 
-Six notices: a warning and a miss for the response target, the resolution target and the update interval.
+Four notices: a warning and a miss for the response target and the resolution target.
 
 | Notice | Sent |
 |---|---|
 | Response due soon, Resolution due soon | At 75% of the target, while it is still open. |
 | Response target missed, Resolution target missed | When the miss is recorded and the target is still unmet. Not for a target met late. |
-| Update due soon | At 75% of the running interval. |
-| Update overdue | For the newest missed update only, so a long gap sends one notice. |
 
 Every notice goes to Slack first:
 
@@ -220,7 +196,6 @@ The **Monthly attainment** table under the reporting shows the last twelve month
 | Incidents | Tracked incidents of that month. |
 | Responded within target | Incidents that met their response target, of those whose severity has one, plus how many are still open. |
 | Resolved within target | The same for the resolution target. |
-| Missed updates | Missed updates recorded on that month's incidents. |
 
 - A target counts as missed once its miss is recorded. Past due but not recorded yet, it still counts as open.
 - A target that is still running counts as open, never as met.
@@ -230,7 +205,7 @@ Every member can view the table. Without the plan it shows example rows.
 
 ### API and agents
 
-Tracked incidents carry their SLA state over the [Incident Service](/docs/sdk/nodejs/incident-service#sla-targets) and the `list_incidents` and `get_incident` [MCP tools](/docs/reference/mcp-server#incidents): target, due time, met time, missed time, miss reason and status for the response and the resolution.
+Tracked incidents carry their SLA state over the [Incident Service](/docs/sdk/nodejs/incident-service#sla-targets) and the `list_incidents` and `get_incident` [MCP tools](/docs/reference/mcp-server#incidents): target, due time, met time, missed time and status for the response and the resolution.
 
 ## Postmortem
 
@@ -286,9 +261,7 @@ After you approve a card, the result shows the usual next step with buttons: **U
 
 An `open` or `mitigated` incident with no activity gets a reminder after the threshold for its [severity](#severity). If it stays quiet, the next reminders follow at twice, four times and eight times that threshold, and so on. The reminder goes to the incident's channel. Without a channel it is sent as a direct message to the commander, or else to the person who declared it.
 
-- A tracked incident with a running [update cadence](#update-cadence) gets no stale reminders. Its [update notices](#notices) take their place, and fall back to email when Slack cannot deliver.
-- Once the cadence ends, for example at the resolution stop, or when the severity has no update target, stale reminders apply as before.
-- Missed targets and missed updates written by the system are not activity. They neither delay a reminder nor count as the last activity.
+- Missed targets written by the system are not activity. They neither delay a reminder nor count as the last activity.
 - Stale reminders are sent in Slack only. Without the Slack agent there are none.
 
 ## Audit log

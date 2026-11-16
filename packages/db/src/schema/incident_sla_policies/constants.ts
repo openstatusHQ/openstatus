@@ -16,7 +16,6 @@ export type IncidentSlaResponseMet = (typeof incidentSlaResponseMets)[number];
 export const incidentSlaTargetKinds = [
   "responseMinutes",
   "resolutionMinutes",
-  "updateMinutes",
 ] as const;
 export type IncidentSlaTargetKind = (typeof incidentSlaTargetKinds)[number];
 
@@ -40,19 +39,14 @@ export const INCIDENT_SLA_TARGET_MIN_MINUTES = 5;
 export const INCIDENT_SLA_TARGET_MAX_MINUTES = 30 * 24 * 60;
 
 export const defaultIncidentSlaTargets = {
-  critical: { responseMinutes: 60, resolutionMinutes: 240, updateMinutes: 120 },
-  major: { responseMinutes: 240, resolutionMinutes: 1440, updateMinutes: 240 },
-  minor: {
-    responseMinutes: 1440,
-    resolutionMinutes: 4320,
-    updateMinutes: 720,
-  },
+  critical: { responseMinutes: 60, resolutionMinutes: 240 },
+  major: { responseMinutes: 240, resolutionMinutes: 1440 },
+  minor: { responseMinutes: 1440, resolutionMinutes: 4320 },
 } as const satisfies Required<IncidentSlaTargets>;
 
 const kindLabel: Record<IncidentSlaTargetKind, string> = {
   responseMinutes: "response",
   resolutionMinutes: "resolution",
-  updateMinutes: "update",
 };
 
 /** Why the targets cannot be saved, naming the field, or null. Shared by the verb and the form. */

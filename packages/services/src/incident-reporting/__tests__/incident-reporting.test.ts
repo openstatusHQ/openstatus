@@ -124,11 +124,7 @@ describe("upsertIncidentReporting", () => {
         ctx: { ...ownerCtx, db: tx },
         input: {
           targets: {
-            critical: {
-              responseMinutes: 60,
-              resolutionMinutes: null,
-              updateMinutes: undefined,
-            },
+            critical: { responseMinutes: 60, resolutionMinutes: null },
           },
           resolutionStop: "mitigated",
         },
@@ -205,13 +201,13 @@ describe("upsertIncidentReporting", () => {
       upsertIncidentReporting({
         ctx: ownerCtx,
         input: {
-          targets: { minor: { updateMinutes: 4 } },
+          targets: { minor: { responseMinutes: 4 } },
           resolutionStop: "mitigated",
         },
       }),
     ).rejects.toThrow(
       new ValidationError(
-        "Minor: the update target must be between 5m and 30d.",
+        "Minor: the response target must be between 5m and 30d.",
       ),
     );
     await expect(

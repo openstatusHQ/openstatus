@@ -1,18 +1,11 @@
 import type {
-  IncidentUpdateCadence,
-  IncidentUpdateCadenceStatus,
-} from "@openstatus/db/src/schema/incident_sla_policies/cadence";
-import type {
   IncidentSlaTimer,
   IncidentSlaTimerStatus,
 } from "@openstatus/db/src/schema/incident_sla_policies/state";
 import { cn } from "@openstatus/ui/lib/utils";
 
 import { StatusDot, type StatusVariant } from "@/components/common/status-dot";
-import {
-  slaTimerPhrase,
-  updateCadencePhrase,
-} from "@/data/incident-sla.client";
+import { slaTimerPhrase } from "@/data/incident-sla.client";
 
 const variant = {
   running: "default",
@@ -66,52 +59,6 @@ export function IncidentSlaBadge({
       />
       {kind ? <span data-slot="incident-sla-kind">{kind} </span> : null}
       {slaTimerPhrase(timer, now)}
-    </span>
-  );
-}
-
-const cadenceVariant = {
-  running: "default",
-  at_risk: "warning",
-  overdue: "destructive",
-} as const satisfies Record<IncidentUpdateCadenceStatus, StatusVariant>;
-
-const cadenceTone = {
-  running: "",
-  at_risk: "text-warning",
-  overdue: "text-destructive",
-} as const satisfies Record<IncidentUpdateCadenceStatus, string>;
-
-/** The update interval as dot and mono phrase, "update overdue by 45m". */
-export function IncidentUpdateBadge({
-  cadence,
-  kind,
-  now,
-  size = "sm",
-  className,
-  ...props
-}: Omit<React.ComponentProps<"span">, "children"> & {
-  cadence: IncidentUpdateCadence;
-  size?: keyof typeof dotSize;
-  kind?: string;
-  now: Date;
-}) {
-  return (
-    <span
-      data-slot="incident-update-badge"
-      className={cn(
-        "font-mono whitespace-nowrap tabular-nums",
-        cadenceTone[cadence.status],
-        className,
-      )}
-      {...props}
-    >
-      <StatusDot
-        variant={cadenceVariant[cadence.status]}
-        className={cn(dotSize[size], "align-middle")}
-      />
-      {kind ? <span data-slot="incident-sla-kind">{kind} </span> : null}
-      {updateCadencePhrase(cadence, now)}
     </span>
   );
 }

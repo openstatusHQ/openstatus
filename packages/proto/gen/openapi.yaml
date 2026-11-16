@@ -560,10 +560,7 @@ components:
         - INCIDENT_EVENT_TYPE_ACKNOWLEDGED
         - INCIDENT_EVENT_TYPE_SLA_RESPONSE_BREACHED
         - INCIDENT_EVENT_TYPE_SLA_RESOLUTION_BREACHED
-        - INCIDENT_EVENT_TYPE_SLA_UPDATE_MISSED
         - INCIDENT_EVENT_TYPE_REPORTED_AT_CHANGED
-        - INCIDENT_EVENT_TYPE_SLA_RESPONSE_MISS_EXPLAINED
-        - INCIDENT_EVENT_TYPE_SLA_RESOLUTION_MISS_EXPLAINED
       description: IncidentEventType is the kind of entry in an incident timeline.
     openstatus.incident.v1.IncidentSeverity:
       type: string
@@ -620,12 +617,6 @@ components:
           title: status
           description: Current state of the target.
           $ref: '#/components/schemas/openstatus.incident.v1.IncidentSlaTimerStatus'
-        missReason:
-          type:
-            - string
-            - "null"
-          title: miss_reason
-          description: Why the target was missed, written by a member (unset without a recorded miss or a reason).
       title: IncidentSlaTimer
       additionalProperties: false
       description: IncidentSlaTimer is the state of one SLA target of an incident.

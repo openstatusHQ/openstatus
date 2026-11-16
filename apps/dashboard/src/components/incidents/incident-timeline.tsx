@@ -1,10 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import {
-  parseIncidentSlaBreachMessage,
-  parseIncidentUpdateMissedMessage,
-} from "@openstatus/db/src/schema/incident_sla_policies/events";
+import { parseIncidentSlaBreachMessage } from "@openstatus/db/src/schema/incident_sla_policies/events";
 import {
   type IncidentSeverity,
   type IncidentStatus,
@@ -293,51 +290,6 @@ function parseEvent(event: Event): Parsed {
                 <TimelineHighlight>
                   {format(breach.dueAt, "LLL dd, HH:mm")}
                 </TimelineHighlight>
-              </>
-            ) : null}
-          </>
-        ),
-        message: null,
-      };
-    }
-    // the message is the reason as written; none means it was cleared
-    case "sla_response_miss_explained":
-    case "sla_resolution_miss_explained": {
-      const target = (
-        <TimelineHighlight className="text-destructive">
-          {event.type === "sla_response_miss_explained"
-            ? "response target"
-            : "resolution target"}
-        </TimelineHighlight>
-      );
-      return {
-        icon: Chat,
-        phrase: message ? (
-          <>explained the missed {target}</>
-        ) : (
-          <>cleared the reason for the missed {target}</>
-        ),
-        message: message || null,
-      };
-    }
-    case "sla_update_missed": {
-      const missed = parseIncidentUpdateMissedMessage(message);
-      return {
-        icon: Clock,
-        phrase: (
-          <>
-            recorded a missed{" "}
-            <TimelineHighlight className="text-warning">
-              update
-            </TimelineHighlight>
-            {missed ? (
-              <>
-                {" "}
-                due{" "}
-                <TimelineHighlight>
-                  {format(missed.dueAt, "LLL dd, HH:mm")}
-                </TimelineHighlight>{" "}
-                (every {missed.interval})
               </>
             ) : null}
           </>

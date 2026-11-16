@@ -1,4 +1,3 @@
-import type { IncidentUpdateCadence } from "@openstatus/db/src/schema/incident_sla_policies/cadence";
 import type { IncidentSlaTimer } from "@openstatus/db/src/schema/incident_sla_policies/state";
 
 import { formatDurationShort } from "@/lib/formatter";
@@ -32,17 +31,6 @@ export function slaTimerPhrase(timer: IncidentSlaTimer, now: Date): string {
   const delta = timer.dueAt.getTime() - now.getTime();
   return timer.status === "breached"
     ? `breached ${formatSpan(-delta)} ago`
-    : `due in ${formatSpan(delta)}`;
-}
-
-/** "due in 1h 4m", "overdue by 45m". */
-export function updateCadencePhrase(
-  cadence: IncidentUpdateCadence,
-  now: Date,
-): string {
-  const delta = cadence.dueAt.getTime() - now.getTime();
-  return cadence.status === "overdue"
-    ? `overdue by ${formatSpan(-delta)}`
     : `due in ${formatSpan(delta)}`;
 }
 

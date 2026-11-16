@@ -19,7 +19,6 @@ import {
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
-  afterIncidentSlaMissExplained,
   afterIncidentStatusChanged,
   afterIncidentUpdated,
   afterPostmortemApproved,
@@ -487,46 +486,6 @@ describe("channel announcements", () => {
       expect(calls[0]?.args.text).toBe(
         `Jane: severity is now *critical*, ${member ? displayName(member) : ""} is now commander.`,
       );
-    });
-  });
-});
-
-describe("afterIncidentSlaMissExplained", () => {
-  test("posts a new reason; unchanged, cleared or closed posts nothing", async () => {
-    await withTestTransaction(async (tx) => {
-      await connectSlack(tx);
-      const row = await declare(tx);
-      await bind(tx, row.id);
-      const bound = { ...row, slackTeamId: "T1", slackChannelId: "C1" };
-      const explained = { ...bound, resolutionMissReason: "Vendor outage" };
-      const run = async (
-        before: typeof bound,
-        after: typeof bound,
-      ): Promise<Call[]> => {
-        const { effects, calls } = makeEffects();
-        await afterIncidentSlaMissExplained({
-          ctx: ctxFor(tx),
-          effects,
-          before,
-          after,
-          kind: "resolution",
-        });
-        return calls;
-      };
-
-      const posted = await run(bound, explained);
-      expect(posted[0]?.method).toBe("postMessage");
-      expect(posted[0]?.args.text).toBe(
-        "Jane explained the missed resolution target:\n>Vendor outage",
-      );
-
-      expect(await run(explained, explained)).toHaveLength(0);
-      expect(
-        await run(explained, { ...explained, resolutionMissReason: null }),
-      ).toHaveLength(0);
-      expect(
-        await run(bound, { ...explained, closedAt: new Date() }),
-      ).toHaveLength(0);
     });
   });
 });

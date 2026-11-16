@@ -3,7 +3,6 @@ import { sendIncidentSlaNotice } from "@openstatus/emails";
 import {
   emailIncidentSlaNotices,
   type ReminderResult,
-  recordIncidentMissedUpdates,
   recordIncidentSlaBreaches,
   remindStaleIncidents,
   sendIncidentSlaNotices,
@@ -37,18 +36,15 @@ function countBy<T>(
 /** Records SLA misses and sends SLA notices, by Slack or by email when Slack cannot. */
 async function runIncidentSlaPhase(): Promise<void> {
   const breaches = await recordIncidentSlaBreaches();
-  const missedUpdates = await recordIncidentMissedUpdates();
-  if (breaches.length + missedUpdates.length > 0) {
-    logger.info(
-      "incident sla misses recorded: {breaches}, missed updates: {updates}",
-      { breaches: breaches.length, updates: missedUpdates.length },
-    );
+  if (breaches.length > 0) {
+    logger.info("incident sla misses recorded: {breaches}", {
+      breaches: breaches.length,
+    });
   }
 
   const dashboardUrl = env().DASHBOARD_URL;
   const notices = await sendIncidentSlaNotices({
     breaches,
-    missedUpdates,
     clientFor,
     dashboardUrl,
   });

@@ -43,10 +43,6 @@ const IncidentSlaTimerSchema = z
       .string()
       .nullable()
       .describe("The due time recorded as missed; never cleared once set."),
-    missReason: z
-      .string()
-      .nullable()
-      .describe("Why the target was missed, as written by a member."),
     status: z.enum(["running", "at_risk", "met", "breached"]),
   })
   .nullable();

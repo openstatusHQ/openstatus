@@ -28,10 +28,7 @@ export const incidentEventType = [
   "acknowledged",
   "sla_response_breached",
   "sla_resolution_breached",
-  "sla_update_missed",
   "reported_at_changed",
-  "sla_response_miss_explained",
-  "sla_resolution_miss_explained",
 ] as const;
 
 // `source_ref` by source: slack → message permalink (null for slash commands

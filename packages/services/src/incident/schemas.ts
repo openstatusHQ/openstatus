@@ -88,16 +88,6 @@ export type LinkIncidentStatusReportInput = z.infer<
 export const IncidentIdInput = z.object({ id });
 export type IncidentIdInput = z.infer<typeof IncidentIdInput>;
 
-export const SetIncidentSlaMissReasonInput = z.object({
-  id,
-  kind: z.enum(["response", "resolution"]),
-  // empty clears the reason
-  reason: z.string().trim().max(2000).nullable(),
-});
-export type SetIncidentSlaMissReasonInput = z.infer<
-  typeof SetIncidentSlaMissReasonInput
->;
-
 export const ListIncidentEventsInput = IncidentIdInput.extend({
   limit: z.number().int().min(1).optional(),
 });

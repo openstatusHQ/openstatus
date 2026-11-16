@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  incidentUpdateCadence,
-  isIncidentSystemEvent,
-} from "@openstatus/db/src/schema/incident_sla_policies/cadence";
+import { isIncidentSystemEvent } from "@openstatus/db/src/schema/incident_sla_policies/events";
 import {
   incidentAwaitsAcknowledgement,
   incidentSlaHeadline,
@@ -40,10 +37,7 @@ import { IncidentHeading } from "@/components/incidents/incident-heading";
 import { IncidentPostmortem } from "@/components/incidents/incident-postmortem";
 import { IncidentProperties } from "@/components/incidents/incident-properties";
 import { IncidentSla } from "@/components/incidents/incident-sla";
-import {
-  IncidentSlaBadge,
-  IncidentUpdateBadge,
-} from "@/components/incidents/incident-sla-badge";
+import { IncidentSlaBadge } from "@/components/incidents/incident-sla-badge";
 import { IncidentTimelineItem } from "@/components/incidents/incident-timeline";
 import { ResolveReportDialog } from "@/components/incidents/resolve-report-dialog";
 import { incidentEndedAt } from "@/data/managed-incidents.client";
@@ -86,11 +80,6 @@ export function Client({ id }: { id: number }) {
   const sla = incidentSlaState(incident, now);
   const slaHeadline = sla ? incidentSlaHeadline(sla) : null;
   const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
-  const updateCadence = incidentUpdateCadence(
-    incident,
-    incident.updateActivity,
-    now,
-  );
   const lastUpdateAt = events?.find(
     (event) => !isIncidentSystemEvent(event.type),
   )?.createdAt;
@@ -186,15 +175,6 @@ export function Client({ id }: { id: number }) {
               />
             </DetailMetaItem>
           ) : null}
-          {updateCadence?.status === "overdue" ? (
-            <DetailMetaItem>
-              <IncidentUpdateBadge
-                cadence={updateCadence}
-                kind="update"
-                now={now}
-              />
-            </DetailMetaItem>
-          ) : null}
         </DetailMeta>
       </DetailHeader>
       <DetailContent>
@@ -217,12 +197,7 @@ export function Client({ id }: { id: number }) {
           {sla ? (
             <DetailSection id="sla">
               <DetailSectionTitle>Response targets</DetailSectionTitle>
-              <IncidentSla
-                incidentId={incident.id}
-                state={sla}
-                cadence={updateCadence}
-                now={now}
-              />
+              <IncidentSla state={sla} now={now} />
             </DetailSection>
           ) : null}
           <DetailSection id="communication">

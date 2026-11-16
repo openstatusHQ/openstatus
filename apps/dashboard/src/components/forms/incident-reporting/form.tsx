@@ -63,7 +63,6 @@ import { severityConfig } from "@/data/managed-incidents.client";
 const COLUMNS = [
   { key: "responseMinutes", label: "First response" },
   { key: "resolutionMinutes", label: "Resolution" },
-  { key: "updateMinutes", label: "Update every" },
 ] as const satisfies readonly {
   key: (typeof incidentSlaTargetKinds)[number];
   label: string;
@@ -75,7 +74,6 @@ const duration = z.string().refine((v) => parseSlaDuration(v).ok, {
 const row = z.object({
   responseMinutes: duration,
   resolutionMinutes: duration,
-  updateMinutes: duration,
 });
 const schema = z.object({
   targets: z.object({ critical: row, major: row, minor: row }),
@@ -99,7 +97,6 @@ function toFormValues(policy: IncidentReportingValues): FormValues {
     return {
       responseMinutes: cell(t.responseMinutes),
       resolutionMinutes: cell(t.resolutionMinutes),
-      updateMinutes: cell(t.updateMinutes),
     };
   };
   return {
@@ -236,16 +233,15 @@ export function FormIncidentReporting({
               </span>
             </FormCardTitle>
             <FormCardDescription>
-              How fast an incident gets its first response, updates and a
-              resolution, per severity. Applies to incidents declared from now
-              on.
+              How fast an incident gets its first response and a resolution, per
+              severity. Applies to incidents declared from now on.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent className={cn(off && "opacity-50")}>
             <div
               role="table"
               aria-label="Targets per severity"
-              className="grid grid-cols-[auto_repeat(3,minmax(0,1fr))] items-center gap-x-3 gap-y-2 sm:grid-cols-[8rem_repeat(3,minmax(0,10rem))]"
+              className="grid grid-cols-[auto_repeat(2,minmax(0,1fr))] items-center gap-x-3 gap-y-2 sm:grid-cols-[8rem_repeat(2,minmax(0,10rem))]"
             >
               <div role="row" className="contents">
                 <span

@@ -27,7 +27,6 @@ import {
   declareIncident,
   emailIncidentSlaNotices,
   type IncidentSlaNoticeEmail,
-  recordIncidentMissedUpdates,
   recordIncidentSlaBreaches,
   sendIncidentSlaNotices,
   type SlackIncidentClient,
@@ -56,15 +55,12 @@ async function declare(
     commanderId?: number | null;
     declaredBy?: number | null;
     teamId?: string;
-    targets?: Record<string, Record<string, number>>;
   },
 ) {
   await upsertIncidentReporting({
     ctx: withDb(makeUserCtx(team, { userId: ownerId }), tx),
     input: {
-      targets: args.targets ?? {
-        critical: { responseMinutes: 60, resolutionMinutes: 240 },
-      },
+      targets: { critical: { responseMinutes: 60, resolutionMinutes: 240 } },
       resolutionStop: "mitigated",
     },
   });
@@ -138,16 +134,12 @@ async function tick(
   const breaches = opts.record
     ? await recordIncidentSlaBreaches({ db: tx, workspaceIds: [team.id] })
     : [];
-  const missedUpdates = opts.record
-    ? await recordIncidentMissedUpdates({ db: tx, workspaceIds: [team.id] })
-    : [];
   const results = await sendIncidentSlaNotices({
     db: tx,
     clientFor: () => opts.client ?? slack(),
     dashboardUrl: "https://app.test",
     workspaceIds: [team.id],
     breaches,
-    missedUpdates,
   });
   const sent: IncidentSlaNoticeEmail[] = [];
   const emailed = await emailIncidentSlaNotices({
@@ -344,7 +336,6 @@ describe("email when Slack cannot deliver", () => {
         dashboardUrl: "https://app.test",
         workspaceIds: [team.id],
         breaches: [],
-        missedUpdates: [],
       });
       let calls = 0;
       const failed = await emailIncidentSlaNotices({
@@ -377,7 +368,6 @@ describe("email when Slack cannot deliver", () => {
         dashboardUrl: "https://app.test",
         workspaceIds: [team.id],
         breaches: [],
-        missedUpdates: [],
       });
       const skipped = await emailIncidentSlaNotices({
         db: tx,
@@ -406,47 +396,6 @@ describe("email when Slack cannot deliver", () => {
       expect(sent).toHaveLength(1);
       expect(again).toEqual([]);
       expect(other).toHaveLength(0);
-    });
-  });
-
-  test("update notices: emailed when Slack cannot deliver, not when it did", async () => {
-    const updatesOnly = { critical: { updateMinutes: 60 } };
-    await withTestTransaction(async (tx) => {
-      const { id, declaredAt } = await declare(tx, {
-        minutesAgo: 61,
-        commanderId: ownerId,
-        targets: updatesOnly,
-      });
-      const { results, sent } = await tick(tx, { record: true });
-      expect(results.map((r) => [r.kind, r.notice, r.outcome])).toEqual([
-        ["update", "miss", "no_connection"],
-      ]);
-      expect(sent).toHaveLength(1);
-      expect(sent[0]).toMatchObject({
-        to: [await emailOf(tx, ownerId)],
-        idempotencyKey: `incident-sla-notice:${id}:update:miss:${declaredAt.getTime() + 60 * MINUTE}`,
-        notice: "miss",
-        headline: "Update overdue",
-        action: "Post a status report update or a note now.",
-        target: "every 1h",
-      });
-      expect(sent[0]?.body).toMatch(
-        /^The update on Checkout down \(critical\) was due .+ UTC \(every 1h\)\.$/,
-      );
-    });
-    await withTestTransaction(async (tx) => {
-      const teamId = await connect(tx);
-      await declare(tx, {
-        minutesAgo: 50,
-        commanderId: ownerId,
-        teamId,
-        targets: updatesOnly,
-      });
-      const { results, sent } = await tick(tx, { record: true });
-      expect(results.map((r) => [r.kind, r.notice, r.outcome])).toEqual([
-        ["update", "warning", "sent"],
-      ]);
-      expect(sent).toHaveLength(0);
     });
   });
 });

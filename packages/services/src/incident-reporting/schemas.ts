@@ -12,7 +12,6 @@ const minutes = z.number().int().nullish();
 const severityTargets = z.object({
   responseMinutes: minutes,
   resolutionMinutes: minutes,
-  updateMinutes: minutes,
 });
 
 export const UpsertIncidentReportingInput = z.object({

@@ -63,18 +63,4 @@ export const columns: ColumnDef<Month>[] = [
     header: "Resolved within target",
     cell: ({ row }) => <TargetCell count={row.original.resolution} />,
   },
-  {
-    accessorKey: "missedUpdates",
-    header: "Missed updates",
-    cell: ({ row }) => {
-      const { incidents, missedUpdates } = row.original;
-      return (
-        <TableCellNumber
-          value={incidents === 0 ? Number.NaN : missedUpdates}
-          variant={missedUpdates > 0 ? "destructive" : "default"}
-          className="tabular-nums"
-        />
-      );
-    },
-  },
 ];

@@ -58,8 +58,6 @@ export const incident = sqliteTable(
     resolutionBreachDueAt: integer("resolution_breach_due_at", {
       mode: "timestamp",
     }),
-    responseMissReason: text("response_miss_reason"),
-    resolutionMissReason: text("resolution_miss_reason"),
     statusReportId: integer("status_report_id").references(
       () => statusReport.id,
       { onDelete: "set null" },
@@ -111,7 +109,7 @@ export const incidentEvent = sqliteTable(
     uniqueIndex("incident_event_system_unique_idx")
       .on(t.incidentId, t.type, t.createdAt)
       .where(
-        sql`${t.type} IN ('sla_response_breached', 'sla_resolution_breached', 'sla_update_missed')`,
+        sql`${t.type} IN ('sla_response_breached', 'sla_resolution_breached')`,
       ),
   ],
 );

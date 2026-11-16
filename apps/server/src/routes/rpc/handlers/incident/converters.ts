@@ -162,14 +162,8 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
       return IncidentEventType.SLA_RESPONSE_BREACHED;
     case "sla_resolution_breached":
       return IncidentEventType.SLA_RESOLUTION_BREACHED;
-    case "sla_update_missed":
-      return IncidentEventType.SLA_UPDATE_MISSED;
     case "reported_at_changed":
       return IncidentEventType.REPORTED_AT_CHANGED;
-    case "sla_response_miss_explained":
-      return IncidentEventType.SLA_RESPONSE_MISS_EXPLAINED;
-    case "sla_resolution_miss_explained":
-      return IncidentEventType.SLA_RESOLUTION_MISS_EXPLAINED;
   }
 }
 
@@ -244,7 +238,6 @@ function toSlaTimer(timer: DbSlaTimer | null): IncidentSlaTimer | undefined {
     metAt: t.metAt ?? undefined,
     missedAt: t.missedAt ?? undefined,
     status: dbSlaStatusToProto(t.status),
-    missReason: t.missReason ?? undefined,
   };
 }
 

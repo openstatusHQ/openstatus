@@ -662,7 +662,6 @@ describe("IncidentService: SLA", () => {
       acknowledgedAt: at(70),
       responseMetAt: at(70),
       responseBreachDueAt: at(60),
-      responseMissReason: "Pager rotation gap",
     });
     const id = String(row.id);
 
@@ -672,7 +671,6 @@ describe("IncidentService: SLA", () => {
         dueAt: at(60).toISOString(),
         metAt: at(70).toISOString(),
         missedAt: at(60).toISOString(),
-        missReason: "Pager rotation gap",
         status: IncidentSlaTimerStatus.BREACHED,
       });
       expect(incident?.sla?.resolution).toMatchObject({
@@ -682,7 +680,6 @@ describe("IncidentService: SLA", () => {
       });
       expect(incident?.sla?.resolution?.metAt).toBeUndefined();
       expect(incident?.sla?.resolution?.missedAt).toBeUndefined();
-      expect(incident?.sla?.resolution?.missReason).toBeUndefined();
     }
   });
 

@@ -303,13 +303,6 @@ async function acknowledgeOnEvent(
   incidentId: number,
   type: IncidentEventType,
 ): Promise<void> {
-  // explaining a miss is after-the-fact bookkeeping, not a response
-  if (
-    type === "sla_response_miss_explained" ||
-    type === "sla_resolution_miss_explained"
-  ) {
-    return;
-  }
   const personId = personUserId(ctx.actor);
   if (personId === null && type !== "resolved") return;
   const now = new Date();

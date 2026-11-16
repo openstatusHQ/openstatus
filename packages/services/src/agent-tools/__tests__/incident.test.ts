@@ -218,7 +218,6 @@ describe("incident agent tools", () => {
           },
           responseMetAt: new Date(at(70)),
           responseBreachDueAt: new Date(at(60)),
-          responseMissReason: "Pager rotation gap",
         })
         .where(eq(incident.id, declared.id));
 
@@ -228,7 +227,6 @@ describe("incident agent tools", () => {
           dueAt: at(60),
           metAt: at(70),
           missedAt: at(60),
-          missReason: "Pager rotation gap",
           status: "breached",
         },
         resolution: {
@@ -236,7 +234,6 @@ describe("incident agent tools", () => {
           dueAt: at(100),
           metAt: null,
           missedAt: null,
-          missReason: null,
           status: "at_risk",
         },
       };

@@ -5,19 +5,14 @@ import {
   type IncidentStatus,
   incident,
   incidentSlaState,
-  incidentUpdateCadence,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import { type DB, type ServiceContext, getReadDb } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { isDeletable } from "./delete";
 import { allowedTransitions, incidentUserColumns } from "./internal";
 import { IncidentIdInput, ListIncidentsInput } from "./schemas";
-import {
-  loadIncidentUpdateActivity,
-  noUpdateActivity,
-} from "./update-activity";
 
 export function toIncidentView<T extends Incident>(
   row: T,
@@ -40,21 +35,6 @@ const incidentListWith = {
   acknowledgedByUser: { columns: incidentUserColumns },
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
-
-// activity only moves the cadence's start, never whether it runs
-async function withUpdateActivity<T extends Incident>(db: DB, rows: T[]) {
-  const now = new Date();
-  const activity = await loadIncidentUpdateActivity(
-    db,
-    rows.filter(
-      (row) => incidentUpdateCadence(row, noUpdateActivity(row), now) !== null,
-    ),
-  );
-  return rows.map((row) => ({
-    ...toIncidentView(row),
-    updateActivity: activity.get(row.id) ?? noUpdateActivity(row),
-  }));
-}
 
 function listWhere(
   ctx: ServiceContext,
@@ -82,16 +62,14 @@ export async function listIncidents(args: {
   const db = getReadDb(ctx);
 
   const where = listWhere(ctx, input);
-  const items = await withUpdateActivity(
-    db,
-    await db.query.incident.findMany({
-      where,
-      orderBy: [desc(incident.declaredAt), desc(incident.id)],
-      limit: input.limit,
-      offset: input.offset,
-      with: incidentListWith,
-    }),
-  );
+  const rows = await db.query.incident.findMany({
+    where,
+    orderBy: [desc(incident.declaredAt), desc(incident.id)],
+    limit: input.limit,
+    offset: input.offset,
+    with: incidentListWith,
+  });
+  const items = rows.map((row) => toIncidentView(row));
 
   // A short page is the last page, so the count is only needed for a full one.
   let totalSize = input.offset + items.length;
@@ -121,7 +99,7 @@ export async function listAllIncidents(args: {
     orderBy: [desc(incident.declaredAt), desc(incident.id)],
     with: incidentListWith,
   });
-  return withUpdateActivity(db, rows);
+  return rows.map((row) => toIncidentView(row));
 }
 
 export async function getIncident(args: {
@@ -148,15 +126,7 @@ export async function getIncident(args: {
     },
   });
   if (!row) return undefined;
-  const now = new Date();
-  const updateActivity =
-    (await loadIncidentUpdateActivity(db, [row])).get(row.id) ??
-    noUpdateActivity(row);
-  return {
-    ...toIncidentView(row, now),
-    updateActivity,
-    updateCadence: incidentUpdateCadence(row, updateActivity, now),
-  };
+  return toIncidentView(row);
 }
 
 export async function getIncidentOrThrow(args: {
