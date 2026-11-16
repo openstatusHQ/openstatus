@@ -71,7 +71,12 @@ export async function fetchUptimeEpisodes(
     toMs: number;
     pipes: () => UptimeEpisodesPipes;
   },
-): Promise<{ episodes: Map<number, Episode[]>; failed: Set<number> }> {
+): Promise<{
+  episodes: Map<number, Episode[]>;
+  failed: Set<number>;
+  /** the monitors the pipes were asked for */
+  requested: Set<number>;
+}> {
   const episodes = new Map<number, Episode[]>();
   const batches = new Map<string, Set<string>>();
   const intervalOf = new Map<string, { jobType: string; ms: number }>();
@@ -84,8 +89,11 @@ export async function fetchUptimeEpisodes(
     ids.add(String(m.id));
     batches.set(key, ids);
   }
+  const requested = new Set(
+    [...batches.values()].flatMap((ids) => [...ids].map(Number)),
+  );
   if (batches.size === 0 || args.toMs <= args.fromMs) {
-    return { episodes, failed: new Set() };
+    return { episodes, failed: new Set(), requested };
   }
 
   let pipes: UptimeEpisodesPipes;
@@ -93,12 +101,7 @@ export async function fetchUptimeEpisodes(
     pipes = args.pipes();
   } catch (e) {
     console.warn("uptime episodes unavailable", e);
-    return {
-      episodes,
-      failed: new Set(
-        [...batches.values()].flatMap((ids) => [...ids].map(Number)),
-      ),
-    };
+    return { episodes, failed: new Set(requested), requested };
   }
   const { rows, failedMonitorIds } = await fetchChunked({
     ...args,
@@ -127,7 +130,11 @@ export async function fetchUptimeEpisodes(
   for (const list of episodes.values()) {
     list.sort((a, b) => a.startedAt - b.startedAt);
   }
-  return { episodes, failed: new Set([...failedMonitorIds].map(Number)) };
+  return {
+    episodes,
+    failed: new Set([...failedMonitorIds].map(Number)),
+    requested,
+  };
 }
 
 /** The parts of `episodes` inside [fromMs, toMs), split at the edges. */

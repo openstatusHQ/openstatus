@@ -377,7 +377,7 @@ describe("sealMonitorUptime", () => {
       : null;
   }
 
-  test("a first run stores the last 40 days up to a day ago, ok time included", async () => {
+  test("a first run stores the longest range up to a day ago, ok time included", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx);
       const calls: EpisodesCall[] = [];
@@ -564,6 +564,28 @@ describe("sealMonitorUptime", () => {
       expect(await stored(tx, api.id)).toEqual([
         { kind: "ok", startedAt: oldest, endedAt: until + 2 * DAY },
       ]);
+    });
+  });
+
+  test("a pipe that answers nothing for a monitor it was asked for is a failed read", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const silent = async () => ({ data: [] });
+      const res = await sealMonitorUptime({
+        db: tx,
+        now,
+        monitorIds: [api.id],
+        episodesPipes: {
+          http: silent,
+          tcp: silent,
+          dns: silent,
+          icmp: silent,
+          grpc: silent,
+        },
+        sleep,
+      });
+      expect(res).toEqual({ sealed: 0, failed: 1, skipped: 0 });
+      expect(await watermarkOf(tx, api.id)).toBeNull();
     });
   });
 

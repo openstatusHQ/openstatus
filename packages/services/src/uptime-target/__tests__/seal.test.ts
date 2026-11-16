@@ -605,6 +605,50 @@ describe("sealUptimeTargetMonths on stored episodes", () => {
     });
   });
 
+  test("a month partly sealed keeps its terms for the members sealed later", async () => {
+    await withTestTransaction(async (tx) => {
+      const api = await insertMonitor(tx);
+      const web = await insertMonitor(tx);
+      const policy = await insertPolicy(tx, [api.id]);
+      const episodesPipes = pipesFor(
+        new Map([
+          [api.id, runs(() => "ok")],
+          [web.id, runs(() => "ok")],
+        ]),
+      );
+      await sealFromChecks({
+        db: tx,
+        now,
+        policyIds: [policy.id],
+        episodesPipes,
+        sleep,
+      });
+      await tx.insert(uptimeTargetToMonitor).values({
+        uptimeTargetId: policy.id,
+        monitorId: web.id,
+        createdAt: new Date(at(8, 1)),
+      });
+      await tx
+        .update(uptimeTarget)
+        .set({ target: 99_990, strict: true })
+        .where(eq(uptimeTarget.id, policy.id));
+      const second = await sealFromChecks({
+        db: tx,
+        now: new Date(now.getTime() + DAY),
+        policyIds: [policy.id],
+        episodesPipes,
+        sleep,
+      });
+
+      expect(second.sealed).toBe(1);
+      const rows = await sealedRows(tx, policy.id);
+      expect(rows).toHaveLength(2);
+      for (const row of rows) {
+        expect(row).toMatchObject({ target: 99_500, strict: false });
+      }
+    });
+  });
+
   test("a monitor with thousands of episodes is stored and sealed whole, beside its siblings", async () => {
     await withTestTransaction(async (tx) => {
       const flappy = await insertMonitor(tx, { name: "flappy" });

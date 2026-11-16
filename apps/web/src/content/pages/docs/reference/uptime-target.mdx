@@ -104,7 +104,7 @@ Select any month cell to open that monitor's month in a side sheet. The month is
 
 Sealing works in two steps, both run by a daily task.
 
-First, the checks of every monitor in an uptime target that is not archived are stored a day behind, as its up, slow, down and unmeasured stretches. They are stored once per monitor, so a monitor in two uptime targets is measured once and both seal from the same record. A monitor that is in no uptime target is not stored; when it joins one, its record starts with the checks still kept, at most 40 days back.
+First, the checks of every monitor in an uptime target that is not archived are stored a day behind, as its up, slow, down and unmeasured stretches. They are stored once per monitor, so a monitor in two uptime targets is measured once and both seal from the same record. A monitor that is in no uptime target is not stored; when it joins one, its record starts with the checks still kept, at most 43 days back.
 
 Then the previous month is sealed from that store. For each monitor in an uptime target the task seals the month when all of these hold:
 

@@ -37,7 +37,7 @@ export const UPTIME_SEAL_LAG_MS = 24 * HOUR_MS;
 /** Checks read before the sealed range, so its first ones are weighted by their neighbours. */
 export const UPTIME_SEAL_MARGIN_MS = 24 * HOUR_MS;
 /** The longest range one run reads; the run view keeps 45 days. */
-export const UPTIME_SEAL_MAX_RANGE_MS = 40 * 24 * HOUR_MS;
+export const UPTIME_SEAL_MAX_RANGE_MS = 43 * 24 * HOUR_MS;
 
 const ID_CHUNK = 500;
 const EPISODE_INSERT_CHUNK = 500;
@@ -106,25 +106,26 @@ export async function storedEpisodes(
   const watermarks = new Map<number, Watermark>();
   const rows = new Map<number, Episode[]>();
   for (const part of chunked(ids, ID_CHUNK)) {
-    const [marks, episodes] = await withBusyRetry(() =>
-      Promise.all([
-        db
-          .select()
-          .from(monitorUptimeWatermark)
-          .where(inArray(monitorUptimeWatermark.monitorId, part))
-          .all(),
-        db
-          .select()
-          .from(monitorUptimeEpisode)
-          .where(
-            and(
-              inArray(monitorUptimeEpisode.monitorId, part),
-              lt(monitorUptimeEpisode.startedAt, toMs),
-              gt(monitorUptimeEpisode.endedAt, fromMs),
-            ),
-          )
-          .all(),
-      ]),
+    // watermark first: a store write landing between the two reads then only adds rows past it
+    const marks = await withBusyRetry(() =>
+      db
+        .select()
+        .from(monitorUptimeWatermark)
+        .where(inArray(monitorUptimeWatermark.monitorId, part))
+        .all(),
+    );
+    const episodes = await withBusyRetry(() =>
+      db
+        .select()
+        .from(monitorUptimeEpisode)
+        .where(
+          and(
+            inArray(monitorUptimeEpisode.monitorId, part),
+            lt(monitorUptimeEpisode.startedAt, toMs),
+            gt(monitorUptimeEpisode.endedAt, fromMs),
+          ),
+        )
+        .all(),
     );
     for (const m of marks) watermarks.set(m.monitorId, m);
     for (const e of episodes) {
@@ -309,7 +310,11 @@ export async function sealMonitorUptime(
       sleep: args.sleep,
     });
     for (const m of group) {
-      if (fetched.failed.has(m.id)) {
+      // the pipe answers every monitor it is asked for, so a silent one is a failed read
+      if (
+        fetched.failed.has(m.id) ||
+        (fetched.requested.has(m.id) && !fetched.episodes.has(m.id))
+      ) {
         result.failed++;
         continue;
       }

@@ -217,12 +217,36 @@ export async function sealUptimeTargetMonths(
     ),
   );
   const stored = await storedZoneEpisodes(db, sealable, windowOf);
+  // a month partly sealed by an earlier run keeps the terms it started sealing with
+  const sealedTerms = new Map(
+    (
+      await withBusyRetry(() =>
+        db
+          .select({
+            policyId: uptimeTargetSealedMonth.uptimeTargetId,
+            target: uptimeTargetSealedMonth.target,
+            strict: uptimeTargetSealedMonth.strict,
+          })
+          .from(uptimeTargetSealedMonth)
+          .where(
+            and(
+              inArray(uptimeTargetSealedMonth.uptimeTargetId, [
+                ...byPolicy.keys(),
+              ]),
+              eq(uptimeTargetSealedMonth.month, month),
+            ),
+          )
+          .all(),
+      )
+    ).map(({ policyId, ...terms }) => [policyId, terms]),
+  );
 
   const unavailable: number[] = [];
   let sealed = 0;
   for (const [policyId, pairs] of byPolicy) {
     const { workspaceId, timeZone, target, strict } = pairs[0];
-    const terms = { target, strict };
+    const pinned = sealedTerms.get(policyId);
+    const terms = pinned ?? { target, strict };
     const range = windowOf(timeZone);
     const own = windowsOf.get(policyId) ?? [];
     const zone = stored.get(timeZone);
@@ -300,6 +324,25 @@ export async function sealUptimeTargetMonths(
           ) {
             return null;
           }
+          const live = await tx
+            .select({
+              target: uptimeTarget.target,
+              strict: uptimeTarget.strict,
+              timeZone: uptimeTarget.timeZone,
+              archivedAt: uptimeTarget.archivedAt,
+            })
+            .from(uptimeTarget)
+            .where(eq(uptimeTarget.id, policyId))
+            .get();
+          if (
+            !live ||
+            live.archivedAt !== null ||
+            live.timeZone !== timeZone ||
+            (!pinned &&
+              (live.target !== terms.target || live.strict !== terms.strict))
+          ) {
+            return null;
+          }
           const written = await tx
             .insert(uptimeTargetSealedMonth)
             .values(row)
@@ -315,7 +358,7 @@ export async function sealUptimeTargetMonths(
         }),
       );
       if (inserted === null) {
-        // its windows changed while its month was judged
+        // its windows or terms changed while its month was judged
         unavailable.push(policyId);
         continue;
       }

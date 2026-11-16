@@ -287,8 +287,15 @@ async function memberMonth(args: {
     const stored = (
       await storedEpisodes(db, [member.id], coveredEnd - coveredMs, coveredEnd)
     ).get(member.id);
-    if (stored) episodes = treatEpisodes(stored, spans, seal.strict);
-    else episodesUnavailable = "expired";
+    // a seal older than the store reads back as unmeasured time the seal never had
+    const storedUnmeasuredMs = (stored ?? [])
+      .filter((e) => e.kind === "unmeasured")
+      .reduce((sum, e) => sum + e.endedAt - e.startedAt, 0);
+    if (stored && storedUnmeasuredMs <= seal.unmeasuredMs + excusedMs) {
+      episodes = treatEpisodes(stored, spans, seal.strict);
+    } else {
+      episodesUnavailable = "expired";
+    }
     budget = monthBudget({
       monthMs: coveredMs,
       excusedMs,
