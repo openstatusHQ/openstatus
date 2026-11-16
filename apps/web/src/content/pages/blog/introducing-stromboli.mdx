@@ -98,7 +98,7 @@ traffic is healthy.
 
 stromboli enforces this split in its state machine:
 
-- **A closed set of mitigations.** Phase 1 (triage) ends as soon as the model
+- **A closed set of mitigations.** Inspired by [generic mitigations](https://www.oreilly.com/content/generic-mitigations/), Phase 1 (triage) ends as soon as the model
   commits to one action from a fixed enum: `rollback`, `restart`, `scale_up`,
   `drain`, `disable_feature`, `block_traffic`, `failover`, `degrade`, or
   `none`. Every mitigation must include the target, the exact command to run,
