@@ -33,7 +33,6 @@ describe("navigationGroup", () => {
         "/reportings",
         "/maintenance-windows",
         "/private-locations",
-        "/insights",
         "/notifications",
         "/on-call",
         "/status-pages",

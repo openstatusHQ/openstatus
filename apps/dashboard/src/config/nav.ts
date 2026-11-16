@@ -13,7 +13,6 @@ import {
   Settings,
   StatusPage,
   Terminal,
-  Trend,
 } from "@openstatus/icons";
 import { ModelContextProtocolIcon } from "@openstatus/icons/brand";
 
@@ -73,13 +72,6 @@ export const NAV = {
       "reporting",
       "report",
     ],
-  },
-  insights: {
-    label: "Insights",
-    href: "/insights",
-    icon: Trend,
-    keywords: ["mttr", "mtta", "analytics"],
-    badge: "Soon",
   },
   onCall: {
     label: "On-call",
@@ -141,7 +133,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       NAV.reports,
       NAV.maintenanceWindows,
       NAV.privateLocations,
-      NAV.insights,
     ],
   },
   { label: "Alerting", items: [NAV.notifications, NAV.onCall] },
@@ -156,7 +147,6 @@ export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.reports,
   NAV.maintenanceWindows,
   NAV.privateLocations,
-  NAV.insights,
   NAV.notifications,
   NAV.onCall,
   NAV.statusPages,
