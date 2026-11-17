@@ -27,6 +27,10 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError } from "../errors";
+import {
+  getMaintenanceInWorkspace,
+  syncDerivedWindow,
+} from "../maintenance/internal";
 import { assertCustomDomainAvailable } from "../page/internal";
 import {
   withComponentImpacts,
@@ -717,6 +721,7 @@ export async function writeMaintenancesPhase(
             .insert(maintenancesToPageComponents)
             .values(reconciliationLinks)
             .onConflictDoNothing();
+          await syncDerivedWindow(tx, ctx, existing.id);
         }
         continue;
       }
@@ -767,6 +772,7 @@ export async function writeMaintenancesPhase(
         if (componentLinks.length > 0) {
           await rtx.insert(maintenancesToPageComponents).values(componentLinks);
         }
+        await syncDerivedWindow(rtx, ctx, inserted.id);
 
         await emitAudit(rtx, ctx, {
           action: "maintenance.create",
@@ -777,7 +783,11 @@ export async function writeMaintenancesPhase(
             pageId,
             title: data.title,
           }),
-          after: inserted,
+          after: await getMaintenanceInWorkspace({
+            tx: rtx,
+            id: inserted.id,
+            workspaceId,
+          }),
         });
         if (insertedUpdate) {
           await emitAudit(rtx, ctx, {

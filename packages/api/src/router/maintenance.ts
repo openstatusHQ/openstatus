@@ -6,6 +6,8 @@ import {
   deleteMaintenance,
   deleteMaintenanceUpdate,
   getMaintenance,
+  LinkMaintenanceWindowInput,
+  linkMaintenanceWindow,
   listMaintenances,
   UnlinkMaintenanceWindowInput,
   unlinkMaintenanceWindow,
@@ -188,6 +190,17 @@ export const maintenanceRouter = createTRPCRouter({
             pageComponentIds: input.pageComponents,
           },
         });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  linkWindow: protectedProcedure
+    .meta({ track: Events.UpdateMaintenance })
+    .input(LinkMaintenanceWindowInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await linkMaintenanceWindow({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

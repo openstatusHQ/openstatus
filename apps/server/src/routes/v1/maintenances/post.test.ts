@@ -1,5 +1,10 @@
 import { db, eq } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema";
+import {
+  maintenance,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
+} from "@openstatus/db/src/schema";
+import { clearAuditLogFor } from "@openstatus/services/test/helpers";
 import { beforeEach, expect, test } from "vitest";
 
 import { app } from "@/index";
@@ -274,4 +279,75 @@ test("create a maintenance with an empty message should return 400", async () =>
   });
 
   expect(res.status).toBe(400);
+});
+
+test("a maintenance on monitors gets a derived pause window that follows it", async () => {
+  const from = new Date(Math.floor(Date.now() / 1000) * 1000 + 3_600_000);
+  const to = new Date(from.getTime() + 3_600_000);
+  const headers = {
+    "x-openstatus-key": "1",
+    "content-type": "application/json",
+  };
+  const res = await app.request("/v1/maintenance", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      title: "Derived window",
+      message: "m",
+      from: from.toISOString(),
+      to: to.toISOString(),
+      pageId: 1,
+      monitorIds: [1],
+    }),
+  });
+  expect(res.status).toBe(200);
+  const { id } = MaintenanceSchema.parse(await res.json());
+  const derived = () =>
+    db
+      .select()
+      .from(monitorMaintenanceWindow)
+      .where(eq(monitorMaintenanceWindow.maintenanceId, id))
+      .get();
+  const windowIds: number[] = [];
+
+  try {
+    const created = await derived();
+    expect(created).toMatchObject({ mode: "pause", from, to });
+    if (created) windowIds.push(created.id);
+    const links = await db
+      .select()
+      .from(monitorMaintenanceWindowToMonitor)
+      .where(
+        eq(
+          monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+          created?.id ?? 0,
+        ),
+      )
+      .all();
+    expect(links.map((l) => l.monitorId)).toEqual([1]);
+
+    const later = new Date(to.getTime() + 3_600_000);
+    const moved = await app.request(`/v1/maintenance/${id}`, {
+      method: "PUT",
+      headers,
+      // the PUT schema defaults `monitorIds` to [], which would clear them
+      body: JSON.stringify({ to: later.toISOString(), monitorIds: [1] }),
+    });
+    expect(moved.status).toBe(200);
+    expect((await derived())?.to).toEqual(later);
+
+    const cleared = await app.request(`/v1/maintenance/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ monitorIds: [] }),
+    });
+    expect(cleared.status).toBe(200);
+    expect(await derived()).toBeUndefined();
+  } finally {
+    await db.delete(maintenance).where(eq(maintenance.id, id));
+    await clearAuditLogFor({
+      entityType: "monitor_maintenance_window",
+      entityIds: windowIds,
+    });
+  }
 });

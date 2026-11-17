@@ -8,10 +8,15 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError } from "../errors";
-import { getMaintenanceWindowInWorkspace } from "../maintenance-window/internal";
+import {
+  assertNotDerived,
+  getMaintenanceWindowInWorkspace,
+} from "../maintenance-window/internal";
 import type { Maintenance, MaintenanceUpdate } from "../types";
 import {
   assertPageInWorkspace,
+  getMaintenanceInWorkspace,
+  syncDerivedWindow,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
@@ -50,7 +55,6 @@ export async function createMaintenance(args: {
       );
     }
 
-    // a linked maintenance takes the window's times, so the two never disagree
     const window =
       input.monitorMaintenanceWindowId === undefined
         ? null
@@ -59,8 +63,9 @@ export async function createMaintenance(args: {
             id: input.monitorMaintenanceWindowId,
             workspaceId: ctx.workspace.id,
           });
+    if (window) await assertNotDerived(tx, window);
 
-    const record = await tx
+    const inserted = await tx
       .insert(maintenance)
       .values({
         workspaceId: ctx.workspace.id,
@@ -68,8 +73,8 @@ export async function createMaintenance(args: {
         title: input.title,
         // deprecated column: mirrors the first update until it is dropped
         message: input.message,
-        from: window?.from ?? input.from,
-        to: window?.to ?? input.to,
+        from: input.from,
+        to: input.to,
         monitorMaintenanceWindowId: window?.id ?? null,
         createdBy: actorUserId,
         updatedBy: actorUserId,
@@ -79,8 +84,14 @@ export async function createMaintenance(args: {
 
     await updatePageComponentAssociations({
       tx,
-      maintenanceId: record.id,
+      maintenanceId: inserted.id,
       componentIds: validated.componentIds,
+    });
+    await syncDerivedWindow(tx, ctx, inserted.id);
+    const record = await getMaintenanceInWorkspace({
+      tx,
+      id: inserted.id,
+      workspaceId: ctx.workspace.id,
     });
 
     const initialUpdate = await tx

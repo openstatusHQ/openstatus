@@ -184,14 +184,14 @@ The first line states the method. The second says when the file was generated, w
 
 ## Maintenance
 
-What a maintenance does to the figure depends on [what puts the monitor in maintenance](/docs/reference/maintenance#checks-during-maintenance): a maintenance window's setting, or pausing for a status page maintenance that announces no window:
+What a maintenance does to the figure depends on the setting of the [maintenance window](/docs/reference/maintenance#checks-during-maintenance) covering the monitor. Only windows count: a status page maintenance reaches a monitor through the window created for it, which pauses checks, or through a window it announces:
 
 - **Pause checks** (default): cloud regions do not check the monitor while it is active. That time is left out of both sides of the fraction. It never counts as downtime, whatever happened during it.
 - **Keep checking:** checks run as usual and their real outcome counts. A failure during the maintenance counts against uptime like any other time; it just does not change the monitor's status, open an incident or notify anyone.
 
 To leave a maintenance out of the figure for such a monitor, excuse it: **Excuse** next to a maintenance window on the uptime target's page opens the [excused window](#excused-windows) dialog with its times and title prefilled. Edit the times first if the maintenance overran and the overrun should count. Excusing is a separate step on purpose, so an overrun can be left to count. Excusing a maintenance whose checks pause leaves the uptime unchanged, since that time is not counted anyway, but turns the unmeasured time into excused time, which raises coverage.
 
-The uptime target's page lists, per month, the maintenance windows and status page maintenances that touched its monitors, each with its checks setting. A window and the maintenances announcing it are one row ("announced on …"). Excusing from a window records it with the excused window, and the dialog shows when the work was announced and how far ahead, as notice evidence; it refuses nothing.
+The uptime target's page lists, per month, the maintenance windows that touched its monitors, each with its checks setting. A window created for a status page maintenance is labelled **Status page** and links to that maintenance; a window you created and the maintenances announcing it are one row ("announced on …"). The row shows the window's times, which are the ones that changed the checks, not an announcement's public times. Excusing from a window records it with the excused window, and the dialog shows when the work was announced and how far ahead, as notice evidence; it refuses nothing.
 
 ## Related resources
 

@@ -25,6 +25,8 @@ let otherWorkspaceComponentId: number;
 const createdMaintenanceIds: number[] = [];
 const updatedMaintenanceIds: number[] = [];
 const createdMaintenanceUpdateIds: number[] = [];
+// derived and user windows the tests leave audit rows for
+const windowIds: number[] = [];
 
 beforeAll(async () => {
   const p = await db
@@ -104,6 +106,12 @@ afterAll(async () => {
     await clearAuditLogFor({
       entityType: "maintenance",
       entityIds: updatedMaintenanceIds,
+    });
+  }
+  if (windowIds.length > 0) {
+    await clearAuditLogFor({
+      entityType: "monitor_maintenance_window",
+      entityIds: windowIds,
     });
   }
   if (createdMaintenanceUpdateIds.length > 0) {
@@ -217,6 +225,11 @@ test("maintenance.new succeeds for own workspace page", async () => {
 
   expect(result).toBeDefined();
   createdMaintenanceIds.push(result.id);
+  // component 1 is monitor-backed: the maintenance gets its derived window
+  expect(result.monitorMaintenanceWindowId).not.toBeNull();
+  if (result.monitorMaintenanceWindowId) {
+    windowIds.push(result.monitorMaintenanceWindowId);
+  }
 
   // Cleanup
   await db
@@ -242,6 +255,9 @@ test("maintenance update procedures provide full CRUD", async () => {
     pageComponents: [1],
   });
   createdMaintenanceIds.push(created.id);
+  if (created.monitorMaintenanceWindowId) {
+    windowIds.push(created.monitorMaintenanceWindowId);
+  }
 
   const added = await caller.maintenance.createUpdate({
     maintenanceId: created.id,
@@ -281,4 +297,73 @@ test("maintenance update procedures provide full CRUD", async () => {
   }
 
   await caller.maintenance.delete({ id: created.id });
+});
+
+test("maintenance.linkWindow swaps the derived window for a user window, unlinkWindow derives it again", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+  const from = new Date(Math.floor(Date.now() / 1000) * 1000 + 3_600_000);
+  const to = new Date(from.getTime() + 3_600_000);
+  const created = await caller.maintenance.new({
+    title: "Link window",
+    message: "m",
+    pageId: 1,
+    startDate: from,
+    endDate: to,
+    pageComponents: [1],
+  });
+  createdMaintenanceIds.push(created.id);
+  const derivedId = created.monitorMaintenanceWindowId;
+  if (!derivedId) throw new Error("expected a derived window");
+  windowIds.push(derivedId);
+
+  const window = await caller.maintenanceWindow.create({
+    title: "User window",
+    mode: "continue",
+    from: new Date(from.getTime() + 600_000),
+    to: new Date(to.getTime() - 600_000),
+    monitorIds: [1],
+  });
+  windowIds.push(window.id);
+
+  try {
+    await expect(
+      caller.maintenance.linkWindow({
+        id: otherWorkspaceMaintenanceId,
+        monitorMaintenanceWindowId: window.id,
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(
+      caller.maintenanceWindow.delete({ id: derivedId }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+    const linked = await caller.maintenance.linkWindow({
+      id: created.id,
+      monitorMaintenanceWindowId: window.id,
+    });
+    expect(linked?.monitorMaintenanceWindowId).toBe(window.id);
+    // the public times stay the maintenance's own
+    expect(linked?.from).toEqual(from);
+    const windows = await caller.maintenanceWindow.list();
+    expect(windows.find((w) => w.id === derivedId)).toBeUndefined();
+    expect(
+      windows.find((w) => w.id === window.id)?.announcements.map((a) => a.id),
+    ).toEqual([created.id]);
+
+    const unlinked = await caller.maintenance.unlinkWindow({ id: created.id });
+    const rederivedId = unlinked?.monitorMaintenanceWindowId;
+    expect(rederivedId).not.toBeNull();
+    expect(rederivedId).not.toBe(window.id);
+    if (rederivedId) windowIds.push(rederivedId);
+    const found = await caller.maintenance.get({ id: created.id });
+    expect(found.window).toMatchObject({ derived: true, mode: "pause", from });
+  } finally {
+    await caller.maintenance.delete({ id: created.id });
+    await caller.maintenanceWindow.delete({ id: window.id });
+  }
 });

@@ -33,7 +33,7 @@ export const CreateMaintenanceInput = z
     to: coercedDate,
     pageId: z.number().int(),
     pageComponentIds: z.array(z.number().int()).default([]),
-    /** Announces this window: times follow it and it decides the checks. */
+    /** Announces this user-created window, which alone decides the checks; `from`/`to` stay this maintenance's own. */
     monitorMaintenanceWindowId: z.number().int().optional(),
   })
   .refine((v) => v.from < v.to, {
@@ -88,6 +88,14 @@ export const GetMaintenanceUpdateInput = z.object({
 });
 export type GetMaintenanceUpdateInput = z.infer<
   typeof GetMaintenanceUpdateInput
+>;
+
+export const LinkMaintenanceWindowInput = z.object({
+  id: z.number().int(),
+  monitorMaintenanceWindowId: z.number().int(),
+});
+export type LinkMaintenanceWindowInput = z.infer<
+  typeof LinkMaintenanceWindowInput
 >;
 
 export const UnlinkMaintenanceWindowInput = z.object({ id: z.number().int() });

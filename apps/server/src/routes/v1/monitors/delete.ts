@@ -2,10 +2,15 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, ne } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
+import {
+  maintenanceIdsBehind,
+  syncDerivedWindows,
+} from "@openstatus/services/maintenance";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
+import { v1ServiceCtx } from "../utils";
 import type { monitorsApi } from "./index";
 import { ParamsSchema } from "./schema";
 
@@ -56,11 +61,20 @@ export function registerDeleteMonitor(app: typeof monitorsApi) {
       });
     }
 
-    await db
-      .update(monitor)
-      .set({ active: false, deletedAt: new Date() })
-      .where(eq(monitor.id, Number(id)))
-      .run();
+    await db.transaction(async (tx) => {
+      await tx
+        .update(monitor)
+        .set({ active: false, deletedAt: new Date() })
+        .where(eq(monitor.id, Number(id)))
+        .run();
+      await syncDerivedWindows(
+        tx,
+        v1ServiceCtx(c),
+        await maintenanceIdsBehind(tx, workspaceId, {
+          monitorIds: [Number(id)],
+        }),
+      );
+    });
 
     // FIXME: Remove all relations of the monitor from all notifications, pages,....
 

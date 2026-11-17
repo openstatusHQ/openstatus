@@ -6,12 +6,13 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import {
   assertNoLinkedMaintenances,
+  assertNotDerived,
   getMaintenanceWindowInWorkspace,
   monitorIdsOf,
 } from "./internal";
 import { DeleteMaintenanceWindowInput } from "./schemas";
 
-/** Refused while announced; cascade removes the monitor links; excused windows keep their times, the link is nulled. */
+/** Refused while announced or derived from a status-page maintenance; cascade removes the monitor links; excused windows keep their times, the link is nulled. */
 export async function deleteMaintenanceWindow(args: {
   ctx: ServiceContext;
   input: DeleteMaintenanceWindowInput;
@@ -26,6 +27,7 @@ export async function deleteMaintenanceWindow(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    await assertNotDerived(tx, existing);
     await assertNoLinkedMaintenances(tx, existing.id);
     const monitorIds = await monitorIdsOf(tx, existing.id);
     await tx

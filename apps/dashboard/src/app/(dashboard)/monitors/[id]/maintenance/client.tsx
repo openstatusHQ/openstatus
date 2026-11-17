@@ -94,8 +94,9 @@ export function Client() {
           <SectionHeader>
             <SectionTitle>Maintenance windows</SectionTitle>
             <SectionDescription>
-              Planned work on this monitor. Internal only: announce it on a
-              status page with a maintenance there.
+              Every window that changes this monitor&apos;s checks, those a
+              status page maintenance created included. Internal only: announce
+              one on a status page with a maintenance there.
             </SectionDescription>
           </SectionHeader>
           <div>{create}</div>
@@ -166,9 +167,9 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Status page maintenances</SectionTitle>
           <SectionDescription>
-            Announced on a status page through a component of this monitor. One
-            that announces a window follows that window; any other pauses the
-            monitor while it is active.
+            Announced on a status page through a component of this monitor, or
+            announcing a window that covers it. Only the windows above change
+            its checks.
           </SectionDescription>
         </SectionHeader>
         {announced.length === 0 ? (

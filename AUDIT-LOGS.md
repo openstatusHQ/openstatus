@@ -101,7 +101,7 @@ Source of truth: `auditActionSchema` in
 | `monitor_incident` | update, delete | monitor incident id | created by the checker, not a verb |
 | `uptime_target` | create, update, delete | uptime target id | |
 | `uptime_target_excused_window` | create, delete | window id | |
-| `monitor_maintenance_window` | create, update, delete | window id | |
+| `monitor_maintenance_window` | create, update, delete | window id | a window with `maintenanceId` set is derived: its rows are written by the maintenance, page-component and monitor verbs that change it, with their actor |
 | `private_location` | create, update, delete | location id | |
 | `page` | create, update, delete | page id | |
 | `page_component` | create, update, delete | component id | |
@@ -109,7 +109,7 @@ Source of truth: `auditActionSchema` in
 | `page_subscriber` | create, update, delete | subscriber id | metadata on every verb; scope edits are off-row |
 | `status_report` | create, update, delete | report id | |
 | `status_report_update` | create, update, delete | update id | `metadata.statusReportId` |
-| `maintenance` | create, update, delete | maintenance id | |
+| `maintenance` | create, update, delete | maintenance id | link/unlink a window is `update`; `monitorMaintenanceWindowId` changing because a derived window came or went through another entity's verb is audited on the window only |
 | `maintenance_update` | create, update, delete | update id | `metadata.maintenanceId` |
 | `incident` | create, update, delete | incident id | |
 | `incident_event` | create | event id | append-only timeline |

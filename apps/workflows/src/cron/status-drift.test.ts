@@ -1,15 +1,19 @@
 import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
+  maintenance,
   notificationOutbox,
   monitorIncidentTable,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
   monitorStatusTable,
+  page,
 } from "@openstatus/db/src/schema";
 import {
   createMonitor,
   createNotification,
+  createPage,
+  createPageMaintenance,
   createTestWorkspace,
   linkNotificationToMonitor,
 } from "@openstatus/db/src/test/factories";
@@ -56,6 +60,11 @@ afterEach(() => {
 });
 
 afterAll(async () => {
+  await db
+    .delete(maintenance)
+    .where(eq(maintenance.workspaceId, workspaceId))
+    .run();
+  await db.delete(page).where(eq(page.workspaceId, workspaceId)).run();
   await db
     .delete(monitorMaintenanceWindow)
     .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
@@ -212,6 +221,51 @@ describe("handleStatusDriftCron", () => {
       .run();
     await handleStatusDriftCron();
     expect(await statusOf()).toBe("error");
+  });
+
+  test("a status page maintenance holds the repair back only through its derived window", async () => {
+    const now = Date.now();
+    const range = {
+      from: new Date(now - 60 * 60_000),
+      to: new Date(now + 60 * 60_000),
+    };
+    const statusPage = await createPage(workspaceId);
+    const drifted = async (derive: boolean) => {
+      const row = await createMonitor(workspaceId, {
+        regions: "ams",
+        active: true,
+      });
+      await createPageMaintenance(workspaceId, statusPage.id, {
+        monitorId: row.id,
+        ...range,
+        derive,
+      });
+      await db
+        .insert(monitorStatusTable)
+        .values({
+          monitorId: row.id,
+          region: "ams",
+          status: "error",
+          cronTimestamp: now,
+        })
+        .run();
+      return row.id;
+    };
+    const held = await drifted(true);
+    const repaired = await drifted(false);
+
+    await handleStatusDriftCron();
+
+    const statusOf = async (id: number) =>
+      (
+        await db
+          .select({ status: monitor.status })
+          .from(monitor)
+          .where(eq(monitor.id, id))
+          .get()
+      )?.status;
+    expect(await statusOf(held)).toBe("active");
+    expect(await statusOf(repaired)).toBe("error");
   });
 
   test("a duplicated region counts once towards quorum", async () => {

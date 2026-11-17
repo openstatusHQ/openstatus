@@ -1,13 +1,11 @@
 import { and, asc, eq, gt, inArray, isNull, lte } from "@openstatus/db";
 import {
   maintenance,
-  maintenancesToPageComponents,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
   uptimeTargetToMonitor,
   page,
-  pageComponent,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -23,8 +21,8 @@ import { completeMonths, monthOf } from "./months";
 import { GetUptimeTargetInput } from "./schemas";
 
 /**
- * Started status-page maintenances and maintenance windows on a policy's
- * monitors in the months `getUptimeTarget` shows, each with its mode.
+ * Started maintenance windows on a policy's monitors in the months
+ * `getUptimeTarget` shows, each with its mode; derived ones included.
  */
 export async function listUptimeTargetMaintenances(args: {
   ctx: ServiceContext;
@@ -66,66 +64,33 @@ export async function listUptimeTargetMaintenances(args: {
   if (members.length === 0) return { months, monitors: [], windows: [] };
   const memberIds = members.map((m) => m.id);
 
-  const [touched, windowRows] = await Promise.all([
-    db
-      .select({
-        id: maintenance.id,
-        title: maintenance.title,
-        from: maintenance.from,
-        to: maintenance.to,
-        pageId: maintenance.pageId,
-        pageTitle: page.title,
-        createdAt: maintenance.createdAt,
-        monitorId: pageComponent.monitorId,
-      })
-      .from(maintenancesToPageComponents)
-      .innerJoin(
-        maintenance,
-        eq(maintenance.id, maintenancesToPageComponents.maintenanceId),
-      )
-      .innerJoin(
-        pageComponent,
-        eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
-      )
-      .leftJoin(page, eq(page.id, maintenance.pageId))
-      .where(
-        and(
-          eq(maintenance.workspaceId, ctx.workspace.id),
-          // a linked maintenance is listed with its window
-          isNull(maintenance.monitorMaintenanceWindowId),
-          inArray(pageComponent.monitorId, memberIds),
-          lte(maintenance.from, now),
-          gt(maintenance.to, rangeStart),
-        ),
-      )
-      .all(),
-    db
-      .select({
-        id: monitorMaintenanceWindow.id,
-        title: monitorMaintenanceWindow.title,
-        mode: monitorMaintenanceWindow.mode,
-        from: monitorMaintenanceWindow.from,
-        to: monitorMaintenanceWindow.to,
-        monitorId: monitorMaintenanceWindowToMonitor.monitorId,
-      })
-      .from(monitorMaintenanceWindowToMonitor)
-      .innerJoin(
-        monitorMaintenanceWindow,
-        eq(
-          monitorMaintenanceWindow.id,
-          monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
-        ),
-      )
-      .where(
-        and(
-          eq(monitorMaintenanceWindow.workspaceId, ctx.workspace.id),
-          inArray(monitorMaintenanceWindowToMonitor.monitorId, memberIds),
-          lte(monitorMaintenanceWindow.from, now),
-          gt(monitorMaintenanceWindow.to, rangeStart),
-        ),
-      )
-      .all(),
-  ]);
+  const windowRows = await db
+    .select({
+      id: monitorMaintenanceWindow.id,
+      title: monitorMaintenanceWindow.title,
+      mode: monitorMaintenanceWindow.mode,
+      from: monitorMaintenanceWindow.from,
+      to: monitorMaintenanceWindow.to,
+      maintenanceId: monitorMaintenanceWindow.maintenanceId,
+      monitorId: monitorMaintenanceWindowToMonitor.monitorId,
+    })
+    .from(monitorMaintenanceWindowToMonitor)
+    .innerJoin(
+      monitorMaintenanceWindow,
+      eq(
+        monitorMaintenanceWindow.id,
+        monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+      ),
+    )
+    .where(
+      and(
+        eq(monitorMaintenanceWindow.workspaceId, ctx.workspace.id),
+        inArray(monitorMaintenanceWindowToMonitor.monitorId, memberIds),
+        lte(monitorMaintenanceWindow.from, now),
+        gt(monitorMaintenanceWindow.to, rangeStart),
+      ),
+    )
+    .all();
 
   const windowIds = [...new Set(windowRows.map((w) => w.id))];
   const announced =
@@ -157,16 +122,14 @@ export async function listUptimeTargetMaintenances(args: {
     createdAt: Date | null;
   };
   type Window = {
-    /** page: an unlinked status-page maintenance, pausing monitors through its components. window: a maintenance window. */
-    kind: "page" | "window";
     id: number;
+    /** Exists only for a status-page maintenance, which is its one announcement. */
+    derived: boolean;
     title: string;
     from: Date;
     to: Date;
-    pageId: number | null;
-    pageTitle: string | null;
     mode: "pause" | "continue";
-    /** The announcements on status pages: for a page row itself, for a window those linked to it. */
+    /** The status-page maintenances announcing it. */
     announcements: Announcement[];
     monitorIds: number[];
     /** Listed once, under the month it started in, or the first month shown. */
@@ -175,13 +138,12 @@ export async function listUptimeTargetMaintenances(args: {
     excusable: boolean;
   };
   const sealed = await sealedMonthsOf(db, policy);
-  const windows = new Map<string, Window>();
+  const windows = new Map<number, Window>();
   const add = (
-    key: string,
     row: Omit<Window, "monitorIds" | "month" | "excusable">,
     monitorId: number,
   ) => {
-    const window = windows.get(key) ?? {
+    const window = windows.get(row.id) ?? {
       ...row,
       monitorIds: [],
       month: row.from < rangeStart ? months[0] : monthOf(row.from, timeZone),
@@ -192,36 +154,13 @@ export async function listUptimeTargetMaintenances(args: {
     if (!window.monitorIds.includes(monitorId)) {
       window.monitorIds.push(monitorId);
     }
-    windows.set(key, window);
+    windows.set(row.id, window);
   };
-  for (const { monitorId, createdAt, ...row } of touched) {
-    if (monitorId === null) continue;
+  for (const { monitorId, maintenanceId, ...row } of windowRows) {
     add(
-      `page:${row.id}`,
       {
         ...row,
-        kind: "page",
-        mode: "pause",
-        announcements: [
-          {
-            id: row.id,
-            pageId: row.pageId,
-            pageTitle: row.pageTitle,
-            createdAt,
-          },
-        ],
-      },
-      monitorId,
-    );
-  }
-  for (const { monitorId, ...row } of windowRows) {
-    add(
-      `window:${row.id}`,
-      {
-        ...row,
-        kind: "window",
-        pageId: null,
-        pageTitle: null,
+        derived: maintenanceId !== null,
         announcements: announced
           .filter((a) => a.windowId === row.id)
           .map(({ windowId: _, ...a }) => a),

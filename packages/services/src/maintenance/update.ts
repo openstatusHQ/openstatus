@@ -9,14 +9,11 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import {
-  ConflictError,
-  InternalServiceError,
-  PreconditionFailedError,
-} from "../errors";
+import { ConflictError, InternalServiceError } from "../errors";
 import type { Maintenance } from "../types";
 import {
   getMaintenanceInWorkspace,
+  syncDerivedWindow,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
@@ -53,16 +50,6 @@ export async function updateMaintenance(args: {
     if (input.title !== undefined) updateValues.title = input.title;
     if (input.from !== undefined) updateValues.from = input.from;
     if (input.to !== undefined) updateValues.to = input.to;
-    if (
-      existing.monitorMaintenanceWindowId !== null &&
-      (effectiveFrom.getTime() !== existing.from.getTime() ||
-        effectiveTo.getTime() !== existing.to.getTime())
-    ) {
-      throw new PreconditionFailedError(
-        "This maintenance follows a maintenance window; change the times on the window, or unlink it first.",
-      );
-    }
-
     if (input.pageComponentIds !== undefined) {
       const validated = await validatePageComponentIds({
         tx,
@@ -89,18 +76,24 @@ export async function updateMaintenance(args: {
       await rewriteLatestUpdate(tx, ctx, existing.id, input.message);
     }
 
-    const updated = await tx
+    const written = await tx
       .update(maintenance)
       .set(updateValues)
       .where(eq(maintenance.id, existing.id))
       .returning()
       .get();
 
-    if (!updated) {
+    if (!written) {
       throw new InternalServiceError(
         `failed to update maintenance ${existing.id}`,
       );
     }
+    await syncDerivedWindow(tx, ctx, existing.id);
+    const updated = await getMaintenanceInWorkspace({
+      tx,
+      id: existing.id,
+      workspaceId: ctx.workspace.id,
+    });
 
     await emitAudit(tx, ctx, {
       action: "maintenance.update",

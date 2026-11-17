@@ -5,6 +5,10 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
+import {
+  maintenanceIdsBehind,
+  syncDerivedWindows,
+} from "../maintenance/internal";
 import { assertPageInWorkspace, validateMonitorIds } from "./internal";
 import { UpdatePageComponentOrderInput } from "./schemas";
 
@@ -189,6 +193,9 @@ export async function updatePageComponentOrder(args: {
       ...removedStaticComponents,
     ];
     if (removedComponentIds.length > 0) {
+      const maintenanceIds = await maintenanceIdsBehind(tx, ctx.workspace.id, {
+        componentIds: removedComponentIds,
+      });
       await tx
         .delete(pageComponent)
         .where(
@@ -198,6 +205,7 @@ export async function updatePageComponentOrder(args: {
             inArray(pageComponent.id, removedComponentIds),
           ),
         );
+      await syncDerivedWindows(tx, ctx, maintenanceIds);
 
       for (const row of removedComponents) {
         await emitAudit(tx, ctx, {

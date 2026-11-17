@@ -1,11 +1,8 @@
-import { and, eq, gt, isNull, lt } from "@openstatus/db";
+import { and, asc, eq, gt, lt } from "@openstatus/db";
 import {
-  maintenance,
-  maintenancesToPageComponents,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
   uptimeTargetSealedMonth,
-  pageComponent,
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -46,13 +43,12 @@ export type UptimeTargetMonthEpisode = {
   startedAt: number;
   endedAt: number;
   treatment: UptimeTargetMonthEpisodeTreatment;
-  /** a pause-mode maintenance that overlaps an unmeasured episode */
-  maintenance: Pick<MonthMaintenance, "kind" | "id" | "title"> | null;
+  /** the maintenance window that overlaps an unmeasured episode most */
+  maintenance: Pick<MonthMaintenance, "id" | "title"> | null;
 };
 
-/** page: an unlinked status-page maintenance, pausing the monitor through a component. window: a maintenance window. */
+/** A maintenance window, user-created or derived from a status-page maintenance. */
 type MonthMaintenance = {
-  kind: "page" | "window";
   id: number;
   title: string;
   mode: "pause" | "continue";
@@ -113,7 +109,6 @@ function labelMaintenances(
       ? {
           ...e,
           maintenance: {
-            kind: best.window.kind,
             id: best.window.id,
             title: best.window.title,
           },
@@ -155,69 +150,36 @@ async function loadMonitorMaintenances(
   monitorId: number,
   range: Span,
 ): Promise<MonthMaintenance[]> {
-  const [pages, windows] = await Promise.all([
-    db
-      .selectDistinct({
-        id: maintenance.id,
-        title: maintenance.title,
-        from: maintenance.from,
-        to: maintenance.to,
-      })
-      .from(maintenancesToPageComponents)
-      .innerJoin(
-        maintenance,
-        eq(maintenance.id, maintenancesToPageComponents.maintenanceId),
-      )
-      .innerJoin(
-        pageComponent,
-        eq(pageComponent.id, maintenancesToPageComponents.pageComponentId),
-      )
-      .where(
-        and(
-          eq(maintenance.workspaceId, workspaceId),
-          // a linked maintenance follows its window, loaded below
-          isNull(maintenance.monitorMaintenanceWindowId),
-          eq(pageComponent.workspaceId, workspaceId),
-          eq(pageComponent.monitorId, monitorId),
-          lt(maintenance.from, new Date(range.end)),
-          gt(maintenance.to, new Date(range.start)),
-        ),
-      )
-      .all(),
-    db
-      .select({
-        id: monitorMaintenanceWindow.id,
-        title: monitorMaintenanceWindow.title,
-        mode: monitorMaintenanceWindow.mode,
-        from: monitorMaintenanceWindow.from,
-        to: monitorMaintenanceWindow.to,
-      })
-      .from(monitorMaintenanceWindowToMonitor)
-      .innerJoin(
-        monitorMaintenanceWindow,
-        eq(
-          monitorMaintenanceWindow.id,
-          monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
-        ),
-      )
-      .where(
-        and(
-          eq(monitorMaintenanceWindow.workspaceId, workspaceId),
-          eq(monitorMaintenanceWindowToMonitor.monitorId, monitorId),
-          lt(monitorMaintenanceWindow.from, new Date(range.end)),
-          gt(monitorMaintenanceWindow.to, new Date(range.start)),
-        ),
-      )
-      .all(),
-  ]);
-  return [
-    ...pages.map((m) => ({
-      ...m,
-      kind: "page" as const,
-      mode: "pause" as const,
-    })),
-    ...windows.map((w) => ({ ...w, kind: "window" as const })),
-  ].sort((a, b) => a.from.getTime() - b.from.getTime() || a.id - b.id);
+  const windows = await db
+    .select({
+      id: monitorMaintenanceWindow.id,
+      title: monitorMaintenanceWindow.title,
+      mode: monitorMaintenanceWindow.mode,
+      from: monitorMaintenanceWindow.from,
+      to: monitorMaintenanceWindow.to,
+    })
+    .from(monitorMaintenanceWindowToMonitor)
+    .innerJoin(
+      monitorMaintenanceWindow,
+      eq(
+        monitorMaintenanceWindow.id,
+        monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+      ),
+    )
+    .where(
+      and(
+        eq(monitorMaintenanceWindow.workspaceId, workspaceId),
+        eq(monitorMaintenanceWindowToMonitor.monitorId, monitorId),
+        lt(monitorMaintenanceWindow.from, new Date(range.end)),
+        gt(monitorMaintenanceWindow.to, new Date(range.start)),
+      ),
+    )
+    .orderBy(
+      asc(monitorMaintenanceWindow.from),
+      asc(monitorMaintenanceWindow.id),
+    )
+    .all();
+  return windows;
 }
 
 type MonthPolicy = {

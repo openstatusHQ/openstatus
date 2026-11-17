@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
-  maintenancesToPageComponents,
   monitor,
   monitorIncidentTable,
   monitorMaintenanceWindow,
@@ -16,7 +15,7 @@ import {
   createMonitor,
   createNotification,
   createPage,
-  createPageComponent,
+  createPageMaintenance,
   createTestWorkspace,
   linkNotificationToMonitor,
 } from "@openstatus/db/src/test/factories";
@@ -108,8 +107,14 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
-/** continue: a maintenance window. pause: a status page maintenance. linked: a continue window and its announcement. */
-async function monitorUnderMaintenance(mode: "pause" | "continue" | "linked") {
+/**
+ * continue: a maintenance window. pause: a status page maintenance with its
+ * derived window. linked: a continue window and its announcement. bare: a
+ * status page maintenance that has no window.
+ */
+async function monitorUnderMaintenance(
+  mode: "pause" | "continue" | "linked" | "bare",
+) {
   const row = await createMonitor(workspaceId, {
     regions: "ams",
     status: "active",
@@ -120,7 +125,7 @@ async function monitorUnderMaintenance(mode: "pause" | "continue" | "linked") {
   const from = new Date(now - HOUR_MS);
   const to = new Date(now + HOUR_MS);
 
-  let windowId: number | undefined;
+  let windowId: number | null = null;
   if (mode === "continue" || mode === "linked") {
     const [window] = await db
       .insert(monitorMaintenanceWindow)
@@ -133,59 +138,30 @@ async function monitorUnderMaintenance(mode: "pause" | "continue" | "linked") {
       .run();
     windowId = window.id;
   }
-  if (mode === "continue" && windowId !== undefined) {
-    const id = windowId;
-    return {
+  if (mode !== "continue") {
+    const m = await createPageMaintenance(workspaceId, pageId, {
       monitorId: row.id,
-      startAt: (start: Date) =>
-        db
-          .update(monitorMaintenanceWindow)
-          .set({ from: start })
-          .where(eq(monitorMaintenanceWindow.id, id))
-          .run(),
-      endAt: (end: Date) =>
-        db
-          .update(monitorMaintenanceWindow)
-          .set({ to: end })
-          .where(eq(monitorMaintenanceWindow.id, id))
-          .run(),
-    };
-  }
-
-  const component = await createPageComponent(workspaceId, pageId, {
-    type: "monitor",
-    monitorId: row.id,
-  });
-  const [m] = await db
-    .insert(maintenance)
-    .values({
-      title: "db upgrade",
-      message: "",
       from,
       to,
-      monitorMaintenanceWindowId: windowId,
-      workspaceId,
-      pageId,
-    })
-    .returning();
-  if (!m) throw new Error("maintenance insert returned no row");
-  await db
-    .insert(maintenancesToPageComponents)
-    .values({ maintenanceId: m.id, pageComponentId: component.id })
-    .run();
+      announcesWindowId: windowId ?? undefined,
+      derive: mode !== "bare",
+    });
+    windowId = m.monitorMaintenanceWindowId;
+  }
+  const id = windowId ?? -1;
   return {
     monitorId: row.id,
     startAt: (start: Date) =>
       db
-        .update(maintenance)
+        .update(monitorMaintenanceWindow)
         .set({ from: start })
-        .where(eq(maintenance.id, m.id))
+        .where(eq(monitorMaintenanceWindow.id, id))
         .run(),
     endAt: (end: Date) =>
       db
-        .update(maintenance)
+        .update(monitorMaintenanceWindow)
         .set({ to: end })
-        .where(eq(maintenance.id, m.id))
+        .where(eq(monitorMaintenanceWindow.id, id))
         .run(),
   };
 }
@@ -321,9 +297,18 @@ describe("isInMaintenance", () => {
     );
   });
 
-  test("a pausing status page maintenance counts", async () => {
+  test("a status page maintenance counts through its derived window", async () => {
     const { monitorId } = await monitorUnderMaintenance("pause");
     expect(await isInMaintenance(monitorId, new Date())).toBe(true);
+  });
+
+  test("a status page maintenance without a window does not count", async () => {
+    const { monitorId } = await monitorUnderMaintenance("bare");
+    expect(await isInMaintenance(monitorId, new Date())).toBe(false);
+
+    await postError(monitorId);
+    expect((await stateOf(monitorId)).status).toBe("error");
+    expect(sendAlert).toHaveBeenCalledTimes(1);
   });
 
   test("an announced continue window counts", async () => {

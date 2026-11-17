@@ -13,8 +13,15 @@ import {
   AlertDialogTrigger,
 } from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
-import { formatDistanceStrict } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/components/ui/dropdown-menu";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format, formatDistanceStrict } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -103,7 +110,28 @@ export function MaintenanceProperties({
       onError: (error) => toast.error(errorMessage(error, "Failed to unlink")),
     }),
   );
-  const linked = maintenance.window;
+  const link = useMutation(
+    trpc.maintenance.linkWindow.mutationOptions({
+      onSuccess: async () => {
+        await invalidate();
+        toast.success("Linked to the window");
+      },
+      onError: (error) => toast.error(errorMessage(error, "Failed to link")),
+    }),
+  );
+  const { data: windows } = useQuery(
+    trpc.maintenanceWindow.list.queryOptions(),
+  );
+  const linked = maintenance.window?.derived ? null : maintenance.window;
+  const now = new Date();
+  // an ended window has no checks left to follow
+  const linkable = (windows ?? []).filter(
+    (w) => w.derivedFrom === null && w.to > now,
+  );
+  const stamp = (date: Date) => format(date, "MMM d, HH:mm");
+  const paused = maintenance.window?.derived
+    ? maintenance.affectedMonitors.length
+    : 0;
   const author = maintenance.createdByUser;
   const editor = distinctEditor(maintenance);
 
@@ -128,7 +156,6 @@ export function MaintenanceProperties({
           {hydrated ? (
             <PropertyDateTimePicker
               aria-label="From"
-              disabled={!!linked}
               value={from}
               onChange={(date) => setDraft({ from: date, to })}
             />
@@ -143,7 +170,6 @@ export function MaintenanceProperties({
           {hydrated ? (
             <PropertyDateTimePicker
               aria-label="To"
-              disabled={!!linked}
               value={to}
               onChange={(date) => setDraft({ from, to: date })}
             />
@@ -178,27 +204,29 @@ export function MaintenanceProperties({
           ) : null}
         </PropertyValue>
       </Property>
-      {linked ? (
-        <Property>
-          <PropertyLabel>Window</PropertyLabel>
-          <PropertyValue>
-            <PropertyLink
-              href={
-                maintenance.affectedMonitors[0]
-                  ? `/monitors/${maintenance.affectedMonitors[0].id}/maintenance`
-                  : "/monitors"
-              }
-            >
-              {linked.title}
-            </PropertyLink>
-          </PropertyValue>
-        </Property>
-      ) : null}
       <Property>
         <PropertyLabel>Checks</PropertyLabel>
-        <PropertyValue className="justify-between">
-          <span className="truncate">
-            {maintenanceWindowModeLabels[linked ? linked.mode : "pause"]}
+        <PropertyValue className="flex-wrap justify-between font-sans">
+          <span className="min-w-0 py-1.5">
+            {linked ? (
+              <>
+                Checks follow window{" "}
+                <Link href="/maintenance-windows">{linked.title}</Link>{" "}
+                <span className="text-muted-foreground">
+                  ({maintenanceWindowModeLabels[linked.mode].toLowerCase()},{" "}
+                  {hydrated
+                    ? `${stamp(linked.from)} – ${stamp(linked.to)}`
+                    : null}
+                  )
+                </span>
+              </>
+            ) : paused > 0 ? (
+              `Paused for ${paused} ${paused === 1 ? "monitor" : "monitors"} while this maintenance runs`
+            ) : (
+              <span className="text-muted-foreground">
+                No monitors are affected
+              </span>
+            )}
           </span>
           {linked ? (
             <AlertDialog>
@@ -211,9 +239,9 @@ export function MaintenanceProperties({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Unlink from the window?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    The times stop following {linked.title}, and while it is
-                    active this maintenance pauses the monitors behind its
-                    components.
+                    {linked.title} keeps running as it is. This maintenance then
+                    pauses the monitors behind its own components, if any, for
+                    its own times.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -226,6 +254,42 @@ export function MaintenanceProperties({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          ) : linkable.length && status !== "completed" ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 shrink-0"
+                  disabled={link.isPending}
+                >
+                  Link to a maintenance window
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-w-72">
+                <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
+                  That window alone then decides the checks.
+                </DropdownMenuLabel>
+                {linkable.map((w) => (
+                  <DropdownMenuItem
+                    key={w.id}
+                    className="flex-col items-start gap-0"
+                    onSelect={() =>
+                      link.mutate({
+                        id: maintenance.id,
+                        monitorMaintenanceWindowId: w.id,
+                      })
+                    }
+                  >
+                    <span className="max-w-full truncate">{w.title}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {maintenanceWindowModeLabels[w.mode]}, {stamp(w.from)} –{" "}
+                      {stamp(w.to)}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : null}
         </PropertyValue>
       </Property>

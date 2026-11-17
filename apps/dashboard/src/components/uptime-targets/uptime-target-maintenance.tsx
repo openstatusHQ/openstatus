@@ -39,7 +39,7 @@ import { formatUptimeMonth } from "@/data/reports.client";
 import { formatDurationShort, formatWindow } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-/** Maintenance windows and status page maintenances that touched an uptime target's monitors, newest month first. */
+/** Maintenance windows that touched an uptime target's monitors, those derived from status page maintenances included, newest month first. */
 export function UptimeTargetMaintenance({
   policyId,
   months,
@@ -98,19 +98,17 @@ export function UptimeTargetMaintenance({
               </EventGroupHeader>
               <EventList>
                 {windows.map((w) => (
-                  <EventRow key={`${w.kind}:${w.id}`}>
+                  <EventRow key={w.id}>
                     <EventRowDate date={w.from} />
                     <EventRowStatus>
                       <StatusDot variant="info" />
-                      <span>
-                        {w.kind === "window" ? "Window" : "Status page"}
-                      </span>
+                      <span>{w.derived ? "Status page" : "Window"}</span>
                     </EventRowStatus>
                     <EventRowContent>
                       <EventRowTitle
                         href={
-                          w.kind === "page" && w.pageId
-                            ? `/status-pages/${w.pageId}/maintenances/${w.id}`
+                          w.derived && w.announcements[0]?.pageId
+                            ? `/status-pages/${w.announcements[0].pageId}/maintenances/${w.announcements[0].id}`
                             : undefined
                         }
                       >
@@ -119,7 +117,7 @@ export function UptimeTargetMaintenance({
                       <EventRowMeta>
                         {w.announcements.length ? (
                           <span>
-                            {w.kind === "window" ? "announced on " : null}
+                            {w.derived ? null : "announced on "}
                             {w.announcements
                               .map((a) => a.pageTitle ?? "a status page")
                               .join(", ")}
@@ -154,8 +152,7 @@ export function UptimeTargetMaintenance({
                               kind: "maintenance",
                               reason: w.title,
                               monitorIds: w.monitorIds,
-                              monitorMaintenanceWindowId:
-                                w.kind === "window" ? w.id : undefined,
+                              monitorMaintenanceWindowId: w.id,
                               announcements: w.announcements,
                             })
                           }

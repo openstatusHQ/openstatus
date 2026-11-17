@@ -2,9 +2,12 @@ import { and, eq } from "@openstatus/db";
 import {
   auditLog,
   maintenance,
+  maintenancesToPageComponents,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
+  page,
+  pageComponent,
 } from "@openstatus/db/src/schema";
 import { beforeAll, describe, expect, test } from "vitest";
 
@@ -15,6 +18,7 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ConflictError } from "../../errors";
+import { createMaintenance } from "../../maintenance/create";
 import { listMonitors } from "../../monitor/list";
 import { createMaintenanceWindow } from "../create";
 import { deleteMaintenanceWindow } from "../delete";
@@ -194,15 +198,18 @@ describe("maintenance windows", () => {
     });
   });
 
-  test("moving a window moves its announcements, with an audit row each", async () => {
+  test("moving or ending a window leaves its announcements' times alone", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx, ctx.workspace.id);
-      const now = Date.now();
-      const from = new Date(now + hour);
-      const to = new Date(now + 2 * hour);
+      const now = Math.floor(Date.now() / 1000) * 1000;
       const window = await createMaintenanceWindow({
         ctx: { ...ctx, db: tx },
-        input: { title: "Upgrade", from, to, monitorIds: [m.id] },
+        input: {
+          title: "Upgrade",
+          from: new Date(now - hour),
+          to: new Date(now + 2 * hour),
+          monitorIds: [m.id],
+        },
       });
       const announcement = await tx
         .insert(maintenance)
@@ -210,51 +217,40 @@ describe("maintenance windows", () => {
           workspaceId: ctx.workspace.id,
           title: "Upgrade",
           message: "",
-          from: window.from,
-          to: window.to,
+          from: new Date(now - 2 * hour),
+          to: new Date(now + 4 * hour),
           monitorMaintenanceWindowId: window.id,
         })
         .returning()
         .get();
-      const maintenanceAudits = () =>
-        tx
-          .select({
-            before: auditLog.before,
-            after: auditLog.after,
-            actorId: auditLog.actorId,
-          })
-          .from(auditLog)
-          .where(
-            and(
-              eq(auditLog.action, "maintenance.update"),
-              eq(auditLog.entityId, String(announcement.id)),
-            ),
-          )
-          .all();
 
       await updateMaintenanceWindow({
         ctx: { ...ctx, db: tx },
-        input: { id: window.id, title: "Renamed" },
-      });
-      expect(await maintenanceAudits()).toHaveLength(0);
-
-      const moved = await updateMaintenanceWindow({
-        ctx: { ...ctx, db: tx },
         input: { id: window.id, to: new Date(now + 3 * hour) },
       });
-      const synced = await tx
+      await endMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: { id: window.id },
+      });
+
+      const after = await tx
         .select()
         .from(maintenance)
         .where(eq(maintenance.id, announcement.id))
         .get();
-      expect(synced?.to).toEqual(moved.to);
-      expect(synced?.updatedBy).toBe(moved.updatedBy);
-      expect(synced?.updatedBy).not.toBeNull();
-
-      const audits = await maintenanceAudits();
-      expect(audits).toHaveLength(1);
-      expect(audits[0]?.before?.to).not.toEqual(audits[0]?.after?.to);
-      expect(audits[0]?.after?.updatedBy).toBe(moved.updatedBy);
+      expect(after?.from).toEqual(announcement.from);
+      expect(after?.to).toEqual(announcement.to);
+      const audits = await tx
+        .select({ id: auditLog.id })
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.action, "maintenance.update"),
+            eq(auditLog.entityId, String(announcement.id)),
+          ),
+        )
+        .all();
+      expect(audits).toHaveLength(0);
     });
   });
 });
@@ -306,6 +302,74 @@ describe("listMonitors maintenance", () => {
       );
       expect(of(paused.id)?.mode).toBe("pause");
       expect(of(later.id)).toBeNull();
+    });
+  });
+
+  test("a status-page maintenance counts only through its derived window", async () => {
+    await withTestTransaction(async (tx) => {
+      const bare = await insertMonitor(tx, ctx.workspace.id);
+      const derived = await insertMonitor(tx, ctx.workspace.id);
+      const now = Date.now();
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId: ctx.workspace.id,
+          title: "p",
+          description: "",
+          slug: `mw-derived-${now}`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+      const component = async (monitorId: number) =>
+        tx
+          .insert(pageComponent)
+          .values({
+            workspaceId: ctx.workspace.id,
+            pageId: pageRow.id,
+            name: "c",
+            type: "monitor",
+            monitorId,
+          })
+          .returning()
+          .get();
+      const bareComponent = await component(bare.id);
+      const derivedComponent = await component(derived.id);
+      const range = { from: new Date(now - hour), to: new Date(now + hour) };
+      // written past the services, as nothing may: no window, so no pause
+      const orphan = await tx
+        .insert(maintenance)
+        .values({
+          workspaceId: ctx.workspace.id,
+          pageId: pageRow.id,
+          title: "orphan",
+          message: "",
+          ...range,
+        })
+        .returning()
+        .get();
+      await tx.insert(maintenancesToPageComponents).values({
+        maintenanceId: orphan.id,
+        pageComponentId: bareComponent.id,
+      });
+      await createMaintenance({
+        ctx: { ...ctx, db: tx },
+        input: {
+          title: "announced",
+          message: "m",
+          ...range,
+          pageId: pageRow.id,
+          pageComponentIds: [derivedComponent.id],
+        },
+      });
+
+      const { items } = await listMonitors({
+        ctx: { ...ctx, db: tx },
+        input: { limit: 100, offset: 0, order: "asc" },
+      });
+      const of = (id: number) => items.find((i) => i.id === id)?.maintenance;
+      expect(of(bare.id)).toBeNull();
+      expect(of(derived.id)?.mode).toBe("pause");
     });
   });
 });

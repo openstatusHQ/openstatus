@@ -49,6 +49,18 @@ fail-closed: a failed audit insert rolls the mutation back. A missing `emitAudit
 lint-enforced; if a verb genuinely needs neither, the inline disable must carry
 a reason.
 
+## Maintenance and checks
+
+Only `monitor_maintenance_window` rows affect checks; a status-page
+`maintenance` communicates. One with monitor-backed components pauses them
+through a derived window (`maintenance_id` set), which `syncDerivedWindow` in
+`src/maintenance/internal.ts` creates, updates and deletes. A write that changes
+a maintenance's times, title, components or window link, or removes a component
+or monitor behind one, calls it in the same transaction; a delete reads
+`maintenanceIdsBehind` first, because the cascade takes the association rows.
+The v1 REST routes that still write inline call both through
+`@openstatus/services/maintenance`.
+
 ## Scope enforcement
 
 `SCOPES.md` at the repo root lists every scope value and which verbs, routes and tools require which.

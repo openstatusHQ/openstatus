@@ -9,13 +9,17 @@ import {
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 import { ConflictError } from "@openstatus/services";
+import {
+  maintenanceIdsBehind,
+  syncDerivedWindows,
+} from "@openstatus/services/maintenance";
 import { assertCustomDomainAvailable } from "@openstatus/services/page";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { notEmpty } from "@/utils/not-empty";
 
-import { isNumberArray } from "../utils";
+import { isNumberArray, v1ServiceCtx } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema, transformPageData } from "./schema";
 
@@ -216,14 +220,26 @@ export function registerPutPage(api: typeof pagesApi) {
 
     // Delete removed monitors from pageComponent
     if (removedMonitorIds.length) {
-      await db
-        .delete(pageComponent)
-        .where(
-          and(
-            inArray(pageComponent.monitorId, removedMonitorIds),
-            eq(pageComponent.pageId, newPage.id),
-          ),
-        );
+      await db.transaction(async (tx) => {
+        const maintenanceIds = await maintenanceIdsBehind(tx, workspaceId, {
+          componentIds: currentPageComponents
+            .filter(
+              (pc) =>
+                pc.monitorId !== null &&
+                removedMonitorIds.includes(pc.monitorId),
+            )
+            .map((pc) => pc.id),
+        });
+        await tx
+          .delete(pageComponent)
+          .where(
+            and(
+              inArray(pageComponent.monitorId, removedMonitorIds),
+              eq(pageComponent.pageId, newPage.id),
+            ),
+          );
+        await syncDerivedWindows(tx, v1ServiceCtx(c), maintenanceIds);
+      });
     }
 
     // Insert or update pageComponents (primary table)

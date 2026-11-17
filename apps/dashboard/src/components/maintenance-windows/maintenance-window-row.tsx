@@ -3,6 +3,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useState } from "react";
 
 import { StatusDot } from "@/components/common/status-dot";
@@ -69,7 +70,7 @@ export function MaintenanceWindowRow({
           queryClient.invalidateQueries({
             queryKey: trpc.maintenanceWindow.list.queryKey(),
           }),
-          // linked announcements follow the window's times
+          // announcements show the window's times next to their own
           queryClient.invalidateQueries({
             queryKey: trpc.maintenance.pathKey(),
           }),
@@ -77,9 +78,16 @@ export function MaintenanceWindowRow({
     }),
   );
   const now = new Date();
-  const { from, to } = window;
+  const { from, to, derivedFrom } = window;
+  // a derived window is changed on the maintenance it exists for
+  const derivedHref = derivedFrom
+    ? derivedFrom.pageId === null
+      ? "/status-pages"
+      : `/status-pages/${derivedFrom.pageId}/maintenances/${derivedFrom.maintenanceId}`
+    : null;
   const others = window.monitors.filter((m) => m.id !== currentMonitorId);
   const meta = [
+    window.derivedFrom ? "From status page maintenance" : null,
     status === "scheduled"
       ? `in ${formatDurationShort(from.getTime() - now.getTime())}`
       : status === "in-progress"
@@ -104,7 +112,9 @@ export function MaintenanceWindowRow({
         <span>{kind ? "Window" : maintenanceStatusConfig[status].label}</span>
       </EventRowStatus>
       <EventRowContent>
-        <EventRowTitle href={kind ? "/maintenance-windows" : undefined}>
+        <EventRowTitle
+          href={derivedHref ?? (kind ? "/maintenance-windows" : undefined)}
+        >
           {window.title}
         </EventRowTitle>
         <EventRowMeta>
@@ -114,7 +124,11 @@ export function MaintenanceWindowRow({
         </EventRowMeta>
       </EventRowContent>
       <EventRowActions>
-        {status === "completed" ? null : (
+        {derivedHref ? (
+          <Button variant="outline" size="sm" className="h-7" asChild>
+            <NextLink href={derivedHref}>Open maintenance</NextLink>
+          </Button>
+        ) : status === "completed" ? null : (
           <Button
             variant="outline"
             size="sm"
@@ -130,15 +144,17 @@ export function MaintenanceWindowRow({
         {formatDurationShort(to.getTime() - from.getTime())}
       </EventRowDuration>
       <EventRowMenu>
-        <MaintenanceWindowRowActions
-          window={window}
-          onEdit={() => setEditOpen(true)}
-          onAnnounce={
-            announcePageIds.length ? () => setAnnounceOpen(true) : undefined
-          }
-        />
+        {derivedFrom ? null : (
+          <MaintenanceWindowRowActions
+            window={window}
+            onEdit={() => setEditOpen(true)}
+            onAnnounce={
+              announcePageIds.length ? () => setAnnounceOpen(true) : undefined
+            }
+          />
+        )}
       </EventRowMenu>
-      {announcePageIds.length ? (
+      {announcePageIds.length && !derivedFrom ? (
         <FormSheetMaintenanceCreate
           open={announceOpen}
           onOpenChange={setAnnounceOpen}
@@ -153,7 +169,12 @@ export function MaintenanceWindowRow({
             monitorMaintenanceWindowId: window.id,
             pageComponents: announceable.map((a) => a.componentId),
           }}
-          window={{ title: window.title, mode: window.mode }}
+          window={{
+            title: window.title,
+            mode: window.mode,
+            from: window.from,
+            to: window.to,
+          }}
         />
       ) : null}
       <FormSheetMaintenanceWindow

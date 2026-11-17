@@ -21,15 +21,19 @@ export default async function Page({
     notFound();
   }
 
-  const subscribers = getQueryClient().prefetchQuery(
-    trpc.pageSubscriber.list.queryOptions({ pageId }),
-  );
+  const queryClient = getQueryClient();
+  const prefetched = Promise.all([
+    queryClient.prefetchQuery(
+      trpc.pageSubscriber.list.queryOptions({ pageId }),
+    ),
+    queryClient.prefetchQuery(trpc.maintenanceWindow.list.queryOptions()),
+  ]);
   const maintenance = await fetchQueryOrNotFound(
     trpc.maintenance.get.queryOptions({ id: maintenanceIdNumber }),
   );
   // the URL's page must own the maintenance
   if (maintenance.pageId !== pageId) notFound();
-  await subscribers;
+  await prefetched;
 
   return (
     <HydrateClient>

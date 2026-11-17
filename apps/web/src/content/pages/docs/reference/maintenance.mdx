@@ -6,10 +6,12 @@ description: Technical specification for scheduled maintenance windows in openst
 
 A maintenance window is a scheduled period during which you expect planned disruption to one or more services — a database upgrade, a deployment, or infrastructure work. Announcing it ahead of time lets you communicate the disruption to your users instead of letting your status page register it as an unexpected outage.
 
-openstatus has two maintenance resources:
+openstatus has two maintenance resources, with one rule between them: **only maintenance windows affect checks; status page maintenances communicate.**
 
 - A **status page maintenance**, which this page covers first, belongs to a single status page and targets one or more of that page's components — monitor-linked or static. It is what your users see.
-- A **monitor maintenance window** belongs to one or more monitors and needs no status page. It decides whether their checks pause or keep running; see [Checks during maintenance](#checks-during-maintenance). A status page maintenance can announce one.
+- A **maintenance window** belongs to one or more monitors and needs no status page. It decides whether their checks pause or keep running; see [Checks during maintenance](#checks-during-maintenance).
+
+The two meet in one of two ways. A status page maintenance whose components are backed by monitors gets a maintenance window automatically, which pauses those monitors for its duration. Or it announces a window you created yourself, and then changes no checks at all.
 
 ## Behaviour
 
@@ -19,7 +21,7 @@ While a maintenance window is active (the current time is between `from` and `to
 - A higher-priority event overrides it: an active incident (error) or an unresolved status report (degraded) takes precedence, so the component shows that status instead. Maintenance only outranks the default operational status.
 - The maintenance is reflected in the historical status bars for the days it overlaps.
 
-The monitors behind the affected components pause while it is active, so the window is absent from their uptime, unless the maintenance announces a [maintenance window](#maintenance-window), which then decides instead. See [Checks during maintenance](#checks-during-maintenance).
+The monitors behind the affected components pause while it is active, through the [maintenance window](#maintenance-window) openstatus creates for it, so that time is absent from their uptime. A maintenance that announces a window you created pauses nothing itself. See [Checks during maintenance](#checks-during-maintenance).
 
 When a maintenance is created, status page subscribers can be notified that it has been scheduled (see [Notify](#notify)). Updating a maintenance never re-notifies.
 
@@ -73,9 +75,17 @@ In the v1 REST API these are passed as `monitorIds`, which accepts monitor compo
 
 ### Maintenance window
 
-**Type:** Integer (optional, dashboard only)
+**Type:** Integer (read-only in the API; linked and unlinked in the dashboard)
 
-The [maintenance window](#checks-during-maintenance) this maintenance announces. Set by **Announce on status page** on a window; a maintenance created on the status page has none. While set, the maintenance's `from` and `to` follow the window and cannot be changed on the maintenance itself, and the window alone decides what happens to checks. Internal: never shown on the status page, in feeds or in subscriber emails.
+The [maintenance window](#checks-during-maintenance) that carries this maintenance's effect on checks. It is one of:
+
+- **Its own window**, created automatically when at least one affected component is backed by a monitor. It pauses those monitors from `from` to `to` and follows the maintenance: changing the times, the title or the components changes the window, and removing the last monitor-backed component removes it. It is listed under **Maintenance windows** as *From status page maintenance* and can only be changed through the maintenance.
+- **A window you created**, which the maintenance announces. Set by **Announce on status page** on a window, or by **Link to a maintenance window** on the maintenance. That window alone decides the checks; the maintenance's components change none.
+- **None**, when no affected component has a monitor and no window is announced. No checks change.
+
+`from` and `to` always belong to the maintenance: they are the public times. For an announced window they start as the window's times and can be changed freely, for example to publish a wider range than the work itself; editing the window later does not move them. The dashboard shows both.
+
+Internal: never shown on the status page, in feeds or in subscriber emails.
 
 ### Notify
 
@@ -98,26 +108,47 @@ A maintenance always keeps at least one update: deleting the last one is rejecte
 
 ## Checks during maintenance
 
-Two things can put a monitor in maintenance:
+Only a **maintenance window** puts a monitor in maintenance. A window has a setting:
 
-- **A maintenance window** on the monitor (dashboard, monitor's **Maintenance** tab). It needs no status page and has a setting:
-  - **Pause checks** (default): cloud regions do not check the monitor at all. The window is absent from both sides of its uptime and can never count as downtime, whatever happened during it.
-  - **Keep checking**: cloud checks run and are stored as usual, with their real outcome, so failures during the window count against uptime. The monitor's status does not change, no monitor incident opens and no notification is sent. When the window ends, normal behaviour resumes with the next check: a failure that is still there then opens its incident and notifies.
-- **A status page maintenance** that does not announce a window pauses the monitors behind its affected components.
+- **Pause checks** (default): cloud regions do not check the monitor at all. The window is absent from both sides of its uptime and can never count as downtime, whatever happened during it.
+- **Keep checking**: cloud checks run and are stored as usual, with their real outcome, so failures during the window count against uptime. The monitor's status does not change, no monitor incident opens and no notification is sent. When the window ends, normal behaviour resumes with the next check: a failure that is still there then opens its incident and notifies.
 
-**Announce on status page** on a window creates a maintenance that announces it. That maintenance changes nothing by itself: its times follow the window and the window's setting applies to the window's monitors. To announce work without losing measured time, create a window set to **Keep checking** and announce it. A window cannot be deleted while a maintenance announces it; unlink the maintenance (it then pauses its components' monitors again) or delete it first.
+A window comes from one of two places:
 
-**No alerts are sent during any maintenance**, whichever setting applies: a check that ran inside the window never changes the monitor's status, opens an incident or notifies anyone. A check that ran before the window still counts, even if its result arrives a little later.
+- **You create it** on the monitor (dashboard, **Maintenance windows** or the monitor's **Maintenance** tab). It needs no status page.
+- **A status page maintenance creates it.** A maintenance with monitor-backed components gets a window set to **Pause checks**, with the maintenance's times and the monitors behind those components. This is how a maintenance scheduled on a status page, through the API or by an import pauses its monitors. The window exists only as long as the maintenance does and cannot be edited, ended or deleted by itself.
 
-When several windows or maintenances cover a monitor at once, **Keep checking** wins over **Pause checks**, so measured time is never lost.
+### Announcing a window
 
-Private locations keep checking during any maintenance and ignore status changes while it is active. Heartbeat monitors are never evaluated during maintenance.
+**Announce on status page** on a window you created publishes a status page maintenance for it. The announcement is communication only:
+
+- The window's setting and monitors decide the checks. The announcement's components are what the status page shows as Under Maintenance and change no checks.
+- The announcement's `from` and `to` are prefilled with the window's and stay independent. Moving or ending the window does not change what the status page says; update the announcement yourself.
+
+To announce work without losing measured time, create a window set to **Keep checking** and announce it.
+
+**Link to a maintenance window** on an existing maintenance does the same after the fact: the maintenance stops pausing through its own window, which is removed, and the linked window takes over. **Unlink** reverses it: the maintenance gets its own pause window back if it has monitor-backed components.
+
+### Deleting
+
+- Deleting a status page maintenance, or its status page, removes the window that was created for it. A window it only announced stays.
+- A window you created cannot be deleted while a maintenance announces it; unlink or delete the announcement first.
+- Removing a component from a status page, or deleting its monitor, takes that monitor out of the windows created for the page's maintenances.
+
+### Rules that hold for every window
+
+**No alerts are sent during any maintenance window**, whichever setting applies: a check that ran inside the window never changes the monitor's status, opens an incident or notifies anyone. A check that ran before the window still counts, even if its result arrives a little later.
+
+When several windows cover a monitor at once, **Keep checking** wins over **Pause checks**, so measured time is never lost.
+
+Private locations keep checking during any window and ignore status changes while it is active. Heartbeat monitors are never evaluated during a window.
 
 For what this means for a monthly uptime target, see the [uptime target reference](/docs/reference/uptime-target#maintenance).
 
 ## Relationships
 
-- **Status page** — a maintenance is tied to a single page. Deleting the page deletes its maintenance windows.
+- **Status page** — a maintenance is tied to a single page. Deleting the page deletes its maintenances and the windows created for them.
+- **Maintenance window** — a maintenance has at most one: its own, or one it announces. A window you created can be announced by several maintenances, one per status page from the dashboard.
 - **Page components** — a maintenance can affect multiple components (monitor-linked or static), and a component can be covered by multiple (including overlapping) maintenance windows.
 
 ## Related resources

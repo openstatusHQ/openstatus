@@ -10,11 +10,13 @@ import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
+import { syncDerivedWindows } from "@openstatus/services/maintenance";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 
+import { v1ServiceCtx } from "../utils";
 import type { maintenancesApi } from "./index";
 import {
   MaintenanceObjectSchema,
@@ -153,6 +155,7 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
             .run();
         }
       }
+      await syncDerivedWindows(tx, v1ServiceCtx(c), [newMaintenance.id]);
 
       return { ...newMaintenance, initialUpdateId: initialUpdate.id };
     });

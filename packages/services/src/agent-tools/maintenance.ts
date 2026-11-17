@@ -72,7 +72,7 @@ const MaintenanceItemOutput = z.object({
     .int()
     .nullable()
     .describe(
-      "Window this maintenance announces; its times and checks follow that window.",
+      "Maintenance window that carries this maintenance's effect on checks: one created automatically from its monitor-backed components (checks paused), or a user-created window it announces. Null when no monitor is affected. `from`/`to` here are the public times and may differ from the window's.",
     ),
   affectedMonitors: z.array(
     z.object({ id: z.number().int(), name: z.string() }),

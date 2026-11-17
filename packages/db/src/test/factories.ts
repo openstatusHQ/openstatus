@@ -5,12 +5,18 @@
 //
 // Pass a transaction as the last arg to scope creation to it (e.g. inside a
 // rolled-back `withTestTransaction`); omit it to commit to the shared db.
+import { eq } from "drizzle-orm";
+
 import { db as defaultDb } from "../db";
 import {
   incident,
   incidentEvent,
   incidentPostmortem,
+  maintenance,
+  maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   notification,
   notificationsToMonitors,
   page,
@@ -215,6 +221,73 @@ export async function createPageComponent(
   );
   if (!row) throw new Error("factory insert returned no row");
   return row;
+}
+
+/**
+ * A status-page maintenance on a monitor's component, with the rows
+ * `@openstatus/services` writes for it: a derived pause window, unless it
+ * announces `announcesWindowId`. `derive: false` leaves the window out.
+ */
+export async function createPageMaintenance(
+  workspaceId: number,
+  pageId: number,
+  args: {
+    monitorId: number;
+    from: Date;
+    to: Date;
+    announcesWindowId?: number;
+    derive?: boolean;
+  },
+  db: Db = defaultDb,
+) {
+  const component = await createPageComponent(
+    workspaceId,
+    pageId,
+    { type: "monitor", monitorId: args.monitorId },
+    db,
+  );
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(maintenance)
+      .values({
+        title: "db upgrade",
+        message: "",
+        from: args.from,
+        to: args.to,
+        monitorMaintenanceWindowId: args.announcesWindowId,
+        workspaceId,
+        pageId,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  await db
+    .insert(maintenancesToPageComponents)
+    .values({ maintenanceId: row.id, pageComponentId: component.id });
+  if (args.announcesWindowId !== undefined || args.derive === false) {
+    return row;
+  }
+  const [window] = await db
+    .insert(monitorMaintenanceWindow)
+    .values({
+      workspaceId,
+      title: row.title,
+      mode: "pause",
+      from: args.from,
+      to: args.to,
+      maintenanceId: row.id,
+    })
+    .returning();
+  if (!window) throw new Error("factory insert returned no row");
+  await db.insert(monitorMaintenanceWindowToMonitor).values({
+    monitorMaintenanceWindowId: window.id,
+    monitorId: args.monitorId,
+  });
+  await db
+    .update(maintenance)
+    .set({ monitorMaintenanceWindowId: window.id })
+    .where(eq(maintenance.id, row.id));
+  return { ...row, monitorMaintenanceWindowId: window.id };
 }
 
 export async function createNotification(

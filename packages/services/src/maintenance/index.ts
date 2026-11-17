@@ -10,8 +10,10 @@ export {
   type MaintenanceUpdateWithRelations,
   type MaintenanceWithRelations,
 } from "./list";
+// for adapters that still write maintenances, components or monitors inline
+export { maintenanceIdsBehind, syncDerivedWindows } from "./internal";
 export { notifyMaintenance } from "./notify";
-export { unlinkMaintenanceWindow } from "./unlink-window";
+export { linkMaintenanceWindow, unlinkMaintenanceWindow } from "./link-window";
 export { updateMaintenance } from "./update";
 export { updateMaintenanceUpdate } from "./update-update";
 export { latestMaintenanceUpdate } from "./utils";
@@ -23,6 +25,7 @@ export {
   DeleteMaintenanceUpdateInput,
   GetMaintenanceInput,
   GetMaintenanceUpdateInput,
+  LinkMaintenanceWindowInput,
   ListMaintenancesInput,
   type MaintenanceListPeriod,
   maintenanceListPeriodSchema,

@@ -1,4 +1,5 @@
 import { createClient } from "@libsql/client";
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
@@ -516,6 +517,39 @@ async function main() {
     ])
     .onConflictDoNothing()
     .run();
+
+  // the derived pause windows the services write for maintenances on
+  // monitor-backed components; same shape as the 0107 backfill
+  await db.run(sql`
+    INSERT INTO monitor_maintenance_window (workspace_id, title, mode, \`from\`, \`to\`, maintenance_id, created_by, updated_by)
+    SELECT m.workspace_id, m.title, 'pause', m.\`from\`, m.\`to\`, m.id, m.created_by, m.updated_by
+    FROM maintenance m
+    WHERE m.monitor_maintenance_window_id IS NULL
+      AND m.workspace_id IS NOT NULL
+      AND EXISTS (
+        SELECT 1
+        FROM maintenance_to_page_component l
+        INNER JOIN page_component pc ON pc.id = l.page_component_id
+        INNER JOIN monitor mo ON mo.id = pc.monitor_id
+        WHERE l.maintenance_id = m.id AND mo.deleted_at IS NULL
+      )`);
+  await db.run(sql`
+    INSERT OR IGNORE INTO monitor_maintenance_window_to_monitor (monitor_maintenance_window_id, monitor_id)
+    SELECT DISTINCT w.id, pc.monitor_id
+    FROM monitor_maintenance_window w
+    INNER JOIN maintenance_to_page_component l ON l.maintenance_id = w.maintenance_id
+    INNER JOIN page_component pc ON pc.id = l.page_component_id
+    INNER JOIN monitor mo ON mo.id = pc.monitor_id
+    WHERE w.maintenance_id IS NOT NULL AND mo.deleted_at IS NULL`);
+  await db.run(sql`
+    UPDATE maintenance
+    SET monitor_maintenance_window_id = (
+      SELECT w.id FROM monitor_maintenance_window w WHERE w.maintenance_id = maintenance.id
+    )
+    WHERE monitor_maintenance_window_id IS NULL
+      AND EXISTS (
+        SELECT 1 FROM monitor_maintenance_window w WHERE w.maintenance_id = maintenance.id
+      )`);
 
   // Incidents - realistic past incidents that were resolved
   const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);

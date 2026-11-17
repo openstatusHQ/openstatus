@@ -3,6 +3,7 @@ import {
   maintenanceUpdate,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
   selectMaintenancePageSchema,
   page,
   pageComponent,
@@ -33,15 +34,26 @@ import {
 } from "../../errors";
 import { createMaintenanceWindow } from "../../maintenance-window/create";
 import { deleteMaintenanceWindow } from "../../maintenance-window/delete";
-import { updateMaintenanceWindow } from "../../maintenance-window/update";
+import { monitorIdsOf } from "../../maintenance-window/internal";
+import {
+  getMaintenanceWindow,
+  listMaintenanceWindows,
+} from "../../maintenance-window/list";
+import {
+  endMaintenanceWindow,
+  updateMaintenanceWindow,
+} from "../../maintenance-window/update";
+import { deleteMonitor } from "../../monitor/delete";
+import { deletePageComponent } from "../../page-component/delete";
+import { deletePage } from "../../page/delete";
 import { getStatusPageContent } from "../../page/get-content";
 import { addMaintenanceUpdate } from "../add-update";
 import { createMaintenance } from "../create";
 import { deleteMaintenance } from "../delete";
 import { deleteMaintenanceUpdate } from "../delete-update";
+import { linkMaintenanceWindow, unlinkMaintenanceWindow } from "../link-window";
 import { getMaintenance, listMaintenances } from "../list";
 import { notifyMaintenance } from "../notify";
-import { unlinkMaintenanceWindow } from "../unlink-window";
 import { updateMaintenance } from "../update";
 import { updateMaintenanceUpdate } from "../update-update";
 
@@ -156,8 +168,33 @@ async function insertMonitorIn(tx: Tx, name: string) {
     .get();
 }
 
+async function insertMonitorComponentIn(tx: Tx, name: string, pageId: number) {
+  const m = await insertMonitorIn(tx, name);
+  const component = await tx
+    .insert(pageComponent)
+    .values({
+      workspaceId: teamCtx.workspace.id,
+      pageId,
+      name: `${TEST_PREFIX}-${name}-component`,
+      type: "monitor",
+      monitorId: m.id,
+    })
+    .returning()
+    .get();
+  return { monitor: m, component };
+}
+
+function derivedWindowOf(tx: Tx, maintenanceId: number) {
+  return tx
+    .select()
+    .from(monitorMaintenanceWindow)
+    .where(eq(monitorMaintenanceWindow.maintenanceId, maintenanceId))
+    .get();
+}
+
 function futureRange(startIn = 60 * 60 * 1000) {
-  const now = Date.now();
+  // whole seconds, the precision the columns keep
+  const now = Math.floor(Date.now() / 1000) * 1000;
   return {
     from: new Date(now + startIn),
     to: new Date(now + startIn + 30 * 60 * 1000),
@@ -607,114 +644,6 @@ describe("list / get", () => {
     });
   });
 
-  test("a maintenance announcing a window follows its times", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const api = await insertMonitorIn(tx, "linked-api");
-      const window = await createMaintenanceWindow({
-        ctx,
-        input: {
-          title: `${TEST_PREFIX}-window`,
-          mode: "continue",
-          ...futureRange(),
-          monitorIds: [api.id],
-        },
-      });
-      const { maintenance: linked } = await createMaintenance({
-        ctx,
-        input: {
-          title: `${TEST_PREFIX}-announce`,
-          message: "m",
-          // ignored: a linked maintenance takes the window's times
-          ...futureRange(5 * 60 * 60 * 1000),
-          pageId: testPageId,
-          pageComponentIds: [],
-          monitorMaintenanceWindowId: window.id,
-        },
-      });
-      expect(linked.monitorMaintenanceWindowId).toBe(window.id);
-      expect(linked.from).toEqual(window.from);
-      expect(linked.to).toEqual(window.to);
-
-      const full = await getMaintenance({ ctx, input: { id: linked.id } });
-      expect(full.window).toEqual({
-        id: window.id,
-        title: `${TEST_PREFIX}-window`,
-        mode: "continue",
-      });
-      expect(full.affectedMonitors.map((m) => m.id)).toEqual([api.id]);
-
-      await expect(
-        updateMaintenance({
-          ctx,
-          input: { id: linked.id, to: new Date(window.to.getTime() + 60_000) },
-        }),
-      ).rejects.toBeInstanceOf(PreconditionFailedError);
-      // unchanged times are fine; the dashboard always sends them
-      await updateMaintenance({
-        ctx,
-        input: {
-          id: linked.id,
-          title: "renamed",
-          from: window.from,
-          to: window.to,
-        },
-      });
-
-      const moved = new Date(window.to.getTime() + 30 * 60 * 1000);
-      await updateMaintenanceWindow({
-        ctx,
-        input: { id: window.id, to: moved },
-      });
-      const synced = await getMaintenance({ ctx, input: { id: linked.id } });
-      expect(synced.to).toEqual(moved);
-    });
-  });
-
-  test("a window cannot be deleted while announced; unlinking frees it", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...teamCtx, db: tx };
-      const api = await insertMonitorIn(tx, "unlink-api");
-      const window = await createMaintenanceWindow({
-        ctx,
-        input: {
-          title: `${TEST_PREFIX}-window-delete`,
-          ...futureRange(),
-          monitorIds: [api.id],
-        },
-      });
-      const { maintenance: linked } = await createMaintenance({
-        ctx,
-        input: {
-          title: `${TEST_PREFIX}-announce-delete`,
-          message: "m",
-          ...futureRange(),
-          pageId: testPageId,
-          pageComponentIds: [],
-          monitorMaintenanceWindowId: window.id,
-        },
-      });
-
-      await expect(
-        deleteMaintenanceWindow({ ctx, input: { id: window.id } }),
-      ).rejects.toThrow(/announce-delete/);
-
-      const unlinked = await unlinkMaintenanceWindow({
-        ctx,
-        input: { id: linked.id },
-      });
-      expect(unlinked.monitorMaintenanceWindowId).toBeNull();
-      await expectAuditRow({
-        workspaceId: teamCtx.workspace.id,
-        action: "maintenance.update",
-        entityType: "maintenance",
-        entityId: linked.id,
-        db: tx,
-      });
-      await deleteMaintenanceWindow({ ctx, input: { id: window.id } });
-    });
-  });
-
   test("the window link stays out of public status-page content", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
@@ -836,6 +765,492 @@ describe("list / get", () => {
         input: { limit: 100, offset: 0, monitorId: other.id, order: "desc" },
       });
       expect(uncovered.items).toEqual([]);
+    });
+  });
+});
+
+describe("derived window", () => {
+  test("a maintenance with a monitor-backed component gets a pause window with its times, title and monitors", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorComponentIn(tx, "derived-api", testPageId);
+      const range = futureRange();
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-derived`,
+          message: "m",
+          ...range,
+          pageId: testPageId,
+          pageComponentIds: [api.component.id, testPageComponentId],
+        },
+      });
+
+      const derived = await derivedWindowOf(tx, record.id);
+      expect(derived).toMatchObject({
+        title: `${TEST_PREFIX}-derived`,
+        mode: "pause",
+        from: record.from,
+        to: record.to,
+        workspaceId: teamCtx.workspace.id,
+      });
+      expect(record.monitorMaintenanceWindowId).toBe(derived?.id);
+      expect(await monitorIdsOf(tx, derived?.id ?? 0)).toEqual([
+        api.monitor.id,
+      ]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_maintenance_window.create",
+        entityType: "monitor_maintenance_window",
+        entityId: derived?.id ?? 0,
+        db: tx,
+      });
+
+      const full = await getMaintenance({ ctx, input: { id: record.id } });
+      expect(full.window).toMatchObject({ id: derived?.id, derived: true });
+      expect(full.affectedMonitors.map((m) => m.id)).toEqual([api.monitor.id]);
+
+      const listed = await listMaintenanceWindows({ ctx });
+      expect(listed.find((w) => w.id === derived?.id)).toMatchObject({
+        derivedFrom: {
+          maintenanceId: record.id,
+          pageId: testPageId,
+          title: `${TEST_PREFIX}-derived`,
+        },
+        announcements: [],
+      });
+    });
+  });
+
+  test("no monitor-backed component, no window", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-static`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+      expect(record.monitorMaintenanceWindowId).toBeNull();
+      expect(await derivedWindowOf(tx, record.id)).toBeUndefined();
+      const full = await getMaintenance({ ctx, input: { id: record.id } });
+      expect(full.window).toBeNull();
+      expect(full.affectedMonitors).toEqual([]);
+    });
+  });
+
+  test("times, title and components of the maintenance move its window", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorComponentIn(tx, "sync-api", testPageId);
+      const web = await insertMonitorComponentIn(tx, "sync-web", testPageId);
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-sync`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [api.component.id],
+        },
+      });
+      const windowId = record.monitorMaintenanceWindowId ?? 0;
+
+      const later = futureRange(3 * 60 * 60 * 1000);
+      await updateMaintenance({
+        ctx,
+        input: {
+          id: record.id,
+          title: `${TEST_PREFIX}-sync-renamed`,
+          ...later,
+          pageComponentIds: [api.component.id, web.component.id],
+        },
+      });
+      const moved = await derivedWindowOf(tx, record.id);
+      expect(moved).toMatchObject({
+        id: windowId,
+        title: `${TEST_PREFIX}-sync-renamed`,
+        from: later.from,
+        to: later.to,
+      });
+      expect(await monitorIdsOf(tx, windowId)).toEqual(
+        [api.monitor.id, web.monitor.id].sort((a, b) => a - b),
+      );
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_maintenance_window.update",
+        entityType: "monitor_maintenance_window",
+        entityId: windowId,
+        db: tx,
+      });
+
+      const cleared = await updateMaintenance({
+        ctx,
+        input: { id: record.id, pageComponentIds: [testPageComponentId] },
+      });
+      expect(cleared.monitorMaintenanceWindowId).toBeNull();
+      expect(await derivedWindowOf(tx, record.id)).toBeUndefined();
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_maintenance_window.delete",
+        entityType: "monitor_maintenance_window",
+        entityId: windowId,
+        db: tx,
+      });
+
+      const back = await updateMaintenance({
+        ctx,
+        input: { id: record.id, pageComponentIds: [web.component.id] },
+      });
+      const again = await derivedWindowOf(tx, record.id);
+      expect(back.monitorMaintenanceWindowId).toBe(again?.id);
+      expect(await monitorIdsOf(tx, again?.id ?? 0)).toEqual([web.monitor.id]);
+    });
+  });
+
+  test("deleting a component or a monitor shrinks the window, the last one removes it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorComponentIn(tx, "shrink-api", testPageId);
+      const web = await insertMonitorComponentIn(tx, "shrink-web", testPageId);
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-shrink`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [api.component.id, web.component.id],
+        },
+      });
+      const windowId = record.monitorMaintenanceWindowId ?? 0;
+
+      await deletePageComponent({ ctx, input: { id: api.component.id } });
+      expect(await monitorIdsOf(tx, windowId)).toEqual([web.monitor.id]);
+
+      await deleteMonitor({ ctx, input: { id: web.monitor.id } });
+      expect(await derivedWindowOf(tx, record.id)).toBeUndefined();
+      const after = await getMaintenance({ ctx, input: { id: record.id } });
+      expect(after.monitorMaintenanceWindowId).toBeNull();
+      expect(after.window).toBeNull();
+    });
+  });
+
+  test("deleting the maintenance or its page takes the window with it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorComponentIn(tx, "gone-api", testPageId);
+      const { maintenance: first } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-gone`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [api.component.id],
+        },
+      });
+      const firstWindowId = first.monitorMaintenanceWindowId ?? 0;
+      await deleteMaintenance({ ctx, input: { id: first.id } });
+      expect(await derivedWindowOf(tx, first.id)).toBeUndefined();
+      expect(await monitorIdsOf(tx, firstWindowId)).toEqual([]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_maintenance_window.delete",
+        entityType: "monitor_maintenance_window",
+        entityId: firstWindowId,
+        db: tx,
+      });
+
+      const other = await insertMonitorComponentIn(
+        tx,
+        "gone-other",
+        otherPageId,
+      );
+      const { maintenance: second } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-gone-page`,
+          message: "m",
+          ...futureRange(),
+          pageId: otherPageId,
+          pageComponentIds: [other.component.id],
+        },
+      });
+      expect(await derivedWindowOf(tx, second.id)).toBeDefined();
+      await deletePage({ ctx, input: { id: otherPageId } });
+      expect(await derivedWindowOf(tx, second.id)).toBeUndefined();
+    });
+  });
+
+  test("a derived window refuses edit, end, delete and announce", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorComponentIn(tx, "locked-api", testPageId);
+      const now = Date.now();
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-managed`,
+          message: "m",
+          from: new Date(now - 60_000),
+          to: new Date(now + 60 * 60 * 1000),
+          pageId: testPageId,
+          pageComponentIds: [api.component.id],
+        },
+      });
+      const id = record.monitorMaintenanceWindowId ?? 0;
+
+      await expect(
+        updateMaintenanceWindow({ ctx, input: { id, title: "x" } }),
+      ).rejects.toThrow(/managed by the status page maintenance .*-managed/);
+      await expect(
+        endMaintenanceWindow({ ctx, input: { id } }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      await expect(
+        deleteMaintenanceWindow({ ctx, input: { id } }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      await expect(
+        createMaintenance({
+          ctx,
+          input: {
+            title: `${TEST_PREFIX}-announce-derived`,
+            message: "m",
+            ...futureRange(),
+            pageId: testPageId,
+            pageComponentIds: [],
+            monitorMaintenanceWindowId: id,
+          },
+        }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      const { maintenance: other } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-link-derived`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      await expect(
+        linkMaintenanceWindow({
+          ctx,
+          input: { id: other.id, monitorMaintenanceWindowId: id },
+        }),
+      ).rejects.toBeInstanceOf(PreconditionFailedError);
+      expect(await derivedWindowOf(tx, record.id)).toMatchObject({ id });
+    });
+  });
+});
+
+describe("announcing a user window", () => {
+  test("no derived window, its own times, and the window's monitors are the affected ones", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorIn(tx, "linked-api");
+      const shown = await insertMonitorComponentIn(tx, "shown", testPageId);
+      const window = await createMaintenanceWindow({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-window`,
+          mode: "continue",
+          ...futureRange(),
+          monitorIds: [api.id],
+        },
+      });
+      const publicRange = futureRange(5 * 60 * 60 * 1000);
+      const { maintenance: linked } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-announce`,
+          message: "m",
+          ...publicRange,
+          pageId: testPageId,
+          pageComponentIds: [shown.component.id],
+          monitorMaintenanceWindowId: window.id,
+        },
+      });
+      expect(linked.monitorMaintenanceWindowId).toBe(window.id);
+      expect(linked.from).toEqual(publicRange.from);
+      expect(linked.to).toEqual(publicRange.to);
+      expect(await derivedWindowOf(tx, linked.id)).toBeUndefined();
+
+      const full = await getMaintenance({ ctx, input: { id: linked.id } });
+      expect(full.window).toEqual({
+        id: window.id,
+        title: `${TEST_PREFIX}-window`,
+        mode: "continue",
+        from: window.from,
+        to: window.to,
+        derived: false,
+      });
+      expect(full.affectedMonitors.map((m) => m.id)).toEqual([api.id]);
+
+      const wider = new Date(publicRange.to.getTime() + 60_000);
+      const edited = await updateMaintenance({
+        ctx,
+        input: { id: linked.id, to: wider },
+      });
+      expect(edited.to).toEqual(wider);
+      expect(await derivedWindowOf(tx, linked.id)).toBeUndefined();
+
+      const moved = new Date(window.to.getTime() + 30 * 60 * 1000);
+      await updateMaintenanceWindow({
+        ctx,
+        input: { id: window.id, to: moved },
+      });
+      const after = await getMaintenance({ ctx, input: { id: linked.id } });
+      expect(after.to).toEqual(wider);
+      expect(after.window?.to).toEqual(moved);
+
+      const listed = await getMaintenanceWindow({
+        ctx,
+        input: { id: window.id },
+      });
+      expect(listed.derivedFrom).toBeNull();
+      expect(listed.announcements.map((a) => a.id)).toEqual([linked.id]);
+    });
+  });
+
+  test("a window cannot be deleted while announced; unlinking frees it", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const api = await insertMonitorIn(tx, "unlink-api");
+      const window = await createMaintenanceWindow({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-window-delete`,
+          ...futureRange(),
+          monitorIds: [api.id],
+        },
+      });
+      const { maintenance: linked } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-announce-delete`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+          monitorMaintenanceWindowId: window.id,
+        },
+      });
+
+      await expect(
+        deleteMaintenanceWindow({ ctx, input: { id: window.id } }),
+      ).rejects.toThrow(/announce-delete/);
+
+      const unlinked = await unlinkMaintenanceWindow({
+        ctx,
+        input: { id: linked.id },
+      });
+      expect(unlinked.monitorMaintenanceWindowId).toBeNull();
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance.update",
+        entityType: "maintenance",
+        entityId: linked.id,
+        db: tx,
+      });
+      await deleteMaintenanceWindow({ ctx, input: { id: window.id } });
+    });
+  });
+
+  test("link removes the derived window, unlink derives it again", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const shown = await insertMonitorComponentIn(tx, "relink", testPageId);
+      const other = await insertMonitorIn(tx, "relink-other");
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-relink`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [shown.component.id],
+        },
+      });
+      const derivedId = record.monitorMaintenanceWindowId ?? 0;
+      expect(derivedId).toBeGreaterThan(0);
+      // unlinking a derived window is a no-op: there is nothing announced
+      const same = await unlinkMaintenanceWindow({
+        ctx,
+        input: { id: record.id },
+      });
+      expect(same.monitorMaintenanceWindowId).toBe(derivedId);
+
+      const window = await createMaintenanceWindow({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-relink-window`,
+          mode: "continue",
+          ...futureRange(2 * 60 * 60 * 1000),
+          monitorIds: [other.id],
+        },
+      });
+      const linked = await linkMaintenanceWindow({
+        ctx,
+        input: { id: record.id, monitorMaintenanceWindowId: window.id },
+      });
+      expect(linked.monitorMaintenanceWindowId).toBe(window.id);
+      expect(linked.from).toEqual(record.from);
+      expect(await derivedWindowOf(tx, record.id)).toBeUndefined();
+      expect(await monitorIdsOf(tx, derivedId)).toEqual([]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_maintenance_window.delete",
+        entityType: "monitor_maintenance_window",
+        entityId: derivedId,
+        db: tx,
+      });
+
+      const unlinked = await unlinkMaintenanceWindow({
+        ctx,
+        input: { id: record.id },
+      });
+      const again = await derivedWindowOf(tx, record.id);
+      expect(again).toMatchObject({ mode: "pause", from: record.from });
+      expect(unlinked.monitorMaintenanceWindowId).toBe(again?.id);
+      expect(await monitorIdsOf(tx, again?.id ?? 0)).toEqual([
+        shown.monitor.id,
+      ]);
+    });
+  });
+
+  test("link rejects a window of another workspace and a read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { maintenance: record } = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-link-foreign`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      await expect(
+        linkMaintenanceWindow({
+          ctx,
+          input: { id: record.id, monitorMaintenanceWindowId: 999_999_999 },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(
+        linkMaintenanceWindow({
+          ctx: makeApiKeyCtx(teamCtx.workspace, {
+            keyId: "ro",
+            scopes: ["incidents:read"],
+          }),
+          input: { id: 1, monitorMaintenanceWindowId: 1 },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

@@ -52,10 +52,22 @@ describe("getMaintenanceStatus", () => {
 
 describe("buildOverviewData", () => {
   it("lists maintenance windows with planned work, not as needing attention", () => {
-    const upcoming = { id: 1, from: daysAgo(-1), to: daysAgo(-2) };
-    const done = { id: 2, from: daysAgo(3), to: daysAgo(2) };
+    const upcoming = {
+      id: 1,
+      from: daysAgo(-1),
+      to: daysAgo(-2),
+      derivedFrom: null,
+    };
+    const done = { id: 2, from: daysAgo(3), to: daysAgo(2), derivedFrom: null };
+    // its status page maintenance is the row that shows it
+    const derived = {
+      id: 3,
+      from: daysAgo(-1),
+      to: daysAgo(-2),
+      derivedFrom: { maintenanceId: 9, pageId: 1, title: "db" },
+    };
     const data = buildOverviewData(
-      input({ maintenanceWindows: [upcoming, done] }),
+      input({ maintenanceWindows: [upcoming, done, derived] }),
       now,
     );
     expect(data.needsAttention).toEqual([]);

@@ -18,7 +18,7 @@ export const maintenance = sqliteTable(
 
     from: integer("from", { mode: "timestamp" }).notNull(),
     to: integer("to", { mode: "timestamp" }).notNull(),
-    // internal: set when announced from a window, whose times and checks it follows
+    // the window carrying its effect on checks: its derived window, or a user window it announces
     monitorMaintenanceWindowId: integer(
       "monitor_maintenance_window_id",
     ).references(() => monitorMaintenanceWindow.id, { onDelete: "set null" }),

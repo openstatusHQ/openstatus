@@ -10,10 +10,10 @@ import {
 } from "../context";
 import { ConflictError } from "../errors";
 import {
+  assertNotDerived,
   getMaintenanceWindowInWorkspace,
   monitorIdsOf,
   replaceWindowMonitors,
-  syncLinkedMaintenances,
   validateWindowMonitorIds,
 } from "./internal";
 import {
@@ -36,6 +36,7 @@ export async function updateMaintenanceWindow(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    await assertNotDerived(tx, existing);
     const from = input.from ?? existing.from;
     const to = input.to ?? existing.to;
     if (from >= to)
@@ -69,7 +70,6 @@ export async function updateMaintenanceWindow(args: {
       .where(eq(monitorMaintenanceWindow.id, existing.id))
       .returning()
       .get();
-    await syncLinkedMaintenances(tx, ctx, updated);
     await emitAudit(tx, ctx, {
       action: "monitor_maintenance_window.update",
       entityType: "monitor_maintenance_window",
@@ -98,6 +98,7 @@ export async function endMaintenanceWindow(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    await assertNotDerived(tx, existing);
     // from === now would leave an empty [from, to) range
     if (existing.from >= now || existing.to <= now) {
       throw new ConflictError(
@@ -114,7 +115,6 @@ export async function endMaintenanceWindow(args: {
       .where(eq(monitorMaintenanceWindow.id, existing.id))
       .returning()
       .get();
-    await syncLinkedMaintenances(tx, ctx, updated);
     await emitAudit(tx, ctx, {
       action: "monitor_maintenance_window.update",
       entityType: "monitor_maintenance_window",

@@ -25,6 +25,10 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
+import {
+  getMaintenanceInWorkspace,
+  syncDerivedWindow,
+} from "../../maintenance/internal";
 import type { Verdict } from "../episodes";
 import { getUptimeTarget } from "../get";
 import { getUptimeTargetMonth } from "../monitor-month";
@@ -179,7 +183,12 @@ async function insertMaintenance(
   await tx
     .insert(maintenancesToPageComponents)
     .values({ maintenanceId: m.id, pageComponentId: c.id });
-  return m;
+  await syncDerivedWindow(tx, { ...ctx, db: tx }, m.id);
+  return getMaintenanceInWorkspace({
+    tx,
+    id: m.id,
+    workspaceId: ctx.workspace.id,
+  });
 }
 
 async function insertWindow(
@@ -390,7 +399,10 @@ describe("getUptimeTargetMonth", () => {
           startedAt: gap,
           endedAt: gap + 4 * HOUR,
           treatment: "unmeasured",
-          maintenance: { kind: "page", id: upgrade.id, title: "DB upgrade" },
+          maintenance: {
+            id: upgrade.monitorMaintenanceWindowId,
+            title: "DB upgrade",
+          },
         },
       ]);
       // the unmeasured gap does not grow the budget
@@ -428,7 +440,6 @@ describe("getUptimeTargetMonth", () => {
         ),
       });
       expect(res.episodes?.[0]?.maintenance).toEqual({
-        kind: "window",
         id: deploy.id,
         title: "Deploy slot",
       });
@@ -473,7 +484,6 @@ describe("getUptimeTargetMonth", () => {
       });
       expect(res.countedMaintenances).toEqual([
         {
-          kind: "window",
           id: live.id,
           title: "Failover drill",
           mode: "continue",
@@ -636,7 +646,7 @@ describe("getUptimeTargetMonth", () => {
         [
           "unmeasured",
           "unmeasured",
-          { kind: "page", id: upgrade.id, title: "Kernel patch" },
+          { id: upgrade.monitorMaintenanceWindowId, title: "Kernel patch" },
         ],
         ["degraded", "lenient", null],
         ["error", "counted", null],

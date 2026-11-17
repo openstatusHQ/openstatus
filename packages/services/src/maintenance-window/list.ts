@@ -29,7 +29,13 @@ type WindowRow = typeof monitorMaintenanceWindow.$inferSelect;
 export type MaintenanceWindowWithRelations = WindowRow & {
   monitors: { id: number; name: string }[];
   monitorIds: number[];
-  /** Status-page maintenances announcing this window. */
+  /** Set on a derived window: the status-page maintenance it exists for, the only place to change it. */
+  derivedFrom: {
+    maintenanceId: number;
+    pageId: number | null;
+    title: string;
+  } | null;
+  /** Status-page maintenances announcing this window; empty for a derived one. */
   announcements: {
     id: number;
     title: string;
@@ -112,11 +118,24 @@ async function enrich(
   }
   return rows.map((r) => {
     const monitors = byWindow.get(r.id) ?? [];
+    const announcements = announcedByWindow.get(r.id) ?? [];
+    const source =
+      r.maintenanceId === null
+        ? undefined
+        : announcements.find((a) => a.id === r.maintenanceId);
     return {
       ...r,
       monitors,
       monitorIds: monitors.map((m) => m.id),
-      announcements: announcedByWindow.get(r.id) ?? [],
+      derivedFrom:
+        r.maintenanceId === null
+          ? null
+          : {
+              maintenanceId: r.maintenanceId,
+              pageId: source?.pageId ?? null,
+              title: source?.title ?? r.title,
+            },
+      announcements: r.maintenanceId === null ? announcements : [],
       createdByUser:
         r.createdBy != null ? (users.get(r.createdBy) ?? null) : null,
     };

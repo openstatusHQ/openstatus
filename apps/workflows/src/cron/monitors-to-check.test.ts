@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
-  maintenancesToPageComponents,
   monitor,
   monitorMaintenanceWindow,
   monitorMaintenanceWindowToMonitor,
@@ -11,7 +10,7 @@ import {
 import {
   createMonitor,
   createPage,
-  createPageComponent,
+  createPageMaintenance,
   createTestWorkspace,
 } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -46,33 +45,18 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
-async function putUnderMaintenance(
+function putUnderMaintenance(
   monitorId: number,
   from: Date,
   to: Date,
-  monitorMaintenanceWindowId?: number,
+  options: { announcesWindowId?: number; derive?: boolean } = {},
 ) {
-  const component = await createPageComponent(workspaceId, pageId, {
-    type: "monitor",
+  return createPageMaintenance(workspaceId, pageId, {
     monitorId,
+    from,
+    to,
+    ...options,
   });
-  const [window] = await db
-    .insert(maintenance)
-    .values({
-      title: "db upgrade",
-      message: "",
-      from,
-      to,
-      monitorMaintenanceWindowId,
-      workspaceId,
-      pageId,
-    })
-    .returning();
-  if (!window) throw new Error("maintenance insert returned no row");
-  await db
-    .insert(maintenancesToPageComponents)
-    .values({ maintenanceId: window.id, pageComponentId: component.id })
-    .run();
 }
 
 async function putUnderWindow(
@@ -101,7 +85,7 @@ async function dispatchedIds(now: Date) {
 describe("listMonitorsToCheck during maintenance", () => {
   const base = { periodicity: "1h" as const, active: true, regions: "ams" };
 
-  test("a status page maintenance pauses its monitors until it ends", async () => {
+  test("a status page maintenance pauses its monitors through its derived window, until it ends", async () => {
     const paused = await createMonitor(workspaceId, base);
     const unaffected = await createMonitor(workspaceId, base);
     const now = Date.now();
@@ -117,6 +101,19 @@ describe("listMonitorsToCheck during maintenance", () => {
 
     const after = await dispatchedIds(new Date(now + 2 * HOUR_MS));
     expect(after).toContain(paused.id);
+  });
+
+  test("a status page maintenance without a window pauses nothing", async () => {
+    const m = await createMonitor(workspaceId, base);
+    const now = Date.now();
+    await putUnderMaintenance(
+      m.id,
+      new Date(now - HOUR_MS),
+      new Date(now + HOUR_MS),
+      { derive: false },
+    );
+
+    expect(await dispatchedIds(new Date(now))).toContain(m.id);
   });
 
   test("a window pauses a monitor on no status page and keeps one set to continue", async () => {
@@ -150,19 +147,26 @@ describe("listMonitorsToCheck during maintenance", () => {
     const from = new Date(now - HOUR_MS);
     const to = new Date(now + HOUR_MS);
     const window = await putUnderWindow(m.id, "continue", from, to);
-    await putUnderMaintenance(m.id, from, to, window.id);
+    await putUnderMaintenance(m.id, from, to, {
+      announcesWindowId: window.id,
+    });
 
     expect(await dispatchedIds(new Date(now))).toContain(m.id);
   });
 
-  test("a linked maintenance pauses nothing outside its window", async () => {
+  test("an announcement pauses nothing outside its window, whatever its components and times", async () => {
     const inWindow = await createMonitor(workspaceId, base);
     const announcedOnly = await createMonitor(workspaceId, base);
     const now = Date.now();
     const from = new Date(now - HOUR_MS);
     const to = new Date(now + HOUR_MS);
     const window = await putUnderWindow(inWindow.id, "pause", from, to);
-    await putUnderMaintenance(announcedOnly.id, from, to, window.id);
+    await putUnderMaintenance(
+      announcedOnly.id,
+      new Date(now - 2 * HOUR_MS),
+      new Date(now + 2 * HOUR_MS),
+      { announcesWindowId: window.id },
+    );
 
     const during = await dispatchedIds(new Date(now));
     expect(during).not.toContain(inWindow.id);

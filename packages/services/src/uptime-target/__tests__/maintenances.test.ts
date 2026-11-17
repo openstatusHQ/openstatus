@@ -19,6 +19,10 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
+import {
+  getMaintenanceInWorkspace,
+  syncDerivedWindow,
+} from "../../maintenance/internal";
 import { listUptimeTargetMaintenances } from "../maintenances";
 
 const now = new Date(Date.UTC(2026, 10, 15, 12));
@@ -148,7 +152,10 @@ async function insertMaintenance(
       })),
     );
   }
-  return m;
+  const workspaceId = args.workspaceId ?? ctx.workspace.id;
+  const owner = [ctx, otherCtx].find((c) => c.workspace.id === workspaceId);
+  if (owner) await syncDerivedWindow(tx, { ...owner, db: tx }, m.id);
+  return getMaintenanceInWorkspace({ tx, id: m.id, workspaceId });
 }
 
 async function insertWindow(
@@ -185,7 +192,7 @@ const utc = (y: number, m: number, d: number, h = 0) =>
   new Date(Date.UTC(y, m - 1, d, h));
 
 describe("listUptimeTargetMaintenances", () => {
-  test("finds windows through the monitors' status page components, once per window", async () => {
+  test("lists the derived windows of status page maintenances, once per window", async () => {
     await withTestTransaction(async (tx) => {
       const api = await insertMonitor(tx, { name: "API" });
       const web = await insertMonitor(tx, { name: "Web" });
@@ -251,18 +258,19 @@ describe("listUptimeTargetMaintenances", () => {
         "Network move",
       ]);
       expect(res.windows[0]).toMatchObject({
-        kind: "page",
+        derived: true,
         mode: "pause",
-        id: both.id,
-        pageId: main.page.id,
-        pageTitle: "Main",
+        id: both.monitorMaintenanceWindowId,
+        announcements: [
+          { id: both.id, pageId: main.page.id, pageTitle: "Main" },
+        ],
         monitorIds: [api.id, web.id],
         month: "2026-10-01",
         excusable: true,
       });
       expect(res.windows[1]).toMatchObject({
-        id: spanning.id,
-        pageTitle: "Partner",
+        id: spanning.monitorMaintenanceWindowId,
+        announcements: [{ id: spanning.id, pageTitle: "Partner" }],
         monitorIds: [api.id],
         month: "2026-09-01",
         // September is older than the previous month: no window fits it
@@ -319,15 +327,14 @@ describe("listUptimeTargetMaintenances", () => {
       });
 
       expect(
-        res.windows.map((w) => [w.kind, w.title, w.mode, w.monitorIds]),
+        res.windows.map((w) => [w.derived, w.title, w.mode, w.monitorIds]),
       ).toEqual([
-        ["window", "Contract migration", "continue", [api.id, web.id]],
-        ["page", "Page maintenance", "pause", [api.id]],
+        [false, "Contract migration", "continue", [api.id, web.id]],
+        [true, "Page maintenance", "pause", [api.id]],
       ]);
       expect(res.windows[0]).toMatchObject({
         id: window.id,
-        pageId: null,
-        pageTitle: null,
+        announcements: [],
         month: "2026-11-01",
         excusable: true,
       });
@@ -363,7 +370,7 @@ describe("listUptimeTargetMaintenances", () => {
 
       expect(res.windows).toHaveLength(1);
       expect(res.windows[0]).toMatchObject({
-        kind: "window",
+        derived: false,
         id: window.id,
         mode: "continue",
         announcements: [

@@ -170,10 +170,10 @@ export function buildOverviewData(
       type: "maintenance" as const,
       maintenance,
     })),
-    ...maintenanceWindows.map((window) => ({
-      type: "maintenanceWindow" as const,
-      window,
-    })),
+    // a derived window is its maintenance's own row above
+    ...maintenanceWindows
+      .filter((window) => window.derivedFrom === null)
+      .map((window) => ({ type: "maintenanceWindow" as const, window })),
     ...monitorIncidents.map((incident) => ({
       type: "incident" as const,
       incident,

@@ -13,6 +13,10 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
+import {
+  maintenanceIdsBehind,
+  syncDerivedWindows,
+} from "../maintenance/internal";
 import { monitorAuditSnapshot } from "./internal";
 import { DeleteMonitorInput, DeleteMonitorsInput } from "./schemas";
 
@@ -45,6 +49,9 @@ export async function deleteMonitor(args: {
       .get();
     if (!existing) throw new NotFoundError("monitor", input.id);
 
+    const maintenanceIds = await maintenanceIdsBehind(tx, ctx.workspace.id, {
+      monitorIds: [existing.id],
+    });
     await tx
       .update(monitor)
       .set({ deletedAt: new Date(), active: false })
@@ -72,6 +79,7 @@ export async function deleteMonitor(args: {
     await tx
       .delete(privateLocationToMonitors)
       .where(eq(privateLocationToMonitors.monitorId, existing.id));
+    await syncDerivedWindows(tx, ctx, maintenanceIds);
 
     await emitAudit(tx, ctx, {
       action: "monitor.delete",
@@ -126,6 +134,9 @@ export async function deleteMonitors(args: {
     // `notificationsToMonitors` don't carry `workspaceId` — they're
     // scoped through the `monitor` FK's cascade, so the pre-check is
     // the only practical guard there.
+    const maintenanceIds = await maintenanceIdsBehind(tx, ctx.workspace.id, {
+      monitorIds: ids,
+    });
     await tx
       .update(monitor)
       .set({ deletedAt: new Date(), active: false })
@@ -161,6 +172,7 @@ export async function deleteMonitors(args: {
     await tx
       .delete(privateLocationToMonitors)
       .where(inArray(privateLocationToMonitors.monitorId, ids));
+    await syncDerivedWindows(tx, ctx, maintenanceIds);
 
     for (const row of existing) {
       await emitAudit(tx, ctx, {

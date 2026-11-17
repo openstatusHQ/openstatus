@@ -81,10 +81,11 @@ export function MaintenanceRow({
         <EventRowMeta>
           {[
             ...meta,
-            // only an announced window can keep checking
-            maintenance.window
-              ? `Window: ${maintenanceWindowModeLabels[maintenance.window.mode]}`
-              : null,
+            maintenance.window === null
+              ? null
+              : maintenance.window.derived
+                ? "Checks paused"
+                : `Window ${maintenance.window.title}: ${maintenanceWindowModeLabels[maintenance.window.mode].toLowerCase()}`,
           ]
             .filter((item) => item !== null)
             .map((item) => (

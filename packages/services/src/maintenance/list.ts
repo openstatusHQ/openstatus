@@ -59,10 +59,17 @@ export type MaintenanceWithRelations = Maintenance & {
   updates: MaintenanceUpdateWithRelations[];
   pageComponents: PageComponent[];
   pageComponentIds: number[];
-  /** Monitors whose checks change during it: the window's when linked, else those behind its components (paused). */
+  /** The monitors of `window`: the only ones whose checks change. */
   affectedMonitors: { id: number; name: string }[];
-  /** The window it announces; its times and checks follow this window. */
-  window: { id: number; title: string; mode: "pause" | "continue" } | null;
+  /** The window carrying its effect on checks: `derived` from its components, or a user window it announces. */
+  window: {
+    id: number;
+    title: string;
+    mode: "pause" | "continue";
+    from: Date;
+    to: Date;
+    derived: boolean;
+  } | null;
   createdByUser: AttributedUserDetail | null;
   updatedByUser: AttributedUserDetail | null;
 };
@@ -126,6 +133,9 @@ async function enrichMaintenancesBatch(
               id: monitorMaintenanceWindow.id,
               title: monitorMaintenanceWindow.title,
               mode: monitorMaintenanceWindow.mode,
+              from: monitorMaintenanceWindow.from,
+              to: monitorMaintenanceWindow.to,
+              maintenanceId: monitorMaintenanceWindow.maintenanceId,
             })
             .from(monitorMaintenanceWindow)
             .where(inArray(monitorMaintenanceWindow.id, windowIds))
@@ -145,7 +155,12 @@ async function enrichMaintenancesBatch(
             )
             .all(),
         ]);
-  const windowById = new Map(windowRows.map((w) => [w.id, w]));
+  const windowById = new Map(
+    windowRows.map(({ maintenanceId, ...w }) => [
+      w.id,
+      { ...w, derived: maintenanceId !== null },
+    ]),
+  );
   const monitorIdsByWindow = new Map<number, { monitorId: number }[]>();
   for (const { windowId, monitorId } of windowLinks) {
     const list = monitorIdsByWindow.get(windowId);
@@ -153,14 +168,7 @@ async function enrichMaintenancesBatch(
     else monitorIdsByWindow.set(windowId, [{ monitorId }]);
   }
 
-  const monitorIds = [
-    ...new Set([
-      ...assocRows.flatMap((r) =>
-        r.component.monitorId == null ? [] : [r.component.monitorId],
-      ),
-      ...windowLinks.map((l) => l.monitorId),
-    ]),
-  ];
+  const monitorIds = [...new Set(windowLinks.map((l) => l.monitorId))];
   const monitorRows =
     monitorIds.length === 0
       ? []
@@ -224,10 +232,9 @@ async function enrichMaintenancesBatch(
         ...new Map(
           (r.monitorMaintenanceWindowId != null
             ? (monitorIdsByWindow.get(r.monitorMaintenanceWindowId) ?? [])
-            : components
+            : []
           ).flatMap((c) => {
-            const m =
-              c.monitorId == null ? undefined : monitorById.get(c.monitorId);
+            const m = monitorById.get(c.monitorId);
             return m ? [[m.id, m] as const] : [];
           }),
         ).values(),

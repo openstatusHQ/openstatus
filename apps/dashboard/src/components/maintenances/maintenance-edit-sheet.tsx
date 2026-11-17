@@ -30,11 +30,16 @@ export function MaintenanceEditSheet({
   );
   const update = useMutation(
     trpc.maintenance.update.mutationOptions({
-      // no-input prefix key — matches every maintenance.list query (overview, page detail)
+      // no-input prefix keys: every maintenance list, and the windows derived from them
       onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: trpc.maintenance.list.queryKey(),
-        }),
+        Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.maintenance.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.maintenanceWindow.list.queryKey(),
+          }),
+        ]),
     }),
   );
 
@@ -53,7 +58,7 @@ export function MaintenanceEditSheet({
         endDate: maintenance.to,
         pageComponents: maintenance.pageComponents?.map((c) => c.id) ?? [],
       }}
-      window={maintenance.window}
+      window={maintenance.window?.derived ? null : maintenance.window}
       onSubmit={async (values) => {
         await update.mutateAsync({
           id: maintenance.id,

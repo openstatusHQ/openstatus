@@ -34,7 +34,9 @@ export function isNumberArray<T>(
 }
 
 /** The services context for a v1 request, attributed to its API key. */
-function v1ServiceCtx(c: Context<{ Variables: Variables }>): ServiceContext {
+export function v1ServiceCtx(
+  c: Context<{ Variables: Variables }>,
+): ServiceContext {
   const apiKey = c.get("apiKey");
   return {
     workspace: c.get("workspace"),

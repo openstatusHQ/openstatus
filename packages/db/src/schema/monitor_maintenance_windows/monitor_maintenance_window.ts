@@ -1,12 +1,15 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  type AnySQLiteColumn,
   index,
   integer,
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { maintenance } from "../maintenances/maintenance";
 import { monitor } from "../monitors/monitor";
 import { user } from "../users";
 import { workspace } from "../workspaces/workspace";
@@ -26,6 +29,11 @@ export const monitorMaintenanceWindow = sqliteTable(
       .default("pause"),
     from: integer("from", { mode: "timestamp" }).notNull(),
     to: integer("to", { mode: "timestamp" }).notNull(),
+    // set on a derived window: it exists only to pause the monitors behind that status-page maintenance
+    maintenanceId: integer("maintenance_id").references(
+      (): AnySQLiteColumn => maintenance.id,
+      { onDelete: "cascade" },
+    ),
 
     createdBy: integer("created_by").references(() => user.id, {
       onDelete: "set null",
@@ -44,6 +52,9 @@ export const monitorMaintenanceWindow = sqliteTable(
     index("monitor_maintenance_window_workspace_id_idx").on(t.workspaceId),
     // the checker cron asks "active now" every tick; nearly all rows have ended
     index("monitor_maintenance_window_to_idx").on(t.to),
+    uniqueIndex("monitor_maintenance_window_maintenance_id_unique").on(
+      t.maintenanceId,
+    ),
   ],
 );
 

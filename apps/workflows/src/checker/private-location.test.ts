@@ -1,7 +1,6 @@
 import { and, db, eq, or } from "@openstatus/db";
 import {
   maintenance,
-  maintenancesToPageComponents,
   monitor,
   notification,
   notificationTrigger,
@@ -14,7 +13,7 @@ import {
 } from "@openstatus/db/src/schema";
 import {
   createPage,
-  createPageComponent,
+  createPageMaintenance,
   createTestWorkspace,
 } from "@openstatus/db/src/test/factories";
 import {
@@ -429,29 +428,14 @@ describe("updateStatusPrivate", () => {
     expect(row?.status).toBe("active");
   });
 
-  test("a report at the maintenance end instant is processed, one before it is suppressed", async () => {
+  test("a report at the end instant of a maintenance's derived window is processed, one before it is suppressed", async () => {
     const pageId = (await createPage(workspaceId)).id;
-    const component = await createPageComponent(workspaceId, pageId, {
-      type: "monitor",
-      monitorId: TEST_MONITOR_ID,
-    });
     const to = new Date(Math.floor(Date.now() / 1000) * 1000 + 3_600_000);
-    const [window] = await db
-      .insert(maintenance)
-      .values({
-        title: "db upgrade",
-        message: "",
-        from: new Date(to.getTime() - 7_200_000),
-        to,
-        workspaceId,
-        pageId,
-      })
-      .returning();
-    if (!window) throw new Error("maintenance insert returned no row");
-    await db
-      .insert(maintenancesToPageComponents)
-      .values({ maintenanceId: window.id, pageComponentId: component.id })
-      .run();
+    await createPageMaintenance(workspaceId, pageId, {
+      monitorId: TEST_MONITOR_ID,
+      from: new Date(to.getTime() - 7_200_000),
+      to,
+    });
 
     try {
       await post({
@@ -468,6 +452,37 @@ describe("updateStatusPrivate", () => {
         privateLocationId: String(TEST_LOCATION_ID),
         status: "error",
         cronTimestamp: to.getTime(),
+      });
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    } finally {
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.workspaceId, workspaceId))
+        .run();
+      await db.delete(page).where(eq(page.workspaceId, workspaceId)).run();
+    }
+  });
+
+  test("a status page maintenance without a window suppresses nothing", async () => {
+    const pageId = (await createPage(workspaceId)).id;
+    const now = Date.now();
+    await createPageMaintenance(workspaceId, pageId, {
+      monitorId: TEST_MONITOR_ID,
+      from: new Date(now - 3_600_000),
+      to: new Date(now + 3_600_000),
+      derive: false,
+    });
+
+    try {
+      await post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp: now,
       });
       expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     } finally {

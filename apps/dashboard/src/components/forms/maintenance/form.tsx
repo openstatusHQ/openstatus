@@ -20,7 +20,7 @@ import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { addDays } from "date-fns";
+import { addDays, format } from "date-fns";
 import React, { useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -80,8 +80,13 @@ export function FormMaintenance({
   items: CheckboxTreeItem[];
   /** The page's components, to name the monitors a maintenance affects. */
   components: { id: number; monitorId: number | null }[];
-  /** The window it announces: its times and checks follow that window. */
-  window?: { title: string; mode: "pause" | "continue" } | null;
+  /** The user window it announces, which alone decides the checks. */
+  window?: {
+    title: string;
+    mode: "pause" | "continue";
+    from: Date;
+    to: Date;
+  } | null;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
@@ -186,7 +191,6 @@ export function FormMaintenance({
                   <DateTimePicker
                     value={field.value}
                     className="w-[240px]"
-                    disabled={!!window}
                     onChange={(date) => {
                       // a start moved past the end drags the end along,
                       // keeping the duration
@@ -203,9 +207,6 @@ export function FormMaintenance({
                   />
                 </FormControl>
                 <FormDescription>
-                  {window
-                    ? `Follows the window ${window.title}; change it there. `
-                    : null}
                   When the maintenance starts. Shown in your timezone (
                   <code className="font-commit-mono text-foreground/70">
                     {timezone}
@@ -234,7 +235,6 @@ export function FormMaintenance({
                     value={field.value}
                     onChange={field.onChange}
                     className="w-[240px]"
-                    disabled={!!window}
                   />
                 </FormControl>
                 <FormDescription>
@@ -329,19 +329,19 @@ export function FormMaintenance({
             <Label>Checks</Label>
             {window ? (
               <p className="text-muted-foreground text-sm">
-                Follow the window{" "}
-                <span className="text-foreground">{window.title}</span>:{" "}
-                {maintenanceWindowModeLabels[window.mode]}. Its times and
-                monitors decide what happens to checks; this announcement
-                changes nothing by itself.
+                Checks follow window{" "}
+                <span className="text-foreground">{window.title}</span> (
+                {maintenanceWindowModeLabels[window.mode].toLowerCase()},{" "}
+                {format(window.from, "MMM d, HH:mm")} –{" "}
+                {format(window.to, "MMM d, HH:mm")}). The dates and components
+                above are only what the status page shows; they change no
+                checks.
               </p>
             ) : (
               <p className="text-muted-foreground text-sm">
                 {affected.length
-                  ? `Pauses ${affected.map((m) => m.name).join(", ")}, the monitors behind the selected components.`
-                  : selected?.length
-                    ? "None of the selected components has a monitor, so no checks change."
-                    : "Pauses the monitors behind the selected components."}{" "}
+                  ? `Checks: paused for ${affected.length} ${affected.length === 1 ? "monitor" : "monitors"} while this maintenance runs (${affected.map((m) => m.name).join(", ")}).`
+                  : "No monitors are affected."}{" "}
                 To keep checking, create a maintenance window on the monitor and
                 announce it from there.
               </p>
