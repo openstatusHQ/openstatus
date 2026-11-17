@@ -68,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             })}
           </NavGroup>
         ))}
-        <div className="mt-auto px-2">
+        <div className="mt-auto px-2 pb-1 group-data-[state=expanded]:has-[>*]:pb-2">
           <NavBanner />
         </div>
         <SidebarSeparator className="mx-0" />
