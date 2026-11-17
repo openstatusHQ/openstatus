@@ -8,8 +8,7 @@ import {
 } from "@openstatus/ui/components/ui/hover-card";
 import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import { type VariantProps, cva } from "class-variance-authority";
-import { Command as CommandPrimitive } from "cmdk";
-import Link from "next/link";
+import { Command as CommandPrimitive, defaultFilter } from "cmdk";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
@@ -24,9 +23,15 @@ type NavPeekState = {
   dismiss: () => void;
   setDismissed: (dismissed: boolean) => void;
   triggerRef: React.RefObject<HTMLElement | null>;
-  /** the search, or the create link when there is nothing to search */
-  focusRef: React.RefObject<HTMLElement | null>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  /** focused instead of the search when there is nothing to search */
+  rootRef: React.RefObject<HTMLDivElement | null>;
 };
+
+// scores 0 for any search, so cmdk's sort always leaves the create row last
+const CREATE_VALUE = "nav-peek-create";
+const filter: typeof defaultFilter = (value, search, keywords) =>
+  value === CREATE_VALUE ? 0 : defaultFilter(value, search, keywords);
 
 const NavPeekContext = createContext<NavPeekState | null>(null);
 
@@ -42,7 +47,8 @@ export function NavPeek({ children }: { children: React.ReactNode }) {
   const [focus, setFocus] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const focusRef = useRef<HTMLElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const close = () => {
     setHover(false);
@@ -66,7 +72,8 @@ export function NavPeek({ children }: { children: React.ReactNode }) {
         dismiss,
         setDismissed,
         triggerRef,
-        focusRef,
+        inputRef,
+        rootRef,
       }}
     >
       {/* stays open while focus is inside, so typing in the search never closes it */}
@@ -96,7 +103,7 @@ export function NavPeekTrigger({
   onBlur,
   ...props
 }: React.ComponentProps<typeof HoverCardTrigger>) {
-  const { dismiss, setDismissed, setFocus, triggerRef, focusRef } =
+  const { dismiss, setDismissed, setFocus, triggerRef, inputRef, rootRef } =
     useNavPeek();
   return (
     <HoverCardTrigger
@@ -132,7 +139,9 @@ export function NavPeekTrigger({
           setDismissed(false);
           setFocus(true);
           // the content mounts on open; focus once it is there
-          requestAnimationFrame(() => focusRef.current?.focus());
+          requestAnimationFrame(() =>
+            (inputRef.current ?? rootRef.current)?.focus(),
+          );
         }
         onKeyDown?.(e);
       }}
@@ -153,7 +162,7 @@ export function NavPeekContent({
   /** accessible name of the combobox, e.g. "Monitors" */
   label: string;
 }) {
-  const { setFocus, dismiss, triggerRef } = useNavPeek();
+  const { setFocus, dismiss, triggerRef, rootRef } = useNavPeek();
   const { isMobile } = useSidebar();
   // mobile: the sidebar is a modal sheet, and a card portaled outside it sits
   // behind the focus trap; render it inside the sheet instead
@@ -200,7 +209,9 @@ export function NavPeekContent({
       {...props}
     >
       <CommandPrimitive
+        ref={rootRef}
         label={label}
+        filter={filter}
         loop
         className="flex min-h-0 flex-1 flex-col gap-1"
       >
@@ -214,12 +225,10 @@ export function NavPeekSearch({
   className,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
-  const { focusRef } = useNavPeek();
+  const { inputRef } = useNavPeek();
   return (
     <CommandPrimitive.Input
-      ref={(el) => {
-        focusRef.current = el;
-      }}
+      ref={inputRef}
       data-slot="nav-peek-search"
       className={cn(
         "bg-muted/50 placeholder:text-muted-foreground focus-visible:bg-muted font-commit-mono h-8 shrink-0 rounded-md px-2 text-sm tracking-tight outline-none",
@@ -284,41 +293,56 @@ export function NavPeekItem({
   );
 }
 
-/** The card's only row when there is nothing to list, e.g. "Create monitor". */
+/**
+ * Pinned last row of `NavPeekList`, e.g. "Create monitor"; stays through any search.
+ * With `onPaywall` set (plan limit reached) it opens the paywall instead of `href`.
+ */
 export function NavPeekCreate({
+  href,
+  onPaywall,
   className,
   children,
-  onClick,
-  onKeyDown,
+  onSelect,
   ...props
-}: React.ComponentProps<typeof Link>) {
-  const { close, focusRef } = useNavPeek();
+}: Omit<React.ComponentProps<typeof CommandPrimitive.Item>, "value"> & {
+  href: string;
+  onPaywall?: () => void;
+}) {
+  const { close } = useNavPeek();
   const { setOpenMobile } = useSidebar();
+  const router = useRouter();
   return (
-    <Link
-      ref={(el) => {
-        focusRef.current = el;
-      }}
+    <CommandPrimitive.Item
       data-slot="nav-peek-create"
-      onKeyDown={(e) => {
-        // cmdk cancels Enter for its own items, which would block the link
-        if (e.key === "Enter") e.stopPropagation();
-        onKeyDown?.(e);
-      }}
-      onClick={(e) => {
+      value={CREATE_VALUE}
+      forceMount
+      onSelect={(value) => {
         close();
-        setOpenMobile(false);
-        onClick?.(e);
+        if (onPaywall) {
+          // the sidebar sheet stays open on mobile: the dialog renders inside it
+          onPaywall();
+        } else {
+          setOpenMobile(false);
+          router.push(href);
+        }
+        onSelect?.(value);
       }}
       className={cn(
-        "hover:bg-muted focus-visible:bg-muted font-commit-mono flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-sm tracking-tight outline-none",
+        // sticky over the scrolling rows; the shadow fills the gap-1 above it
+        "bg-popover hover:bg-muted hover:text-foreground group-focus-within/peek:data-[selected=true]:bg-muted group-focus-within/peek:data-[selected=true]:text-foreground text-muted-foreground font-commit-mono sticky bottom-0 flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-md px-2 text-sm tracking-tight shadow-[0_-4px_0_var(--color-popover)] outline-none",
         className,
       )}
+      {...(onPaywall
+        ? { "data-track": "paywall_viewed", "data-limited": true }
+        : {})}
       {...props}
     >
-      <Add className="text-muted-foreground size-4" />
+      {/* a dot-wide slot: the label lines up with the item titles above */}
+      <span className="flex size-2 shrink-0 items-center justify-center">
+        <Add className="size-3.5 shrink-0" />
+      </span>
       {children}
-    </Link>
+    </CommandPrimitive.Item>
   );
 }
 

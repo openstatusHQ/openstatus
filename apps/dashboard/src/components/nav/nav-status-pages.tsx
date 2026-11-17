@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { NAV } from "@/config/nav";
 import { compareStatusPages } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -26,6 +28,11 @@ export function NavStatusPagesItem() {
   const { data: pages = [], isPending } = useQuery(
     trpc.page.list.queryOptions(),
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const [paywall, setPaywall] = useState(false);
+  const limitReached = workspace
+    ? pages.length >= workspace.limits["status-pages"]
+    : false;
 
   const rows = [...pages].sort(compareStatusPages);
   const open = rows.filter((p) => p.hasActiveStatusReport).length;
@@ -36,9 +43,11 @@ export function NavStatusPagesItem() {
         <NavPeekTrigger>
           <NavGroupButton item={NAV.statusPages} tooltip={false} />
         </NavPeekTrigger>
-        {isPending ? null : pages.length ? (
+        {isPending ? null : (
           <NavPeekContent label="Status pages">
-            <NavPeekSearch placeholder="Search status pages…" />
+            {pages.length ? (
+              <NavPeekSearch placeholder="Search status pages…" />
+            ) : null}
             <NavPeekList>
               {rows.map((p) => (
                 <NavPeekItem
@@ -56,17 +65,23 @@ export function NavStatusPagesItem() {
                   ) : null}
                 </NavPeekItem>
               ))}
-              <NavPeekEmpty>No match</NavPeekEmpty>
+              {pages.length ? <NavPeekEmpty>No match</NavPeekEmpty> : null}
+              <NavPeekCreate
+                href="/status-pages/create"
+                data-limit="status-pages"
+                onPaywall={limitReached ? () => setPaywall(true) : undefined}
+              >
+                Create status page
+              </NavPeekCreate>
             </NavPeekList>
-          </NavPeekContent>
-        ) : (
-          <NavPeekContent label="Status pages">
-            <NavPeekCreate href="/status-pages/create">
-              Create status page
-            </NavPeekCreate>
           </NavPeekContent>
         )}
       </NavPeek>
+      <UpgradeDialog
+        open={paywall}
+        onOpenChange={setPaywall}
+        limit="status-pages"
+      />
       {pages.length ? (
         <NavGroupStatus
           variant={open ? "warning" : "success"}

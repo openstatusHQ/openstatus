@@ -2,8 +2,10 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import type { StatusVariant } from "@/components/common/status-dot";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { NAV } from "@/config/nav";
 import {
   type MonitorHealth,
@@ -49,6 +51,11 @@ export function NavMonitorsItem() {
   const { data: monitors = [], isPending } = useQuery(
     trpc.monitor.list.queryOptions(),
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const [paywall, setPaywall] = useState(false);
+  const limitReached = workspace
+    ? monitors.length >= workspace.limits.monitors
+    : false;
   const now = useNow(60_000);
 
   const rows = [...monitors]
@@ -72,9 +79,11 @@ export function NavMonitorsItem() {
         <NavPeekTrigger>
           <NavGroupButton item={NAV.monitors} tooltip={false} />
         </NavPeekTrigger>
-        {isPending ? null : monitors.length ? (
+        {isPending ? null : (
           <NavPeekContent label="Monitors">
-            <NavPeekSearch placeholder="Search monitors…" />
+            {monitors.length ? (
+              <NavPeekSearch placeholder="Search monitors…" />
+            ) : null}
             <NavPeekList>
               {rows.map(({ m, health }) => {
                 const variant = monitorHealthConfig[health].variant;
@@ -97,17 +106,23 @@ export function NavMonitorsItem() {
                   </NavPeekItem>
                 );
               })}
-              <NavPeekEmpty>No match</NavPeekEmpty>
+              {monitors.length ? <NavPeekEmpty>No match</NavPeekEmpty> : null}
+              <NavPeekCreate
+                href="/monitors/create"
+                data-limit="monitors"
+                onPaywall={limitReached ? () => setPaywall(true) : undefined}
+              >
+                Create monitor
+              </NavPeekCreate>
             </NavPeekList>
-          </NavPeekContent>
-        ) : (
-          <NavPeekContent label="Monitors">
-            <NavPeekCreate href="/monitors/create">
-              Create monitor
-            </NavPeekCreate>
           </NavPeekContent>
         )}
       </NavPeek>
+      <UpgradeDialog
+        open={paywall}
+        onOpenChange={setPaywall}
+        limit="monitors"
+      />
       {monitors.length ? (
         <NavGroupStatus
           variant={worst}
