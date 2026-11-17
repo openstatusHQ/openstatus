@@ -61,6 +61,7 @@ const INCIDENT_COLUMNS = {
 // must stay in sync with fetchers that implement `fetchIncidents` in @openstatus/status-fetcher
 export const INCIDENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
   "atlassian",
+  "betterstack",
   "incidentio",
 ]);
 

@@ -134,6 +134,8 @@ function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
     const planned = spansOnDay(date, maintenance.map(spanOf), now);
     entries.push({
       ...maintenanceActivity(planned),
+      // one legend swatch here; the duration is in the tooltip
+      level: 2,
       lead: `${formatDurationShort(planned)} · ${
         maintenance.length === 1
           ? plannedTitle(maintenance[0])

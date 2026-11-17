@@ -15,6 +15,7 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 
+import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type { MonitorIncident, Monitor } from "../types";
@@ -40,6 +41,8 @@ function periodToSince(period: MonitorIncidentListPeriod): Date {
 
 export type MonitorIncidentWithRelations = MonitorIncident & {
   monitor: Monitor | null;
+  acknowledgedByUser: AttributedUserDetail | null;
+  resolvedByUser: AttributedUserDetail | null;
 };
 
 export type ListMonitorIncidentsResult = {
@@ -83,10 +86,19 @@ async function enrichIncidentsBatch(
     }
   }
 
+  const users = await loadAttributedUsers(
+    db,
+    rows.flatMap((r) => [r.acknowledgedBy, r.resolvedBy]),
+  );
+
   return rows.map((r) => ({
     ...r,
     monitor:
       r.monitorId != null ? (monitorById.get(r.monitorId) ?? null) : null,
+    acknowledgedByUser:
+      r.acknowledgedBy != null ? (users.get(r.acknowledgedBy) ?? null) : null,
+    resolvedByUser:
+      r.resolvedBy != null ? (users.get(r.resolvedBy) ?? null) : null,
   }));
 }
 

@@ -113,6 +113,9 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   "openstatus.monitor.v1.MonitorService/UpdateHeartbeatMonitor": {
     event: Events.UpdateMonitor,
   },
+  "openstatus.monitor.v1.MonitorService/RegenerateHeartbeatToken": {
+    event: Events.UpdateMonitor,
+  },
   "openstatus.monitor.v1.MonitorService/DeleteMonitor": {
     event: Events.DeleteMonitor,
   },

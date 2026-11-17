@@ -569,6 +569,8 @@ describe("getUptimeHistory", () => {
       const row = res.rows[0];
       expect(row.months[key(1)]?.percentage ?? null).toBe(100);
       expect(row.months[key(0)]?.percentage ?? null).toBe(null);
+      expect(res.partial).toBe(true);
+      expect(res.runsPartial).toBe(true);
     });
   });
 
@@ -1191,6 +1193,26 @@ describe("getUptimeHistory runs view", () => {
     });
   });
 
+  test("failed counts of a monitor without runs do not flag runsPartial", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, { regions: "" });
+      await attachPrivateLocations(tx, testMonitor.id, 1);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: failingPipes(),
+        runsPipes: makeRunsPipes(),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.partial).toBe(true);
+      expect(res.runsPartial).toBe(false);
+    });
+  });
+
   test("a failed runs read keeps requests and leaves runs empty", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
@@ -1211,6 +1233,8 @@ describe("getUptimeHistory runs view", () => {
       const row = res.rows[0];
       expect(row.months[key(0)]?.percentage).toBe(99);
       expect(row.runs?.months[key(0)]).toBe(null);
+      expect(res.partial).toBe(false);
+      expect(res.runsPartial).toBe(true);
     });
   });
 

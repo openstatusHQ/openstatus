@@ -45,7 +45,7 @@ Extra time after the period before a late ping counts as missed. Set it to cover
 
 ## Sending pings
 
-The ping URL looks like `https://api.openstatus.dev/heartbeat/<token>`. It accepts `GET`, `POST` and `HEAD` requests and needs no authentication: the token in the URL identifies the monitor, so keep it secret. You can regenerate it from the monitor settings, after which the old URL stops working.
+The ping URL looks like `https://api.openstatus.dev/heartbeat/<token>`. It accepts `GET`, `POST` and `HEAD` requests and needs no authentication: the token in the URL identifies the monitor, so keep it secret. You can regenerate it from the monitor settings or [through the API](#reading-pings-via-the-api), after which the old URL stops working.
 
 The examples below use the hosted URL. Copy the exact ping URL shown in your monitor: a self-hosted instance uses its own base URL.
 
@@ -94,6 +94,48 @@ If you would rather not report failures, simply do not ping: the monitor goes do
 Each ping is kept with its time, whether it reported a failure, the client IP, the HTTP method and user agent, the request headers and, for `POST` requests, the first **10 KB** of the body. Headers that look like credentials (`Authorization`, `Cookie`, or any name containing `token`, `secret`, `key`, `password` or `signature`) are redacted before they are stored, and so are values that look like secrets in the body (bearer tokens, JWTs, `token=…` pairs, JSON fields such as `api_key`). Body redaction matches known patterns only, so do not send secrets in the body. You can see each ping in the monitor's **Logs** tab, which is a handy place to send the tail of your job's output.
 
 Ping details are only visible to members of your workspace. They never appear on status pages.
+
+## Reading pings via the API
+
+`ListMonitorHeartbeatPings` returns the pings of a heartbeat monitor, newest first, with the same fields as the **Logs** tab. It needs an API key with `monitors:read` and a plan with response logs. Pings older than your plan's [data retention](/docs/concept/response-logs-and-retention) are not returned.
+
+```bash
+curl -X POST https://api.openstatus.dev/rpc/openstatus.monitor.v1.MonitorService/ListMonitorHeartbeatPings \
+  -H "x-openstatus-key: $OPENSTATUS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"id": "123", "kinds": ["HEARTBEAT_PING_KIND_FAIL"], "limit": 50}'
+```
+
+```json
+{
+  "pings": [
+    {
+      "id": "0b7c…",
+      "monitorId": "123",
+      "timestamp": "1767225600000",
+      "kind": "HEARTBEAT_PING_KIND_FAIL",
+      "method": "POST",
+      "ip": "203.0.113.7",
+      "userAgent": "curl/8.7.1",
+      "headers": { "content-type": "application/x-www-form-urlencoded" },
+      "body": "backup failed: disk full",
+      "bodyTruncated": false
+    }
+  ],
+  "nextCursor": "djE6MTc2NzIyNTYwMDAwMA"
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `fromTimestamp`, `toTimestamp` | Optional window in Unix milliseconds. |
+| `kinds` | Only return `HEARTBEAT_PING_KIND_SUCCESS` or `HEARTBEAT_PING_KIND_FAIL` pings. |
+| `limit` | Page size, 1 to 100, defaults to 50. |
+| `cursor` | Pass the previous response's `nextCursor` to read the next page. It is absent on the last page. |
+
+`GetMonitor` also reports `nextDueAt`, the time the next ping is due, unset before the first ping and while the monitor is paused.
+
+`RegenerateHeartbeatToken` (needs `monitors:write`) replaces the ping URL and returns the monitor with its new `pingUrl`. The old URL stops working immediately, so update your jobs right after rotating it. See the [API reference](https://api.openstatus.dev/openapi) for every field.
 
 ## Status pages
 

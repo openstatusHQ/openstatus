@@ -11,7 +11,7 @@ import { ForbiddenError, NotFoundError } from "../../errors";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getMonitorUptimeHistory } from "../get-monitor-history";
-import type { UptimeFreezePipes } from "../run";
+import type { UptimeFreezePipes, UptimeRunsPipes } from "../run";
 
 const noSleep = () => Promise.resolve();
 // the 10th: the previous month is still inside the 45d lookback
@@ -45,6 +45,16 @@ function pipes(rows: ComputeCountRow[] | Error): UptimeFreezePipes {
     grpc: pipe,
     heartbeat: pipe,
   };
+}
+
+function runsPipes(rows: ComputeCountRow[] | Error): UptimeRunsPipes {
+  const { heartbeat: _, ...rest } = pipes(rows);
+  return rest;
+}
+
+// no test may reach the real Tinybird runs pipes
+function history(args: Parameters<typeof getMonitorUptimeHistory>[0]) {
+  return getMonitorUptimeHistory({ runsPipes: runsPipes([]), ...args });
 }
 
 type Tx = Parameters<Parameters<typeof withTestTransaction>[0]>[0];
@@ -93,7 +103,7 @@ describe("getMonitorUptimeHistory", () => {
           frozenMonth(m.id, "2026-10"),
         ]);
       const id = String(m.id);
-      const res = await getMonitorUptimeHistory({
+      const res = await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: pipes([
@@ -128,7 +138,7 @@ describe("getMonitorUptimeHistory", () => {
   test("live rows of a month past the 45d lookback are dropped", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx);
-      const res = await getMonitorUptimeHistory({
+      const res = await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: pipes([
@@ -158,7 +168,7 @@ describe("getMonitorUptimeHistory", () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx);
       await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-09"));
-      const res = await getMonitorUptimeHistory({
+      const res = await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: pipes(new Error("tinybird down")),
@@ -174,7 +184,7 @@ describe("getMonitorUptimeHistory", () => {
     await withTestTransaction(async (tx) => {
       const deleted = await insertMonitor(tx, { deletedAt: now });
       await expect(
-        getMonitorUptimeHistory({
+        history({
           ctx: { ...userCtx, db: tx },
           input: { monitorId: deleted.id },
           pipes: pipes([]),
@@ -188,7 +198,7 @@ describe("getMonitorUptimeHistory", () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx);
       await expect(
-        getMonitorUptimeHistory({
+        history({
           ctx: { ...freeCtx, db: tx },
           input: { monitorId: m.id },
           pipes: pipes([]),
@@ -212,7 +222,7 @@ describe("getMonitorUptimeHistory", () => {
           },
         ]),
       ) as UptimeFreezePipes;
-      await getMonitorUptimeHistory({
+      await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: tracked,
@@ -227,7 +237,7 @@ describe("getMonitorUptimeHistory", () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx, { jobType: "udp" });
       await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-10"));
-      const res = await getMonitorUptimeHistory({
+      const res = await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: pipes(new Error("must not be called")),
@@ -262,7 +272,7 @@ describe("getMonitorUptimeHistory", () => {
               });
         },
       };
-      const res = await getMonitorUptimeHistory({
+      const res = await history({
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: flaky,
@@ -277,13 +287,126 @@ describe("getMonitorUptimeHistory", () => {
     });
   });
 
+  test("run verdicts from frozen months and live runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "ams,fra,iad" });
+      await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-10"));
+      const id = String(m.id);
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([
+          { monitorId: id, day: "2026-11-01", ok: 3, degraded: 0, error: 0 },
+          { monitorId: id, day: "2026-11-02", ok: 3, degraded: 0, error: 0 },
+        ]),
+        // a day without requests gets no runs
+        runsPipes: runsPipes([
+          { monitorId: id, day: "2026-11-01", ok: 1, degraded: 0, error: 0 },
+          { monitorId: id, day: "2026-11-03", ok: 1, degraded: 0, error: 0 },
+        ]),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.runsPartial).toBe(false);
+      expect(res.runs?.length).toBe(31 + 1);
+      expect(res.runs?.at(-1)).toEqual({
+        day: "2026-11-01",
+        ok: 1,
+        degraded: 0,
+        error: 0,
+      });
+      expect(res.days.length).toBe(31 + 2);
+    });
+  });
+
+  test("monitors without cloud regions have no runs and skip the runs read", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "" });
+      const frozen = frozenMonth(m.id, "2026-10");
+      await tx.insert(frozenMonitorUptime).values({
+        ...frozen,
+        days: frozen.days.map(({ runs: _, ...d }) => d),
+      });
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([]),
+        runsPipes: runsPipes(new Error("must not be called")),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.runs).toBeNull();
+      expect(res.runsPartial).toBe(false);
+      expect(res.days.length).toBe(31);
+    });
+  });
+
+  test("a failed runs read keeps requests and flags runsPartial", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx);
+      await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-10"));
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([]),
+        runsPipes: runsPipes(new Error("tinybird down")),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.partial).toBe(false);
+      expect(res.runsPartial).toBe(true);
+      expect(res.runs?.length).toBe(31);
+    });
+  });
+
+  test("a failed counts read also flags runsPartial", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx);
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes(new Error("tinybird down")),
+        runsPipes: runsPipes([
+          {
+            monitorId: String(m.id),
+            day: "2026-11-01",
+            ok: 1,
+            degraded: 0,
+            error: 0,
+          },
+        ]),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.partial).toBe(true);
+      expect(res.runsPartial).toBe(true);
+    });
+  });
+
+  test("frozen runs stay after a move to private-only locations", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, { regions: "" });
+      await tx.insert(frozenMonitorUptime).values(frozenMonth(m.id, "2026-10"));
+      const res = await history({
+        ctx: { ...userCtx, db: tx },
+        input: { monitorId: m.id },
+        pipes: pipes([]),
+        runsPipes: runsPipes(new Error("must not be called")),
+        now,
+        sleep: noSleep,
+      });
+      expect(res.runs?.length).toBe(31);
+      expect(res.runsPartial).toBe(false);
+    });
+  });
+
   test("monitors of another workspace are not found", async () => {
     await withTestTransaction(async (tx) => {
       const foreign = await insertMonitor(tx, {
         workspaceId: otherWorkspaceId,
       });
       await expect(
-        getMonitorUptimeHistory({
+        history({
           ctx: { ...userCtx, db: tx },
           input: { monitorId: foreign.id },
           pipes: pipes([]),

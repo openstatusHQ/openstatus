@@ -25,7 +25,7 @@ import { AgentHint } from "../../service-blocks";
 import { getCheckerHref, getComponentFullName, getHost } from "../../utils";
 import { ComponentDetail } from "./client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const HISTORY_DAYS = 45;
 

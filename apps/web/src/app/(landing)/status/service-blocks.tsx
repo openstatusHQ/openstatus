@@ -63,6 +63,7 @@ export function IssueList({ services }: { services: ServiceItem[] }) {
     <div className={cn(TILE_GRID, "grid-cols-1")}>
       {services.map((s) => (
         <Link
+          prefetch={false}
           key={s.slug}
           href={`/status/${s.slug}`}
           className={cn(
@@ -97,6 +98,7 @@ export function PopularGrid({
     <div className={cn(TILE_GRID, "grid-cols-2 sm:grid-cols-4")}>
       {services.map((s) => (
         <Link
+          prefetch={false}
           key={s.href ?? s.slug}
           href={s.href ?? `/status/${s.slug}`}
           className={cn(TILE_LINK, "flex flex-col gap-1 p-3")}
@@ -118,6 +120,7 @@ export function ServiceList({ services }: { services: ServiceItem[] }) {
     <div className={cn(TILE_GRID, "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
       {services.map((s) => (
         <Link
+          prefetch={false}
           key={s.slug}
           href={`/status/${s.slug}`}
           className={cn(
@@ -158,6 +161,7 @@ export function LetterNav({ active }: { active: string | null }) {
         const current = item.key === active;
         return (
           <Link
+            prefetch={false}
             key={item.label}
             href={`${statusHref({ letter: item.key })}#all`}
             aria-current={current ? "page" : undefined}
@@ -211,6 +215,7 @@ export function StatusPagination({
     >
       {page > 1 ? (
         <Link
+          prefetch={false}
           href={href(page - 1)}
           rel="prev"
           className={cn(TILE_LINK, "px-3 py-2")}
@@ -228,6 +233,7 @@ export function StatusPagination({
             </span>
           ) : (
             <Link
+              prefetch={false}
               key={p}
               href={href(p)}
               aria-current={p === page ? "page" : undefined}
@@ -245,6 +251,7 @@ export function StatusPagination({
       </span>
       {page < pageCount ? (
         <Link
+          prefetch={false}
           href={href(page + 1)}
           rel="next"
           className={cn(TILE_LINK, "px-3 py-2")}

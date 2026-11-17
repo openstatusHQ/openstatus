@@ -177,12 +177,17 @@ export function heartbeatPingUrl(token: string): string {
 /**
  * Transform database heartbeat monitor to proto HeartbeatMonitor.
  */
-export type HeartbeatLastPing = { at: Date; kind: HeartbeatPingKind };
+export type HeartbeatPingState = {
+  at: Date;
+  kind: HeartbeatPingKind;
+  nextDueAt: Date | null;
+};
 
 export function dbMonitorToHeartbeatProto(
   dbMon: Monitor,
-  lastPing: HeartbeatLastPing | null = null,
+  lastPing: HeartbeatPingState | null = null,
 ): HeartbeatMonitor {
+  const active = dbMon.active ?? MONITOR_DEFAULTS.active;
   return {
     $typeName: "openstatus.monitor.v1.HeartbeatMonitor",
     id: String(dbMon.id),
@@ -190,11 +195,13 @@ export function dbMonitorToHeartbeatProto(
     period: BigInt(dbMon.heartbeatPeriod ?? 0),
     grace: BigInt(dbMon.heartbeatGrace ?? 0),
     description: dbMon.description,
-    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    active,
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
     pingUrl: dbMon.heartbeatToken ? heartbeatPingUrl(dbMon.heartbeatToken) : "",
     lastPingAt: lastPing?.at.toISOString(),
     lastPingKind: stringToHeartbeatPingKind(lastPing?.kind ?? null),
     status: stringToMonitorStatus(dbMon.status),
+    // a paused heartbeat keeps a stale deadline until it is resumed
+    nextDueAt: active ? lastPing?.nextDueAt?.toISOString() : undefined,
   };
 }

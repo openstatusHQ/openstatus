@@ -135,7 +135,7 @@ Each `fetchJson` / `fetchText` call:
 | -------------------- | ----------------- | --------------------------------------------------------- |
 | Atlassian Statuspage | `atlassian`       | `<status_page_url>/api/v2/summary.json`                   |
 | Instatus             | `instatus`        | `<status_page_url>/summary.json`                          |
-| BetterStack          | `betterstack`     | `<status_page_url>/index.json`                            |
+| BetterStack          | `betterstack`     | `<status_page_url>/index.json` (components, incidents too) |
 | Incident.io          | `incidentio`      | `<origin>/api/widget` (Widget API must be enabled)        |
 | UptimeRobot          | `uptimerobot`     | endpoint required — `<page>/api/getMonitorList/<u>-<p>`   |
 | Custom JSON          | `custom`          | `parser: "slack" \| "aws" \| "generic"`                   |

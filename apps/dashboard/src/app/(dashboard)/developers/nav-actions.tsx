@@ -27,7 +27,12 @@ export function NavActions() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
-              <a href={docs} target="_blank" rel="noreferrer">
+              <a
+                href={docs}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="View Documentation"
+              >
                 <Docs className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>

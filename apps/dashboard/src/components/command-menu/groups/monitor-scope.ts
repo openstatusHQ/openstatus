@@ -29,6 +29,7 @@ export function monitorScopeGroups(
     {
       // Not "Settings": the tab group above already has a Settings entry.
       heading: "Settings Sections",
+      key: "sections",
       items: MONITOR_EDIT_ANCHORS.map((anchor) => ({
         value: `edit-${anchor.id}`,
         label: anchor.label,

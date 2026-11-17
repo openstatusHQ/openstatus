@@ -21,12 +21,14 @@ import { FormDialogSupportContact } from "@/components/forms/support-contact/dia
 
 /** Placeholder page for a nav item that has not shipped; visits show up as OpenPanel screen views. */
 export function ComingSoon({
+  id,
   title,
   description,
   icon: Icon,
   pitch,
   message,
 }: {
+  id: string;
   title: string;
   description: string;
   icon: IconType;
@@ -36,7 +38,7 @@ export function ComingSoon({
 }) {
   return (
     <SectionGroup>
-      <Section>
+      <Section id={id}>
         <SectionHeader>
           <SectionTitle>{title}</SectionTitle>
           <SectionDescription>{description}</SectionDescription>

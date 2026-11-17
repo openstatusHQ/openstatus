@@ -22,7 +22,7 @@ export type PrivateLocationAlertProps = z.infer<
   typeof PrivateLocationAlertSchema
 >;
 
-const LOCATIONS_URL = "https://app.openstatus.dev/settings/private-locations";
+const LOCATIONS_URL = "https://app.openstatus.dev/private-locations";
 
 export function privateLocationAlertSubject(
   props: Pick<PrivateLocationAlertProps, "locationName" | "status">,

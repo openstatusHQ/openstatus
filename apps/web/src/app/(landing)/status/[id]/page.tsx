@@ -26,7 +26,7 @@ import { PopularStatus } from "../sections";
 import { AgentHint } from "../service-blocks";
 import { ServiceDetail } from "./client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const HISTORY_DAYS = 45;
 const RELATED_COUNT = 6;

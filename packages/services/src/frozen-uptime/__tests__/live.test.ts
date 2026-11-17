@@ -108,13 +108,15 @@ describe("fetchLiveDays", () => {
     const { pipes: liveRunsPipes } = runsPipes(async () => {
       throw new Error("tinybird 500");
     });
-    const { days, failedMonitorIds } = await fetchLiveDays({
-      monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
-      pipes: livePipes,
-      runsPipes: liveRunsPipes,
-      sleep,
-    });
+    const { days, failedMonitorIds, failedRunsMonitorIds } =
+      await fetchLiveDays({
+        monitors: [{ id: 1, jobType: "http", regions: sixRegions }],
+        pipes: livePipes,
+        runsPipes: liveRunsPipes,
+        sleep,
+      });
     expect(failedMonitorIds.size).toBe(0);
+    expect(failedRunsMonitorIds).toEqual(new Set(["1"]));
     expect(days.get("1")?.get("2026-11-02")).toEqual({
       day: "2026-11-02",
       requests: { ok: 1, degraded: 0, error: 0 },
