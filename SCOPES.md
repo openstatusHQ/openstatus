@@ -32,7 +32,7 @@ mount. Lint (`openstatus/services-no-legacy-scope`) rejects a bare `"read"` /
 | `write` | yes, legacy | itself, `*` | every `<group>:read` and `<group>:write`. Full access for Terraform, the CLI and CI |
 | `*` | no | itself | super-admin token and dev keys only. Satisfies everything, including `admin` |
 | `admin` | never held | `*` | required by workspace, billing, members, invitations, API keys, OAuth clients, SSO, integrations and account deletion. No key or grant can reach these |
-| `any` | never held | any non-empty credential | public content and docs tools, `get_workspace`, `/v1/whoami` |
+| `any` | never held | any non-empty credential | public content and docs tools, `get_workspace`, `submit_feedback`, `/v1/whoami` |
 
 Matching lives in one place, `packages/services/src/auth/matches-scope.ts`.
 
@@ -93,7 +93,7 @@ lookups) carry no scope by design; the lint rule
 | `incidents:write` | create_status_report, update_status_report, add_status_report_update, update_status_report_update, delete_status_report_update, resolve_status_report, declare_incident, update_incident, set_incident_status, resolve_incident, add_incident_note, draft_postmortem, approve_postmortem, create_maintenance, update_maintenance, add_maintenance_update, update_maintenance_update, delete_maintenance_update |
 | `notifications:read` | list_notifications |
 | `read` | list_audit_logs, get_audit_log |
-| `any` | get_workspace, search_docs, get_doc_page, search_content, get_content_page |
+| `any` | get_workspace, search_docs, get_doc_page, search_content, get_content_page, submit_feedback |
 
 No tool uses `notifications:write`, `subscribers:*` or `admin` on purpose:
 channel secrets and subscriber emails stay out of transcripts, and admin is
@@ -108,6 +108,8 @@ never reachable by a credential.
 2. Write verbs: `requireScope(ctx, "<group>:write")` first line. Read verbs:
    `requireScope(ctx, "<group>:read")`. Admin: `"admin"`.
 3. Tools: `scope: "<group>:read" | "<group>:write"`, or `"any"` only for
-   data that carries nothing workspace-sensitive.
+   data that carries nothing workspace-sensitive. `submit_feedback` is the
+   one `any` tool that writes: it stores a row for the openstatus team, not
+   workspace data, so it sets no `readOnlyHint`.
 4. Tests: a `rejects other-group key` case next to the entity's
    `rejects read-only actor` case.

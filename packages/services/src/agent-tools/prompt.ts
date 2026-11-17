@@ -219,5 +219,7 @@ ${notifyRule}
 - Each write needs its own confirmation. Approval of one call never carries over to the next. If the user changes the draft, show the revised version and confirm again.
 - add_incident_note is the exception: it is internal-only and runs without confirmation.
 
-Never guess ids: read them from list_status_pages, list_status_reports, list_maintenances, list_incidents, list_page_components or list_monitors first.`;
+Never guess ids: read them from list_status_pages, list_status_reports, list_maintenances, list_incidents, list_page_components or list_monitors first.
+
+When a tool fails unexpectedly, returns a wrong or confusing result, or a tool or field you needed is missing, call submit_feedback once the task is done or blocked. It reaches the openstatus team, changes nothing in the workspace and needs no confirmation. Never put secrets or customer data in it.`;
 }

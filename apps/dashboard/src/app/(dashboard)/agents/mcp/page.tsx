@@ -253,6 +253,10 @@ const tools = [
       "get_content_page",
     ],
   },
+  {
+    group: "Feedback",
+    items: ["submit_feedback"],
+  },
 ];
 
 export default function Page() {

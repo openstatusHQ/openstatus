@@ -17,6 +17,7 @@ const TOOL_EVENTS: Record<string, (typeof Events)[keyof typeof Events]> = {
   add_maintenance_update: Events.CreateMaintenanceUpdate,
   update_maintenance_update: Events.UpdateMaintenanceUpdate,
   delete_maintenance_update: Events.DeleteMaintenanceUpdate,
+  submit_feedback: Events.SubmitFeedback,
 };
 
 /** Fire-and-forget: a successful mapped MCP write is counted like a dashboard one, with `source: "mcp"`. */

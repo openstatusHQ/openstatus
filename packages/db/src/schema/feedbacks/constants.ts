@@ -5,6 +5,7 @@ export const feedbackSource = [
   "onboarding-source",
   "onboarding-completed",
   "upgrade-intent",
+  "mcp",
 ] as const;
 
 export const feedbackType = [

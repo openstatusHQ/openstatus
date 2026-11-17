@@ -1,31 +1,26 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
+import { feedbackSource, feedbackType } from "@openstatus/db/src/schema";
 import {
-  feedback,
-  feedbackSource,
-  feedbackType,
-} from "@openstatus/db/src/schema";
+  hasSubmittedFeedback,
+  postFeedbackToSlack,
+  submitFeedback,
+} from "@openstatus/services/feedback";
 import { z } from "zod";
 
 import { env } from "../env";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const feedbackRouter = createTRPCRouter({
   // Lets one-time prompts ask only until the user has answered once.
   hasSubmitted: protectedProcedure
     .input(z.object({ source: z.enum(feedbackSource) }))
-    .query(async (opts) => {
-      const row = await opts.ctx.db
-        .select({ id: feedback.id })
-        .from(feedback)
-        .where(
-          and(
-            eq(feedback.userId, opts.ctx.user.id),
-            eq(feedback.source, opts.input.source),
-          ),
-        )
-        .get();
-      return row !== undefined;
+    .query(async ({ ctx, input }) => {
+      try {
+        return await hasSubmittedFeedback({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   submit: protectedProcedure
@@ -46,64 +41,39 @@ export const feedbackRouter = createTRPCRouter({
         type: z.enum(feedbackType).optional(),
       }),
     )
-    .mutation(async (opts) => {
-      // Persist to database
-      await opts.ctx.db.insert(feedback).values({
-        workspaceId: opts.ctx.workspace.id,
-        userId: opts.ctx.user.id,
-        source: opts.input.source,
-        message: opts.input.message,
-        type: opts.input.type,
-        blocker: opts.input.blocker,
-        path: opts.input.path,
-        metadata: JSON.stringify({
-          isMobile: opts.input.isMobile,
-          userAgent: opts.ctx.metadata?.userAgent,
-        }),
-      });
-
-      // Send to Slack
-      if (!env.SLACK_FEEDBACK_WEBHOOK_URL) {
-        console.error("Slack feedback webhook not configured.");
-        return { success: true } as const;
-      }
-
-      if (process.env.NODE_ENV === "development") {
-        console.log("feedback.submit", opts.input);
-        return { success: true } as const;
-      }
-
-      const textLines: string[] = [];
-      textLines.push(`*Source:* ${opts.input.source}`);
-      if (opts.input.name) textLines.push(`*Name:* ${opts.input.name}`);
-      if (opts.input.email) textLines.push(`*Email:* ${opts.input.email}`);
-      if (opts.input.blocker)
-        textLines.push(`*Blocker:* ${opts.input.blocker}`);
-      if (opts.input.type) textLines.push(`*Type:* ${opts.input.type}`);
-      if (opts.ctx.user) textLines.push(`*User:* ${opts.ctx.user.email}`);
-      if (opts.input.path) textLines.push(`*Path:* ${opts.input.path}`);
-      if (opts.input.isMobile)
-        textLines.push(`*Mobile:* ${opts.input.isMobile}`);
-      if (opts.ctx.metadata?.userAgent)
-        textLines.push(`*User Agent:* ${opts.ctx.metadata.userAgent}`);
-
-      textLines.push("--------------------------------");
-
-      textLines.push(`*Message:* ${opts.input.message}`);
-
+    .mutation(async ({ ctx, input }) => {
+      const userAgent = ctx.metadata?.userAgent;
       try {
-        await fetch(env.SLACK_FEEDBACK_WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        await submitFeedback({
+          ctx: toServiceCtx(ctx),
+          input: {
+            message: input.message,
+            source: input.source,
+            path: input.path,
+            type: input.type,
+            blocker: input.blocker,
+            metadata: { isMobile: input.isMobile, userAgent },
           },
-          body: JSON.stringify({
-            text: textLines.join("\n"),
-          }),
         });
       } catch (err) {
-        console.error("Failed to send feedback to Slack", err);
+        toTRPCError(err);
       }
+
+      await postFeedbackToSlack({
+        webhookUrl: env.SLACK_FEEDBACK_WEBHOOK_URL,
+        message: input.message,
+        fields: [
+          ["Source", input.source],
+          ["Name", input.name],
+          ["Email", input.email],
+          ["Blocker", input.blocker],
+          ["Type", input.type],
+          ["User", ctx.user.email],
+          ["Path", input.path],
+          ["Mobile", input.isMobile],
+          ["User Agent", userAgent],
+        ],
+      });
 
       return { success: true } as const;
     }),
