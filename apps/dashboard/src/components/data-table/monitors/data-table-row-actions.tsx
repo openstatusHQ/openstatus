@@ -38,6 +38,14 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     }),
   );
   const router = useRouter();
+  const cloneMonitorMutation = useMutation(
+    trpc.monitor.clone.mutationOptions({
+      onSuccess: (newMonitor) => {
+        queryClient.invalidateQueries(trpc.monitor.list.queryOptions());
+        router.push(`/monitors/${newMonitor.id}`);
+      },
+    }),
+  );
 
   function setActive(active: boolean) {
     const promise = updateMonitorsMutation.mutateAsync({
@@ -72,6 +80,21 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           toast.success("cURL command copied to clipboard");
         }
       : undefined,
+    clone: () => {
+      const promise = cloneMonitorMutation.mutateAsync({
+        id: row.original.id,
+      });
+      toast.promise(promise, {
+        loading: "Cloning monitor...",
+        success: "Monitor cloned",
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "Failed to clone monitor";
+        },
+      });
+    },
     // export: () => setOpenDialog(true),
   }).filter(
     (action) =>
