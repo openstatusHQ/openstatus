@@ -11,6 +11,7 @@ import {
   getMonitorHealth,
   monitorHealthConfig,
 } from "@/data/monitors.client";
+import { useNow } from "@/hooks/use-now";
 import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -45,7 +46,7 @@ function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
 export function NavMonitorsItem() {
   const trpc = useTRPC();
   const { data: monitors = [] } = useQuery(trpc.monitor.list.queryOptions());
-  const now = new Date();
+  const now = useNow(60_000);
 
   const rows = [...monitors]
     .sort(compareMonitorHealth)

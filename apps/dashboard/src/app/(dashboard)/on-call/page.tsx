@@ -6,6 +6,7 @@ import { NAV } from "@/config/nav";
 export default function Page() {
   return (
     <ComingSoon
+      id="on-call"
       title={NAV.onCall.label}
       icon={NAV.onCall.icon}
       description="Who gets paged, and when."
