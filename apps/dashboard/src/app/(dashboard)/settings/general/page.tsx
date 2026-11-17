@@ -10,7 +10,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
-import { FormApiKey } from "@/components/forms/settings/form-api-key";
+import { FormCardPointer } from "@/components/forms/form-card-pointer";
 import { FormMembers } from "@/components/forms/settings/form-members";
 import { FormSlug } from "@/components/forms/settings/form-slug";
 import { FormWorkspace } from "@/components/forms/settings/form-workspace";
@@ -79,7 +79,13 @@ export default function Page() {
               workspace.limits.members !== "Unlimited"
             }
           />
-          <FormApiKey />
+          <FormCardPointer
+            id="api-keys"
+            title="API Keys"
+            description="API keys are created and revoked under Developers."
+            href="/developers/api-keys"
+            action="Go to API keys"
+          />
         </FormCardGroup>
       </Section>
     </SectionGroup>

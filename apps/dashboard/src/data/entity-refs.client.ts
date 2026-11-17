@@ -74,7 +74,7 @@ export const entityKinds = {
     icon: PrivateLocation,
     fields: ["privateLocationId", "privateLocationIds"],
     auditType: "private_location",
-    href: () => "/settings/private-locations",
+    href: () => "/private-locations",
   },
   notification: {
     label: "Notification",

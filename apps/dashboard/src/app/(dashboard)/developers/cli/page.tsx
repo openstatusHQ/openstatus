@@ -57,8 +57,8 @@ const installs = [
     icon: KeyIcon,
     description: (
       <>
-        Or set it as an environment variable. Create an API key in your
-        workspace <Link href="/settings/general#api-keys">settings.</Link>
+        Or set it as an environment variable. Create an API key in the{" "}
+        <Link href="/developers/api-keys">API Keys</Link> tab.
       </>
     ),
     command: {

@@ -1,273 +1,117 @@
 "use client";
 
-import { More, Add } from "@openstatus/icons";
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSkeleton,
-  useSidebar,
-} from "@openstatus/ui/components/ui/sidebar";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
-import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { cn } from "@openstatus/ui/lib/utils";
-import { buildCurlCommand } from "@openstatus/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
+import type { RouterOutputs } from "@openstatus/api";
+import { useQuery } from "@tanstack/react-query";
 
-import { ExportCodeDialog } from "@/components/dialogs/export-code";
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/monitors.client";
+import type { StatusVariant } from "@/components/common/status-dot";
+import { NAV } from "@/config/nav";
+import {
+  type MonitorHealth,
+  compareMonitorHealth,
+  getMonitorHealth,
+  monitorHealthConfig,
+} from "@/data/monitors.client";
+import { useNow } from "@/hooks/use-now";
+import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-export const STATUS = {
-  degraded: "bg-warning border border-warning",
-  error: "bg-destructive border border-destructive",
-  inactive: "bg-muted-foreground/70 border border-muted-foreground/70",
-  active: "bg-success border border-success",
-};
+import { NavGroupButton, NavGroupItem, NavGroupStatus } from "./nav-group";
+import {
+  NavPeek,
+  NavPeekContent,
+  NavPeekEmpty,
+  NavPeekItem,
+  NavPeekItemMeta,
+  NavPeekItemTitle,
+  NavPeekList,
+  NavPeekSearch,
+  NavPeekTrigger,
+} from "./nav-peek";
 
-export function NavMonitors() {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
-  const { isMobile, setOpenMobile } = useSidebar();
-  const { copy } = useCopyToClipboard();
+type Monitor = RouterOutputs["monitor"]["list"][number];
+
+function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
+  if (health === "inactive") return "paused";
+  if (health === "error" || health === "degraded") {
+    const open = m.incidents.find((i) => !i.resolvedAt);
+    const word = health === "error" ? "down" : "degraded";
+    return open
+      ? `${word} ${formatDurationShort(now.getTime() - new Date(open.startedAt).getTime())}`
+      : word;
+  }
+  return null;
+}
+
+/** Sidebar item for monitors: worst status at a glance, the list on hover. */
+export function NavMonitorsItem() {
   const trpc = useTRPC();
-  const router = useRouter();
-  const pathname = usePathname();
-  const {
-    data: monitors,
-    isLoading,
-    refetch,
-  } = useQuery(trpc.monitor.list.queryOptions());
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const queryClient = useQueryClient();
-  const deleteMonitorMutation = useMutation(
-    trpc.monitor.delete.mutationOptions({
-      onSuccess: () => {
-        refetch();
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.usage.queryKey(),
-        });
-      },
-    }),
-  );
-  const updateMonitorsMutation = useMutation(
-    trpc.monitor.updateMonitors.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
-      },
-    }),
-  );
-  const cloneMonitorMutation = useMutation(
-    trpc.monitor.clone.mutationOptions({
-      onSuccess: (newMonitor) => {
-        refetch();
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.usage.queryKey(),
-        });
-        router.push(`/monitors/${newMonitor.id}`);
-      },
-    }),
-  );
+  const { data: monitors = [] } = useQuery(trpc.monitor.list.queryOptions());
+  const now = useNow(60_000);
 
-  if (!workspace || !monitors) return null;
-
-  const limitReached = monitors.length >= workspace.limits.monitors;
+  const rows = [...monitors]
+    .sort(compareMonitorHealth)
+    .map((m) => ({ m, health: getMonitorHealth(m) }));
+  const failing = rows.filter(
+    (r) => r.health === "error" || r.health === "degraded",
+  ).length;
+  const paused = rows.filter((r) => r.health === "inactive").length;
+  const worst: StatusVariant = rows.some((r) => r.health === "error")
+    ? "destructive"
+    : failing
+      ? "warning"
+      : paused === rows.length
+        ? "default"
+        : "success";
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel
-        className="flex items-center justify-between pr-1"
-        style={{ paddingRight: 4 }}
-      >
-        <div className="flex items-center gap-1">
-          <span>Monitors</span>
-          {isLoading ? (
-            <Skeleton className="h-4 w-5 shrink-0" />
-          ) : (
-            <code className="text-muted-foreground">({monitors.length})</code>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarMenuAction
-                  data-limited={limitReached}
-                  data-track={limitReached ? "paywall_viewed" : undefined}
-                  data-limit={limitReached ? "monitors" : undefined}
-                  className="relative top-0 right-0 border data-[limited=true]:opacity-80"
-                  onClick={() => {
-                    if (limitReached) {
-                      setOpenUpgradeDialog(true);
-                      return;
-                    }
-                    router.push("/monitors/create");
-                    setOpenMobile(false);
-                  }}
+    <NavGroupItem>
+      <NavPeek>
+        <NavPeekTrigger>
+          <NavGroupButton item={NAV.monitors} tooltip={false} />
+        </NavPeekTrigger>
+        <NavPeekContent label="Monitors">
+          <NavPeekSearch placeholder="Search monitors…" />
+          <NavPeekList>
+            {rows.map(({ m, health }) => {
+              const variant = monitorHealthConfig[health].variant;
+              const reason = healthReason(m, health, now);
+              return (
+                <NavPeekItem
+                  key={m.id}
+                  // unique even when two monitors share a name
+                  value={`${m.name} #${m.id}`}
+                  keywords={[m.url, m.jobType, ...m.tags.map((t) => t.name)]}
+                  href={`/monitors/${m.id}/overview`}
+                  variant={variant}
                 >
-                  <Add className="text-muted-foreground" />
-                  <span className="sr-only">Create Monitor</span>
-                </SidebarMenuAction>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                {limitReached ? "Upgrade" : "Create Monitor"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {isLoading ? (
-          <SidebarMenuItem>
-            <SidebarMenuSkeleton />
-          </SidebarMenuItem>
-        ) : monitors && monitors.length > 0 ? (
-          monitors.map((item) => {
-            const isActive = pathname.startsWith(`/monitors/${item.id}/`);
-            // curl only speaks HTTP — the action is hidden for tcp/dns monitors
-            const isHttp = item.jobType === "http";
-            const hiddenAction = item.active ? "resume" : "pause";
-            const setActive = (active: boolean) => {
-              const promise = updateMonitorsMutation.mutateAsync({
-                ids: [item.id],
-                active,
-              });
-              toast.promise(promise, {
-                loading: active ? "Resuming monitor..." : "Pausing monitor...",
-                success: active ? "Monitor resumed" : "Monitor paused",
-                error: (error) => {
-                  if (isTRPCClientError(error)) {
-                    return error.message;
-                  }
-                  return active
-                    ? "Failed to resume monitor"
-                    : "Failed to pause monitor";
-                },
-              });
-            };
-            const actions = getActions({
-              edit: () => router.push(`/monitors/${item.id}/edit`),
-              pause: () => setActive(false),
-              resume: () => setActive(true),
-              "copy-id": () => {
-                navigator.clipboard.writeText(item.id.toString());
-                toast.success("Monitor ID copied to clipboard");
-              },
-              "copy-curl": isHttp
-                ? async () => {
-                    const copied = await copy(buildCurlCommand(item), {
-                      withToast: "cURL command copied to clipboard",
-                    });
-                    if (!copied) toast.error("Failed to copy cURL command");
-                  }
-                : undefined,
-              clone: () => {
-                const promise = cloneMonitorMutation.mutateAsync({
-                  id: item.id,
-                });
-                toast.promise(promise, {
-                  loading: "Cloning monitor...",
-                  success: "Monitor cloned",
-                  error: (error) => {
-                    if (isTRPCClientError(error)) {
-                      return error.message;
-                    }
-                    return "Failed to clone monitor";
-                  },
-                });
-              },
-              // export: () => setOpenDialog(true),
-            }).filter(
-              (action) =>
-                action.id !== hiddenAction &&
-                (action.id !== "copy-curl" || isHttp),
-            );
-            return (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11"
-                  isActive={isActive}
-                  asChild
-                >
-                  <Link
-                    href={`/monitors/${item.id}/overview`}
-                    onClick={() => setOpenMobile(false)}
-                    className="font-commit-mono tracking-tight"
-                  >
-                    <span>{item.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-                <div
-                  data-sidebar="menu-dot"
-                  className={cn(
-                    "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                    isMobile && "right-6",
-                  )}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <div
-                      className={cn(
-                        "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                        STATUS[item.active ? item.status : "inactive"],
-                      )}
-                    >
-                      <span className="sr-only">{item.status}</span>
-                    </div>
-                  </div>
-                </div>
-                <QuickActions
-                  actions={actions}
-                  deleteAction={{
-                    confirmationValue: item.name ?? "monitor",
-                    submitAction: async () => {
-                      await deleteMonitorMutation.mutateAsync({
-                        id: item.id,
-                      });
-                      if (pathname.startsWith(`/monitors/${item.id}`)) {
-                        router.push("/monitors");
-                      }
-                    },
-                  }}
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}
-                >
-                  <SidebarMenuAction showOnHover>
-                    <More />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </QuickActions>
-              </SidebarMenuItem>
-            );
-          })
-        ) : (
-          <SidebarMenuItem>
-            <SidebarMenuButton disabled>
-              <span>No monitors found</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        )}
-      </SidebarMenu>
-      <ExportCodeDialog open={openDialog} onOpenChange={setOpenDialog} />
-      <UpgradeDialog
-        open={openUpgradeDialog}
-        onOpenChange={setOpenUpgradeDialog}
-      />
-    </SidebarGroup>
+                  <NavPeekItemTitle>{m.name}</NavPeekItemTitle>
+                  {reason ? (
+                    <NavPeekItemMeta variant={variant}>
+                      {reason}
+                    </NavPeekItemMeta>
+                  ) : null}
+                </NavPeekItem>
+              );
+            })}
+            <NavPeekEmpty>
+              {monitors.length ? "No match" : "No monitors yet"}
+            </NavPeekEmpty>
+          </NavPeekList>
+        </NavPeekContent>
+      </NavPeek>
+      {monitors.length ? (
+        <NavGroupStatus
+          variant={worst}
+          count={failing}
+          label={
+            failing
+              ? `${failing} ${failing === 1 ? "monitor needs" : "monitors need"} attention`
+              : paused
+                ? `${paused} paused, the rest normal`
+                : "All monitors normal"
+          }
+        />
+      ) : null}
+    </NavGroupItem>
   );
 }

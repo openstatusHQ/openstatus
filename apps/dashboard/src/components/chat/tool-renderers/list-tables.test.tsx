@@ -139,10 +139,8 @@ describe("listPrivateLocationsTable", () => {
     }),
   );
 
-  it("links to the private locations settings", () => {
-    expect(hrefOf(table.rows[0].cells.name)).toBe(
-      "/settings/private-locations",
-    );
+  it("links to the private locations page", () => {
+    expect(hrefOf(table.rows[0].cells.name)).toBe("/private-locations");
   });
 
   it("shows 'Never' for a location that never reported", () => {

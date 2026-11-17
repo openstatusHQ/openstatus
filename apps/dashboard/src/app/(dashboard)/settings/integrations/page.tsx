@@ -1,6 +1,3 @@
-"use client";
-
-import { useQuery } from "@tanstack/react-query";
 import { KeyRound } from "lucide-react";
 import Link from "next/link";
 
@@ -14,24 +11,11 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
+import { FormCardPointer } from "@/components/forms/form-card-pointer";
 
 import { ConnectedAppsCard } from "./connected-apps-card";
-import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {
-  const trpc = useTRPC();
-  //  FIXME: we should use workspace limit here
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-
-  const { data: integrations } = useQuery(
-    trpc.integrationRouter.list.queryOptions(),
-  );
-
-  if (!integrations) return null;
-
-  const slackIntegration = integrations.find((i) => i.name === "slack-agent");
-
   return (
     <SectionGroup>
       <Section id="integrations">
@@ -43,26 +27,18 @@ export default function Page() {
         </SectionHeader>
         <NoteDismissible cookieKey="note_integrations_api_keys">
           <KeyRound />
-          Looking for your API keys? They live in the General settings page.
+          Looking for your API keys? They live under Developers.
           <NoteButton variant="default" asChild>
-            <Link href="/settings/general#api-keys">Go API keys</Link>
+            <Link href="/developers/api-keys">Go to API keys</Link>
           </NoteButton>
         </NoteDismissible>
         <FormCardGroup>
-          <SlackIntegrationCard
-            locked={!workspace?.limits["slack-agent"]}
-            integration={
-              slackIntegration
-                ? {
-                    id: slackIntegration.id,
-                    externalId: slackIntegration.externalId,
-                    data: slackIntegration.data as {
-                      teamName?: string;
-                    },
-                    missingScopes: slackIntegration.missingScopes,
-                  }
-                : null
-            }
+          <FormCardPointer
+            id="slack"
+            title="Slack"
+            description="The Slack agent is connected, reconnected and removed under Agents."
+            href="/agents/slack#slack"
+            action="Go to Slack agent"
           />
           <ConnectedAppsCard />
         </FormCardGroup>

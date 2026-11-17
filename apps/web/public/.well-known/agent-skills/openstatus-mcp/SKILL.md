@@ -32,7 +32,7 @@ Connected apps are listed under **Settings > Integrations > Connected apps**, wh
 
 ### API key (CI, cron, headless agents)
 
-Send an openstatus API key in the `x-openstatus-key` header. It is the same key used by the CLI, REST API, and Terraform provider; create one in **Settings > General**, in the **API Keys** card. When both credentials are present, the header wins.
+Send an openstatus API key in the `x-openstatus-key` header. It is the same key used by the CLI, REST API, and Terraform provider; create one in [**Developers > API Keys**](https://app.openstatus.dev/developers/api-keys). When both credentials are present, the header wins.
 
 ```json
 {

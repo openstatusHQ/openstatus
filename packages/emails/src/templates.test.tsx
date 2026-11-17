@@ -369,7 +369,9 @@ describe("private location alert", () => {
     expect(html).toContain("4 monitors");
     expect(html).toContain("Check, in this order");
     expect(html).toContain("you are a member of this workspace");
-    expect(html).toContain("/settings/private-locations");
+    expect(html).toContain(
+      'href="https://app.openstatus.dev/private-locations"',
+    );
   });
 
   test("recovered drops the checklist; no monitors drops the row", async () => {

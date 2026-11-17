@@ -22,7 +22,7 @@ export function FormDialogSupportContact({
   onOpenChange,
   ...props
 }: React.ComponentProps<typeof DialogTrigger> & {
-  defaultValues?: FormValues;
+  defaultValues?: Partial<FormValues>;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
