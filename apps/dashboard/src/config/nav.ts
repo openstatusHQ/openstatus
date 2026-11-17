@@ -158,7 +158,7 @@ export const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     ],
   },
   { label: "Respond", items: [NAV.incidents, NAV.notifications, NAV.onCall] },
-  { items: [NAV.statusPages] },
+  { label: "Communicate", items: [NAV.statusPages] },
   { label: "Build", items: [NAV.agents, NAV.developers] },
 ];
 
