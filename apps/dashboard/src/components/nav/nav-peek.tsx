@@ -172,9 +172,10 @@ export function NavPeekContent({
       // py-1.5 + 1px border: the search lands on the trigger's row
       alignOffset={isMobile ? 0 : -7}
       sideOffset={isMobile ? 4 : 8}
-      // px-1 + the rows' px-2 puts text 12px in, like the sidebar
+      // px-1 + the rows' px-2 puts text 12px in, like the sidebar;
+      // 514px is the search plus 13 rows, then the list scrolls
       className={cn(
-        "group/peek flex max-h-(--radix-hover-card-content-available-height) w-72 flex-col px-1 py-1.5 data-[side=bottom]:w-(--radix-hover-card-trigger-width)",
+        "group/peek flex max-h-[min(var(--radix-hover-card-content-available-height),514px)] w-72 flex-col px-1 py-1.5 data-[side=bottom]:w-(--radix-hover-card-trigger-width)",
         className,
       )}
       onFocusCapture={(e) => {

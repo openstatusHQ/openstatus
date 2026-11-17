@@ -102,14 +102,14 @@ export function NavMonitorsItem() {
       {monitors.length ? (
         <NavGroupStatus
           variant={worst}
-          count={failing}
-          label={
+          count={monitors.length}
+          label={`${monitors.length} ${monitors.length === 1 ? "monitor" : "monitors"}, ${
             failing
-              ? `${failing} ${failing === 1 ? "monitor needs" : "monitors need"} attention`
+              ? `${failing} ${failing === 1 ? "needs" : "need"} attention`
               : paused
                 ? `${paused} paused, the rest normal`
-                : "All monitors normal"
-          }
+                : "all normal"
+          }`}
         />
       ) : null}
     </NavGroupItem>

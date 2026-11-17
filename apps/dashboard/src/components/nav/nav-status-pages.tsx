@@ -61,11 +61,12 @@ export function NavStatusPagesItem() {
       {pages.length ? (
         <NavGroupStatus
           variant={open ? "warning" : "success"}
-          label={
+          count={pages.length}
+          label={`${pages.length} ${pages.length === 1 ? "status page" : "status pages"}, ${
             open
-              ? `${open} ${open === 1 ? "page has an" : "pages have an"} open report`
-              : "No open reports"
-          }
+              ? `${open} ${open === 1 ? "has an" : "have an"} open report`
+              : "no open reports"
+          }`}
         />
       ) : null}
     </NavGroupItem>
