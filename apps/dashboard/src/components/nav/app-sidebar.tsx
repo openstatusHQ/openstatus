@@ -47,7 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       {/* no gap: NavGroup's py-1 alone keeps groups on the 36px row grid */}
       <SidebarContent className="gap-0">
-        <NavGroup>
+        <NavGroup className="pt-2">
           <NavSearch />
           <NavGroupDefaultItem item={NAV.overview} />
           <NavGroupDefaultItem item={NAV.chat} />
@@ -72,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <NavBanner />
         </div>
         <SidebarSeparator className="mx-0" />
-        <NavGroup>
+        <NavGroup className="py-2">
           <NavGroupDefaultItem item={NAV.settings} />
           <NavHelp />
         </NavGroup>
