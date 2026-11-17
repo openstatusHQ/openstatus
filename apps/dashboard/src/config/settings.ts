@@ -2,7 +2,6 @@ import {
   Account,
   AuditLog,
   Billing,
-  Globe,
   type IconType,
   Integrations,
   Settings,
@@ -46,13 +45,6 @@ export const SETTINGS_TABS = [
     label: "Integrations",
     icon: Integrations,
     href: "/settings/integrations",
-  },
-  {
-    value: "private-locations",
-    label: "Private Locations",
-    icon: Globe,
-    href: "/settings/private-locations",
-    keywords: ["probes", "regions"],
   },
   {
     value: "sso",

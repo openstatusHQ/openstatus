@@ -82,9 +82,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
   const error = c.req.query("error");
 
   if (error) {
-    return c.redirect(
-      `${config.dashboardUrl}/settings/integrations?slack=error`,
-    );
+    return c.redirect(`${config.dashboardUrl}/agents/slack?slack=error`);
   }
 
   if (!code || !stateParam) {
@@ -114,9 +112,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
   const tokenData = (await tokenRes.json()) as SlackOAuthResponse;
   if (!tokenData.ok) {
     logger.error("token exchange failed", { error: tokenData.error });
-    return c.redirect(
-      `${config.dashboardUrl}/settings/integrations?slack=error`,
-    );
+    return c.redirect(`${config.dashboardUrl}/agents/slack?slack=error`);
   }
 
   const workspaceRow = await db
@@ -128,9 +124,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
     logger.error("workspace not found at callback", {
       workspaceId: state.workspaceId,
     });
-    return c.redirect(
-      `${config.dashboardUrl}/settings/integrations?slack=error`,
-    );
+    return c.redirect(`${config.dashboardUrl}/agents/slack?slack=error`);
   }
 
   const workspaceParsed = selectWorkspaceSchema.safeParse(workspaceRow);
@@ -139,9 +133,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
       workspaceId: state.workspaceId,
       issues: workspaceParsed.error.issues,
     });
-    return c.redirect(
-      `${config.dashboardUrl}/settings/integrations?slack=error`,
-    );
+    return c.redirect(`${config.dashboardUrl}/agents/slack?slack=error`);
   }
 
   try {
@@ -175,9 +167,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
       workspaceId: state.workspaceId,
       err: err instanceof Error ? err.message : String(err),
     });
-    return c.redirect(
-      `${config.dashboardUrl}/settings/integrations?slack=error`,
-    );
+    return c.redirect(`${config.dashboardUrl}/agents/slack?slack=error`);
   }
 
   setupAnalytics({
@@ -190,9 +180,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
     .then((analytics) => analytics.track(Events.InstallSlackAgent))
     .catch(() => undefined);
 
-  return c.redirect(
-    `${config.dashboardUrl}/settings/integrations?slack=success`,
-  );
+  return c.redirect(`${config.dashboardUrl}/agents/slack?slack=success`);
 }
 
 function getRedirectUri(c: Context<SlackEnv>): string {

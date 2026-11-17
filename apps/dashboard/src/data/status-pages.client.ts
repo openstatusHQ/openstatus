@@ -1,5 +1,16 @@
 import { Settings, Copy, Delete } from "@openstatus/icons";
 
+/** An open report first, then by title. */
+export function compareStatusPages(
+  a: { title: string; hasActiveStatusReport: boolean },
+  b: { title: string; hasActiveStatusReport: boolean },
+): number {
+  return (
+    Number(b.hasActiveStatusReport) - Number(a.hasActiveStatusReport) ||
+    a.title.localeCompare(b.title)
+  );
+}
+
 export function getPageUrl(page: {
   slug: string;
   customDomain: string | null;

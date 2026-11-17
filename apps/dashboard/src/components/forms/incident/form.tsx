@@ -313,8 +313,8 @@ export function FormDeclareIncident({
               {slack === "reconnect"
                 ? "Reconnect Slack in "
                 : "Connect Slack in "}
-              <Link href="/settings/integrations">Settings → Integrations</Link>{" "}
-              to open a channel for each incident.
+              <Link href="/agents/slack#slack">Agents → Slack</Link> to open a
+              channel for each incident.
             </p>
           )}
         </FormCardContent>

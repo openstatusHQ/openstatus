@@ -373,9 +373,7 @@ export function FormSchedulingRegions({
                 <Globe />
                 Monitor your endpoints from private locations.
                 <NoteButton variant="outline" asChild>
-                  <NextLink href="/settings/private-locations">
-                    Learn more
-                  </NextLink>
+                  <NextLink href="/private-locations">Learn more</NextLink>
                 </NoteButton>
               </Note>
             ) : (
