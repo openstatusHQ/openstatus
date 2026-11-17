@@ -118,7 +118,7 @@ function NavGroupBadge({
   );
 }
 
-/** Status dot with an optional count, e.g. how many monitors need attention. */
+/** Status dot with an optional count, e.g. how many monitors there are. */
 export function NavGroupStatus({
   variant,
   count,
@@ -127,7 +127,7 @@ export function NavGroupStatus({
 }: React.ComponentProps<typeof SidebarMenuBadge> & {
   variant: StatusVariant;
   count?: number;
-  /** screen-reader text, e.g. "2 monitors need attention" */
+  /** screen-reader text, e.g. "14 monitors, 2 need attention" */
   label: string;
 }) {
   return (
