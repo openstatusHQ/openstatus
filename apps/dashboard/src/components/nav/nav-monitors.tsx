@@ -19,6 +19,7 @@ import { NavGroupButton, NavGroupItem, NavGroupStatus } from "./nav-group";
 import {
   NavPeek,
   NavPeekContent,
+  NavPeekCreate,
   NavPeekEmpty,
   NavPeekItem,
   NavPeekItemMeta,
@@ -45,7 +46,9 @@ function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
 /** Sidebar item for monitors: worst status at a glance, the list on hover. */
 export function NavMonitorsItem() {
   const trpc = useTRPC();
-  const { data: monitors = [] } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: monitors = [], isPending } = useQuery(
+    trpc.monitor.list.queryOptions(),
+  );
   const now = useNow(60_000);
 
   const rows = [...monitors]
@@ -69,35 +72,41 @@ export function NavMonitorsItem() {
         <NavPeekTrigger>
           <NavGroupButton item={NAV.monitors} tooltip={false} />
         </NavPeekTrigger>
-        <NavPeekContent label="Monitors">
-          <NavPeekSearch placeholder="Search monitors…" />
-          <NavPeekList>
-            {rows.map(({ m, health }) => {
-              const variant = monitorHealthConfig[health].variant;
-              const reason = healthReason(m, health, now);
-              return (
-                <NavPeekItem
-                  key={m.id}
-                  // unique even when two monitors share a name
-                  value={`${m.name} #${m.id}`}
-                  keywords={[m.url, m.jobType, ...m.tags.map((t) => t.name)]}
-                  href={`/monitors/${m.id}/overview`}
-                  variant={variant}
-                >
-                  <NavPeekItemTitle>{m.name}</NavPeekItemTitle>
-                  {reason ? (
-                    <NavPeekItemMeta variant={variant}>
-                      {reason}
-                    </NavPeekItemMeta>
-                  ) : null}
-                </NavPeekItem>
-              );
-            })}
-            <NavPeekEmpty>
-              {monitors.length ? "No match" : "No monitors yet"}
-            </NavPeekEmpty>
-          </NavPeekList>
-        </NavPeekContent>
+        {isPending ? null : monitors.length ? (
+          <NavPeekContent label="Monitors">
+            <NavPeekSearch placeholder="Search monitors…" />
+            <NavPeekList>
+              {rows.map(({ m, health }) => {
+                const variant = monitorHealthConfig[health].variant;
+                const reason = healthReason(m, health, now);
+                return (
+                  <NavPeekItem
+                    key={m.id}
+                    // unique even when two monitors share a name
+                    value={`${m.name} #${m.id}`}
+                    keywords={[m.url, m.jobType, ...m.tags.map((t) => t.name)]}
+                    href={`/monitors/${m.id}/overview`}
+                    variant={variant}
+                  >
+                    <NavPeekItemTitle>{m.name}</NavPeekItemTitle>
+                    {reason ? (
+                      <NavPeekItemMeta variant={variant}>
+                        {reason}
+                      </NavPeekItemMeta>
+                    ) : null}
+                  </NavPeekItem>
+                );
+              })}
+              <NavPeekEmpty>No match</NavPeekEmpty>
+            </NavPeekList>
+          </NavPeekContent>
+        ) : (
+          <NavPeekContent label="Monitors">
+            <NavPeekCreate href="/monitors/create">
+              Create monitor
+            </NavPeekCreate>
+          </NavPeekContent>
+        )}
       </NavPeek>
       {monitors.length ? (
         <NavGroupStatus

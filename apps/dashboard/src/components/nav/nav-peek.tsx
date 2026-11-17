@@ -1,5 +1,6 @@
 "use client";
 
+import { Add } from "@openstatus/icons";
 import {
   HoverCard,
   HoverCardContent,
@@ -8,6 +9,7 @@ import {
 import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import { type VariantProps, cva } from "class-variance-authority";
 import { Command as CommandPrimitive } from "cmdk";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
@@ -22,7 +24,8 @@ type NavPeekState = {
   dismiss: () => void;
   setDismissed: (dismissed: boolean) => void;
   triggerRef: React.RefObject<HTMLElement | null>;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  /** the search, or the create link when there is nothing to search */
+  focusRef: React.RefObject<HTMLElement | null>;
 };
 
 const NavPeekContext = createContext<NavPeekState | null>(null);
@@ -39,7 +42,7 @@ export function NavPeek({ children }: { children: React.ReactNode }) {
   const [focus, setFocus] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const focusRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const close = () => {
     setHover(false);
@@ -63,7 +66,7 @@ export function NavPeek({ children }: { children: React.ReactNode }) {
         dismiss,
         setDismissed,
         triggerRef,
-        inputRef,
+        focusRef,
       }}
     >
       {/* stays open while focus is inside, so typing in the search never closes it */}
@@ -83,7 +86,7 @@ export function NavPeek({ children }: { children: React.ReactNode }) {
 
 /**
  * Clicking navigates and keeps the card closed until the pointer leaves;
- * ArrowRight moves keyboard focus into the search.
+ * ArrowRight moves keyboard focus into the card.
  */
 export function NavPeekTrigger({
   onClick,
@@ -93,7 +96,7 @@ export function NavPeekTrigger({
   onBlur,
   ...props
 }: React.ComponentProps<typeof HoverCardTrigger>) {
-  const { dismiss, setDismissed, setFocus, triggerRef, inputRef } =
+  const { dismiss, setDismissed, setFocus, triggerRef, focusRef } =
     useNavPeek();
   return (
     <HoverCardTrigger
@@ -129,7 +132,7 @@ export function NavPeekTrigger({
           setDismissed(false);
           setFocus(true);
           // the content mounts on open; focus once it is there
-          requestAnimationFrame(() => inputRef.current?.focus());
+          requestAnimationFrame(() => focusRef.current?.focus());
         }
         onKeyDown?.(e);
       }}
@@ -211,10 +214,12 @@ export function NavPeekSearch({
   className,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
-  const { inputRef } = useNavPeek();
+  const { focusRef } = useNavPeek();
   return (
     <CommandPrimitive.Input
-      ref={inputRef}
+      ref={(el) => {
+        focusRef.current = el;
+      }}
       data-slot="nav-peek-search"
       className={cn(
         "bg-muted/50 placeholder:text-muted-foreground focus-visible:bg-muted font-commit-mono h-8 shrink-0 rounded-md px-2 text-sm tracking-tight outline-none",
@@ -276,6 +281,44 @@ export function NavPeekItem({
       <StatusDot variant={variant} />
       {children}
     </CommandPrimitive.Item>
+  );
+}
+
+/** The card's only row when there is nothing to list, e.g. "Create monitor". */
+export function NavPeekCreate({
+  className,
+  children,
+  onClick,
+  onKeyDown,
+  ...props
+}: React.ComponentProps<typeof Link>) {
+  const { close, focusRef } = useNavPeek();
+  const { setOpenMobile } = useSidebar();
+  return (
+    <Link
+      ref={(el) => {
+        focusRef.current = el;
+      }}
+      data-slot="nav-peek-create"
+      onKeyDown={(e) => {
+        // cmdk cancels Enter for its own items, which would block the link
+        if (e.key === "Enter") e.stopPropagation();
+        onKeyDown?.(e);
+      }}
+      onClick={(e) => {
+        close();
+        setOpenMobile(false);
+        onClick?.(e);
+      }}
+      className={cn(
+        "hover:bg-muted focus-visible:bg-muted font-commit-mono flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-sm tracking-tight outline-none",
+        className,
+      )}
+      {...props}
+    >
+      <Add className="text-muted-foreground size-4" />
+      {children}
+    </Link>
   );
 }
 

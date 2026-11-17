@@ -10,6 +10,7 @@ import { NavGroupButton, NavGroupItem, NavGroupStatus } from "./nav-group";
 import {
   NavPeek,
   NavPeekContent,
+  NavPeekCreate,
   NavPeekEmpty,
   NavPeekItem,
   NavPeekItemMeta,
@@ -22,7 +23,9 @@ import {
 /** Sidebar item for status pages: pages with an open report first. */
 export function NavStatusPagesItem() {
   const trpc = useTRPC();
-  const { data: pages = [] } = useQuery(trpc.page.list.queryOptions());
+  const { data: pages = [], isPending } = useQuery(
+    trpc.page.list.queryOptions(),
+  );
 
   const rows = [...pages].sort(compareStatusPages);
   const open = rows.filter((p) => p.hasActiveStatusReport).length;
@@ -33,30 +36,36 @@ export function NavStatusPagesItem() {
         <NavPeekTrigger>
           <NavGroupButton item={NAV.statusPages} tooltip={false} />
         </NavPeekTrigger>
-        <NavPeekContent label="Status pages">
-          <NavPeekSearch placeholder="Search status pages…" />
-          <NavPeekList>
-            {rows.map((p) => (
-              <NavPeekItem
-                key={p.id}
-                value={`${p.title} #${p.id}`}
-                keywords={[p.slug, p.customDomain]}
-                href={`/status-pages/${p.id}/status-reports`}
-                variant={p.hasActiveStatusReport ? "warning" : "success"}
-              >
-                <NavPeekItemTitle>{p.title}</NavPeekItemTitle>
-                {p.hasActiveStatusReport ? (
-                  <NavPeekItemMeta variant="warning">
-                    open report
-                  </NavPeekItemMeta>
-                ) : null}
-              </NavPeekItem>
-            ))}
-            <NavPeekEmpty>
-              {pages.length ? "No match" : "No status pages yet"}
-            </NavPeekEmpty>
-          </NavPeekList>
-        </NavPeekContent>
+        {isPending ? null : pages.length ? (
+          <NavPeekContent label="Status pages">
+            <NavPeekSearch placeholder="Search status pages…" />
+            <NavPeekList>
+              {rows.map((p) => (
+                <NavPeekItem
+                  key={p.id}
+                  value={`${p.title} #${p.id}`}
+                  keywords={[p.slug, p.customDomain]}
+                  href={`/status-pages/${p.id}/status-reports`}
+                  variant={p.hasActiveStatusReport ? "warning" : "success"}
+                >
+                  <NavPeekItemTitle>{p.title}</NavPeekItemTitle>
+                  {p.hasActiveStatusReport ? (
+                    <NavPeekItemMeta variant="warning">
+                      open report
+                    </NavPeekItemMeta>
+                  ) : null}
+                </NavPeekItem>
+              ))}
+              <NavPeekEmpty>No match</NavPeekEmpty>
+            </NavPeekList>
+          </NavPeekContent>
+        ) : (
+          <NavPeekContent label="Status pages">
+            <NavPeekCreate href="/status-pages/create">
+              Create status page
+            </NavPeekCreate>
+          </NavPeekContent>
+        )}
       </NavPeek>
       {pages.length ? (
         <NavGroupStatus
