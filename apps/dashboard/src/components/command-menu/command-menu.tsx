@@ -14,7 +14,7 @@ import {
 } from "@openstatus/ui/components/ui/dialog";
 import { Command as CommandPrimitive } from "cmdk";
 import { useTheme } from "next-themes";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
@@ -27,6 +27,7 @@ import { scrollToHash } from "@/hooks/use-scroll-to-hash";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
 import { GroupView } from "./group-view";
+import { currentPageGroup } from "./groups/current-page";
 import {
   incidentsGroup,
   maintenancesGroup,
@@ -46,6 +47,7 @@ import {
 } from "./groups/static";
 import { statusPageScopeGroups } from "./groups/status-page-scope";
 import { useCommandMenu } from "./provider";
+import { routeContext } from "./route-context";
 import type {
   CommandAction,
   CommandMenuGroup,
@@ -66,6 +68,7 @@ export function CommandMenu() {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const router = useRouter();
+  const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
 
   const data = useCommandMenuData({ open });
@@ -157,6 +160,11 @@ export function CommandMenu() {
             maintenances: data.sortedMaintenances,
           })
     : [
+        currentPageGroup({
+          context: routeContext(pathname),
+          pathname,
+          data,
+        }),
         incidentsGroup(data.incidents),
         monitorsGroup(data.monitors),
         statusPagesGroup(data.statusPages),

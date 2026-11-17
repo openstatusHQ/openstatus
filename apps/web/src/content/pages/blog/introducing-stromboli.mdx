@@ -1,0 +1,352 @@
+---
+title: "Introducing stromboli: an open-source AI SRE you host yourself"
+description: "When an alert fires, stromboli builds a deterministic incident brief, posts a concrete mitigation to Slack within a few tool calls, and then digs for the root cause. MIT licensed, one Go binary and a Postgres."
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2026-11-16"
+category: "engineering"
+image: "/assets/posts/introducing-stromboli/stromboli.png"
+---
+
+We have spent three years telling you when your service is down.
+
+What happens next was always your problem: an alert lands in Slack, someone
+wakes up, opens five tabs (logs, metrics, recent deploys, the dependency graph
+in their head, the runbook nobody updated since 2024), and starts piecing
+together what broke.
+
+We do the exact same thing when openstatus pages us. Our synthetic checkers run
+on Fly.io, our background workers and queues run on Google Cloud, our dashboard
+sits on Vercel, and our logs live in Axiom and Cloud Logging. Every incident
+starts with the same ten-minute ritual of running `fly status`, diffing recent
+commits, and checking whether a downstream queue backed up before anyone knows
+what action to take.
+
+Over the past year we built small, single-purpose agents around incident
+communication: a [Slack agent](/blog/openstatus-slack-agent) to draft status
+reports in-thread and an [agent webhook](/blog/agent-webhook) to translate
+monitor failures into human-readable updates. Useful, but they only helped
+*after* someone figured out what was going on.
+
+So we started a side project to tackle those first ten minutes. It's called
+[stromboli](https://stromboli.dev): an open-source AI SRE
+agent we run on our own production, and today we're releasing it under the MIT
+license on [GitHub](https://github.com/openstatusHQ/stromboli).
+
+It is deliberately a standalone project, separate from the openstatus monorepo.
+Nobody really knows yet what an AI SRE that engineers actually trust looks
+like—us included—and stromboli is our lab for finding out on real incidents, in
+the open.
+
+## What happens when an alert fires
+
+```
+alert ──▶ 1. match ──▶ 2. brief ──▶ 3. mitigate ──▶ 4. investigate ──▶ 5. report
+           & dedupe     (no LLM)     (posted now)    (read-only tools)   (Slack + API)
+```
+
+When an alert hits a stromboli webhook (from openstatus, Alertmanager, Grafana,
+or a generic JSON payload), it runs a five-stage pipeline:
+
+1. **Match and deduplicate.** stromboli maps the alert to a service in its
+   catalog (by openstatus monitor ID or `service` / `app` / `job` labels). If
+   Alertmanager or your monitor fires five times for the same outage, repeats
+   merge into the running investigation instead of burning tokens five times.
+   Once the alert resolves—or a mitigation action is applied—deduplication
+   resets so a regression is treated as a fresh incident.
+2. **Build a deterministic brief (zero LLM tokens).** Before any model is
+   called, Go code queries your stack in parallel and builds the exact snapshot
+   an on-call engineer pulls by hand:
+   - the service, its upstream and downstream dependencies, and its transitive
+     blast radius
+   - log error patterns in the incident window diffed against a preceding
+     baseline window of the same length (so you see `"new error pattern: 340 vs
+     0 in baseline"`, not 340 raw JSON lines)
+   - per-instance metrics (CPU, throttling, memory, OOM kills, 5xx rate, p95
+     latency, Pub/Sub or Cloud Tasks backlog) compared against the same baseline
+   - recent deploys and commits for both the failing service *and* its
+     dependencies
+   - attached runbooks, similar past investigations, and—on Fly.io—live machine
+     states with exact mitigation commands
+3. **Propose a mitigation first.** Within a handful of tool calls, the triage
+   model commits to a concrete action to stop user impact and posts it to Slack
+   immediately.
+4. **Investigate the root cause.** A second phase forms hypotheses and tests
+   them against your logs, metrics, and commit diffs using read-only tools.
+5. **Publish a structured report.** Likely cause, confidence, supporting
+   evidence, hypotheses that were ruled out, whether the initial mitigation
+   still holds, and the long-term fix—edited straight into the Slack message
+   with the full audit trail in the thread.
+
+Because the brief in step 2 is pure Go code, it doesn't need an LLM to be
+useful. You can run `stromboli brief api --since 1h` from your terminal at any
+time and get the full cross-system diff in seconds, for free.
+
+## Mitigate first, investigate second
+
+When an alert fires, two clocks start ticking: how long users are hurting, and
+how long until someone understands *why*.
+
+Most AI SRE tools optimize for the second clock. They spend three minutes and
+twenty tool calls hunting for a root cause in a commit diff before outputting a
+single actionable sentence. That makes the on-call engineer wait for the
+slowest, least certain step while production is still bleeding.
+
+Experienced incident responders work the other way around: stop the bleeding
+first, debug second. If 5xx errors spiked ninety seconds after a deploy, roll
+it back—whether the bug is an unindexed query or a bad env var can wait until
+traffic is healthy.
+
+stromboli enforces this split in its state machine:
+
+- **A closed set of mitigations.** Inspired by [generic mitigations](https://www.oreilly.com/content/generic-mitigations/), Phase 1 (triage) ends as soon as the model
+  commits to one action from a fixed enum: `rollback`, `restart`, `scale_up`,
+  `drain`, `disable_feature`, `block_traffic`, `failover`, `degrade`, or
+  `none`. Every mitigation must include the target, the exact command to run,
+  how to verify it worked, how to undo it, and a risk level (`safe`,
+  `reversible`, or `destructive`).
+- **`none` is a first-class answer.** When there is no clear user impact or no
+  safe action to take, saying `none` is much better than inventing a placebo
+  command.
+- **No wandering.** After six tool calls (`STROMBOLI_MITIGATION_TOOL_CALLS`)
+  without a mitigation, stromboli injects a prompt reminding the model that
+  users may still be affected and forces it to commit. Submitting a root-cause
+  report without first recording a mitigation is rejected.
+- **Self-correction in Phase 2.** Early mitigations are based on symptoms, so
+  they can be wrong. If the deeper investigation proves a restart won't help
+  because a downstream database is saturated or a config push broke parsing,
+  the model publishes a revised mitigation to Slack and automatically
+  supersedes any pending action.
+
+Because the two phases optimize for different things, you can point them at
+different models. A fast model handles triage in seconds; a frontier reasoning
+model takes over the *exact same conversation history* for root-cause analysis:
+
+```sh
+STROMBOLI_TRIAGE_MODEL=anthropic:claude-haiku-5-5
+STROMBOLI_TRIAGE_EFFORT=low
+STROMBOLI_INVESTIGATE_MODEL=openai:gpt-5
+STROMBOLI_INVESTIGATE_EFFORT=high
+```
+
+## Safety by construction, not prompt engineering
+
+If you run infrastructure for a living, your first reaction to "point an LLM at
+production during an outage" is probably *absolutely not*. Between
+hallucinated flags and prompt injections hiding in user-controlled log lines,
+asking a model to "please be careful" in a system prompt is not a security
+model.
+
+stromboli doesn't rely on the model behaving well. It removes the capability to
+misbehave at the architecture level:
+
+- **Every LLM tool is strictly read-only.** The model has no tool to run shell
+  commands, deploy, restart, or mutate state. Its only outputs are structured
+  mitigation and report objects. Log lines and commit messages are treated as
+  untrusted data—so even if an attacker crafts a prompt injection in an HTTP
+  header that lands in Loki, the worst it can do is confuse a text summary.
+- **Connectors use read-only credentials.** A `fly tokens create readonly` org
+  token, GCP `roles/logging.viewer` and `roles/monitoring.viewer`, a read-only
+  GitHub token. Even a bug in stromboli's own Go code cannot mutate resources
+  with those keys.
+- **stromboli is the MCP client, not the model.** When a provider hosts an
+  official remote MCP server (Google Cloud Logging and Monitoring, GitHub,
+  Axiom, Vercel), stromboli connects to it from Go, enforces a strict
+  per-connector tool allow-list, and verifies that every allowed tool carries
+  the `readOnlyHint` annotation before starting. Anything else (`deploy`,
+  `delete`, `exec`) is refused at the client boundary.
+- **No local CLI wrappers masquerading as MCP.** Where a provider's MCP server
+  is just a local wrapper around a privileged CLI—for instance, `flyctl mcp
+  server` exposes `destroy`, `exec`, and `secrets` without read-only
+  annotations—stromboli skips MCP entirely and talks directly to the provider's
+  HTTP API and managed Prometheus.
+- **Pre-aggregation and redaction before the context window.** Raw logs and
+  diffs pass through a size cap (24 KiB per call) and a regex redaction pipeline
+  that strips Bearer tokens, JWTs, cloud keys, Slack tokens, URL credentials,
+  and email addresses before a single byte leaves your server for the LLM API.
+
+### The one opt-in exception: human-approved Fly.io machine actions
+
+By default, every mitigation is a command for a human to copy-paste. On Fly.io,
+where we run our own checkers, we added an opt-in path
+(`STROMBOLI_ACTIONS_ENABLED=true`) for the mitigations you run half-asleep at 3
+AM: `restart`, `clone`, `cordon`, and `uncordon`.
+
+Even with actions enabled, **the model still has no execution tool**. It can
+only attach a proposed action to its mitigation. Before anything touches the
+Fly Machines API:
+
+1. Actions require a separate `fly_machines` connector and an explicit
+   per-service allow-list in the catalog (`stop` and `start` are excluded by
+   default).
+2. stromboli validates the target machine IDs against the Fly app twice—when
+   proposed and when approved—caps batch size at 10, and refuses to clone
+   machines with attached volumes (since a clone starts with an empty volume).
+3. A named human must click **Apply** in Slack (verified via Slack's
+   HMAC-SHA256 signature and restricted to `SLACK_APPROVERS` user IDs) or run
+   `stromboli actions approve` before the 30-minute TTL expires.
+4. Approval claims the action atomically so double-clicks never execute twice.
+   stromboli runs the action **one machine at a time**, waits up to 60 seconds
+   for each machine to reach `started`, and halts immediately on the first
+   machine that fails to come back—so a bad rolling restart can never take down
+   an entire pool.
+
+## No data ingestion, no second observability tax
+
+Many observability and AI incident tools start by asking you to ship your logs
+and metrics into their storage engine.
+
+You already pay for a log store and a metrics backend. stromboli doesn't become
+a second one: there is no ingestion pipeline, no ClickHouse cluster to size,
+and no duplicate copy of PII-heavy production logs sitting in another database.
+
+It queries your existing backends on demand for the incident window:
+
+- **Logs:** Grafana Loki, Axiom, AWS CloudWatch Logs, Google Cloud Logging,
+  Vercel
+- **Metrics:** Prometheus (and anything speaking the Prometheus HTTP API:
+  Mimir, Thanos, VictoriaMetrics, Grafana Cloud), Fly.io Managed Prometheus,
+  Google Cloud Monitoring
+- **Deploys & commits:** GitHub Actions / Deployments / commits, Vercel
+
+All stromboli stores in Postgres is the service catalog, encrypted connector
+credentials (AES-256-GCM), and the aggregated, redacted evidence each
+investigation actually used—so your incident audit trail stays intact even
+after your log store's retention window expires.
+
+## A small, GitOps-friendly service catalog
+
+An alert only says `"api is returning 5xx"`. To investigate without guessing
+Loki labels or PromQL selectors, stromboli keeps a lightweight service catalog.
+
+You don't have to write it from scratch. Point `catalog discover` at your log
+or metric connectors and stromboli inspects your active labels, Cloud Run
+services, Pub/Sub subscriptions, or Fly apps to generate the initial YAML:
+
+```sh
+stromboli catalog discover loki > services.yaml
+```
+
+Then add what telemetry can't tell you—owners, dependencies, and runbooks:
+
+```yaml
+- name: api
+  description: Public REST API
+  owners: ["@team-backend"]
+  tier: 1
+  depends_on: [db-proxy, redis]
+  logs:
+    source: loki
+    selector: '{service_name="api"}'
+  metrics:
+    source: fly
+    selectors: ['app="api"']
+  deploys:
+    source: github
+    repo: acme/api
+    workflow: deploy.yml
+  runbooks: [runbooks/api-5xx.md]
+  monitors: ["openstatus:1234"]
+  runtime: fly.io
+```
+
+Keep `services.yaml` and your markdown runbooks in git, review changes in PRs,
+and sync them from CI with `stromboli catalog import services.yaml --runbooks
+runbooks/ --prune --yes`. Every write validates dependency cycles, connector
+types, and missing runbooks before it lands.
+
+## Why an AI SRE has to be open source and self-hosted
+
+Every AI SRE we looked at is closed-source SaaS. Datadog has Bits AI SRE, the
+other observability incumbents are bundling their own, and a wave of startups
+will happily take a webhook and your cloud credentials. You send an alert into
+a black box and get back a paragraph in Slack—with no way to read the system
+prompt, inspect the tool definitions, audit the redaction rules, or understand
+why the agent fixated on an unrelated warning.
+
+We think that's backwards for software that sits next to production during an
+outage.
+
+First, **debuggability**: when an agent misdiagnoses an incident, you should be
+able to read the exact system prompt, check the tool schemas, inspect the
+ordered step log, and open a PR to fix it. In stromboli, even our architecture
+trade-offs live in [`docs/adr/`](https://github.com/openstatusHQ/stromboli/tree/main/docs/adr).
+
+Second, **data sovereignty**: an AI SRE needs read access to your production
+logs, metrics, commit diffs, and internal runbooks. Handing those credentials
+to a multi-tenant third party is a tough sell for any security-conscious team.
+stromboli is designed as one single-tenant instance per organization. Your
+credentials stay in your Postgres encrypted at rest, and nothing leaves your
+network except the redacted prompt sent to the LLM provider you choose—Anthropic,
+OpenAI, Gemini, DeepSeek, OpenRouter, Vercel AI Gateway, or **Ollama** if not a
+single token can leave your VPC.
+
+## Self-hosting in five minutes (really)
+
+We'll be honest: self-hosting the full openstatus platform is a project. Turso,
+Tinybird, Go checkers, several apps, and background queues—we [made it much
+smoother](/blog/self-hosting-openstatus), but it's still a weekend commitment.
+
+We designed stromboli to be the exact opposite: **one static Go binary and a
+Postgres database**. The same binary runs both the ConnectRPC server and the
+[clig.dev](https://clig.dev)-compliant CLI (`--json` output, TTY detection,
+hidden secret prompts, `grpcurl` reflection out of the box), and database
+migrations run automatically on startup.
+
+```sh
+cp .env.example .env   # STROMBOLI_SECRET_KEY, STROMBOLI_API_TOKEN, and an LLM key
+docker compose up -d   # stromboli + Postgres on http://localhost:8080
+```
+
+Install the CLI via Homebrew (or grab a binary from GitHub Releases), wire up
+your connectors, and run your first investigation:
+
+```sh
+brew install openstatusHQ/stromboli/stromboli
+
+stromboli connector add loki loki url=http://loki:3100
+stromboli connector add github github token
+stromboli catalog discover loki
+stromboli brief api --since 1h
+stromboli investigate api --description "5xx spike on /v1/monitors"
+```
+
+If you just want to watch it work without wiring up production first, the repo
+ships with a local dev stack (`docker compose -f docker-compose.dev.yml up -d`)
+that spins up Postgres, Loki, and a demo service that triggers a real failure
+after three minutes. There are also one-command deploy scripts for Fly.io and
+Railway.
+
+## Built to pair with openstatus, or run completely on its own
+
+stromboli has its own repository, its own release cycle, and zero hard
+dependency on openstatus. If your stack runs on Prometheus, Alertmanager, and
+Grafana, point them at `/webhooks/alertmanager` or `/webhooks/grafana` and you
+never need an openstatus account.
+
+If you *do* use openstatus, the two fit together naturally: point a webhook
+notification at `POST /webhooks/openstatus`, map your monitor ID in
+`services.yaml`, and the next failed check automatically triggers a brief, a
+mitigation in Slack, and a root-cause report—and resets deduplication as soon
+as the monitor recovers.
+
+stromboli also exposes an **MCP server** (`stromboli mcp` over stdio or `/mcp`
+over HTTP) and a Claude Code skill. During an incident, you can ask Claude Code
+or Cursor right from your editor what stromboli saw on `api`, pull the
+deterministic brief, or inspect the evidence behind a mitigation before
+shipping the code fix.
+
+## Try it and break it
+
+stromboli is MIT licensed and available today at
+[v0.1](https://github.com/openstatusHQ/stromboli/releases). It is early, and it
+is unapologetically shaped by the stack we run in production (Fly.io, Google
+Cloud, Vercel, Axiom, Loki, Prometheus, GitHub).
+
+If you run a different log store, orchestrator, or alerting pipeline—or if you
+throw a gnarly incident at it and it gets the hypothesis wrong—we want to hear
+about it:
+
+- **Website:** [stromboli.dev](https://stromboli.dev)
+- **GitHub:** [github.com/openstatusHQ/stromboli](https://github.com/openstatusHQ/stromboli) (and the [ADRs](https://github.com/openstatusHQ/stromboli/tree/main/docs/adr) behind the design)
+- **Community:** [Discord](https://discord.gg/openstatus) for feedback, connector requests, and war stories from production.
+

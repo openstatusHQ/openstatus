@@ -15,12 +15,15 @@ import {
   HEARTBEAT_GRACE_RANGE,
   HEARTBEAT_PERIOD_RANGE,
   headerPairSchema,
+  uniqueRegions,
 } from "@openstatus/utils";
 import { z } from "zod";
 
 export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
 const headerPair = headerPairSchema;
+// deduped, not rejected: existing API clients may send a region twice
+const regions = z.array(z.string()).transform((r) => uniqueRegions(r));
 export const monitorAssertionSchema = z.discriminatedUnion("type", [
   statusAssertion,
   headerAssertion,
@@ -61,7 +64,7 @@ export const CreateMonitorInput = z
     assertions: z.array(assertion).default([]),
     active: z.boolean().default(false),
     periodicity: z.enum(monitorPeriodicity).optional(),
-    regions: z.array(z.string()).optional(),
+    regions: regions.optional(),
     // Config fields below are omitted by the dashboard create form and set
     // by the public API. Each stays `undefined` when unset so the insert
     // falls through to the column default rather than overwriting it.
@@ -116,7 +119,7 @@ export const UpdateMonitorConfigInput = z.object({
   assertions: z.array(assertion).optional(),
   active: z.boolean().optional(),
   periodicity: z.enum(monitorPeriodicity).optional(),
-  regions: z.array(z.string()).optional(),
+  regions: regions.optional(),
   description: z.string().optional(),
   public: z.boolean().optional(),
   timeout: timeoutMs.optional(),
@@ -223,7 +226,7 @@ export type UpdateMonitorResponseTimeInput = z.infer<
 
 export const UpdateMonitorSchedulingRegionsInput = z.object({
   id: z.number().int(),
-  regions: z.array(z.string()),
+  regions,
   periodicity: z.enum(monitorPeriodicity),
   privateLocations: z.array(z.number().int()).default([]),
 });

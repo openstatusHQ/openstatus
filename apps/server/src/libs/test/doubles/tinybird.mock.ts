@@ -4,6 +4,7 @@
 export * from "@openstatus/tinybird-real";
 
 import {
+  heartbeatPingMock,
   tinybirdMockCalls as calls,
   tinybirdMockData as data,
 } from "./state.ts";
@@ -78,7 +79,10 @@ export class OSTinybird {
     return empty;
   }
   get heartbeatList() {
-    return empty;
+    return (params: (typeof heartbeatPingMock.calls)[number]) => {
+      heartbeatPingMock.calls.push(params);
+      return Promise.resolve({ data: heartbeatPingMock.rows });
+    };
   }
   get publishHeartbeatPing() {
     return () => Promise.resolve({ successful_rows: 0, quarantined_rows: 0 });

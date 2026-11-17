@@ -1,122 +1,107 @@
 package main
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	_ "embed"
-	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
-	"io"
+	"io/fs"
 	"log"
-	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 
-	"github.com/gliderlabs/ssh"
+	"github.com/charmbracelet/ssh"
+	"github.com/charmbracelet/wish"
+	bm "github.com/charmbracelet/wish/bubbletea"
+	gossh "golang.org/x/crypto/ssh"
 )
 
 //go:embed banner.txt
 var banner string
 
-func bannerfunc(ctx ssh.Context) string {
-	return banner
-}
+const (
+	listenAddr         = ":2222"
+	defaultHostKeyPath = "/data/id_rsa"
+	// A live board holds the connection open indefinitely, and an abandoned
+	// terminal would keep the fly machine awake forever.
+	maxSessionDuration = 30 * time.Minute
+)
 
-var statusOk = `
-+----------------------------------+
-|                                  |
-|       All Systems Operational    |
-|                                  |
-+----------------------------------+
-`
-var statusDegraded = `
-+----------------------------------+
-|                                  |
-|       System is degraded         |
-|                                  |
-+----------------------------------+
-`
-var statusPartialOutage = `
-+----------------------------------+
-|                                  |
-|   System is partially out of     |
-|       service                    |
-|                                  |
-+----------------------------------+
-`
-var statusMajorOutage = `
-+----------------------------------+
-|                                  |
-|       System is out of service   |
-|                                  |
-+----------------------------------+
-`
-var statusUnderMaintenance = `
-+----------------------------------+
-|                                  |
-|       System is under            |
-|       maintenance                |
-|                                  |
-+----------------------------------+
-`
-var statusIncident = `
-+----------------------------------+
-|                                  |
-|   System is partially out of     |
-|       service                    |
-|                                  |
-+----------------------------------+
-`
+func bannerHandler(ctx ssh.Context) string { return banner }
 
-type status struct {
-	Status string `json:"status"`
-}
+// hostKey returns the persistent host key stored at path, generating and
+// persisting one on first boot. The key has to survive restarts, otherwise
+// every client is asked to accept a new host fingerprint each time the machine
+// comes back up.
+func hostKey(path string) (gossh.Signer, error) {
+	switch data, err := os.ReadFile(path); {
+	case err == nil:
+		signer, err := gossh.ParsePrivateKey(data)
+		if err != nil {
+			return nil, fmt.Errorf("parsing host key %s: %w", path, err)
+		}
+		return signer, nil
+	case !errors.Is(err, fs.ErrNotExist):
+		return nil, fmt.Errorf("reading host key %s: %w", path, err)
+	}
 
-func handler(s ssh.Session) {
-	url := fmt.Sprintf("https://api.openstatus.dev/public/status/%s", s.User())
-	res, err := http.Get(url)
+	log.Printf("no host key at %s, generating one...", path)
+	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		fmt.Fprintf(s, "Error fetching status: %v\n", err)
-		return
+		return nil, fmt.Errorf("generating host key: %w", err)
 	}
-	defer res.Body.Close()
-	var status status
-	json.NewDecoder(res.Body).Decode(&status)
-
-	var currentStatus string
-	switch status.Status {
-	case "operational":
-		currentStatus = statusOk
-	case "degraded_performance":
-		currentStatus = statusDegraded
-	case "partial_outage":
-	currentStatus = statusPartialOutage
-	case "major_outage":
-		currentStatus = statusMajorOutage
-	case "under_maintenance":
-		currentStatus = statusUnderMaintenance
-	case "incident":
-		currentStatus = statusIncident
-	default:
-		currentStatus = ""
+	block, err := gossh.MarshalPrivateKey(key, "")
+	if err != nil {
+		return nil, fmt.Errorf("encoding host key: %w", err)
 	}
-
-	if currentStatus == "" {
-		io.WriteString(s, "Unknown status page")
-		return
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return nil, fmt.Errorf("creating host key directory: %w", err)
 	}
+	if err := os.WriteFile(path, pem.EncodeToMemory(block), 0o600); err != nil {
+		return nil, fmt.Errorf("writing host key %s: %w", path, err)
+	}
+	return gossh.NewSignerFromKey(key)
+}
 
-	io.WriteString(s, fmt.Sprintf("\nCurrent Status for: %s\n\n%s\n\nVisit the status page at https://%s.openstatus.dev/\n\n", s.User(), currentStatus, s.User()))
+func withHostSigner(signer gossh.Signer) ssh.Option {
+	return func(s *ssh.Server) error {
+		s.HostSigners = []ssh.Signer{signer}
+		return nil
+	}
 }
 
 func main() {
+	configureFromEnv()
 
-	server := &ssh.Server{
-		Addr:          ":2222",
-		BannerHandler: bannerfunc,
-		Handler:       handler,
-
+	path := os.Getenv("HOST_KEY_PATH")
+	if path == "" {
+		path = defaultHostKeyPath
 	}
-	ssh.HostKeyFile("/data/id_rsa")
+	signer, err := hostKey(path)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	log.Println("starting ssh server on port 2222...")
+	// Middlewares run last-to-first, so the TUI gets the session and the plain
+	// renderer is what it falls through to.
+	server, err := wish.NewServer(
+		wish.WithAddress(listenAddr),
+		wish.WithBannerHandler(bannerHandler),
+		wish.WithMaxTimeout(maxSessionDuration),
+		withHostSigner(signer),
+		wish.WithMiddleware(
+			plainMiddleware,
+			bm.Middleware(teaHandler),
+		),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("host key %s (%s)", path, gossh.FingerprintSHA256(signer.PublicKey()))
+	log.Printf("starting ssh server on %s...", listenAddr)
 	log.Fatal(server.ListenAndServe())
-
-
 }

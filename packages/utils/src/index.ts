@@ -33,6 +33,7 @@ export {
   type CheckerPayload,
 } from "./checker-payload";
 export { personName } from "./person-name";
+export { uniqueRegions } from "./regions";
 export { iteratorToStream, yieldMany } from "./stream";
 export { type PageUpdateStatus, statusLabel } from "./status";
 export {

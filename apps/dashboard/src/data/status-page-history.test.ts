@@ -5,9 +5,12 @@ import {
   cellFromPercentage,
   eventsForMonth,
   getColumnVisibility,
+  historyBreakdown,
+  historyRows,
   monthKeyToFullLabel,
   monthKeyToLabel,
   parseWindow,
+  windowLabel,
 } from "./status-page-history";
 
 describe("parseWindow", () => {
@@ -98,5 +101,122 @@ describe("getColumnVisibility", () => {
       "8": false,
       "9": false,
     });
+  });
+});
+
+describe("historyBreakdown", () => {
+  const DAY = 86_400_000;
+
+  it("lists success, degraded and error with the total in the unit", () => {
+    expect(
+      historyBreakdown(
+        { percentage: 99.975, ok: 73_450, degraded: 18, error: 18 },
+        "requests",
+      ),
+    ).toEqual({
+      rows: [
+        { key: "ok", label: "Success", value: "73,450" },
+        { key: "degraded", label: "Degraded", value: "18" },
+        { key: "error", label: "Error", value: "18" },
+      ],
+      total: { value: "73,486", unit: "requests" },
+    });
+  });
+
+  it("keeps zero rows", () => {
+    const { rows, total } = historyBreakdown(
+      { percentage: 100, ok: 8640, degraded: 0, error: 0 },
+      "runs",
+    );
+    expect(rows.map((row) => row.value)).toEqual(["8,640", "0", "0"]);
+    expect(total).toEqual({ value: "8,640", unit: "runs" });
+  });
+
+  it("uses the singular for a single run or request", () => {
+    const one = { percentage: 0, ok: 0, degraded: 0, error: 1 };
+    expect(historyBreakdown(one, "runs").total).toEqual({
+      value: "1",
+      unit: "run",
+    });
+    expect(historyBreakdown(one, "requests").total).toEqual({
+      value: "1",
+      unit: "request",
+    });
+  });
+
+  it("formats time as success and error durations of the covered span", () => {
+    const down = (2 * 60 + 32) * 60_000;
+    expect(
+      historyBreakdown(
+        { percentage: 99.648, ok: 30 * DAY - down, degraded: 0, error: down },
+        "time",
+      ),
+    ).toEqual({
+      rows: [
+        { key: "ok", label: "Success", value: "29d 21h" },
+        { key: "error", label: "Error", value: "2h 32m" },
+      ],
+      total: { value: "30d", unit: null },
+    });
+  });
+
+  it("shows a zero error duration", () => {
+    const { rows } = historyBreakdown(
+      { percentage: 100, ok: 7.5 * DAY, degraded: 0, error: 0 },
+      "time",
+    );
+    expect(rows[1]).toEqual({ key: "error", label: "Error", value: "0s" });
+  });
+});
+
+describe("windowLabel", () => {
+  it("names the window", () => {
+    expect(windowLabel(6)).toBe("Last 6 months");
+  });
+});
+
+describe("historyRows", () => {
+  const value = (percentage: number) => ({
+    percentage,
+    ok: 1,
+    degraded: 0,
+    error: 0,
+  });
+  const base = {
+    component: { id: 1, name: "API", type: "monitor" as const, monitorId: 1 },
+    events: [],
+  };
+  const monitorRow = {
+    ...base,
+    unit: "requests" as const,
+    months: { "2026-11": value(99) },
+    rolling: { "6": value(99), "12": value(99), "24": value(99) },
+    runs: {
+      months: { "2026-11": value(100) },
+      rolling: { "6": value(100), "12": null, "24": null },
+    },
+  };
+  const staticRow = {
+    ...base,
+    unit: "time" as const,
+    months: { "2026-11": value(50) },
+    rolling: { "6": value(50), "12": null, "24": null },
+    runs: null,
+  };
+
+  it("keeps requests by default and drops the runs block", () => {
+    const [row] = historyRows([monitorRow], "requests");
+    expect(row.unit).toBe("requests");
+    expect(row.months["2026-11"]?.percentage).toBe(99);
+    expect(row).not.toHaveProperty("runs");
+  });
+
+  it("swaps in runs where a row has them", () => {
+    const [monitor, other] = historyRows([monitorRow, staticRow], "runs");
+    expect(monitor.unit).toBe("runs");
+    expect(monitor.months["2026-11"]?.percentage).toBe(100);
+    expect(monitor.rolling["12"]).toBe(null);
+    expect(other.unit).toBe("time");
+    expect(other.months["2026-11"]?.percentage).toBe(50);
   });
 });

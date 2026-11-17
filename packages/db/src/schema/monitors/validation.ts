@@ -1,5 +1,5 @@
 import * as assertions from "@openstatus/assertions";
-import { headerPairSchema } from "@openstatus/utils";
+import { headerPairSchema, uniqueRegions } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -21,12 +21,10 @@ export const grpcTlsModesSchema = z.enum(grpcTlsModes);
 // oxlint-disable-next-line eslint/no-unused-vars
 function stringToArrayProcess<T>(_string: T) {}
 
-const regionsToArraySchema = z.preprocess((val) => {
-  if (String(val).length > 0) {
-    return String(val).split(",");
-  }
-  return [];
-}, z.array(monitorRegionSchema));
+const regionsToArraySchema = z.preprocess(
+  (val) => uniqueRegions(String(val)),
+  z.array(monitorRegionSchema),
+);
 
 const bodyToStringSchema = z.preprocess((val) => {
   return String(val);

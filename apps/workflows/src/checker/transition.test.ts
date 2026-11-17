@@ -106,6 +106,25 @@ describe("quorum", () => {
   }
 });
 
+describe("duplicated regions", () => {
+  test("a region configured twice counts once in the quorum", async () => {
+    const row = await createMonitor(workspaceId, {
+      regions: "ams,arn,ams,arn,atl,bog",
+    });
+    await seedRegionStatus(row.id, ["ams"], "error");
+
+    const result = await applyStatusTransition(
+      transitionInput(row.id, "arn", Date.now()),
+    );
+
+    expect(result.kind).toBe("evaluated");
+    if (result.kind !== "evaluated") return;
+    expect(result.quorumCount).toBe(2);
+    expect(result.regionCount).toBe(4);
+    expect(result.transitioned).toBe(true);
+  });
+});
+
 describe("fast path", () => {
   test("an unchanged region status writes nothing and short-circuits", async () => {
     const { monitorId, regions } = await makeMonitor(1);

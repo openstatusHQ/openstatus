@@ -57,7 +57,7 @@ function makeInput(
   return {
     monitorId,
     month: "2026-06-01",
-    days: [{ day: "2026-06-01", ok: 42, degraded: 0, error: 1 }],
+    days: [{ day: "2026-06-01", requests: { ok: 42, degraded: 0, error: 1 } }],
     ...overrides,
   };
 }
@@ -106,7 +106,9 @@ describe("freezeMonitorMonth", () => {
         ctx,
         input: {
           ...input,
-          days: [{ day: "2026-06-01", ok: 0, degraded: 0, error: 0 }],
+          days: [
+            { day: "2026-06-01", requests: { ok: 0, degraded: 0, error: 0 } },
+          ],
         },
       });
       expect(second).toBeNull();
@@ -117,7 +119,7 @@ describe("freezeMonitorMonth", () => {
         .where(eq(frozenMonitorUptime.monitorId, input.monitorId))
         .all();
       expect(persisted.length).toBe(1);
-      expect(persisted[0].days[0].ok).toBe(42);
+      expect(persisted[0].days[0].requests.ok).toBe(42);
 
       const auditRows = await readAuditLog({
         workspaceId: teamWorkspaceId,

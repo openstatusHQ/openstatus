@@ -80,7 +80,7 @@ export function AnswerLink({
   }
   // Internal pages (other status pages, the checker) navigate client-side.
   return (
-    <Link className={className} href={href}>
+    <Link prefetch={false} className={className} href={href}>
       {children}
     </Link>
   );

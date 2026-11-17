@@ -49,6 +49,12 @@ kill_signal = "SIGTERM"
   NODE_ENV = "production"
   PORT = "3000"
 
+# The embedded replica mirrors the whole Turso database; a full volume stops
+# its sync silently and the checker dispatch reads a frozen snapshot.
 [[mounts]]
-    source = "libsql_data"
-    destination = "/app/data"
+  source = "libsql_data"
+  destination = "/app/data"
+  initial_size = "5gb"
+  auto_extend_size_threshold = 80
+  auto_extend_size_increment = "1gb"
+  auto_extend_size_limit = "10gb"

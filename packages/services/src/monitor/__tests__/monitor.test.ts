@@ -31,7 +31,11 @@ import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
 import { deleteMonitor, deleteMonitors } from "../delete";
 import { getMonitor, listMonitors } from "../list";
-import { updateMonitorNotifiers, updateMonitorTags } from "../relations";
+import {
+  updateMonitorNotifiers,
+  updateMonitorSchedulingRegions,
+  updateMonitorTags,
+} from "../relations";
 import { triggerMonitorRun } from "../trigger";
 import {
   bulkUpdateMonitors,
@@ -1578,6 +1582,89 @@ describe("group scopes", () => {
         },
       });
       expect(row.id).toBeGreaterThan(0);
+    });
+  });
+});
+
+describe("duplicate regions", () => {
+  async function storedRegions(tx: DrizzleTx, id: number) {
+    const row = await tx
+      .select({ regions: monitor.regions })
+      .from(monitor)
+      .where(eq(monitor.id, id))
+      .get();
+    return row?.regions;
+  }
+
+  async function create(ctx: ServiceContext, regions: string[]) {
+    return createMonitor({
+      ctx,
+      input: {
+        name: `${TEST_PREFIX}-dup-regions`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: false,
+        regions,
+      },
+    });
+  }
+
+  test("create stores each region once, in first-seen order", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await create({ ...teamCtx, db: tx }, [
+        "iad",
+        "ams",
+        "iad",
+        "ams",
+      ]);
+      expect(await storedRegions(tx, row.id)).toBe("iad,ams");
+    });
+  });
+
+  test("a duplicate does not count against max-regions", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = {
+        ...teamCtx,
+        db: tx,
+        workspace: {
+          ...teamCtx.workspace,
+          limits: { ...teamCtx.workspace.limits, "max-regions": 2 },
+        },
+      };
+      const row = await create(ctx, ["ams", "iad", "ams"]);
+      expect(await storedRegions(tx, row.id)).toBe("ams,iad");
+    });
+  });
+
+  test("updateMonitorConfig stores each region once", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await create(ctx, ["ams"]);
+      await updateMonitorConfig({
+        ctx,
+        input: { id: row.id, regions: ["gru", "gru", "ams"] },
+      });
+      expect(await storedRegions(tx, row.id)).toBe("gru,ams");
+    });
+  });
+
+  test("updateMonitorSchedulingRegions stores each region once", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await create(ctx, ["ams"]);
+      await updateMonitorSchedulingRegions({
+        ctx,
+        input: {
+          id: row.id,
+          regions: ["iad", "ams", "iad"],
+          periodicity: "10m",
+          privateLocations: [],
+        },
+      });
+      expect(await storedRegions(tx, row.id)).toBe("iad,ams");
     });
   });
 });

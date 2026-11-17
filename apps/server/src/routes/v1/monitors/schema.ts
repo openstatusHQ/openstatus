@@ -10,7 +10,7 @@ import {
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { assertSafeUrlSync } from "@openstatus/utils";
+import { assertSafeUrlSync, uniqueRegions } from "@openstatus/utils";
 import { ZodError } from "zod";
 
 const statusAssertion = z
@@ -108,17 +108,7 @@ export const MonitorSchema = z
     }),
     regions: z
       .preprocess(
-        (val) => {
-          let parsedRegions: Array<unknown> = [];
-          if (!val) return parsedRegions;
-          if (Array.isArray(val)) {
-            parsedRegions = val;
-          }
-          if (String(val).length > 0) {
-            parsedRegions = String(val).split(",");
-          }
-          return parsedRegions;
-        },
+        (val) => (val ? uniqueRegions(String(val)) : []),
         z.array(z.enum(monitorRegions)),
       )
       .superRefine((regions, ctx) => {
@@ -382,17 +372,7 @@ const baseRequest = z.object({
   }),
   regions: z
     .preprocess(
-      (val) => {
-        let parsedRegions: Array<unknown> = [];
-        if (!val) return parsedRegions;
-        if (Array.isArray(val)) {
-          parsedRegions = val;
-        }
-        if (String(val).length > 0) {
-          parsedRegions = String(val).split(",");
-        }
-        return parsedRegions;
-      },
+      (val) => (val ? uniqueRegions(String(val)) : []),
       z.array(z.enum(monitorRegions)),
     )
     .superRefine((regions, ctx) => {

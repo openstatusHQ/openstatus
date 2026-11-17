@@ -10,7 +10,7 @@ import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
 import { Link } from "@/components/common/link";
-import { NoteButton } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   BillingOverlay,
@@ -49,12 +49,14 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
+import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import {
   HISTORY_WINDOWS,
   getColumnVisibility,
+  historyRows,
   parseWindow,
   windowKey,
 } from "@/data/status-page-history";
@@ -75,7 +77,8 @@ const MODE_LABELS = {
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [{ window }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [{ window, metric }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -92,6 +95,10 @@ export function Client() {
     [isLimited],
   );
   const history = isLimited ? exampleHistory : liveHistory;
+  const rows = useMemo(
+    () => historyRows(history?.rows ?? [], metric),
+    [history?.rows, metric],
+  );
 
   const columns = useMemo(
     () => getColumns(history?.months ?? [], window),
@@ -105,7 +112,15 @@ export function Client() {
   if (!history) return null;
 
   const summary = history.summary[windowKey(window)];
-  const hasAnyData = history.rows.some((row) =>
+  const showMetric = !isLimited && history.mode === "requests";
+  const showRuns = showMetric && metric === "runs";
+  const uptime = showRuns ? summary.runsUptime : summary.uptime;
+  const partial = showRuns ? history.runsPartial : history.partial;
+  // rows without a value in the window are left out of the page average
+  const averaged = rows.filter(
+    (row) => row.rolling[windowKey(window)] !== null,
+  ).length;
+  const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
   );
 
@@ -122,20 +137,42 @@ export function Client() {
                   : "Long-term uptime, built from your page's components."}
               </SectionDescription>
             </div>
-            <Tabs
-              value={String(window)}
-              onValueChange={(v) => setSearchParams({ window: parseWindow(v) })}
-            >
-              <TabsList>
-                {HISTORY_WINDOWS.map((w) => (
-                  <TabsTrigger key={w} value={String(w)}>
-                    {w} months
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap justify-end gap-2">
+              {showMetric ? (
+                <UptimeMetricTabs
+                  value={metric}
+                  onValueChange={(m) => setSearchParams({ metric: m })}
+                />
+              ) : null}
+              <Tabs
+                value={String(window)}
+                onValueChange={(v) =>
+                  setSearchParams({ window: parseWindow(v) })
+                }
+              >
+                <TabsList>
+                  {HISTORY_WINDOWS.map((w) => (
+                    <TabsTrigger key={w} value={String(w)}>
+                      {w} months
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
           </SectionHeaderRow>
         </SectionHeader>
+        {!isLimited && partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent{" "}
+            {showRuns
+              ? "runs"
+              : history.mode === "requests"
+                ? "requests"
+                : "uptime data"}{" "}
+            couldn&apos;t be loaded, so the latest months may be incomplete.
+          </Note>
+        ) : null}
       </Section>
       <Section id="history-metrics">
         <MetricCardGroup
@@ -151,9 +188,16 @@ export function Client() {
                 Page Uptime
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>
-              {summary.uptime === null ? "—" : `${summary.uptime.toFixed(3)}%`}
-            </MetricCardValue>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <MetricCardValue>
+                {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
+              </MetricCardValue>
+              {averaged > 0 && averaged < rows.length ? (
+                <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                  {averaged} of {rows.length} components
+                </span>
+              ) : null}
+            </div>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -167,7 +211,7 @@ export function Client() {
                 Components
               </MetricCardTitle>
             </MetricCardHeader>
-            <MetricCardValue>{history.rows.length}</MetricCardValue>
+            <MetricCardValue>{rows.length}</MetricCardValue>
           </MetricCard>
           <MetricCard>
             <MetricCardHeader>
@@ -186,7 +230,7 @@ export function Client() {
               <DataTable
                 paginationComponent={DataTablePaginationSimple}
                 columns={columns}
-                data={history.rows}
+                data={rows}
                 columnVisibility={columnVisibility}
               />
             </div>
@@ -215,7 +259,7 @@ export function Client() {
               paginationComponent={DataTablePaginationSimple}
               columns={columns}
               // rows without a single value are not history yet
-              data={hasAnyData ? history.rows : []}
+              data={hasAnyData ? rows : []}
               columnVisibility={columnVisibility}
               emptyState={
                 <DataTableEmpty>
@@ -258,11 +302,16 @@ export function Client() {
                   {MODE_LABELS.requests}
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  — Monitor components. Uptime is{" "}
-                  <span className="text-foreground font-medium">
-                    (ok + degraded) / total checks
-                  </span>
-                  . Degraded responses still count as up.
+                  — Monitor components, counted in requests or runs.{" "}
+                  <span className="text-foreground font-medium">Requests</span>{" "}
+                  counts each region&apos;s result.{" "}
+                  <span className="text-foreground font-medium">Runs</span>{" "}
+                  counts each scheduled check once across its cloud regions: a
+                  run is down when at least half of the regions that reported
+                  fail. Uptime is (ok + degraded) / total; degraded still counts
+                  as up. Monitors with only private locations have no runs and
+                  show no data in runs; Page Uptime then averages the components
+                  that have data.
                 </span>
               </li>
               <li>
@@ -305,9 +354,9 @@ export function Client() {
         {!isLimited ? (
           <NoteDismissible cookieKey="note_status_page_history_missing_months">
             <Info />
-            If there are any missing months, please contact us.
+            Is a month missing that your monitors were running? Let us know.
             <FormDialogSupportContact>
-              <NoteButton variant="default">Request Backfill</NoteButton>
+              <NoteButton variant="default">Contact us</NoteButton>
             </FormDialogSupportContact>
           </NoteDismissible>
         ) : null}

@@ -34,7 +34,7 @@ export type ActivityLink = {
 
 export type ActivityDay = Partial<ActivityMark> & {
   date: Date;
-  /** Scheduled, not recorded: a dashed ring over the lightest planned fill. */
+  /** Scheduled, not recorded: a dashed ring over the empty fill. */
   upcoming?: boolean;
   /** Tooltip lines under the date; with the date they make the aria-label. */
   lines?: string[];
@@ -70,8 +70,8 @@ const cellVariants = cva(
   {
     variants: {
       upcoming: {
-        // filled, so it differs from a bare future day by more than hue
-        true: "border-info bg-activity-planned-1 border border-dashed",
+        // filled and darker-edged, so it differs from a bare future day
+        true: "border-muted-foreground bg-activity-0 border border-dashed",
       },
     },
   },
@@ -283,7 +283,7 @@ function ActivityCalendarDay({
   if (!hydrated) {
     return <ActivityCalendarCell className={cn(recent && "invisible")} />;
   }
-  // after today: empty days are a bare outline, scheduled ones filled and dashed blue
+  // after today: empty days are a bare outline, scheduled ones filled and dashed darker
   const future = day.date > today;
   // not a button, so arrow keys hop over it
   if (day.blank || (future && !day.upcoming && day.scale === undefined)) {

@@ -1,6 +1,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { format } from "date-fns";
 
+import { formatDurationShort, formatNumber } from "@/lib/formatter";
+
 // single client-side source for the window set; the server keeps its own
 // WINDOWS tuple (services can't be imported into client bundles)
 export const HISTORY_WINDOWS = [6, 12, 24] as const;
@@ -28,9 +30,76 @@ export type MonthCell = {
 };
 
 // wire types inferred from the endpoint so server shape changes surface here
-export type HistoryRow =
-  RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
+type HistoryWireRow = RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
+export type HistoryUnit = HistoryWireRow["unit"] | "runs";
+export type HistoryRow = Omit<HistoryWireRow, "unit" | "runs"> & {
+  unit: HistoryUnit;
+};
 export type HistoryEvent = HistoryRow["events"][number];
+export type HistoryValue = NonNullable<HistoryRow["months"][string]>;
+
+export const HISTORY_METRICS = ["requests", "runs"] as const;
+export type HistoryMetric = (typeof HISTORY_METRICS)[number];
+
+/** Rows as `metric` counts them; rows without runs keep their own unit. */
+export function historyRows(
+  rows: HistoryWireRow[],
+  metric: HistoryMetric,
+): HistoryRow[] {
+  return rows.map(({ runs, ...row }) =>
+    metric === "runs" && runs ? { ...row, unit: "runs", ...runs } : row,
+  );
+}
+
+export type BreakdownRow = {
+  key: "ok" | "degraded" | "error";
+  label: string;
+  value: string;
+};
+
+/** Rows of a month's or window's card; time units have no degraded duration. */
+export function historyBreakdown(
+  value: HistoryValue,
+  unit: HistoryUnit,
+): { rows: BreakdownRow[]; total: { value: string; unit: string | null } } {
+  if (unit === "time") {
+    return {
+      rows: [
+        { key: "ok", label: "Success", value: formatDurationShort(value.ok) },
+        {
+          key: "error",
+          label: "Error",
+          value: formatDurationShort(value.error),
+        },
+      ],
+      total: {
+        value: formatDurationShort(value.ok + value.error),
+        unit: null,
+      },
+    };
+  }
+  const total = value.ok + value.degraded + value.error;
+  return {
+    rows: [
+      { key: "ok", label: "Success", value: formatNumber(value.ok) },
+      {
+        key: "degraded",
+        label: "Degraded",
+        value: formatNumber(value.degraded),
+      },
+      { key: "error", label: "Error", value: formatNumber(value.error) },
+    ],
+    total: {
+      value: formatNumber(total),
+      unit: total === 1 ? unit.slice(0, -1) : unit,
+    },
+  };
+}
+
+/** "Last 6 months", the header of the window total's card. */
+export function windowLabel(window: HistoryWindow): string {
+  return `Last ${window} months`;
+}
 
 // safe because HistoryRow.rolling keys are exactly the string forms of HistoryWindow
 export function windowKey(window: HistoryWindow): keyof HistoryRow["rolling"] {

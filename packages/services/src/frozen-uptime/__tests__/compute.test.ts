@@ -63,21 +63,15 @@ describe("computeMonitorMonth", () => {
     expect(computed?.days.length).toBe(30);
     expect(computed?.days[4]).toEqual({
       day: "2026-06-05",
-      ok: 42,
-      degraded: 1,
-      error: 0,
+      requests: { ok: 42, degraded: 1, error: 0 },
     });
     expect(computed?.days[29]).toEqual({
       day: "2026-06-30",
-      ok: 7,
-      degraded: 0,
-      error: 2,
+      requests: { ok: 7, degraded: 0, error: 2 },
     });
     expect(computed?.days[0]).toEqual({
       day: "2026-06-01",
-      ok: 0,
-      degraded: 0,
-      error: 0,
+      requests: { ok: 0, degraded: 0, error: 0 },
     });
   });
 
@@ -93,8 +87,8 @@ describe("computeMonitorMonth", () => {
       ],
     });
 
-    expect(computed?.days[9].ok).toBe(5);
-    expect(computed?.days.every((d) => d.ok <= 5)).toBe(true);
+    expect(computed?.days[9].requests.ok).toBe(5);
+    expect(computed?.days.every((d) => d.requests.ok <= 5)).toBe(true);
   });
 
   test("sums multiple rows for the same day instead of overwriting", () => {
@@ -109,10 +103,24 @@ describe("computeMonitorMonth", () => {
 
     expect(computed?.days[9]).toEqual({
       day: "2026-06-10",
-      ok: 15,
-      degraded: 1,
-      error: 2,
+      requests: { ok: 15, degraded: 1, error: 2 },
     });
+  });
+
+  test("adds the runs of a day when given", () => {
+    const runs = { ok: 280, degraded: 1, error: 3 };
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [row("2026-06-10", { ok: 10 })],
+      runs: new Map([["2026-06-10", runs]]),
+    });
+    expect(computed?.days[9]).toEqual({
+      day: "2026-06-10",
+      requests: { ok: 10, degraded: 0, error: 0 },
+      runs,
+    });
+    expect(computed?.days[0]).not.toHaveProperty("runs");
   });
 
   test("returns null when the monitor has no counts in the month", () => {

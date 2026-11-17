@@ -66,6 +66,6 @@ export function incidentScopeGroups({
         })),
       ],
     },
-    { heading: "Status Report", items: reportItems },
+    { heading: "Status Report", key: "report", items: reportItems },
   ];
 }

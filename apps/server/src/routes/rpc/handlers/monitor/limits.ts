@@ -4,6 +4,7 @@ import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
+import { uniqueRegions } from "@openstatus/utils";
 import { z } from "zod";
 
 import { periodicityToString, regionsToStrings } from "./converters";
@@ -33,7 +34,7 @@ export function checkMonitorConfigLimits(
   if (regions && regions.length > 0) {
     const regionStrings = z
       .array(monitorRegionSchema)
-      .parse(regionsToStrings(regions));
+      .parse(uniqueRegions(regionsToStrings(regions)));
 
     // Check max regions limit
     if (regionStrings.length > limits["max-regions"]) {

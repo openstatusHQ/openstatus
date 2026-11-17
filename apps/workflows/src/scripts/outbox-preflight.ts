@@ -18,6 +18,7 @@ import {
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
+import { uniqueRegions } from "@openstatus/utils";
 
 const CHECKS_PER_REGION_PER_DAY: Record<string, number> = {
   "30s": 2880,
@@ -139,7 +140,7 @@ async function writeVolumeBaseline() {
 
   let checksPerDay = 0;
   for (const row of monitors) {
-    const regionCount = row.regions.split(",").filter(Boolean).length;
+    const regionCount = uniqueRegions(row.regions).length;
     checksPerDay +=
       regionCount * (CHECKS_PER_REGION_PER_DAY[row.periodicity] ?? 0);
   }

@@ -1,3 +1,4 @@
+import { frozenMonitorUptimeDaySchema } from "@openstatus/db/src/schema";
 import { describe, expect, test } from "vitest";
 
 import { FreezeMonitorMonthInput } from "../schemas";
@@ -5,7 +6,7 @@ import { FreezeMonitorMonthInput } from "../schemas";
 const valid: FreezeMonitorMonthInput = {
   monitorId: 1,
   month: "2026-06-01",
-  days: [{ day: "2026-06-01", ok: 10, degraded: 1, error: 0 }],
+  days: [{ day: "2026-06-01", requests: { ok: 10, degraded: 1, error: 0 } }],
 };
 
 describe("FreezeMonitorMonthInput", () => {
@@ -26,19 +27,54 @@ describe("FreezeMonitorMonthInput", () => {
     expect(() =>
       FreezeMonitorMonthInput.parse({
         ...valid,
-        days: [{ day: "2026-06-01", ok: 0 }],
+        days: [{ day: "2026-06-01", requests: { ok: 0 } }],
       }),
     ).toThrow();
     expect(() =>
       FreezeMonitorMonthInput.parse({
         ...valid,
-        days: [{ day: "2026-06-01T00:00:00Z", ok: 0, degraded: 0, error: 0 }],
+        days: [
+          {
+            day: "2026-06-01T00:00:00Z",
+            requests: { ok: 0, degraded: 0, error: 0 },
+          },
+        ],
       }),
     ).toThrow();
     expect(() =>
       FreezeMonitorMonthInput.parse({
         ...valid,
-        days: [{ day: "2026-06-01", ok: -1, degraded: 0, error: 0 }],
+        days: [
+          { day: "2026-06-01", requests: { ok: -1, degraded: 0, error: 0 } },
+        ],
+      }),
+    ).toThrow();
+  });
+});
+
+describe("frozenMonitorUptimeDaySchema", () => {
+  const requests = { ok: 10, degraded: 1, error: 2 };
+  const runs = { ok: 1430, degraded: 0, error: 10 };
+
+  test("accepts a day without runs", () => {
+    const day = { day: "2026-06-01", requests };
+    expect(frozenMonitorUptimeDaySchema.parse(day)).toEqual(day);
+  });
+
+  test("accepts a day with runs", () => {
+    const day = { day: "2026-06-01", requests, runs };
+    expect(frozenMonitorUptimeDaySchema.parse(day)).toEqual(day);
+    expect(
+      FreezeMonitorMonthInput.parse({ ...valid, days: [day] }).days[0].runs,
+    ).toEqual(runs);
+  });
+
+  test("rejects negative runs", () => {
+    expect(() =>
+      frozenMonitorUptimeDaySchema.parse({
+        day: "2026-06-01",
+        requests,
+        runs: { ...runs, error: -1 },
       }),
     ).toThrow();
   });

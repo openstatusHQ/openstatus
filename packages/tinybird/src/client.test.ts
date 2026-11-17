@@ -6,6 +6,8 @@ import {
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
+  runs45dParameters,
+  runs45dShape,
   status15mParameters,
   status15mShape,
 } from "./client";
@@ -270,6 +272,55 @@ describe("15m status pipes", () => {
       expect(
         await tb[name]({ monitorIds: ["1"], timezone: "Asia/Kolkata" }),
       ).toEqual({ meta: [], data: [] });
+      expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
+        meta: [],
+        data: [],
+      });
+    });
+  }
+});
+
+const runs45dGetters = [
+  "httpRuns45d",
+  "tcpRuns45d",
+  "dnsRuns45d",
+  "icmpRuns45d",
+  "grpcRuns45d",
+] as const;
+
+describe("runs45dParameters", () => {
+  test("sends monitorIds only", () => {
+    expect(
+      runs45dParameters.parse({ monitorIds: ["1", "666"], type: "runs" }),
+    ).toEqual({ monitorIds: ["1", "666"] });
+  });
+});
+
+describe("runs45dShape", () => {
+  test("re-keys the UTC day as an ISO midnight and defaults missing counts", () => {
+    expect(
+      runs45dShape.parse({
+        day: "2026-06-14 00:00:00",
+        monitorId: "1",
+        count: 144,
+        ok: 140,
+      }),
+    ).toEqual({
+      day: "2026-06-14T00:00:00.000Z",
+      monitorId: "1",
+      count: 144,
+      ok: 140,
+      degraded: 0,
+      error: 0,
+    });
+  });
+});
+
+describe("runs 45d pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+
+  for (const name of runs45dGetters) {
+    test(`${name} resolves`, async () => {
       expect(await tb[name]({ monitorIds: ["1"] })).toEqual({
         meta: [],
         data: [],

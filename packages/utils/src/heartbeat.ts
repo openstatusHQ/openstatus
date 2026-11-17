@@ -1,3 +1,5 @@
+import { uniqueRegions } from "./regions";
+
 const UNITS = [
   { seconds: 86_400, label: "d" },
   { seconds: 3_600, label: "h" },
@@ -34,5 +36,7 @@ export function statusRegions<R extends string>(monitor: {
   jobType: string;
   regions: R[];
 }): string[] {
-  return monitor.jobType === "heartbeat" ? [HEARTBEAT_REGION] : monitor.regions;
+  return monitor.jobType === "heartbeat"
+    ? [HEARTBEAT_REGION]
+    : uniqueRegions(monitor.regions);
 }

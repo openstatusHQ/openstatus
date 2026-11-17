@@ -348,6 +348,20 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
+export const runs45dParameters = z.object({
+  monitorIds: z.string().array(),
+});
+
+// Each run is judged against the cloud regions that reported in it.
+export const runs45dShape = z.object({
+  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+  monitorId: z.string(),
+  count: z.number().prefault(0),
+  ok: z.number().prefault(0),
+  degraded: z.number().prefault(0),
+  error: z.number().prefault(0),
+});
+
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
 
 /**
@@ -893,6 +907,15 @@ export class OSTinybird {
       pipe: "endpoint__http_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1475,6 +1498,15 @@ export class OSTinybird {
     });
   }
 
+  public get tcpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
@@ -1944,6 +1976,15 @@ export class OSTinybird {
       pipe: "endpoint__icmp_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -2433,6 +2474,15 @@ export class OSTinybird {
       pipe: "endpoint__grpc_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -3749,6 +3799,15 @@ export class OSTinybird {
       pipe: "endpoint__dns_status_15m__v0",
       parameters: status15mParameters,
       data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

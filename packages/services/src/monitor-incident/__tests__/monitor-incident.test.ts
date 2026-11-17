@@ -317,4 +317,41 @@ describe("list / get", () => {
       expect(ours[1]?.monitor?.id).toBe(testMonitorId);
     });
   });
+
+  test("attributes who acknowledged and resolved", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+      await acknowledgeMonitorIncident({ ctx, input: { id: incident.id } });
+      await resolveMonitorIncident({ ctx, input: { id: incident.id } });
+
+      const full = await getMonitorIncident({
+        ctx,
+        input: { id: incident.id },
+      });
+      expect(full.acknowledgedByUser?.id).toBe(1);
+      expect(full.resolvedByUser?.id).toBe(1);
+    });
+  });
+
+  test("leaves attribution empty for an auto-resolved incident", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+
+      const full = await getMonitorIncident({
+        ctx,
+        input: { id: incident.id },
+      });
+      expect(full.acknowledgedByUser).toBeNull();
+      expect(full.resolvedByUser).toBeNull();
+    });
+  });
 });

@@ -152,6 +152,58 @@ describe("handleStatusDriftCron", () => {
       .all();
     expect(after[0]?.status).toBe("active");
   });
+
+  test("a duplicated region counts once towards quorum", async () => {
+    const monitorRow = await createMonitor(workspaceId, {
+      regions: "ams,ams,fra",
+      active: true,
+    });
+
+    await db
+      .insert(monitorStatusTable)
+      .values({
+        monitorId: monitorRow.id,
+        region: "ams",
+        status: "error",
+        cronTimestamp: Date.now(),
+      })
+      .run();
+
+    await handleStatusDriftCron();
+
+    const after = await db
+      .select({ status: monitor.status })
+      .from(monitor)
+      .where(eq(monitor.id, monitorRow.id))
+      .all();
+    expect(after[0]?.status).toBe("error");
+  });
+
+  test("a duplicated region with stray whitespace counts once towards quorum", async () => {
+    const monitorRow = await createMonitor(workspaceId, {
+      regions: "ams, ams, fra",
+      active: true,
+    });
+
+    await db
+      .insert(monitorStatusTable)
+      .values({
+        monitorId: monitorRow.id,
+        region: "ams",
+        status: "error",
+        cronTimestamp: Date.now(),
+      })
+      .run();
+
+    await handleStatusDriftCron();
+
+    const after = await db
+      .select({ status: monitor.status })
+      .from(monitor)
+      .where(eq(monitor.id, monitorRow.id))
+      .all();
+    expect(after[0]?.status).toBe("error");
+  });
 });
 
 describe("drift repair delivery", () => {

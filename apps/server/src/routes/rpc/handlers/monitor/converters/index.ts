@@ -30,6 +30,8 @@ export {
   stringToHttpMethod,
   httpMethodToString,
   stringToMonitorStatus,
+  stringToHeartbeatPingKind,
+  heartbeatPingKindToString,
   stringToGrpcTlsMode,
   grpcTlsModeToString,
   timeRangeToKey,
@@ -52,7 +54,7 @@ export {
   dbMonitorToGrpcProto,
   dbMonitorToIcmpProto,
   dbMonitorToHeartbeatProto,
-  type HeartbeatLastPing,
+  type HeartbeatPingState,
 } from "./monitors";
 
 // Regions

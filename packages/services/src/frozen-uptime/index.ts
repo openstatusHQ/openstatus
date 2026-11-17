@@ -14,8 +14,10 @@ export {
   type StatusPipeFn,
   type UptimeFreezeJobType,
   type UptimeFreezePipes,
+  type UptimeRunsPipes,
   fetchFreezeCounts,
   runUptimeFreeze,
   uptimeFreezePipes,
+  uptimeRunsPipes,
 } from "./run";
 export { FreezeMonitorMonthInput } from "./schemas";

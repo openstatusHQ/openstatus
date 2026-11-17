@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/heartbeat_monitor.proto.
  */
 export const file_openstatus_monitor_v1_heartbeat_monitor: GenFile = /*@__PURE__*/
-  fileDesc("Ci1vcGVuc3RhdHVzL21vbml0b3IvdjEvaGVhcnRiZWF0X21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLbAwoQSGVhcnRiZWF0TW9uaXRvchIKCgJpZBgBIAEoCRItCgRuYW1lGAIgASgJQh+6RxI6EBIOTmlnaHRseSBiYWNrdXC6SAdyBRABGIACEicKBnBlcmlvZBgDIAEoA0IXukcIOgYSBDM2MDC6SAkiBxiAmp4BKDwSJAoFZ3JhY2UYBCABKANCFbpHBzoFEgMzMDC6SAgiBhiA9SQoPBIiCgtkZXNjcmlwdGlvbhgFIAEoCUIIukgFcgMYgAhIAIgBARITCgZhY3RpdmUYBiABKAhIAYgBARITCgZwdWJsaWMYByABKAhIAogBARIXCghwaW5nX3VybBgIIAEoCUIFukcCGAESIAoMbGFzdF9waW5nX2F0GAkgASgJQgW6RwIYAUgDiAEBEjQKBnN0YXR1cxgKIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzEkcKDmxhc3RfcGluZ19raW5kGAsgASgOMigub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYXJ0YmVhdFBpbmdLaW5kQgW6RwIYAUIOCgxfZGVzY3JpcHRpb25CCQoHX2FjdGl2ZUIJCgdfcHVibGljQg8KDV9sYXN0X3BpbmdfYXQqdwoRSGVhcnRiZWF0UGluZ0tpbmQSIwofSEVBUlRCRUFUX1BJTkdfS0lORF9VTlNQRUNJRklFRBAAEh8KG0hFQVJUQkVBVF9QSU5HX0tJTkRfU1VDQ0VTUxABEhwKGEhFQVJUQkVBVF9QSU5HX0tJTkRfRkFJTBACQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_monitor]);
+  fileDesc("Ci1vcGVuc3RhdHVzL21vbml0b3IvdjEvaGVhcnRiZWF0X21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKMBAoQSGVhcnRiZWF0TW9uaXRvchIKCgJpZBgBIAEoCRItCgRuYW1lGAIgASgJQh+6RxI6EBIOTmlnaHRseSBiYWNrdXC6SAdyBRABGIACEicKBnBlcmlvZBgDIAEoA0IXukcIOgYSBDM2MDC6SAkiBxiAmp4BKDwSJAoFZ3JhY2UYBCABKANCFbpHBzoFEgMzMDC6SAgiBhiA9SQoPBIiCgtkZXNjcmlwdGlvbhgFIAEoCUIIukgFcgMYgAhIAIgBARITCgZhY3RpdmUYBiABKAhIAYgBARITCgZwdWJsaWMYByABKAhIAogBARIXCghwaW5nX3VybBgIIAEoCUIFukcCGAESIAoMbGFzdF9waW5nX2F0GAkgASgJQgW6RwIYAUgDiAEBEjQKBnN0YXR1cxgKIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzEkcKDmxhc3RfcGluZ19raW5kGAsgASgOMigub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYXJ0YmVhdFBpbmdLaW5kQgW6RwIYARIfCgtuZXh0X2R1ZV9hdBgMIAEoCUIFukcCGAFIBIgBAUIOCgxfZGVzY3JpcHRpb25CCQoHX2FjdGl2ZUIJCgdfcHVibGljQg8KDV9sYXN0X3BpbmdfYXRCDgoMX25leHRfZHVlX2F0IvICCg1IZWFydGJlYXRQaW5nEgoKAmlkGAEgASgJEhIKCm1vbml0b3JfaWQYAiABKAkSEQoJdGltZXN0YW1wGAMgASgDEjYKBGtpbmQYBCABKA4yKC5vcGVuc3RhdHVzLm1vbml0b3IudjEuSGVhcnRiZWF0UGluZ0tpbmQSDgoGbWV0aG9kGAUgASgJEg8KAmlwGAYgASgJSACIAQESFwoKdXNlcl9hZ2VudBgHIAEoCUgBiAEBEkIKB2hlYWRlcnMYCCADKAsyMS5vcGVuc3RhdHVzLm1vbml0b3IudjEuSGVhcnRiZWF0UGluZy5IZWFkZXJzRW50cnkSEQoEYm9keRgJIAEoCUgCiAEBEhYKDmJvZHlfdHJ1bmNhdGVkGAogASgIGi4KDEhlYWRlcnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQgUKA19pcEINCgtfdXNlcl9hZ2VudEIHCgVfYm9keSp3ChFIZWFydGJlYXRQaW5nS2luZBIjCh9IRUFSVEJFQVRfUElOR19LSU5EX1VOU1BFQ0lGSUVEEAASHwobSEVBUlRCRUFUX1BJTkdfS0lORF9TVUNDRVNTEAESHAoYSEVBUlRCRUFUX1BJTkdfS0lORF9GQUlMEAJCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_monitor]);
 
 /**
  * HeartbeatMonitor is pinged by your job; it goes down when a ping is missed
@@ -99,6 +99,14 @@ export type HeartbeatMonitor = Message<"openstatus.monitor.v1.HeartbeatMonitor">
    * @generated from field: openstatus.monitor.v1.HeartbeatPingKind last_ping_kind = 11;
    */
   lastPingKind: HeartbeatPingKind;
+
+  /**
+   * Time the next ping is due (last ping + period + grace) in ISO 8601.
+   * Unset until the first ping and while the monitor is paused. Read-only.
+   *
+   * @generated from field: optional string next_due_at = 12;
+   */
+  nextDueAt?: string | undefined;
 };
 
 /**
@@ -107,6 +115,90 @@ export type HeartbeatMonitor = Message<"openstatus.monitor.v1.HeartbeatMonitor">
  */
 export const HeartbeatMonitorSchema: GenMessage<HeartbeatMonitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_heartbeat_monitor, 0);
+
+/**
+ * HeartbeatPing is one request your job sent to the ping URL.
+ *
+ * @generated from message openstatus.monitor.v1.HeartbeatPing
+ */
+export type HeartbeatPing = Message<"openstatus.monitor.v1.HeartbeatPing"> & {
+  /**
+   * Ping ID.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Monitor ID.
+   *
+   * @generated from field: string monitor_id = 2;
+   */
+  monitorId: string;
+
+  /**
+   * Time the ping arrived in Unix milliseconds.
+   *
+   * @generated from field: int64 timestamp = 3;
+   */
+  timestamp: bigint;
+
+  /**
+   * Whether the ping reported success or failure.
+   *
+   * @generated from field: openstatus.monitor.v1.HeartbeatPingKind kind = 4;
+   */
+  kind: HeartbeatPingKind;
+
+  /**
+   * HTTP method of the ping request.
+   *
+   * @generated from field: string method = 5;
+   */
+  method: string;
+
+  /**
+   * Client IP address, when known.
+   *
+   * @generated from field: optional string ip = 6;
+   */
+  ip?: string | undefined;
+
+  /**
+   * User-Agent header, cut at 256 characters.
+   *
+   * @generated from field: optional string user_agent = 7;
+   */
+  userAgent?: string | undefined;
+
+  /**
+   * Request headers, with sensitive values redacted.
+   *
+   * @generated from field: map<string, string> headers = 8;
+   */
+  headers: { [key: string]: string };
+
+  /**
+   * Request body, cut at 10 KB, with secrets redacted.
+   *
+   * @generated from field: optional string body = 9;
+   */
+  body?: string | undefined;
+
+  /**
+   * Whether the body was cut at 10 KB.
+   *
+   * @generated from field: bool body_truncated = 10;
+   */
+  bodyTruncated: boolean;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.HeartbeatPing.
+ * Use `create(HeartbeatPingSchema)` to create a new message.
+ */
+export const HeartbeatPingSchema: GenMessage<HeartbeatPing> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_heartbeat_monitor, 1);
 
 /**
  * HeartbeatPingKind is what the last ping reported.
