@@ -45,7 +45,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
-      {/* no gap: NavGroup's py-1 alone keeps groups on the 36px row grid */}
+      {/* no gap: NavGroup's py-1 alone keeps groups on the 36px row grid;
+          next to a border a group takes 8px instead, matching its px-2 */}
       <SidebarContent className="gap-0">
         <NavGroup className="pt-2">
           <NavSearch />
