@@ -287,6 +287,24 @@ export async function writeComponentsPhase(
 ): Promise<void> {
   const { ctx, tx } = pc;
   const workspaceId = ctx.workspace.id;
+  // Workspace-wide count — `page-components` is the plan cap
+  // across every page in the workspace (see `page-component/update-order`).
+  // Scoping to this page alone would let an import into an empty page
+  // push the workspace past the cap.
+  const [existingCount] = await tx
+    .select({ count: count() })
+    .from(pageComponent)
+    .where(eq(pageComponent.workspaceId, workspaceId));
+  const maxComponents = ctx.workspace.limits["page-components"];
+  let remaining = maxComponents - (existingCount?.count ?? 0);
+  if (remaining <= 0) {
+    for (const resource of phase.resources) {
+      resource.status = "skipped";
+      resource.error = `Skipped: component limit reached (${maxComponents})`;
+    }
+    phase.status = "skipped";
+    return;
+  }
 
   for (const resource of phase.resources) {
     if (resource.status === "skipped") continue;
@@ -352,6 +370,12 @@ export async function writeComponentsPhase(
         continue;
       }
 
+      if (remaining <= 0) {
+        resource.status = "skipped";
+        resource.error = `Skipped: would exceed component limit (${maxComponents})`;
+        continue;
+      }
+
       const [inserted] = await tx
         .insert(pageComponent)
         .values({
@@ -372,6 +396,7 @@ export async function writeComponentsPhase(
         continue;
       }
 
+      remaining--;
       componentIdMap.set(resource.sourceId, inserted.id);
       resource.openstatusId = inserted.id;
       resource.status = "created";

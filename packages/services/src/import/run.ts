@@ -1,5 +1,4 @@
-import { count, db as defaultDb, eq } from "@openstatus/db";
-import { pageComponent } from "@openstatus/db/src/schema";
+import { db as defaultDb } from "@openstatus/db";
 import type { ImportSummary } from "@openstatus/importers";
 
 import { requireScope } from "../auth";
@@ -168,41 +167,6 @@ export async function runImport(args: {
           break;
         case "components":
           if (targetPageId && input.options?.includeComponents !== false) {
-            // Workspace-wide count — `page-components` is the plan cap
-            // across every page in the workspace (see
-            // `page-component/update-order`). Scoping to `targetPageId`
-            // alone would let an import into an empty page push the
-            // workspace past the cap because components on other
-            // pages go uncounted.
-            const [compCount] = await tx
-              .select({ count: count() })
-              .from(pageComponent)
-              .where(eq(pageComponent.workspaceId, ctx.workspace.id));
-            const maxComponents = ctx.workspace.limits["page-components"];
-            const remaining = maxComponents - (compCount?.count ?? 0);
-            if (remaining <= 0) {
-              // Stamp each resource with a skip reason to mirror the
-              // `writeMonitorsPhase` pattern — otherwise users see a
-              // failed phase with no explanation and stale resource
-              // statuses.
-              for (const r of phase.resources) {
-                r.status = "skipped";
-                r.error = `Skipped: component limit reached (${maxComponents})`;
-              }
-              phase.status = "skipped";
-              break;
-            }
-            if (phase.resources.length > remaining) {
-              // Trim the overflow: mark skipped with a clear error string
-              // and keep them in `resources` so the summary still reports
-              // them.
-              const skipped = phase.resources.splice(remaining);
-              for (const r of skipped) {
-                r.status = "skipped";
-                r.error = `Skipped: would exceed component limit (${maxComponents})`;
-              }
-              phase.resources.push(...skipped);
-            }
             await writeComponentsPhase(
               pc,
               phase,
