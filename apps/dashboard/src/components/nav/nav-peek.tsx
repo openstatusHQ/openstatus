@@ -213,7 +213,7 @@ export function NavPeekContent({
         label={label}
         filter={filter}
         loop
-        className="flex min-h-0 flex-1 flex-col gap-1"
+        className="relative flex min-h-0 flex-1 flex-col gap-1"
       >
         {children}
       </CommandPrimitive>
@@ -248,7 +248,8 @@ export function NavPeekList({
     <CommandPrimitive.List
       data-slot="nav-peek-list"
       className={cn(
-        "min-h-0 overflow-y-auto [&_[cmdk-list-sizer]]:flex [&_[cmdk-list-sizer]]:flex-col [&_[cmdk-list-sizer]]:gap-1",
+        // the margin is the create row's slot, plus the gap-1 when rows sit above it
+        "mb-8 min-h-0 overflow-y-auto has-[[data-slot=nav-peek-item],[data-slot=nav-peek-empty]]:mb-9 [&_[cmdk-list-sizer]]:flex [&_[cmdk-list-sizer]]:flex-col [&_[cmdk-list-sizer]]:gap-1",
         className,
       )}
       {...props}
@@ -328,8 +329,9 @@ export function NavPeekCreate({
         onSelect?.(value);
       }}
       className={cn(
-        // sticky over the scrolling rows; the shadow fills the gap-1 above it
-        "bg-popover hover:bg-muted hover:text-foreground group-focus-within/peek:data-[selected=true]:bg-muted group-focus-within/peek:data-[selected=true]:text-foreground text-muted-foreground font-commit-mono sticky bottom-0 flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-md px-2 text-sm tracking-tight shadow-[0_-4px_0_var(--color-popover)] outline-none",
+        // pinned to the card, outside the scroller: a sticky row jumps in
+        // Chrome while the card's open animation runs
+        "hover:bg-muted hover:text-foreground group-focus-within/peek:data-[selected=true]:bg-muted group-focus-within/peek:data-[selected=true]:text-foreground text-muted-foreground font-commit-mono absolute inset-x-0 bottom-0 flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm tracking-tight outline-none",
         className,
       )}
       {...(onPaywall
