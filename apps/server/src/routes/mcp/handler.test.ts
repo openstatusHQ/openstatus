@@ -167,6 +167,7 @@ describe("MCP transport", () => {
       "search_content",
       "search_docs",
       "set_incident_status",
+      "submit_feedback",
       "update_component_group",
       "update_incident",
       "update_maintenance",
@@ -505,6 +506,7 @@ const ANY_TOOLS = [
   "get_workspace",
   "search_content",
   "search_docs",
+  "submit_feedback",
 ];
 
 // Snapshots span every group, so only the `read` umbrella (or above) sees them.
@@ -559,6 +561,11 @@ describe("MCP transport — group scopes", () => {
       for (const name of INCIDENT_GROUP_TOOLS)
         expect(names).not.toContain(name);
       for (const tool of tools) {
+        // Writes a row for the openstatus team, nothing in the workspace.
+        if (tool.name === "submit_feedback") {
+          expect(tool.annotations?.readOnlyHint).toBeUndefined();
+          continue;
+        }
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
       }
     } finally {

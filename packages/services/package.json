@@ -61,6 +61,10 @@
       "import": "./src/invitation/index.ts",
       "types": "./src/invitation/index.ts"
     },
+    "./feedback": {
+      "import": "./src/feedback/index.ts",
+      "types": "./src/feedback/index.ts"
+    },
     "./api-key": {
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"

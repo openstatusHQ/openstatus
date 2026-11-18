@@ -72,11 +72,11 @@ The consent screen offers presets, plus a **Custom** grid with one row per group
 
 A client may request any of the twelve values in a space-separated `scope` string; what you grant can only be narrower than what it asked for, and a request without `scope` means Read & write. The API key form offers the same three choices. On a key the scopes are set at creation and **immutable**: to change them, revoke the key and issue a new one.
 
-The server only advertises tools the credential can call. Read only sees `list_*` and `get_*`; `incidents:write` adds the status report, incident and maintenance tools, `update_maintenance` included; `monitors:write` adds `create_monitor` and `update_monitor` (which also pauses a monitor and links notification channels); `pages:write` adds `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group`. Read & write gets all of them. The `tools/list` filter is the visible UX, the service-layer scope check is the boundary, so a misconfigured client can't accidentally mutate. The [content tools](#content) and `get_workspace` work with any scope; the audit tools need `read` or `write`.
+The server only advertises tools the credential can call. Read only sees `list_*` and `get_*`; `incidents:write` adds the status report, incident and maintenance tools, `update_maintenance` included; `monitors:write` adds `create_monitor` and `update_monitor` (which also pauses a monitor and links notification channels); `pages:write` adds `create_status_page`, `update_status_page`, `add_page_component`, `update_page_component`, `create_component_group` and `update_component_group`. Read & write gets all of them. The `tools/list` filter is the visible UX, the service-layer scope check is the boundary, so a misconfigured client can't accidentally mutate. The [content tools](#content), `get_workspace` and `submit_feedback` work with any scope; the audit tools need `read` or `write`.
 
 ## Tools
 
-The server exposes 50 tools (48 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, plus 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
+The server exposes 51 tools (49 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)), and `submit_feedback` (see [Feedback](#feedback)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
 
 ### Pages
 
@@ -183,6 +183,14 @@ Public openstatus.dev content — no workspace data, available on any credential
 | `get_doc_page`     | any | Full markdown of one docs, guide, or changelog page by `path`. |
 | `search_content`   | any | Search every public page — product/pricing, blog, comparisons, use cases, customer stories, tooling, plus docs/guides/changelog. `type` defaults to `all`. Returns title, type, snippet, url, and a `path` for `get_content_page`. |
 | `get_content_page` | any | Full markdown of any public page by `path` (e.g. `pricing`, `blog/…`, `compare/…`). |
+
+### Feedback
+
+Lets the assistant tell the openstatus team when something did not work: a tool that failed, a confusing result, a missing capability. It changes nothing in your workspace and is not audit-logged.
+
+| Tool              | Scope | Purpose |
+|-------------------|------|---------|
+| `submit_feedback` | any | Send a `message` to the openstatus team, with an optional `type` (`bug`, `feature`, `question`, `security`, `demo`), the `tool` it is about and a `blocker` flag. Stored with the workspace and the user behind the credential, so it needs OAuth or an API key created in the dashboard. Capped at 10 submissions per credential per hour. |
 
 The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
 
