@@ -1,4 +1,14 @@
-import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { db, eq } from "@openstatus/db";
+import { feedback } from "@openstatus/db/src/schema";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -13,11 +23,18 @@ import { hasSubmittedFeedback, submitFeedback } from "../index.ts";
 
 let userCtx: ServiceContext;
 let userId: number;
+const WEBHOOK = "https://hooks.slack.test/feedback";
 
 beforeAll(async () => {
   const fixture = await createWorkspaceFixture("team");
   userId = fixture.userId;
   userCtx = makeUserCtx(fixture.workspace, { userId });
+});
+
+afterAll(async () => {
+  await db
+    .delete(feedback)
+    .where(eq(feedback.workspaceId, userCtx.workspace.id));
 });
 
 afterEach(() => {
@@ -34,19 +51,18 @@ describe("submitFeedback", () => {
     vi.stubGlobal("fetch", fetchMock);
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await withTestTransaction(async (tx) => {
-      const ctx = { ...userCtx, db: tx };
-      const feedback = await submitFeedback({
-        ctx,
-        input: { source: "widget", message: "hello", path: "/" },
-        slackWebhookUrl: "https://hooks.slack.test/feedback",
-      });
-
-      expect(feedback.id).toBeGreaterThan(0);
-      expect(
-        await hasSubmittedFeedback({ ctx, input: { source: "widget" } }),
-      ).toBe(true);
+    const stored = await submitFeedback({
+      ctx: userCtx,
+      input: { source: "support", message: "hello", path: "/" },
+      slackWebhookUrl: WEBHOOK,
     });
+
+    const row = await db
+      .select({ id: feedback.id })
+      .from(feedback)
+      .where(eq(feedback.id, stored.id))
+      .get();
+    expect(row?.id).toBe(stored.id);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(logged).toHaveBeenCalled();
   });
@@ -55,16 +71,10 @@ describe("submitFeedback", () => {
     const fetchMock = vi.fn(async () => new Response("ok"));
     vi.stubGlobal("fetch", fetchMock);
 
-    await withTestTransaction(async (tx) => {
-      await submitFeedback({
-        ctx: { ...userCtx, db: tx },
-        input: {
-          source: "mcp",
-          message: "<!channel> a & b",
-          path: "<@U123>",
-        },
-        slackWebhookUrl: "https://hooks.slack.test/feedback",
-      });
+    await submitFeedback({
+      ctx: userCtx,
+      input: { source: "mcp", message: "<!channel> a & b", path: "<@U123>" },
+      slackWebhookUrl: WEBHOOK,
     });
 
     const init = (
@@ -74,6 +84,21 @@ describe("submitFeedback", () => {
     expect(text).toContain("*Message:* &lt;!channel&gt; a &amp; b");
     expect(text).toContain("*Path:* &lt;@U123&gt;");
     expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  test("does not post from inside a caller's transaction", async () => {
+    const fetchMock = vi.fn(async () => new Response("ok"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await withTestTransaction(async (tx) => {
+      await submitFeedback({
+        ctx: { ...userCtx, db: tx },
+        input: { source: "widget", message: "hello", path: "/" },
+        slackWebhookUrl: WEBHOOK,
+      });
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("stores the row for the actor's workspace and user", async () => {

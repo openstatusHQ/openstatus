@@ -5,6 +5,7 @@ import type { Feedback } from "@openstatus/db/src/schema";
 import { requireScope } from "../auth";
 import {
   type ServiceContext,
+  isTx,
   tryGetActorUserId,
   withTransaction,
 } from "../context";
@@ -59,7 +60,9 @@ export async function submitFeedback(args: {
     return { row, userEmail: author?.email ?? null };
   });
 
-  // After the transaction, so a slow webhook never holds the write lock.
+  // A caller's transaction can still roll back, and the webhook call would hold its write lock.
+  if (ctx.db && isTx(ctx.db)) return stored.row;
+
   await postFeedbackToSlack({
     webhookUrl: args.slackWebhookUrl,
     message: stored.row.message,

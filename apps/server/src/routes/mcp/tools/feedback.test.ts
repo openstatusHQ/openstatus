@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { eq } from "@openstatus/db";
+import { db, eq } from "@openstatus/db";
 import { feedback } from "@openstatus/db/src/schema";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
@@ -7,7 +7,15 @@ import {
   createWorkspaceFixture,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
-import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { toServiceCtx } from "../adapter";
 import { registerFeedbackTools } from "./feedback";
@@ -20,6 +28,10 @@ beforeAll(async () => {
   const fixture = await createWorkspaceFixture("team");
   workspace = fixture.workspace;
   userId = fixture.userId;
+});
+
+afterAll(async () => {
+  await db.delete(feedback).where(eq(feedback.workspaceId, workspace.id));
 });
 
 afterEach(() => {
@@ -102,13 +114,10 @@ describe("submit_feedback", () => {
     const fetchMock = vi.fn(async () => new Response("ok"));
     vi.stubGlobal("fetch", fetchMock);
 
-    await withTestTransaction(async (tx) => {
-      const ctx = makeCtx({ db: tx, createdById: userId });
-      await submitTool(
-        ctx,
-        "https://hooks.slack.test/feedback",
-      )({ message: "missing delete_monitor", type: "feature" });
-    });
+    await submitTool(
+      makeCtx({ createdById: userId }),
+      "https://hooks.slack.test/feedback",
+    )({ message: "missing delete_monitor", type: "feature" });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [
