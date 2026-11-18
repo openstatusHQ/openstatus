@@ -10,6 +10,7 @@ import {
 } from "../context";
 import { InternalServiceError, PreconditionFailedError } from "../errors";
 import { SubmitFeedbackInput } from "./schemas";
+import { postFeedbackToSlack } from "./slack";
 
 // Feedback is addressed to openstatus, not workspace configuration, and the
 // audit action union has no `feedback` verb.
@@ -17,7 +18,8 @@ import { SubmitFeedbackInput } from "./schemas";
 export async function submitFeedback(args: {
   ctx: ServiceContext;
   input: SubmitFeedbackInput;
-}): Promise<{ feedback: Feedback; userEmail: string | null }> {
+  slackWebhookUrl?: string;
+}): Promise<Feedback> {
   const { ctx } = args;
   requireScope(ctx, "any");
   const input = SubmitFeedbackInput.parse(args.input);
@@ -31,7 +33,7 @@ export async function submitFeedback(args: {
     );
   }
 
-  return withTransaction(ctx, async (tx) => {
+  const stored = await withTransaction(ctx, async (tx) => {
     const row = await tx
       .insert(feedback)
       .values({
@@ -54,6 +56,23 @@ export async function submitFeedback(args: {
       .where(eq(user.id, userId))
       .get();
 
-    return { feedback: row, userEmail: author?.email ?? null };
+    return { row, userEmail: author?.email ?? null };
   });
+
+  // After the transaction, so a slow webhook never holds the write lock.
+  await postFeedbackToSlack({
+    webhookUrl: args.slackWebhookUrl,
+    message: stored.row.message,
+    fields: [
+      ["Source", stored.row.source],
+      ["Type", stored.row.type],
+      ["Blocker", stored.row.blocker],
+      ["User", stored.userEmail],
+      ["Workspace", ctx.workspace.slug],
+      ["Path", stored.row.path],
+      ...Object.entries(input.metadata ?? {}),
+    ],
+  });
+
+  return stored.row;
 }

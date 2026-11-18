@@ -7,10 +7,7 @@ import {
   PreconditionFailedError,
   type ServiceContext,
 } from "@openstatus/services";
-import {
-  postFeedbackToSlack,
-  submitFeedback,
-} from "@openstatus/services/feedback";
+import { submitFeedback } from "@openstatus/services/feedback";
 import { incrWithTtl } from "@openstatus/upstash";
 import { z } from "zod";
 
@@ -101,7 +98,7 @@ export function registerFeedbackTools(
         async () => {
           const parsed = z.object(inputSchema).parse(input);
           await assertFeedbackBudget(ctx);
-          const { userEmail } = await submitFeedback({
+          await submitFeedback({
             ctx,
             input: {
               source: "mcp",
@@ -109,20 +106,8 @@ export function registerFeedbackTools(
               type: parsed.type,
               blocker: parsed.blocker,
               path: parsed.tool ?? "mcp",
-              metadata: { tool: parsed.tool },
             },
-          });
-          await postFeedbackToSlack({
-            webhookUrl: config.slackWebhookUrl,
-            message: parsed.message,
-            fields: [
-              ["Source", "mcp"],
-              ["Type", parsed.type],
-              ["Blocker", parsed.blocker],
-              ["Tool", parsed.tool],
-              ["User", userEmail],
-              ["Workspace", ctx.workspace.slug],
-            ],
+            slackWebhookUrl: config.slackWebhookUrl,
           });
           trackToolSuccess(ctx, TOOL_NAME);
           return { received: true };

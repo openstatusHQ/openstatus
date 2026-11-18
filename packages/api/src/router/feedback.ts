@@ -2,7 +2,6 @@ import { Events } from "@openstatus/analytics";
 import { feedbackSource, feedbackType } from "@openstatus/db/src/schema";
 import {
   hasSubmittedFeedback,
-  postFeedbackToSlack,
   submitFeedback,
 } from "@openstatus/services/feedback";
 import { z } from "zod";
@@ -42,7 +41,6 @@ export const feedbackRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userAgent = ctx.metadata?.userAgent;
       try {
         await submitFeedback({
           ctx: toServiceCtx(ctx),
@@ -52,28 +50,18 @@ export const feedbackRouter = createTRPCRouter({
             path: input.path,
             type: input.type,
             blocker: input.blocker,
-            metadata: { isMobile: input.isMobile, userAgent },
+            metadata: {
+              name: input.name,
+              email: input.email,
+              isMobile: input.isMobile,
+              userAgent: ctx.metadata?.userAgent,
+            },
           },
+          slackWebhookUrl: env.SLACK_FEEDBACK_WEBHOOK_URL,
         });
       } catch (err) {
         toTRPCError(err);
       }
-
-      await postFeedbackToSlack({
-        webhookUrl: env.SLACK_FEEDBACK_WEBHOOK_URL,
-        message: input.message,
-        fields: [
-          ["Source", input.source],
-          ["Name", input.name],
-          ["Email", input.email],
-          ["Blocker", input.blocker],
-          ["Type", input.type],
-          ["User", ctx.user.email],
-          ["Path", input.path],
-          ["Mobile", input.isMobile],
-          ["User Agent", userAgent],
-        ],
-      });
 
       return { success: true } as const;
     }),

@@ -1,9 +1,6 @@
 import { env } from "../env";
 
-export type FeedbackSlackField = [
-  label: string,
-  value: string | number | boolean | null | undefined,
-];
+type FeedbackSlackField = [label: string, value: unknown];
 
 /** Best-effort: the feedback row is already stored, so a failed post never throws. */
 export async function postFeedbackToSlack(args: {
@@ -21,7 +18,12 @@ export async function postFeedbackToSlack(args: {
   }
 
   const lines = args.fields
-    .filter(([, value]) => value != null && value !== false && value !== "")
+    .filter(
+      ([, value]) =>
+        value === true ||
+        typeof value === "number" ||
+        (typeof value === "string" && value !== ""),
+    )
     .map(([label, value]) => `*${label}:* ${value}`);
   lines.push("--------------------------------", `*Message:* ${args.message}`);
 

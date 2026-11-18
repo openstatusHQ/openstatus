@@ -24,7 +24,7 @@ describe("submitFeedback", () => {
   test("stores the row for the actor's workspace and user", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
-      const { feedback } = await submitFeedback({
+      const feedback = await submitFeedback({
         ctx,
         input: {
           source: "widget",
@@ -51,7 +51,7 @@ describe("submitFeedback", () => {
         }),
         db: tx,
       };
-      const { feedback } = await submitFeedback({
+      const feedback = await submitFeedback({
         ctx,
         input: { source: "mcp", message: "tool failed", path: "mcp" },
       });
