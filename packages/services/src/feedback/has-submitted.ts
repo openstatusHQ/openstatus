@@ -1,6 +1,7 @@
 import { and, eq } from "@openstatus/db";
 import { feedback } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { HasSubmittedFeedbackInput } from "./schemas";
 
@@ -10,6 +11,7 @@ export async function hasSubmittedFeedback(args: {
   input: HasSubmittedFeedbackInput;
 }): Promise<boolean> {
   const { ctx } = args;
+  requireScope(ctx, "any");
   const input = HasSubmittedFeedbackInput.parse(args.input);
   const userId = tryGetActorUserId(ctx.actor);
   if (userId == null) return false;

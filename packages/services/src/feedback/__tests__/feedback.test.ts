@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
 import {
   createWorkspaceFixture,
@@ -20,7 +20,62 @@ beforeAll(async () => {
   userCtx = makeUserCtx(fixture.workspace, { userId });
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
 describe("submitFeedback", () => {
+  test.each([
+    ["rejects", () => Promise.reject(new Error("slack down"))],
+    ["answers 500", () => Promise.resolve(new Response("no", { status: 500 }))],
+  ])("still stores and resolves when the webhook %s", async (_, respond) => {
+    const fetchMock = vi.fn(respond);
+    vi.stubGlobal("fetch", fetchMock);
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const feedback = await submitFeedback({
+        ctx,
+        input: { source: "widget", message: "hello", path: "/" },
+        slackWebhookUrl: "https://hooks.slack.test/feedback",
+      });
+
+      expect(feedback.id).toBeGreaterThan(0);
+      expect(
+        await hasSubmittedFeedback({ ctx, input: { source: "widget" } }),
+      ).toBe(true);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(logged).toHaveBeenCalled();
+  });
+
+  test("escapes Slack mentions and bounds the webhook call", async () => {
+    const fetchMock = vi.fn(async () => new Response("ok"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await withTestTransaction(async (tx) => {
+      await submitFeedback({
+        ctx: { ...userCtx, db: tx },
+        input: {
+          source: "mcp",
+          message: "<!channel> a & b",
+          path: "<@U123>",
+        },
+        slackWebhookUrl: "https://hooks.slack.test/feedback",
+      });
+    });
+
+    const init = (
+      fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    )[1];
+    const { text } = JSON.parse(String(init.body)) as { text: string };
+    expect(text).toContain("*Message:* &lt;!channel&gt; a &amp; b");
+    expect(text).toContain("*Path:* &lt;@U123&gt;");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
   test("stores the row for the actor's workspace and user", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
