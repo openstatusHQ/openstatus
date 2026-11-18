@@ -75,7 +75,13 @@ import {
   markThreadTitled,
   renameThread,
 } from "./thread-title";
-import { buildWelcomeBlocks, CATCH_UP_REQUEST, WELCOME_TEXT } from "./welcome";
+import {
+  buildChannelIntroBlocks,
+  buildWelcomeBlocks,
+  CATCH_UP_REQUEST,
+  CHANNEL_INTRO_TEXT,
+  WELCOME_TEXT,
+} from "./welcome";
 import { resolveWorkspace, type SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -467,7 +473,16 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
     const resolved = await resolveWorkspace(teamId);
     if (!resolved || event.user !== resolved.botUserId) return;
     if (inviter === resolved.botUserId) return;
-    await new WebClient(resolved.botToken).chat.postEphemeral({
+    const slack = new WebClient(resolved.botToken);
+    // Without the plan the agent can't answer, so don't advertise it to the channel.
+    if (slackAgentAllowed(resolved.workspace)) {
+      await slack.chat.postMessage({
+        channel,
+        text: CHANNEL_INTRO_TEXT,
+        blocks: buildChannelIntroBlocks(resolved.botUserId),
+      });
+    }
+    await slack.chat.postEphemeral({
       channel,
       user: inviter,
       text: WELCOME_TEXT,
