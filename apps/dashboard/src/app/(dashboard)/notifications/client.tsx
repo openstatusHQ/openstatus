@@ -3,7 +3,6 @@
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { ExternalLink, Notification } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
@@ -12,7 +11,6 @@ import { useState } from "react";
 import { Link } from "@/components/common/link";
 import {
   ActionCard,
-  ActionCardBadge,
   ActionCardDescription,
   ActionCardGroup,
   ActionCardHeader,
@@ -42,7 +40,6 @@ import {
   config,
   hiddenProviders,
 } from "@/data/notifications.client";
-import { planOrder, plans } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
@@ -68,35 +65,20 @@ function isPlanGated(
   return planGated.some((gated) => gated === provider);
 }
 
-/** Lowest plan that unlocks the provider, or null when the workspace has it. */
-function getRequiredPlan(provider: NotifierProvider, limits: Limits) {
-  if (!isPlanGated(provider) || limits[provider]) return null;
-  return planOrder.find((plan) => plans[plan].limits[provider]) ?? null;
-}
-
-function NotifierCard({
-  provider,
-  muted,
-  children,
-}: {
-  provider: NotifierProvider;
-  muted?: boolean;
-  children?: React.ReactNode;
-}) {
+function NotifierCard({ provider }: { provider: NotifierProvider }) {
   const { icon: Icon, label } = config[provider];
   return (
     <ActionCard className="h-full w-full">
       <ActionCardHeader>
-        <div className={cn("flex items-center gap-2", muted && "opacity-50")}>
+        <div className="flex items-center gap-2">
           <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
             <Icon className="size-3" />
           </div>
           <ActionCardTitle>{label}</ActionCardTitle>
         </div>
-        <ActionCardDescription className={cn(muted && "opacity-50")}>
+        <ActionCardDescription>
           Send notifications to {label}
         </ActionCardDescription>
-        {children}
       </ActionCardHeader>
     </ActionCard>
   );
@@ -184,29 +166,19 @@ export function Client() {
           {Object.keys(config).map((notifier) => {
             const key = notifier as NotifierProvider;
             if (hiddenProviders.has(key)) return null;
-            const requiredPlan = getRequiredPlan(key, workspace.limits);
+            const locked = isPlanGated(key) && !workspace.limits[key];
 
-            if (requiredPlan || limitReached) {
+            if (locked || limitReached) {
               return (
                 <button
                   key={key}
                   type="button"
                   className="cursor-pointer text-left"
                   onClick={() =>
-                    setPaywall(
-                      requiredPlan && isPlanGated(key)
-                        ? key
-                        : "notification-channels",
-                    )
+                    setPaywall(locked ? key : "notification-channels")
                   }
                 >
-                  <NotifierCard provider={key} muted>
-                    <ActionCardBadge>
-                      {requiredPlan
-                        ? plans[requiredPlan].title
-                        : "Limit reached"}
-                    </ActionCardBadge>
-                  </NotifierCard>
+                  <NotifierCard provider={key} />
                 </button>
               );
             }
