@@ -3,14 +3,13 @@ import {
   REPORT_WINDOW_MS,
   computeEffectiveStatus,
 } from "@openstatus/api/src/router/effective-status";
+import { cachedExternalStatusLatest } from "@openstatus/api/src/tb-cache";
 import {
   getComponentReportWindows,
   getServiceReportWindows,
 } from "@openstatus/services/external-service-report";
 import { safePipeData } from "@openstatus/tinybird";
 import { unstable_cache } from "next/cache";
-
-import { tb } from "./tb";
 
 const REPORTS_REVALIDATE_SECONDS = 30;
 // Distinct from the "external-services" tag on service-lookup caches so that
@@ -73,7 +72,7 @@ export async function getServiceEscalation(
 
   const [latestRes, reporters] = await Promise.all([
     safePipeData(
-      tb.externalStatusLatest({ ids: slugChain }),
+      cachedExternalStatusLatest({ ids: slugChain }),
       "externalStatusLatest (escalation)",
     ),
     serviceReporters(service.id),
