@@ -1,3 +1,4 @@
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -29,7 +30,13 @@ export function ActionCardHeader({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <CardHeader className={cn("px-4 [.border-b]:pb-4", className)} {...props}>
+    <CardHeader
+      className={cn(
+        "px-4 *:data-[slot=card-description]:col-span-full [.border-b]:pb-4",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </CardHeader>
   );
@@ -59,6 +66,25 @@ export function ActionCardDescription({
   ...props
 }: React.ComponentProps<"div">) {
   return <CardDescription {...props}>{children}</CardDescription>;
+}
+
+/** Sits top-right of an `ActionCardHeader`. */
+export function ActionCardBadge({
+  className,
+  variant = "outline",
+  ...props
+}: React.ComponentProps<typeof Badge>) {
+  return (
+    <Badge
+      data-slot="card-action"
+      variant={variant}
+      className={cn(
+        "text-muted-foreground col-start-2 row-start-1 self-center justify-self-end font-mono font-normal",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function ActionCardContent({
