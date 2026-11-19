@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { getActions, getPageUrl } from "@/data/status-pages.client";
@@ -21,6 +22,7 @@ export function NavActions() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
 
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -43,7 +45,11 @@ export function NavActions() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
-              <a href={getPageUrl(statusPage)} target="_blank" rel="noreferrer">
+              <a
+                href={getPageUrl(statusPage, statusPageBaseDomain)}
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Globe className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>

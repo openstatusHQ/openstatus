@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { getValidSubdomain, stripHostPort } from "./domain";
 
@@ -87,6 +87,61 @@ describe("getValidSubdomain", () => {
       expect(getValidSubdomain(null)).toBe(null);
       expect(getValidSubdomain(undefined)).toBe(null);
       expect(getValidSubdomain("")).toBe(null);
+    });
+  });
+
+  describe("configured base domain (STATUS_PAGE_BASE_DOMAIN)", () => {
+    const base = "status.example.com";
+
+    test("tenant subdomain of the base domain → the slug", () => {
+      expect(getValidSubdomain("internal.status.example.com", base)).toBe(
+        "internal",
+      );
+      expect(getValidSubdomain("internal.status.example.com:443", base)).toBe(
+        "internal",
+      );
+    });
+
+    test("`www.` under the base domain is not a tenant", () => {
+      expect(getValidSubdomain("www.status.example.com", base)).toBe(null);
+    });
+
+    test("custom domains still resolve by the whole host", () => {
+      expect(getValidSubdomain("status.acme.com", base)).toBe(
+        "status.acme.com",
+      );
+      // a sibling of the base domain is a custom domain, not a tenant
+      expect(getValidSubdomain("internal.example.com", base)).toBe(
+        "internal.example.com",
+      );
+    });
+
+    test("openstatus.dev / stpg.dev hosts keep resolving by slug", () => {
+      expect(getValidSubdomain("acme.openstatus.dev", base)).toBe("acme");
+      expect(getValidSubdomain("acme.stpg.dev", base)).toBe("acme");
+    });
+
+    test("without a base domain argument the default is openstatus.dev", () => {
+      vi.stubEnv("STATUS_PAGE_BASE_DOMAIN", "");
+      try {
+        expect(getValidSubdomain("internal.status.example.com")).toBe(
+          "internal.status.example.com",
+        );
+        expect(getValidSubdomain("acme.openstatus.dev")).toBe("acme");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    test("without a base domain argument STATUS_PAGE_BASE_DOMAIN is read", () => {
+      vi.stubEnv("STATUS_PAGE_BASE_DOMAIN", "status.example.com");
+      try {
+        expect(getValidSubdomain("internal.status.example.com")).toBe(
+          "internal",
+        );
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
   });
 

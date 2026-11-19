@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { resolveRoute } from "./resolve-route";
 
@@ -692,6 +692,68 @@ describe("resolveRoute", () => {
         pathname: "/",
       });
       expect(result?.prefix).toBe("acme");
+    });
+  });
+
+  describe("configured base domain (STATUS_PAGE_BASE_DOMAIN)", () => {
+    test("internal.status.example.com/ → slug internal, hostname routing", () => {
+      expect(
+        resolveRoute({
+          host: "internal.status.example.com",
+          urlHost: "localhost:3000",
+          pathname: "/",
+          baseDomain: "status.example.com",
+        }),
+      ).toEqual({
+        type: "hostname",
+        prefix: "internal",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/internal/en",
+      });
+    });
+
+    test("internal.status.example.com/fr/events → /internal/fr/events", () => {
+      expect(
+        resolveRoute({
+          host: "internal.status.example.com",
+          urlHost: "localhost:3000",
+          pathname: "/fr/events",
+          baseDomain: "status.example.com",
+        })?.rewritePath,
+      ).toBe("/internal/fr/events");
+    });
+
+    test("a custom domain is still keyed by its full host", () => {
+      expect(
+        resolveRoute({
+          host: "status.acme.com",
+          urlHost: "localhost:3000",
+          pathname: "/",
+          baseDomain: "status.example.com",
+        }),
+      ).toEqual({
+        type: "hostname",
+        prefix: "status.acme.com",
+        locale: "en",
+        localeExplicit: false,
+        rewritePath: "/status.acme.com/en",
+      });
+    });
+
+    test("without baseDomain the host is a custom domain (default openstatus.dev)", () => {
+      vi.stubEnv("STATUS_PAGE_BASE_DOMAIN", "");
+      try {
+        expect(
+          resolveRoute({
+            host: "internal.status.example.com",
+            urlHost: "localhost:3000",
+            pathname: "/",
+          })?.prefix,
+        ).toBe("internal.status.example.com");
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
   });
 });

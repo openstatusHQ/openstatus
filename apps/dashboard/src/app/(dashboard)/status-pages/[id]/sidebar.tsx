@@ -14,6 +14,7 @@ import { useParams } from "next/navigation";
 import { Link } from "@/components/common/link";
 import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { getPageUrl } from "@/data/status-pages.client";
@@ -22,6 +23,7 @@ import { useTRPC } from "@/lib/trpc/client";
 export function Sidebar() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -29,7 +31,7 @@ export function Sidebar() {
 
   if (!statusPage) return null;
 
-  const BADGE_URL = `${getPageUrl(statusPage)}/badge/v2`;
+  const BADGE_URL = `${getPageUrl(statusPage, statusPageBaseDomain)}/badge/v2`;
 
   return (
     <SidebarRight
@@ -41,7 +43,10 @@ export function Sidebar() {
             {
               label: "Slug",
               value: (
-                <Link href={getPageUrl(statusPage)} target="_blank">
+                <Link
+                  href={getPageUrl(statusPage, statusPageBaseDomain)}
+                  target="_blank"
+                >
                   {statusPage.slug}
                 </Link>
               ),
@@ -148,7 +153,7 @@ export function Sidebar() {
       footerButton={{
         onClick: () =>
           typeof window !== "undefined" &&
-          window.open(getPageUrl(statusPage), "_blank"),
+          window.open(getPageUrl(statusPage, statusPageBaseDomain), "_blank"),
         children: (
           <>
             <ExternalLink />

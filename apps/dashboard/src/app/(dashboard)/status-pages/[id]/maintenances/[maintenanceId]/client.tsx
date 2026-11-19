@@ -20,6 +20,7 @@ import {
 } from "@/components/content/detail";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { MaintenanceActions } from "@/components/maintenances/maintenance-actions";
 import { MaintenanceComponents } from "@/components/maintenances/maintenance-components";
 import { MaintenanceProperties } from "@/components/maintenances/maintenance-properties";
@@ -36,6 +37,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export function Client({ id, pageId }: { id: number; pageId: number }) {
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const { data: maintenance } = useQuery(
     trpc.maintenance.get.queryOptions({ id }),
   );
@@ -48,7 +50,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
 
   if (!maintenance || !page) return null;
 
-  const publicUrl = `${getPageUrl(page)}/events/maintenance/${maintenance.id}`;
+  const publicUrl = `${getPageUrl(page, statusPageBaseDomain)}/events/maintenance/${maintenance.id}`;
   const canNotify = workspace?.limits["status-subscribers"] === true;
   // service returns updates newest first
   const updates = maintenance.updates;

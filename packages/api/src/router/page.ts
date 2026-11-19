@@ -34,6 +34,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { isSelfHost } from "../lib/deployment";
 import {
   addDomainToVercel,
   removeDomainFromVercelIfUnused,
@@ -202,7 +203,9 @@ export const pageRouter = createTRPCRouter({
     // had then rejected.
     .input(UpdatePageCustomDomainInput)
     .mutation(async ({ ctx, input }) => {
-      if (input.customDomain.includes("openstatus")) {
+      // Guards the hosted openstatus.dev namespace; a self-hosted instance
+      // may well serve its pages under a domain containing "openstatus".
+      if (!isSelfHost() && input.customDomain.includes("openstatus")) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Domain cannot contain 'openstatus'",

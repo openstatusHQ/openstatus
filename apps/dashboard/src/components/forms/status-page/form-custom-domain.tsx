@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { Link } from "@/components/common/link";
+import { useDeploymentConfig } from "@/components/deployment-config-provider";
 import DomainConfiguration from "@/components/domains/domain-configuration";
 import { useDomainStatus } from "@/components/domains/use-domain-status";
 import {
@@ -61,7 +62,10 @@ export function FormCustomDomain({
     },
   });
   const [isPending, startTransition] = useTransition();
-  const { refresh, isLoading } = useDomainStatus(defaultValues?.domain);
+  const { isSelfHosted } = useDeploymentConfig();
+  const { refresh, isLoading } = useDomainStatus(defaultValues?.domain, {
+    enabled: !isSelfHosted,
+  });
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -88,9 +92,10 @@ export function FormCustomDomain({
 
   // NOTE: poll every 30 seconds to check for the status
   useEffect(() => {
+    if (isSelfHosted) return;
     const interval = setInterval(() => refresh(), 30_000);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [refresh, isSelfHosted]);
 
   return (
     <Form {...form}>
@@ -129,7 +134,14 @@ export function FormCustomDomain({
             <>
               <FormCardSeparator />
               <FormCardContent>
-                <DomainConfiguration domain={defaultValues?.domain} />
+                {isSelfHosted ? (
+                  <p className="text-muted-foreground text-sm">
+                    Self-hosted: point the domain at this instance and terminate
+                    TLS in your reverse proxy.
+                  </p>
+                ) : (
+                  <DomainConfiguration domain={defaultValues?.domain} />
+                )}
               </FormCardContent>
             </>
           ) : null}
@@ -159,15 +171,17 @@ export function FormCustomDomain({
               </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={isPending || isLoading}
-                  onClick={refresh}
-                  className="hidden sm:block"
-                >
-                  {isLoading ? "Refreshing..." : "Refresh Configuration"}
-                </Button>
+                {isSelfHosted ? null : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={isPending || isLoading}
+                    onClick={refresh}
+                    className="hidden sm:block"
+                  >
+                    {isLoading ? "Refreshing..." : "Refresh Configuration"}
+                  </Button>
+                )}
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Submitting..." : "Submit"}
                 </Button>

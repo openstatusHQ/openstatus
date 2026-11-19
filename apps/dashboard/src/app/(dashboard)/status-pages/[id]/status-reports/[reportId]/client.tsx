@@ -32,6 +32,7 @@ import {
 } from "@/components/content/detail";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { Notifications } from "@/components/status-pages/notifications";
 import { StatusReportActions } from "@/components/status-reports/status-report-actions";
 import { StatusReportComposer } from "@/components/status-reports/status-report-composer";
@@ -49,6 +50,7 @@ import { errorMessage } from "@/lib/trpc/error";
 
 export function Client({ id, pageId }: { id: number; pageId: number }) {
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const { data: report } = useQuery(trpc.statusReport.get.queryOptions({ id }));
   const { data: page } = useQuery(trpc.page.get.queryOptions({ id: pageId }));
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -65,7 +67,7 @@ export function Client({ id, pageId }: { id: number; pageId: number }) {
 
   if (!report) return null;
 
-  const publicUrl = `${getPageUrl(report.page)}/events/report/${report.id}`;
+  const publicUrl = `${getPageUrl(report.page, statusPageBaseDomain)}/events/report/${report.id}`;
   const canNotify = workspace?.limits["status-subscribers"] === true;
   const updates = [...report.updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,

@@ -3,6 +3,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getPageUrl } from "@/data/status-pages.client";
 import { getActions } from "@/data/status-reports.client";
@@ -21,6 +22,7 @@ export function StatusReportRowActions({
   onResolve?: () => void;
 }) {
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const queryClient = useQueryClient();
   // only wired actions: a resolved report has nothing to add or resolve
   const actions = getActions({
@@ -28,7 +30,7 @@ export function StatusReportRowActions({
     resolve: onResolve,
     "view-report": () => {
       window.open(
-        `${getPageUrl(report.page)}/events/report/${report.id}`,
+        `${getPageUrl(report.page, statusPageBaseDomain)}/events/report/${report.id}`,
         "_blank",
       );
     },

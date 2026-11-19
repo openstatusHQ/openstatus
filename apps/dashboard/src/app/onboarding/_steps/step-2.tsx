@@ -5,6 +5,7 @@ import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useState } from "react";
 
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import {
   CreatePageForm,
   type FormValues as CreatePageFormValues,
@@ -48,6 +49,7 @@ export function Step2({
   onSkip: () => void;
   onContinue: () => void;
 }) {
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const isLocked = pageStatus === "completed" && !!createdPageData;
 
   // Live preview tracks the form values via `onValuesChange` below. Defaults
@@ -78,8 +80,8 @@ export function Step2({
         </OnboardingStepHeader>
         {isLocked ? (
           <OnboardingLockedSummary
-            value={`${createdPageData?.slug}.openstatus.dev`}
-            href={`https://${createdPageData?.slug}.openstatus.dev`}
+            value={`${createdPageData?.slug}.${statusPageBaseDomain}`}
+            href={`https://${createdPageData?.slug}.${statusPageBaseDomain}`}
             helper="Theme, components, and visibility are editable later from page settings."
           />
         ) : (

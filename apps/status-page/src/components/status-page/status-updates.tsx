@@ -31,17 +31,20 @@ import {
   FormSubscribeEmail,
   type FormValues,
 } from "../forms/form-subscribe-email";
+import { useStatusPageBaseDomain } from "./base-domain-provider";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
 function getUpdateLink(
   type: "rss" | "json" | "atom",
+  baseDomain: string,
   page?: Page | null,
   password?: string,
 ) {
   const baseUrl = getBaseUrl({
     slug: page?.slug,
     customDomain: page?.customDomain,
+    baseDomain,
   });
 
   return `${baseUrl}/feed/${type}${
@@ -69,13 +72,14 @@ export function StatusUpdates({
   // The password lives in the cookie this browser set at login — not in the
   // page payload, which intentionally omits it.
   const [password] = useCookieState(createProtectedCookieKey(domain));
+  const baseDomain = useStatusPageBaseDomain();
 
   const types = page?.statusUpdateTypes ?? [];
   if (types.length === 0) return null;
 
-  const rssUrl = getUpdateLink("rss", page, password);
-  const atomUrl = getUpdateLink("atom", page, password);
-  const jsonUrl = getUpdateLink("json", page, password);
+  const rssUrl = getUpdateLink("rss", baseDomain, page, password);
+  const atomUrl = getUpdateLink("atom", baseDomain, page, password);
+  const jsonUrl = getUpdateLink("json", baseDomain, page, password);
 
   return (
     <BlockStatusUpdates>

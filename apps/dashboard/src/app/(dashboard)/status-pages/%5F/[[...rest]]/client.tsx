@@ -13,11 +13,13 @@ import {
   EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const {
     data: statusPages,
     errorUpdateCount,
@@ -38,7 +40,10 @@ export function Client() {
       items={statusPages?.map((page) => ({
         id: page.id,
         name: page.title,
-        description: getPageUrl(page).replace("https://", ""),
+        description: getPageUrl(page, statusPageBaseDomain).replace(
+          "https://",
+          "",
+        ),
       }))}
       empty={
         <EmptyStateContainer>

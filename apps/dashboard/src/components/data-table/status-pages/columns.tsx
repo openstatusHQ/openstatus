@@ -5,11 +5,28 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
+import { getStatusPageUrl } from "@/lib/deployment-config";
 
 import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusPage = RouterOutputs["page"]["list"][number];
+
+// A component (not an inline cell function) so it can read the runtime base
+// domain from context.
+function SlugCell({ slug, domain }: { slug: string; domain?: string | null }) {
+  const statusPageBaseDomain = useStatusPageBaseDomain();
+  return (
+    <TableCellLink
+      href={getStatusPageUrl(
+        { slug, customDomain: domain },
+        statusPageBaseDomain,
+      )}
+      value={slug}
+    />
+  );
+}
 
 export const columns: ColumnDef<StatusPage>[] = [
   {
@@ -50,16 +67,9 @@ export const columns: ColumnDef<StatusPage>[] = [
   {
     accessorKey: "slug",
     header: "Slug",
-    cell: ({ row }) => {
-      const domain = row.getValue("domain");
-      const slug = row.getValue("slug");
-      return (
-        <TableCellLink
-          href={domain ? `https://${domain}` : `https://${slug}.openstatus.dev`}
-          value={slug}
-        />
-      );
-    },
+    cell: ({ row }) => (
+      <SlugCell slug={row.original.slug} domain={row.original.customDomain} />
+    ),
     enableSorting: false,
     enableHiding: false,
     meta: {

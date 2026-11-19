@@ -31,6 +31,7 @@ import {
 import { Section } from "@/components/content/section";
 import { columns } from "@/components/data-table/subscribers/columns";
 import { SubscribersDataTableToolbar } from "@/components/data-table/subscribers/data-table-toolbar";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
@@ -82,6 +83,7 @@ export default function Page() {
   const [openDialog, setOpenDialog] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const { data: page } = useQuery(trpc.page.get.queryOptions({ id: pageId }));
   const { data: subscribers, refetch } = useQuery(
     trpc.pageSubscriber.list.queryOptions({ pageId }),
@@ -217,7 +219,7 @@ export default function Page() {
                   {page ? (
                     <Button size="sm" variant="outline" asChild>
                       <NextLink
-                        href={getPageUrl(page)}
+                        href={getPageUrl(page, statusPageBaseDomain)}
                         target="_blank"
                         rel="noreferrer"
                       >

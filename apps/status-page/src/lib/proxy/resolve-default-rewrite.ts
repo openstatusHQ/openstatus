@@ -1,16 +1,18 @@
+import { isHostUnderBaseDomain } from "../base-domain";
 import type { Action, ComposeInput } from "./types";
 
 type Input = Pick<
   ComposeInput,
-  "route" | "host" | "pathname" | "search" | "requestUrl"
+  "route" | "host" | "pathname" | "search" | "requestUrl" | "baseDomain"
 >;
 
 /**
  * Fallback rewrite: target is the route's internal `rewritePath`. Fires when
  * either:
- *   - the request is on an openstatus.dev host (preserved from original —
- *     unclear if this no-op rewrite is load-bearing when rewritePath ===
- *     pathname; kept as-is), OR
+ *   - the request is on an openstatus.dev host, or on the configured
+ *     `STATUS_PAGE_BASE_DOMAIN` (preserved from original — unclear if this
+ *     no-op rewrite is load-bearing when rewritePath === pathname; kept
+ *     as-is), OR
  *   - the resolved rewritePath differs from the incoming pathname.
  */
 export function resolveDefaultRewrite({
@@ -19,8 +21,11 @@ export function resolveDefaultRewrite({
   pathname,
   search,
   requestUrl,
+  baseDomain,
 }: Input): Action | null {
-  const isOpenstatusDevHost = !!host?.includes("openstatus.dev");
+  const isOpenstatusDevHost =
+    !!host?.includes("openstatus.dev") ||
+    (!!baseDomain && isHostUnderBaseDomain(host, baseDomain));
   const pathDiffers = route.rewritePath !== pathname;
 
   if (!isOpenstatusDevHost && !pathDiffers) return null;

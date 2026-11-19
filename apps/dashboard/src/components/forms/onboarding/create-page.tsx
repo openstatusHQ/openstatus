@@ -35,6 +35,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -84,6 +85,7 @@ export function CreatePageForm({
   showComponents?: boolean;
 }) {
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const { theme: dashboardTheme, setTheme: setDashboardTheme } = useTheme();
 
   const form = useForm<FormValues>({
@@ -179,7 +181,7 @@ export function CreatePageForm({
                   <InputGroupInput placeholder="status" {...field} />
                 </FormControl>
                 <InputGroupAddon align="inline-end">
-                  .openstatus.dev
+                  .{statusPageBaseDomain}
                 </InputGroupAddon>
               </InputGroup>
               <FormMessage />

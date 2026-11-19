@@ -1,5 +1,10 @@
 import { Settings, Copy, Delete } from "@openstatus/icons";
 
+import {
+  DEFAULT_STATUS_PAGE_BASE_DOMAIN,
+  getStatusPageUrl,
+} from "@/lib/deployment-config";
+
 /** An open report first, then by title. */
 export function compareStatusPages(
   a: { title: string; hasActiveStatusReport: boolean },
@@ -11,11 +16,18 @@ export function compareStatusPages(
   );
 }
 
-export function getPageUrl(page: {
-  slug: string;
-  customDomain: string | null;
-}): string {
-  return `https://${page.customDomain || `${page.slug}.openstatus.dev`}`;
+/**
+ * `baseDomain` is the runtime `STATUS_PAGE_BASE_DOMAIN` — client components get
+ * it from `useStatusPageBaseDomain()`.
+ */
+export function getPageUrl(
+  page: {
+    slug: string;
+    customDomain: string | null;
+  },
+  baseDomain: string = DEFAULT_STATUS_PAGE_BASE_DOMAIN,
+): string {
+  return getStatusPageUrl(page, baseDomain);
 }
 
 export const actions = [
