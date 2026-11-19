@@ -412,11 +412,11 @@ const nextConfig: NextConfig = {
           source: "/:path*\\.md",
           destination: "/api/markdown/:path*",
         },
-        // Markdown content negotiation for AI tools. beforeFiles rewrites
-        // chain, so skip paths the .md rule above already rewrote — otherwise
-        // /pricing.md + Accept: text/markdown ends up at /api/markdown/api/markdown/pricing
+        // Markdown content negotiation for AI tools. Skip /api and /_next:
+        // they are not pages, and beforeFiles rewrites chain, so /pricing.md
+        // would end up at /api/markdown/api/markdown/pricing.
         {
-          source: `/:path((?!api/markdown(?:/|$))${NOT_A_PAGE}.+)`,
+          source: `/:path((?!(?:api|_next)(?:/|$))${NOT_A_PAGE}.+)`,
           destination: "/api/markdown/:path",
           has: [
             {
