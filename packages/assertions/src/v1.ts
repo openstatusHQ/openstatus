@@ -367,7 +367,8 @@ export class JsonBodyAssertion implements Assertion {
     }
     try {
       const json = JSON.parse(req.body);
-      const value = JSONPath({ path: this.schema.path, json });
+      const matches = JSONPath({ path: this.schema.path, json });
+      const value = matches.length > 0 ? String(matches[0]) : "";
       const { success, message } = evaluateString(
         value,
         this.schema.compare,
