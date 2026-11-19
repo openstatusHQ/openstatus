@@ -204,7 +204,7 @@ export function FormCustomTheme({
                 type="button"
                 asChild
               >
-                <NextLink href="/settings/billing#plans">
+                <NextLink href="/settings/billing?highlight=custom-theme#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>

@@ -150,7 +150,7 @@ export function FormMembers({
                   size="sm"
                   asChild
                 >
-                  <NextLink href="/settings/billing#plans">
+                  <NextLink href="/settings/billing?highlight=members#plans">
                     <Lock />
                     Upgrade
                   </NextLink>

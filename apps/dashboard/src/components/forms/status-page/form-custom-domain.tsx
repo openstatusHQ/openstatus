@@ -152,7 +152,7 @@ export function FormCustomDomain({
                 type="button"
                 asChild
               >
-                <NextLink href="/settings/billing#plans">
+                <NextLink href="/settings/billing?highlight=custom-domain#plans">
                   <Lock />
                   Upgrade
                 </NextLink>
