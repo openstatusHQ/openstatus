@@ -11,6 +11,11 @@ transaction where it needs a single atomic `db.batch()`, and a fail-closed
 `emitAudit` would roll back a real status transition because an audit insert
 failed. Do not "fix" it by routing it through a verb.
 
+Only that batch is exempt. It records its incident audit rows after the commit
+through `recordMonitorIncidentAudit`, best-effort. Every other job that opens
+or closes a monitor incident calls `createMonitorIncident` or
+`autoResolveMonitorIncidents` as a `system` actor.
+
 ## Shape of a verb
 
 - **One file per verb** under `packages/services/src/<entity>/` (`create.ts`,

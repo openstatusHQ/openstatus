@@ -134,6 +134,7 @@ const maintenanceUpdateActions = [
 ] as const;
 
 const monitorIncidentActions = [
+  action("monitor_incident.create", "monitor_incident", intId),
   action("monitor_incident.update", "monitor_incident", intId),
   action("monitor_incident.delete", "monitor_incident", intId),
 ] as const;
@@ -197,8 +198,8 @@ const invitationActions = [
 //     (the acceptance stamp), so `member.create` covers only the paths that
 //     mint a membership with no invitation behind it — today, SSO JIT
 //     provisioning.
-//   - `monitor_incident`: rows originate from the checker pipeline, not user
-//     mutations.
+//   - `monitor_incident`: opened and auto-resolved by the checker pipeline,
+//     which records them best-effort after its own commit; nothing deletes one.
 // When those write paths migrate to the service layer, add the missing
 // verbs alongside.
 const memberActions = [

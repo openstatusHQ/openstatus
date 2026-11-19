@@ -14,6 +14,7 @@ import { IncidentCard } from "./cards/incident";
 import { MaintenanceCard } from "./cards/maintenance";
 import { MaintenanceWindowCard } from "./cards/maintenance-window";
 import { MonitorCard } from "./cards/monitor";
+import { MonitorIncidentCard } from "./cards/monitor-incident";
 import { NotificationCard } from "./cards/notification";
 import { PageCard } from "./cards/page";
 import { PageComponentCard } from "./cards/page-component";
@@ -27,6 +28,7 @@ const cards = {
   statusReport: StatusReportCard,
   maintenance: MaintenanceCard,
   incident: IncidentCard,
+  monitorIncident: MonitorIncidentCard,
   privateLocation: PrivateLocationCard,
   notification: NotificationCard,
   maintenanceWindow: MaintenanceWindowCard,

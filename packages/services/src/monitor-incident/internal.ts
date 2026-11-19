@@ -4,6 +4,7 @@ import { monitorIncidentTable } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import type { DB, ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
+import type { MonitorIncident } from "../types";
 
 /** Load an incident by id, scoped to the workspace. Throws on miss. */
 export async function getMonitorIncidentInWorkspace(args: {
@@ -35,9 +36,9 @@ export async function resolveOpenMonitorIncidents(args: {
   ctx: ServiceContext;
   monitorIds: number[];
   now?: Date;
-}): Promise<void> {
+}): Promise<MonitorIncident[]> {
   const { tx, ctx, monitorIds, now = new Date() } = args;
-  if (monitorIds.length === 0) return;
+  if (monitorIds.length === 0) return [];
 
   const where = and(
     eq(monitorIncidentTable.workspaceId, ctx.workspace.id),
@@ -45,7 +46,7 @@ export async function resolveOpenMonitorIncidents(args: {
     isNull(monitorIncidentTable.resolvedAt),
   );
   const open = await tx.select().from(monitorIncidentTable).where(where).all();
-  if (open.length === 0) return;
+  if (open.length === 0) return [];
 
   const resolved = await tx
     .update(monitorIncidentTable)
@@ -71,4 +72,5 @@ export async function resolveOpenMonitorIncidents(args: {
       after,
     });
   }
+  return resolved;
 }

@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 
 import {
   expectAuditRow,
+  readAuditLog,
   createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
@@ -13,8 +14,11 @@ import {
 import type { DrizzleTx, ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { acknowledgeMonitorIncident } from "../acknowledge";
+import { autoResolveMonitorIncidents } from "../auto-resolve";
+import { createMonitorIncident } from "../create";
 import { excuseMonitorIncident } from "../excuse";
 import { getMonitorIncident, listMonitorIncidents } from "../list";
+import { recordMonitorIncidentAudit } from "../record-audit";
 import { resolveMonitorIncident } from "../resolve";
 import { unexcuseMonitorIncident } from "../unexcuse";
 
@@ -504,6 +508,226 @@ describe("list / get", () => {
       expect(full.acknowledgedByUser).toBeNull();
       expect(full.resolvedByUser).toBeNull();
       expect(full.excusedByUser).toBeNull();
+    });
+  });
+});
+
+describe("recordMonitorIncidentAudit", () => {
+  test("records an opened incident as a system create", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+
+      await recordMonitorIncidentAudit({
+        ctx: {
+          workspace: teamCtx.workspace,
+          actor: { type: "system", job: "checker" },
+          db: tx,
+        },
+        transition: "created",
+        incidents: [incident],
+      });
+
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: incident.id,
+        db: tx,
+      });
+      expect(row).toMatchObject({
+        action: "monitor_incident.create",
+        actorType: "system",
+        actorId: "checker",
+        actorUserId: null,
+        before: null,
+        changedFields: null,
+      });
+      expect(row?.after).toMatchObject({ id: incident.id });
+    });
+  });
+
+  test("records an auto-resolve as a diff on the resolve columns", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+
+      await recordMonitorIncidentAudit({
+        ctx: {
+          workspace: teamCtx.workspace,
+          actor: { type: "system", job: "checker" },
+          db: tx,
+        },
+        transition: "auto_resolved",
+        incidents: [{ ...incident, autoResolved: true }],
+      });
+
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: incident.id,
+        db: tx,
+      });
+      expect(row?.action).toBe("monitor_incident.update");
+      expect(row?.actorType).toBe("system");
+      expect(row?.changedFields?.toSorted()).toEqual([
+        "autoResolved",
+        "resolvedAt",
+      ]);
+    });
+  });
+});
+
+describe("createMonitorIncident", () => {
+  test("opens an incident and audits it in the same transaction", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = {
+        workspace: teamCtx.workspace,
+        actor: { type: "system", job: "checker" },
+        db: tx,
+      };
+      const startedAt = new Date("2026-01-02T03:04:05Z");
+
+      const created = await createMonitorIncident({
+        ctx,
+        input: { monitorId: testMonitorId, startedAt },
+      });
+
+      expect(created.monitorId).toBe(testMonitorId);
+      expect(created.workspaceId).toBe(teamCtx.workspace.id);
+      expect(created.startedAt).toEqual(startedAt);
+      expect(created.resolvedAt).toBeNull();
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_incident.create",
+        entityType: "monitor_incident",
+        entityId: created.id,
+        actorType: "system",
+        db: tx,
+      });
+    });
+  });
+
+  test("throws ConflictError while an incident is open, and audits nothing", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const open = await createMonitorIncident({
+        ctx,
+        input: { monitorId: testMonitorId },
+      });
+
+      await expect(
+        createMonitorIncident({
+          ctx,
+          input: { monitorId: testMonitorId, startedAt: new Date(0) },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        db: tx,
+      });
+      expect(rows.map((row) => row.entityId)).toEqual([String(open.id)]);
+    });
+  });
+
+  test("throws NotFoundError for another workspace's monitor", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createMonitorIncident({
+          ctx: { ...freeCtx, db: tx },
+          input: { monitorId: testMonitorId },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("requires monitors:write", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "read-only",
+          scopes: ["monitors:read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createMonitorIncident({ ctx, input: { monitorId: testMonitorId } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("autoResolveMonitorIncidents", () => {
+  test("closes the open incident and audits the diff", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = {
+        workspace: teamCtx.workspace,
+        actor: { type: "system", job: "checker" },
+        db: tx,
+      };
+      const open = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+      const resolvedAt = new Date("2026-01-02T03:04:05Z");
+
+      const resolved = await autoResolveMonitorIncidents({
+        ctx,
+        input: { monitorId: testMonitorId, resolvedAt },
+      });
+
+      expect(resolved.map((row) => row.id)).toEqual([open.id]);
+      expect(resolved[0]?.resolvedAt).toEqual(resolvedAt);
+      expect(resolved[0]?.autoResolved).toBe(true);
+      expect(resolved[0]?.resolvedBy).toBeNull();
+
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: open.id,
+        db: tx,
+      });
+      expect(row?.action).toBe("monitor_incident.update");
+      expect(row?.actorType).toBe("system");
+      expect(row?.changedFields?.toSorted()).toEqual([
+        "autoResolved",
+        "resolvedAt",
+      ]);
+    });
+  });
+
+  test("returns nothing when no incident is open", async () => {
+    await withTestTransaction(async (tx) => {
+      const resolved = await autoResolveMonitorIncidents({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorId: testMonitorId },
+      });
+      expect(resolved).toEqual([]);
+    });
+  });
+
+  test("requires monitors:write", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "read-only",
+          scopes: ["monitors:read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        autoResolveMonitorIncidents({
+          ctx,
+          input: { monitorId: testMonitorId },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

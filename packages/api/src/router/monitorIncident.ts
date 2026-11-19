@@ -3,6 +3,7 @@ import {
   ExcuseMonitorIncidentInput,
   acknowledgeMonitorIncident,
   excuseMonitorIncident,
+  getMonitorIncident,
   getMonitorReport,
   listMonitorIncidents,
   resolveMonitorIncident,
@@ -45,6 +46,16 @@ export const monitorIncidentRouter = createTRPCRouter({
         // `/overview` / `/monitors/:id/report` surfaces. We still log
         // so the inconsistency remains visible.
         return items.filter(hasMonitor);
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getMonitorIncident({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

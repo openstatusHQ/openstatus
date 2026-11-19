@@ -9,7 +9,7 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
-import { findOpenIncident, resolveIncident } from "./incident-utils";
+import { openIncident, resolveIncident } from "./incident-utils";
 
 const logger = getLogger(["workflow"]);
 
@@ -238,63 +238,36 @@ export async function updateStatusPrivate(c: Context<Env>) {
         // Create incident only if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
           try {
-            const existingIncident = await findOpenIncident(monitorIdNumber);
-            if (!existingIncident) {
-              const [newIncident] = await db
-                .insert(schema.monitorIncidentTable)
-                .values({
-                  monitorId: monitorIdNumber,
-                  workspaceId: monitor.workspaceId,
-                  startedAt: new Date(cronTimestamp),
-                })
-                .returning();
-
-              if (newIncident?.id) {
-                incident = newIncident;
-                await checkerAudit.publishAuditLog({
-                  id: `monitor:${monitorId}`,
-                  action: "incident.created",
-                  targets: [{ id: monitorId, type: "monitor" }],
-                  metadata: { cronTimestamp, incidentId: newIncident.id },
-                });
-                logger.info("Created incident", {
-                  incident_id: newIncident.id,
-                  monitor_id: monitorId,
-                  affected_location_count: affectedLocationCount,
-                  total_locations: numberOfLocations,
-                });
-              }
-            } else {
-              incident = existingIncident;
+            const opened = await openIncident({
+              monitorId: monitorIdNumber,
+              workspaceId: monitor.workspaceId,
+              cronTimestamp,
+            });
+            incident = opened.incident;
+            if (opened.created && opened.incident) {
+              await checkerAudit.publishAuditLog({
+                id: `monitor:${monitorId}`,
+                action: "incident.created",
+                targets: [{ id: monitorId, type: "monitor" }],
+                metadata: { cronTimestamp, incidentId: opened.incident.id },
+              });
+              logger.info("Created incident", {
+                incident_id: opened.incident.id,
+                monitor_id: monitorId,
+                affected_location_count: affectedLocationCount,
+                total_locations: numberOfLocations,
+              });
+            } else if (opened.incident) {
               logger.info("Already in incident", {
-                incident_id: existingIncident.id,
+                incident_id: opened.incident.id,
               });
             }
           } catch (error) {
-            // Check if this is a constraint violation (race condition)
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-            if (
-              errorMessage.includes("UNIQUE constraint") ||
-              errorMessage.includes("unique")
-            ) {
-              // Another request created the incident concurrently, fetch it
-              logger.info(
-                "Concurrent incident creation detected, fetching existing",
-                {
-                  monitor_id: monitorId,
-                },
-              );
-              const existingIncident = await findOpenIncident(monitorIdNumber);
-              if (existingIncident) {
-                incident = existingIncident;
-              }
-            } else {
-              logger.error("Failed to create incident", {
-                monitor_id: monitorId,
-                error_message: errorMessage,
-              });
-            }
+            logger.error("Failed to create incident", {
+              monitor_id: monitorId,
+              error_message:
+                error instanceof Error ? error.message : String(error),
+            });
           }
         }
 
@@ -349,6 +322,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           try {
             const incidents = await resolveIncident({
               monitorId,
+              workspaceId: monitor.workspaceId,
               cronTimestamp,
             });
             incident = incidents[0] ?? null;
@@ -415,6 +389,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           try {
             const incidents = await resolveIncident({
               monitorId,
+              workspaceId: monitor.workspaceId,
               cronTimestamp,
             });
             incident = incidents[0] ?? null;

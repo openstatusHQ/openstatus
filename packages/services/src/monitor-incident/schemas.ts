@@ -55,6 +55,22 @@ const coercedDate = z
   .union([z.string(), z.number(), z.date()])
   .pipe(z.coerce.date());
 
+export const CreateMonitorIncidentInput = z.object({
+  monitorId: z.number().int(),
+  startedAt: coercedDate.default(() => new Date()),
+});
+export type CreateMonitorIncidentInput = z.input<
+  typeof CreateMonitorIncidentInput
+>;
+
+export const AutoResolveMonitorIncidentsInput = z.object({
+  monitorId: z.number().int(),
+  resolvedAt: coercedDate.default(() => new Date()),
+});
+export type AutoResolveMonitorIncidentsInput = z.input<
+  typeof AutoResolveMonitorIncidentsInput
+>;
+
 export const GetMonitorReportInput = z.object({
   monitorId: z.number().int(),
   from: coercedDate,

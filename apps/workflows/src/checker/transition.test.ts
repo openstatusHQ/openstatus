@@ -1,5 +1,6 @@
 import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
+  auditLog,
   monitorTransition,
   notificationOutbox,
   monitorIncidentTable,
@@ -28,6 +29,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await db.delete(auditLog).where(eq(auditLog.workspaceId, workspaceId)).run();
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
@@ -287,6 +289,47 @@ describe("recovery", () => {
     expect(events.map((row) => row.eventType).sort()).toEqual([
       "alert",
       "recovery",
+    ]);
+  });
+
+  test("leaves a system audit row for the open and the auto-resolve", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+    const down = Date.now();
+    const opened = await applyStatusTransition(
+      transitionInput(monitorId, regions[0], down),
+    );
+    await applyStatusTransition({
+      monitorId,
+      region: regions[0],
+      status: "active",
+      cronTimestamp: down + 60_000,
+      deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 100,
+    });
+
+    if (opened.kind !== "evaluated") throw new Error("expected a transition");
+    const rows = await db
+      .select()
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(opened.incidentCreatedId)),
+        ),
+      )
+      .orderBy(auditLog.id)
+      .all();
+
+    expect(rows.map((row) => [row.action, row.actorType, row.actorId])).toEqual(
+      [
+        ["monitor_incident.create", "system", "checker"],
+        ["monitor_incident.update", "system", "checker"],
+      ],
+    );
+    expect(rows[1]?.changedFields?.toSorted()).toEqual([
+      "autoResolved",
+      "resolvedAt",
     ]);
   });
 });

@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { type SQL, and, db, eq, sql } from "@openstatus/db";
+import { type SQL, and, db, eq, inArray, sql } from "@openstatus/db";
 import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type {
   NotificationOutboxPayload,
@@ -18,9 +18,11 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
+import { recordMonitorIncidentAudit } from "@openstatus/services/monitor-incident";
 import { statusRegions } from "@openstatus/utils";
 
 import { checkerAudit } from "../utils/audit-log";
+import { systemContext } from "../utils/system-context";
 
 const logger = getLogger(["workflow"]);
 import { quorumCountSql, quorumGuardSql } from "./quorum";
@@ -385,6 +387,9 @@ async function publishIncidentAudit(
     );
   }
 
+  const incidentIds = createdId !== null ? [createdId] : resolvedIds;
+  if (incidentIds.length > 0) entries.push(recordAudit(input, incidentIds));
+
   // Best-effort: the incident is already committed, and failing here would make
   // Cloud Tasks retry a transition that has landed.
   try {
@@ -395,4 +400,19 @@ async function publishIncidentAudit(
       error_message: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+async function recordAudit(input: TransitionInput, incidentIds: number[]) {
+  // The batch returns raw ids; the audit snapshot wants the mapped rows.
+  const incidents = await db
+    .select()
+    .from(monitorIncidentTable)
+    .where(inArray(monitorIncidentTable.id, incidentIds));
+  const workspaceId = incidents[0]?.workspaceId;
+  if (workspaceId == null) return;
+  await recordMonitorIncidentAudit({
+    ctx: await systemContext(workspaceId, "checker"),
+    transition: input.status === "error" ? "created" : "auto_resolved",
+    incidents,
+  });
 }

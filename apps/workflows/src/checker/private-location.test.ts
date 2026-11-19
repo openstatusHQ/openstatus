@@ -1,7 +1,9 @@
 import { and, db, eq, or } from "@openstatus/db";
 import {
+  auditLog,
   maintenance,
   monitor,
+  monitorIncidentTable,
   monitorMaintenanceWindow,
   notification,
   notificationTrigger,
@@ -225,6 +227,10 @@ describe("updateStatusPrivate", () => {
   });
 
   afterAll(async () => {
+    await db
+      .delete(auditLog)
+      .where(eq(auditLog.workspaceId, workspaceId))
+      .run();
     await db
       .delete(privateLocationMonitorStatus)
       .where(eq(privateLocationMonitorStatus.monitorId, TEST_MONITOR_ID))
@@ -634,6 +640,64 @@ describe("updateStatusPrivate", () => {
       .get();
     expect(monitorAfter2?.status).toBe("error");
     expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+  });
+
+  test("private-only monitor: the incident is opened and auto-resolved through audited verbs", async () => {
+    await db
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    // SQLite recycles the deleted incident's id, and its audit rows with it.
+    await db
+      .delete(auditLog)
+      .where(eq(auditLog.workspaceId, workspaceId))
+      .run();
+    await db
+      .update(monitor)
+      .set({ status: "active" })
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+
+    const locations = [TEST_LOCATION_ID, PRIVATE_LOCATION_2_ID];
+    for (const [i, status] of (["error", "active"] as const).entries()) {
+      for (const locationId of locations) {
+        const res = await post({
+          monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+          privateLocationId: String(locationId),
+          status,
+          cronTimestamp: 9320010 + i * 100 + locationId,
+        });
+        expect(res.status).toBe(200);
+      }
+    }
+
+    const incidents = await db
+      .select()
+      .from(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .all();
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]?.resolvedAt).not.toBeNull();
+    expect(incidents[0]?.autoResolved).toBe(true);
+
+    const rows = await db
+      .select()
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(incidents[0]?.id)),
+        ),
+      )
+      .orderBy(auditLog.id)
+      .all();
+    expect(rows.map((row) => [row.action, row.actorType, row.actorId])).toEqual(
+      [
+        ["monitor_incident.create", "system", "checker"],
+        ["monitor_incident.update", "system", "checker"],
+      ],
+    );
   });
 
   test("does not change monitor.status from error when 1/3 locations report degraded (threshold not met)", async () => {
