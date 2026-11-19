@@ -4,6 +4,8 @@ import type React from "react";
 
 export const plans = allPlans;
 
+export const planOrder = ["free", "starter", "team", "scale"] as const;
+
 export const config: Record<
   string,
   {

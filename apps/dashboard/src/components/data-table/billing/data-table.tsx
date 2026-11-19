@@ -35,7 +35,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { config as featureGroups, plans } from "@/data/plans";
+import { config as featureGroups, planOrder, plans } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -43,8 +43,6 @@ const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
     : "http://localhost:3001";
-
-const PLAN_ORDER: WorkspacePlan[] = ["free", "starter", "team", "scale"];
 
 function getPeriodSuffix(interval: BillingInterval) {
   return interval === "yearly" ? "/yr." : "/mo.";
@@ -238,9 +236,11 @@ export function DataTable({
     restrictTo ? restrictTo.includes(plan.id) : true,
   );
   const pinned = allFeatures.find((feature) => feature.value === highlight);
-  const upgrades = pinned
-    ? getPlansForLimit(workspace.plan, pinned.value as keyof Limits)
-    : PLAN_ORDER.slice(PLAN_ORDER.indexOf(workspace.plan) + 1);
+  // Some limits (uptime-history) have no row but still decide the plan.
+  const upgrades =
+    highlight && highlight in workspace.limits
+      ? getPlansForLimit(workspace.plan, highlight as keyof Limits)
+      : planOrder.slice(planOrder.indexOf(workspace.plan) + 1);
   const recommended = upgrades.find((id) =>
     filteredPlans.some((plan) => plan.id === id),
   );

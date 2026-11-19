@@ -17,10 +17,8 @@ import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { BillingAddons } from "@/components/content/billing-addons";
 import { DataTable } from "@/components/data-table/billing/data-table";
-import { config as featureGroups } from "@/data/plans";
+import { config as featureGroups, planOrder } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
-
-const PLAN_ORDER: WorkspacePlan[] = ["free", "starter", "team", "scale"];
 
 const UNITS: Partial<Record<keyof Limits, [string, string]>> = {
   monitors: ["monitor", "monitors"],
@@ -42,6 +40,9 @@ function getTitle(limit: keyof Limits | undefined, plan: WorkspacePlan) {
   if (value === false && label) {
     return `${label} is not part of ${allPlans[plan].title}`;
   }
+  if (typeof value === "string" && label) {
+    return `${allPlans[plan].title} includes ${value} ${label.toLowerCase()}`;
+  }
   return null;
 }
 
@@ -57,7 +58,7 @@ export function UpgradeDialog(
 
   const planAddons = allPlans[workspace.plan].addons;
   // The current plan stays in as the column to compare against.
-  const plans = PLAN_ORDER.slice(PLAN_ORDER.indexOf(workspace.plan));
+  const plans = planOrder.slice(planOrder.indexOf(workspace.plan));
   const canUpgrade = plans.length > 1;
   const canTrial =
     workspace?.trial.eligible === true && plans.includes("starter");
