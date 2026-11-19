@@ -265,9 +265,10 @@ export function DataTable({
         </TabsList>
       </Tabs>
       {/* Not `Table`: its own overflow wrapper would trap the sticky header. */}
+      {/* `isolate`: keeps the header's z-10 from painting over the app nav. */}
       <div
         data-slot="table-container"
-        className="relative min-h-0 w-full flex-1 overflow-auto in-data-[slot=dialog-content]:border-t"
+        className="relative isolate min-h-0 w-full flex-1 overflow-auto in-data-[slot=dialog-content]:border-t"
       >
         <table data-slot="table" className="w-full caption-bottom text-sm">
           <TableCaption className="in-data-[slot=dialog-content]:pb-4">
