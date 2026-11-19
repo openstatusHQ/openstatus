@@ -378,7 +378,7 @@ The chart creates ClusterIP Services only, so expose the dashboard and status pa
 
 ## Email sender
 
-openstatus sends every email through [Resend](https://resend.com): magic-link logins, team invitations, monitor alerts and status page notifications. Resend only delivers from domains verified in the account that owns `RESEND_API_KEY`. Without further configuration the senders are openstatus' own `openstatus.dev` addresses, so a self-hosted instance gets every email rejected with `The mail.openstatus.dev domain is not verified`.
+openstatus sends every email through [Resend](https://resend.com): magic-link logins, team invitations, monitor alerts and status page notifications. Resend only delivers from domains verified in the account that owns `RESEND_API_KEY`. Without further configuration the senders are openstatus' own domains, so a self-hosted instance gets emails rejected because those domains are not verified.
 
 [Verify a domain](https://resend.com/docs/dashboard/domains/introduction) in your Resend account and set one sender in `.env.docker`:
 
