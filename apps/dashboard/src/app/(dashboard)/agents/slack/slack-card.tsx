@@ -167,7 +167,7 @@ export function SlackIntegrationCard({
             type="button"
             asChild
           >
-            <NextLink href="/settings/billing#plans">
+            <NextLink href="/settings/billing?highlight=slack-agent#plans">
               <Lock />
               Upgrade
             </NextLink>

@@ -236,7 +236,7 @@ export function FormLocale({
                 type="button"
                 asChild
               >
-                <NextLink href="/settings/billing#plans">
+                <NextLink href="/settings/billing?highlight=i18n#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>

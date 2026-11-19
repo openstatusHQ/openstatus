@@ -340,7 +340,9 @@ export function FormPageAccess({
                 type="button"
                 asChild
               >
-                <NextLink href="/settings/billing#plans">
+                <NextLink
+                  href={`/settings/billing?highlight=${ACCESS_TYPE_LIMIT[watchAccessType]}#plans`}
+                >
                   <Lock />
                   Upgrade
                 </NextLink>

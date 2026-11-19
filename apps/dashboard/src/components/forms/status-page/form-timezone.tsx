@@ -203,7 +203,7 @@ export function FormTimezone({
                 type="button"
                 asChild
               >
-                <Link href="/settings/billing#plans">
+                <Link href="/settings/billing?highlight=timezone#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </Link>

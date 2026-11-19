@@ -79,7 +79,7 @@ export function Client() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
-  const [{ success, setup, trial }, setSearchParams] =
+  const [{ success, setup, trial, highlight }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   // Captured on mount: the toasts clear the params while the dialog is open.
@@ -449,7 +449,7 @@ export function Client() {
             </FormCardHeader>
             <FormCardSeparator />
             <FormCardContent className="pb-4">
-              <DataTable />
+              <DataTable highlight={highlight} />
             </FormCardContent>
           </FormCard>
         </FormCardGroup>
