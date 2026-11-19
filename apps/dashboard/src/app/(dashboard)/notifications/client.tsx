@@ -3,6 +3,7 @@
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { ExternalLink, Notification } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
@@ -65,10 +66,15 @@ function isPlanGated(
   return planGated.some((gated) => gated === provider);
 }
 
-function NotifierCard({ provider }: { provider: NotifierProvider }) {
+// Spreads its props: `FormSheetTrigger asChild` hands the click handler to it.
+function NotifierCard({
+  provider,
+  className,
+  ...props
+}: React.ComponentProps<typeof ActionCard> & { provider: NotifierProvider }) {
   const { icon: Icon, label } = config[provider];
   return (
-    <ActionCard className="h-full w-full">
+    <ActionCard className={cn("h-full w-full", className)} {...props}>
       <ActionCardHeader>
         <div className="flex items-center gap-2">
           <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
