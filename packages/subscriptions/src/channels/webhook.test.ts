@@ -776,3 +776,67 @@ describe("sendTestWebhookRequest", () => {
     expect(headers["X-Custom"]).toBe("abc");
   });
 });
+
+// ─── Delivery deadline (issue #2936) ─────────────────────────────────────────
+
+describe("delivery deadline", () => {
+  test("sendTestWebhookRequest aborts when the server stalls returning headers", async () => {
+    setFetch(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const start = Date.now();
+    await expect(
+      sendTestWebhookRequest({
+        url: "https://example.com/hook",
+        flavor: "generic",
+      }),
+    ).rejects.toThrow();
+    // 5 s cap; should not hang the test runner even on slow CI.
+    expect(Date.now() - start).toBeLessThan(10_000);
+  });
+
+  test("sendWebhookVerification aborts a stalled destination", async () => {
+    setFetch(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const sub = makeSub({ webhookUrl: "https://example.com/sub" });
+    const start = Date.now();
+    await expect(
+      sendWebhookVerification(sub, "https://example.com/verify/token"),
+    ).rejects.toThrow();
+    expect(Date.now() - start).toBeLessThan(10_000);
+  });
+
+  test("sendWebhookNotifications retries a stalled subscriber and gives up as a timeout", async () => {
+    setFetch(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    // allSettled hides the per-subscriber WebhookSendError, so elapsed time
+    // alone cannot prove anything. Instead assert the retry policy was
+    // actually exercised: a stalled destination must be re-attempted the
+    // configured number of times before giving up.
+    await sendWebhookNotifications(
+      [makeSub({ webhookUrl: "https://example.com/hook" })],
+      // A valid status_report update, otherwise buildGenericPayload throws
+      // before any fetch happens and the test would pass vacuously.
+      makeUpdate({ updateId: 42 }),
+    );
+    // retryPolicy.times = 3 → initial attempt + 3 retries = 4 fetch attempts.
+    expect(fetchMock.mock.calls.length).toBe(4);
+  });
+});
