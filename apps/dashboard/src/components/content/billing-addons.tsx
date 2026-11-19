@@ -28,9 +28,11 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import NextLink from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { planOrder } from "@/data/plans";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Workspace = RouterOutputs["workspace"]["get"];
@@ -244,6 +246,58 @@ export function BillingAddons({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** An add-on the plan cannot buy: already bundled, or sold from a higher plan. */
+export function BillingAddonUnavailable({
+  addon,
+  plan,
+}: {
+  addon: keyof Addons;
+  plan: Workspace["plan"];
+}) {
+  const [currency] = useCookieState("x-currency", "USD");
+  const offeredOn = planOrder.find((id) => allPlans[id].addons[addon]);
+  const config = offeredOn ? allPlans[offeredOn].addons[addon] : null;
+  if (!offeredOn || !config) return null;
+
+  const isIncluded = allPlans[plan].limits[addon] === true;
+  const isQuantity = typeof allPlans[offeredOn].limits[addon] === "number";
+  const price = getAddonPriceConfig(offeredOn, addon, currency, "monthly");
+
+  return (
+    <div
+      data-slot="billing-addon-unavailable"
+      className="grid grid-cols-3 gap-1.5 lg:grid-cols-5"
+    >
+      <div className="text-muted-foreground col-span-3 space-y-0.5 text-sm">
+        <Label>{config.title}</Label>
+        <div>{config.description}</div>
+      </div>
+      <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
+        {isIncluded ? (
+          <>
+            <Check className="text-success size-4" />
+            Included in {allPlans[plan].title}
+          </>
+        ) : (
+          <span className="font-mono">
+            {formatPrice(price)}
+            {getPriceSuffix(isQuantity, getAddonPackSize(addon), "monthly")}
+          </span>
+        )}
+      </div>
+      <div className="col-span-2 flex items-center justify-end gap-1.5 lg:col-span-1">
+        {isIncluded ? null : (
+          <Button size="sm" variant="outline" asChild>
+            <NextLink href={`/settings/billing?highlight=${addon}#plans`}>
+              From {allPlans[offeredOn].title}
+            </NextLink>
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
