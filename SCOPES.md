@@ -19,7 +19,7 @@ mount. Lint (`openstatus/services-no-legacy-scope`) rejects a bare `"read"` /
 | Value | Settable | Satisfied by | Meaning |
 | --- | --- | --- | --- |
 | `monitors:read` | yes | itself, `monitors:write`, `read`, `write`, `*` | list and inspect monitors, tags, private locations, monitor incidents, response logs, uptime history, maintenance windows |
-| `monitors:write` | yes | itself, `write`, `*` | create, update, delete monitors and private locations; link tags and notification channels; on-demand checks and probes; acknowledge or resolve monitor incidents; freeze uptime; create, update, end, delete maintenance windows |
+| `monitors:write` | yes | itself, `write`, `*` | create, update, delete monitors and private locations; link tags and notification channels; on-demand checks and probes; acknowledge, resolve, excuse or unexcuse monitor incidents; freeze uptime; create, update, end, delete maintenance windows |
 | `pages:read` | yes | itself, `pages:write`, `read`, `write`, `*` | list pages and components, slug and custom-domain lookups, import preview |
 | `pages:write` | yes | itself, `write`, `*` | create, update, delete pages, components and groups; provider import (also needs `monitors:write` and `incidents:write`, plus `subscribers:write` when subscribers are included) |
 | `incidents:read` | yes | itself, `incidents:write`, `read`, `write`, `*` | list status reports, managed incidents, their events, postmortems, maintenances |

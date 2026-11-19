@@ -75,27 +75,25 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    // checks cannot be stopped from here, so a pause only drops the result; a continue
-    // window drops failures too because this path has no transition guard
-    const paused = monitorInMaintenance(db, { at: new Date(), mode: "pause" });
-    const activeMaintenance = await db
-      .select({ id: schema.monitor.id })
-      .from(schema.monitor)
-      .where(
-        and(
-          eq(schema.monitor.id, monitorIdNumber),
-          status === "active"
-            ? paused
-            : or(
-                paused,
-                monitorInMaintenance(db, {
-                  at: new Date(cronTimestamp),
-                  mode: "window",
-                }),
+    // checks cannot be stopped from here, so maintenance drops the failures a
+    // check reported while it ran; a recovery always closes its outage
+    const at = new Date(cronTimestamp);
+    const activeMaintenance =
+      status === "active"
+        ? undefined
+        : await db
+            .select({ id: schema.monitor.id })
+            .from(schema.monitor)
+            .where(
+              and(
+                eq(schema.monitor.id, monitorIdNumber),
+                or(
+                  monitorInMaintenance(db, { at, mode: "pause" }),
+                  monitorInMaintenance(db, { at, mode: "window" }),
+                ),
               ),
-        ),
-      )
-      .get();
+            )
+            .get();
 
     if (activeMaintenance) {
       return c.json({ success: true }, 200);

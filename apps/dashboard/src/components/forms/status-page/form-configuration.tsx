@@ -47,11 +47,11 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { UptimeCalculation } from "@/components/status-pages/uptime-calculation";
 import {
-  UptimeCalculation,
   configurationLabels,
   uptimeModeOf,
-} from "@/components/status-pages/uptime-calculation";
+} from "@/data/uptime-calculation.client";
 
 // card values offered for monitor checks; "manual" belongs to reports only
 const CHECK_CARD_VALUES = ["duration", "requests", "runs"] as const;
@@ -424,7 +424,7 @@ const message = {
       "cards show how long the monitor was operational, degraded or down.",
     requests:
       "cards show how many checks succeeded, degraded or failed in each region, including private locations and manual checks.",
-    runs: "cards count each scheduled check once across its regions: it fails only when at least half of the regions fail. Private-only and heartbeat monitors show requests.",
+    runs: "cards count each scheduled check once across its cloud regions: it fails only when at least half of them fail. Private-only and heartbeat monitors show requests.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {

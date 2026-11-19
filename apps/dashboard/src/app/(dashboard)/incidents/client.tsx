@@ -45,14 +45,6 @@ import {
 import { DeclareIncidentButton } from "@/components/incidents/declare-incident-button";
 import { IncidentRow } from "@/components/incidents/incident-row";
 import {
-  MetricCard,
-  MetricCardDetail,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
-import {
   activityDayLines,
   activityRange,
   groupByDay,
@@ -61,12 +53,10 @@ import {
 import {
   incidentActivity,
   incidentSpan,
-  monthlyResponseAverages,
   severityConfig,
   severityLevels,
 } from "@/data/managed-incidents.client";
 import { usePaged } from "@/hooks/use-paged";
-import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
@@ -86,7 +76,6 @@ export function Client() {
   if (!incidents) return null;
 
   const now = new Date();
-  const averages = monthlyResponseAverages(incidents, now);
   const range = activityRange(now);
   const grouped = groupByDay(range, incidents, incidentSpan, now);
   const days = grouped.map(({ date, items }) => {
@@ -126,34 +115,6 @@ export function Client() {
             </DeclareIncidentButton>
           </div>
         </SectionHeaderRow>
-        {incidents.length > 0 ? (
-          <MetricCardGroup>
-            {(
-              [
-                ["Time to acknowledge", averages.acknowledge],
-                ["Time to mitigate", averages.mitigate],
-                ["Time to resolve", averages.resolve],
-              ] as const
-            ).map(([title, { average, count }]) => (
-              <MetricCard key={title}>
-                <MetricCardHeader>
-                  <MetricCardTitle className="truncate">
-                    {title}
-                  </MetricCardTitle>
-                </MetricCardHeader>
-                <div className="flex flex-col">
-                  <MetricCardValue className="tabular-nums">
-                    {average === null ? "—" : formatDurationShort(average)}
-                  </MetricCardValue>
-                  <MetricCardDetail>
-                    {count === 1 ? "1 incident" : `${count} incidents`} this
-                    month
-                  </MetricCardDetail>
-                </div>
-              </MetricCard>
-            ))}
-          </MetricCardGroup>
-        ) : null}
         <ActivityFeed>
           <Activity>
             <ActivityHeader>

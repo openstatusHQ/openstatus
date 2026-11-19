@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
-import { reportRange } from "@/data/monitor-report";
+import { reportRange } from "@/data/monitor-report.client";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";

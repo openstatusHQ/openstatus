@@ -47,6 +47,8 @@ function monthColumns(
     const offset = months.length - i;
     const isCurrent = offset === 1;
     const utcOnly = timeZone !== "UTC" && utcOnlyMonths.includes(key);
+    // a UTC-only month annotates with the events of that UTC month
+    const eventZone = utcOnly ? "UTC" : timeZone;
     return {
       id: String(offset),
       accessorFn: (row: HistoryRow) => row.months[key]?.percentage ?? null,
@@ -66,16 +68,16 @@ function monthColumns(
           unit={row.original.unit}
           label={monthKeyToFullLabel(key)}
           isCurrent={isCurrent}
-          events={eventsForMonth(row.original.events, key, timeZone)}
+          events={eventsForMonth(row.original.events, key, eventZone)}
           maintenanceWindows={eventsForMonth(
             row.original.maintenanceWindows,
             key,
-            timeZone,
+            eventZone,
           )}
           excusedOutages={eventsForMonth(
             row.original.excusedOutages,
             key,
-            timeZone,
+            eventZone,
           )}
           monitorId={row.original.component.monitorId}
         />

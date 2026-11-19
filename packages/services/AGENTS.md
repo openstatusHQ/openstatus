@@ -122,3 +122,51 @@ which is what makes it expensive.
 is pinned by tests: `major_outage` = 1, `partial_outage` = 0.5,
 `degraded_performance` = 0. These numbers have been changed and reverted before —
 confirm with a maintainer before touching them.
+
+## Frozen uptime rows
+
+`frozen_monitor_uptime` holds one row per monitor and UTC month, written once,
+48 hours after the month ends. The Tinybird views it is read from keep 76 days
+and the freeze refuses a month 45 days after it started, so after that a frozen
+row is the only copy: a wrong row stays wrong.
+
+`days` is one entry per UTC day with `requests` counts and, for monitors with
+cloud regions, `runs` counts. A day's `bad` lists only its failing
+quarter-hours as ranges `[firstBucket, count, degraded, error]` (buckets 0..95,
+0 is 00:00 to 00:15 UTC).
+
+**`bucket_minutes` says whether those ranges were recorded for the row.**
+
+| `bucket_minutes` | A day without `bad` means | Written by |
+|---|---|---|
+| `15` | no failures that day | the freeze, when every day's ranges add up |
+| `NULL` | not recorded | rows frozen before ranges existed, heartbeat monitors, a mismatch |
+
+- **All or nothing.** `attachBadRanges` (`frozen-uptime/compute.ts`) sets `15`
+  only when, for every day of the month, the ranges sum exactly to that day's
+  degraded and error counts. One day off and the whole row keeps `NULL`, with a
+  "bad ranges do not match the day counts" warning. Every writer of this column goes through that
+  check.
+- **Only `15` rows can leave UTC.** `toLocalDays` (`frozen-uptime/buckets.ts`)
+  regroups a `15` row into the page time zone; a `NULL` row comes back as UTC
+  days and its month is listed in `utcOnlyMonths`, which the dashboard labels
+  "UTC". Around the frozen/live seam a `NULL` month can double-count or drop a
+  few hours on a page with another time zone.
+- **Regrouped totals are estimates, failures are exact.** A UTC day's total is
+  spread evenly over its 96 buckets, so local-day counts are fractional.
+  Degraded and error counts move with their real quarter-hour.
+- **Counts are never rewritten.** `backfillFrozenBuckets` only adds ranges to
+  `NULL` rows and only under the same sum check. Replacing counts is
+  `refreezeMonitorMonths`, which works only while Tinybird still covers the
+  whole month.
+- **Heartbeat rows stay `NULL`.** They have no quarter-hour data.
+- **The bucket size is a contract across three places**: `BUCKET_MINUTES` in
+  `frozen-uptime/buckets.ts`, the 0..95 bounds of `badRangeSchema` in
+  `packages/db/src/schema/frozen_uptime/validation.ts`, and the `*_bad_15m`
+  pipes in `packages/tinybird`. A different size is a new value of
+  `bucket_minutes` that readers must handle next to `15`, never an edit of
+  existing rows.
+
+The runbook for giving old months their ranges is in
+`packages/tinybird/README.md` under "Backfilling quarter-hour ranges for frozen
+months".

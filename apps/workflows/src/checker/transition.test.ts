@@ -35,6 +35,7 @@ async function makeMonitor(regionCount: number, withNotification = true) {
   const regions = REGIONS.slice(0, regionCount);
   const row = await createMonitor(workspaceId, {
     regions: regions.join(","),
+    active: true,
   });
   if (withNotification) {
     const notif = await createNotification(workspaceId);
@@ -110,6 +111,7 @@ describe("duplicated regions", () => {
   test("a region configured twice counts once in the quorum", async () => {
     const row = await createMonitor(workspaceId, {
       regions: "ams,arn,ams,arn,atl,bog",
+      active: true,
     });
     await seedRegionStatus(row.id, ["ams"], "error");
 
@@ -122,6 +124,26 @@ describe("duplicated regions", () => {
     expect(result.quorumCount).toBe(2);
     expect(result.regionCount).toBe(4);
     expect(result.transitioned).toBe(true);
+  });
+});
+
+describe("a result that was queued before the monitor stopped", () => {
+  test.each([
+    ["paused", { active: false }],
+    ["deleted", { deletedAt: new Date() }],
+  ])("a %s monitor does not transition", async (_state, change) => {
+    const { monitorId, regions } = await makeMonitor(1);
+    await db.update(monitor).set(change).where(eq(monitor.id, monitorId)).run();
+
+    const result = await applyStatusTransition(
+      transitionInput(monitorId, regions[0], Date.now()),
+    );
+
+    expect(result.kind).toBe("evaluated");
+    if (result.kind !== "evaluated") return;
+    expect(result.transitioned).toBe(false);
+    expect(result.incidentCreatedId).toBeNull();
+    expect(result.outboxRows).toEqual([]);
   });
 });
 

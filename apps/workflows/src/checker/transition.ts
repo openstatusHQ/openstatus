@@ -280,11 +280,12 @@ export async function evaluateTransition(
     latency: input.latency,
   };
 
-  const quorum = quorumGuardSql({
+  // a result queued before a pause or delete must not reopen the outage
+  const quorum = sql`(${quorumGuardSql({
     toStatus: input.status,
     regionsJson,
     regionCount,
-  });
+  })} AND ${monitor.active} = 1 AND ${monitor.deletedAt} IS NULL)`;
   // rechecked in the batch: a window can start after the caller's maintenance
   // read. Recoveries are never held back.
   const guard =

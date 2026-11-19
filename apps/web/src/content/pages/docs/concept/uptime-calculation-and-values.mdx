@@ -20,7 +20,7 @@ In the dashboard, two settings on the status page's [**Components**](https://app
 - **Card shows** — what the hover card (and uptime) is based on, when the source is **Monitor checks**:
     - **Time per status** — aggregated from the incidents' duration.
     - **Number of requests** — aggregated from every check result, region by region.
-    - **Number of runs** (default for new status pages) — each scheduled check counted once across its regions.
+    - **Number of runs** (default for new status pages) — each scheduled check counted once across its cloud regions.
 
 > **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration`, **Number of requests** is `value: requests` and **Number of runs** is `value: runs`. A page that never stored a value reads as `requests`.
 

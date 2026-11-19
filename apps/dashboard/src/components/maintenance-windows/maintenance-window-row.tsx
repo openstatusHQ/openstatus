@@ -45,10 +45,15 @@ export function MaintenanceWindowRow({
   const [editOpen, setEditOpen] = useState(false);
   const updateMutation = useMutation(
     trpc.maintenanceWindow.update.mutationOptions({
-      onSuccess: () =>
+      onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.maintenanceWindow.list.queryKey(),
-        }),
+        });
+        // each monitor carries its maintenance state
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
+      },
     }),
   );
   const now = new Date();
@@ -75,8 +80,8 @@ export function MaintenanceWindowRow({
       <EventRowContent>
         <EventRowTitle>{window.title}</EventRowTitle>
         <EventRowMeta>
-          {meta.map((item) => (
-            <span key={item}>{item}</span>
+          {meta.map((item, i) => (
+            <span key={i}>{item}</span>
           ))}
         </EventRowMeta>
       </EventRowContent>

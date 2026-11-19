@@ -144,11 +144,13 @@ export function NavMonitorsItem() {
           label={`${monitors.length} ${monitors.length === 1 ? "monitor" : "monitors"}, ${
             failing
               ? `${failing} ${failing === 1 ? "needs" : "need"} attention`
-              : inMaintenance
-                ? `${inMaintenance} in maintenance, the rest normal`
-                : paused
-                  ? `${paused} paused, the rest normal`
-                  : "all normal"
+              : inMaintenance && paused
+                ? `${inMaintenance} in maintenance, ${paused} paused`
+                : inMaintenance
+                  ? `${inMaintenance} in maintenance, the rest normal`
+                  : paused
+                    ? `${paused} paused, the rest normal`
+                    : "all normal"
           }`}
         />
       ) : null}

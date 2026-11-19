@@ -479,28 +479,45 @@ describe("updateStatusPrivate", () => {
       },
     );
 
-    test("a continue window lets a recovery through", async () => {
-      await report(Date.now() - 2000);
-      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    test.each(["pause", "continue"] as const)(
+      "a %s window lets a recovery through",
+      async (mode) => {
+        await report(Date.now() - 2000);
+        expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+        const now = Date.now();
+        await createMaintenanceWindow(workspaceId, {
+          monitorIds: [TEST_MONITOR_ID],
+          mode,
+          from: new Date(now - 1000),
+          to: new Date(now + 3_600_000),
+        });
+
+        await post({
+          monitorId: String(TEST_MONITOR_ID),
+          privateLocationId: String(TEST_LOCATION_ID),
+          status: "active",
+          cronTimestamp: now,
+        });
+
+        expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
+        expect((await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
+          "active",
+        );
+      },
+    );
+
+    test("a failure that ran before a pause window is still processed", async () => {
       const now = Date.now();
       await createMaintenanceWindow(workspaceId, {
         monitorIds: [TEST_MONITOR_ID],
-        mode: "continue",
+        mode: "pause",
         from: new Date(now - 1000),
         to: new Date(now + 3_600_000),
       });
 
-      await post({
-        monitorId: String(TEST_MONITOR_ID),
-        privateLocationId: String(TEST_LOCATION_ID),
-        status: "active",
-        cronTimestamp: now,
-      });
+      await report(now - 60_000);
 
-      expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
-      expect((await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
-        "active",
-      );
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     });
 
     test("a status-page maintenance drops the report, as before", async () => {

@@ -9,6 +9,7 @@ import {
   type CheckerPublisher,
   type TaskInput,
   buildCronCheckerPayload,
+  buildTaskInputs,
   checkerTopic,
   publishCheckerTasks,
 } from "./checker-payload";
@@ -148,6 +149,66 @@ describe("buildCronCheckerPayload", () => {
       tls: "tls",
       headers: { "x-api-key": "secret" },
     });
+  });
+});
+
+describe("buildTaskInputs", () => {
+  const timestamp = 1_700_000_000_000;
+
+  test("one task per region, with that region's last status", () => {
+    const row = monitorRow({ regions: "ams,iad" });
+    const inputs = buildTaskInputs({
+      monitors: [row],
+      statusesByMonitor: new Map([[42, [{ region: "iad", status: "error" }]]]),
+      periodicity: "1m",
+      timestamp,
+    });
+
+    expect(inputs).toEqual([
+      { row, timestamp, status: "active", region: "ams" },
+      { row, timestamp, status: "error", region: "iad" },
+    ]);
+  });
+
+  test("a 30s monitor gets a second task half a minute later", () => {
+    const inputs = buildTaskInputs({
+      monitors: [monitorRow({ periodicity: "30s" })],
+      statusesByMonitor: new Map(),
+      periodicity: "30s",
+      timestamp,
+    });
+
+    expect(inputs.map((i) => i.timestamp)).toEqual([
+      timestamp,
+      timestamp + 30_000,
+    ]);
+  });
+
+  test("unknown and deprecated regions get no task", () => {
+    const deprecated = Object.entries(regionDict).find(
+      ([, info]) => info.deprecated,
+    )?.[0];
+    expect(deprecated).toBeDefined();
+
+    const inputs = buildTaskInputs({
+      monitors: [monitorRow({ regions: `ams,${deprecated}` })],
+      statusesByMonitor: new Map(),
+      periodicity: "1m",
+      timestamp,
+    });
+
+    expect(inputs.map((i) => i.region)).toEqual(["ams"]);
+  });
+
+  test("a monitor without cloud regions gets no task", () => {
+    expect(
+      buildTaskInputs({
+        monitors: [monitorRow({ regions: "" })],
+        statusesByMonitor: new Map(),
+        periodicity: "1m",
+        timestamp,
+      }),
+    ).toEqual([]);
   });
 });
 

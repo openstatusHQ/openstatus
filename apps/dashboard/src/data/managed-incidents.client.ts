@@ -110,34 +110,3 @@ export function incidentResponseTimes(
         : null,
   };
 }
-
-/** Per-step averages over incidents declared in `now`'s month, canceled ones left out. */
-export function monthlyResponseAverages(
-  incidents: ResponseTimeFields[],
-  now = new Date(),
-): Record<ResponseStep, { average: number | null; count: number }> {
-  const times = incidents
-    .filter(
-      (i) =>
-        i.status !== "canceled" &&
-        i.declaredAt.getFullYear() === now.getFullYear() &&
-        i.declaredAt.getMonth() === now.getMonth(),
-    )
-    .map(incidentResponseTimes);
-  const average = (step: ResponseStep) => {
-    const values = times
-      .map((t) => t[step])
-      .filter((v): v is number => v !== null);
-    return {
-      average: values.length
-        ? values.reduce((sum, v) => sum + v, 0) / values.length
-        : null,
-      count: values.length,
-    };
-  };
-  return {
-    acknowledge: average("acknowledge"),
-    mitigate: average("mitigate"),
-    resolve: average("resolve"),
-  };
-}

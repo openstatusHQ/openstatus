@@ -132,14 +132,18 @@ export function toLocalDays(
     }
     const dayTotal = counts.ok + counts.degraded + counts.error;
     const ranges = d.bad?.[measure] ?? [];
-    for (const { day, first, n } of localGroups(d.day, timeZone)) {
-      const bad = rangesInBuckets(ranges, first, first + n);
-      // a monitor that only ran, and failed, late in the day keeps all its errors
-      const total = Math.max(
-        (dayTotal * n) / BUCKETS_PER_DAY,
-        bad.degraded + bad.error,
-      );
-      add(day, total - bad.degraded - bad.error, bad.degraded, bad.error);
+    const groups = localGroups(d.day, timeZone).map((g) => {
+      const bad = rangesInBuckets(ranges, g.first, g.first + g.n);
+      // checks spread evenly over the day; failures sit in their real buckets
+      const share = (dayTotal * g.n) / BUCKETS_PER_DAY;
+      return { ...g, bad, ok: Math.max(share - bad.degraded - bad.error, 0) };
+    });
+    // a sparse monitor can fail more often in a group than its even share:
+    // rescale so the day keeps exactly its own passing checks
+    const okSum = groups.reduce((sum, g) => sum + g.ok, 0);
+    const scale = okSum > 0 ? counts.ok / okSum : 0;
+    for (const g of groups) {
+      add(g.day, g.ok * scale, g.bad.degraded, g.bad.error);
     }
   }
   return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));

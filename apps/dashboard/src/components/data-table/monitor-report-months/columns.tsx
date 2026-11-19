@@ -4,7 +4,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
-import { type ReportMonth, formatAvailability } from "@/data/monitor-report";
+import {
+  type ReportMonth,
+  formatAvailability,
+} from "@/data/monitor-report.client";
 import { monthKeyToFullLabel } from "@/data/status-page-history";
 import { formatDurationShort } from "@/lib/formatter";
 

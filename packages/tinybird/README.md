@@ -96,7 +96,9 @@ each frozen row whose ranges sum exactly to its stored day counts.
    ```
 
    Add `--param monitorIds=1,2` to limit a run. Running a month again
-   replaces its rows.
+   replaces the buckets it finds again; a bucket from an earlier run that no
+   longer appears stays. Raw data does not change, so that only matters after
+   a prune: truncate the month in `frozen_bad_15m_backfill__v0` first then.
 3. Call `GET /uptime-freeze/backfill-buckets?month=2026-08-01` on workflows
    (`Authorization: $CRON_SECRET`, optional `&monitorIds=1,2`). It returns
    `updated`, `mismatched`, `skipped` (heartbeat) and `failed`.

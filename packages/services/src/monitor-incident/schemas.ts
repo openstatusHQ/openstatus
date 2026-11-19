@@ -50,9 +50,14 @@ export type ListMonitorIncidentsInput = z.infer<
   typeof ListMonitorIncidentsInput
 >;
 
+// `z.coerce.date()` turns `null` into 1970-01-01; reject it before coercing.
+const coercedDate = z
+  .union([z.string(), z.number(), z.date()])
+  .pipe(z.coerce.date());
+
 export const GetMonitorReportInput = z.object({
   monitorId: z.number().int(),
-  from: z.coerce.date(),
-  to: z.coerce.date(),
+  from: coercedDate,
+  to: coercedDate,
 });
 export type GetMonitorReportInput = z.infer<typeof GetMonitorReportInput>;

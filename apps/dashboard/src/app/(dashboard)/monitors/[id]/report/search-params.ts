@@ -4,7 +4,7 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server";
 
-import { REPORT_PERIODS } from "@/data/monitor-report";
+import { REPORT_PERIODS } from "@/data/monitor-report.client";
 import { HISTORY_METRICS } from "@/data/status-page-history";
 
 export const searchParamsParsers = {

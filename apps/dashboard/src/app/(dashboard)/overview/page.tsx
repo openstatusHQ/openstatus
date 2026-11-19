@@ -64,6 +64,7 @@ import {
   incidentActivity,
   incidentSpan,
 } from "@/data/managed-incidents.client";
+import { monitorReportHref } from "@/data/monitor-report.client";
 import {
   type OverviewEvent,
   buildOverviewData,
@@ -150,7 +151,10 @@ function linkOf(event: OverviewEvent): ActivityLink {
   switch (event.type) {
     case "incident":
       return {
-        href: `/monitors/${event.incident.monitor.id}/report#outages`,
+        href: monitorReportHref(
+          event.incident.monitor.id,
+          event.incident.startedAt,
+        ),
         title: event.incident.monitor.name,
         kind: "Downtime",
       };

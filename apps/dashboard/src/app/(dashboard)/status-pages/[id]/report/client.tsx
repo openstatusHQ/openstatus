@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,10 +12,12 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
+import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
@@ -38,6 +41,16 @@ import {
 } from "@/components/content/section";
 import { getColumns } from "@/components/data-table/status-page-history/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
   MetricCard,
@@ -48,6 +61,10 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
+import {
+  UptimeCalculation,
+  UptimeModeTiles,
+} from "@/components/status-pages/uptime-calculation";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
@@ -59,12 +76,15 @@ import {
   parseWindow,
   windowKey,
 } from "@/data/status-page-history";
+import {
+  UPTIME_DOCS_URL,
+  UPTIME_MODES,
+} from "@/data/uptime-calculation.client";
 import { truncatePercentage } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { buildExampleHistory } from "./examples";
 import { searchParamsParsers } from "./search-params";
-import { UptimeExplainer } from "./uptime-explainer";
 
 export function Client() {
   const { id } = useParams<{ id: string }>();
@@ -113,6 +133,9 @@ export function Client() {
 
   if (!history) return null;
 
+  const uptimeMode =
+    UPTIME_MODES.find((m) => m.value === history.mode) ?? UPTIME_MODES[0];
+  const configurationHref = `/status-pages/${id}/components#components-configuration`;
   const summary = history.summary[windowKey(window)];
   const countsRequests = history.mode === "requests" || history.mode === "runs";
   const showMetric = !isLimited && countsRequests;
@@ -313,7 +336,43 @@ export function Client() {
         ) : null}
       </Section>
       <Section id="uptime-calculation">
-        <UptimeExplainer pageId={id} mode={history.mode} />
+        <FormCard id="how-uptime-is-calculated">
+          <FormCardHeader>
+            <FormCardTitle>How uptime is calculated</FormCardTitle>
+            <FormCardDescription>
+              This page counts{" "}
+              <span className="text-foreground font-medium">
+                {uptimeMode.label}
+              </span>
+              . It applies to every month here and to your public status page.{" "}
+              <Link href={UPTIME_DOCS_URL}>Learn more</Link>
+            </FormCardDescription>
+          </FormCardHeader>
+          <FormCardSeparator />
+          <FormCardContent>
+            <UptimeModeTiles mode={uptimeMode.value} />
+          </FormCardContent>
+          <FormCardSeparator />
+          <FormCardContent>
+            <UptimeCalculation mode={uptimeMode.value} />
+          </FormCardContent>
+          <FormCardFooter className="flex-wrap">
+            <FormCardFooterInfo>
+              Change it in{" "}
+              <Link href={configurationHref}>
+                Components &gt; Components Configuration
+              </Link>
+              . Months follow{" "}
+              <Link href={`/status-pages/${id}/edit#timezone`}>
+                Settings &gt; Timezone
+              </Link>
+              .
+            </FormCardFooterInfo>
+            <Button size="sm" asChild>
+              <NextLink href={configurationHref}>Change calculation</NextLink>
+            </Button>
+          </FormCardFooter>
+        </FormCard>
       </Section>
     </SectionGroup>
   );

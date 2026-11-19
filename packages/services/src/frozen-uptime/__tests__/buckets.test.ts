@@ -156,7 +156,7 @@ describe("toLocalDays", () => {
     ]);
   });
 
-  test("failures never get a smaller share than their own count", () => {
+  test("a day that only failed gains no passing checks", () => {
     const days: FrozenMonitorUptimeDay[] = [
       {
         day: "2026-10-31",
@@ -164,10 +164,32 @@ describe("toLocalDays", () => {
         bad: { requests: [[92, 4, 0, 1]] },
       },
     ];
-    const [before, after] = toLocalDays(days, "Europe/Berlin", "requests", 15);
-    expect(before.day).toBe("2026-10-31");
-    expect(before.ok).toBeCloseTo(4 * (92 / 96));
-    expect(after).toEqual({ day: "2026-11-01", ok: 0, degraded: 0, error: 4 });
+    expect(toLocalDays(days, "Europe/Berlin", "requests", 15)).toEqual([
+      { day: "2026-10-31", ok: 0, degraded: 0, error: 0 },
+      { day: "2026-11-01", ok: 0, degraded: 0, error: 4 },
+    ]);
+  });
+
+  test("a sparse monitor with clustered failures keeps its day total", () => {
+    // hourly checks: 20 passed, 4 failed inside the last UTC hour
+    const days: FrozenMonitorUptimeDay[] = [
+      {
+        day: "2026-10-31",
+        requests: { ok: 20, degraded: 0, error: 4 },
+        bad: { requests: [[92, 4, 0, 1]] },
+      },
+    ];
+    const local = toLocalDays(days, "Europe/Berlin", "requests", 15);
+    const sum = (key: "ok" | "error") =>
+      local.reduce((total, d) => total + d[key], 0);
+    expect(sum("ok")).toBeCloseTo(20);
+    expect(sum("error")).toBe(4);
+    expect(local[1]).toEqual({
+      day: "2026-11-01",
+      ok: 0,
+      degraded: 0,
+      error: 4,
+    });
   });
 
   test("a row frozen without ranges keeps its UTC days", () => {

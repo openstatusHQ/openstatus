@@ -1,5 +1,9 @@
 import { db, eq } from "@openstatus/db";
-import { monitor, monitorIncidentTable } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  monitorHeartbeatState,
+  monitorIncidentTable,
+} from "@openstatus/db/src/schema";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -283,6 +287,41 @@ describe("getMonitorReport", () => {
 
       expect(report.months).toEqual([]);
       expect(report.downtimeMs).toBe(HOUR);
+    });
+  });
+
+  test("a heartbeat reports no data until its first ping", async () => {
+    await withTestTransaction(async (tx) => {
+      const heartbeat = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: ctx.workspace.id,
+          active: true,
+          url: "",
+          name: "svc-report-test-heartbeat",
+          jobType: "heartbeat",
+          periodicity: "10m",
+          regions: "",
+          createdAt,
+        })
+        .returning()
+        .get();
+      const report = () =>
+        getMonitorReport({
+          ctx: { ...ctx, db: tx },
+          input: { monitorId: heartbeat.id, ...feb },
+          now: new Date(Date.UTC(2026, 2, 5)),
+        });
+
+      const waiting = await report();
+      expect(waiting.availability).toBeNull();
+      expect(waiting.months).toEqual([]);
+
+      await tx.insert(monitorHeartbeatState).values({
+        monitorId: heartbeat.id,
+        lastPingAt: new Date(Date.UTC(2026, 1, 2)),
+      });
+      expect((await report()).availability).toBe(100);
     });
   });
 });

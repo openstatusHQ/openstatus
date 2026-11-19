@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import {
-  incidentResponseTimes,
-  monthlyResponseAverages,
-} from "./managed-incidents.client";
+import { incidentResponseTimes } from "./managed-incidents.client";
 
 const MIN = 60_000;
 const declaredAt = new Date(2026, 10, 10, 12, 0);
@@ -53,48 +50,5 @@ describe("incidentResponseTimes", () => {
       incidentResponseTimes(incident({ status: "open", resolvedAt: at(40) }))
         .resolve,
     ).toBeNull();
-  });
-});
-
-describe("monthlyResponseAverages", () => {
-  const now = new Date(2026, 10, 20);
-
-  test("averages the month's incidents per step with the sample size", () => {
-    const averages = monthlyResponseAverages(
-      [
-        incident({
-          status: "resolved",
-          acknowledgedAt: at(10),
-          mitigatedAt: at(20),
-          resolvedAt: at(60),
-        }),
-        incident({
-          status: "mitigated",
-          acknowledgedAt: at(20),
-          mitigatedAt: at(40),
-        }),
-        incident(),
-      ],
-      now,
-    );
-    expect(averages).toEqual({
-      acknowledge: { average: 15 * MIN, count: 2 },
-      mitigate: { average: 30 * MIN, count: 2 },
-      resolve: { average: 60 * MIN, count: 1 },
-    });
-  });
-
-  test("leaves out canceled incidents and other months", () => {
-    const averages = monthlyResponseAverages(
-      [
-        incident({ status: "canceled", acknowledgedAt: at(1) }),
-        incident({
-          declaredAt: new Date(2026, 9, 31, 23, 0),
-          acknowledgedAt: new Date(2026, 9, 31, 23, 30),
-        }),
-      ],
-      now,
-    );
-    expect(averages.acknowledge).toEqual({ average: null, count: 0 });
   });
 });

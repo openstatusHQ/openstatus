@@ -35,6 +35,12 @@ export async function updateMaintenanceWindow(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    // a completed window is history: the dashboard offers no edit for it either
+    if (existing.to <= new Date()) {
+      throw new ConflictError(
+        "A completed maintenance window can no longer be changed.",
+      );
+    }
     const from = input.from ?? existing.from;
     const to = input.to ?? existing.to;
     if (from >= to)

@@ -20,6 +20,7 @@ import {
   type Periodicity,
   type TaskInput,
   buildCronCheckerPayload,
+  buildTaskInputs,
   publishCheckerTasks,
 } from "./checker-payload";
 import { listMonitorsToCheck } from "./monitors-to-check";
@@ -106,7 +107,6 @@ export async function sendCheckerTasks(
   });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
-  const taskInputs: TaskInput[] = [];
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
@@ -143,37 +143,12 @@ export async function sendCheckerTasks(
     statusMap.set(raw.monitorId, list);
   }
 
-  for (const row of monitors.data) {
-    const monitorStatuses = statusMap.get(row.id) ?? [];
-
-    for (const region of row.regions) {
-      const status =
-        monitorStatuses.find((m) => region === m.region)?.status || "active";
-
-      const r = regionDict[region as keyof typeof regionDict];
-
-      if (!r) {
-        logger.error(`Invalid region ${region}`);
-        continue;
-      }
-      if (r.deprecated) {
-        // Let's uncomment this when we are ready to remove deprecated regions
-        // We should not use deprecated regions anymore
-        logger.error(`Deprecated region ${region}`);
-        continue;
-      }
-      taskInputs.push({ row, timestamp, status, region });
-      if (periodicity === "30s") {
-        const scheduledAt = timestamp + 30 * 1000;
-        taskInputs.push({
-          row,
-          timestamp: scheduledAt,
-          status,
-          region,
-        });
-      }
-    }
-  }
+  const taskInputs = buildTaskInputs({
+    monitors: monitors.data,
+    statusesByMonitor: statusMap,
+    periodicity,
+    timestamp,
+  });
 
   const transport = env().CHECKER_TRANSPORT;
   const { success, failed } =
@@ -217,7 +192,7 @@ async function publishToPubSub(
   return result;
 }
 
-async function createCloudTasks(
+export async function createCloudTasks(
   taskInputs: TaskInput[],
   periodicity: Periodicity,
   client: CloudTasksClient,

@@ -11,7 +11,6 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
@@ -64,27 +63,21 @@ import {
   REPORT_PERIOD_LABELS,
   REPORT_PERIODS,
   type ReportPeriod,
+  dayOfLocalDate,
   exampleReportMonths,
   formatAvailability,
+  localDateOfDay,
+  rangeDays,
+  rarelyOpensOutages,
+  reportPresets,
   reportRange,
-} from "@/data/monitor-report";
+} from "@/data/monitor-report.client";
 import { exampleUptimeCounts } from "@/data/uptime-history.client";
 import { usePaged } from "@/hooks/use-paged";
 import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
-
-const toDay = (date: Date) => format(date, "yyyy-MM-dd");
-const utcDay = (date: Date) => date.toISOString().slice(0, 10);
-// the picker works in local dates; put each UTC day on the same calendar day
-const asLocalDay = (date: Date) =>
-  new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-const fromDay = (day: string | null) => {
-  if (!day) return undefined;
-  const [y, m, d] = day.split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
 
 export function Client() {
   const { id } = useParams<{ id: string }>();
@@ -121,19 +114,7 @@ export function Client() {
   const resolved = incidents.filter((i) => i.resolvedAt);
   const paged = usePaged(resolved);
 
-  const presets = useMemo(
-    () =>
-      REPORT_PERIODS.filter((p) => p !== "custom").map((p, i) => {
-        const r = reportRange({ period: p }, new Date());
-        return {
-          label: REPORT_PERIOD_LABELS[p],
-          shortcut: String(i + 1),
-          from: asLocalDay(r.from),
-          to: asLocalDay(new Date(r.to.getTime() - 1)),
-        };
-      }),
-    [],
-  );
+  const presets = useMemo(() => reportPresets(new Date()), []);
 
   if (!workspace || !monitor || !report) return null;
 
@@ -147,11 +128,6 @@ export function Client() {
     ? exampleUptimeCounts()
     : ((metric === "runs" ? history?.runs : history?.days) ?? []);
   const partial = metric === "runs" ? history?.runsPartial : history?.partial;
-
-  const rarelyOpensOutages =
-    monitor.jobType === "heartbeat" ||
-    (monitor.regions.length === 0 &&
-      (monitor.privateLocations?.length ?? 0) > 0);
 
   const upgrade = (description: string) => (
     <BillingOverlay>
@@ -201,11 +177,7 @@ export function Client() {
                 const next = value as ReportPeriod;
                 setSearchParams(
                   next === "custom"
-                    ? {
-                        period: next,
-                        from: utcDay(range.from),
-                        to: utcDay(new Date(range.to.getTime() - 1)),
-                      }
+                    ? { period: next, ...rangeDays(range) }
                     : { period: next, from: null, to: null },
                 );
               }}
@@ -223,14 +195,14 @@ export function Client() {
             </Select>
             {period === "custom" ? (
               <DatePickerWithRange
-                date={{ from: fromDay(from), to: fromDay(to) }}
+                date={{ from: localDateOfDay(from), to: localDateOfDay(to) }}
                 presets={presets}
                 setDate={(date) => {
                   if (!date?.from || !date.to) return;
                   setSearchParams({
                     period: "custom",
-                    from: toDay(date.from),
-                    to: toDay(date.to),
+                    from: dayOfLocalDate(date.from),
+                    to: dayOfLocalDate(date.to),
                   });
                 }}
               />
@@ -304,11 +276,13 @@ export function Client() {
             </MetricCardValue>
           </MetricCard>
         </MetricCardGroup>
-        {rarelyOpensOutages ? (
+        {rarelyOpensOutages(monitor) ? (
           <Note size="sm">
             <Info />
             {monitor.jobType === "heartbeat"
-              ? "Heartbeat monitors open an outage only when a ping is missed or fails, so availability often reads 100%."
+              ? report.availability === null
+                ? "Nothing was measured in this period. A heartbeat's availability starts with its first ping."
+                : "Heartbeat monitors open an outage only when a ping is missed or fails, so availability often reads 100%."
               : "Monitors checked only from private locations rarely open outages, so availability often reads 100%."}
           </Note>
         ) : null}

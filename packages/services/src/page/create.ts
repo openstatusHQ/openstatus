@@ -19,18 +19,6 @@ import {
 } from "./internal";
 import { CreatePageInput, NewPageInput } from "./schemas";
 
-// the column is loose json: a non-object is replaced, a missing value filled in
-function withNewPageValue(configuration: unknown): Record<string, unknown> {
-  const stored: Record<string, unknown> =
-    configuration !== null &&
-    typeof configuration === "object" &&
-    !Array.isArray(configuration)
-      ? Object.fromEntries(Object.entries(configuration))
-      : {};
-  return { ...stored, value: stored.value ?? NEW_PAGE_CONFIGURATION_VALUE };
-}
-
-/** Full create — mirrors legacy `pageRouter.create` (insertPageSchema input). */
 export async function createPage(args: {
   ctx: ServiceContext;
   input: CreatePageInput;
@@ -79,6 +67,11 @@ export async function createPage(args: {
       ...pageProps
     } = input;
     const monitorIds = monitors?.map((m) => m.monitorId) ?? [];
+    // the column's zod type is any json; only an object carries settings
+    const stored =
+      typeof configuration === "object" && !Array.isArray(configuration)
+        ? configuration
+        : null;
 
     const row = await tx
       .insert(page)
@@ -88,7 +81,10 @@ export async function createPage(args: {
         // column — drizzle serialises objects automatically. Calling
         // `JSON.stringify` first would double-encode and persist a raw
         // JSON string, breaking downstream reads that expect an object.
-        configuration: withNewPageValue(configuration),
+        configuration: {
+          ...stored,
+          value: stored?.value ?? NEW_PAGE_CONFIGURATION_VALUE,
+        },
         ...pageProps,
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),

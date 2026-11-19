@@ -8,7 +8,10 @@ import {
   lt,
   or,
 } from "@openstatus/db";
-import { monitorIncidentTable } from "@openstatus/db/src/schema";
+import {
+  monitorHeartbeatState,
+  monitorIncidentTable,
+} from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
@@ -75,7 +78,17 @@ export async function getMonitorReport(args: {
     input.from.getTime(),
     record.createdAt?.getTime() ?? input.from.getTime(),
   );
-  const end = Math.min(input.to.getTime(), nowMs);
+  // a heartbeat that never pinged was never measured: no data, not 100%
+  const neverPinged =
+    record.jobType === "heartbeat" &&
+    !(
+      await db
+        .select({ lastPingAt: monitorHeartbeatState.lastPingAt })
+        .from(monitorHeartbeatState)
+        .where(eq(monitorHeartbeatState.monitorId, record.id))
+        .get()
+    )?.lastPingAt;
+  const end = neverPinged ? start : Math.min(input.to.getTime(), nowMs);
   const window = { start, end: Math.max(start, end), now: nowMs };
 
   const rows =

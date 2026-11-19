@@ -11,6 +11,7 @@ import { Fragment } from "react";
 
 import { ChartTooltipNumberRaw } from "@/components/chart/chart-tooltip-number";
 import { entityKinds } from "@/data/entity-refs.client";
+import { monitorReportHref } from "@/data/monitor-report.client";
 import {
   type BreakdownRow,
   type HistoryEvent,
@@ -36,7 +37,7 @@ function eventHref(
     return `/status-pages/${pageId}/maintenances`;
   }
   if (event.type === "incident" && monitorId !== null) {
-    return `/monitors/${monitorId}/report#outages`;
+    return monitorReportHref(monitorId, event.from);
   }
   return null;
 }

@@ -336,6 +336,29 @@ describe("maintenance windows", () => {
     });
   });
 
+  test("a completed window can no longer be changed", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertMonitor(tx, ctx.workspace.id);
+      const now = Date.now();
+      const window = await createMaintenanceWindow({
+        ctx: { ...ctx, db: tx },
+        input: {
+          title: "Done",
+          from: new Date(now - 2 * hour),
+          to: new Date(now - hour),
+          monitorIds: [m.id],
+        },
+      });
+
+      await expect(
+        updateMaintenanceWindow({
+          ctx: { ...ctx, db: tx },
+          input: { id: window.id, to: new Date(now + hour) },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+  });
+
   test("rejects read-only actor", async () => {
     const readOnlyCtx = makeApiKeyCtx(ctx.workspace, {
       keyId: "k-read",
