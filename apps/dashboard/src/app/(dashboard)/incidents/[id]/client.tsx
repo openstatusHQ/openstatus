@@ -1,6 +1,9 @@
 "use client";
 
-import type { IncidentStatus } from "@openstatus/db/src/schema/incidents/constants";
+import {
+  type IncidentStatus,
+  incidentAwaitsAcknowledgement,
+} from "@openstatus/db/src/schema/incidents/constants";
 import { personName } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
@@ -19,6 +22,7 @@ import {
 } from "@/components/content/detail";
 import { SectionGroup } from "@/components/content/section";
 import { Timeline } from "@/components/content/timeline";
+import { IncidentAcknowledgeButton } from "@/components/incidents/incident-acknowledge-button";
 import {
   IncidentActions,
   hasIncidentActions,
@@ -65,6 +69,7 @@ export function Client({ id }: { id: number }) {
   };
 
   const resolved = incident.status === "resolved";
+  const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
   const timeline = (
     <DetailSection id="activity">
       <DetailSectionTitle variant="heading">
@@ -108,8 +113,15 @@ export function Client({ id }: { id: number }) {
         <IncidentHeading
           incident={incident}
           actions={
-            hasIncidentActions(incident) ? (
-              <IncidentActions incident={incident} />
+            awaitsAcknowledgement || hasIncidentActions(incident) ? (
+              <>
+                {awaitsAcknowledgement ? (
+                  <IncidentAcknowledgeButton incidentId={incident.id} />
+                ) : null}
+                {hasIncidentActions(incident) ? (
+                  <IncidentActions incident={incident} />
+                ) : null}
+              </>
             ) : null
           }
         />

@@ -133,4 +133,30 @@ describe("buildOverviewData", () => {
     );
     expect(data.events.map((e) => e.type)).toEqual(["maintenance", "incident"]);
   });
+
+  it("leaves excused outages off the calendar but keeps them in the lists", () => {
+    const data = buildOverviewData(
+      input({
+        monitorIncidents: [
+          {
+            id: 1,
+            startedAt: daysAgo(2),
+            resolvedAt: daysAgo(1),
+            excusedAt: daysAgo(1),
+          },
+          {
+            id: 2,
+            startedAt: daysAgo(3),
+            resolvedAt: daysAgo(2),
+            excusedAt: null,
+          },
+        ],
+      }),
+      now,
+    );
+    expect(
+      data.calendarEvents.map((e) => e.type === "incident" && e.incident.id),
+    ).toEqual([2]);
+    expect(data.recentlyResolved).toHaveLength(2);
+  });
 });

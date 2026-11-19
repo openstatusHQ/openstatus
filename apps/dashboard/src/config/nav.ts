@@ -6,6 +6,7 @@ import {
   Globe,
   type IconType,
   Incident,
+  Maintenance,
   Monitor,
   Notification,
   Overview,
@@ -46,6 +47,12 @@ export const NAV = {
     href: "/monitors",
     icon: Monitor,
     keywords: ["checks", "uptime"],
+  },
+  maintenanceWindows: {
+    label: "Maintenance Windows",
+    href: "/maintenance-windows",
+    icon: Maintenance,
+    keywords: ["maintenance", "window", "pause", "downtime"],
   },
   privateLocations: {
     label: "Private Locations",
@@ -127,7 +134,7 @@ export const NAV = {
 export const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   {
     label: "Monitor",
-    items: [NAV.monitors, NAV.privateLocations],
+    items: [NAV.monitors, NAV.maintenanceWindows, NAV.privateLocations],
   },
   { label: "Respond", items: [NAV.incidents, NAV.notifications, NAV.onCall] },
   { label: "Communicate", items: [NAV.statusPages] },

@@ -1,13 +1,19 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import {
   attemptsSchema,
+  bad15mParameters,
+  bad15mShape,
   isValidTimeZone,
   noopFlagSchema,
   OSTinybird,
   runs45dParameters,
   runs45dShape,
+  status45dParameters,
   status15mParameters,
   status15mShape,
 } from "./client";
@@ -288,11 +294,43 @@ const runs45dGetters = [
   "grpcRuns45d",
 ] as const;
 
-describe("runs45dParameters", () => {
-  test("sends monitorIds only", () => {
+describe.each([
+  ["runs45dParameters", runs45dParameters],
+  ["status45dParameters", status45dParameters],
+] as const)("%s", (_, schema) => {
+  test("sends monitorIds only when no window is asked for", () => {
     expect(
-      runs45dParameters.parse({ monitorIds: ["1", "666"], type: "runs" }),
-    ).toEqual({ monitorIds: ["1", "666"] });
+      schema.parse({ monitorIds: ["1", "666"], type: "runs" }),
+    ).toStrictEqual({ monitorIds: ["1", "666"] });
+  });
+
+  test("passes a window of up to the 76-day retention", () => {
+    expect(schema.parse({ monitorIds: ["1"], days: 76 })).toEqual({
+      monitorIds: ["1"],
+      days: 76,
+    });
+  });
+
+  test("rejects a window outside 1..76 days", () => {
+    for (const days of [0, 77, 1.5]) {
+      expect(schema.safeParse({ monitorIds: ["1"], days }).success).toBe(false);
+    }
+  });
+});
+
+describe("runs45dParameters timezone", () => {
+  test("passes an IANA zone through", () => {
+    expect(
+      runs45dParameters.parse({ monitorIds: ["1"], timezone: "Europe/Berlin" }),
+    ).toEqual({ monitorIds: ["1"], timezone: "Europe/Berlin" });
+  });
+
+  test("rejects a zone ClickHouse does not know", () => {
+    for (const timezone of ["Mars/Base", "+05:30"]) {
+      expect(
+        runs45dParameters.safeParse({ monitorIds: ["1"], timezone }).success,
+      ).toBe(false);
+    }
   });
 });
 
@@ -325,6 +363,121 @@ describe("runs 45d pipes", () => {
         meta: [],
         data: [],
       });
+    });
+  }
+});
+
+const bad15mJobTypes = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+
+describe("bad15mParameters", () => {
+  test("sends monitorIds and the epoch-ms window", () => {
+    expect(
+      bad15mParameters.parse({
+        monitorIds: ["1"],
+        fromDate: 1_790_812_800_000,
+        toDate: 1_793_491_200_000,
+      }),
+    ).toEqual({
+      monitorIds: ["1"],
+      fromDate: 1_790_812_800_000,
+      toDate: 1_793_491_200_000,
+    });
+  });
+
+  test("requires the window", () => {
+    expect(bad15mParameters.safeParse({ monitorIds: ["1"] }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("bad15mShape", () => {
+  const shape = bad15mShape(z.coerce.string());
+
+  test("renames the counters and keeps the UTC day and bucket", () => {
+    expect(
+      shape.parse({
+        monitorId: 7,
+        day: "2026-10-31",
+        bucket: 95,
+        degradedCount: 0,
+        errorCount: 30,
+      }),
+    ).toEqual({
+      monitorId: "7",
+      day: "2026-10-31",
+      bucket: 95,
+      degraded: 0,
+      error: 30,
+    });
+  });
+
+  test("rejects a bucket outside the day", () => {
+    expect(
+      shape.safeParse({
+        monitorId: "7",
+        day: "2026-10-31",
+        bucket: 96,
+        degradedCount: 0,
+        errorCount: 1,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("bad 15m pipes", () => {
+  const tb = new OSTinybird({ token: "a-token" });
+  const params = {
+    monitorIds: ["1"],
+    fromDate: 1_790_812_800_000,
+    toDate: 1_793_491_200_000,
+  };
+
+  for (const type of bad15mJobTypes) {
+    for (const name of [`${type}StatusBad15m`, `${type}RunsBad15m`] as const) {
+      test(`${name} resolves`, async () => {
+        expect(await tb[name](params)).toEqual({ meta: [], data: [] });
+      });
+    }
+  }
+});
+
+describe("bad 15m endpoint SQL", () => {
+  const endpoint = (name: string) =>
+    readFileSync(
+      join(import.meta.dirname, "../endpoints", `${name}.pipe`),
+      "utf8",
+    );
+  const quorum = [
+    "uniqExactMerge(regions) AS n",
+    "uniqExactMerge(errorRegions) AS e",
+    "uniqExactMerge(degradedRegions) AS d",
+    "countIf(e * 2 >= n)",
+    "countIf(e * 2 < n AND (e + d) * 2 >= n)",
+  ];
+
+  for (const type of bad15mJobTypes) {
+    test(`${type} runs variant judges runs like the 45d runs endpoint`, () => {
+      const runs45d = endpoint(`endpoint__${type}_runs_45d__v0`);
+      const bad = endpoint(`endpoint__${type}_runs_bad_15m__v0`);
+      for (const expr of quorum) {
+        expect(runs45d).toContain(expr);
+        expect(bad).toContain(expr);
+      }
+      expect(bad).toContain(`FROM mv__${type}_runs_45d__v0`);
+      expect(bad).toContain(
+        `"endpoint__${type}_runs_bad_15m__v0_endpoint_read"`,
+      );
+    });
+
+    test(`${type} status variant reads the 15m view`, () => {
+      const bad = endpoint(`endpoint__${type}_status_bad_15m__v0`);
+      expect(bad).toContain(`FROM mv__${type}_status_15m__v0`);
+      expect(bad).toContain(
+        `"endpoint__${type}_status_bad_15m__v0_endpoint_read"`,
+      );
+      expect(bad).toContain("countMerge(degraded)");
+      expect(bad).toContain("countMerge(error)");
     });
   }
 });

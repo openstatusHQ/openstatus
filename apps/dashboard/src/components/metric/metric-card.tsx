@@ -95,6 +95,24 @@ export function MetricCardValue({
   );
 }
 
+export function MetricCardDetail({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      className={cn(
+        "text-muted-foreground font-mono text-xs font-normal tabular-nums",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function MetricCardGroup({
   children,
   className,

@@ -14,11 +14,14 @@ import { withTestTransaction } from "../../../test/helpers";
 import type { ComputeCountRow } from "../compute";
 import {
   type ChunkFailure,
+  type BadBucketPipeFn,
   type StatusPipeFn,
+  type UptimeBadBucketPipes,
   type UptimeFreezePipes,
   type UptimeRunsPipes,
   fetchFreezeCounts,
   runUptimeFreeze,
+  uptimeBadBucketPipes,
   uptimeFreezePipes,
   uptimeRunsPipes,
 } from "../run";
@@ -115,6 +118,30 @@ describe("uptimeRunsPipes", () => {
       dns: "dnsRuns45d",
       icmp: "icmpRuns45d",
       grpc: "grpcRuns45d",
+    });
+  });
+});
+
+describe("uptimeBadBucketPipes", () => {
+  test("covers every job type with a 15m view; heartbeat has none", () => {
+    // safe because uptimeBadBucketPipes only reads pipe getters off the client
+    const tb = new Proxy({}, { get: (_, key) => String(key) }) as OSTinybird;
+
+    expect(uptimeBadBucketPipes(tb)).toEqual({
+      requests: {
+        http: "httpStatusBad15m",
+        tcp: "tcpStatusBad15m",
+        dns: "dnsStatusBad15m",
+        icmp: "icmpStatusBad15m",
+        grpc: "grpcStatusBad15m",
+      },
+      runs: {
+        http: "httpRunsBad15m",
+        tcp: "tcpRunsBad15m",
+        dns: "dnsRunsBad15m",
+        icmp: "icmpRunsBad15m",
+        grpc: "grpcRunsBad15m",
+      },
     });
   });
 });
@@ -352,9 +379,150 @@ describe("runUptimeFreeze", () => {
     });
   });
 
-  test("deleted monitors are excluded before any TB fetch", async () => {
+  test("holds until 48 hours after the month ends", async () => {
     await withTestTransaction(async (tx) => {
-      const deleted = await insertTestMonitor(tx, { deletedAt: new Date() });
+      const testMonitor = await insertTestMonitor(tx);
+      const http = okPipe([
+        {
+          monitorId: String(testMonitor.id),
+          day: "2026-06-05T00:00:00.000Z",
+          ok: 42,
+          degraded: 0,
+          error: 0,
+        },
+      ]);
+      const runArgs = {
+        pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
+        db: tx,
+        monitorIds: [testMonitor.id],
+        sleep: noSleep,
+      };
+
+      const early = await runUptimeFreeze({
+        ...runArgs,
+        now: new Date("2026-07-02T23:59:59Z"),
+      });
+      expect(early).toEqual({
+        month: "2026-06-01",
+        frozen: 0,
+        alreadyFrozen: 0,
+        skipped: 0,
+        bucketMismatch: 0,
+        failures: [],
+        held: true,
+      });
+      expect(http.calls).toEqual([]);
+
+      const onTime = await runUptimeFreeze({
+        ...runArgs,
+        now: new Date("2026-07-03T00:00:00Z"),
+      });
+      expect(onTime.frozen).toBe(1);
+    });
+  });
+
+  test("force bypasses the 48-hour hold", async () => {
+    await withTestTransaction(async (tx) => {
+      const testMonitor = await insertTestMonitor(tx);
+      const http = okPipe([
+        {
+          monitorId: String(testMonitor.id),
+          day: "2026-06-05T00:00:00.000Z",
+          ok: 42,
+          degraded: 0,
+          error: 0,
+        },
+      ]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
+        now: new Date("2026-07-01T04:00:00Z"),
+        force: true,
+        db: tx,
+        monitorIds: [testMonitor.id],
+        sleep: noSleep,
+      });
+
+      expect(res.frozen).toBe(1);
+    });
+  });
+
+  test("monitor deleted during the month is frozen", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted = await insertTestMonitor(tx, {
+        deletedAt: new Date(Date.UTC(2026, 5, 20)),
+        // soft-delete shape: active off, updatedAt untouched since before the month
+        active: false,
+        updatedAt: new Date(Date.UTC(2026, 3, 1)),
+      });
+      const http = okPipe([
+        {
+          monitorId: String(deleted.id),
+          day: "2026-06-05T00:00:00.000Z",
+          ok: 42,
+          degraded: 0,
+          error: 0,
+        },
+      ]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
+        now: new Date(Date.UTC(2026, 6, 10)),
+        db: tx,
+        monitorIds: [deleted.id],
+        sleep: noSleep,
+      });
+
+      expect(res.failures).toEqual([]);
+      expect(res.frozen).toBe(1);
+      const rows = await tx
+        .select()
+        .from(frozenMonitorUptime)
+        .where(eq(frozenMonitorUptime.monitorId, deleted.id))
+        .all();
+      expect(rows[0]?.days[4].requests.ok).toBe(42);
+    });
+  });
+
+  test("monitor deleted at the month start is frozen", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted = await insertTestMonitor(tx, {
+        deletedAt: new Date(Date.UTC(2026, 5, 1)),
+        // soft-delete shape: active off, updatedAt untouched since before the month
+        active: false,
+        updatedAt: new Date(Date.UTC(2026, 3, 1)),
+      });
+      const http = okPipe([
+        {
+          monitorId: String(deleted.id),
+          day: "2026-06-01T00:00:00.000Z",
+          ok: 1,
+          degraded: 0,
+          error: 0,
+        },
+      ]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({ http: http.pipe }),
+        runsPipes: makeRunsPipes(),
+        now: new Date(Date.UTC(2026, 6, 10)),
+        db: tx,
+        monitorIds: [deleted.id],
+        sleep: noSleep,
+      });
+
+      expect(res.frozen).toBe(1);
+    });
+  });
+
+  test("monitor deleted before the month is excluded before any TB fetch", async () => {
+    await withTestTransaction(async (tx) => {
+      const deleted = await insertTestMonitor(tx, {
+        deletedAt: new Date(Date.UTC(2026, 4, 31, 23, 59)),
+      });
       const http = okPipe();
 
       const res = await runUptimeFreeze({
@@ -633,8 +801,11 @@ describe("runUptimeFreeze with run verdicts", () => {
       });
 
       expect(res.frozen).toBe(1);
-      expect(http.calls).toEqual([{ monitorIds: [String(m.id)] }]);
-      expect(http.runsCalls).toEqual([{ monitorIds: [String(m.id)] }]);
+      // the 45d cutoff plus a day: the whole allowed month, not the 45d default
+      expect(http.calls).toEqual([{ monitorIds: [String(m.id)], days: 46 }]);
+      expect(http.runsCalls).toEqual([
+        { monitorIds: [String(m.id)], days: 46 },
+      ]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({
         day: "2026-06-05",
@@ -667,6 +838,7 @@ describe("runUptimeFreeze with run verdicts", () => {
       const [call] = http.runsCalls;
       expect(call).toEqual({
         monitorIds: expect.arrayContaining([a.id, b.id, c.id].map(String)),
+        days: 46,
       });
       expect(call?.monitorIds).toHaveLength(3);
     });
@@ -712,7 +884,9 @@ describe("runUptimeFreeze with run verdicts", () => {
         sleep: noSleep,
       });
 
-      expect(http.runsCalls).toEqual([{ monitorIds: [String(m.id)] }]);
+      expect(http.runsCalls).toEqual([
+        { monitorIds: [String(m.id)], days: 46 },
+      ]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]?.runs).toEqual({ ok: 0, degraded: 0, error: 4 });
     });
@@ -799,7 +973,9 @@ describe("runUptimeFreeze with run verdicts", () => {
         });
 
         expect(res.frozen).toBe(1);
-        expect(own.runsCalls).toEqual([{ monitorIds: [String(m.id)] }]);
+        expect(own.runsCalls).toEqual([
+          { monitorIds: [String(m.id)], days: 46 },
+        ]);
         expect(http.calls).toEqual([]);
         expect(http.runsCalls).toEqual([]);
         const days = await frozenDays(tx, m.id);
@@ -826,10 +1002,242 @@ describe("runUptimeFreeze with run verdicts", () => {
       });
 
       expect(res.frozen).toBe(1);
-      expect(heartbeat.calls).toEqual([{ monitorIds: [String(m.id)] }]);
+      expect(heartbeat.calls).toEqual([
+        { monitorIds: [String(m.id)], days: 46 },
+      ]);
       expect(heartbeat.runsCalls).toEqual([]);
       const days = await frozenDays(tx, m.id);
       expect(days?.[4]).toEqual({ day: "2026-06-05", requests });
+    });
+  });
+});
+
+describe("runUptimeFreeze with bad buckets", () => {
+  const now = new Date(Date.UTC(2026, 6, 10));
+  const SIX_REGIONS = "ams,fra,iad,syd,gru,hkg";
+  const day = "2026-06-05T00:00:00.000Z";
+
+  function countsPipe(
+    monitorId: number,
+    counts: Omit<ComputeCountRow, "monitorId" | "day">,
+  ): StatusPipeFn {
+    return () =>
+      Promise.resolve({
+        data: [{ monitorId: String(monitorId), day, ...counts }],
+      });
+  }
+
+  function bucketPipe(
+    monitorId: number,
+    rows: { bucket: number; degraded: number; error: number }[],
+  ) {
+    const calls: Parameters<BadBucketPipeFn>[0][] = [];
+    const pipe: BadBucketPipeFn = (params) => {
+      calls.push(params);
+      return Promise.resolve({
+        data: rows.map((r) => ({
+          monitorId: String(monitorId),
+          day: "2026-06-05",
+          ...r,
+        })),
+      });
+    };
+    return { pipe, calls };
+  }
+
+  function makeBadPipes(
+    requests: BadBucketPipeFn,
+    runs: BadBucketPipeFn,
+  ): UptimeBadBucketPipes {
+    const types = ["http", "tcp", "dns", "icmp", "grpc"] as const;
+    return {
+      requests: Object.fromEntries(
+        types.map((t) => [t, requests]),
+      ) as UptimeBadBucketPipes["requests"],
+      runs: Object.fromEntries(
+        types.map((t) => [t, runs]),
+      ) as UptimeBadBucketPipes["runs"],
+    };
+  }
+
+  async function frozenRow(tx: Tx, monitorId: number) {
+    return tx
+      .select()
+      .from(frozenMonitorUptime)
+      .where(eq(frozenMonitorUptime.monitorId, monitorId))
+      .get();
+  }
+
+  test("stores the failing quarter-hours with bucket_minutes 15", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+      const requests = bucketPipe(m.id, [
+        { bucket: 94, degraded: 0, error: 90 },
+        { bucket: 95, degraded: 0, error: 30 },
+      ]);
+      const runs = bucketPipe(m.id, [
+        { bucket: 94, degraded: 0, error: 15 },
+        { bucket: 95, degraded: 0, error: 5 },
+      ]);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({
+          http: countsPipe(m.id, { ok: 8520, degraded: 0, error: 120 }),
+        }),
+        runsPipes: makeRunsPipes({
+          http: countsPipe(m.id, { ok: 1420, degraded: 0, error: 20 }),
+        }),
+        badPipes: makeBadPipes(requests.pipe, runs.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res).toMatchObject({ frozen: 1, bucketMismatch: 0, failures: [] });
+      const window = {
+        monitorIds: [String(m.id)],
+        fromDate: Date.UTC(2026, 5, 1),
+        toDate: Date.UTC(2026, 6, 1),
+      };
+      expect(requests.calls).toEqual([window]);
+      expect(runs.calls).toEqual([window]);
+      const row = await frozenRow(tx, m.id);
+      expect(row?.bucketMinutes).toBe(15);
+      expect(row?.days[4].bad).toEqual({
+        requests: [
+          [94, 1, 0, 90],
+          [95, 1, 0, 30],
+        ],
+        runs: [
+          [94, 1, 0, 15],
+          [95, 1, 0, 5],
+        ],
+      });
+      expect(row?.days[0]).not.toHaveProperty("bad");
+    });
+  });
+
+  test.each(["requests", "runs"] as const)(
+    "a failed %s bucket chunk skips the monitor",
+    async (measure) => {
+      await withTestTransaction(async (tx) => {
+        const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+        const failures: ChunkFailure[] = [];
+        const ok = bucketPipe(m.id, []).pipe;
+        const down: BadBucketPipeFn = () =>
+          Promise.reject(new Error("tb down"));
+
+        const res = await runUptimeFreeze({
+          pipes: makePipes({
+            http: countsPipe(m.id, { ok: 10, degraded: 0, error: 0 }),
+          }),
+          runsPipes: makeRunsPipes({
+            http: countsPipe(m.id, { ok: 10, degraded: 0, error: 0 }),
+          }),
+          badPipes:
+            measure === "requests"
+              ? makeBadPipes(down, ok)
+              : makeBadPipes(ok, down),
+          now,
+          db: tx,
+          monitorIds: [m.id],
+          sleep: noSleep,
+          onChunkFailure: (f) => failures.push(f),
+        });
+
+        const kind = measure === "requests" ? "badRequests" : "badRuns";
+        expect(res.frozen).toBe(0);
+        expect(res.skipped).toBe(1);
+        expect(res.failures).toEqual([
+          `monitor ${m.id}: tinybird ${kind} unavailable`,
+        ]);
+        expect(failures.map((f) => [f.pipe, f.jobType])).toEqual([
+          [kind, "http"],
+        ]);
+        expect(await frozenRow(tx, m.id)).toBeUndefined();
+      });
+    },
+  );
+
+  test("ranges that do not add up freeze the month without them and are counted", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({
+          http: countsPipe(m.id, { ok: 8520, degraded: 0, error: 120 }),
+        }),
+        runsPipes: makeRunsPipes({
+          http: countsPipe(m.id, { ok: 1420, degraded: 0, error: 20 }),
+        }),
+        badPipes: makeBadPipes(
+          bucketPipe(m.id, [{ bucket: 94, degraded: 0, error: 90 }]).pipe,
+          bucketPipe(m.id, [{ bucket: 94, degraded: 0, error: 20 }]).pipe,
+        ),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res).toMatchObject({ frozen: 1, bucketMismatch: 1, failures: [] });
+      const row = await frozenRow(tx, m.id);
+      expect(row?.bucketMinutes).toBeNull();
+      expect(row?.days[4]).toEqual({
+        day: "2026-06-05",
+        requests: { ok: 8520, degraded: 0, error: 120 },
+        runs: { ok: 1420, degraded: 0, error: 20 },
+      });
+    });
+  });
+
+  test("heartbeat monitors keep bucket_minutes null and are never in a bucket read", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { jobType: "heartbeat" });
+      const buckets = bucketPipe(m.id, []);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({
+          heartbeat: countsPipe(m.id, { ok: 10, degraded: 0, error: 1 }),
+        }),
+        runsPipes: makeRunsPipes(),
+        badPipes: makeBadPipes(buckets.pipe, buckets.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res).toMatchObject({ frozen: 1, bucketMismatch: 0 });
+      expect(buckets.calls).toEqual([]);
+      expect((await frozenRow(tx, m.id))?.bucketMinutes).toBeNull();
+    });
+  });
+
+  test("private-only monitors get request ranges and no runs read", async () => {
+    await withTestTransaction(async (tx) => {
+      const m = await insertTestMonitor(tx, { regions: "" });
+      const requests = bucketPipe(m.id, [{ bucket: 3, degraded: 1, error: 0 }]);
+      const runs = bucketPipe(m.id, []);
+
+      const res = await runUptimeFreeze({
+        pipes: makePipes({
+          http: countsPipe(m.id, { ok: 10, degraded: 1, error: 0 }),
+        }),
+        runsPipes: makeRunsPipes(),
+        badPipes: makeBadPipes(requests.pipe, runs.pipe),
+        now,
+        db: tx,
+        monitorIds: [m.id],
+        sleep: noSleep,
+      });
+
+      expect(res.frozen).toBe(1);
+      expect(runs.calls).toEqual([]);
+      const row = await frozenRow(tx, m.id);
+      expect(row?.bucketMinutes).toBe(15);
+      expect(row?.days[4].bad).toEqual({ requests: [[3, 1, 1, 0]] });
     });
   });
 });

@@ -1,0 +1,320 @@
+"use client";
+
+import { Calendar, Info, Lock } from "@openstatus/icons";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { useMemo, useState } from "react";
+
+import { Note, NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
+import {
+  BillingOverlay,
+  BillingOverlayButton,
+  BillingOverlayContainer,
+  BillingOverlayDescription,
+} from "@/components/content/billing-overlay";
+import {
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  Section,
+  SectionDescription,
+  SectionGroup,
+  SectionHeader,
+  SectionHeaderRow,
+  SectionTitle,
+} from "@/components/content/section";
+import { getColumns } from "@/components/data-table/status-page-history/columns";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
+import {
+  MetricCard,
+  MetricCardDetail,
+  MetricCardGroup,
+  MetricCardHeader,
+  MetricCardTitle,
+  MetricCardValue,
+} from "@/components/metric/metric-card";
+import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import {
+  HISTORY_WINDOWS,
+  getColumnVisibility,
+  historyMetric,
+  historyRows,
+  parseWindow,
+  windowKey,
+} from "@/data/status-page-history";
+import { truncatePercentage } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
+
+import { buildExampleHistory } from "./examples";
+import { searchParamsParsers } from "./search-params";
+import { UptimeExplainer } from "./uptime-explainer";
+
+export function Client() {
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const [{ window, metric: metricParam }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const { data: page } = useQuery(
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
+  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const isLimited = workspace?.limits["uptime-history"] === false;
+
+  // one 24-month fetch; the period select only toggles column visibility
+  const { data: liveHistory } = useQuery({
+    ...trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+    enabled: !!workspace && !isLimited,
+  });
+
+  const exampleHistory = useMemo(
+    () => (isLimited ? buildExampleHistory() : null),
+    [isLimited],
+  );
+  const history = isLimited ? exampleHistory : liveHistory;
+  const metric = historyMetric(metricParam, history?.mode ?? "requests");
+  const rows = useMemo(
+    () => historyRows(history?.rows ?? [], metric),
+    [history?.rows, metric],
+  );
+
+  const columns = useMemo(
+    () =>
+      getColumns(
+        history?.months ?? [],
+        window,
+        history?.timeZone,
+        history?.utcOnlyMonths,
+      ),
+    [history?.months, window, history?.timeZone, history?.utcOnlyMonths],
+  );
+  const columnVisibility = useMemo(
+    () => getColumnVisibility(window, history?.months.length ?? 0),
+    [window, history?.months.length],
+  );
+
+  if (!history) return null;
+
+  const summary = history.summary[windowKey(window)];
+  const countsRequests = history.mode === "requests" || history.mode === "runs";
+  const showMetric = !isLimited && countsRequests;
+  const showRuns = showMetric && metric === "runs";
+  const uptime = showRuns ? summary.runsUptime : summary.uptime;
+  const partial = showRuns ? history.runsPartial : history.partial;
+  // rows without a value in the window are left out of the page average
+  const averaged = rows.filter(
+    (row) => row.rolling[windowKey(window)] !== null,
+  ).length;
+  const hasAnyData = rows.some((row) =>
+    Object.values(row.months).some((value) => value !== null),
+  );
+
+  return (
+    <SectionGroup>
+      <Section id="history">
+        <SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>{page?.title}</SectionTitle>
+            <SectionDescription>
+              {isLimited
+                ? "Example data. Upgrade to see your page's long-term uptime."
+                : `Long-term uptime, built from your page's components. Months and days in ${history.timeZone}.`}
+            </SectionDescription>
+          </SectionHeader>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {showMetric ? (
+              <UptimeMetricTabs
+                value={metric}
+                onValueChange={(m) => setSearchParams({ metric: m })}
+              />
+            ) : null}
+            <Select
+              value={String(window)}
+              onValueChange={(v) => setSearchParams({ window: parseWindow(v) })}
+            >
+              <SelectTrigger size="sm" aria-label="Period" className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {HISTORY_WINDOWS.map((w) => (
+                  <SelectItem key={w} value={String(w)}>
+                    Last {w} months
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </SectionHeaderRow>
+        {!isLimited ? (
+          <NoteDismissible cookieKey="note_reports_global_status_pages">
+            <Info />
+            Need one report across all your status pages? Let us know.
+            <FormDialogSupportContact
+              defaultValues={{
+                type: "feature",
+                message:
+                  "I'm interested in a report across all my status pages. What I need: ",
+              }}
+            >
+              <NoteButton variant="default">Tell us what you need</NoteButton>
+            </FormDialogSupportContact>
+          </NoteDismissible>
+        ) : null}
+        {!isLimited && partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent{" "}
+            {showRuns
+              ? "runs"
+              : countsRequests
+                ? "requests"
+                : "uptime data"}{" "}
+            couldn&apos;t be loaded, so the latest months may be incomplete.
+          </Note>
+        ) : null}
+        {!isLimited &&
+        history.timeZone !== "UTC" &&
+        history.utcOnlyMonths.length > 0 ? (
+          <Note size="sm">
+            <Info />
+            Months marked UTC were frozen before days could be regrouped, so
+            their days follow UTC rather than {history.timeZone}.
+          </Note>
+        ) : null}
+      </Section>
+      <Section id="history-metrics">
+        <MetricCardGroup
+          aria-hidden={isLimited}
+          className={cn(
+            "md:grid-cols-4 lg:grid-cols-4",
+            isLimited && "pointer-events-none blur-sm select-none",
+          )}
+        >
+          <MetricCard>
+            <MetricCardHeader>
+              <MetricCardTitle className="uppercase">
+                Page Uptime
+              </MetricCardTitle>
+            </MetricCardHeader>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <MetricCardValue>
+                {uptime === null ? "—" : `${truncatePercentage(uptime)}%`}
+              </MetricCardValue>
+              {averaged > 0 && averaged < rows.length ? (
+                <MetricCardDetail>
+                  {averaged} of {rows.length} components
+                </MetricCardDetail>
+              ) : null}
+            </div>
+          </MetricCard>
+          <MetricCard>
+            <MetricCardHeader>
+              <MetricCardTitle className="uppercase">Reports</MetricCardTitle>
+            </MetricCardHeader>
+            <MetricCardValue>{summary.reports}</MetricCardValue>
+          </MetricCard>
+          <MetricCard>
+            <MetricCardHeader>
+              <MetricCardTitle className="uppercase">
+                Components
+              </MetricCardTitle>
+            </MetricCardHeader>
+            <MetricCardValue>{rows.length}</MetricCardValue>
+          </MetricCard>
+          <MetricCard>
+            <MetricCardHeader>
+              <MetricCardTitle className="uppercase">
+                Created At
+              </MetricCardTitle>
+            </MetricCardHeader>
+            <MetricCardValue>
+              {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
+            </MetricCardValue>
+          </MetricCard>
+        </MetricCardGroup>
+        {isLimited ? (
+          <BillingOverlayContainer>
+            <div className="overflow-x-auto">
+              <DataTable
+                paginationComponent={DataTablePaginationSimple}
+                columns={columns}
+                data={rows}
+                columnVisibility={columnVisibility}
+              />
+            </div>
+            <BillingOverlay>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="uptime-history"
+                onClick={() => setOpenDialog(true)}
+              >
+                <Lock />
+                Upgrade
+              </BillingOverlayButton>
+              <BillingOverlayDescription>
+                Keep an overview of your uptime history for the last 24 months.
+              </BillingOverlayDescription>
+            </BillingOverlay>
+            <UpgradeDialog
+              open={openDialog}
+              onOpenChange={setOpenDialog}
+              limit="uptime-history"
+            />
+          </BillingOverlayContainer>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable
+              paginationComponent={DataTablePaginationSimple}
+              columns={columns}
+              // rows without a single value are not history yet
+              data={hasAnyData ? rows : []}
+              columnVisibility={columnVisibility}
+              emptyState={
+                <DataTableEmpty>
+                  <EmptyStateMedia>
+                    <Calendar />
+                  </EmptyStateMedia>
+                  <EmptyStateTitle>No history yet</EmptyStateTitle>
+                  <EmptyStateDescription>
+                    Each month is frozen early in the following month. Until
+                    then, it is served live.
+                  </EmptyStateDescription>
+                </DataTableEmpty>
+              }
+            />
+          </div>
+        )}
+        {!isLimited ? (
+          <NoteDismissible cookieKey="note_status_page_history_missing_months">
+            <Info />
+            Is a month missing that your monitors were running? Let us know.
+            <FormDialogSupportContact>
+              <NoteButton variant="default">Contact us</NoteButton>
+            </FormDialogSupportContact>
+          </NoteDismissible>
+        ) : null}
+      </Section>
+      <Section id="uptime-calculation">
+        <UptimeExplainer pageId={id} mode={history.mode} />
+      </Section>
+    </SectionGroup>
+  );
+}

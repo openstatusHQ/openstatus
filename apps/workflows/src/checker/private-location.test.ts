@@ -1,14 +1,23 @@
 import { and, db, eq, or } from "@openstatus/db";
 import {
+  maintenance,
   monitor,
+  monitorMaintenanceWindow,
   notification,
   notificationTrigger,
   notificationsToMonitors,
+  page,
+  pageComponent,
   privateLocation,
   privateLocationMonitorStatus,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  createMaintenanceWindow,
+  createPage,
+  createPageMaintenance,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
@@ -419,6 +428,94 @@ describe("updateStatusPrivate", () => {
 
     const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
     expect(row?.status).toBe("active");
+  });
+
+  describe("during maintenance", () => {
+    afterEach(async () => {
+      await db
+        .delete(monitorMaintenanceWindow)
+        .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.workspaceId, workspaceId))
+        .run();
+      await db.delete(page).where(eq(page.workspaceId, workspaceId)).run();
+    });
+
+    const report = (cronTimestamp: number) =>
+      post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp,
+      });
+
+    test.each(["pause", "continue"] as const)(
+      "a %s window drops a report that ran inside it; one at its end is processed",
+      async (mode) => {
+        const to = Math.floor(Date.now() / 1000) * 1000 + 3_600_000;
+        await createMaintenanceWindow(workspaceId, {
+          monitorIds: [TEST_MONITOR_ID],
+          mode,
+          from: new Date(to - 7_200_000),
+          to: new Date(to),
+        });
+
+        await report(Date.now());
+        expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+        expect(
+          await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID),
+        ).toBeUndefined();
+
+        if (mode === "continue") {
+          await report(to);
+          expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+        }
+      },
+    );
+
+    test("a continue window lets a recovery through", async () => {
+      await report(Date.now() - 2000);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+      const now = Date.now();
+      await createMaintenanceWindow(workspaceId, {
+        monitorIds: [TEST_MONITOR_ID],
+        mode: "continue",
+        from: new Date(now - 1000),
+        to: new Date(now + 3_600_000),
+      });
+
+      await post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "active",
+        cronTimestamp: now,
+      });
+
+      expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
+      expect((await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
+        "active",
+      );
+    });
+
+    test("a status-page maintenance drops the report, as before", async () => {
+      const pageId = (await createPage(workspaceId)).id;
+      const now = Date.now();
+      await createPageMaintenance(workspaceId, pageId, {
+        monitorId: TEST_MONITOR_ID,
+        from: new Date(now - 3_600_000),
+        to: new Date(now + 3_600_000),
+      });
+
+      await report(now);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+      expect(await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID)).toBeUndefined();
+    });
   });
 
   test("degraded report sends a degraded notification", async () => {

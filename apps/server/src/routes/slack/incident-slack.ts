@@ -3,7 +3,9 @@ import { incidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { sendIncidentCommander } from "@openstatus/emails";
 import { ServiceError, type ServiceContext } from "@openstatus/services";
 import {
+  acknowledgeIncident,
   actorDisplayName,
+  afterIncidentAcknowledged,
   afterIncidentDeclared,
   afterIncidentStatusChanged,
   afterPostmortemApproved,
@@ -20,11 +22,17 @@ import {
 import { type KnownBlock, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
+import { buildLinkAccountBlocks, LINK_ACCOUNT_TEXT } from "./blocks";
 import type { SlackConfig } from "./config";
 import { postConfirmationCard } from "./confirmation-card";
 import { trackSlackIncident } from "./incident-analytics";
 import { postReportFollowUp } from "./report-follow-up";
-import { requireSlackMember, slackAgentAllowed } from "./require-slack-member";
+import {
+  linkAccountUrl,
+  planRequiredMessage,
+  requireSlackMember,
+  slackAgentAllowed,
+} from "./require-slack-member";
 import type { SlackWorkspace } from "./workspace-resolver";
 
 const logger = getLogger(["api-server", "slack", "incident"]);
@@ -308,6 +316,91 @@ async function offerStatusReportResolve(args: {
           : "This was a false alarm. Everything is operating normally."),
     },
   });
+}
+
+/** The card's Acknowledge button. A stale click still redraws the card it was on. */
+export async function acknowledgeFromCard(args: {
+  resolved: SlackWorkspace;
+  config: SlackConfig;
+  teamId: string;
+  slackUserId: string;
+  channelId: string;
+  messageTs: string;
+  incidentId: number;
+}): Promise<void> {
+  const { resolved, config, teamId, slackUserId, channelId, incidentId } = args;
+  const slack = new WebClient(resolved.botToken);
+  const tell = (message: {
+    text: string;
+    blocks?: ReturnType<typeof buildLinkAccountBlocks>;
+  }) =>
+    slack.chat.postEphemeral({
+      channel: channelId,
+      user: slackUserId,
+      ...message,
+    });
+  if (!slackAgentAllowed(resolved.workspace)) {
+    await tell(planRequiredMessage(config));
+    return;
+  }
+  const actor = await requireSlackMember({
+    workspace: resolved.workspace,
+    teamId,
+    slackUserId,
+    slack,
+  });
+  if (!actor) {
+    const url = await linkAccountUrl(config, {
+      workspaceId: resolved.workspace.id,
+      teamId,
+      slackUserId,
+    });
+    await tell({
+      text: LINK_ACCOUNT_TEXT,
+      blocks: buildLinkAccountBlocks(url),
+    });
+    return;
+  }
+  const ctx: ServiceContext = { workspace: resolved.workspace, actor };
+  try {
+    await acknowledgeIncident({ ctx, input: { id: incidentId } });
+    trackSlackIncident(ctx, "acknowledged");
+    await slackEffects(ctx, config)
+      .then((effects) =>
+        afterIncidentAcknowledged({ ctx, effects, incidentId }),
+      )
+      .catch(() => undefined);
+  } catch (error) {
+    if (!(error instanceof ServiceError)) throw error;
+    const current = await getIncident({ ctx, input: { id: incidentId } }).catch(
+      () => undefined,
+    );
+    await tell({
+      text: current?.closedAt
+        ? "This incident is closed."
+        : current?.acknowledgedAt
+          ? "This incident is already acknowledged."
+          : `:x: ${error.message}`,
+    });
+  }
+
+  const current = await getIncident({ ctx, input: { id: incidentId } }).catch(
+    () => undefined,
+  );
+  if (!current) return;
+  await slack.chat
+    .update({
+      channel: channelId,
+      ts: args.messageTs,
+      text: `Incident: ${current.title}`,
+      blocks: headerBlocks(
+        current,
+        `${config.dashboardUrl}/incidents/${incidentId}`,
+      ),
+    })
+    .catch((error) =>
+      logger.warn("slack incident card refresh failed", { error, incidentId }),
+    );
 }
 
 /** "Link this channel": the fallback when binding failed during declare. */

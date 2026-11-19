@@ -234,6 +234,24 @@ const monitorTagActions = [
   action("monitor_tag.delete", "monitor_tag", intId),
 ] as const;
 
+const monitorMaintenanceWindowActions = [
+  action(
+    "monitor_maintenance_window.create",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.update",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.delete",
+    "monitor_maintenance_window",
+    intId,
+  ),
+] as const;
+
 const privateLocationActions = [
   action("private_location.create", "private_location", intId, {
     optionalMetadata: true,
@@ -283,6 +301,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
+  ...monitorMaintenanceWindowActions,
   ...ssoActions,
 ]);
 

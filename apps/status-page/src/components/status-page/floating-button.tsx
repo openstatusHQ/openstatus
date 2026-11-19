@@ -48,7 +48,9 @@ export const IS_DEV = process.env.NODE_ENV === "development";
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
 
-export const CARD_TYPE = ["duration", "requests", "manual"] as const;
+// the card types offered for monitor checks; "manual" belongs to reports only
+const CHECK_CARD_TYPE = ["duration", "requests", "runs"] as const;
+export const CARD_TYPE = [...CHECK_CARD_TYPE, "manual"] as const;
 export type CardType = (typeof CARD_TYPE)[number];
 
 export const BAR_TYPE = ["absolute", "manual"] as const;
@@ -66,6 +68,7 @@ const LABELS = {
   value: {
     duration: "Time per status",
     requests: "Number of requests",
+    runs: "Number of runs",
     manual: "Worst status of the day",
   },
 } as const;
@@ -297,20 +300,26 @@ export function FloatingButton({
                     )}
                   </SelectTrigger>
                   <SelectContent>
-                    {(["duration", "requests"] as const).map((v) => (
+                    {CHECK_CARD_TYPE.map((v) => (
                       <SelectItem key={v} value={v}>
                         {LABELS.value[v]}
                       </SelectItem>
                     ))}
-                    {/* stored configs may pair an absolute source with a manual value */}
+                    {/* a stored value that is not offered here still needs an item to render */}
                     {cardType === "manual" ? (
-                      <SelectItem value="manual" disabled>
-                        {LABELS.value.manual}
+                      <SelectItem value={cardType} disabled>
+                        {LABELS.value[cardType]}
                       </SelectItem>
                     ) : null}
                   </SelectContent>
                 </Select>
               </div>
+              {cardType === "runs" && barType === "absolute" ? (
+                <p className="text-muted-foreground col-span-2 text-xs">
+                  Each scheduled check counts once and fails only when at least
+                  half of its regions fail.
+                </p>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="show-uptime">Show Uptime</Label>
                 <Select

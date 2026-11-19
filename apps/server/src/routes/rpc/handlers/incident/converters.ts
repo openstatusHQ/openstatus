@@ -146,6 +146,8 @@ export function dbEventTypeToProto(type: DbEventType): IncidentEventType {
       return IncidentEventType.POSTMORTEM_APPROVED;
     case "closed":
       return IncidentEventType.CLOSED;
+    case "acknowledged":
+      return IncidentEventType.ACKNOWLEDGED;
   }
 }
 

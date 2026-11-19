@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import type { RouterOutputs } from "@openstatus/api";
 import { format } from "date-fns";
 
@@ -8,7 +9,7 @@ import { formatDurationShort, formatNumber } from "@/lib/formatter";
 export const HISTORY_WINDOWS = [6, 12, 24] as const;
 export type HistoryWindow = (typeof HISTORY_WINDOWS)[number];
 
-// safe because callers only pass values rendered from HISTORY_WINDOWS tabs;
+// safe because callers only pass values rendered from HISTORY_WINDOWS;
 // anything else falls back to the default window
 export function parseWindow(value: string): HistoryWindow {
   const window = Number(value);
@@ -17,29 +18,28 @@ export function parseWindow(value: string): HistoryWindow {
     : HISTORY_WINDOWS[0];
 }
 
-export type UptimeStatus =
-  | "operational"
-  | "degraded"
-  | "down"
-  | "in-progress"
-  | "no-data";
-
-export type MonthCell = {
-  percentage: number | null;
-  status: UptimeStatus;
-};
-
 // wire types inferred from the endpoint so server shape changes surface here
-type HistoryWireRow = RouterOutputs["page"]["getUptimeHistory"]["rows"][number];
+type HistoryWire = RouterOutputs["page"]["getUptimeHistory"];
+type HistoryWireRow = HistoryWire["rows"][number];
 export type HistoryUnit = HistoryWireRow["unit"] | "runs";
 export type HistoryRow = Omit<HistoryWireRow, "unit" | "runs"> & {
   unit: HistoryUnit;
 };
 export type HistoryEvent = HistoryRow["events"][number];
+export type HistoryMaintenanceWindow = HistoryRow["maintenanceWindows"][number];
+export type HistoryExcusedOutage = HistoryRow["excusedOutages"][number];
 export type HistoryValue = NonNullable<HistoryRow["months"][string]>;
 
 export const HISTORY_METRICS = ["requests", "runs"] as const;
 export type HistoryMetric = (typeof HISTORY_METRICS)[number];
+
+/** The URL's metric, else runs on a runs page and requests otherwise. */
+export function historyMetric(
+  param: HistoryMetric | null,
+  mode: HistoryWire["mode"],
+): HistoryMetric {
+  return param ?? (mode === "runs" ? "runs" : "requests");
+}
 
 /** Rows as `metric` counts them; rows without runs keep their own unit. */
 export function historyRows(
@@ -107,41 +107,23 @@ export function windowKey(window: HistoryWindow): keyof HistoryRow["rolling"] {
 }
 
 /**
- * Events overlapping the month; open-ended events count up to now.
- * UTC boundaries — the server buckets months in UTC, so local boundaries
- * would list an event under a neighboring month for non-UTC users.
+ * Events overlapping the month in the page time zone, which is how the server
+ * buckets months; open-ended events count up to now.
  */
-export function eventsForMonth(
-  events: HistoryEvent[],
+export function eventsForMonth<T extends Pick<HistoryEvent, "from" | "to">>(
+  events: T[],
   key: string,
-): HistoryEvent[] {
+  timeZone = "UTC",
+): T[] {
   const [year, month] = key.split("-").map(Number);
-  const start = Date.UTC(year, month - 1, 1);
-  const end = Date.UTC(year, month, 1);
+  const start = new TZDate(year, month - 1, 1, timeZone).getTime();
+  const end = new TZDate(year, month, 1, timeZone).getTime();
   const now = Date.now();
   return events.filter((e) => {
     const from = e.from.getTime();
     const to = e.to?.getTime() ?? now;
     return from < end && to >= start;
   });
-}
-
-// presentational thresholds only — the verb owns the uptime math
-export function cellFromPercentage(
-  percentage: number | null,
-  isCurrent = false,
-): MonthCell {
-  if (percentage === null) return { percentage, status: "no-data" };
-  if (isCurrent) return { percentage, status: "in-progress" };
-  return {
-    percentage,
-    status:
-      percentage >= 99.9
-        ? "operational"
-        : percentage >= 99
-          ? "degraded"
-          : "down",
-  };
 }
 
 function monthKeyToDate(key: string): Date {

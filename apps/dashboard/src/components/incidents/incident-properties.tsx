@@ -3,6 +3,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
   type IncidentStatus,
+  incidentAwaitsAcknowledgement,
   incidentSeverity,
 } from "@openstatus/db/src/schema/incidents/constants";
 import {
@@ -33,9 +34,11 @@ import {
 } from "@/components/content/property-list";
 import {
   incidentEndedAt,
+  incidentResponseTimes,
   severityConfig,
   statusConfig,
 } from "@/data/managed-incidents.client";
+import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -85,6 +88,8 @@ export function IncidentProperties({
   const status = statusConfig[incident.status];
   const commander = personName(incident.commander);
   const endedAt = incidentEndedAt(incident);
+  const responseTimes = incidentResponseTimes(incident);
+  const acknowledgedBy = personName(incident.acknowledgedByUser);
 
   return (
     <PropertyList>
@@ -239,6 +244,24 @@ export function IncidentProperties({
           )}
         </PropertyValue>
       </Property>
+      {(
+        [
+          ["Acked in", responseTimes.acknowledge],
+          ["Mitigated in", responseTimes.mitigate],
+          ["Resolved in", responseTimes.resolve],
+        ] as const
+      ).map(([label, ms]) => (
+        <Property key={label}>
+          <PropertyLabel>{label}</PropertyLabel>
+          <PropertyValue className="tabular-nums">
+            {ms === null ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              formatDurationShort(ms)
+            )}
+          </PropertyValue>
+        </Property>
+      ))}
       {lastUpdateAt ? (
         <Property>
           <PropertyLabel>Last update</PropertyLabel>
@@ -257,6 +280,33 @@ export function IncidentProperties({
           <span className="truncate">
             {personName(incident.declaredByUser) ?? "System"}
           </span>
+        </PropertyValue>
+      </Property>
+      <Property>
+        <PropertyLabel>Acknowledged</PropertyLabel>
+        <PropertyValue>
+          {incident.acknowledgedAt ? (
+            <>
+              {acknowledgedBy ? (
+                <>
+                  <UserAvatar
+                    name={acknowledgedBy}
+                    src={incident.acknowledgedByUser?.photoUrl}
+                  />
+                  <span className="truncate">{acknowledgedBy}</span>
+                </>
+              ) : null}
+              <HoverCardTimestamp date={incident.acknowledgedAt} side="left">
+                <span className={acknowledgedBy ? "text-muted-foreground" : ""}>
+                  {format(incident.acknowledgedAt, "LLL dd, HH:mm")}
+                </span>
+              </HoverCardTimestamp>
+            </>
+          ) : (
+            <span className="text-muted-foreground">
+              {incidentAwaitsAcknowledgement(incident) ? "Not yet" : "—"}
+            </span>
+          )}
         </PropertyValue>
       </Property>
     </PropertyList>

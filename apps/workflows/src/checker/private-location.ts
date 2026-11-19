@@ -1,15 +1,6 @@
 import { getLogger } from "@logtape/logtape";
-import {
-  and,
-  db,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lte,
-  schema,
-  sql,
-} from "@openstatus/db";
+import { and, db, eq, inArray, isNull, or, schema, sql } from "@openstatus/db";
+import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -84,29 +75,24 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    const now = new Date();
+    // checks cannot be stopped from here, so a pause only drops the result; a continue
+    // window drops failures too because this path has no transition guard
+    const paused = monitorInMaintenance(db, { at: new Date(), mode: "pause" });
     const activeMaintenance = await db
-      .select({ id: schema.maintenance.id })
-      .from(schema.maintenance)
-      .innerJoin(
-        schema.maintenancesToPageComponents,
-        eq(
-          schema.maintenancesToPageComponents.maintenanceId,
-          schema.maintenance.id,
-        ),
-      )
-      .innerJoin(
-        schema.pageComponent,
-        eq(
-          schema.pageComponent.id,
-          schema.maintenancesToPageComponents.pageComponentId,
-        ),
-      )
+      .select({ id: schema.monitor.id })
+      .from(schema.monitor)
       .where(
         and(
-          lte(schema.maintenance.from, now),
-          gte(schema.maintenance.to, now),
-          eq(schema.pageComponent.monitorId, monitorIdNumber),
+          eq(schema.monitor.id, monitorIdNumber),
+          status === "active"
+            ? paused
+            : or(
+                paused,
+                monitorInMaintenance(db, {
+                  at: new Date(cronTimestamp),
+                  mode: "window",
+                }),
+              ),
         ),
       )
       .get();

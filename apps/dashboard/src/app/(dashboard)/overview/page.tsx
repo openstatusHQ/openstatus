@@ -150,7 +150,7 @@ function linkOf(event: OverviewEvent): ActivityLink {
   switch (event.type) {
     case "incident":
       return {
-        href: `/monitors/${event.incident.monitor.id}/incidents`,
+        href: `/monitors/${event.incident.monitor.id}/report#outages`,
         title: event.incident.monitor.name,
         kind: "Downtime",
       };
@@ -256,7 +256,7 @@ export default function Page() {
     return null;
 
   const {
-    events,
+    calendarEvents,
     needsAttention,
     upcomingMaintenances,
     recentlyResolved,
@@ -271,29 +271,31 @@ export default function Page() {
       undefined,
     );
   const range = activityRange(now, until);
-  const days = groupByDay(range, events, spanOf, now).map(({ date, items }) => {
-    if (items.length === 0) return { date };
-    const [lead, ...others] = dayEntries(items, date, now);
-    // dashed only when the day holds nothing but maintenance still ahead
-    const upcoming = items.every(
-      (e) => e.type === "maintenance" && e.maintenance.from > now,
-    );
-    return {
-      date,
-      scale: lead.scale,
-      level: lead.level,
-      hatched: lead.hatched,
-      upcoming,
-      lines: [
-        ...activityDayLines(
-          lead.lead,
-          others.map((e) => e.name),
-        ),
-        ...(upcoming ? ["Upcoming"] : []),
-      ],
-      links: dayLinks(items, date, now),
-    };
-  });
+  const days = groupByDay(range, calendarEvents, spanOf, now).map(
+    ({ date, items }) => {
+      if (items.length === 0) return { date };
+      const [lead, ...others] = dayEntries(items, date, now);
+      // dashed only when the day holds nothing but maintenance still ahead
+      const upcoming = items.every(
+        (e) => e.type === "maintenance" && e.maintenance.from > now,
+      );
+      return {
+        date,
+        scale: lead.scale,
+        level: lead.level,
+        hatched: lead.hatched,
+        upcoming,
+        lines: [
+          ...activityDayLines(
+            lead.lead,
+            others.map((e) => e.name),
+          ),
+          ...(upcoming ? ["Upcoming"] : []),
+        ],
+        links: dayLinks(items, date, now),
+      };
+    },
+  );
   const anyUpcoming = days.some((day) => day.upcoming);
   const attention = needsAttention.length;
 

@@ -15,7 +15,7 @@ FROM mv__http_status_15m__v0
 WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
     -- start at a local midnight so the oldest day is complete, not cut at the
     -- TTL edge; the bound is under 46d + 1h for every zone (45 local days, one
-    -- of them 25h after a DST fall-back, plus today so far) and the TTL is 47d
+    -- of them 25h after a DST fall-back, plus today so far) and the TTL is 76d
     AND time >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL 45 DAY
 GROUP BY day, monitorId
 ORDER BY day DESC

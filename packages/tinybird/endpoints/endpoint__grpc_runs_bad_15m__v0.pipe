@@ -1,0 +1,38 @@
+TOKEN "endpoint__grpc_runs_bad_15m__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+WITH
+    {{ Int64(fromDate, 1730419200000, required=True) }} AS fromMs,
+    {{ Int64(toDate, 1733011200000, required=True) }} AS toMs
+SELECT
+    monitorId,
+    day,
+    bucket,
+    -- same quorum as endpoint__grpc_runs_45d__v0, so bucket sums equal its day counts
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degradedCount,
+    countIf(e * 2 >= n) AS errorCount
+FROM (
+    SELECT
+        monitorId,
+        toDate(time) AS day,
+        toUInt8(intDiv(cronTimestamp % 86400000, 900000)) AS bucket,
+        cronTimestamp,
+        uniqExactMerge(regions) AS n,
+        uniqExactMerge(errorRegions) AS e,
+        uniqExactMerge(degradedRegions) AS d
+    FROM mv__grpc_runs_45d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+        AND time >= toStartOfDay(toDateTime(intDiv(fromMs, 1000), 'UTC'))
+        AND time < fromUnixTimestamp64Milli(toInt64(toMs), 'UTC')
+        AND cronTimestamp >= fromMs
+        AND cronTimestamp < toMs
+    GROUP BY monitorId, day, bucket, cronTimestamp
+)
+GROUP BY monitorId, day, bucket
+HAVING degradedCount + errorCount > 0
+ORDER BY monitorId, day, bucket
+
+TYPE endpoint

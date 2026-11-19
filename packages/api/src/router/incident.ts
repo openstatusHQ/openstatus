@@ -13,11 +13,13 @@ import {
   LinkIncidentStatusReportInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
+  acknowledgeIncident,
   addIncidentNote,
   approvePostmortem,
   draftPostmortem,
   generatePostmortemDraft,
   getPostmortem,
+  afterIncidentAcknowledged,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,
@@ -204,6 +206,28 @@ export const incidentRouter = createTRPCRouter({
             incidentId: row.id,
             status: row.status,
             note: input.note,
+          }),
+        );
+        return row;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  acknowledge: protectedProcedure
+    .meta({ track: Events.AcknowledgeManagedIncident })
+    .input(IncidentIdInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const row = await acknowledgeIncident({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+        afterResponse(() =>
+          afterIncidentAcknowledged({
+            ctx: toServiceCtx(ctx),
+            effects: effectsFor(ctx),
+            incidentId: row.id,
           }),
         );
         return row;

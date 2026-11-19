@@ -176,8 +176,14 @@ export function buildOverviewData(
     return resolvedAt !== null && resolvedAt >= sevenDaysAgo;
   });
 
+  // an excused outage counts as up, so the calendar shows it like no outage
+  const calendarEvents = events.filter(
+    (event) => event.type !== "incident" || !event.incident.excusedAt,
+  );
+
   return {
     events,
+    calendarEvents,
     needsAttention,
     upcomingMaintenances,
     recentlyResolved,

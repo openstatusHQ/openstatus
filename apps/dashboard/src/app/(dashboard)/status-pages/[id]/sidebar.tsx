@@ -14,8 +14,8 @@ import { useParams } from "next/navigation";
 import { Link } from "@/components/common/link";
 import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { configurationLabels } from "@/components/status-pages/uptime-calculation";
 import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 

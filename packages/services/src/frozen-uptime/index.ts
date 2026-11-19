@@ -1,4 +1,12 @@
 export {
+  type BackfillBucketPipeFn,
+  type BackfillFrozenBucketsResult,
+  BackfillFrozenBucketsInput,
+  backfillBucketPipe,
+  backfillFrozenBuckets,
+} from "./backfill";
+export {
+  type BadBucketRow,
   type ComputeCountRow,
   computeMonitorMonth,
   monthDays,
@@ -6,18 +14,24 @@ export {
   previousMonth,
 } from "./compute";
 export { freezeMonitorMonth } from "./freeze";
+export { splitByMonth } from "./months";
 export { getUptimeHistory } from "./get-history";
 export { getMonitorUptimeHistory } from "./get-monitor-history";
 export {
   type ChunkFailure,
   type RunUptimeFreezeResult,
   type StatusPipeFn,
+  type UptimeBadBucketPipes,
   type UptimeFreezeJobType,
   type UptimeFreezePipes,
   type UptimeRunsPipes,
+  countsRuns,
   fetchFreezeCounts,
+  freezeCutoff,
+  refreezeMonitorMonths,
   runUptimeFreeze,
+  uptimeBadBucketPipes,
   uptimeFreezePipes,
   uptimeRunsPipes,
 } from "./run";
-export { FreezeMonitorMonthInput } from "./schemas";
+export { FreezeMonitorMonthInput, RefreezeMonitorMonthsInput } from "./schemas";

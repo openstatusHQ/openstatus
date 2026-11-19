@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { NAV } from "@/config/nav";
 import {
   type MonitorHealth,
@@ -14,7 +15,7 @@ import {
   monitorHealthConfig,
 } from "@/data/monitors.client";
 import { useNow } from "@/hooks/use-now";
-import { formatDurationShort } from "@/lib/formatter";
+import { formatClockOrDay, formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { NavGroupButton, NavGroupItem, NavGroupStatus } from "./nav-group";
@@ -35,6 +36,9 @@ type Monitor = RouterOutputs["monitor"]["list"][number];
 
 function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
   if (health === "inactive") return "paused";
+  if (health === "maintenance" && m.maintenance) {
+    return `until ${formatClockOrDay(m.maintenance.until, now)}`;
+  }
   if (health === "error" || health === "degraded") {
     const open = m.incidents.find((i) => !i.resolvedAt);
     const word = health === "error" ? "down" : "degraded";
@@ -56,6 +60,13 @@ export function NavMonitorsItem() {
   const limitReached = workspace
     ? monitors.length >= workspace.limits.monitors
     : false;
+  useMaintenanceTick(
+    monitors.flatMap((m) =>
+      m.maintenance
+        ? [{ from: m.maintenance.until, to: m.maintenance.until }]
+        : [],
+    ),
+  );
   const now = useNow(60_000);
 
   const rows = [...monitors]
@@ -65,13 +76,16 @@ export function NavMonitorsItem() {
     (r) => r.health === "error" || r.health === "degraded",
   ).length;
   const paused = rows.filter((r) => r.health === "inactive").length;
+  const inMaintenance = rows.filter((r) => r.health === "maintenance").length;
   const worst: StatusVariant = rows.some((r) => r.health === "error")
     ? "destructive"
     : failing
       ? "warning"
-      : paused === rows.length
-        ? "default"
-        : "success";
+      : inMaintenance
+        ? "info"
+        : paused === rows.length
+          ? "default"
+          : "success";
 
   return (
     <NavGroupItem>
@@ -130,9 +144,11 @@ export function NavMonitorsItem() {
           label={`${monitors.length} ${monitors.length === 1 ? "monitor" : "monitors"}, ${
             failing
               ? `${failing} ${failing === 1 ? "needs" : "need"} attention`
-              : paused
-                ? `${paused} paused, the rest normal`
-                : "all normal"
+              : inMaintenance
+                ? `${inMaintenance} in maintenance, the rest normal`
+                : paused
+                  ? `${paused} paused, the rest normal`
+                  : "all normal"
           }`}
         />
       ) : null}

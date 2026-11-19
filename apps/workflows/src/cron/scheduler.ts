@@ -8,6 +8,7 @@ import { runIncidentRemindersTick } from "./incident-reminders";
 import { runOAuthPruneTick } from "./oauth-prune";
 import { handleOutboxDrainCron, handleOutboxRetentionCron } from "./outbox";
 import { handleStatusDriftCron } from "./status-drift";
+import { runUptimeFreezeTick } from "./uptime-freeze";
 
 const logger = getLogger(["workflow"]);
 
@@ -31,8 +32,9 @@ type ScheduledTask = {
  * Internal maintenance only, so it runs in-process rather than needing a
  * schedule added outside this repo. Every task is safe to run on both machines
  * at once: the outbox claim is atomic, drift repair is guarded by the same
- * compare-and-swap as a live check, retention deletes are idempotent, and each
- * incident reminder window is claimed in Redis before it is sent.
+ * compare-and-swap as a live check, retention deletes are idempotent, each
+ * incident reminder window is claimed in Redis before it is sent, and the
+ * uptime freeze writes one write-once row per monitor and month.
  */
 export const SCHEDULED_TASKS: ScheduledTask[] = [
   {
@@ -67,6 +69,14 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     name: "incident-reminders",
     expression: "*/10 * * * *",
     run: runIncidentRemindersTick,
+  },
+  {
+    name: "uptime-freeze-daily",
+    expression: "29 4 * * *",
+    run: () => runUptimeFreezeTick(),
+    // A month not frozen within 45 days of its start is lost for good.
+    timeoutMs: 30 * 60_000,
+    checkIn: true,
   },
 ];
 

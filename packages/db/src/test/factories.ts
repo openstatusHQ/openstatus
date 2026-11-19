@@ -10,7 +10,11 @@ import {
   incident,
   incidentEvent,
   incidentPostmortem,
+  maintenance,
+  maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   notification,
   notificationsToMonitors,
   page,
@@ -214,6 +218,71 @@ export async function createPageComponent(
       .returning(),
   );
   if (!row) throw new Error("factory insert returned no row");
+  return row;
+}
+
+/** A status-page maintenance covering one monitor's component. */
+export async function createPageMaintenance(
+  workspaceId: number,
+  pageId: number,
+  args: { monitorId: number; from: Date; to: Date },
+  db: Db = defaultDb,
+) {
+  const component = await createPageComponent(
+    workspaceId,
+    pageId,
+    { type: "monitor", monitorId: args.monitorId },
+    db,
+  );
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(maintenance)
+      .values({
+        title: "db upgrade",
+        message: "",
+        from: args.from,
+        to: args.to,
+        workspaceId,
+        pageId,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  await db
+    .insert(maintenancesToPageComponents)
+    .values({ maintenanceId: row.id, pageComponentId: component.id });
+  return row;
+}
+
+export async function createMaintenanceWindow(
+  workspaceId: number,
+  args: {
+    monitorIds: number[];
+    mode: "pause" | "continue";
+    from: Date;
+    to: Date;
+  },
+  db: Db = defaultDb,
+) {
+  const [row] = await withBusyRetry(() =>
+    db
+      .insert(monitorMaintenanceWindow)
+      .values({
+        workspaceId,
+        title: `test-window-${unique()}`,
+        mode: args.mode,
+        from: args.from,
+        to: args.to,
+      })
+      .returning(),
+  );
+  if (!row) throw new Error("factory insert returned no row");
+  await db.insert(monitorMaintenanceWindowToMonitor).values(
+    args.monitorIds.map((monitorId) => ({
+      monitorMaintenanceWindowId: row.id,
+      monitorId,
+    })),
+  );
   return row;
 }
 

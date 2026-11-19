@@ -22,7 +22,11 @@ import {
 } from "./outbox";
 import { handlePrivateLocationHealthCron } from "./private-location-health";
 import { handleStatusDriftCron } from "./status-drift";
-import { handleUptimeFreezeCron } from "./uptime-freeze";
+import {
+  handleUptimeBackfillBuckets,
+  handleUptimeFreezeCron,
+  handleUptimeRefreeze,
+} from "./uptime-freeze";
 
 const app = new Hono({ strict: false });
 
@@ -98,6 +102,14 @@ app.get("/oauth-prune", async (c) => {
 
 app.get("/uptime-freeze", async (c) => {
   return handleUptimeFreezeCron(c);
+});
+
+app.get("/uptime-freeze/refreeze", async (c) => {
+  return handleUptimeRefreeze(c);
+});
+
+app.get("/uptime-freeze/backfill-buckets", async (c) => {
+  return handleUptimeBackfillBuckets(c);
 });
 
 app.get("/private-location-health", async (c) => {

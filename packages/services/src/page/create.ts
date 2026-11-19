@@ -1,4 +1,5 @@
 import {
+  NEW_PAGE_CONFIGURATION_VALUE,
   page,
   pageComponent,
   selectPageSchema,
@@ -17,6 +18,17 @@ import {
   validateMonitorIdsActive,
 } from "./internal";
 import { CreatePageInput, NewPageInput } from "./schemas";
+
+// the column is loose json: a non-object is replaced, a missing value filled in
+function withNewPageValue(configuration: unknown): Record<string, unknown> {
+  const stored: Record<string, unknown> =
+    configuration !== null &&
+    typeof configuration === "object" &&
+    !Array.isArray(configuration)
+      ? Object.fromEntries(Object.entries(configuration))
+      : {};
+  return { ...stored, value: stored.value ?? NEW_PAGE_CONFIGURATION_VALUE };
+}
 
 /** Full create — mirrors legacy `pageRouter.create` (insertPageSchema input). */
 export async function createPage(args: {
@@ -76,7 +88,7 @@ export async function createPage(args: {
         // column — drizzle serialises objects automatically. Calling
         // `JSON.stringify` first would double-encode and persist a raw
         // JSON string, breaking downstream reads that expect an object.
-        configuration,
+        configuration: withNewPageValue(configuration),
         ...pageProps,
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),
@@ -154,7 +166,7 @@ export async function newPage(args: {
 
     const defaultConfiguration = {
       type: "absolute",
-      value: "requests",
+      value: NEW_PAGE_CONFIGURATION_VALUE,
       uptime: true,
       theme: "default-rounded",
     };

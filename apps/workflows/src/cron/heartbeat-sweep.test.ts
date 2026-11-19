@@ -5,11 +5,13 @@ import {
   monitor,
   monitorHeartbeatState,
   monitorIncidentTable,
+  monitorMaintenanceWindow,
   notificationOutbox,
   page,
   pageComponent,
 } from "@openstatus/db/src/schema";
 import {
+  createMaintenanceWindow,
   createMonitor,
   createNotification,
   createPage,
@@ -66,6 +68,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
+  await db
+    .delete(monitorMaintenanceWindow)
+    .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+    .run();
   await db
     .delete(maintenance)
     .where(eq(maintenance.workspaceId, workspaceId))
@@ -281,6 +287,40 @@ describe("handleHeartbeatSweepCron", () => {
     await handleHeartbeatSweepCron();
 
     expect(await statusOf(row.id)).toBe("active");
+  });
+
+  test("a heartbeat under a pause window is skipped", async () => {
+    const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
+    await createMaintenanceWindow(workspaceId, {
+      monitorIds: [row.id],
+      mode: "pause",
+      from: new Date(Date.now() - HOUR_MS),
+      to: new Date(Date.now() + HOUR_MS),
+    });
+
+    await handleHeartbeatSweepCron();
+
+    expect(await statusOf(row.id)).toBe("active");
+  });
+
+  test("a deadline missed inside a continue window goes down once the window ends", async () => {
+    const now = Date.now();
+    const row = await createHeartbeat(now - 2 * HOUR_MS);
+    const to = now + HOUR_MS;
+    await createMaintenanceWindow(workspaceId, {
+      monitorIds: [row.id],
+      mode: "continue",
+      from: new Date(now - 2 * HOUR_MS),
+      to: new Date(to),
+    });
+
+    await handleHeartbeatSweepCron(now);
+    expect(await statusOf(row.id)).toBe("active");
+    expect(await outboxFor(row.id)).toHaveLength(0);
+
+    await handleHeartbeatSweepCron(to + 1000);
+    expect(await statusOf(row.id)).toBe("error");
+    expect(await openIncidents(row.id)).toHaveLength(1);
   });
 });
 

@@ -55,6 +55,18 @@ describe("setDataByType in a time zone", () => {
     expect(utc.bar[0].status).toBe("success");
   });
 
+  it("labels a runs day of the zone in runs", () => {
+    const [tokyo] = setDataByType({
+      events: [early],
+      data: [bucket("2026-10-16", 96)],
+      cardType: "runs",
+      barType: "dominant",
+      timeZone: "Asia/Tokyo",
+    });
+    expect(tokyo.bar[0].status).toBe("error");
+    expect(tokyo.card.map((c) => c.value)).toEqual(["96 runs"]);
+  });
+
   it("measures downtime against the 25 hours of the day summer time ends", () => {
     // 23:30-23:45 in Berlin on 2026-10-25, the day summer time ends
     const late = incident(

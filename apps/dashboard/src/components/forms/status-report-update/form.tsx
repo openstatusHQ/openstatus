@@ -41,6 +41,7 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { ComponentImpactList } from "@/components/forms/status-report/component-impact-field";
+import { ImpactUptimeHint } from "@/components/status-pages/uptime-calculation";
 import { colors } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -227,7 +228,8 @@ export function FormStatusReportUpdate({
                   <FormItem>
                     <FormLabel>Component Impact</FormLabel>
                     <FormDescription>
-                      How badly is each affected component impacted?
+                      How badly is each affected component impacted?{" "}
+                      <ImpactUptimeHint />
                     </FormDescription>
                     <FormControl>
                       <ComponentImpactList

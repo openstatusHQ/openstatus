@@ -8,6 +8,7 @@ import { importRouter } from "./router/import";
 import { incidentRouter } from "./router/incident";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
+import { maintenanceWindowRouter } from "./router/maintenanceWindow";
 import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
 import { monitorIncidentRouter } from "./router/monitorIncident";
@@ -44,6 +45,7 @@ export const edgeRouter = createTRPCRouter({
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,
   maintenance: maintenanceRouter,
+  maintenanceWindow: maintenanceWindowRouter,
   member: memberRouter,
   checker: checkerRouter,
   feedback: feedbackRouter,

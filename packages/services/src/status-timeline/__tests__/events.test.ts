@@ -60,6 +60,9 @@ describe("getEvents incident timestamps", () => {
     incidentScreenshotUrl: null,
     recoveryScreenshotUrl: null,
     autoResolved: true,
+    excusedAt: null,
+    excusedBy: null,
+    excusedReason: null,
     createdAt: new Date(now - 1_800_000),
     updatedAt: new Date(now),
   };
@@ -98,6 +101,27 @@ describe("getEvents incident timestamps", () => {
     });
 
     expect(events).toEqual([]);
+  });
+
+  test("an excused outage produces no event and no downtime", () => {
+    const events = getEvents({
+      maintenances: [],
+      incidents: [
+        {
+          ...incident,
+          excusedAt: new Date(now),
+          excusedBy: 1,
+          excusedReason: "Provider outage",
+        },
+      ],
+      reports: [],
+      monitorId: 1,
+    });
+
+    expect(events).toEqual([]);
+    expect(
+      durationDowntimeMs(events, { start: now - 86_400_000, end: now, now }),
+    ).toBe(0);
   });
 });
 

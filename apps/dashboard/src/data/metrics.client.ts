@@ -7,6 +7,7 @@ import { startOfDay, subDays } from "date-fns";
 import type { MetricCard } from "@/components/metric/metric-card";
 import { formatMilliseconds } from "@/lib/formatter";
 
+import { getMonitorHealth } from "./monitors.client";
 import type { RegionMetric } from "./region-metrics";
 
 export const STATUS = ["success", "error", "degraded"] as const;
@@ -274,20 +275,11 @@ export function getMonitorListMetrics(
     let value: number | string | undefined;
     switch (key) {
       case "active":
-        value = monitors.filter(
-          (m) => m.status === "active" && m.active,
-        ).length;
-        break;
       case "degraded":
-        value = monitors.filter(
-          (m) => m.status === "degraded" && m.active,
-        ).length;
-        break;
       case "error":
-        value = monitors.filter((m) => m.status === "error" && m.active).length;
-        break;
       case "inactive":
-        value = monitors.filter((m) => m.active === false).length;
+        // a monitor in maintenance holds its last status; it counts in none
+        value = monitors.filter((m) => getMonitorHealth(m) === key).length;
         break;
       case "p95":
         const p95 = [...data].sort((a, b) => b.p95Latency - a.p95Latency)[0]

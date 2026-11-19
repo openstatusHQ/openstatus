@@ -1,7 +1,6 @@
 import { and, eq, gte, inArray } from "@openstatus/db";
 import {
   frozenMonitorUptime,
-  type FrozenMonitorUptimeDay,
   frozenMonitorUptimeDaySchema,
   pageConfigurationSchema,
 } from "@openstatus/db/src/schema";
@@ -21,15 +20,25 @@ import {
   requestsTally,
 } from "../status-timeline";
 import { monthRange } from "./compute";
-import { fetchLiveDays } from "./live";
+import {
+  type HistoryAnnotations,
+  historyAnnotations,
+} from "./history-annotations";
+import {
+  fetchLiveDays,
+  liveRunsPipes,
+  liveStatusPipes,
+  type FrozenMonth,
+  type LocalDays,
+  mergeLocalDays,
+} from "./live";
+import { canonicalTimeZone, monthOf, monthsBetween } from "./months";
 import type { Counts } from "./quorum";
 import {
   FREEZE_CUTOFF_MS,
   type UptimeFreezePipes,
   countsRuns,
   type UptimeRunsPipes,
-  uptimeFreezePipes,
-  uptimeRunsPipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
@@ -97,12 +106,16 @@ type UptimeHistoryRow = HistoryValues & {
   runs: HistoryValues | null;
   /** component events in the window; clients bucket per month by overlap */
   events: UptimeHistoryEvent[];
-};
+} & HistoryAnnotations;
 
 type UptimeHistoryResult = {
-  mode: "requests" | "duration" | "manual";
+  mode: "requests" | "runs" | "duration" | "manual";
+  /** the page's zone that months and days are grouped in */
+  timeZone: string;
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
+  /** months frozen without quarter-hour ranges, so still grouped in UTC days */
+  utcOnlyMonths: string[];
   createdAt: Date | null;
   /** live counts failed for a monitor, so recent months may be missing */
   partial: boolean;
@@ -115,18 +128,11 @@ type UptimeHistoryResult = {
   rows: UptimeHistoryRow[];
 };
 
-function monthKeys(now: Date): string[] {
-  return Array.from({ length: HISTORY_MONTHS }, (_, i) => {
-    const d = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth() - (HISTORY_MONTHS - 1 - i),
-        1,
-      ),
-    );
-    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-    return `${d.getUTCFullYear()}-${mm}`;
-  });
+function monthKeys(now: Date, timeZone: string): string[] {
+  const current = monthOf(now, timeZone);
+  const [year, month] = current.split("-").map(Number);
+  const first = new Date(Date.UTC(year, month - HISTORY_MONTHS, 1));
+  return monthsBetween(first.toISOString(), current).map((m) => m.slice(0, 7));
 }
 
 function requestsMonth(days: DayCount[] | null): MonthValue {
@@ -139,6 +145,10 @@ function requestsMonth(days: DayCount[] | null): MonthValue {
     shown.degraded += d.degraded;
     shown.error += d.error;
   }
+  // regrouped days carry fractional totals; round only what is shown
+  shown.ok = Math.round(shown.ok);
+  shown.degraded = Math.round(shown.degraded);
+  shown.error = Math.round(shown.error);
   return { percentage: floorPct(up / total), up, total, shown };
 }
 
@@ -146,6 +156,7 @@ function durationMonth(
   days: DayCount[] | null,
   events: Event[],
   nowMs: number,
+  timeZone: string,
 ): MonthValue {
   // denominator = days with checks, matching getUptime's data.length; frozen
   // months are zero-filled so counting all days would inflate sparse months
@@ -156,7 +167,7 @@ function durationMonth(
   // downtime is clipped to the checked days (a paused stretch can't exceed
   // the denominator) and the in-progress day is clamped to elapsed time so
   // 2h down on the 2nd isn't diluted by the rest of today
-  const windows = withChecks.map((d) => dayWindow(d.day));
+  const windows = withChecks.map((d) => dayWindow(d.day, timeZone));
   const { segments, totalMs } = dayCoverage(windows, nowMs);
   if (segments.length === 0 || totalMs <= 0) return null;
   const window = {
@@ -172,9 +183,10 @@ function eventOnlyMonth(
   events: Event[],
   key: string,
   nowMs: number,
+  timeZone: string,
   notBeforeMs?: number,
 ): MonthValue {
-  const { start, end } = monthRange(`${key}-01`);
+  const { start, end } = monthRange(`${key}-01`, timeZone);
   // months fully before the component existed are "no data", not fake 100%
   if (notBeforeMs !== undefined && end <= notBeforeMs) return null;
   const clampedEnd = Math.min(end, nowMs);
@@ -196,9 +208,10 @@ function heartbeatMonth(
   nowMs: number,
   coverageStartMs: number | null,
   reportsOnly: boolean,
+  timeZone: string,
 ): MonthValue {
   if (coverageStartMs === null) return null;
-  const { start, end } = monthRange(`${key}-01`);
+  const { start, end } = monthRange(`${key}-01`, timeZone);
   const from = Math.max(start, coverageStartMs);
   const to = Math.min(end, nowMs);
   if (to <= from) return null;
@@ -306,10 +319,11 @@ export async function getUptimeHistory(args: {
     _page.configuration ?? {},
   );
   const mode = configuration.success ? configuration.data.value : "requests";
+  // both count checks; each row carries requests and runs, the client picks
+  const countsRequests = mode === "requests" || mode === "runs";
 
-  const months = monthKeys(now);
-  const currentKey = months[months.length - 1];
-  const previousKey = months[months.length - 2];
+  const timeZone = canonicalTimeZone(_page.defaultTimezone) ?? "UTC";
+  const months = monthKeys(now, timeZone);
 
   const components = _page.pageComponents;
   const monitorIds = [
@@ -326,6 +340,7 @@ export async function getUptimeHistory(args: {
         monitorId: frozenMonitorUptime.monitorId,
         month: frozenMonitorUptime.month,
         days: frozenMonitorUptime.days,
+        bucketMinutes: frozenMonitorUptime.bucketMinutes,
       })
       .from(frozenMonitorUptime)
       .where(
@@ -344,9 +359,10 @@ export async function getUptimeHistory(args: {
   const tb = ctx.tb ?? defaultTb;
   const liveReads = fetchLiveDays({
     monitors: components.flatMap((c) => (c.monitor ? [c.monitor] : [])),
-    pipes: args.pipes ?? uptimeFreezePipes(tb),
-    runsPipes:
-      mode === "requests" ? (args.runsPipes ?? uptimeRunsPipes(tb)) : undefined,
+    pipes: args.pipes ?? liveStatusPipes(tb, timeZone),
+    runsPipes: countsRequests
+      ? (args.runsPipes ?? liveRunsPipes(tb, timeZone))
+      : undefined,
     sleep: args.sleep,
   });
 
@@ -358,29 +374,31 @@ export async function getUptimeHistory(args: {
       failedRunsMonitorIds: liveRunsFailed,
     },
   ] = await Promise.all([dbReads, liveReads]);
-  const frozenByKey = new Map(
-    frozenRows.map((r) => [
-      `${r.monitorId}:${r.month.slice(0, 7)}`,
-      frozenMonitorUptimeDaySchema.array().parse(r.days),
-    ]),
-  );
+  const frozenByMonitor = new Map<number, FrozenMonth[]>();
+  for (const r of frozenRows) {
+    const list = frozenByMonitor.get(r.monitorId) ?? [];
+    list.push({
+      month: r.month,
+      days: frozenMonitorUptimeDaySchema.array().parse(r.days),
+      bucketMinutes: r.bucketMinutes,
+    });
+    frozenByMonitor.set(r.monitorId, list);
+  }
 
-  function daysFor(
-    monitorId: number,
-    key: string,
-  ): FrozenMonitorUptimeDay[] | null {
-    const frozen = frozenByKey.get(`${monitorId}:${key}`);
-    if (frozen && key !== currentKey) return frozen;
-    // Unfrozen months need full retention coverage, just like the freeze job.
-    const isLive =
-      key === currentKey ||
-      (key === previousKey &&
-        nowMs - monthRange(`${key}-01`).start < FREEZE_CUTOFF_MS);
-    if (!isLive || liveFailed.has(String(monitorId))) return null;
-    const days = [...(liveDays.get(String(monitorId))?.values() ?? [])]
-      .filter((d) => d.day.startsWith(key))
-      .sort((a, b) => (a.day < b.day ? -1 : 1));
-    return days.length > 0 ? days : null;
+  const localByMonitor = new Map<number, LocalDays>();
+  function localDaysOf(monitorId: number) {
+    let local = localByMonitor.get(monitorId);
+    if (!local) {
+      local = mergeLocalDays({
+        frozen: frozenByMonitor.get(monitorId) ?? [],
+        live: liveFailed.has(String(monitorId))
+          ? []
+          : (liveDays.get(String(monitorId))?.values() ?? []),
+        timeZone,
+      });
+      localByMonitor.set(monitorId, local);
+    }
+    return local;
   }
 
   // a day without `runs` is left out of the runs view, never derived
@@ -389,104 +407,119 @@ export async function getUptimeHistory(args: {
     key: string,
     metric: "requests" | "runs" = "requests",
   ): DayCount[] | null {
-    const days = daysFor(monitorId, key);
-    if (!days) return null;
-    return days.flatMap((d) => {
-      const counts = d[metric];
-      return counts ? [{ day: d.day, ...counts }] : [];
-    });
+    const frozen = frozenByMonitor
+      .get(monitorId)
+      ?.some((r) => r.month.startsWith(key));
+    // Unfrozen months need full retention coverage, just like the freeze job.
+    const isLive =
+      nowMs - monthRange(`${key}-01`, timeZone).start < FREEZE_CUTOFF_MS;
+    if (!frozen && (!isLive || liveFailed.has(String(monitorId)))) return null;
+    const days = localDaysOf(monitorId)[metric].filter((d) =>
+      d.day.startsWith(key),
+    );
+    return days.length > 0 ? days : null;
   }
 
   const pastDays = HISTORY_MONTHS * 31 + 7;
-  const rows: UptimeHistoryRow[] = components.map((c) => {
-    const events = getEvents({
-      maintenances: _page.maintenances,
-      incidents: c.monitor?.monitorIncidents ?? [],
-      reports: _page.statusReports,
-      pageComponentId: c.id,
-      monitorId: c.monitorId ?? undefined,
-      componentType: c.type,
-      pastDays,
-    });
+  const rows: Omit<UptimeHistoryRow, keyof HistoryAnnotations>[] =
+    components.map((c) => {
+      const events = getEvents({
+        maintenances: _page.maintenances,
+        incidents: c.monitor?.monitorIncidents ?? [],
+        reports: _page.statusReports,
+        pageComponentId: c.id,
+        monitorId: c.monitorId ?? undefined,
+        componentType: c.type,
+        pastDays,
+      });
 
-    const heartbeatId =
-      c.type === "monitor" && c.monitor?.jobType === "heartbeat"
-        ? c.monitorId
-        : null;
-    const heartbeatStart =
-      heartbeatId !== null
-        ? heartbeatCoverageStart(
-            months.flatMap((key) => countsFor(heartbeatId, key) ?? []),
-            events,
-          )
-        : null;
+      const heartbeatId =
+        c.type === "monitor" && c.monitor?.jobType === "heartbeat"
+          ? c.monitorId
+          : null;
+      const heartbeatStart =
+        heartbeatId !== null
+          ? heartbeatCoverageStart(
+              months.flatMap((key) => countsFor(heartbeatId, key) ?? []),
+              events,
+              timeZone,
+            )
+          : null;
 
-    const values = new Map<string, MonthValue>();
-    for (const key of months) {
-      let value: MonthValue = null;
-      if (heartbeatId !== null) {
-        value = heartbeatMonth(
-          events,
-          key,
-          nowMs,
-          heartbeatStart,
-          mode === "manual",
-        );
-      } else if (c.type === "monitor" && c.monitorId !== null) {
-        const days = countsFor(c.monitorId, key);
-        if (mode === "requests") {
-          value = requestsMonth(days);
-        } else if (mode === "duration") {
-          value = durationMonth(days, events, nowMs);
-        } else {
-          // manual mode still keys "did the monitor run" off counts: a
-          // zero-check month has no meaningful uptime in any mode
-          value = days?.some((d) => d.ok + d.degraded + d.error > 0)
-            ? eventOnlyMonth(events, key, nowMs)
-            : null;
-        }
-      } else {
-        value = eventOnlyMonth(
-          events,
-          key,
-          nowMs,
-          c.createdAt?.getTime() ?? undefined,
-        );
-      }
-      values.set(key, value);
-    }
-
-    const requestsId =
-      heartbeatId === null && c.type === "monitor" && mode === "requests"
-        ? c.monitorId
-        : null;
-    const runValues = new Map<string, MonthValue>();
-    if (requestsId !== null) {
+      const values = new Map<string, MonthValue>();
       for (const key of months) {
-        runValues.set(key, requestsMonth(countsFor(requestsId, key, "runs")));
+        let value: MonthValue = null;
+        if (heartbeatId !== null) {
+          value = heartbeatMonth(
+            events,
+            key,
+            nowMs,
+            heartbeatStart,
+            mode === "manual",
+            timeZone,
+          );
+        } else if (c.type === "monitor" && c.monitorId !== null) {
+          const days = countsFor(c.monitorId, key);
+          if (countsRequests) {
+            value = requestsMonth(days);
+          } else if (mode === "duration") {
+            value = durationMonth(days, events, nowMs, timeZone);
+          } else {
+            // manual mode still keys "did the monitor run" off counts: a
+            // zero-check month has no meaningful uptime in any mode
+            value = days?.some((d) => d.ok + d.degraded + d.error > 0)
+              ? eventOnlyMonth(events, key, nowMs, timeZone)
+              : null;
+          }
+        } else {
+          value = eventOnlyMonth(
+            events,
+            key,
+            nowMs,
+            timeZone,
+            c.createdAt?.getTime() ?? undefined,
+          );
+        }
+        values.set(key, value);
       }
-    }
 
-    return {
-      component: {
-        id: c.id,
-        name: c.name,
-        type: c.type === "static" ? ("static" as const) : ("monitor" as const),
-        monitorId: c.monitorId,
-      },
-      unit: requestsId !== null ? ("requests" as const) : ("time" as const),
-      ...historyValues(months, values),
-      runs: requestsId !== null ? historyValues(months, runValues) : null,
-      events: events.map((e) => ({
-        id: e.id,
-        name: e.name,
-        type: e.type,
-        status: e.status,
-        from: e.from,
-        to: e.to,
-      })),
-    };
-  });
+      const requestsId =
+        heartbeatId === null && c.type === "monitor" && countsRequests
+          ? c.monitorId
+          : null;
+      // private-only monitors have no runs; like the public page they keep requests
+      const runsId =
+        requestsId !== null && c.monitor && countsRuns(c.monitor)
+          ? requestsId
+          : null;
+      const runValues = new Map<string, MonthValue>();
+      if (runsId !== null) {
+        for (const key of months) {
+          runValues.set(key, requestsMonth(countsFor(runsId, key, "runs")));
+        }
+      }
+
+      return {
+        component: {
+          id: c.id,
+          name: c.name,
+          type:
+            c.type === "static" ? ("static" as const) : ("monitor" as const),
+          monitorId: c.monitorId,
+        },
+        unit: requestsId !== null ? ("requests" as const) : ("time" as const),
+        ...historyValues(months, values),
+        runs: runsId !== null ? historyValues(months, runValues) : null,
+        events: events.map((e) => ({
+          id: e.id,
+          name: e.name,
+          type: e.type,
+          status: e.status,
+          from: e.from,
+          to: e.to,
+        })),
+      };
+    });
 
   // page-level events (no component filter) for the report metric
   const pageEvents = getEvents({
@@ -496,9 +529,19 @@ export async function getUptimeHistory(args: {
     pastDays,
   });
 
-  const summary = {} as UptimeHistoryResult["summary"];
-  for (const w of WINDOWS) {
-    const windowStart = monthRange(`${months[months.length - w]}-01`).start;
+  const annotations = await historyAnnotations({
+    db,
+    workspaceId: ctx.workspace.id,
+    components,
+    sinceMs: nowMs - pastDays * 86_400_000,
+  });
+  const annotatedRows = rows.map((row, i) => ({ ...row, ...annotations[i] }));
+
+  const windowSummary = (w: (typeof WINDOWS)[number]) => {
+    const windowStart = monthRange(
+      `${months[months.length - w]}-01`,
+      timeZone,
+    ).start;
     const seen = new Set<number>();
     for (const e of pageEvents) {
       if (e.type !== "report") continue;
@@ -508,16 +551,32 @@ export async function getUptimeHistory(args: {
       }
     }
     const wk = windowKey(w);
-    summary[wk] = {
+    return {
       uptime: averageUptime(rows.map((r) => r.rolling[wk])),
       runsUptime: averageUptime(rows.map((r) => (r.runs ?? r).rolling[wk])),
       reports: seen.size,
     };
+  };
+  const summary: UptimeHistoryResult["summary"] = {
+    "6": windowSummary(6),
+    "12": windowSummary(12),
+    "24": windowSummary(24),
+  };
+
+  // heartbeat months are measured in time, never from the frozen days
+  const utcOnlyMonths = new Set<string>();
+  for (const c of components) {
+    if (c.monitorId === null || c.monitor?.jobType === "heartbeat") continue;
+    for (const m of localDaysOf(c.monitorId).utcOnlyMonths) {
+      utcOnlyMonths.add(m);
+    }
   }
 
   return {
     mode,
+    timeZone,
     months,
+    utcOnlyMonths: months.filter((m) => utcOnlyMonths.has(m)),
     createdAt: _page.createdAt,
     partial: liveFailed.size > 0,
     runsPartial:
@@ -529,6 +588,6 @@ export async function getUptimeHistory(args: {
           liveFailed.has(String(c.monitor.id)),
       ),
     summary,
-    rows,
+    rows: annotatedRows,
   };
 }

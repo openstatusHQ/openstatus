@@ -1,4 +1,12 @@
-import { and, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
+import {
+  and,
+  db as defaultDb,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  or,
+} from "@openstatus/db";
 import {
   frozenMonitorUptime,
   type MonitorJobType,
@@ -10,6 +18,7 @@ import type { OSTinybird } from "@openstatus/tinybird";
 
 import type { DB } from "../context";
 import {
+  type BadBucketRow,
   type ComputeCountRow,
   computeMonitorMonth,
   monthRange,
@@ -17,9 +26,11 @@ import {
 } from "./compute";
 import { freezeMonitorMonth } from "./freeze";
 import { quorumRegionCount, type RunsByDay, runsByMonitorDay } from "./quorum";
+import { RefreezeMonitorMonthsInput } from "./schemas";
 
 type PipeFn<Row> = (params: {
   monitorIds: string[];
+  days?: number;
 }) => Promise<{ data: Row[] }>;
 
 export type StatusPipeFn = PipeFn<ComputeCountRow>;
@@ -84,16 +95,56 @@ const RUNS_JOB_TYPES = {
   grpc: true,
 } satisfies Record<UptimeQuorumJobType, true>;
 
-function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
+export function hasRuns(jobType: string): jobType is UptimeQuorumJobType {
   return Object.hasOwn(RUNS_JOB_TYPES, jobType);
 }
 
 /** Whether the monitor gets run verdicts: a job type with runs pipes and cloud regions. */
-export function countsRuns(m: { jobType: string; regions: string }): boolean {
+export function countsRuns(m: {
+  jobType: string;
+  regions: string | readonly string[];
+}): boolean {
   return hasRuns(m.jobType) && quorumRegionCount(m.regions) !== null;
 }
 
-export type FreezePipeKind = "counts" | "runs";
+/** Failing quarter-hours of the month, `[fromDate, toDate)` in epoch ms. */
+export type BadBucketPipeFn = (params: {
+  monitorIds: string[];
+  fromDate: number;
+  toDate: number;
+}) => Promise<{ data: (BadBucketRow & { monitorId: string })[] }>;
+
+// heartbeat has no 15m view and no runs: its rows keep bucket_minutes null
+export type UptimeBadBucketPipes = {
+  requests: Record<UptimeQuorumJobType, BadBucketPipeFn>;
+  runs: Record<UptimeQuorumJobType, BadBucketPipeFn>;
+};
+
+export function uptimeBadBucketPipes(tb: OSTinybird): UptimeBadBucketPipes {
+  return {
+    requests: {
+      http: tb.httpStatusBad15m,
+      tcp: tb.tcpStatusBad15m,
+      dns: tb.dnsStatusBad15m,
+      icmp: tb.icmpStatusBad15m,
+      grpc: tb.grpcStatusBad15m,
+    },
+    runs: {
+      http: tb.httpRunsBad15m,
+      tcp: tb.tcpRunsBad15m,
+      dns: tb.dnsRunsBad15m,
+      icmp: tb.icmpRunsBad15m,
+      grpc: tb.grpcRunsBad15m,
+    },
+  };
+}
+
+export type FreezePipeKind =
+  | "counts"
+  | "runs"
+  | "badRequests"
+  | "badRuns"
+  | "backfill";
 
 export type ChunkFailure = {
   pipe: FreezePipeKind;
@@ -105,6 +156,8 @@ export type ChunkFailure = {
 // zod-bird sends monitorIds as one comma-joined GET query param — unbounded
 // batches risk URL-length 400s
 const TB_CHUNK_SIZE = 200;
+// a monitor failing all month returns 96 rows per day per measure
+export const TB_BUCKET_CHUNK_SIZE = 25;
 const TB_ATTEMPTS = 3;
 // spacing between chunk requests: keeps the monthly sweep from bursting TB
 // (zod-bird already absorbs 429/5xx with its own internal retries)
@@ -113,6 +166,10 @@ const TB_THROTTLE_MS = 250;
 // the status pipes look back a fixed 45 days; past monthStart + 45d the
 // earliest month days return no rows and would freeze as permanent zeros
 export const FREEZE_CUTOFF_MS = 45 * 86_400_000;
+
+// the pipes count back from Tinybird's today; one day of slack over the cutoff
+// keeps the first month day in the read even if the guard and TB straddle midnight
+const FREEZE_WINDOW_DAYS = FREEZE_CUTOFF_MS / 86_400_000 + 1;
 
 function chunk<T>(items: T[], size: number): T[][] {
   if (size <= 0) throw new Error(`chunk size must be positive, got ${size}`);
@@ -130,16 +187,18 @@ function hasStatusPipe(
   return Object.hasOwn(pipes, jobType);
 }
 
-type FetchOptions = {
+export type FetchOptions = {
   monitorIdsByJobType: Map<string, Set<string>>;
   chunkSize?: number;
   attempts?: number;
   throttleMs?: number;
   sleep?: (ms: number) => Promise<void>;
   onChunkFailure?: (failure: ChunkFailure) => void;
+  // omitted: the pipe's own 45-day default
+  days?: number;
 };
 
-async function fetchChunked<Row>(
+export async function fetchChunked<Row>(
   args: FetchOptions & {
     kind: FreezePipeKind;
     pipeFor: (jobType: string) => PipeFn<Row> | undefined;
@@ -166,7 +225,11 @@ async function fetchChunked<Row>(
       for (let attempt = 0; attempt < attempts && !done; attempt++) {
         try {
           if (attempt > 0) await sleep(1000 * 2 ** (attempt - 1));
-          const res = await pipe({ monitorIds });
+          const res = await pipe(
+            args.days === undefined
+              ? { monitorIds }
+              : { monitorIds, days: args.days },
+          );
           rows.push(...res.data);
           done = true;
         } catch (e) {
@@ -231,6 +294,73 @@ export async function fetchRunsByDay(
   return { runs: runsByMonitorDay(rows), failedMonitorIds };
 }
 
+/**
+ * Failing quarter-hours of the month per monitor and measure. A failed chunk
+ * skips its monitors: a row frozen with bucket_minutes 15 but missing ranges
+ * would claim those quarter-hours were clean forever.
+ */
+async function fetchBadBuckets(
+  args: Omit<FetchOptions, "monitorIdsByJobType"> & {
+    badPipes: UptimeBadBucketPipes;
+    month: string;
+    monitors: { id: number; jobType: string; regions: string }[];
+  },
+) {
+  const { start, end } = monthRange(args.month);
+  const byJobType = (monitors: typeof args.monitors) => {
+    const out = new Map<string, Set<string>>();
+    for (const m of monitors) {
+      if (!hasRuns(m.jobType)) continue;
+      const ids = out.get(m.jobType) ?? new Set<string>();
+      ids.add(String(m.id));
+      out.set(m.jobType, ids);
+    }
+    return out;
+  };
+  const fetchMeasure = (
+    kind: "badRequests" | "badRuns",
+    pipes: Record<UptimeQuorumJobType, BadBucketPipeFn>,
+    monitors: typeof args.monitors,
+  ) =>
+    fetchChunked({
+      ...args,
+      chunkSize: args.chunkSize ?? TB_BUCKET_CHUNK_SIZE,
+      monitorIdsByJobType: byJobType(monitors),
+      kind,
+      pipeFor: (jobType) =>
+        hasRuns(jobType)
+          ? ({ monitorIds }) =>
+              pipes[jobType]({ monitorIds, fromDate: start, toDate: end })
+          : undefined,
+    });
+
+  const requests = await fetchMeasure(
+    "badRequests",
+    args.badPipes.requests,
+    args.monitors,
+  );
+  const runs = await fetchMeasure(
+    "badRuns",
+    args.badPipes.runs,
+    args.monitors.filter(
+      (m) => countsRuns(m) && !requests.failedMonitorIds.has(String(m.id)),
+    ),
+  );
+
+  const failedPipeByMonitorId = new Map<string, FreezePipeKind>();
+  for (const id of requests.failedMonitorIds) {
+    failedPipeByMonitorId.set(id, "badRequests");
+  }
+  for (const id of runs.failedMonitorIds) {
+    failedPipeByMonitorId.set(id, "badRuns");
+  }
+  return {
+    requests: groupByMonitorId(requests.rows),
+    runs: groupByMonitorId(runs.rows),
+    failedPipeByMonitorId,
+  };
+}
+
 export function groupByMonitorId<Row extends { monitorId: string }>(
   rows: Row[],
 ): Map<string, Row[]> {
@@ -248,44 +378,80 @@ export type RunUptimeFreezeResult = {
   frozen: number;
   alreadyFrozen: number;
   skipped: number;
+  // frozen without bad ranges because they did not add up to the day counts
+  bucketMismatch: number;
   failures: string[];
+  // set when the month is still inside the hold and nothing was attempted
+  held?: true;
 };
 
-/**
- * Freeze the previous calendar month for every non-deleted monitor.
- * Pipes (and optionally db/now) are injected so the cron stays a thin
- * env/Sentry wrapper and this orchestration is unit-testable.
- */
-export async function runUptimeFreeze(args: {
-  pipes: UptimeFreezePipes;
-  runsPipes: UptimeRunsPipes;
-  now?: Date;
-  db?: DB;
-  monitorIds?: number[]; // scope a run (tests, manual retries); default all
-  sleep?: (ms: number) => Promise<void>;
-  onChunkFailure?: (failure: ChunkFailure) => void;
-}): Promise<RunUptimeFreezeResult> {
-  const db = args.db ?? defaultDb;
-  const now = args.now ?? new Date();
-  const month = previousMonth(now);
-  const monthStart = new Date(monthRange(month).start);
+// late check results keep landing in Tinybird for a while after the month ends
+const FREEZE_HOLD_MS = 48 * 3_600_000;
 
-  // refuse instead of writing wrong zeros into the write-once table; the
-  // failure surfaces via the cron's reportBackgroundError
-  if (now.getTime() - monthStart.getTime() >= FREEZE_CUTOFF_MS) {
+/** Epoch ms after which Tinybird no longer covers the whole month. */
+export function freezeCutoff(month: string): number {
+  return monthRange(month).start + FREEZE_CUTOFF_MS;
+}
+
+function emptyResult(month: string, failures: string[] = []) {
+  return {
+    month,
+    frozen: 0,
+    alreadyFrozen: 0,
+    skipped: 0,
+    bucketMismatch: 0,
+    failures,
+  };
+}
+
+// null when the month may be frozen now, else the result to return unchanged
+function guardMonth(
+  month: string,
+  now: Date,
+  force: boolean,
+): RunUptimeFreezeResult | null {
+  // refuse instead of writing wrong zeros into the frozen table; the failure
+  // surfaces via the cron's reportBackgroundError
+  if (now.getTime() >= freezeCutoff(month)) {
+    return emptyResult(month, [
+      `month ${month}: past the 45d Tinybird window — freezing now would write permanent zero-count days`,
+    ]);
+  }
+  // force skips the hold, never the month end: a row frozen early keeps zero
+  // days for good, the daily run counts it as already frozen
+  if (now.getTime() < monthRange(month).end) {
     return {
-      month,
-      frozen: 0,
-      alreadyFrozen: 0,
-      skipped: 0,
-      failures: [
-        `month ${month}: past the 45d Tinybird window — freezing now would write permanent zero-count days`,
-      ],
+      ...emptyResult(month, [`month ${month}: has not ended yet`]),
+      held: true,
     };
   }
+  if (!force && now.getTime() < monthRange(month).end + FREEZE_HOLD_MS) {
+    return { ...emptyResult(month), held: true };
+  }
+  return null;
+}
 
-  // all non-deleted monitors, regardless of page attachment — months without
-  // counts are dropped by computeMonitorMonth anyway
+type FreezeMonthArgs = {
+  db: DB;
+  month: string;
+  pipes: UptimeFreezePipes;
+  runsPipes: UptimeRunsPipes;
+  badPipes?: UptimeBadBucketPipes;
+  monitorIds?: number[];
+  sleep?: (ms: number) => Promise<void>;
+  onChunkFailure?: (failure: ChunkFailure) => void;
+  // false: write-once, frozen monitors are skipped; true: upsert over them
+  replace: boolean;
+};
+
+async function freezeMonth(
+  args: FreezeMonthArgs,
+): Promise<RunUptimeFreezeResult> {
+  const { db, month } = args;
+  const monthStart = new Date(monthRange(month).start);
+
+  // regardless of page attachment — months without counts are dropped by
+  // computeMonitorMonth anyway; deleted during the month still ran part of it
   const monitorRows = await db
     .select({
       id: monitor.id,
@@ -294,20 +460,24 @@ export async function runUptimeFreeze(args: {
       regions: monitor.regions,
       active: monitor.active,
       updatedAt: monitor.updatedAt,
+      deletedAt: monitor.deletedAt,
     })
     .from(monitor)
     .where(
       and(
-        isNull(monitor.deletedAt),
+        or(isNull(monitor.deletedAt), gte(monitor.deletedAt, monthStart)),
         args.monitorIds ? inArray(monitor.id, args.monitorIds) : undefined,
       ),
     );
   // inactive + untouched since before the month ⇒ it was inactive the whole
-  // month (pausing bumps updatedAt), so skip the TB fetch entirely; inactive
-  // but updated during/after the month may have run part of it — check TB
+  // month (pausing bumps updatedAt), so skip the TB fetch; soft-delete sets
+  // active=false without touching updatedAt, so deleted rows always go to TB
   const monitors = monitorRows.flatMap((m) =>
     m.workspaceId === null ||
-    (!m.active && m.updatedAt !== null && m.updatedAt < monthStart)
+    (!m.active &&
+      m.deletedAt === null &&
+      m.updatedAt !== null &&
+      m.updatedAt < monthStart)
       ? []
       : [{ ...m, workspaceId: m.workspaceId }],
   );
@@ -315,18 +485,21 @@ export async function runUptimeFreeze(args: {
   // re-runs only work the monitors that failed last time: those with a frozen
   // row for this month are excluded before any TB fetch (the insert's
   // onConflictDoNothing stays as the race backstop)
-  const frozenRows = await db
-    .select({ monitorId: frozenMonitorUptime.monitorId })
-    .from(frozenMonitorUptime)
-    .where(
-      args.monitorIds
-        ? and(
-            eq(frozenMonitorUptime.month, month),
-            inArray(frozenMonitorUptime.monitorId, args.monitorIds),
-          )
-        : eq(frozenMonitorUptime.month, month),
-    );
-  const frozenMonitorIds = new Set(frozenRows.map((r) => r.monitorId));
+  const frozenMonitorIds = new Set<number>();
+  if (!args.replace) {
+    const frozenRows = await db
+      .select({ monitorId: frozenMonitorUptime.monitorId })
+      .from(frozenMonitorUptime)
+      .where(
+        and(
+          eq(frozenMonitorUptime.month, month),
+          args.monitorIds
+            ? inArray(frozenMonitorUptime.monitorId, args.monitorIds)
+            : undefined,
+        ),
+      );
+    for (const r of frozenRows) frozenMonitorIds.add(r.monitorId);
+  }
 
   const pending = monitors.filter((m) => !frozenMonitorIds.has(m.id));
   let alreadyFrozen = monitors.length - pending.length;
@@ -341,6 +514,7 @@ export async function runUptimeFreeze(args: {
   const { counts, failedMonitorIds: countsFailed } = await fetchFreezeCounts({
     monitorIdsByJobType,
     pipes: args.pipes,
+    days: FREEZE_WINDOW_DAYS,
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });
@@ -352,6 +526,7 @@ export async function runUptimeFreeze(args: {
   const runs = await fetchRunsByDay({
     monitors: pending.filter((m) => !countsFailed.has(String(m.id))),
     pipes: args.runsPipes,
+    days: FREEZE_WINDOW_DAYS,
     sleep: args.sleep,
     onChunkFailure: args.onChunkFailure,
   });
@@ -361,6 +536,24 @@ export async function runUptimeFreeze(args: {
 
   // avoid an O(pending²) sweep: computeMonitorMonth scans linearly per call
   const countsByMonitorId = groupByMonitorId(counts);
+
+  const bad = args.badPipes
+    ? await fetchBadBuckets({
+        badPipes: args.badPipes,
+        month,
+        // a monitor without counts gets no row, so its buckets are never used
+        monitors: pending.filter(
+          (m) =>
+            !failedPipeByMonitorId.has(String(m.id)) &&
+            countsByMonitorId.has(String(m.id)),
+        ),
+        sleep: args.sleep,
+        onChunkFailure: args.onChunkFailure,
+      })
+    : undefined;
+  for (const [id, kind] of bad?.failedPipeByMonitorId ?? []) {
+    failedPipeByMonitorId.set(id, kind);
+  }
 
   const workspaceIds = [...new Set(pending.map((m) => m.workspaceId))];
   const workspaceRows =
@@ -376,6 +569,7 @@ export async function runUptimeFreeze(args: {
 
   let frozen = 0;
   let skipped = 0;
+  let bucketMismatch = 0;
   const failures: string[] = [];
 
   for (const m of pending) {
@@ -393,8 +587,26 @@ export async function runUptimeFreeze(args: {
       monitorId: m.id,
       counts: countsByMonitorId.get(String(m.id)) ?? [],
       runs: runs.runs.get(String(m.id)),
+      bad: hasRuns(m.jobType)
+        ? bad && {
+            requests: bad.requests.get(String(m.id)) ?? [],
+            runs: bad.runs.get(String(m.id)) ?? [],
+          }
+        : undefined,
     });
-    if (!computed) continue;
+    if (!computed) {
+      // a re-freeze names its monitors: say when one kept its old row
+      if (args.replace) {
+        failures.push(`monitor ${m.id}: no counts in Tinybird, row unchanged`);
+      }
+      continue;
+    }
+    if (computed.bucketMismatch) {
+      bucketMismatch++;
+      console.warn(
+        `uptime-freeze: monitor ${m.id} ${month} bad ranges do not match the day counts, frozen without them`,
+      );
+    }
 
     const ws = workspacesById.get(m.workspaceId);
     if (!ws) {
@@ -408,11 +620,17 @@ export async function runUptimeFreeze(args: {
     };
 
     try {
-      const inserted = await freezeMonitorMonth({
+      const written = await freezeMonitorMonth({
         ctx,
-        input: { monitorId: m.id, month, days: computed.days },
+        input: {
+          monitorId: m.id,
+          month,
+          days: computed.days,
+          bucketMinutes: computed.bucketMinutes,
+        },
+        replace: args.replace,
       });
-      if (inserted) frozen++;
+      if (written) frozen++;
       else alreadyFrozen++;
     } catch (e) {
       failures.push(
@@ -421,5 +639,60 @@ export async function runUptimeFreeze(args: {
     }
   }
 
-  return { month, frozen, alreadyFrozen, skipped, failures };
+  return { month, frozen, alreadyFrozen, skipped, bucketMismatch, failures };
+}
+
+type FreezeRunOptions = {
+  pipes: UptimeFreezePipes;
+  runsPipes: UptimeRunsPipes;
+  // omitted: rows are frozen without bad ranges (bucket_minutes null)
+  badPipes?: UptimeBadBucketPipes;
+  now?: Date;
+  db?: DB;
+  // freeze before the 48h hold has passed
+  force?: boolean;
+  sleep?: (ms: number) => Promise<void>;
+  onChunkFailure?: (failure: ChunkFailure) => void;
+};
+
+/**
+ * Freeze the previous calendar month for every monitor that existed in it.
+ * Pipes (and optionally db/now) are injected so the cron stays a thin
+ * env/Sentry wrapper and this orchestration is unit-testable.
+ */
+export async function runUptimeFreeze(
+  args: FreezeRunOptions & {
+    monitorIds?: number[]; // scope a run (tests, manual retries); default all
+  },
+): Promise<RunUptimeFreezeResult> {
+  const now = args.now ?? new Date();
+  const month = previousMonth(now);
+  const held = guardMonth(month, now, args.force ?? false);
+  if (held) return held;
+  return freezeMonth({
+    ...args,
+    db: args.db ?? defaultDb,
+    month,
+    replace: false,
+  });
+}
+
+/**
+ * Recompute and overwrite the frozen rows of the given monitors for one month.
+ * A monitor whose Tinybird read fails keeps its existing row.
+ */
+export async function refreezeMonitorMonths(
+  args: FreezeRunOptions & RefreezeMonitorMonthsInput,
+): Promise<RunUptimeFreezeResult> {
+  const { month, monitorIds } = RefreezeMonitorMonthsInput.parse(args);
+  const now = args.now ?? new Date();
+  const held = guardMonth(month, now, args.force ?? false);
+  if (held) return held;
+  return freezeMonth({
+    ...args,
+    db: args.db ?? defaultDb,
+    month,
+    monitorIds,
+    replace: true,
+  });
 }

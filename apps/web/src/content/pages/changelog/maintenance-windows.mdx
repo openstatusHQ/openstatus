@@ -1,0 +1,20 @@
+---
+title: "Maintenance windows"
+description: "Pause a monitor's checks during planned work, or keep checking without status changes and alerts."
+publishedAt: "2026-11-18"
+category: "monitoring"
+author: "openstatus"
+---
+
+Planned work used to need a status page. To stop a monitor from alerting during a database upgrade, you scheduled a maintenance on a page that showed it, and announced the work to your users whether you wanted to or not.
+
+A maintenance window is the internal version. Pick the monitors, the start and the end, and what checks should do in between:
+
+- **Pause checks.** No checks run for those monitors, so nothing can fail and nothing alerts.
+- **Keep checking.** Checks run and their results are recorded as usual, but the monitor's status does not change, no downtime is opened, and nobody is notified. If the monitor is still failing when the window ends, the first failing check after it alerts. A downtime that was already open when the window started still closes as soon as a check passes.
+
+Windows live under [**Maintenance Windows**](https://app.openstatus.dev/maintenance-windows) in the sidebar. A monitor inside a window shows a blue status dot until it ends, and you can end a running window early.
+
+Status page maintenances work exactly as before: they still pause the checks of the monitors behind their components. The two are independent. A window never shows on a status page, and a maintenance never creates a window.
+
+Read the [maintenance reference](/docs/reference/maintenance#maintenance-windows) for the details.

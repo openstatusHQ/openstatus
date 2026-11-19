@@ -1,0 +1,34 @@
+DESCRIPTION >
+    On demand: failing UTC quarter-hours of one month from raw grpc_response__v0, for frozen months written without them.
+
+NODE copy
+SQL >
+
+%
+WITH
+    -- the default copies nothing: a run without month must not write rows
+    toDate({{ Date(month, '1970-01-01') }}) AS monthStart,
+    toInt64(toUnixTimestamp(toDateTime(monthStart, 'UTC'))) * 1000 AS fromMs,
+    toInt64(toUnixTimestamp(toDateTime(addMonths(monthStart, 1), 'UTC'))) * 1000 AS toMs
+SELECT
+    monthStart AS month,
+    toString(monitorId) AS monitorId,
+    'requests' AS measure,
+    toDate(fromUnixTimestamp64Milli(cronTimestamp), 'UTC') AS day,
+    toUInt8(intDiv(cronTimestamp % 86400000, 900000)) AS bucket,
+    -- same counters as aggregate__grpc_status_15m__v0 and the 45d status view the day counts came from
+    countIf(requestStatus = 'degraded') AS degraded,
+    countIf(requestStatus = 'error') AS error,
+    now() AS copiedAt
+FROM grpc_response__v0
+WHERE cronTimestamp >= fromMs
+    AND cronTimestamp < toMs
+    {% if defined(monitorIds) %}
+    AND monitorId IN {{ Array(monitorIds, 'String') }}
+    {% end %}
+GROUP BY monitorId, day, bucket
+HAVING degraded + error > 0
+
+TYPE COPY
+TARGET_DATASOURCE frozen_bad_15m_backfill__v0
+COPY_MODE append

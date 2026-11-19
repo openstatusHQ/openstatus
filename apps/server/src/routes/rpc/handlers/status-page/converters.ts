@@ -172,6 +172,8 @@ function metricTypeToProto(
       return PageMetricType.DURATION;
     case "requests":
       return PageMetricType.REQUESTS;
+    case "runs":
+      return PageMetricType.RUNS;
     case "manual":
       return PageMetricType.MANUAL;
     default:

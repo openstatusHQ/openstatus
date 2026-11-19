@@ -117,11 +117,12 @@ type MonitorStatus = (typeof monitorStatus)[number];
 
 export const monitorHealthConfig = {
   inactive: { label: "Inactive", variant: "default" },
+  maintenance: { label: "Maintenance", variant: "info" },
   active: { label: "Normal", variant: "success" },
   degraded: { label: "Degraded", variant: "warning" },
   error: { label: "Failing", variant: "destructive" },
 } as const satisfies Record<
-  MonitorStatus | "inactive",
+  MonitorStatus | "inactive" | "maintenance",
   { label: string; variant: StatusVariant }
 >;
 
@@ -130,16 +131,18 @@ export type MonitorHealth = keyof typeof monitorHealthConfig;
 type MonitorHealthInput = {
   active: boolean | null;
   status: MonitorStatus;
+  maintenance?: { until: Date } | null;
 };
 
 const monitorHealthOrder = [
   "error",
   "degraded",
+  "maintenance",
   "active",
   "inactive",
 ] as const satisfies readonly MonitorHealth[];
 
-/** What needs attention first, then by name. */
+/** Default order of every monitor list: what needs attention first, then by name. */
 export function compareMonitorHealth(
   a: MonitorHealthInput & { name: string },
   b: MonitorHealthInput & { name: string },
@@ -151,7 +154,13 @@ export function compareMonitorHealth(
   );
 }
 
-/** A paused monitor reads as inactive whatever its last check said. */
-export function getMonitorHealth(monitor: MonitorHealthInput): MonitorHealth {
-  return monitor.active ? monitor.status : "inactive";
+/** Paused wins over maintenance; maintenance wins over the status it holds. */
+export function getMonitorHealth(
+  monitor: MonitorHealthInput,
+  now = new Date(),
+): MonitorHealth {
+  if (!monitor.active) return "inactive";
+  return monitor.maintenance && monitor.maintenance.until > now
+    ? "maintenance"
+    : monitor.status;
 }

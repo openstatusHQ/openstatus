@@ -1,13 +1,8 @@
 import { getLogger } from "@logtape/logtape";
 import { db, sql } from "@openstatus/db";
+import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
-import {
-  maintenance,
-  maintenancesToPageComponents,
-  monitor,
-  monitorHeartbeatState,
-  pageComponent,
-} from "@openstatus/db/src/schema";
+import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
 import { HEARTBEAT_REGION, formatHeartbeatSeconds } from "@openstatus/utils";
 
@@ -69,14 +64,7 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
             AND ${monitor.status} = 'error'
           )
         )
-        AND ${monitor.id} NOT IN (
-          SELECT ${pageComponent.monitorId} FROM ${maintenancesToPageComponents}
-          JOIN ${maintenance} ON ${maintenance.id} = ${maintenancesToPageComponents.maintenanceId}
-          JOIN ${pageComponent} ON ${pageComponent.id} = ${maintenancesToPageComponents.pageComponentId}
-          WHERE ${maintenance.from} <= ${Math.floor(now / 1000)}
-            AND ${maintenance.to} >= ${Math.floor(now / 1000)}
-            AND ${pageComponent.monitorId} IS NOT NULL
-        )
+        AND NOT ${monitorInMaintenance(db, { at: new Date(now), mode: "pause" })}
       LIMIT ${CANDIDATE_LIMIT}
     `),
   );
@@ -141,6 +129,8 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
       region: HEARTBEAT_REGION,
       status: failed || overdue ? "error" : "active",
       cronTimestamp: overdue ? row.next_due_at : row.last_ping_at,
+      // a deadline missed inside a maintenance is still missed once it ends
+      observedAt: now,
       message: failed
         ? failedPingMessage(row)
         : overdue

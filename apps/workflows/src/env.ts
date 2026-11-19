@@ -14,6 +14,7 @@ export const env = () =>
         .prefault("cloudtasks"),
       CRON_SECRET: z.string().prefault(""),
       SITE_URL: z.string().prefault("http://localhost:3000"),
+      DASHBOARD_URL: z.string().prefault(""),
       DATABASE_URL: z.string().prefault("http://localhost:8080"),
       DATABASE_AUTH_TOKEN: z.string().prefault(""),
       RESEND_API_KEY: z.string().prefault(""),

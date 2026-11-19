@@ -1,5 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { type SQL, and, db, eq, sql } from "@openstatus/db";
+import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type {
   NotificationOutboxPayload,
   MonitorStatus,
@@ -37,6 +38,8 @@ export type TransitionInput = {
   region: string;
   status: MonitorStatus;
   cronTimestamp: number;
+  /** When the signal was observed, if later than `cronTimestamp`; the maintenance guard reads this. */
+  observedAt?: number;
   statusCode?: number;
   message?: string;
   latency?: number;
@@ -277,11 +280,20 @@ export async function evaluateTransition(
     latency: input.latency,
   };
 
-  const guard = quorumGuardSql({
+  const quorum = quorumGuardSql({
     toStatus: input.status,
     regionsJson,
     regionCount,
   });
+  // rechecked in the batch: a window can start after the caller's maintenance
+  // read. Recoveries are never held back.
+  const guard =
+    input.status === "active"
+      ? quorum
+      : sql`(${quorum} AND NOT ${monitorInMaintenance(db, {
+          at: new Date(input.observedAt ?? input.cronTimestamp),
+          mode: "window",
+        })})`;
   const journal = journalStatement(input, regionsJson, regionCount, guard);
   const outbox = outboxStatement(input, payload, guard);
   const cas = casStatement(input, guard);

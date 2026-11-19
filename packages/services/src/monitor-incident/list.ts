@@ -43,6 +43,7 @@ export type MonitorIncidentWithRelations = MonitorIncident & {
   monitor: Monitor | null;
   acknowledgedByUser: AttributedUserDetail | null;
   resolvedByUser: AttributedUserDetail | null;
+  excusedByUser: AttributedUserDetail | null;
 };
 
 export type ListMonitorIncidentsResult = {
@@ -58,7 +59,7 @@ export type ListMonitorIncidentsResult = {
  * ownership, so a cross-workspace pointer (however unlikely) should not
  * leak the other workspace's monitor row.
  */
-async function enrichIncidentsBatch(
+export async function enrichIncidentsBatch(
   db: DB,
   rows: MonitorIncident[],
   workspaceId: number,
@@ -88,7 +89,7 @@ async function enrichIncidentsBatch(
 
   const users = await loadAttributedUsers(
     db,
-    rows.flatMap((r) => [r.acknowledgedBy, r.resolvedBy]),
+    rows.flatMap((r) => [r.acknowledgedBy, r.resolvedBy, r.excusedBy]),
   );
 
   return rows.map((r) => ({
@@ -99,6 +100,8 @@ async function enrichIncidentsBatch(
       r.acknowledgedBy != null ? (users.get(r.acknowledgedBy) ?? null) : null,
     resolvedByUser:
       r.resolvedBy != null ? (users.get(r.resolvedBy) ?? null) : null,
+    excusedByUser:
+      r.excusedBy != null ? (users.get(r.excusedBy) ?? null) : null,
   }));
 }
 

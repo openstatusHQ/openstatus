@@ -84,6 +84,13 @@ export const entityKinds = {
     // Notifiers are edited in a sheet on the list; there is no detail page.
     href: () => "/notifications",
   },
+  maintenanceWindow: {
+    label: "Maintenance window",
+    icon: Maintenance,
+    fields: [],
+    auditType: "monitor_maintenance_window",
+    href: () => "/maintenance-windows",
+  },
 } as const satisfies Record<string, EntityKindConfig>;
 
 export type EntityKind = keyof typeof entityKinds;

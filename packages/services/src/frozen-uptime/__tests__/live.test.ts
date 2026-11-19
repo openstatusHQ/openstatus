@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import type { ComputeCountRow } from "../compute";
-import { fetchLiveDays } from "../live";
+import { fetchLiveDays, mergeLocalDays } from "../live";
 import type { StatusPipeFn, UptimeFreezePipes, UptimeRunsPipes } from "../run";
 
 type Call = Parameters<StatusPipeFn>[0];
@@ -138,5 +138,52 @@ describe("fetchLiveDays", () => {
     });
     expect(failedMonitorIds).toEqual(new Set(["1"]));
     expect(days.has("1")).toBe(false);
+  });
+});
+
+describe("mergeLocalDays", () => {
+  const c = (ok: number) => ({ ok, degraded: 0, error: 0 });
+
+  test("keeps frozen runs where the live runs read returned nothing", () => {
+    const merged = mergeLocalDays({
+      frozen: [
+        {
+          month: "2026-06-01",
+          bucketMinutes: null,
+          days: [
+            { day: "2026-06-28", requests: c(10), runs: c(5) },
+            { day: "2026-06-29", requests: c(10), runs: c(5) },
+          ],
+        },
+      ],
+      // live counts from the 29th, but the runs read failed
+      live: [{ day: "2026-06-29", requests: c(12) }],
+      timeZone: "UTC",
+    });
+
+    expect(merged.requests).toEqual([
+      { day: "2026-06-28", ...c(10) },
+      { day: "2026-06-29", ...c(12) },
+    ]);
+    expect(merged.runs).toEqual([
+      { day: "2026-06-28", ...c(5) },
+      { day: "2026-06-29", ...c(5) },
+    ]);
+  });
+
+  test("live runs win from their own first day", () => {
+    const merged = mergeLocalDays({
+      frozen: [
+        {
+          month: "2026-06-01",
+          bucketMinutes: null,
+          days: [{ day: "2026-06-29", requests: c(10), runs: c(5) }],
+        },
+      ],
+      live: [{ day: "2026-06-29", requests: c(12), runs: c(6) }],
+      timeZone: "UTC",
+    });
+
+    expect(merged.runs).toEqual([{ day: "2026-06-29", ...c(6) }]);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import type { Event } from "../events";
+import { type Event, getEvents } from "../events";
 import {
   type UptimeWindow,
   durationDowntimeMs,
@@ -232,5 +232,46 @@ describe("heartbeatCoverageStart", () => {
 
   test("no pings and no incidents is untracked", () => {
     expect(heartbeatCoverageStart([day(0, 0)], [])).toBe(null);
+  });
+});
+
+describe("excused outages", () => {
+  const now = Date.now();
+  const recent: UptimeWindow = { start: now - DAY, end: now, now };
+  const outage = {
+    id: 1,
+    title: "",
+    summary: "",
+    status: "resolved" as const,
+    monitorId: 1,
+    workspaceId: 1,
+    startedAt: new Date(now - 2 * HOUR),
+    acknowledgedAt: null,
+    acknowledgedBy: null,
+    resolvedAt: new Date(now - HOUR),
+    resolvedBy: null,
+    incidentScreenshotUrl: null,
+    recoveryScreenshotUrl: null,
+    autoResolved: false,
+    excusedAt: null,
+    excusedBy: null,
+    excusedReason: null,
+    createdAt: new Date(now - 2 * HOUR),
+    updatedAt: new Date(now - HOUR),
+  };
+  const downtime = (excusedAt: Date | null) =>
+    durationDowntimeMs(
+      getEvents({
+        maintenances: [],
+        incidents: [{ ...outage, excusedAt }],
+        reports: [],
+        monitorId: 1,
+      }),
+      recent,
+    );
+
+  test("an excused outage produces no downtime", () => {
+    expect(downtime(null)).toBe(HOUR);
+    expect(downtime(new Date(now))).toBe(0);
   });
 });

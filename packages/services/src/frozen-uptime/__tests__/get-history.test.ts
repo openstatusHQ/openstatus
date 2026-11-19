@@ -3,6 +3,8 @@ import {
   frozenMonitorUptime,
   monitorIncidentTable,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   page,
   pageComponent,
   privateLocation,
@@ -209,7 +211,12 @@ async function insertComponent(
 
 async function insertFrozen(
   tx: Tx,
-  args: { monitorId: number; month: string; days: FrozenMonitorUptimeDay[] },
+  args: {
+    monitorId: number;
+    month: string;
+    days: FrozenMonitorUptimeDay[];
+    bucketMinutes?: number | null;
+  },
 ) {
   return tx
     .insert(frozenMonitorUptime)
@@ -537,8 +544,9 @@ describe("getUptimeHistory", () => {
         now: new Date("2026-09-30T12:00:00.000Z"),
         sleep: noSleep,
       });
-      expect(res.rows[0].months["2026-08"]?.percentage ?? null).toBe(25);
-      expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(12.5);
+      // frozen fills the days before the first live one; live wins for 08-31
+      expect(res.rows[0].months["2026-08"]?.percentage ?? null).toBe(62.5);
+      expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(41.666);
     });
   });
 
@@ -897,6 +905,7 @@ describe("getUptimeHistory", () => {
 
   test.each([
     { mode: "requests", incidentCounts: true },
+    { mode: "runs", incidentCounts: true },
     { mode: "duration", incidentCounts: true },
     { mode: "manual", incidentCounts: false },
   ] as const)(
@@ -1056,7 +1065,7 @@ describe("getUptimeHistory runs view", () => {
   async function setup(
     tx: Tx,
     overrides: Partial<typeof monitor.$inferInsert> = {},
-    value: "requests" | "duration" = "requests",
+    value: "requests" | "runs" | "duration" = "requests",
   ) {
     const testMonitor = await insertMonitor(tx, {
       regions: SIX_REGIONS,
@@ -1144,6 +1153,33 @@ describe("getUptimeHistory runs view", () => {
     });
   });
 
+  test("runs mode reads like requests mode", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, {}, "runs");
+      const id = String(testMonitor.id);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+        ]),
+        runsPipes: makeRunsPipes([
+          { monitorId: id, day: today, ok: 90, degraded: 5, error: 5 },
+        ]),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.mode).toBe("runs");
+      const row = res.rows[0];
+      expect(row.unit).toBe("requests");
+      expect(row.months[key(0)]?.percentage).toBe(83.333);
+      expect(row.runs?.months[key(0)]?.percentage).toBe(95);
+    });
+  });
+
   test("duration mode does not read runs", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
@@ -1166,7 +1202,7 @@ describe("getUptimeHistory runs view", () => {
     });
   });
 
-  test("a private-only monitor has requests but no runs", async () => {
+  test("a private-only monitor falls back to requests on a runs page", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const { testMonitor, testPage } = await setup(tx, { regions: "" });
@@ -1188,8 +1224,9 @@ describe("getUptimeHistory runs view", () => {
       expect(runsCalls).toEqual([]);
       const row = res.rows[0];
       expect(row.months[key(0)]?.percentage).toBe(99);
-      expect(row.runs?.months[key(0)]).toBe(null);
-      expect(res.summary["6"].runsUptime).toBe(null);
+      expect(row.unit).toBe("requests");
+      expect(row.runs).toBe(null);
+      expect(res.summary["6"].runsUptime).toBe(99);
     });
   });
 
@@ -1275,6 +1312,279 @@ describe("getUptimeHistory runs view", () => {
         expect(res.rows[0].unit).toBe("time");
         expect(res.rows[0].runs).toBe(null);
       }
+    });
+  });
+});
+
+describe("getUptimeHistory annotations", () => {
+  async function insertWindow(
+    tx: Tx,
+    args: { monitorIds: number[]; from: Date; to: Date; title?: string },
+  ) {
+    const window = await tx
+      .insert(monitorMaintenanceWindow)
+      .values({
+        workspaceId: teamWorkspaceId,
+        title: args.title ?? "svc-history-window",
+        mode: "pause",
+        from: args.from,
+        to: args.to,
+      })
+      .returning()
+      .get();
+    for (const monitorId of args.monitorIds) {
+      await tx.insert(monitorMaintenanceWindowToMonitor).values({
+        monitorMaintenanceWindowId: window.id,
+        monitorId,
+      });
+    }
+    return window;
+  }
+
+  test("maintenance windows are attached to their monitor's row, not to events", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const covered = await insertMonitor(tx);
+      const other = await insertMonitor(tx);
+      const testPage = await insertPage(tx);
+      await insertComponent(tx, { pageId: testPage.id, monitorId: covered.id });
+      await insertComponent(tx, { pageId: testPage.id, monitorId: other.id });
+      await insertComponent(tx, { pageId: testPage.id });
+      const from = new Date(monthStart(key(1)).getTime() + 3 * MS_PER_DAY);
+      const to = new Date(from.getTime() + 3_600_000);
+      const window = await insertWindow(tx, {
+        monitorIds: [covered.id],
+        from,
+        to,
+        title: "DB upgrade",
+      });
+      // ended before the 24-month history starts
+      await insertWindow(tx, {
+        monitorIds: [covered.id],
+        from: new Date(monthStart(key(30)).getTime()),
+        to: new Date(monthStart(key(30)).getTime() + 3_600_000),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
+        now,
+        sleep: noSleep,
+      });
+
+      const rowOf = (monitorId: number | null) =>
+        res.rows.find((r) => r.component.monitorId === monitorId);
+      const coveredRow = rowOf(covered.id);
+      const otherRow = rowOf(other.id);
+      const staticRow = rowOf(null);
+      expect(coveredRow?.maintenanceWindows).toEqual([
+        { id: window.id, title: "DB upgrade", mode: "pause", from, to },
+      ]);
+      expect(coveredRow?.events).toEqual([]);
+      expect(otherRow?.maintenanceWindows).toEqual([]);
+      expect(staticRow?.maintenanceWindows).toEqual([]);
+    });
+  });
+
+  test("excused outages are listed separately with their reason", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx);
+      const testPage = await insertPage(tx, {
+        configuration: { value: "duration" },
+      });
+      await insertComponent(tx, {
+        pageId: testPage.id,
+        monitorId: testMonitor.id,
+      });
+      const base = monthStart(key(1)).getTime() + 5 * MS_PER_DAY;
+      const excused = await tx
+        .insert(monitorIncidentTable)
+        .values({
+          workspaceId: teamWorkspaceId,
+          monitorId: testMonitor.id,
+          startedAt: new Date(base),
+          createdAt: new Date(base),
+          resolvedAt: new Date(base + 3_600_000),
+          excusedAt: new Date(base + 7_200_000),
+          excusedReason: "Planned failover",
+        })
+        .returning()
+        .get();
+      const counted = await tx
+        .insert(monitorIncidentTable)
+        .values({
+          workspaceId: teamWorkspaceId,
+          monitorId: testMonitor.id,
+          startedAt: new Date(base + MS_PER_DAY),
+          createdAt: new Date(base + MS_PER_DAY),
+          resolvedAt: new Date(base + MS_PER_DAY + 3_600_000),
+        })
+        .returning()
+        .get();
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
+        now,
+        sleep: noSleep,
+      });
+
+      const row = res.rows[0];
+      expect(row.events.map((e) => e.id)).toEqual([counted.id]);
+      expect(row.excusedOutages).toEqual([
+        {
+          id: excused.id,
+          from: new Date(base),
+          to: new Date(base + 3_600_000),
+          reason: "Planned failover",
+        },
+      ]);
+    });
+  });
+});
+
+describe("getUptimeHistory in the page's time zone", () => {
+  // 10 checks per quarter-hour
+  function quietMonth(k: string): FrozenMonitorUptimeDay[] {
+    return fullMonth(k, { ok: 960 });
+  }
+
+  test("a 23:30 UTC outage on a month's last day counts in the next Berlin month", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx);
+      const testPage = await insertPage(tx, {
+        defaultTimezone: "Europe/Berlin",
+      });
+      await insertComponent(tx, {
+        pageId: testPage.id,
+        monitorId: testMonitor.id,
+      });
+      const august = quietMonth("2026-08");
+      august[30] = {
+        day: "2026-08-31",
+        requests: { ok: 940, degraded: 0, error: 20 },
+        bad: { requests: [[94, 2, 0, 10]] },
+      };
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: "2026-08-01",
+        days: august,
+        bucketMinutes: 15,
+      });
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: "2026-09-01",
+        days: quietMonth("2026-09"),
+        bucketMinutes: 15,
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
+        now: new Date("2026-10-31T23:30:00.000Z"),
+        sleep: noSleep,
+      });
+
+      expect(res.months.at(-1)).toBe("2026-11");
+      expect(res.rows[0].months["2026-08"]).toMatchObject({
+        percentage: 100,
+        error: 0,
+      });
+      expect(res.rows[0].months["2026-09"]?.error).toBe(20);
+      expect(res.utcOnlyMonths).toEqual([]);
+    });
+  });
+
+  test("live local days replace frozen ones at the seam, nothing counts twice", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx);
+      const testPage = await insertPage(tx, { defaultTimezone: "Asia/Tokyo" });
+      await insertComponent(tx, {
+        pageId: testPage.id,
+        monitorId: testMonitor.id,
+      });
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: "2026-09-01",
+        days: quietMonth("2026-09"),
+        bucketMinutes: 15,
+      });
+      const live = (day: string, ok: number) => ({
+        monitorId: String(testMonitor.id),
+        day,
+        ok,
+        degraded: 0,
+        error: 0,
+      });
+      const pipes = makePipes([
+        ...Array.from({ length: 11 }, (_, i) =>
+          live(`2026-09-${String(20 + i).padStart(2, "0")}`, 100),
+        ),
+        ...Array.from({ length: 20 }, (_, i) =>
+          live(`2026-10-${String(1 + i).padStart(2, "0")}`, 50),
+        ),
+      ]);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes,
+        runsPipes: makeRunsPipes(),
+        now: new Date("2026-10-20T12:00:00.000Z"),
+        sleep: noSleep,
+      });
+
+      // Tokyo 09-01 starts at 15:00 UTC on 08-31 (not frozen): 60 frozen
+      // quarter-hours, then 18 full frozen days, then 11 live days
+      expect(res.rows[0].months["2026-09"]?.ok).toBe(600 + 18 * 960 + 1100);
+      // the frozen 30th's late quarter-hours belong to 10-01, which is live
+      expect(res.rows[0].months["2026-10"]?.ok).toBe(1000);
+    });
+  });
+
+  test("a month frozen without ranges is flagged UTC-only on a zoned page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testMonitor = await insertMonitor(tx);
+      const berlin = await insertPage(tx, { defaultTimezone: "Europe/Berlin" });
+      const utc = await insertPage(tx);
+      for (const p of [berlin, utc]) {
+        await insertComponent(tx, { pageId: p.id, monitorId: testMonitor.id });
+      }
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: "2026-08-01",
+        days: fullMonth("2026-08", { ok: 100 }),
+      });
+      await insertFrozen(tx, {
+        monitorId: testMonitor.id,
+        month: "2026-09-01",
+        days: quietMonth("2026-09"),
+        bucketMinutes: 15,
+      });
+
+      const read = (pageId: number) =>
+        getUptimeHistory({
+          ctx,
+          input: { pageId },
+          pipes: makePipes([]),
+          runsPipes: makeRunsPipes(),
+          now: new Date("2026-10-20T12:00:00.000Z"),
+          sleep: noSleep,
+        });
+      const zoned = await read(berlin.id);
+      expect(zoned.utcOnlyMonths).toEqual(["2026-08"]);
+      expect(zoned.rows[0].months["2026-08"]?.ok).toBe(31 * 100);
+      expect((await read(utc.id)).utcOnlyMonths).toEqual([]);
     });
   });
 });

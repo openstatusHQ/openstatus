@@ -10,15 +10,17 @@ import { useParams } from "next/navigation";
 import { Fragment } from "react";
 
 import { ChartTooltipNumberRaw } from "@/components/chart/chart-tooltip-number";
+import { entityKinds } from "@/data/entity-refs.client";
 import {
   type BreakdownRow,
   type HistoryEvent,
+  type HistoryExcusedOutage,
+  type HistoryMaintenanceWindow,
   type HistoryUnit,
   type HistoryValue,
-  type UptimeStatus,
-  cellFromPercentage,
   historyBreakdown,
 } from "@/data/status-page-history";
+import { truncatePercentage } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 
 // maintenances have no detail route (sheet-edited on the list page)
@@ -34,26 +36,10 @@ function eventHref(
     return `/status-pages/${pageId}/maintenances`;
   }
   if (event.type === "incident" && monitorId !== null) {
-    return `/monitors/${monitorId}/incidents`;
+    return `/monitors/${monitorId}/report#outages`;
   }
   return null;
 }
-
-const statusStyles: Record<UptimeStatus, string> = {
-  operational: "text-success",
-  degraded: "text-warning",
-  down: "text-destructive",
-  "in-progress": "text-info",
-  "no-data": "text-muted-foreground/50",
-};
-
-const indicatorStyles: Record<UptimeStatus, string> = {
-  operational: "bg-success",
-  degraded: "bg-warning",
-  down: "bg-destructive",
-  "in-progress": "bg-info",
-  "no-data": "bg-muted-foreground/30",
-};
 
 // the monitor overview's uptime chart colors
 const breakdownStyles: Record<BreakdownRow["key"], string> = {
@@ -67,11 +53,11 @@ const tooltipRowClassName = "flex w-full flex-wrap items-center gap-2";
 function Breakdown({
   value,
   unit,
-  status,
+  isCurrent,
 }: {
   value: HistoryValue;
   unit: HistoryUnit;
-  status: UptimeStatus;
+  isCurrent?: boolean;
 }) {
   const { rows, total } = historyBreakdown(value, unit);
   return (
@@ -79,9 +65,9 @@ function Breakdown({
       <div className={tooltipRowClassName}>
         <ChartTooltipNumberRaw
           label="Uptime"
-          value={value.percentage.toFixed(3)}
+          value={truncatePercentage(value.percentage)}
           unit="%"
-          className={indicatorStyles[status]}
+          className={isCurrent ? "bg-info" : "bg-foreground"}
         />
       </div>
       {rows.map((row) => (
@@ -114,24 +100,28 @@ const eventIndicatorStyles: Record<HistoryEvent["type"], string> = {
 
 // local copy of the status-page StatusBarEvent so dashboard tweaks
 // don't leak into the public blocks
-function EventItem({ event }: { event: HistoryEvent }) {
-  if (!event.from) return null;
-  const duration = event.to
-    ? formatDistanceStrict(event.from, event.to)
-    : "ongoing";
+function EventItem({
+  name,
+  from,
+  to,
+  indicatorClassName,
+}: {
+  name: string;
+  from: Date;
+  to: Date | null;
+  indicatorClassName: string;
+}) {
+  const duration = to ? formatDistanceStrict(from, to) : "ongoing";
   return (
     <div className="text-muted-foreground group-hover/event:text-foreground grid gap-0.5">
       <div className="flex items-center gap-2">
         <span
-          className={cn(
-            "size-2.5 shrink-0 rounded-xs",
-            eventIndicatorStyles[event.type],
-          )}
+          className={cn("size-2.5 shrink-0 rounded-xs", indicatorClassName)}
         />
-        <span className="truncate">{event.name}</span>
+        <span className="truncate">{name}</span>
       </div>
       <div className="text-muted-foreground">
-        <span>{formatDateRange(event.from, event.to ?? undefined)}</span>
+        <span>{formatDateRange(from, to ?? undefined)}</span>
         {duration !== "0 seconds" && (
           <span className="text-muted-foreground/70 ml-1.5 font-mono">
             {duration}
@@ -147,8 +137,9 @@ export function TableCellUptime({
   unit,
   label,
   isCurrent,
-  tinted = true,
   events = [],
+  maintenanceWindows = [],
+  excusedOutages = [],
   monitorId = null,
 }: {
   value: HistoryValue | null;
@@ -156,13 +147,14 @@ export function TableCellUptime({
   /** card header: the month, or the window of a total */
   label: string;
   isCurrent?: boolean;
-  /** colors the cell by status; window totals stay neutral */
-  tinted?: boolean;
   events?: HistoryEvent[];
+  /** dashboard-only, never on the public page */
+  maintenanceWindows?: HistoryMaintenanceWindow[];
+  /** left out of the numbers */
+  excusedOutages?: HistoryExcusedOutage[];
   monitorId?: number | null;
 }) {
   const { id: pageId } = useParams<{ id: string }>();
-  const cell = cellFromPercentage(value?.percentage ?? null, isCurrent);
 
   return (
     <HoverCard openDelay={50} closeDelay={50}>
@@ -171,10 +163,12 @@ export function TableCellUptime({
           type="button"
           className={cn(
             "mx-auto flex h-9 cursor-default items-center justify-center font-mono text-xs font-medium",
-            tinted && statusStyles[cell.status],
+            value === null
+              ? "text-muted-foreground/50"
+              : isCurrent && "text-info",
           )}
         >
-          {cell.percentage === null ? "–" : `${cell.percentage.toFixed(3)}%`}
+          {value === null ? "–" : `${truncatePercentage(value.percentage)}%`}
         </button>
       </HoverCardTrigger>
       <HoverCardContent
@@ -187,7 +181,7 @@ export function TableCellUptime({
         {value === null ? (
           <div className="text-muted-foreground">No data recorded.</div>
         ) : (
-          <Breakdown value={value} unit={unit} status={cell.status} />
+          <Breakdown value={value} unit={unit} isCurrent={isCurrent} />
         )}
         {events.length > 0 && (
           <>
@@ -196,7 +190,14 @@ export function TableCellUptime({
               {events.map((event) => {
                 const key = `${event.type}-${event.id}`;
                 const href = eventHref(event, pageId, monitorId);
-                const node = <EventItem event={event} />;
+                const node = (
+                  <EventItem
+                    name={event.name}
+                    from={event.from}
+                    to={event.to}
+                    indicatorClassName={eventIndicatorStyles[event.type]}
+                  />
+                );
                 if (!href) return <Fragment key={key}>{node}</Fragment>;
                 return (
                   <Link
@@ -208,6 +209,36 @@ export function TableCellUptime({
                   </Link>
                 );
               })}
+            </div>
+          </>
+        )}
+        {maintenanceWindows.length + excusedOutages.length > 0 && (
+          <>
+            <div className="bg-border -mx-2.5 h-px" />
+            <div className="grid gap-1">
+              {maintenanceWindows.map((w) => (
+                <Link
+                  key={`window-${w.id}`}
+                  href={entityKinds.maintenanceWindow.href()}
+                  className="group/event hover:no-underline"
+                >
+                  <EventItem
+                    name={`Maintenance window · ${w.title}`}
+                    from={w.from}
+                    to={w.to}
+                    indicatorClassName="bg-info/50"
+                  />
+                </Link>
+              ))}
+              {excusedOutages.map((o) => (
+                <EventItem
+                  key={`excused-${o.id}`}
+                  name={o.reason ? `Excused · ${o.reason}` : "Excused"}
+                  from={o.from}
+                  to={o.to}
+                  indicatorClassName="bg-muted-foreground/40"
+                />
+              ))}
             </div>
           </>
         )}

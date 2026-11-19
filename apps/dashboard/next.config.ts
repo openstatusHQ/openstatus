@@ -64,6 +64,16 @@ const nextConfig: NextConfig = {
         destination: "/settings/audit-logs",
         permanent: false,
       },
+      {
+        source: "/monitors/:id/incidents",
+        destination: "/monitors/:id/report",
+        permanent: true,
+      },
+      {
+        source: "/status-pages/:id/history",
+        destination: "/status-pages/:id/report",
+        permanent: true,
+      },
     ];
   },
 };

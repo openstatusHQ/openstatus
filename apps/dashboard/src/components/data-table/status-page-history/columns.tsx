@@ -38,16 +38,26 @@ const componentColumn: ColumnDef<HistoryRow> = {
 
 // `months` comes oldest-first from the server; column ids stay slot-based
 // (1 = current) so the window visibility toggle keeps working
-function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
+function monthColumns(
+  months: string[],
+  timeZone: string,
+  utcOnlyMonths: string[],
+): ColumnDef<HistoryRow>[] {
   return months.map((key, i) => {
     const offset = months.length - i;
     const isCurrent = offset === 1;
+    const utcOnly = timeZone !== "UTC" && utcOnlyMonths.includes(key);
     return {
       id: String(offset),
       accessorFn: (row: HistoryRow) => row.months[key]?.percentage ?? null,
       header: () => (
         <span className={cn("block text-center", isCurrent && "text-info")}>
           {monthKeyToLabel(key)}
+          {utcOnly ? (
+            <span className="text-muted-foreground block text-xs leading-none">
+              UTC
+            </span>
+          ) : null}
         </span>
       ),
       cell: ({ row }: { row: { original: HistoryRow } }) => (
@@ -56,7 +66,17 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
           unit={row.original.unit}
           label={monthKeyToFullLabel(key)}
           isCurrent={isCurrent}
-          events={eventsForMonth(row.original.events, key)}
+          events={eventsForMonth(row.original.events, key, timeZone)}
+          maintenanceWindows={eventsForMonth(
+            row.original.maintenanceWindows,
+            key,
+            timeZone,
+          )}
+          excusedOutages={eventsForMonth(
+            row.original.excusedOutages,
+            key,
+            timeZone,
+          )}
           monitorId={row.original.component.monitorId}
         />
       ),
@@ -76,7 +96,6 @@ function rollingColumn(window: HistoryWindow): ColumnDef<HistoryRow> {
         value={row.original.rolling[windowKey(window)]}
         unit={row.original.unit}
         label={windowLabel(window)}
-        tinted={false}
       />
     ),
     enableSorting: false,
@@ -90,6 +109,12 @@ function rollingColumn(window: HistoryWindow): ColumnDef<HistoryRow> {
 export function getColumns(
   months: string[],
   window: HistoryWindow,
+  timeZone = "UTC",
+  utcOnlyMonths: string[] = [],
 ): ColumnDef<HistoryRow>[] {
-  return [componentColumn, ...monthColumns(months), rollingColumn(window)];
+  return [
+    componentColumn,
+    ...monthColumns(months, timeZone, utcOnlyMonths),
+    rollingColumn(window),
+  ];
 }

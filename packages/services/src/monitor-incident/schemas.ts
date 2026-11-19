@@ -20,9 +20,17 @@ export type ResolveMonitorIncidentInput = z.infer<
   typeof ResolveMonitorIncidentInput
 >;
 
-export const DeleteMonitorIncidentInput = z.object({ id: z.number().int() });
-export type DeleteMonitorIncidentInput = z.infer<
-  typeof DeleteMonitorIncidentInput
+export const ExcuseMonitorIncidentInput = z.object({
+  id: z.number().int(),
+  reason: z.string().trim().min(1, "A reason is required."),
+});
+export type ExcuseMonitorIncidentInput = z.infer<
+  typeof ExcuseMonitorIncidentInput
+>;
+
+export const UnexcuseMonitorIncidentInput = z.object({ id: z.number().int() });
+export type UnexcuseMonitorIncidentInput = z.infer<
+  typeof UnexcuseMonitorIncidentInput
 >;
 
 export const GetMonitorIncidentInput = z.object({ id: z.number().int() });
@@ -41,3 +49,10 @@ export const ListMonitorIncidentsInput = z.object({
 export type ListMonitorIncidentsInput = z.infer<
   typeof ListMonitorIncidentsInput
 >;
+
+export const GetMonitorReportInput = z.object({
+  monitorId: z.number().int(),
+  from: z.coerce.date(),
+  to: z.coerce.date(),
+});
+export type GetMonitorReportInput = z.infer<typeof GetMonitorReportInput>;

@@ -7,6 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { getMonitorHealth } from "@/data/monitors.client";
 import { formatDistanceToNowShort } from "@/lib/formatter";
 
 import { TableCellSkeleton } from "../dable-cell-skeleton";
@@ -49,7 +50,7 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "status",
-    accessorFn: (row) => (row.active ? row.status : "inactive"),
+    accessorFn: (row) => getMonitorHealth(row),
     header: () => <span className="sr-only">Status</span>,
     cell: ({ row }) => {
       const value = String(row.getValue("status"));
@@ -61,21 +62,15 @@ export const columns: ColumnDef<Monitor>[] = [
           return <TableCellIndicator variant="warning" label={value} />;
         case "error":
           return <TableCellIndicator variant="destructive" label={value} />;
+        case "maintenance":
+          return <TableCellIndicator variant="info" label={value} />;
         default:
           return <TableCellIndicator variant="muted" label={value} />;
       }
     },
     filterFn: (row, _, value) => {
       const statuses: string[] = Array.isArray(value) ? value : [value];
-      // "inactive" is a paused monitor, "active" a running healthy one;
-      // every other status matches the monitor's status as-is
-      return statuses.some((status) => {
-        if (status === "inactive") return !row.original.active;
-        if (status === "active") {
-          return !!row.original.active && row.original.status === "active";
-        }
-        return row.original.status === status;
-      });
+      return statuses.includes(getMonitorHealth(row.original));
     },
     enableSorting: false,
     enableHiding: false,

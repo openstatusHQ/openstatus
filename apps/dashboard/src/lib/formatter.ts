@@ -34,6 +34,16 @@ export function formatPercentage(value: number, fractionDigits = 2) {
   }).format(value)}`;
 }
 
+/**
+ * A 0–100 value truncated, never rounded up: 99.9996 must not read as 100.
+ * No "%" sign, chart tooltips render the unit on their own.
+ */
+export function truncatePercentage(pct: number, digits = 3): string {
+  const factor = 10 ** digits;
+  // epsilon: 57 * 100 is 5699.999…, which would floor to 56.99
+  return (Math.floor(pct * factor + 1e-9) / factor).toFixed(digits);
+}
+
 export function formatNumber(value: number) {
   return `${Intl.NumberFormat("en-US").format(value)}`;
 }

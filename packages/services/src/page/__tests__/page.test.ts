@@ -655,6 +655,75 @@ describe("custom domain uniqueness", () => {
   });
 });
 
+describe("new pages count runs", () => {
+  const storedValue = async (tx: DrizzleTx, id: number) =>
+    (
+      (await tx.select().from(pageTable).where(eq(pageTable.id, id)).get())
+        ?.configuration as { value?: string } | null
+    )?.value;
+
+  test("newPage stores runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await newPage({
+        ctx,
+        input: { title: "Runs", slug: uniqueSlug("runs-new") },
+      });
+      expect(await storedValue(tx, row.id)).toBe("runs");
+    });
+  });
+
+  test("createPage stores runs unless the caller picks a measure", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const create = (configuration?: Record<string, unknown>) =>
+        createPage({
+          ctx,
+          input: {
+            workspaceId: ctx.workspace.id,
+            title: "Runs",
+            slug: uniqueSlug("runs-create"),
+            description: "",
+            configuration,
+          },
+        });
+
+      expect(await storedValue(tx, (await create()).id)).toBe("runs");
+      const themed = await create({ theme: "default-rounded" });
+      expect(
+        (
+          await tx
+            .select()
+            .from(pageTable)
+            .where(eq(pageTable.id, themed.id))
+            .get()
+        )?.configuration,
+      ).toEqual({ theme: "default-rounded", value: "runs" });
+      expect(
+        await storedValue(tx, (await create({ value: "requests" })).id),
+      ).toBe("requests");
+    });
+  });
+
+  test("a configuration update keeps the stored runs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await newPage({
+        ctx,
+        input: { title: "Runs", slug: uniqueSlug("runs-update") },
+      });
+      await updatePageConfiguration({
+        ctx,
+        input: UpdatePageConfigurationInput.parse({
+          id: row.id,
+          configuration: { days: 30 },
+        }),
+      });
+      expect(await storedValue(tx, row.id)).toBe("runs");
+    });
+  });
+});
+
 describe("updatePageConfiguration", () => {
   test("preserves omitted settings in partial updates", async () => {
     await withTestTransaction(async (tx) => {

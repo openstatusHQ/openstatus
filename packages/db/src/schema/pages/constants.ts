@@ -27,3 +27,7 @@ export const pageAccessTypes = [
   "email-domain",
   "ip-restriction",
 ] as const;
+
+// written on create: the read default stays "requests" so pages that never
+// stored a value keep their numbers
+export const NEW_PAGE_CONFIGURATION_VALUE = "runs" as const;

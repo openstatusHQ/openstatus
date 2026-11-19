@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { env } from "../env.mjs";
 import {
   externalService,
+  frozenMonitorUptime,
   incident,
   incidentEvent,
   monitorIncidentTable,
@@ -11,6 +12,8 @@ import {
   maintenanceUpdate,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   notification,
   notificationsToMonitors,
   page,
@@ -26,7 +29,9 @@ import {
   workspace,
 } from "./schema";
 import { externalServicesSeed } from "./seed/external-services";
+import { frozenUptimeSeed } from "./seed/frozen-uptime";
 import { TEAM_WORKSPACE_LIMITS } from "./seed/limits";
+import { monitorIncidentsSeed } from "./seed/monitor-incidents";
 
 async function main() {
   if (
@@ -97,11 +102,14 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
+  // Older than every seeded outage and frozen month, so reports keep them.
+  const monitorsCreatedAt = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000);
   await db
     .insert(monitor)
     .values([
       {
         id: 1,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
         active: true,
         url: "https://www.openstatus.dev",
@@ -116,6 +124,7 @@ async function main() {
       {
         id: 2,
         active: false,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
         name: "Legacy Dashboard",
         description: "Paused until the migration is done",
@@ -127,6 +136,7 @@ async function main() {
       },
       {
         id: 3,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
         active: true,
         url: "https://www.openstatus.dev",
@@ -141,6 +151,7 @@ async function main() {
       {
         id: 4,
         active: true,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
         name: "Search",
         description: "Search backend, traces exported to OpenTelemetry",
@@ -155,6 +166,7 @@ async function main() {
       {
         id: 5,
         active: true,
+        createdAt: monitorsCreatedAt,
         workspaceId: 3,
         name: "Edge Proxy",
         description: "Checked from a private location",
@@ -194,6 +206,12 @@ async function main() {
       slug: "acme",
       customDomain: "status.acme.com",
       published: true,
+      configuration: {
+        value: "runs",
+        type: "absolute",
+        uptime: true,
+        theme: "default",
+      },
     })
     .onConflictDoNothing()
     .run();
@@ -524,6 +542,7 @@ async function main() {
   );
 
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
   const threeDaysAgoPlus20Min = new Date(
     threeDaysAgo.getTime() + 20 * 60 * 1000,
   );
@@ -549,6 +568,19 @@ async function main() {
         acknowledgedAt: new Date(threeDaysAgo.getTime() + 2 * 60 * 1000),
         resolvedAt: threeDaysAgoPlus20Min,
       },
+      {
+        id: 3,
+        workspaceId: 1,
+        monitorId: 3,
+        createdAt: tenDaysAgo,
+        startedAt: tenDaysAgo,
+        resolvedAt: new Date(tenDaysAgo.getTime() + 45 * 60 * 1000),
+        resolvedBy: 2,
+        excusedAt: new Date(tenDaysAgo.getTime() + 2 * 60 * 60 * 1000),
+        excusedBy: 2,
+        excusedReason: "Planned DNS cutover, the failing checks were expected.",
+      },
+      ...monitorIncidentsSeed(),
     ])
     .onConflictDoNothing()
     .run();
@@ -653,6 +685,117 @@ async function main() {
         createdAt: minutesAfterDeclare(80),
       },
     ])
+    .run();
+
+  // Resolved and acknowledged, so response times and averages have data.
+  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const afterDeclare = (m: number) =>
+    new Date(fiveDaysAgo.getTime() + m * 60 * 1000);
+  await db
+    .insert(incident)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      title: "Search results delayed",
+      severity: "minor",
+      status: "resolved",
+      summary: "Search index lagged behind by up to 20 minutes.",
+      commanderId: 3,
+      declaredBy: 2,
+      declaredAt: fiveDaysAgo,
+      startedAt: afterDeclare(-15),
+      acknowledgedAt: afterDeclare(4),
+      acknowledgedBy: 3,
+      mitigatedAt: afterDeclare(35),
+      resolvedAt: afterDeclare(90),
+      resolvedBy: 3,
+    })
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(incidentEvent)
+    .values([
+      {
+        incidentId: 2,
+        type: "declared",
+        message: "Declared as minor: Search results delayed",
+        createdBy: 2,
+        createdAt: fiveDaysAgo,
+      },
+      {
+        incidentId: 2,
+        type: "acknowledged",
+        message: "Incident acknowledged",
+        createdBy: 3,
+        createdAt: afterDeclare(4),
+      },
+      {
+        incidentId: 2,
+        type: "status_changed",
+        message: "Status changed from open to mitigated",
+        createdBy: 3,
+        createdAt: afterDeclare(35),
+      },
+      {
+        incidentId: 2,
+        type: "status_changed",
+        message: "Status changed from mitigated to resolved",
+        createdBy: 3,
+        createdAt: afterDeclare(90),
+      },
+    ])
+    .run();
+
+  // One window per state: running (continue), scheduled (pause), ended.
+  const hour = 60 * 60 * 1000;
+  const now = Date.now();
+  await db
+    .insert(monitorMaintenanceWindow)
+    .values([
+      {
+        id: 1,
+        workspaceId: 1,
+        title: "Search reindex",
+        mode: "continue",
+        from: new Date(now - hour),
+        to: new Date(now + 2 * hour),
+        createdBy: 2,
+      },
+      {
+        id: 2,
+        workspaceId: 1,
+        title: "Website hosting migration",
+        mode: "pause",
+        from: new Date(now + 2 * 24 * hour),
+        to: new Date(now + 2 * 24 * hour + hour),
+        createdBy: 3,
+      },
+      {
+        id: 3,
+        workspaceId: 1,
+        title: "API load balancer upgrade",
+        mode: "continue",
+        from: new Date(now - 6 * 24 * hour),
+        to: new Date(now - 6 * 24 * hour + 30 * 60 * 1000),
+        createdBy: 2,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(monitorMaintenanceWindowToMonitor)
+    .values([
+      { monitorMaintenanceWindowId: 1, monitorId: 4 },
+      { monitorMaintenanceWindowId: 2, monitorId: 3 },
+      { monitorMaintenanceWindowId: 3, monitorId: 1 },
+    ])
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(frozenMonitorUptime)
+    .values(frozenUptimeSeed())
+    .onConflictDoNothing()
     .run();
 
   await db

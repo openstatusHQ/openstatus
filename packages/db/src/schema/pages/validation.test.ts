@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { selectPageSchema, timeZoneSchema } from "../index";
+import {
+  pageConfigurationSchema,
+  selectPageSchema,
+  timeZoneSchema,
+} from "../index";
 
 describe("timeZoneSchema", () => {
   it("accepts IANA zone names", () => {
@@ -22,5 +26,18 @@ describe("selectPageSchema defaultTimezone", () => {
   it("falls back to UTC when the stored zone cannot be resolved", () => {
     expect(defaultTimezone.parse("Asia/Tokyo")).toBe("Asia/Tokyo");
     expect(defaultTimezone.parse("Mars/Olympus")).toBe("UTC");
+  });
+});
+
+describe("pageConfigurationSchema value", () => {
+  const value = pageConfigurationSchema.shape.value;
+
+  it("accepts a stored runs value", () => {
+    expect(value.parse("runs")).toBe("runs");
+  });
+
+  it("reads a missing value as requests", () => {
+    expect(value.parse(undefined)).toBe("requests");
+    expect(value.parse(null)).toBe("requests");
   });
 });

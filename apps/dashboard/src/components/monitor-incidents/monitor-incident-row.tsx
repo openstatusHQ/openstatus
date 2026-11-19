@@ -1,6 +1,11 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 
 import { StatusBars } from "@/components/common/status-bars";
 import type { StatusVariant } from "@/components/common/status-dot";
@@ -20,6 +25,7 @@ import { IncidentRowActions } from "@/components/data-table/incidents/data-table
 import { IncidentActionCell } from "@/components/data-table/overview-events/incident-action-cell";
 import { DeclareFromRow } from "@/components/incidents/declare-from-row";
 import { downtimeActivity } from "@/data/incidents.client";
+import { resolutionLabel } from "@/data/monitor-report";
 import {
   type IncidentStatus,
   getIncidentStatus,
@@ -63,7 +69,8 @@ export function MonitorIncidentRow({
         ? "acknowledged"
         : "down"
       : null,
-    resolvedAt && incident.autoResolved ? "auto-resolved" : null,
+    resolvedAt ? resolutionLabel(incident) : null,
+    incident.excusedReason,
   ];
   // `when` is local time, which differs between the server render and the browser
   const hydrated = useHydrated();
@@ -75,8 +82,11 @@ export function MonitorIncidentRow({
   const actor = incident.resolvedByUser
     ? { user: incident.resolvedByUser, label: "Resolved by" }
     : { user: incident.acknowledgedByUser, label: "Acknowledged by" };
-  const variant =
-    status === "resolved"
+  const excused = incident.excusedAt !== null;
+  // excused downtime counts as up, so it drops the failure color
+  const variant = excused
+    ? "default"
+    : status === "resolved"
       ? level === 3
         ? "destructive"
         : "warning"
@@ -87,11 +97,15 @@ export function MonitorIncidentRow({
       <EventRowDate date={startedAt} />
       <EventRowStatus>
         <StatusBars level={level} variant={variant} />
-        <span>{kind ? "Downtime" : incidentStatusConfig[status].label}</span>
+        {excused ? (
+          <ExcusedLabel incident={incident} />
+        ) : (
+          <span>{kind ? "Downtime" : incidentStatusConfig[status].label}</span>
+        )}
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
-          href={kind ? `/monitors/${monitor.id}/incidents` : undefined}
+          href={kind ? `/monitors/${monitor.id}/report#outages` : undefined}
           empty={hydrated ? "No name" : ""}
         >
           {title}
@@ -122,5 +136,25 @@ export function MonitorIncidentRow({
         <IncidentRowActions incident={incident} />
       </EventRowMenu>
     </EventRow>
+  );
+}
+
+function ExcusedLabel({ incident }: { incident: MonitorIncident }) {
+  const by = incident.excusedByUser?.name;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          tabIndex={0}
+          className="decoration-muted-foreground/50 focus-visible:ring-ring/50 relative z-10 underline decoration-dashed underline-offset-2 outline-none focus-visible:ring-[3px]"
+        >
+          Excused
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <p className="font-medium">{by ? `Excused by ${by}` : "Excused"}</p>
+        <p className="whitespace-pre-wrap">{incident.excusedReason}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

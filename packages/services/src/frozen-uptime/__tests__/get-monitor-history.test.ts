@@ -107,7 +107,7 @@ describe("getMonitorUptimeHistory", () => {
         ctx: { ...userCtx, db: tx },
         input: { monitorId: m.id },
         pipes: pipes([
-          // frozen month wins over live rows
+          // live wins over the frozen day it returns
           { monitorId: id, day: "2026-10-31", ok: 1, degraded: 0, error: 99 },
           // regions of one day add up
           { monitorId: id, day: "2026-11-02", ok: 10, degraded: 1, error: 0 },
@@ -124,7 +124,8 @@ describe("getMonitorUptimeHistory", () => {
         degraded: 0,
         error: 2,
       });
-      expect(res.days.find((d) => d.day === "2026-10-31")?.error).toBe(0);
+      expect(res.days.find((d) => d.day === "2026-10-31")?.error).toBe(99);
+      expect(res.days.find((d) => d.day === "2026-10-30")?.error).toBe(0);
       expect(res.days.at(-1)).toEqual({
         day: "2026-11-02",
         ok: 15,

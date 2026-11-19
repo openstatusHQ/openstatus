@@ -484,6 +484,61 @@ describe("setDataByType", () => {
     });
   });
 
+  describe("cardType: runs", () => {
+    it("counts each status in runs", () => {
+      const data = [createStatusData(0, 100, 50, 10)];
+
+      const result = setDataByType({
+        events: [],
+        data,
+        cardType: "runs",
+        barType: "dominant",
+      });
+
+      expect(result[0].card.map((c) => c.value).sort()).toEqual([
+        "10 runs",
+        "100 runs",
+        "50 runs",
+      ]);
+    });
+
+    it("formats large numbers in runs", () => {
+      const result = setDataByType({
+        events: [],
+        data: [createStatusData(0, 5000, 0, 0)],
+        cardType: "runs",
+        barType: "dominant",
+      });
+
+      expect(result[0].card[0].value).toBe("5.0k runs");
+    });
+
+    it("shows the event status in an empty card", () => {
+      const result = setDataByType({
+        events: [createIncident(1, 0)],
+        data: [createStatusData(0, 0, 0, 0)],
+        cardType: "runs",
+        barType: "dominant",
+      });
+
+      expect(result[0].card).toHaveLength(1);
+      expect(result[0].card[0].status).toBe("error");
+    });
+
+    it("shows an empty card when no data", () => {
+      const result = setDataByType({
+        events: [],
+        data: [createStatusData(0, 0, 0, 0)],
+        cardType: "runs",
+        barType: "dominant",
+      });
+
+      expect(result[0].card).toEqual([
+        expect.objectContaining({ value: "", status: "empty" }),
+      ]);
+    });
+  });
+
   describe("cardType: duration", () => {
     it("should calculate duration for events", () => {
       const data = [createStatusData(0, 100, 0, 0)];
@@ -840,6 +895,19 @@ describe("fillStatusDataFor45Days", () => {
 });
 
 describe("getUptime", () => {
+  describe("cardType: runs", () => {
+    it("computes uptime from counts like requests mode", () => {
+      const data = [createStatusData(0, 90, 0, 10)];
+      const uptime = getUptime({
+        data,
+        events: [createIncident(0, 0, 24)],
+        barType: "absolute",
+        cardType: "runs",
+      });
+      expect(uptime).toBe("90%");
+    });
+  });
+
   describe("heartbeat monitors", () => {
     it("counts a silent day's incident as downtime in requests mode", () => {
       // pings only on the first and last day: a ping tally would read 100%

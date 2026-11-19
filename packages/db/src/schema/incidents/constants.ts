@@ -25,6 +25,7 @@ export const incidentEventType = [
   "postmortem_updated",
   "postmortem_approved",
   "closed",
+  "acknowledged",
 ] as const;
 
 // `source_ref` by source: slack → message permalink (null for slash commands
@@ -43,6 +44,19 @@ export type IncidentSeverity = (typeof incidentSeverity)[number];
 export type IncidentStatus = (typeof incidentStatus)[number];
 export type IncidentEventType = (typeof incidentEventType)[number];
 export type IncidentEventSource = (typeof incidentEventSource)[number];
+
+/** Acknowledge is offered once, while the incident is still being worked on. */
+export function incidentAwaitsAcknowledgement(incident: {
+  status: IncidentStatus;
+  closedAt: Date | null;
+  acknowledgedAt: Date | null;
+}): boolean {
+  return (
+    incident.acknowledgedAt === null &&
+    incident.closedAt === null &&
+    (incident.status === "open" || incident.status === "mitigated")
+  );
+}
 
 export const postmortemStatus = ["draft", "approved"] as const;
 export const postmortemAuthor = ["agent", "user"] as const;

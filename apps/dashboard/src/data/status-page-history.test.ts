@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   type HistoryEvent,
-  cellFromPercentage,
   eventsForMonth,
   getColumnVisibility,
+  historyMetric,
   historyBreakdown,
   historyRows,
   monthKeyToFullLabel,
@@ -24,27 +24,6 @@ describe("parseWindow", () => {
     expect(parseWindow("3")).toBe(6);
     expect(parseWindow("abc")).toBe(6);
     expect(parseWindow("")).toBe(6);
-  });
-});
-
-describe("cellFromPercentage", () => {
-  it("marks missing data", () => {
-    expect(cellFromPercentage(null)).toEqual({
-      percentage: null,
-      status: "no-data",
-    });
-  });
-
-  it("marks the current month as in progress", () => {
-    expect(cellFromPercentage(50, true).status).toBe("in-progress");
-  });
-
-  it("applies the thresholds", () => {
-    expect(cellFromPercentage(100).status).toBe("operational");
-    expect(cellFromPercentage(99.9).status).toBe("operational");
-    expect(cellFromPercentage(99.89).status).toBe("degraded");
-    expect(cellFromPercentage(99).status).toBe("degraded");
-    expect(cellFromPercentage(98.99).status).toBe("down");
   });
 });
 
@@ -68,6 +47,13 @@ describe("eventsForMonth", () => {
         "2025-03",
       ),
     ).toEqual([inside, spanningStart, spanningEnd]);
+  });
+
+  it("uses the month of the page's zone", () => {
+    // 23:30 UTC on Oct 31 is already November in Berlin
+    const late = event("2026-10-31T23:30:00Z", "2026-10-31T23:45:00Z");
+    expect(eventsForMonth([late], "2026-10", "Europe/Berlin")).toEqual([]);
+    expect(eventsForMonth([late], "2026-11", "Europe/Berlin")).toEqual([late]);
   });
 
   it("treats open-ended events as lasting until now", () => {
@@ -185,6 +171,8 @@ describe("historyRows", () => {
   const base = {
     component: { id: 1, name: "API", type: "monitor" as const, monitorId: 1 },
     events: [],
+    maintenanceWindows: [],
+    excusedOutages: [],
   };
   const monitorRow = {
     ...base,
@@ -218,5 +206,18 @@ describe("historyRows", () => {
     expect(monitor.rolling["12"]).toBe(null);
     expect(other.unit).toBe("time");
     expect(other.months["2026-11"]?.percentage).toBe(50);
+  });
+});
+
+describe("historyMetric", () => {
+  it("follows the page mode when the URL names no metric", () => {
+    expect(historyMetric(null, "runs")).toBe("runs");
+    expect(historyMetric(null, "requests")).toBe("requests");
+    expect(historyMetric(null, "duration")).toBe("requests");
+  });
+
+  it("keeps the metric the URL asks for", () => {
+    expect(historyMetric("requests", "runs")).toBe("requests");
+    expect(historyMetric("runs", "requests")).toBe("runs");
   });
 });

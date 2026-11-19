@@ -14,6 +14,7 @@ import {
   headersToDbJson,
   monitorAuditSnapshot,
   serialiseAssertions,
+  resetMonitorsForPause,
 } from "./internal";
 import {
   BulkUpdateMonitorsInput,
@@ -111,6 +112,9 @@ export async function updateMonitorConfig(args: {
       values.heartbeatGrace = input.heartbeatGrace;
     }
 
+    if (existing.active && input.active === false) {
+      await resetMonitorsForPause({ tx, ctx, monitorIds: [existing.id] });
+    }
     const updated = await tx
       .update(monitor)
       .set(values)
@@ -173,6 +177,9 @@ export async function updateMonitorGeneral(args: {
       );
     }
 
+    if (existing.active && input.active === false) {
+      await resetMonitorsForPause({ tx, ctx, monitorIds: [existing.id] });
+    }
     const updated = await tx
       .update(monitor)
       .set({
@@ -408,6 +415,13 @@ export async function bulkUpdateMonitors(args: {
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (input.public !== undefined) set.public = input.public;
     if (input.active !== undefined) set.active = input.active;
+    if (input.active === false) {
+      await resetMonitorsForPause({
+        tx,
+        ctx,
+        monitorIds: existingRows.filter((r) => r.active).map((r) => r.id),
+      });
+    }
 
     // `.returning()` the full rows that actually matched so the audit
     // loop below attributes only what we wrote and carries the new

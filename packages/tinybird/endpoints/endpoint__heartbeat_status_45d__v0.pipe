@@ -16,7 +16,7 @@ SELECT
     0 AS degraded
 FROM heartbeat_ping__v0
 WHERE monitorId IN {{ Array(monitorIds, 'String', '1') }}
-    AND timestamp >= toUnixTimestamp64Milli(toDateTime64(toStartOfDay(now() - INTERVAL 45 DAY), 3))
+    AND timestamp >= toUnixTimestamp64Milli(toDateTime64(toStartOfDay(now() - INTERVAL {{ Int16(days, 45) }} DAY), 3))
 GROUP BY day, monitorId
 ORDER BY day DESC
 

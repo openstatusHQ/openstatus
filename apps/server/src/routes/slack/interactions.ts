@@ -47,6 +47,7 @@ import {
   type ViewSubmissionResponse,
 } from "./incident-modal";
 import {
+  acknowledgeFromCard,
   afterIncidentTool,
   bindChannelFromButton,
   INCIDENT_BIND_ACTION_PREFIX,
@@ -478,6 +479,31 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
           });
         },
         { teamId },
+      );
+    }
+    return c.json({ ok: true });
+  }
+
+  if (payload.actions[0].action_id === INCIDENT_CARD_ACTIONS.acknowledge) {
+    const teamId = payload.team?.id;
+    const incidentId = Number(payload.actions[0].value);
+    if (teamId && Number.isInteger(incidentId)) {
+      runInBackground(
+        "incident-acknowledge",
+        async () => {
+          const resolved = await resolveWorkspace(teamId);
+          if (!resolved) return;
+          await acknowledgeFromCard({
+            resolved,
+            config,
+            teamId,
+            slackUserId: payload.user.id,
+            channelId: payload.channel.id,
+            messageTs: payload.message.ts,
+            incidentId,
+          });
+        },
+        { teamId, incidentId },
       );
     }
     return c.json({ ok: true });

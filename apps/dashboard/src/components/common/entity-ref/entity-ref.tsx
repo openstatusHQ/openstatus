@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { IncidentCard } from "./cards/incident";
 import { MaintenanceCard } from "./cards/maintenance";
+import { MaintenanceWindowCard } from "./cards/maintenance-window";
 import { MonitorCard } from "./cards/monitor";
 import { NotificationCard } from "./cards/notification";
 import { PageCard } from "./cards/page";
@@ -28,6 +29,7 @@ const cards = {
   incident: IncidentCard,
   privateLocation: PrivateLocationCard,
   notification: NotificationCard,
+  maintenanceWindow: MaintenanceWindowCard,
 } satisfies Record<EntityKind, React.ComponentType<{ id: number }>>;
 
 /** An entity id that opens a card with the entity on hover, focus or tap. */
