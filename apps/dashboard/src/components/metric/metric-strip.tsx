@@ -13,7 +13,8 @@ type MetricStripItemProps = {
 
 /**
  * Summary metrics in one bordered box: columns when the strip is wide,
- * label/value lines when it is narrow. A container query on the strip itself.
+ * label/value lines when it is narrow, two per line once they fit.
+ * A container query on the strip itself.
  */
 export function MetricStrip({
   className,
@@ -47,6 +48,7 @@ export function MetricStripRow({
       aria-label={label}
       className={cn(
         "grid gap-px @3xl:auto-cols-[minmax(0,1fr)] @3xl:grid-flow-col",
+        "@min-[21rem]:@max-3xl:grid-cols-2",
         label && "@3xl:grid-cols-[6.5rem]",
         className,
       )}
@@ -56,7 +58,7 @@ export function MetricStripRow({
         <span
           data-slot="metric-strip-row-label"
           aria-hidden
-          className="text-muted-foreground bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-card))] px-3 py-1.5 text-xs @3xl:py-2"
+          className="text-muted-foreground bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-card))] px-3 py-1.5 text-xs @min-[21rem]:@max-3xl:col-span-full @3xl:py-2"
         >
           {label}
         </span>
@@ -71,6 +73,8 @@ const itemClassName = cn(
   "group/metric-strip-item flex min-w-0 items-center justify-between gap-3 bg-(--metric-strip-tint,var(--metric-strip-fill,var(--color-card))) px-3 py-2.5",
   "[--metric-strip-mix:10%]",
   "@3xl:flex-col @3xl:items-start @3xl:justify-start @3xl:gap-1 @3xl:py-2",
+  // two per line: an odd item out takes the whole line, so no cell stays empty
+  "@min-[21rem]:@max-3xl:gap-2 @min-[21rem]:@max-3xl:[&:last-child:nth-child(odd_of_[data-slot=metric-strip-item])]:col-span-full",
   "data-[active=true]:data-[status=success]:[--metric-strip-tint:color-mix(in_oklab,var(--color-success)_var(--metric-strip-mix),var(--color-card))]",
   "data-[active=true]:data-[status=warning]:[--metric-strip-tint:color-mix(in_oklab,var(--color-warning)_var(--metric-strip-mix),var(--color-card))]",
   "data-[active=true]:data-[status=destructive]:[--metric-strip-tint:color-mix(in_oklab,var(--color-destructive)_var(--metric-strip-mix),var(--color-card))]",
