@@ -94,7 +94,7 @@ export function HeartbeatSection({
     isLoading: boolean;
   }[] = [
     {
-      label: "STATUS",
+      label: "Status",
       status: healthStatus,
       active:
         healthStatus === "destructive" || healthStatus === "warning"
@@ -104,7 +104,7 @@ export function HeartbeatSection({
       isLoading,
     },
     {
-      label: "LAST PING",
+      label: "Last ping",
       value: !heartbeat ? undefined : heartbeat.lastPingAt ? (
         <CardTime date={heartbeat.lastPingAt}>
           {formatDistanceToNowShort(heartbeat.lastPingAt)}
@@ -115,7 +115,7 @@ export function HeartbeatSection({
       isLoading: isLoading || !hydrated,
     },
     {
-      label: "NEXT PING",
+      label: "Next ping",
       value: !heartbeat ? undefined : expectedAt ? (
         <CardTime date={expectedAt}>{formatNextPing(expectedAt, now)}</CardTime>
       ) : (
@@ -124,14 +124,14 @@ export function HeartbeatSection({
       isLoading: isLoading || !hydrated,
     },
     {
-      label: "FAILED",
+      label: "Failed",
       status: "destructive",
       active: failed === undefined ? undefined : failed > 0,
       value: failed === undefined ? undefined : formatNumber(failed),
       isLoading: isWindowLoading,
     },
     {
-      label: "DOWNTIME",
+      label: "Downtime",
       value:
         downtime === undefined
           ? undefined

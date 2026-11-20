@@ -182,9 +182,7 @@ export function Client() {
         >
           <MetricStripRow>
             <MetricStripItem status="success">
-              <MetricStripLabel className="uppercase">
-                Page Uptime
-              </MetricStripLabel>
+              <MetricStripLabel>Page uptime</MetricStripLabel>
               <MetricStripValue>
                 {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
                 {averaged > 0 && averaged < rows.length ? (
@@ -195,19 +193,15 @@ export function Client() {
               </MetricStripValue>
             </MetricStripItem>
             <MetricStripItem>
-              <MetricStripLabel className="uppercase">Reports</MetricStripLabel>
+              <MetricStripLabel>Reports</MetricStripLabel>
               <MetricStripValue>{summary.reports}</MetricStripValue>
             </MetricStripItem>
             <MetricStripItem>
-              <MetricStripLabel className="uppercase">
-                Components
-              </MetricStripLabel>
+              <MetricStripLabel>Components</MetricStripLabel>
               <MetricStripValue>{rows.length}</MetricStripValue>
             </MetricStripItem>
             <MetricStripItem>
-              <MetricStripLabel className="uppercase">
-                Created At
-              </MetricStripLabel>
+              <MetricStripLabel>Created at</MetricStripLabel>
               <MetricStripValue>
                 {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
               </MetricStripValue>
@@ -300,7 +294,7 @@ export function Client() {
                   run is down when at least half of the regions that reported
                   fail. Uptime is (ok + degraded) / total; degraded still counts
                   as up. Monitors with only private locations have no runs and
-                  show no data in runs; Page Uptime then averages the components
+                  show no data in runs; Page uptime then averages the components
                   that have data.
                 </span>
               </li>

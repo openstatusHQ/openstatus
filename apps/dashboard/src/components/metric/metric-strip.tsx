@@ -73,10 +73,10 @@ export function MetricStripRow({
 const itemClassName = cn(
   "group/metric-strip-item flex min-w-0 items-center justify-between gap-3 bg-(--metric-strip-fill,var(--color-card)) px-3 py-2.5",
   "@xl:flex-col @xl:items-start @xl:justify-start @xl:gap-1 @xl:py-2",
-  "data-[active=true]:data-[status=success]:[--metric-strip-fill:color-mix(in_oklab,var(--color-success)_12%,var(--color-card))]",
-  "data-[active=true]:data-[status=warning]:[--metric-strip-fill:color-mix(in_oklab,var(--color-warning)_12%,var(--color-card))]",
-  "data-[active=true]:data-[status=destructive]:[--metric-strip-fill:color-mix(in_oklab,var(--color-destructive)_12%,var(--color-card))]",
-  "data-[active=true]:data-[status=info]:[--metric-strip-fill:color-mix(in_oklab,var(--color-info)_12%,var(--color-card))]",
+  "data-[active=true]:data-[status=success]:[--metric-strip-fill:color-mix(in_oklab,var(--color-success)_10%,var(--color-card))]",
+  "data-[active=true]:data-[status=warning]:[--metric-strip-fill:color-mix(in_oklab,var(--color-warning)_10%,var(--color-card))]",
+  "data-[active=true]:data-[status=destructive]:[--metric-strip-fill:color-mix(in_oklab,var(--color-destructive)_10%,var(--color-card))]",
+  "data-[active=true]:data-[status=info]:[--metric-strip-fill:color-mix(in_oklab,var(--color-info)_10%,var(--color-card))]",
 );
 
 export function MetricStripItem({
@@ -130,14 +130,18 @@ export function MetricStripLabel({
     <span
       data-slot="metric-strip-label"
       className={cn(
-        "text-muted-foreground max-w-full min-w-0 truncate text-sm font-medium",
+        "text-muted-foreground max-w-full min-w-0 truncate text-sm",
         "before:mr-1.5 before:hidden before:size-2 before:rounded-full before:align-[0.05em] before:content-['']",
         "group-data-[status]/metric-strip-item:before:inline-block",
         "group-data-[status=success]/metric-strip-item:before:bg-success",
         "group-data-[status=warning]/metric-strip-item:before:bg-warning",
         "group-data-[status=destructive]/metric-strip-item:before:bg-destructive",
         "group-data-[status=info]/metric-strip-item:before:bg-info",
+        // two attributes, so a zero count wins over the status color
+        "group-data-[active=false]/metric-strip-item:group-data-[status]/metric-strip-item:before:bg-muted-foreground",
         "[&_svg]:ml-1.5 [&_svg]:inline-block [&_svg]:size-3.5 [&_svg]:align-[-0.125em]",
+        // in a button the icon is its state: shown on hover, focus and when pressed
+        "in-[button:not(:hover,:focus-visible,[aria-pressed=true])]:[&_svg]:hidden",
         className,
       )}
       {...props}
@@ -198,19 +202,15 @@ export function MetricStripAside({
 const badgeVariants = cva("ml-1.5 px-1.5 align-middle font-mono text-[10px]", {
   variants: {
     variant: {
-      default: "border-border",
       increase:
         "border-destructive/20 bg-destructive/10 hover:bg-destructive/10 text-destructive",
       decrease:
         "border-success/20 bg-success/10 hover:bg-success/10 text-success",
     },
   },
-  defaultVariants: {
-    variant: "default",
-  },
 });
 
-/** Trend against the previous period; `value` is the ratio (1 = unchanged). */
+/** Trend against the previous period; `value` is the ratio. Nothing at 0%. */
 export function MetricStripBadge({
   value,
   decimal = 1,
@@ -223,8 +223,10 @@ export function MetricStripBadge({
   const round = 10 ** decimal;
   const percentage = Math.round((value - 1) * 100 * round) / round;
 
+  if (percentage === 0) return null;
+
   const variant: VariantProps<typeof badgeVariants>["variant"] =
-    percentage > 0 ? "increase" : percentage < 0 ? "decrease" : "default";
+    percentage > 0 ? "increase" : "decrease";
 
   return (
     <Badge
@@ -233,12 +235,13 @@ export function MetricStripBadge({
       className={badgeVariants({ variant, className })}
       {...props}
     >
-      {percentage !== 0 ? (
-        <span>
-          {percentage > 0 ? <ChevronUp className="mr-px size-2.5" /> : null}
-          {percentage < 0 ? <ChevronDown className="mr-px size-2.5" /> : null}
-        </span>
-      ) : null}
+      <span>
+        {percentage > 0 ? (
+          <ChevronUp className="mr-px size-2.5" />
+        ) : (
+          <ChevronDown className="mr-px size-2.5" />
+        )}
+      </span>
       {Math.abs(percentage)}%
     </Badge>
   );

@@ -65,23 +65,23 @@ export function hasMetricsData(metrics: RouterOutputs["tinybird"]["metrics"]) {
 
 export const metricsCards = {
   uptime: {
-    label: "UPTIME",
+    label: "Uptime",
     status: "success",
   },
   degraded: {
-    label: "DEGRADED",
+    label: "Degraded",
     status: "warning",
   },
   error: {
-    label: "FAILING",
+    label: "Failing",
     status: "destructive",
   },
   total: {
-    label: "REQUESTS",
+    label: "Requests",
     status: undefined,
   },
   lastTimestamp: {
-    label: "LAST CHECKED",
+    label: "Last checked",
     status: undefined,
   },
   p50: {
