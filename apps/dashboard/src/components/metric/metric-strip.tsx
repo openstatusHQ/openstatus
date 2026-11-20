@@ -153,7 +153,7 @@ export function MetricStripValue({
     <span
       data-slot="metric-strip-value"
       className={cn(
-        "shrink-0 text-right text-base font-medium whitespace-nowrap tabular-nums",
+        "font-commit-mono shrink-0 text-right text-base font-medium tracking-tight whitespace-nowrap tabular-nums",
         "@xl:max-w-full @xl:shrink @xl:text-left @xl:whitespace-normal",
         "group-data-[active=false]/metric-strip-item:text-muted-foreground",
         className,

@@ -188,7 +188,7 @@ export function Client() {
               <MetricStripValue>
                 {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
                 {averaged > 0 && averaged < rows.length ? (
-                  <MetricStripAside className="font-mono">
+                  <MetricStripAside>
                     {averaged} of {rows.length} components
                   </MetricStripAside>
                 ) : null}
