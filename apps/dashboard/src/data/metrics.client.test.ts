@@ -198,13 +198,13 @@ describe("getMonitorListMetrics", () => {
       { monitorId: "2", p95Latency: 1500 },
     ]);
     expect(
-      metrics.map(({ key, value, variant }) => ({ key, value, variant })),
+      metrics.map(({ key, value, status }) => ({ key, value, status })),
     ).toEqual([
-      { key: "active", value: 2, variant: "success" },
-      { key: "degraded", value: 1, variant: "warning" },
-      { key: "error", value: 1, variant: "destructive" },
-      { key: "inactive", value: 1, variant: "default" },
-      { key: "p95", value: "1.5 sec", variant: "ghost" },
+      { key: "active", value: 2, status: "success" },
+      { key: "degraded", value: 1, status: "warning" },
+      { key: "error", value: 1, status: "destructive" },
+      { key: "inactive", value: 1, status: undefined },
+      { key: "p95", value: "1.5 sec", status: undefined },
     ]);
   });
 

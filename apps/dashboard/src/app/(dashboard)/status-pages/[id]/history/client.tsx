@@ -43,12 +43,13 @@ import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { configurationLabels } from "@/components/forms/status-page/form-configuration";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
-  MetricCard,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
+  MetricStrip,
+  MetricStripAside,
+  MetricStripItem,
+  MetricStripLabel,
+  MetricStripRow,
+  MetricStripValue,
+} from "@/components/metric/metric-strip";
 import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
@@ -175,55 +176,44 @@ export function Client() {
         ) : null}
       </Section>
       <Section id="history-metrics">
-        <MetricCardGroup
+        <MetricStrip
           aria-hidden={isLimited}
-          className={cn(
-            "md:grid-cols-4 lg:grid-cols-4",
-            isLimited && "pointer-events-none blur-sm select-none",
-          )}
+          className={cn(isLimited && "pointer-events-none blur-sm select-none")}
         >
-          <MetricCard variant="success">
-            <MetricCardHeader>
-              <MetricCardTitle className="uppercase">
+          <MetricStripRow>
+            <MetricStripItem status="success">
+              <MetricStripLabel className="uppercase">
                 Page Uptime
-              </MetricCardTitle>
-            </MetricCardHeader>
-            <div className="flex flex-wrap items-baseline gap-x-2">
-              <MetricCardValue>
+              </MetricStripLabel>
+              <MetricStripValue>
                 {uptime === null ? "—" : `${uptime.toFixed(3)}%`}
-              </MetricCardValue>
-              {averaged > 0 && averaged < rows.length ? (
-                <span className="text-muted-foreground font-mono text-xs tabular-nums">
-                  {averaged} of {rows.length} components
-                </span>
-              ) : null}
-            </div>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle className="uppercase">Reports</MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>{summary.reports}</MetricCardValue>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle className="uppercase">
+                {averaged > 0 && averaged < rows.length ? (
+                  <MetricStripAside className="font-mono">
+                    {averaged} of {rows.length} components
+                  </MetricStripAside>
+                ) : null}
+              </MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel className="uppercase">Reports</MetricStripLabel>
+              <MetricStripValue>{summary.reports}</MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel className="uppercase">
                 Components
-              </MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>{rows.length}</MetricCardValue>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle className="uppercase">
+              </MetricStripLabel>
+              <MetricStripValue>{rows.length}</MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel className="uppercase">
                 Created At
-              </MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>
-              {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
-            </MetricCardValue>
-          </MetricCard>
-        </MetricCardGroup>
+              </MetricStripLabel>
+              <MetricStripValue>
+                {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
+              </MetricStripValue>
+            </MetricStripItem>
+          </MetricStripRow>
+        </MetricStrip>
         {isLimited ? (
           <BillingOverlayContainer>
             <div className="overflow-x-auto">
