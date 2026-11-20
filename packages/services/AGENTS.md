@@ -11,10 +11,12 @@ transaction where it needs a single atomic `db.batch()`, and a fail-closed
 `emitAudit` would roll back a real status transition because an audit insert
 failed. Do not "fix" it by routing it through a verb.
 
-Only that batch is exempt. It records its incident audit rows after the commit
-through `recordMonitorIncidentAudit`, best-effort. Every other job that opens
-or closes a monitor incident calls `createMonitorIncident` or
-`autoResolveMonitorIncidents` as a `system` actor.
+Among the workflow jobs, only that batch is exempt. It records its incident
+audit rows right after the commit through `recordMonitorIncidentAudit`,
+best-effort. Every other job that opens or closes a monitor incident calls
+`createMonitorIncident` or `autoResolveMonitorIncidents` as a `system` actor.
+Two older writers still update the table without a verb or an audit row: the
+legacy v1 incident `PUT` and the screenshot service.
 
 ## Shape of a verb
 

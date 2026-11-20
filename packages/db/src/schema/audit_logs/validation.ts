@@ -198,10 +198,9 @@ const invitationActions = [
 //     (the acceptance stamp), so `member.create` covers only the paths that
 //     mint a membership with no invitation behind it — today, SSO JIT
 //     provisioning.
-//   - `monitor_incident`: opened and auto-resolved by the checker pipeline,
-//     which records them best-effort after its own commit; nothing deletes one.
-// When those write paths migrate to the service layer, add the missing
-// verbs alongside.
+//   - `monitor_incident`: nothing deletes one.
+// When a write path for a missing verb appears in the service layer, add the
+// verb alongside.
 const memberActions = [
   // `entityId` is the affected user's id. Member rows have no surrogate key —
   // they're (userId, workspaceId) composite — so the user id is the most

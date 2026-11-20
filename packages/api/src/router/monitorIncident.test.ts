@@ -1,5 +1,9 @@
-import { db, eq } from "@openstatus/db";
-import { monitor, monitorIncidentTable } from "@openstatus/db/src/schema";
+import { db, eq, inArray } from "@openstatus/db";
+import {
+  monitor,
+  monitorIncidentTable,
+  workspace,
+} from "@openstatus/db/src/schema";
 import {
   createMonitor,
   createWorkspace,
@@ -54,6 +58,10 @@ afterAll(async () => {
     .where(eq(monitorIncidentTable.id, incidentId))
     .run();
   await db.delete(monitor).where(eq(monitor.workspaceId, ownWorkspaceId)).run();
+  await db
+    .delete(workspace)
+    .where(inArray(workspace.id, [ownWorkspaceId, otherWorkspaceId]))
+    .catch(() => undefined);
 });
 
 test("get returns the incident with its monitor", async () => {

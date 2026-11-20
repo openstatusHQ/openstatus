@@ -40,9 +40,9 @@ export function MonitorIncidentCard({ id }: { id: number }) {
       <EntityRefHeader
         kind="monitorIncident"
         href={
-          monitorId === null
-            ? undefined
-            : entityKinds.monitorIncident.href({ monitorId, startedAt })
+          data.monitor && monitorId !== null
+            ? entityKinds.monitorIncident.href({ monitorId, startedAt })
+            : undefined
         }
       >
         {data.monitor?.name ?? "Deleted monitor"}

@@ -10,7 +10,7 @@ import {
 // setTimeout overflows past 2^31-1 ms and would fire immediately.
 const MAX_DELAY = 2 ** 31 - 1;
 
-/** Re-renders when the next `from` or `to` passes. */
+/** Re-renders when the next `from` or `to` passes; returns how often that happened. */
 export function useMaintenanceTick(maintenances: { from: Date; to: Date }[]) {
   const [tick, rerender] = useReducer((n: number) => n + 1, 0);
   const now = Date.now();
@@ -25,6 +25,7 @@ export function useMaintenanceTick(maintenances: { from: Date; to: Date }[]) {
     const timer = setTimeout(rerender, Math.min(next - Date.now(), MAX_DELAY));
     return () => clearTimeout(timer);
   }, [next, tick]);
+  return tick;
 }
 
 /** `getMaintenanceStatus`, re-evaluated when `from` or `to` passes. */

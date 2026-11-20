@@ -50,9 +50,7 @@ export function MaintenanceWindowRow({
           queryKey: trpc.maintenanceWindow.list.queryKey(),
         });
         // each monitor carries its maintenance state
-        queryClient.invalidateQueries({
-          queryKey: trpc.monitor.list.queryKey(),
-        });
+        queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
       },
     }),
   );

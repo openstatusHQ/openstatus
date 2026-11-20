@@ -331,6 +331,19 @@ describe("recovery", () => {
       "autoResolved",
       "resolvedAt",
     ]);
+
+    // Snapshots are the rows the batch wrote, decoded like a drizzle read.
+    const stored = await db
+      .select()
+      .from(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, opened.incidentCreatedId ?? 0))
+      .get();
+    expect(rows[0]?.after).toEqual(
+      JSON.parse(
+        JSON.stringify({ ...stored, resolvedAt: null, autoResolved: false }),
+      ),
+    );
+    expect(rows[1]?.after).toEqual(JSON.parse(JSON.stringify(stored)));
   });
 });
 

@@ -1,8 +1,8 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import type { StatusVariant } from "@/components/common/status-dot";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
@@ -52,6 +52,7 @@ function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
 /** Sidebar item for monitors: worst status at a glance, the list on hover. */
 export function NavMonitorsItem() {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { data: monitors = [], isPending } = useQuery(
     trpc.monitor.list.queryOptions(),
   );
@@ -60,13 +61,18 @@ export function NavMonitorsItem() {
   const limitReached = workspace
     ? monitors.length >= workspace.limits.monitors
     : false;
-  useMaintenanceTick(
+  const boundary = useMaintenanceTick(
     monitors.flatMap((m) =>
       m.maintenance
         ? [{ from: m.maintenance.until, to: m.maintenance.until }]
         : [],
     ),
   );
+  // The client only knows the winning window; the server picks the next one.
+  useEffect(() => {
+    if (boundary === 0) return;
+    void queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
+  }, [boundary, queryClient, trpc]);
   const now = useNow(60_000);
 
   const rows = [...monitors]

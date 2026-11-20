@@ -116,6 +116,7 @@ test("resolveIncident auto-resolves, audits, and publishes one event per inciden
     ["monitor_incident.create", "checker"],
     ["monitor_incident.update", "checker"],
   ]);
+  expect(publishFn).toHaveBeenCalledTimes(1);
   expect(publishFn).toHaveBeenCalledWith(
     expect.objectContaining({
       action: "incident.resolved",

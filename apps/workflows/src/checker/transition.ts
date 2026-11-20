@@ -1,7 +1,8 @@
 import { getLogger } from "@logtape/logtape";
-import { type SQL, and, db, eq, inArray, sql } from "@openstatus/db";
+import { type SQL, and, db, eq, getTableColumns, sql } from "@openstatus/db";
 import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type {
+  MonitorIncident,
   NotificationOutboxPayload,
   MonitorStatus,
   NotificationProvider,
@@ -127,8 +128,32 @@ function journalStatement(
   `);
 }
 
+const incidentColumns = getTableColumns(monitorIncidentTable);
+type IncidentRow = Record<string, unknown>;
+
+// Every column under its property name, so the audit snapshot is the row the
+// batch itself wrote rather than a later read.
+const returningIncident = sql.join(
+  Object.entries(incidentColumns).map(
+    ([key, column]) =>
+      sql`${sql.identifier(column.name)} AS ${sql.identifier(key)}`,
+  ),
+  sql`, `,
+);
+
+// Safe because `returningIncident` selects every table column by property
+// name and each value is decoded by that column's own driver mapper.
+function toMonitorIncident(row: IncidentRow): MonitorIncident {
+  return Object.fromEntries(
+    Object.entries(incidentColumns).map(([key, column]) => {
+      const value = row[key];
+      return [key, value == null ? null : column.mapFromDriverValue(value)];
+    }),
+  ) as MonitorIncident;
+}
+
 function createIncidentStatement(input: TransitionInput, guard: SQL) {
-  return db.all<{ id: number }>(sql`
+  return db.all<IncidentRow>(sql`
     INSERT INTO ${monitorIncidentTable} (monitor_id, workspace_id, started_at)
     SELECT ${monitor.id}, ${monitor.workspaceId}, ${Math.floor(input.cronTimestamp / 1000)}
     FROM ${monitor}
@@ -140,12 +165,12 @@ function createIncidentStatement(input: TransitionInput, guard: SQL) {
         WHERE ${monitorIncidentTable.monitorId} = ${monitor.id}
           AND ${monitorIncidentTable.resolvedAt} IS NULL)
     ON CONFLICT DO NOTHING
-    RETURNING id
+    RETURNING ${returningIncident}
   `);
 }
 
 function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
-  return db.all<{ id: number }>(sql`
+  return db.all<IncidentRow>(sql`
     UPDATE ${monitorIncidentTable}
     SET resolved_at = ${Math.floor(input.cronTimestamp / 1000)}, auto_resolved = 1
     WHERE ${monitorIncidentTable.monitorId} = ${input.monitorId}
@@ -155,7 +180,7 @@ function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
         WHERE ${monitor.id} = ${input.monitorId}
           AND ${monitor.status} <> ${input.status}
           AND ${guard})
-    RETURNING id
+    RETURNING ${returningIncident}
   `);
 }
 
@@ -303,7 +328,7 @@ export async function evaluateTransition(
 
   let journalRows: JournalRow[];
   let outboxRows: OutboxInsertRow[];
-  let incidentRows: { id: number }[] = [];
+  let incidentRows: IncidentRow[] = [];
 
   // All three statuses enqueue notifications; only the incident statement moves.
   // The outbox row reads incident_id by subquery, so it must run after the
@@ -331,13 +356,14 @@ export async function evaluateTransition(
     incidentRows = incidentResult;
   }
 
+  const incidents = incidentRows.map(toMonitorIncident);
   const incidentCreatedId =
-    input.status === "error" ? (incidentRows[0]?.id ?? null) : null;
+    input.status === "error" ? (incidents[0]?.id ?? null) : null;
   const incidentResolvedIds =
-    input.status === "error" ? [] : incidentRows.map((row) => row.id);
+    input.status === "error" ? [] : incidents.map((row) => row.id);
 
   // Published here rather than in the route so drift repair keeps the trail too.
-  await publishIncidentAudit(input, incidentCreatedId, incidentResolvedIds);
+  await publishIncidentAudit(input, incidents);
 
   return {
     kind: "evaluated",
@@ -359,36 +385,27 @@ export async function evaluateTransition(
 
 async function publishIncidentAudit(
   input: TransitionInput,
-  createdId: number | null,
-  resolvedIds: number[],
+  incidents: MonitorIncident[],
 ): Promise<void> {
+  const created = input.status === "error";
   const targets = [{ id: String(input.monitorId), type: "monitor" as const }];
   const entries: Promise<unknown>[] = [];
 
-  if (createdId !== null) {
+  for (const incident of incidents) {
     entries.push(
       checkerAudit.publishAuditLog({
         id: `monitor:${input.monitorId}`,
-        action: "incident.created",
+        action: created ? "incident.created" : "incident.resolved",
         targets,
-        metadata: { cronTimestamp: input.cronTimestamp, incidentId: createdId },
+        metadata: {
+          cronTimestamp: input.cronTimestamp,
+          incidentId: incident.id,
+        },
       }),
     );
   }
 
-  for (const incidentId of resolvedIds) {
-    entries.push(
-      checkerAudit.publishAuditLog({
-        id: `monitor:${input.monitorId}`,
-        action: "incident.resolved",
-        targets,
-        metadata: { cronTimestamp: input.cronTimestamp, incidentId },
-      }),
-    );
-  }
-
-  const incidentIds = createdId !== null ? [createdId] : resolvedIds;
-  if (incidentIds.length > 0) entries.push(recordAudit(input, incidentIds));
+  if (incidents.length > 0) entries.push(recordAudit(created, incidents));
 
   // Best-effort: the incident is already committed, and failing here would make
   // Cloud Tasks retry a transition that has landed.
@@ -402,17 +419,12 @@ async function publishIncidentAudit(
   }
 }
 
-async function recordAudit(input: TransitionInput, incidentIds: number[]) {
-  // The batch returns raw ids; the audit snapshot wants the mapped rows.
-  const incidents = await db
-    .select()
-    .from(monitorIncidentTable)
-    .where(inArray(monitorIncidentTable.id, incidentIds));
+async function recordAudit(created: boolean, incidents: MonitorIncident[]) {
   const workspaceId = incidents[0]?.workspaceId;
   if (workspaceId == null) return;
   await recordMonitorIncidentAudit({
     ctx: await systemContext(workspaceId, "checker"),
-    transition: input.status === "error" ? "created" : "auto_resolved",
+    transition: created ? "created" : "auto_resolved",
     incidents,
   });
 }

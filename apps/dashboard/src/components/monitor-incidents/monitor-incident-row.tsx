@@ -1,6 +1,11 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 
 import { StatusBars } from "@/components/common/status-bars";
 import type { StatusVariant } from "@/components/common/status-dot";
@@ -101,13 +106,11 @@ export function MonitorIncidentRow({
       <EventRowDate date={startedAt} />
       <EventRowStatus>
         <StatusBars level={level} variant={variant} />
-        <span>
-          {excused
-            ? "Excused"
-            : kind
-              ? "Downtime"
-              : incidentStatusConfig[status].label}
-        </span>
+        {excused ? (
+          <ExcusedLabel incident={incident} />
+        ) : (
+          <span>{kind ? "Downtime" : incidentStatusConfig[status].label}</span>
+        )}
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
@@ -145,5 +148,26 @@ export function MonitorIncidentRow({
         <IncidentRowActions incident={incident} />
       </EventRowMenu>
     </EventRow>
+  );
+}
+
+// The meta line folds away on narrow rows, so the reason has to be reachable here.
+function ExcusedLabel({ incident }: { incident: MonitorIncident }) {
+  const by = incident.excusedByUser?.name;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          tabIndex={0}
+          className="decoration-muted-foreground/50 focus-visible:ring-ring/50 relative z-10 underline decoration-dashed underline-offset-2 outline-none focus-visible:ring-[3px]"
+        >
+          Excused
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <p className="font-medium">{by ? `Excused by ${by}` : "Excused"}</p>
+        <p className="whitespace-pre-wrap">{incident.excusedReason}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
