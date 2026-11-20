@@ -1,9 +1,6 @@
 import { ChevronDown, ChevronUp } from "@openstatus/icons";
-import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
 import type React from "react";
 
 export type MetricStatus = "success" | "warning" | "destructive" | "info";
@@ -199,24 +196,13 @@ export function MetricStripAside({
   );
 }
 
-const badgeVariants = cva("ml-1.5 px-1.5 align-middle font-mono text-[10px]", {
-  variants: {
-    variant: {
-      increase:
-        "border-destructive/20 bg-destructive/10 hover:bg-destructive/10 text-destructive",
-      decrease:
-        "border-success/20 bg-success/10 hover:bg-success/10 text-success",
-    },
-  },
-});
-
 /** Trend against the previous period; `value` is the ratio. Nothing at 0%. */
-export function MetricStripBadge({
+export function MetricStripTrend({
   value,
   decimal = 1,
   className,
   ...props
-}: React.ComponentProps<typeof Badge> & {
+}: Omit<React.ComponentProps<"span">, "children"> & {
   value: number;
   decimal?: number;
 }) {
@@ -225,25 +211,24 @@ export function MetricStripBadge({
 
   if (percentage === 0) return null;
 
-  const variant: VariantProps<typeof badgeVariants>["variant"] =
-    percentage > 0 ? "increase" : "decrease";
+  const Icon = percentage > 0 ? ChevronUp : ChevronDown;
 
   return (
-    <Badge
-      data-slot="metric-strip-badge"
-      variant="secondary"
-      className={badgeVariants({ variant, className })}
+    <span
+      data-slot="metric-strip-trend"
+      className={cn(
+        "ml-1.5 text-xs font-normal whitespace-nowrap",
+        percentage > 0 ? "text-destructive" : "text-success",
+        className,
+      )}
       {...props}
     >
-      <span>
-        {percentage > 0 ? (
-          <ChevronUp className="mr-px size-2.5" />
-        ) : (
-          <ChevronDown className="mr-px size-2.5" />
-        )}
-      </span>
+      <Icon
+        aria-hidden
+        className="mr-px inline-block size-3 align-[-0.125em]"
+      />
       {Math.abs(percentage)}%
-    </Badge>
+    </span>
   );
 }
 

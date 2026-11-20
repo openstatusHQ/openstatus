@@ -6,7 +6,7 @@ import { formatDistanceToNowStrict } from "date-fns";
 import {
   type MetricStatus,
   MetricStrip,
-  MetricStripBadge,
+  MetricStripTrend,
   MetricStripItem,
   MetricStripLabel,
   MetricStripRow,
@@ -173,7 +173,7 @@ export function GlobalUptimeSection({
                     {value}
                     {unit ? <MetricStripUnit>{unit}</MetricStripUnit> : null}
                     {metric.trend ? (
-                      <MetricStripBadge value={metric.trend} />
+                      <MetricStripTrend value={metric.trend} />
                     ) : null}
                   </MetricStripValue>
                 )}
