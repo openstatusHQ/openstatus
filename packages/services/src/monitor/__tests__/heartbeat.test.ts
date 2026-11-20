@@ -622,6 +622,72 @@ describe("recordHeartbeatPing", () => {
   });
 });
 
+describe("recordHeartbeatPing first ping", () => {
+  test("stamps the first ping once and keeps it on later pings", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      const token = row.heartbeatToken ?? "";
+      const first = new Date("2026-01-01T00:00:00.000Z");
+      const later = new Date("2026-01-03T00:00:00.000Z");
+
+      await recordHeartbeatPing({ token, at: first, db: tx });
+      await recordHeartbeatPing({ token, at: later, db: tx });
+
+      const state = await readState(tx, row.id);
+      expect(state?.firstPingAt?.getTime()).toBe(first.getTime());
+      expect(state?.lastPingAt?.getTime()).toBe(later.getTime());
+    });
+  });
+
+  test("stamps a row that exists but never pinged", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      await tx
+        .insert(monitorHeartbeatState)
+        .values({ monitorId: row.id })
+        .onConflictDoNothing();
+      const at = new Date("2026-01-01T00:00:00.000Z");
+
+      await recordHeartbeatPing({
+        token: row.heartbeatToken ?? "",
+        at,
+        db: tx,
+      });
+
+      expect((await readState(tx, row.id))?.firstPingAt?.getTime()).toBe(
+        at.getTime(),
+      );
+    });
+  });
+
+  test("leaves a row from before the column for the backfill", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHeartbeat(tx);
+      await tx
+        .insert(monitorHeartbeatState)
+        .values({
+          monitorId: row.id,
+          lastPingAt: new Date("2025-12-01T00:00:00.000Z"),
+        })
+        .onConflictDoUpdate({
+          target: monitorHeartbeatState.monitorId,
+          set: {
+            lastPingAt: new Date("2025-12-01T00:00:00.000Z"),
+            firstPingAt: null,
+          },
+        });
+
+      await recordHeartbeatPing({
+        token: row.heartbeatToken ?? "",
+        at: new Date("2026-01-01T00:00:00.000Z"),
+        db: tx,
+      });
+
+      expect((await readState(tx, row.id))?.firstPingAt).toBeNull();
+    });
+  });
+});
+
 describe("triggerMonitorRun (heartbeat)", () => {
   test("is rejected", async () => {
     await withTestTransaction(async (tx) => {

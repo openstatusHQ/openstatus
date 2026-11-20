@@ -127,6 +127,10 @@ describe("createCloudTasks", () => {
 
       const request = requests[0]?.task?.httpRequest;
       expect(request?.url).toContain(provider);
+      expect(request?.headers).toMatchObject({
+        [provider === "koyeb" ? "X-KOYEB-REGION-OVERRIDE" : "railway-region"]:
+          region.replace(`${provider}_`, ""),
+      });
       expect(request?.headers).not.toHaveProperty("fly-prefer-region");
     },
   );

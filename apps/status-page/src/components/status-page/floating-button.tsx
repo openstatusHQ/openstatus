@@ -317,7 +317,8 @@ export function FloatingButton({
               {cardType === "runs" && barType === "absolute" ? (
                 <p className="text-muted-foreground col-span-2 text-xs">
                   Each scheduled check counts once and fails only when at least
-                  half of its cloud regions fail.
+                  half of the cloud regions that reported fail. Heartbeat and
+                  private-location-only monitors keep counting requests.
                 </p>
               ) : null}
               <div className="space-y-2">

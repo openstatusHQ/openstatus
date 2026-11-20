@@ -16,7 +16,11 @@ import {
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { drainOutbox } from "./outbox";
-import { applyStatusTransition, isStaleCheck } from "./transition";
+import {
+  applyStatusTransition,
+  evaluateTransition,
+  isStaleCheck,
+} from "./transition";
 
 const REGIONS = ["ams", "arn", "atl", "bog", "bom", "bos"] as const;
 const DEADLINE_SECONDS = 300;
@@ -137,10 +141,20 @@ describe("a result that was queued before the monitor stopped", () => {
     const { monitorId, regions } = await makeMonitor(1);
     await db.update(monitor).set(change).where(eq(monitor.id, monitorId)).run();
 
-    const result = await applyStatusTransition(
-      transitionInput(monitorId, regions[0], Date.now()),
-    );
+    const input = transitionInput(monitorId, regions[0], Date.now());
 
+    // the region row is not written, so nothing is left for a resume to trip on
+    expect(await applyStatusTransition(input)).toEqual({ kind: "unchanged" });
+    const regionRows = await db
+      .select()
+      .from(monitorStatusTable)
+      .where(eq(monitorStatusTable.monitorId, monitorId))
+      .all();
+    expect(regionRows).toEqual([]);
+
+    // and the transition itself is guarded, for a region row written earlier
+    await seedRegionStatus(monitorId, regions, "error");
+    const result = await evaluateTransition(input);
     expect(result.kind).toBe("evaluated");
     if (result.kind !== "evaluated") return;
     expect(result.transitioned).toBe(false);
@@ -298,7 +312,7 @@ describe("recovery", () => {
     const opened = await applyStatusTransition(
       transitionInput(monitorId, regions[0], down),
     );
-    await applyStatusTransition({
+    const recovered = await applyStatusTransition({
       monitorId,
       region: regions[0],
       status: "active",
@@ -308,6 +322,13 @@ describe("recovery", () => {
     });
 
     if (opened.kind !== "evaluated") throw new Error("expected a transition");
+    // pinned so a missing audit row can be told apart from a missing recovery
+    expect(opened.incidentCreatedId).not.toBeNull();
+    expect(recovered).toMatchObject({
+      kind: "evaluated",
+      transitioned: true,
+      incidentResolvedIds: [opened.incidentCreatedId],
+    });
     const rows = await db
       .select()
       .from(auditLog)

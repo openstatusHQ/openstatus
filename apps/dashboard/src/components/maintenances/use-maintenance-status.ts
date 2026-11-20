@@ -22,7 +22,9 @@ export function useMaintenanceTick(maintenances: { from: Date; to: Date }[]) {
   // tick re-arms a timer capped at MAX_DELAY, which fires before `next` moves
   useEffect(() => {
     if (next === Number.POSITIVE_INFINITY) return;
-    const timer = setTimeout(rerender, Math.min(next - Date.now(), MAX_DELAY));
+    // 1 ms past the boundary: firing exactly on it would still read the old state
+    const delay = Math.min(next - Date.now() + 1, MAX_DELAY);
+    const timer = setTimeout(rerender, delay);
     return () => clearTimeout(timer);
   }, [next, tick]);
   return tick;

@@ -324,4 +324,82 @@ describe("getMonitorReport", () => {
       expect((await report()).availability).toBe(100);
     });
   });
+
+  describe("heartbeat coverage", () => {
+    const reportFor = async (
+      tx: DrizzleTx,
+      state: { firstPingAt: Date | null; lastPingAt: Date },
+      outages: Array<[Date, Date]> = [],
+    ) => {
+      const heartbeat = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: ctx.workspace.id,
+          active: true,
+          url: "",
+          name: "svc-report-test-heartbeat-coverage",
+          jobType: "heartbeat",
+          periodicity: "10m",
+          regions: "",
+          createdAt,
+        })
+        .returning()
+        .get();
+      await tx
+        .insert(monitorHeartbeatState)
+        .values({ monitorId: heartbeat.id, ...state });
+      for (const [startedAt, resolvedAt] of outages) {
+        await tx.insert(monitorIncidentTable).values({
+          workspaceId: ctx.workspace.id,
+          monitorId: heartbeat.id,
+          startedAt,
+          resolvedAt,
+        });
+      }
+      return getMonitorReport({
+        ctx: { ...ctx, db: tx },
+        input: { monitorId: heartbeat.id, ...feb },
+        now: new Date(Date.UTC(2026, 2, 5)),
+      });
+    };
+    const lastPingAt = new Date(Date.UTC(2026, 1, 20));
+
+    test("starts on the day of the first ping, not at creation", async () => {
+      await withTestTransaction(async (tx) => {
+        const report = await reportFor(
+          tx,
+          { firstPingAt: new Date(Date.UTC(2026, 1, 10, 13, 30)), lastPingAt },
+          [[new Date(Date.UTC(2026, 1, 15)), new Date(Date.UTC(2026, 1, 16))]],
+        );
+
+        expect(report.window).toEqual({
+          from: new Date(Date.UTC(2026, 1, 10)),
+          to: new Date(Date.UTC(2026, 2, 1)),
+        });
+        // one day down out of the 19 measured, not out of 28
+        expect(report.availability).toBe(94.736);
+      });
+    });
+
+    test("an outage before the first ping pulls the start back", async () => {
+      await withTestTransaction(async (tx) => {
+        const report = await reportFor(
+          tx,
+          { firstPingAt: new Date(Date.UTC(2026, 1, 10)), lastPingAt },
+          [[new Date(Date.UTC(2026, 1, 5)), new Date(Date.UTC(2026, 1, 6))]],
+        );
+
+        expect(report.window.from).toEqual(new Date(Date.UTC(2026, 1, 5)));
+      });
+    });
+
+    test("a row without a first ping keeps the creation date", async () => {
+      await withTestTransaction(async (tx) => {
+        const report = await reportFor(tx, { firstPingAt: null, lastPingAt });
+
+        expect(report.window.from).toEqual(new Date(Date.UTC(2026, 1, 1)));
+        expect(report.availability).toBe(100);
+      });
+    });
+  });
 });

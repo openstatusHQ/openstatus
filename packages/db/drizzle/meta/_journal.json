@@ -687,6 +687,13 @@
       "when": 1795035327138,
       "tag": "0097_woozy_molten_man",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "6",
+      "when": 1795169376119,
+      "tag": "0098_needy_fantastic_four",
+      "breakpoints": true
     }
   ]
 }

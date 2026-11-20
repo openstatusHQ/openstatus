@@ -138,6 +138,15 @@ describe("maintenance windows", () => {
         input: { id: window.id },
       });
       expect(got.monitorIds).toEqual([own.id]);
+
+      const byMonitor = (monitorId: number) =>
+        listMaintenanceWindows({
+          ctx: { ...ctx, db: tx },
+          input: { monitorId },
+        }).then((rows) => rows.map((row) => row.id));
+      expect(await byMonitor(own.id)).toEqual([window.id]);
+      expect(await byMonitor(gone.id)).toEqual([]);
+      expect(await byMonitor(foreign.id)).toEqual([]);
     });
   });
 

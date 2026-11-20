@@ -249,7 +249,12 @@ export async function applyStatusTransition(
     db.all<{ region: string }>(sql`
       INSERT INTO ${monitorStatusTable}
         (monitor_id, region, status, cron_timestamp, updated_at)
-      VALUES (${input.monitorId}, ${input.region}, ${input.status}, ${input.cronTimestamp}, unixepoch())
+      -- a result queued before a pause or delete must not outlive the reset
+      SELECT ${monitor.id}, ${input.region}, ${input.status}, ${input.cronTimestamp}, unixepoch()
+      FROM ${monitor}
+      WHERE ${monitor.id} = ${input.monitorId}
+        AND ${monitor.active} = 1
+        AND ${monitor.deletedAt} IS NULL
       ON CONFLICT (monitor_id, region) DO UPDATE
         SET status = excluded.status,
             cron_timestamp = excluded.cron_timestamp,

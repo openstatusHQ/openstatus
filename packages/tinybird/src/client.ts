@@ -348,8 +348,9 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
-// days back from today; the views keep 76, readers default to 45 in the pipe
-const windowDays = z.int().min(1).max(76).optional();
+// days back from today, 45 by default in the pipe. The views keep 76 UTC days
+// counting today, and a reader's time zone can shift the window one more.
+const windowDays = z.int().min(1).max(74).optional();
 
 export const status45dParameters = z.object({
   monitorIds: z.string().array(),

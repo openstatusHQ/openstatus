@@ -48,7 +48,7 @@ export const UPTIME_MODES: {
     value: "runs",
     label: configurationLabels.value.runs,
     meaning:
-      "Each scheduled check counts once. It is down when half its cloud regions fail.",
+      "Each scheduled check counts once. It is down when half the cloud regions that reported fail.",
   },
   {
     value: "duration",
@@ -63,7 +63,7 @@ export const UPTIME_MODES: {
 ];
 
 const HEARTBEAT =
-  "Time since the first ping, minus outages and impact-weighted status reports. Excused outages count as up.";
+  "Time since the day of the first ping, minus outages and impact-weighted status reports. Excused outages count as up.";
 const STATIC = "Time minus impact-weighted status reports.";
 
 export const COMPONENT_RULES: Record<
@@ -105,7 +105,7 @@ export const COMPONENT_RULES: Record<
     },
     {
       label: "Heartbeat monitor",
-      rule: "Time since the first ping, minus impact-weighted status reports.",
+      rule: "Time since the day of the first ping, minus impact-weighted status reports.",
     },
     { label: "Static", rule: STATIC },
   ],

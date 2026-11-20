@@ -6,6 +6,7 @@ import {
   gt,
   isNull,
   lt,
+  min,
   or,
 } from "@openstatus/db";
 import {
@@ -14,7 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import type { ServiceContext } from "../context";
+import type { DB, ServiceContext } from "../context";
 import { ValidationError } from "../errors";
 import { splitByMonth } from "../frozen-uptime/months";
 import { getMonitorInWorkspace } from "../monitor/internal";
@@ -34,7 +35,7 @@ export type MonitorReportMonth = {
 };
 
 export type MonitorReport = {
-  /** [from, to): the period clipped to the monitor's creation and now */
+  /** [from, to): the period clipped to when the monitor was first measured and now */
   window: { from: Date; to: Date };
   /** thousandths of a percent; null when the window is empty */
   availability: number | null;
@@ -51,6 +52,26 @@ export type MonitorReport = {
 
 function ratio(spanMs: number, downMs: number): number {
   return floorPct((spanMs - downMs) / spanMs);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Same rule as `heartbeatCoverageStart` on the status page: the UTC day of the
+ * first ping, or the first outage if that is earlier.
+ */
+async function heartbeatMeasuredFrom(
+  db: DB,
+  monitorId: number,
+  firstPingAt: Date,
+): Promise<number> {
+  const firstDay = Math.floor(firstPingAt.getTime() / DAY_MS) * DAY_MS;
+  const first = await db
+    .select({ startedAt: min(monitorIncidentTable.startedAt) })
+    .from(monitorIncidentTable)
+    .where(eq(monitorIncidentTable.monitorId, monitorId))
+    .get();
+  return Math.min(firstDay, first?.startedAt?.getTime() ?? firstDay);
 }
 
 /** Outage-based availability of one monitor over a period; excused outages count as up. */
@@ -74,20 +95,26 @@ export async function getMonitorReport(args: {
     workspaceId: ctx.workspace.id,
   });
 
-  const start = Math.max(
-    input.from.getTime(),
-    record.createdAt?.getTime() ?? input.from.getTime(),
-  );
+  const heartbeat =
+    record.jobType === "heartbeat"
+      ? await db
+          .select({
+            lastPingAt: monitorHeartbeatState.lastPingAt,
+            firstPingAt: monitorHeartbeatState.firstPingAt,
+          })
+          .from(monitorHeartbeatState)
+          .where(eq(monitorHeartbeatState.monitorId, record.id))
+          .get()
+      : undefined;
+  const measuredFrom =
+    (heartbeat?.firstPingAt
+      ? await heartbeatMeasuredFrom(db, record.id, heartbeat.firstPingAt)
+      : null) ??
+    record.createdAt?.getTime() ??
+    input.from.getTime();
+  const start = Math.max(input.from.getTime(), measuredFrom);
   // a heartbeat that never pinged was never measured: no data, not 100%
-  const neverPinged =
-    record.jobType === "heartbeat" &&
-    !(
-      await db
-        .select({ lastPingAt: monitorHeartbeatState.lastPingAt })
-        .from(monitorHeartbeatState)
-        .where(eq(monitorHeartbeatState.monitorId, record.id))
-        .get()
-    )?.lastPingAt;
+  const neverPinged = record.jobType === "heartbeat" && !heartbeat?.lastPingAt;
   const end = neverPinged ? start : Math.min(input.to.getTime(), nowMs);
   const window = { start, end: Math.max(start, end), now: nowMs };
 

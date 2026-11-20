@@ -36,7 +36,7 @@ import {
 import { applyStatusTransition } from "../checker/transition";
 import { providerToFunction } from "../checker/utils";
 import { stubPublishAuditLog } from "../test/stub-audit-log";
-import { handleStatusDriftCron } from "./status-drift";
+import { repairStatusDrift } from "./status-drift";
 
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
 type AnyStub = MockInstance;
@@ -85,7 +85,7 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
-describe("handleStatusDriftCron", () => {
+describe("repairStatusDrift", () => {
   test("re-evaluates a monitor whose region write landed without its transition", async () => {
     const monitorRow = await createMonitor(workspaceId, {
       regions: "ams",
@@ -125,7 +125,7 @@ describe("handleStatusDriftCron", () => {
       .all();
     expect(beforeRepair[0]?.status).toBe("active");
 
-    const result = await handleStatusDriftCron();
+    const result = await repairStatusDrift(workspaceId);
     expect(result.repaired).toBeGreaterThanOrEqual(1);
 
     const afterRepair = await db
@@ -171,7 +171,7 @@ describe("handleStatusDriftCron", () => {
       })
       .run();
 
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
 
     const after = await db
       .select({ status: monitor.status })
@@ -197,7 +197,7 @@ describe("handleStatusDriftCron", () => {
       })
       .run();
 
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
 
     const after = await db
       .select({ status: monitor.status })
@@ -223,7 +223,7 @@ describe("handleStatusDriftCron", () => {
       })
       .run();
 
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
 
     const after = await db
       .select({ status: monitor.status })
@@ -265,7 +265,7 @@ describe("drift repair delivery", () => {
 
     // OUTBOX_ROLLOUT_PCT defaults to 0, so the repair must fall back to the
     // inline sender rather than writing a row nobody delivers.
-    const result = await handleStatusDriftCron();
+    const result = await repairStatusDrift(workspaceId);
     expect(result.repaired).toBeGreaterThanOrEqual(1);
     expect(sent.length).toBeGreaterThanOrEqual(1);
   });
@@ -313,7 +313,7 @@ describe("drift repair during maintenance", () => {
         ...range(),
       });
 
-      await handleStatusDriftCron();
+      await repairStatusDrift(workspaceId);
 
       expect(await statusOf(row.id)).toBe("active");
     },
@@ -340,7 +340,7 @@ describe("drift repair during maintenance", () => {
       ...range(),
     });
 
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
 
     expect(await statusOf(row.id)).toBe("active");
   });
@@ -353,7 +353,7 @@ describe("drift repair during maintenance", () => {
       ...range(),
     });
 
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
 
     expect(await statusOf(row.id)).toBe("error");
   });
@@ -374,7 +374,7 @@ describe("pausing a failing monitor", () => {
         cronTimestamp: Date.now(),
       })
       .run();
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
 
     const openIncidents = () =>
       db
@@ -401,7 +401,7 @@ describe("pausing a failing monitor", () => {
       input: { id: monitorRow.id, active: true },
     });
     // the pause cleared the stale region failure: no outage without a check
-    await handleStatusDriftCron();
+    await repairStatusDrift(workspaceId);
     expect(await openIncidents()).toHaveLength(0);
 
     // A new outage cannot share the first one's (monitor_id, started_at) second.

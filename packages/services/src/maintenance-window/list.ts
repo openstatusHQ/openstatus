@@ -103,6 +103,16 @@ export async function listMaintenanceWindows(args: {
                   id: monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
                 })
                 .from(monitorMaintenanceWindowToMonitor)
+                // same live-monitor rule as `enrich`, or the filter matches a
+                // window whose response no longer lists that monitor
+                .innerJoin(
+                  monitor,
+                  and(
+                    eq(monitor.id, monitorMaintenanceWindowToMonitor.monitorId),
+                    eq(monitor.workspaceId, ctx.workspace.id),
+                    isNull(monitor.deletedAt),
+                  ),
+                )
                 .where(
                   eq(
                     monitorMaintenanceWindowToMonitor.monitorId,

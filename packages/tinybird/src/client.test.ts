@@ -304,15 +304,15 @@ describe.each([
     ).toStrictEqual({ monitorIds: ["1", "666"] });
   });
 
-  test("passes a window of up to the 76-day retention", () => {
-    expect(schema.parse({ monitorIds: ["1"], days: 76 })).toEqual({
+  test("passes a window the 76-day retention still covers", () => {
+    expect(schema.parse({ monitorIds: ["1"], days: 74 })).toEqual({
       monitorIds: ["1"],
-      days: 76,
+      days: 74,
     });
   });
 
-  test("rejects a window outside 1..76 days", () => {
-    for (const days of [0, 77, 1.5]) {
+  test("rejects a window outside 1..74 days", () => {
+    for (const days of [0, 75, 77, 1.5]) {
       expect(schema.safeParse({ monitorIds: ["1"], days }).success).toBe(false);
     }
   });

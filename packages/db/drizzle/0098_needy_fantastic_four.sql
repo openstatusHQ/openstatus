@@ -1,0 +1,1 @@
+ALTER TABLE `monitor_heartbeat_state` ADD `first_ping_at` integer;

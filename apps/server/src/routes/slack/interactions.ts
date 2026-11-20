@@ -84,7 +84,7 @@ const logger = getLogger("api-server");
 
 interface SlackInteractionPayload {
   type: string;
-  user: { id: string };
+  user: { id: string; team_id?: string };
   channel: { id: string };
   message: { ts: string };
   team?: { id: string };
@@ -96,7 +96,7 @@ async function processIncidentBind(payload: SlackInteractionPayload) {
   const incidentId = Number(
     action.action_id.slice(INCIDENT_BIND_ACTION_PREFIX.length),
   );
-  const teamId = payload.team?.id;
+  const teamId = payload.team?.id ?? payload.user.team_id;
   if (!teamId || !Number.isInteger(incidentId)) return;
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) return;
@@ -461,7 +461,7 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
   }
 
   if (payload.actions[0].action_id === INCIDENT_RELINK_ACTION) {
-    const teamId = payload.team?.id;
+    const teamId = payload.team?.id ?? payload.user.team_id;
     if (teamId) {
       runInBackground(
         "incident-relink",
@@ -485,7 +485,7 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
   }
 
   if (payload.actions[0].action_id === INCIDENT_CARD_ACTIONS.acknowledge) {
-    const teamId = payload.team?.id;
+    const teamId = payload.team?.id ?? payload.user.team_id;
     const incidentId = Number(payload.actions[0].value);
     if (teamId && Number.isInteger(incidentId)) {
       runInBackground(

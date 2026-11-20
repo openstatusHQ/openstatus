@@ -152,8 +152,9 @@ quarter-hours as ranges `[firstBucket, count, degraded, error]` (buckets 0..95,
 - **All or nothing.** `attachBadRanges` (`frozen-uptime/compute.ts`) sets `15`
   only when, for every day of the month, the ranges sum exactly to that day's
   degraded and error counts. One day off and the whole row keeps `NULL`, with a
-  "bad ranges do not match the day counts" warning. Every writer of this column goes through that
-  check.
+  "bad ranges do not match the day counts" warning. The freeze run and the
+  backfill go through that check; `freezeMonitorMonth` itself writes what it is
+  given, so a new caller must do the same.
 - **Only `15` rows can leave UTC.** `toLocalDays` (`frozen-uptime/buckets.ts`)
   regroups a `15` row into the page time zone; a `NULL` row comes back as UTC
   days and its month is listed in `utcOnlyMonths`, which the dashboard labels

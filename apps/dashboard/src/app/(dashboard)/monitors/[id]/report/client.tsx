@@ -73,6 +73,7 @@ import {
   reportRange,
 } from "@/data/monitor-report.client";
 import { exampleUptimeCounts } from "@/data/uptime-history.client";
+import { useNow } from "@/hooks/use-now";
 import { usePaged } from "@/hooks/use-paged";
 import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
@@ -87,9 +88,12 @@ export function Client() {
   const [{ period, from, to, metric: requestedMetric }, setSearchParams] =
     useQueryStates(searchParamsParsers);
 
+  // recomputed when the UTC month rolls over under an open tab
+  const now = useNow(60_000);
+  const utcMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
   const range = useMemo(
     () => reportRange({ period, from, to }, new Date()),
-    [period, from, to],
+    [period, from, to, utcMonth],
   );
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -114,7 +118,7 @@ export function Client() {
   const resolved = incidents.filter((i) => i.resolvedAt);
   const paged = usePaged(resolved);
 
-  const presets = useMemo(() => reportPresets(new Date()), []);
+  const presets = useMemo(() => reportPresets(new Date()), [utcMonth]);
 
   if (!workspace || !monitor || !report) return null;
 

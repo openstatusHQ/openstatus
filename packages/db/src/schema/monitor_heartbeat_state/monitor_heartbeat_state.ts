@@ -13,6 +13,8 @@ export const monitorHeartbeatState = sqliteTable(
       .primaryKey()
       .references(() => monitor.id, { onDelete: "cascade" }),
     lastPingAt: integer("last_ping_at", { mode: "timestamp_ms" }),
+    // uptime is measured from here; NULL on rows that pinged before the column existed
+    firstPingAt: integer("first_ping_at", { mode: "timestamp_ms" }),
     // what the last ping reported: a `/fail` keeps the heartbeat down until a success ping
     lastPingKind: text("last_ping_kind", { enum: heartbeatPingKinds })
       .notNull()
