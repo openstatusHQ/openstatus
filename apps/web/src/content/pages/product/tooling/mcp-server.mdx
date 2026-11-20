@@ -32,20 +32,25 @@ Add the URL as a custom connector in Claude, ChatGPT, or Cursor, or run `claude 
 
 ## What you can do
 
-The server exposes **46 workspace tools**, four public content tools and a feedback tool, grouped by entity:
+The server exposes **46 workspace tools**, grouped by entity. Read tools work with **Read only** access; write tools need **Read & write**.
 
-- **Status pages** — `list_status_pages` · `list_page_components` · `create_status_page` · `update_status_page` · `add_page_component` · `update_page_component` · `create_component_group` · `update_component_group`
-- **Status reports** — `list_status_reports` · `get_status_report` · `create_status_report` · `add_status_report_update` · `update_status_report` · `resolve_status_report` · `update_status_report_update` · `delete_status_report_update`
-- **Maintenance** — `list_maintenances` · `get_maintenance` · `create_maintenance` · `update_maintenance` · `add_maintenance_update` · `update_maintenance_update` · `delete_maintenance_update`
-- **Incidents** — `list_incidents` · `get_incident` · `declare_incident` · `update_incident` · `set_incident_status` · `resolve_incident` · `add_incident_note` · `get_postmortem` · `draft_postmortem` · `approve_postmortem`
-- **Monitors** — `list_monitors` · `get_monitor` · `get_monitor_status` · `get_monitor_summary` · `create_monitor` · `update_monitor`
-- **Response logs** — `list_response_logs` · `get_response_log`
-- **Notifications** — `list_notifications`
-- **Private locations** — `list_private_locations`
-- **Workspace** — `get_workspace`
-- **Audit log** *(workspaces on the audit-log plan only)* — `list_audit_logs` · `get_audit_log`
-- **Content** *(public openstatus.dev pages)* — `search_docs` · `get_doc_page` · `search_content` · `get_content_page`
-- **Feedback** *(goes to the openstatus team, changes nothing in the workspace)* — `submit_feedback`
+| Area              | Read                                                                               | Write                                                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status pages      | `list_status_pages` `list_page_components`                                         | `create_status_page` `update_status_page` `add_page_component` `update_page_component` `create_component_group` `update_component_group`                                                                          |
+| Status reports    | `list_status_reports` `get_status_report`                                          | `create_status_report` `add_status_report_update` `update_status_report` `resolve_status_report` `update_status_report_update` `delete_status_report_update`                                                      |
+| Maintenance       | `list_maintenances` `get_maintenance`                                              | `create_maintenance` `update_maintenance` `add_maintenance_update` `update_maintenance_update` `delete_maintenance_update`                                                                                        |
+| Incidents         | `list_incidents` `get_incident` `get_postmortem`                                   | `declare_incident` `update_incident` `set_incident_status` `resolve_incident` `add_incident_note` `draft_postmortem` `approve_postmortem`                                                                         |
+| Monitors          | `list_monitors` `get_monitor` `get_monitor_status` `get_monitor_summary`           | `create_monitor` `update_monitor`                                                                                                                                                                                 |
+| Response logs     | `list_response_logs` `get_response_log`                                            |                                                                                                                                                                                                                   |
+| Notifications     | `list_notifications`                                                               |                                                                                                                                                                                                                   |
+| Private locations | `list_private_locations`                                                           |                                                                                                                                                                                                                   |
+| Workspace         | `get_workspace`                                                                    |                                                                                                                                                                                                                   |
+| Audit log         | `list_audit_logs` `get_audit_log` _(workspaces on the audit-log plan only)_        |                                                                                                                                                                                                                   |
+
+Every connection also gets five tools that touch nothing in the workspace:
+
+- **Content** — `search_docs` · `get_doc_page` · `search_content` · `get_content_page` read the public openstatus.dev pages.
+- **Feedback** — `submit_feedback` goes to the openstatus team.
 
 The four **publishing** tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) require `notify: true | false` — the assistant must explicitly choose whether to notify subscribers, so an LLM cannot quietly fan out an alert. `update_status_report` is metadata-only and cannot notify.
 
