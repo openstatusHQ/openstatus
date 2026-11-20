@@ -166,7 +166,9 @@ function ExcusedLabel({ incident }: { incident: MonitorIncident }) {
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
         <p className="font-medium">{by ? `Excused by ${by}` : "Excused"}</p>
-        <p className="whitespace-pre-wrap">{incident.excusedReason}</p>
+        <p className="break-words whitespace-pre-wrap">
+          {incident.excusedReason}
+        </p>
       </TooltipContent>
     </Tooltip>
   );
