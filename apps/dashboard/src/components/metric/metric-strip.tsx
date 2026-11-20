@@ -26,7 +26,7 @@ export function MetricStrip({
     <div
       data-slot="metric-strip"
       className={cn(
-        "border-input bg-border text-card-foreground @container grid gap-px overflow-hidden rounded-lg border",
+        "bg-border text-card-foreground @container grid gap-px overflow-hidden rounded-lg border",
         className,
       )}
       {...props}
@@ -69,14 +69,15 @@ export function MetricStripRow({
   );
 }
 
-// the fill is a variable so hover and pressed can replace it whatever the status
+// a status tint outranks the plain fill, so hover and pressed deepen it instead of greying it
 const itemClassName = cn(
-  "group/metric-strip-item flex min-w-0 items-center justify-between gap-3 bg-(--metric-strip-fill,var(--color-card)) px-3 py-2.5",
+  "group/metric-strip-item flex min-w-0 items-center justify-between gap-3 bg-(--metric-strip-tint,var(--metric-strip-fill,var(--color-card))) px-3 py-2.5",
+  "[--metric-strip-mix:10%]",
   "@3xl:flex-col @3xl:items-start @3xl:justify-start @3xl:gap-1 @3xl:py-2",
-  "data-[active=true]:data-[status=success]:[--metric-strip-fill:color-mix(in_oklab,var(--color-success)_10%,var(--color-card))]",
-  "data-[active=true]:data-[status=warning]:[--metric-strip-fill:color-mix(in_oklab,var(--color-warning)_10%,var(--color-card))]",
-  "data-[active=true]:data-[status=destructive]:[--metric-strip-fill:color-mix(in_oklab,var(--color-destructive)_10%,var(--color-card))]",
-  "data-[active=true]:data-[status=info]:[--metric-strip-fill:color-mix(in_oklab,var(--color-info)_10%,var(--color-card))]",
+  "data-[active=true]:data-[status=success]:[--metric-strip-tint:color-mix(in_oklab,var(--color-success)_var(--metric-strip-mix),var(--color-card))]",
+  "data-[active=true]:data-[status=warning]:[--metric-strip-tint:color-mix(in_oklab,var(--color-warning)_var(--metric-strip-mix),var(--color-card))]",
+  "data-[active=true]:data-[status=destructive]:[--metric-strip-tint:color-mix(in_oklab,var(--color-destructive)_var(--metric-strip-mix),var(--color-card))]",
+  "data-[active=true]:data-[status=info]:[--metric-strip-tint:color-mix(in_oklab,var(--color-info)_var(--metric-strip-mix),var(--color-card))]",
 );
 
 export function MetricStripItem({
@@ -111,8 +112,9 @@ export function MetricStripButton({
       data-active={active}
       className={cn(
         itemClassName,
-        "hover:bg-muted aria-pressed:bg-muted cursor-pointer text-left transition-colors outline-none",
-        "aria-pressed:shadow-[inset_0_-2px_0_0_var(--color-foreground)]",
+        "cursor-pointer text-left transition-colors outline-none",
+        "hover:[--metric-strip-fill:var(--color-muted)] aria-pressed:[--metric-strip-fill:var(--color-muted)]",
+        "hover:[--metric-strip-mix:15%] aria-pressed:[--metric-strip-mix:20%]",
         // inset: the strip clips anything drawn outside the item
         "focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:ring-inset",
         className,
@@ -137,8 +139,6 @@ export function MetricStripLabel({
         "group-data-[status=warning]/metric-strip-item:before:bg-warning",
         "group-data-[status=destructive]/metric-strip-item:before:bg-destructive",
         "group-data-[status=info]/metric-strip-item:before:bg-info",
-        // two attributes, so a zero count wins over the status color
-        "group-data-[active=false]/metric-strip-item:group-data-[status]/metric-strip-item:before:bg-muted-foreground",
         "[&_svg]:ml-1.5 [&_svg]:inline-block [&_svg]:size-3.5 [&_svg]:align-[-0.125em]",
         // in a button the icon is its state: shown on hover, focus and when pressed
         "in-[button:not(:hover,:focus-visible,[aria-pressed=true])]:[&_svg]:hidden",
