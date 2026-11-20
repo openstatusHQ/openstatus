@@ -81,7 +81,7 @@ func TestIngestTCP_Unauthenticated(t *testing.T) {
 	}
 }
 
-func TestIngestTCP_DBError(t *testing.T) {
+func TestIngestTCP_UnknownToken(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(http.DefaultClient, ""))
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{})
@@ -89,6 +89,30 @@ func TestIngestTCP_DBError(t *testing.T) {
 	req.Msg.Id = "monitor1"
 	req.Msg.MonitorId = "monitor1"
 	req.Msg.Timestamp = 1234567890
+	resp, err := h.IngestTCP(context.Background(), req)
+	if err == nil {
+		t.Fatalf("expected error for unknown token, got nil")
+	}
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Errorf("expected unauthenticated code, got %v", connect.CodeOf(err))
+	}
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+}
+
+func TestIngestTCP_DBError(t *testing.T) {
+	db := testDB()
+	h := server.NewPrivateLocationServer(db, getTBClient(context.Background()))
+	require.NoError(t, db.Close())
+
+	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
+		Id:        "monitor1",
+		MonitorId: "5",
+		Timestamp: 1234567890,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
 	resp, err := h.IngestTCP(context.Background(), req)
 	if err == nil {
 		t.Fatalf("expected error for db failure, got nil")
@@ -181,8 +205,8 @@ func TestIngestTCP_MonitorNotExist(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for monitor not found, got nil")
 	}
-	if connect.CodeOf(err) != connect.CodeInternal {
-		t.Errorf("expected internal code, got %v", connect.CodeOf(err))
+	if connect.CodeOf(err) != connect.CodeNotFound {
+		t.Errorf("expected not found code, got %v", connect.CodeOf(err))
 	}
 	if resp != nil {
 		t.Errorf("expected nil response, got %v", resp)
