@@ -49,6 +49,11 @@ export interface ComposeInput {
   pathname: string;
   search: string;
   isSelfHosted: boolean;
+  /**
+   * `STATUS_PAGE_BASE_DOMAIN`: its subdomains are treated like openstatus.dev
+   * hosts. Omitted means openstatus.dev only.
+   */
+  baseDomain?: string;
   requestUrl: string;
   origin: string;
   cookiePassword: string | undefined;

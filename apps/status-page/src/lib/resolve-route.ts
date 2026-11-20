@@ -21,6 +21,7 @@ export function resolveRoute({
   host,
   urlHost,
   pathname,
+  baseDomain,
 }: {
   /** x-forwarded-host header value */
   host: string | null;
@@ -28,13 +29,18 @@ export function resolveRoute({
   urlHost: string;
   /** req.nextUrl.pathname */
   pathname: string;
+  /**
+   * Base domain whose subdomains resolve by slug. Defaults to
+   * `STATUS_PAGE_BASE_DOMAIN` (falling back to openstatus.dev).
+   */
+  baseDomain?: string;
 }): ResolvedRoute | null {
   const hostnames = host?.split(/[.:]/) ?? urlHost.split(/[.:]/);
   const pathnames = pathname.split("/");
 
   // Prefer x-forwarded-host for custom-domain detection (behind reverse proxy/CDN,
   // req.nextUrl.host may be an internal host, not the real custom domain)
-  const subdomain = getValidSubdomain(host ?? urlHost);
+  const subdomain = getValidSubdomain(host ?? urlHost, baseDomain);
 
   let prefix: string;
   let type: RouteType;

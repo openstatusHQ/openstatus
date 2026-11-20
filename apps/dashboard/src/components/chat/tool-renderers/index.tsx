@@ -10,6 +10,10 @@ import {
   type ChangeRow,
   ChangesTable,
 } from "@/components/common/changes-table";
+import {
+  DEFAULT_STATUS_PAGE_BASE_DOMAIN,
+  getStatusPageHost,
+} from "@/lib/deployment-config";
 
 import { addPageComponentChanges } from "./add-page-component";
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
@@ -89,7 +93,16 @@ export type ToolRenderer<N extends AgentToolName> = {
     input: AgentToolInput<N>;
     output: AgentToolOutput<N>;
   }) => ReactNode;
-  summary?: (output: AgentToolOutput<N>) => string | undefined;
+  summary?: (
+    output: AgentToolOutput<N>,
+    ctx: SummaryContext,
+  ) => string | undefined;
+};
+
+/** Runtime deployment values a summary may need (read on the server). */
+export type SummaryContext = {
+  /** `STATUS_PAGE_BASE_DOMAIN`: pages live at `{slug}.{statusPageBaseDomain}`. */
+  statusPageBaseDomain: string;
 };
 
 /**
@@ -148,7 +161,7 @@ export const toolRenderers: ToolRendererRegistry = {
     renderResult: ({ input, output }) => (
       <ChangesTable changes={createStatusPageChanges(input, output)} />
     ),
-    summary: (o) => `${o.slug}.openstatus.dev`,
+    summary: (o, ctx) => getStatusPageHost(o.slug, ctx.statusPageBaseDomain),
   },
   update_status_page: {
     renderDraft: (input, before) =>
@@ -157,7 +170,7 @@ export const toolRenderers: ToolRendererRegistry = {
     renderResult: ({ input, output }) => (
       <ChangesTable changes={updateStatusPageChanges(input, output)} />
     ),
-    summary: (o) => `${o.slug}.openstatus.dev`,
+    summary: (o, ctx) => getStatusPageHost(o.slug, ctx.statusPageBaseDomain),
   },
   add_page_component: {
     renderDraft: (input) => addPageComponentChanges(input),
@@ -521,7 +534,10 @@ export function renderToolResult(
 export function summarizeToolOutput(
   toolName: string,
   output: unknown,
+  ctx: SummaryContext = {
+    statusPageBaseDomain: DEFAULT_STATUS_PAGE_BASE_DOMAIN,
+  },
 ): string | undefined {
   if (output === undefined) return undefined;
-  return findRenderer(toolName)?.summary?.(output as never);
+  return findRenderer(toolName)?.summary?.(output as never, ctx);
 }

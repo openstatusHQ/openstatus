@@ -9,10 +9,12 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { DeploymentConfigProvider } from "@/components/deployment-config-provider";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScrollToHash } from "@/hooks/use-scroll-to-hash";
 import { auth } from "@/lib/auth";
+import { getDeploymentConfig } from "@/lib/deployment-config";
 import { TRPCReactProvider } from "@/lib/trpc/client";
 
 import { ogMetadata, twitterMetadata } from "./metadata";
@@ -96,32 +98,34 @@ export default async function RootLayout({
         )}
       >
         <SessionProvider session={session}>
-          <TRPCReactProvider>
-            <NuqsAdapter>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                {children}
-                <ScrollToHash />
-                <TailwindIndicator />
-                <Toaster richColors expand />
-                {process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
-                  <OpenPanelComponent
-                    clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
-                    profileId={
-                      session?.user?.id ? `usr_${session.user.id}` : undefined
-                    }
-                    trackScreenViews
-                    trackOutgoingLinks
-                    trackAttributes
-                  />
-                )}
-              </ThemeProvider>
-            </NuqsAdapter>
-          </TRPCReactProvider>
+          <DeploymentConfigProvider value={getDeploymentConfig()}>
+            <TRPCReactProvider>
+              <NuqsAdapter>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  {children}
+                  <ScrollToHash />
+                  <TailwindIndicator />
+                  <Toaster richColors expand />
+                  {process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
+                    <OpenPanelComponent
+                      clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+                      profileId={
+                        session?.user?.id ? `usr_${session.user.id}` : undefined
+                      }
+                      trackScreenViews
+                      trackOutgoingLinks
+                      trackAttributes
+                    />
+                  )}
+                </ThemeProvider>
+              </NuqsAdapter>
+            </TRPCReactProvider>
+          </DeploymentConfigProvider>
         </SessionProvider>
       </body>
     </html>

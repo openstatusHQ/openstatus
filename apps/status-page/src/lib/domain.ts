@@ -1,11 +1,17 @@
 import type { NextRequest } from "next/server";
 
+import { getStatusPageBaseDomain, isHostUnderBaseDomain } from "./base-domain";
+
 // Custom-domain lookups exact-match page.customDomain, which is stored without a
 // port; an inbound host like "status.acme.com:8080" must be normalized first.
 export const stripHostPort = (host?: string | null) =>
   host ? host.replace(/:\d+$/, "") : (host ?? null);
 
-export const getValidSubdomain = (host?: string | null) => {
+export const getValidSubdomain = (
+  host?: string | null,
+  // `{slug}.{baseDomain}` resolves by slug exactly like `{slug}.openstatus.dev`
+  baseDomain: string = getStatusPageBaseDomain(),
+) => {
   let subdomain: string | null = null;
   if (!host && typeof window !== "undefined") {
     // On client side, get the host from window
@@ -40,7 +46,8 @@ export const getValidSubdomain = (host?: string | null) => {
     !(
       host?.includes("stpg.dev") ||
       host?.includes("openstatus.dev") ||
-      host?.endsWith(".vercel.app")
+      host?.endsWith(".vercel.app") ||
+      isHostUnderBaseDomain(host, baseDomain)
     )
   ) {
     subdomain = host;

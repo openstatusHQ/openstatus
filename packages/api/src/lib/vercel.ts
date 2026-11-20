@@ -4,10 +4,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
+import { isSelfHost } from "./deployment";
 import { hasTrustedCertificate } from "./tls";
 
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
+//
+// Self-hosted deployments have no Vercel project: the add/remove helpers are
+// no-ops there (returning null) so saving or clearing a custom domain only
+// updates the row. Routing and TLS are the operator's reverse proxy's job.
 const VERCEL_API_ORIGIN = "https://api.vercel.com";
 
 export async function vercelFetch(path: string, init?: RequestInit) {
@@ -33,6 +38,7 @@ export async function vercelFetch(path: string, init?: RequestInit) {
 }
 
 export async function addDomainToVercel(domain: string) {
+  if (isSelfHost()) return null;
   const response = await vercelFetch(
     `/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
     {
@@ -150,6 +156,7 @@ export async function removeDomainFromVercelIfUnused(
   domain: string,
   opts?: { excludePageId?: number },
 ) {
+  if (isSelfHost()) return null;
   const holder = await db
     .select({ id: page.id })
     .from(page)
@@ -175,6 +182,7 @@ export async function removeDomainFromVercelIfUnused(
 }
 
 export async function removeDomainFromVercel(domain: string) {
+  if (isSelfHost()) return null;
   const response = await vercelFetch(
     `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(domain)}?teamId=${env.TEAM_ID_VERCEL}`,
     { method: "DELETE" },

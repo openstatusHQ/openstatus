@@ -47,6 +47,7 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { StatusReportRow } from "@/components/status-reports/status-report-row";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
@@ -72,6 +73,7 @@ import { useTRPC } from "@/lib/trpc/client";
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const queryClient = useQueryClient();
   const [openCreate, setOpenCreate] = useState(false);
   const { data: page } = useQuery(
@@ -304,7 +306,7 @@ export default function Page() {
               </Button>
               <Button size="sm" variant="outline" asChild>
                 <NextLink
-                  href={getPageUrl(page)}
+                  href={getPageUrl(page, statusPageBaseDomain)}
                   target="_blank"
                   rel="noreferrer"
                 >

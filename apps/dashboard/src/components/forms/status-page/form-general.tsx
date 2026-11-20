@@ -27,6 +27,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import {
   FormCard,
   FormCardContent,
@@ -92,6 +93,7 @@ export function FormGeneral({
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
 }) {
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -200,7 +202,7 @@ export function FormGeneral({
                       <InputGroupInput placeholder="status" {...field} />
                     </FormControl>
                     <InputGroupAddon align="inline-end">
-                      .openstatus.dev
+                      .{statusPageBaseDomain}
                     </InputGroupAddon>
                   </InputGroup>
                   <FormMessage />

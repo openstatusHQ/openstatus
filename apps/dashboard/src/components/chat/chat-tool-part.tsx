@@ -19,6 +19,7 @@ import {
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
+import { useStatusPageBaseDomain } from "@/components/deployment-config-provider";
 import { useModifierKey } from "@/lib/keyboard";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -236,9 +237,10 @@ function ToolDisclosure({
   toolName: string;
 }) {
   const state: ToolState = part.state ?? "output-available";
+  const statusPageBaseDomain = useStatusPageBaseDomain();
   const rich = renderToolResult(toolName, part.input, part.output);
   const summary =
-    summarizeToolOutput(toolName, part.output) ??
+    summarizeToolOutput(toolName, part.output, { statusPageBaseDomain }) ??
     (state === "output-denied" ? "Cancelled" : undefined);
   const [open, setOpen] = useState(false);
   // Gate the height animation behind a post-mount flag so a tool that mounts

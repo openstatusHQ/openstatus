@@ -3,6 +3,8 @@ import { pageSubscriber } from "@openstatus/db/src/schema";
 import { getChannel } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 
+import { getStatusPageBaseDomain } from "./deployment";
+
 /**
  * Emails the verification link to the subscriber's own address. The token
  * must never be handed back to the caller, or double opt-in is meaningless.
@@ -22,7 +24,7 @@ export async function sendSubscriberVerification(
 
   const verifyUrl = subscriber.page.customDomain
     ? `https://${subscriber.page.customDomain}/verify/${subscriber.token}`
-    : `https://${subscriber.page.slug}.openstatus.dev/verify/${subscriber.token}`;
+    : `https://${subscriber.page.slug}.${getStatusPageBaseDomain()}/verify/${subscriber.token}`;
 
   const channel = getChannel("email");
   if (!channel) {

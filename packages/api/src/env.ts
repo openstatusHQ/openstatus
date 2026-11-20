@@ -21,6 +21,12 @@ export const env = createEnv({
     SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
     EXTERNAL_REPORT_SALT: z.string().optional(),
     SELF_HOST: z.stringbool().prefault("false"),
+    // `{slug}.{STATUS_PAGE_BASE_DOMAIN}` is a page's default URL; an empty
+    // value means unset (openstatus.dev)
+    STATUS_PAGE_BASE_DOMAIN: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.string().default("openstatus.dev"),
+    ),
     // An empty value (e.g. HEARTBEAT_PING_BASE_URL= in .env) means unset, not an invalid URL
     HEARTBEAT_PING_BASE_URL: z.preprocess(
       (v) => (v === "" ? undefined : v),
@@ -45,6 +51,7 @@ export const env = createEnv({
     SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
     EXTERNAL_REPORT_SALT: process.env.EXTERNAL_REPORT_SALT,
     SELF_HOST: process.env.SELF_HOST,
+    STATUS_PAGE_BASE_DOMAIN: process.env.STATUS_PAGE_BASE_DOMAIN,
     HEARTBEAT_PING_BASE_URL: process.env.HEARTBEAT_PING_BASE_URL,
     NODE_ENV: process.env.NODE_ENV,
   },

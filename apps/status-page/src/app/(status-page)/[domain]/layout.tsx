@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { PasswordWrapper } from "../../../components/password-wrapper";
+import { BaseDomainProvider } from "../../../components/status-page/base-domain-provider";
 import {
   FloatingButton,
   StatusPageProvider,
@@ -12,6 +13,7 @@ import {
 import { FloatingTheme } from "../../../components/status-page/floating-theme";
 import { ThemeProvider } from "../../../components/themes/theme-provider";
 import { statusPageAlternates } from "../../../lib/alternates";
+import { getStatusPageBaseDomain } from "../../../lib/base-domain";
 import { getQueryClient, HydrateClient, trpc } from "../../../lib/trpc/server";
 import { defaultMetadata, ogMetadata, twitterMetadata } from "../../metadata";
 
@@ -43,52 +45,54 @@ export default async function Layout({
 
   return (
     <HydrateClient>
-      <style
-        id="theme-styles"
-        // custom theme vars (already plan-gated + validated server-side) are
-        // merged over the selected theme: custom-theme > theme
-        // oxlint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{
-          __html: generatePageStyles({
-            themeKey: cfg.theme,
-            customTheme: page.customTheme,
-          }),
-        }}
-      />
-      <ThemeProvider
-        attribute="class"
-        defaultTheme={page?.forceTheme ?? "system"}
-        enableSystem
-        disableTransitionOnChange
-      >
-        <StatusPageProvider
-          defaultBarType={cfg.type}
-          defaultCardType={cfg.value}
-          defaultShowUptime={cfg.uptime}
-          defaultNumberOfDays={cfg.days}
-          defaultCommunityTheme={cfg.theme}
-          customTheme={page.customTheme}
-          timezone={page.defaultTimezone}
+      <BaseDomainProvider baseDomain={getStatusPageBaseDomain()}>
+        <style
+          id="theme-styles"
+          // custom theme vars (already plan-gated + validated server-side) are
+          // merged over the selected theme: custom-theme > theme
+          // oxlint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: generatePageStyles({
+              themeKey: cfg.theme,
+              customTheme: page.customTheme,
+            }),
+          }}
+        />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme={page?.forceTheme ?? "system"}
+          enableSystem
+          disableTransitionOnChange
         >
-          {children}
-          <FloatingButton
-            pageId={page?.id}
-            // NOTE: token to avoid showing the floating button to random users
-            // timestamp is our token - it is hard to guess
-            token={page?.createdAt?.getTime().toString()}
-          />
-          <FloatingTheme />
-          <Toaster
-            toastOptions={{
-              classNames: {},
-              style: { borderRadius: "var(--radius-lg)" },
-            }}
-            richColors
-            expand
-          />
-          <PasswordWrapper />
-        </StatusPageProvider>
-      </ThemeProvider>
+          <StatusPageProvider
+            defaultBarType={cfg.type}
+            defaultCardType={cfg.value}
+            defaultShowUptime={cfg.uptime}
+            defaultNumberOfDays={cfg.days}
+            defaultCommunityTheme={cfg.theme}
+            customTheme={page.customTheme}
+            timezone={page.defaultTimezone}
+          >
+            {children}
+            <FloatingButton
+              pageId={page?.id}
+              // NOTE: token to avoid showing the floating button to random users
+              // timestamp is our token - it is hard to guess
+              token={page?.createdAt?.getTime().toString()}
+            />
+            <FloatingTheme />
+            <Toaster
+              toastOptions={{
+                classNames: {},
+                style: { borderRadius: "var(--radius-lg)" },
+              }}
+              richColors
+              expand
+            />
+            <PasswordWrapper />
+          </StatusPageProvider>
+        </ThemeProvider>
+      </BaseDomainProvider>
     </HydrateClient>
   );
 }

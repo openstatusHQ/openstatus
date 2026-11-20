@@ -46,3 +46,35 @@ test("page.updateCustomDomain rejects a taken domain before touching Vercel", as
   const after = await db.select().from(page).where(eq(page.id, 1)).get();
   expect(after?.customDomain).toBe(before?.customDomain);
 });
+
+test("page.updateCustomDomain (hosted) still rejects a domain containing 'openstatus'", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    workspace: selectWorkspaceSchema.parse(
+      await db.select().from(workspace).where(eq(workspace.id, 1)).get(),
+    ),
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  const realFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = () => {
+    fetchCalls++;
+    return Promise.reject(new Error("unexpected Vercel request"));
+  };
+  try {
+    await caller.page.updateCustomDomain({
+      id: 1,
+      customDomain: "status.openstatus.example.com",
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("BAD_REQUEST");
+    expect((e as TRPCError).message).toBe("Domain cannot contain 'openstatus'");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  expect(fetchCalls).toBe(0);
+});

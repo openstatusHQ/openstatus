@@ -68,6 +68,32 @@ describe("resolveDefaultRewrite", () => {
     expect(action?.url?.pathname).toBe("/acme/en");
   });
 
+  test("configured base domain host always rewrites (even if paths match)", () => {
+    const action = resolveDefaultRewrite({
+      route: pathnameRoute,
+      host: "acme.status.example.com",
+      pathname: "/acme/en",
+      search: "",
+      requestUrl: "https://acme.status.example.com/acme/en",
+      baseDomain: "status.example.com",
+    });
+    expect(action?.reason).toBe("default-rewrite");
+    expect(action?.url?.pathname).toBe("/acme/en");
+  });
+
+  test("custom domain with a configured base domain: passes when paths match", () => {
+    expect(
+      resolveDefaultRewrite({
+        route: pathnameRoute,
+        host: "status.acme.com",
+        pathname: "/acme/en",
+        search: "",
+        requestUrl: "https://status.acme.com/acme/en",
+        baseDomain: "status.example.com",
+      }),
+    ).toBeNull();
+  });
+
   test("preserves search params", () => {
     const action = resolveDefaultRewrite({
       route: hostnameRoute,

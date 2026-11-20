@@ -3,8 +3,9 @@ import { assertCustomDomainInWorkspace } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { env } from "../env";
+import { isSelfHost } from "../lib/deployment";
 import {
-  type domainConfigResponseSchema,
+  domainConfigResponseSchema,
   fetchDomainConfig,
   getCertificateReadiness,
   issueCertificateOnVercel,
@@ -38,6 +39,15 @@ export const domainResponseSchema = z.object({
     .optional(),
 });
 
+const domainResponseWithErrorSchema = domainResponseSchema.extend({
+  error: z
+    .object({
+      code: z.string(),
+      message: z.string(),
+    })
+    .optional(),
+});
+
 export type DomainVerificationResponse = z.infer<typeof domainResponseSchema>;
 export type DomainConfigResponse = z.infer<typeof domainConfigResponseSchema>;
 export type DomainResponse = z.infer<typeof domainResponseSchema>;
@@ -65,6 +75,14 @@ async function assertOwned(
 
 const domainInput = z.object({ domain: customDomainSchema.optional() });
 
+// Self-hosted: there is no Vercel project to ask. The operator points the
+// domain at the instance and terminates TLS in their reverse proxy, so report
+// a configured, verified domain and let the dashboard hide the Vercel panel.
+const selfHostedDomain = (domain: string) => ({
+  name: domain,
+  verified: true,
+});
+
 export const domainRouter = createTRPCRouter({
   getDomainResponse: protectedProcedure
     .input(domainInput)
@@ -73,20 +91,16 @@ export const domainRouter = createTRPCRouter({
         return null;
       }
       await assertOwned(opts.ctx, opts.input.domain);
+      if (isSelfHost()) {
+        return domainResponseWithErrorSchema.parse(
+          selfHostedDomain(opts.input.domain),
+        );
+      }
       const data = await vercelFetch(
         `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(opts.input.domain)}?teamId=${env.TEAM_ID_VERCEL}`,
       );
       const json = await data.json();
-      const result = domainResponseSchema
-        .extend({
-          error: z
-            .object({
-              code: z.string(),
-              message: z.string(),
-            })
-            .optional(),
-        })
-        .parse(json);
+      const result = domainResponseWithErrorSchema.parse(json);
       return result;
     }),
   getConfigResponse: protectedProcedure
@@ -96,6 +110,9 @@ export const domainRouter = createTRPCRouter({
         return null;
       }
       await assertOwned(opts.ctx, opts.input.domain);
+      if (isSelfHost()) {
+        return domainConfigResponseSchema.parse({ misconfigured: false });
+      }
       return fetchDomainConfig(opts.input.domain);
     }),
   getCertificateStatus: protectedProcedure
@@ -105,6 +122,7 @@ export const domainRouter = createTRPCRouter({
         return null;
       }
       await assertOwned(opts.ctx, opts.input.domain);
+      if (isSelfHost()) return { ready: true };
       const { ready } = await getCertificateReadiness(opts.input.domain);
       return { ready };
     }),
@@ -115,6 +133,7 @@ export const domainRouter = createTRPCRouter({
         return { issued: false };
       }
       await assertOwned(opts.ctx, opts.input.domain);
+      if (isSelfHost()) return { issued: false };
       const { configured, ready } = await getCertificateReadiness(
         opts.input.domain,
       );
@@ -129,6 +148,9 @@ export const domainRouter = createTRPCRouter({
       return null;
     }
     await assertOwned(opts.ctx, opts.input.domain);
+    if (isSelfHost()) {
+      return domainResponseSchema.parse(selfHostedDomain(opts.input.domain));
+    }
     const data = await vercelFetch(
       `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(opts.input.domain)}/verify?teamId=${env.TEAM_ID_VERCEL}`,
       { method: "POST" },

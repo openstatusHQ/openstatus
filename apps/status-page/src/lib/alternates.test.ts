@@ -61,4 +61,27 @@ describe("statusPageAlternates", () => {
       })?.types?.["text/markdown"],
     ).toBe("https://status.acme.com/events/report/7.md");
   });
+
+  test("configured base domain replaces openstatus.dev", () => {
+    expect(
+      statusPageAlternates({ slug: "acme", baseDomain: "status.example.com" }),
+    ).toEqual({
+      canonical: "https://acme.status.example.com",
+      types: {
+        "text/markdown": "https://acme.status.example.com/.md",
+        "application/json":
+          "https://acme.status.example.com/api/status/summary.json",
+      },
+    });
+  });
+
+  test("custom domain wins over a configured base domain", () => {
+    expect(
+      statusPageAlternates({
+        slug: "acme",
+        customDomain: "status.acme.com",
+        baseDomain: "status.example.com",
+      })?.canonical,
+    ).toBe("https://status.acme.com");
+  });
 });

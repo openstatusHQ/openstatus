@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getBaseUrl } from "./base-url";
 
@@ -9,6 +9,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   Object.assign(process.env, { NODE_ENV: originalEnv });
   if (originalEnv === undefined)
     Reflect.deleteProperty(process.env, "NODE_ENV");
@@ -29,6 +30,32 @@ describe("getBaseUrl", () => {
     expect(getBaseUrl({ slug: "acme", customDomain: "status.acme.com" })).toBe(
       "https://status.acme.com",
     );
+  });
+
+  it("uses an explicit base domain", () => {
+    setNodeEnv("production");
+    expect(getBaseUrl({ slug: "acme", baseDomain: "status.example.com" })).toBe(
+      "https://acme.status.example.com",
+    );
+  });
+
+  it("reads STATUS_PAGE_BASE_DOMAIN when no base domain is passed", () => {
+    setNodeEnv("production");
+    vi.stubEnv("STATUS_PAGE_BASE_DOMAIN", "status.example.com");
+    expect(getBaseUrl({ slug: "acme" })).toBe(
+      "https://acme.status.example.com",
+    );
+  });
+
+  it("custom domain wins over the base domain", () => {
+    setNodeEnv("production");
+    expect(
+      getBaseUrl({
+        slug: "acme",
+        customDomain: "status.acme.com",
+        baseDomain: "status.example.com",
+      }),
+    ).toBe("https://status.acme.com");
   });
 
   it("serves from localhost in development, ignoring the custom domain", () => {

@@ -56,6 +56,22 @@ describe("summarizeToolOutput", () => {
     );
   });
 
+  it("names the status page host under the default base domain", () => {
+    expect(summarizeToolOutput("create_status_page", { slug: "acme" })).toBe(
+      "acme.openstatus.dev",
+    );
+  });
+
+  it("names the status page host under the runtime base domain", () => {
+    const ctx = { statusPageBaseDomain: "status.example.com" };
+    expect(
+      summarizeToolOutput("create_status_page", { slug: "acme" }, ctx),
+    ).toBe("acme.status.example.com");
+    expect(
+      summarizeToolOutput("update_status_page", { slug: "acme" }, ctx),
+    ).toBe("acme.status.example.com");
+  });
+
   it("describes doc page reads", () => {
     expect(
       summarizeToolOutput("get_doc_page", {

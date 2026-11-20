@@ -5,21 +5,29 @@ import { useCallback } from "react";
 import type { StepCardVariant } from "@/components/forms/step-card";
 import { useTRPC } from "@/lib/trpc/client";
 
-export function useDomainStatus(domain?: string) {
+export function useDomainStatus(
+  domain?: string,
+  // false skips every Vercel-backed query (self-hosted has no Vercel project)
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   const trpc = useTRPC();
   const {
     data: domainJson,
     refetch: refetchDomain,
     isLoading: isLoadingDomain,
     isRefetching: isRefetchingDomain,
-  } = useQuery(trpc.domain.getDomainResponse.queryOptions({ domain }));
+  } = useQuery(
+    trpc.domain.getDomainResponse.queryOptions({ domain }, { enabled }),
+  );
   const {
     data: configJson,
     refetch: refetchConfig,
     isError: isConfigError,
     isLoading: isLoadingConfig,
     isRefetching: isRefetchingConfig,
-  } = useQuery(trpc.domain.getConfigResponse.queryOptions({ domain }));
+  } = useQuery(
+    trpc.domain.getConfigResponse.queryOptions({ domain }, { enabled }),
+  );
   const {
     data: verificationJson,
     refetch: refetchVerification,
@@ -28,7 +36,7 @@ export function useDomainStatus(domain?: string) {
   } = useQuery(
     trpc.domain.verifyDomain.queryOptions(
       { domain },
-      { enabled: !domainJson?.verified },
+      { enabled: enabled && !domainJson?.verified },
     ),
   );
 
@@ -43,7 +51,7 @@ export function useDomainStatus(domain?: string) {
   } = useQuery(
     trpc.domain.getCertificateStatus.queryOptions(
       { domain },
-      { enabled: dnsReady },
+      { enabled: enabled && dnsReady },
     ),
   );
 

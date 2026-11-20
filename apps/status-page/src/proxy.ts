@@ -4,6 +4,7 @@ import { resolveClientIp } from "@openstatus/services/page-access";
 import { NextResponse } from "next/server";
 
 import { auth } from "./lib/auth";
+import { getStatusPageBaseDomain } from "./lib/base-domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
@@ -14,6 +15,7 @@ import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
 const isSelfHosted = process.env.SELF_HOST === "true";
+const baseDomain = getStatusPageBaseDomain();
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -58,6 +60,7 @@ export default auth(async (req) => {
     host,
     urlHost: url.host,
     pathname,
+    baseDomain,
   });
 
   if (!initialRoute) {
@@ -122,6 +125,7 @@ export default auth(async (req) => {
     pathname: url.pathname,
     search: url.search,
     isSelfHosted,
+    baseDomain,
     requestUrl: req.url,
     origin: req.nextUrl.origin,
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
