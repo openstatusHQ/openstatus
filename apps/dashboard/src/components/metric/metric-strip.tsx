@@ -59,7 +59,7 @@ export function MetricStripRow({
         <span
           data-slot="metric-strip-row-label"
           aria-hidden
-          className="font-commit-mono text-muted-foreground bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-card))] px-3 py-1.5 text-xs @xl:py-2"
+          className="text-muted-foreground bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-card))] px-3 py-1.5 text-xs @xl:py-2"
         >
           {label}
         </span>
@@ -130,7 +130,7 @@ export function MetricStripLabel({
     <span
       data-slot="metric-strip-label"
       className={cn(
-        "font-commit-mono text-muted-foreground max-w-full min-w-0 truncate text-sm font-medium tracking-tight",
+        "text-muted-foreground max-w-full min-w-0 truncate text-sm font-medium",
         "before:mr-1.5 before:hidden before:size-2 before:rounded-full before:align-[0.05em] before:content-['']",
         "group-data-[status]/metric-strip-item:before:inline-block",
         "group-data-[status=success]/metric-strip-item:before:bg-success",
