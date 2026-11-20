@@ -2,6 +2,7 @@ import {
   ATTRIBUTION_COOKIE,
   ATTRIBUTION_DOMAIN,
   ATTRIBUTION_MAX_AGE,
+  type Attribution,
   parseAttribution,
   serializeAttribution,
 } from "@openstatus/analytics/src/attribution";
@@ -19,26 +20,65 @@ import {
 import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
-// Marketing CTAs land here as `?ref=home-hero`. Fold the ref into the
-// first-touch cookie the web app set (or start one) so `user_created` can
-// carry it; the ref is dropped by the login redirect otherwise.
-function withAttributionRef(req: NextRequest, response: NextResponse) {
+const ATTRIBUTION_PARAMS = [
+  "ref",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+] as const;
+
+function referrerHost(req: NextRequest): string | undefined {
+  const referer = req.headers.get("referer");
+  if (!referer) return undefined;
+  try {
+    const host = new URL(referer).hostname;
+    const own = ATTRIBUTION_DOMAIN.slice(1);
+    const internal =
+      host === own ||
+      host.endsWith(ATTRIBUTION_DOMAIN) ||
+      host === req.nextUrl.hostname;
+    return internal ? undefined : host;
+  } catch {
+    return undefined;
+  }
+}
+
+// First touch for visitors who reach the app without passing through the web
+// app (GitHub, docs, email, bookmarks). An existing cookie only gains a
+// missing `ref`, since marketing CTAs land here as `?ref=home-hero` and the
+// login redirect would drop it otherwise.
+function withAttributionRef(
+  req: NextRequest & { auth: unknown },
+  response: NextResponse,
+) {
+  const raw = req.cookies.get(ATTRIBUTION_COOKIE)?.value;
   const ref = req.nextUrl.searchParams.get("ref");
-  if (!ref) return response;
-  const current = parseAttribution(req.cookies.get(ATTRIBUTION_COOKIE)?.value);
-  if (current.ref) return response;
+
+  let next: Attribution;
+  if (raw) {
+    const current = parseAttribution(raw);
+    if (!ref || current.ref) return response;
+    next = { ...current, ref };
+  } else {
+    if (req.auth) return response;
+    next = {
+      landing_path: req.nextUrl.pathname,
+      landing_referrer: referrerHost(req),
+    };
+    for (const key of ATTRIBUTION_PARAMS) {
+      const value = req.nextUrl.searchParams.get(key);
+      if (value) next[key] = value;
+    }
+  }
+
   const onProd = req.nextUrl.hostname.endsWith(ATTRIBUTION_DOMAIN.slice(1));
-  response.cookies.set(
-    ATTRIBUTION_COOKIE,
-    serializeAttribution({ ...current, ref }),
-    {
-      path: "/",
-      maxAge: ATTRIBUTION_MAX_AGE,
-      sameSite: "lax",
-      secure: onProd,
-      ...(onProd ? { domain: ATTRIBUTION_DOMAIN } : {}),
-    },
-  );
+  response.cookies.set(ATTRIBUTION_COOKIE, serializeAttribution(next), {
+    path: "/",
+    maxAge: ATTRIBUTION_MAX_AGE,
+    sameSite: "lax",
+    secure: onProd,
+    ...(onProd ? { domain: ATTRIBUTION_DOMAIN } : {}),
+  });
   return response;
 }
 
