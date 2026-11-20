@@ -1,18 +1,18 @@
-import type { MetricCard } from "@/components/metric/metric-card";
+import type { MetricStatus } from "@/components/metric/metric-strip";
 import { formatDurationShort } from "@/lib/formatter";
 
 export const HEARTBEAT_WINDOW_DAYS = 30;
 
 export const heartbeatHealthConfig = {
-  paused: { label: "Paused", variant: "default" },
-  waiting: { label: "Waiting", variant: "default" },
-  failed: { label: "Failed", variant: "destructive" },
-  missed: { label: "Missed", variant: "destructive" },
-  late: { label: "Late", variant: "warning" },
-  "on-time": { label: "On time", variant: "success" },
+  paused: { label: "Paused", status: undefined },
+  waiting: { label: "Waiting", status: undefined },
+  failed: { label: "Failed", status: "destructive" },
+  missed: { label: "Missed", status: "destructive" },
+  late: { label: "Late", status: "warning" },
+  "on-time": { label: "On time", status: "success" },
 } as const satisfies Record<
   string,
-  { label: string; variant: React.ComponentProps<typeof MetricCard>["variant"] }
+  { label: string; status: MetricStatus | undefined }
 >;
 
 export type HeartbeatHealth = keyof typeof heartbeatHealthConfig;

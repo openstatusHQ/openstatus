@@ -24,13 +24,12 @@ import { useTRPC } from "@/lib/trpc/client";
 type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
 
 const healthText = {
-  default: undefined,
   success: "text-success",
   warning: "text-warning",
   destructive: "text-destructive",
 } satisfies Record<
-  (typeof heartbeatHealthConfig)[HeartbeatHealth]["variant"],
-  string | undefined
+  NonNullable<(typeof heartbeatHealthConfig)[HeartbeatHealth]["status"]>,
+  string
 >;
 
 // own component: the clock re-renders this word, not the sidebar
@@ -48,8 +47,8 @@ function HeartbeatStatus({ monitor }: { monitor: Monitor }) {
     heartbeat,
     hydrated ? now : new Date(0),
   );
-  const { label, variant } = heartbeatHealthConfig[health];
-  return <span className={healthText[variant]}>{label}</span>;
+  const { label, status } = heartbeatHealthConfig[health];
+  return <span className={status && healthText[status]}>{label}</span>;
 }
 
 export function Sidebar() {
