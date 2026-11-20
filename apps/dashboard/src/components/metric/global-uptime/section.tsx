@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 
 import {
   type MetricStatus,
@@ -71,7 +71,7 @@ export function GlobalUptimeSection({
             const v = (() => {
               if (k === "lastTimestamp") {
                 if (!value) return "—";
-                return formatDistanceToNow(new Date(value ?? 0), {
+                return formatDistanceToNowStrict(new Date(value ?? 0), {
                   addSuffix: true,
                 });
               }
