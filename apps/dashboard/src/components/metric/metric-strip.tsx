@@ -49,8 +49,8 @@ export function MetricStripRow({
       role={label ? "group" : undefined}
       aria-label={label}
       className={cn(
-        "grid gap-px @xl:auto-cols-[minmax(0,1fr)] @xl:grid-flow-col",
-        label && "@xl:grid-cols-[6.5rem]",
+        "grid gap-px @3xl:auto-cols-[minmax(0,1fr)] @3xl:grid-flow-col",
+        label && "@3xl:grid-cols-[6.5rem]",
         className,
       )}
       {...props}
@@ -59,7 +59,7 @@ export function MetricStripRow({
         <span
           data-slot="metric-strip-row-label"
           aria-hidden
-          className="text-muted-foreground bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-card))] px-3 py-1.5 text-xs @xl:py-2"
+          className="text-muted-foreground bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-card))] px-3 py-1.5 text-xs @3xl:py-2"
         >
           {label}
         </span>
@@ -72,7 +72,7 @@ export function MetricStripRow({
 // the fill is a variable so hover and pressed can replace it whatever the status
 const itemClassName = cn(
   "group/metric-strip-item flex min-w-0 items-center justify-between gap-3 bg-(--metric-strip-fill,var(--color-card)) px-3 py-2.5",
-  "@xl:flex-col @xl:items-start @xl:justify-start @xl:gap-1 @xl:py-2",
+  "@3xl:flex-col @3xl:items-start @3xl:justify-start @3xl:gap-1 @3xl:py-2",
   "data-[active=true]:data-[status=success]:[--metric-strip-fill:color-mix(in_oklab,var(--color-success)_10%,var(--color-card))]",
   "data-[active=true]:data-[status=warning]:[--metric-strip-fill:color-mix(in_oklab,var(--color-warning)_10%,var(--color-card))]",
   "data-[active=true]:data-[status=destructive]:[--metric-strip-fill:color-mix(in_oklab,var(--color-destructive)_10%,var(--color-card))]",
@@ -158,7 +158,7 @@ export function MetricStripValue({
       data-slot="metric-strip-value"
       className={cn(
         "font-commit-mono shrink-0 text-right text-base font-medium tracking-tight whitespace-nowrap tabular-nums",
-        "@xl:max-w-full @xl:shrink @xl:text-left @xl:whitespace-normal",
+        "@3xl:max-w-full @3xl:shrink @3xl:text-left @3xl:whitespace-normal",
         "group-data-[active=false]/metric-strip-item:text-muted-foreground",
         className,
       )}
