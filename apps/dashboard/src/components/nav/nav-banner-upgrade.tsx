@@ -9,15 +9,13 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-import { UpgradeDialog } from "../dialogs/upgrade";
+import { NavBannerUpgradeAction } from "./nav-banner-upgrade-action";
 
 const plan = allPlans.starter;
 
@@ -35,7 +33,6 @@ const features = [
 export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const [open, setOpen] = useState(false);
 
   if (!workspace) return null;
 
@@ -43,7 +40,7 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
     <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex h-7 items-center justify-between pr-0 pl-0">
         <span>
-          {workspace?.trial.eligible
+          {workspace.trial.eligible
             ? `Try ${plan.title} free for ${TRIAL_DAYS} days`
             : `Upgrade to ${plan.title}`}
         </span>
@@ -64,22 +61,8 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
             <span>{feature.title}</span>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem className="pt-1">
-          <SidebarMenuButton
-            className="justify-center border"
-            data-active="true"
-            onClick={() => setOpen(true)}
-          >
-            {workspace?.trial.eligible ? "Start trial" : "Upgrade"}
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        {workspace?.trial.eligible ? (
-          <SidebarMenuItem className="text-muted-foreground text-center text-[10px]">
-            No credit card needed
-          </SidebarMenuItem>
-        ) : null}
+        <NavBannerUpgradeAction trialEligible={workspace.trial.eligible} />
       </SidebarMenu>
-      <UpgradeDialog open={open} onOpenChange={setOpen} />
     </SidebarGroup>
   );
 }

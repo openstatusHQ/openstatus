@@ -21,19 +21,16 @@ import { Link } from "@/components/common/link";
 import { useCopyAgentPrompt } from "@/hooks/use-copy-agent-prompt";
 import { useTRPC } from "@/lib/trpc/client";
 
-export function NavBannerChecklist({
-  handleClose,
-}: {
-  handleClose: () => void;
-}) {
+import { NavBannerUpgradeAction } from "./nav-banner-upgrade-action";
+
+export function useChecklistItems() {
   const trpc = useTRPC();
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
-  const { copyPrompt, isCopied } = useCopyAgentPrompt("setup", "checklist");
 
-  // Hide until the counts land — every item would read as unchecked and the
-  // banner would flash "0/5" before correcting itself.
-  if (!usage) return null;
+  // Undefined until the counts land — every item would read as unchecked and
+  // the banner would flash "0/5" before correcting itself.
+  if (!usage) return undefined;
 
   const onlyPage = pages?.length === 1 ? pages[0] : undefined;
 
@@ -75,7 +72,19 @@ export function NavBannerChecklist({
     },
   ];
 
-  if (items.every((i) => i.checked)) return null;
+  return items;
+}
+
+export function NavBannerChecklist({
+  items,
+  handleClose,
+}: {
+  items: NonNullable<ReturnType<typeof useChecklistItems>>;
+  handleClose: () => void;
+}) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { copyPrompt, isCopied } = useCopyAgentPrompt("setup", "checklist");
 
   return (
     <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
@@ -130,6 +139,9 @@ export function NavBannerChecklist({
             Copy prompt for your agent
           </button>
         </SidebarMenuItem>
+        {workspace?.plan === "free" ? (
+          <NavBannerUpgradeAction trialEligible={workspace.trial.eligible} />
+        ) : null}
       </SidebarMenu>
     </SidebarGroup>
   );
