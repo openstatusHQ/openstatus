@@ -21,6 +21,8 @@ import { Link } from "@/components/common/link";
 import { useCopyAgentPrompt } from "@/hooks/use-copy-agent-prompt";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { NavBannerUpgradeAction } from "./nav-banner-upgrade-action";
+
 export function NavBannerChecklist({
   handleClose,
 }: {
@@ -29,6 +31,7 @@ export function NavBannerChecklist({
   const trpc = useTRPC();
   const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { copyPrompt, isCopied } = useCopyAgentPrompt("setup", "checklist");
 
   // Hide until the counts land — every item would read as unchecked and the
@@ -130,6 +133,9 @@ export function NavBannerChecklist({
             Copy prompt for your agent
           </button>
         </SidebarMenuItem>
+        {workspace?.plan === "free" ? (
+          <NavBannerUpgradeAction trialEligible={workspace.trial.eligible} />
+        ) : null}
       </SidebarMenu>
     </SidebarGroup>
   );
