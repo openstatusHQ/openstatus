@@ -633,7 +633,7 @@ describe("writePagePhase with a taken custom domain", () => {
       expect(created?.customDomain).toBe("");
       expect(phase.resources[0].error).toContain("already used");
       // a new page, so it counts runs like every other creation path
-      expect(created?.configuration).toEqual({ value: "runs" });
+      expect(created?.configuration).toEqual({ value: "requests" });
     });
   });
 });

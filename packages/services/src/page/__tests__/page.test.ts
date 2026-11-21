@@ -655,25 +655,25 @@ describe("custom domain uniqueness", () => {
   });
 });
 
-describe("new pages count runs", () => {
+describe("new pages count requests", () => {
   const storedValue = async (tx: DrizzleTx, id: number) =>
     (
       (await tx.select().from(pageTable).where(eq(pageTable.id, id)).get())
         ?.configuration as { value?: string } | null
     )?.value;
 
-  test("newPage stores runs", async () => {
+  test("newPage stores requests", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const row = await newPage({
         ctx,
         input: { title: "Runs", slug: uniqueSlug("runs-new") },
       });
-      expect(await storedValue(tx, row.id)).toBe("runs");
+      expect(await storedValue(tx, row.id)).toBe("requests");
     });
   });
 
-  test("createPage stores runs unless the caller picks a measure", async () => {
+  test("createPage stores requests unless the caller picks a measure", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const create = (configuration?: Record<string, unknown>) =>
@@ -688,7 +688,7 @@ describe("new pages count runs", () => {
           },
         });
 
-      expect(await storedValue(tx, (await create()).id)).toBe("runs");
+      expect(await storedValue(tx, (await create()).id)).toBe("requests");
       const themed = await create({ theme: "default-rounded" });
       expect(
         (
@@ -698,14 +698,14 @@ describe("new pages count runs", () => {
             .where(eq(pageTable.id, themed.id))
             .get()
         )?.configuration,
-      ).toEqual({ theme: "default-rounded", value: "runs" });
-      expect(
-        await storedValue(tx, (await create({ value: "requests" })).id),
-      ).toBe("requests");
+      ).toEqual({ theme: "default-rounded", value: "requests" });
+      expect(await storedValue(tx, (await create({ value: "runs" })).id)).toBe(
+        "runs",
+      );
     });
   });
 
-  test("a configuration update keeps the stored runs", async () => {
+  test("a configuration update keeps the stored requests", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const row = await newPage({
@@ -719,7 +719,7 @@ describe("new pages count runs", () => {
           configuration: { days: 30 },
         }),
       });
-      expect(await storedValue(tx, row.id)).toBe("runs");
+      expect(await storedValue(tx, row.id)).toBe("requests");
     });
   });
 });
