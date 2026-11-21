@@ -1,8 +1,7 @@
 import { getLogger } from "@logtape/logtape";
-import { type SQL, and, db, eq, getTableColumns, sql } from "@openstatus/db";
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
+import { type SQL, and, db, eq, sql } from "@openstatus/db";
+import { monitorInWindow } from "@openstatus/db/src/maintenance";
 import type {
-  MonitorIncident,
   NotificationOutboxPayload,
   MonitorStatus,
   NotificationProvider,
@@ -19,11 +18,10 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
-import { recordMonitorIncidentAudit } from "@openstatus/services/monitor-incident";
+import { monitorIncidentAuditStatement } from "@openstatus/services/monitor-incident";
 import { statusRegions } from "@openstatus/utils";
 
 import { checkerAudit } from "../utils/audit-log";
-import { systemContext } from "../utils/system-context";
 
 const logger = getLogger(["workflow"]);
 import { quorumCountSql, quorumGuardSql } from "./quorum";
@@ -128,29 +126,7 @@ function journalStatement(
   `);
 }
 
-const incidentColumns = getTableColumns(monitorIncidentTable);
-type IncidentRow = Record<string, unknown>;
-
-// Every column under its property name, so the audit snapshot is the row the
-// batch itself wrote rather than a later read.
-const returningIncident = sql.join(
-  Object.entries(incidentColumns).map(
-    ([key, column]) =>
-      sql`${sql.identifier(column.name)} AS ${sql.identifier(key)}`,
-  ),
-  sql`, `,
-);
-
-// Safe because `returningIncident` selects every table column by property
-// name and each value is decoded by that column's own driver mapper.
-function toMonitorIncident(row: IncidentRow): MonitorIncident {
-  return Object.fromEntries(
-    Object.entries(incidentColumns).map(([key, column]) => {
-      const value = row[key];
-      return [key, value == null ? null : column.mapFromDriverValue(value)];
-    }),
-  ) as MonitorIncident;
-}
+type IncidentRow = { id: number };
 
 function createIncidentStatement(input: TransitionInput, guard: SQL) {
   return db.all<IncidentRow>(sql`
@@ -165,7 +141,7 @@ function createIncidentStatement(input: TransitionInput, guard: SQL) {
         WHERE ${monitorIncidentTable.monitorId} = ${monitor.id}
           AND ${monitorIncidentTable.resolvedAt} IS NULL)
     ON CONFLICT DO NOTHING
-    RETURNING ${returningIncident}
+    RETURNING id
   `);
 }
 
@@ -180,8 +156,25 @@ function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
         WHERE ${monitor.id} = ${input.monitorId}
           AND ${monitor.status} <> ${input.status}
           AND ${guard})
-    RETURNING ${returningIncident}
+    RETURNING id
   `);
+}
+
+// `changes()` is the row count of the incident statement right before this one
+// in the batch, so a replay or a held transition audits nothing.
+function auditStatement(input: TransitionInput) {
+  const at = Math.floor(input.cronTimestamp / 1000);
+  const written =
+    input.status === "error"
+      ? sql`${monitorIncidentTable.startedAt} = ${at} AND ${monitorIncidentTable.resolvedAt} IS NULL`
+      : sql`${monitorIncidentTable.resolvedAt} = ${at} AND ${monitorIncidentTable.autoResolved} = 1`;
+  return db.run(
+    monitorIncidentAuditStatement({
+      actor: { type: "system", job: "checker" },
+      transition: input.status === "error" ? "created" : "auto_resolved",
+      where: sql`${monitorIncidentTable.monitorId} = ${input.monitorId} AND ${written} AND changes() > 0`,
+    }),
+  );
 }
 
 function outboxStatement(
@@ -240,7 +233,8 @@ function casStatement(input: TransitionInput, guard: SQL) {
 /**
  * Writes the region status and, only when that changed something, evaluates the
  * monitor transition as one atomic batch. An outbox row exists iff the
- * compare-and-swap matched, so a notification is owed exactly once.
+ * compare-and-swap matched, so a notification is owed exactly once. The audit
+ * row of an opened or auto-resolved incident is part of that batch.
  */
 export async function applyStatusTransition(
   input: TransitionInput,
@@ -323,13 +317,14 @@ export async function evaluateTransition(
   const guard =
     input.status === "active"
       ? quorum
-      : sql`(${quorum} AND NOT ${monitorInMaintenance(db, {
-          at: new Date(input.observedAt ?? input.cronTimestamp),
-          mode: "window",
-        })})`;
+      : sql`(${quorum} AND NOT ${monitorInWindow(
+          db,
+          new Date(input.observedAt ?? input.cronTimestamp),
+        )})`;
   const journal = journalStatement(input, regionsJson, regionCount, guard);
   const outbox = outboxStatement(input, payload, guard);
   const cas = casStatement(input, guard);
+  const audit = auditStatement(input);
 
   let journalRows: JournalRow[];
   let outboxRows: OutboxInsertRow[];
@@ -337,11 +332,18 @@ export async function evaluateTransition(
 
   // All three statuses enqueue notifications; only the incident statement moves.
   // The outbox row reads incident_id by subquery, so it must run after the
-  // incident is created but before an existing one is resolved.
+  // incident is created but before an existing one is resolved. The audit
+  // statement always follows the incident statement directly.
   if (input.status === "error") {
-    const [journalResult, incidentResult, outboxResult] = await withBusyRetry(
+    const [journalResult, incidentResult, , outboxResult] = await withBusyRetry(
       () =>
-        db.batch([journal, createIncidentStatement(input, guard), outbox, cas]),
+        db.batch([
+          journal,
+          createIncidentStatement(input, guard),
+          audit,
+          outbox,
+          cas,
+        ]),
     );
     journalRows = journalResult;
     outboxRows = outboxResult;
@@ -353,6 +355,7 @@ export async function evaluateTransition(
           journal,
           outbox,
           resolveIncidentStatement(input, guard),
+          audit,
           cas,
         ]),
     );
@@ -361,14 +364,13 @@ export async function evaluateTransition(
     incidentRows = incidentResult;
   }
 
-  const incidents = incidentRows.map(toMonitorIncident);
+  const incidentIds = incidentRows.map((row) => row.id);
   const incidentCreatedId =
-    input.status === "error" ? (incidents[0]?.id ?? null) : null;
-  const incidentResolvedIds =
-    input.status === "error" ? [] : incidents.map((row) => row.id);
+    input.status === "error" ? (incidentIds[0] ?? null) : null;
+  const incidentResolvedIds = input.status === "error" ? [] : incidentIds;
 
   // Published here rather than in the route so drift repair keeps the trail too.
-  await publishIncidentAudit(input, incidents);
+  await publishIncidentEvents(input, incidentIds);
 
   return {
     kind: "evaluated",
@@ -388,48 +390,33 @@ export async function evaluateTransition(
   };
 }
 
-async function publishIncidentAudit(
+async function publishIncidentEvents(
   input: TransitionInput,
-  incidents: MonitorIncident[],
+  incidentIds: number[],
 ): Promise<void> {
   const created = input.status === "error";
   const targets = [{ id: String(input.monitorId), type: "monitor" as const }];
-  const entries: Promise<unknown>[] = [];
-
-  for (const incident of incidents) {
-    entries.push(
-      checkerAudit.publishAuditLog({
-        id: `monitor:${input.monitorId}`,
-        action: created ? "incident.created" : "incident.resolved",
-        targets,
-        metadata: {
-          cronTimestamp: input.cronTimestamp,
-          incidentId: incident.id,
-        },
-      }),
-    );
-  }
-
-  if (incidents.length > 0) entries.push(recordAudit(created, incidents));
 
   // Best-effort: the incident is already committed, and failing here would make
   // Cloud Tasks retry a transition that has landed.
   try {
-    await Promise.all(entries);
+    await Promise.all(
+      incidentIds.map((incidentId) =>
+        checkerAudit.publishAuditLog({
+          id: `monitor:${input.monitorId}`,
+          action: created ? "incident.created" : "incident.resolved",
+          targets,
+          metadata: {
+            cronTimestamp: input.cronTimestamp,
+            incidentId,
+          },
+        }),
+      ),
+    );
   } catch (error) {
     logger.warn("Failed to publish incident audit log", {
       monitor_id: input.monitorId,
       error_message: error instanceof Error ? error.message : String(error),
     });
   }
-}
-
-async function recordAudit(created: boolean, incidents: MonitorIncident[]) {
-  const workspaceId = incidents[0]?.workspaceId;
-  if (workspaceId == null) return;
-  await recordMonitorIncidentAudit({
-    ctx: await systemContext(workspaceId, "checker"),
-    transition: created ? "created" : "auto_resolved",
-    incidents,
-  });
 }

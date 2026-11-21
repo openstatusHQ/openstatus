@@ -1,5 +1,5 @@
 import { and, db as defaultDb, eq, schema } from "@openstatus/db";
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
+import { monitorInWindow } from "@openstatus/db/src/maintenance";
 
 /** True when a maintenance window of either mode covered the monitor when its check ran. */
 export async function isInMaintenance(
@@ -10,10 +10,7 @@ export async function isInMaintenance(
     .select({ id: schema.monitor.id })
     .from(schema.monitor)
     .where(
-      and(
-        eq(schema.monitor.id, monitorId),
-        monitorInMaintenance(defaultDb, { at: ranAt, mode: "window" }),
-      ),
+      and(eq(schema.monitor.id, monitorId), monitorInWindow(defaultDb, ranAt)),
     )
     .get();
   return row !== undefined;

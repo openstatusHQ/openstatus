@@ -4,6 +4,7 @@ import {
   maintenance,
   notExcused,
   page,
+  pageCardValues,
   pageComponent,
   pageConfigurationSchema,
   privateLocationToMonitors,
@@ -89,6 +90,7 @@ const gateFieldsSchema = selectPageSchema.pick({
 
 // Password for cookie-less server callers (feeds, `?pw=` links).
 const queryPasswordSchema = z.string().nullish();
+const cardTypeSchema = z.enum([...pageCardValues, "dominant"]);
 
 // A host reaches its page through either the slug or the custom domain.
 const bySlugOrDomain = (slug: string) =>
@@ -178,9 +180,7 @@ export const statusPageRouter = createTRPCRouter({
         slug: z.string().toLowerCase(),
         pw: queryPasswordSchema,
         // NOTE: override the defaults we are getting from the page configuration
-        cardType: z
-          .enum(["requests", "runs", "duration", "dominant", "manual"])
-          .nullish(),
+        cardType: cardTypeSchema.nullish(),
         barType: z.enum(["absolute", "dominant", "manual"]).nullish(),
       }),
     )
@@ -822,9 +822,7 @@ export const statusPageRouter = createTRPCRouter({
         slug: z.string().toLowerCase(),
         pw: queryPasswordSchema,
         pageComponentIds: z.string().array(),
-        cardType: z
-          .enum(["requests", "runs", "duration", "dominant", "manual"])
-          .prefault("requests"),
+        cardType: cardTypeSchema.prefault("requests"),
         barType: z
           .enum(["absolute", "dominant", "manual"])
           .prefault("dominant"),

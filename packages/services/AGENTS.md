@@ -6,17 +6,17 @@ handler. Routers validate input, call a verb, map errors.
 One documented exception: the checker ingest path
 (`apps/workflows/src/checker/transition.ts`) writes `monitor_status`,
 `incident` and the outbox directly. `ServiceContext` requires a `Workspace` that
-path would have to load on every check, `withTransaction` opens an interactive
-transaction where it needs a single atomic `db.batch()`, and a fail-closed
-`emitAudit` would roll back a real status transition because an audit insert
-failed. Do not "fix" it by routing it through a verb.
+path would have to load on every check, and `withTransaction` opens an
+interactive transaction where it needs a single atomic `db.batch()`. Do not
+"fix" it by routing it through a verb.
 
-Among the workflow jobs, only that batch is exempt. It records its incident
-audit rows right after the commit through `recordMonitorIncidentAudit`,
-best-effort. Every other job that opens or closes a monitor incident calls
-`createMonitorIncident` or `autoResolveMonitorIncidents` as a `system` actor.
-Two older writers still update the table without a verb or an audit row: the
-legacy v1 incident `PUT` and the screenshot service.
+Among the workflow jobs, only that batch is exempt, and it still audits in the
+same transaction: `monitorIncidentAuditStatement` builds the audit insert that
+runs in the batch right after the incident statement, so a failed audit row
+rolls the transition back. Every other job that opens or closes a monitor
+incident calls `createMonitorIncident` or `autoResolveMonitorIncidents` as a
+`system` actor. Two older writers still update the table without a verb or an
+audit row: the legacy v1 incident `PUT` and the screenshot service.
 
 ## Shape of a verb
 

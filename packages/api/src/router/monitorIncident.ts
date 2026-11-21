@@ -1,6 +1,8 @@
 import { Events } from "@openstatus/analytics";
 import {
   ExcuseMonitorIncidentInput,
+  GetMonitorIncidentInput,
+  UnexcuseMonitorIncidentInput,
   acknowledgeMonitorIncident,
   excuseMonitorIncident,
   getMonitorIncident,
@@ -52,7 +54,7 @@ export const monitorIncidentRouter = createTRPCRouter({
     }),
 
   get: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(GetMonitorIncidentInput)
     .query(async ({ ctx, input }) => {
       try {
         return await getMonitorIncident({ ctx: toServiceCtx(ctx), input });
@@ -127,7 +129,7 @@ export const monitorIncidentRouter = createTRPCRouter({
 
   unexcuse: protectedProcedure
     .meta({ track: Events.UnexcuseIncident })
-    .input(z.object({ id: z.number() }))
+    .input(UnexcuseMonitorIncidentInput)
     .mutation(async ({ ctx, input }) => {
       try {
         await unexcuseMonitorIncident({ ctx: toServiceCtx(ctx), input });

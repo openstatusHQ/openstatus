@@ -392,13 +392,15 @@ describe("StatusPageService.CreateStatusPage", () => {
   });
 
   test("a created page counts requests", async () => {
+    const { workspace } = await createTestWorkspace();
+    const headers = { "x-openstatus-key": String(workspace.id) };
     const res = await connectRequest(
       "CreateStatusPage",
       {
         title: `${TEST_PREFIX}-requests`,
         slug: `${TEST_PREFIX}-requests-slug`,
       },
-      { "x-openstatus-key": "1" },
+      headers,
     );
     expect(res.status).toBe(200);
     const { statusPage } = await res.json();
@@ -406,7 +408,7 @@ describe("StatusPageService.CreateStatusPage", () => {
       const overview = await connectRequest(
         "GetStatusPageOverview",
         { id: statusPage.id },
-        { "x-openstatus-key": "1" },
+        headers,
       );
       const data = await overview.json();
       expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
@@ -3329,26 +3331,18 @@ describe("StatusPageService.GetStatusPageOverview", () => {
   });
 
   test("maps a stored runs value", async () => {
-    const createdPage = await db
-      .insert(page)
-      .values({
-        workspaceId: 1,
-        title: `${TEST_PREFIX}-overview-runs-config`,
-        slug: `${TEST_PREFIX}-overview-runs-config-slug`,
-        description: "",
-        customDomain: "",
-        published: true,
-        accessType: "public",
-        configuration: { value: "runs", type: "absolute" },
-      })
-      .returning()
-      .get();
+    const { workspace } = await createTestWorkspace();
+    const createdPage = await createPage(workspace.id, {
+      slug: `${TEST_PREFIX}-overview-runs-config-slug`,
+      accessType: "public",
+      configuration: { value: "runs", type: "absolute" },
+    });
 
     try {
       const res = await connectRequest(
         "GetStatusPageOverview",
         { id: String(createdPage.id) },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": String(workspace.id) },
       );
 
       expect(res.status).toBe(200);

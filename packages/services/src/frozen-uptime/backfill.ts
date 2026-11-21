@@ -1,10 +1,9 @@
 import { and, db as defaultDb, eq, inArray } from "@openstatus/db";
 import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
-import { z } from "zod";
 
 import type { DB } from "../context";
-import { withBusyRetry } from "../retry";
+import { attachFrozenBadRanges } from "./attach-bad-ranges";
 import { hasBadRanges } from "./buckets";
 import { attachBadRanges, type BadBucketRow } from "./compute";
 import {
@@ -13,7 +12,9 @@ import {
   fetchChunked,
   groupByMonitorId,
   hasRuns,
+  workspacesById,
 } from "./run";
+import { BackfillFrozenBucketsInput } from "./schemas";
 
 export type BackfillBucketRow = BadBucketRow & {
   monitorId: string;
@@ -30,14 +31,6 @@ export function backfillBucketPipe(tb: OSTinybird): BackfillBucketPipeFn {
   return tb.frozenBad15mBackfill;
 }
 
-export const BackfillFrozenBucketsInput = z.object({
-  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])-01$/, "expected YYYY-MM-01"),
-  monitorIds: z.array(z.number().int().positive()).min(1).max(1000).optional(),
-});
-export type BackfillFrozenBucketsInput = z.infer<
-  typeof BackfillFrozenBucketsInput
->;
-
 export type BackfillFrozenBucketsResult = {
   month: string;
   updated: number;
@@ -52,7 +45,8 @@ export type BackfillFrozenBucketsResult = {
 /**
  * Give frozen rows written without 15-minute ranges their ranges, when those
  * sum exactly to the stored day counts. Counts are never rewritten.
- * System sweep across workspaces, so no ctx: rows are matched by their own id.
+ * System sweep: each row is written through `attachFrozenBadRanges` as its
+ * own workspace.
  */
 export async function backfillFrozenBuckets(
   args: BackfillFrozenBucketsInput & {
@@ -68,6 +62,7 @@ export async function backfillFrozenBuckets(
   const rows = await db
     .select({
       id: frozenMonitorUptime.id,
+      workspaceId: frozenMonitorUptime.workspaceId,
       monitorId: frozenMonitorUptime.monitorId,
       days: frozenMonitorUptime.days,
       jobType: monitor.jobType,
@@ -110,6 +105,10 @@ export async function backfillFrozenBuckets(
     onChunkFailure: args.onChunkFailure,
   });
   const bucketsByMonitorId = groupByMonitorId(fetched.rows);
+  const workspaces = await workspacesById(
+    db,
+    pending.map((r) => r.workspaceId),
+  );
 
   for (const r of pending) {
     if (fetched.failedMonitorIds.has(String(r.monitorId))) {
@@ -134,21 +133,25 @@ export async function backfillFrozenBuckets(
       continue;
     }
 
-    try {
-      const written = await withBusyRetry(() =>
-        db
-          .update(frozenMonitorUptime)
-          .set({ days: attached.days })
-          .where(
-            and(
-              eq(frozenMonitorUptime.id, r.id),
-              // a re-freeze since the read wins: its counts are newer
-              eq(frozenMonitorUptime.days, r.days),
-            ),
-          )
-          .returning({ id: frozenMonitorUptime.id }),
+    const ws = workspaces.get(r.workspaceId);
+    if (!ws) {
+      result.failed++;
+      result.failures.push(
+        `monitor ${r.monitorId}: workspace ${r.workspaceId} not found`,
       );
-      if (written.length > 0) result.updated++;
+      continue;
+    }
+
+    try {
+      const written = await attachFrozenBadRanges({
+        ctx: {
+          workspace: ws,
+          actor: { type: "system", job: "uptime-backfill" },
+          db,
+        },
+        input: { id: r.id, days: attached.days, expected: r.days },
+      });
+      if (written) result.updated++;
     } catch (e) {
       result.failed++;
       result.failures.push(

@@ -167,14 +167,18 @@ export async function handleUptimeFreezeCron(c: Context) {
   return c.json({ success: true }, 200);
 }
 
+function monitorIdsQuery(c: Context): number[] {
+  return (c.req.query("monitorIds") ?? "")
+    .split(",")
+    .filter((id) => id.trim() !== "")
+    .map(Number);
+}
+
 /** `GET /uptime-freeze/refreeze?month=YYYY-MM-01&monitorIds=1,2[&force=true]` */
 export async function handleUptimeRefreeze(c: Context) {
   const parsed = RefreezeMonitorMonthsInput.safeParse({
     month: c.req.query("month"),
-    monitorIds: (c.req.query("monitorIds") ?? "")
-      .split(",")
-      .filter((id) => id.trim() !== "")
-      .map(Number),
+    monitorIds: monitorIdsQuery(c),
   });
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues[0]?.message }, 400);
@@ -206,10 +210,7 @@ export async function handleUptimeRefreeze(c: Context) {
 
 /** `GET /uptime-freeze/backfill-buckets?month=YYYY-MM-01[&monitorIds=1,2]` */
 export async function handleUptimeBackfillBuckets(c: Context) {
-  const ids = (c.req.query("monitorIds") ?? "")
-    .split(",")
-    .filter((id) => id.trim() !== "")
-    .map(Number);
+  const ids = monitorIdsQuery(c);
   const parsed = BackfillFrozenBucketsInput.safeParse({
     month: c.req.query("month"),
     monitorIds: ids.length > 0 ? ids : undefined,

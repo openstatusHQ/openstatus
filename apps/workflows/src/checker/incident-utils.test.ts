@@ -16,6 +16,7 @@ import {
   expect,
   test,
   type MockInstance,
+  vi,
 } from "vitest";
 
 import { stubPublishAuditLog } from "../test/stub-audit-log";
@@ -101,7 +102,7 @@ test("resolveIncident auto-resolves, audits, and publishes one event per inciden
     workspaceId,
     cronTimestamp: 1_800_000_000_000,
   });
-  const publishFn = checkerAudit.publishAuditLog as unknown as MockInstance;
+  const publishFn = vi.mocked(checkerAudit.publishAuditLog);
 
   const resolved = await resolveIncident({
     monitorId: String(monitorId),

@@ -237,6 +237,28 @@ describe("replay", () => {
       .all();
     expect(outbox[0]?.total).toBe(1);
   });
+
+  test("re-evaluating a landed transition writes no second audit row", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+    const input = transitionInput(monitorId, regions[0], Date.now());
+
+    const opened = await applyStatusTransition(input);
+    await evaluateTransition(input);
+
+    if (opened.kind !== "evaluated") throw new Error("expected a transition");
+    const audits = await db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(opened.incidentCreatedId)),
+        ),
+      )
+      .all();
+    expect(audits[0]?.total).toBe(1);
+  });
 });
 
 describe("decision journal", () => {

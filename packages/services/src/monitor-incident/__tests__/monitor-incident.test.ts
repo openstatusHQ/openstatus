@@ -1,4 +1,4 @@
-import { db, eq } from "@openstatus/db";
+import { db, eq, sql } from "@openstatus/db";
 import { monitorIncidentTable, monitor } from "@openstatus/db/src/schema";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { ZodError } from "zod";
@@ -14,11 +14,11 @@ import {
 import type { DrizzleTx, ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { acknowledgeMonitorIncident } from "../acknowledge";
+import { monitorIncidentAuditStatement } from "../audit-statement";
 import { autoResolveMonitorIncidents } from "../auto-resolve";
 import { createMonitorIncident } from "../create";
 import { excuseMonitorIncident } from "../excuse";
 import { getMonitorIncident, listMonitorIncidents } from "../list";
-import { recordMonitorIncidentAudit } from "../record-audit";
 import { resolveMonitorIncident } from "../resolve";
 import { unexcuseMonitorIncident } from "../unexcuse";
 
@@ -512,31 +512,32 @@ describe("list / get", () => {
   });
 });
 
-describe("recordMonitorIncidentAudit", () => {
-  test("records an opened incident as a system create", async () => {
+describe("monitorIncidentAuditStatement", () => {
+  const actor = { type: "system", job: "checker" } as const;
+
+  test("writes the create row emitAudit would write", async () => {
     await withTestTransaction(async (tx) => {
       const incident = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
       });
 
-      await recordMonitorIncidentAudit({
-        ctx: {
-          workspace: teamCtx.workspace,
-          actor: { type: "system", job: "checker" },
-          db: tx,
-        },
-        transition: "created",
-        incidents: [incident],
-      });
+      await tx.run(
+        monitorIncidentAuditStatement({
+          actor,
+          transition: "created",
+          where: eq(monitorIncidentTable.id, incident.id),
+        }),
+      );
 
-      const [row] = await readAuditLog({
+      const rows = await readAuditLog({
         workspaceId: teamCtx.workspace.id,
         entityType: "monitor_incident",
         entityId: incident.id,
         db: tx,
       });
-      expect(row).toMatchObject({
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
         action: "monitor_incident.create",
         actorType: "system",
         actorId: "checker",
@@ -544,40 +545,72 @@ describe("recordMonitorIncidentAudit", () => {
         before: null,
         changedFields: null,
       });
-      expect(row?.after).toMatchObject({ id: incident.id });
+      expect(rows[0]?.after).toEqual(JSON.parse(JSON.stringify(incident)));
     });
   });
 
-  test("records an auto-resolve as a diff on the resolve columns", async () => {
+  test("writes an auto-resolve as a diff on the resolve columns", async () => {
     await withTestTransaction(async (tx) => {
-      const incident = await insertIncident(tx, {
+      const inserted = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
         resolvedAt: new Date(),
       });
+      const [incident] = await tx
+        .update(monitorIncidentTable)
+        .set({ autoResolved: true })
+        .where(eq(monitorIncidentTable.id, inserted.id))
+        .returning();
 
-      await recordMonitorIncidentAudit({
-        ctx: {
-          workspace: teamCtx.workspace,
-          actor: { type: "system", job: "checker" },
-          db: tx,
-        },
-        transition: "auto_resolved",
-        incidents: [{ ...incident, autoResolved: true }],
-      });
+      await tx.run(
+        monitorIncidentAuditStatement({
+          actor,
+          transition: "auto_resolved",
+          where: eq(monitorIncidentTable.id, inserted.id),
+        }),
+      );
 
       const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: inserted.id,
+        db: tx,
+      });
+      const after = JSON.parse(JSON.stringify(incident));
+      expect(row?.action).toBe("monitor_incident.update");
+      expect(row?.actorType).toBe("system");
+      expect(row?.changedFields).toEqual(["resolvedAt", "autoResolved"]);
+      expect(row?.after).toEqual(after);
+      expect(row?.before).toEqual({
+        ...after,
+        resolvedAt: null,
+        autoResolved: false,
+      });
+    });
+  });
+
+  test("writes nothing when no incident matches", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+
+      await tx.run(
+        monitorIncidentAuditStatement({
+          actor,
+          transition: "created",
+          where: sql`${monitorIncidentTable.id} = ${incident.id} AND changes() > 1`,
+        }),
+      );
+
+      const rows = await readAuditLog({
         workspaceId: teamCtx.workspace.id,
         entityType: "monitor_incident",
         entityId: incident.id,
         db: tx,
       });
-      expect(row?.action).toBe("monitor_incident.update");
-      expect(row?.actorType).toBe("system");
-      expect(row?.changedFields?.toSorted()).toEqual([
-        "autoResolved",
-        "resolvedAt",
-      ]);
+      expect(rows).toHaveLength(0);
     });
   });
 });

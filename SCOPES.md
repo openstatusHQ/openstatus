@@ -64,8 +64,8 @@ Generated from `requireScope` calls on 2026-10-30. Regenerate with
 
 | Scope | Verbs |
 | --- | --- |
-| `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getHeartbeatState, listHeartbeatPings, getMonitorIncident, listMonitorIncidents, getMonitorReport, getUptimeHistory, listMaintenanceWindows, getMaintenanceWindow |
-| `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, updateMonitorHeartbeat, regenerateHeartbeatToken, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, acknowledgeMonitorIncident, resolveMonitorIncident, excuseMonitorIncident, unexcuseMonitorIncident, freezeMonitorMonth, createMaintenanceWindow, updateMaintenanceWindow, endMaintenanceWindow, deleteMaintenanceWindow, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
+| `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getHeartbeatState, listHeartbeatPings, getMonitorIncident, listMonitorIncidents, getMonitorReport, getUptimeHistory, getMonitorUptimeHistory, listMaintenanceWindows, getMaintenanceWindow |
+| `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, updateMonitorHeartbeat, regenerateHeartbeatToken, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, createMonitorIncident, autoResolveMonitorIncidents, acknowledgeMonitorIncident, resolveMonitorIncident, excuseMonitorIncident, unexcuseMonitorIncident, freezeMonitorMonth, attachFrozenBadRanges, createMaintenanceWindow, updateMaintenanceWindow, endMaintenanceWindow, deleteMaintenanceWindow, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `pages:read` | listPages, getPage, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponentDailySummary, listPageComponentGroups, previewImport |
 | `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `incidents:read` | listStatusReports, getStatusReport, listIncidents, getIncident, getIncidentBySlackChannel, getIncidentForStatusReport, listLinkedStatusReportIds, listIncidentEvents, getIncidentEvent, getPostmortem, listMaintenances, getMaintenance, getMaintenanceUpdate |
@@ -80,6 +80,11 @@ Read verbs that take no `ctx` (status-page visitor paths, cron jobs, token
 lookups) carry no scope by design; the lint rule
 `openstatus/services-read-verbs-require-scope` covers the exported `list*`,
 `get*`, `search*`, `stream*`, `preview*` verbs that do.
+
+The frozen-uptime sweeps (`runUptimeFreeze`, `refreezeMonitorMonths`,
+`backfillFrozenBuckets`) take no `ctx` either: they run across workspaces and
+write each row through `freezeMonitorMonth` or `attachFrozenBadRanges` as a
+`system` actor of that row's workspace.
 
 ## Agent tools by scope
 

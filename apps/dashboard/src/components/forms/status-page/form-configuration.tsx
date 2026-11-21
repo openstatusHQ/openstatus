@@ -1,4 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  pageCardValues,
+  pageCheckCardValues,
+} from "@openstatus/db/src/schema/pages/constants";
 import { ArrowUpRight } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -53,10 +57,6 @@ import {
   uptimeModeOf,
 } from "@/data/uptime-calculation.client";
 
-// card values offered for monitor checks; "manual" belongs to reports only
-const CHECK_CARD_VALUES = ["duration", "requests", "runs"] as const;
-const CARD_VALUES = [...CHECK_CARD_VALUES, "manual"] as const;
-
 const schema = z.object({
   configuration: z.record(
     z.string(),
@@ -67,7 +67,7 @@ const schema = z.object({
 const configurationSchema = z
   .object({
     type: z.enum(["manual", "absolute"]),
-    value: z.enum(CARD_VALUES).nullish(),
+    value: z.enum(pageCardValues).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
     days: z
@@ -112,7 +112,7 @@ export function FormConfiguration({
     | "absolute";
   const watchConfigurationValue = form.watch(
     "configuration.value",
-  ) as (typeof CHECK_CARD_VALUES)[number];
+  ) as (typeof pageCheckCardValues)[number];
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
@@ -125,7 +125,7 @@ export function FormConfiguration({
       // runs on mount too: only replace a value that is invalid for monitor
       // checks, with the read default of a page without configuration
       const value = form.getValues("configuration.value");
-      if (!CHECK_CARD_VALUES.some((v) => v === value)) {
+      if (!pageCheckCardValues.some((v) => v === value)) {
         form.setValue("configuration.value", "requests");
       }
       form.setValue("configuration.type", "absolute");
@@ -230,7 +230,7 @@ export function FormConfiguration({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CHECK_CARD_VALUES.map((value) => (
+                        {pageCheckCardValues.map((value) => (
                           <SelectItem key={value} value={value}>
                             {configurationLabels.value[value]}
                           </SelectItem>
@@ -437,7 +437,7 @@ const message = {
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
-  value: parseAsStringLiteral(CARD_VALUES),
+  value: parseAsStringLiteral(pageCardValues),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
   days: parseAsStringLiteral(["30", "45"]),

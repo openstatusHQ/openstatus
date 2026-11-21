@@ -1,6 +1,9 @@
 import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, isNull, or, schema, sql } from "@openstatus/db";
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
+import {
+  monitorInMaintenance,
+  monitorInWindow,
+} from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -62,6 +65,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
     monitorId: monitorIdNumber,
   };
   if (event) event.status_update = statusUpdate;
+  const recordIncidentError = (error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    statusUpdate.incident_error = errorMessage;
+    return errorMessage;
+  };
 
   try {
     const monitor = await db
@@ -88,7 +96,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
                 eq(schema.monitor.id, monitorIdNumber),
                 or(
                   monitorInMaintenance(db, { at, mode: "pause" }),
-                  monitorInMaintenance(db, { at, mode: "window" }),
+                  monitorInWindow(db, at),
                 ),
               ),
             )
@@ -268,12 +276,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
               });
             }
           } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-            statusUpdate.incident_error = errorMessage;
             logger.error("Failed to create incident", {
               monitor_id: monitorId,
-              error_message: errorMessage,
+              error_message: recordIncidentError(error),
             });
           }
         }
@@ -334,12 +339,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
             });
             incident = incidents[0] ?? null;
           } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-            statusUpdate.incident_error = errorMessage;
             logger.warning(
               "Failed to resolve incident on degraded transition",
-              { monitor_id: monitorId, error_message: errorMessage },
+              {
+                monitor_id: monitorId,
+                error_message: recordIncidentError(error),
+              },
             );
             // Continue with notifications even if resolution fails
           }
@@ -400,12 +405,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
             });
             incident = incidents[0] ?? null;
           } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-            statusUpdate.incident_error = errorMessage;
             logger.warning("Failed to resolve incident on active transition", {
               monitor_id: monitorId,
-              error_message: errorMessage,
+              error_message: recordIncidentError(error),
             });
             // Continue with notifications even if resolution fails
           }

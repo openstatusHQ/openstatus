@@ -2,6 +2,7 @@ import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 
 import { monitorRegions } from "../../db/src/schema/constants";
+import { frozenMonitorUptimeMonthSchema } from "../../db/src/schema/frozen_uptime/month";
 import { env } from "./env";
 import {
   headersSchema,
@@ -405,7 +406,7 @@ export function bad15mShape(monitorId: z.ZodType<string>) {
 }
 
 export const backfillBad15mParameters = z.object({
-  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])-01$/, "expected YYYY-MM-01"),
+  month: frozenMonitorUptimeMonthSchema,
   monitorIds: z.string().array(),
 });
 

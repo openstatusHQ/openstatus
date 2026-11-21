@@ -1,4 +1,5 @@
 export { acknowledgeMonitorIncident } from "./acknowledge";
+export { monitorIncidentAuditStatement } from "./audit-statement";
 export { autoResolveMonitorIncidents } from "./auto-resolve";
 export { createMonitorIncident } from "./create";
 export { excuseMonitorIncident } from "./excuse";
@@ -13,7 +14,6 @@ export {
   listMonitorIncidents,
   type ListMonitorIncidentsResult,
 } from "./list";
-export { recordMonitorIncidentAudit } from "./record-audit";
 export { resolveMonitorIncident } from "./resolve";
 export { unexcuseMonitorIncident } from "./unexcuse";
 

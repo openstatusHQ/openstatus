@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "@openstatus/db";
 import {
   monitorInMaintenance,
+  monitorInWindow,
   PAGE_MAINTENANCE_PAUSE_ENDS,
   pageMaintenancePauses,
 } from "@openstatus/db/src/maintenance";
@@ -513,6 +514,7 @@ describe("monitorInMaintenance", () => {
         },
       });
 
+      const at = new Date(now);
       const matching = async (mode: "pause" | "continue" | "window") => {
         const rows = await tx
           .select({ id: monitor.id })
@@ -520,7 +522,9 @@ describe("monitorInMaintenance", () => {
           .where(
             and(
               inArray(monitor.id, ids),
-              monitorInMaintenance(tx, { at: new Date(now), mode }),
+              mode === "window"
+                ? monitorInWindow(tx, at)
+                : monitorInMaintenance(tx, { at, mode }),
             ),
           )
           .all();

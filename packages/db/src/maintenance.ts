@@ -56,18 +56,21 @@ function pageMaintenanceMonitorIds(db: Db, at: Date) {
   );
 }
 
+/** Condition on `monitor.id`: a window of any mode covers it at `at`. */
+export function monitorInWindow(db: Db, at: Date): SQL {
+  return inArray(schema.monitor.id, windowMonitorIds(db, at));
+}
+
 /**
- * Condition on `monitor.id` at `at`.
- * `pause`: a pause window covers it, or until `PAGE_MAINTENANCE_PAUSE_ENDS` a status-page
- * maintenance, and no continue window does.
- * `continue`: a continue window covers it. `window`: any window, status-page maintenances excluded.
+ * Condition on `monitor.id` at `at`. `continue`: a continue window covers it.
+ * `pause`: a pause window does, or until `PAGE_MAINTENANCE_PAUSE_ENDS` a
+ * status-page maintenance, and no continue window does.
  */
 export function monitorInMaintenance(
   db: Db,
-  args: { at: Date; mode: MonitorMaintenanceWindowMode | "window" },
+  args: { at: Date; mode: MonitorMaintenanceWindowMode },
 ): SQL {
   const id = schema.monitor.id;
-  if (args.mode === "window") return inArray(id, windowMonitorIds(db, args.at));
   const continued = inArray(id, windowMonitorIds(db, args.at, "continue"));
   if (args.mode === "continue") return continued;
   const byWindow = inArray(id, windowMonitorIds(db, args.at, "pause"));

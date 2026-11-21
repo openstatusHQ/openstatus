@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { frozenMonitorUptime } from "./frozen_monitor_uptime";
+import { frozenMonitorUptimeMonthSchema } from "./month";
 
 const countsSchema = z.object({
   ok: z.number().int().nonnegative(),
@@ -39,11 +40,6 @@ export const frozenMonitorUptimeDaySchema = z.object({
 export type FrozenMonitorUptimeDay = z.infer<
   typeof frozenMonitorUptimeDaySchema
 >;
-
-// YYYY-MM-01, UTC first-of-month
-export const frozenMonitorUptimeMonthSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-01$/, "month must be YYYY-MM-01");
 
 export const selectFrozenMonitorUptimeSchema = createSelectSchema(
   frozenMonitorUptime,

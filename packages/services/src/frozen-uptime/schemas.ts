@@ -1,4 +1,8 @@
-import { insertFrozenMonitorUptimeSchema } from "@openstatus/db/src/schema";
+import {
+  type FrozenMonitorUptimeDay,
+  frozenMonitorUptimeMonthSchema,
+  insertFrozenMonitorUptimeSchema,
+} from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 // workspaceId comes from ctx; id/createdAt from the db
@@ -10,11 +14,29 @@ export const FreezeMonitorMonthInput = insertFrozenMonitorUptimeSchema.omit({
 export type FreezeMonitorMonthInput = z.infer<typeof FreezeMonitorMonthInput>;
 
 export const RefreezeMonitorMonthsInput = z.object({
-  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])-01$/, "expected YYYY-MM-01"),
+  month: frozenMonitorUptimeMonthSchema,
   monitorIds: z.array(z.number().int().positive()).min(1).max(1000),
 });
 export type RefreezeMonitorMonthsInput = z.infer<
   typeof RefreezeMonitorMonthsInput
+>;
+
+export const BackfillFrozenBucketsInput = z.object({
+  month: frozenMonitorUptimeMonthSchema,
+  monitorIds: z.array(z.number().int().positive()).min(1).max(1000).optional(),
+});
+export type BackfillFrozenBucketsInput = z.infer<
+  typeof BackfillFrozenBucketsInput
+>;
+
+export const AttachFrozenBadRangesInput = z.object({
+  id: z.number().int().positive(),
+  days: insertFrozenMonitorUptimeSchema.shape.days,
+  // matched against the stored JSON, so it must not be reshaped by a parse
+  expected: z.custom<FrozenMonitorUptimeDay[]>(Array.isArray),
+});
+export type AttachFrozenBadRangesInput = z.infer<
+  typeof AttachFrozenBadRangesInput
 >;
 
 export const GetUptimeHistoryInput = z.object({

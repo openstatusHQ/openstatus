@@ -1,6 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { db, sql } from "@openstatus/db";
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
+import { monitorInWindow } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import { monitor, monitorStatusTable } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
@@ -40,7 +40,7 @@ async function findDrift(workspaceId?: number): Promise<DriftRow[]> {
         AND ${monitorStatusTable.status} <> ${monitor.status}
         -- no alerts during maintenance; a failure repair waits for the window to end
         AND (${monitorStatusTable.status} = 'active'
-          OR NOT ${monitorInMaintenance(db, { at: new Date(), mode: "window" })})
+          OR NOT ${monitorInWindow(db, new Date())})
         AND ${csvRegionMemberSql(sql`${monitorStatusTable.region}`)}
       GROUP BY ${monitorStatusTable.monitorId}, ${monitorStatusTable.status}
       HAVING ${quorumMetSql(sql`count(*)`, csvRegionCountSql())}

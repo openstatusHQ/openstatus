@@ -12,6 +12,7 @@ import {
   type MonitorJobType,
   monitor,
   selectWorkspaceSchema,
+  type Workspace,
   workspace,
 } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
@@ -554,16 +555,9 @@ async function freezeMonth(
     failedPipeByMonitorId.set(id, kind);
   }
 
-  const workspaceIds = [...new Set(pending.map((m) => m.workspaceId))];
-  const workspaceRows =
-    workspaceIds.length > 0
-      ? await db
-          .select()
-          .from(workspace)
-          .where(inArray(workspace.id, workspaceIds))
-      : [];
-  const workspacesById = new Map(
-    workspaceRows.map((w) => [w.id, selectWorkspaceSchema.parse(w)]),
+  const workspaces = await workspacesById(
+    db,
+    pending.map((m) => m.workspaceId),
   );
 
   let frozen = 0;
@@ -607,7 +601,7 @@ async function freezeMonth(
       );
     }
 
-    const ws = workspacesById.get(m.workspaceId);
+    const ws = workspaces.get(m.workspaceId);
     if (!ws) {
       failures.push(`monitor ${m.id}: workspace ${m.workspaceId} not found`);
       continue;
@@ -638,6 +632,18 @@ async function freezeMonth(
   }
 
   return { month, frozen, alreadyFrozen, skipped, bucketMismatch, failures };
+}
+
+export async function workspacesById(
+  db: DB,
+  ids: number[],
+): Promise<Map<number, Workspace>> {
+  const unique = [...new Set(ids)];
+  const rows =
+    unique.length > 0
+      ? await db.select().from(workspace).where(inArray(workspace.id, unique))
+      : [];
+  return new Map(rows.map((w) => [w.id, selectWorkspaceSchema.parse(w)]));
 }
 
 type FreezeRunOptions = {

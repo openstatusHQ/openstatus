@@ -7,6 +7,7 @@ import {
   pageSubscriber,
   workspace,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 /**
@@ -1716,11 +1717,13 @@ describe("statusPage never serializes excused outages", () => {
 
   beforeAll(async () => {
     await db.delete(page).where(eq(page.slug, excusedSlug));
+    const { workspace: ws, user } = await createTestWorkspace();
+    const workspaceId = ws.id;
 
     const testPage = await db
       .insert(page)
       .values({
-        workspaceId: 1,
+        workspaceId,
         title: "Excused Outage Page",
         description: "Verifies excused outages stay private",
         slug: excusedSlug,
@@ -1733,7 +1736,7 @@ describe("statusPage never serializes excused outages", () => {
     const testMonitor = await db
       .insert(monitor)
       .values({
-        workspaceId: 1,
+        workspaceId,
         name: "Excused Outage Monitor",
         periodicity: "1m",
         url: "https://example.com",
@@ -1748,7 +1751,7 @@ describe("statusPage never serializes excused outages", () => {
       .insert(monitorIncidentTable)
       .values({
         monitorId: excusedMonitorId,
-        workspaceId: 1,
+        workspaceId,
         startedAt: new Date(now - 4 * 3_600_000),
         resolvedAt: new Date(now - 3 * 3_600_000),
       })
@@ -1760,11 +1763,11 @@ describe("statusPage never serializes excused outages", () => {
       .insert(monitorIncidentTable)
       .values({
         monitorId: excusedMonitorId,
-        workspaceId: 1,
+        workspaceId,
         startedAt: new Date(now - 2 * 3_600_000),
         resolvedAt: new Date(now - 3_600_000),
         excusedAt: new Date(now),
-        excusedBy: 1,
+        excusedBy: user.id,
         excusedReason: excuseReason,
       })
       .returning()
@@ -1774,7 +1777,7 @@ describe("statusPage never serializes excused outages", () => {
     const component = await db
       .insert(pageComponent)
       .values({
-        workspaceId: 1,
+        workspaceId,
         pageId: excusedPageId,
         type: "monitor",
         monitorId: excusedMonitorId,
@@ -1831,8 +1834,9 @@ describe("statusPage on a page stored in runs mode", () => {
 
   beforeAll(async () => {
     await db.delete(page).where(eq(page.slug, runsSlug));
+    const { workspace: ws } = await createTestWorkspace();
     await db.insert(page).values({
-      workspaceId: 1,
+      workspaceId: ws.id,
       title: "E2E Runs Mode Page",
       description: "",
       slug: runsSlug,

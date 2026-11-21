@@ -1,7 +1,7 @@
+export { attachFrozenBadRanges } from "./attach-bad-ranges";
 export {
   type BackfillBucketPipeFn,
   type BackfillFrozenBucketsResult,
-  BackfillFrozenBucketsInput,
   backfillBucketPipe,
   backfillFrozenBuckets,
 } from "./backfill";
@@ -34,4 +34,9 @@ export {
   uptimeFreezePipes,
   uptimeRunsPipes,
 } from "./run";
-export { FreezeMonitorMonthInput, RefreezeMonitorMonthsInput } from "./schemas";
+export {
+  AttachFrozenBadRangesInput,
+  BackfillFrozenBucketsInput,
+  FreezeMonitorMonthInput,
+  RefreezeMonitorMonthsInput,
+} from "./schemas";
