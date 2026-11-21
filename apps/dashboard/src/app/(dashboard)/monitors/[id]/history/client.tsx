@@ -245,6 +245,7 @@ export function Client() {
             counts={counts}
             metric={metric}
             partial={partial}
+            reportFrom={report.window.from}
           />
         )}
       </Section>

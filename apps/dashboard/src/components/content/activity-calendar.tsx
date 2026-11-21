@@ -40,7 +40,7 @@ export type ActivityDay = Partial<ActivityMark> & {
   lines?: string[];
   /** Opens a popover on click listing these; `kind` labels each in a mixed calendar. */
   links?: ActivityLink[];
-  /** Outside the record, e.g. before monitoring began: a bare outline like a future day. */
+  /** Outside the record, e.g. before history was kept: a solid outline, unlike a future day's dashed one. */
   blank?: boolean;
 };
 
@@ -73,6 +73,7 @@ const cellVariants = cva(
         // filled and darker-edged, so it differs from a bare future day
         true: "border-muted-foreground bg-activity-0 border border-dashed",
       },
+      blank: { true: "border-border border bg-transparent" },
     },
   },
 );
@@ -82,6 +83,7 @@ export function ActivityCalendarCell({
   level,
   hatched,
   upcoming,
+  blank,
   className,
   ...props
 }: React.ComponentProps<"div"> &
@@ -90,10 +92,10 @@ export function ActivityCalendarCell({
   return (
     <div
       data-slot="activity-calendar-cell"
-      data-empty={!level && !hatched && !upcoming ? "" : undefined}
+      data-empty={!level && !hatched && !upcoming && !blank ? "" : undefined}
       className={cn(
         activityColorVariants({ scale, level, hatched }),
-        cellVariants({ upcoming }),
+        cellVariants({ upcoming, blank }),
         className,
       )}
       {...props}
@@ -286,7 +288,10 @@ function ActivityCalendarDay({
   // after today: empty days are a bare outline, scheduled ones filled and dashed darker
   const future = day.date > today;
   // not a button, so arrow keys hop over it
-  if (day.blank || (future && !day.upcoming && day.scale === undefined)) {
+  if (day.blank) {
+    return <div aria-hidden className={cellVariants({ blank: true })} />;
+  }
+  if (future && !day.upcoming && day.scale === undefined) {
     return (
       <div
         aria-hidden
