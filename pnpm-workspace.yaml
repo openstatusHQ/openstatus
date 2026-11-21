@@ -76,6 +76,7 @@ catalog:
   "@logtape/logtape": 2.3.6
   "@logtape/otel": 2.3.6
   "@logtape/sentry": 2.3.6
+  "@modelcontextprotocol/ext-apps": 1.7.5
   "@modelcontextprotocol/sdk": 1.30.0
   "@openpanel/nextjs": 1.5.1
   "@openpanel/sdk": 1.3.1

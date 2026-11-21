@@ -1,5 +1,6 @@
 "use client";
 
+import { ChartTooltipNumber } from "@openstatus/ui/components/custom/chart-tooltip-number";
 import {
   type ChartConfig,
   ChartContainer,
@@ -31,7 +32,6 @@ import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { computeLatencyYAxisDomain } from "./chart-latency-domain";
-import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
   latency: {

@@ -54,6 +54,13 @@ codebases that are not this one.
 - **Defaults must render unconfigured.** Slots are optional, i18n falls back to
   English. The registry preview has no wiring.
 
+## `custom/` components also render in MCP Apps views
+
+`apps/server/mcp-apps/*` bundles `custom/` components (the latency chart and its
+tooltip) into sandboxed iframes with no network access. A component shared that
+way takes its data as props and its links or actions as slot props: no tRPC,
+no `useQuery`, no `next/link`. Keep the fetching wrapper in the app.
+
 ## Border radius
 
 `globals.css` defines the scale as ratios of the themed `--radius`, anchored so

@@ -2,7 +2,10 @@ import type { ServiceContext } from "./context";
 import { ForbiddenError } from "./errors";
 import type { Workspace } from "./types";
 
-const featureWorkspaces = {} satisfies Record<string, ReadonlyArray<number>>;
+const featureWorkspaces = {
+  // `render_monitor_chart` in the dashboard assistant and Slack
+  "monitor-chart": [],
+} satisfies Record<string, ReadonlyArray<number>>;
 
 export type Feature = keyof typeof featureWorkspaces;
 

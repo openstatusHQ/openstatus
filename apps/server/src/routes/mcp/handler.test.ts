@@ -26,6 +26,7 @@ import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
 import { mcpRoute } from "./index";
 import { createMcpServer } from "./server";
+import { VIEW_CALL_META } from "./view-call";
 
 /**
  * Build a fresh Hono app with the same middleware chain as production.
@@ -122,24 +123,33 @@ describe("MCP transport", () => {
     ]);
   });
 
-  // Flip to an explicit experimental list once the first gated tool lands.
-  test.each(["tools/list", "resources/list"])(
-    "%s is the same with ?experimental=1 while nothing is gated",
-    async (method) => {
-      const app = makeApp();
-      const [stable, experimental] = await Promise.all(
+  test("?experimental=1 adds the gated tools and views, and nothing else", async () => {
+    const app = makeApp();
+    const added = async (method: string, key: "tools" | "resources") => {
+      const lists = await Promise.all(
         [jsonRpc({ method }), jsonRpc({ method }, KEY, "?experimental=1")].map(
           async (req) => {
             const res = await app.fetch(req);
             expect(res.status).toBe(200);
-            return (await readJsonRpc(res)).result;
+            const result = (await readJsonRpc(res)).result as Record<
+              string,
+              { name: string }[]
+            >;
+            return result[key].map((entry) => entry.name);
           },
         ),
       );
-      expect(stable).toBeDefined();
-      expect(experimental).toEqual(stable);
-    },
-  );
+      const [stable, experimental] = lists as [string[], string[]];
+      expect(experimental).toEqual(expect.arrayContaining(stable));
+      return experimental.filter((name) => !stable.includes(name));
+    };
+    expect(await added("tools/list", "tools")).toEqual([
+      "render_monitor_chart",
+    ]);
+    expect(await added("resources/list", "resources")).toEqual([
+      "monitor-chart",
+    ]);
+  });
 
   test("tools/list returns the expected registered tool set", async () => {
     const app = makeApp();
@@ -339,7 +349,29 @@ describe("MCP transport — analytics", () => {
     expect(event?.name).toBe(Events.McpRequest.name);
     expect(event?.method).toBe("tools/call");
     expect(event?.tool).toBe("list_status_pages");
+    expect(event?.origin).toBe("model");
     expect(event?.authenticated).toBe(true);
+  });
+
+  test("a tools/call made by a view is tracked with origin view", async () => {
+    const app = makeApp();
+    await app.fetch(
+      jsonRpc({
+        method: "tools/call",
+        params: {
+          name: "list_status_pages",
+          arguments: {},
+          _meta: VIEW_CALL_META,
+        },
+      }),
+    );
+    await flushTracking();
+
+    const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(event?.origin).toBe("view");
   });
 
   test("a rejected request is not tracked", async () => {

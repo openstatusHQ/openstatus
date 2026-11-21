@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "@openstatus/ui/globals";
+
+@source "./";
+@source "../_shared";
+
+body {
+  /* `--font-sans` comes from the host's style variables when it sends them */
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  background: transparent;
+}
