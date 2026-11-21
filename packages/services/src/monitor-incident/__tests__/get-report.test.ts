@@ -330,6 +330,7 @@ describe("getMonitorReport", () => {
       tx: DrizzleTx,
       state: { firstPingAt: Date | null; lastPingAt: Date },
       outages: Array<[Date, Date]> = [],
+      period = feb,
     ) => {
       const heartbeat = await tx
         .insert(monitor)
@@ -358,7 +359,7 @@ describe("getMonitorReport", () => {
       }
       return getMonitorReport({
         ctx: { ...ctx, db: tx },
-        input: { monitorId: heartbeat.id, ...feb },
+        input: { monitorId: heartbeat.id, ...period },
         now: new Date(Date.UTC(2026, 2, 5)),
       });
     };
@@ -395,9 +396,15 @@ describe("getMonitorReport", () => {
 
     test("a row without a first ping keeps the creation date", async () => {
       await withTestTransaction(async (tx) => {
-        const report = await reportFor(tx, { firstPingAt: null, lastPingAt });
+        // a period that starts before the monitor existed
+        const report = await reportFor(
+          tx,
+          { firstPingAt: null, lastPingAt },
+          [],
+          { from: new Date(Date.UTC(2026, 0, 1)), to: feb.to },
+        );
 
-        expect(report.window.from).toEqual(new Date(Date.UTC(2026, 1, 1)));
+        expect(report.window.from).toEqual(createdAt);
         expect(report.availability).toBe(100);
       });
     });

@@ -48,7 +48,7 @@ export const UPTIME_MODES: {
     value: "runs",
     label: configurationLabels.value.runs,
     meaning:
-      "Each scheduled check counts once. It is down when half the cloud regions that reported fail.",
+      "Each scheduled check counts once. It is down when at least half the cloud regions that reported fail.",
   },
   {
     value: "duration",

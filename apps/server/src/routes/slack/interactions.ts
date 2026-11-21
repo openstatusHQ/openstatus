@@ -511,7 +511,7 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
 
   if (payload.actions[0].action_id.startsWith(INCIDENT_BIND_ACTION_PREFIX)) {
     runInBackground("incident-bind", () => processIncidentBind(payload), {
-      teamId: payload.team?.id,
+      teamId: payload.team?.id ?? payload.user.team_id,
     });
     return c.json({ ok: true });
   }
