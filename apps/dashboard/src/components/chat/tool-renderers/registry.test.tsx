@@ -86,8 +86,19 @@ describe("summarizeToolOutput", () => {
       }),
     ).toBe("p95 · last 7d · peak 911ms in fra");
     expect(
-      summarizeToolOutput("render_monitor_chart", { ...chart, peak: null }),
+      summarizeToolOutput("render_monitor_chart", {
+        ...chart,
+        timestamps: [],
+        peak: null,
+      }),
     ).toBe("p95 · last 7d · no checks");
+    expect(
+      summarizeToolOutput("render_monitor_chart", {
+        ...chart,
+        timestamps: [0],
+        peak: null,
+      }),
+    ).toBe("p95 · last 7d · no latency");
   });
 
   it("handles a missing postmortem", () => {

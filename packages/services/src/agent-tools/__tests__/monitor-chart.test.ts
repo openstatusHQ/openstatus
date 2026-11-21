@@ -10,15 +10,15 @@ import {
 const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 8, 8, 20);
 
-function point(region: string, hour: number, p95: number) {
+function point(region: string, hour: number, p95: number | null) {
   return {
     region,
     timestamp: T0 + hour * HOUR,
-    p50: Math.round(p95 / 2),
-    p75: Math.round(p95 * 0.7),
-    p90: Math.round(p95 * 0.9),
+    p50: p95 === null ? null : Math.round(p95 / 2),
+    p75: p95 === null ? null : Math.round(p95 * 0.7),
+    p90: p95 === null ? null : Math.round(p95 * 0.9),
     p95,
-    p99: p95 + 100,
+    p99: p95 === null ? null : p95 + 100,
   };
 }
 
@@ -108,6 +108,30 @@ describe("toMonitorChartModel", () => {
     expect(model.series).toEqual([]);
     expect(summarizeMonitorChart(model)).toContain("No checks recorded");
   });
+
+  test("checks without latency are an outage, not an empty window", () => {
+    const model = toMonitorChartModel(
+      series([point("fra", 0, null), point("iad", 0, null)]),
+      "p95",
+    );
+    expect(model.peak).toBeNull();
+    expect(model.timestamps).toHaveLength(1);
+    const text = summarizeMonitorChart(model);
+    expect(text).toContain("none recorded a latency");
+    expect(text).not.toContain("No checks recorded");
+  });
+
+  test("a region with no latency is ranked after every region with some", () => {
+    const regions = ["ams", "fra", "gru", "hkg", "iad", "jnb"];
+    const model = toMonitorChartModel(
+      series([
+        ...regions.map((region) => point(region, 0, 100)),
+        point("syd", 0, null),
+      ]),
+      "p95",
+    );
+    expect(model.omittedRegions).toEqual(["syd"]);
+  });
 });
 
 describe("summarizeMonitorChart", () => {
@@ -127,5 +151,17 @@ describe("summarizeMonitorChart", () => {
     );
     expect(text).toContain("Peak: 900 ms in fra at 2026-09-08T21:00:00.000Z.");
     expect(text).toContain("Mean by region: fra 600 ms, iad 200 ms.");
+  });
+
+  test("names a region with no latency instead of calling it 0 ms", () => {
+    const text = summarizeMonitorChart(
+      toMonitorChartModel(
+        series([point("fra", 0, 300), point("iad", 0, null)]),
+        "p95",
+      ),
+    );
+    expect(text).toContain(
+      "Mean by region: fra 300 ms, iad no latency recorded.",
+    );
   });
 });

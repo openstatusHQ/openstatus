@@ -180,7 +180,7 @@ function renderChart(current: MonitorChartModel) {
     ),
   );
 
-  if (count === 0) {
+  if (values.length === 0) {
     svg.append(
       svgEl(
         "text",
@@ -191,7 +191,9 @@ function renderChart(current: MonitorChartModel) {
           y: yOf(max * 0.625) + 4,
           "text-anchor": "middle",
         },
-        "No checks recorded in this window",
+        count === 0
+          ? "No checks recorded in this window"
+          : "No latency recorded: every check failed",
       ),
     );
     return;

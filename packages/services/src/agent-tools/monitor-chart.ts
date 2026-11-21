@@ -38,7 +38,7 @@ const RenderMonitorChartInput = z.object({
     .max(MAX_CHART_REGIONS)
     .optional()
     .describe(
-      `Region codes to plot, e.g. ["fra","iad"], at most ${MAX_CHART_REGIONS}. Omit for the monitor's regions; with more than ${MAX_CHART_REGIONS}, the slowest are shown.`,
+      `Region codes to plot, e.g. ["fra","iad"], at most ${MAX_CHART_REGIONS}. Omit to use the monitor's own regions; if it runs in more than ${MAX_CHART_REGIONS}, the slowest are plotted.`,
     ),
 });
 
@@ -73,9 +73,10 @@ const RenderMonitorChartOutput = z.object({
 
 export type MonitorChartModel = z.infer<typeof RenderMonitorChartOutput>;
 
-export function meanLatency(values: (number | null)[]): number {
+/** null when no bucket recorded a latency, e.g. every check failed. */
+export function meanLatency(values: (number | null)[]): number | null {
   const present = values.filter((value) => value !== null);
-  if (present.length === 0) return 0;
+  if (present.length === 0) return null;
   return Math.round(
     present.reduce((sum, value) => sum + value, 0) / present.length,
   );
@@ -102,7 +103,10 @@ export function toMonitorChartModel(
   }
 
   const slowestFirst = [...byRegion.entries()].sort(
-    (a, b) => meanLatency(b[1]) - meanLatency(a[1]) || a[0].localeCompare(b[0]),
+    // a region with no latency sorts after every region with some
+    (a, b) =>
+      (meanLatency(b[1]) ?? -1) - (meanLatency(a[1]) ?? -1) ||
+      a[0].localeCompare(b[0]),
   );
   const shown = slowestFirst.slice(0, MAX_CHART_REGIONS);
   const omitted = slowestFirst.slice(MAX_CHART_REGIONS);
@@ -141,14 +145,20 @@ function formatInterval(minutes: number): string {
 /** The chart as prose, for a surface that cannot draw it. */
 export function summarizeMonitorChart(model: MonitorChartModel): string {
   const head = `${model.percentile} latency for "${model.name}" over the last ${model.timeRange} (${formatInterval(model.intervalMinutes)} buckets).`;
-  if (model.peak === null) {
+  if (model.timestamps.length === 0) {
     return `${head} No checks recorded in this window. Dashboard: ${model.dashboardUrl}`;
+  }
+  if (model.peak === null) {
+    return `${head} Checks ran, but none recorded a latency: usually every check failed. Use list_response_logs to see why. Dashboard: ${model.dashboardUrl}`;
   }
   const lines = [
     head,
     `Peak: ${model.peak.value} ms in ${model.peak.region} at ${new Date(model.peak.timestamp).toISOString()}.`,
     `Mean by region: ${model.series
-      .map((s) => `${s.region} ${meanLatency(s.values)} ms`)
+      .map((s) => {
+        const mean = meanLatency(s.values);
+        return `${s.region} ${mean === null ? "no latency recorded" : `${mean} ms`}`;
+      })
       .join(", ")}.`,
   ];
   if (model.omittedRegions.length > 0) {

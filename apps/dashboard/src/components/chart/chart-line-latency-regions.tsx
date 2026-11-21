@@ -46,13 +46,18 @@ export function ChartLineLatencyRegions({
   period: (typeof PERIODS)[number];
   intervalMinutes: number;
 }) {
-  if (timestamps.length === 0) {
+  const hasLatency = series.some((s) => s.values.some((v) => v !== null));
+  if (!hasLatency) {
     return (
       <ChartEmpty>
         <EmptyStateMedia>
           <Trend />
         </EmptyStateMedia>
-        <EmptyStateTitle>No checks recorded in this window</EmptyStateTitle>
+        <EmptyStateTitle>
+          {timestamps.length === 0
+            ? "No checks recorded in this window"
+            : "No latency recorded: every check failed"}
+        </EmptyStateTitle>
       </ChartEmpty>
     );
   }

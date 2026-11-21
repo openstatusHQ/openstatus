@@ -10,7 +10,7 @@ export function renderMonitorChartSummary(output: Output): string {
   const window = `${output.percentile} · last ${output.timeRange}`;
   return output.peak
     ? `${window} · peak ${output.peak.value}ms in ${output.peak.region}`
-    : `${window} · no checks`;
+    : `${window} · ${output.timestamps.length === 0 ? "no checks" : "no latency"}`;
 }
 
 export function MonitorChartResult({ output }: { output: Output }) {
