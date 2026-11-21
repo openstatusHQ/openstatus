@@ -113,8 +113,26 @@ export async function sendCheckerTasks(
     throw new Error("Error while fetching the monitors");
   }
 
+  // the dispatch runs after its request returned, so this is its only line in Axiom
+  const emitDispatch = async (success: number, failed: number) =>
+    otelLogger.info("checker_dispatch", {
+      periodicity,
+      monitor_count: result.length,
+      // a count that fails must not fail a dispatch that already went out
+      paused_count: await countPausedMonitors(
+        db,
+        periodicity,
+        new Date(timestamp),
+      ).catch(() => null),
+      success_count: success,
+      failed_count: failed,
+      duration_ms: Date.now() - timestamp,
+    });
+
   if (monitors.data.length === 0) {
     logger.info("No monitors to check", { periodicity });
+    // all paused must not look like a cron that never ran
+    await emitDispatch(0, 0);
     return { success: 0, failed: 0 };
   }
 
@@ -157,20 +175,7 @@ export async function sendCheckerTasks(
       ? await publishToPubSub(taskInputs, periodicity, publisher)
       : await createCloudTasks(taskInputs, periodicity, client);
 
-  // the dispatch runs after its request returned, so this is its only line in Axiom
-  otelLogger.info("checker_dispatch", {
-    periodicity,
-    monitor_count: result.length,
-    // a count that fails must not fail a dispatch that already went out
-    paused_count: await countPausedMonitors(
-      db,
-      periodicity,
-      new Date(timestamp),
-    ).catch(() => null),
-    success_count: success,
-    failed_count: failed,
-    duration_ms: Date.now() - timestamp,
-  });
+  await emitDispatch(success, failed);
   logger.info("Completed cron job", {
     periodicity,
     transport,

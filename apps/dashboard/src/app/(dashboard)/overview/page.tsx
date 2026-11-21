@@ -313,6 +313,7 @@ export default function Page() {
           <Link
             href="https://www.openstatus.dev/changelog/maintenance-windows"
             target="_blank"
+            rel="noreferrer"
           >
             Learn more
           </Link>

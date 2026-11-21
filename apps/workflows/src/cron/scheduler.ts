@@ -28,6 +28,20 @@ function emitTaskEvent(
   });
 }
 
+// arrays (freeze failures, reminder recipients) become a count and a sample
+function boundedResult(result: unknown): unknown {
+  if (Array.isArray(result)) return { count: result.length };
+  if (!result || typeof result !== "object") return result;
+  return Object.fromEntries(
+    Object.entries(result).map(([key, value]) => [
+      key,
+      Array.isArray(value)
+        ? { count: value.length, first: value.slice(0, 5) }
+        : value,
+    ]),
+  );
+}
+
 type ScheduledTask = {
   name: string;
   expression: string;
@@ -147,8 +161,11 @@ function scheduleTask(task: ScheduledTask): RunningTask {
     return bounded.pipe(
       Effect.tap((result) =>
         Effect.promise(async () => {
-          emitTaskEvent(task, startedAt, "success", { result });
+          // check-in first: if it throws, the catch below emits the only event
           await checkIn?.cronCompleted();
+          emitTaskEvent(task, startedAt, "success", {
+            result: boundedResult(result),
+          });
         }),
       ),
       Effect.catch((error) =>

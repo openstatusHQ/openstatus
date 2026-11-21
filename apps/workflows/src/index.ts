@@ -62,6 +62,7 @@ function shouldSample(event: Record<string, unknown>): boolean {
   if (
     su?.maintenance_skipped ||
     su?.transition_applied ||
+    su?.notificationTriggered ||
     su?.incident_error ||
     event.status_drift
   ) {

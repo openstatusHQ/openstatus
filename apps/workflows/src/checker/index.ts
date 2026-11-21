@@ -170,7 +170,9 @@ checkerRoute.post("/updateStatus", async (c) => {
   statusUpdate.region_count = transition.regionCount;
   statusUpdate.transition_applied = transition.transitioned;
   statusUpdate.outbox_rows = transition.outboxRows.length;
-  statusUpdate.incident_id = transition.incidentId;
+  // not `incidentId`: that is read off the outbox, empty without subscribers
+  statusUpdate.incident_id =
+    transition.incidentCreatedId ?? transition.incidentResolvedIds[0] ?? null;
 
   await publishStatusAudit(result.data);
 
