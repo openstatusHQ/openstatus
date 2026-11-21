@@ -1,0 +1,508 @@
+---
+title: "Postmortem Template"
+seo:
+  title: "Postmortem Template and Incident Report Template (Copy-Paste)"
+  description: "A blameless postmortem template in Markdown, a short incident report template for customers, a filled-in example, and how to write each section: summary, impact, timeline, root cause, what went well, what went wrong, action items."
+description: "A copy-paste postmortem template with seven sections, a shorter incident report template for customers, a filled-in example, and how to write each section after your first real outage so it leads to fixes, not blame."
+author: "openstatus"
+publishedAt: "2026-11-20"
+category: "template"
+howto:
+  totalTime: "PT1H"
+  steps:
+    - name: "Copy the postmortem template"
+      text: "Paste the seven-section Markdown template into Notion, Linear, GitHub, or your incident tool within 48 hours of the outage while the logs and context are still fresh."
+      url: "#the-postmortem-template"
+    - name: "Rebuild the timeline from receipts"
+      text: "Pull exact timestamps from alerts, deploy logs, Slack history, and status page updates—not from memory. Mark the four key times: impact started, detected, mitigated, resolved."
+      url: "#timeline"
+    - name: "Trace the root cause past the trigger"
+      text: "Ask why the system allowed the failure to reach production and why it took as long as it did to notice. Keep asking until you hit a guardrail, test, or alert you can actually ship."
+      url: "#root-cause"
+    - name: "Commit to 2–4 action items with owners and dates"
+      text: "Every action item gets one owner, a deadline this sprint, and a Linear or GitHub ticket. Pick systemic guardrails in CI, config, or alerting over reminders to 'be more careful.'"
+      url: "#action-items"
+    - name: "Publish the customer-facing incident report"
+      text: "Trim the internal postmortem into a plain-language incident report for your status page or affected customers, and close the incident once the team signs off."
+      url: "#the-incident-report-template"
+faq:
+  - question: "What is the difference between a postmortem and an incident report?"
+    answer: "A postmortem is an internal engineering document: the full timeline, exact failure mechanics, what went well and badly, and links to the tickets you are shipping to prevent a repeat. An incident report is the external version written for customers, design partners, or auditors: what broke, who was affected, why it happened in plain language, and what you are changing. Most teams write the internal postmortem first and cut the customer report from it."
+  - question: "When should we write a postmortem?"
+    answer: "Write one for every outage customers noticed (typically SEV0 and SEV1), any security incident, any data loss regardless of size, and any near miss where only luck saved production. Decide the threshold once and write it down so you aren't debating after an exhausting outage whether this one 'counts.'"
+  - question: "How soon after an incident should the postmortem be written?"
+    answer: "Start the draft within 48 hours while people still remember why they made each call in the heat of the moment, and review it within a week. Wait a month and the Slack scrollback is buried, logs have rotated, and memory rewrites the story around hindsight."
+  - question: "What does blameless mean on a small team where everyone knows who merged the PR?"
+    answer: "On a four-person engineering team, everyone already knows who pushed the commit. Blameless doesn't mean pretending nobody typed the command—it means treating human error as the starting point of the investigation, not the conclusion. If a single unflagged migration or mistyped CLI command can take down production, the system had a trap waiting to be stepped on. Fix the trap."
+  - question: "Who should write the postmortem?"
+    answer: "Usually the incident commander or the engineer who led the recovery writes the first draft, and everyone involved reviews it. On an early-stage team, those are often the same person. The goal isn't bureaucracy—it's getting the facts onto paper and making sure every action item has an owner before everyone moves back to feature work."
+  - question: "Should we publish postmortems publicly?"
+    answer: "If customers felt the outage, publish at least a customer-facing incident report. Early on, it is tempting to stay quiet and hope nobody noticed—but customers already noticed, and silence reads as incompetence. A candid explanation of what broke and how you hardened the system builds more technical credibility than any marketing page. Just strip internal hostnames, employee names, and details that would help an attacker."
+---
+
+You just survived an outage. Production is back to green, your heart rate is finally dropping, and a customer in your shared Slack channel is asking what happened.
+
+The temptation—especially after your first real outage—is to ship the hotfix, exhale, and get back to the roadmap. Don't. Right now, your deploy logs, Slack timestamps, and mental context are intact. In 72 hours, half of that context will evaporate, and you will still have the exact same single point of failure waiting to page you at 3 a.m. next month.
+
+You don't need enterprise ceremony or a twelve-person review board. You need one sharp Markdown document you can draft in under an hour.
+
+Below is a copy-paste **internal postmortem template** with seven sections in a fixed order, a breakdown of how to write each section without fluff, a **filled-in example**, and a shorter **customer-facing incident report template** you can send to affected accounts or post on your status page.
+
+## When to Write One
+
+You don't need a postmortem for every 30-second deploy hiccup. Draw a bright line so nobody has to debate after a stressful afternoon whether an outage "counts":
+
+- **Customers noticed:** Any incident at your top two severity levels (see [postmortem requirements by severity](/guides/incident-severity-matrix#postmortem-requirements)).
+- **Data or security was touched:** Any security incident or data loss, corruption, or leak—even if it only affected one account.
+- **A terrifying near miss:** Production stayed up, but only because a traffic spike happened at 2 p.m. instead of 2 a.m., or someone caught a bad script by pure luck.
+- **Someone asked for receipts:** An enterprise customer, design partner, or auditor asks for a formal incident report.
+
+Start the draft within **48 hours** (two working days). After two days, engineers still remember *what* commands they ran, but they forget *why* a wrong hypothesis looked right at the time—and that gap is where the best fixes hide.
+
+## The Postmortem Template
+
+Copy this into Notion, Linear, GitHub, or your incident tool. Keep all seven headings even when a section is two lines long. Writing `"Unknown — logs rotated before we checked"` is an actionable finding; deleting the heading hides the gap.
+
+```markdown
+# Postmortem: [Short description of what users experienced]
+
+**Date:** YYYY-MM-DD
+**Severity:** [SEV0 / SEV1 / SEV2]
+**Status:** Draft | Approved
+**Author:** [Name]
+**Incident commander:** [Name]
+**Reviewed by:** [Names]
+
+## Summary
+
+[2–4 sentences: what broke in user terms, who was affected and for how long, the
+one-line technical cause, and how it was fixed. Someone who reads only this paragraph
+should get the complete picture.]
+
+## Impact
+
+- **Duration:** [HH:MM] to [HH:MM] UTC ([total duration])
+- **Users affected:** [Count or % of requests/accounts, plus scope: region, plan, endpoint]
+- **What users saw:** [503 errors, failed checkouts, stale dashboard data, webhook delays]
+- **Data impact:** [None / delayed / lost — be explicit]
+- **SLA / revenue impact:** [SLA breached or intact, credits owed, failed transactions]
+- **Support load:** [Tickets opened, Slack pings, public mentions]
+
+## Timeline
+
+All times UTC, YYYY-MM-DD.
+
+- HH:MM - [Trigger / Impact starts: the deploy, traffic spike, or upstream change]
+- HH:MM - [Detected: alert fired, or customer reported it]
+- HH:MM - [Incident declared, commander assigned]
+- HH:MM - [First status page update published]
+- HH:MM - [Key diagnostic finding or dead end worth noting]
+- HH:MM - [Decision made: rollback, config change, failover — and why]
+- HH:MM - [Mitigated: user-facing impact stops]
+- HH:MM - [Resolved: root cause confirmed and system stable]
+
+| Time to detect (TTD) | Time to mitigate (TTM) | Time to resolve (TTR) |
+|----------------------|------------------------|-----------------------|
+| [detected - start]   | [mitigated - start]    | [resolved - start]    |
+
+## Root cause
+
+[Explain the technical chain of events: what triggered the failure, why safeguards in
+CI/staging/production allowed it through, and what contributing factors slowed down
+detection or recovery. Describe system conditions, not people.]
+
+## What went well
+
+- [What worked and should be kept: the alert that fired, the one-click rollback, the
+  fast status page update, the feature flag that isolated the blast radius]
+
+## What went wrong
+
+- [What added friction, time, or confusion: missing alerts, outdated runbook, slow
+  status update, two people running conflicting fixes]
+
+## Action items
+
+- [ ] [Prevention / guardrail] - Owner: [Name] - Due: YYYY-MM-DD - [Ticket link]
+- [ ] [Detection / alerting] - Owner: [Name] - Due: YYYY-MM-DD - [Ticket link]
+- [ ] [Process / recovery] - Owner: [Name] - Due: YYYY-MM-DD - [Ticket link]
+```
+
+> **Note for 3-person teams:** If the author, the incident commander, and the engineer who fixed the bug are all you, keep the header fields anyway. Putting your name next to **Incident commander** builds the habit of separating coordination from debugging as the team grows.
+
+## How to Write Each Section
+
+### Summary
+
+Write this section last, even though it sits at the top. It is the TL;DR for your co-founder, your support lead, or a new engineer reading your incident archive six months from now. State what users felt, how long it lasted, why it happened, and what stopped the bleeding.
+
+**Weak:**
+> "On Tuesday we experienced an unexpected issue with our database infrastructure that caused intermittent degradation for some users. The team investigated and resolved the issue."
+
+**Sharp:**
+> "For 47 minutes on Tuesday morning, 38% of write requests to the EU API returned `503 Service Unavailable`. A database migration deployed on Monday inadvertently lowered the Postgres connection pool limit from 100 to 10, which saturated under Tuesday's peak traffic. We hot-patched the pool limit back to 100 and are adding a CI check that blocks unreviewed pool config changes."
+
+### Impact
+
+Use numbers, not adjectives. Phrases like *"a subset of users"* or *"briefly degraded"* usually mean nobody queried the logs. Pull the real numbers from your reverse proxy, error tracker, or billing logs:
+
+- What percentage of requests failed?
+- How many distinct accounts or workspaces hit at least one error?
+- Were failed requests cleanly rejected (safe to retry), queued, or silently dropped?
+
+Measure duration from the moment **users first experienced failures**, not from when your alert fired or when someone opened a Slack channel. If impact started at `08:12` and your team noticed at `08:31`, the outage was 47 minutes long, not 28. That 19-minute blind spot is often the single most important number in the postmortem.
+
+### Timeline
+
+Never write a timeline from memory. Human memory under stress compresses 20 minutes of silent confusion into two minutes and edits out the wrong turns. Reconstruct it from receipts:
+
+- Git commits and CI/CD deploy timestamps
+- Monitoring and alerting history
+- Your `#incident-*` Slack channel or call transcript
+- Status page update timestamps
+
+Keep the timeline to the inflection points: when impact began, how it was detected, when you communicated externally, which hypotheses you tested (including the dead ends that cost 15 minutes), what action stopped the bleeding, and when you confirmed recovery. Thirty lines of *"checked CloudWatch logs"* buries the three decisions that actually mattered.
+
+Always call out the four milestone timestamps—they give you the three metrics worth tracking across every outage:
+
+| Milestone | Question it answers | Metric it drives |
+|-----------|---------------------|------------------|
+| **Impact started** | When did the first user request fail? | Baseline (`t = 0`) |
+| **Detected** | When did an alert fire or a human notice? | **Time to detect (TTD)** |
+| **Mitigated** | When did user-facing errors drop back to normal? | **Time to mitigate (TTM)** |
+| **Resolved** | When was the underlying cause fixed or safely contained? | **Time to resolve (TTR)** |
+
+If a customer DM'd your founder before any alert fired, write that down plainly in the timeline. Finding out from a customer is painful on your first outage, and it is almost always the easiest gap to fix before your second one.
+
+### Root cause
+
+The trigger is not the root cause. *"A bad deploy broke checkout"* or *"Redis ran out of memory"* is where the investigation starts, not where it ends.
+
+You are looking for the **systemic conditions** that allowed the trigger to reach production, go unnoticed, or cascade. Walk backward using the **Five Whys** until you hit something you can change in code, tooling, or process:
+
+1. **Why did EU API writes return 503?** Postgres refused new connections from the API workers.
+2. **Why did Postgres refuse connections?** The worker connection pool hit its maximum limit.
+3. **Why did the pool saturate at normal Tuesday traffic?** Monday's migration lowered `maxConnections` in the database config from `100` to `10` (a local debug setting committed by accident).
+4. **Why did that config change pass code review and CI?** The PR was reviewed as a schema migration; nobody noticed the config line, and staging runs at 1% of production concurrency so it never saturated.
+5. **Why did it take 19 minutes to detect?** The 5xx alert was evaluated over a 5-minute rolling average across all regions combined, diluting the EU error spike until a customer reported it in Slack.
+
+Notice how steps 1–3 explain the bug, while **steps 4 and 5 generate the real action items**. Most outages require two or three things to go wrong at once: a latent defect, a missing guardrail, and a blind spot in alerting. List the root cause first, then list the **contributing factors** that made the outage last longer or hit harder.
+
+#### Keeping it blameless on a small team
+
+In a big company, "blameless" can sound like corporate HR policy. In a startup with four engineers, everyone in the room already knows who merged the PR—usually it's the person writing the postmortem.
+
+Blameless does not mean pretending nobody made a mistake. It means refusing to accept *"Sam ran the wrong command"* as the explanation. Sam had the same context, tools, and terminal history any other engineer on the team would have had. If staging and production CLI commands differ by a single flag and both live in shell history, someone was eventually going to run the wrong one. Blaming the engineer makes people hide near misses; fixing the CLI so production commands require an explicit confirmation flag prevents the next outage.
+
+### What went well
+
+Don't skip this out of guilt over the outage. Every incident tests your reflexes and your architecture under fire:
+
+- Did a feature flag or circuit breaker keep a broken billing integration from taking down the core app?
+- Did your one-command rollback finish in 90 seconds?
+- Did you get an initial update onto the status page within five minutes of declaring the incident?
+
+Write it down. Otherwise, six months from now, someone will delete the "unused" rollback script during a repo cleanup.
+
+### What went wrong
+
+List everything that added minutes to the clock or confusion to the response—even if it had nothing to do with the underlying bug:
+
+- The alert fired in a muted `#alerts-low` channel nobody watches.
+- Two engineers SSH'd into production and ran competing fixes because nobody claimed the [incident commander](/guides/incident-commander) role.
+- The runbook linked to a dashboard that broke two migrations ago.
+- The status page stayed on *"Investigating"* for 40 minutes after the fix was already live because nobody owned comms.
+
+### Action items
+
+This section determines whether your postmortem was an engineering improvement or a creative writing exercise. Five rules keep action items honest:
+
+1. **One human owner per item.** `"Platform team"` or `"Everyone"` means nobody owns it. Put one person's name on it.
+2. **A ticket link and a due date.** An action item that only exists inside a Markdown file is already dead. Create the Linear or GitHub issue before you mark the postmortem approved.
+3. **Engineer out the trap instead of asking for vigilance.** *"Be more careful reviewing migrations"* will fail the next time someone reviews a PR at 6 p.m. on a Friday. *"Add a CI check that fails if `config/database.ts` is modified without the `allow-pool-change` label"* works every time.
+4. **Cover three bases:** At least one item to **prevent or catch** the failure earlier, one to **detect** it faster if it happens anyway, and one to **speed up mitigation** (runbook, rollback, or comms).
+5. **Ship 3 items, not 15.** After a rough first outage, teams often brainstorm a 14-item wishlist of architectural rewrites. Two weeks later, zero have shipped. Pick the three highest-leverage fixes you can close in the next sprint.
+
+## A Filled-In Example
+
+Here is what a completed postmortem looks like for a fictional startup—long enough to be clear to anyone on the team, short enough to write in 45 minutes.
+
+```markdown
+# Postmortem: EU API returned 503 errors on write requests for 47 minutes
+
+**Date:** 2026-11-03
+**Severity:** SEV1
+**Status:** Approved
+**Author:** Sam (Founding Engineer)
+**Incident commander:** Alex (CTO)
+**Reviewed by:** Sam, Alex, Priya
+
+## Summary
+
+On Tuesday, Nov 3, between 08:12 and 08:59 UTC (47 minutes), 38% of write requests
+to the EU API failed with 503 errors. A database migration deployed on Monday
+inadvertently committed a local debug setting that lowered the Postgres connection
+pool limit from 100 to 10. When EU morning traffic ramped up on Tuesday, the pool
+saturated. We restored the pool limit to 100 via config deploy and are adding a CI
+check to block pool configuration changes without an explicit override.
+
+## Impact
+
+- **Duration:** 08:12 to 08:59 UTC (47 minutes)
+- **Users affected:** ~1,200 workspaces in the EU region (38% of EU write requests;
+  14,820 failed requests total). US region and cached GET requests were unaffected.
+- **What users saw:** `503 Service Unavailable` when saving projects or triggering
+  webhooks; dashboard reads continued working from cache.
+- **Data impact:** None lost or corrupted. Failed writes were rejected cleanly before
+  opening a transaction; clients with retry logic recovered automatically.
+- **SLA / revenue impact:** Monthly EU uptime sits at 99.89% (above our 99.5% SLA);
+  no SLA credits triggered.
+- **Support load:** 14 support tickets, 4 messages in shared customer Slack channels,
+  3 posts on X.
+
+## Timeline
+
+All times UTC, 2026-11-03.
+
+- 08:12 - EU morning traffic crosses ~60 concurrent active requests; the 10-connection
+  pool saturates and API workers begin returning 503s on database writes.
+- 08:31 - Customer pings shared Slack channel reporting 503 errors on project saves.
+- 08:32 - Global 5xx alert fires in #alerts-prod (20 minutes after initial impact).
+- 08:34 - Incident declared in #inc-2026-11-03-eu-503. Alex takes Incident Commander;
+  Sam begins triage.
+- 08:38 - First status page update posted: "Investigating elevated 503 error rates on
+  the EU API."
+- 08:41 - Initial hypothesis: upstream network issue in eu-central-1. Ruled out after
+  checking regional health metrics (6 minutes spent).
+- 08:47 - Sam checks Postgres PgBouncer metrics and spots active connections flatlined
+  at 10 per worker; suspects Monday's invoice schema migration PR (#842).
+- 08:52 - Decision: hot-patch the pool configuration back to 100 rather than rolling
+  back PR #842, since the new `invoices.region` column already has production rows.
+- 08:55 - Config PR (#849) deployed to EU production workers.
+- 08:59 - EU 5xx rate drops to 0.01% baseline. Incident marked Mitigated; Status page
+  updated to "Monitoring".
+- 09:20 - After 20 minutes of clean traffic, status page updated to "Resolved".
+
+| Time to detect (TTD) | Time to mitigate (TTM) | Time to resolve (TTR) |
+|----------------------|------------------------|-----------------------|
+| 19 min               | 47 min                 | 1 h 08 min            |
+
+## Root cause
+
+PR #842 added the `invoices.region` column and included a one-line change in
+`config/database.ts` that lowered `maxConnections` from `100` to `10` (used
+locally to reproduce a connection leak during development). During code review, the
+diff was reviewed for SQL migration safety and the config change was missed. Because
+staging runs with synthetic traffic below 10 concurrent connections, the cap never
+triggered until Tuesday morning's EU peak.
+
+Contributing factors:
+
+- **Diluted alerting threshold:** Our 5xx alert averaged error rates across US and EU
+  combined over a 5-minute window. Because US traffic was quiet at 08:12 UTC, the EU
+  error spike took 19 minutes to cross the global threshold—after a customer had
+  already messaged us.
+- **Unlinked database dashboard:** We had a Postgres connection pool dashboard, but it
+  was not linked in the API 5xx runbook, costing ~13 minutes during triage.
+
+## What went well
+
+- Public status page update went out 4 minutes after declaring the incident.
+- Separating the config hotfix from the schema migration avoided a risky down-migration
+  on a table with live data.
+- API workers failed fast with 503s instead of hanging or dropping partial writes, so
+  zero data cleanup was required.
+
+## What went wrong
+
+- A customer told us about the outage in Slack 1 minute before our own alert fired.
+- 13 minutes passed between declaring the incident and checking database pool metrics
+  because we chased an AWS networking theory first.
+- The final "Resolved" status page update took 21 minutes after mitigation because
+  everyone jumped straight into writing the root-cause summary.
+
+## Action items
+
+- [ ] Fail CI if `config/database.ts` changes without `allow-pool-change` PR label -
+  Owner: Sam - Due: 2026-11-06 - [PLAT-412]
+- [ ] Split 5xx error rate alerts by region (`eu-central-1`, `us-east-1`) with a
+  1-minute evaluation window above 5% - Owner: Priya - Due: 2026-11-05 - [PLAT-413]
+- [ ] Add direct link to PgBouncer saturation dashboard at the top of the API 5xx
+  runbook - Owner: Alex - Due: 2026-11-04 - [PLAT-414]
+```
+
+## The Incident Report Template
+
+Your internal postmortem is written for engineers who know your repo. Your **incident report** is the external version written for customers, design partners, or auditors who care about four things:
+
+1. **Did this affect me and my data?**
+2. **Do you actually understand why it broke?**
+3. **What are you changing so it doesn't happen again next Tuesday?**
+4. **Are you being straight with me?**
+
+Cut the incident report directly from your approved postmortem. Strip out employee names, internal hostnames, ticket IDs, and anything that would give an attacker a blueprint of your stack, while keeping the technical honesty intact. Technical buyers can smell a sanitized PR statement from a mile away—saying *"a database connection pool limit was set too low during a deployment"* earns ten times more trust than *"we experienced an unforeseen infrastructure anomaly."*
+
+```markdown
+# Incident Report: [What users experienced] — [YYYY-MM-DD]
+
+## What happened
+
+On [Date], between [HH:MM] and [HH:MM] UTC ([total duration]), customers in [region /
+plan / feature scope] experienced [clear description of symptoms: e.g., 503 errors
+when saving changes]. Approximately [X%] of requests to [service/feature] failed
+during this window. [Unaffected services, e.g., Read requests and US workspaces]
+continued operating normally.
+
+## Why it happened
+
+During a release on [Date/time], a configuration change lowered the maximum database
+connection limit for our [affected service] workers. Under normal off-peak load the
+service operated within this lower ceiling, but when traffic ramped up at [HH:MM] UTC
+the connection pool saturated and new write requests were rejected.
+
+## How we responded
+
+- **[HH:MM] UTC:** Impact began as concurrent traffic exceeded the connection limit.
+- **[HH:MM] UTC:** Our engineering team identified the connection pool saturation and
+  published an initial status update.
+- **[HH:MM] UTC:** We deployed a configuration fix restoring the connection limit to
+  its normal production capacity.
+- **[HH:MM] UTC:** Error rates returned to baseline and full recovery was confirmed.
+
+## Impact on your data
+
+[Be explicit: e.g., "No data was lost, corrupted, or exposed. Requests that failed
+during this window were cleanly rejected with 503 status codes before any changes were
+written."]
+
+## What we are changing
+
+To prevent this from recurring and to catch regional spikes faster, we are making three
+changes this week:
+
+- **Automated configuration guardrails:** We added a deployment check that blocks
+  changes to production database pool limits in standard releases.
+- **Per-region alerting:** We split our error-rate alerts by region on a 1-minute
+  window so regional spikes page on-call engineers immediately.
+- **Runbook updates:** We updated our incident runbooks to surface connection pool
+  saturation metrics in the first step of API triage.
+
+We apologize for the disruption to your workflow. If you have questions about how this
+affected your account, reply to this email or reach us at [support@yourcompany.com].
+```
+
+Post this on your status page, email it directly to enterprise accounts that hit errors during the window, or drop a link into shared customer Slack channels. (If you operate under compliance frameworks, check the reporting timelines for [SOC 2](/guides/soc-2-status-page-requirements), [ISO 27001](/guides/iso-27001-incident-communication), [NIS2](/guides/nis2-incident-reporting-requirements), and [DORA](/guides/dora-incident-reporting-requirements).)
+
+## Running the Postmortem Review (Without Bureaucracy)
+
+Writing the document is half the loop; the other half is a quick review with the people who lived through the outage. Even if your entire engineering team is three people on a huddle, hold the review deliberately:
+
+- **Send the draft before the call.** Don't stare at a blank cursor together on Zoom. One person drafts the timeline and 5 Whys; everyone else reads it asynchronously and drops comments in the doc first.
+- **Timebox to 30 minutes.** Spend 10 minutes verifying the timeline, 10 minutes challenging the root cause and contributing factors, and 10 minutes locking in the 2–4 action items.
+- **Don't redesign the architecture in the review.** When someone starts whiteboarding a month-long migration to a multi-region active-active database on the call, park it. Focus on the concrete guardrails you can ship this week.
+- **Redirect "I should have" to "What would have stopped it?"** Whenever an engineer says *"Sorry, I should have checked the config diff more carefully,"* the person running the meeting asks: *"Given that we all review diffs fast when shipping, what check in CI or staging would have caught it automatically?"*
+- **Check last incident's action items first.** Take two minutes at the start to check whether the action items from your previous postmortem actually shipped. Nothing kills postmortem culture faster than realizing the outage you just had was supposed to be fixed by an open ticket from two months ago.
+
+## 6 Mistakes Teams Make on Their First Postmortem
+
+1. **Reconstructing the timeline from vibes.** Your memory of when you noticed the bug and when you updated the status page is almost certainly off by 15 minutes. Pull the Slack and deploy timestamps first.
+2. **Stopping at the trigger.** *"A bad deploy"* or *"Third-party provider outage"* is not a root cause. If an upstream provider went down, ask why a non-critical dependency was able to block your core request path without a timeout or fallback.
+3. **Writing "be more careful" as an action item.** Human attention does not scale. If the fix relies on engineers remembering a tribal rule at 2 a.m., you haven't fixed the bug.
+4. **Creating a 15-ticket backlog graveyard.** Fifteen action items means zero action items. Pick the two or three that eliminate the biggest risk and schedule them into the current sprint.
+5. **Skipping "What went well."** When your first outage hurts, it feels weird to praise anything. Do it anyway—recognizing that a feature flag or fast rollback cut a 3-hour outage down to 20 minutes reinforces the habits that save you next time.
+6. **Going radio silent with customers.** Early-stage founders often worry that publishing an incident report makes the product look fragile. In reality, technical customers already know startups have outages; what scares them off is radio silence. [Public postmortems build disproportionate trust](/guides/public-postmortem-underrated-marketing).
+
+## Automating the Grunt Work in openstatus
+
+The hardest part of writing your first postmortem isn't the analysis—it's scavenging timestamps across five tabs (monitoring alerts, Slack channels, deploy logs, and status page updates) two days after the fire is out.
+
+In openstatus, those records already live on the incident:
+
+- **Automatic timeline capture:** The incident records when impact started, when it was declared, mitigated, and resolved, along with every status change, note, and public status page update in UTC.
+- **One-command draft:** Once the incident is resolved, run `/openstatus incident postmortem` in the incident's Slack channel (or click **Draft with agent** on the incident in the dashboard). The agent drafts the postmortem using the exact seven sections in this guide—pulling facts from the incident timeline, status reports, and Slack discussion, and explicitly marking unknown fields rather than hallucinating.
+- **Human review and sign-off:** You edit the draft, lock in the action items, and approve it. Approving closes the incident loop, and nothing is published to your status page unless you explicitly publish a public report.
+
+See [how to run incidents in Slack](/guides/slack-incident-management) and the [incident management reference](/docs/reference/incident-management#postmortem) for the full workflow. The AI draft is included on paid plans, and you can write and store postmortems manually on any plan—including the free tier.
+
+## Related Guides and Templates
+
+- **[Incident Severity Matrix Template](/guides/incident-severity-matrix):** Define SEV0–SEV3 thresholds and decide which incidents require a postmortem.
+- **[Incident Communication](/guides/incident-communication):** Copy-paste status page templates for the *Investigating*, *Identified*, *Monitoring*, and *Resolved* stages during the outage.
+- **[Incident Commander](/guides/incident-commander):** How to coordinate the response during the outage—including how to wear the IC hat on a 3-person team.
+- **[Public Postmortems are Underrated Marketing](/guides/public-postmortem-underrated-marketing):** Why radical transparency after an outage wins over technical buyers.
+
+## Frequently Asked Questions
+
+<Details summary="What is the difference between a postmortem and an incident report?">
+
+A postmortem is an internal engineering document: the full timeline, exact failure
+mechanics, what went well and badly, and links to the tickets you are shipping to
+prevent a repeat. An incident report is the external version written for customers,
+design partners, or auditors: what broke, who was affected, why it happened in plain
+language, and what you are changing. Most teams write the internal postmortem first
+and cut the customer report from it.
+
+</Details>
+
+<Details summary="When should we write a postmortem?">
+
+Write one for every outage customers noticed (typically SEV0 and SEV1), any security
+incident, any data loss regardless of size, and any near miss where only luck saved
+production. Decide the threshold once and write it down so you aren't debating after
+an exhausting outage whether this one "counts."
+
+</Details>
+
+<Details summary="How soon after an incident should the postmortem be written?">
+
+Start the draft within 48 hours while people still remember why they made each call
+in the heat of the moment, and review it within a week. Wait a month and the Slack
+scrollback is buried, logs have rotated, and memory rewrites the story around
+hindsight.
+
+</Details>
+
+<Details summary="What does blameless mean on a small team where everyone knows who merged the PR?">
+
+On a four-person engineering team, everyone already knows who pushed the commit.
+Blameless doesn't mean pretending nobody typed the command—it means treating human
+error as the starting point of the investigation, not the conclusion. If a single
+unflagged migration or mistyped CLI command can take down production, the system had
+a trap waiting to be stepped on. Fix the trap.
+
+</Details>
+
+<Details summary="Who should write the postmortem?">
+
+Usually the incident commander or the engineer who led the recovery writes the first
+draft, and everyone involved reviews it. On an early-stage team, those are often the
+same person. The goal isn't bureaucracy—it's getting the facts onto paper and making
+sure every action item has an owner before everyone moves back to feature work.
+
+</Details>
+
+<Details summary="Should we publish postmortems publicly?">
+
+If customers felt the outage, publish at least a customer-facing incident report.
+Early on, it is tempting to stay quiet and hope nobody noticed—but customers already
+noticed, and silence reads as incompetence. A candid explanation of what broke and
+how you hardened the system builds more technical credibility than any marketing
+page. Just strip internal hostnames, employee names, and details that would help an
+attacker.
+
+</Details>
+
+---
+
+**Next time, you won't start from a blank doc.** openstatus captures the timeline
+while you put out the fire and drafts the postmortem from your alerts, status
+updates, and Slack channel. You review and approve it. Open source.
+[See how incident management works](/incident-management).
+
+<ButtonLink href="https://app.openstatus.dev">Start free</ButtonLink>
+
+---
+
+Start free. No credit card required.
+
+---

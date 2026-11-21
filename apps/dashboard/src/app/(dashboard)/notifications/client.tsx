@@ -1,19 +1,22 @@
 "use client";
 
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { ExternalLink, Notification } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
 import { useQueryStates } from "nuqs";
+import { useState } from "react";
 
 import { Link } from "@/components/common/link";
 import {
   ActionCard,
   ActionCardDescription,
+  ActionCardGroup,
   ActionCardHeader,
   ActionCardTitle,
 } from "@/components/content/action-card";
-import { ActionCardGroup } from "@/components/content/action-card";
 import {
   EmptyStateActions,
   EmptyStateDescription,
@@ -28,11 +31,16 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/notifications/columns";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import { config, hiddenProviders } from "@/data/notifications.client";
+import {
+  type NotifierProvider,
+  config,
+  hiddenProviders,
+} from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
@@ -42,6 +50,45 @@ const BASE_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
     : "https://www.openstatus.dev";
+
+const planGated = [
+  "pagerduty",
+  "opsgenie",
+  "grafana-oncall",
+  "whatsapp",
+] as const satisfies readonly (NotifierProvider & keyof Limits)[];
+
+type PlanGatedProvider = (typeof planGated)[number];
+
+function isPlanGated(
+  provider: NotifierProvider,
+): provider is PlanGatedProvider {
+  return planGated.some((gated) => gated === provider);
+}
+
+// Spreads its props: `FormSheetTrigger asChild` hands the click handler to it.
+function NotifierCard({
+  provider,
+  className,
+  ...props
+}: React.ComponentProps<typeof ActionCard> & { provider: NotifierProvider }) {
+  const { icon: Icon, label } = config[provider];
+  return (
+    <ActionCard className={cn("h-full w-full", className)} {...props}>
+      <ActionCardHeader>
+        <div className="flex items-center gap-2">
+          <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
+            <Icon className="size-3" />
+          </div>
+          <ActionCardTitle>{label}</ActionCardTitle>
+        </div>
+        <ActionCardDescription>
+          Send notifications to {label}
+        </ActionCardDescription>
+      </ActionCardHeader>
+    </ActionCard>
+  );
+}
 
 export function Client() {
   const trpc = useTRPC();
@@ -56,6 +103,8 @@ export function Client() {
       onSuccess: () => refetch(),
     }),
   );
+
+  const [paywall, setPaywall] = useState<keyof Limits | null>(null);
 
   if (!notifications || !monitors || !workspace) return null;
 
@@ -121,44 +170,30 @@ export function Client() {
         </SectionHeader>
         <ActionCardGroup className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {Object.keys(config).map((notifier) => {
-            const key = notifier as keyof typeof config;
+            const key = notifier as NotifierProvider;
             if (hiddenProviders.has(key)) return null;
-            const Icon = config[key].icon;
-            let enabled = true;
+            const locked = isPlanGated(key) && !workspace.limits[key];
 
-            if (key in workspace.limits) {
-              enabled =
-                workspace.limits[
-                  key as "opsgenie" | "sms" | "opsgenie" | "whatsapp"
-                ];
-            }
-
-            if (limitReached) {
-              enabled = false;
+            if (locked || limitReached) {
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className="cursor-pointer text-left"
+                  onClick={() =>
+                    setPaywall(locked ? key : "notification-channels")
+                  }
+                >
+                  <NotifierCard provider={key} />
+                </button>
+              );
             }
 
             if (!searchParams.channel && key === "pagerduty") {
               const PAGERDUTY_URL = `https://app.pagerduty.com/install/integration?app_id=${process.env.NEXT_PUBLIC_PAGERDUTY_APP_ID}&redirect_url=${BASE_URL}/api/callback/pagerduty?workspace=${workspace.slug}&version=2`;
               return (
-                <a
-                  key={key}
-                  href={PAGERDUTY_URL}
-                  data-disabled={!enabled}
-                  className="data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
-                >
-                  <ActionCard className="h-full w-full">
-                    <ActionCardHeader>
-                      <div className="flex items-center gap-2">
-                        <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
-                          <Icon className="size-3" />
-                        </div>
-                        <ActionCardTitle>{config[key].label}</ActionCardTitle>
-                      </div>
-                      <ActionCardDescription>
-                        Send notifications to {config[key].label}
-                      </ActionCardDescription>
-                    </ActionCardHeader>
-                  </ActionCard>
+                <a key={key} href={PAGERDUTY_URL}>
+                  <NotifierCard provider={key} />
                 </a>
               );
             }
@@ -177,21 +212,8 @@ export function Client() {
                     monitors: values.monitors,
                   });
                 }}
-                disabled={!enabled}
               >
-                <ActionCard className="h-full w-full">
-                  <ActionCardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
-                        <Icon className="size-3" />
-                      </div>
-                      <ActionCardTitle>{config[key].label}</ActionCardTitle>
-                    </div>
-                    <ActionCardDescription>
-                      Send notifications to {config[key].label}
-                    </ActionCardDescription>
-                  </ActionCardHeader>
-                </ActionCard>
+                <NotifierCard provider={key} />
               </FormSheetNotifier>
             );
           })}
@@ -210,6 +232,11 @@ export function Client() {
             </ActionCardHeader>
           </ActionCard>
         </ActionCardGroup>
+        <UpgradeDialog
+          open={paywall !== null}
+          onOpenChange={(open) => !open && setPaywall(null)}
+          limit={paywall ?? undefined}
+        />
       </Section>
     </SectionGroup>
   );

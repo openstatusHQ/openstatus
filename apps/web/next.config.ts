@@ -58,6 +58,11 @@ const useNucleoIcons = process.env.ICON_SET === "nucleo";
 const ACCEPTS_MARKDOWN =
   "(.*)text/markdown(?!\\s*;\\s*q=0(?:\\.0*)?\\s*(?:,|$))(.*)";
 
+// Files, not pages: the markdown route has no representation for them, so
+// negotiating would 404 llms.txt, robots.txt and .well-known for agents.
+const NOT_A_PAGE =
+  "(?!\\.well-known(?:/|$))(?!.*\\.(?:txt|xml|json|ico|png|jpe?g|svg|webp|gif|js|css|map|woff2?|webmanifest|pdf)$)";
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -124,6 +129,11 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         has: [{ type: "host", value: "docs.openstatus.dev" }],
         destination: "https://www.openstatus.dev/docs/:path*",
+        permanent: true,
+      },
+      {
+        source: "/docs/:file(llms\\.txt|llms-full\\.txt)",
+        destination: "/:file",
         permanent: true,
       },
       {
@@ -402,11 +412,11 @@ const nextConfig: NextConfig = {
           source: "/:path*\\.md",
           destination: "/api/markdown/:path*",
         },
-        // Markdown content negotiation for AI tools. beforeFiles rewrites
-        // chain, so skip paths the .md rule above already rewrote — otherwise
-        // /pricing.md + Accept: text/markdown ends up at /api/markdown/api/markdown/pricing
+        // Markdown content negotiation for AI tools. Skip /api and /_next:
+        // they are not pages, and beforeFiles rewrites chain, so /pricing.md
+        // would end up at /api/markdown/api/markdown/pricing.
         {
-          source: "/:path((?!api/markdown(?:/|$)).+)",
+          source: `/:path((?!(?:api|_next)(?:/|$))${NOT_A_PAGE}.+)`,
           destination: "/api/markdown/:path",
           has: [
             {

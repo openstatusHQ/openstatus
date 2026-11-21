@@ -4,7 +4,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay, subDays } from "date-fns";
 
-import type { MetricCard } from "@/components/metric/metric-card";
+import type { MetricStatus } from "@/components/metric/metric-strip";
 import { formatMilliseconds } from "@/lib/formatter";
 
 import { getMonitorHealth } from "./monitors.client";
@@ -66,50 +66,50 @@ export function hasMetricsData(metrics: RouterOutputs["tinybird"]["metrics"]) {
 
 export const metricsCards = {
   uptime: {
-    label: "UPTIME",
-    variant: "success",
+    label: "Uptime",
+    status: "success",
   },
   degraded: {
-    label: "DEGRADED",
-    variant: "warning",
+    label: "Degraded",
+    status: "warning",
   },
   error: {
-    label: "FAILING",
-    variant: "destructive",
+    label: "Failing",
+    status: "destructive",
   },
   total: {
-    label: "REQUESTS",
-    variant: "default",
+    label: "Requests",
+    status: undefined,
   },
   lastTimestamp: {
-    label: "LAST CHECKED",
-    variant: "ghost",
+    label: "Last checked",
+    status: undefined,
   },
   p50: {
     label: "P50",
-    variant: "default",
+    status: undefined,
   },
   p75: {
     label: "P75",
-    variant: "default",
+    status: undefined,
   },
   p90: {
     label: "P90",
-    variant: "default",
+    status: undefined,
   },
   p95: {
     label: "P95",
-    variant: "default",
+    status: undefined,
   },
   p99: {
     label: "P99",
-    variant: "default",
+    status: undefined,
   },
 } as const satisfies Record<
   keyof ReturnType<typeof mapMetrics>[number],
   {
     label: string;
-    variant: React.ComponentProps<typeof MetricCard>["variant"];
+    status: MetricStatus | undefined;
   }
 >;
 
@@ -210,7 +210,7 @@ export type MonitorListMetric = {
   title: string;
   key: "degraded" | "error" | "active" | "inactive" | "p95";
   value: number | string | undefined;
-  variant: React.ComponentProps<typeof MetricCard>["variant"];
+  status: MetricStatus | undefined;
 };
 
 export const globalCards = [
@@ -260,16 +260,16 @@ export function getMonitorListMetrics(
     monitorId: string;
   }[] = [],
 ): readonly MonitorListMetric[] {
-  const variantMap: Record<
+  const statusMap: Record<
     (typeof globalCards)[number],
-    React.ComponentProps<typeof MetricCard>["variant"]
+    MetricStatus | undefined
   > = {
     active: "success",
     degraded: "warning",
     error: "destructive",
-    inactive: "default",
-    p95: "ghost",
-  } as const;
+    inactive: undefined,
+    p95: undefined,
+  };
 
   return globalCards.map((key) => {
     let value: number | string | undefined;
@@ -293,7 +293,7 @@ export function getMonitorListMetrics(
       key,
       // a count of nothing is not a zero
       value: monitors.length === 0 ? "—" : value,
-      variant: variantMap[key],
+      status: statusMap[key],
     } as const;
   }) as readonly MonitorListMetric[];
 }

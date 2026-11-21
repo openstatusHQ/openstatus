@@ -2,7 +2,7 @@
 
 import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,12 +11,11 @@ import { useQueryStates } from "nuqs";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { BillingAddons } from "@/components/content/billing-addons";
-import { BillingProgress } from "@/components/content/billing-progress";
 import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
+  BillingAddons,
+  BillingAddonUnavailable,
+} from "@/components/content/billing-addons";
+import { BillingProgress } from "@/components/content/billing-progress";
 import {
   Section,
   SectionDescription,
@@ -41,6 +40,16 @@ import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
+
+const ADDON_ORDER = [
+  "email-domain-protection",
+  "ip-restriction",
+  "white-label",
+  "custom-theme",
+  "status-pages",
+  "monitors",
+  "sso",
+] satisfies (keyof Addons)[];
 
 function calculateTotalRequests(limits: Limits) {
   const monitors = limits.monitors;
@@ -79,7 +88,7 @@ export function Client() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
-  const [{ success, setup, trial }, setSearchParams] =
+  const [{ success, setup, trial, highlight }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   // Captured on mount: the toasts clear the params while the dialog is open.
@@ -352,69 +361,24 @@ export function Client() {
                 </FormCardDescription>
               </FormCardHeader>
               <div className="flex flex-col gap-2 pt-4">
-                {planAddons["email-domain-protection"] ? (
-                  <BillingAddons
-                    label={planAddons["email-domain-protection"].title}
-                    description={
-                      planAddons["email-domain-protection"].description
-                    }
-                    addon="email-domain-protection"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["ip-restriction"] ? (
-                  <BillingAddons
-                    label={planAddons["ip-restriction"].title}
-                    description={planAddons["ip-restriction"].description}
-                    addon="ip-restriction"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["white-label"] ? (
-                  <BillingAddons
-                    label={planAddons["white-label"].title}
-                    description={planAddons["white-label"].description}
-                    addon="white-label"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["custom-theme"] ? (
-                  <BillingAddons
-                    label={planAddons["custom-theme"].title}
-                    description={planAddons["custom-theme"].description}
-                    addon="custom-theme"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["status-pages"] ? (
-                  <BillingAddons
-                    label={planAddons["status-pages"].title}
-                    description={planAddons["status-pages"].description}
-                    addon="status-pages"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons.monitors ? (
-                  <BillingAddons
-                    label={planAddons.monitors.title}
-                    description={planAddons.monitors.description}
-                    addon="monitors"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons.sso ? (
-                  <BillingAddons
-                    label={planAddons.sso.title}
-                    description={planAddons.sso.description}
-                    addon="sso"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {Object.keys(planAddons).length === 0 ? (
-                  <EmptyStateContainer>
-                    <EmptyStateTitle>No add-ons available</EmptyStateTitle>
-                  </EmptyStateContainer>
-                ) : null}
+                {ADDON_ORDER.map((addon) => {
+                  const config = planAddons[addon];
+                  return config ? (
+                    <BillingAddons
+                      key={addon}
+                      label={config.title}
+                      description={config.description}
+                      addon={addon}
+                      workspace={workspace}
+                    />
+                  ) : (
+                    <BillingAddonUnavailable
+                      key={addon}
+                      addon={addon}
+                      plan={workspace.plan}
+                    />
+                  );
+                })}
               </div>
             </FormCardContent>
             <FormCardFooter>
@@ -449,7 +413,7 @@ export function Client() {
             </FormCardHeader>
             <FormCardSeparator />
             <FormCardContent className="pb-4">
-              <DataTable />
+              <DataTable highlight={highlight} />
             </FormCardContent>
           </FormCard>
         </FormCardGroup>

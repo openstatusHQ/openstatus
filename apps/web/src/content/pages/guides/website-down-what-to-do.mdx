@@ -1,0 +1,345 @@
+---
+title: "First Outage Kit"
+seo:
+  title: "Website Down? What to Do in the First Hour (Triage Checklist + Templates)"
+  description: "Your site or API is down and customers are noticing. A first-15-minutes triage checklist, copy-paste status updates for all 4 stages, customer outage and apology emails, and what to fix once production is back."
+description: "The kit for your first real production outage: a 15-minute triage checklist, copy-paste status updates for every stage, an outage email and post-incident email for customers, and what to harden before you go back to shipping."
+author: "openstatus"
+publishedAt: "2026-11-20"
+category: "template"
+howto:
+  totalTime: "PT1H"
+  steps:
+    - name: "Confirm the blast radius"
+      text: "Check from outside your network and across multiple regions so you know whether it's a global outage, a single region, DNS, or just your local connection."
+      url: "#the-first-15-minutes"
+    - name: "Check the last diff and upstream providers"
+      text: "Check recent deploys, config/env changes, migrations, DNS, certs, and cloud quotas—plus your providers' status pages. If a deploy or config change lines up with t=0, roll it back before debugging."
+      url: "#the-first-15-minutes"
+    - name: "Post the first status update within 15 minutes"
+      text: "Publish an Investigating update in user terms with a specific UTC time for the next update. Don't guess at root cause and don't promise an ETA."
+      url: "#status-updates-to-copy-and-paste"
+    - name: "Reply to customers who reached out"
+      text: "Send the outage email only to the customers who complained or wrote in—everyone else has the status page."
+      url: "#the-outage-email"
+    - name: "Close the loop and fix detection"
+      text: "Mark the status page Resolved, send the apology email to the customers who complained, and write the postmortem within 48 hours."
+      url: "#once-its-back-up"
+faq:
+  - question: "What should I do first when my website or API goes down?"
+    answer: "First, verify the blast radius from outside your network and from multiple regions so you know what's actually failing. Second, drop a timestamped message in Slack to start your incident log. Third, check what changed right before errors spiked (deploys, env vars, migrations, DNS, certs, quotas) and check your upstream providers' status pages. If a recent change lines up with the start of the outage, roll back immediately—debug the diff after production is green. Post your first status update within 15 minutes, even if all you know is the symptom."
+  - question: "How do I tell customers my service is down?"
+    answer: "Publish on your status page first so you have a single canonical URL for everyone. Don't blast your entire user list—only send a direct outage email or reply to the customers who complained or wrote in (via support tickets, email, or shared Slack channels) and point them to the status page. State what is failing in user terms, who is affected, and the exact UTC time of your next update."
+  - question: "Should I apologize for an outage?"
+    answer: "Yes—say 'we're sorry' once, plainly, and immediately pivot to facts. Technical customers and B2B buyers don't want three paragraphs of contrition. They want to know the exact impact window, whether their data or queued webhooks are safe, why it broke, and what concrete guardrail you are adding to CI or alerting so it doesn't happen again next week."
+  - question: "Do I need a status page if we're an early-stage team?"
+    answer: "Your first real outage is usually when you realize you do. Without a status page, every affected customer pings you individually across Slack, email, and X while you're trying to read logs and fix production. A status page hosted outside your own cloud gives everyone one URL to refresh and pushes updates to subscribers automatically."
+  - question: "How do I find out we're down before a customer DMs us?"
+    answer: "External synthetic monitoring: run scheduled checks from multiple global regions against the endpoints that actually prove your app works (like an authenticated API health route that touches the database, not a CDN-cached marketing homepage). Assert on status code, response payload, and latency, and alert on consecutive failures so transient network blips don't page you at 3 a.m."
+  - question: "We're down because AWS, Vercel, or another provider is down. What do we tell customers?"
+    answer: "State the upstream failure as a technical fact, not an excuse: 'An outage at our database provider in us-east-1 is causing 503 errors on write requests.' Your customers pay you, not your sub-processors. Own the communication, keep posting updates on your own status page on a 30-minute cadence, and use the postmortem to examine whether you need better timeouts, graceful degradation, or a fallback."
+---
+
+Production is down. A customer in a shared Slack channel noticed before your alerts did, support notifications are stacking up, your heart rate just spiked, and you're staring at five terminal tabs trying to figure out where to start.
+
+Every CTO, SRE, and founding engineer goes through this rite of passage. When you're an early-stage team, you don't have a dedicated communications lead or a 20-person NOC—the person reading the logs is usually the same person answering customers.
+
+Take a breath. Your only two jobs right now are **stopping the bleeding** and **keeping customers informed while you do it**. Copy what you need below and read the theory later.
+
+- **[The first 15 minutes](#the-first-15-minutes):** triage checklist (stop the bleeding first)
+- **[Status updates to copy and paste](#status-updates-to-copy-and-paste):** all four stages + Slack/X one-liner
+- **[The outage email](#the-outage-email)** and **[the apology email](#the-apology-email)**
+- **[Common traps during your first outage](#five-mistakes-that-turn-a-30-minute-outage-into-a-3-hour-one)**
+- **[Once it's back up](#once-its-back-up):** closing the loop so you don't repeat it next week
+
+## The First 15 Minutes
+
+Run through these in order. Do not open a debugger or start reading application stack traces until you reach step 5.
+
+1. **Confirm the blast radius.** Check from outside your network: cellular on your phone, `curl -Iv https://yourapp.com` from a different machine, or a [multi-region check](/play/checker). Is it returning `502`/`503` at the load balancer? Failing TLS handshake? Timing out in Europe while US works? Or is your CDN serving a cached `200 OK` marketing page while `/api/*` and login are dead? Knowing *what* is failing saves you from debugging application code during a DNS or edge-routing failure.
+2. **Start a single incident thread and log `t = 0`.** Spin up `#inc-YYYY-MM-DD` in Slack (or a scratch doc) and drop one message with the current time in UTC and what's broken. Put every theory, link, and command you run in that thread. Your brain under adrenaline will distort time—you will need these timestamps for customer updates and the postmortem.
+3. **Check what changed—and check the boring killers.** Look at the last 2 hours of activity, plus the silent expirations that bite startups all the time:
+   - **Code & config:** The last deploy, a feature flag toggle, an environment variable or secret rotation, a CDN/WAF rule.
+   - **Database:** A migration that took an exclusive lock, connection pool exhaustion, disk full, or a runaway query after a traffic spike.
+   - **The silent killers:** An expired TLS certificate, an expired domain registration, an OAuth/webhook signing secret that expired, a hit rate-limit or spending cap on OpenAI/Stripe/AWS, or a failed credit card on a critical SaaS dependency.
+4. **Check your upstream providers.** Before you tear apart your own stack, check the status pages for your cloud host, managed Postgres/Redis, auth provider, DNS/CDN, and third-party APIs. (You can check most common cloud, AI, and developer tools in one place in our [status directory](/status).) If your provider is down, you can't fix their infra—assess whether you can fail over or degrade gracefully, then jump straight to step 7.
+5. **Mitigate first, debug later.** If the outage lines up with a deploy, config change, or feature flag, **roll it back immediately**. Don't spend 25 minutes trying to forward-fix a broken commit in production while customers are getting `500`s. Revert to the last known-good state, confirm error rates drop, and debug the diff on your laptop afterwards. *(Exception: if the deploy ran a destructive database migration, check whether the old code can run against the new schema before you hit revert—sometimes a hot-patch or config tweak is safer than a down-migration on live data.)*
+6. **Split the hats (or set a 20-minute timer).** If there are two of you awake, explicitly assign roles in the channel: *"You debug, I'm [Incident Commander](/guides/incident-commander) and handling comms and status updates."* Never have two engineers silently running competing commands in production without calling them out. If you are solo, **set a recurring 20-minute timer on your phone right now**. Without an alarm, you will dive into logs for 90 minutes while customers stare at total radio silence.
+7. **Publish your first status update within 15 minutes.** Even if you have zero idea why it's broken. The first update isn't meant to explain the root cause—it tells customers *"we are awake, we see the errors, and you don't need to open a support ticket to tell us."*
+
+> **Your site is down—and your status page went down with it?** If `/status` lives in your main Next.js app or points to the same load balancer/DNS zone that just failed, customers can't see it. For right now: post in your shared customer Slack channels, pin a post on X/LinkedIn, or add a banner in your support widget. For tomorrow: move your status page to an independent host and subdomain outside your production blast radius.
+
+## Status Updates to Copy and Paste
+
+Nearly every technical buyer expects the standard four-stage progression: **Investigating → Identified → Monitoring → Resolved**.
+
+Replace the bracketed text and publish. Every update must end with a specific time for the next update—and you **must post at that time even if nothing has changed**. Saying *"We are still investigating; next update by 15:00 UTC"* builds trust. Missing a promised update destroys it.
+
+### 1. Investigating (Post within 15 minutes)
+
+You see the symptom, you don't know the cause yet. State what users are experiencing in plain terms. Do **not** guess at a root cause, and do **not** give an ETA.
+
+```text
+We are investigating an issue causing [503 errors on the API / failed logins /
+the dashboard to fail to load] for [all users / workspaces in the EU region].
+Our engineering team is actively looking into it. We will share another update
+by [HH:MM UTC] (or sooner if we have news).
+```
+
+### 2. Identified (You know the mechanism and have a mitigation path)
+
+You found the culprit and are actively rolling back, scaling up, or failing over. Still avoid promising a hard resolution time unless the rollback is already finishing.
+
+```text
+We have identified the cause of the [API errors / login failures]: [a bad
+configuration in our latest deployment / connection pool saturation on our
+primary database / an upstream outage at our cloud provider in us-east-1].
+[All users / Users in Europe] are currently unable to [authenticate / save
+changes / trigger webhooks]. We are [rolling back the deployment / increasing
+database capacity / failing over traffic] now. Next update by [HH:MM UTC].
+```
+
+### 3. Monitoring (The fix is live; you're verifying under real load)
+
+Never jump straight from *Identified* to *Resolved*. If your fix regresses five minutes later under retry traffic, reopening a "Resolved" incident makes you look amateur. Put it in *Monitoring* for 15–30 minutes while you watch your telemetry.
+
+```text
+We have [rolled back the deployment / applied a database configuration fix] and
+[error rates / API latencies] have returned to normal levels. We are closely
+monitoring the system under load before marking this resolved. If you are still
+seeing issues, please [hard-refresh your browser / retry failed API requests] or
+reach out via [support@yourcompany.com / your shared Slack channel]. Next update
+by [HH:MM UTC].
+```
+
+### 4. Resolved (Error rates are stable and the backlog is clear)
+
+State the exact UTC window of impact, answer the data/retry question immediately, and commit to a postmortem if the outage was major.
+
+```text
+This incident is resolved. Between [HH:MM] and [HH:MM UTC] ([total duration]),
+[the API / web application] returned errors for [all users / ~X% of requests in
+the EU region] due to [a database configuration change / an upstream network
+issue]. [No data was lost or corrupted. / Failed webhook deliveries from this
+window are now draining from the queue. / Synchronous API writes that returned
+5xx during this window were not processed and are safe to retry.] We will publish
+a full postmortem detailing what happened and what we are changing by [Day/Date].
+```
+
+### Bonus: The Shared Slack Channel / X One-Liner
+
+Once your status page is updated, drop this into your shared customer Slack channels or social feed so everyone gets pointed to one canonical URL instead of starting 15 separate threads:
+
+```text
+Heads up: we're currently seeing [5xx errors on the API / login failures]
+starting around [HH:MM UTC]. We're actively working on a fix (currently
+[investigating / rolling back the last deploy]). Live updates every 30 min
+here: [status page URL]
+```
+
+How often should you post? **Every 30 minutes** for a full outage (SEV0/SEV1), **every 60 minutes** for partial degradation (SEV2). Need scenario-specific copy? Grab templates for an [API disruption](/guides/api-service-disruption), [database degradation](/guides/database-performance-degradation), [deployment rollback](/guides/deployment-rollback), or [network routing issue](/guides/network-connectivity-issues), or check the full [incident communication guide](/guides/incident-communication).
+
+## The Outage Email
+
+Do **not** blast your entire user database during an outage—that just wakes up customers who never noticed you were down. Everyone else has the status page.
+
+Send this email **only to the customers who are complaining or wrote in** (via support tickets, direct emails, or shared Slack channels) to acknowledge them personally and route them to your status page for the rest of the incident:
+
+```text
+Subject: Re: [Product] service disruption — we're working on it
+
+Hi [first name],
+
+Thanks for flagging this. Starting at [HH:MM UTC] today, [Product] has been
+experiencing [elevated 503 errors on our API / dashboard login failures]
+affecting [all workspaces / workspaces in the EU region].
+
+Nothing is required on your end right now—your integration and credentials do
+not need to be changed.
+
+What we know so far:
+- Cause: [We are rolling back a deployment from earlier today. / We are working
+  to mitigate database connection saturation. / We are actively investigating.]
+- Impact: [Dashboard logins are failing. / API write requests are returning 503s
+  and will need to be retried once service is restored.]
+- Data safety: [Existing data is intact; failed requests are being rejected
+  cleanly before writing.]
+
+We are posting live updates every 30 minutes on our status page:
+[status page URL]
+
+You can subscribe at that link to get every update automatically, and I'll
+follow up with you directly here once we're fully resolved.
+
+[Your name]
+[Title, Product]
+```
+
+Keep it short. During an active incident, the email's job is to reassure the customer who reached out that you're on it, confirm they didn't break their own integration, and move them onto the status page so you can get back to fixing production.
+
+## The Apology Email
+
+Send this **within 24 hours of resolution** to the **same customers who complained or wrote in during the outage** (everyone else can read the resolved summary on your status page).
+
+Because they are the ones who felt the pain and took the time to report it, closing the loop with them personally matters. This is the email they will actually remember—and forward internally to their VP of Engineering. Early-stage teams often worry that admitting a bug makes them look fragile. In reality, technical buyers know startups have bugs; what scares them off is evasive PR speak. A candid breakdown of the technical failure and the guardrail you shipped builds more credibility than any marketing page.
+
+```text
+Subject: Resolved: What happened during [today's / yesterday's] [Product] outage
+
+Hi [first name],
+
+[Earlier today / Yesterday], between [HH:MM] and [HH:MM UTC] ([X minutes]),
+[Product] was [unavailable / returning 503 errors on API writes] for [all users /
+workspaces in Europe]. If your team tried to [log in / run builds / send API
+requests] during that window, those requests failed. We're sorry for the
+disruption to your workflow.
+
+What happened:
+[2–3 plain, technically honest sentences. Example: "A database migration we
+deployed at 08:10 UTC inadvertently lowered our Postgres connection pool limit
+from 100 to 10 connections per worker. Under normal traffic it held, but when
+European morning traffic ramped up at 08:12 UTC, the pool saturated and new
+write requests were rejected with 503 errors. We deployed a config fix restoring
+the pool limit at 08:55 UTC, and error rates returned to 0% by 08:59 UTC."]
+
+What this means for your data:
+[Be concrete. Example: "No data was lost or corrupted. Write requests that failed
+during the 47-minute window were rejected cleanly before opening a transaction.
+Queued background jobs and webhooks were paused and finished draining by 09:15
+UTC. If your client does not automatically retry 503 responses, any synchronous
+POST requests sent between 08:12 and 08:59 UTC will need to be re-sent."]
+
+What we're changing so this doesn't happen again:
+- [Prevention guardrail: "We added a CI check that blocks any changes to
+  production database pool configuration without an explicit review override."]
+- [Faster detection: "We split our 5xx error alerts by region on a 1-minute
+  window so regional spikes page us immediately, before a customer notices."]
+- [Recovery speed: "We linked our connection-pool saturation dashboard directly
+  to the top of our API 5xx runbook."]
+
+[Optional — SLA / make-good: "We've applied a [amount / X%] credit to your next
+invoice to account for the downtime." OR "If this outage caused a specific issue
+for your team or your customers, reply directly to this email and we'll make it
+right."]
+
+You can read the full technical incident report here: [link to status page /
+postmortem].
+
+Thank you for your patience while we fixed this. Reply directly if you have any
+questions about how your workspace was affected.
+
+[Your name]
+[Title, Product]
+```
+
+Three rules that separate a great post-incident email from corporate fluff:
+
+- **One apology, then engineering facts.** Say *"We're sorry"* once, mean it, and move straight into the timeline and mechanics. Three paragraphs of contrition with zero technical detail reads like you're hiding incompetence.
+- **Name the concrete guardrail, not a resolution to "try harder."** Saying *"We are reviewing our deployment processes to ensure high reliability"* means nothing. Saying *"We added a CI check that runs migrations against a production schema snapshot before merge"* tells an engineer on the other side that you actually fixed the trap.
+- **Answer the data and idempotency question unprompted.** Every engineer using your product is silently asking: *Was state corrupted? Did webhooks drop? Do I need to run a backfill script?* Answer it explicitly even when the answer is *"nothing was lost."*
+
+## Five Mistakes That Turn a 30-Minute Outage Into a 3-Hour One
+
+When your first real incident hits, adrenaline pushes you toward bad instincts. Watch out for these five traps:
+
+1. **Waiting to post on the status page until you know the root cause.** You think, *"Give me five more minutes, I almost have it."* Five minutes turns into 45 minutes of radio silence while your customers assume you're asleep at the wheel. Post *Investigating* within 15 minutes, every time.
+2. **Debugging forward in production instead of rolling back.** When a deploy breaks prod, your ego wants to spot the one-line typo and push a hotfix commit. And then the hotfix fails CI, or introduces a second bug. Revert first. Get users unblocked. Debug the diff in peace.
+3. **Two engineers running unannounced commands at the same time.** One person restarts the database while another is running a manual migration fix, and now nobody knows whether the new errors came from the bug or the restart. Keep one shared channel and call out every production mutation before you hit Enter.
+4. **Using four hedges in one sentence.** Never write *"Some users may be experiencing intermittent degradation."* If checkouts are throwing `500`s, say checkouts are failing. Precision is what convinces technical users they can trust your updates.
+5. **Declaring "Resolved" the second the deploy finishes.** Wait 15–20 minutes in *Monitoring* while caches warm up, retry storms clear, and background queues drain. Reopening an incident ten minutes after you declared victory hurts worse than a slightly longer outage.
+
+## Once It's Back Up
+
+Production is green again and your heart rate is coming down. Before you close your laptop or go back to feature work, finish these three steps:
+
+1. **Close out every communication channel.** Move your status page from *Monitoring* to *Resolved* (leaving an incident stuck in *Monitoring* for three days is a classic startup mistake). Then send the [apology email](#the-apology-email) to the customers who complained or opened tickets during the fire so they hear directly from you that it's fixed and why it broke.
+2. **Write a blameless postmortem within 48 hours.** Do it while the Slack timestamps, terminal history, and dead-end hypotheses are still fresh in your head. You don't need enterprise bureaucracy—just a sharp one-page Markdown doc with the timeline, the 5 Whys, and 2–3 ticketed action items you can ship this sprint. Grab our copy-paste [postmortem template and customer incident report template](/guides/postmortem-template) (with a filled-in startup example).
+3. **Fix how you found out.** Be honest about your **Time to Detect (TTD)**. If a customer DM'd your founder before an alert paged you, that is action item `#1`. (Read [why your monitoring stayed green while your customer found out first](/blog/your-customer-found-out-first).)
+   - Replace naive homepage pings with [synthetic uptime monitoring](/uptime-monitoring) from multiple regions against an endpoint that actually exercises your auth and database, with assertions on the response body.
+   - Move your [status page](/status-page) off your own infrastructure so it never goes down with your app.
+   - Spend 10 minutes agreeing on what counts as a SEV1 vs. SEV2 before the next fire starts—our [severity matrix builder](/play/severity-matrix) and [severity matrix guide](/guides/incident-severity-matrix) give you a clean starting point.
+
+## When It's Not Your Fault (Upstream Provider Outages)
+
+What if your app was completely fine, and AWS, Cloudflare, Vercel, or your managed Postgres provider went down?
+
+Most of this kit still applies. Your customers signed a contract with you, not your cloud vendors. To them, your dependency graph *is* your product.
+
+- **Name the provider as a technical fact, never as an excuse.** Write: *"An outage at our database provider in `us-east-1` is causing 503 errors on write requests."* Don't write: *"Unfortunately this is completely out of our hands."*
+- **Keep updating your own status page on your own schedule.** You can link to the upstream provider's status page for context, but don't tell customers to go check it themselves and go silent. Translate what the upstream outage means for *your* features and *their* data.
+- **Still write a short internal postmortem.** You couldn't prevent the provider's outage, but you can ask architectural questions: *Could we have failed closed or served cached reads? Did a non-critical third-party API block our main request thread because a timeout was set to 30 seconds instead of 2 seconds? How fast did our alerts tell us which dependency was failing?*
+
+## Frequently Asked Questions
+
+<Details summary="What should I do first when my website or API goes down?">
+
+First, verify the blast radius from outside your network and from multiple regions
+so you know what's actually failing. Second, drop a timestamped message in Slack to
+start your incident log. Third, check what changed right before errors spiked
+(deploys, env vars, migrations, DNS, certs, quotas) and check your upstream
+providers' status pages. If a recent change lines up with the start of the outage,
+roll back immediately—debug the diff after production is green. Post your first
+status update within 15 minutes, even if all you know is the symptom.
+
+</Details>
+
+<Details summary="How do I tell customers my service is down?">
+
+Publish on your status page first so you have a single canonical URL for
+everyone. Don't blast your entire user list—only send a direct outage email or
+reply to the customers who complained or wrote in (via support tickets, email, or
+shared Slack channels) and point them to the status page. State what is failing in
+user terms, who is affected, and the exact UTC time of your next update. Never
+speculate on root cause in the first update, and never promise a resolution ETA
+you can't guarantee.
+
+</Details>
+
+<Details summary="Should I apologize for an outage?">
+
+Yes—say "we're sorry" once, plainly, and immediately pivot to facts. Technical
+customers and B2B buyers don't want three paragraphs of contrition. They want to
+know the exact impact window, whether their data or queued webhooks are safe, why it
+broke, and what concrete guardrail you are adding to CI or alerting so it doesn't
+happen again next week.
+
+</Details>
+
+<Details summary="Do I need a status page if we're an early-stage team?">
+
+Your first real outage is usually when you realize you do. Without a status page,
+every affected customer pings you individually across Slack, email, and X while
+you're trying to read logs and fix production. A status page hosted outside your own
+cloud gives everyone one URL to refresh and pushes updates to subscribers
+automatically.
+
+</Details>
+
+<Details summary="How do I find out we're down before a customer DMs us?">
+
+External synthetic monitoring: run scheduled checks from multiple global regions
+against the endpoints that actually prove your app works (like an authenticated API
+health route that touches the database, not a CDN-cached marketing homepage). Assert
+on status code, response payload, and latency, and alert on consecutive failures so
+transient network blips don't page you at 3 a.m.
+
+</Details>
+
+<Details summary="We're down because AWS, Vercel, or another provider is down. What do we tell customers?">
+
+State the upstream failure as a technical fact, not an excuse: "An outage at our
+database provider in us-east-1 is causing 503 errors on write requests." Your
+customers pay you, not your sub-processors. Own the communication, keep posting
+updates on your own status page on a 30-minute cadence, and use the postmortem to
+examine whether you need better timeouts, graceful degradation, or a fallback.
+
+</Details>
+
+---
+
+**Next time, you won't be stitching this together by hand while production is burning.** openstatus runs multi-region synthetic checks with real payload assertions so you get paged before a customer DMs you, and hosts your status page outside your infrastructure so it stays up when your cloud is down. When an incident hits, openstatus captures the UTC timeline automatically and drafts your status updates and postmortem from the actual timeline and Slack thread—you just review and approve. Open source, with a free plan that gets a monitor and status page live in three minutes.
+
+<Actions source="outage-kit">
+  <ButtonLink href="https://app.openstatus.dev" variant="default">Start free</ButtonLink>
+  <ButtonLink href="/incident-management" variant="ghost">See how incident management works</ButtonLink>
+</Actions>

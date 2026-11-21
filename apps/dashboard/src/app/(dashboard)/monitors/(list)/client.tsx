@@ -27,17 +27,19 @@ import { columns } from "@/components/data-table/monitors/columns";
 import { MonitorDataTableActionBar } from "@/components/data-table/monitors/data-table-action-bar";
 import { MonitorDataTableToolbar } from "@/components/data-table/monitors/data-table-toolbar";
 import {
-  MetricCardButton,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardSkeleton,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
+  MetricStrip,
+  MetricStripButton,
+  MetricStripLabel,
+  MetricStripRow,
+  MetricStripSkeleton,
+  MetricStripUnit,
+  MetricStripValue,
+} from "@/components/metric/metric-strip";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getMonitorListMetrics } from "@/data/metrics.client";
+import { splitUnit } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateMonitorButton } from "./create-monitor-button";
@@ -151,57 +153,71 @@ export function Client() {
             <CreateMonitorButton />
           </div>
         </SectionHeaderRow>
-        <MetricCardGroup>
-          {metrics.map((metric) => {
-            const statusArray = columnFilters.find((f) => f.id === "status")
-              ?.value as string[] | undefined;
+        <MetricStrip>
+          <MetricStripRow>
+            {metrics.map((metric) => {
+              const statusArray = columnFilters.find((f) => f.id === "status")
+                ?.value as string[] | undefined;
 
-            let isActive = false;
-            if (metric.key === "p95") {
-              isActive = !!sorting.find((s) => s.id === "p95" && s.desc);
-            } else {
-              isActive =
-                Array.isArray(statusArray) && statusArray.includes(metric.key);
-            }
+              let isActive = false;
+              if (metric.key === "p95") {
+                isActive = !!sorting.find((s) => s.id === "p95" && s.desc);
+              } else {
+                isActive =
+                  Array.isArray(statusArray) &&
+                  statusArray.includes(metric.key);
+              }
 
-            const iconGroup = metric.key === "p95" ? icons.p95 : icons.default;
-            const Icon = iconGroup[isActive ? "active" : "inactive"];
+              const iconGroup =
+                metric.key === "p95" ? icons.p95 : icons.default;
+              const Icon = iconGroup[isActive ? "active" : "inactive"];
+              const isAlarm =
+                metric.key === "degraded" || metric.key === "error";
+              const { value, unit } = splitUnit(String(metric.value ?? "—"));
 
-            return (
-              <MetricCardButton
-                key={metric.title}
-                variant={metric.variant}
-                onClick={() => {
-                  if (metric.key === "p95") {
-                    onSortingChange(
-                      sorting.length === 0 || !isActive
-                        ? [{ id: "p95", desc: true }]
-                        : [],
-                    );
-                  } else {
-                    onColumnFiltersChange(
-                      columnFilters.length === 0 || !isActive
-                        ? [{ id: "status", value: [metric.key] }]
-                        : [],
-                    );
+              return (
+                <MetricStripButton
+                  key={metric.title}
+                  status={metric.status}
+                  active={
+                    isAlarm
+                      ? typeof metric.value === "number" && metric.value > 0
+                      : undefined
                   }
-                }}
-              >
-                <MetricCardHeader className="flex w-full items-center justify-between gap-2">
-                  <MetricCardTitle className="truncate">
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    if (metric.key === "p95") {
+                      onSortingChange(
+                        sorting.length === 0 || !isActive
+                          ? [{ id: "p95", desc: true }]
+                          : [],
+                      );
+                    } else {
+                      onColumnFiltersChange(
+                        columnFilters.length === 0 || !isActive
+                          ? [{ id: "status", value: [metric.key] }]
+                          : [],
+                      );
+                    }
+                  }}
+                >
+                  <MetricStripLabel>
                     {metric.title}
-                  </MetricCardTitle>
-                  <Icon className="size-4" />
-                </MetricCardHeader>
-                {metric.key === "p95" && isLoadingMetrics ? (
-                  <MetricCardSkeleton className="h-6 w-12" />
-                ) : (
-                  <MetricCardValue>{metric.value}</MetricCardValue>
-                )}
-              </MetricCardButton>
-            );
-          })}
-        </MetricCardGroup>
+                    <Icon aria-hidden />
+                  </MetricStripLabel>
+                  {metric.key === "p95" && isLoadingMetrics ? (
+                    <MetricStripSkeleton />
+                  ) : (
+                    <MetricStripValue>
+                      {value}
+                      {unit ? <MetricStripUnit>{unit}</MetricStripUnit> : null}
+                    </MetricStripValue>
+                  )}
+                </MetricStripButton>
+              );
+            })}
+          </MetricStripRow>
+        </MetricStrip>
       </Section>
       <Section id="monitors-table">
         <DataTable

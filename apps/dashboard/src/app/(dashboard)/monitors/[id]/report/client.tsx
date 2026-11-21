@@ -48,13 +48,13 @@ import { columns as monthColumns } from "@/components/data-table/monitor-report-
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
-  MetricCard,
-  MetricCardDetail,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
+  MetricStrip,
+  MetricStripAside,
+  MetricStripItem,
+  MetricStripLabel,
+  MetricStripRow,
+  MetricStripValue,
+} from "@/components/metric/metric-strip";
 import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
 import { MonitorIncidentRow } from "@/components/monitor-incidents/monitor-incident-row";
 import { CheckSuccessHeatmap } from "@/components/monitor-report/check-success-heatmap";
@@ -228,58 +228,49 @@ export function Client() {
             </FormDialogSupportContact>
           </NoteDismissible>
         ) : null}
-        <MetricCardGroup>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle>Availability</MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>
-              {formatAvailability(report.availability)}
-            </MetricCardValue>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle>Downtime</MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>
-              {report.downtimeMs > 0
-                ? formatDurationShort(report.downtimeMs)
-                : "—"}
-              {report.excusedMs > 0 ? (
-                <MetricCardDetail>
-                  {" "}
-                  · {formatDurationShort(report.excusedMs)} excused
-                </MetricCardDetail>
-              ) : null}
-            </MetricCardValue>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle>Outages</MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>{report.outageCount}</MetricCardValue>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle>Longest outage</MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>
-              {report.longestMs === null
-                ? "—"
-                : formatDurationShort(report.longestMs)}
-            </MetricCardValue>
-          </MetricCard>
-          <MetricCard>
-            <MetricCardHeader>
-              <MetricCardTitle>Mean time to resolve</MetricCardTitle>
-            </MetricCardHeader>
-            <MetricCardValue>
-              {report.mttrMs === null
-                ? "—"
-                : formatDurationShort(report.mttrMs)}
-            </MetricCardValue>
-          </MetricCard>
-        </MetricCardGroup>
+        <MetricStrip>
+          <MetricStripRow>
+            <MetricStripItem>
+              <MetricStripLabel>Availability</MetricStripLabel>
+              <MetricStripValue>
+                {formatAvailability(report.availability)}
+              </MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel>Downtime</MetricStripLabel>
+              <MetricStripValue>
+                {report.downtimeMs > 0
+                  ? formatDurationShort(report.downtimeMs)
+                  : "—"}
+                {report.excusedMs > 0 ? (
+                  <MetricStripAside>
+                    {formatDurationShort(report.excusedMs)} excused
+                  </MetricStripAside>
+                ) : null}
+              </MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel>Outages</MetricStripLabel>
+              <MetricStripValue>{report.outageCount}</MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel>Longest outage</MetricStripLabel>
+              <MetricStripValue>
+                {report.longestMs === null
+                  ? "—"
+                  : formatDurationShort(report.longestMs)}
+              </MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel>Mean time to resolve</MetricStripLabel>
+              <MetricStripValue>
+                {report.mttrMs === null
+                  ? "—"
+                  : formatDurationShort(report.mttrMs)}
+              </MetricStripValue>
+            </MetricStripItem>
+          </MetricStripRow>
+        </MetricStrip>
         {rarelyOpensOutages(monitor) ? (
           <Note size="sm">
             <Info />

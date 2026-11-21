@@ -4,13 +4,14 @@ import type { RouterOutputs } from "@openstatus/api";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import {
-  MetricCard,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardSkeleton,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
+  type MetricStatus,
+  MetricStrip,
+  MetricStripItem,
+  MetricStripLabel,
+  MetricStripRow,
+  MetricStripSkeleton,
+  MetricStripValue,
+} from "@/components/metric/metric-strip";
 import {
   type PingDay,
   formatNextPing,
@@ -80,22 +81,30 @@ export function HeartbeatSection({
     heartbeat && health !== "paused" ? heartbeatExpectedAt(heartbeat) : null;
   const failed = days?.reduce((sum, day) => sum + day.error, 0);
 
+  const healthStatus = health
+    ? heartbeatHealthConfig[health].status
+    : undefined;
+
   const metrics: {
     label: string;
-    variant: React.ComponentProps<typeof MetricCard>["variant"];
+    status?: MetricStatus;
+    active?: boolean;
     /** undefined while it loads, or for good when its query failed */
     value: React.ReactNode | undefined;
     isLoading: boolean;
   }[] = [
     {
-      label: "STATUS",
-      variant: health ? heartbeatHealthConfig[health].variant : "default",
+      label: "Status",
+      status: healthStatus,
+      active:
+        healthStatus === "destructive" || healthStatus === "warning"
+          ? true
+          : undefined,
       value: health ? heartbeatHealthConfig[health].label : undefined,
       isLoading,
     },
     {
-      label: "LAST PING",
-      variant: "default",
+      label: "Last ping",
       value: !heartbeat ? undefined : heartbeat.lastPingAt ? (
         <CardTime date={heartbeat.lastPingAt}>
           {formatDistanceToNowShort(heartbeat.lastPingAt)}
@@ -106,8 +115,7 @@ export function HeartbeatSection({
       isLoading: isLoading || !hydrated,
     },
     {
-      label: "NEXT PING",
-      variant: "default",
+      label: "Next ping",
       value: !heartbeat ? undefined : expectedAt ? (
         <CardTime date={expectedAt}>{formatNextPing(expectedAt, now)}</CardTime>
       ) : (
@@ -116,14 +124,14 @@ export function HeartbeatSection({
       isLoading: isLoading || !hydrated,
     },
     {
-      label: "FAILED",
-      variant: "destructive",
+      label: "Failed",
+      status: "destructive",
+      active: failed === undefined ? undefined : failed > 0,
       value: failed === undefined ? undefined : formatNumber(failed),
       isLoading: isWindowLoading,
     },
     {
-      label: "DOWNTIME",
-      variant: "default",
+      label: "Downtime",
       value:
         downtime === undefined
           ? undefined
@@ -135,23 +143,25 @@ export function HeartbeatSection({
   ];
 
   return (
-    <MetricCardGroup>
-      {metrics.map((metric) => (
-        <MetricCard key={metric.label} variant={metric.variant}>
-          <MetricCardHeader>
-            <MetricCardTitle className="truncate">
-              {metric.label}
-            </MetricCardTitle>
-          </MetricCardHeader>
-          {metric.value !== undefined ? (
-            <MetricCardValue>{metric.value}</MetricCardValue>
-          ) : metric.isLoading ? (
-            <MetricCardSkeleton className="h-6 w-12" />
-          ) : (
-            <MetricCardValue>—</MetricCardValue>
-          )}
-        </MetricCard>
-      ))}
-    </MetricCardGroup>
+    <MetricStrip>
+      <MetricStripRow>
+        {metrics.map((metric) => (
+          <MetricStripItem
+            key={metric.label}
+            status={metric.status}
+            active={metric.active}
+          >
+            <MetricStripLabel>{metric.label}</MetricStripLabel>
+            {metric.value !== undefined ? (
+              <MetricStripValue>{metric.value}</MetricStripValue>
+            ) : metric.isLoading ? (
+              <MetricStripSkeleton />
+            ) : (
+              <MetricStripValue>—</MetricStripValue>
+            )}
+          </MetricStripItem>
+        ))}
+      </MetricStripRow>
+    </MetricStrip>
   );
 }

@@ -25,6 +25,14 @@ export function formatMilliseconds(ms: number) {
   }).format(ms)}`;
 }
 
+/** Splits "120 ms" into the number and its unit; anything else has no unit. */
+export function splitUnit(formatted: string) {
+  const match = /^(-?[\d.,]+)\s*([a-zA-Z]+)$/.exec(formatted);
+  return match
+    ? { value: match[1], unit: match[2] }
+    : { value: formatted, unit: null };
+}
+
 export function formatPercentage(value: number, fractionDigits = 2) {
   if (Number.isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {
