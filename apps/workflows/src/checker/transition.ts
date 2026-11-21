@@ -145,34 +145,49 @@ function createIncidentStatement(input: TransitionInput, guard: SQL) {
   `);
 }
 
-function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
-  return db.all<IncidentRow>(sql`
-    UPDATE ${monitorIncidentTable}
-    SET resolved_at = ${Math.floor(input.cronTimestamp / 1000)}, auto_resolved = 1
-    WHERE ${monitorIncidentTable.monitorId} = ${input.monitorId}
+// Shared by the resolve and its audit row, so both see the same incidents.
+function resolvableIncident(input: TransitionInput, guard: SQL) {
+  return sql`${monitorIncidentTable.monitorId} = ${input.monitorId}
       AND ${monitorIncidentTable.resolvedAt} IS NULL
       AND EXISTS (
         SELECT 1 FROM ${monitor}
         WHERE ${monitor.id} = ${input.monitorId}
           AND ${monitor.status} <> ${input.status}
-          AND ${guard})
+          AND ${guard})`;
+}
+
+function resolveIncidentStatement(input: TransitionInput, guard: SQL) {
+  return db.all<IncidentRow>(sql`
+    UPDATE ${monitorIncidentTable}
+    SET resolved_at = ${Math.floor(input.cronTimestamp / 1000)}, auto_resolved = 1
+    WHERE ${resolvableIncident(input, guard)}
     RETURNING id
   `);
 }
 
-// `changes()` is the row count of the incident statement right before this one
-// in the batch, so a replay or a held transition audits nothing.
-function auditStatement(input: TransitionInput) {
-  const at = Math.floor(input.cronTimestamp / 1000);
-  const written =
-    input.status === "error"
-      ? sql`${monitorIncidentTable.startedAt} = ${at} AND ${monitorIncidentTable.resolvedAt} IS NULL`
-      : sql`${monitorIncidentTable.resolvedAt} = ${at} AND ${monitorIncidentTable.autoResolved} = 1`;
+const auditActor = { type: "system", job: "checker" } as const;
+
+// Runs right after the create: `changes()` is that insert's row count, and a
+// monitor holds one open incident, so this is exactly the row it wrote.
+function createAuditStatement(input: TransitionInput) {
   return db.run(
     monitorIncidentAuditStatement({
-      actor: { type: "system", job: "checker" },
-      transition: input.status === "error" ? "created" : "auto_resolved",
-      where: sql`${monitorIncidentTable.monitorId} = ${input.monitorId} AND ${written} AND changes() > 0`,
+      actor: auditActor,
+      transition: "created",
+      where: sql`${monitorIncidentTable.monitorId} = ${input.monitorId}
+        AND ${monitorIncidentTable.resolvedAt} IS NULL AND changes() > 0`,
+    }),
+  );
+}
+
+// Runs right before the resolve, on the rows that statement will close.
+function resolveAuditStatement(input: TransitionInput, guard: SQL) {
+  return db.run(
+    monitorIncidentAuditStatement({
+      actor: auditActor,
+      transition: "auto_resolved",
+      resolvedAt: new Date(Math.floor(input.cronTimestamp / 1000) * 1000),
+      where: resolvableIncident(input, guard),
     }),
   );
 }
@@ -324,7 +339,6 @@ export async function evaluateTransition(
   const journal = journalStatement(input, regionsJson, regionCount, guard);
   const outbox = outboxStatement(input, payload, guard);
   const cas = casStatement(input, guard);
-  const audit = auditStatement(input);
 
   let journalRows: JournalRow[];
   let outboxRows: OutboxInsertRow[];
@@ -333,14 +347,14 @@ export async function evaluateTransition(
   // All three statuses enqueue notifications; only the incident statement moves.
   // The outbox row reads incident_id by subquery, so it must run after the
   // incident is created but before an existing one is resolved. The audit
-  // statement always follows the incident statement directly.
+  // statement sits right next to its incident statement.
   if (input.status === "error") {
     const [journalResult, incidentResult, , outboxResult] = await withBusyRetry(
       () =>
         db.batch([
           journal,
           createIncidentStatement(input, guard),
-          audit,
+          createAuditStatement(input),
           outbox,
           cas,
         ]),
@@ -349,13 +363,13 @@ export async function evaluateTransition(
     outboxRows = outboxResult;
     incidentRows = incidentResult;
   } else {
-    const [journalResult, outboxResult, incidentResult] = await withBusyRetry(
+    const [journalResult, outboxResult, , incidentResult] = await withBusyRetry(
       () =>
         db.batch([
           journal,
           outbox,
+          resolveAuditStatement(input, guard),
           resolveIncidentStatement(input, guard),
-          audit,
           cas,
         ]),
     );

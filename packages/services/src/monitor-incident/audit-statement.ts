@@ -28,26 +28,34 @@ function snapshot(overrides: Partial<Record<keyof MonitorIncident, SQL>> = {}) {
 }
 
 /**
- * The audit insert for incidents a raw statement just opened or auto-resolved,
- * to run in the same batch as that statement. `where` selects those rows.
+ * The audit insert for incidents a raw statement opens or auto-resolves, to run
+ * in the same batch. `created`: after the insert, `where` selects the new rows.
+ * `auto_resolved`: before the update, `where` selects the open rows it will close.
  */
-export function monitorIncidentAuditStatement(args: {
-  actor: Actor;
-  transition: "created" | "auto_resolved";
-  where: SQL;
-}): SQL {
+export function monitorIncidentAuditStatement(
+  args: { actor: Actor; where: SQL } & (
+    | { transition: "created" }
+    | { transition: "auto_resolved"; resolvedAt: Date }
+  ),
+): SQL {
   const { actor, where } = args;
   const created = args.transition === "created";
   const action: AuditActionName = created
     ? "monitor_incident.create"
     : "monitor_incident.update";
-  // every auto-resolve only sets these two columns, on a row that was open
-  const before = created
-    ? sql`NULL`
-    : snapshot({ resolvedAt: sql`NULL`, autoResolved: sql`json('false')` });
+  const before = created ? sql`NULL` : snapshot();
+  const after = created
+    ? snapshot()
+    : snapshot({
+        resolvedAt: sql`${args.resolvedAt.toISOString()}`,
+        autoResolved: sql`json('true')`,
+      });
   const changedFields = created
     ? null
     : JSON.stringify(["resolvedAt", "autoResolved"]);
+  const open = created
+    ? sql`1`
+    : sql`${monitorIncidentTable.resolvedAt} IS NULL`;
 
   return sql`
     INSERT INTO ${auditLog}
@@ -57,8 +65,9 @@ export function monitorIncidentAuditStatement(args: {
       ${monitorIncidentTable.workspaceId}, ${actor.type},
       ${extractActorId(actor)}, ${tryGetActorUserId(actor)}, ${action},
       'monitor_incident', CAST(${monitorIncidentTable.id} AS TEXT),
-      ${before}, ${snapshot()}, ${changedFields}, ${Date.now()}
+      ${before}, ${after}, ${changedFields}, ${Date.now()}
     FROM ${monitorIncidentTable}
-    WHERE ${monitorIncidentTable.workspaceId} IS NOT NULL AND ${where}
+    WHERE ${monitorIncidentTable.workspaceId} IS NOT NULL
+      AND ${open} AND ${where}
   `;
 }

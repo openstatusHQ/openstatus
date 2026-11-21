@@ -12,8 +12,8 @@ interactive transaction where it needs a single atomic `db.batch()`. Do not
 
 Among the workflow jobs, only that batch is exempt, and it still audits in the
 same transaction: `monitorIncidentAuditStatement` builds the audit insert that
-runs in the batch right after the incident statement, so a failed audit row
-rolls the transition back. Every other job that opens or closes a monitor
+runs in the batch next to the incident statement, so a failed audit row rolls
+the transition back. Every other job that opens or closes a monitor
 incident calls `createMonitorIncident` or `autoResolveMonitorIncidents` as a
 `system` actor. Two older writers still update the table without a verb or an
 audit row: the legacy v1 incident `PUT` and the screenshot service.

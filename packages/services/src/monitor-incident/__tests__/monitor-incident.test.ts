@@ -549,43 +549,53 @@ describe("monitorIncidentAuditStatement", () => {
     });
   });
 
-  test("writes an auto-resolve as a diff on the resolve columns", async () => {
+  test("writes the update row of the auto-resolve that follows it", async () => {
     await withTestTransaction(async (tx) => {
-      const inserted = await insertIncident(tx, {
+      const open = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
-        resolvedAt: new Date(),
       });
-      const [incident] = await tx
-        .update(monitorIncidentTable)
-        .set({ autoResolved: true })
-        .where(eq(monitorIncidentTable.id, inserted.id))
-        .returning();
+      const earlier = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date("2026-03-01T00:00:00Z"),
+      });
+      const resolvedAt = new Date("2026-03-01T00:00:00Z");
 
       await tx.run(
         monitorIncidentAuditStatement({
           actor,
           transition: "auto_resolved",
-          where: eq(monitorIncidentTable.id, inserted.id),
+          resolvedAt,
+          where: eq(monitorIncidentTable.monitorId, testMonitorId),
         }),
       );
+      const [resolved] = await tx
+        .update(monitorIncidentTable)
+        .set({ resolvedAt, autoResolved: true })
+        .where(eq(monitorIncidentTable.id, open.id))
+        .returning();
 
       const [row] = await readAuditLog({
         workspaceId: teamCtx.workspace.id,
         entityType: "monitor_incident",
-        entityId: inserted.id,
+        entityId: open.id,
         db: tx,
       });
-      const after = JSON.parse(JSON.stringify(incident));
       expect(row?.action).toBe("monitor_incident.update");
       expect(row?.actorType).toBe("system");
       expect(row?.changedFields).toEqual(["resolvedAt", "autoResolved"]);
-      expect(row?.after).toEqual(after);
-      expect(row?.before).toEqual({
-        ...after,
-        resolvedAt: null,
-        autoResolved: false,
+      expect(row?.before).toEqual(JSON.parse(JSON.stringify(open)));
+      expect(row?.after).toEqual(JSON.parse(JSON.stringify(resolved)));
+
+      // an incident already resolved at the same second is not audited again
+      const others = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: earlier.id,
+        db: tx,
       });
+      expect(others).toHaveLength(0);
     });
   });
 
