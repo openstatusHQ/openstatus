@@ -22,6 +22,8 @@ export default defineConfig({
     "**/.content-collections/**",
     ".devbox/**",
     "**/*.astro",
+    // Bundled MCP Apps views: one inlined HTML string per file.
+    "apps/server/static/mcp-app-*.ts",
     // CSS/MD/YAML/etc deferred to a follow-up PR — keep scope to JS/TS/JSON.
     "**/*.{css,scss,less,md,mdx,yaml,yml,html,graphql,gql,vue,svelte,toml}",
   ],

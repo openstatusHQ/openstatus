@@ -16,6 +16,11 @@ import { registerPrivateLocationTools } from "./tools/private-location";
 import { registerStatusReportTools } from "./tools/status-report";
 import { registerWorkspaceTools } from "./tools/workspace";
 
+type McpRegistrar = (server: McpServer, ctx: ServiceContext) => void;
+
+// Tools and resources served only to `/mcp?experimental=1` until they graduate.
+const EXPERIMENTAL_REGISTRARS: McpRegistrar[] = [];
+
 /**
  * Build a fresh `McpServer` for this request. Each tool registration
  * closes over `ctx`, so every tool invocation reads the workspace +
@@ -28,7 +33,10 @@ import { registerWorkspaceTools } from "./tools/workspace";
  * carry the write-confirmation rules, since clients may not prompt. Resources are the
  * public documents from `./resources` — they carry no workspace data.
  */
-export function createMcpServer(ctx: ServiceContext): McpServer {
+export function createMcpServer(
+  ctx: ServiceContext,
+  options: { experimental?: boolean } = {},
+): McpServer {
   const server = new McpServer(
     { name: "openstatus", version: packageJson.version },
     {
@@ -51,5 +59,8 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerAuditTools(server, ctx);
   registerContentTools(server, ctx);
   registerFeedbackTools(server, ctx);
+  if (options.experimental) {
+    for (const register of EXPERIMENTAL_REGISTRARS) register(server, ctx);
+  }
   return server;
 }

@@ -55,13 +55,13 @@ const KEY = String(SEEDED_WORKSPACE_TEAM_ID);
  * path) — `undefined` would trigger the parameter default and
  * silently authenticate, masking the missing-auth case.
  */
-function jsonRpc(body: object, key: string | false = KEY): Request {
+function jsonRpc(body: object, key: string | false = KEY, query = ""): Request {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json, text/event-stream",
   };
   if (key !== false) headers["x-openstatus-key"] = key;
-  return new Request("http://localhost/mcp", {
+  return new Request(`http://localhost/mcp${query}`, {
     method: "POST",
     headers,
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, ...body }),
@@ -115,8 +115,31 @@ describe("MCP transport", () => {
     const body = await readJsonRpc(res);
     const resources = (body.result as { resources: { uri: string }[] })
       .resources;
-    expect(resources.length).toBeGreaterThan(0);
+    expect(resources.map((r) => r.uri).sort()).toEqual([
+      "https://api.openstatus.dev/openapi.json",
+      "https://www.openstatus.dev/docs/reference/mcp-server",
+      "https://www.openstatus.dev/llms.txt",
+    ]);
   });
+
+  // Flip to an explicit experimental list once the first gated tool lands.
+  test.each(["tools/list", "resources/list"])(
+    "%s is the same with ?experimental=1 while nothing is gated",
+    async (method) => {
+      const app = makeApp();
+      const [stable, experimental] = await Promise.all(
+        [jsonRpc({ method }), jsonRpc({ method }, KEY, "?experimental=1")].map(
+          async (req) => {
+            const res = await app.fetch(req);
+            expect(res.status).toBe(200);
+            return (await readJsonRpc(res)).result;
+          },
+        ),
+      );
+      expect(stable).toBeDefined();
+      expect(experimental).toEqual(stable);
+    },
+  );
 
   test("tools/list returns the expected registered tool set", async () => {
     const app = makeApp();
