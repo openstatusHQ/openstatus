@@ -43,6 +43,8 @@ type ScopedToolDefinition<
   annotations?: ToolAnnotations;
   inputSchema?: InputArgs;
   outputSchema?: OutputArgs;
+  // Passed to clients verbatim in `tools/list`; extensions such as MCP Apps read it.
+  _meta?: Record<string, unknown>;
 };
 
 /**

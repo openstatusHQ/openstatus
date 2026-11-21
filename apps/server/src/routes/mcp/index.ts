@@ -156,6 +156,7 @@ mcpRoute.all("/", async (c) => {
   // empty response to the client.
   const server = createMcpServer(
     toServiceCtx({ workspace, apiKey: c.get("apiKey"), requestId }),
+    { experimental: c.req.query("experimental") === "1" },
   );
   const transport = new StreamableHTTPTransport();
   try {

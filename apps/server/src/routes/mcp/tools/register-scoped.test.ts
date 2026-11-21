@@ -1,3 +1,5 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
@@ -48,6 +50,33 @@ describe("registerScopedTool", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
     expect(result).toBeDefined();
+  });
+
+  test("forwards _meta to tools/list", async () => {
+    const server = makeServer();
+    const meta = { ui: { resourceUri: "ui://openstatus/demo" } };
+    registerScopedTool(
+      server,
+      ctxWithScopes(["read"]),
+      "demo_meta",
+      {
+        scope: "monitors:read",
+        description: "demo",
+        inputSchema: {},
+        _meta: meta,
+      },
+      async () => ({ content: [{ type: "text", text: "ok" }] }),
+    );
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test", version: "0.0.0" });
+    await Promise.all([
+      server.connect(serverTransport),
+      client.connect(clientTransport),
+    ]);
+    const { tools } = await client.listTools();
+    expect(tools.find((t) => t.name === "demo_meta")?._meta).toEqual(meta);
+    await client.close();
   });
 
   test("returns undefined (not registered) when actor scope is insufficient", () => {
