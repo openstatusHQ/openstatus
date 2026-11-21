@@ -1,6 +1,6 @@
 {
   "extends": "../../packages/tsconfig/base.json",
-  "include": ["src", "*.ts", "**/*.ts"],
+  "include": ["src", "*.ts", "**/*.ts", "mcp-apps/**/*.tsx"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "module": "ESNext",

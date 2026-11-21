@@ -1,6 +1,5 @@
 "use client";
 
-import { Trend } from "@openstatus/icons";
 import {
   type ChartConfig,
   ChartContainer,
@@ -9,20 +8,17 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
+import {
+  type ChartLocale,
+  type LatencyRegionSeries,
+  formatChartDateTime,
+  formatChartTick,
+  toLatencyRegionRows,
+} from "@openstatus/ui/lib/chart-latency";
+import { cn } from "@openstatus/ui/lib/utils";
+import type { ReactNode } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
-import {
-  EmptyStateMedia,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import type { PERIODS } from "@/data/metrics.client";
-import { formatAxisTick, formatDateTime } from "@/lib/formatter";
-
-import { ChartEmpty } from "./chart-empty";
-import {
-  type LatencyRegionSeries,
-  toLatencyRegionRows,
-} from "./chart-line-latency-regions.data";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 // The theme has five chart colours; a sixth line falls back to the text colour.
@@ -35,30 +31,49 @@ const SERIES_COLORS = [
   "var(--foreground)",
 ];
 
-export function ChartLineLatencyRegions({
+export type ChartLatencyRegionsEmpty = "no-checks" | "no-latency";
+
+const EMPTY_TEXT: Record<ChartLatencyRegionsEmpty, string> = {
+  "no-checks": "No checks recorded in this window",
+  "no-latency": "No latency recorded: every check failed",
+};
+
+/**
+ * Latency per region over time, one line each. Presentational only: it also
+ * renders inside sandboxed MCP Apps views, which have no network access.
+ */
+export function ChartLatencyRegions({
   timestamps,
   series,
-  period,
+  timeRange,
   intervalMinutes,
+  locale,
+  renderEmpty,
+  className,
 }: {
   timestamps: number[];
   series: LatencyRegionSeries[];
-  period: (typeof PERIODS)[number];
+  timeRange: string;
   intervalMinutes: number;
+  locale?: ChartLocale;
+  renderEmpty?: (reason: ChartLatencyRegionsEmpty, text: string) => ReactNode;
+  className?: string;
 }) {
   const hasLatency = series.some((s) => s.values.some((v) => v !== null));
   if (!hasLatency) {
-    return (
-      <ChartEmpty>
-        <EmptyStateMedia>
-          <Trend />
-        </EmptyStateMedia>
-        <EmptyStateTitle>
-          {timestamps.length === 0
-            ? "No checks recorded in this window"
-            : "No latency recorded: every check failed"}
-        </EmptyStateTitle>
-      </ChartEmpty>
+    const reason = timestamps.length === 0 ? "no-checks" : "no-latency";
+    return renderEmpty ? (
+      renderEmpty(reason, EMPTY_TEXT[reason])
+    ) : (
+      <div
+        data-slot="chart-empty"
+        className={cn(
+          "text-muted-foreground flex h-[250px] items-center justify-center rounded-md border border-dashed text-sm",
+          className,
+        )}
+      >
+        {EMPTY_TEXT[reason]}
+      </div>
     );
   }
 
@@ -71,7 +86,10 @@ export function ChartLineLatencyRegions({
   );
 
   return (
-    <ChartContainer config={chartConfig} className="h-[250px] w-full">
+    <ChartContainer
+      config={chartConfig}
+      className={cn("h-[250px] w-full", className)}
+    >
       <LineChart
         accessibilityLayer
         data={toLatencyRegionRows(timestamps, series)}
@@ -84,7 +102,7 @@ export function ChartLineLatencyRegions({
           tickMargin={8}
           minTickGap={24}
           tickFormatter={(value) =>
-            formatAxisTick(new Date(value), period, intervalMinutes)
+            formatChartTick(value, { timeRange, intervalMinutes }, locale)
           }
         />
         <ChartTooltip
@@ -93,7 +111,7 @@ export function ChartLineLatencyRegions({
             <ChartTooltipContent
               indicator="dot"
               labelFormatter={(_, payload) =>
-                formatDateTime(new Date(payload[0]?.payload.timestamp))
+                formatChartDateTime(payload[0]?.payload.timestamp, locale)
               }
               formatter={(value, name) => (
                 <ChartTooltipNumber

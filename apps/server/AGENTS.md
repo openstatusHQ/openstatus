@@ -55,3 +55,8 @@ its scopes cannot call in `tools/list`. The registry adapter derives
 `readOnlyHint` with `isReadScope`; a direct `registerScopedTool` caller must
 set it the same way, and the wrapper rejects a hint that disagrees with the
 scope. A tool registered the plain way leaks regardless of the key.
+
+MCP Apps views live in `mcp-apps/<name>/` as small React apps over
+`@openstatus/ui` components. `pnpm --filter @openstatus/server mcp-apps:build`
+bundles each into `static/mcp-app-<name>.ts`, which is committed; the Check
+workflow fails when it is stale, so rebuild after changing a shared component.

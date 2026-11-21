@@ -1,4 +1,8 @@
 import {
+  formatChartDateTime,
+  formatChartTick,
+} from "@openstatus/ui/lib/chart-latency";
+import {
   differenceInCalendarDays,
   endOfDay,
   format,
@@ -57,12 +61,7 @@ export function formatDate(date: Date) {
 }
 
 export function formatDateTime(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  });
+  return formatChartDateTime(date.getTime());
 }
 
 export function formatTime(date: Date) {
@@ -72,23 +71,14 @@ export function formatTime(date: Date) {
   });
 }
 
-// Axis ticks only carry what the range can't imply (tooltip has the full date):
-// time of day on 1d, the date at midnight and for daily buckets, both otherwise.
 export function formatAxisTick(
   date: Date,
   period: (typeof PERIODS)[number],
   interval: number,
 ) {
-  const midnight = date.getHours() === 0 && date.getMinutes() === 0;
-  if (interval >= 1440 || (period === "1d" && midnight)) {
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
-  if (period === "1d") return formatTime(date);
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    ...(date.getMinutes() ? { minute: "numeric" } : {}),
+  return formatChartTick(date.getTime(), {
+    timeRange: period,
+    intervalMinutes: interval,
   });
 }
 

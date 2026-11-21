@@ -1,25 +1,26 @@
+import { execFile } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 import { build } from "tsdown";
 
 /**
- * Bundles each MCP App view under `mcp-apps/` (its own files plus the
- * `_shared` kit and base stylesheet) into one self-contained HTML
+ * Bundles each MCP App view under `mcp-apps/` into one self-contained HTML
  * document (hosts render it in a sandboxed iframe with no network access by
  * default) and embeds it as a module, for the same reason as `openapi-yaml.ts`:
  * tsdown flattens `src/` into one file, so a runtime path would not resolve.
  *
- * A view is ~430 kB (~110 kB gzipped), nearly all of it the ext-apps SDK and
- * zod. Accepted: the host reads it once per render and it never enters the
- * model's context, while a hand-rolled postMessage client would have to track
- * the protocol itself.
+ * A view is a React app rendering `@openstatus/ui` components, so a change to a
+ * shared chart reaches it on the next build; CI fails on a stale bundle. The
+ * script and the Tailwind CSS are inlined.
  *
  * Run: `pnpm --filter @openstatus/server mcp-apps:build`
  */
 const root = new URL("../", import.meta.url);
+const run = promisify(execFile);
 
 // Every folder is a view, except `_shared` and other underscore-prefixed kits.
 const APPS = (
@@ -28,10 +29,6 @@ const APPS = (
   .filter((entry) => entry.isDirectory() && !entry.name.startsWith("_"))
   .map((entry) => entry.name)
   .sort();
-const baseCss = await readFile(
-  new URL("mcp-apps/_shared/base.css", root),
-  "utf8",
-);
 
 for (const name of APPS) {
   const dir = new URL(`mcp-apps/${name}/`, root);
@@ -39,7 +36,7 @@ for (const name of APPS) {
   try {
     await build({
       config: false,
-      entry: { main: fileURLToPath(new URL("main.ts", dir)) },
+      entry: { main: fileURLToPath(new URL("main.tsx", dir)) },
       outDir,
       format: "esm",
       platform: "browser",
@@ -47,18 +44,32 @@ for (const name of APPS) {
       minify: true,
       dts: false,
       clean: false,
-      logLevel: "warn",
+      logLevel: "error",
+      define: { "process.env.NODE_ENV": JSON.stringify("production") },
       outExtensions: () => ({ js: ".js" }),
       deps: { alwaysBundle: [/.*/], onlyBundle: false },
     });
+    await run(
+      "pnpm",
+      [
+        "exec",
+        "tailwindcss",
+        "--input",
+        fileURLToPath(new URL("styles.css", dir)),
+        "--output",
+        join(outDir, "styles.css"),
+        "--minify",
+      ],
+      { cwd: fileURLToPath(root) },
+    );
     const [template, css, js] = await Promise.all([
       readFile(new URL("index.html", dir), "utf8"),
-      readFile(new URL("styles.css", dir), "utf8"),
+      readFile(join(outDir, "styles.css"), "utf8"),
       readFile(join(outDir, "main.js"), "utf8"),
     ]);
     // function replacers: `$&` and friends in the bundle must stay literal
     const html = template
-      .replace("/*__STYLE__*/", () => baseCss + css)
+      .replace("/*__STYLE__*/", () => css.replaceAll("</style", "<\\/style"))
       .replace("/*__SCRIPT__*/", () => js.replaceAll("</script", "<\\/script"));
     await writeFile(
       new URL(`static/mcp-app-${name}.ts`, root),

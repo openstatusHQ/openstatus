@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  ChartTooltipNumber,
+  ChartTooltipNumberRaw,
+} from "@openstatus/ui/components/custom/chart-tooltip-number";
+import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
@@ -31,10 +35,6 @@ import { formatAxisTick, formatDateTime } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { computeLatencyYAxisDomain } from "./chart-latency-domain";
-import {
-  ChartTooltipNumber,
-  ChartTooltipNumberRaw,
-} from "./chart-tooltip-number";
 
 const chartConfig = {
   dns: {

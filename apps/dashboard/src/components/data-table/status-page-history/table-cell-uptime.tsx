@@ -1,4 +1,5 @@
 import { formatDateRange } from "@openstatus/ui/components/blocks/status.utils";
+import { ChartTooltipNumberRaw } from "@openstatus/ui/components/custom/chart-tooltip-number";
 import {
   HoverCard,
   HoverCardContent,
@@ -9,7 +10,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Fragment } from "react";
 
-import { ChartTooltipNumberRaw } from "@/components/chart/chart-tooltip-number";
 import {
   type BreakdownRow,
   type HistoryEvent,

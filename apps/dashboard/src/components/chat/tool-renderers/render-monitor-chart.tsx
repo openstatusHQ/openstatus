@@ -1,7 +1,13 @@
+import { Trend } from "@openstatus/icons";
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
+import { ChartLatencyRegions } from "@openstatus/ui/components/custom/chart-latency-regions";
 
-import { ChartLineLatencyRegions } from "@/components/chart/chart-line-latency-regions";
+import { ChartEmpty } from "@/components/chart/chart-empty";
 import { EntityRef } from "@/components/common/entity-ref/entity-ref";
+import {
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import { formatDateTime } from "@/lib/formatter";
 
 type Output = AgentToolOutput<"render_monitor_chart">;
@@ -30,11 +36,19 @@ export function MonitorChartResult({ output }: { output: Output }) {
           </>
         ) : null}
       </p>
-      <ChartLineLatencyRegions
+      <ChartLatencyRegions
         timestamps={output.timestamps}
         series={output.series}
-        period={output.timeRange}
+        timeRange={output.timeRange}
         intervalMinutes={output.intervalMinutes}
+        renderEmpty={(_, text) => (
+          <ChartEmpty>
+            <EmptyStateMedia>
+              <Trend />
+            </EmptyStateMedia>
+            <EmptyStateTitle>{text}</EmptyStateTitle>
+          </ChartEmpty>
+        )}
       />
       {output.omittedRegions.length > 0 ? (
         <p className="text-muted-foreground text-xs">
