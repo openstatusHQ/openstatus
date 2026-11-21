@@ -1,7 +1,12 @@
 "use client";
 
 import { Check, Copy } from "@openstatus/icons";
-import { ClaudeIcon, CursorIcon, OpenAIIcon } from "@openstatus/icons/brand";
+import {
+  ClaudeIcon,
+  CursorIcon,
+  GeminiIcon,
+  OpenAIIcon,
+} from "@openstatus/icons/brand";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 
@@ -13,6 +18,7 @@ import {
 const agents = [
   { name: "Claude", icon: ClaudeIcon },
   { name: "OpenAI", icon: OpenAIIcon },
+  { name: "Gemini", icon: GeminiIcon },
   { name: "Cursor", icon: CursorIcon },
 ];
 
