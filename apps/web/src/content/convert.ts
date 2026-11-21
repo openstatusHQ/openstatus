@@ -33,11 +33,13 @@ export function convertMdxToMarkdown(data: MDXData): string {
 
   // Step 2: Convert <ButtonLink> to markdown links
   markdown = markdown.replace(
-    /<ButtonLink\s+href="([^"]*)"[^>]*>([\s\S]*?)<\/ButtonLink>/g,
-    (_match, href, children) => {
+    /<ButtonLink\s+href="([^"]*)"([^>]*)>([\s\S]*?)<\/ButtonLink>/g,
+    (_match, href, attrs: string, children) => {
       // Extract plain text from children (remove any nested tags)
       const text = children.replace(/<[^>]*>/g, "").trim();
-      return `[${text}](${href})`;
+      // An icon-led button shows no name in its text, so say it here.
+      const icon = attrs.includes('icon="github"') ? "GitHub " : "";
+      return `[${icon}${text}](${href})`;
     },
   );
 

@@ -8,7 +8,7 @@ import { CustomLink } from "./custom-link";
 
 const icons = { github: GitHubIcon };
 
-/** With `icon`, only the icon shows; children stay as the accessible name. */
+/** `icon` renders before the children; the icon's own title names it. */
 export function ButtonLink({
   icon,
   children,
@@ -32,8 +32,8 @@ export function ButtonLink({
       <CustomLink href={props.href}>
         {Icon ? (
           <>
-            <Icon aria-hidden className="size-5" />
-            <span className="sr-only">{children}</span>
+            <Icon className="size-5" />
+            {children}
           </>
         ) : (
           children
