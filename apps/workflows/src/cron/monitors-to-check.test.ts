@@ -15,7 +15,7 @@ import {
 } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-import { listMonitorsToCheck } from "./monitors-to-check";
+import { countPausedMonitors, listMonitorsToCheck } from "./monitors-to-check";
 
 const HOUR_MS = 3_600_000;
 
@@ -69,6 +69,24 @@ describe("listMonitorsToCheck during maintenance", () => {
     expect(during).toContain(unaffected.id);
     expect(during).not.toContain(paused.id);
     expect(await dispatchedIds(to)).toContain(paused.id);
+  });
+
+  test("counts the monitors a pause window leaves out", async () => {
+    const paused = await createMonitor(workspaceId, base);
+    await createMonitor(workspaceId, base);
+    // far from every other suite's windows, so the count is this one monitor
+    const from = Date.UTC(2100, 0, 1);
+    await createMaintenanceWindow(workspaceId, {
+      monitorIds: [paused.id],
+      mode: "pause",
+      from: new Date(from),
+      to: new Date(from + HOUR_MS),
+    });
+
+    expect(await countPausedMonitors(db, "1h", new Date(from))).toBe(1);
+    expect(await countPausedMonitors(db, "1h", new Date(from + HOUR_MS))).toBe(
+      0,
+    );
   });
 
   test("a continue window does not exclude its monitors", async () => {

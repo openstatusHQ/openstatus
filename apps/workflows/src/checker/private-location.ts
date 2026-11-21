@@ -444,6 +444,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // Add notification outcome to event for OTel logging
     statusUpdate.notificationTriggered = triggeredNotifications.length > 0;
     statusUpdate.notifications = triggeredNotifications;
+    statusUpdate.incident_id = incident?.id ?? null;
 
     return c.json({ success: true }, 200);
   } catch (error) {

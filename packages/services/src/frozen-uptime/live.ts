@@ -3,6 +3,7 @@ import type { OSTinybird } from "@openstatus/tinybird";
 
 import { BUCKET_MINUTES, type LocalDayCount, toLocalDays } from "./buckets";
 import {
+  type ChunkFailure,
   fetchFreezeCounts,
   fetchRunsByDay,
   type UptimeFreezePipes,
@@ -125,6 +126,18 @@ export function mergeLocalDays(args: {
   return { requests: sum(requests), runs: sum(runs), utcOnlyMonths };
 }
 
+// the caller only learns `partial`; this is the reason
+function warnLiveReadFailed({
+  pipe,
+  jobType,
+  monitorIds,
+  error,
+}: ChunkFailure) {
+  console.warn(
+    `uptime-history: live ${jobType} ${pipe} read failed for ${monitorIds.length} monitors: ${error instanceof Error ? error.message : String(error)}`,
+  );
+}
+
 /**
  * Live per-day counts from the 45d pipes, keyed monitorId → day, with `runs`
  * where the monitor has run verdicts. Never throws: a monitor whose counts
@@ -155,6 +168,7 @@ export async function fetchLiveDays(args: {
       pipes: args.pipes,
       throttleMs: 0,
       sleep: args.sleep,
+      onChunkFailure: warnLiveReadFailed,
     }),
     args.runsPipes
       ? fetchRunsByDay({
@@ -162,6 +176,7 @@ export async function fetchLiveDays(args: {
           pipes: args.runsPipes,
           throttleMs: 0,
           sleep: args.sleep,
+          onChunkFailure: warnLiveReadFailed,
         })
       : undefined,
   ]);

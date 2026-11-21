@@ -1,4 +1,4 @@
-import { type db as defaultDb, and, eq, ne, not } from "@openstatus/db";
+import { type db as defaultDb, and, count, eq, ne, not } from "@openstatus/db";
 import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import { monitor } from "@openstatus/db/src/schema";
 import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
@@ -21,4 +21,25 @@ export function listMonitorsToCheck(
       ),
     )
     .all();
+}
+
+/** How many monitors `listMonitorsToCheck` leaves out for a pause-mode maintenance. */
+export async function countPausedMonitors(
+  db: Pick<typeof defaultDb, "select">,
+  periodicity: MonitorPeriodicity,
+  now: Date = new Date(),
+) {
+  const row = await db
+    .select({ count: count() })
+    .from(monitor)
+    .where(
+      and(
+        eq(monitor.periodicity, periodicity),
+        eq(monitor.active, true),
+        ne(monitor.jobType, "heartbeat"),
+        monitorInMaintenance(db, { at: now, mode: "pause" }),
+      ),
+    )
+    .get();
+  return row?.count ?? 0;
 }

@@ -23,13 +23,14 @@ import {
   buildTaskInputs,
   publishCheckerTasks,
 } from "./checker-payload";
-import { listMonitorsToCheck } from "./monitors-to-check";
+import { countPausedMonitors, listMonitorsToCheck } from "./monitors-to-check";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };
 
 const logger = getLogger("workflow");
+const otelLogger = getLogger(["workflow-otel"]);
 
 /**
  * Check if GCP Cloud Tasks is properly configured.
@@ -156,6 +157,20 @@ export async function sendCheckerTasks(
       ? await publishToPubSub(taskInputs, periodicity, publisher)
       : await createCloudTasks(taskInputs, periodicity, client);
 
+  // the dispatch runs after its request returned, so this is its only line in Axiom
+  otelLogger.info("checker_dispatch", {
+    periodicity,
+    monitor_count: result.length,
+    // a count that fails must not fail a dispatch that already went out
+    paused_count: await countPausedMonitors(
+      db,
+      periodicity,
+      new Date(timestamp),
+    ).catch(() => null),
+    success_count: success,
+    failed_count: failed,
+    duration_ms: Date.now() - timestamp,
+  });
   logger.info("Completed cron job", {
     periodicity,
     transport,

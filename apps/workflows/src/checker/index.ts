@@ -170,6 +170,7 @@ checkerRoute.post("/updateStatus", async (c) => {
   statusUpdate.region_count = transition.regionCount;
   statusUpdate.transition_applied = transition.transitioned;
   statusUpdate.outbox_rows = transition.outboxRows.length;
+  statusUpdate.incident_id = transition.incidentId;
 
   await publishStatusAudit(result.data);
 
