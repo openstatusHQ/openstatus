@@ -73,4 +73,40 @@ func TestSendEvent(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "https://api.tinybird.co/v0/events?name=test", url)
 	})
+
+	t.Run("it should omit Authorization header when apiKey is empty", func(t *testing.T) {
+		var authHeader string
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				authHeader = req.Header.Get("Authorization")
+				return &http.Response{
+					StatusCode: http.StatusAccepted,
+				}, nil
+			},
+		}
+
+		client := tinybird.NewClient(interceptor.GetHTTPClient(), "")
+
+		err := client.SendEvent(ctx, "event", "test")
+		require.NoError(t, err)
+		require.Empty(t, authHeader)
+	})
+
+	t.Run("it should send Authorization Bearer when apiKey is set", func(t *testing.T) {
+		var authHeader string
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				authHeader = req.Header.Get("Authorization")
+				return &http.Response{
+					StatusCode: http.StatusAccepted,
+				}, nil
+			},
+		}
+
+		client := tinybird.NewClient(interceptor.GetHTTPClient(), "test-token")
+
+		err := client.SendEvent(ctx, "event", "test")
+		require.NoError(t, err)
+		require.Equal(t, "Bearer test-token", authHeader)
+	})
 }

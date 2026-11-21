@@ -250,7 +250,9 @@ func (b *Batcher) sendWithRetry(ctx context.Context, target *batch, event *Flush
 		if err != nil {
 			return fmt.Errorf("unable to create request: %w", err)
 		}
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.apiKey))
+		if b.apiKey != "" {
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.apiKey))
+		}
 
 		event.Attempts++
 		resp, err := b.httpClient.Do(req)
