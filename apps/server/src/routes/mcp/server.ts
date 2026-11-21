@@ -10,16 +10,21 @@ import { registerFeedbackTools } from "./tools/feedback";
 import { registerIncidentTools } from "./tools/incident";
 import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
+import { registerMonitorChartTool } from "./tools/monitor-chart";
 import { registerNotificationTools } from "./tools/notification";
 import { registerPageTools } from "./tools/page";
 import { registerPrivateLocationTools } from "./tools/private-location";
 import { registerStatusReportTools } from "./tools/status-report";
 import { registerWorkspaceTools } from "./tools/workspace";
+import { registerUiResources } from "./ui-resources";
 
 type McpRegistrar = (server: McpServer, ctx: ServiceContext) => void;
 
 // Tools and resources served only to `/mcp?experimental=1` until they graduate.
-const EXPERIMENTAL_REGISTRARS: McpRegistrar[] = [];
+const EXPERIMENTAL_REGISTRARS: McpRegistrar[] = [
+  registerUiResources,
+  registerMonitorChartTool,
+];
 
 /**
  * Build a fresh `McpServer` for this request. Each tool registration

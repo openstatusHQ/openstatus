@@ -11,6 +11,11 @@ export {
   getMonitorSummary,
   type GetMonitorSummaryResult,
 } from "./get-monitor-summary";
+export {
+  getMonitorLatencySeries,
+  type GetMonitorLatencySeriesResult,
+  type MonitorLatencyPoint,
+} from "./get-monitor-latency-series";
 export { getResponseLog, type ResponseLogDetail } from "./get-response-log";
 export {
   getResponseLogFacets,
@@ -92,6 +97,7 @@ export {
   DeleteMonitorInput,
   DeleteMonitorsInput,
   GetMonitorInput,
+  GetMonitorLatencySeriesInput,
   GetMonitorStatusInput,
   GetMonitorSummaryInput,
   GetPrivateLocationIdsByMonitorInput,

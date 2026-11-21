@@ -295,6 +295,17 @@ export const GetMonitorSummaryInput = z.object({
 });
 export type GetMonitorSummaryInput = z.infer<typeof GetMonitorSummaryInput>;
 
+export const GetMonitorLatencySeriesInput = z.object({
+  monitorId: z.number().int(),
+  timeRange: z.enum(monitorTimeRange).default("1d"),
+  regions: z.array(z.string()).optional(),
+  /** Bucket size in minutes; clamped to what the window can serve. */
+  interval: z.number().int().positive().optional(),
+});
+export type GetMonitorLatencySeriesInput = z.infer<
+  typeof GetMonitorLatencySeriesInput
+>;
+
 export const ListResponseLogsInput = z.object({
   monitorId: z.number().int(),
   fromTimestamp: z.number().int().optional(),

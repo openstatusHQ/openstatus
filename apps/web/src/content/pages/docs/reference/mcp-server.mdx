@@ -209,6 +209,19 @@ List them with `resources/list` and fetch one with `resources/read`:
 Remotely fetched resources are capped at a 5-second timeout and never resolve empty: on a failure
 the read returns a short pointer back to the same URI rather than a blank body.
 
+### Experimental: charts in the conversation
+
+Append `?experimental=1` to the endpoint (`https://api.openstatus.dev/mcp?experimental=1`) to opt
+in to tools that may still change shape. Today that adds one, built on
+[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview):
+
+| Tool | Scope | Purpose |
+|---|---|---|
+| `render_monitor_chart` | `monitors:read` | Latency over time for a monitor, one line per region (`timeRange` 1d / 7d / 14d, `percentile` p50–p99, up to 6 `regions`). Hosts that support MCP Apps render an interactive chart from the `ui://openstatus/monitor-chart.html` resource; every other host gets the peak and per-region means as text. |
+
+The chart is a single self-contained document: it loads nothing from the network and only talks
+to the server through the host, by calling the same tool again when you switch range or percentile.
+
 ### Notifying subscribers
 
 Every publishing tool — `create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`, `add_maintenance_update` — has a **required** `notify: boolean` field, with no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing. `update_status_report` edits metadata only and carries no `notify` field at all.

@@ -118,6 +118,7 @@ export {
 } from "./page-component-group";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
+export { dashboardUrl } from "./urls";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,

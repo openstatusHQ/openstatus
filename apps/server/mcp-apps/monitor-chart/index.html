@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>openstatus monitor chart</title>
+    <style>
+      /*__STYLE__*/
+    </style>
+  </head>
+  <body>
+    <main class="viz-root" id="root" aria-busy="true">
+      <header class="head">
+        <div class="titles">
+          <h1 id="title">Latency</h1>
+          <p id="subtitle" class="muted">Loading…</p>
+        </div>
+        <div class="controls" id="controls" hidden>
+          <div class="segmented" role="group" aria-label="Time range" id="ranges"></div>
+          <label class="select">
+            <span class="sr-only">Percentile</span>
+            <select id="percentile"></select>
+          </label>
+          <button type="button" class="btn" id="toggle-table" aria-pressed="false">Table</button>
+          <button type="button" class="btn" id="open">Open in openstatus</button>
+        </div>
+      </header>
+      <p id="peak" class="peak" hidden></p>
+      <section id="chart-view">
+        <div class="plot" id="plot">
+          <svg id="svg" role="img" aria-labelledby="title subtitle"></svg>
+          <div class="tooltip" id="tooltip" hidden></div>
+        </div>
+        <ul class="legend" id="legend" aria-label="Regions"></ul>
+      </section>
+      <section id="table-view" hidden>
+        <div class="table-scroll"><table id="table"></table></div>
+      </section>
+      <p id="note" class="muted note" hidden></p>
+      <p id="error" class="error" role="alert" hidden></p>
+    </main>
+    <script type="module">
+      /*__SCRIPT__*/
+    </script>
+  </body>
+</html>
