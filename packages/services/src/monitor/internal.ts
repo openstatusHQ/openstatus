@@ -10,9 +10,11 @@ import {
 import { and, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
+  monitorStatusTable,
   monitorTag,
   notification,
   privateLocation,
+  privateLocationMonitorStatus,
 } from "@openstatus/db/src/schema";
 import {
   freeFlyRegions,
@@ -20,13 +22,14 @@ import {
 } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 
-import type { DB } from "../context";
+import type { DB, ServiceContext } from "../context";
 import {
   ForbiddenError,
   LimitExceededError,
   NotFoundError,
   ValidationError,
 } from "../errors";
+import { resolveOpenMonitorIncidents } from "../monitor-incident/internal";
 import { toBase64Url } from "../oauth/crypto";
 import type { Workspace } from "../types";
 
@@ -50,6 +53,58 @@ export async function getMonitorInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("monitor", id);
   return row;
+}
+
+/** Like getMonitorInWorkspace, but a monitor deleted since still resolves (it owns its frozen months). */
+export async function getMonitorInWorkspaceIncludingDeleted(args: {
+  tx: DB;
+  id: number;
+  workspaceId: number;
+}) {
+  const row = await args.tx
+    .select({ workspaceId: monitor.workspaceId })
+    .from(monitor)
+    .where(
+      and(eq(monitor.id, args.id), eq(monitor.workspaceId, args.workspaceId)),
+    )
+    .get();
+  if (!row) throw new NotFoundError("monitor", args.id);
+  return row;
+}
+
+/**
+ * Run before the update that pauses the monitors: a paused monitor is not
+ * failing and its open outages auto-resolve. Stale per-region failures would
+ * reopen an outage on resume before any check ran, so they reset too.
+ */
+export async function resetMonitorsForPause(args: {
+  tx: DB;
+  ctx: ServiceContext;
+  monitorIds: number[];
+}): Promise<void> {
+  const { tx, ctx, monitorIds } = args;
+  if (monitorIds.length === 0) return;
+  await tx
+    .update(monitor)
+    .set({ status: "active" })
+    .where(
+      and(
+        inArray(monitor.id, monitorIds),
+        eq(monitor.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .run();
+  await tx
+    .update(monitorStatusTable)
+    .set({ status: "active" })
+    .where(inArray(monitorStatusTable.monitorId, monitorIds))
+    .run();
+  await tx
+    .update(privateLocationMonitorStatus)
+    .set({ status: "active" })
+    .where(inArray(privateLocationMonitorStatus.monitorId, monitorIds))
+    .run();
+  await resolveOpenMonitorIncidents({ tx, ctx, monitorIds });
 }
 
 /** Validate that tag ids exist and belong to the workspace. */

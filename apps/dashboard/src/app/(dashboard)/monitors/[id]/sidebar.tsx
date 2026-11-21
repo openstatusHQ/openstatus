@@ -9,16 +9,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import {
   type HeartbeatHealth,
   getHeartbeatHealth,
   heartbeatHealthConfig,
 } from "@/data/heartbeat.client";
-import { monitorTypes } from "@/data/monitors.client";
+import { getMonitorHealth, monitorTypes } from "@/data/monitors.client";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useNow } from "@/hooks/use-now";
-import { formatMilliseconds } from "@/lib/formatter";
+import { formatClockOrDay, formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
@@ -59,11 +60,15 @@ export function Sidebar() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
+  const until = monitor?.maintenance?.until;
+  useMaintenanceTick(until ? [{ from: until, to: until }] : []);
+
   if (!monitor) return null;
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
   const type = monitorTypes.find((type) => type.id === monitor.jobType);
   const isHeartbeat = monitor.jobType === "heartbeat";
+  const inMaintenance = getMonitorHealth(monitor) === "maintenance";
 
   return (
     <SidebarRight
@@ -78,22 +83,28 @@ export function Sidebar() {
             },
             {
               label: "Status",
-              value: isHeartbeat ? (
-                <HeartbeatStatus monitor={monitor} />
-              ) : (
-                <span
-                  className={
-                    monitor.status === "error"
-                      ? "text-destructive"
-                      : monitor.status === "degraded"
-                        ? "text-warning"
-                        : "text-success"
-                  }
-                >
-                  {monitor.status.charAt(0).toUpperCase() +
-                    monitor.status.slice(1)}
-                </span>
-              ),
+              value:
+                inMaintenance && monitor.maintenance ? (
+                  <span className="text-info">
+                    Maintenance until{" "}
+                    {formatClockOrDay(monitor.maintenance.until)}
+                  </span>
+                ) : isHeartbeat ? (
+                  <HeartbeatStatus monitor={monitor} />
+                ) : (
+                  <span
+                    className={
+                      monitor.status === "error"
+                        ? "text-destructive"
+                        : monitor.status === "degraded"
+                          ? "text-warning"
+                          : "text-success"
+                    }
+                  >
+                    {monitor.status.charAt(0).toUpperCase() +
+                      monitor.status.slice(1)}
+                  </span>
+                ),
             },
             {
               label: "Type",

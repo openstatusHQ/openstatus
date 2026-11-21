@@ -620,7 +620,8 @@
           "INCIDENT_EVENT_TYPE_POSTMORTEM_DRAFTED",
           "INCIDENT_EVENT_TYPE_POSTMORTEM_UPDATED",
           "INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED",
-          "INCIDENT_EVENT_TYPE_CLOSED"
+          "INCIDENT_EVENT_TYPE_CLOSED",
+          "INCIDENT_EVENT_TYPE_ACKNOWLEDGED"
         ],
         "description": "IncidentEventType is the kind of entry in an incident timeline."
       },
@@ -6442,7 +6443,8 @@
           "PAGE_METRIC_TYPE_UNSPECIFIED",
           "PAGE_METRIC_TYPE_DURATION",
           "PAGE_METRIC_TYPE_REQUESTS",
-          "PAGE_METRIC_TYPE_MANUAL"
+          "PAGE_METRIC_TYPE_MANUAL",
+          "PAGE_METRIC_TYPE_RUNS"
         ],
         "description": "PageMetricType mirrors page.configuration.value (which metric the status bars represent)."
       },

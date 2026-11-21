@@ -27,6 +27,7 @@ export function toIncidentView<T extends Incident>(
 
 const incidentListWith = {
   commander: { columns: incidentUserColumns },
+  acknowledgedByUser: { columns: incidentUserColumns },
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
 
@@ -112,6 +113,7 @@ export async function getIncident(args: {
       commander: { columns: incidentUserColumns },
       declaredByUser: { columns: incidentUserColumns },
       resolvedByUser: { columns: incidentUserColumns },
+      acknowledgedByUser: { columns: incidentUserColumns },
       statusReport: {
         columns: { id: true, title: true, status: true, pageId: true },
       },

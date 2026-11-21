@@ -1,7 +1,9 @@
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
+  monitorIncidentTable,
   monitorRun,
+  monitorStatusTable,
   monitorTag,
   monitorTagsToMonitors,
   notification,
@@ -27,6 +29,7 @@ import {
   LimitExceededError,
   NotFoundError,
 } from "../../errors";
+import { getMonitorIncident } from "../../monitor-incident/list";
 import { cloneMonitor } from "../clone";
 import { createMonitor } from "../create";
 import { deleteMonitor, deleteMonitors } from "../delete";
@@ -1665,6 +1668,204 @@ describe("duplicate regions", () => {
         },
       });
       expect(await storedRegions(tx, row.id)).toBe("iad,ams");
+    });
+  });
+});
+
+describe("pausing or deleting a monitor resolves its open outage", () => {
+  async function failingMonitor(tx: DrizzleTx, ctx: ServiceContext) {
+    const row = await createMonitor({
+      ctx,
+      input: {
+        name: `${TEST_PREFIX}-failing`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: true,
+      },
+    });
+    await tx
+      .update(monitor)
+      .set({ status: "error" })
+      .where(eq(monitor.id, row.id));
+    const incident = await tx
+      .insert(monitorIncidentTable)
+      .values({
+        workspaceId: ctx.workspace.id,
+        monitorId: row.id,
+        startedAt: new Date(Date.now() - 60_000),
+      })
+      .returning()
+      .get();
+    return { monitorId: row.id, incidentId: incident.id };
+  }
+
+  async function expectAutoResolved(
+    tx: DrizzleTx,
+    ctx: ServiceContext,
+    incidentId: number,
+  ) {
+    const incident = await getMonitorIncident({
+      ctx: { ...ctx, db: tx },
+      input: { id: incidentId },
+    });
+    expect(incident.resolvedAt).toBeInstanceOf(Date);
+    expect(incident.autoResolved).toBe(true);
+    expect(incident.resolvedBy).toBeNull();
+    await expectAuditRow({
+      workspaceId: ctx.workspace.id,
+      action: "monitor_incident.update",
+      entityType: "monitor_incident",
+      entityId: incidentId,
+      db: tx,
+    });
+  }
+
+  test("updateMonitorConfig pause resolves and resets the monitor status", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId, incidentId } = await failingMonitor(tx, ctx);
+
+      const updated = await updateMonitorConfig({
+        ctx,
+        input: { id: monitorId, active: false },
+      });
+
+      expect(updated.status).toBe("active");
+      await expectAutoResolved(tx, ctx, incidentId);
+    });
+  });
+
+  test("a pause clears the region statuses, so resuming starts from fresh checks", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId } = await failingMonitor(tx, ctx);
+      await tx.insert(monitorStatusTable).values({
+        monitorId,
+        region: "ams",
+        status: "error",
+        cronTimestamp: Date.now(),
+      });
+
+      await updateMonitorConfig({
+        ctx,
+        input: { id: monitorId, active: false },
+      });
+
+      const regions = await tx
+        .select({ status: monitorStatusTable.status })
+        .from(monitorStatusTable)
+        .where(eq(monitorStatusTable.monitorId, monitorId))
+        .all();
+      expect(regions.map((r) => r.status)).toEqual(["active"]);
+    });
+  });
+
+  test("bulkUpdateMonitors leaves an already paused monitor as it is", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId } = await failingMonitor(tx, ctx);
+      await tx
+        .update(monitor)
+        .set({ active: false })
+        .where(eq(monitor.id, monitorId));
+
+      await bulkUpdateMonitors({
+        ctx,
+        input: { ids: [monitorId], active: false },
+      });
+
+      const row = await tx
+        .select({ status: monitor.status })
+        .from(monitor)
+        .where(eq(monitor.id, monitorId))
+        .get();
+      expect(row?.status).toBe("error");
+    });
+  });
+
+  test("updateMonitorConfig without a pause leaves the outage open", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId, incidentId } = await failingMonitor(tx, ctx);
+
+      await updateMonitorConfig({
+        ctx,
+        input: { id: monitorId, name: `${TEST_PREFIX}-renamed` },
+      });
+
+      const incident = await getMonitorIncident({
+        ctx,
+        input: { id: incidentId },
+      });
+      expect(incident.resolvedAt).toBeNull();
+    });
+  });
+
+  test("updateMonitorGeneral pause resolves", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId, incidentId } = await failingMonitor(tx, ctx);
+
+      await updateMonitorGeneral({
+        ctx,
+        input: {
+          id: monitorId,
+          name: `${TEST_PREFIX}-failing`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      await expectAutoResolved(tx, ctx, incidentId);
+    });
+  });
+
+  test("bulkUpdateMonitors pause resolves", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId, incidentId } = await failingMonitor(tx, ctx);
+
+      await bulkUpdateMonitors({
+        ctx,
+        input: { ids: [monitorId], active: false },
+      });
+
+      const row = await tx
+        .select({ status: monitor.status })
+        .from(monitor)
+        .where(eq(monitor.id, monitorId))
+        .get();
+      expect(row?.status).toBe("active");
+      await expectAutoResolved(tx, ctx, incidentId);
+    });
+  });
+
+  test("deleteMonitor resolves", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId, incidentId } = await failingMonitor(tx, ctx);
+
+      await deleteMonitor({ ctx, input: { id: monitorId } });
+
+      await expectAutoResolved(tx, ctx, incidentId);
+    });
+  });
+
+  test("deleteMonitors resolves", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { monitorId, incidentId } = await failingMonitor(tx, ctx);
+
+      await deleteMonitors({ ctx, input: { ids: [monitorId] } });
+
+      await expectAutoResolved(tx, ctx, incidentId);
     });
   });
 });

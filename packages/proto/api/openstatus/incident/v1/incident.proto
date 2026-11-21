@@ -43,6 +43,7 @@ enum IncidentEventType {
   INCIDENT_EVENT_TYPE_POSTMORTEM_UPDATED = 14;
   INCIDENT_EVENT_TYPE_POSTMORTEM_APPROVED = 15;
   INCIDENT_EVENT_TYPE_CLOSED = 16;
+  INCIDENT_EVENT_TYPE_ACKNOWLEDGED = 17;
 }
 
 // PostmortemStatus is the review state of a postmortem.

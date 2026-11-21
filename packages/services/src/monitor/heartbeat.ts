@@ -1,4 +1,4 @@
-import { and, db as defaultDb, eq, isNull, lt, or } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNull, lt, or, sql } from "@openstatus/db";
 import {
   type HeartbeatPingKind,
   monitor,
@@ -253,10 +253,23 @@ export async function recordHeartbeatPing(args: {
   const lastPingKind = args.kind ?? "success";
   await db
     .insert(monitorHeartbeatState)
-    .values({ monitorId: row.id, lastPingAt: args.at, lastPingKind, nextDueAt })
+    .values({
+      monitorId: row.id,
+      lastPingAt: args.at,
+      firstPingAt: args.at,
+      lastPingKind,
+      nextDueAt,
+    })
     .onConflictDoUpdate({
       target: monitorHeartbeatState.monitorId,
-      set: { lastPingAt: args.at, lastPingKind, nextDueAt },
+      set: {
+        lastPingAt: args.at,
+        // only a row that never pinged; one from before the column stays NULL
+        // for the backfill rather than taking a late ping as its first
+        firstPingAt: sql`CASE WHEN ${monitorHeartbeatState.lastPingAt} IS NULL THEN ${args.at.getTime()} ELSE ${monitorHeartbeatState.firstPingAt} END`,
+        lastPingKind,
+        nextDueAt,
+      },
       // a slower, older ping must not pull the deadline back
       setWhere: or(
         isNull(monitorHeartbeatState.lastPingAt),

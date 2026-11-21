@@ -3,6 +3,7 @@ import { type ServiceContext, tryGetActorUserId } from "@openstatus/services";
 
 const EVENTS = {
   declare: Events.DeclareManagedIncident,
+  acknowledged: Events.AcknowledgeManagedIncident,
   status: Events.ChangeManagedIncidentStatus,
   note: Events.AddManagedIncidentNote,
   postmortem: Events.DraftManagedPostmortem,

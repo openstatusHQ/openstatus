@@ -82,3 +82,31 @@ export function incidentActivity(incident: {
     label: severityConfig[incident.severity].label,
   };
 }
+
+type ResponseTimeFields = {
+  status: IncidentStatus;
+  declaredAt: Date;
+  acknowledgedAt: Date | null;
+  mitigatedAt: Date | null;
+  resolvedAt: Date | null;
+};
+
+type ResponseStep = "acknowledge" | "mitigate" | "resolve";
+
+const since = (from: Date, to: Date | null) =>
+  to ? to.getTime() - from.getTime() : null;
+
+/** Milliseconds from the declare to each step; `null` when unknown. */
+export function incidentResponseTimes(
+  incident: ResponseTimeFields,
+): Record<ResponseStep, number | null> {
+  return {
+    acknowledge: since(incident.declaredAt, incident.acknowledgedAt),
+    mitigate: since(incident.declaredAt, incident.mitigatedAt),
+    // a reopened incident keeps its old resolvedAt
+    resolve:
+      incident.status === "resolved"
+        ? since(incident.declaredAt, incident.resolvedAt)
+        : null,
+  };
+}

@@ -8,6 +8,7 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
+import { isInMaintenance } from "./maintenance";
 import { enqueueOutbox } from "./outbox";
 import { updateStatusPrivate } from "./private-location";
 import { EVENT_TYPE, applyStatusTransition, isStaleCheck } from "./transition";
@@ -131,6 +132,17 @@ checkerRoute.post("/updateStatus", async (c) => {
     return c.json({ success: true }, 200);
   }
 
+  // No alerts during maintenance. Leaving monitor_status untouched makes the
+  // next check after the window report again, so a lasting failure still alerts.
+  // A recovery passes, or an outage open before the window would outlast it.
+  if (
+    status !== "active" &&
+    (await isInMaintenance(monitorIdNumber, new Date(cronTimestamp)))
+  ) {
+    statusUpdate.maintenance_skipped = true;
+    return c.json({ success: true }, 200);
+  }
+
   const transition = await applyStatusTransition({
     monitorId: monitorIdNumber,
     region,
@@ -158,6 +170,9 @@ checkerRoute.post("/updateStatus", async (c) => {
   statusUpdate.region_count = transition.regionCount;
   statusUpdate.transition_applied = transition.transitioned;
   statusUpdate.outbox_rows = transition.outboxRows.length;
+  // not `incidentId`: that is read off the outbox, empty without subscribers
+  statusUpdate.incident_id =
+    transition.incidentCreatedId ?? transition.incidentResolvedIds[0] ?? null;
 
   await publishStatusAudit(result.data);
 

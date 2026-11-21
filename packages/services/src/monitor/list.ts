@@ -10,6 +10,10 @@ import {
   sql,
 } from "@openstatus/db";
 import {
+  type ActiveMaintenance,
+  activeMaintenanceByMonitor,
+} from "@openstatus/db/src/maintenance";
+import {
   monitorIncidentTable,
   monitor,
   monitorTag,
@@ -40,11 +44,14 @@ import { GetMonitorInput, ListMonitorsInput } from "./schemas";
 export type MonitorListItem = Monitor & {
   tags: MonitorTag[];
   incidents: MonitorIncident[];
+  /** The maintenance window or status-page maintenance it is in right now. */
+  maintenance: ActiveMaintenance | null;
 };
 
 export type MonitorWithRelations = Monitor & {
   tags: MonitorTag[];
   incidents: MonitorIncident[];
+  maintenance: ActiveMaintenance | null;
   notifications: Notification[];
   privateLocations: PrivateLocation[];
 };
@@ -73,76 +80,81 @@ async function enrichMonitorsBatch(
   // our hands instead of relying on drizzle's auto-derived `row.<table_name>`
   // keys, which are named after the JS variable and silently break on
   // schema rename.
-  const [tagRows, incidentRows, notifRows, locRows] = await Promise.all([
-    db
-      .select({
-        monitorId: monitorTagsToMonitors.monitorId,
-        tag: monitorTag,
-      })
-      .from(monitorTag)
-      .innerJoin(
-        monitorTagsToMonitors,
-        eq(monitorTagsToMonitors.monitorTagId, monitorTag.id),
-      )
-      .where(
-        and(
-          inArray(monitorTagsToMonitors.monitorId, ids),
-          eq(monitorTag.workspaceId, workspaceId),
-        ),
-      )
-      .all(),
-    db
-      .select()
-      .from(monitorIncidentTable)
-      .where(
-        and(
-          inArray(monitorIncidentTable.monitorId, ids),
-          // Scope to caller's workspace — defence-in-depth in case an
-          // incident.monitorId somehow points cross-workspace. The
-          // `incident.monitorId` FK doesn't enforce workspace ownership.
-          eq(monitorIncidentTable.workspaceId, workspaceId),
-        ),
-      )
-      .all(),
-    include.notifications
-      ? db
-          .select({
-            monitorId: notificationsToMonitors.monitorId,
-            notification,
-          })
-          .from(notification)
-          .innerJoin(
-            notificationsToMonitors,
-            eq(notificationsToMonitors.notificationId, notification.id),
-          )
-          .where(
-            and(
-              inArray(notificationsToMonitors.monitorId, ids),
-              eq(notification.workspaceId, workspaceId),
-            ),
-          )
-          .all()
-      : Promise.resolve([]),
-    include.privateLocations
-      ? db
-          .select({
-            monitorId: privateLocationToMonitors.monitorId,
-            location: privateLocation,
-          })
-          .from(privateLocation)
-          .innerJoin(
-            privateLocationToMonitors,
-            eq(privateLocationToMonitors.privateLocationId, privateLocation.id),
-          )
-          .where(
-            and(
-              inArray(privateLocationToMonitors.monitorId, ids),
-              eq(privateLocation.workspaceId, workspaceId),
-            ),
-          )
-          .all()
-      : Promise.resolve([]),
-  ]);
+  const [tagRows, incidentRows, notifRows, locRows, maintenanceByMonitor] =
+    await Promise.all([
+      db
+        .select({
+          monitorId: monitorTagsToMonitors.monitorId,
+          tag: monitorTag,
+        })
+        .from(monitorTag)
+        .innerJoin(
+          monitorTagsToMonitors,
+          eq(monitorTagsToMonitors.monitorTagId, monitorTag.id),
+        )
+        .where(
+          and(
+            inArray(monitorTagsToMonitors.monitorId, ids),
+            eq(monitorTag.workspaceId, workspaceId),
+          ),
+        )
+        .all(),
+      db
+        .select()
+        .from(monitorIncidentTable)
+        .where(
+          and(
+            inArray(monitorIncidentTable.monitorId, ids),
+            // Scope to caller's workspace — defence-in-depth in case an
+            // incident.monitorId somehow points cross-workspace. The
+            // `incident.monitorId` FK doesn't enforce workspace ownership.
+            eq(monitorIncidentTable.workspaceId, workspaceId),
+          ),
+        )
+        .all(),
+      include.notifications
+        ? db
+            .select({
+              monitorId: notificationsToMonitors.monitorId,
+              notification,
+            })
+            .from(notification)
+            .innerJoin(
+              notificationsToMonitors,
+              eq(notificationsToMonitors.notificationId, notification.id),
+            )
+            .where(
+              and(
+                inArray(notificationsToMonitors.monitorId, ids),
+                eq(notification.workspaceId, workspaceId),
+              ),
+            )
+            .all()
+        : Promise.resolve([]),
+      include.privateLocations
+        ? db
+            .select({
+              monitorId: privateLocationToMonitors.monitorId,
+              location: privateLocation,
+            })
+            .from(privateLocation)
+            .innerJoin(
+              privateLocationToMonitors,
+              eq(
+                privateLocationToMonitors.privateLocationId,
+                privateLocation.id,
+              ),
+            )
+            .where(
+              and(
+                inArray(privateLocationToMonitors.monitorId, ids),
+                eq(privateLocation.workspaceId, workspaceId),
+              ),
+            )
+            .all()
+        : Promise.resolve([]),
+      activeMaintenanceByMonitor(db, workspaceId, ids, new Date()),
+    ]);
 
   const tagsByMonitor = new Map<number, MonitorTag[]>();
   for (const row of tagRows) {
@@ -184,6 +196,7 @@ async function enrichMonitorsBatch(
     incidents: incidentsByMonitor.get(r.id) ?? [],
     notifications: notifsByMonitor.get(r.id) ?? [],
     privateLocations: locsByMonitor.get(r.id) ?? [],
+    maintenance: maintenanceByMonitor.get(r.id) ?? null,
   }));
 }
 

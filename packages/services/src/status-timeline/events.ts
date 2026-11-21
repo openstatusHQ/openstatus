@@ -311,8 +311,10 @@ export function getEvents({
   // Static components don't have incidents
   if (componentType !== "static") {
     incidents
-      .filter((incident) =>
-        monitorId ? incident.monitorId === monitorId : true,
+      .filter(
+        (incident) =>
+          !incident.excusedAt &&
+          (monitorId ? incident.monitorId === monitorId : true),
       )
       .forEach((incident) => {
         if (incident.resolvedAt && incident.resolvedAt < pastThreshold) return;

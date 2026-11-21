@@ -1,9 +1,11 @@
+export { acknowledgeIncident } from "./acknowledge";
 export { addIncidentNote } from "./add-note";
 export { closeIncident, closeIncidentInTx } from "./close";
 export { declareIncident } from "./declare";
 export { deleteIncident, isDeletable } from "./delete";
 export {
   actorDisplayName,
+  afterIncidentAcknowledged,
   afterIncidentClosed,
   afterIncidentDeclared,
   afterIncidentDeleted,

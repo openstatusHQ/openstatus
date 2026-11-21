@@ -1,13 +1,8 @@
 import { getLogger } from "@logtape/logtape";
 import { db, sql } from "@openstatus/db";
+import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
-import {
-  maintenance,
-  maintenancesToPageComponents,
-  monitor,
-  monitorHeartbeatState,
-  pageComponent,
-} from "@openstatus/db/src/schema";
+import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
 import { HEARTBEAT_REGION, formatHeartbeatSeconds } from "@openstatus/utils";
 
@@ -22,7 +17,7 @@ import {
 } from "../checker/transition";
 import { env } from "../env";
 
-const logger = getLogger(["workflow"]);
+const logger = getLogger(["workflow-otel"]);
 
 const CANDIDATE_LIMIT = 500;
 
@@ -39,7 +34,8 @@ type SweepRow = {
 /**
  * Heartbeats whose signal disagrees with their status: overdue or reporting a
  * `/fail` but not down, or pinged successfully again while down. Paused,
- * deleted, in-maintenance and never-pinged heartbeats are left alone.
+ * deleted and never-pinged heartbeats are left alone; a maintenance holds back
+ * failures only, so an outage open before it still closes.
  */
 async function findCandidates(now: number): Promise<SweepRow[]> {
   return withBusyRetry(() =>
@@ -62,20 +58,13 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
           (
             (${monitorHeartbeatState.nextDueAt} < ${now} OR ${monitorHeartbeatState.lastPingKind} = 'fail')
             AND ${monitor.status} <> 'error'
+            AND NOT ${monitorInMaintenance(db, { at: new Date(now), mode: "pause" })}
           )
           OR (
             ${monitorHeartbeatState.nextDueAt} >= ${now}
             AND ${monitorHeartbeatState.lastPingKind} <> 'fail'
             AND ${monitor.status} = 'error'
           )
-        )
-        AND ${monitor.id} NOT IN (
-          SELECT ${pageComponent.monitorId} FROM ${maintenancesToPageComponents}
-          JOIN ${maintenance} ON ${maintenance.id} = ${maintenancesToPageComponents.maintenanceId}
-          JOIN ${pageComponent} ON ${pageComponent.id} = ${maintenancesToPageComponents.pageComponentId}
-          WHERE ${maintenance.from} <= ${Math.floor(now / 1000)}
-            AND ${maintenance.to} >= ${Math.floor(now / 1000)}
-            AND ${pageComponent.monitorId} IS NOT NULL
         )
       LIMIT ${CANDIDATE_LIMIT}
     `),
@@ -141,6 +130,8 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
       region: HEARTBEAT_REGION,
       status: failed || overdue ? "error" : "active",
       cronTimestamp: overdue ? row.next_due_at : row.last_ping_at,
+      // a deadline missed inside a maintenance is still missed once it ends
+      observedAt: now,
       message: failed
         ? failedPingMessage(row)
         : overdue
@@ -158,6 +149,7 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
     logger.info("Heartbeat status changed", {
       monitor_id: row.monitor_id,
       status: input.status,
+      overdue,
       outbox_rows: result.outboxRows.length,
     });
     await deliver(input, result);

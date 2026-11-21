@@ -44,6 +44,7 @@ beforeAll(async () => {
   const monitorRow = await createMonitor(workspaceId, {
     regions: "ams",
     status: "active",
+    active: true,
   });
   monitorId = monitorRow.id;
   const notif = await createNotification(workspaceId, { provider: "email" });
@@ -91,6 +92,63 @@ function post(payload: Record<string, unknown>) {
     body: JSON.stringify(payload),
   });
 }
+
+describe("updateStatus guards", () => {
+  const payload = () => ({
+    monitorId: String(monitorId),
+    region: "ams",
+    status: "error",
+    cronTimestamp: Date.now(),
+    statusCode: 500,
+  });
+
+  async function monitorStatus() {
+    const row = await db
+      .select({ status: monitor.status })
+      .from(monitor)
+      .where(eq(monitor.id, monitorId))
+      .get();
+    return row?.status;
+  }
+
+  test("rejects a request without the cron secret", async () => {
+    const res = await checkerRoute.request("/updateStatus", {
+      method: "POST",
+      headers: {
+        Authorization: "Basic wrong",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload()),
+    });
+
+    expect(res.status).toBe(401);
+    expect(await monitorStatus()).toBe("active");
+  });
+
+  test("rejects a payload with an unknown region", async () => {
+    const res = await post({ ...payload(), region: "nowhere" });
+
+    expect(res.status).toBe(422);
+    expect(await monitorStatus()).toBe("active");
+  });
+
+  test("ignores a check older than the stale cutoff", async () => {
+    stubs.push(stubPublishAuditLog());
+    const sendAlert = vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve());
+    stubs.push(sendAlert as AnyStub);
+
+    const res = await post({
+      ...payload(),
+      cronTimestamp: Date.now() - env().STALE_CHECK_MS - 1000,
+    });
+
+    expect(res.status).toBe(200);
+    expect(await monitorStatus()).toBe("active");
+    expect(sendAlert).not.toHaveBeenCalled();
+  });
+});
 
 describe("updateStatus audit failures", () => {
   test("a failing audit log does not cost the notification", async () => {

@@ -47,6 +47,7 @@ import {
   type ViewSubmissionResponse,
 } from "./incident-modal";
 import {
+  acknowledgeFromCard,
   afterIncidentTool,
   bindChannelFromButton,
   INCIDENT_BIND_ACTION_PREFIX,
@@ -83,7 +84,7 @@ const logger = getLogger("api-server");
 
 interface SlackInteractionPayload {
   type: string;
-  user: { id: string };
+  user: { id: string; team_id?: string };
   channel: { id: string };
   message: { ts: string };
   team?: { id: string };
@@ -95,7 +96,7 @@ async function processIncidentBind(payload: SlackInteractionPayload) {
   const incidentId = Number(
     action.action_id.slice(INCIDENT_BIND_ACTION_PREFIX.length),
   );
-  const teamId = payload.team?.id;
+  const teamId = payload.team?.id ?? payload.user.team_id;
   if (!teamId || !Number.isInteger(incidentId)) return;
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) return;
@@ -460,7 +461,7 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
   }
 
   if (payload.actions[0].action_id === INCIDENT_RELINK_ACTION) {
-    const teamId = payload.team?.id;
+    const teamId = payload.team?.id ?? payload.user.team_id;
     if (teamId) {
       runInBackground(
         "incident-relink",
@@ -483,9 +484,34 @@ export async function handleSlackInteraction(c: Context<SlackEnv>) {
     return c.json({ ok: true });
   }
 
+  if (payload.actions[0].action_id === INCIDENT_CARD_ACTIONS.acknowledge) {
+    const teamId = payload.team?.id ?? payload.user.team_id;
+    const incidentId = Number(payload.actions[0].value);
+    if (teamId && Number.isInteger(incidentId)) {
+      runInBackground(
+        "incident-acknowledge",
+        async () => {
+          const resolved = await resolveWorkspace(teamId);
+          if (!resolved) return;
+          await acknowledgeFromCard({
+            resolved,
+            config,
+            teamId,
+            slackUserId: payload.user.id,
+            channelId: payload.channel.id,
+            messageTs: payload.message.ts,
+            incidentId,
+          });
+        },
+        { teamId, incidentId },
+      );
+    }
+    return c.json({ ok: true });
+  }
+
   if (payload.actions[0].action_id.startsWith(INCIDENT_BIND_ACTION_PREFIX)) {
     runInBackground("incident-bind", () => processIncidentBind(payload), {
-      teamId: payload.team?.id,
+      teamId: payload.team?.id ?? payload.user.team_id,
     });
     return c.json({ ok: true });
   }

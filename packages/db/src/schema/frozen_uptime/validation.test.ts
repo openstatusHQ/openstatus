@@ -19,3 +19,49 @@ describe("frozenMonitorUptimeDaySchema", () => {
     ).toBe(false);
   });
 });
+
+describe("frozenMonitorUptimeDaySchema bad ranges", () => {
+  const outage = {
+    day: "2026-10-31",
+    requests: { ok: 8520, degraded: 0, error: 120 },
+    runs: { ok: 1420, degraded: 0, error: 20 },
+    bad: {
+      requests: [
+        [94, 1, 0, 90],
+        [95, 1, 0, 30],
+      ],
+      runs: [
+        [94, 1, 0, 15],
+        [95, 1, 0, 5],
+      ],
+    },
+  };
+
+  it("round-trips the ranges", () => {
+    expect(frozenMonitorUptimeDaySchema.parse(outage)).toEqual(outage);
+  });
+
+  it("accepts a whole-day range", () => {
+    const day = { ...current, bad: { runs: [[0, 96, 0, 15]] } };
+    expect(frozenMonitorUptimeDaySchema.parse(day)).toEqual(day);
+  });
+
+  it("rejects malformed ranges", () => {
+    for (const range of [
+      [96, 1, 0, 1],
+      [-1, 1, 0, 1],
+      [95, 2, 0, 1],
+      [0, 0, 0, 1],
+      [0, 1, 0, -1],
+      [0, 1, 0.5, 1],
+      [0, 1, 0],
+    ]) {
+      expect(
+        frozenMonitorUptimeDaySchema.safeParse({
+          ...current,
+          bad: { requests: [range] },
+        }).success,
+      ).toBe(false);
+    }
+  });
+});

@@ -1,0 +1,17 @@
+# Failing UTC quarter-hours of already-frozen months, filled on demand by the
+# copy__*_bad_15m_backfill__v0 pipes from raw data. Read with FINAL.
+
+SCHEMA >
+    `month` Date,
+    `monitorId` String,
+    `measure` LowCardinality(String),
+    `day` Date,
+    `bucket` UInt8,
+    `degraded` UInt64,
+    `error` UInt64,
+    `copiedAt` DateTime
+
+ENGINE "ReplacingMergeTree"
+ENGINE_PARTITION_KEY "toYear(month)"
+ENGINE_SORTING_KEY "month, monitorId, measure, day, bucket"
+ENGINE_VER "copiedAt"

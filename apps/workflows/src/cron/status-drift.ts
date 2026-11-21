@@ -1,5 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { db, sql } from "@openstatus/db";
+import { monitorInWindow } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import { monitor, monitorStatusTable } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
@@ -25,7 +26,7 @@ type DriftRow = { monitor_id: number; status: MonitorStatus };
  * Finds monitors whose regions already carry a quorum for a status the monitor
  * itself does not have, using the same quorum rule as a live check.
  */
-async function findDrift(): Promise<DriftRow[]> {
+async function findDrift(workspaceId?: number): Promise<DriftRow[]> {
   return withBusyRetry(() =>
     db.all<DriftRow>(sql`
       SELECT ${monitorStatusTable.monitorId} AS monitor_id,
@@ -34,8 +35,12 @@ async function findDrift(): Promise<DriftRow[]> {
       JOIN ${monitor} ON ${monitor.id} = ${monitorStatusTable.monitorId}
       WHERE ${monitor.deletedAt} IS NULL
         AND ${monitor.active} = 1
+        AND ${workspaceId === undefined ? sql`1 = 1` : sql`${monitor.workspaceId} = ${workspaceId}`}
         AND ${monitor.regions} <> ''
         AND ${monitorStatusTable.status} <> ${monitor.status}
+        -- no alerts during maintenance; a failure repair waits for the window to end
+        AND (${monitorStatusTable.status} = 'active'
+          OR NOT ${monitorInWindow(db, new Date())})
         AND ${csvRegionMemberSql(sql`${monitorStatusTable.region}`)}
       GROUP BY ${monitorStatusTable.monitorId}, ${monitorStatusTable.status}
       HAVING ${quorumMetSql(sql`count(*)`, csvRegionCountSql())}
@@ -50,8 +55,13 @@ async function findDrift(): Promise<DriftRow[]> {
  * monitor whose regions say "down" but whose status still says "up", which no
  * later check will re-evaluate because the region status stopped changing.
  */
-export async function handleStatusDriftCron() {
-  const candidates = await findDrift();
+export function handleStatusDriftCron() {
+  return repairStatusDrift();
+}
+
+/** `workspaceId` narrows the sweep; the cron repairs every workspace. */
+export async function repairStatusDrift(workspaceId?: number) {
+  const candidates = await findDrift(workspaceId);
   if (candidates.length === 0) return { candidates: 0, repaired: 0 };
 
   let repaired = 0;

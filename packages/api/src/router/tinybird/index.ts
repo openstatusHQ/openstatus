@@ -197,6 +197,17 @@ export function getStatusProcedure(_period: "45d", type: Type | "heartbeat") {
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
+/** Runs judged by region quorum; heartbeat has no runs. */
+export function getRunsProcedure(type: Type | "heartbeat") {
+  if (type === "heartbeat") return null;
+  if (type === "dns") return tb.dnsRuns45d;
+  if (type === "http") return tb.httpRuns45d;
+  if (type === "tcp") return tb.tcpRuns45d;
+  if (type === "icmp") return tb.icmpRuns45d;
+  if (type === "grpc") return tb.grpcRuns45d;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+}
+
 /** 15m buckets regrouped into the days of a time zone; the 45d pipes are UTC only. */
 export function getStatusInTimeZoneProcedure(type: Type | "heartbeat") {
   if (type === "heartbeat") return tb.heartbeatStatus15m;

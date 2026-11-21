@@ -1,15 +1,18 @@
 import { and, db, eq, isNull } from "@openstatus/db";
+import { pageMaintenancePauses } from "@openstatus/db/src/maintenance";
 import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
   monitorHeartbeatState,
   monitorIncidentTable,
+  monitorMaintenanceWindow,
   notificationOutbox,
   page,
   pageComponent,
 } from "@openstatus/db/src/schema";
 import {
+  createMaintenanceWindow,
   createMonitor,
   createNotification,
   createPage,
@@ -66,6 +69,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
+  await db
+    .delete(monitorMaintenanceWindow)
+    .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+    .run();
   await db
     .delete(maintenance)
     .where(eq(maintenance.workspaceId, workspaceId))
@@ -254,33 +261,89 @@ describe("handleHeartbeatSweepCron", () => {
     expect(await statusOf(row.id)).toBe("active");
   });
 
-  test("a heartbeat in maintenance is skipped", async () => {
+  // runs on the wall clock: delete with the status-page branch after the migration
+  test.skipIf(!pageMaintenancePauses(new Date()))(
+    "a heartbeat in a status-page maintenance is skipped",
+    async () => {
+      const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
+      const statusPage = await createPage(workspaceId);
+      const component = await createPageComponent(workspaceId, statusPage.id, {
+        type: "monitor",
+        monitorId: row.id,
+      });
+      const [window] = await db
+        .insert(maintenance)
+        .values({
+          title: "db upgrade",
+          message: "",
+          from: new Date(Date.now() - HOUR_MS),
+          to: new Date(Date.now() + HOUR_MS),
+          workspaceId,
+          pageId: statusPage.id,
+        })
+        .returning();
+      if (!window) throw new Error("maintenance insert returned no row");
+      await db
+        .insert(maintenancesToPageComponents)
+        .values({ maintenanceId: window.id, pageComponentId: component.id })
+        .run();
+
+      await handleHeartbeatSweepCron();
+
+      expect(await statusOf(row.id)).toBe("active");
+    },
+  );
+
+  test("a heartbeat under a pause window is skipped", async () => {
     const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
-    const statusPage = await createPage(workspaceId);
-    const component = await createPageComponent(workspaceId, statusPage.id, {
-      type: "monitor",
-      monitorId: row.id,
+    await createMaintenanceWindow(workspaceId, {
+      monitorIds: [row.id],
+      mode: "pause",
+      from: new Date(Date.now() - HOUR_MS),
+      to: new Date(Date.now() + HOUR_MS),
     });
-    const [window] = await db
-      .insert(maintenance)
-      .values({
-        title: "db upgrade",
-        message: "",
-        from: new Date(Date.now() - HOUR_MS),
-        to: new Date(Date.now() + HOUR_MS),
-        workspaceId,
-        pageId: statusPage.id,
-      })
-      .returning();
-    if (!window) throw new Error("maintenance insert returned no row");
-    await db
-      .insert(maintenancesToPageComponents)
-      .values({ maintenanceId: window.id, pageComponentId: component.id })
-      .run();
 
     await handleHeartbeatSweepCron();
 
     expect(await statusOf(row.id)).toBe("active");
+  });
+
+  test("a ping inside a pause window closes the outage that was open before it", async () => {
+    const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
+    await handleHeartbeatSweepCron();
+    expect(await statusOf(row.id)).toBe("error");
+
+    await createMaintenanceWindow(workspaceId, {
+      monitorIds: [row.id],
+      mode: "pause",
+      from: new Date(Date.now() - HOUR_MS),
+      to: new Date(Date.now() + HOUR_MS),
+    });
+    await ping(row.id, Date.now());
+    await handleHeartbeatSweepCron();
+
+    expect(await statusOf(row.id)).toBe("active");
+    expect(await openIncidents(row.id)).toHaveLength(0);
+  });
+
+  test("a deadline missed inside a continue window goes down once the window ends", async () => {
+    const now = Date.now();
+    const row = await createHeartbeat(now - 2 * HOUR_MS);
+    const to = now + HOUR_MS;
+    await createMaintenanceWindow(workspaceId, {
+      monitorIds: [row.id],
+      mode: "continue",
+      from: new Date(now - 2 * HOUR_MS),
+      to: new Date(to),
+    });
+
+    await handleHeartbeatSweepCron(now);
+    expect(await statusOf(row.id)).toBe("active");
+    expect(await outboxFor(row.id)).toHaveLength(0);
+
+    await handleHeartbeatSweepCron(to + 1000);
+    expect(await statusOf(row.id)).toBe("error");
+    expect(await openIncidents(row.id)).toHaveLength(1);
   });
 });
 

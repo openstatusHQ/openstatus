@@ -1,5 +1,6 @@
 import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
+  auditLog,
   monitorTransition,
   notificationOutbox,
   monitorIncidentTable,
@@ -15,7 +16,11 @@ import {
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { drainOutbox } from "./outbox";
-import { applyStatusTransition, isStaleCheck } from "./transition";
+import {
+  applyStatusTransition,
+  evaluateTransition,
+  isStaleCheck,
+} from "./transition";
 
 const REGIONS = ["ams", "arn", "atl", "bog", "bom", "bos"] as const;
 const DEADLINE_SECONDS = 300;
@@ -28,6 +33,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await db.delete(auditLog).where(eq(auditLog.workspaceId, workspaceId)).run();
   await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
 });
 
@@ -35,6 +41,7 @@ async function makeMonitor(regionCount: number, withNotification = true) {
   const regions = REGIONS.slice(0, regionCount);
   const row = await createMonitor(workspaceId, {
     regions: regions.join(","),
+    active: true,
   });
   if (withNotification) {
     const notif = await createNotification(workspaceId);
@@ -110,6 +117,7 @@ describe("duplicated regions", () => {
   test("a region configured twice counts once in the quorum", async () => {
     const row = await createMonitor(workspaceId, {
       regions: "ams,arn,ams,arn,atl,bog",
+      active: true,
     });
     await seedRegionStatus(row.id, ["ams"], "error");
 
@@ -122,6 +130,36 @@ describe("duplicated regions", () => {
     expect(result.quorumCount).toBe(2);
     expect(result.regionCount).toBe(4);
     expect(result.transitioned).toBe(true);
+  });
+});
+
+describe("a result that was queued before the monitor stopped", () => {
+  test.each([
+    ["paused", { active: false }],
+    ["deleted", { deletedAt: new Date() }],
+  ])("a %s monitor does not transition", async (_state, change) => {
+    const { monitorId, regions } = await makeMonitor(1);
+    await db.update(monitor).set(change).where(eq(monitor.id, monitorId)).run();
+
+    const input = transitionInput(monitorId, regions[0], Date.now());
+
+    // the region row is not written, so nothing is left for a resume to trip on
+    expect(await applyStatusTransition(input)).toEqual({ kind: "unchanged" });
+    const regionRows = await db
+      .select()
+      .from(monitorStatusTable)
+      .where(eq(monitorStatusTable.monitorId, monitorId))
+      .all();
+    expect(regionRows).toEqual([]);
+
+    // and the transition itself is guarded, for a region row written earlier
+    await seedRegionStatus(monitorId, regions, "error");
+    const result = await evaluateTransition(input);
+    expect(result.kind).toBe("evaluated");
+    if (result.kind !== "evaluated") return;
+    expect(result.transitioned).toBe(false);
+    expect(result.incidentCreatedId).toBeNull();
+    expect(result.outboxRows).toEqual([]);
   });
 });
 
@@ -199,6 +237,28 @@ describe("replay", () => {
       .all();
     expect(outbox[0]?.total).toBe(1);
   });
+
+  test("re-evaluating a landed transition writes no second audit row", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+    const input = transitionInput(monitorId, regions[0], Date.now());
+
+    const opened = await applyStatusTransition(input);
+    await evaluateTransition(input);
+
+    if (opened.kind !== "evaluated") throw new Error("expected a transition");
+    const audits = await db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(opened.incidentCreatedId)),
+        ),
+      )
+      .all();
+    expect(audits[0]?.total).toBe(1);
+  });
 });
 
 describe("decision journal", () => {
@@ -266,6 +326,67 @@ describe("recovery", () => {
       "alert",
       "recovery",
     ]);
+  });
+
+  test("leaves a system audit row for the open and the auto-resolve", async () => {
+    const { monitorId, regions } = await makeMonitor(1);
+    const down = Date.now();
+    const opened = await applyStatusTransition(
+      transitionInput(monitorId, regions[0], down),
+    );
+    const recovered = await applyStatusTransition({
+      monitorId,
+      region: regions[0],
+      status: "active",
+      cronTimestamp: down + 60_000,
+      deadlineSeconds: DEADLINE_SECONDS,
+      rolloutPct: 100,
+    });
+
+    if (opened.kind !== "evaluated") throw new Error("expected a transition");
+    // pinned so a missing audit row can be told apart from a missing recovery
+    expect(opened.incidentCreatedId).not.toBeNull();
+    expect(recovered).toMatchObject({
+      kind: "evaluated",
+      transitioned: true,
+      incidentResolvedIds: [opened.incidentCreatedId],
+    });
+    const rows = await db
+      .select()
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(opened.incidentCreatedId)),
+        ),
+      )
+      .orderBy(auditLog.id)
+      .all();
+
+    expect(rows.map((row) => [row.action, row.actorType, row.actorId])).toEqual(
+      [
+        ["monitor_incident.create", "system", "checker"],
+        ["monitor_incident.update", "system", "checker"],
+      ],
+    );
+    expect(rows[1]?.changedFields?.toSorted()).toEqual([
+      "autoResolved",
+      "resolvedAt",
+    ]);
+
+    // Snapshots are the rows the batch wrote, decoded like a drizzle read.
+    const stored = await db
+      .select()
+      .from(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, opened.incidentCreatedId ?? 0))
+      .get();
+    expect(rows[0]?.after).toEqual(
+      JSON.parse(
+        JSON.stringify({ ...stored, resolvedAt: null, autoResolved: false }),
+      ),
+    );
+    expect(rows[1]?.after).toEqual(JSON.parse(JSON.stringify(stored)));
   });
 });
 

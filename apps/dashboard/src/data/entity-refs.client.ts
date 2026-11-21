@@ -11,6 +11,8 @@ import {
   StatusPage,
 } from "@openstatus/icons";
 
+import { monitorReportHref } from "./monitor-report.client";
+
 type EntityKindConfig = {
   label: string;
   icon: IconType;
@@ -69,6 +71,14 @@ export const entityKinds = {
     auditType: "incident",
     href: (incident: { id: number }) => `/incidents/${incident.id}`,
   },
+  monitorIncident: {
+    label: "Outage",
+    icon: Monitor,
+    fields: [],
+    auditType: "monitor_incident",
+    href: (incident: { monitorId: number; startedAt: Date }) =>
+      monitorReportHref(incident.monitorId, incident.startedAt),
+  },
   privateLocation: {
     label: "Private location",
     icon: PrivateLocation,
@@ -83,6 +93,13 @@ export const entityKinds = {
     auditType: "notification",
     // Notifiers are edited in a sheet on the list; there is no detail page.
     href: () => "/notifications",
+  },
+  maintenanceWindow: {
+    label: "Maintenance window",
+    icon: Maintenance,
+    fields: [],
+    auditType: "monitor_maintenance_window",
+    href: () => "/maintenance-windows",
   },
 } as const satisfies Record<string, EntityKindConfig>;
 

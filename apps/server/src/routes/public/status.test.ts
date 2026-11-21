@@ -234,6 +234,33 @@ describe("Status Route: Active monitor filtering", () => {
   });
 });
 
+describe("Status Route: Excused outages", () => {
+  test("ignores an excused outage", async () => {
+    const excused = await db
+      .insert(monitorIncidentTable)
+      .values({
+        monitorId: testMonitorId,
+        title: "Excused Incident",
+        status: "investigating",
+        excusedAt: new Date(),
+        excusedReason: "Provider outage",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await app.request(`/public/status/${TEST_PREFIX}-page`);
+      const data = await res.json();
+      expect(data.status).toBe("operational");
+      expect(JSON.stringify(data)).not.toContain("Provider outage");
+    } finally {
+      await db
+        .delete(monitorIncidentTable)
+        .where(eq(monitorIncidentTable.id, excused.id));
+    }
+  });
+});
+
 describe("Status Route: Incident detection", () => {
   test("returns incident status with ongoing incident", async () => {
     // Create an ongoing incident for the active monitor

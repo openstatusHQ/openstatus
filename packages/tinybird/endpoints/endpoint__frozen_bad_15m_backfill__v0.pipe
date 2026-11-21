@@ -1,0 +1,19 @@
+TOKEN "endpoint__frozen_bad_15m_backfill__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+SELECT
+    monitorId,
+    measure,
+    day,
+    bucket,
+    degraded AS degradedCount,
+    error AS errorCount
+FROM frozen_bad_15m_backfill__v0 FINAL
+WHERE month = {{ Date(month, '2026-01-01', required=True) }}
+    AND monitorId IN {{ Array(monitorIds, 'String', '1', required=True) }}
+ORDER BY monitorId, measure, day, bucket
+
+TYPE endpoint

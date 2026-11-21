@@ -14,6 +14,11 @@ export const env = () =>
         .prefault("cloudtasks"),
       CRON_SECRET: z.string().prefault(""),
       SITE_URL: z.string().prefault("http://localhost:3000"),
+      // a malformed value falls back like an empty one instead of failing boot
+      DASHBOARD_URL: z
+        .union([z.url(), z.literal("")])
+        .catch("")
+        .prefault(""),
       DATABASE_URL: z.string().prefault("http://localhost:8080"),
       DATABASE_AUTH_TOKEN: z.string().prefault(""),
       RESEND_API_KEY: z.string().prefault(""),

@@ -1,12 +1,16 @@
+import { getLogger } from "@logtape/logtape";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 import type {
   Region,
   monitorPeriodicitySchema,
 } from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/regions";
 import { type CheckerPayload, buildCheckerPayload } from "@openstatus/utils";
 import { Effect, Result } from "effect";
 import type { z } from "zod";
+
+const logger = getLogger("workflow");
 
 export type Periodicity = z.infer<typeof monitorPeriodicitySchema>;
 
@@ -29,6 +33,41 @@ export function buildCronCheckerPayload({
     trigger: "cron",
     timestamp,
   });
+}
+
+/**
+ * One task per monitor and region, carrying that region's last known status.
+ * 30s monitors get a second task half a minute later, the scheduler ticks per minute.
+ */
+export function buildTaskInputs(args: {
+  monitors: TaskInput["row"][];
+  statusesByMonitor: Map<number, { region: string; status: MonitorStatus }[]>;
+  periodicity: Periodicity;
+  timestamp: number;
+}): TaskInput[] {
+  const { monitors, statusesByMonitor, periodicity, timestamp } = args;
+  const inputs: TaskInput[] = [];
+  for (const row of monitors) {
+    const statuses = statusesByMonitor.get(row.id) ?? [];
+    for (const region of row.regions) {
+      const info = regionDict[region as keyof typeof regionDict];
+      if (!info) {
+        logger.error(`Invalid region ${region}`);
+        continue;
+      }
+      if (info.deprecated) {
+        logger.error(`Deprecated region ${region}`);
+        continue;
+      }
+      const status =
+        statuses.find((s) => s.region === region)?.status || "active";
+      inputs.push({ row, timestamp, status, region });
+      if (periodicity === "30s") {
+        inputs.push({ row, timestamp: timestamp + 30_000, status, region });
+      }
+    }
+  }
+  return inputs;
 }
 
 export function checkerTopic(region: Region, periodicity: Periodicity) {

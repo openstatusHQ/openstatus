@@ -1,10 +1,10 @@
 ---
 category: Concepts
 title: Uptime Calculation and Shared Values
-description: Understand how openstatus calculates uptime — from monitor checks (time per status or number of requests) or from reports only — and choose which values to share on your status page.
+description: Understand how openstatus calculates uptime — from monitor checks (time per status, number of requests or number of runs) or from reports only — and choose which values to share on your status page.
 ---
 
-Uptime values can be a complete lie if they're not properly connected to monitoring. openstatus makes uptime transparent and configurable — you decide how it's calculated and which values to share on your status page.
+Uptime values can be a complete lie if they're not properly connected to monitoring. Openstatus makes uptime transparent and configurable — you decide how it's calculated and which values to share on your status page.
 
 When monitoring an endpoint, a check can end up in one of three states:
 
@@ -19,9 +19,10 @@ In the dashboard, two settings on the status page's [**Components**](https://app
     - **Reports only** — only from the status reports and maintenances you publish.
 - **Card shows** — what the hover card (and uptime) is based on, when the source is **Monitor checks**:
     - **Time per status** — aggregated from the incidents' duration.
-    - **Number of requests** (default) — aggregated from every check result.
+    - **Number of requests** (default) — aggregated from every check result, region by region.
+    - **Number of runs** — each scheduled check counted once across its cloud regions.
 
-> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration` and **Number of requests** is `value: requests`.
+> **API and URL values:** in the API, SDKs and configuration links, **Monitor checks** is `type: absolute`, **Reports only** is `type: manual`, **Time per status** is `value: duration`, **Number of requests** is `value: requests` and **Number of runs** is `value: runs`. A page that never stored a value reads as `requests`.
 
 **TL;DR**
 
@@ -29,11 +30,12 @@ In the dashboard, two settings on the status page's [**Components**](https://app
 |-------------|----------------------|-------------------------------------|----------------------------------|
 | **Monitor checks** + **Time per status** | Incidents and report impacts | Time-based uptime, proportional colours | Accurate long-term view         |
 | **Monitor checks** + **Number of requests** | Every check result    | Check-based uptime %              | Real-time reflection            |
+| **Monitor checks** + **Number of runs** | Every scheduled check, judged across regions | Check-based uptime %, one region failing alone doesn't count | Uptime that matches what users felt |
 | **Reports only**   | Your status reports and maintenances  | Controlled, narrative updates       | Transparency without monitoring |
 
 ## Monitor checks
 
-With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in two variants: _time per status_ and _number of requests_. Both share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
+With **Monitor checks** as the status source (`absolute`), uptime is calculated from actual monitoring results. It's the most accurate reflection of what's really happening, and comes in three variants: _time per status_, _number of requests_ and _number of runs_. All three share real data with your users — incidents, degraded states, and historical uptime — but they differ in how they aggregate and display that data.
 
 ### Time per status
 
@@ -44,8 +46,10 @@ In simple terms: `uptime = (total time - downtime) / total time`
 This means uptime is based on how long something was down, not how many checks failed. Downtime combines:
 
 - **Incidents**, which count fully.
-- **Status report impacts**, weighted by severity: a major outage counts fully, a partial outage counts half, and degraded performance not at all. Reports without per-component impacts are ignored in this mode.
+- **Status report impacts**, weighted by severity (see [status report impact](#status-report-impact)). Reports without per-component impacts are ignored in this mode.
 - **Probe errors**, only for monitors that run exclusively from [private locations](/docs/concept/private-locations).
+
+[Excused outages](#excused-outages) are left out, so their time counts as up.
 
 Overlapping periods are merged, so an incident and a status report describing the same outage count once.
 
@@ -59,18 +63,29 @@ The number of requests value (`requests`) is more straightforward — it looks a
 
 In simple terms: `uptime = (success + degraded) / total requests`
 
-This is the current default mode for most openstatus users. It's simple, data-driven, and updates immediately as new results come in.
+Requests include checks from [private locations](/docs/concept/private-locations) and checks you trigger manually. It's simple, data-driven, and updates immediately as new results come in.
 
 Like with time per status, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 
+### Number of runs
+
+The number of runs value (`runs`) counts **each scheduled check once**, across all the cloud regions it ran in.
+
+A run is:
+
+- **Down** when at least half of the cloud regions that reported in it fail.
+- **Degraded** when failing and degraded regions together make up at least half.
+- **Successful** otherwise.
+
+In simple terms: `uptime = (successful + degraded runs) / total runs`
+
+A monitor checking from six regions, with one region failing, has no failed run. Only scheduled checks from cloud regions count: checks from private locations and checks you trigger manually are not runs.
+
+Runs exist for HTTP, TCP, DNS, ICMP and gRPC monitors with at least one cloud region. [Heartbeat monitors](#heartbeat-monitors) and monitors that run only from private locations have no runs, so their cards and uptime fall back to **Number of requests** on a page set to runs.
+
 #### Requests or runs in the uptime history
 
-The status page's [**History**](https://app.openstatus.dev/status-pages/_/history) in the dashboard lets you switch monitor components between **Requests** and **Runs**. It changes only that view, not your public status page.
-
-- **Requests** counts each region's result, as above.
-- **Runs** counts each scheduled run once. A run is down when at least half of the cloud regions that reported in it fail, degraded when failing and degraded regions together make up at least half, and successful otherwise. Degraded runs still count as up.
-
-Runs are recorded for HTTP, TCP, DNS, ICMP and gRPC monitors with cloud regions. Months without run data, and monitors that run only from private locations, show no data under **Runs**.
+The status page's [**Report**](https://app.openstatus.dev/status-pages/_/report) in the dashboard lets you switch monitor components between **Requests** and **Runs**. It opens on **Runs** for a page set to runs and on **Requests** otherwise, and the switch changes only that view, not your public status page. Months without run data show no data under **Runs**; heartbeat monitors and monitors that run only from private locations keep showing requests there, as on the public page.
 
 ## Reports only
 
@@ -85,17 +100,30 @@ In this mode, all displayed uptime values and statuses come from your shared rep
 
 In simple terms: `uptime = (total duration - weighted status report duration) / total duration`
 
-How much a report counts against uptime depends on the [component impact](/docs/reference/status-report#component-impacts) each update sets:
+How much a report counts against uptime depends on its impact, see [status report impact](#status-report-impact). Monitor outages are not counted in this mode.
 
-| Impact | Downtime weight |
+## Status report impact
+
+Under **Time per status** and **Reports only**, and for static and heartbeat components in every mode, a status report counts against uptime by the [component impact](/docs/reference/status-report#component-impacts) each update sets:
+
+| Impact | Share of the report's time counted as downtime |
 |--------|-----------------|
-| `operational` / `degraded_performance` | 0 |
-| `partial_outage` | 0.5 |
-| `major_outage` | 1 |
+| Major outage (`major_outage`) | 100% |
+| Partial outage (`partial_outage`) | 50% |
+| Degraded performance (`degraded_performance`) | 0% (slow but available) |
+| Operational (`operational`) | 0% |
 
-A report that goes `major_outage` → `partial_outage` → `operational` across its updates counts each interval at its own weight.
+A report that goes `major_outage` → `partial_outage` → `operational` across its updates counts each interval at its own weight. Monitor outages (incidents) always count fully.
 
-> **Legacy behavior:** reports without impact levels (created before component impacts existed, or via clients that don't send them) count their full duration as downtime — `uptime = (total duration - status report duration) / total duration`.
+> **Legacy behavior:** reports without impact levels (created before component impacts existed, or via clients that don't send them) count their full duration as downtime under **Reports only** and for static components. Under **Time per status** they are ignored for monitor components.
+
+## Excused outages
+
+A resolved outage can be excused with a reason: open the monitor's [**Monitors > Report**](https://app.openstatus.dev/monitors/_/report#outages) tab, then the outage row menu, then **Excuse**. An excused outage is hidden from the public status page.
+
+- **Time per status** and heartbeat monitors: the excused time counts as up.
+- **Number of requests** and **Number of runs**: excusing does not change check results. The failed checks still count, so the uptime percentage stays the same.
+- **Reports only**: outages do not count, so excusing changes nothing.
 
 ## Heartbeat monitors
 

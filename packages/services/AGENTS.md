@@ -6,10 +6,17 @@ handler. Routers validate input, call a verb, map errors.
 One documented exception: the checker ingest path
 (`apps/workflows/src/checker/transition.ts`) writes `monitor_status`,
 `incident` and the outbox directly. `ServiceContext` requires a `Workspace` that
-path would have to load on every check, `withTransaction` opens an interactive
-transaction where it needs a single atomic `db.batch()`, and a fail-closed
-`emitAudit` would roll back a real status transition because an audit insert
-failed. Do not "fix" it by routing it through a verb.
+path would have to load on every check, and `withTransaction` opens an
+interactive transaction where it needs a single atomic `db.batch()`. Do not
+"fix" it by routing it through a verb.
+
+Among the workflow jobs, only that batch is exempt, and it still audits in the
+same transaction: `monitorIncidentAuditStatement` builds the audit insert that
+runs in the batch next to the incident statement, so a failed audit row rolls
+the transition back. Every other job that opens or closes a monitor
+incident calls `createMonitorIncident` or `autoResolveMonitorIncidents` as a
+`system` actor. Two older writers still update the table without a verb or an
+audit row: the legacy v1 incident `PUT` and the screenshot service.
 
 ## Shape of a verb
 
@@ -60,7 +67,7 @@ a reason.
 
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
-monitor-incident, frozen-uptime), `pages` (page, page-component,
+monitor-incident, frozen-uptime, maintenance-window), `pages` (page, page-component,
 page-component-group, import), `incidents` (status-report, incident,
 maintenance), `notifications` and `subscribers` (page-subscriber). Workspace,
 billing, members, invitations, API keys, OAuth, SSO and integrations require
@@ -122,3 +129,52 @@ which is what makes it expensive.
 is pinned by tests: `major_outage` = 1, `partial_outage` = 0.5,
 `degraded_performance` = 0. These numbers have been changed and reverted before —
 confirm with a maintainer before touching them.
+
+## Frozen uptime rows
+
+`frozen_monitor_uptime` holds one row per monitor and UTC month, written once,
+48 hours after the month ends. The Tinybird views it is read from keep 76 days
+and the freeze refuses a month 45 days after it started, so after that a frozen
+row is the only copy: a wrong row stays wrong.
+
+`days` is one entry per UTC day with `requests` counts and, for monitors with
+cloud regions, `runs` counts. A day's `bad` lists only its failing
+quarter-hours as ranges `[firstBucket, count, degraded, error]` (buckets 0..95,
+0 is 00:00 to 00:15 UTC).
+
+**Whether a row carries its ranges is read from `days`, not stored.**
+`hasBadRanges` (`frozen-uptime/buckets.ts`) is true when, for every day of the
+month, the ranges sum exactly to that day's degraded and error counts.
+
+| `hasBadRanges` | A day without `bad` means | Rows |
+|---|---|---|
+| true | no failures that day | frozen with ranges that add up, or a month without any failure |
+| false | not recorded | a month with failures frozen before ranges existed, on a heartbeat monitor, or after a mismatch |
+
+- **All or nothing.** `attachBadRanges` (`frozen-uptime/compute.ts`) adds the
+  ranges only when every day adds up. One day off and the row is written
+  without any, with a "bad ranges do not match the day counts" warning.
+- **Only rows with ranges can leave UTC.** `toLocalDays`
+  (`frozen-uptime/buckets.ts`) regroups them into the page time zone; any other
+  row comes back as UTC days and its month is listed in `utcOnlyMonths`, which
+  the dashboard labels "UTC". Around the frozen/live seam such a month can
+  double-count or drop a few hours on a page with another time zone.
+- **Regrouped totals are estimates, failures are exact.** A UTC day's total is
+  spread evenly over its 96 buckets, so local-day counts are fractional.
+  Degraded and error counts move with their real quarter-hour.
+- **Counts are never rewritten.** `backfillFrozenBuckets` only adds ranges to
+  rows without them and only under the same sum check. Replacing counts is
+  `refreezeMonitorMonths`, which works only while Tinybird still covers the
+  whole month.
+- **Heartbeat rows never get ranges and never leave UTC.** They have no
+  quarter-hour data, so readers pass `quarterHours: false` to `mergeLocalDays`
+  even for a month without failures.
+- **The bucket size is a contract across three places**: `BUCKET_MINUTES` in
+  `frozen-uptime/buckets.ts`, the 0..95 bounds of `badRangeSchema` in
+  `packages/db/src/schema/frozen_uptime/validation.ts`, and the `*_bad_15m`
+  pipes in `packages/tinybird`. A different size needs a marker on the rows
+  that use it, never an edit of existing rows.
+
+The runbook for giving old months their ranges is in
+`packages/tinybird/README.md` under "Backfilling quarter-hour ranges for frozen
+months".

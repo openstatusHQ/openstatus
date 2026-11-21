@@ -46,6 +46,7 @@ import {
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { ComponentImpactList } from "@/components/forms/status-report/component-impact-field";
+import { ImpactUptimeHint } from "@/components/status-pages/uptime-calculation";
 import {
   CheckboxTree,
   type CheckboxTreeItem,
@@ -317,7 +318,8 @@ export function FormStatusReport({
                   <FormItem>
                     <FormLabel>Component Impact</FormLabel>
                     <FormDescription>
-                      How badly is each affected component impacted?
+                      How badly is each affected component impacted?{" "}
+                      <ImpactUptimeHint />
                     </FormDescription>
                     <FormControl>
                       <ComponentImpactList

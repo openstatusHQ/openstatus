@@ -176,6 +176,14 @@ export const Events = {
     name: "incident_resolved",
     channel: "incident",
   },
+  ExcuseIncident: {
+    name: "incident_excused",
+    channel: "incident",
+  },
+  UnexcuseIncident: {
+    name: "incident_unexcused",
+    channel: "incident",
+  },
   UpdateIncident: {
     name: "incident_updated",
     channel: "incident",
@@ -194,6 +202,10 @@ export const Events = {
   },
   ChangeManagedIncidentStatus: {
     name: "incident_status_changed",
+    channel: "incident_management",
+  },
+  AcknowledgeManagedIncident: {
+    name: "managed_incident_acknowledged",
     channel: "incident_management",
   },
   AddManagedIncidentNote: {

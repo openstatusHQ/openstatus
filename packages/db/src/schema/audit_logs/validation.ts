@@ -134,6 +134,7 @@ const maintenanceUpdateActions = [
 ] as const;
 
 const monitorIncidentActions = [
+  action("monitor_incident.create", "monitor_incident", intId),
   action("monitor_incident.update", "monitor_incident", intId),
   action("monitor_incident.delete", "monitor_incident", intId),
 ] as const;
@@ -197,10 +198,9 @@ const invitationActions = [
 //     (the acceptance stamp), so `member.create` covers only the paths that
 //     mint a membership with no invitation behind it — today, SSO JIT
 //     provisioning.
-//   - `monitor_incident`: rows originate from the checker pipeline, not user
-//     mutations.
-// When those write paths migrate to the service layer, add the missing
-// verbs alongside.
+//   - `monitor_incident`: nothing deletes one.
+// When a write path for a missing verb appears in the service layer, add the
+// verb alongside.
 const memberActions = [
   // `entityId` is the affected user's id. Member rows have no surrogate key —
   // they're (userId, workspaceId) composite — so the user id is the most
@@ -232,6 +232,24 @@ const monitorTagActions = [
   }),
   action("monitor_tag.update", "monitor_tag", intId),
   action("monitor_tag.delete", "monitor_tag", intId),
+] as const;
+
+const monitorMaintenanceWindowActions = [
+  action(
+    "monitor_maintenance_window.create",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.update",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.delete",
+    "monitor_maintenance_window",
+    intId,
+  ),
 ] as const;
 
 const privateLocationActions = [
@@ -283,6 +301,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
+  ...monitorMaintenanceWindowActions,
   ...ssoActions,
 ]);
 

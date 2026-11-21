@@ -18,8 +18,8 @@ mount. Lint (`openstatus/services-no-legacy-scope`) rejects a bare `"read"` /
 
 | Value | Settable | Satisfied by | Meaning |
 | --- | --- | --- | --- |
-| `monitors:read` | yes | itself, `monitors:write`, `read`, `write`, `*` | list and inspect monitors, tags, private locations, monitor incidents, response logs, uptime history |
-| `monitors:write` | yes | itself, `write`, `*` | create, update, delete monitors and private locations; link tags and notification channels; on-demand checks and probes; acknowledge or resolve monitor incidents; freeze uptime |
+| `monitors:read` | yes | itself, `monitors:write`, `read`, `write`, `*` | list and inspect monitors, tags, private locations, monitor incidents, response logs, uptime history, maintenance windows |
+| `monitors:write` | yes | itself, `write`, `*` | create, update, delete monitors and private locations; link tags and notification channels; on-demand checks and probes; open, auto-resolve, acknowledge, resolve, excuse or unexcuse monitor incidents; freeze uptime; create, update, end, delete maintenance windows |
 | `pages:read` | yes | itself, `pages:write`, `read`, `write`, `*` | list pages and components, slug and custom-domain lookups, import preview |
 | `pages:write` | yes | itself, `write`, `*` | create, update, delete pages, components and groups; provider import (also needs `monitors:write` and `incidents:write`, plus `subscribers:write` when subscribers are included) |
 | `incidents:read` | yes | itself, `incidents:write`, `read`, `write`, `*` | list status reports, managed incidents, their events, postmortems, maintenances |
@@ -64,12 +64,12 @@ Generated from `requireScope` calls on 2026-10-30. Regenerate with
 
 | Scope | Verbs |
 | --- | --- |
-| `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getHeartbeatState, listHeartbeatPings, getMonitorIncident, listMonitorIncidents, getUptimeHistory |
-| `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, updateMonitorHeartbeat, regenerateHeartbeatToken, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, acknowledgeMonitorIncident, resolveMonitorIncident, deleteMonitorIncident, freezeMonitorMonth, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
+| `monitors:read` | getMonitor, listMonitors, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getHeartbeatState, listHeartbeatPings, getMonitorIncident, listMonitorIncidents, getMonitorReport, getUptimeHistory, getMonitorUptimeHistory, listMaintenanceWindows, getMaintenanceWindow |
+| `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, updateMonitorHeartbeat, regenerateHeartbeatToken, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, createMonitorIncident, autoResolveMonitorIncidents, acknowledgeMonitorIncident, resolveMonitorIncident, excuseMonitorIncident, unexcuseMonitorIncident, freezeMonitorMonth, attachFrozenBadRanges, createMaintenanceWindow, updateMaintenanceWindow, endMaintenanceWindow, deleteMaintenanceWindow, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `pages:read` | listPages, getPage, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponentDailySummary, listPageComponentGroups, previewImport |
 | `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `incidents:read` | listStatusReports, getStatusReport, listIncidents, getIncident, getIncidentBySlackChannel, getIncidentForStatusReport, listLinkedStatusReportIds, listIncidentEvents, getIncidentEvent, getPostmortem, listMaintenances, getMaintenance, getMaintenanceUpdate |
-| `incidents:write` | createStatusReport, updateStatusReport, deleteStatusReport, addStatusReportUpdate, updateStatusReportUpdate, deleteStatusReportUpdate, notifyStatusReport, declareIncident, updateIncident, setIncidentStatus, closeIncident, deleteIncident, addIncidentNote, linkIncidentStatusReport, unlinkIncidentStatusReport, bindIncidentSlackChannel, unbindIncidentSlackChannel, draftPostmortem, approvePostmortem, createMaintenance, updateMaintenance, deleteMaintenance, addMaintenanceUpdate, updateMaintenanceUpdate, deleteMaintenanceUpdate, notifyMaintenance |
+| `incidents:write` | createStatusReport, updateStatusReport, deleteStatusReport, addStatusReportUpdate, updateStatusReportUpdate, deleteStatusReportUpdate, notifyStatusReport, declareIncident, updateIncident, setIncidentStatus, acknowledgeIncident, closeIncident, deleteIncident, addIncidentNote, linkIncidentStatusReport, unlinkIncidentStatusReport, bindIncidentSlackChannel, unbindIncidentSlackChannel, draftPostmortem, approvePostmortem, createMaintenance, updateMaintenance, deleteMaintenance, addMaintenanceUpdate, updateMaintenanceUpdate, deleteMaintenanceUpdate, notifyMaintenance |
 | `notifications:read` | listNotifications, getNotification |
 | `notifications:write` | createNotification, updateNotification, deleteNotification, sendTestNotification (RPC handler) |
 | `subscribers:read` | listPageSubscribers, countPageSubscribers; `listAuditLogs` / `getAuditLog` hide `page_subscriber` rows without it |
@@ -80,6 +80,11 @@ Read verbs that take no `ctx` (status-page visitor paths, cron jobs, token
 lookups) carry no scope by design; the lint rule
 `openstatus/services-read-verbs-require-scope` covers the exported `list*`,
 `get*`, `search*`, `stream*`, `preview*` verbs that do.
+
+The frozen-uptime sweeps (`runUptimeFreeze`, `refreezeMonitorMonths`,
+`backfillFrozenBuckets`) take no `ctx` either: they run across workspaces and
+write each row through `freezeMonitorMonth` or `attachFrozenBadRanges` as a
+`system` actor of that row's workspace.
 
 ## Agent tools by scope
 

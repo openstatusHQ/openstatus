@@ -1,4 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  pageCardValues,
+  pageCheckCardValues,
+} from "@openstatus/db/src/schema/pages/constants";
 import { ArrowUpRight } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -47,6 +51,11 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { UptimeCalculation } from "@/components/status-pages/uptime-calculation";
+import {
+  configurationLabels,
+  uptimeModeOf,
+} from "@/data/uptime-calculation.client";
 
 const schema = z.object({
   configuration: z.record(
@@ -58,7 +67,7 @@ const schema = z.object({
 const configurationSchema = z
   .object({
     type: z.enum(["manual", "absolute"]),
-    value: z.enum(["duration", "requests", "manual"]).nullish(),
+    value: z.enum(pageCardValues).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
     days: z
@@ -101,9 +110,9 @@ export function FormConfiguration({
   const watchConfigurationType = form.watch("configuration.type") as
     | "manual"
     | "absolute";
-  const watchConfigurationValue = form.watch("configuration.value") as
-    | "duration"
-    | "requests";
+  const watchConfigurationValue = form.watch(
+    "configuration.value",
+  ) as (typeof pageCheckCardValues)[number];
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
@@ -113,7 +122,12 @@ export function FormConfiguration({
     if (watchConfigurationType === "manual") {
       form.setValue("configuration.value", "manual");
     } else {
-      form.setValue("configuration.value", "duration");
+      // runs on mount too: only replace a value that is invalid for monitor
+      // checks, with the read default of a page without configuration
+      const value = form.getValues("configuration.value");
+      if (!pageCheckCardValues.some((v) => v === value)) {
+        form.setValue("configuration.value", "requests");
+      }
       form.setValue("configuration.type", "absolute");
       if (!watchConfigurationUptime) {
         form.setValue("configuration.uptime", "true");
@@ -198,7 +212,7 @@ export function FormConfiguration({
                     <FormLabel>Card shows</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value) ?? "duration"}
+                      defaultValue={String(field.value) ?? "requests"}
                       disabled={
                         !hasMonitorComponents ||
                         watchConfigurationType === "manual"
@@ -216,7 +230,7 @@ export function FormConfiguration({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(["duration", "requests"] as const).map((value) => (
+                        {pageCheckCardValues.map((value) => (
                           <SelectItem key={value} value={value}>
                             {configurationLabels.value[value]}
                           </SelectItem>
@@ -257,6 +271,19 @@ export function FormConfiguration({
                   </span>
                 )}
               </Note>
+              {hasMonitorComponents ? (
+                <div className="col-span-full grid gap-2">
+                  <span className="text-sm font-medium">
+                    How uptime is calculated
+                  </span>
+                  <UptimeCalculation
+                    mode={uptimeModeOf(
+                      watchConfigurationType,
+                      watchConfigurationValue,
+                    )}
+                  />
+                </div>
+              ) : null}
             </FormCardContent>
             <FormCardSeparator />
             <FormCardContent className="grid gap-4 sm:grid-cols-3">
@@ -386,20 +413,6 @@ export function FormConfiguration({
   );
 }
 
-// UI labels only - the stored enum values stay `absolute`/`manual` and
-// `duration`/`requests`/`manual` (DB, API and URL params).
-export const configurationLabels = {
-  type: {
-    absolute: "Monitor checks",
-    manual: "Reports only",
-  },
-  value: {
-    duration: "Time per status",
-    requests: "Number of requests",
-    manual: "Worst status of the day",
-  },
-} as const;
-
 const message = {
   type: {
     absolute: "bars show your monitor's real results for each day.",
@@ -409,7 +422,9 @@ const message = {
   value: {
     duration:
       "cards show how long the monitor was operational, degraded or down.",
-    requests: "cards show how many requests succeeded, degraded or failed.",
+    requests:
+      "cards show how many checks succeeded, degraded or failed in each region, including private locations and manual checks.",
+    runs: "cards count each scheduled check once across its cloud regions: it fails only when at least half of them fail. Private-only and heartbeat monitors show requests.",
     default: "cards show only the worst status of the day.",
   },
   uptime: {
@@ -422,7 +437,7 @@ const message = {
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
-  value: parseAsStringLiteral(["duration", "requests", "manual"]),
+  value: parseAsStringLiteral(pageCardValues),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
   days: parseAsStringLiteral(["30", "45"]),

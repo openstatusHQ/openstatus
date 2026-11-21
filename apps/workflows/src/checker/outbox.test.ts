@@ -43,7 +43,10 @@ const PAYLOAD: NotificationOutboxPayload = { regions: ["ams"] };
 beforeAll(async () => {
   const { workspace } = await createTestWorkspace();
   workspaceId = workspace.id;
-  const monitorRow = await createMonitor(workspaceId, { regions: "ams" });
+  const monitorRow = await createMonitor(workspaceId, {
+    regions: "ams",
+    active: true,
+  });
   monitorId = monitorRow.id;
   const notif = await createNotification(workspaceId, { provider: "email" });
   notificationId = notif.id;
@@ -273,6 +276,7 @@ describe("drainOutbox", () => {
     });
     const smsMonitor = await createMonitor(smsWorkspace.id, {
       regions: "ams",
+      active: true,
     });
     const smsNotification = await createNotification(smsWorkspace.id, {
       provider: "sms",

@@ -391,6 +391,32 @@ describe("StatusPageService.CreateStatusPage", () => {
     await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
   });
 
+  test("a created page counts requests", async () => {
+    const { workspace } = await createTestWorkspace();
+    const headers = { "x-openstatus-key": String(workspace.id) };
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-requests`,
+        slug: `${TEST_PREFIX}-requests-slug`,
+      },
+      headers,
+    );
+    expect(res.status).toBe(200);
+    const { statusPage } = await res.json();
+    try {
+      const overview = await connectRequest(
+        "GetStatusPageOverview",
+        { id: statusPage.id },
+        headers,
+      );
+      const data = await overview.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+    } finally {
+      await db.delete(page).where(eq(page.id, Number(statusPage.id)));
+    }
+  });
+
   test("returns 401 when no auth key provided", async () => {
     const res = await connectRequest("CreateStatusPage", {
       title: "Unauthorized test",
@@ -3299,6 +3325,30 @@ describe("StatusPageService.GetStatusPageOverview", () => {
       // proto3 JSON omits a false bool (the default), so it reads back as undefined
       expect(data.configuration.showUptime ?? false).toBe(false);
       expect(data.configuration.themeKey).toBe("dracula");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("maps a stored runs value", async () => {
+    const { workspace } = await createTestWorkspace();
+    const createdPage = await createPage(workspace.id, {
+      slug: `${TEST_PREFIX}-overview-runs-config-slug`,
+      accessType: "public",
+      configuration: { value: "runs", type: "absolute" },
+    });
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": String(workspace.id) },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_RUNS");
     } finally {
       await db.delete(page).where(eq(page.id, createdPage.id));
     }

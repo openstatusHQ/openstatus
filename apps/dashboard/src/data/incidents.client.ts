@@ -1,4 +1,4 @@
-import { Acknowledge, Check, Delete } from "@openstatus/icons";
+import { Acknowledge, Check, Reset, Shield } from "@openstatus/icons";
 
 import type { ActivityMark } from "@/components/content/activity";
 import { levelFor } from "@/data/activity.client";
@@ -17,10 +17,16 @@ export const actions = [
     variant: "default" as const,
   },
   {
-    id: "delete",
-    label: "Delete",
-    icon: Delete,
-    variant: "destructive" as const,
+    id: "excuse",
+    label: "Excuse",
+    icon: Shield,
+    variant: "default" as const,
+  },
+  {
+    id: "unexcuse",
+    label: "Unexcuse",
+    icon: Reset,
+    variant: "default" as const,
   },
 ] as const;
 

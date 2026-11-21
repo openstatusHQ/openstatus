@@ -1,14 +1,26 @@
 import { and, db, eq, or } from "@openstatus/db";
+import { PAGE_MAINTENANCE_PAUSE_ENDS } from "@openstatus/db/src/maintenance";
 import {
+  auditLog,
+  maintenance,
   monitor,
+  monitorIncidentTable,
+  monitorMaintenanceWindow,
   notification,
   notificationTrigger,
   notificationsToMonitors,
+  page,
+  pageComponent,
   privateLocation,
   privateLocationMonitorStatus,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
-import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import {
+  createMaintenanceWindow,
+  createPage,
+  createPageMaintenance,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
@@ -217,6 +229,10 @@ describe("updateStatusPrivate", () => {
 
   afterAll(async () => {
     await db
+      .delete(auditLog)
+      .where(eq(auditLog.workspaceId, workspaceId))
+      .run();
+    await db
       .delete(privateLocationMonitorStatus)
       .where(eq(privateLocationMonitorStatus.monitorId, TEST_MONITOR_ID))
       .run();
@@ -421,6 +437,114 @@ describe("updateStatusPrivate", () => {
     expect(row?.status).toBe("active");
   });
 
+  describe("during maintenance", () => {
+    afterEach(async () => {
+      await db
+        .delete(monitorMaintenanceWindow)
+        .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.workspaceId, workspaceId))
+        .run();
+      await db.delete(page).where(eq(page.workspaceId, workspaceId)).run();
+    });
+
+    const report = (cronTimestamp: number) =>
+      post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp,
+      });
+
+    test.each(["pause", "continue"] as const)(
+      "a %s window drops a report that ran inside it; one at its end is processed",
+      async (mode) => {
+        const to = Math.floor(Date.now() / 1000) * 1000 + 3_600_000;
+        await createMaintenanceWindow(workspaceId, {
+          monitorIds: [TEST_MONITOR_ID],
+          mode,
+          from: new Date(to - 7_200_000),
+          to: new Date(to),
+        });
+
+        await report(Date.now());
+        expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+        expect(
+          await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID),
+        ).toBeUndefined();
+
+        if (mode === "continue") {
+          await report(to);
+          expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+        }
+      },
+    );
+
+    test.each(["pause", "continue"] as const)(
+      "a %s window lets a recovery through",
+      async (mode) => {
+        await report(Date.now() - 2000);
+        expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+        const now = Date.now();
+        await createMaintenanceWindow(workspaceId, {
+          monitorIds: [TEST_MONITOR_ID],
+          mode,
+          from: new Date(now - 1000),
+          to: new Date(now + 3_600_000),
+        });
+
+        await post({
+          monitorId: String(TEST_MONITOR_ID),
+          privateLocationId: String(TEST_LOCATION_ID),
+          status: "active",
+          cronTimestamp: now,
+        });
+
+        expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
+        expect((await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
+          "active",
+        );
+      },
+    );
+
+    test("a failure that ran before a pause window is still processed", async () => {
+      const now = Date.now();
+      await createMaintenanceWindow(workspaceId, {
+        monitorIds: [TEST_MONITOR_ID],
+        mode: "pause",
+        from: new Date(now - 1000),
+        to: new Date(now + 3_600_000),
+      });
+
+      await report(now - 60_000);
+
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    });
+
+    test("a status-page maintenance drops the report until the migration ends", async () => {
+      const pageId = (await createPage(workspaceId)).id;
+      const ends = PAGE_MAINTENANCE_PAUSE_ENDS.getTime();
+      await createPageMaintenance(workspaceId, pageId, {
+        monitorId: TEST_MONITOR_ID,
+        from: new Date(ends - 3_600_000),
+        to: new Date(ends + 3_600_000),
+      });
+
+      await report(ends - 1000);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+      expect(await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID)).toBeUndefined();
+
+      await report(ends);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    });
+  });
+
   test("degraded report sends a degraded notification", async () => {
     const res = await post({
       monitorId: String(TEST_MONITOR_ID),
@@ -520,6 +644,64 @@ describe("updateStatusPrivate", () => {
       .get();
     expect(monitorAfter2?.status).toBe("error");
     expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+  });
+
+  test("private-only monitor: the incident is opened and auto-resolved through audited verbs", async () => {
+    await db
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    // SQLite recycles the deleted incident's id, and its audit rows with it.
+    await db
+      .delete(auditLog)
+      .where(eq(auditLog.workspaceId, workspaceId))
+      .run();
+    await db
+      .update(monitor)
+      .set({ status: "active" })
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+
+    const locations = [TEST_LOCATION_ID, PRIVATE_LOCATION_2_ID];
+    for (const [i, status] of (["error", "active"] as const).entries()) {
+      for (const locationId of locations) {
+        const res = await post({
+          monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+          privateLocationId: String(locationId),
+          status,
+          cronTimestamp: 9320010 + i * 100 + locationId,
+        });
+        expect(res.status).toBe(200);
+      }
+    }
+
+    const incidents = await db
+      .select()
+      .from(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .all();
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]?.resolvedAt).not.toBeNull();
+    expect(incidents[0]?.autoResolved).toBe(true);
+
+    const rows = await db
+      .select()
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(incidents[0]?.id)),
+        ),
+      )
+      .orderBy(auditLog.id)
+      .all();
+    expect(rows.map((row) => [row.action, row.actorType, row.actorId])).toEqual(
+      [
+        ["monitor_incident.create", "system", "checker"],
+        ["monitor_incident.update", "system", "checker"],
+      ],
+    );
   });
 
   test("does not change monitor.status from error when 1/3 locations report degraded (threshold not met)", async () => {

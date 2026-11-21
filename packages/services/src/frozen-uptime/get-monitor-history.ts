@@ -8,7 +8,7 @@ import { requireScope } from "../auth";
 import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { monthRange } from "./compute";
-import { fetchLiveDays } from "./live";
+import { fetchLiveDays, mergeLocalDays } from "./live";
 import {
   countsRuns,
   FREEZE_CUTOFF_MS,
@@ -87,35 +87,32 @@ export async function getMonitorUptimeHistory(args: {
     }),
   ]);
 
-  const byDay = new Map<string, DayCount>();
-  const runsByDay = new Map<string, DayCount>();
-  const frozenMonths = new Set<string>();
-  for (const row of frozenRows) {
-    frozenMonths.add(row.month.slice(0, 7));
-    for (const d of frozenMonitorUptimeDaySchema.array().parse(row.days)) {
-      byDay.set(d.day, { day: d.day, ...d.requests });
-      if (d.runs) runsByDay.set(d.day, { day: d.day, ...d.runs });
-    }
-  }
-
-  // only unfrozen months still inside the pipes' 45d lookback: an older
-  // month would come back with its first days missing
-  for (const d of live.days.get(String(_monitor.id))?.values() ?? []) {
+  const frozen = frozenRows.map((row) => ({
+    month: row.month,
+    days: frozenMonitorUptimeDaySchema.array().parse(row.days),
+  }));
+  const frozenMonths = new Set(frozen.map((row) => row.month.slice(0, 7)));
+  const local = mergeLocalDays({
+    frozen,
+    live: live.days.get(String(_monitor.id))?.values() ?? [],
+    timeZone: "UTC",
+  });
+  // an unfrozen month older than the pipes' 45d lookback would come back
+  // with its first days missing
+  const covered = (d: DayCount) => {
     const month = d.day.slice(0, 7);
-    if (frozenMonths.has(month)) continue;
-    if (nowMs - monthRange(`${month}-01`).start >= FREEZE_CUTOFF_MS) continue;
-    byDay.set(d.day, { day: d.day, ...d.requests });
-    if (d.runs) runsByDay.set(d.day, { day: d.day, ...d.runs });
-  }
-
-  const sorted = (days: Map<string, DayCount>) =>
-    [...days.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+    return (
+      frozenMonths.has(month) ||
+      nowMs - monthRange(`${month}-01`).start < FREEZE_CUTOFF_MS
+    );
+  };
+  const runs = local.runs.filter(covered);
 
   const partial = live.failedMonitorIds.size > 0;
   return {
-    days: sorted(byDay),
+    days: local.requests.filter(covered),
     // frozen runs outlive a move to private-only locations
-    runs: withRuns || runsByDay.size > 0 ? sorted(runsByDay) : null,
+    runs: withRuns || runs.length > 0 ? runs : null,
     partial,
     runsPartial: partial || live.failedRunsMonitorIds.size > 0,
   };

@@ -2,7 +2,9 @@ import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   maintenance,
+  notExcused,
   page,
+  pageCardValues,
   pageComponent,
   pageConfigurationSchema,
   privateLocationToMonitors,
@@ -17,6 +19,7 @@ import {
   statusReport,
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
+import { countsRuns } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
   constantTimeEqual,
@@ -59,6 +62,7 @@ import {
   getMetricsLatencyProcedure,
   getMetricsRegionsProcedure,
   getStatusInTimeZoneProcedure,
+  getRunsProcedure,
   getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
@@ -86,6 +90,7 @@ const gateFieldsSchema = selectPageSchema.pick({
 
 // Password for cookie-less server callers (feeds, `?pw=` links).
 const queryPasswordSchema = z.string().nullish();
+const cardTypeSchema = z.enum([...pageCardValues, "dominant"]);
 
 // A host reaches its page through either the slug or the custom domain.
 const bySlugOrDomain = (slug: string) =>
@@ -105,30 +110,57 @@ export function sortStatusReportsByLatestUpdate<
   );
 }
 
-// Status rows grouped into `timeZone` days, with the zone they ended up in.
-async function fetchStatusDays(
-  monitors: Parameters<typeof fetchByJobType>[0],
-  timeZone: string,
-) {
-  const readUtc = async () => ({
-    timeZone: "UTC",
-    rows: await fetchByJobType(monitors, (type) =>
-      getStatusProcedure("45d", type),
-    ),
-  });
+type StatusMonitors = Parameters<typeof fetchByJobType>[0];
+
+function readStatus(monitors: StatusMonitors, timeZone: string) {
   // UTC pages keep the 45d pipes; other zones regroup 15m buckets into their days
-  if (timeZone === "UTC") return readUtc();
+  if (timeZone === "UTC") {
+    return fetchByJobType(monitors, (type) => getStatusProcedure("45d", type));
+  }
+  return fetchByJobType(
+    monitors,
+    (type) =>
+      ({ monitorIds }) =>
+        getStatusInTimeZoneProcedure(type)({ monitorIds, timezone: timeZone }),
+  );
+}
+
+function readRuns(monitors: StatusMonitors, timeZone: string) {
+  return fetchByJobType(monitors, (type) => {
+    const procedure = getRunsProcedure(type);
+    if (!procedure) return null;
+    // the pipe's UTC query runs only when `timezone` is absent
+    return ({ monitorIds }) =>
+      procedure(
+        timeZone === "UTC"
+          ? { monitorIds }
+          : { monitorIds, timezone: timeZone },
+      );
+  });
+}
+
+// Status rows grouped into `timeZone` days, with the zone they ended up in.
+// Runs mode reads run verdicts for monitors that get them, counts for the rest.
+async function fetchStatusDays(
+  monitors: (StatusMonitors[number] & {
+    monitor: { regions: readonly string[] };
+  })[],
+  timeZone: string,
+  cardType: string,
+) {
+  const readIn = async (zone: string) => {
+    if (cardType !== "runs") return readStatus(monitors, zone);
+    const runsGroup = monitors.filter((c) => countsRuns(c.monitor));
+    const rest = monitors.filter((c) => !countsRuns(c.monitor));
+    const [runs, status] = await Promise.all([
+      readRuns(runsGroup, zone),
+      readStatus(rest, zone),
+    ]);
+    return new Map([...status, ...runs]);
+  };
+  if (timeZone === "UTC") return { timeZone: "UTC", rows: await readIn("UTC") };
   try {
-    const rows = await fetchByJobType(
-      monitors,
-      (type) =>
-        ({ monitorIds }) =>
-          getStatusInTimeZoneProcedure(type)({
-            monitorIds,
-            timezone: timeZone,
-          }),
-    );
-    return { timeZone, rows };
+    return { timeZone, rows: await readIn(timeZone) };
   } catch (err) {
     // ClickHouse's tz database can reject a zone Node accepts: keep real bars
     // in UTC days; other errors still drop the page to manual mode
@@ -137,7 +169,7 @@ async function fetchStatusDays(
       `[status-page] zone ${timeZone} failed, using UTC days:`,
       err,
     );
-    return readUtc();
+    return { timeZone: "UTC", rows: await readIn("UTC") };
   }
 }
 
@@ -148,9 +180,7 @@ export const statusPageRouter = createTRPCRouter({
         slug: z.string().toLowerCase(),
         pw: queryPasswordSchema,
         // NOTE: override the defaults we are getting from the page configuration
-        cardType: z
-          .enum(["requests", "duration", "dominant", "manual"])
-          .nullish(),
+        cardType: cardTypeSchema.nullish(),
         barType: z.enum(["absolute", "dominant", "manual"]).nullish(),
       }),
     )
@@ -189,7 +219,9 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  monitorIncidents: true,
+                  monitorIncidents: {
+                    where: notExcused,
+                  },
                 },
               },
               group: true,
@@ -624,7 +656,13 @@ export const statusPageRouter = createTRPCRouter({
           },
           pageComponents: {
             with: {
-              monitor: { with: { monitorIncidents: true } },
+              monitor: {
+                with: {
+                  monitorIncidents: {
+                    where: notExcused,
+                  },
+                },
+              },
               group: true,
             },
             orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
@@ -784,9 +822,7 @@ export const statusPageRouter = createTRPCRouter({
         slug: z.string().toLowerCase(),
         pw: queryPasswordSchema,
         pageComponentIds: z.string().array(),
-        cardType: z
-          .enum(["requests", "duration", "dominant", "manual"])
-          .prefault("requests"),
+        cardType: cardTypeSchema.prefault("requests"),
         barType: z
           .enum(["absolute", "dominant", "manual"])
           .prefault("dominant"),
@@ -823,7 +859,9 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               monitor: {
                 with: {
-                  monitorIncidents: true,
+                  monitorIncidents: {
+                    where: notExcused,
+                  },
                 },
               },
             },
@@ -855,7 +893,7 @@ export const statusPageRouter = createTRPCRouter({
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
           ? Promise.resolve(null)
-          : fetchStatusDays(monitors, pageTimeZone),
+          : fetchStatusDays(monitors, pageTimeZone, input.cardType),
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
@@ -934,7 +972,12 @@ export const statusPageRouter = createTRPCRouter({
         // every component into manual mode so bars/cards still render.
         const forceManual = c.type === "static" || tinybirdUnhealthy;
         const effectiveBarType = forceManual ? "manual" : input.barType;
-        const effectiveCardType = forceManual ? "manual" : input.cardType;
+        // heartbeat and private-only monitors have no runs: they keep counting requests
+        const effectiveCardType = forceManual
+          ? "manual"
+          : input.cardType === "runs" && !(c.monitor && countsRuns(c.monitor))
+            ? "requests"
+            : input.cardType;
 
         const processedData = setDataByType({
           events,

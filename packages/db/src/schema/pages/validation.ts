@@ -10,7 +10,7 @@ import { isKnownTimeZone } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { pageAccessTypes } from "./constants";
+import { pageAccessTypes, pageCardValues } from "./constants";
 import { page } from "./page";
 
 // Exported so `@openstatus/services` can reuse the canonical rules in
@@ -133,7 +133,7 @@ export const insertPageSchema = createInsertSchema(page, {
 // barType and rendering manual-mode bars as empty).
 export const pageConfigurationSchema = z.object({
   value: z
-    .enum(["duration", "requests", "manual"])
+    .enum(pageCardValues)
     .nullish()
     .transform((v) => v ?? "requests"),
   type: z

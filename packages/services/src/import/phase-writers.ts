@@ -1,5 +1,6 @@
 import { and, asc, count, eq, isNull } from "@openstatus/db";
 import {
+  NEW_PAGE_CONFIGURATION_VALUE,
   maintenance,
   maintenanceUpdate,
   maintenancesToPageComponents,
@@ -187,6 +188,7 @@ export async function writePagePhase(
       customDomain: data.customDomain,
       published: data.published,
       icon: data.icon,
+      configuration: { value: NEW_PAGE_CONFIGURATION_VALUE },
     })
     .returning();
 

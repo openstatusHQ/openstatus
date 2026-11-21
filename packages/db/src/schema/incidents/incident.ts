@@ -37,6 +37,8 @@ export const incident = sqliteTable(
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
     resolvedBy: integer("resolved_by").references(() => user.id),
     closedAt: integer("closed_at", { mode: "timestamp" }),
+    acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
+    acknowledgedBy: integer("acknowledged_by").references(() => user.id),
     statusReportId: integer("status_report_id").references(
       () => statusReport.id,
       { onDelete: "set null" },
@@ -106,6 +108,11 @@ export const incidentRelations = relations(incident, ({ one, many }) => ({
     fields: [incident.resolvedBy],
     references: [user.id],
     relationName: "incidentResolvedBy",
+  }),
+  acknowledgedByUser: one(user, {
+    fields: [incident.acknowledgedBy],
+    references: [user.id],
+    relationName: "incidentAcknowledgedBy",
   }),
   statusReport: one(statusReport, {
     fields: [incident.statusReportId],

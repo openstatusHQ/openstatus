@@ -632,6 +632,8 @@ describe("writePagePhase with a taken custom domain", () => {
       const created = await tx.select().from(page).where(eq(page.id, id)).get();
       expect(created?.customDomain).toBe("");
       expect(phase.resources[0].error).toContain("already used");
+      // a new page, so it counts requests like every other creation path
+      expect(created?.configuration).toEqual({ value: "requests" });
     });
   });
 });

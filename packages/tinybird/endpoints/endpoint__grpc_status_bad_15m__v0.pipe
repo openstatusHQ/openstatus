@@ -1,0 +1,25 @@
+TOKEN "endpoint__grpc_status_bad_15m__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+WITH
+    {{ Int64(fromDate, 1730419200000, required=True) }} AS fromMs,
+    {{ Int64(toDate, 1733011200000, required=True) }} AS toMs
+SELECT
+    monitorId,
+    toDate(time) AS day,
+    -- quarter-hour of the UTC day, 0..95; the view buckets by cronTimestamp like the day totals
+    toUInt8(intDiv(toHour(time) * 60 + toMinute(time), 15)) AS bucket,
+    countMerge(degraded) AS degradedCount,
+    countMerge(error) AS errorCount
+FROM mv__grpc_status_15m__v0
+WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+    AND time >= fromUnixTimestamp64Milli(toInt64(fromMs), 'UTC')
+    AND time < fromUnixTimestamp64Milli(toInt64(toMs), 'UTC')
+GROUP BY monitorId, time
+HAVING degradedCount + errorCount > 0
+ORDER BY monitorId, time
+
+TYPE endpoint

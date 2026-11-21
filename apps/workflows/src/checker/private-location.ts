@@ -1,15 +1,9 @@
 import { getLogger } from "@logtape/logtape";
+import { and, db, eq, inArray, isNull, or, schema, sql } from "@openstatus/db";
 import {
-  and,
-  db,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lte,
-  schema,
-  sql,
-} from "@openstatus/db";
+  monitorInMaintenance,
+  monitorInWindow,
+} from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -18,7 +12,7 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
-import { findOpenIncident, resolveIncident } from "./incident-utils";
+import { openIncident, resolveIncident } from "./incident-utils";
 
 const logger = getLogger(["workflow"]);
 
@@ -61,17 +55,21 @@ export async function updateStatusPrivate(c: Context<Env>) {
   // Set event data for OTel/Axiom structured logging (matches cloud checker pattern)
   // Note: Private location pings are ingested to Tinybird separately via Go code in
   // apps/private-location/internal/tinybird/client.go, not through this event object
-  if (event) {
-    event.status_update = {
-      status: status,
-      message: message,
-      region: privateLocationId, // Private location ID as region string
-      status_code: statusCode,
-      cron_timestamp: cronTimestamp,
-      latency_ms: latency,
-      monitorId: monitorIdNumber,
-    };
-  }
+  const statusUpdate: Record<string, unknown> = {
+    status: status,
+    message: message,
+    region: privateLocationId, // Private location ID as region string
+    status_code: statusCode,
+    cron_timestamp: cronTimestamp,
+    latency_ms: latency,
+    monitorId: monitorIdNumber,
+  };
+  if (event) event.status_update = statusUpdate;
+  const recordIncidentError = (error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    statusUpdate.incident_error = errorMessage;
+    return errorMessage;
+  };
 
   try {
     const monitor = await db
@@ -84,34 +82,28 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    const now = new Date();
-    const activeMaintenance = await db
-      .select({ id: schema.maintenance.id })
-      .from(schema.maintenance)
-      .innerJoin(
-        schema.maintenancesToPageComponents,
-        eq(
-          schema.maintenancesToPageComponents.maintenanceId,
-          schema.maintenance.id,
-        ),
-      )
-      .innerJoin(
-        schema.pageComponent,
-        eq(
-          schema.pageComponent.id,
-          schema.maintenancesToPageComponents.pageComponentId,
-        ),
-      )
-      .where(
-        and(
-          lte(schema.maintenance.from, now),
-          gte(schema.maintenance.to, now),
-          eq(schema.pageComponent.monitorId, monitorIdNumber),
-        ),
-      )
-      .get();
+    // checks cannot be stopped from here, so maintenance drops the failures a
+    // check reported while it ran; a recovery always closes its outage
+    const at = new Date(cronTimestamp);
+    const activeMaintenance =
+      status === "active"
+        ? undefined
+        : await db
+            .select({ id: schema.monitor.id })
+            .from(schema.monitor)
+            .where(
+              and(
+                eq(schema.monitor.id, monitorIdNumber),
+                or(
+                  monitorInMaintenance(db, { at, mode: "pause" }),
+                  monitorInWindow(db, at),
+                ),
+              ),
+            )
+            .get();
 
     if (activeMaintenance) {
+      statusUpdate.maintenance_skipped = true;
       return c.json({ success: true }, 200);
     }
 
@@ -229,6 +221,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
       (affectedLocationCount >= numberOfLocations / 2 ||
         numberOfLocations === 1);
 
+    statusUpdate.affected_location_count = affectedLocationCount;
+    statusUpdate.location_count = numberOfLocations;
+    statusUpdate.transition_applied =
+      !hasCloudRegions && shouldTriggerIncident && monitor.status !== status;
+
     let incident = null;
     let triggeredNotifications: { notificationId: number; provider: string }[] =
       [];
@@ -254,63 +251,35 @@ export async function updateStatusPrivate(c: Context<Env>) {
         // Create incident only if private-only monitor AND threshold met
         if (shouldTriggerIncident) {
           try {
-            const existingIncident = await findOpenIncident(monitorIdNumber);
-            if (!existingIncident) {
-              const [newIncident] = await db
-                .insert(schema.monitorIncidentTable)
-                .values({
-                  monitorId: monitorIdNumber,
-                  workspaceId: monitor.workspaceId,
-                  startedAt: new Date(cronTimestamp),
-                })
-                .returning();
-
-              if (newIncident?.id) {
-                incident = newIncident;
-                await checkerAudit.publishAuditLog({
-                  id: `monitor:${monitorId}`,
-                  action: "incident.created",
-                  targets: [{ id: monitorId, type: "monitor" }],
-                  metadata: { cronTimestamp, incidentId: newIncident.id },
-                });
-                logger.info("Created incident", {
-                  incident_id: newIncident.id,
-                  monitor_id: monitorId,
-                  affected_location_count: affectedLocationCount,
-                  total_locations: numberOfLocations,
-                });
-              }
-            } else {
-              incident = existingIncident;
+            const opened = await openIncident({
+              monitorId: monitorIdNumber,
+              workspaceId: monitor.workspaceId,
+              cronTimestamp,
+            });
+            incident = opened.incident;
+            if (opened.created && opened.incident) {
+              await checkerAudit.publishAuditLog({
+                id: `monitor:${monitorId}`,
+                action: "incident.created",
+                targets: [{ id: monitorId, type: "monitor" }],
+                metadata: { cronTimestamp, incidentId: opened.incident.id },
+              });
+              logger.info("Created incident", {
+                incident_id: opened.incident.id,
+                monitor_id: monitorId,
+                affected_location_count: affectedLocationCount,
+                total_locations: numberOfLocations,
+              });
+            } else if (opened.incident) {
               logger.info("Already in incident", {
-                incident_id: existingIncident.id,
+                incident_id: opened.incident.id,
               });
             }
           } catch (error) {
-            // Check if this is a constraint violation (race condition)
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-            if (
-              errorMessage.includes("UNIQUE constraint") ||
-              errorMessage.includes("unique")
-            ) {
-              // Another request created the incident concurrently, fetch it
-              logger.info(
-                "Concurrent incident creation detected, fetching existing",
-                {
-                  monitor_id: monitorId,
-                },
-              );
-              const existingIncident = await findOpenIncident(monitorIdNumber);
-              if (existingIncident) {
-                incident = existingIncident;
-              }
-            } else {
-              logger.error("Failed to create incident", {
-                monitor_id: monitorId,
-                error_message: errorMessage,
-              });
-            }
+            logger.error("Failed to create incident", {
+              monitor_id: monitorId,
+              error_message: recordIncidentError(error),
+            });
           }
         }
 
@@ -365,6 +334,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
           try {
             const incidents = await resolveIncident({
               monitorId,
+              workspaceId: monitor.workspaceId,
               cronTimestamp,
             });
             incident = incidents[0] ?? null;
@@ -373,8 +343,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
               "Failed to resolve incident on degraded transition",
               {
                 monitor_id: monitorId,
-                error_message:
-                  error instanceof Error ? error.message : String(error),
+                error_message: recordIncidentError(error),
               },
             );
             // Continue with notifications even if resolution fails
@@ -431,14 +400,14 @@ export async function updateStatusPrivate(c: Context<Env>) {
           try {
             const incidents = await resolveIncident({
               monitorId,
+              workspaceId: monitor.workspaceId,
               cronTimestamp,
             });
             incident = incidents[0] ?? null;
           } catch (error) {
             logger.warning("Failed to resolve incident on active transition", {
               monitor_id: monitorId,
-              error_message:
-                error instanceof Error ? error.message : String(error),
+              error_message: recordIncidentError(error),
             });
             // Continue with notifications even if resolution fails
           }
@@ -475,12 +444,9 @@ export async function updateStatusPrivate(c: Context<Env>) {
     }
 
     // Add notification outcome to event for OTel logging
-    if (event?.status_update) {
-      (event.status_update as Record<string, unknown>).notificationTriggered =
-        triggeredNotifications.length > 0;
-      (event.status_update as Record<string, unknown>).notifications =
-        triggeredNotifications;
-    }
+    statusUpdate.notificationTriggered = triggeredNotifications.length > 0;
+    statusUpdate.notifications = triggeredNotifications;
+    statusUpdate.incident_id = incident?.id ?? null;
 
     return c.json({ success: true }, 200);
   } catch (error) {

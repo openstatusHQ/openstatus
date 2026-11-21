@@ -1,9 +1,17 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, isNull, schema } from "@openstatus/db";
+import { and, db, eq, isNull, schema } from "@openstatus/db";
+import { ConflictError } from "@openstatus/services";
+import {
+  autoResolveMonitorIncidents,
+  createMonitorIncident,
+} from "@openstatus/services/monitor-incident";
 
 import { checkerAudit } from "../utils/audit-log";
+import { systemContext } from "../utils/system-context";
 
 const logger = getLogger(["workflow"]);
+
+type MonitorIncident = typeof schema.monitorIncidentTable.$inferSelect;
 
 /**
  * Finds an open incident (not resolved) for the given monitor.
@@ -21,67 +29,50 @@ export async function findOpenIncident(monitorId: number) {
     .get();
 }
 
-/**
- * Finds all open incidents (not resolved) for the given monitor.
- */
-export async function findAllOpenIncidents(monitorId: number) {
-  return db
-    .select()
-    .from(schema.monitorIncidentTable)
-    .where(
-      and(
-        eq(schema.monitorIncidentTable.monitorId, monitorId),
-        isNull(schema.monitorIncidentTable.resolvedAt),
-      ),
-    )
-    .all();
+/** Opens an incident, or returns the one already open (`created: false`). */
+export async function openIncident(params: {
+  monitorId: number;
+  workspaceId: number | null;
+  cronTimestamp: number;
+}): Promise<{ incident: MonitorIncident | null; created: boolean }> {
+  const { monitorId, workspaceId, cronTimestamp } = params;
+  const ctx = await systemContext(workspaceId, "checker");
+  try {
+    const incident = await createMonitorIncident({
+      ctx,
+      input: { monitorId, startedAt: new Date(cronTimestamp) },
+    });
+    return { incident, created: true };
+  } catch (error) {
+    if (!(error instanceof ConflictError)) throw error;
+    const incident = await findOpenIncident(monitorId);
+    return { incident: incident ?? null, created: false };
+  }
 }
 
-/**
- * Resolves all open incidents by setting resolvedAt and autoResolved flag.
- * Uses a single atomic bulk update to prevent partial state on failures.
- * Returns array of successfully resolved incidents.
- */
+/** Auto-resolves the monitor's open incidents and returns them. */
 export async function resolveIncident(params: {
   monitorId: string;
+  workspaceId: number | null;
   cronTimestamp: number;
-}): Promise<(typeof schema.monitorIncidentTable.$inferSelect)[]> {
-  const { monitorId, cronTimestamp } = params;
+}): Promise<MonitorIncident[]> {
+  const { monitorId, workspaceId, cronTimestamp } = params;
 
-  // Find ALL open incidents for this monitor
-  const incidents = await findAllOpenIncidents(Number(monitorId));
-
-  if (incidents.length === 0) {
-    return []; // No open incidents
-  }
-
-  // Extract all incident IDs for bulk update
-  const incidentIds = incidents.map((i) => i.id);
-
-  // ATOMIC BULK UPDATE: Resolve all incidents in a single query
-  // This prevents partial state if operation fails midway
-  const resolvedIncidents = await db
-    .update(schema.monitorIncidentTable)
-    .set({
+  const resolvedIncidents = await autoResolveMonitorIncidents({
+    ctx: await systemContext(workspaceId, "checker"),
+    input: {
+      monitorId: Number(monitorId),
       resolvedAt: new Date(cronTimestamp),
-      autoResolved: true,
-    })
-    .where(
-      and(
-        inArray(schema.monitorIncidentTable.id, incidentIds),
-        isNull(schema.monitorIncidentTable.resolvedAt), // Still prevents race conditions
-      ),
-    )
-    .returning();
+    },
+  });
 
-  // Emit audit logs for each resolved incident
-  // These are best-effort; failure here doesn't affect data integrity
   for (const incident of resolvedIncidents) {
     logger.info("Recovered incident", {
       incident_id: incident.id,
       monitor_id: monitorId,
     });
 
+    // Best-effort: the Tinybird trail is not the record, the incident is resolved.
     try {
       await checkerAudit.publishAuditLog({
         id: `monitor:${monitorId}`,
@@ -95,7 +86,6 @@ export async function resolveIncident(params: {
         monitor_id: monitorId,
         error,
       });
-      // Don't throw - incident is already resolved
     }
   }
 

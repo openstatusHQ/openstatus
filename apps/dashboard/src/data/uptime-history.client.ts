@@ -3,7 +3,7 @@ import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
 import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
 import type { HistoryMetric } from "@/data/status-page-history";
-import { formatNumber } from "@/lib/formatter";
+import { formatNumber, truncatePercentage } from "@/lib/formatter";
 
 export type CheckCounts = {
   day: string;
@@ -23,9 +23,7 @@ export type UptimeYear = {
 
 /** Truncated, never rounded up: 99.9999% must not read as 100%. */
 export function formatUptime(ratio: number, digits = 2): string {
-  const factor = 10 ** digits;
-  // epsilon: 0.57 * 100 * 100 is 5699.999…, which would floor to 56.99%
-  return `${(Math.floor(ratio * 100 * factor + 1e-9) / factor).toFixed(digits)}%`;
+  return `${truncatePercentage(ratio * 100, digits)}%`;
 }
 
 function countLabel(count: number, metric: HistoryMetric): string {

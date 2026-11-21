@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { incidentAwaitsAcknowledgement } from "@openstatus/db/src/schema/incidents/constants";
 import { Acknowledge, Check, Close, Reset } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { personName } from "@openstatus/utils";
@@ -38,6 +39,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
 import { ConfirmCloseDialog } from "./confirm-close-dialog";
+import { IncidentAcknowledgeButton } from "./incident-acknowledge-button";
 import { ResolveReportDialog } from "./resolve-report-dialog";
 
 type Incident = NonNullable<RouterOutputs["incident"]["list"]>[number];
@@ -120,6 +122,7 @@ export function IncidentRow({
           (endedAt ?? new Date()).getTime() - incident.startedAt.getTime(),
         );
   const allowed = new Set(incident.allowedTransitions);
+  const awaitsAcknowledgement = incidentAwaitsAcknowledgement(incident);
   // canceling closes the incident for good; ask first
   const transition = (next: IncidentStatus) =>
     next === "canceled"
@@ -150,8 +153,12 @@ export function IncidentRow({
         </EventRowMeta>
       </EventRowContent>
       <EventRowActions>
+        {awaitsAcknowledgement ? (
+          <IncidentAcknowledgeButton incidentId={incident.id} className="h-7" />
+        ) : null}
+        {/* the row menu still carries the transitions */}
         {(["mitigated", "resolved"] as const)
-          .filter((next) => allowed.has(next))
+          .filter((next) => !awaitsAcknowledgement && allowed.has(next))
           .map((next) => (
             <Button
               key={next}

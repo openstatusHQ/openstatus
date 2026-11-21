@@ -9,6 +9,7 @@ import {
 } from "@openstatus/db/src/schema/incidents/constants";
 import {
   Account,
+  Acknowledge,
   Api,
   Chat,
   Check,
@@ -234,6 +235,17 @@ function parseEvent(event: Event): Parsed {
     }
     case "closed":
       return { icon: Lock, phrase: "closed the incident", message: null };
+    case "acknowledged": {
+      // compact rows drop the avatar badge, so the source goes into the sentence
+      const source = eventSource(event);
+      return {
+        icon: Acknowledge,
+        phrase: source
+          ? `acknowledged the incident via ${source.label}`
+          : "acknowledged the incident",
+        message: null,
+      };
+    }
   }
 }
 

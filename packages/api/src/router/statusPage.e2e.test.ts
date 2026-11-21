@@ -7,6 +7,7 @@ import {
   pageSubscriber,
   workspace,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 /**
@@ -1691,5 +1692,176 @@ describe("statusPage exposes page component names, not internal monitor names", 
 
     expect(result?.name).toBe(componentName);
     expect(result?.description).toBe(componentDescription);
+  });
+});
+
+describe("statusPage never serializes excused outages", () => {
+  const excusedSlug = "excused-outage-public-test-page";
+  const excuseReason = "excused-reason-must-not-leak";
+  let excusedPageId: number;
+  let excusedMonitorId: number;
+  let excusedComponentId: number;
+  let visibleIncidentId: number;
+  let excusedIncidentId: number;
+
+  async function createCaller() {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+    return edgeRouter.createCaller(ctx);
+  }
+
+  beforeAll(async () => {
+    await db.delete(page).where(eq(page.slug, excusedSlug));
+    const { workspace: ws, user } = await createTestWorkspace();
+    const workspaceId = ws.id;
+
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId,
+        title: "Excused Outage Page",
+        description: "Verifies excused outages stay private",
+        slug: excusedSlug,
+        customDomain: "",
+      })
+      .returning()
+      .get();
+    excusedPageId = testPage.id;
+
+    const testMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        name: "Excused Outage Monitor",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+      })
+      .returning()
+      .get();
+    excusedMonitorId = testMonitor.id;
+
+    const now = Date.now();
+    const visible = await db
+      .insert(monitorIncidentTable)
+      .values({
+        monitorId: excusedMonitorId,
+        workspaceId,
+        startedAt: new Date(now - 4 * 3_600_000),
+        resolvedAt: new Date(now - 3 * 3_600_000),
+      })
+      .returning()
+      .get();
+    visibleIncidentId = visible.id;
+
+    const excused = await db
+      .insert(monitorIncidentTable)
+      .values({
+        monitorId: excusedMonitorId,
+        workspaceId,
+        startedAt: new Date(now - 2 * 3_600_000),
+        resolvedAt: new Date(now - 3_600_000),
+        excusedAt: new Date(now),
+        excusedBy: user.id,
+        excusedReason: excuseReason,
+      })
+      .returning()
+      .get();
+    excusedIncidentId = excused.id;
+
+    const component = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId,
+        pageId: excusedPageId,
+        type: "monitor",
+        monitorId: excusedMonitorId,
+        name: "Excused Outage Component",
+        order: 0,
+      })
+      .returning()
+      .get();
+    excusedComponentId = component.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, excusedComponentId));
+    await db
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, excusedMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, excusedMonitorId));
+    await db.delete(page).where(eq(page.id, excusedPageId));
+  });
+
+  test("get keeps the plain outage and drops the excused one", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({
+      slug: excusedSlug,
+      barType: "absolute",
+    });
+
+    const ids = (
+      result?.pageComponents.find((c) => c.id === excusedComponentId)?.monitor
+        ?.monitorIncidents ?? []
+    ).map((i) => i.id);
+    expect(ids).toEqual([visibleIncidentId]);
+    expect(result?.incidents.map((i) => i.id)).not.toContain(excusedIncidentId);
+    expect(JSON.stringify(result)).not.toContain(excuseReason);
+  });
+
+  test("getLight and getUptime never carry the excuse", async () => {
+    const caller = await createCaller();
+    const light = await caller.statusPage.getLight({ slug: excusedSlug });
+    const uptime = await caller.statusPage.getUptime({
+      slug: excusedSlug,
+      pageComponentIds: [String(excusedComponentId)],
+    });
+
+    expect(JSON.stringify(light)).not.toContain(excuseReason);
+    expect(JSON.stringify(uptime)).not.toContain(excuseReason);
+  });
+});
+
+describe("statusPage on a page stored in runs mode", () => {
+  const runsSlug = "e2e-runs-mode-page";
+
+  beforeAll(async () => {
+    await db.delete(page).where(eq(page.slug, runsSlug));
+    const { workspace: ws } = await createTestWorkspace();
+    await db.insert(page).values({
+      workspaceId: ws.id,
+      title: "E2E Runs Mode Page",
+      description: "",
+      slug: runsSlug,
+      customDomain: "",
+      published: true,
+      configuration: { value: "runs", type: "absolute" },
+    });
+  });
+
+  afterAll(async () => {
+    await db.delete(page).where(eq(page.slug, runsSlug));
+  });
+
+  test("get and getLight load it and keep the stored value", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    const caller = edgeRouter.createCaller(
+      // @ts-expect-error - auth not required for public procedure
+      createInnerTRPCContext({ req: undefined, auth: undefined }),
+    );
+
+    const result = await caller.statusPage.get({ slug: runsSlug });
+    expect(result?.configuration?.value).toBe("runs");
+
+    const light = await caller.statusPage.getLight({ slug: runsSlug });
+    expect(light).not.toBeNull();
   });
 });

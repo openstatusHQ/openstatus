@@ -178,7 +178,7 @@ export function setDataByType({
 }: {
   events: Event[];
   data: StatusData[];
-  cardType: "requests" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
   /** IANA zone whose calendar days the bars stand for */
   timeZone?: string;
@@ -356,11 +356,12 @@ export function setDataByType({
       count: number;
     }>,
   ): UptimeData["card"] {
+    const unit = cardType === "runs" ? "runs" : "reqs";
     return entries
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
-        value: `${formatNumber(entry.count)} reqs`,
+        value: `${formatNumber(entry.count)} ${unit}`,
       }));
   }
 
@@ -516,6 +517,7 @@ export function setDataByType({
 
     switch (cardType) {
       case "requests":
+      case "runs":
         if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
@@ -675,7 +677,7 @@ export function getUptime({
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
-  cardType: "requests" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   /** no public regions and ≥1 private location: include probe errors in duration uptime */
   privateLocationOnly?: boolean;
   /** pings are not checks: uptime is incident time since the first signal */

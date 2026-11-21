@@ -27,3 +27,10 @@ export const pageAccessTypes = [
   "email-domain",
   "ip-restriction",
 ] as const;
+
+// card values of monitor checks; "manual" belongs to status reports only
+export const pageCheckCardValues = ["duration", "requests", "runs"] as const;
+export const pageCardValues = [...pageCheckCardValues, "manual"] as const;
+
+// written on create; stays "requests" until pages have moved to "runs"
+export const NEW_PAGE_CONFIGURATION_VALUE = "requests" as const;

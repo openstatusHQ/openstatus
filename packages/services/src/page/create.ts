@@ -1,4 +1,5 @@
 import {
+  NEW_PAGE_CONFIGURATION_VALUE,
   page,
   pageComponent,
   selectPageSchema,
@@ -18,7 +19,6 @@ import {
 } from "./internal";
 import { CreatePageInput, NewPageInput } from "./schemas";
 
-/** Full create — mirrors legacy `pageRouter.create` (insertPageSchema input). */
 export async function createPage(args: {
   ctx: ServiceContext;
   input: CreatePageInput;
@@ -67,6 +67,11 @@ export async function createPage(args: {
       ...pageProps
     } = input;
     const monitorIds = monitors?.map((m) => m.monitorId) ?? [];
+    // the column's zod type is any json; only an object carries settings
+    const stored =
+      typeof configuration === "object" && !Array.isArray(configuration)
+        ? configuration
+        : null;
 
     const row = await tx
       .insert(page)
@@ -76,7 +81,10 @@ export async function createPage(args: {
         // column — drizzle serialises objects automatically. Calling
         // `JSON.stringify` first would double-encode and persist a raw
         // JSON string, breaking downstream reads that expect an object.
-        configuration,
+        configuration: {
+          ...stored,
+          value: stored?.value ?? NEW_PAGE_CONFIGURATION_VALUE,
+        },
         ...pageProps,
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),
@@ -154,7 +162,7 @@ export async function newPage(args: {
 
     const defaultConfiguration = {
       type: "absolute",
-      value: "requests",
+      value: NEW_PAGE_CONFIGURATION_VALUE,
       uptime: true,
       theme: "default-rounded",
     };

@@ -11,6 +11,7 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
+import { resolveOpenMonitorIncidents } from "../monitor-incident/internal";
 import { monitorAuditSnapshot } from "./internal";
 import { DeleteMonitorInput, DeleteMonitorsInput } from "./schemas";
 
@@ -47,6 +48,7 @@ export async function deleteMonitor(args: {
       .update(monitor)
       .set({ deletedAt: new Date(), active: false })
       .where(eq(monitor.id, existing.id));
+    await resolveOpenMonitorIncidents({ tx, ctx, monitorIds: [existing.id] });
     await tx
       .delete(monitorTagsToMonitors)
       .where(eq(monitorTagsToMonitors.monitorId, existing.id));
@@ -127,6 +129,7 @@ export async function deleteMonitors(args: {
           eq(monitor.workspaceId, ctx.workspace.id),
         ),
       );
+    await resolveOpenMonitorIncidents({ tx, ctx, monitorIds: ids });
     await tx
       .delete(monitorTagsToMonitors)
       .where(inArray(monitorTagsToMonitors.monitorId, ids));

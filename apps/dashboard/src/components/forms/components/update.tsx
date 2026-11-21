@@ -145,7 +145,7 @@ export function FormComponentsUpdate() {
                   ? values.configuration.uptime
                   : values.configuration.uptime === "true",
               value: (values.configuration.value ??
-                "duration") as PageConfiguration["value"],
+                "requests") as PageConfiguration["value"],
               type: (values.configuration.type ??
                 "absolute") as PageConfiguration["type"],
               theme: (values.configuration.theme ??

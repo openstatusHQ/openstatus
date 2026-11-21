@@ -1,9 +1,11 @@
-import { db, eq } from "@openstatus/db";
+import { db, eq, sql } from "@openstatus/db";
 import { monitorIncidentTable, monitor } from "@openstatus/db/src/schema";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { ZodError } from "zod";
 
 import {
   expectAuditRow,
+  readAuditLog,
   createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
@@ -12,9 +14,13 @@ import {
 import type { DrizzleTx, ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { acknowledgeMonitorIncident } from "../acknowledge";
-import { deleteMonitorIncident } from "../delete";
+import { monitorIncidentAuditStatement } from "../audit-statement";
+import { autoResolveMonitorIncidents } from "../auto-resolve";
+import { createMonitorIncident } from "../create";
+import { excuseMonitorIncident } from "../excuse";
 import { getMonitorIncident, listMonitorIncidents } from "../list";
 import { resolveMonitorIncident } from "../resolve";
+import { unexcuseMonitorIncident } from "../unexcuse";
 
 const TEST_PREFIX = "svc-incident-test";
 
@@ -207,27 +213,28 @@ describe("resolveMonitorIncident", () => {
   });
 });
 
-describe("deleteMonitorIncident", () => {
-  test("removes the row and emits audit", async () => {
+describe("excuseMonitorIncident", () => {
+  test("stamps excusedAt, excusedBy and reason on a resolved outage", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const incident = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
+        resolvedAt: new Date(),
       });
 
-      await deleteMonitorIncident({ ctx, input: { id: incident.id } });
+      const updated = await excuseMonitorIncident({
+        ctx,
+        input: { id: incident.id, reason: "Upstream DNS provider outage" },
+      });
 
-      const remaining = await tx
-        .select()
-        .from(monitorIncidentTable)
-        .where(eq(monitorIncidentTable.id, incident.id))
-        .all();
-      expect(remaining).toHaveLength(0);
+      expect(updated.excusedAt).toBeInstanceOf(Date);
+      expect(updated.excusedBy).toBe(1);
+      expect(updated.excusedReason).toBe("Upstream DNS provider outage");
 
       await expectAuditRow({
         workspaceId: teamCtx.workspace.id,
-        action: "monitor_incident.delete",
+        action: "monitor_incident.update",
         entityType: "monitor_incident",
         entityId: incident.id,
         db: tx,
@@ -235,20 +242,140 @@ describe("deleteMonitorIncident", () => {
     });
   });
 
-  test("throws NotFoundError for cross-workspace delete", async () => {
+  test("requires a non-empty reason", async () => {
     await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+
+      await expect(
+        excuseMonitorIncident({
+          ctx,
+          input: { id: incident.id, reason: "  " },
+        }),
+      ).rejects.toBeInstanceOf(ZodError);
+    });
+  });
+
+  test("rejects an outage that is already excused and keeps its reason", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+      await excuseMonitorIncident({
+        ctx,
+        input: { id: incident.id, reason: "first" },
+      });
+
+      await expect(
+        excuseMonitorIncident({
+          ctx,
+          input: { id: incident.id, reason: "second" },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      const row = await tx
+        .select({ reason: monitorIncidentTable.excusedReason })
+        .from(monitorIncidentTable)
+        .where(eq(monitorIncidentTable.id, incident.id))
+        .get();
+      expect(row?.reason).toBe("first");
+    });
+  });
+
+  test("rejects an open outage", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
       const incident = await insertIncident(tx, {
         workspaceId: teamCtx.workspace.id,
         monitorId: testMonitorId,
       });
 
       await expect(
-        deleteMonitorIncident({
+        excuseMonitorIncident({
+          ctx,
+          input: { id: incident.id, reason: "Still failing" },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+  });
+
+  test("throws NotFoundError for a cross-workspace incident", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+
+      await expect(
+        excuseMonitorIncident({
           ctx: { ...freeCtx, db: tx },
-          input: { id: incident.id },
+          input: { id: incident.id, reason: "Not mine" },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
     });
+  });
+
+  test("rejects read-only actor", async () => {
+    const ctx = makeApiKeyCtx(teamCtx.workspace, {
+      keyId: "k-read",
+      userId: 1,
+      scopes: ["monitors:read"],
+    });
+    await expect(
+      excuseMonitorIncident({ ctx, input: { id: 1, reason: "x" } }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+});
+
+describe("unexcuseMonitorIncident", () => {
+  test("clears all excuse columns and emits audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+      await excuseMonitorIncident({
+        ctx,
+        input: { id: incident.id, reason: "Planned migration" },
+      });
+
+      const updated = await unexcuseMonitorIncident({
+        ctx,
+        input: { id: incident.id },
+      });
+
+      expect(updated.excusedAt).toBeNull();
+      expect(updated.excusedBy).toBeNull();
+      expect(updated.excusedReason).toBeNull();
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_incident.update",
+        entityType: "monitor_incident",
+        entityId: incident.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    const ctx = makeApiKeyCtx(teamCtx.workspace, {
+      keyId: "k-read",
+      userId: 1,
+      scopes: ["monitors:read"],
+    });
+    await expect(
+      unexcuseMonitorIncident({ ctx, input: { id: 1 } }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
 
@@ -337,6 +464,34 @@ describe("list / get", () => {
     });
   });
 
+  test("attributes who excused, without filtering excused rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date(),
+      });
+      await excuseMonitorIncident({
+        ctx,
+        input: { id: incident.id, reason: "Provider outage" },
+      });
+
+      const { items } = await listMonitorIncidents({
+        ctx,
+        input: {
+          limit: 100,
+          offset: 0,
+          order: "desc",
+          monitorId: testMonitorId,
+        },
+      });
+      const row = items.find((i) => i.id === incident.id);
+      expect(row?.excusedReason).toBe("Provider outage");
+      expect(row?.excusedByUser?.id).toBe(1);
+    });
+  });
+
   test("leaves attribution empty for an auto-resolved incident", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
@@ -352,6 +507,270 @@ describe("list / get", () => {
       });
       expect(full.acknowledgedByUser).toBeNull();
       expect(full.resolvedByUser).toBeNull();
+      expect(full.excusedByUser).toBeNull();
+    });
+  });
+});
+
+describe("monitorIncidentAuditStatement", () => {
+  const actor = { type: "system", job: "checker" } as const;
+
+  test("writes the create row emitAudit would write", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+
+      await tx.run(
+        monitorIncidentAuditStatement({
+          actor,
+          transition: "created",
+          where: eq(monitorIncidentTable.id, incident.id),
+        }),
+      );
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: incident.id,
+        db: tx,
+      });
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        action: "monitor_incident.create",
+        actorType: "system",
+        actorId: "checker",
+        actorUserId: null,
+        before: null,
+        changedFields: null,
+      });
+      expect(rows[0]?.after).toEqual(JSON.parse(JSON.stringify(incident)));
+    });
+  });
+
+  test("writes the update row of the auto-resolve that follows it", async () => {
+    await withTestTransaction(async (tx) => {
+      const open = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+      const earlier = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+        resolvedAt: new Date("2026-03-01T00:00:00Z"),
+      });
+      const resolvedAt = new Date("2026-03-01T00:00:00Z");
+
+      await tx.run(
+        monitorIncidentAuditStatement({
+          actor,
+          transition: "auto_resolved",
+          resolvedAt,
+          where: eq(monitorIncidentTable.monitorId, testMonitorId),
+        }),
+      );
+      const [resolved] = await tx
+        .update(monitorIncidentTable)
+        .set({ resolvedAt, autoResolved: true })
+        .where(eq(monitorIncidentTable.id, open.id))
+        .returning();
+
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: open.id,
+        db: tx,
+      });
+      expect(row?.action).toBe("monitor_incident.update");
+      expect(row?.actorType).toBe("system");
+      expect(row?.changedFields).toEqual(["resolvedAt", "autoResolved"]);
+      expect(row?.before).toEqual(JSON.parse(JSON.stringify(open)));
+      expect(row?.after).toEqual(JSON.parse(JSON.stringify(resolved)));
+
+      // an incident already resolved at the same second is not audited again
+      const others = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: earlier.id,
+        db: tx,
+      });
+      expect(others).toHaveLength(0);
+    });
+  });
+
+  test("writes nothing when no incident matches", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+
+      await tx.run(
+        monitorIncidentAuditStatement({
+          actor,
+          transition: "created",
+          where: sql`${monitorIncidentTable.id} = ${incident.id} AND changes() > 1`,
+        }),
+      );
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: incident.id,
+        db: tx,
+      });
+      expect(rows).toHaveLength(0);
+    });
+  });
+});
+
+describe("createMonitorIncident", () => {
+  test("opens an incident and audits it in the same transaction", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = {
+        workspace: teamCtx.workspace,
+        actor: { type: "system", job: "checker" },
+        db: tx,
+      };
+      const startedAt = new Date("2026-01-02T03:04:05Z");
+
+      const created = await createMonitorIncident({
+        ctx,
+        input: { monitorId: testMonitorId, startedAt },
+      });
+
+      expect(created.monitorId).toBe(testMonitorId);
+      expect(created.workspaceId).toBe(teamCtx.workspace.id);
+      expect(created.startedAt).toEqual(startedAt);
+      expect(created.resolvedAt).toBeNull();
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor_incident.create",
+        entityType: "monitor_incident",
+        entityId: created.id,
+        actorType: "system",
+        db: tx,
+      });
+    });
+  });
+
+  test("throws ConflictError while an incident is open, and audits nothing", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const open = await createMonitorIncident({
+        ctx,
+        input: { monitorId: testMonitorId },
+      });
+
+      await expect(
+        createMonitorIncident({
+          ctx,
+          input: { monitorId: testMonitorId, startedAt: new Date(0) },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        db: tx,
+      });
+      expect(rows.map((row) => row.entityId)).toEqual([String(open.id)]);
+    });
+  });
+
+  test("throws NotFoundError for another workspace's monitor", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createMonitorIncident({
+          ctx: { ...freeCtx, db: tx },
+          input: { monitorId: testMonitorId },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("requires monitors:write", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "read-only",
+          scopes: ["monitors:read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createMonitorIncident({ ctx, input: { monitorId: testMonitorId } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("autoResolveMonitorIncidents", () => {
+  test("closes the open incident and audits the diff", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = {
+        workspace: teamCtx.workspace,
+        actor: { type: "system", job: "checker" },
+        db: tx,
+      };
+      const open = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+      const resolvedAt = new Date("2026-01-02T03:04:05Z");
+
+      const resolved = await autoResolveMonitorIncidents({
+        ctx,
+        input: { monitorId: testMonitorId, resolvedAt },
+      });
+
+      expect(resolved.map((row) => row.id)).toEqual([open.id]);
+      expect(resolved[0]?.resolvedAt).toEqual(resolvedAt);
+      expect(resolved[0]?.autoResolved).toBe(true);
+      expect(resolved[0]?.resolvedBy).toBeNull();
+
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor_incident",
+        entityId: open.id,
+        db: tx,
+      });
+      expect(row?.action).toBe("monitor_incident.update");
+      expect(row?.actorType).toBe("system");
+      expect(row?.changedFields?.toSorted()).toEqual([
+        "autoResolved",
+        "resolvedAt",
+      ]);
+    });
+  });
+
+  test("returns nothing when no incident is open", async () => {
+    await withTestTransaction(async (tx) => {
+      const resolved = await autoResolveMonitorIncidents({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorId: testMonitorId },
+      });
+      expect(resolved).toEqual([]);
+    });
+  });
+
+  test("requires monitors:write", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "read-only",
+          scopes: ["monitors:read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        autoResolveMonitorIncidents({
+          ctx,
+          input: { monitorId: testMonitorId },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

@@ -77,6 +77,38 @@ FORWARD_QUERY >
 It is a `SELECT` list only, no `FROM`/`WHERE`, and it applies to existing data
 until the next deploy compacts it. Remove it once the change is live.
 
+## Backfilling quarter-hour ranges for frozen months
+
+Months frozen before quarter-hour ranges existed carry day counts only, so the
+status page cannot regroup them into other time zones. The `copies/` pipes
+rebuild their failing quarter-hours from raw data (which has no TTL) into
+`frozen_bad_15m_backfill__v0`; the workflows route then adds the ranges to
+each frozen row whose ranges sum exactly to its stored day counts.
+
+1. Deploy (`tb --cloud deploy`), which creates the datasource, the ten copy
+   pipes and `endpoint__frozen_bad_15m_backfill__v0`.
+2. For each month to backfill, oldest first, run all ten pipes:
+
+   ```bash
+   for t in http tcp dns icmp grpc; do for m in status runs; do
+     tb --cloud copy run copy__${t}_${m}_bad_15m_backfill__v0 --param month=2026-08-01 --wait
+   done; done
+   ```
+
+   Add `--param monitorIds=1,2` to limit a run. Running a month again
+   replaces the buckets it finds again; a bucket from an earlier run that no
+   longer appears stays. Raw data does not change, so that only matters after
+   a prune: truncate the month in `frozen_bad_15m_backfill__v0` first then.
+3. Call `GET /uptime-freeze/backfill-buckets?month=2026-08-01` on workflows
+   (`Authorization: $CRON_SECRET`, optional `&monitorIds=1,2`). It returns
+   `updated`, `mismatched`, `skipped` (heartbeat) and `failed`.
+4. Do all of this before the next manual raw prune
+   (`apps/workflows/src/scripts/tinybird.ts`).
+
+Where raw data has already been pruned (the free plan keeps 14 days), months
+with failures come back `mismatched` and stay UTC-only. That is correct: the
+counts are never changed, and those rows simply keep no ranges.
+
 ## Self-hosting
 
 **Tinybird is optional.** Openstatus runs without it; you lose the charts and

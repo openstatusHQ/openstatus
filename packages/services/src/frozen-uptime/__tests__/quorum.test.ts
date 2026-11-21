@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { quorumRegionCount, runsByMonitorDay } from "../quorum";
+import { countsRuns } from "../run";
 
 describe("quorumRegionCount", () => {
   test("counts unique cloud regions", () => {
@@ -66,5 +67,18 @@ describe("runsByMonitorDay", () => {
         { monitorId: "1", day: "2026-11-02", ok: 0, degraded: 0, error: 0 },
       ]).size,
     ).toBe(0);
+  });
+});
+
+describe("countsRuns", () => {
+  test("takes regions as a list, as parsed monitors carry them", () => {
+    expect(countsRuns({ jobType: "http", regions: ["ams", "fra"] })).toBe(true);
+    expect(countsRuns({ jobType: "http", regions: [] })).toBe(false);
+    expect(countsRuns({ jobType: "heartbeat", regions: ["ams"] })).toBe(false);
+  });
+
+  test("is exported for the status page", async () => {
+    const pkg = await import("../index");
+    expect(pkg.countsRuns({ jobType: "tcp", regions: "ams" })).toBe(true);
   });
 });

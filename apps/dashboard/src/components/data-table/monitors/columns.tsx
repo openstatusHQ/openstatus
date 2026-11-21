@@ -7,6 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { getMonitorHealth } from "@/data/monitors.client";
 import { formatDistanceToNowShort } from "@/lib/formatter";
 
 import { TableCellSkeleton } from "../dable-cell-skeleton";
@@ -49,7 +50,7 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "status",
-    accessorFn: (row) => (row.active ? row.status : "inactive"),
+    accessorFn: (row) => getMonitorHealth(row),
     header: () => <span className="sr-only">Status</span>,
     cell: ({ row }) => {
       const value = String(row.getValue("status"));
@@ -61,6 +62,8 @@ export const columns: ColumnDef<Monitor>[] = [
           return <TableCellIndicator variant="warning" label={value} />;
         case "error":
           return <TableCellIndicator variant="destructive" label={value} />;
+        case "maintenance":
+          return <TableCellIndicator variant="info" label={value} />;
         default:
           return <TableCellIndicator variant="muted" label={value} />;
       }

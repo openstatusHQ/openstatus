@@ -20,9 +20,17 @@ export type ResolveMonitorIncidentInput = z.infer<
   typeof ResolveMonitorIncidentInput
 >;
 
-export const DeleteMonitorIncidentInput = z.object({ id: z.number().int() });
-export type DeleteMonitorIncidentInput = z.infer<
-  typeof DeleteMonitorIncidentInput
+export const ExcuseMonitorIncidentInput = z.object({
+  id: z.number().int(),
+  reason: z.string().trim().min(1, "A reason is required."),
+});
+export type ExcuseMonitorIncidentInput = z.infer<
+  typeof ExcuseMonitorIncidentInput
+>;
+
+export const UnexcuseMonitorIncidentInput = z.object({ id: z.number().int() });
+export type UnexcuseMonitorIncidentInput = z.infer<
+  typeof UnexcuseMonitorIncidentInput
 >;
 
 export const GetMonitorIncidentInput = z.object({ id: z.number().int() });
@@ -41,3 +49,31 @@ export const ListMonitorIncidentsInput = z.object({
 export type ListMonitorIncidentsInput = z.infer<
   typeof ListMonitorIncidentsInput
 >;
+
+// `z.coerce.date()` turns `null` into 1970-01-01; reject it before coercing.
+const coercedDate = z
+  .union([z.string(), z.number(), z.date()])
+  .pipe(z.coerce.date());
+
+export const CreateMonitorIncidentInput = z.object({
+  monitorId: z.number().int(),
+  startedAt: coercedDate.default(() => new Date()),
+});
+export type CreateMonitorIncidentInput = z.input<
+  typeof CreateMonitorIncidentInput
+>;
+
+export const AutoResolveMonitorIncidentsInput = z.object({
+  monitorId: z.number().int(),
+  resolvedAt: coercedDate.default(() => new Date()),
+});
+export type AutoResolveMonitorIncidentsInput = z.input<
+  typeof AutoResolveMonitorIncidentsInput
+>;
+
+export const GetMonitorReportInput = z.object({
+  monitorId: z.number().int(),
+  from: coercedDate,
+  to: coercedDate,
+});
+export type GetMonitorReportInput = z.infer<typeof GetMonitorReportInput>;

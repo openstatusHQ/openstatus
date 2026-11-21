@@ -13,6 +13,7 @@ SELECT
     countMerge(degraded) as degraded
 FROM mv__tcp_status_45d__v1
 WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+    AND time >= toStartOfDay(now()) - INTERVAL {{ Int16(days, 45) }} DAY
 GROUP BY day, monitorId
 ORDER BY day DESC
 

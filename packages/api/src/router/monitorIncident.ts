@@ -1,10 +1,15 @@
 import { Events } from "@openstatus/analytics";
-import { NotFoundError } from "@openstatus/services";
 import {
+  ExcuseMonitorIncidentInput,
+  GetMonitorIncidentInput,
+  UnexcuseMonitorIncidentInput,
   acknowledgeMonitorIncident,
-  deleteMonitorIncident,
+  excuseMonitorIncident,
+  getMonitorIncident,
+  getMonitorReport,
   listMonitorIncidents,
   resolveMonitorIncident,
+  unexcuseMonitorIncident,
 } from "@openstatus/services/monitor-incident";
 import { z } from "zod";
 
@@ -13,23 +18,6 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { periods } from "./utils";
 
 export const monitorIncidentRouter = createTRPCRouter({
-  delete: protectedProcedure
-    .meta({ track: Events.DeleteIncident })
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await deleteMonitorIncident({
-          ctx: toServiceCtx(ctx),
-          input: { id: input.id },
-        });
-      } catch (err) {
-        // Preserve the pre-migration idempotent behaviour — the old tRPC
-        // delete silently returned when the row was already gone.
-        if (err instanceof NotFoundError) return;
-        toTRPCError(err);
-      }
-    }),
-
   list: protectedProcedure
     .input(
       z
@@ -57,9 +45,40 @@ export const monitorIncidentRouter = createTRPCRouter({
         // Filter-and-log instead of throwing on orphaned rows: a single
         // incident missing its monitor (data-migration artifact, partial
         // cascade) shouldn't blow up the whole list and break the
-        // `/overview` / `/monitors/:id/incidents` surfaces. We still log
+        // `/overview` / `/monitors/:id/report` surfaces. We still log
         // so the inconsistency remains visible.
         return items.filter(hasMonitor);
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  get: protectedProcedure
+    .input(GetMonitorIncidentInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getMonitorIncident({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  report: protectedProcedure
+    // not GetMonitorReportInput: its coerced dates type the client input as unknown
+    .input(
+      z.object({
+        monitorId: z.number(),
+        from: z.date(),
+        to: z.date(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const report = await getMonitorReport({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+        return { ...report, incidents: report.incidents.filter(hasMonitor) };
       } catch (err) {
         toTRPCError(err);
       }
@@ -90,6 +109,30 @@ export const monitorIncidentRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
         });
+        return true;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  excuse: protectedProcedure
+    .meta({ track: Events.ExcuseIncident })
+    .input(ExcuseMonitorIncidentInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await excuseMonitorIncident({ ctx: toServiceCtx(ctx), input });
+        return true;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  unexcuse: protectedProcedure
+    .meta({ track: Events.UnexcuseIncident })
+    .input(UnexcuseMonitorIncidentInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await unexcuseMonitorIncident({ ctx: toServiceCtx(ctx), input });
         return true;
       } catch (err) {
         toTRPCError(err);

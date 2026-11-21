@@ -379,8 +379,14 @@ describe("headerBlocks", () => {
       status: "open" as const,
       summary: null,
     };
-    const actionIds = (closedAt: Date | null) =>
-      headerBlocks({ ...base, closedAt }, "https://app.test/incidents/7")
+    const actionIds = (
+      closedAt: Date | null,
+      acknowledgedAt: Date | null = new Date(),
+    ) =>
+      headerBlocks(
+        { ...base, closedAt, acknowledgedAt },
+        "https://app.test/incidents/7",
+      )
         .flatMap((b) => (b.type === "actions" ? b.elements : []))
         .map((e) => e.action_id);
     expect(actionIds(null)).toEqual([
@@ -389,5 +395,28 @@ describe("headerBlocks", () => {
       INCIDENT_CARD_ACTIONS.open,
     ]);
     expect(actionIds(new Date())).toEqual([INCIDENT_CARD_ACTIONS.open]);
+  });
+
+  test("leads with Acknowledge until someone has acknowledged", () => {
+    const actionIds = (acknowledgedAt: Date | null) =>
+      headerBlocks(
+        {
+          id: 7,
+          title: "API down",
+          severity: "major" as const,
+          status: "open" as const,
+          summary: null,
+          closedAt: null,
+          acknowledgedAt,
+        },
+        "https://app.test/incidents/7",
+      )
+        .flatMap((b) => (b.type === "actions" ? b.elements : []))
+        .map((e) => e.action_id);
+
+    expect(actionIds(null)[0]).toBe(INCIDENT_CARD_ACTIONS.acknowledge);
+    expect(actionIds(new Date())).not.toContain(
+      INCIDENT_CARD_ACTIONS.acknowledge,
+    );
   });
 });

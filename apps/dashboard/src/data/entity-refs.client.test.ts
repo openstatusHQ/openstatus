@@ -57,6 +57,7 @@ describe("auditEntityKind", () => {
   it("maps audit entity types with a card", () => {
     expect(auditEntityKind("status_report")).toBe("statusReport");
     expect(auditEntityKind("private_location")).toBe("privateLocation");
+    expect(auditEntityKind("monitor_incident")).toBe("monitorIncident");
   });
 
   it("returns undefined for types without a card", () => {

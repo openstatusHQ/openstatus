@@ -2,6 +2,7 @@ import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 
 import { monitorRegions } from "../../db/src/schema/constants";
+import { frozenMonitorUptimeMonthSchema } from "../../db/src/schema/frozen_uptime/month";
 import { env } from "./env";
 import {
   headersSchema,
@@ -348,8 +349,23 @@ const grpcUptimeShape = z.object({
   error: z.int(),
 });
 
+// days back from today, 45 by default in the pipe. The views keep 76 UTC days
+// counting today, and a reader's time zone can shift the window one more.
+const windowDays = z.int().min(1).max(74).optional();
+
+export const status45dParameters = z.object({
+  monitorIds: z.string().array(),
+  days: windowDays,
+});
+
+// omit `timezone` for UTC pages: the pipe then runs its unchanged UTC query
 export const runs45dParameters = z.object({
   monitorIds: z.string().array(),
+  days: windowDays,
+  timezone: z
+    .string()
+    .refine(isValidTimeZone, "timezone must be an IANA zone name")
+    .optional(),
 });
 
 // Each run is judged against the cloud regions that reported in it.
@@ -361,6 +377,47 @@ export const runs45dShape = z.object({
   degraded: z.number().prefault(0),
   error: z.number().prefault(0),
 });
+
+export const bad15mParameters = z.object({
+  monitorIds: z.string().array(),
+  fromDate: z.int(), // epoch ms, inclusive
+  toDate: z.int(), // epoch ms, exclusive
+});
+
+const bad15mFields = {
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  bucket: z.int().min(0).max(95),
+  degradedCount: z.number(),
+  errorCount: z.number(),
+};
+
+function renameBadCounts<
+  T extends { degradedCount: number; errorCount: number },
+>({ degradedCount, errorCount, ...row }: T) {
+  return { ...row, degraded: degradedCount, error: errorCount };
+}
+
+/**
+ * One failing UTC quarter-hour (bucket 0..95) of a day. `monitorId` is Int32 in
+ * the non-http status views, so those getters pass `z.coerce.string()`.
+ */
+export function bad15mShape(monitorId: z.ZodType<string>) {
+  return z.object({ monitorId, ...bad15mFields }).transform(renameBadCounts);
+}
+
+export const backfillBad15mParameters = z.object({
+  month: frozenMonitorUptimeMonthSchema,
+  monitorIds: z.string().array(),
+});
+
+/** A failing quarter-hour copied from raw data for a month frozen without ranges. */
+export const backfillBad15mShape = z
+  .object({
+    monitorId: z.string(),
+    measure: z.enum(["requests", "runs"]),
+    ...bad15mFields,
+  })
+  .transform(renameBadCounts);
 
 export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
 
@@ -911,6 +968,33 @@ export class OSTinybird {
     });
   }
 
+  public get httpStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get frozenBad15mBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__frozen_bad_15m_backfill__v0",
+      parameters: backfillBad15mParameters,
+      data: backfillBad15mShape,
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get httpRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpRuns45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_runs_45d__v0",
@@ -923,9 +1007,7 @@ export class OSTinybird {
   public get httpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_45d__v1",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
@@ -1498,6 +1580,24 @@ export class OSTinybird {
     });
   }
 
+  public get tcpStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpRuns45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_runs_45d__v0",
@@ -1510,10 +1610,7 @@ export class OSTinybird {
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        days: z.int().max(45).optional(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
@@ -1532,9 +1629,7 @@ export class OSTinybird {
   public get heartbeatStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__heartbeat_status_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z
           .string()
@@ -1980,6 +2075,24 @@ export class OSTinybird {
     });
   }
 
+  public get icmpStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get icmpRuns45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_runs_45d__v0",
@@ -1992,10 +2105,7 @@ export class OSTinybird {
   public get icmpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__icmp_status_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        days: z.int().max(45).optional(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
@@ -2478,6 +2588,24 @@ export class OSTinybird {
     });
   }
 
+  public get grpcStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get grpcRuns45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_runs_45d__v0",
@@ -2490,10 +2618,7 @@ export class OSTinybird {
   public get grpcStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__grpc_status_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        days: z.int().max(45).optional(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
@@ -3803,6 +3928,24 @@ export class OSTinybird {
     });
   }
 
+  public get dnsStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get dnsRuns45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_runs_45d__v0",
@@ -3815,9 +3958,7 @@ export class OSTinybird {
   public get dnsStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)

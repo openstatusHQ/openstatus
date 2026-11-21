@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { type Column, isNull, relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -55,6 +55,13 @@ export const monitorIncidentTable = sqliteTable(
     // If the incident was auto resolved
     autoResolved: integer("auto_resolved", { mode: "boolean" }).default(false),
 
+    // An excused outage counts as up and is hidden from public surfaces
+    excusedAt: integer("excused_at", { mode: "timestamp" }),
+    excusedBy: integer("excused_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    excusedReason: text("excused_reason"),
+
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
@@ -95,5 +102,14 @@ export const monitorIncidentRelations = relations(
       fields: [monitorIncidentTable.resolvedBy],
       references: [user.id],
     }),
+    excusedByUser: one(user, {
+      fields: [monitorIncidentTable.excusedBy],
+      references: [user.id],
+    }),
   }),
 );
+
+/** Relational `where` for public surfaces: an excused outage counts as up and is never shown. */
+export function notExcused(t: { excusedAt: Column }) {
+  return isNull(t.excusedAt);
+}

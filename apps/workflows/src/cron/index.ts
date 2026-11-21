@@ -4,6 +4,7 @@ import { Effect, Schedule } from "effect";
 import { Hono } from "hono";
 
 import { env } from "../env";
+import type { Env } from "../index";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
@@ -22,9 +23,13 @@ import {
 } from "./outbox";
 import { handlePrivateLocationHealthCron } from "./private-location-health";
 import { handleStatusDriftCron } from "./status-drift";
-import { handleUptimeFreezeCron } from "./uptime-freeze";
+import {
+  handleUptimeBackfillBuckets,
+  handleUptimeFreezeCron,
+  handleUptimeRefreeze,
+} from "./uptime-freeze";
 
-const app = new Hono({ strict: false });
+const app = new Hono<Env>({ strict: false });
 
 app.use("*", async (c, next) => {
   if (c.req.header("authorization") !== env().CRON_SECRET) {
@@ -98,6 +103,14 @@ app.get("/oauth-prune", async (c) => {
 
 app.get("/uptime-freeze", async (c) => {
   return handleUptimeFreezeCron(c);
+});
+
+app.get("/uptime-freeze/refreeze", async (c) => {
+  return handleUptimeRefreeze(c);
+});
+
+app.get("/uptime-freeze/backfill-buckets", async (c) => {
+  return handleUptimeBackfillBuckets(c);
 });
 
 app.get("/private-location-health", async (c) => {
@@ -180,6 +193,8 @@ app.get("/outbox/shadow", async (c) => {
 
 app.get("/status-drift", async (c) => {
   const result = await handleStatusDriftCron();
+  const event = c.get("event");
+  if (event) event.status_drift = result;
   return c.json({ success: true, ...result }, 200);
 });
 

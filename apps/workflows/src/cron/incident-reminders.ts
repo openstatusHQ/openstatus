@@ -2,6 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import {
   type ReminderResult,
   remindStaleIncidents,
+  resolveDashboardUrl,
 } from "@openstatus/services/incident";
 import { Redis } from "@openstatus/upstash";
 import { WebClient } from "@slack/web-api";
@@ -24,10 +25,10 @@ export async function runIncidentRemindersTick(): Promise<ReminderResult[]> {
     release: async (key) => {
       await client.del(key);
     },
-    dashboardUrl:
-      env().NODE_ENV === "production"
-        ? "https://app.openstatus.dev"
-        : "http://localhost:3001",
+    dashboardUrl: resolveDashboardUrl({
+      override: env().DASHBOARD_URL,
+      nodeEnv: env().NODE_ENV,
+    }),
   });
   logger.info(
     "incident reminders sent: {sent}, failed: {failed}, skipped: {skipped}",

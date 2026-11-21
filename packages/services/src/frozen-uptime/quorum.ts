@@ -5,7 +5,9 @@ export type Counts = { ok: number; degraded: number; error: number };
 // mirrors the cloud-region quorum in apps/workflows/src/checker/transition.ts;
 // private-only monitors get none: private checks carry no shared run key
 /** The monitor's unique cloud regions, null without any: it gets no run verdicts. */
-export function quorumRegionCount(regions: string): number | null {
+export function quorumRegionCount(
+  regions: string | readonly string[],
+): number | null {
   const cloud = uniqueRegions(regions);
   return cloud.length > 0 ? cloud.length : null;
 }

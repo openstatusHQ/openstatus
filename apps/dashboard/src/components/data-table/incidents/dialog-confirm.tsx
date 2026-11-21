@@ -20,9 +20,9 @@ import { useTRPC } from "@/lib/trpc/client";
 
 type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
-export type IncidentConfirmType = "acknowledge" | "resolve";
+export type IncidentConfirmType = "acknowledge" | "resolve" | "unexcuse";
 
-/** Controlled acknowledge/resolve confirmation — stays open on error so the action can be retried. */
+/** Controlled acknowledge/resolve/unexcuse confirmation — stays open on error so the action can be retried. */
 export function DialogConfirmIncident({
   incident,
   type,
@@ -37,10 +37,10 @@ export function DialogConfirmIncident({
   const [isPending, startTransition] = useTransition();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  // no-input prefix key — matches every incident.list query (overview, monitor detail)
+  // path key: every monitorIncident query (lists and the monitor report)
   const invalidateList = () =>
     queryClient.invalidateQueries({
-      queryKey: trpc.monitorIncident.list.queryKey(),
+      queryKey: trpc.monitorIncident.pathKey(),
     });
   const acknowledgeIncidentMutation = useMutation(
     trpc.monitorIncident.acknowledge.mutationOptions({
@@ -50,13 +50,20 @@ export function DialogConfirmIncident({
   const resolveIncidentMutation = useMutation(
     trpc.monitorIncident.resolve.mutationOptions({ onSuccess: invalidateList }),
   );
+  const unexcuseIncidentMutation = useMutation(
+    trpc.monitorIncident.unexcuse.mutationOptions({
+      onSuccess: invalidateList,
+    }),
+  );
 
   const handleConfirm = () => {
     startTransition(async () => {
-      const promise =
-        type === "acknowledge"
-          ? acknowledgeIncidentMutation.mutateAsync({ id: incident.id })
-          : resolveIncidentMutation.mutateAsync({ id: incident.id });
+      const mutation = {
+        acknowledge: acknowledgeIncidentMutation,
+        resolve: resolveIncidentMutation,
+        unexcuse: unexcuseIncidentMutation,
+      }[type ?? "resolve"];
+      const promise = mutation.mutateAsync({ id: incident.id });
       toast.promise(promise, {
         loading: "Confirming...",
         success: "Confirmed",
@@ -90,6 +97,9 @@ export function DialogConfirmIncident({
           <AlertDialogDescription>
             You are about to <span className="font-semibold">{type}</span> this
             downtime.
+            {type === "unexcuse"
+              ? " It counts as downtime again and shows on your status pages."
+              : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

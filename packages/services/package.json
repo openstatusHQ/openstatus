@@ -105,6 +105,10 @@
       "import": "./src/sso/index.ts",
       "types": "./src/sso/index.ts"
     },
+    "./maintenance-window": {
+      "import": "./src/maintenance-window/index.ts",
+      "types": "./src/maintenance-window/index.ts"
+    },
     "./monitor-tag": {
       "import": "./src/monitor-tag/index.ts",
       "types": "./src/monitor-tag/index.ts"

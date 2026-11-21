@@ -2,28 +2,13 @@ import { PubSub, type Topic } from "@google-cloud/pubsub";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
+import { inArray } from "@openstatus/db";
 import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  ne,
-  notInArray,
-} from "@openstatus/db";
-import {
-  maintenance,
-  monitor,
   monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import {
-  maintenancesToPageComponents,
-  pageComponent,
-} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
 import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
@@ -35,14 +20,17 @@ import {
   type Periodicity,
   type TaskInput,
   buildCronCheckerPayload,
+  buildTaskInputs,
   publishCheckerTasks,
 } from "./checker-payload";
+import { countPausedMonitors, listMonitorsToCheck } from "./monitors-to-check";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };
 
 const logger = getLogger("workflow");
+const otelLogger = getLogger(["workflow-otel"]);
 
 /**
  * Check if GCP Cloud Tasks is properly configured.
@@ -112,39 +100,7 @@ export async function sendCheckerTasks(
 
   const timestamp = Date.now();
 
-  const currentMaintenance = db
-    .select({ id: maintenance.id })
-    .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
-    .as("currentMaintenance");
-
-  const currentMaintenanceMonitors = db
-    .select({ id: pageComponent.monitorId })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      currentMaintenance,
-      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(isNotNull(pageComponent.monitorId));
-
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        ne(monitor.jobType, "heartbeat"),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
-    )
-    .all();
+  const result = await listMonitorsToCheck(db, periodicity);
 
   logger.info("Starting cron job", {
     periodicity,
@@ -152,14 +108,31 @@ export async function sendCheckerTasks(
   });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
-  const taskInputs: TaskInput[] = [];
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
   }
 
+  // the dispatch runs after its request returned, so this is its only line in Axiom
+  const emitDispatch = async (success: number, failed: number) =>
+    otelLogger.info("checker_dispatch", {
+      periodicity,
+      monitor_count: result.length,
+      // a count that fails must not fail a dispatch that already went out
+      paused_count: await countPausedMonitors(
+        db,
+        periodicity,
+        new Date(timestamp),
+      ).catch(() => null),
+      success_count: success,
+      failed_count: failed,
+      duration_ms: Date.now() - timestamp,
+    });
+
   if (monitors.data.length === 0) {
     logger.info("No monitors to check", { periodicity });
+    // all paused must not look like a cron that never ran
+    await emitDispatch(0, 0);
     return { success: 0, failed: 0 };
   }
 
@@ -189,37 +162,12 @@ export async function sendCheckerTasks(
     statusMap.set(raw.monitorId, list);
   }
 
-  for (const row of monitors.data) {
-    const monitorStatuses = statusMap.get(row.id) ?? [];
-
-    for (const region of row.regions) {
-      const status =
-        monitorStatuses.find((m) => region === m.region)?.status || "active";
-
-      const r = regionDict[region as keyof typeof regionDict];
-
-      if (!r) {
-        logger.error(`Invalid region ${region}`);
-        continue;
-      }
-      if (r.deprecated) {
-        // Let's uncomment this when we are ready to remove deprecated regions
-        // We should not use deprecated regions anymore
-        logger.error(`Deprecated region ${region}`);
-        continue;
-      }
-      taskInputs.push({ row, timestamp, status, region });
-      if (periodicity === "30s") {
-        const scheduledAt = timestamp + 30 * 1000;
-        taskInputs.push({
-          row,
-          timestamp: scheduledAt,
-          status,
-          region,
-        });
-      }
-    }
-  }
+  const taskInputs = buildTaskInputs({
+    monitors: monitors.data,
+    statusesByMonitor: statusMap,
+    periodicity,
+    timestamp,
+  });
 
   const transport = env().CHECKER_TRANSPORT;
   const { success, failed } =
@@ -227,6 +175,7 @@ export async function sendCheckerTasks(
       ? await publishToPubSub(taskInputs, periodicity, publisher)
       : await createCloudTasks(taskInputs, periodicity, client);
 
+  await emitDispatch(success, failed);
   logger.info("Completed cron job", {
     periodicity,
     transport,
@@ -263,7 +212,7 @@ async function publishToPubSub(
   return result;
 }
 
-async function createCloudTasks(
+export async function createCloudTasks(
   taskInputs: TaskInput[],
   periodicity: Periodicity,
   client: CloudTasksClient,
