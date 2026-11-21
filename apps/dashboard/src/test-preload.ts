@@ -3,3 +3,4 @@
 // EmailClient off the network.
 Object.assign(process.env, { NODE_ENV: "development" });
 process.env.RESEND_API_KEY ||= "test-key";
+process.env.DATABASE_URL ||= "http://127.0.0.1:0";
