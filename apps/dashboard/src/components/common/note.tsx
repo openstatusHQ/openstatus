@@ -62,12 +62,13 @@ export function NoteButton({
   return (
     <Button
       size="sm"
-      data-slot="note-button"
       className={cn(
         "-mr-1 ml-auto shrink-0 max-sm:col-start-2 max-sm:row-start-2 max-sm:mx-0 max-sm:justify-self-start",
         className,
       )}
       {...props}
+      // after the spread: an asChild trigger (e.g. DialogTrigger) would overwrite it
+      data-slot="note-button"
     >
       {children}
     </Button>
@@ -84,9 +85,9 @@ export function NoteButtonClose({
       variant="ghost"
       size="icon-sm"
       aria-label="Close"
-      data-slot="note-button-close"
       className={cn("text-muted-foreground -mr-1 shrink-0", className)}
       {...props}
+      data-slot="note-button-close"
     >
       <Close />
     </Button>
