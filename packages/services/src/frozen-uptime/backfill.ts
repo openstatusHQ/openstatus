@@ -1,11 +1,11 @@
-import { and, db as defaultDb, eq, inArray, isNull } from "@openstatus/db";
+import { and, db as defaultDb, eq, inArray } from "@openstatus/db";
 import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
 import { z } from "zod";
 
 import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
-import { BUCKET_MINUTES } from "./buckets";
+import { hasBadRanges } from "./buckets";
 import { attachBadRanges, type BadBucketRow } from "./compute";
 import {
   type ChunkFailure,
@@ -77,19 +77,19 @@ export async function backfillFrozenBuckets(
     .where(
       and(
         eq(frozenMonitorUptime.month, month),
-        isNull(frozenMonitorUptime.bucketMinutes),
         monitorIds
           ? inArray(frozenMonitorUptime.monitorId, monitorIds)
           : undefined,
       ),
     );
 
-  const pending = rows.filter((r) => hasRuns(r.jobType));
+  const missing = rows.filter((r) => !hasBadRanges(r.days));
+  const pending = missing.filter((r) => hasRuns(r.jobType));
   const result: BackfillFrozenBucketsResult = {
     month,
     updated: 0,
     mismatched: 0,
-    skipped: rows.length - pending.length,
+    skipped: missing.length - pending.length,
     failed: 0,
     failures: [],
   };
@@ -138,11 +138,12 @@ export async function backfillFrozenBuckets(
       const written = await withBusyRetry(() =>
         db
           .update(frozenMonitorUptime)
-          .set({ days: attached.days, bucketMinutes: BUCKET_MINUTES })
+          .set({ days: attached.days })
           .where(
             and(
               eq(frozenMonitorUptime.id, r.id),
-              isNull(frozenMonitorUptime.bucketMinutes),
+              // a re-freeze since the read wins: its counts are newer
+              eq(frozenMonitorUptime.days, r.days),
             ),
           )
           .returning({ id: frozenMonitorUptime.id }),

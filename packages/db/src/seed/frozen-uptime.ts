@@ -83,28 +83,24 @@ export function frozenUptimeSeed(): InsertFrozenMonitorUptime[] {
       monitorId: 1,
       month: month(last),
       days: frozenMonth(last, apiFailures, true),
-      bucketMinutes: 15,
     },
     {
       workspaceId: 1,
       monitorId: 3,
       month: month(last),
       days: frozenMonth(last, websiteFailures, true),
-      bucketMinutes: 15,
     },
     {
       workspaceId: 1,
       monitorId: 1,
       month: month(before),
       days: frozenMonth(before, [{ day: 18, ranges: [[60, 2, 0, 15]] }], false),
-      bucketMinutes: null,
     },
     {
       workspaceId: 1,
       monitorId: 3,
       month: month(before),
       days: frozenMonth(before, [], false),
-      bucketMinutes: null,
     },
   ];
 }

@@ -26,10 +26,6 @@ export const frozenMonitorUptime = sqliteTable(
     days: text("days", { mode: "json" })
       .$type<FrozenMonitorUptimeDay[]>()
       .notNull(),
-    // 15 when `days` carry bad ranges; null for older rows and heartbeat,
-    // so readers can tell "no failures" from "not recorded".
-    // Rules: packages/services/AGENTS.md, "Frozen uptime rows"
-    bucketMinutes: integer("bucket_minutes"),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,

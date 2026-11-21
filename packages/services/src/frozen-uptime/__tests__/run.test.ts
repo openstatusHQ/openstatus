@@ -1068,7 +1068,7 @@ describe("runUptimeFreeze with bad buckets", () => {
       .get();
   }
 
-  test("stores the failing quarter-hours with bucket_minutes 15", async () => {
+  test("stores the failing quarter-hours", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { regions: SIX_REGIONS });
       const requests = bucketPipe(m.id, [
@@ -1103,7 +1103,6 @@ describe("runUptimeFreeze with bad buckets", () => {
       expect(requests.calls).toEqual([window]);
       expect(runs.calls).toEqual([window]);
       const row = await frozenRow(tx, m.id);
-      expect(row?.bucketMinutes).toBe(15);
       expect(row?.days[4].bad).toEqual({
         requests: [
           [94, 1, 0, 90],
@@ -1183,7 +1182,6 @@ describe("runUptimeFreeze with bad buckets", () => {
 
       expect(res).toMatchObject({ frozen: 1, bucketMismatch: 1, failures: [] });
       const row = await frozenRow(tx, m.id);
-      expect(row?.bucketMinutes).toBeNull();
       expect(row?.days[4]).toEqual({
         day: "2026-06-05",
         requests: { ok: 8520, degraded: 0, error: 120 },
@@ -1192,7 +1190,7 @@ describe("runUptimeFreeze with bad buckets", () => {
     });
   });
 
-  test("heartbeat monitors keep bucket_minutes null and are never in a bucket read", async () => {
+  test("heartbeat monitors get no ranges and are never in a bucket read", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertTestMonitor(tx, { jobType: "heartbeat" });
       const buckets = bucketPipe(m.id, []);
@@ -1211,7 +1209,8 @@ describe("runUptimeFreeze with bad buckets", () => {
 
       expect(res).toMatchObject({ frozen: 1, bucketMismatch: 0 });
       expect(buckets.calls).toEqual([]);
-      expect((await frozenRow(tx, m.id))?.bucketMinutes).toBeNull();
+      const row = await frozenRow(tx, m.id);
+      expect(row?.days.some((d) => "bad" in d)).toBe(false);
     });
   });
 
@@ -1236,7 +1235,6 @@ describe("runUptimeFreeze with bad buckets", () => {
       expect(res.frozen).toBe(1);
       expect(runs.calls).toEqual([]);
       const row = await frozenRow(tx, m.id);
-      expect(row?.bucketMinutes).toBe(15);
       expect(row?.days[4].bad).toEqual({ requests: [[3, 1, 1, 0]] });
     });
   });

@@ -111,7 +111,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[94, 2, 0, 10]] },
       },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "requests", 15)).toEqual([
+    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
       { day: "2026-10-30", ok: 920, degraded: 0, error: 0 },
       { day: "2026-10-31", ok: 960, degraded: 0, error: 0 },
       { day: "2026-11-01", ok: 20, degraded: 0, error: 20 },
@@ -126,7 +126,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[73, 2, 0, 5]] },
       },
     ];
-    expect(toLocalDays(days, "Asia/Kolkata", "requests", 15)).toEqual([
+    expect(toLocalDays(days, "Asia/Kolkata", "requests")).toEqual([
       { day: "2026-06-10", ok: 735, degraded: 0, error: 5 },
       { day: "2026-06-11", ok: 215, degraded: 0, error: 5 },
     ]);
@@ -140,7 +140,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[72, 2, 3, 0]] },
       },
     ];
-    expect(toLocalDays(days, "Asia/Kathmandu", "requests", 15)).toEqual([
+    expect(toLocalDays(days, "Asia/Kathmandu", "requests")).toEqual([
       { day: "2026-06-10", ok: 727, degraded: 3, error: 0 },
       { day: "2026-06-11", ok: 227, degraded: 3, error: 0 },
     ]);
@@ -148,7 +148,7 @@ describe("toLocalDays", () => {
 
   test("the spring-forward day is 23 local hours long", () => {
     const days = ["2026-03-28", "2026-03-29", "2026-03-30"].map(quiet);
-    expect(toLocalDays(days, "Europe/Berlin", "requests", 15)).toEqual([
+    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
       { day: "2026-03-28", ok: 920, degraded: 0, error: 0 },
       { day: "2026-03-29", ok: 920, degraded: 0, error: 0 },
       { day: "2026-03-30", ok: 960, degraded: 0, error: 0 },
@@ -164,7 +164,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[92, 4, 0, 1]] },
       },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "requests", 15)).toEqual([
+    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
       { day: "2026-10-31", ok: 0, degraded: 0, error: 0 },
       { day: "2026-11-01", ok: 0, degraded: 0, error: 4 },
     ]);
@@ -179,7 +179,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[92, 4, 0, 1]] },
       },
     ];
-    const local = toLocalDays(days, "Europe/Berlin", "requests", 15);
+    const local = toLocalDays(days, "Europe/Berlin", "requests");
     const sum = (key: "ok" | "error") =>
       local.reduce((total, d) => total + d[key], 0);
     expect(sum("ok")).toBeCloseTo(20);
@@ -196,7 +196,7 @@ describe("toLocalDays", () => {
     const days: FrozenMonitorUptimeDay[] = [
       { day: "2026-10-31", requests: { ok: 940, degraded: 0, error: 20 } },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "requests", null)).toEqual([
+    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
       { day: "2026-10-31", ok: 940, degraded: 0, error: 20 },
     ]);
   });
@@ -211,7 +211,7 @@ describe("toLocalDays", () => {
         bad: { runs: [[94, 2, 0, 1]] },
       },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "runs", 15)).toEqual([
+    expect(toLocalDays(days, "Europe/Berlin", "runs")).toEqual([
       { day: "2026-10-31", ok: 92, degraded: 0, error: 0 },
       { day: "2026-11-01", ok: 2, degraded: 0, error: 2 },
     ]);

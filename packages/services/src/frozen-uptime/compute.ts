@@ -1,13 +1,7 @@
 import { TZDate } from "@date-fns/tz";
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 
-import {
-  type BadBucket,
-  BUCKET_MINUTES,
-  BUCKETS_PER_DAY,
-  rangesInBuckets,
-  toRanges,
-} from "./buckets";
+import { type BadBucket, dayRangesAddUp, toRanges } from "./buckets";
 import type { Counts } from "./quorum";
 
 export type ComputeCountRow = {
@@ -64,14 +58,6 @@ function rangesByDay(rows: BadBucketRow[]) {
   return new Map([...byDay].map(([day, list]) => [day, toRanges(list)]));
 }
 
-function addsUp(ranges: DayBad["requests"], counts: Counts | undefined) {
-  const sum = rangesInBuckets(ranges ?? [], 0, BUCKETS_PER_DAY);
-  return (
-    sum.degraded === (counts?.degraded ?? 0) &&
-    sum.error === (counts?.error ?? 0)
-  );
-}
-
 /**
  * Pure assembly of one monitor's frozen month from already-fetched count
  * rows — no I/O. Returns null when the monitor has no counts in the month
@@ -84,11 +70,7 @@ export function computeMonitorMonth(args: {
   runs?: Map<string, Counts>;
   // the monitor's failing quarter-hours; omitted when not fetched
   bad?: { requests: BadBucketRow[]; runs: BadBucketRow[] };
-}): {
-  days: FrozenMonitorUptimeDay[];
-  bucketMinutes: number | null;
-  bucketMismatch: boolean;
-} | null {
+}): { days: FrozenMonitorUptimeDay[]; bucketMismatch: boolean } | null {
   const { month, monitorId, counts, runs } = args;
   const prefix = month.slice(0, 8); // YYYY-MM-
 
@@ -116,7 +98,7 @@ export function computeMonitorMonth(args: {
     };
   });
 
-  if (!args.bad) return { days, bucketMinutes: null, bucketMismatch: false };
+  if (!args.bad) return { days, bucketMismatch: false };
   return attachBadRanges(days, args.bad);
 }
 
@@ -127,11 +109,7 @@ export function computeMonitorMonth(args: {
 export function attachBadRanges(
   days: FrozenMonitorUptimeDay[],
   bad: { requests: BadBucketRow[]; runs: BadBucketRow[] },
-): {
-  days: FrozenMonitorUptimeDay[];
-  bucketMinutes: number | null;
-  bucketMismatch: boolean;
-} {
+): { days: FrozenMonitorUptimeDay[]; bucketMismatch: boolean } {
   const requestRanges = rangesByDay(bad.requests);
   const runRanges = rangesByDay(bad.runs);
   const withBad: FrozenMonitorUptimeDay[] = [];
@@ -141,16 +119,11 @@ export function attachBadRanges(
     const run = runRanges.get(d.day);
     if (req?.length) dayBad.requests = req;
     if (run?.length) dayBad.runs = run;
+    const next = { ...d, bad: dayBad };
     // ranges that disagree with the day counts would regroup into wrong days
-    if (!addsUp(dayBad.requests, d.requests) || !addsUp(dayBad.runs, d.runs)) {
-      return { days, bucketMinutes: null, bucketMismatch: true };
-    }
-    withBad.push(dayBad.requests || dayBad.runs ? { ...d, bad: dayBad } : d);
+    if (!dayRangesAddUp(next)) return { days, bucketMismatch: true };
+    withBad.push(dayBad.requests || dayBad.runs ? next : d);
   }
 
-  return {
-    days: withBad,
-    bucketMinutes: BUCKET_MINUTES,
-    bucketMismatch: false,
-  };
+  return { days: withBad, bucketMismatch: false };
 }

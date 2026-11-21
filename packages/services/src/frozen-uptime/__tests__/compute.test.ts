@@ -181,7 +181,6 @@ describe("computeMonitorMonth bad ranges", () => {
       },
     });
 
-    expect(computed?.bucketMinutes).toBe(15);
     expect(computed?.bucketMismatch).toBe(false);
     expect(computed?.days[9].bad).toEqual({
       requests: [
@@ -223,7 +222,6 @@ describe("computeMonitorMonth bad ranges", () => {
         runs: [],
       },
     });
-    expect(computed?.bucketMinutes).toBeNull();
     expect(computed?.bucketMismatch).toBe(true);
     expect(computed?.days.some((d) => "bad" in d)).toBe(false);
   });
@@ -237,16 +235,14 @@ describe("computeMonitorMonth bad ranges", () => {
       bad: { requests: [], runs: [] },
     });
     expect(computed?.bucketMismatch).toBe(true);
-    expect(computed?.bucketMinutes).toBeNull();
   });
 
-  test("without bucket data the month is not recorded at 15 minutes", () => {
+  test("without bucket data the month has no ranges", () => {
     const computed = computeMonitorMonth({
       month: MONTH,
       monitorId: 77,
       counts: [row("2026-06-10", { ok: 10, error: 1 })],
     });
-    expect(computed?.bucketMinutes).toBeNull();
     expect(computed?.bucketMismatch).toBe(false);
     expect(computed?.days[9]).not.toHaveProperty("bad");
   });

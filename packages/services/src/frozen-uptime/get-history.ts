@@ -340,7 +340,6 @@ export async function getUptimeHistory(args: {
         monitorId: frozenMonitorUptime.monitorId,
         month: frozenMonitorUptime.month,
         days: frozenMonitorUptime.days,
-        bucketMinutes: frozenMonitorUptime.bucketMinutes,
       })
       .from(frozenMonitorUptime)
       .where(
@@ -380,7 +379,6 @@ export async function getUptimeHistory(args: {
     list.push({
       month: r.month,
       days: frozenMonitorUptimeDaySchema.array().parse(r.days),
-      bucketMinutes: r.bucketMinutes,
     });
     frozenByMonitor.set(r.monitorId, list);
   }

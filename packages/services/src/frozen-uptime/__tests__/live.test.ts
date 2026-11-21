@@ -149,7 +149,6 @@ describe("mergeLocalDays", () => {
       frozen: [
         {
           month: "2026-06-01",
-          bucketMinutes: null,
           days: [
             { day: "2026-06-28", requests: c(10), runs: c(5) },
             { day: "2026-06-29", requests: c(10), runs: c(5) },
@@ -176,7 +175,6 @@ describe("mergeLocalDays", () => {
       frozen: [
         {
           month: "2026-06-01",
-          bucketMinutes: null,
           days: [{ day: "2026-06-29", requests: c(10), runs: c(5) }],
         },
       ],

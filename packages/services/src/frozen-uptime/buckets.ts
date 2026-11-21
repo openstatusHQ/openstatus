@@ -54,6 +54,29 @@ export function rangesInBuckets(
   return { degraded, error };
 }
 
+type Counts = { ok: number; degraded: number; error: number };
+
+function addsUp(ranges: BadRange[] | undefined, counts: Counts | undefined) {
+  const sum = rangesInBuckets(ranges ?? [], 0, BUCKETS_PER_DAY);
+  return (
+    sum.degraded === (counts?.degraded ?? 0) &&
+    sum.error === (counts?.error ?? 0)
+  );
+}
+
+/** Whether one day's bad ranges sum exactly to its degraded and error counts. */
+export function dayRangesAddUp(d: FrozenMonitorUptimeDay): boolean {
+  return addsUp(d.bad?.requests, d.requests) && addsUp(d.bad?.runs, d.runs);
+}
+
+/**
+ * Whether a frozen month carries its failing quarter-hours: every day's
+ * ranges account for its failures. A month without any failure qualifies.
+ */
+export function hasBadRanges(days: FrozenMonitorUptimeDay[]): boolean {
+  return days.every(dayRangesAddUp);
+}
+
 const MS_PER_BUCKET = BUCKET_MINUTES * 60_000;
 
 const dateFormats = new Map<string, Intl.DateTimeFormat>();
@@ -106,15 +129,14 @@ export type LocalDayCount = {
 
 /**
  * Regroup frozen UTC days into days of `timeZone`; totals turn fractional.
- * Rows frozen without 15-minute ranges come back as UTC days unchanged.
+ * Months frozen without their 15-minute ranges come back as UTC days unchanged.
  */
 export function toLocalDays(
   days: FrozenMonitorUptimeDay[],
   timeZone: string,
   measure: "requests" | "runs",
-  bucketMinutes: number | null,
 ): LocalDayCount[] {
-  const regroup = bucketMinutes === BUCKET_MINUTES && timeZone !== "UTC";
+  const regroup = timeZone !== "UTC" && hasBadRanges(days);
   const byDay = new Map<string, LocalDayCount>();
   const add = (day: string, ok: number, degraded: number, error: number) => {
     const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };

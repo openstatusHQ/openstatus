@@ -70,7 +70,6 @@ export async function getMonitorUptimeHistory(args: {
       .select({
         month: frozenMonitorUptime.month,
         days: frozenMonitorUptime.days,
-        bucketMinutes: frozenMonitorUptime.bucketMinutes,
       })
       .from(frozenMonitorUptime)
       .where(
@@ -91,7 +90,6 @@ export async function getMonitorUptimeHistory(args: {
   const frozen = frozenRows.map((row) => ({
     month: row.month,
     days: frozenMonitorUptimeDaySchema.array().parse(row.days),
-    bucketMinutes: row.bucketMinutes,
   }));
   const frozenMonths = new Set(frozen.map((row) => row.month.slice(0, 7)));
   const local = mergeLocalDays({

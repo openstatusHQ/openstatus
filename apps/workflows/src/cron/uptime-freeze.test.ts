@@ -277,7 +277,7 @@ describe("handleUptimeBackfillBuckets", () => {
     expect((await res.json()).error).toContain("YYYY-MM-01");
   });
 
-  test("gives a clean row frozen without ranges its bucket size", async () => {
+  test("leaves a clean row frozen without ranges alone", async () => {
     const m = await createMonitor(workspaceId, {
       jobType: "http",
       regions: "ams",
@@ -293,7 +293,7 @@ describe("handleUptimeBackfillBuckets", () => {
       days,
     });
 
-    // the Tinybird client returns no rows under test: nothing failed, so it adds up
+    // no failures, so there are no ranges to add
     const res = await app.request(
       `/backfill?month=2026-08-01&monitorIds=${m.id}`,
     );
@@ -302,7 +302,7 @@ describe("handleUptimeBackfillBuckets", () => {
     expect(await res.json()).toEqual({
       success: true,
       month: "2026-08-01",
-      updated: 1,
+      updated: 0,
       mismatched: 0,
       skipped: 0,
       failed: 0,
@@ -312,7 +312,6 @@ describe("handleUptimeBackfillBuckets", () => {
       .select()
       .from(frozenMonitorUptime)
       .where(eq(frozenMonitorUptime.monitorId, m.id));
-    expect(row.bucketMinutes).toBe(15);
     expect(row.days).toEqual(days);
   });
 });

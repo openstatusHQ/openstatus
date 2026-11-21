@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "9596f5b3-ad87-464d-a0bd-c1f8b39e5811",
+  "id": "735c839d-7e98-4286-a764-bca4c31c9fba",
   "prevId": "7b2ea6a3-3992-42d4-a7bd-6be1c9ca5cf5",
   "tables": {
     "workspace": {
@@ -5643,13 +5643,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "bucket_minutes": {
-          "name": "bucket_minutes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -7009,6 +7002,13 @@
         },
         "last_ping_at": {
           "name": "last_ping_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "first_ping_at": {
+          "name": "first_ping_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,

@@ -26,8 +26,8 @@ CREATE TABLE `monitor_maintenance_window_to_monitor` (
 --> statement-breakpoint
 CREATE INDEX `monitor_maintenance_window_to_monitor_monitor_id_idx` ON `monitor_maintenance_window_to_monitor` (`monitor_id`);--> statement-breakpoint
 ALTER TABLE `monitor_incident` ADD `excused_at` integer;--> statement-breakpoint
-ALTER TABLE `monitor_incident` ADD `excused_by` integer REFERENCES user(id) ON DELETE set null;--> statement-breakpoint
+ALTER TABLE `monitor_incident` ADD `excused_by` integer REFERENCES user(id);--> statement-breakpoint
 ALTER TABLE `monitor_incident` ADD `excused_reason` text;--> statement-breakpoint
-ALTER TABLE `frozen_monitor_uptime` ADD `bucket_minutes` integer;--> statement-breakpoint
 ALTER TABLE `incident` ADD `acknowledged_at` integer;--> statement-breakpoint
-ALTER TABLE `incident` ADD `acknowledged_by` integer REFERENCES user(id);
+ALTER TABLE `incident` ADD `acknowledged_by` integer REFERENCES user(id);--> statement-breakpoint
+ALTER TABLE `monitor_heartbeat_state` ADD `first_ping_at` integer;

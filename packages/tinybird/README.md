@@ -79,7 +79,7 @@ until the next deploy compacts it. Remove it once the change is live.
 
 ## Backfilling quarter-hour ranges for frozen months
 
-Months frozen before `bucket_minutes` existed carry day counts only, so the
+Months frozen before quarter-hour ranges existed carry day counts only, so the
 status page cannot regroup them into other time zones. The `copies/` pipes
 rebuild their failing quarter-hours from raw data (which has no TTL) into
 `frozen_bad_15m_backfill__v0`; the workflows route then adds the ranges to

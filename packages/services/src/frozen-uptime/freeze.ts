@@ -48,7 +48,6 @@ export async function freezeMonitorMonth(args: {
             target,
             set: {
               days: values.days,
-              bucketMinutes: values.bucketMinutes ?? null,
               workspaceId: values.workspaceId,
             },
           })

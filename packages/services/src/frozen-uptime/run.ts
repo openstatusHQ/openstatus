@@ -114,7 +114,7 @@ export type BadBucketPipeFn = (params: {
   toDate: number;
 }) => Promise<{ data: (BadBucketRow & { monitorId: string })[] }>;
 
-// heartbeat has no 15m view and no runs: its rows keep bucket_minutes null
+// heartbeat has no 15m view and no runs: its rows never get bad ranges
 export type UptimeBadBucketPipes = {
   requests: Record<UptimeQuorumJobType, BadBucketPipeFn>;
   runs: Record<UptimeQuorumJobType, BadBucketPipeFn>;
@@ -296,8 +296,7 @@ export async function fetchRunsByDay(
 
 /**
  * Failing quarter-hours of the month per monitor and measure. A failed chunk
- * skips its monitors: a row frozen with bucket_minutes 15 but missing ranges
- * would claim those quarter-hours were clean forever.
+ * skips its monitors, so the next run freezes them with their ranges.
  */
 async function fetchBadBuckets(
   args: Omit<FetchOptions, "monitorIdsByJobType"> & {
@@ -626,7 +625,6 @@ async function freezeMonth(
           monitorId: m.id,
           month,
           days: computed.days,
-          bucketMinutes: computed.bucketMinutes,
         },
         replace: args.replace,
       });
@@ -645,7 +643,7 @@ async function freezeMonth(
 type FreezeRunOptions = {
   pipes: UptimeFreezePipes;
   runsPipes: UptimeRunsPipes;
-  // omitted: rows are frozen without bad ranges (bucket_minutes null)
+  // omitted: rows are frozen without bad ranges
   badPipes?: UptimeBadBucketPipes;
   now?: Date;
   db?: DB;

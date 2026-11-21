@@ -43,7 +43,6 @@ async function insertFrozen(
   opts: {
     jobType?: "http" | "heartbeat";
     days?: FrozenMonitorUptimeDay[];
-    bucketMinutes?: number | null;
   } = {},
 ) {
   const m = await tx
@@ -65,7 +64,6 @@ async function insertFrozen(
     workspaceId,
     month,
     days: opts.days ?? [failingDay, cleanDay],
-    bucketMinutes: opts.bucketMinutes ?? null,
   });
   return m;
 }
@@ -145,7 +143,6 @@ describe("backfillFrozenBuckets", () => {
       });
       expect(calls).toEqual([{ month, monitorIds: [String(m.id)] }]);
       const row = await frozenRow(tx, m.id);
-      expect(row?.bucketMinutes).toBe(15);
       expect(row?.days[0].bad).toEqual({
         requests: [[40, 2, 0, 3]],
         runs: [[40, 1, 0, 2]],
@@ -173,17 +170,23 @@ describe("backfillFrozenBuckets", () => {
 
       expect(res).toMatchObject({ updated: 0, mismatched: 1, failed: 0 });
       const row = await frozenRow(tx, m.id);
-      expect(row?.bucketMinutes).toBeNull();
       expect(row?.days).toEqual([failingDay, cleanDay]);
     });
   });
 
   test("does not touch or fetch rows that already have ranges", async () => {
     await withTestTransaction(async (tx) => {
-      const m = await insertFrozen(tx, {
-        days: [cleanDay],
-        bucketMinutes: 15,
-      });
+      const days = [
+        {
+          ...failingDay,
+          bad: {
+            requests: [[40, 2, 0, 3]],
+            runs: [[40, 1, 0, 2]],
+          },
+        } satisfies FrozenMonitorUptimeDay,
+        cleanDay,
+      ];
+      const m = await insertFrozen(tx, { days });
       const { pipe, calls } = pipeServing(() => matchingRows(m.id));
 
       const res = await backfillFrozenBuckets({
@@ -196,7 +199,7 @@ describe("backfillFrozenBuckets", () => {
 
       expect(calls).toEqual([]);
       expect(res).toMatchObject({ updated: 0, mismatched: 0, skipped: 0 });
-      expect((await frozenRow(tx, m.id))?.days).toEqual([cleanDay]);
+      expect((await frozenRow(tx, m.id))?.days).toEqual(days);
     });
   });
 
@@ -234,7 +237,7 @@ describe("backfillFrozenBuckets", () => {
       expect(res.failures).toEqual([
         `monitor ${m.id}: tinybird backfill unavailable`,
       ]);
-      expect((await frozenRow(tx, m.id))?.bucketMinutes).toBeNull();
+      expect((await frozenRow(tx, m.id))?.days[0].bad).toBeUndefined();
     });
   });
 
@@ -258,7 +261,7 @@ describe("backfillFrozenBuckets", () => {
 
       expect(calls).toEqual([]);
       expect(res).toMatchObject({ updated: 0, skipped: 1 });
-      expect((await frozenRow(tx, m.id))?.bucketMinutes).toBeNull();
+      expect((await frozenRow(tx, m.id))?.days[0].bad).toBeUndefined();
     });
   });
 

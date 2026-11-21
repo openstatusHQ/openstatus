@@ -1,7 +1,7 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
 
-import { BUCKET_MINUTES, type LocalDayCount, toLocalDays } from "./buckets";
+import { hasBadRanges, type LocalDayCount, toLocalDays } from "./buckets";
 import {
   type ChunkFailure,
   fetchFreezeCounts,
@@ -56,7 +56,6 @@ export function liveRunsPipes(
 export type FrozenMonth = {
   month: string;
   days: FrozenMonitorUptimeDay[];
-  bucketMinutes: number | null;
 };
 
 export type LocalDays = {
@@ -89,7 +88,7 @@ export function mergeLocalDays(args: {
   const utcOnlyMonths = new Set<string>();
   for (const row of args.frozen) {
     const local = (measure: "requests" | "runs") =>
-      toLocalDays(row.days, args.timeZone, measure, row.bucketMinutes).filter(
+      toLocalDays(row.days, args.timeZone, measure).filter(
         (d) => seam[measure] === null || d.day < seam[measure],
       );
     const rowRequests = local("requests");
@@ -97,7 +96,7 @@ export function mergeLocalDays(args: {
     runs.push(...local("runs"));
     if (
       args.timeZone !== "UTC" &&
-      row.bucketMinutes !== BUCKET_MINUTES &&
+      !hasBadRanges(row.days) &&
       rowRequests.length > 0
     ) {
       utcOnlyMonths.add(row.month.slice(0, 7));

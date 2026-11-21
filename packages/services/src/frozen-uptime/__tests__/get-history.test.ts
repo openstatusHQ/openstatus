@@ -215,7 +215,6 @@ async function insertFrozen(
     monitorId: number;
     month: string;
     days: FrozenMonitorUptimeDay[];
-    bucketMinutes?: number | null;
   },
 ) {
   return tx
@@ -1475,13 +1474,11 @@ describe("getUptimeHistory in the page's time zone", () => {
         monitorId: testMonitor.id,
         month: "2026-08-01",
         days: august,
-        bucketMinutes: 15,
       });
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: "2026-09-01",
         days: quietMonth("2026-09"),
-        bucketMinutes: 15,
       });
 
       const res = await getUptimeHistory({
@@ -1516,7 +1513,6 @@ describe("getUptimeHistory in the page's time zone", () => {
         monitorId: testMonitor.id,
         month: "2026-09-01",
         days: quietMonth("2026-09"),
-        bucketMinutes: 15,
       });
       const live = (day: string, ok: number) => ({
         monitorId: String(testMonitor.id),
@@ -1563,13 +1559,12 @@ describe("getUptimeHistory in the page's time zone", () => {
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: "2026-08-01",
-        days: fullMonth("2026-08", { ok: 100 }),
+        days: fullMonth("2026-08", { ok: 100, error: 1 }),
       });
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: "2026-09-01",
         days: quietMonth("2026-09"),
-        bucketMinutes: 15,
       });
 
       const read = (pageId: number) =>
