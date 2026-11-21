@@ -160,6 +160,8 @@ export function MetricStripValue({
       className={cn(
         "font-commit-mono shrink-0 text-right text-base font-medium tracking-tight whitespace-nowrap tabular-nums",
         "@3xl:max-w-full @3xl:shrink @3xl:text-left @3xl:whitespace-normal",
+        // flex, so the trend can sit before the value and values share the right edge
+        "@max-3xl:inline-flex @max-3xl:items-baseline",
         "group-data-[active=false]/metric-strip-item:text-muted-foreground",
         className,
       )}
@@ -222,6 +224,7 @@ export function MetricStripTrend({
       data-slot="metric-strip-trend"
       className={cn(
         "ml-1.5 text-xs font-normal whitespace-nowrap",
+        "@max-3xl:-order-1 @max-3xl:mr-1.5 @max-3xl:ml-0",
         percentage > 0 ? "text-destructive" : "text-success",
         className,
       )}
