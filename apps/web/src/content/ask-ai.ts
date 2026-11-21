@@ -32,13 +32,12 @@ Link the pages you used in every answer. If the docs don't cover something, say 
 My question: `;
 }
 
-// Prefill query params are undocumented; Gemini has none, so its link copies the prompt instead.
+// Prefill query params are undocumented; Gemini has none, so it has no handoff link.
 export const askAiAgents = [
   {
     id: "claude",
     name: "Claude",
     icon: ClaudeIcon,
-    prefills: true,
     href: (prompt: string) =>
       `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
   },
@@ -46,7 +45,6 @@ export const askAiAgents = [
     id: "chatgpt",
     name: "ChatGPT",
     icon: OpenAIIcon,
-    prefills: true,
     href: (prompt: string) =>
       `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`,
   },
@@ -54,17 +52,22 @@ export const askAiAgents = [
     id: "gemini",
     name: "Gemini",
     icon: GeminiIcon,
-    prefills: false,
-    href: (_prompt: string) => "https://gemini.google.com/app",
+    href: null,
   },
   {
     id: "cursor",
     name: "Cursor",
     icon: CursorIcon,
-    prefills: true,
     href: (prompt: string) =>
       `https://cursor.com/link/prompt?text=${encodeURIComponent(prompt)}`,
   },
 ] as const;
 
-export type AskAiAgentId = (typeof askAiAgents)[number]["id"];
+type AskAiAgent = (typeof askAiAgents)[number];
+
+export const handoffAgents = askAiAgents.filter(
+  (agent): agent is Extract<AskAiAgent, { href: (prompt: string) => string }> =>
+    agent.href !== null,
+);
+
+export type HandoffAgentId = (typeof handoffAgents)[number]["id"];

@@ -34,13 +34,13 @@ export function DocsAskAi({ title }: { title?: string }) {
           {askAiAgents.map(({ name, icon: Icon }) => (
             <span
               key={name}
-              className="bg-background -ml-2 flex size-5 items-center justify-center border first:ml-0"
+              className="bg-background -ml-1.5 flex size-5 items-center justify-center border first:ml-0"
             >
               <Icon className="size-3" />
             </span>
           ))}
         </span>
-        {isCopied ? "Prompt copied" : "Copy prompt for AI"}
+        {isCopied ? "Prompt copied" : "Copy prompt"}
       </button>
     </div>
   );

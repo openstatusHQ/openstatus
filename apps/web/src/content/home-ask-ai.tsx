@@ -11,7 +11,7 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/rq-client";
 
-import { type AskAiAgentId, askAiAgents, buildAskAiPrompt } from "./ask-ai";
+import { buildAskAiPrompt, type HandoffAgentId, handoffAgents } from "./ask-ai";
 
 const PATH = "/";
 
@@ -23,15 +23,8 @@ export function HomeAskAi({ title }: { title?: string }) {
   const track = api.track.contentCopied.useMutation();
   const prompt = buildAskAiPrompt({ path: PATH, title });
 
-  const onHandoff = (agent: AskAiAgentId, name: string, prefills: boolean) => {
+  const onHandoff = (agent: HandoffAgentId) =>
     track.mutate({ kind: "handoff", path: PATH, agent });
-    if (!prefills) {
-      void copy(prompt, {
-        successMessage: `Prompt copied. Paste it into ${name}.`,
-        withToast: true,
-      });
-    }
-  };
 
   const onCopy = async () => {
     const ok = await copy(prompt, {
@@ -47,7 +40,7 @@ export function HomeAskAi({ title }: { title?: string }) {
         <span className="text-muted-foreground px-3 py-2 max-sm:hidden">
           Ask
         </span>
-        {askAiAgents.map(({ id, name, icon: Icon, href, prefills }, i) => (
+        {handoffAgents.map(({ id, name, icon: Icon, href }, i) => (
           <Tooltip key={id}>
             <TooltipTrigger asChild>
               <a
@@ -55,7 +48,7 @@ export function HomeAskAi({ title }: { title?: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Ask ${name} about openstatus`}
-                onClick={() => onHandoff(id, name, prefills)}
+                onClick={() => onHandoff(id)}
                 className={cn(
                   cell,
                   "w-10 border-l px-0",
