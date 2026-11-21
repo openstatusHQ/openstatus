@@ -56,3 +56,32 @@ func TestTinybirdOptions(t *testing.T) {
 		require.Equal(t, defaults.RetryBudget, opts.RetryBudget)
 	})
 }
+
+func TestTinybirdToken(t *testing.T) {
+	t.Run("it should prefer TINYBIRD_TOKEN when set", func(t *testing.T) {
+		t.Setenv("TINYBIRD_TOKEN", "token-from-tinybird-token")
+		t.Setenv("TINY_BIRD_API_KEY", "key-from-api-key")
+
+		require.Equal(t, "token-from-tinybird-token", tinybirdToken())
+	})
+
+	t.Run("it should fall back to TINY_BIRD_API_KEY when TINYBIRD_TOKEN is empty", func(t *testing.T) {
+		t.Setenv("TINYBIRD_TOKEN", "")
+		t.Setenv("TINY_BIRD_API_KEY", "key-from-api-key")
+
+		require.Equal(t, "key-from-api-key", tinybirdToken())
+	})
+
+	t.Run("it should fall back to TINY_BIRD_API_KEY when TINYBIRD_TOKEN is unset", func(t *testing.T) {
+		t.Setenv("TINY_BIRD_API_KEY", "key-from-api-key")
+
+		require.Equal(t, "key-from-api-key", tinybirdToken())
+	})
+
+	t.Run("it should return empty string when neither is set", func(t *testing.T) {
+		t.Setenv("TINYBIRD_TOKEN", "")
+		t.Setenv("TINY_BIRD_API_KEY", "")
+
+		require.Equal(t, "", tinybirdToken())
+	})
+}

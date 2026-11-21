@@ -193,7 +193,7 @@ func main() {
 	// environment variables.
 	var region string
 	cronSecret := env("CRON_SECRET", "")
-	tinyBirdToken := env("TINYBIRD_TOKEN", "")
+	tinyBirdToken := env("TINYBIRD_TOKEN", env("TINY_BIRD_API_KEY", ""))
 	logLevel := env("LOG_LEVEL", "info")
 	cloudProvider := env("CLOUD_PROVIDER", "fly")
 	axiomToken := env("AXIOM_TOKEN", "")
@@ -451,7 +451,7 @@ func envInt(key string, fallback int) int {
 }
 
 func env(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
+	if value, ok := os.LookupEnv(key); ok && value != "" {
 		return value
 	}
 

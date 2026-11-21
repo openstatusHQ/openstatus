@@ -18,6 +18,7 @@ import (
 type recordedRequest struct {
 	dataSource string
 	lines      []string
+	header     http.Header
 }
 
 type fakeEventsAPI struct {
@@ -34,6 +35,7 @@ func (f *fakeEventsAPI) client() *http.Client {
 		f.requests = append(f.requests, recordedRequest{
 			dataSource: req.URL.Query().Get("name"),
 			lines:      strings.Split(strings.TrimSuffix(string(body), "\n"), "\n"),
+			header:     req.Header.Clone(),
 		})
 		f.mu.Unlock()
 
@@ -289,5 +291,35 @@ func TestBatcher(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatal("the row should fail as soon as Close returns")
 		}
+	})
+
+	t.Run("it should omit Authorization header when apiKey is empty", func(t *testing.T) {
+		t.Parallel()
+		api := &fakeEventsAPI{}
+		opts := options()
+		opts.FlushInterval = 10 * time.Millisecond
+		b := tinybird.NewBatcher(api.client(), "", opts)
+
+		err := b.SendEvent(t.Context(), "event", "ping_response__v8")
+		require.NoError(t, err)
+
+		requests := api.recorded()
+		require.Len(t, requests, 1)
+		require.Empty(t, requests[0].header.Get("Authorization"))
+	})
+
+	t.Run("it should send Authorization Bearer when apiKey is provided", func(t *testing.T) {
+		t.Parallel()
+		api := &fakeEventsAPI{}
+		opts := options()
+		opts.FlushInterval = 10 * time.Millisecond
+		b := tinybird.NewBatcher(api.client(), "test-token", opts)
+
+		err := b.SendEvent(t.Context(), "event", "ping_response__v8")
+		require.NoError(t, err)
+
+		requests := api.recorded()
+		require.Len(t, requests, 1)
+		require.Equal(t, "Bearer test-token", requests[0].header.Get("Authorization"))
 	})
 }

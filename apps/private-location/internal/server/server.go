@@ -60,7 +60,8 @@ func NewServer() (*http.Server, func(context.Context)) {
 	httpClient := &http.Client{
 		Timeout: 45 * time.Second,
 	}
-	tbClient := tinybird.NewBatcher(httpClient, os.Getenv("TINYBIRD_TOKEN"), tinybirdOptions())
+	tbToken := tinybirdToken()
+	tbClient := tinybird.NewBatcher(httpClient, tbToken, tinybirdOptions())
 
 	newServer := &Server{
 		port:        port,
@@ -89,7 +90,7 @@ func NewServer() (*http.Server, func(context.Context)) {
 		"port", port,
 		"instance_id", instanceID,
 		"axiom_configured", os.Getenv("AXIOM_TOKEN") != "",
-		"tinybird_configured", os.Getenv("TINYBIRD_TOKEN") != "",
+		"tinybird_configured", tbToken != "",
 	)
 
 	// Return cleanup function for graceful shutdown
@@ -159,10 +160,17 @@ func setupLogger() (*slog.Logger, *sdklog.LoggerProvider) {
 }
 
 func env(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
+	if value, ok := os.LookupEnv(key); ok && value != "" {
 		return value
 	}
 	return fallback
+}
+
+func tinybirdToken() string {
+	if token := env("TINYBIRD_TOKEN", ""); token != "" {
+		return token
+	}
+	return env("TINY_BIRD_API_KEY", "")
 }
 
 func tinybirdOptions() tinybird.BatcherOptions {
