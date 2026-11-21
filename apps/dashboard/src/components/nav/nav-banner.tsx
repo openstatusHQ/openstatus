@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TRIAL_BANNER_DAYS } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
 
-import { NavBannerChecklist } from "./nav-banner-checklist";
+import { NavBannerChecklist, useChecklistItems } from "./nav-banner-checklist";
 import { NavBannerTrial } from "./nav-banner-trial";
 import { NavBannerUpgrade } from "./nav-banner-upgrade";
 
@@ -22,6 +22,7 @@ export function NavBanner() {
     refetchInterval: (query) =>
       query.state.data?.trialDaysLeft != null ? TRIAL_REFETCH_MS : false,
   });
+  const checklistItems = useChecklistItems();
   const [openChecklist, setOpenChecklist] = useCookieState<"true" | "false">(
     "sidebar_banner_checklist",
     "true",
@@ -56,7 +57,16 @@ export function NavBanner() {
   }
 
   if (openChecklist === "true") {
-    return <NavBannerChecklist handleClose={() => setOpenChecklist("false")} />;
+    // Wait for the counts so the upgrade banner doesn't flash in first.
+    if (!checklistItems) return null;
+    if (checklistItems.some((i) => !i.checked)) {
+      return (
+        <NavBannerChecklist
+          items={checklistItems}
+          handleClose={() => setOpenChecklist("false")}
+        />
+      );
+    }
   }
 
   if (openUpgrade === "true" && workspace.plan === "free") {
