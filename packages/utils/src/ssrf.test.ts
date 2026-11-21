@@ -334,4 +334,63 @@ describe("safeFetch", () => {
       restore();
     }
   });
+
+  it("aborts assertSafeUrl and safeFetch before fetching when signal is already aborted", async () => {
+    const original = globalThis.fetch;
+    let fetchCalled = false;
+    globalThis.fetch = () => {
+      fetchCalled = true;
+      return Promise.resolve(new Response("ok"));
+    };
+    try {
+      const abortError = new Error("Deadline expired");
+      const signal = AbortSignal.abort(abortError);
+
+      await expect(assertSafeUrl("https://example.com", signal)).rejects.toThrow(
+        "Deadline expired",
+      );
+      await expect(
+        safeFetch("https://example.com", { signal }),
+      ).rejects.toThrow("Deadline expired");
+      expect(fetchCalled).toBe(false);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it("shares timeout signal across redirects and aborts when budget is exceeded", async () => {
+    const original = globalThis.fetch;
+    const seen: string[] = [];
+    globalThis.fetch = (input, init) => {
+      const url = String(input);
+      seen.push(url);
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (url === "https://example.com/hop1") {
+            resolve(
+              new Response(null, {
+                status: 307,
+                headers: { location: "https://example.com/hop2" },
+              }),
+            );
+          } else {
+            resolve(new Response("ok"));
+          }
+        }, 30);
+        init?.signal?.addEventListener("abort", () => {
+          clearTimeout(timer);
+          reject(init.signal.reason);
+        });
+      });
+    };
+    try {
+      // 50ms budget: hop1 takes 30ms, leaving 20ms. Hop 2 takes 30ms, which exceeds budget.
+      const signal = AbortSignal.timeout(50);
+      await expect(
+        safeFetch("https://example.com/hop1", { signal }),
+      ).rejects.toThrow();
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });

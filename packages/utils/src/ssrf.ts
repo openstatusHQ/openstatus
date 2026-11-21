@@ -88,7 +88,11 @@ function isBlockedHost(hostname: string): boolean {
  * `assertSafeUrlSync`, kept async for existing callers.
  * Throws an error if the URL is not safe.
  */
-export async function assertSafeUrl(urlString: string): Promise<void> {
+export async function assertSafeUrl(
+  urlString: string,
+  signal?: AbortSignal | null,
+): Promise<void> {
+  signal?.throwIfAborted();
   let parsed: URL;
   try {
     parsed = new URL(urlString);
@@ -143,7 +147,9 @@ export async function safeFetch(
 ): Promise<Response> {
   let target = url;
   for (let hop = 0; ; hop++) {
-    await assertSafeUrl(target);
+    init?.signal?.throwIfAborted();
+    await assertSafeUrl(target, init?.signal);
+    init?.signal?.throwIfAborted();
     const res = await fetch(target, { ...init, redirect: "manual" });
 
     const location = res.headers.get("location");
