@@ -57,6 +57,17 @@ function shouldSample(event: Record<string, unknown>): boolean {
   // Always capture: slow requests (above p99 - 2s threshold)
   if (durationMs && durationMs > 2000) return true;
 
+  // Always capture: alerting branches and drift sweeps, so Axiom counts are exact
+  const su = event.status_update as Record<string, unknown> | undefined;
+  if (
+    su?.maintenance_skipped ||
+    su?.transition_applied ||
+    su?.incident_error ||
+    event.status_drift
+  ) {
+    return true;
+  }
+
   // Higher sampling for client errors (4xx) - 50%
   if (statusCode && statusCode >= 400 && statusCode < 500) {
     return true;
@@ -102,7 +113,7 @@ await configure({
     {
       category: "workflow",
       lowestLevel: "warning",
-      sinks: ["console"],
+      sinks: ["console", "otel"],
     },
     {
       category: "workflow-otel",

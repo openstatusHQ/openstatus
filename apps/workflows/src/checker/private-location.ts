@@ -52,17 +52,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
   // Set event data for OTel/Axiom structured logging (matches cloud checker pattern)
   // Note: Private location pings are ingested to Tinybird separately via Go code in
   // apps/private-location/internal/tinybird/client.go, not through this event object
-  if (event) {
-    event.status_update = {
-      status: status,
-      message: message,
-      region: privateLocationId, // Private location ID as region string
-      status_code: statusCode,
-      cron_timestamp: cronTimestamp,
-      latency_ms: latency,
-      monitorId: monitorIdNumber,
-    };
-  }
+  const statusUpdate: Record<string, unknown> = {
+    status: status,
+    message: message,
+    region: privateLocationId, // Private location ID as region string
+    status_code: statusCode,
+    cron_timestamp: cronTimestamp,
+    latency_ms: latency,
+    monitorId: monitorIdNumber,
+  };
+  if (event) event.status_update = statusUpdate;
 
   try {
     const monitor = await db
@@ -96,6 +95,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             .get();
 
     if (activeMaintenance) {
+      statusUpdate.maintenance_skipped = true;
       return c.json({ success: true }, 200);
     }
 
@@ -213,6 +213,11 @@ export async function updateStatusPrivate(c: Context<Env>) {
       (affectedLocationCount >= numberOfLocations / 2 ||
         numberOfLocations === 1);
 
+    statusUpdate.affected_location_count = affectedLocationCount;
+    statusUpdate.location_count = numberOfLocations;
+    statusUpdate.transition_applied =
+      !hasCloudRegions && shouldTriggerIncident && monitor.status !== status;
+
     let incident = null;
     let triggeredNotifications: { notificationId: number; provider: string }[] =
       [];
@@ -263,10 +268,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
               });
             }
           } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            statusUpdate.incident_error = errorMessage;
             logger.error("Failed to create incident", {
               monitor_id: monitorId,
-              error_message:
-                error instanceof Error ? error.message : String(error),
+              error_message: errorMessage,
             });
           }
         }
@@ -327,13 +334,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
             });
             incident = incidents[0] ?? null;
           } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            statusUpdate.incident_error = errorMessage;
             logger.warning(
               "Failed to resolve incident on degraded transition",
-              {
-                monitor_id: monitorId,
-                error_message:
-                  error instanceof Error ? error.message : String(error),
-              },
+              { monitor_id: monitorId, error_message: errorMessage },
             );
             // Continue with notifications even if resolution fails
           }
@@ -394,10 +400,12 @@ export async function updateStatusPrivate(c: Context<Env>) {
             });
             incident = incidents[0] ?? null;
           } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            statusUpdate.incident_error = errorMessage;
             logger.warning("Failed to resolve incident on active transition", {
               monitor_id: monitorId,
-              error_message:
-                error instanceof Error ? error.message : String(error),
+              error_message: errorMessage,
             });
             // Continue with notifications even if resolution fails
           }
@@ -434,12 +442,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
     }
 
     // Add notification outcome to event for OTel logging
-    if (event?.status_update) {
-      (event.status_update as Record<string, unknown>).notificationTriggered =
-        triggeredNotifications.length > 0;
-      (event.status_update as Record<string, unknown>).notifications =
-        triggeredNotifications;
-    }
+    statusUpdate.notificationTriggered = triggeredNotifications.length > 0;
+    statusUpdate.notifications = triggeredNotifications;
 
     return c.json({ success: true }, 200);
   } catch (error) {

@@ -11,6 +11,22 @@ import { handleStatusDriftCron } from "./status-drift";
 import { runUptimeFreezeTick } from "./uptime-freeze";
 
 const logger = getLogger(["workflow"]);
+const otelLogger = getLogger(["workflow-otel"]);
+
+// Scheduled tasks bypass the request middleware, so this is their only line in Axiom.
+function emitTaskEvent(
+  task: ScheduledTask,
+  startedAt: number,
+  outcome: "success" | "error",
+  fields: Record<string, unknown>,
+) {
+  otelLogger.info("scheduled_task", {
+    task: task.name,
+    outcome,
+    duration_ms: Date.now() - startedAt,
+    ...fields,
+  });
+}
 
 type ScheduledTask = {
   name: string;
@@ -127,14 +143,19 @@ function scheduleTask(task: ScheduledTask): RunningTask {
 
   const body = Effect.suspend(() => {
     const checkIn = startCheckIn(task);
+    const startedAt = Date.now();
     return bounded.pipe(
-      Effect.tap(() =>
+      Effect.tap((result) =>
         Effect.promise(async () => {
+          emitTaskEvent(task, startedAt, "success", { result });
           await checkIn?.cronCompleted();
         }),
       ),
       Effect.catch((error) =>
         Effect.promise(async () => {
+          emitTaskEvent(task, startedAt, "error", {
+            error_message: error.message,
+          });
           logger.error("Scheduled task failed", {
             task: task.name,
             error_message: error.message,

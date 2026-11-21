@@ -17,7 +17,7 @@ import {
 } from "../checker/transition";
 import { env } from "../env";
 
-const logger = getLogger(["workflow"]);
+const logger = getLogger(["workflow-otel"]);
 
 const CANDIDATE_LIMIT = 500;
 
@@ -149,6 +149,7 @@ export async function handleHeartbeatSweepCron(now = Date.now()) {
     logger.info("Heartbeat status changed", {
       monitor_id: row.monitor_id,
       status: input.status,
+      overdue,
       outbox_rows: result.outboxRows.length,
     });
     await deliver(input, result);
