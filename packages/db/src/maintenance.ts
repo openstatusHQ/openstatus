@@ -16,6 +16,14 @@ import type { MonitorMaintenanceWindowMode } from "./schema";
 
 type Db = Pick<typeof defaultDb, "select">;
 
+// Migration period: from this instant only maintenance windows pause checks.
+// Once it has passed, delete the status-page branches below.
+export const PAGE_MAINTENANCE_PAUSE_ENDS = new Date("2027-01-01T00:00:00.000Z");
+
+export function pageMaintenancePauses(at: Date): boolean {
+  return at < PAGE_MAINTENANCE_PAUSE_ENDS;
+}
+
 function windowMonitorIds(
   db: Db,
   at: Date,
@@ -50,7 +58,8 @@ function pageMaintenanceMonitorIds(db: Db, at: Date) {
 
 /**
  * Condition on `monitor.id` at `at`.
- * `pause`: a pause window or a status-page maintenance covers it, and no continue window does.
+ * `pause`: a pause window covers it, or until `PAGE_MAINTENANCE_PAUSE_ENDS` a status-page
+ * maintenance, and no continue window does.
  * `continue`: a continue window covers it. `window`: any window, status-page maintenances excluded.
  */
 export function monitorInMaintenance(
@@ -61,7 +70,10 @@ export function monitorInMaintenance(
   if (args.mode === "window") return inArray(id, windowMonitorIds(db, args.at));
   const continued = inArray(id, windowMonitorIds(db, args.at, "continue"));
   if (args.mode === "continue") return continued;
-  const paused = sql`(${inArray(id, windowMonitorIds(db, args.at, "pause"))} or ${inArray(id, pageMaintenanceMonitorIds(db, args.at))})`;
+  const byWindow = inArray(id, windowMonitorIds(db, args.at, "pause"));
+  const paused = pageMaintenancePauses(args.at)
+    ? sql`(${byWindow} or ${inArray(id, pageMaintenanceMonitorIds(db, args.at))})`
+    : byWindow;
   return sql`(${paused} and not ${continued})`;
 }
 
@@ -100,19 +112,21 @@ export async function activeMaintenanceByMonitor(
           gt(w.to, at),
         ),
       ),
-    db
-      .select({ monitorId: pc.monitorId, to: m.to })
-      .from(mLink)
-      .innerJoin(m, eq(m.id, mLink.maintenanceId))
-      .innerJoin(pc, eq(pc.id, mLink.pageComponentId))
-      .where(
-        and(
-          eq(m.workspaceId, workspaceId),
-          inArray(pc.monitorId, [...monitorIds]),
-          lte(m.from, at),
-          gte(m.to, at),
-        ),
-      ),
+    pageMaintenancePauses(at)
+      ? db
+          .select({ monitorId: pc.monitorId, to: m.to })
+          .from(mLink)
+          .innerJoin(m, eq(m.id, mLink.maintenanceId))
+          .innerJoin(pc, eq(pc.id, mLink.pageComponentId))
+          .where(
+            and(
+              eq(m.workspaceId, workspaceId),
+              inArray(pc.monitorId, [...monitorIds]),
+              lte(m.from, at),
+              gte(m.to, at),
+            ),
+          )
+      : [],
   ]);
 
   const rows: (ActiveMaintenance & { monitorId: number })[] = [

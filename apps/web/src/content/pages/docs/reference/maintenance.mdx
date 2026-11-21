@@ -11,7 +11,7 @@ Openstatus has two kinds of planned maintenance. They are independent: neither c
 | Purpose | Tell your users about planned work | Stop checks or alerts during planned work |
 | Targets | Components of one status page | Monitors |
 | Public | Yes, on the status page, feeds and subscriber notifications | No, dashboard only |
-| Checks | Paused for the monitors behind its components | Paused, or kept running without status changes |
+| Checks | Paused for the monitors behind its components until January 1, 2027, unaffected afterwards | Paused, or kept running without status changes |
 | Active | `from` to `to`, both included | `from` included, `to` excluded |
 
 ## Status page maintenance
@@ -25,7 +25,9 @@ While a maintenance is active (the current time is between `from` and `to`, both
 - The affected components display the **Under Maintenance** (info) status on the status page.
 - A higher-priority event overrides it: an active incident (error) or an unresolved status report (degraded) takes precedence, so the component shows that status instead. Maintenance only outranks the default operational status.
 - The maintenance is reflected in the historical status bars for the days it overlaps.
-- Monitors behind the affected monitor-linked components are not checked, unless a [continue window](#mode) covers them.
+- Until January 1, 2027 (00:00 UTC), monitors behind the affected monitor-linked components are not checked, unless a [continue window](#mode) covers them.
+
+**Pausing checks is moving to maintenance windows.** From January 1, 2027 (00:00 UTC) a status page maintenance no longer stops checks: its monitors keep running and can alert, including for a maintenance that started before that date. To keep a monitor quiet during planned work, schedule a [maintenance window](#maintenance-windows) for the same time.
 
 A maintenance does **not** exclude downtime from uptime calculations. Uptime is computed from check results; a paused monitor simply has no results for that time.
 
@@ -110,7 +112,7 @@ A window is active from `from`, included, to `to`, excluded. A check that ran at
 
 Heartbeat monitors follow the same rule: in `pause` they are not swept; in `continue` a deadline missed inside the window is reported once the window has ended, if no ping arrived in the meantime.
 
-When windows and status page maintenances overlap on one monitor, `continue` wins: the monitor keeps being checked even if a `pause` window or a status page maintenance covers it at the same time.
+When windows and status page maintenances overlap on one monitor, `continue` wins: the monitor keeps being checked even if a `pause` window or a status page maintenance covers it at the same time. From January 1, 2027 only windows count here, since a status page maintenance no longer pauses checks.
 
 ### Title
 

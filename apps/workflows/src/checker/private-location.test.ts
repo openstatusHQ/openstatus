@@ -1,4 +1,5 @@
 import { and, db, eq, or } from "@openstatus/db";
+import { PAGE_MAINTENANCE_PAUSE_ENDS } from "@openstatus/db/src/maintenance";
 import {
   auditLog,
   maintenance,
@@ -526,18 +527,21 @@ describe("updateStatusPrivate", () => {
       expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     });
 
-    test("a status-page maintenance drops the report, as before", async () => {
+    test("a status-page maintenance drops the report until the migration ends", async () => {
       const pageId = (await createPage(workspaceId)).id;
-      const now = Date.now();
+      const ends = PAGE_MAINTENANCE_PAUSE_ENDS.getTime();
       await createPageMaintenance(workspaceId, pageId, {
         monitorId: TEST_MONITOR_ID,
-        from: new Date(now - 3_600_000),
-        to: new Date(now + 3_600_000),
+        from: new Date(ends - 3_600_000),
+        to: new Date(ends + 3_600_000),
       });
 
-      await report(now);
+      await report(ends - 1000);
       expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
       expect(await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID)).toBeUndefined();
+
+      await report(ends);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     });
   });
 

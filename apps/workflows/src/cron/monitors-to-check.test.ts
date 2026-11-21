@@ -1,4 +1,5 @@
 import { db, eq } from "@openstatus/db";
+import { PAGE_MAINTENANCE_PAUSE_ENDS } from "@openstatus/db/src/maintenance";
 import {
   maintenance,
   monitor,
@@ -102,9 +103,9 @@ describe("listMonitorsToCheck during maintenance", () => {
     expect(await dispatchedIds(new Date(now))).toContain(m.id);
   });
 
-  test("a status-page maintenance excludes its monitors, end inclusive", async () => {
+  test("a status-page maintenance excludes its monitors until the migration ends, end inclusive", async () => {
     const m = await createMonitor(workspaceId, base);
-    const now = Math.floor(Date.now() / 1000) * 1000;
+    const now = PAGE_MAINTENANCE_PAUSE_ENDS.getTime() - 24 * HOUR_MS;
     const to = new Date(now + HOUR_MS);
     await createPageMaintenance(workspaceId, pageId, {
       monitorId: m.id,
@@ -115,6 +116,19 @@ describe("listMonitorsToCheck during maintenance", () => {
     expect(await dispatchedIds(new Date(now))).not.toContain(m.id);
     expect(await dispatchedIds(to)).not.toContain(m.id);
     expect(await dispatchedIds(new Date(now + 2 * HOUR_MS))).toContain(m.id);
+  });
+
+  test("a status-page maintenance no longer excludes its monitors once the migration ends", async () => {
+    const m = await createMonitor(workspaceId, base);
+    const ends = PAGE_MAINTENANCE_PAUSE_ENDS.getTime();
+    await createPageMaintenance(workspaceId, pageId, {
+      monitorId: m.id,
+      from: new Date(ends - HOUR_MS),
+      to: new Date(ends + HOUR_MS),
+    });
+
+    expect(await dispatchedIds(new Date(ends - 1))).not.toContain(m.id);
+    expect(await dispatchedIds(new Date(ends))).toContain(m.id);
   });
 
   test("a continue window wins over an overlapping status-page maintenance", async () => {

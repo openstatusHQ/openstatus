@@ -1,5 +1,9 @@
 import { and, eq, inArray } from "@openstatus/db";
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
+import {
+  monitorInMaintenance,
+  PAGE_MAINTENANCE_PAUSE_ENDS,
+  pageMaintenancePauses,
+} from "@openstatus/db/src/maintenance";
 import {
   auditLog,
   maintenance,
@@ -445,38 +449,42 @@ describe("listMonitors maintenance", () => {
     });
   });
 
-  test("a status-page maintenance shows as pause; a continue window wins over it", async () => {
-    await withTestTransaction(async (tx) => {
-      const paused = await insertMonitor(tx, ctx.workspace.id);
-      const continued = await insertMonitor(tx, ctx.workspace.id);
-      const now = Date.now();
-      const range = { from: new Date(now - hour), to: new Date(now + hour) };
-      await pageMaintenance(tx, [paused.id, continued.id], range);
-      await createMaintenanceWindow({
-        ctx: { ...ctx, db: tx },
-        input: {
-          title: "c",
-          mode: "continue",
-          ...range,
-          monitorIds: [continued.id],
-        },
-      });
+  // listMonitors reads the wall clock: delete with the status-page branch after the migration
+  test.skipIf(!pageMaintenancePauses(new Date()))(
+    "a status-page maintenance shows as pause; a continue window wins over it",
+    async () => {
+      await withTestTransaction(async (tx) => {
+        const paused = await insertMonitor(tx, ctx.workspace.id);
+        const continued = await insertMonitor(tx, ctx.workspace.id);
+        const now = Date.now();
+        const range = { from: new Date(now - hour), to: new Date(now + hour) };
+        await pageMaintenance(tx, [paused.id, continued.id], range);
+        await createMaintenanceWindow({
+          ctx: { ...ctx, db: tx },
+          input: {
+            title: "c",
+            mode: "continue",
+            ...range,
+            monitorIds: [continued.id],
+          },
+        });
 
-      const { items } = await listMonitors({
-        ctx: { ...ctx, db: tx },
-        input: { limit: 100, offset: 0, order: "asc" },
+        const { items } = await listMonitors({
+          ctx: { ...ctx, db: tx },
+          input: { limit: 100, offset: 0, order: "asc" },
+        });
+        const of = (id: number) => items.find((i) => i.id === id)?.maintenance;
+        expect(of(paused.id)).toMatchObject({
+          mode: "pause",
+          source: "status_page",
+        });
+        expect(of(continued.id)).toMatchObject({
+          mode: "continue",
+          source: "window",
+        });
       });
-      const of = (id: number) => items.find((i) => i.id === id)?.maintenance;
-      expect(of(paused.id)).toMatchObject({
-        mode: "pause",
-        source: "status_page",
-      });
-      expect(of(continued.id)).toMatchObject({
-        mode: "continue",
-        source: "window",
-      });
-    });
-  });
+    },
+  );
 });
 
 describe("monitorInMaintenance", () => {
@@ -488,7 +496,7 @@ describe("monitorInMaintenance", () => {
       const overridden = await insertMonitor(tx, ctx.workspace.id);
       const free = await insertMonitor(tx, ctx.workspace.id);
       const ids = [byWindow.id, byPage.id, both.id, overridden.id, free.id];
-      const now = Date.now();
+      const now = PAGE_MAINTENANCE_PAUSE_ENDS.getTime() - 24 * hour;
       const range = { from: new Date(now - hour), to: new Date(now + hour) };
       await createMaintenanceWindow({
         ctx: { ...ctx, db: tx },
@@ -533,7 +541,7 @@ describe("monitorInMaintenance", () => {
     await withTestTransaction(async (tx) => {
       const byWindow = await insertMonitor(tx, ctx.workspace.id);
       const byPage = await insertMonitor(tx, ctx.workspace.id);
-      const end = Math.floor(Date.now() / 1000) * 1000;
+      const end = PAGE_MAINTENANCE_PAUSE_ENDS.getTime() - 24 * hour;
       const range = { from: new Date(end - hour), to: new Date(end) };
       await createMaintenanceWindow({
         ctx: { ...ctx, db: tx },
@@ -551,6 +559,32 @@ describe("monitorInMaintenance", () => {
         )
         .all();
       expect(rows.map((r) => r.id)).toEqual([byPage.id]);
+    });
+  });
+
+  test("a status-page maintenance stops pausing when the migration ends", async () => {
+    await withTestTransaction(async (tx) => {
+      const byPage = await insertMonitor(tx, ctx.workspace.id);
+      const ends = PAGE_MAINTENANCE_PAUSE_ENDS.getTime();
+      await pageMaintenance(tx, [byPage.id], {
+        from: new Date(ends - hour),
+        to: new Date(ends + hour),
+      });
+      const pausedAt = async (at: number) => {
+        const rows = await tx
+          .select({ id: monitor.id })
+          .from(monitor)
+          .where(
+            and(
+              eq(monitor.id, byPage.id),
+              monitorInMaintenance(tx, { at: new Date(at), mode: "pause" }),
+            ),
+          )
+          .all();
+        return rows.length > 0;
+      };
+      expect(await pausedAt(ends - 1)).toBe(true);
+      expect(await pausedAt(ends)).toBe(false);
     });
   });
 });

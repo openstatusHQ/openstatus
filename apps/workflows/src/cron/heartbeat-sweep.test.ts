@@ -1,4 +1,5 @@
 import { and, db, eq, isNull } from "@openstatus/db";
+import { pageMaintenancePauses } from "@openstatus/db/src/maintenance";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -260,34 +261,38 @@ describe("handleHeartbeatSweepCron", () => {
     expect(await statusOf(row.id)).toBe("active");
   });
 
-  test("a heartbeat in maintenance is skipped", async () => {
-    const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
-    const statusPage = await createPage(workspaceId);
-    const component = await createPageComponent(workspaceId, statusPage.id, {
-      type: "monitor",
-      monitorId: row.id,
-    });
-    const [window] = await db
-      .insert(maintenance)
-      .values({
-        title: "db upgrade",
-        message: "",
-        from: new Date(Date.now() - HOUR_MS),
-        to: new Date(Date.now() + HOUR_MS),
-        workspaceId,
-        pageId: statusPage.id,
-      })
-      .returning();
-    if (!window) throw new Error("maintenance insert returned no row");
-    await db
-      .insert(maintenancesToPageComponents)
-      .values({ maintenanceId: window.id, pageComponentId: component.id })
-      .run();
+  // runs on the wall clock: delete with the status-page branch after the migration
+  test.skipIf(!pageMaintenancePauses(new Date()))(
+    "a heartbeat in a status-page maintenance is skipped",
+    async () => {
+      const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
+      const statusPage = await createPage(workspaceId);
+      const component = await createPageComponent(workspaceId, statusPage.id, {
+        type: "monitor",
+        monitorId: row.id,
+      });
+      const [window] = await db
+        .insert(maintenance)
+        .values({
+          title: "db upgrade",
+          message: "",
+          from: new Date(Date.now() - HOUR_MS),
+          to: new Date(Date.now() + HOUR_MS),
+          workspaceId,
+          pageId: statusPage.id,
+        })
+        .returning();
+      if (!window) throw new Error("maintenance insert returned no row");
+      await db
+        .insert(maintenancesToPageComponents)
+        .values({ maintenanceId: window.id, pageComponentId: component.id })
+        .run();
 
-    await handleHeartbeatSweepCron();
+      await handleHeartbeatSweepCron();
 
-    expect(await statusOf(row.id)).toBe("active");
-  });
+      expect(await statusOf(row.id)).toBe("active");
+    },
+  );
 
   test("a heartbeat under a pause window is skipped", async () => {
     const row = await createHeartbeat(Date.now() - 2 * HOUR_MS);
