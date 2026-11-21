@@ -394,7 +394,10 @@ describe("StatusPageService.CreateStatusPage", () => {
   test("a created page counts requests", async () => {
     const res = await connectRequest(
       "CreateStatusPage",
-      { title: `${TEST_PREFIX}-requests`, slug: `${TEST_PREFIX}-requests-slug` },
+      {
+        title: `${TEST_PREFIX}-requests`,
+        slug: `${TEST_PREFIX}-requests-slug`,
+      },
       { "x-openstatus-key": "1" },
     );
     expect(res.status).toBe(200);
