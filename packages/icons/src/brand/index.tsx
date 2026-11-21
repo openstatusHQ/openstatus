@@ -28,3 +28,4 @@ export * from "./claude";
 export * from "./claude-code";
 export * from "./cloudflare";
 export * from "./openai";
+export * from "./gemini";

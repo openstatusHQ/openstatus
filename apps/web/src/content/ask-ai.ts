@@ -1,4 +1,9 @@
-import { ClaudeIcon, CursorIcon, OpenAIIcon } from "@openstatus/icons/brand";
+import {
+  ClaudeIcon,
+  CursorIcon,
+  GeminiIcon,
+  OpenAIIcon,
+} from "@openstatus/icons/brand";
 
 const BASE = "https://www.openstatus.dev";
 
@@ -27,12 +32,13 @@ Link the pages you used in every answer. If the docs don't cover something, say 
 My question: `;
 }
 
-// The prefill query params are undocumented on all three apps; the copy button is the fallback.
+// Prefill query params are undocumented; Gemini has none, so its link copies the prompt instead.
 export const askAiAgents = [
   {
     id: "claude",
     name: "Claude",
     icon: ClaudeIcon,
+    prefills: true,
     href: (prompt: string) =>
       `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
   },
@@ -40,13 +46,22 @@ export const askAiAgents = [
     id: "chatgpt",
     name: "ChatGPT",
     icon: OpenAIIcon,
+    prefills: true,
     href: (prompt: string) =>
       `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`,
+  },
+  {
+    id: "gemini",
+    name: "Gemini",
+    icon: GeminiIcon,
+    prefills: false,
+    href: (_prompt: string) => "https://gemini.google.com/app",
   },
   {
     id: "cursor",
     name: "Cursor",
     icon: CursorIcon,
+    prefills: true,
     href: (prompt: string) =>
       `https://cursor.com/link/prompt?text=${encodeURIComponent(prompt)}`,
   },

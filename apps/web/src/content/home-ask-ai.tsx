@@ -23,8 +23,15 @@ export function HomeAskAi({ title }: { title?: string }) {
   const track = api.track.contentCopied.useMutation();
   const prompt = buildAskAiPrompt({ path: PATH, title });
 
-  const onHandoff = (agent: AskAiAgentId) =>
+  const onHandoff = (agent: AskAiAgentId, name: string, prefills: boolean) => {
     track.mutate({ kind: "handoff", path: PATH, agent });
+    if (!prefills) {
+      void copy(prompt, {
+        successMessage: `Prompt copied. Paste it into ${name}.`,
+        withToast: true,
+      });
+    }
+  };
 
   const onCopy = async () => {
     const ok = await copy(prompt, {
@@ -36,9 +43,11 @@ export function HomeAskAi({ title }: { title?: string }) {
 
   return (
     <TooltipProvider>
-      <div className="not-prose mb-6 flex w-fit max-w-full divide-x border text-base">
-        <span className="text-muted-foreground px-3 py-2">Ask</span>
-        {askAiAgents.map(({ id, name, icon: Icon, href }) => (
+      <div className="not-prose mb-6 flex w-fit max-w-full border text-base">
+        <span className="text-muted-foreground px-3 py-2 max-sm:hidden">
+          Ask
+        </span>
+        {askAiAgents.map(({ id, name, icon: Icon, href, prefills }, i) => (
           <Tooltip key={id}>
             <TooltipTrigger asChild>
               <a
@@ -46,8 +55,12 @@ export function HomeAskAi({ title }: { title?: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Ask ${name} about openstatus`}
-                onClick={() => onHandoff(id)}
-                className={cn(cell, "w-10 px-0")}
+                onClick={() => onHandoff(id, name, prefills)}
+                className={cn(
+                  cell,
+                  "w-10 border-l px-0",
+                  i === 0 && "max-sm:border-l-0",
+                )}
               >
                 <Icon className="size-3.5" />
               </a>
@@ -55,7 +68,7 @@ export function HomeAskAi({ title }: { title?: string }) {
             <TooltipContent>Ask {name}</TooltipContent>
           </Tooltip>
         ))}
-        <button type="button" onClick={onCopy} className={cell}>
+        <button type="button" onClick={onCopy} className={cn(cell, "border-l")}>
           {isCopied ? "[prompt copied]" : "[copy prompt]"}
         </button>
       </div>
