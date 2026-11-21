@@ -66,23 +66,25 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/monitors/:id/incidents",
-        destination: "/monitors/:id/report",
-        permanent: true,
-      },
-      {
-        source: "/monitors/:id/uptime",
-        destination: "/monitors/:id/report",
-        permanent: true,
+        destination: "/monitors/:id/outages",
+        permanent: false,
       },
       {
         source: "/monitors/:id/downtime",
-        destination: "/monitors/:id/report",
-        permanent: true,
+        destination: "/monitors/:id/outages",
+        permanent: false,
       },
       {
-        source: "/status-pages/:id/history",
-        destination: "/status-pages/:id/report",
-        permanent: true,
+        source: "/monitors/:id/uptime",
+        destination: "/monitors/:id/history",
+        permanent: false,
+      },
+      // browsers cached the earlier permanent redirects to /report, so it
+      // stays a target; /status-pages/:id/report is a page for the same reason
+      {
+        source: "/monitors/:id/report",
+        destination: "/monitors/:id/history",
+        permanent: false,
       },
     ];
   },

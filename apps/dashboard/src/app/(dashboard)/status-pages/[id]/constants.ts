@@ -2,8 +2,8 @@ import type { IconType } from "@openstatus/icons";
 import {
   Settings,
   Maintenance,
+  Calendar,
   Components,
-  FileText,
   Report,
   Team,
 } from "@openstatus/icons";
@@ -17,6 +17,6 @@ export const STATUS_PAGE_TABS: {
   { value: "maintenances", label: "Maintenances", icon: Maintenance },
   { value: "subscribers", label: "Subscribers", icon: Team },
   { value: "components", label: "Components", icon: Components },
-  { value: "report", label: "Report", icon: FileText },
+  { value: "history", label: "History", icon: Calendar },
   { value: "edit", label: "Settings", icon: Settings },
 ];

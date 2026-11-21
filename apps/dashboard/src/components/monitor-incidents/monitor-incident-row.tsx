@@ -25,10 +25,7 @@ import { IncidentRowActions } from "@/components/data-table/incidents/data-table
 import { IncidentActionCell } from "@/components/data-table/overview-events/incident-action-cell";
 import { DeclareFromRow } from "@/components/incidents/declare-from-row";
 import { downtimeActivity } from "@/data/incidents.client";
-import {
-  monitorReportHref,
-  resolutionLabel,
-} from "@/data/monitor-report.client";
+import { resolutionLabel } from "@/data/monitor-report.client";
 import {
   type IncidentStatus,
   getIncidentStatus,
@@ -114,7 +111,7 @@ export function MonitorIncidentRow({
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
-          href={kind ? monitorReportHref(monitor.id, startedAt) : undefined}
+          href={kind ? `/monitors/${monitor.id}/outages` : undefined}
           empty={hydrated ? "No name" : ""}
         >
           {title}

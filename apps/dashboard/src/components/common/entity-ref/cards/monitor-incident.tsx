@@ -41,7 +41,7 @@ export function MonitorIncidentCard({ id }: { id: number }) {
         kind="monitorIncident"
         href={
           data.monitor && monitorId !== null
-            ? entityKinds.monitorIncident.href({ monitorId, startedAt })
+            ? entityKinds.monitorIncident.href({ monitorId })
             : undefined
         }
       >
