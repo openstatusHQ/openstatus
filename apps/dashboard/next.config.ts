@@ -80,7 +80,7 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       // browsers cached the earlier permanent redirects to /report, so it
-      // stays a target; /status-pages/:id/report is a page for the same reason
+      // stays a target; /status-pages/:id/report redirects on the client for the same reason
       {
         source: "/monitors/:id/report",
         destination: "/monitors/:id/history",
