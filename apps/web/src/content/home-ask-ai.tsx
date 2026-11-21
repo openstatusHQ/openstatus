@@ -36,7 +36,7 @@ export function HomeAskAi({ title }: { title?: string }) {
 
   return (
     <TooltipProvider>
-      <div className="not-prose mb-6 flex w-fit max-w-full border text-base">
+      <div className="not-prose flex w-fit max-w-full border text-base">
         <span className="text-muted-foreground px-3 py-2 max-sm:hidden">
           Ask
         </span>

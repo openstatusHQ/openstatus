@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { HomeAskAi } from "../home-ask-ai";
 import { LatencyChartTable } from "../latency-chart-table";
 import { Actions } from "./actions";
 import { Aside } from "./aside";
@@ -42,6 +43,7 @@ export const components = {
   Grid,
   LogoCloud,
   Actions,
+  AskAi: HomeAskAi,
   SrOnly,
   Quote,
   Demo,

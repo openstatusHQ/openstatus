@@ -41,6 +41,9 @@ export function convertMdxToMarkdown(data: MDXData): string {
     },
   );
 
+  // The ask-AI row is interactive chrome with no copy of its own.
+  markdown = markdown.replace(/<AskAi\b[^>]*\/>/g, "");
+
   // Step 3: Convert <Image> to markdown images
   // Handle with alt attribute
   markdown = markdown.replace(
