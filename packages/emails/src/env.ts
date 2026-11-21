@@ -11,10 +11,12 @@ const processEnv: Record<string, string | undefined> = process.env;
 export const env = createEnv({
   server: {
     RESEND_API_KEY: z.string().min(1),
+    EMAIL_FROM: z.string().optional(),
     NODE_ENV: z.string().prefault("development"),
   },
   runtimeEnv: {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
     NODE_ENV: processEnv.NODE_ENV,
   },
 });

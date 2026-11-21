@@ -15,6 +15,8 @@ import { selectWorkspaceSchema, user } from "@openstatus/db/src/schema";
 import {
   monitorDeactivationEmail,
   monitorPausedEmail,
+  senderFrom,
+  senderReplyTo,
 } from "@openstatus/emails";
 import {
   type EmailHtml,
@@ -29,8 +31,10 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const PAUSE_FROM = "Thibault from openstatus <thibault@mail.openstatus.dev>";
-const PAUSE_REPLY_TO = "thibault@openstatus.dev";
+const PAUSE_FROM = senderFrom(
+  "Thibault from openstatus <thibault@mail.openstatus.dev>",
+);
+const PAUSE_REPLY_TO = senderReplyTo("thibault@openstatus.dev");
 
 // Check if GCP is properly configured (not empty and not placeholder values)
 const isGcpConfigured = () => {
