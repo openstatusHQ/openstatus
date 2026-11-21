@@ -65,17 +65,11 @@ export const columns: ColumnDef<Monitor>[] = [
           return <TableCellIndicator variant="muted" label={value} />;
       }
     },
-    filterFn: (row, _, value) => {
+    filterFn: (row, id, value) => {
       const statuses: string[] = Array.isArray(value) ? value : [value];
-      // "inactive" is a paused monitor, "active" a running healthy one;
-      // every other status matches the monitor's status as-is
-      return statuses.some((status) => {
-        if (status === "inactive") return !row.original.active;
-        if (status === "active") {
-          return !!row.original.active && row.original.status === "active";
-        }
-        return row.original.status === status;
-      });
+      // the accessor folds paused monitors into "inactive", so a paused
+      // monitor never matches its last known status
+      return statuses.includes(String(row.getValue(id)));
     },
     enableSorting: false,
     enableHiding: false,
