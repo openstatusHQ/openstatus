@@ -6,8 +6,7 @@ type HistoryValue = NonNullable<HistoryRow["months"][string]>;
 
 // TODO: rework later - currently not happy how we keep the metrics data available
 
-const HISTORY_MONTHS = 24;
-const WINDOWS = ["6", "12", "24"] as const;
+const HISTORY_MONTHS = 12;
 
 // deterministic PRNG so the placeholder rows don't reshuffle between renders
 function mulberry32(seed: number) {
@@ -89,9 +88,7 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
       component: { ...component, monitorId: null },
       unit,
       months: Object.fromEntries(months.map((key, i) => [key, monthValues[i]])),
-      rolling: Object.fromEntries(
-        WINDOWS.map((w) => [w, sumValues(monthValues.slice(-Number(w)))]),
-      ) as HistoryRow["rolling"],
+      total: sumValues(monthValues),
       runs: null,
       events: [],
       maintenanceWindows: [],
@@ -99,16 +96,11 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
     };
   });
 
-  const summary = Object.fromEntries(
-    WINDOWS.map((w) => [
-      w,
-      {
-        uptime: average(rows.map((row) => row.rolling[w]?.percentage ?? null)),
-        runsUptime: null,
-        reports: Number(w) / 3,
-      },
-    ]),
-  ) as UptimeHistory["summary"];
+  const summary: UptimeHistory["summary"] = {
+    uptime: average(rows.map((row) => row.total?.percentage ?? null)),
+    runsUptime: null,
+    reports: 4,
+  };
 
   return {
     mode: "requests",

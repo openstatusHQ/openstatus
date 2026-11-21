@@ -4,14 +4,11 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server";
 
-import { REPORT_PERIODS } from "@/data/monitor-report.client";
 import { HISTORY_METRICS } from "@/data/status-page-history";
 
 export const searchParamsParsers = {
-  period: parseAsStringLiteral(REPORT_PERIODS).withDefault("this-month"),
-  // YYYY-MM-DD UTC days of a custom period
-  from: parseAsString,
-  to: parseAsString,
+  // YYYY-MM UTC month, set only by links to outages older than the report
+  month: parseAsString,
   metric: parseAsStringLiteral(HISTORY_METRICS).withDefault("requests"),
 };
 

@@ -4,12 +4,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import {
   type HistoryRow,
-  type HistoryWindow,
   eventsForMonth,
   monthKeyToFullLabel,
   monthKeyToLabel,
-  windowKey,
-  windowLabel,
 } from "@/data/status-page-history";
 import { cn } from "@/lib/utils";
 
@@ -36,21 +33,19 @@ const componentColumn: ColumnDef<HistoryRow> = {
   },
 };
 
-// `months` comes oldest-first from the server; column ids stay slot-based
-// (1 = current) so the window visibility toggle keeps working
+// `months` comes oldest-first from the server
 function monthColumns(
   months: string[],
   timeZone: string,
   utcOnlyMonths: string[],
 ): ColumnDef<HistoryRow>[] {
   return months.map((key, i) => {
-    const offset = months.length - i;
-    const isCurrent = offset === 1;
+    const isCurrent = i === months.length - 1;
     const utcOnly = timeZone !== "UTC" && utcOnlyMonths.includes(key);
     // a UTC-only month annotates with the events of that UTC month
     const eventZone = utcOnly ? "UTC" : timeZone;
     return {
-      id: String(offset),
+      id: key,
       accessorFn: (row: HistoryRow) => row.months[key]?.percentage ?? null,
       header: () => (
         <span className={cn("block text-center", isCurrent && "text-info")}>
@@ -88,35 +83,32 @@ function monthColumns(
   });
 }
 
-function rollingColumn(window: HistoryWindow): ColumnDef<HistoryRow> {
-  return {
-    id: "rolling",
-    accessorFn: (row) => row.rolling[windowKey(window)]?.percentage ?? null,
-    header: "Total",
-    cell: ({ row }) => (
-      <TableCellUptime
-        value={row.original.rolling[windowKey(window)]}
-        unit={row.original.unit}
-        label={windowLabel(window)}
-      />
-    ),
-    enableSorting: false,
-    meta: {
-      headerClassName: "text-center tabular-nums",
-      cellClassName: "p-1",
-    },
-  };
-}
+const totalColumn: ColumnDef<HistoryRow> = {
+  id: "total",
+  accessorFn: (row) => row.total?.percentage ?? null,
+  header: "Total",
+  cell: ({ row }) => (
+    <TableCellUptime
+      value={row.original.total}
+      unit={row.original.unit}
+      label="Last 12 months"
+    />
+  ),
+  enableSorting: false,
+  meta: {
+    headerClassName: "text-center tabular-nums",
+    cellClassName: "p-1",
+  },
+};
 
 export function getColumns(
   months: string[],
-  window: HistoryWindow,
   timeZone = "UTC",
   utcOnlyMonths: string[] = [],
 ): ColumnDef<HistoryRow>[] {
   return [
     componentColumn,
     ...monthColumns(months, timeZone, utcOnlyMonths),
-    rollingColumn(window),
+    totalColumn,
   ];
 }

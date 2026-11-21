@@ -1,14 +1,6 @@
 "use client";
 
-import { Info, Lock, Success } from "@openstatus/icons";
-import { DatePickerWithRange } from "@openstatus/ui/components/custom/date-picker-with-range";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@openstatus/ui/components/ui/select";
+import { Calendar, Info, Lock, Success } from "@openstatus/icons";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -60,18 +52,13 @@ import { MonitorIncidentRow } from "@/components/monitor-incidents/monitor-incid
 import { CheckSuccessHeatmap } from "@/components/monitor-report/check-success-heatmap";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import {
-  REPORT_PERIOD_LABELS,
-  REPORT_PERIODS,
-  type ReportPeriod,
-  dayOfLocalDate,
   exampleReportMonths,
   formatAvailability,
-  localDateOfDay,
-  rangeDays,
+  parseMonthKey,
   rarelyOpensOutages,
-  reportPresets,
   reportRange,
 } from "@/data/monitor-report.client";
+import { monthKeyToFullLabel } from "@/data/status-page-history";
 import { exampleUptimeCounts } from "@/data/uptime-history.client";
 import { useNow } from "@/hooks/use-now";
 import { usePaged } from "@/hooks/use-paged";
@@ -85,15 +72,16 @@ export function Client() {
   const monitorId = Number.parseInt(id);
   const trpc = useTRPC();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [{ period, from, to, metric: requestedMetric }, setSearchParams] =
+  const [{ month: monthParam, metric: requestedMetric }, setSearchParams] =
     useQueryStates(searchParamsParsers);
+  const month = parseMonthKey(monthParam);
 
   // recomputed when the UTC month rolls over under an open tab
   const now = useNow(60_000);
   const utcMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
   const range = useMemo(
-    () => reportRange({ period, from, to }, new Date()),
-    [period, from, to, utcMonth],
+    () => reportRange(new Date(), month),
+    [month, utcMonth],
   );
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -117,8 +105,6 @@ export function Client() {
   const ongoing = incidents.filter((i) => !i.resolvedAt);
   const resolved = incidents.filter((i) => i.resolvedAt);
   const paged = usePaged(resolved);
-
-  const presets = useMemo(() => reportPresets(new Date()), [utcMonth]);
 
   if (!workspace || !monitor || !report) return null;
 
@@ -166,53 +152,24 @@ export function Client() {
   return (
     <SectionGroup>
       <Section id="report">
-        <SectionHeaderRow>
-          <SectionHeader>
-            <SectionTitle>{monitor.name}</SectionTitle>
-            <SectionDescription>
-              Availability from outages, with monthly figures and daily check
-              success. Months and days in UTC.
-            </SectionDescription>
-          </SectionHeader>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={period}
-              onValueChange={(value) => {
-                const next = value as ReportPeriod;
-                setSearchParams(
-                  next === "custom"
-                    ? { period: next, ...rangeDays(range) }
-                    : { period: next, from: null, to: null },
-                );
-              }}
-            >
-              <SelectTrigger size="sm" aria-label="Period" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {REPORT_PERIODS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {REPORT_PERIOD_LABELS[p]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {period === "custom" ? (
-              <DatePickerWithRange
-                date={{ from: localDateOfDay(from), to: localDateOfDay(to) }}
-                presets={presets}
-                setDate={(date) => {
-                  if (!date?.from || !date.to) return;
-                  setSearchParams({
-                    period: "custom",
-                    from: dayOfLocalDate(date.from),
-                    to: dayOfLocalDate(date.to),
-                  });
-                }}
-              />
-            ) : null}
-          </div>
-        </SectionHeaderRow>
+        <SectionHeader>
+          <SectionTitle>{monitor.name}</SectionTitle>
+          <SectionDescription>
+            Availability over{" "}
+            {month ? monthKeyToFullLabel(month) : "the last 12 months"} from
+            outages, with monthly figures and daily check success. Months and
+            days in UTC.
+          </SectionDescription>
+        </SectionHeader>
+        {month ? (
+          <Note>
+            <Calendar />
+            Showing {monthKeyToFullLabel(month)} only.
+            <NoteButton onClick={() => setSearchParams({ month: null })}>
+              Show last 12 months
+            </NoteButton>
+          </Note>
+        ) : null}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_reports_global_monitors">
             <Info />

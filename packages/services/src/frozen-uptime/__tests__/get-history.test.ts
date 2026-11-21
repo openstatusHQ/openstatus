@@ -461,7 +461,7 @@ describe("getUptimeHistory", () => {
       });
 
       expect(res.mode).toBe("requests");
-      expect(res.months.length).toBe(24);
+      expect(res.months.length).toBe(12);
       expect(res.months[res.months.length - 1]).toBe(key(0));
       const row = res.rows[0];
       expect(row.component.type).toBe("monitor");
@@ -507,7 +507,7 @@ describe("getUptimeHistory", () => {
         },
       ]);
 
-      for (const [date, previous, rolling] of [
+      for (const [date, previous, total] of [
         ["2026-09-14T23:59:59.999Z", 100, 50],
         ["2026-09-15T00:00:00.000Z", null, 0],
         ["2026-09-30T12:00:00.000Z", null, 0],
@@ -524,8 +524,8 @@ describe("getUptimeHistory", () => {
           previous,
         );
         expect(res.rows[0].months["2026-09"]?.percentage ?? null).toBe(0);
-        expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(rolling);
-        expect(res.summary["6"].uptime).toBe(rolling);
+        expect(res.rows[0].total?.percentage ?? null).toBe(total);
+        expect(res.summary.uptime).toBe(total);
       }
 
       await insertFrozen(tx, {
@@ -545,7 +545,7 @@ describe("getUptimeHistory", () => {
       });
       // frozen fills the days before the first live one; live wins for 08-31
       expect(res.rows[0].months["2026-08"]?.percentage ?? null).toBe(62.5);
-      expect(res.rows[0].rolling["6"]?.percentage ?? null).toBe(41.666);
+      expect(res.rows[0].total?.percentage ?? null).toBe(41.666);
     });
   });
 
@@ -623,7 +623,7 @@ describe("getUptimeHistory", () => {
     });
   });
 
-  test("rolling totals are additive across months, not averaged percentages", async () => {
+  test("totals are additive across months, not averaged percentages", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const testMonitor = await insertMonitor(tx);
@@ -664,8 +664,7 @@ describe("getUptimeHistory", () => {
       expect(row.months[key(2)]?.percentage ?? null).toBe(100);
       expect(row.months[key(1)]?.percentage ?? null).toBe(0);
       // additive: 3000/4000 = 75.00; a naive percentage average would say 50
-      expect(row.rolling["6"]?.percentage ?? null).toBe(75);
-      expect(row.rolling["24"]?.percentage ?? null).toBe(75);
+      expect(row.total?.percentage ?? null).toBe(75);
     });
   });
 
@@ -731,7 +730,7 @@ describe("getUptimeHistory", () => {
       // events overlap key(2) not at all and it has no counts → null anyway
       expect(row.months[key(2)]?.percentage ?? null).toBe(null);
       // reports metric counts status reports only, not checker incidents
-      expect(res.summary["6"].reports).toBe(2);
+      expect(res.summary.reports).toBe(2);
     });
   });
 
@@ -1139,16 +1138,14 @@ describe("getUptimeHistory runs view", () => {
         degraded: 5,
         error: 5,
       });
-      expect(row.runs?.rolling["6"]).toEqual({
+      expect(row.runs?.total).toEqual({
         percentage: floorPct((144 * d1 + 95) / (144 * d1 + 100)),
         ok: 144 * d1 + 90,
         degraded: 5,
         error: 5,
       });
-      expect(res.summary["6"].runsUptime).toBe(
-        row.runs?.rolling["6"]?.percentage,
-      );
-      expect(res.summary["6"].uptime).toBe(row.rolling["6"]?.percentage);
+      expect(res.summary.runsUptime).toBe(row.runs?.total?.percentage);
+      expect(res.summary.uptime).toBe(row.total?.percentage);
     });
   });
 
@@ -1225,7 +1222,7 @@ describe("getUptimeHistory runs view", () => {
       expect(row.months[key(0)]?.percentage).toBe(99);
       expect(row.unit).toBe("requests");
       expect(row.runs).toBe(null);
-      expect(res.summary["6"].runsUptime).toBe(99);
+      expect(res.summary.runsUptime).toBe(99);
     });
   });
 
@@ -1357,7 +1354,7 @@ describe("getUptimeHistory annotations", () => {
         to,
         title: "DB upgrade",
       });
-      // ended before the 24-month history starts
+      // ended before the 12-month history starts
       await insertWindow(tx, {
         monitorIds: [covered.id],
         from: new Date(monthStart(key(30)).getTime()),

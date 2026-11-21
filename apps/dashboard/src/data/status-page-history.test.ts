@@ -3,29 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
   type HistoryEvent,
   eventsForMonth,
-  getColumnVisibility,
   historyMetric,
   historyBreakdown,
   historyRows,
   monthKeyToFullLabel,
   monthKeyToLabel,
-  parseWindow,
-  windowLabel,
 } from "./status-page-history";
-
-describe("parseWindow", () => {
-  it("accepts the known windows", () => {
-    expect(parseWindow("6")).toBe(6);
-    expect(parseWindow("12")).toBe(12);
-    expect(parseWindow("24")).toBe(24);
-  });
-
-  it("falls back to the first window", () => {
-    expect(parseWindow("3")).toBe(6);
-    expect(parseWindow("abc")).toBe(6);
-    expect(parseWindow("")).toBe(6);
-  });
-});
 
 describe("eventsForMonth", () => {
   function event(from: string, to: string | null) {
@@ -72,21 +55,6 @@ describe("month labels", () => {
   it("formats short and full labels", () => {
     expect(monthKeyToLabel("2025-10")).toBe("Oct 25");
     expect(monthKeyToFullLabel("2025-10")).toBe("October 2025");
-  });
-});
-
-describe("getColumnVisibility", () => {
-  it("shows everything when the window covers all months", () => {
-    expect(getColumnVisibility(12, 12)).toEqual({});
-    expect(getColumnVisibility(24, 12)).toEqual({});
-  });
-
-  it("hides the slots beyond the window", () => {
-    expect(getColumnVisibility(6, 9)).toEqual({
-      "7": false,
-      "8": false,
-      "9": false,
-    });
   });
 });
 
@@ -155,12 +123,6 @@ describe("historyBreakdown", () => {
   });
 });
 
-describe("windowLabel", () => {
-  it("names the window", () => {
-    expect(windowLabel(6)).toBe("Last 6 months");
-  });
-});
-
 describe("historyRows", () => {
   const value = (percentage: number) => ({
     percentage,
@@ -178,17 +140,17 @@ describe("historyRows", () => {
     ...base,
     unit: "requests" as const,
     months: { "2026-11": value(99) },
-    rolling: { "6": value(99), "12": value(99), "24": value(99) },
+    total: value(99),
     runs: {
       months: { "2026-11": value(100) },
-      rolling: { "6": value(100), "12": null, "24": null },
+      total: null,
     },
   };
   const staticRow = {
     ...base,
     unit: "time" as const,
     months: { "2026-11": value(50) },
-    rolling: { "6": value(50), "12": null, "24": null },
+    total: value(50),
     runs: null,
   };
 
@@ -203,7 +165,7 @@ describe("historyRows", () => {
     const [monitor, other] = historyRows([monitorRow, staticRow], "runs");
     expect(monitor.unit).toBe("runs");
     expect(monitor.months["2026-11"]?.percentage).toBe(100);
-    expect(monitor.rolling["12"]).toBe(null);
+    expect(monitor.total).toBe(null);
     expect(other.unit).toBe("time");
     expect(other.months["2026-11"]?.percentage).toBe(50);
   });
