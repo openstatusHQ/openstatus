@@ -59,10 +59,11 @@ function useNav() {
   ];
 }
 
-export function Header({
-  className,
-  ...props
-}: React.ComponentProps<"header">) {
+interface HeaderProps extends React.ComponentProps<"header"> {
+  baseUrlOverride?: string;
+}
+
+export function Header({ className, baseUrlOverride, ...props }: HeaderProps) {
   const t = useExtracted();
   const trpc = useTRPC();
   const { domain } = useParams<{ domain: string }>();
@@ -119,6 +120,7 @@ export function Header({
               await subscribeMutation.mutateAsync({ slug: domain, ...values });
             }}
             page={page}
+            baseUrlOverride={baseUrlOverride}
           />
           <NavMobile className="md:hidden" />
         </StatusPageHeaderActions>

@@ -1,5 +1,5 @@
 import { COLORS } from "@openstatus/notification-base";
-import { statusLabel } from "@openstatus/utils";
+import { getStatusPageBaseUrl, statusLabel } from "@openstatus/utils";
 import type { KnownBlock, MessageAttachment } from "@slack/web-api";
 
 import type { PageUpdate, Subscription } from "../types";
@@ -29,9 +29,10 @@ function statusColor(status: PageUpdate["status"]): StatusColor {
 }
 
 function pageOrigin(subscription: Subscription): string {
-  return subscription.customDomain
-    ? `https://${subscription.customDomain}`
-    : `https://${subscription.pageSlug}.openstatus.dev`;
+  return getStatusPageBaseUrl({
+    slug: subscription.pageSlug,
+    customDomain: subscription.customDomain,
+  });
 }
 
 function eventUrl(pageUpdate: PageUpdate, subscription: Subscription): string {

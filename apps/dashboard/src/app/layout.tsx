@@ -3,6 +3,7 @@ import { Toaster } from "@openstatus/ui/components/ui/sonner";
 
 import "./globals.css";
 import { cn } from "@openstatus/ui/lib/utils";
+import { getConfiguredStatusPageBaseUrl } from "@openstatus/utils";
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
@@ -82,9 +83,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const statusPageBaseUrl = getConfiguredStatusPageBaseUrl();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      data-status-page-base-url={statusPageBaseUrl}
+    >
       <body
         className={cn(
           geistSans.variable,

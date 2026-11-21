@@ -1,7 +1,19 @@
 import { type db as defaultDb, eq } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
 import { getChannel } from "@openstatus/subscriptions";
+import { getStatusPageBaseUrl } from "@openstatus/utils";
 import { TRPCError } from "@trpc/server";
+
+export function buildSubscriberVerificationUrl(
+  page: { slug?: string; customDomain?: string | null },
+  token: string,
+): string {
+  const baseUrl = getStatusPageBaseUrl({
+    slug: page.slug,
+    customDomain: page.customDomain,
+  });
+  return `${baseUrl}/verify/${token}`;
+}
 
 /**
  * Emails the verification link to the subscriber's own address. The token
@@ -20,9 +32,10 @@ export async function sendSubscriberVerification(
     return;
   }
 
-  const verifyUrl = subscriber.page.customDomain
-    ? `https://${subscriber.page.customDomain}/verify/${subscriber.token}`
-    : `https://${subscriber.page.slug}.openstatus.dev/verify/${subscriber.token}`;
+  const verifyUrl = buildSubscriberVerificationUrl(
+    subscriber.page,
+    subscriber.token,
+  );
 
   const channel = getChannel("email");
   if (!channel) {
