@@ -73,6 +73,8 @@ export function mergeLocalDays(args: {
   frozen: FrozenMonth[];
   live: Iterable<FrozenMonitorUptimeDay>;
   timeZone: string;
+  /** false for heartbeat: its days have no quarter-hours to regroup by */
+  quarterHours?: boolean;
 }): LocalDays {
   const live = [...args.live];
   // seam per measure: a failed live runs read must not drop frozen runs
@@ -87,18 +89,15 @@ export function mergeLocalDays(args: {
   const runs: LocalDayCount[] = [];
   const utcOnlyMonths = new Set<string>();
   for (const row of args.frozen) {
+    const hasRanges = args.quarterHours !== false && hasBadRanges(row.days);
     const local = (measure: "requests" | "runs") =>
-      toLocalDays(row.days, args.timeZone, measure).filter(
+      toLocalDays(row.days, args.timeZone, measure, hasRanges).filter(
         (d) => seam[measure] === null || d.day < seam[measure],
       );
     const rowRequests = local("requests");
     requests.push(...rowRequests);
     runs.push(...local("runs"));
-    if (
-      args.timeZone !== "UTC" &&
-      !hasBadRanges(row.days) &&
-      rowRequests.length > 0
-    ) {
+    if (args.timeZone !== "UTC" && !hasRanges && rowRequests.length > 0) {
       utcOnlyMonths.add(row.month.slice(0, 7));
     }
   }

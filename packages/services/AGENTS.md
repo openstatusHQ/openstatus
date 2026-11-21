@@ -166,7 +166,9 @@ month, the ranges sum exactly to that day's degraded and error counts.
   rows without them and only under the same sum check. Replacing counts is
   `refreezeMonitorMonths`, which works only while Tinybird still covers the
   whole month.
-- **Heartbeat rows never get ranges.** They have no quarter-hour data.
+- **Heartbeat rows never get ranges and never leave UTC.** They have no
+  quarter-hour data, so readers pass `quarterHours: false` to `mergeLocalDays`
+  even for a month without failures.
 - **The bucket size is a contract across three places**: `BUCKET_MINUTES` in
   `frozen-uptime/buckets.ts`, the 0..95 bounds of `badRangeSchema` in
   `packages/db/src/schema/frozen_uptime/validation.ts`, and the `*_bad_15m`

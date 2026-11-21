@@ -383,6 +383,11 @@ export async function getUptimeHistory(args: {
     frozenByMonitor.set(r.monitorId, list);
   }
 
+  const heartbeatIds = new Set(
+    components.flatMap((c) =>
+      c.monitor?.jobType === "heartbeat" ? [c.monitor.id] : [],
+    ),
+  );
   const localByMonitor = new Map<number, LocalDays>();
   function localDaysOf(monitorId: number) {
     let local = localByMonitor.get(monitorId);
@@ -393,6 +398,7 @@ export async function getUptimeHistory(args: {
           ? []
           : (liveDays.get(String(monitorId))?.values() ?? []),
         timeZone,
+        quarterHours: !heartbeatIds.has(monitorId),
       });
       localByMonitor.set(monitorId, local);
     }

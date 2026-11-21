@@ -129,14 +129,15 @@ export type LocalDayCount = {
 
 /**
  * Regroup frozen UTC days into days of `timeZone`; totals turn fractional.
- * Months frozen without their 15-minute ranges come back as UTC days unchanged.
+ * Months without their 15-minute ranges come back as UTC days unchanged.
  */
 export function toLocalDays(
   days: FrozenMonitorUptimeDay[],
   timeZone: string,
   measure: "requests" | "runs",
+  hasRanges = hasBadRanges(days),
 ): LocalDayCount[] {
-  const regroup = timeZone !== "UTC" && hasBadRanges(days);
+  const regroup = timeZone !== "UTC" && hasRanges;
   const byDay = new Map<string, LocalDayCount>();
   const add = (day: string, ok: number, degraded: number, error: number) => {
     const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };

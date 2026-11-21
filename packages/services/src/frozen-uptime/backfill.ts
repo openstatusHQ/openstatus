@@ -89,7 +89,7 @@ export async function backfillFrozenBuckets(
     month,
     updated: 0,
     mismatched: 0,
-    skipped: missing.length - pending.length,
+    skipped: rows.filter((r) => !hasRuns(r.jobType)).length,
     failed: 0,
     failures: [],
   };
