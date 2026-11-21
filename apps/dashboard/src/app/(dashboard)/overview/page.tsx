@@ -1,6 +1,6 @@
 "use client";
 
-import { Agent, Clock, Success } from "@openstatus/icons";
+import { Agent, Clock, Maintenance, Success } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -305,6 +305,19 @@ export default function Page() {
 
   return (
     <SectionGroup>
+      <NoteDismissible cookieKey="note_overview_maintenance_windows">
+        <Maintenance />
+        Schedule maintenance windows to pause checks or mute alerts during
+        planned work.
+        <NoteButton variant="default" asChild>
+          <Link
+            href="https://www.openstatus.dev/changelog/maintenance-windows"
+            target="_blank"
+          >
+            Learn more
+          </Link>
+        </NoteButton>
+      </NoteDismissible>
       <NoteDismissible cookieKey="note_overview_slack_agent">
         <Agent />
         Use our Slack agent to manage your status pages and incidents.
