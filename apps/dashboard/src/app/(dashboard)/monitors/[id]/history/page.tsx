@@ -19,8 +19,9 @@ export default async function Page({
   if (Number.isNaN(monitorId)) notFound();
   const queryClient = getQueryClient();
 
-  const { month } = await searchParamsCache.parse(searchParams);
-  const range = reportRange(new Date(), month);
+  // NOTE: store in cache to avoid flicker on clients first render
+  await searchParamsCache.parse(searchParams);
+  const range = reportRange(new Date());
 
   const workspace = await queryClient.fetchQuery(
     trpc.workspace.get.queryOptions(),

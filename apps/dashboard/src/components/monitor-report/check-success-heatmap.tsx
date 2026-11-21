@@ -33,7 +33,7 @@ import {
   uptimeYears,
 } from "@/data/uptime-history.client";
 
-/** Daily check success per year; blurred example data when `limited`. */
+/** Daily check success per year; inert example data when `limited`. */
 export function CheckSuccessHeatmap({
   counts,
   metric,
@@ -91,7 +91,7 @@ export function CheckSuccessHeatmap({
         aria-hidden={limited}
         className={cn(
           "flex flex-col gap-6",
-          limited && "pointer-events-none blur-sm select-none",
+          limited && "pointer-events-none select-none",
         )}
       >
         {years.map(({ year, days, uptime, failedDays }) => (

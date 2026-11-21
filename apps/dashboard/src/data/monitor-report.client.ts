@@ -6,25 +6,8 @@ import { truncatePercentage } from "@/lib/formatter";
 const utcStart = (year: number, month: number) =>
   new Date(Date.UTC(year, month, 1));
 
-/** `YYYY-MM` of a real month, else null. */
-export function parseMonthKey(key: string | null): string | null {
-  if (!key || !/^\d{4}-(0[1-9]|1[0-2])$/.test(key)) return null;
-  return key;
-}
-
-/**
- * `[from, to)` of the report in UTC: the current month and the 11 before it,
- * or a single month that a link to an older outage asks for.
- */
-export function reportRange(
-  now: Date,
-  monthKey: string | null = null,
-): { from: Date; to: Date } {
-  const key = parseMonthKey(monthKey);
-  if (key) {
-    const [year, month] = key.split("-").map(Number);
-    return { from: utcStart(year, month - 1), to: utcStart(year, month) };
-  }
+/** `[from, to)` of the history in UTC: the current month and the 11 before it. */
+export function reportRange(now: Date): { from: Date; to: Date } {
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();
   return { from: utcStart(year, month - 11), to: utcStart(year, month + 1) };
@@ -41,17 +24,6 @@ export function rarelyOpensOutages(monitor: {
     (monitor.regions.length === 0 &&
       (monitor.privateLocations?.length ?? 0) > 0)
   );
-}
-
-/** The monitor report scrolled to its outages, on the outage's month when older than the report. */
-export function monitorReportHref(
-  monitorId: number,
-  at: Date,
-  now = new Date(),
-): string {
-  const base = `/monitors/${monitorId}/report`;
-  if (at >= reportRange(now).from) return `${base}#outages`;
-  return `${base}?month=${at.toISOString().slice(0, 7)}#outages`;
 }
 
 type Report = RouterOutputs["monitorIncident"]["report"];

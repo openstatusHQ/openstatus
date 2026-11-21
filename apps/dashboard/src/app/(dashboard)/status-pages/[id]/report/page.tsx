@@ -1,38 +1,15 @@
-import { notFound } from "next/navigation";
-import type { SearchParams } from "nuqs";
+"use client";
 
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-import { Client } from "./client";
-import { searchParamsCache } from "./search-params";
-
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<SearchParams>;
-}) {
-  const { id } = await params;
-  const pageId = Number.parseInt(id);
-  if (Number.isNaN(pageId)) notFound();
-  const queryClient = getQueryClient();
-
-  // NOTE: store in cache to avoid flicker on clients first render
-  await searchParamsCache.parse(searchParams);
-  const workspace = await queryClient.fetchQuery(
-    trpc.workspace.get.queryOptions(),
-  );
-  // plans without uptime history get a FORBIDDEN, which would land in Sentry
-  if (workspace.limits["uptime-history"]) {
-    await queryClient.prefetchQuery(
-      trpc.page.getUptimeHistory.queryOptions({ id: pageId }),
-    );
-  }
-
-  return (
-    <HydrateClient>
-      <Client />
-    </HydrateClient>
-  );
+// Browsers cached a permanent redirect from /history to here, so a server
+// redirect back would loop. A client navigation is not served from that cache.
+export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  useEffect(() => {
+    router.replace(`/status-pages/${id}/history${window.location.search}`);
+  }, [id, router]);
+  return null;
 }

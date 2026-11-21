@@ -45,7 +45,7 @@ export const monitorIncidentRouter = createTRPCRouter({
         // Filter-and-log instead of throwing on orphaned rows: a single
         // incident missing its monitor (data-migration artifact, partial
         // cascade) shouldn't blow up the whole list and break the
-        // `/overview` / `/monitors/:id/report` surfaces. We still log
+        // `/overview` / `/monitors/:id/outages` surfaces. We still log
         // so the inconsistency remains visible.
         return items.filter(hasMonitor);
       } catch (err) {

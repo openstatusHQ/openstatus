@@ -11,8 +11,6 @@ import {
   StatusPage,
 } from "@openstatus/icons";
 
-import { monitorReportHref } from "./monitor-report.client";
-
 type EntityKindConfig = {
   label: string;
   icon: IconType;
@@ -76,8 +74,8 @@ export const entityKinds = {
     icon: Monitor,
     fields: [],
     auditType: "monitor_incident",
-    href: (incident: { monitorId: number; startedAt: Date }) =>
-      monitorReportHref(incident.monitorId, incident.startedAt),
+    href: (incident: { monitorId: number }) =>
+      `/monitors/${incident.monitorId}/outages`,
   },
   privateLocation: {
     label: "Private location",

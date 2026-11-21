@@ -189,7 +189,7 @@ export function Client() {
       <Section id="history-metrics">
         <MetricStrip
           aria-hidden={isLimited}
-          className={cn(isLimited && "pointer-events-none blur-sm select-none")}
+          className={cn(isLimited && "pointer-events-none select-none")}
         >
           <MetricStripRow>
             <MetricStripItem status="success">

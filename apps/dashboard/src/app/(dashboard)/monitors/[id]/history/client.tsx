@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Info, Lock, Success } from "@openstatus/icons";
+import { Info, Lock } from "@openstatus/icons";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -15,19 +15,6 @@ import {
   BillingOverlayContainer,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-  EmptyStateMedia,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  EventGroup,
-  EventGroupCount,
-  EventGroupHeader,
-  EventGroupTitle,
-} from "@/components/content/event-group";
-import { EventList, EventListMore } from "@/components/content/event-list";
 import {
   Section,
   SectionDescription,
@@ -48,20 +35,16 @@ import {
   MetricStripValue,
 } from "@/components/metric/metric-strip";
 import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
-import { MonitorIncidentRow } from "@/components/monitor-incidents/monitor-incident-row";
 import { CheckSuccessHeatmap } from "@/components/monitor-report/check-success-heatmap";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import {
   exampleReportMonths,
   formatAvailability,
-  parseMonthKey,
   rarelyOpensOutages,
   reportRange,
 } from "@/data/monitor-report.client";
-import { monthKeyToFullLabel } from "@/data/status-page-history";
 import { exampleUptimeCounts } from "@/data/uptime-history.client";
 import { useNow } from "@/hooks/use-now";
-import { usePaged } from "@/hooks/use-paged";
 import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -72,17 +55,13 @@ export function Client() {
   const monitorId = Number.parseInt(id);
   const trpc = useTRPC();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [{ month: monthParam, metric: requestedMetric }, setSearchParams] =
+  const [{ metric: requestedMetric }, setSearchParams] =
     useQueryStates(searchParamsParsers);
-  const month = parseMonthKey(monthParam);
 
   // recomputed when the UTC month rolls over under an open tab
   const now = useNow(60_000);
   const utcMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
-  const range = useMemo(
-    () => reportRange(new Date(), month),
-    [month, utcMonth],
-  );
+  const range = useMemo(() => reportRange(new Date()), [utcMonth]);
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitor } = useQuery(
@@ -100,11 +79,6 @@ export function Client() {
     ...trpc.monitor.getUptimeHistory.queryOptions({ id: monitorId }),
     enabled: !!workspace && !isLimited,
   });
-
-  const incidents = report?.incidents ?? [];
-  const ongoing = incidents.filter((i) => !i.resolvedAt);
-  const resolved = incidents.filter((i) => i.resolvedAt);
-  const paged = usePaged(resolved);
 
   if (!workspace || !monitor || !report) return null;
 
@@ -138,7 +112,7 @@ export function Client() {
       aria-hidden={isLimited}
       className={cn(
         "overflow-x-auto",
-        isLimited && "pointer-events-none blur-sm select-none",
+        isLimited && "pointer-events-none select-none",
       )}
     >
       <DataTable
@@ -151,25 +125,14 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Section id="report">
+      <Section id="history">
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>
-            Availability over{" "}
-            {month ? monthKeyToFullLabel(month) : "the last 12 months"} from
-            outages, with monthly figures and daily check success. Months and
-            days in UTC.
+            Availability over the last 12 months from outages, with monthly
+            figures and daily check success. Months and days in UTC.
           </SectionDescription>
         </SectionHeader>
-        {month ? (
-          <Note>
-            <Calendar />
-            Showing {monthKeyToFullLabel(month)} only.
-            <NoteButton onClick={() => setSearchParams({ month: null })}>
-              Show last 12 months
-            </NoteButton>
-          </Note>
-        ) : null}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_reports_global_monitors">
             <Info />
@@ -283,65 +246,6 @@ export function Client() {
             metric={metric}
             partial={partial}
           />
-        )}
-      </Section>
-      <Section id="outages">
-        <SectionHeader>
-          <SectionTitle>Outages</SectionTitle>
-          <SectionDescription>
-            {monitor.jobType === "heartbeat"
-              ? "Recorded automatically when a ping is missed or fails."
-              : "Recorded automatically when checks fail."}
-          </SectionDescription>
-        </SectionHeader>
-        {incidents.length === 0 ? (
-          <EmptyStateContainer>
-            <EmptyStateMedia variant="success">
-              <Success />
-            </EmptyStateMedia>
-            <EmptyStateTitle>No outages in this period</EmptyStateTitle>
-            <EmptyStateDescription>
-              {monitor.jobType === "heartbeat"
-                ? "A missed or failed ping opens an outage here and alerts the channels linked to this monitor."
-                : "A failed check opens an outage here and alerts the channels linked to this monitor."}
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        ) : (
-          <div className="flex flex-col gap-6">
-            {ongoing.length > 0 ? (
-              <EventGroup>
-                <EventGroupHeader>
-                  <EventGroupTitle>
-                    Ongoing
-                    <EventGroupCount>{ongoing.length}</EventGroupCount>
-                  </EventGroupTitle>
-                </EventGroupHeader>
-                <EventList>
-                  {ongoing.map((incident) => (
-                    <MonitorIncidentRow key={incident.id} incident={incident} />
-                  ))}
-                </EventList>
-              </EventGroup>
-            ) : null}
-            <EventGroup>
-              <EventGroupHeader>
-                <EventGroupTitle>
-                  Resolved
-                  <EventGroupCount>{resolved.length}</EventGroupCount>
-                </EventGroupTitle>
-              </EventGroupHeader>
-              <EventList>
-                {paged.visible.map((incident) => (
-                  <MonitorIncidentRow key={incident.id} incident={incident} />
-                ))}
-                {paged.hasMore ? (
-                  <EventListMore onClick={paged.showMore}>
-                    Show older
-                  </EventListMore>
-                ) : null}
-              </EventList>
-            </EventGroup>
-          </div>
         )}
       </Section>
       <UpgradeDialog

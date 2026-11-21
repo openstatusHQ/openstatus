@@ -236,7 +236,7 @@ export function DataTable({
     restrictTo ? restrictTo.includes(plan.id) : true,
   );
   const pinned = allFeatures.find((feature) => feature.value === highlight);
-  // Some limits (uptime-history) have no row but still decide the plan.
+  // Some limits have no row but still decide the plan.
   const upgrades =
     highlight && highlight in workspace.limits
       ? getPlansForLimit(workspace.plan, highlight as keyof Limits)
