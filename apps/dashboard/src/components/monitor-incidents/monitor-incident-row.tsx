@@ -114,7 +114,7 @@ export function MonitorIncidentRow({
       </EventRowStatus>
       <EventRowContent>
         <EventRowTitle
-          href={kind ? monitorReportHref(monitor.id, startedAt) : undefined}
+          href={kind ? monitorReportHref(monitor.id) : undefined}
           empty={hydrated ? "No name" : ""}
         >
           {title}

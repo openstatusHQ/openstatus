@@ -2,13 +2,6 @@
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -69,11 +62,10 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import {
-  HISTORY_WINDOWS,
+  REPORT_WINDOW,
   getColumnVisibility,
   historyMetric,
   historyRows,
-  parseWindow,
   windowKey,
 } from "@/data/status-page-history";
 import {
@@ -89,7 +81,7 @@ import { searchParamsParsers } from "./search-params";
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [{ window, metric: metricParam }, setSearchParams] =
+  const [{ metric: metricParam }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -99,7 +91,6 @@ export function Client() {
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const isLimited = workspace?.limits["uptime-history"] === false;
 
-  // one 24-month fetch; the period select only toggles column visibility
   const { data: liveHistory } = useQuery({
     ...trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
     enabled: !!workspace && !isLimited,
@@ -120,15 +111,15 @@ export function Client() {
     () =>
       getColumns(
         history?.months ?? [],
-        window,
+        REPORT_WINDOW,
         history?.timeZone,
         history?.utcOnlyMonths,
       ),
-    [history?.months, window, history?.timeZone, history?.utcOnlyMonths],
+    [history?.months, history?.timeZone, history?.utcOnlyMonths],
   );
   const columnVisibility = useMemo(
-    () => getColumnVisibility(window, history?.months.length ?? 0),
-    [window, history?.months.length],
+    () => getColumnVisibility(REPORT_WINDOW, history?.months.length ?? 0),
+    [history?.months.length],
   );
 
   if (!history) return null;
@@ -136,7 +127,7 @@ export function Client() {
   const uptimeMode =
     UPTIME_MODES.find((m) => m.value === history.mode) ?? UPTIME_MODES[0];
   const configurationHref = `/status-pages/${id}/components#components-configuration`;
-  const summary = history.summary[windowKey(window)];
+  const summary = history.summary[windowKey(REPORT_WINDOW)];
   const countsRequests = history.mode === "requests" || history.mode === "runs";
   const showMetric = !isLimited && countsRequests;
   const showRuns = showMetric && metric === "runs";
@@ -144,7 +135,7 @@ export function Client() {
   const partial = showRuns ? history.runsPartial : history.partial;
   // rows without a value in the window are left out of the page average
   const averaged = rows.filter(
-    (row) => row.rolling[windowKey(window)] !== null,
+    (row) => row.rolling[windowKey(REPORT_WINDOW)] !== null,
   ).length;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
@@ -169,21 +160,6 @@ export function Client() {
                 onValueChange={(m) => setSearchParams({ metric: m })}
               />
             ) : null}
-            <Select
-              value={String(window)}
-              onValueChange={(v) => setSearchParams({ window: parseWindow(v) })}
-            >
-              <SelectTrigger size="sm" aria-label="Period" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {HISTORY_WINDOWS.map((w) => (
-                  <SelectItem key={w} value={String(w)}>
-                    Last {w} months
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </SectionHeaderRow>
         {!isLimited ? (

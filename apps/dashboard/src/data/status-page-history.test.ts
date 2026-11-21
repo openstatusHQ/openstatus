@@ -9,23 +9,8 @@ import {
   historyRows,
   monthKeyToFullLabel,
   monthKeyToLabel,
-  parseWindow,
   windowLabel,
 } from "./status-page-history";
-
-describe("parseWindow", () => {
-  it("accepts the known windows", () => {
-    expect(parseWindow("6")).toBe(6);
-    expect(parseWindow("12")).toBe(12);
-    expect(parseWindow("24")).toBe(24);
-  });
-
-  it("falls back to the first window", () => {
-    expect(parseWindow("3")).toBe(6);
-    expect(parseWindow("abc")).toBe(6);
-    expect(parseWindow("")).toBe(6);
-  });
-});
 
 describe("eventsForMonth", () => {
   function event(from: string, to: string | null) {

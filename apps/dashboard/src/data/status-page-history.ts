@@ -9,14 +9,7 @@ import { formatDurationShort, formatNumber } from "@/lib/formatter";
 export const HISTORY_WINDOWS = [6, 12, 24] as const;
 export type HistoryWindow = (typeof HISTORY_WINDOWS)[number];
 
-// safe because callers only pass values rendered from HISTORY_WINDOWS;
-// anything else falls back to the default window
-export function parseWindow(value: string): HistoryWindow {
-  const window = Number(value);
-  return (HISTORY_WINDOWS as readonly number[]).includes(window)
-    ? (window as HistoryWindow)
-    : HISTORY_WINDOWS[0];
-}
+export const REPORT_WINDOW: HistoryWindow = 12;
 
 // wire types inferred from the endpoint so server shape changes surface here
 type HistoryWire = RouterOutputs["page"]["getUptimeHistory"];
