@@ -4,7 +4,11 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 
 const noteVariants = cva(
-  "flex items-center gap-2 rounded-lg border [&_strong]:font-semibold [&>svg]:shrink-0 [&>svg]:text-current",
+  [
+    "flex items-center gap-2 rounded-lg border [&_strong]:font-semibold [&>svg]:shrink-0 [&>svg]:text-current",
+    // on mobile, an action button drops below the text instead of squeezing it
+    "max-sm:has-[>[data-slot=note-button]]:grid max-sm:has-[>[data-slot=note-button]]:grid-cols-[auto_minmax(0,1fr)] max-sm:has-[>[data-slot=note-button]]:has-[>[data-slot=note-button-close]]:grid-cols-[auto_minmax(0,1fr)_auto]",
+  ],
   {
     variants: {
       variant: {
@@ -58,7 +62,11 @@ export function NoteButton({
   return (
     <Button
       size="sm"
-      className={cn("-mr-1 ml-auto shrink-0", className)}
+      data-slot="note-button"
+      className={cn(
+        "-mr-1 ml-auto shrink-0 max-sm:col-start-2 max-sm:row-start-2 max-sm:mx-0 max-sm:justify-self-start",
+        className,
+      )}
       {...props}
     >
       {children}
@@ -76,6 +84,7 @@ export function NoteButtonClose({
       variant="ghost"
       size="icon-sm"
       aria-label="Close"
+      data-slot="note-button-close"
       className={cn("text-muted-foreground -mr-1 shrink-0", className)}
       {...props}
     >
