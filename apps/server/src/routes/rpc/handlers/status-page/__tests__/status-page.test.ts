@@ -391,10 +391,10 @@ describe("StatusPageService.CreateStatusPage", () => {
     await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
   });
 
-  test("a created page counts runs", async () => {
+  test("a created page counts requests", async () => {
     const res = await connectRequest(
       "CreateStatusPage",
-      { title: `${TEST_PREFIX}-runs`, slug: `${TEST_PREFIX}-runs-slug` },
+      { title: `${TEST_PREFIX}-requests`, slug: `${TEST_PREFIX}-requests-slug` },
       { "x-openstatus-key": "1" },
     );
     expect(res.status).toBe(200);
@@ -406,7 +406,7 @@ describe("StatusPageService.CreateStatusPage", () => {
         { "x-openstatus-key": "1" },
       );
       const data = await overview.json();
-      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_RUNS");
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
     } finally {
       await db.delete(page).where(eq(page.id, Number(statusPage.id)));
     }
