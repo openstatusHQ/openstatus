@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Lock, Success } from "@openstatus/icons";
+import { Calendar, Info, Lock, Success } from "@openstatus/icons";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -54,9 +54,11 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import {
   exampleReportMonths,
   formatAvailability,
+  parseMonthKey,
   rarelyOpensOutages,
   reportRange,
 } from "@/data/monitor-report.client";
+import { monthKeyToFullLabel } from "@/data/status-page-history";
 import { exampleUptimeCounts } from "@/data/uptime-history.client";
 import { useNow } from "@/hooks/use-now";
 import { usePaged } from "@/hooks/use-paged";
@@ -70,13 +72,17 @@ export function Client() {
   const monitorId = Number.parseInt(id);
   const trpc = useTRPC();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [{ metric: requestedMetric }, setSearchParams] =
+  const [{ month: monthParam, metric: requestedMetric }, setSearchParams] =
     useQueryStates(searchParamsParsers);
+  const month = parseMonthKey(monthParam);
 
   // recomputed when the UTC month rolls over under an open tab
   const now = useNow(60_000);
   const utcMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
-  const range = useMemo(() => reportRange(new Date()), [utcMonth]);
+  const range = useMemo(
+    () => reportRange(new Date(), month),
+    [month, utcMonth],
+  );
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitor } = useQuery(
@@ -149,10 +155,21 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>
-            Availability over the last 12 months from outages, with monthly
-            figures and daily check success. Months and days in UTC.
+            Availability over{" "}
+            {month ? monthKeyToFullLabel(month) : "the last 12 months"} from
+            outages, with monthly figures and daily check success. Months and
+            days in UTC.
           </SectionDescription>
         </SectionHeader>
+        {month ? (
+          <Note>
+            <Calendar />
+            Showing {monthKeyToFullLabel(month)} only.
+            <NoteButton onClick={() => setSearchParams({ month: null })}>
+              Show last 12 months
+            </NoteButton>
+          </Note>
+        ) : null}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_reports_global_monitors">
             <Info />

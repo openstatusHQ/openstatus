@@ -77,7 +77,7 @@ export const entityKinds = {
     fields: [],
     auditType: "monitor_incident",
     href: (incident: { monitorId: number; startedAt: Date }) =>
-      monitorReportHref(incident.monitorId),
+      monitorReportHref(incident.monitorId, incident.startedAt),
   },
   privateLocation: {
     label: "Private location",

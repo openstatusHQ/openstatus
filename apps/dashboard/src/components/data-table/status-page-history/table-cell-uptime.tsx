@@ -37,7 +37,7 @@ function eventHref(
     return `/status-pages/${pageId}/maintenances`;
   }
   if (event.type === "incident" && monitorId !== null) {
-    return monitorReportHref(monitorId);
+    return monitorReportHref(monitorId, event.from);
   }
   return null;
 }

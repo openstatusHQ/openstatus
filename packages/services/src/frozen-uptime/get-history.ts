@@ -42,20 +42,12 @@ import {
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
-const HISTORY_MONTHS = 24;
-
-const WINDOWS = [6, 12, 24] as const;
-type HistoryWindowKey = "6" | "12" | "24";
-
-// safe because HistoryWindowKey is exactly the string form of each WINDOWS entry
-function windowKey(w: (typeof WINDOWS)[number]): HistoryWindowKey {
-  return String(w) as HistoryWindowKey;
-}
+const HISTORY_MONTHS = 12;
 
 type DayCount = { day: string; ok: number; degraded: number; error: number };
 
-// native-unit numerators kept alongside the percentage so rolling windows
-// stay additive (checks for requests mode, milliseconds for event math);
+// native-unit numerators kept alongside the percentage so totals stay
+// additive (checks for requests mode, milliseconds for event math);
 // averaging monthly percentages would weigh a 2-day month like a full one
 type MonthValue = {
   percentage: number;
@@ -73,8 +65,8 @@ type UptimeHistoryValue = Counts & { percentage: number };
 type HistoryValues = {
   /** "YYYY-MM" → month; null = no data recorded, NEVER "down" */
   months: Record<string, UptimeHistoryValue | null>;
-  /** counts are the sums of the window's month counts */
-  rolling: Record<HistoryWindowKey, UptimeHistoryValue | null>;
+  /** counts are the sums of the month counts */
+  total: UptimeHistoryValue | null;
 };
 
 function timeMonth(up: number, total: number): MonthValue {
@@ -100,7 +92,7 @@ type UptimeHistoryRow = HistoryValues & {
     /** for event links, null for static components */
     monitorId: number | null;
   };
-  /** unit of `months` and `rolling` */
+  /** unit of `months` and `total` */
   unit: "requests" | "time";
   /** the same months counted per run, for monitors counted per request */
   runs: HistoryValues | null;
@@ -121,10 +113,11 @@ type UptimeHistoryResult = {
   partial: boolean;
   /** live run verdicts failed, or the live counts they attach to */
   runsPartial: boolean;
-  summary: Record<
-    HistoryWindowKey,
-    { uptime: number | null; runsUptime: number | null; reports: number }
-  >;
+  summary: {
+    uptime: number | null;
+    runsUptime: number | null;
+    reports: number;
+  };
   rows: UptimeHistoryRow[];
 };
 
@@ -227,22 +220,17 @@ function historyValues(
   months: string[],
   values: Map<string, MonthValue>,
 ): HistoryValues {
-  const rolling = {} as HistoryValues["rolling"];
-  for (const w of WINDOWS) {
-    let up = 0;
-    let total = 0;
-    const shown = { ok: 0, degraded: 0, error: 0 };
-    for (const key of months.slice(-w)) {
-      const v = values.get(key);
-      if (!v) continue;
-      up += v.up;
-      total += v.total;
-      shown.ok += v.shown.ok;
-      shown.degraded += v.shown.degraded;
-      shown.error += v.shown.error;
-    }
-    rolling[windowKey(w)] =
-      total > 0 ? { percentage: floorPct(up / total), ...shown } : null;
+  let up = 0;
+  let total = 0;
+  const shown = { ok: 0, degraded: 0, error: 0 };
+  for (const key of months) {
+    const v = values.get(key);
+    if (!v) continue;
+    up += v.up;
+    total += v.total;
+    shown.ok += v.shown.ok;
+    shown.degraded += v.shown.degraded;
+    shown.error += v.shown.error;
   }
   return {
     months: Object.fromEntries(
@@ -251,7 +239,7 @@ function historyValues(
         return [k, v ? { percentage: v.percentage, ...v.shown } : null];
       }),
     ),
-    rolling,
+    total: total > 0 ? { percentage: floorPct(up / total), ...shown } : null,
   };
 }
 
@@ -541,30 +529,17 @@ export async function getUptimeHistory(args: {
   });
   const annotatedRows = rows.map((row, i) => ({ ...row, ...annotations[i] }));
 
-  const windowSummary = (w: (typeof WINDOWS)[number]) => {
-    const windowStart = monthRange(
-      `${months[months.length - w]}-01`,
-      timeZone,
-    ).start;
-    const seen = new Set<number>();
-    for (const e of pageEvents) {
-      if (e.type !== "report") continue;
-      const endMs = e.to?.getTime() ?? nowMs;
-      if (e.from.getTime() <= nowMs && endMs >= windowStart) {
-        seen.add(e.id);
-      }
-    }
-    const wk = windowKey(w);
-    return {
-      uptime: averageUptime(rows.map((r) => r.rolling[wk])),
-      runsUptime: averageUptime(rows.map((r) => (r.runs ?? r).rolling[wk])),
-      reports: seen.size,
-    };
-  };
+  const historyStart = monthRange(`${months[0]}-01`, timeZone).start;
+  const reports = new Set<number>();
+  for (const e of pageEvents) {
+    if (e.type !== "report") continue;
+    const endMs = e.to?.getTime() ?? nowMs;
+    if (e.from.getTime() <= nowMs && endMs >= historyStart) reports.add(e.id);
+  }
   const summary: UptimeHistoryResult["summary"] = {
-    "6": windowSummary(6),
-    "12": windowSummary(12),
-    "24": windowSummary(24),
+    uptime: averageUptime(rows.map((r) => r.total)),
+    runsUptime: averageUptime(rows.map((r) => (r.runs ?? r).total)),
+    reports: reports.size,
   };
 
   // heartbeat months are measured in time, never from the frozen days

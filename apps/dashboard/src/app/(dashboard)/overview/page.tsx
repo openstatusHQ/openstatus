@@ -151,7 +151,10 @@ function linkOf(event: OverviewEvent): ActivityLink {
   switch (event.type) {
     case "incident":
       return {
-        href: monitorReportHref(event.incident.monitor.id),
+        href: monitorReportHref(
+          event.incident.monitor.id,
+          event.incident.startedAt,
+        ),
         title: event.incident.monitor.name,
         kind: "Downtime",
       };

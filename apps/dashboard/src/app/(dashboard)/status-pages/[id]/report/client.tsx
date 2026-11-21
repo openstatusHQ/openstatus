@@ -61,13 +61,7 @@ import {
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import {
-  REPORT_WINDOW,
-  getColumnVisibility,
-  historyMetric,
-  historyRows,
-  windowKey,
-} from "@/data/status-page-history";
+import { historyMetric, historyRows } from "@/data/status-page-history";
 import {
   UPTIME_DOCS_URL,
   UPTIME_MODES,
@@ -111,15 +105,10 @@ export function Client() {
     () =>
       getColumns(
         history?.months ?? [],
-        REPORT_WINDOW,
         history?.timeZone,
         history?.utcOnlyMonths,
       ),
     [history?.months, history?.timeZone, history?.utcOnlyMonths],
-  );
-  const columnVisibility = useMemo(
-    () => getColumnVisibility(REPORT_WINDOW, history?.months.length ?? 0),
-    [history?.months.length],
   );
 
   if (!history) return null;
@@ -127,16 +116,14 @@ export function Client() {
   const uptimeMode =
     UPTIME_MODES.find((m) => m.value === history.mode) ?? UPTIME_MODES[0];
   const configurationHref = `/status-pages/${id}/components#components-configuration`;
-  const summary = history.summary[windowKey(REPORT_WINDOW)];
+  const { summary } = history;
   const countsRequests = history.mode === "requests" || history.mode === "runs";
   const showMetric = !isLimited && countsRequests;
   const showRuns = showMetric && metric === "runs";
   const uptime = showRuns ? summary.runsUptime : summary.uptime;
   const partial = showRuns ? history.runsPartial : history.partial;
-  // rows without a value in the window are left out of the page average
-  const averaged = rows.filter(
-    (row) => row.rolling[windowKey(REPORT_WINDOW)] !== null,
-  ).length;
+  // rows without a value are left out of the page average
+  const averaged = rows.filter((row) => row.total !== null).length;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
   );
@@ -239,7 +226,6 @@ export function Client() {
                 paginationComponent={DataTablePaginationSimple}
                 columns={columns}
                 data={rows}
-                columnVisibility={columnVisibility}
               />
             </div>
             <BillingOverlay>
@@ -252,7 +238,7 @@ export function Client() {
                 Upgrade
               </BillingOverlayButton>
               <BillingOverlayDescription>
-                Keep an overview of your uptime history for the last 24 months.
+                Keep an overview of your uptime history for the last 12 months.
               </BillingOverlayDescription>
             </BillingOverlay>
             <UpgradeDialog
@@ -268,7 +254,6 @@ export function Client() {
               columns={columns}
               // rows without a single value are not history yet
               data={hasAnyData ? rows : []}
-              columnVisibility={columnVisibility}
               emptyState={
                 <DataTableEmpty>
                   <EmptyStateMedia>

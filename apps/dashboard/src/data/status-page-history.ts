@@ -4,13 +4,6 @@ import { format } from "date-fns";
 
 import { formatDurationShort, formatNumber } from "@/lib/formatter";
 
-// single client-side source for the window set; the server keeps its own
-// WINDOWS tuple (services can't be imported into client bundles)
-export const HISTORY_WINDOWS = [6, 12, 24] as const;
-export type HistoryWindow = (typeof HISTORY_WINDOWS)[number];
-
-export const REPORT_WINDOW: HistoryWindow = 12;
-
 // wire types inferred from the endpoint so server shape changes surface here
 type HistoryWire = RouterOutputs["page"]["getUptimeHistory"];
 type HistoryWireRow = HistoryWire["rows"][number];
@@ -89,16 +82,6 @@ export function historyBreakdown(
   };
 }
 
-/** "Last 6 months", the header of the window total's card. */
-export function windowLabel(window: HistoryWindow): string {
-  return `Last ${window} months`;
-}
-
-// safe because HistoryRow.rolling keys are exactly the string forms of HistoryWindow
-export function windowKey(window: HistoryWindow): keyof HistoryRow["rolling"] {
-  return String(window) as keyof HistoryRow["rolling"];
-}
-
 /**
  * Events overlapping the month in the page time zone, which is how the server
  * buckets months; open-ended events count up to now.
@@ -131,18 +114,4 @@ export function monthKeyToLabel(key: string): string {
 /** Full month + year, e.g. "October 2025". */
 export function monthKeyToFullLabel(key: string): string {
   return format(monthKeyToDate(key), "MMMM yyyy");
-}
-
-/** Show slots 1…window; hide the rest of the served months. */
-export function getColumnVisibility(
-  window: HistoryWindow,
-  monthCount: number,
-): Record<string, boolean> {
-  if (window >= monthCount) return {};
-  return Object.fromEntries(
-    Array.from({ length: monthCount - window }, (_, i) => [
-      String(i + window + 1),
-      false,
-    ]),
-  );
 }
