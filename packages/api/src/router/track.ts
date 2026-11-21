@@ -46,8 +46,9 @@ export const trackRouter = createTRPCRouter({
   contentCopied: publicProcedure
     .input(
       z.object({
-        kind: z.enum(["link", "markdown", "prompt"]),
+        kind: z.enum(["link", "markdown", "prompt", "handoff"]),
         path: z.string().max(512),
+        agent: z.enum(["claude", "chatgpt", "cursor"]).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

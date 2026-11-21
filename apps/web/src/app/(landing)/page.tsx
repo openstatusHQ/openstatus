@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { HomeAskAi } from "../../content/home-ask-ai";
 import { CustomMDX } from "../../content/mdx";
 import { getHomePage } from "../../content/utils";
 import { JsonLd } from "../../lib/metadata/json-ld";
@@ -35,6 +36,7 @@ export default function Page() {
   return (
     <div className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
+      <HomeAskAi title={homePage.metadata.title} />
       <h1>{homePage.metadata.hero ?? homePage.metadata.title}</h1>
       <p>{homePage.metadata.description}</p>
       <CustomMDX source={homePage.content} />
