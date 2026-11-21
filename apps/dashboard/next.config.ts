@@ -70,6 +70,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/monitors/:id/uptime",
+        destination: "/monitors/:id/report",
+        permanent: true,
+      },
+      {
+        source: "/monitors/:id/downtime",
+        destination: "/monitors/:id/report",
+        permanent: true,
+      },
+      {
         source: "/status-pages/:id/history",
         destination: "/status-pages/:id/report",
         permanent: true,

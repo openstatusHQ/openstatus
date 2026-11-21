@@ -34,7 +34,8 @@ type SweepRow = {
 /**
  * Heartbeats whose signal disagrees with their status: overdue or reporting a
  * `/fail` but not down, or pinged successfully again while down. Paused,
- * deleted, in-maintenance and never-pinged heartbeats are left alone.
+ * deleted and never-pinged heartbeats are left alone; a maintenance holds back
+ * failures only, so an outage open before it still closes.
  */
 async function findCandidates(now: number): Promise<SweepRow[]> {
   return withBusyRetry(() =>
@@ -57,6 +58,7 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
           (
             (${monitorHeartbeatState.nextDueAt} < ${now} OR ${monitorHeartbeatState.lastPingKind} = 'fail')
             AND ${monitor.status} <> 'error'
+            AND NOT ${monitorInMaintenance(db, { at: new Date(now), mode: "pause" })}
           )
           OR (
             ${monitorHeartbeatState.nextDueAt} >= ${now}
@@ -64,7 +66,6 @@ async function findCandidates(now: number): Promise<SweepRow[]> {
             AND ${monitor.status} = 'error'
           )
         )
-        AND NOT ${monitorInMaintenance(db, { at: new Date(now), mode: "pause" })}
       LIMIT ${CANDIDATE_LIMIT}
     `),
   );
