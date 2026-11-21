@@ -217,7 +217,7 @@ describe("fetchMonitorDailyStats", () => {
           regions: ["ams"],
         },
       });
-      const stats = await fetchMonitorDailyStats({
+      const { rows: stats } = await fetchMonitorDailyStats({
         db: tx,
         tb: emptyTb,
         monitorIds: [row.id],
@@ -229,7 +229,7 @@ describe("fetchMonitorDailyStats", () => {
 
   test("skips unknown monitorId (returns empty)", async () => {
     await withTestTransaction(async (tx) => {
-      const stats = await fetchMonitorDailyStats({
+      const { rows: stats } = await fetchMonitorDailyStats({
         db: tx,
         tb: emptyTb,
         monitorIds: [999_999_999],
@@ -254,7 +254,7 @@ describe("fetchMonitorDailyStats", () => {
           regions: ["ams"],
         },
       });
-      const stats = await fetchMonitorDailyStats({
+      const { rows: stats } = await fetchMonitorDailyStats({
         db: tx,
         tb: emptyTb,
         monitorIds: [row.id],
@@ -295,7 +295,7 @@ describe("fetchMonitorDailyStats", () => {
             })),
           }),
       } as unknown as NonNullable<ServiceContext["tb"]>;
-      const stats = await fetchMonitorDailyStats({
+      const { rows: stats } = await fetchMonitorDailyStats({
         db: tx,
         tb: icmpTb,
         monitorIds: [row.id],
@@ -360,7 +360,7 @@ describe("fetchMonitorDailyStats", () => {
         dnsStatus45d: () => Promise.resolve({ data: [] }),
       } as unknown as NonNullable<ServiceContext["tb"]>;
 
-      const stats = await fetchMonitorDailyStats({
+      const { rows: stats } = await fetchMonitorDailyStats({
         db: tx,
         tb: fakeTb,
         monitorIds: [httpMon.id, tcpMon.id],

@@ -771,7 +771,7 @@ enum ComponentEventStatus {
 
 // ComponentDayBucket is one day of status data for a component.
 message ComponentDayBucket {
-  // Day in RFC 3339 format (UTC midnight).
+  // Calendar day in the page's time zone (UTC as fallback), written as UTC midnight in RFC 3339.
   string day = 1;
   // Total checks that day.
   int64 count = 2;
@@ -825,4 +825,6 @@ message PageComponentDailySummary {
 message GetPageComponentDailySummaryResponse {
   // Per-component daily summaries, in page order.
   repeated PageComponentDailySummary components = 1;
+  // IANA time zone the days are grouped in: the page's time zone, or UTC as fallback.
+  string time_zone = 2;
 }

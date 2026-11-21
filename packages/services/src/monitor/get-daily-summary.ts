@@ -8,19 +8,19 @@ import type { StatusData } from "../status-timeline";
 type SupportedJobType = "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat";
 
 /**
- * Raw daily status buckets (one row per monitor per day) from the 45d Tinybird
- * pipes, grouped by jobType. Ids that are missing / soft-deleted / of an
- * unsupported jobType are skipped — callers want empty data for those, not a
- * throw. The pipe rows already match `StatusData` (day ISO, monitorId string).
+ * Daily status rows per monitor in `timeZone`, or in UTC days if Tinybird rejects it.
+ * Unknown, deleted or unsupported monitors are skipped rather than thrown on.
  */
 export async function fetchMonitorDailyStats(args: {
   db: DB;
   tb: OSTinybird;
   monitorIds: number[];
   workspaceId: number;
-}): Promise<StatusData[]> {
+  timeZone?: string;
+}): Promise<{ timeZone: string; rows: StatusData[] }> {
+  const timeZone = args.timeZone ?? "UTC";
   const ids = Array.from(new Set(args.monitorIds));
-  if (ids.length === 0) return [];
+  if (ids.length === 0) return { timeZone, rows: [] };
 
   const rows = await args.db
     .select({ id: monitor.id, jobType: monitor.jobType })
@@ -55,26 +55,58 @@ export async function fetchMonitorDailyStats(args: {
     }
   }
 
-  const results = await Promise.all(
-    (["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const)
-      .filter((jobType) => idsByJobType[jobType].length > 0)
-      .map((jobType) => {
-        const monitorIds = idsByJobType[jobType];
-        const pipe =
-          jobType === "http"
-            ? args.tb.httpStatus45d
-            : jobType === "tcp"
-              ? args.tb.tcpStatus45d
-              : jobType === "dns"
-                ? args.tb.dnsStatus45d
-                : jobType === "icmp"
-                  ? args.tb.icmpStatus45d
-                  : jobType === "grpc"
-                    ? args.tb.grpcStatus45d
-                    : args.tb.heartbeatStatus45d;
-        return pipe({ monitorIds });
-      }),
-  );
+  const jobTypes = (
+    ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const
+  ).filter((jobType) => idsByJobType[jobType].length > 0);
 
-  return results.flatMap((result) => result.data);
+  const readUtc = async () => {
+    const results = await Promise.all(
+      jobTypes.map((jobType) =>
+        status45d(args.tb, jobType)({ monitorIds: idsByJobType[jobType] }),
+      ),
+    );
+    return { timeZone: "UTC", rows: results.flatMap((r) => r.data) };
+  };
+
+  if (timeZone === "UTC") return readUtc();
+  try {
+    const results = await Promise.all(
+      jobTypes.map((jobType) =>
+        status15m(
+          args.tb,
+          jobType,
+        )({
+          monitorIds: idsByJobType[jobType],
+          timezone: timeZone,
+        }),
+      ),
+    );
+    return { timeZone, rows: results.flatMap((r) => r.data) };
+  } catch (err) {
+    // ClickHouse's tz database can reject a zone Node accepts
+    if (!(err instanceof Error) || !/time ?zone/i.test(err.message)) throw err;
+    console.error(
+      `[daily-summary] zone ${timeZone} failed, using UTC days:`,
+      err,
+    );
+    return readUtc();
+  }
+}
+
+function status45d(tb: OSTinybird, jobType: SupportedJobType) {
+  if (jobType === "http") return tb.httpStatus45d;
+  if (jobType === "tcp") return tb.tcpStatus45d;
+  if (jobType === "dns") return tb.dnsStatus45d;
+  if (jobType === "icmp") return tb.icmpStatus45d;
+  if (jobType === "grpc") return tb.grpcStatus45d;
+  return tb.heartbeatStatus45d;
+}
+
+function status15m(tb: OSTinybird, jobType: SupportedJobType) {
+  if (jobType === "http") return tb.httpStatus15m;
+  if (jobType === "tcp") return tb.tcpStatus15m;
+  if (jobType === "dns") return tb.dnsStatus15m;
+  if (jobType === "icmp") return tb.icmpStatus15m;
+  if (jobType === "grpc") return tb.grpcStatus15m;
+  return tb.heartbeatStatus15m;
 }

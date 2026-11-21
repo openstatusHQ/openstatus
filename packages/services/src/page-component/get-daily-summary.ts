@@ -1,5 +1,10 @@
 import { and, asc, eq, inArray } from "@openstatus/db";
-import { monitorIncidentTable, pageComponent } from "@openstatus/db/src/schema";
+import {
+  monitorIncidentTable,
+  page,
+  pageComponent,
+  timeZoneSchema,
+} from "@openstatus/db/src/schema";
 import type {
   PageComponentImpact,
   PageComponentType,
@@ -50,6 +55,8 @@ export type PageComponentDailySummary = {
 
 export type GetPageComponentDailySummaryResult = {
   components: PageComponentDailySummary[];
+  // IANA zone the days were grouped in: the page's, or UTC when it was rejected
+  timeZone: string;
 };
 
 export async function getPageComponentDailySummary(args: {
@@ -71,12 +78,21 @@ export async function getPageComponentDailySummary(args: {
     conditions.push(inArray(pageComponent.id, input.componentIds));
   }
 
-  const components = await db
-    .select()
-    .from(pageComponent)
-    .where(and(...conditions))
-    .orderBy(asc(pageComponent.order))
-    .all();
+  const [components, pageRow] = await Promise.all([
+    db
+      .select()
+      .from(pageComponent)
+      .where(and(...conditions))
+      .orderBy(asc(pageComponent.order))
+      .all(),
+    db
+      .select({ defaultTimezone: page.defaultTimezone })
+      .from(page)
+      .where(
+        and(eq(page.id, input.pageId), eq(page.workspaceId, input.workspaceId)),
+      )
+      .get(),
+  ]);
 
   if (input.componentIds?.length) {
     const found = new Set(components.map((c) => c.id));
@@ -84,6 +100,11 @@ export async function getPageComponentDailySummary(args: {
       if (!found.has(id)) throw new NotFoundError("page_component", id);
     }
   }
+
+  // a zone this runtime cannot resolve falls back to UTC instead of failing
+  const pageTimeZone = timeZoneSchema
+    .catch("UTC")
+    .parse(pageRow?.defaultTimezone ?? "UTC");
 
   const monitorIds = Array.from(
     new Set(
@@ -97,6 +118,7 @@ export async function getPageComponentDailySummary(args: {
       tb,
       monitorIds,
       workspaceId: input.workspaceId,
+      timeZone: pageTimeZone,
     }),
     db.query.maintenance.findMany({
       where: (m, { eq }) => eq(m.pageId, input.pageId),
@@ -120,8 +142,10 @@ export async function getPageComponentDailySummary(args: {
       : Promise.resolve([]),
   ]);
 
-  const statsByMonitor = new Map<string, typeof monitorStats>();
-  for (const stat of monitorStats) {
+  // the zone the days were grouped in, UTC if Tinybird rejected the page's
+  const timeZone = monitorStats.timeZone;
+  const statsByMonitor = new Map<string, typeof monitorStats.rows>();
+  for (const stat of monitorStats.rows) {
     const arr = statsByMonitor.get(stat.monitorId);
     if (arr) arr.push(stat);
     else statsByMonitor.set(stat.monitorId, [stat]);
@@ -141,10 +165,10 @@ export async function getPageComponentDailySummary(args: {
     const monitorKey =
       component.monitorId != null ? String(component.monitorId) : "";
     const stats = statsByMonitor.get(monitorKey) ?? [];
-    const filled = fillStatusDataFor45Days(stats, monitorKey, days);
+    const filled = fillStatusDataFor45Days(stats, monitorKey, days, timeZone);
 
     const buckets: ComponentDayBucket[] = filled.map((bucket) => {
-      const { status, impact } = resolveDayStatus(bucket, events);
+      const { status, impact } = resolveDayStatus(bucket, events, timeZone);
       return {
         day: bucket.day,
         count: bucket.count,
@@ -176,5 +200,5 @@ export async function getPageComponentDailySummary(args: {
     };
   });
 
-  return { components: summaries };
+  return { components: summaries, timeZone };
 }
