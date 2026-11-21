@@ -1,9 +1,8 @@
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
-import { LimitExceededError, NotFoundError } from "@openstatus/services";
+import { NotFoundError } from "@openstatus/services";
 import { getUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
-  assertCustomDomainAvailable,
   createPage,
   type CreatePageInput,
   // `CreatePageInput` re-exports the drizzle insert schema so routers
@@ -11,7 +10,6 @@ import {
   CreatePageInput as CreatePageInputSchema,
   deletePage,
   getPage,
-  getPageCustomDomain,
   getSlugAvailable,
   listPages,
   newPage,
@@ -20,7 +18,7 @@ import {
   UpdatePageAppearanceInput,
   updatePageConfiguration,
   UpdatePageConfigurationInput,
-  updatePageCustomDomain,
+  setPageCustomDomain,
   UpdatePageCustomDomainInput,
   updatePageCustomTheme,
   UpdatePageCustomThemeInput,
@@ -31,13 +29,8 @@ import {
   updatePageTimezone,
   UpdatePageTimezoneInput,
 } from "@openstatus/services/page";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  addDomainToVercel,
-  removeDomainFromVercelIfUnused,
-} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -61,27 +54,10 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        const sCtx = toServiceCtx(ctx);
-        const customDomain = await getPageCustomDomain({
-          ctx: sCtx,
-          input: { id: input.id },
-        });
         await deletePage({
-          ctx: sCtx,
+          ctx: toServiceCtx(ctx),
           input: { id: input.id },
         });
-        // best-effort: the page is gone either way, a leaked Vercel
-        // attachment is recoverable while a failed delete is not
-        if (customDomain) {
-          try {
-            await removeDomainFromVercelIfUnused(ctx.db, customDomain);
-          } catch (err) {
-            console.error("Failed to release domain from Vercel:", {
-              domain: customDomain,
-              error: err,
-            });
-          }
-        }
       } catch (err) {
         if (err instanceof NotFoundError) return;
         toTRPCError(err);
@@ -191,71 +167,10 @@ export const pageRouter = createTRPCRouter({
 
   updateCustomDomain: protectedProcedure
     .meta({ track: Events.UpdatePageDomain, trackProps: ["customDomain"] })
-    // Validate customDomain *before* the handler body runs — reusing
-    // the service's `UpdatePageCustomDomainInput` (backed by the
-    // canonical `customDomainSchema`) guarantees that malformed
-    // domains (`http://…`, `www.…`, format garbage) are rejected
-    // with a `ZodError` at tRPC's input layer, before any Vercel
-    // add/remove call fires. Previously the format check ran inside
-    // the service — reached only *after* Vercel mutations, which
-    // meant a bad input could leave Vercel holding a domain the db
-    // had then rejected.
     .input(UpdatePageCustomDomainInput)
     .mutation(async ({ ctx, input }) => {
-      if (input.customDomain.includes("openstatus")) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Domain cannot contain 'openstatus'",
-        });
-      }
-
-      // Resolve the existing domain via the service so the Vercel diff below
-      // sees the true pre-change state, then the service persists the new
-      // value. Vercel add/remove calls stay at the transport layer.
-      //
-      // `getPageCustomDomain` (narrow one-column read) instead of
-      // `getPage` (3 batched relation queries) — Vercel only needs the
-      // old domain string, so fanning out the full-relations read on
-      // every domain update was wasteful.
       try {
-        const sCtx = toServiceCtx(ctx);
-        if (input.customDomain && !sCtx.workspace.limits["custom-domain"]) {
-          throw new LimitExceededError("custom-domain", 0);
-        }
-        const oldDomain = await getPageCustomDomain({
-          ctx: sCtx,
-          input: { id: input.id },
-        });
-        const newDomain = input.customDomain;
-
-        // unchanged saves must be a no-op — re-adding an existing domain
-        // fails on Vercel; case-insensitive since DNS is and the schema
-        // doesn't lowercase, so a case-only re-save must not re-add either
-        if (newDomain.toLowerCase() === oldDomain.toLowerCase()) return;
-
-        // Before touching Vercel: a conflict after the add/remove below
-        // would leave Vercel out of sync with the row.
-        await assertCustomDomainAvailable({
-          tx: ctx.db,
-          customDomain: newDomain,
-          excludePageId: input.id,
-        });
-
-        if (newDomain) {
-          await addDomainToVercel(newDomain);
-        }
-        if (oldDomain) {
-          // this page's row still holds oldDomain until the update below,
-          // so exclude it — any other holder keeps the domain on Vercel
-          await removeDomainFromVercelIfUnused(ctx.db, oldDomain, {
-            excludePageId: input.id,
-          });
-        }
-
-        await updatePageCustomDomain({
-          ctx: sCtx,
-          input: { id: input.id, customDomain: newDomain },
-        });
+        await setPageCustomDomain({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

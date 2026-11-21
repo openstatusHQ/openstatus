@@ -3,6 +3,10 @@
     {
       "path": "/api/internal/email/feedback",
       "schedule": "30 15 * * *"
+    },
+    {
+      "path": "/api/internal/domains/reconcile",
+      "schedule": "0 6 * * *"
     }
   ]
 }

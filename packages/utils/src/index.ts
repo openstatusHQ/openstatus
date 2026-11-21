@@ -48,3 +48,4 @@ export {
   heartbeatExpectation,
   statusRegions,
 } from "./heartbeat";
+export { wwwCounterpart } from "./domain";

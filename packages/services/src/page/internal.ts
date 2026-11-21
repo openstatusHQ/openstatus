@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, ne, sql } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import {
   type pageAccessTypes,
@@ -62,6 +62,26 @@ export async function assertSlugAvailable(args: {
   }
 }
 
+/** Any page (across workspaces) holding `domain`, case-insensitive. */
+export async function findDomainHolder(args: {
+  db: DB;
+  domain: string;
+  excludePageId?: number;
+}): Promise<{ id: number } | undefined> {
+  return args.db
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${args.domain.toLowerCase()}`,
+        args.excludePageId !== undefined
+          ? ne(page.id, args.excludePageId)
+          : undefined,
+      ),
+    )
+    .get();
+}
+
 /** Assert no other page, in any workspace, already serves this custom domain. */
 export async function assertCustomDomainAvailable(args: {
   tx: DB;
@@ -70,12 +90,7 @@ export async function assertCustomDomainAvailable(args: {
 }): Promise<void> {
   const { tx, customDomain, excludePageId } = args;
   if (!customDomain) return;
-  const rows = await tx
-    .select({ id: page.id })
-    .from(page)
-    .where(sql`lower(${page.customDomain}) = ${customDomain.toLowerCase()}`)
-    .all();
-  if (rows.some((r) => r.id !== excludePageId)) {
+  if (await findDomainHolder({ db: tx, domain: customDomain, excludePageId })) {
     throw new ConflictError(
       "This domain is already used by another status page.",
     );

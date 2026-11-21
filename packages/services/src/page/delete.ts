@@ -3,11 +3,23 @@ import { page } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  getReadDb,
+  isTx,
+  type ServiceContext,
+  withTransaction,
+} from "../context";
+import { detachDomainIfUnused, resolveVercelConfig } from "./domain-sync";
 import { getPageInWorkspace } from "./internal";
+import { getPageCustomDomain } from "./list";
 import { DeletePageInput } from "./schemas";
 
-/** Delete a page. FK cascade clears pageComponents / statusReports / … */
+/**
+ * Delete a page. FK cascade clears pageComponents / statusReports / …
+ * Releases the custom domain best-effort after the delete; reconcile clears a
+ * leak. Inside a caller's transaction it skips Vercel — HTTP must not hold the
+ * libSQL writer — and the caller releases after commit.
+ */
 export async function deletePage(args: {
   ctx: ServiceContext;
   input: DeletePageInput;
@@ -15,6 +27,11 @@ export async function deletePage(args: {
   const { ctx } = args;
   requireScope(ctx, "pages:write");
   const input = DeletePageInput.parse(args.input);
+
+  const domain =
+    ctx.db && isTx(ctx.db)
+      ? ""
+      : await getPageCustomDomain({ ctx, input: { id: input.id } });
 
   await withTransaction(ctx, async (tx) => {
     const existing = await getPageInWorkspace({
@@ -32,4 +49,18 @@ export async function deletePage(args: {
       before: existing,
     });
   });
+
+  if (domain) {
+    await detachDomainIfUnused({
+      db: getReadDb(ctx),
+      domain,
+      excludePageId: input.id,
+      config: resolveVercelConfig(ctx),
+    }).catch((err) =>
+      console.warn("Failed to release domain from Vercel:", {
+        domain,
+        error: err,
+      }),
+    );
+  }
 }

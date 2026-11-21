@@ -6,6 +6,20 @@ export {
 export { deletePage } from "./delete";
 export { assertCustomDomainAvailable } from "./internal";
 export {
+  attachDomain,
+  attachWwwCompanion,
+  detachDomain,
+  detachDomainIfUnused,
+  getProjectDomain,
+  listProjectDomains,
+  reconcileProjectDomains,
+  type ProjectDomain,
+  resolveVercelConfig,
+  type VercelDomainConfig,
+  vercelConfigFromEnv,
+  vercelFetch,
+} from "./domain-sync";
+export {
   type MaintenanceContent,
   type StatusPageContent,
   type StatusReportContent,
@@ -21,6 +35,10 @@ export {
   type PageListItem,
   type PageWithRelations,
 } from "./list";
+export {
+  assertCustomDomainSettable,
+  setPageCustomDomain,
+} from "./set-custom-domain";
 export {
   updatePageAppearance,
   updatePageConfiguration,

@@ -1,0 +1,370 @@
+import { page as pageTable } from "@openstatus/db/src/schema";
+import { afterEach, beforeAll, describe, expect, test } from "vitest";
+
+import {
+  createWorkspaceFixture,
+  withTestTransaction,
+} from "../../../test/helpers";
+import type { DB } from "../../context";
+import {
+  ConflictError,
+  InternalServiceError,
+  ValidationError,
+} from "../../errors";
+import {
+  attachDomain,
+  detachDomain,
+  detachDomainIfUnused,
+  reconcileProjectDomains,
+  type VercelDomainConfig,
+  vercelFetch,
+} from "../domain-sync";
+
+const config: VercelDomainConfig = {
+  projectId: "prj_test",
+  teamId: "team_test",
+  token: "token",
+};
+
+type Call = { method: string; url: URL; body?: Record<string, unknown> };
+const originalFetch = globalThis.fetch;
+let calls: Call[] = [];
+
+function mockVercel(handler: (call: Call) => Response) {
+  calls = [];
+  globalThis.fetch = (input, init) => {
+    const request = new Request(input, init);
+    const call = {
+      method: request.method,
+      url: new URL(request.url),
+      body: init?.body ? JSON.parse(String(init.body)) : undefined,
+    };
+    calls.push(call);
+    return Promise.resolve(handler(call));
+  };
+}
+
+const errorResponse = (status: number, code: string) =>
+  Response.json({ error: { code, message: "vercel internals" } }, { status });
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
+
+let workspaceId: number;
+beforeAll(async () => {
+  workspaceId = (await createWorkspaceFixture("team")).workspace.id;
+});
+
+describe("detachDomain", () => {
+  test("treats 404 as detached", async () => {
+    mockVercel(() => errorResponse(404, "not_found"));
+    await detachDomain(config, "gone.example.com");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].method).toBe("DELETE");
+  });
+
+  test("throws on 500", async () => {
+    mockVercel(() => errorResponse(500, "internal"));
+    await expect(
+      detachDomain(config, "boom.example.com"),
+    ).rejects.toBeInstanceOf(InternalServiceError);
+  });
+
+  test("no-op without config", async () => {
+    mockVercel(() => Response.json({}));
+    await detachDomain(null, "selfhost.example.com");
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe("attachDomain", () => {
+  test("falls back to GET and accepts an existing attachment", async () => {
+    mockVercel(({ method }) =>
+      method === "POST"
+        ? errorResponse(409, "domain_already_in_use")
+        : Response.json({ name: "again.example.com" }),
+    );
+    await attachDomain(config, "again.example.com");
+    expect(calls.map((c) => c.method)).toEqual(["POST", "GET"]);
+  });
+
+  test("clears a redirect on an existing attachment", async () => {
+    mockVercel(({ method }) =>
+      method === "POST"
+        ? errorResponse(409, "domain_already_in_use")
+        : Response.json({ name: "acme.com", redirect: "www.acme.com" }),
+    );
+    const attached = await attachDomain(config, "acme.com");
+    expect(calls.map((c) => c.method)).toEqual(["POST", "GET", "PATCH"]);
+    expect(calls[2].body).toEqual({ redirect: null, redirectStatusCode: null });
+    expect(attached?.redirect).toBeNull();
+  });
+
+  test("throws the mapped error when the domain is not attached", async () => {
+    mockVercel(({ method }) =>
+      method === "POST"
+        ? errorResponse(409, "domain_already_in_use")
+        : errorResponse(404, "not_found"),
+    );
+    const error = await attachDomain(config, "taken.example.com").catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ConflictError);
+    expect((error as Error).message).not.toContain("vercel internals");
+  });
+});
+
+describe("detachDomainIfUnused", () => {
+  test("skips when another page holds the domain, proceeds with excludePageId", async () => {
+    await withTestTransaction(async (tx) => {
+      const domain = `held-${crypto.randomUUID()}.example.com`;
+      const holder = await tx
+        .insert(pageTable)
+        .values({
+          workspaceId,
+          title: "Holder",
+          slug: `svc-domain-sync-${crypto.randomUUID()}`,
+          description: "",
+          customDomain: domain.toUpperCase(),
+        })
+        .returning()
+        .get();
+
+      mockVercel(() => Response.json({}));
+      await detachDomainIfUnused({ db: tx, domain, config });
+      expect(calls).toHaveLength(0);
+
+      await detachDomainIfUnused({
+        db: tx,
+        domain,
+        excludePageId: holder.id,
+        config,
+      });
+      expect(calls.map((c) => c.method)).toEqual(["GET", "DELETE"]);
+    });
+  });
+});
+
+describe("detachDomainIfUnused www companions", () => {
+  async function holderOf(tx: DB, customDomain: string) {
+    await tx
+      .insert(pageTable)
+      .values({
+        workspaceId,
+        title: "Companion",
+        slug: `svc-domain-sync-${crypto.randomUUID()}`,
+        description: "",
+        customDomain,
+      })
+      .run();
+  }
+
+  test("keeps a domain whose www counterpart a page holds", async () => {
+    await withTestTransaction(async (tx) => {
+      const apex = `${crypto.randomUUID()}.example.com`;
+      await holderOf(tx, `www.${apex}`);
+      mockVercel(() => Response.json({}));
+      expect(await detachDomainIfUnused({ db: tx, domain: apex, config })).toBe(
+        false,
+      );
+      expect(calls).toHaveLength(0);
+    });
+  });
+
+  test("releases a redirecting companion before the domain", async () => {
+    await withTestTransaction(async (tx) => {
+      const apex = `${crypto.randomUUID()}.example.com`;
+      mockVercel(({ method }) =>
+        method === "GET"
+          ? Response.json({ name: `www.${apex}`, redirect: apex })
+          : Response.json({}),
+      );
+      expect(await detachDomainIfUnused({ db: tx, domain: apex, config })).toBe(
+        true,
+      );
+      const deletes = calls.filter((c) => c.method === "DELETE");
+      expect(deletes.map((c) => c.url.pathname)).toEqual([
+        expect.stringContaining(`/domains/www.${apex}`),
+        expect.stringContaining(`/domains/${apex}`),
+      ]);
+    });
+  });
+
+  test("leaves a www alias that does not redirect to the domain", async () => {
+    await withTestTransaction(async (tx) => {
+      const apex = `${crypto.randomUUID()}.example.com`;
+      mockVercel(({ method }) =>
+        method === "GET"
+          ? Response.json({ name: `www.${apex}` })
+          : Response.json({}),
+      );
+      await detachDomainIfUnused({ db: tx, domain: apex, config });
+      const deletes = calls.filter((c) => c.method === "DELETE");
+      expect(deletes).toHaveLength(1);
+      expect(deletes[0].url.pathname).not.toContain("www.");
+    });
+  });
+});
+
+describe("reconcileProjectDomains", () => {
+  test("splits orphans and missing, skips own domains, follows pagination", async () => {
+    await withTestTransaction(async (tx) => {
+      const id = crypto.randomUUID();
+      const held = `held-${id}.example.com`;
+      const orphan = `orphan-${id}.example.com`;
+      const missing = `missing-${id}.example.com`;
+      for (const domain of [held, missing]) {
+        await tx
+          .insert(pageTable)
+          .values({
+            workspaceId,
+            title: "Reconcile",
+            slug: `svc-domain-sync-${crypto.randomUUID()}`,
+            description: "",
+            customDomain: domain,
+          })
+          .run();
+      }
+
+      mockVercel(({ method, url }) => {
+        if (method === "DELETE") return Response.json({});
+        return url.searchParams.has("until")
+          ? Response.json({
+              domains: [
+                { name: orphan },
+                { name: "www.x.com", redirect: "x.com" },
+              ],
+              pagination: { next: null },
+            })
+          : Response.json({
+              domains: [
+                { name: held.toUpperCase() },
+                { name: "openstatus.dev" },
+                { name: "acme.openstatus.dev" },
+                { name: "stpg.dev" },
+                { name: "www.stpg.dev" },
+                { name: "openstatus-web.vercel.app" },
+                { name: "preview.example.com", gitBranch: "main" },
+              ],
+              pagination: { next: 123 },
+            });
+      });
+
+      const report = await reconcileProjectDomains({ db: tx, config });
+      expect(report.orphans).toEqual([orphan]);
+      expect(report.missing).toContain(missing);
+      expect(report.missing).not.toContain(held);
+      expect(report.detached).toEqual([]);
+      expect(calls.filter((c) => c.method === "DELETE")).toHaveLength(0);
+
+      const applied = await reconcileProjectDomains({
+        db: tx,
+        config,
+        apply: true,
+      });
+      expect(applied.detached).toEqual([orphan]);
+      const deletes = calls.filter((c) => c.method === "DELETE");
+      expect(deletes).toHaveLength(1);
+      expect(deletes[0].url.pathname).toContain(encodeURIComponent(orphan));
+    });
+  });
+
+  test("a held domain bound to a git branch counts as missing", async () => {
+    await withTestTransaction(async (tx) => {
+      const branchBound = `${crypto.randomUUID()}.example.com`;
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId,
+          title: "Branch",
+          slug: `svc-domain-sync-${crypto.randomUUID()}`,
+          description: "",
+          customDomain: branchBound,
+        })
+        .run();
+
+      mockVercel(() =>
+        Response.json({
+          domains: [{ name: branchBound, gitBranch: "preview" }],
+          pagination: { next: null },
+        }),
+      );
+
+      const report = await reconcileProjectDomains({ db: tx, config });
+      expect(report.missing).toContain(branchBound);
+    });
+  });
+
+  test("a www alias of a held apex without a redirect is not an orphan", async () => {
+    await withTestTransaction(async (tx) => {
+      const apex = `${crypto.randomUUID()}.example.com`;
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId,
+          title: "Alias",
+          slug: `svc-domain-sync-${crypto.randomUUID()}`,
+          description: "",
+          customDomain: apex,
+        })
+        .run();
+
+      mockVercel(() =>
+        Response.json({
+          domains: [{ name: apex }, { name: `www.${apex}` }],
+          pagination: { next: null },
+        }),
+      );
+
+      const report = await reconcileProjectDomains({ db: tx, config });
+      expect(report.orphans).not.toContain(`www.${apex}`);
+    });
+  });
+
+  test("a held domain redirecting to www is neither missing nor an orphan", async () => {
+    await withTestTransaction(async (tx) => {
+      const apex = `${crypto.randomUUID()}.example.com`;
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId,
+          title: "Redirect",
+          slug: `svc-domain-sync-${crypto.randomUUID()}`,
+          description: "",
+          customDomain: apex,
+        })
+        .run();
+
+      mockVercel(() =>
+        Response.json({
+          domains: [
+            { name: apex, redirect: `www.${apex}` },
+            { name: `www.${apex}` },
+          ],
+          pagination: { next: null },
+        }),
+      );
+
+      const report = await reconcileProjectDomains({ db: tx, config });
+      expect(report.missing).not.toContain(apex);
+      expect(report.orphans).not.toContain(`www.${apex}`);
+    });
+  });
+});
+
+for (const path of [
+  "/v9/projects/p/domains/../../../../v2/user",
+  "/v9/projects/p/domains/%2e%2e/%2e%2e/x",
+  "/v9/projects/p/domains/a.com#?teamId=t",
+  "//evil.example/v2/user",
+]) {
+  test(`vercelFetch refuses ${path}`, async () => {
+    mockVercel(() => {
+      throw new Error("unexpected network call");
+    });
+    const error = await vercelFetch("token", path).catch((e) => e);
+    expect(error).toBeInstanceOf(ValidationError);
+    expect(calls).toHaveLength(0);
+  });
+}

@@ -564,39 +564,6 @@ describe("custom domain uniqueness", () => {
   const uniqueDomain = (tag: string) =>
     `${uniqueSlug(tag)}.example.com`.toLowerCase();
 
-  test("createPage rejects a domain another workspace already uses", async () => {
-    await withTestTransaction(async (tx) => {
-      const domain = uniqueDomain("taken-create");
-      await tx
-        .insert(pageTable)
-        .values({
-          workspaceId: freeCtx.workspace.id,
-          title: "Owner",
-          description: "",
-          slug: uniqueSlug("domain-owner"),
-          customDomain: domain,
-        })
-        .run();
-
-      const slug = uniqueSlug("domain-thief");
-      await expect(
-        createPage({
-          ctx: { ...teamCtx, db: tx },
-          input: {
-            workspaceId: teamCtx.workspace.id,
-            title: "Thief",
-            description: "",
-            slug,
-            customDomain: domain.toUpperCase(),
-          },
-        }),
-      ).rejects.toBeInstanceOf(ConflictError);
-      expect(
-        await tx.select().from(pageTable).where(eq(pageTable.slug, slug)).get(),
-      ).toBeUndefined();
-    });
-  });
-
   test("updatePageCustomDomain rejects a domain used by another page", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
