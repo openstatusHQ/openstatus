@@ -1,35 +1,26 @@
-import {
-  App,
-  type McpUiHostContext,
-  applyDocumentTheme,
-  applyHostFonts,
-  applyHostStyleVariables,
-} from "@modelcontextprotocol/ext-apps";
+import { App } from "@modelcontextprotocol/ext-apps";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { MonitorChartModel } from "@openstatus/services/agent-tools";
 
-import type { MonitorChartModel } from "../../src/routes/mcp/tools/monitor-chart";
+import { el, htmlEl, svgEl } from "../_shared/dom";
+import {
+  formatInterval,
+  formatMs,
+  formatNumber,
+  formatTime,
+} from "../_shared/format";
+import { callTool, connectHost, hostLocale, resultText } from "../_shared/host";
+import { seriesKey, showTooltip } from "../_shared/tooltip";
 
 const TOOL_NAME = "render_monitor_chart";
 const TIME_RANGES = ["1d", "7d", "14d"] as const;
 const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
-const SVG_NS = "http://www.w3.org/2000/svg";
 const HEIGHT = 240;
 const MARGIN = { top: 24, right: 16, bottom: 24, left: 52 };
 // End labels only while few enough lines can carry one each.
 const MAX_END_LABELS = 4;
 const END_LABEL_WIDTH = 36;
 const END_LABEL_MIN_GAP = 13;
-
-type CallResult = {
-  isError?: boolean;
-  content?: { type: string; text?: string }[];
-  structuredContent?: unknown;
-};
-
-function el<T extends HTMLElement>(id: string): T {
-  const node = document.getElementById(id);
-  if (!node) throw new Error(`#${id} is missing from the view`);
-  return node as T;
-}
 
 const root = el("root");
 const title = el("title");
@@ -53,8 +44,6 @@ const error = el("error");
 const app = new App({ name: "openstatus-monitor-chart", version: "0.1.0" });
 
 let model: MonitorChartModel | undefined;
-let locale: string | undefined;
-let timeZone: string | undefined;
 let hovered: number | undefined;
 
 // The tool's `outputSchema` is the contract; this only guards a foreign payload.
@@ -68,37 +57,12 @@ function isChartModel(value: unknown): value is MonitorChartModel {
   );
 }
 
-function textOf(result: CallResult): string {
-  return (result.content ?? [])
-    .map((block) => (block.type === "text" ? (block.text ?? "") : ""))
-    .join("\n")
-    .trim();
-}
-
 function seriesColor(index: number): string {
   return `var(--series-${index + 1})`;
 }
 
-function formatMs(value: number): string {
-  return `${value.toLocaleString(locale)} ms`;
-}
-
-function formatInterval(minutes: number): string {
-  return minutes % 60 === 0 ? `${minutes / 60}h` : `${minutes}min`;
-}
-
-function formatTime(timestamp: number, style: "tick" | "full"): string {
-  const day = { month: "short", day: "numeric" } as const;
-  const time = { hour: "2-digit", minute: "2-digit" } as const;
-  const options =
-    style === "full"
-      ? { ...day, ...time }
-      : model?.timeRange === "1d"
-        ? time
-        : day;
-  return new Intl.DateTimeFormat(locale, { ...options, timeZone }).format(
-    timestamp,
-  );
+function tickStyle(current: MonitorChartModel) {
+  return current.timeRange === "1d" ? "time" : "day";
 }
 
 function niceMax(max: number): { max: number; step: number } {
@@ -109,36 +73,6 @@ function niceMax(max: number): { max: number; step: number } {
     [1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) ??
     10 * magnitude;
   return { max: Math.ceil(max / step) * step, step };
-}
-
-function svgEl<K extends keyof SVGElementTagNameMap>(
-  tag: K,
-  attrs: Record<string, string | number>,
-  text?: string,
-): SVGElementTagNameMap[K] {
-  const node = document.createElementNS(SVG_NS, tag);
-  for (const [key, value] of Object.entries(attrs)) {
-    node.setAttribute(key, String(value));
-  }
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-function htmlEl<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className?: string,
-  text?: string,
-): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-function lineKey(index: number): HTMLSpanElement {
-  const key = htmlEl("span", "key");
-  key.style.background = seriesColor(index);
-  return key;
 }
 
 /** Bucket indices to label: evenly spaced hours for 1d, day starts otherwise. */
@@ -156,9 +90,14 @@ function xTicks(current: MonitorChartModel, limit: number): number[] {
     ];
   }
   const days: number[] = [];
-  let previous = formatTime(current.timestamps[0] as number, "tick");
+  const style = tickStyle(current);
+  let previous = formatTime(current.timestamps[0] as number, style, hostLocale);
   for (let index = 1; index <= last; index++) {
-    const label = formatTime(current.timestamps[index] as number, "tick");
+    const label = formatTime(
+      current.timestamps[index] as number,
+      style,
+      hostLocale,
+    );
     if (label !== previous) days.push(index);
     previous = label;
   }
@@ -229,7 +168,7 @@ function renderChart(current: MonitorChartModel) {
       svgEl(
         "text",
         { class: "tick", x: MARGIN.left - 8, y: y + 4, "text-anchor": "end" },
-        tick.toLocaleString(locale),
+        formatNumber(tick, hostLocale),
       ),
     );
   }
@@ -277,7 +216,11 @@ function renderChart(current: MonitorChartModel) {
           y: HEIGHT - 6,
           "text-anchor": anchor,
         },
-        formatTime(current.timestamps[index] as number, "tick"),
+        formatTime(
+          current.timestamps[index] as number,
+          tickStyle(current),
+          hostLocale,
+        ),
       ),
     );
   });
@@ -363,30 +306,23 @@ function showHover(index: number) {
     );
   }
 
-  tooltip.replaceChildren(
-    htmlEl(
-      "div",
-      "when",
-      formatTime(model.timestamps[index] as number, "full"),
-    ),
+  showTooltip(
+    tooltip,
+    {
+      heading: formatTime(
+        model.timestamps[index] as number,
+        "full",
+        hostLocale,
+      ),
+      rows: rows.map((row) => ({
+        color: seriesColor(row.i),
+        name: row.region,
+        value: formatMs(row.value, hostLocale),
+      })),
+      empty: "No checks",
+    },
+    { x, containerWidth: scales.width },
   );
-  if (rows.length === 0) {
-    tooltip.append(htmlEl("div", "name", "No checks"));
-  }
-  for (const row of rows) {
-    const line = htmlEl("div", "row");
-    line.append(
-      lineKey(row.i),
-      htmlEl("span", "name", row.region),
-      htmlEl("span", "value", formatMs(row.value)),
-    );
-    tooltip.append(line);
-  }
-  tooltip.hidden = false;
-  const tooltipWidth = tooltip.offsetWidth;
-  const left =
-    x + 12 + tooltipWidth > scales.width ? x - 12 - tooltipWidth : x + 12;
-  tooltip.style.left = `${Math.max(0, left)}px`;
 }
 
 function hideHover() {
@@ -413,7 +349,7 @@ function renderLegend(current: MonitorChartModel) {
   legend.hidden = current.series.length < 2;
   current.series.forEach((s, i) => {
     const item = htmlEl("li");
-    item.append(lineKey(i), htmlEl("span", undefined, s.region));
+    item.append(seriesKey(seriesColor(i)), htmlEl("span", undefined, s.region));
     legend.append(item);
   });
 }
@@ -434,7 +370,7 @@ function renderTable(current: MonitorChartModel) {
       htmlEl(
         "td",
         undefined,
-        formatTime(current.timestamps[index] as number, "full"),
+        formatTime(current.timestamps[index] as number, "full", hostLocale),
       ),
     );
     for (const s of current.series) {
@@ -443,7 +379,7 @@ function renderTable(current: MonitorChartModel) {
         htmlEl(
           "td",
           undefined,
-          value === null ? "–" : value.toLocaleString(locale),
+          value === null ? "–" : formatNumber(value, hostLocale),
         ),
       );
     }
@@ -478,8 +414,8 @@ function render() {
   if (current.peak) {
     peak.replaceChildren(
       "Peak ",
-      htmlEl("strong", undefined, formatMs(current.peak.value)),
-      ` in ${current.peak.region} at ${formatTime(current.peak.timestamp, "full")}`,
+      htmlEl("strong", undefined, formatMs(current.peak.value, hostLocale)),
+      ` in ${current.peak.region} at ${formatTime(current.peak.timestamp, "full", hostLocale)}`,
     );
   }
 
@@ -497,9 +433,9 @@ function showError(message: string) {
   error.hidden = false;
 }
 
-function applyResult(result: CallResult) {
+function applyResult(result: CallToolResult) {
   if (result.isError) {
-    showError(textOf(result) || "The chart could not be loaded.");
+    showError(resultText(result) || "The chart could not be loaded.");
   } else if (isChartModel(result.structuredContent)) {
     error.hidden = true;
     model = result.structuredContent;
@@ -519,17 +455,14 @@ async function refetch(next: {
   const regions = model.series.map((s) => s.region);
   root.setAttribute("aria-busy", "true");
   try {
-    const result = await app.callServerTool({
-      name: TOOL_NAME,
-      arguments: {
-        monitorId: model.monitorId,
-        timeRange: next.timeRange ?? model.timeRange,
-        percentile: next.percentile ?? model.percentile,
-        // pin the regions so a line keeps its colour across ranges
-        ...(regions.length > 0 ? { regions } : {}),
-      },
+    const result = await callTool(app, TOOL_NAME, {
+      monitorId: model.monitorId,
+      timeRange: next.timeRange ?? model.timeRange,
+      percentile: next.percentile ?? model.percentile,
+      // pin the regions so a line keeps its colour across ranges
+      ...(regions.length > 0 ? { regions } : {}),
     });
-    applyResult(result as CallResult);
+    applyResult(result);
     if (!result.isError && app.getHostCapabilities()?.updateModelContext) {
       // keeps the model's picture in step with what the user now sees
       await app.updateModelContext({ content: result.content }).catch(() => {});
@@ -541,17 +474,6 @@ async function refetch(next: {
     root.setAttribute("aria-busy", "false");
     if (model) renderControls(model);
   }
-}
-
-function applyHostContext(context: Partial<McpUiHostContext> | undefined) {
-  if (!context) return;
-  if (context.theme) applyDocumentTheme(context.theme);
-  if (context.styles?.variables)
-    applyHostStyleVariables(context.styles.variables);
-  if (context.styles?.css?.fonts) applyHostFonts(context.styles.css.fonts);
-  if (context.locale) locale = context.locale;
-  if (context.timeZone) timeZone = context.timeZone;
-  render();
 }
 
 function setUpControls() {
@@ -623,22 +545,15 @@ function setUpControls() {
 }
 
 async function main() {
-  applyDocumentTheme(
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light",
-  );
   setUpControls();
 
-  app.ontoolresult = (result) => applyResult(result as CallResult);
+  app.ontoolresult = (result) => applyResult(result);
   app.ontoolcancelled = () => {
     showError("The chart request was cancelled.");
     root.setAttribute("aria-busy", "false");
   };
-  app.onhostcontextchanged = (context) => applyHostContext(context);
 
-  await app.connect();
-  applyHostContext(app.getHostContext());
+  await connectHost(app, render);
 
   const capabilities = app.getHostCapabilities();
   controls.hidden = false;

@@ -1,5 +1,8 @@
 import type { ServiceContext } from "@openstatus/services";
-import { agentTools } from "@openstatus/services/agent-tools";
+import {
+  agentTools,
+  isAgentToolAvailable,
+} from "@openstatus/services/agent-tools";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
@@ -76,13 +79,22 @@ describe("getRegistryTool", () => {
   });
 });
 
+// feature-gated tools are hidden until the feature is on for the workspace
+const offeredToolNames = Object.values(agentTools)
+  .filter((tool) => isAgentToolAvailable(tool, fakeCtx.workspace))
+  .map((tool) => tool.name);
+
 describe("buildSlackTools", () => {
   const tools = buildSlackTools(fakeCtx);
 
-  test("emits an entry for every registry tool", () => {
-    for (const name of Object.keys(agentTools)) {
+  test("emits an entry for every registry tool offered in the workspace", () => {
+    for (const name of offeredToolNames) {
       expect(tools[name], `${name} missing`).toBeDefined();
     }
+  });
+
+  test("leaves out a tool whose feature is off", () => {
+    expect(tools.render_monitor_chart).toBeUndefined();
   });
 
   test("destructive tools omit extraFlag fields from the LLM-facing schema", () => {
@@ -375,11 +387,11 @@ describe("buildTool draft split", () => {
 });
 
 describe("buildSystemPrompt coverage", () => {
-  // buildSlackTools hands the model every registry tool; a tool the prompt
+  // buildSlackTools hands the model every offered registry tool; a tool the prompt
   // never mentions is one the model won't reach for (or will misuse).
   test("mentions every tool the Slack agent is given", () => {
     const prompt = buildSystemPrompt("Acme Corp");
-    const missing = Object.keys(agentTools).filter(
+    const missing = offeredToolNames.filter(
       (name) => !new RegExp(`\\b${name}\\b`).test(prompt),
     );
     expect(missing).toEqual([]);

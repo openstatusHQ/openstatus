@@ -26,6 +26,7 @@ import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
 import { mcpRoute } from "./index";
 import { createMcpServer } from "./server";
+import { VIEW_CALL_META } from "./view-call";
 
 /**
  * Build a fresh Hono app with the same middleware chain as production.
@@ -348,7 +349,29 @@ describe("MCP transport — analytics", () => {
     expect(event?.name).toBe(Events.McpRequest.name);
     expect(event?.method).toBe("tools/call");
     expect(event?.tool).toBe("list_status_pages");
+    expect(event?.origin).toBe("model");
     expect(event?.authenticated).toBe(true);
+  });
+
+  test("a tools/call made by a view is tracked with origin view", async () => {
+    const app = makeApp();
+    await app.fetch(
+      jsonRpc({
+        method: "tools/call",
+        params: {
+          name: "list_status_pages",
+          arguments: {},
+          _meta: VIEW_CALL_META,
+        },
+      }),
+    );
+    await flushTracking();
+
+    const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(event?.origin).toBe("view");
   });
 
   test("a rejected request is not tracked", async () => {

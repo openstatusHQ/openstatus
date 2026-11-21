@@ -38,6 +38,7 @@ import {
   listResponseLogsTool,
   updateMonitorTool,
 } from "./monitor";
+import { renderMonitorChartTool } from "./monitor-chart";
 import { listNotificationsTool } from "./notification";
 import {
   createStatusPageTool,
@@ -101,6 +102,15 @@ export {
   listResponseLogsTool,
   updateMonitorTool,
 } from "./monitor";
+export {
+  MAX_CHART_REGIONS,
+  type MonitorChartModel,
+  meanLatency,
+  monitorChartPercentiles,
+  renderMonitorChartTool,
+  summarizeMonitorChart,
+  toMonitorChartModel,
+} from "./monitor-chart";
 export { listNotificationsTool } from "./notification";
 export {
   createStatusPageTool,
@@ -118,7 +128,6 @@ export {
 } from "./page-component-group";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
-export { dashboardUrl } from "./urls";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -197,6 +206,7 @@ export const agentTools = {
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,
   get_monitor_summary: getMonitorSummaryTool,
+  render_monitor_chart: renderMonitorChartTool,
   list_response_logs: listResponseLogsTool,
   get_response_log: getResponseLogTool,
   list_notifications: listNotificationsTool,

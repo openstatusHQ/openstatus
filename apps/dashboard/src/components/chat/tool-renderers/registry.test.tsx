@@ -14,6 +14,7 @@ import {
   renderToolResult,
   summarizeToolOutput,
   toolBeforeIdField,
+  toolOpensByDefault,
   toolRenderers,
 } from "./index";
 
@@ -74,6 +75,19 @@ describe("summarizeToolOutput", () => {
         p95: 120,
       }),
     ).toBe("10 checks · p95 120ms");
+  });
+
+  it("names the latency chart's window and peak", () => {
+    const chart = { percentile: "p95", timeRange: "7d" };
+    expect(
+      summarizeToolOutput("render_monitor_chart", {
+        ...chart,
+        peak: { region: "fra", value: 911, timestamp: 0 },
+      }),
+    ).toBe("p95 · last 7d · peak 911ms in fra");
+    expect(
+      summarizeToolOutput("render_monitor_chart", { ...chart, peak: null }),
+    ).toBe("p95 · last 7d · no checks");
   });
 
   it("handles a missing postmortem", () => {
@@ -171,6 +185,14 @@ describe("unknown tools", () => {
     expect(renderToolDraft("not_a_tool", {})).toBeUndefined();
     expect(renderToolResult("not_a_tool", {}, {})).toBeUndefined();
     expect(warnStub?.mock.calls).toHaveLength(1);
+  });
+});
+
+describe("toolOpensByDefault", () => {
+  it("expands the chart and leaves tables collapsed", () => {
+    expect(toolOpensByDefault("render_monitor_chart")).toBe(true);
+    expect(toolOpensByDefault("list_monitors")).toBe(false);
+    expect(toolOpensByDefault("not_a_tool")).toBe(false);
   });
 });
 

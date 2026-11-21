@@ -39,3 +39,9 @@ jobs:
 
       - name: 🔍 Check
         run: pnpm check
+
+      # The bundled views are committed; a source change without a rebuild ships a stale one.
+      - name: 🧩 MCP Apps bundles are up to date
+        run: |
+          pnpm --filter @openstatus/server mcp-apps:build
+          git diff --exit-code -- apps/server/static

@@ -12,6 +12,7 @@ import type { Variables } from "../../types";
 import { oauthConfigFromEnv } from "../oauth/config";
 import { toServiceCtx } from "./adapter";
 import { createMcpServer } from "./server";
+import { isViewCall } from "./view-call";
 
 const logger = getLogger("api-server");
 
@@ -48,6 +49,7 @@ mcpRoute.use("*", authMiddleware);
  * The JSON-RPC calls carried by a request body, as OpenPanel event properties.
  * A batch arrives as an array and every entry is its own call; `params.name` is
  * the tool for `tools/call`, `params.uri` the document for `resources/read`.
+ * `origin` is `view` when an MCP Apps view made the call, `model` otherwise.
  */
 function rpcCalls(body: unknown): Record<string, unknown>[] {
   const entries = Array.isArray(body) ? body : [body];
@@ -56,10 +58,16 @@ function rpcCalls(body: unknown): Record<string, unknown>[] {
     if (typeof entry !== "object" || entry === null) continue;
     const { method, params } = entry as { method?: unknown; params?: unknown };
     if (typeof method !== "string") continue;
-    const { name, uri } = (params ?? {}) as { name?: unknown; uri?: unknown };
+    const { name, uri, _meta } = (params ?? {}) as {
+      name?: unknown;
+      uri?: unknown;
+      _meta?: unknown;
+    };
     calls.push({
       method,
-      ...(typeof name === "string" ? { tool: name } : {}),
+      ...(typeof name === "string"
+        ? { tool: name, origin: isViewCall(_meta) ? "view" : "model" }
+        : {}),
       ...(typeof uri === "string" ? { uri } : {}),
     });
   }

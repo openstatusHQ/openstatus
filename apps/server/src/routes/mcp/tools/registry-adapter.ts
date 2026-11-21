@@ -96,7 +96,7 @@ export function registerRegistryTools(
 // registry contract is "schemas are ZodObject". A union/intersection at
 // the root would silently produce `shape: undefined` and an unusable
 // MCP tool — fail loudly at registration instead.
-function assertShape(
+export function assertShape(
   schema: ZodType,
   toolName: string,
   kind: "input" | "output",

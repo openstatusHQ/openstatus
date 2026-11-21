@@ -1,0 +1,202 @@
+.viz-root {
+  color-scheme: light;
+  --surface: var(--color-background-primary, #fcfcfb);
+  --text-primary: var(--color-text-primary, #0b0b0b);
+  --text-secondary: var(--color-text-secondary, #52514e);
+  --text-muted: var(--color-text-tertiary, #898781);
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: var(--color-border-primary, rgba(11, 11, 11, 0.1));
+  --danger: var(--color-text-danger, #d03b3b);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --surface: var(--color-background-primary, #1a1a19);
+  --text-primary: var(--color-text-primary, #f0efec);
+  --text-secondary: var(--color-text-secondary, #c3c2b7);
+  --text-muted: var(--color-text-tertiary, #898781);
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: var(--color-border-primary, rgba(255, 255, 255, 0.1));
+  --danger: var(--color-text-danger, #e66767);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #0ca30c;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  background: transparent;
+}
+.viz-root {
+  font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  background: var(--surface);
+  padding: 16px;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+p {
+  margin: 0;
+}
+.muted {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.controls[hidden],
+[hidden] {
+  display: none !important;
+}
+.btn,
+.segmented button,
+.select select {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-height: 28px;
+  cursor: pointer;
+}
+.btn:hover,
+.segmented button:hover {
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+.btn[aria-pressed="true"],
+.segmented button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  font-weight: 600;
+}
+.segmented {
+  display: inline-flex;
+}
+.segmented button {
+  border-radius: 0;
+  margin-left: -1px;
+}
+.segmented button:first-child {
+  border-radius: 6px 0 0 6px;
+  margin-left: 0;
+}
+.segmented button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 1px;
+}
+.tooltip {
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+  min-width: 132px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.12));
+  font-size: 12px;
+  z-index: 1;
+}
+.tooltip .when {
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.tooltip .row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tooltip .value {
+  margin-left: auto;
+  padding-left: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tooltip .name {
+  color: var(--text-secondary);
+}
+.key {
+  flex: none;
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+.table-scroll {
+  margin-top: 8px;
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+th,
+td {
+  padding: 4px 10px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.note {
+  margin-top: 8px;
+}
+.error {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 12px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

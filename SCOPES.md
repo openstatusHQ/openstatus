@@ -85,7 +85,7 @@ lookups) carry no scope by design; the lint rule
 
 | Scope | Tools |
 | --- | --- |
-| `monitors:read` | list_monitors, get_monitor, get_monitor_status, get_monitor_summary, list_response_logs, get_response_log, list_private_locations, render_monitor_chart (experimental, MCP only) |
+| `monitors:read` | list_monitors, get_monitor, get_monitor_status, get_monitor_summary, list_response_logs, get_response_log, list_private_locations, render_monitor_chart (experimental: MCP behind `?experimental=1`; dashboard assistant and Slack behind the `monitor-chart` feature) |
 | `monitors:write` | create_monitor, update_monitor |
 | `pages:read` | list_status_pages, list_page_components |
 | `pages:write` | create_status_page, update_status_page, add_page_component, update_page_component, create_component_group, update_component_group |

@@ -28,6 +28,7 @@ import {
   renderToolResult,
   summarizeToolOutput,
   toolBeforeIdField,
+  toolOpensByDefault,
 } from "./tool-renderers";
 
 // SDK tool-part state machine: input-streaming/-available → in-flight;
@@ -240,7 +241,9 @@ function ToolDisclosure({
   const summary =
     summarizeToolOutput(toolName, part.output) ??
     (state === "output-denied" ? "Cancelled" : undefined);
-  const [open, setOpen] = useState(false);
+  // undefined until the user toggles: a default-open result expands once it has something to show
+  const [toggled, setOpen] = useState<boolean>();
+  const open = toggled ?? (rich !== undefined && toolOpensByDefault(toolName));
   // Gate the height animation behind a post-mount flag so a tool that mounts
   // already-open doesn't play the open animation on first paint.
   const [mounted, setMounted] = useState(false);
@@ -264,7 +267,7 @@ function ToolDisclosure({
             if (e.target !== e.currentTarget) return;
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              setOpen((o) => !o);
+              setOpen(!open);
             }
           }}
           className="flex w-full cursor-pointer items-center gap-2 rounded-xl p-3 text-left text-sm"

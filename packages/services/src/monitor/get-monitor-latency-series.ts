@@ -11,11 +11,12 @@ export type MonitorLatencyPoint = {
   region: string;
   /** Bucket start, epoch milliseconds. */
   timestamp: number;
-  p50: number;
-  p75: number;
-  p90: number;
-  p95: number;
-  p99: number;
+  // null when the bucket recorded no latency, e.g. every check failed
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+  p95: number | null;
+  p99: number | null;
 };
 
 export type GetMonitorLatencySeriesResult = {
@@ -61,6 +62,10 @@ const MAX_INTERVAL: Record<MonitorTimeRange, number> = {
   "7d": 1440,
   "14d": 1440,
 };
+
+function roundOrNull(value: number | null): number | null {
+  return value === null ? null : Math.round(value);
+}
 
 function resolveInterval(timeRange: MonitorTimeRange, interval?: number) {
   if (interval === undefined) return DEFAULT_INTERVAL[timeRange];
@@ -162,11 +167,11 @@ export async function getMonitorLatencySeries(args: {
     .map((row) => ({
       region: row.region,
       timestamp: row.timestamp,
-      p50: Math.round(row.p50Latency ?? 0),
-      p75: Math.round(row.p75Latency ?? 0),
-      p90: Math.round(row.p90Latency ?? 0),
-      p95: Math.round(row.p95Latency ?? 0),
-      p99: Math.round(row.p99Latency ?? 0),
+      p50: roundOrNull(row.p50Latency),
+      p75: roundOrNull(row.p75Latency),
+      p90: roundOrNull(row.p90Latency),
+      p95: roundOrNull(row.p95Latency),
+      p99: roundOrNull(row.p99Latency),
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 

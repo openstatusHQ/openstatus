@@ -5,8 +5,7 @@ import { type Feature, isFeatureEnabled, requireFeature } from "../features";
 import type { Workspace } from "../types";
 
 const none = new Set<string>();
-// No feature is registered right now; cast a placeholder to exercise the logic.
-const feature = "test-feature" as Feature;
+const feature: Feature = "monitor-chart";
 
 describe("isFeatureEnabled", () => {
   test("workspace off the allowlist", () => {

@@ -51,6 +51,10 @@ import {
   deleteMaintenanceUpdateChanges,
   updateMaintenanceUpdateChanges,
 } from "./maintenance-update";
+import {
+  MonitorChartResult,
+  renderMonitorChartSummary,
+} from "./render-monitor-chart";
 import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
 import { searchContentTable } from "./search-content";
@@ -90,6 +94,8 @@ export type ToolRenderer<N extends AgentToolName> = {
     output: AgentToolOutput<N>;
   }) => ReactNode;
   summary?: (output: AgentToolOutput<N>) => string | undefined;
+  /** Show the result expanded as soon as it arrives; for results meant to be looked at. */
+  defaultOpen?: boolean;
 };
 
 /**
@@ -424,6 +430,11 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) =>
       `${o.totalSuccessful + o.totalDegraded + o.totalFailed} checks · p95 ${o.p95}ms`,
   },
+  render_monitor_chart: {
+    renderResult: ({ output }) => <MonitorChartResult output={output} />,
+    summary: renderMonitorChartSummary,
+    defaultOpen: true,
+  },
   get_response_log: {
     renderResult: ({ input, output }) => (
       <DetailsTable {...getResponseLogDetails(input, output)} />
@@ -500,6 +511,10 @@ export function renderToolDraft(
   before?: ApprovalBefore,
 ): ChangeRow[] | undefined {
   return findRenderer(toolName)?.renderDraft?.(input as never, before);
+}
+
+export function toolOpensByDefault(toolName: string): boolean {
+  return toolRenderers[toolName as AgentToolName]?.defaultOpen ?? false;
 }
 
 export function toolBeforeIdField(toolName: string): string | undefined {
