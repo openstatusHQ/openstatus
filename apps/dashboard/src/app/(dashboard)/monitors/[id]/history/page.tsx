@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
 import { reportRange } from "@/data/monitor-report.client";
+import { historyPeriodMonths } from "@/data/uptime-history.client";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";
@@ -20,14 +21,12 @@ export default async function Page({
   const queryClient = getQueryClient();
 
   // NOTE: store in cache to avoid flicker on clients first render
-  await searchParamsCache.parse(searchParams);
+  const { period } = await searchParamsCache.parse(searchParams);
   const workspace = await queryClient.fetchQuery(
     trpc.workspace.get.queryOptions(),
   );
-  const range = reportRange(
-    new Date(),
-    workspace.limits["uptime-history"] || 12,
-  );
+  const limit = workspace.limits["uptime-history"];
+  const range = reportRange(new Date(), historyPeriodMonths(period, limit));
   await Promise.all([
     queryClient.prefetchQuery(
       trpc.monitorIncident.report.queryOptions({ monitorId, ...range }),

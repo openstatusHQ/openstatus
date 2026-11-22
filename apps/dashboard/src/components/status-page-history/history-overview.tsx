@@ -30,7 +30,11 @@ import {
   EventGroupHint,
   EventGroupTitle,
 } from "@/components/content/event-group";
-import { EventList, EventRow } from "@/components/content/event-list";
+import {
+  EventList,
+  EventListMore,
+  EventRow,
+} from "@/components/content/event-list";
 import {
   MetricStrip,
   MetricStripAside,
@@ -54,6 +58,7 @@ import {
   pageMonthUptime,
 } from "@/data/status-page-history";
 import type { UptimeMode } from "@/data/uptime-calculation.client";
+import { usePaged } from "@/hooks/use-paged";
 import {
   formatDurationShort,
   formatNumber,
@@ -168,6 +173,34 @@ function toMarkers(
             },
     );
   });
+}
+
+// keyed by month so paging restarts when the month changes
+function MonthEventList({
+  items,
+  mode,
+  timeZone,
+}: {
+  items: HistoryItem[];
+  mode: UptimeMode;
+  timeZone: string;
+}) {
+  const paged = usePaged(items);
+  return (
+    <EventList>
+      {paged.visible.map((item) => (
+        <HistoryItemRow
+          key={historyItemKey(item)}
+          item={item}
+          mode={mode}
+          timeZone={timeZone}
+        />
+      ))}
+      {paged.hasMore ? (
+        <EventListMore onClick={paged.showMore}>Show older</EventListMore>
+      ) : null}
+    </EventList>
+  );
 }
 
 export function HistoryOverview({
@@ -347,16 +380,12 @@ export function HistoryOverview({
             {index === 0 ? " · in progress" : ""}
           </EventGroupHint>
         </EventGroupHeader>
-        <EventList>
-          {monthItems.map((item) => (
-            <HistoryItemRow
-              key={historyItemKey(item)}
-              item={item}
-              mode={mode}
-              timeZone={timeZone}
-            />
-          ))}
-        </EventList>
+        <MonthEventList
+          key={selected}
+          items={monthItems}
+          mode={mode}
+          timeZone={timeZone}
+        />
         <EventGroupEmpty>
           <EmptyStateMedia>
             <Calendar />
