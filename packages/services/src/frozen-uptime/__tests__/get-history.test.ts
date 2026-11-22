@@ -1176,6 +1176,49 @@ describe("getUptimeHistory runs view", () => {
     });
   });
 
+  test("a mode override counts another calculation and keeps the page's", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testMonitor, testPage } = await setup(tx, {}, "duration");
+      const id = String(testMonitor.id);
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id, mode: "requests" },
+        pipes: makePipes([
+          { monitorId: id, day: today, ok: 500, degraded: 0, error: 100 },
+        ]),
+        runsPipes: makeRunsPipes(),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.mode).toBe("requests");
+      expect(res.configuredMode).toBe("duration");
+      expect(res.rows[0].unit).toBe("requests");
+      expect(res.rows[0].months[key(0)]?.percentage).toBe(83.333);
+    });
+  });
+
+  test("without an override, mode is the page's configuration", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const { testPage } = await setup(tx, {}, "duration");
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
+        now,
+        sleep: noSleep,
+      });
+
+      expect(res.mode).toBe("duration");
+      expect(res.configuredMode).toBe("duration");
+    });
+  });
+
   test("duration mode does not read runs", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };

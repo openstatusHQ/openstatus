@@ -2,12 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   type HistoryEvent,
+  type HistoryRow,
+  downtimeMinutes,
+  historyItems,
+  monthMinutes,
+  pageMonthUptime,
   eventsForMonth,
   historyMetric,
-  historyBreakdown,
   historyRows,
   monthKeyToFullLabel,
-  monthKeyToLabel,
 } from "./status-page-history";
 
 describe("eventsForMonth", () => {
@@ -52,74 +55,8 @@ describe("eventsForMonth", () => {
 });
 
 describe("month labels", () => {
-  it("formats short and full labels", () => {
-    expect(monthKeyToLabel("2025-10")).toBe("Oct 25");
+  it("formats the full label", () => {
     expect(monthKeyToFullLabel("2025-10")).toBe("October 2025");
-  });
-});
-
-describe("historyBreakdown", () => {
-  const DAY = 86_400_000;
-
-  it("lists success, degraded and error with the total in the unit", () => {
-    expect(
-      historyBreakdown(
-        { percentage: 99.975, ok: 73_450, degraded: 18, error: 18 },
-        "requests",
-      ),
-    ).toEqual({
-      rows: [
-        { key: "ok", label: "Success", value: "73,450" },
-        { key: "degraded", label: "Degraded", value: "18" },
-        { key: "error", label: "Error", value: "18" },
-      ],
-      total: { value: "73,486", unit: "requests" },
-    });
-  });
-
-  it("keeps zero rows", () => {
-    const { rows, total } = historyBreakdown(
-      { percentage: 100, ok: 8640, degraded: 0, error: 0 },
-      "runs",
-    );
-    expect(rows.map((row) => row.value)).toEqual(["8,640", "0", "0"]);
-    expect(total).toEqual({ value: "8,640", unit: "runs" });
-  });
-
-  it("uses the singular for a single run or request", () => {
-    const one = { percentage: 0, ok: 0, degraded: 0, error: 1 };
-    expect(historyBreakdown(one, "runs").total).toEqual({
-      value: "1",
-      unit: "run",
-    });
-    expect(historyBreakdown(one, "requests").total).toEqual({
-      value: "1",
-      unit: "request",
-    });
-  });
-
-  it("formats time as success and error durations of the covered span", () => {
-    const down = (2 * 60 + 32) * 60_000;
-    expect(
-      historyBreakdown(
-        { percentage: 99.648, ok: 30 * DAY - down, degraded: 0, error: down },
-        "time",
-      ),
-    ).toEqual({
-      rows: [
-        { key: "ok", label: "Success", value: "29d 21h" },
-        { key: "error", label: "Error", value: "2h 32m" },
-      ],
-      total: { value: "30d", unit: null },
-    });
-  });
-
-  it("shows a zero error duration", () => {
-    const { rows } = historyBreakdown(
-      { percentage: 100, ok: 7.5 * DAY, degraded: 0, error: 0 },
-      "time",
-    );
-    expect(rows[1]).toEqual({ key: "error", label: "Error", value: "0s" });
   });
 });
 
@@ -181,5 +118,92 @@ describe("historyMetric", () => {
   it("keeps the metric the URL asks for", () => {
     expect(historyMetric("requests", "runs")).toBe("requests");
     expect(historyMetric("runs", "requests")).toBe("runs");
+  });
+});
+
+describe("pageMonthUptime", () => {
+  const v = (percentage: number) => ({
+    percentage,
+    ok: 1,
+    degraded: 0,
+    error: 0,
+  });
+
+  it("averages the rows that have a value", () => {
+    const rows = [
+      { months: { "2026-10": v(99) } },
+      { months: { "2026-10": v(100) } },
+      { months: { "2026-10": null } },
+    ];
+    expect(pageMonthUptime(rows, "2026-10")).toBe(99.5);
+  });
+
+  it("is null when no row has a value", () => {
+    expect(pageMonthUptime([{ months: {} }], "2026-10")).toBeNull();
+  });
+});
+
+describe("monthMinutes / downtimeMinutes", () => {
+  it("counts a whole past month in the page's zone", () => {
+    const now = new Date("2026-12-15T00:00:00Z");
+    expect(monthMinutes("2026-11", "UTC", now)).toBe(30 * 1440);
+    // a UTC+1 month starts and ends an hour earlier, same length
+    expect(monthMinutes("2026-11", "Europe/Berlin", now)).toBe(30 * 1440);
+  });
+
+  it("counts the current month only up to now", () => {
+    const now = new Date("2026-11-02T00:00:00Z");
+    expect(monthMinutes("2026-11", "UTC", now)).toBe(1440);
+  });
+
+  it("turns the missing share into minutes", () => {
+    const now = new Date("2026-12-15T00:00:00Z");
+    expect(downtimeMinutes(99.9, "2026-11", "UTC", now)).toBeCloseTo(43.2);
+    expect(downtimeMinutes(null, "2026-11", "UTC", now)).toBeNull();
+  });
+});
+
+describe("historyItems", () => {
+  const from = new Date("2026-11-03T09:00:00Z");
+  const to = new Date("2026-11-03T10:00:00Z");
+  const row = (id: number, name: string): HistoryRow => ({
+    component: { id, name, type: "monitor", monitorId: id },
+    unit: "requests",
+    months: {},
+    total: null,
+    events: [
+      { id: 7, name: "Latency", type: "report", status: "degraded", from, to },
+    ],
+    maintenanceWindows: [{ id: 3, title: "Upgrade", mode: "pause", from, to }],
+    excusedOutages: [{ id: id * 10, reason: "DNS", from, to }],
+  });
+
+  it("merges a shared report or window and lists its components", () => {
+    const items = historyItems([row(1, "API"), row(2, "Dashboard")]);
+    const report = items.find((i) => i.kind === "event");
+    const window = items.find((i) => i.kind === "window");
+    expect(report?.components).toEqual(["API", "Dashboard"]);
+    expect(window?.components).toEqual(["API", "Dashboard"]);
+  });
+
+  it("keeps one excused outage per monitor", () => {
+    const items = historyItems([row(1, "API"), row(2, "Dashboard")]);
+    expect(items.filter((i) => i.kind === "excused")).toHaveLength(2);
+  });
+
+  it("sorts newest first", () => {
+    const later = { ...row(1, "API") };
+    later.events = [
+      ...later.events,
+      {
+        id: 8,
+        name: "Outage",
+        type: "incident",
+        status: "error",
+        from: to,
+        to: null,
+      },
+    ];
+    expect(historyItems([later])[0].from).toEqual(to);
   });
 });

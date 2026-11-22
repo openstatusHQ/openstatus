@@ -5,7 +5,13 @@ import {
 
 import { impactConfig } from "@/data/status-report-updates.client";
 
-export type UptimeMode = "requests" | "runs" | "duration" | "manual";
+export const UPTIME_MODE_VALUES = [
+  "requests",
+  "runs",
+  "duration",
+  "manual",
+] as const;
+export type UptimeMode = (typeof UPTIME_MODE_VALUES)[number];
 
 export const UPTIME_DOCS_URL =
   "https://www.openstatus.dev/docs/concept/uptime-calculation-and-values";
@@ -133,6 +139,14 @@ export const IMPACT_WEIGHTS = [
     hint: "Counts fully for static components and on Reports only pages. Ignored for monitors under Time per status, where their outages decide.",
   },
 ];
+
+/** How an excused outage counts, short enough for an event row. */
+export const EXCUSE_EFFECT_SHORT: Record<UptimeMode, string> = {
+  requests: "still counts",
+  runs: "still counts",
+  duration: "counts as up",
+  manual: "not counted",
+};
 
 export const EXCUSE_EFFECT: Record<UptimeMode, string> = {
   requests:

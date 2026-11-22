@@ -2,9 +2,7 @@
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -20,6 +18,7 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
+  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -29,10 +28,8 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
-  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { getColumns } from "@/components/data-table/status-page-history/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   FormCard,
@@ -45,28 +42,17 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import {
-  MetricStrip,
-  MetricStripAside,
-  MetricStripItem,
-  MetricStripLabel,
-  MetricStripRow,
-  MetricStripValue,
-} from "@/components/metric/metric-strip";
-import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
+import { CalculationSelect } from "@/components/status-page-history/calculation-select";
+import { HistoryOverview } from "@/components/status-page-history/history-overview";
 import {
   UptimeCalculation,
   UptimeModeTiles,
 } from "@/components/status-pages/uptime-calculation";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { historyMetric, historyRows } from "@/data/status-page-history";
 import {
   UPTIME_DOCS_URL,
   UPTIME_MODES,
 } from "@/data/uptime-calculation.client";
-import { truncatePercentage } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { buildExampleHistory } from "./examples";
@@ -75,7 +61,7 @@ import { searchParamsParsers } from "./search-params";
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [{ metric: metricParam }, setSearchParams] =
+  const [{ calculation }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -86,8 +72,13 @@ export function Client() {
   const isLimited = workspace?.limits["uptime-history"] === false;
 
   const { data: liveHistory } = useQuery({
-    ...trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+    ...trpc.page.getUptimeHistory.queryOptions({
+      id: Number.parseInt(id),
+      mode: calculation ?? undefined,
+    }),
     enabled: !!workspace && !isLimited,
+    // switching the calculation keeps the last numbers until the new ones land
+    placeholderData: keepPreviousData,
   });
 
   const exampleHistory = useMemo(
@@ -95,60 +86,82 @@ export function Client() {
     [isLimited],
   );
   const history = isLimited ? exampleHistory : liveHistory;
-  const metric = historyMetric(metricParam, history?.mode ?? "requests");
+  const metric = historyMetric(null, history?.mode ?? "requests");
   const rows = useMemo(
     () => historyRows(history?.rows ?? [], metric),
     [history?.rows, metric],
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        history?.months ?? [],
-        history?.timeZone,
-        history?.utcOnlyMonths,
-      ),
-    [history?.months, history?.timeZone, history?.utcOnlyMonths],
-  );
-
   if (!history) return null;
 
-  const uptimeMode =
-    UPTIME_MODES.find((m) => m.value === history.mode) ?? UPTIME_MODES[0];
+  const configured =
+    UPTIME_MODES.find((m) => m.value === history.configuredMode) ??
+    UPTIME_MODES[0];
+  const current =
+    UPTIME_MODES.find((m) => m.value === history.mode) ?? configured;
+  const isPreview = current.value !== configured.value;
   const configurationHref = `/status-pages/${id}/components#components-configuration`;
-  const { summary } = history;
-  const countsRequests = history.mode === "requests" || history.mode === "runs";
-  const showMetric = !isLimited && countsRequests;
-  const showRuns = showMetric && metric === "runs";
-  const uptime = showRuns ? summary.runsUptime : summary.uptime;
+  const countsRequests =
+    current.value === "requests" || current.value === "runs";
+  const showRuns = metric === "runs";
+  const uptime = showRuns ? history.summary.runsUptime : history.summary.uptime;
   const partial = showRuns ? history.runsPartial : history.partial;
-  // rows without a value are left out of the page average
-  const averaged = rows.filter((row) => row.total !== null).length;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
+  );
+
+  const overview = (
+    <HistoryOverview
+      // a new calculation starts again from the latest month
+      key={current.value}
+      rows={rows}
+      months={history.months}
+      timeZone={history.timeZone}
+      utcOnlyMonths={history.utcOnlyMonths}
+      uptime={uptime}
+      mode={current.value}
+      isPreview={isPreview}
+    />
   );
 
   return (
     <SectionGroup>
       <Section id="history">
-        <SectionHeaderRow>
-          <SectionHeader>
-            <SectionTitle>{page?.title}</SectionTitle>
-            <SectionDescription>
-              {isLimited
-                ? "Example data. Upgrade to see your page's long-term uptime."
-                : `Long-term uptime, built from your page's components. Months and days in ${history.timeZone}.`}
-            </SectionDescription>
-          </SectionHeader>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {showMetric ? (
-              <UptimeMetricTabs
-                value={metric}
-                onValueChange={(m) => setSearchParams({ metric: m })}
-              />
-            ) : null}
+        <SectionHeader>
+          <SectionTitle>{page?.title}</SectionTitle>
+          <SectionDescription>
+            {isLimited
+              ? "Example data. Upgrade to see your page's long-term uptime."
+              : `Downtime per month, built from your page's components. Months and days in ${history.timeZone}.`}
+          </SectionDescription>
+        </SectionHeader>
+        {!isLimited ? (
+          <div>
+            {isPreview ? "Previewing" : "Uptime counted by"}{" "}
+            <CalculationSelect
+              value={current.value}
+              configured={configured.value}
+              configurationHref={configurationHref}
+              onValueChange={(mode) => setSearchParams({ calculation: mode })}
+            />{" "}
+            {isPreview ? (
+              <>
+                <span className="text-muted-foreground">
+                  Visitors see {configured.label}.
+                </span>{" "}
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-[length:inherit]"
+                  onClick={() => setSearchParams({ calculation: null })}
+                >
+                  Back to public
+                </Button>
+              </>
+            ) : (
+              "like your public page."
+            )}
           </div>
-        </SectionHeaderRow>
+        ) : null}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_reports_global_status_pages">
             <Info />
@@ -186,47 +199,11 @@ export function Client() {
           </Note>
         ) : null}
       </Section>
-      <Section id="history-metrics">
-        <MetricStrip
-          aria-hidden={isLimited}
-          className={cn(isLimited && "pointer-events-none select-none")}
-        >
-          <MetricStripRow>
-            <MetricStripItem status="success">
-              <MetricStripLabel>Page uptime</MetricStripLabel>
-              <MetricStripValue>
-                {uptime === null ? "—" : `${truncatePercentage(uptime)}%`}
-                {averaged > 0 && averaged < rows.length ? (
-                  <MetricStripAside>
-                    {averaged} of {rows.length} components
-                  </MetricStripAside>
-                ) : null}
-              </MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Reports</MetricStripLabel>
-              <MetricStripValue>{summary.reports}</MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Components</MetricStripLabel>
-              <MetricStripValue>{rows.length}</MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Created at</MetricStripLabel>
-              <MetricStripValue>
-                {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
-              </MetricStripValue>
-            </MetricStripItem>
-          </MetricStripRow>
-        </MetricStrip>
+      <Section id="history-overview">
         {isLimited ? (
           <BillingOverlayContainer>
-            <div className="overflow-x-auto">
-              <DataTable
-                paginationComponent={DataTablePaginationSimple}
-                columns={columns}
-                data={rows}
-              />
+            <div aria-hidden className="pointer-events-none select-none">
+              {overview}
             </div>
             <BillingOverlay>
               <BillingOverlayButton
@@ -247,27 +224,19 @@ export function Client() {
               limit="uptime-history"
             />
           </BillingOverlayContainer>
+        ) : hasAnyData ? (
+          overview
         ) : (
-          <div className="overflow-x-auto">
-            <DataTable
-              paginationComponent={DataTablePaginationSimple}
-              columns={columns}
-              // rows without a single value are not history yet
-              data={hasAnyData ? rows : []}
-              emptyState={
-                <DataTableEmpty>
-                  <EmptyStateMedia>
-                    <Calendar />
-                  </EmptyStateMedia>
-                  <EmptyStateTitle>No history yet</EmptyStateTitle>
-                  <EmptyStateDescription>
-                    Each month is frozen early in the following month. Until
-                    then, it is served live.
-                  </EmptyStateDescription>
-                </DataTableEmpty>
-              }
-            />
-          </div>
+          <EmptyStateContainer>
+            <EmptyStateMedia>
+              <Calendar />
+            </EmptyStateMedia>
+            <EmptyStateTitle>No history yet</EmptyStateTitle>
+            <EmptyStateDescription>
+              Each month is frozen early in the following month. Until then, it
+              is served live.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
         )}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_status_page_history_missing_months">
@@ -286,19 +255,20 @@ export function Client() {
             <FormCardDescription>
               This page counts{" "}
               <span className="text-foreground font-medium">
-                {uptimeMode.label}
+                {configured.label}
               </span>
-              . It applies to every month here and to your public status page.{" "}
+              . It applies to your public status page; the calculation above
+              only changes what you see here.{" "}
               <Link href={UPTIME_DOCS_URL}>Learn more</Link>
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
           <FormCardContent>
-            <UptimeModeTiles mode={uptimeMode.value} />
+            <UptimeModeTiles mode={configured.value} />
           </FormCardContent>
           <FormCardSeparator />
           <FormCardContent>
-            <UptimeCalculation mode={uptimeMode.value} />
+            <UptimeCalculation mode={configured.value} />
           </FormCardContent>
           <FormCardFooter className="flex-wrap">
             <FormCardFooterInfo>

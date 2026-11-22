@@ -38,5 +38,6 @@ export {
   AttachFrozenBadRangesInput,
   BackfillFrozenBucketsInput,
   FreezeMonitorMonthInput,
+  GetUptimeHistoryInput,
   RefreezeMonitorMonthsInput,
 } from "./schemas";

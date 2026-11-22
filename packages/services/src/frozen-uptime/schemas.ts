@@ -2,6 +2,7 @@ import {
   type FrozenMonitorUptimeDay,
   frozenMonitorUptimeMonthSchema,
   insertFrozenMonitorUptimeSchema,
+  pageCardValues,
 } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
@@ -41,6 +42,8 @@ export type AttachFrozenBadRangesInput = z.infer<
 
 export const GetUptimeHistoryInput = z.object({
   pageId: z.number().int().positive(),
+  /** Count under another calculation; omitted, the page's own configuration. */
+  mode: z.enum(pageCardValues).optional(),
 });
 export type GetUptimeHistoryInput = z.infer<typeof GetUptimeHistoryInput>;
 

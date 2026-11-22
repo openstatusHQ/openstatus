@@ -104,6 +104,7 @@ export function buildExampleHistory(now = new Date()): UptimeHistory {
 
   return {
     mode: "requests",
+    configuredMode: "requests",
     timeZone: "UTC",
     months,
     utcOnlyMonths: [],

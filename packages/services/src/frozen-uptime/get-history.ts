@@ -102,6 +102,8 @@ type UptimeHistoryRow = HistoryValues & {
 
 type UptimeHistoryResult = {
   mode: "requests" | "runs" | "duration" | "manual";
+  /** what the public status page counts; differs from `mode` on an override */
+  configuredMode: "requests" | "runs" | "duration" | "manual";
   /** the page's zone that months and days are grouped in */
   timeZone: string;
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
@@ -306,7 +308,10 @@ export async function getUptimeHistory(args: {
   const configuration = pageConfigurationSchema.safeParse(
     _page.configuration ?? {},
   );
-  const mode = configuration.success ? configuration.data.value : "requests";
+  const configuredMode = configuration.success
+    ? configuration.data.value
+    : "requests";
+  const mode = input.mode ?? configuredMode;
   // both count checks; each row carries requests and runs, the client picks
   const countsRequests = mode === "requests" || mode === "runs";
 
@@ -553,6 +558,7 @@ export async function getUptimeHistory(args: {
 
   return {
     mode,
+    configuredMode,
     timeZone,
     months,
     utcOnlyMonths: months.filter((m) => utcOnlyMonths.has(m)),
