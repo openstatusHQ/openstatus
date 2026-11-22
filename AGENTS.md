@@ -75,6 +75,13 @@ boundaries with external SDKs or at registry-style dispatch. When you need one:
   check whether it still holds.
 - A scattered `as never` is usually a missing helper.
 
+## Prototyping
+
+`/prototype` runs as an Artifact, never in the codebase: build its picker
+harness as one self-contained HTML page (the skill's standalone branch) styled
+with our tokens, and publish it with the Artifact tool. No `/prototypes` route,
+no files in `apps/` or `packages/`. Promote a variant into code only when asked.
+
 ## Package context
 
 - `DESIGN.md` — what good UI looks like: hierarchy, compound kits, tokens, motion, a11y
