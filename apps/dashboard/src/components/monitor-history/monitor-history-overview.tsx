@@ -27,7 +27,7 @@ import {
   EventGroupHint,
   EventGroupTitle,
 } from "@/components/content/event-group";
-import { EventList } from "@/components/content/event-list";
+import { EventList, EventListMore } from "@/components/content/event-list";
 import {
   MetricStrip,
   MetricStripAside,
@@ -60,6 +60,7 @@ import {
   monthKeyToFullLabel,
 } from "@/data/status-page-history";
 import type { CheckCounts } from "@/data/uptime-history.client";
+import { usePaged } from "@/hooks/use-paged";
 import { formatDurationShort, formatNumber } from "@/lib/formatter";
 
 const formatDowntime = (ms: number) => (ms > 0 ? formatDurationShort(ms) : "—");
@@ -114,6 +115,25 @@ function DayCard({
         </div>
       ))}
     </dl>
+  );
+}
+
+// keyed by month so paging restarts when the month changes
+function MonthOutageList({
+  incidents,
+}: {
+  incidents: MonitorHistoryIncident[];
+}) {
+  const paged = usePaged(incidents);
+  return (
+    <EventList>
+      {paged.visible.map((incident) => (
+        <MonitorIncidentRow key={incident.id} incident={incident} />
+      ))}
+      {paged.hasMore ? (
+        <EventListMore onClick={paged.showMore}>Show older</EventListMore>
+      ) : null}
+    </EventList>
   );
 }
 
@@ -344,11 +364,10 @@ export function MonitorHistoryOverview({
               </EventGroupTitle>
               {hint ? <EventGroupHint>{hint}</EventGroupHint> : null}
             </EventGroupHeader>
-            <EventList>
-              {selected.incidents.map((incident) => (
-                <MonitorIncidentRow key={incident.id} incident={incident} />
-              ))}
-            </EventList>
+            <MonthOutageList
+              key={selected.key}
+              incidents={selected.incidents}
+            />
             <EventGroupEmpty>
               <EmptyStateMedia>
                 <Calendar />
