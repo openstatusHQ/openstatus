@@ -106,7 +106,7 @@ export function MonitorIncidentRow({
         {excused ? (
           <ExcusedLabel incident={incident} />
         ) : (
-          <span>{kind ? "Downtime" : incidentStatusConfig[status].label}</span>
+          <span>{kind ? "Outage" : incidentStatusConfig[status].label}</span>
         )}
       </EventRowStatus>
       <EventRowContent>

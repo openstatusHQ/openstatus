@@ -96,7 +96,7 @@ export function DialogConfirmIncident({
           <AlertDialogTitle>Confirm your action</AlertDialogTitle>
           <AlertDialogDescription>
             You are about to <span className="font-semibold">{type}</span> this
-            downtime.
+            outage.
             {type === "unexcuse"
               ? " It counts as downtime again and shows on your status pages."
               : null}

@@ -42,7 +42,7 @@ export function DialogExcuseIncident({
         queryClient.invalidateQueries({
           queryKey: trpc.monitorIncident.pathKey(),
         });
-        toast.success("Downtime excused");
+        toast.success("Outage excused");
         setReason("");
         onOpenChange(false);
       },
@@ -64,9 +64,9 @@ export function DialogExcuseIncident({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Excuse downtime</DialogTitle>
+          <DialogTitle>Excuse outage</DialogTitle>
           <DialogDescription>
-            An excused downtime counts as up in availability and time-based
+            An excused outage counts as up in availability and time-based
             uptime, and is hidden from your status pages. Its failed checks
             still count in request and run figures. It stays listed here with
             its reason.

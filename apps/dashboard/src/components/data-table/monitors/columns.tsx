@@ -168,16 +168,12 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "lastIncident",
-    header: "Last Downtime",
+    header: "Last Outage",
     accessorFn: (row) => row.incidents?.[0]?.createdAt,
     cell: ({ row }) => {
       const value = row.getValue("lastIncident");
       return (
-        <TableCellDate
-          value={value}
-          formatStr="LLL dd, y"
-          empty="No downtime"
-        />
+        <TableCellDate value={value} formatStr="LLL dd, y" empty="No outages" />
       );
     },
     enableHiding: false,
