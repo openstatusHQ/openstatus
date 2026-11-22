@@ -12,6 +12,7 @@ on:
     paths:
       - "apps/checker/**"
       - "apps/private-location/**"
+      - ".github/workflows/go-tests.yml"
 
 jobs:
   ci:
