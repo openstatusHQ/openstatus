@@ -1,4 +1,4 @@
-import { db, eq, sql } from "@openstatus/db";
+import { db, eq, is, SQLiteTransaction, sql } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import type { AdapterUser } from "next-auth/adapters";
 import * as randomWordSlugs from "random-word-slugs";
@@ -36,52 +36,62 @@ export async function getUserByEmail(email: string) {
   return legacy[0] ?? null;
 }
 
-export async function createUser(data: AdapterUser) {
-  const newUser = await db
-    .insert(user)
-    .values({
-      email: normalizeEmail(data.email),
-      photoUrl: data.image,
-      name: data.name,
-      firstName: data.firstName,
-      lastName: data.lastName,
-    })
-    .returning()
-    .get();
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-  let slug: string | undefined = undefined;
-
-  while (!slug) {
-    slug = randomWordSlugs.generateSlug(2);
-    const slugAlreadyExists = await db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.slug, slug))
+export async function createUser(data: AdapterUser, client: DbClient = db) {
+  const run = async (tx: DbClient) => {
+    const newUser = await tx
+      .insert(user)
+      .values({
+        email: normalizeEmail(data.email),
+        photoUrl: data.image,
+        name: data.name,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      })
+      .returning()
       .get();
 
-    if (slugAlreadyExists) {
-      console.warn(`slug already exists: '${slug} - recreating new one'`);
-      slug = undefined;
+    let slug: string | undefined = undefined;
+
+    while (!slug) {
+      slug = randomWordSlugs.generateSlug(2);
+      const slugAlreadyExists = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, slug))
+        .get();
+
+      if (slugAlreadyExists) {
+        console.warn(`slug already exists: '${slug} - recreating new one'`);
+        slug = undefined;
+      }
     }
+
+    const newWorkspace = await tx
+      .insert(workspace)
+      .values({ slug, name: "" })
+      .returning({ id: workspace.id })
+      .get();
+
+    await tx
+      .insert(usersToWorkspaces)
+      .values({
+        userId: newUser.id,
+        workspaceId: newWorkspace.id,
+        role: "owner",
+      })
+      .returning()
+      .get();
+
+    return newUser;
+  };
+
+  if (is(client, SQLiteTransaction)) {
+    return await run(client);
   }
 
-  const newWorkspace = await db
-    .insert(workspace)
-    .values({ slug, name: "" })
-    .returning({ id: workspace.id })
-    .get();
-
-  await db
-    .insert(usersToWorkspaces)
-    .values({
-      userId: newUser.id,
-      workspaceId: newWorkspace.id,
-      role: "owner",
-    })
-    .returning()
-    .get();
-
-  return newUser;
+  return await client.transaction(run);
 }
 
 export async function getUser(id: string) {
