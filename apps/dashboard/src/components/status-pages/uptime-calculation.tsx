@@ -1,119 +1,199 @@
+"use client";
+
 import { impactUptimeWeight } from "@openstatus/db/src/schema/page_components/constants";
-import { Check, Info } from "@openstatus/icons";
+import { Next } from "@openstatus/icons";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@openstatus/ui/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import type React from "react";
 
 import { Link } from "@/components/common/link";
-import { Note } from "@/components/common/note";
 import {
-  COMPONENT_RULES,
-  EXCUSE_EFFECT,
-  IMPACT_WEIGHTS,
+  UPTIME_COLUMNS,
   UPTIME_DOCS_URL,
+  UPTIME_MATRIX,
   UPTIME_MODES,
+  type UptimeCell,
   type UptimeMode,
+  type UptimeRow,
 } from "@/data/uptime-calculation.client";
 
 const pct = (weight: number) => `${Math.round(weight * 100)}%`;
 
-function Tile({ className, ...props }: React.ComponentProps<"li">) {
+const weightOf = (cell: UptimeCell) => (typeof cell === "number" ? cell : 0);
+
+function cellLabel(cell: UptimeCell, section: "monitors" | "reports") {
+  if (cell === null) return "—";
+  if (cell === "up") return "Up";
+  if (cell === "ignored") return "Not counted";
+  return section === "monitors" && cell === 1 ? "Down" : pct(cell);
+}
+
+function cellColor(cell: UptimeCell) {
+  if (cell === "up") return "text-success";
+  if (typeof cell !== "number" || cell === 0) return "text-muted-foreground";
+  return cell === 1 ? "text-destructive" : "text-warning";
+}
+
+function Cell({
+  cell,
+  before,
+  section,
+}: {
+  cell: UptimeCell;
+  before: UptimeCell;
+  section: "monitors" | "reports";
+}) {
+  const label = (
+    <span className={cn("font-mono", cellColor(cell))}>
+      {cellLabel(cell, section)}
+    </span>
+  );
+  // a change in wording alone (Up vs Not counted) does not move the number
+  if (cell === null || weightOf(cell) === weightOf(before)) return label;
   return (
-    <li
-      className={cn("flex flex-col gap-1 rounded-lg border p-3", className)}
-      {...props}
-    />
+    <span className="-mr-1.5 inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5">
+      <s className="text-muted-foreground font-mono">
+        {cellLabel(before, section)}
+      </s>
+      <Next aria-label="becomes" className="text-muted-foreground size-3" />
+      {label}
+    </span>
   );
 }
 
-export function UptimeModeTiles({ mode }: { mode: UptimeMode }) {
+function MatrixTable({
+  title,
+  section,
+  rows,
+  before,
+}: {
+  title: string;
+  section: "monitors" | "reports";
+  rows: UptimeRow[];
+  before: UptimeRow[];
+}) {
   return (
-    <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-      {UPTIME_MODES.map((m) => {
-        const active = m.value === mode;
-        return (
-          <Tile
-            key={m.value}
-            aria-current={active ? "true" : undefined}
-            className={cn(
-              "text-sm",
-              active ? "border-foreground bg-muted/50" : "border-dashed",
-            )}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span
-                className={cn(
-                  "font-medium",
-                  active ? "text-foreground" : "text-muted-foreground",
-                )}
+    <div className="overflow-hidden rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="text-foreground">{title}</TableHead>
+            {UPTIME_COLUMNS.map((column) => (
+              <TableHead
+                key={column}
+                className="text-foreground text-right sm:w-48"
               >
-                {m.label}
-              </span>
-              {active ? (
-                <span className="text-foreground inline-flex items-center gap-1 font-mono text-xs">
-                  <Check className="size-3" />
-                  In use
-                </span>
-              ) : null}
-            </div>
-            <span className="text-muted-foreground">{m.meaning}</span>
-          </Tile>
-        );
-      })}
-    </ul>
+                {column}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row, i) => (
+            <TableRow key={row.key} className="hover:bg-transparent">
+              <TableCell className="whitespace-normal">
+                {row.label}
+                {row.hint ? (
+                  <span className="text-muted-foreground hidden sm:inline">
+                    {" · "}
+                    {row.hint}
+                  </span>
+                ) : null}
+              </TableCell>
+              {row.cells.map((cell, column) => (
+                <TableCell key={UPTIME_COLUMNS[column]} className="text-right">
+                  <Cell
+                    cell={cell}
+                    before={before[i].cells[column]}
+                    section={section}
+                  />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
-/** Per-component rules, impact weights and excusing under `mode`. */
+/**
+ * What counts against uptime under `mode`, per component kind. Cells that
+ * count differently than under `configured` show the change.
+ */
 export function UptimeCalculation({
   mode,
+  configured,
+  onModeChange,
+  children,
   className,
 }: {
   mode: UptimeMode;
+  configured: UptimeMode;
+  onModeChange: (mode: UptimeMode) => void;
+  /** shown under the tables, e.g. what switching would do to the page's uptime */
+  children?: React.ReactNode;
   className?: string;
 }) {
+  const current = UPTIME_MATRIX[mode];
+  const before = UPTIME_MATRIX[configured];
   return (
-    <div className={cn("grid gap-4 text-sm", className)}>
-      <dl className="grid gap-3 sm:grid-cols-[12rem_1fr] sm:gap-x-4">
-        {COMPONENT_RULES[mode].map((c) => (
-          <div key={c.label} className="contents">
-            <dt className="text-foreground font-medium">{c.label}</dt>
-            <dd className="text-muted-foreground -mt-2 sm:mt-0">{c.rule}</dd>
-          </div>
-        ))}
-      </dl>
-      <div className="grid gap-2">
-        <span className="text-foreground font-medium">
-          Status report impact
-        </span>
-        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {IMPACT_WEIGHTS.map((i) => (
-            <Tile key={i.label}>
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-foreground font-medium">{i.label}</span>
-                <span className="text-foreground font-mono tabular-nums">
-                  {pct(i.weight)}
+    <div className={cn("grid gap-3 text-sm", className)}>
+      <Tabs
+        value={mode}
+        onValueChange={(next) => {
+          const found = UPTIME_MODES.find((m) => m.value === next);
+          if (found) onModeChange(found.value);
+        }}
+        className="overflow-x-auto"
+      >
+        <TabsList>
+          {UPTIME_MODES.map((m) => (
+            <TabsTrigger key={m.value} value={m.value}>
+              {m.label}
+              {m.value === configured ? (
+                <span className="text-muted-foreground font-mono text-xs font-normal">
+                  In use
                 </span>
-              </div>
-              <span className="text-muted-foreground">{i.hint}</span>
-            </Tile>
+              ) : null}
+            </TabsTrigger>
           ))}
-        </ul>
-        <span className="text-muted-foreground">
-          The share of a report&apos;s time counted as downtime. Monitor outages
-          always count fully.
-        </span>
-      </div>
-      <Note size="sm" className="items-start">
-        <Info className="mt-0.5" />
-        <span>
-          Excuse a resolved outage with a reason in{" "}
-          <span className="font-medium">
-            Monitor &gt; Report &gt; outage menu &gt; Excuse
-          </span>
-          . It is hidden from the public page. {EXCUSE_EFFECT[mode]}{" "}
-          <Link href={`${UPTIME_DOCS_URL}#excused-outages`}>Learn more</Link>
-        </span>
-      </Note>
+        </TabsList>
+      </Tabs>
+      <p className="text-muted-foreground">
+        {UPTIME_MODES.find((m) => m.value === mode)?.meaning}
+      </p>
+      <MatrixTable
+        title="Monitor data"
+        section="monitors"
+        rows={current.monitors}
+        before={before.monitors}
+      />
+      <MatrixTable
+        title="Status reports"
+        section="reports"
+        rows={current.reports}
+        before={before.reports}
+      />
+      <p className="text-muted-foreground">
+        {mode === "manual"
+          ? "Heartbeat monitors are counted by time, and only status reports count against them."
+          : "Heartbeat monitors are counted by time: outages and reports both count against them, and an outage and a report over the same time count once."}
+        {current.notes.map((note) => ` ${note}`)} Excuse a resolved outage in{" "}
+        <Link href={`${UPTIME_DOCS_URL}#excused-outages`}>
+          Monitors &gt; Outages
+        </Link>
+        .
+      </p>
+      {children}
     </div>
   );
 }

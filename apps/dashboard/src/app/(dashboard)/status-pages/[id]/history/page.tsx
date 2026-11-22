@@ -19,14 +19,18 @@ export default async function Page({
   const queryClient = getQueryClient();
 
   // NOTE: store in cache to avoid flicker on clients first render
-  await searchParamsCache.parse(searchParams);
+  const { calculation, period } = await searchParamsCache.parse(searchParams);
   const workspace = await queryClient.fetchQuery(
     trpc.workspace.get.queryOptions(),
   );
   // plans without uptime history get a FORBIDDEN, which would land in Sentry
   if (workspace.limits["uptime-history"]) {
     await queryClient.prefetchQuery(
-      trpc.page.getUptimeHistory.queryOptions({ id: pageId }),
+      trpc.page.getUptimeHistory.queryOptions({
+        id: pageId,
+        mode: calculation ?? undefined,
+        months: period ?? undefined,
+      }),
     );
   }
 

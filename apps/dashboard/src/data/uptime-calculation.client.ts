@@ -5,7 +5,13 @@ import {
 
 import { impactConfig } from "@/data/status-report-updates.client";
 
-export type UptimeMode = "requests" | "runs" | "duration" | "manual";
+export const UPTIME_MODE_VALUES = [
+  "requests",
+  "runs",
+  "duration",
+  "manual",
+] as const;
+export type UptimeMode = (typeof UPTIME_MODE_VALUES)[number];
 
 export const UPTIME_DOCS_URL =
   "https://www.openstatus.dev/docs/concept/uptime-calculation-and-values";
@@ -62,82 +68,126 @@ export const UPTIME_MODES: {
   },
 ];
 
-const HEARTBEAT =
-  "Time since the day of the first ping, minus outages and impact-weighted status reports. Excused outages count as up.";
-const STATIC = "Time minus impact-weighted status reports.";
+/** Share counted as downtime; "up" and "ignored" are both 0, null is not applicable. */
+export type UptimeCell = number | "up" | "ignored" | null;
 
-export const COMPONENT_RULES: Record<
-  UptimeMode,
-  { label: string; rule: string }[]
-> = {
-  requests: [
-    {
-      label: "Monitor",
-      rule: "Successful and degraded checks out of all checks, private locations included. Excused outages still count.",
-    },
-    { label: "Heartbeat monitor", rule: HEARTBEAT },
-    { label: "Static", rule: STATIC },
-  ],
-  runs: [
-    {
-      label: "Monitor",
-      rule: "Successful and degraded runs out of all runs. Excused outages still count.",
-    },
-    {
-      label: "Private locations only",
-      rule: "Has no runs, so it is counted in requests.",
-    },
-    { label: "Heartbeat monitor", rule: HEARTBEAT },
-    { label: "Static", rule: STATIC },
-  ],
-  duration: [
-    {
-      label: "Monitor",
-      rule: "Time on days with checks, minus outages and impact-weighted status reports. Excused outages count as up.",
-    },
-    { label: "Heartbeat monitor", rule: HEARTBEAT },
-    { label: "Static", rule: STATIC },
-  ],
-  manual: [
-    {
-      label: "Monitor",
-      rule: "Time minus impact-weighted status reports. Months without checks show no data.",
-    },
-    {
-      label: "Heartbeat monitor",
-      rule: "Time since the day of the first ping, minus impact-weighted status reports.",
-    },
-    { label: "Static", rule: STATIC },
-  ],
+export const UPTIME_COLUMNS = ["Uptime", "Heartbeat", "Static"] as const;
+
+type Cells = [monitor: UptimeCell, heartbeat: UptimeCell, statik: UptimeCell];
+
+export type UptimeRow = {
+  key: string;
+  label: string;
+  hint?: string;
+  cells: Cells;
 };
 
-export const IMPACT_WEIGHTS = [
-  {
-    label: impactConfig.major_outage.label,
-    weight: impactUptimeWeight("major_outage"),
-    hint: "All of its time is downtime.",
-  },
-  {
-    label: impactConfig.partial_outage.label,
-    weight: impactUptimeWeight("partial_outage"),
-    hint: "Some users affected.",
-  },
-  {
-    label: impactConfig.degraded_performance.label,
-    weight: impactUptimeWeight("degraded_performance"),
-    hint: "Slow but available.",
-  },
-  {
-    label: "No impact set",
-    weight: LEGACY_IMPACT_WEIGHT,
-    hint: "Counts fully for static components and on Reports only pages. Ignored for monitors under Time per status, where their outages decide.",
-  },
-];
+const major = impactUptimeWeight("major_outage");
+const partial = impactUptimeWeight("partial_outage");
 
-export const EXCUSE_EFFECT: Record<UptimeMode, string> = {
-  requests:
-    "Its failed checks still count, so Number of requests does not change.",
-  runs: "Its failed checks still count, so Number of runs does not change.",
-  duration: "It then counts as up.",
-  manual: "Outages do not count under Reports only, so uptime does not change.",
+function monitorRows(
+  mode: UptimeMode,
+  failed: { label: string; hint: string },
+  degraded: string,
+): UptimeRow[] {
+  const reportsOnly = mode === "manual";
+  const perCheck = mode === "requests" || mode === "runs";
+  return [
+    {
+      key: "failed",
+      ...failed,
+      cells: reportsOnly ? ["ignored", "ignored", null] : [1, 1, null],
+    },
+    {
+      key: "degraded",
+      label: degraded,
+      hint: "slow",
+      cells: [reportsOnly ? "ignored" : "up", null, null],
+    },
+    {
+      key: "excused",
+      label: "Excused outage",
+      hint: "hidden from the public page",
+      cells: reportsOnly
+        ? ["ignored", "ignored", null]
+        : [perCheck ? 1 : "up", "up", null],
+    },
+  ];
+}
+
+function reportRows(mode: UptimeMode): UptimeRow[] {
+  const perCheck = mode === "requests" || mode === "runs";
+  const legacy = mode === "manual" ? LEGACY_IMPACT_WEIGHT : "ignored";
+  return [
+    {
+      key: "major_outage",
+      label: impactConfig.major_outage.label,
+      cells: [perCheck ? "ignored" : major, major, major],
+    },
+    {
+      key: "partial_outage",
+      label: impactConfig.partial_outage.label,
+      hint: "some users affected",
+      cells: [perCheck ? "ignored" : partial, partial, partial],
+    },
+    {
+      key: "degraded_performance",
+      label: impactConfig.degraded_performance.label,
+      hint: "slow but available",
+      cells: [perCheck ? "ignored" : "up", "up", "up"],
+    },
+    {
+      key: "legacy",
+      label: "No impact set",
+      cells: [legacy, legacy, LEGACY_IMPACT_WEIGHT],
+    },
+  ];
+}
+
+const OUTAGE = { label: "Outage", hint: "failed or missed" };
+
+export const UPTIME_MATRIX: Record<
+  UptimeMode,
+  { monitors: UptimeRow[]; reports: UptimeRow[]; notes: string[] }
+> = {
+  requests: {
+    monitors: monitorRows(
+      "requests",
+      { label: "Failed check", hint: "any region, private locations included" },
+      "Degraded check",
+    ),
+    reports: reportRows("requests"),
+    notes: [],
+  },
+  runs: {
+    monitors: monitorRows(
+      "runs",
+      { label: "Failed run", hint: "at least half the cloud regions fail" },
+      "Degraded run",
+    ),
+    reports: reportRows("runs"),
+    notes: [
+      "Monitors that run only from private locations have no runs and are counted in requests.",
+    ],
+  },
+  duration: {
+    monitors: monitorRows("duration", OUTAGE, "Degraded check"),
+    reports: reportRows("duration"),
+    notes: [],
+  },
+  manual: {
+    monitors: monitorRows("manual", OUTAGE, "Degraded check"),
+    reports: reportRows("manual"),
+    notes: [
+      "Uptime monitor months without checks show no data; heartbeat months count from the first ping, even when silent.",
+    ],
+  },
+};
+
+/** How an excused outage counts, short enough for an event row. */
+export const EXCUSE_EFFECT_SHORT: Record<UptimeMode, string> = {
+  requests: "still counts",
+  runs: "still counts",
+  duration: "counts as up",
+  manual: "not counted",
 };

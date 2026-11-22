@@ -1,7 +1,10 @@
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
 import { LimitExceededError, NotFoundError } from "@openstatus/services";
-import { getUptimeHistory } from "@openstatus/services/frozen-uptime";
+import {
+  GetUptimeHistoryInput,
+  getUptimeHistory,
+} from "@openstatus/services/frozen-uptime";
 import {
   assertCustomDomainAvailable,
   createPage,
@@ -128,12 +131,22 @@ export const pageRouter = createTRPCRouter({
     }),
 
   getUptimeHistory: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(
+      z.object({
+        id: z.number(),
+        mode: GetUptimeHistoryInput.shape.mode,
+        months: GetUptimeHistoryInput.shape.months,
+      }),
+    )
     .query(async ({ ctx, input }) => {
       try {
         return await getUptimeHistory({
           ctx: toServiceCtx(ctx),
-          input: { pageId: input.id },
+          input: {
+            pageId: input.id,
+            mode: input.mode,
+            months: input.months,
+          },
         });
       } catch (err) {
         toTRPCError(err);

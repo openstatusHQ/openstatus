@@ -117,7 +117,7 @@ export function Sidebar() {
               ),
             },
             {
-              label: "Show Uptime",
+              label: "Show uptime percentage",
               value: statusPage.configuration?.uptime ? "Yes" : "No",
             },
           ],

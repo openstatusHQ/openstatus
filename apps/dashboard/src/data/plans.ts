@@ -28,7 +28,6 @@ export const config: Record<
       { value: "regions", label: "Total regions" },
       { value: "max-regions", label: "Regions per monitor" },
       { value: "data-retention", label: "Data retention" },
-      { value: "uptime-history", label: "Uptime history (12 months)" },
       { value: "response-logs", label: "Response Logs" },
       { value: "private-locations", label: "Private Locations" },
       { value: "otel", label: "OTel Exporter" },
@@ -62,6 +61,7 @@ export const config: Record<
       { value: "status-pages", label: "Number of status pages" },
       { value: "page-components", label: "Number of components" },
       { value: "maintenance", label: "Maintenance status" },
+      { value: "uptime-history", label: "Uptime history" },
       { value: "status-subscribers", label: "Subscribers" },
       { value: "slack-agent", label: "Slack Agent" },
       {

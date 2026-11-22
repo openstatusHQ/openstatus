@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   canonicalTimeZone,
+  historyStart,
   monthOf,
   monthsBetween,
   splitByMonth,
@@ -45,5 +46,13 @@ describe("canonicalTimeZone", () => {
     expect(canonicalTimeZone("Mars/Base")).toBeNull();
     expect(canonicalTimeZone("+02:00")).toBeNull();
     expect(canonicalTimeZone("")).toBeNull();
+  });
+});
+
+describe("historyStart", () => {
+  test("starts the window `count` months back, current month included", () => {
+    const at = Date.UTC(2026, 10, 22);
+    expect(historyStart(at, 3)).toBe("2026-09-01");
+    expect(monthsBetween(historyStart(at, 12), "2026-11")).toHaveLength(12);
   });
 });

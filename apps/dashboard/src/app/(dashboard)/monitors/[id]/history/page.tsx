@@ -21,10 +21,12 @@ export default async function Page({
 
   // NOTE: store in cache to avoid flicker on clients first render
   await searchParamsCache.parse(searchParams);
-  const range = reportRange(new Date());
-
   const workspace = await queryClient.fetchQuery(
     trpc.workspace.get.queryOptions(),
+  );
+  const range = reportRange(
+    new Date(),
+    workspace.limits["uptime-history"] || 12,
   );
   await Promise.all([
     queryClient.prefetchQuery(

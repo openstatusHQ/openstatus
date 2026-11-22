@@ -5,6 +5,12 @@ import { dayKey } from "@/data/activity.client";
 import type { HistoryMetric } from "@/data/status-page-history";
 import { formatNumber, truncatePercentage } from "@/lib/formatter";
 
+export const HISTORY_PERIODS = [3, 6, 12, 24] as const;
+export type HistoryPeriod = (typeof HISTORY_PERIODS)[number];
+
+/** Months shown when none is picked: a year, or all the plan keeps. */
+export const defaultHistoryPeriod = (limit: number) => Math.min(limit, 12);
+
 export type CheckCounts = {
   day: string;
   ok: number;

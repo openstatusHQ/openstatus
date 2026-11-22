@@ -51,6 +51,16 @@ export function monthOf(at: number | Date, timeZone = "UTC"): string {
   return monthKey(d.getFullYear(), d.getMonth());
 }
 
+/** YYYY-MM-01 of the oldest of `count` months ending with the one holding `at`. */
+export function historyStart(
+  at: number | Date,
+  count: number,
+  timeZone = "UTC",
+): string {
+  const [year, month] = monthOf(at, timeZone).split("-").map(Number);
+  return monthKey(year, month - count);
+}
+
 /** `from` through `to` (YYYY-MM or YYYY-MM-01), oldest first, YYYY-MM-01. */
 export function monthsBetween(from: string, to: string): string[] {
   const [fy, fm] = from.split("-").map(Number);

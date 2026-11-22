@@ -1,14 +1,28 @@
 "use client";
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import NextLink from "next/link";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
@@ -20,6 +34,7 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
+  EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateMedia,
   EmptyStateTitle,
@@ -29,10 +44,8 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
-  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { getColumns } from "@/components/data-table/status-page-history/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   FormCard,
@@ -45,110 +58,173 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import {
-  MetricStrip,
-  MetricStripAside,
-  MetricStripItem,
-  MetricStripLabel,
-  MetricStripRow,
-  MetricStripValue,
-} from "@/components/metric/metric-strip";
-import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
-import {
-  UptimeCalculation,
-  UptimeModeTiles,
-} from "@/components/status-pages/uptime-calculation";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { CalculationSelect } from "@/components/status-page-history/calculation-select";
+import { HistoryOverview } from "@/components/status-page-history/history-overview";
+import { PeriodSelect } from "@/components/status-page-history/period-select";
+import { UptimeCalculation } from "@/components/status-pages/uptime-calculation";
 import { historyMetric, historyRows } from "@/data/status-page-history";
 import {
   UPTIME_DOCS_URL,
   UPTIME_MODES,
 } from "@/data/uptime-calculation.client";
-import { truncatePercentage } from "@/lib/formatter";
+import { defaultHistoryPeriod } from "@/data/uptime-history.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { buildExampleHistory } from "./examples";
 import { searchParamsParsers } from "./search-params";
 
+const formatUptime = (value: number | null | undefined) =>
+  typeof value === "number" ? `${value}%` : "…";
+
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [{ metric: metricParam }, setSearchParams] =
+  const [{ calculation, period, month }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: page } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const isLimited = workspace?.limits["uptime-history"] === false;
+  const historyLimit = workspace?.limits["uptime-history"] ?? 0;
+  const isLimited = workspace?.limits["uptime-history"] === 0;
 
-  const { data: liveHistory } = useQuery({
-    ...trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+  const { data: liveHistory, isPlaceholderData } = useQuery({
+    ...trpc.page.getUptimeHistory.queryOptions({
+      id: Number.parseInt(id),
+      mode: calculation ?? undefined,
+      months: period ?? undefined,
+    }),
+    enabled: !!workspace && !isLimited,
+    // switching calculation or period keeps the last numbers until the new ones land
+    placeholderData: keepPreviousData,
+  });
+
+  // same key as the history above until another calculation is previewed
+  const { data: publicHistory } = useQuery({
+    ...trpc.page.getUptimeHistory.queryOptions({
+      id: Number.parseInt(id),
+      months: period ?? undefined,
+    }),
     enabled: !!workspace && !isLimited,
   });
+  const updateConfiguration = useMutation(
+    trpc.page.updatePageConfiguration.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: trpc.page.pathKey(),
+        });
+        await setSearchParams({ calculation: null });
+        setOpenConfirm(false);
+      },
+    }),
+  );
 
   const exampleHistory = useMemo(
     () => (isLimited ? buildExampleHistory() : null),
     [isLimited],
   );
   const history = isLimited ? exampleHistory : liveHistory;
-  const metric = historyMetric(metricParam, history?.mode ?? "requests");
+  const metric = historyMetric(null, history?.mode ?? "requests");
   const rows = useMemo(
     () => historyRows(history?.rows ?? [], metric),
     [history?.rows, metric],
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        history?.months ?? [],
-        history?.timeZone,
-        history?.utcOnlyMonths,
-      ),
-    [history?.months, history?.timeZone, history?.utcOnlyMonths],
-  );
-
   if (!history) return null;
 
-  const uptimeMode =
-    UPTIME_MODES.find((m) => m.value === history.mode) ?? UPTIME_MODES[0];
+  const configured =
+    UPTIME_MODES.find((m) => m.value === history.configuredMode) ??
+    UPTIME_MODES[0];
+  const current =
+    UPTIME_MODES.find((m) => m.value === history.mode) ?? configured;
+  const isPreview = current.value !== configured.value;
+  // the tab follows the click; `current` lags until its numbers land
+  const selected =
+    UPTIME_MODES.find((m) => m.value === calculation) ?? configured;
+  // placeholder data is the previous calculation or period, not the selected one
+  const isSettled = !isPlaceholderData && current.value === selected.value;
   const configurationHref = `/status-pages/${id}/components#components-configuration`;
-  const { summary } = history;
-  const countsRequests = history.mode === "requests" || history.mode === "runs";
-  const showMetric = !isLimited && countsRequests;
-  const showRuns = showMetric && metric === "runs";
-  const uptime = showRuns ? summary.runsUptime : summary.uptime;
+  const countsRequests =
+    current.value === "requests" || current.value === "runs";
+  const showRuns = metric === "runs";
+  const uptime = showRuns ? history.summary.runsUptime : history.summary.uptime;
+  const publicSummary = publicHistory?.summary;
+  const publicUptime =
+    configured.value === "runs"
+      ? publicSummary?.runsUptime
+      : publicSummary?.uptime;
+  const delta =
+    isSettled && typeof uptime === "number" && typeof publicUptime === "number"
+      ? uptime - publicUptime
+      : null;
   const partial = showRuns ? history.runsPartial : history.partial;
-  // rows without a value are left out of the page average
-  const averaged = rows.filter((row) => row.total !== null).length;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
+  );
+
+  const overview = (
+    <HistoryOverview
+      rows={rows}
+      months={history.months}
+      month={month}
+      onMonthChange={(next) => setSearchParams({ month: next })}
+      timeZone={history.timeZone}
+      uptime={uptime}
+      mode={current.value}
+      isPreview={isPreview}
+    />
   );
 
   return (
     <SectionGroup>
       <Section id="history">
-        <SectionHeaderRow>
-          <SectionHeader>
-            <SectionTitle>{page?.title}</SectionTitle>
-            <SectionDescription>
-              {isLimited
-                ? "Example data. Upgrade to see your page's long-term uptime."
-                : `Long-term uptime, built from your page's components. Months and days in ${history.timeZone}.`}
-            </SectionDescription>
-          </SectionHeader>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {showMetric ? (
-              <UptimeMetricTabs
-                value={metric}
-                onValueChange={(m) => setSearchParams({ metric: m })}
-              />
-            ) : null}
+        <SectionHeader>
+          <SectionTitle>{page?.title}</SectionTitle>
+          <SectionDescription>
+            {isLimited
+              ? "Example data. Upgrade to see your page's long-term uptime."
+              : `Downtime per month, built from your page's components. Months and days in ${history.timeZone}.`}
+          </SectionDescription>
+        </SectionHeader>
+        {!isLimited ? (
+          <div>
+            {isPreview ? "Previewing" : "Uptime counted by"}{" "}
+            <CalculationSelect
+              value={current.value}
+              configured={configured.value}
+              onValueChange={(mode) => setSearchParams({ calculation: mode })}
+            />{" "}
+            over the{" "}
+            <PeriodSelect
+              value={Math.min(
+                period ?? defaultHistoryPeriod(historyLimit),
+                historyLimit,
+              )}
+              limit={historyLimit}
+              onValueChange={(next) => setSearchParams({ period: next })}
+            />{" "}
+            {isPreview ? (
+              <>
+                <span className="text-muted-foreground">
+                  Visitors see {configured.label}.
+                </span>{" "}
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-[length:inherit]"
+                  onClick={() => setSearchParams({ calculation: null })}
+                >
+                  Back to public
+                </Button>
+              </>
+            ) : (
+              "like your public page."
+            )}
           </div>
-        </SectionHeaderRow>
+        ) : null}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_reports_global_status_pages">
             <Info />
@@ -176,58 +252,17 @@ export function Client() {
             couldn&apos;t be loaded, so the latest months may be incomplete.
           </Note>
         ) : null}
-        {!isLimited &&
-        history.timeZone !== "UTC" &&
-        history.utcOnlyMonths.length > 0 ? (
-          <Note size="sm">
-            <Info />
-            Months marked UTC were frozen before days could be regrouped, so
-            their days follow UTC rather than {history.timeZone}.
-          </Note>
-        ) : null}
       </Section>
-      <Section id="history-metrics">
-        <MetricStrip
-          aria-hidden={isLimited}
-          className={cn(isLimited && "pointer-events-none select-none")}
-        >
-          <MetricStripRow>
-            <MetricStripItem status="success">
-              <MetricStripLabel>Page uptime</MetricStripLabel>
-              <MetricStripValue>
-                {uptime === null ? "—" : `${truncatePercentage(uptime)}%`}
-                {averaged > 0 && averaged < rows.length ? (
-                  <MetricStripAside>
-                    {averaged} of {rows.length} components
-                  </MetricStripAside>
-                ) : null}
-              </MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Reports</MetricStripLabel>
-              <MetricStripValue>{summary.reports}</MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Components</MetricStripLabel>
-              <MetricStripValue>{rows.length}</MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Created at</MetricStripLabel>
-              <MetricStripValue>
-                {history.createdAt ? format(history.createdAt, "MMM yy") : "—"}
-              </MetricStripValue>
-            </MetricStripItem>
-          </MetricStripRow>
-        </MetricStrip>
+      <Section id="history-overview">
         {isLimited ? (
           <BillingOverlayContainer>
-            <div className="overflow-x-auto">
-              <DataTable
-                paginationComponent={DataTablePaginationSimple}
-                columns={columns}
-                data={rows}
-              />
-            </div>
+            <Section
+              aria-hidden
+              inert
+              className="pointer-events-none select-none"
+            >
+              {overview}
+            </Section>
             <BillingOverlay>
               <BillingOverlayButton
                 data-track="paywall_viewed"
@@ -238,7 +273,7 @@ export function Client() {
                 Upgrade
               </BillingOverlayButton>
               <BillingOverlayDescription>
-                Keep an overview of your uptime history for the last 12 months.
+                Keep an overview of your uptime history for up to 24 months.
               </BillingOverlayDescription>
             </BillingOverlay>
             <UpgradeDialog
@@ -247,37 +282,20 @@ export function Client() {
               limit="uptime-history"
             />
           </BillingOverlayContainer>
+        ) : hasAnyData ? (
+          overview
         ) : (
-          <div className="overflow-x-auto">
-            <DataTable
-              paginationComponent={DataTablePaginationSimple}
-              columns={columns}
-              // rows without a single value are not history yet
-              data={hasAnyData ? rows : []}
-              emptyState={
-                <DataTableEmpty>
-                  <EmptyStateMedia>
-                    <Calendar />
-                  </EmptyStateMedia>
-                  <EmptyStateTitle>No history yet</EmptyStateTitle>
-                  <EmptyStateDescription>
-                    Each month is frozen early in the following month. Until
-                    then, it is served live.
-                  </EmptyStateDescription>
-                </DataTableEmpty>
-              }
-            />
-          </div>
+          <EmptyStateContainer>
+            <EmptyStateMedia>
+              <Calendar />
+            </EmptyStateMedia>
+            <EmptyStateTitle>No history yet</EmptyStateTitle>
+            <EmptyStateDescription>
+              Each month is frozen early in the following month. Until then, it
+              is served live.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
         )}
-        {!isLimited ? (
-          <NoteDismissible cookieKey="note_status_page_history_missing_months">
-            <Info />
-            Is a month missing that your monitors were running? Let us know.
-            <FormDialogSupportContact>
-              <NoteButton variant="default">Contact us</NoteButton>
-            </FormDialogSupportContact>
-          </NoteDismissible>
-        ) : null}
       </Section>
       <Section id="uptime-calculation">
         <FormCard id="how-uptime-is-calculated">
@@ -286,23 +304,53 @@ export function Client() {
             <FormCardDescription>
               This page counts{" "}
               <span className="text-foreground font-medium">
-                {uptimeMode.label}
+                {configured.label}
               </span>
-              . It applies to every month here and to your public status page.{" "}
-              <Link href={UPTIME_DOCS_URL}>Learn more</Link>
+              . Open another tab to preview what would change, here and in the
+              history above. <Link href={UPTIME_DOCS_URL}>Learn more</Link>
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
           <FormCardContent>
-            <UptimeModeTiles mode={uptimeMode.value} />
-          </FormCardContent>
-          <FormCardSeparator />
-          <FormCardContent>
-            <UptimeCalculation mode={uptimeMode.value} />
+            <UptimeCalculation
+              mode={selected.value}
+              configured={configured.value}
+              onModeChange={(mode) =>
+                setSearchParams({
+                  calculation: mode === configured.value ? null : mode,
+                })
+              }
+            >
+              {selected.value !== configured.value ? (
+                <Note size="sm">
+                  <Info />
+                  <span>
+                    Page uptime, {(publicHistory ?? history).months.length}{" "}
+                    months:{" "}
+                    <span className="font-mono">
+                      {formatUptime(publicUptime)}
+                    </span>
+                    {" → "}
+                    <span className="font-mono">
+                      {formatUptime(isSettled ? uptime : undefined)}
+                      {delta !== null
+                        ? ` (${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(3)})`
+                        : null}
+                    </span>
+                  </span>
+                  <NoteButton
+                    variant="default"
+                    onClick={() => setOpenConfirm(true)}
+                  >
+                    Use {selected.label}
+                  </NoteButton>
+                </Note>
+              ) : null}
+            </UptimeCalculation>
           </FormCardContent>
           <FormCardFooter className="flex-wrap">
             <FormCardFooterInfo>
-              Change it in{" "}
+              Also in{" "}
               <Link href={configurationHref}>
                 Components &gt; Components Configuration
               </Link>
@@ -312,11 +360,51 @@ export function Client() {
               </Link>
               .
             </FormCardFooterInfo>
-            <Button size="sm" asChild>
-              <NextLink href={configurationHref}>Change calculation</NextLink>
-            </Button>
+            <div />
           </FormCardFooter>
         </FormCard>
+        <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Use {selected.label}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your public status page switches from {configured.label} to{" "}
+                {selected.label}. The uptime visitors see changes right away.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={updateConfiguration.isPending}
+                onClick={(event) => {
+                  // stay open on error so it can be retried
+                  event.preventDefault();
+                  const manual = selected.value === "manual";
+                  toast.promise(
+                    updateConfiguration.mutateAsync({
+                      id: Number.parseInt(id),
+                      configuration: {
+                        ...page?.configuration,
+                        type: manual ? "manual" : "absolute",
+                        value: selected.value,
+                      },
+                    }),
+                    {
+                      loading: "Saving...",
+                      success: "Saved",
+                      error: (error) =>
+                        isTRPCClientError(error)
+                          ? error.message
+                          : "Failed to save",
+                    },
+                  );
+                }}
+              >
+                Use {selected.label}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Section>
     </SectionGroup>
   );

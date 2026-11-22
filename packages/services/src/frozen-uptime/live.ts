@@ -1,7 +1,12 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
 
-import { hasBadRanges, type LocalDayCount, toLocalDays } from "./buckets";
+import {
+  hasBadRanges,
+  type LocalDayCount,
+  mergeCovered,
+  toLocalDays,
+} from "./buckets";
 import {
   type ChunkFailure,
   fetchFreezeCounts,
@@ -61,13 +66,12 @@ export type FrozenMonth = {
 export type LocalDays = {
   requests: LocalDayCount[];
   runs: LocalDayCount[];
-  utcOnlyMonths: Set<string>;
 };
 
 /**
  * One monitor's days in `timeZone`: live days win from the first one the
  * pipes return, frozen rows (regrouped where they carry ranges) fill earlier
- * days. `utcOnlyMonths` lists the frozen months that could not be regrouped.
+ * days.
  */
 export function mergeLocalDays(args: {
   frozen: FrozenMonth[];
@@ -87,19 +91,14 @@ export function mergeLocalDays(args: {
 
   const requests: LocalDayCount[] = [];
   const runs: LocalDayCount[] = [];
-  const utcOnlyMonths = new Set<string>();
   for (const row of args.frozen) {
     const hasRanges = args.quarterHours !== false && hasBadRanges(row.days);
     const local = (measure: "requests" | "runs") =>
       toLocalDays(row.days, args.timeZone, measure, hasRanges).filter(
         (d) => seam[measure] === null || d.day < seam[measure],
       );
-    const rowRequests = local("requests");
-    requests.push(...rowRequests);
+    requests.push(...local("requests"));
     runs.push(...local("runs"));
-    if (args.timeZone !== "UTC" && !hasRanges && rowRequests.length > 0) {
-      utcOnlyMonths.add(row.month.slice(0, 7));
-    }
   }
   for (const d of live) {
     requests.push({ day: d.day, ...d.requests });
@@ -118,10 +117,18 @@ export function mergeLocalDays(args: {
       acc.ok += d.ok;
       acc.degraded += d.degraded;
       acc.error += d.error;
+      const covered = mergeCovered(
+        acc.covered,
+        d.covered,
+        d.day,
+        args.timeZone,
+      );
+      if (covered) acc.covered = covered;
+      else delete acc.covered;
     }
     return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
   };
-  return { requests: sum(requests), runs: sum(runs), utcOnlyMonths };
+  return { requests: sum(requests), runs: sum(runs) };
 }
 
 // the caller only learns `partial`; this is the reason

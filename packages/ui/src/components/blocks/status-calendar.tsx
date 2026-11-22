@@ -1,6 +1,9 @@
 "use client";
 
-import { StatusBarCard } from "@openstatus/ui/components/blocks/status-bar";
+import {
+  StatusBarCard,
+  StatusBarEvent,
+} from "@openstatus/ui/components/blocks/status-bar";
 import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import type {
   StatusBarData,
@@ -31,8 +34,10 @@ import {
   type FocusEvent,
   type ReactNode,
   type RefObject,
+  createContext,
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -46,8 +51,8 @@ export interface StatusCalendarMarker {
   id: string | number;
   /** Day this marker belongs to, in the viewer's local timezone. */
   date: Date;
-  /** Drives the day cell's tinted-fill color (worst-severity wins per day). */
-  status: Exclude<StatusType, "empty">;
+  /** Drives the day cell's tinted-fill color (worst-severity wins per day); "empty" is neutral. */
+  status: StatusType;
   /** Event shape mirrors StatusBarEvent so the popover can render the same row. */
   type: StatusEventType;
   name: string;
@@ -56,6 +61,8 @@ export interface StatusCalendarMarker {
   to?: Date | null;
   isAggregated?: boolean;
   href?: string;
+  /** Planned, non-counting time: the day is hatched unless a filled marker shares it. */
+  hatched?: boolean;
 }
 
 export interface StatusCalendarProps {
@@ -96,6 +103,7 @@ const SEVERITY_RANK: Record<StatusCalendarMarker["status"], number> = {
   degraded: 2,
   info: 1,
   success: 0,
+  empty: -1,
 };
 
 // Hover deepens the same tint rather than swapping to the neutral accent, so
@@ -105,7 +113,25 @@ const SEVERITY_FILL: Record<StatusCalendarMarker["status"], string> = {
   degraded: "bg-warning/10 hover:bg-warning/20 text-warning",
   info: "bg-info/10 hover:bg-info/20 text-info",
   success: "bg-success/10 hover:bg-success/20 text-success",
+  empty: "bg-muted hover:bg-muted/80 text-muted-foreground",
 };
+
+// literal class strings so Tailwind's scanner picks them up
+const HATCHED_FILL: Record<StatusCalendarMarker["status"], string> = {
+  error:
+    "text-destructive hover:bg-destructive/10 bg-[image:repeating-linear-gradient(-45deg,color-mix(in_oklch,var(--color-destructive)_35%,transparent)_0_1px,transparent_1px_4px)]",
+  degraded:
+    "text-warning hover:bg-warning/10 bg-[image:repeating-linear-gradient(-45deg,color-mix(in_oklch,var(--color-warning)_35%,transparent)_0_1px,transparent_1px_4px)]",
+  info: "text-info hover:bg-info/10 bg-[image:repeating-linear-gradient(-45deg,color-mix(in_oklch,var(--color-info)_35%,transparent)_0_1px,transparent_1px_4px)]",
+  success:
+    "text-success hover:bg-success/10 bg-[image:repeating-linear-gradient(-45deg,color-mix(in_oklch,var(--color-success)_35%,transparent)_0_1px,transparent_1px_4px)]",
+  empty:
+    "text-muted-foreground hover:bg-muted bg-[image:repeating-linear-gradient(-45deg,color-mix(in_oklch,var(--color-muted-foreground)_35%,transparent)_0_1px,transparent_1px_4px)]",
+};
+
+// Context, not a `Day` dep: `Day` identity stays stable so cells don't remount
+// every hover, and each cell still reads the open day in the same render.
+const ActiveDayContext = createContext<string | null>(null);
 
 function dayKey(date: Date): string {
   return format(date, "yyyy-MM-dd");
@@ -116,7 +142,7 @@ function worstSeverity(
 ): StatusCalendarMarker["status"] {
   return markers.reduce<StatusCalendarMarker["status"]>((worst, m) => {
     return SEVERITY_RANK[m.status] > SEVERITY_RANK[worst] ? m.status : worst;
-  }, "success");
+  }, "empty");
 }
 
 export function StatusCalendar({
@@ -202,12 +228,6 @@ export function StatusCalendar({
   const isTouch = useMediaQuery("(hover: none)");
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeDayKey, setActiveDayKey] = useState<string | null>(null);
-  // Via ref, not a `Day` dep: keeps `Day` identity stable so cells don't remount
-  // every hover. CalendarDay re-renders top-down on setActiveDayKey regardless.
-  const activeDayKeyRef = useRef(activeDayKey);
-  useEffect(() => {
-    activeDayKeyRef.current = activeDayKey;
-  }, [activeDayKey]);
   const [interaction, setInteraction] = useState<
     "hover" | "pin" | "focus" | null
   >(null);
@@ -302,7 +322,6 @@ export function StatusCalendar({
       <CalendarDay
         {...dayProps}
         markersByDay={markersByDay}
-        activeDayKeyRef={activeDayKeyRef}
         isTouch={isTouch}
         onClickDay={handleClick}
         onHoverStart={handleHoverStart}
@@ -369,35 +388,37 @@ export function StatusCalendar({
         </div>
       </header>
       <div className="border-t">
-        <DayPicker
-          mode="default"
-          month={currentMonth}
-          weekStartsOn={weekStartsOn}
-          showOutsideDays={false}
-          locale={locale}
-          className="w-full"
-          classNames={{
-            months: "flex flex-col",
-            month: "flex flex-col w-full",
-            caption: "hidden",
-            table: "w-full border-collapse",
-            head_row: "flex w-full border-b",
-            head_cell:
-              "flex-1 text-muted-foreground font-mono font-normal text-[0.7rem] uppercase tracking-wide py-1.5 border-r last:border-r-0",
-            row: "flex w-full border-b last:border-b-0",
-            cell: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
-            day: cn(
-              "text-foreground/80 inline-flex h-12 w-full items-center justify-center text-sm font-normal transition-colors",
-              "hover:bg-accent hover:text-accent-foreground",
-              "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
-            ),
-            day_today: "text-foreground font-semibold",
-            day_outside: "text-muted-foreground/50",
-            day_disabled: "text-muted-foreground/40 cursor-not-allowed",
-            day_hidden: "invisible",
-          }}
-          components={dayPickerComponents}
-        />
+        <ActiveDayContext.Provider value={activeDayKey}>
+          <DayPicker
+            mode="default"
+            month={currentMonth}
+            weekStartsOn={weekStartsOn}
+            showOutsideDays={false}
+            locale={locale}
+            className="w-full"
+            classNames={{
+              months: "flex flex-col",
+              month: "flex flex-col w-full",
+              caption: "hidden",
+              table: "w-full border-collapse",
+              head_row: "flex w-full border-b",
+              head_cell:
+                "flex-1 text-muted-foreground font-mono font-normal text-[0.7rem] uppercase tracking-wide py-1.5 border-r last:border-r-0",
+              row: "flex w-full border-b last:border-b-0",
+              cell: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
+              day: cn(
+                "text-foreground/80 inline-flex h-12 w-full items-center justify-center text-sm font-normal transition-colors",
+                "hover:bg-accent hover:text-accent-foreground",
+                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
+              ),
+              day_today: "text-foreground font-semibold",
+              day_outside: "text-muted-foreground/50",
+              day_disabled: "text-muted-foreground/40 cursor-not-allowed",
+              day_hidden: "invisible",
+            }}
+            components={dayPickerComponents}
+          />
+        </ActiveDayContext.Provider>
       </div>
     </div>
   );
@@ -405,7 +426,6 @@ export function StatusCalendar({
 
 interface CalendarDayProps extends DayProps {
   markersByDay: Map<string, StatusCalendarMarker[]>;
-  activeDayKeyRef: RefObject<string | null>;
   isTouch: boolean;
   onClickDay: (key: string) => void;
   onHoverStart: (key: string) => void;
@@ -428,7 +448,6 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       date,
       displayMonth,
       markersByDay,
-      activeDayKeyRef,
       isTouch,
       onClickDay,
       onHoverStart,
@@ -447,6 +466,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     // day — DayPicker only generates click handlers under a selection mode.
     // We don't need DayPicker's interactivity (we drive our own hover popover),
     // so we skip useDayRender entirely and render our own trigger.
+    const activeDayKey = useContext(ActiveDayContext);
     const thisDayKey = dayKey(startOfDay(date));
     const isOutside =
       startOfMonth(date).getTime() !== startOfMonth(displayMonth).getTime();
@@ -480,9 +500,9 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
 
     const isToday = isSameDay(date, new Date());
     const dayMarkers = markersByDay.get(thisDayKey) ?? [];
-    const severity =
-      dayMarkers.length > 0 ? worstSeverity(dayMarkers) : undefined;
-    const open = activeDayKeyRef.current === thisDayKey;
+    const filled = dayMarkers.filter((m) => !m.hatched);
+    const severity = filled.length > 0 ? worstSeverity(filled) : undefined;
+    const open = activeDayKey === thisDayKey;
 
     const hasMarkers = dayMarkers.length > 0;
     // Tinted-field: severity days get a soft fill that owns the hover state,
@@ -493,7 +513,9 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       isToday && "text-foreground font-semibold",
       severity
         ? SEVERITY_FILL[severity]
-        : "hover:bg-accent hover:text-accent-foreground",
+        : dayMarkers.length > 0
+          ? HATCHED_FILL[worstSeverity(dayMarkers)]
+          : "hover:bg-accent hover:text-accent-foreground",
       hasMarkers && "cursor-pointer",
     );
 
@@ -564,14 +586,13 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
             item={barItem}
             renderEvent={(event, eventIndex) => {
               const fn = renderMarkerRowRef.current;
-              if (!fn) return undefined;
               const idx = indexByEventId.get(event.id) ?? 0;
               return (
                 <div key={`${event.id}-${event.type}`}>
                   {eventIndex > 0 && (
                     <Separator className="-mx-2 my-2 data-[orientation=horizontal]:w-auto" />
                   )}
-                  {fn(dayMarkers[idx])}
+                  {fn ? fn(dayMarkers[idx]) : <StatusBarEvent {...event} />}
                 </div>
               );
             }}
@@ -590,6 +611,7 @@ function markerToBarEvent(m: StatusCalendarMarker): BarEvent {
     from: m.from ?? null,
     to: m.to ?? null,
     isAggregated: m.isAggregated,
+    status: m.status,
   };
 }
 
