@@ -6,11 +6,14 @@ import { truncatePercentage } from "@/lib/formatter";
 const utcStart = (year: number, month: number) =>
   new Date(Date.UTC(year, month, 1));
 
-/** `[from, to)` of the history in UTC: the current month and the 11 before it. */
-export function reportRange(now: Date): { from: Date; to: Date } {
+/** `[from, to)` of the history in UTC: `months` months ending with the current one. */
+export function reportRange(now: Date, months = 12): { from: Date; to: Date } {
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();
-  return { from: utcStart(year, month - 11), to: utcStart(year, month + 1) };
+  return {
+    from: utcStart(year, month - months + 1),
+    to: utcStart(year, month + 1),
+  };
 }
 
 /** Heartbeats and private-location-only monitors seldom open outages, so availability reads 100%. */

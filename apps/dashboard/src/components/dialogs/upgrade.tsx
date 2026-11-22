@@ -37,7 +37,7 @@ function getTitle(limit: keyof Limits | undefined, plan: WorkspacePlan) {
   const label = Object.values(featureGroups)
     .flatMap(({ features }) => features)
     .find((feature) => feature.value === limit)?.label;
-  if (value === false && label) {
+  if ((value === false || value === 0) && label) {
     return `${label} is not part of ${allPlans[plan].title}`;
   }
   if (typeof value === "string" && label) {

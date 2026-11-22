@@ -96,12 +96,12 @@ describe("getMonitorUptimeHistory", () => {
   test("frozen months plus live counts for unfrozen months", async () => {
     await withTestTransaction(async (tx) => {
       const m = await insertMonitor(tx);
-      await tx
-        .insert(frozenMonitorUptime)
-        .values([
-          frozenMonth(m.id, "2025-01", 2),
-          frozenMonth(m.id, "2026-10"),
-        ]);
+      await tx.insert(frozenMonitorUptime).values([
+        // older than the team plan's 12 months
+        frozenMonth(m.id, "2025-11", 5),
+        frozenMonth(m.id, "2025-12", 2),
+        frozenMonth(m.id, "2026-10"),
+      ]);
       const id = String(m.id);
       const res = await history({
         ctx: { ...userCtx, db: tx },
@@ -119,7 +119,7 @@ describe("getMonitorUptimeHistory", () => {
 
       expect(res.partial).toBe(false);
       expect(res.days[0]).toEqual({
-        day: "2025-01-01",
+        day: "2025-12-01",
         ok: 98,
         degraded: 0,
         error: 2,

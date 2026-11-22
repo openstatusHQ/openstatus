@@ -78,7 +78,7 @@ const withoutHistory = (base: ServiceContext): ServiceContext => ({
   ...base,
   workspace: {
     ...base.workspace,
-    limits: { ...base.workspace.limits, "uptime-history": false },
+    limits: { ...base.workspace.limits, "uptime-history": 0 },
   },
 });
 

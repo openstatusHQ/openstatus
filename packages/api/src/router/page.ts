@@ -131,12 +131,22 @@ export const pageRouter = createTRPCRouter({
     }),
 
   getUptimeHistory: protectedProcedure
-    .input(z.object({ id: z.number(), mode: GetUptimeHistoryInput.shape.mode }))
+    .input(
+      z.object({
+        id: z.number(),
+        mode: GetUptimeHistoryInput.shape.mode,
+        months: GetUptimeHistoryInput.shape.months,
+      }),
+    )
     .query(async ({ ctx, input }) => {
       try {
         return await getUptimeHistory({
           ctx: toServiceCtx(ctx),
-          input: { pageId: input.id, mode: input.mode },
+          input: {
+            pageId: input.id,
+            mode: input.mode,
+            months: input.months,
+          },
         });
       } catch (err) {
         toTRPCError(err);

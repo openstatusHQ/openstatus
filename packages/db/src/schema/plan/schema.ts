@@ -31,7 +31,10 @@ export const limitsSchema = z.object({
   "page-components": z.number().prefault(3),
   maintenance: z.boolean().prefault(true),
   "monitor-values-visibility": z.boolean().prefault(true),
-  "uptime-history": z.boolean().prefault(false),
+  // months of history; limits stored before this was a number hold a boolean
+  "uptime-history": z
+    .preprocess((v) => (typeof v === "boolean" ? (v ? 12 : 0) : v), z.number())
+    .prefault(0),
   "status-subscribers": z.boolean().prefault(false),
   "custom-domain": z.boolean().prefault(false),
   i18n: z.boolean().prefault(false),

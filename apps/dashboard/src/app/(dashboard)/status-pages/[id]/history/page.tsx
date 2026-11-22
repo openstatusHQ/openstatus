@@ -19,7 +19,7 @@ export default async function Page({
   const queryClient = getQueryClient();
 
   // NOTE: store in cache to avoid flicker on clients first render
-  const { calculation } = await searchParamsCache.parse(searchParams);
+  const { calculation, period } = await searchParamsCache.parse(searchParams);
   const workspace = await queryClient.fetchQuery(
     trpc.workspace.get.queryOptions(),
   );
@@ -29,6 +29,7 @@ export default async function Page({
       trpc.page.getUptimeHistory.queryOptions({
         id: pageId,
         mode: calculation ?? undefined,
+        months: period ?? undefined,
       }),
     );
   }

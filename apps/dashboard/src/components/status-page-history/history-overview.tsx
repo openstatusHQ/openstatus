@@ -8,7 +8,7 @@ import {
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { cn } from "@openstatus/ui/lib/utils";
 import { eachDayOfInterval, format, startOfDay } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   Activity,
@@ -16,11 +16,7 @@ import {
   ActivityPeriod,
   ActivityTitle,
 } from "@/components/content/activity";
-import {
-  ComponentList,
-  ComponentListItem,
-  ComponentListName,
-} from "@/components/content/component-list";
+import { ComponentListName } from "@/components/content/component-list";
 import {
   EmptyStateDescription,
   EmptyStateMedia,
@@ -34,7 +30,7 @@ import {
   EventGroupHint,
   EventGroupTitle,
 } from "@/components/content/event-group";
-import { EventList } from "@/components/content/event-list";
+import { EventList, EventRow } from "@/components/content/event-list";
 import {
   MetricStrip,
   MetricStripAside,
@@ -45,6 +41,7 @@ import {
   MetricStripValue,
 } from "@/components/metric/metric-strip";
 import {
+  type HistoryEvent,
   type HistoryItem,
   type HistoryRow,
   downtimeMinutes,
@@ -56,7 +53,12 @@ import {
   pageMonthUptime,
 } from "@/data/status-page-history";
 import type { UptimeMode } from "@/data/uptime-calculation.client";
-import { formatDurationShort, truncatePercentage } from "@/lib/formatter";
+import {
+  formatDurationShort,
+  formatNumber,
+  inTimeZone,
+  truncatePercentage,
+} from "@/lib/formatter";
 
 import {
   HistoryItemLegend,
@@ -80,14 +82,20 @@ function DowntimeBars({
   values,
   selected,
   className,
+  style,
 }: {
   values: (number | null)[];
   selected: number;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const max = Math.max(1, ...values.map((v) => v ?? 0));
   return (
-    <span aria-hidden className={cn("flex items-end gap-px", className)}>
+    <span
+      aria-hidden
+      className={cn("flex items-end gap-px", className)}
+      style={style}
+    >
       {values.map((v, i) =>
         v === null ? (
           <span
@@ -109,35 +117,56 @@ function DowntimeBars({
   );
 }
 
-// the block tints by status only, so excused outages (neutral) stay out of it
-function toMarkers(items: HistoryItem[]): StatusCalendarMarker[] {
+// a resolved report carries "success", but history shows what happened, not the end state
+const markerStatus = (event: HistoryEvent): StatusCalendarMarker["status"] =>
+  event.type === "report" && event.status !== "error"
+    ? "degraded"
+    : event.status;
+
+function toMarkers(
+  items: HistoryItem[],
+  timeZone: string,
+): StatusCalendarMarker[] {
+  // the calendar buckets by local day, so hand it the zone's calendar day
+  const zoneDay = (date: Date) => startOfDay(inTimeZone(date, timeZone));
   return items.flatMap((item) => {
-    if (item.kind === "excused") return [];
     const days = eachDayOfInterval({
-      start: startOfDay(item.from),
-      end: startOfDay(item.to ?? new Date()),
+      start: zoneDay(item.from),
+      end: zoneDay(item.to ?? new Date()),
     });
     const where = item.components.join(", ");
     return days.map((date) =>
-      item.kind === "window"
+      item.kind === "excused"
         ? {
             id: `${historyItemKey(item)}-${date.getTime()}`,
             date,
-            status: "info" as const,
-            type: "maintenance" as const,
-            name: `Window · ${item.window.title} · ${where}`,
+            status: "empty" as const,
+            type: "incident" as const,
+            name: `Excused · ${where}`,
             from: item.from,
             to: item.to,
+            hatched: true,
           }
-        : {
-            id: `${historyItemKey(item)}-${date.getTime()}`,
-            date,
-            status: item.event.status,
-            type: item.event.type,
-            name: `${item.event.name} · ${where}`,
-            from: item.from,
-            to: item.to,
-          },
+        : item.kind === "window"
+          ? {
+              id: `${historyItemKey(item)}-${date.getTime()}`,
+              date,
+              status: "info" as const,
+              type: "maintenance" as const,
+              hatched: true,
+              name: `Window · ${item.window.title} · ${where}`,
+              from: item.from,
+              to: item.to,
+            }
+          : {
+              id: `${historyItemKey(item)}-${date.getTime()}`,
+              date,
+              status: markerStatus(item.event),
+              type: item.event.type,
+              name: `${item.event.name} · ${where}`,
+              from: item.from,
+              to: item.to,
+            },
     );
   });
 }
@@ -145,8 +174,9 @@ function toMarkers(items: HistoryItem[]): StatusCalendarMarker[] {
 export function HistoryOverview({
   rows,
   months,
+  month,
+  onMonthChange,
   timeZone,
-  utcOnlyMonths,
   uptime,
   mode,
   isPreview,
@@ -154,24 +184,27 @@ export function HistoryOverview({
   rows: HistoryRow[];
   /** oldest first, the last one in progress */
   months: string[];
+  /** YYYY-MM to show; null or outside `months`, the latest */
+  month: string | null;
+  onMonthChange: (month: string | null) => void;
   timeZone: string;
-  utcOnlyMonths: string[];
   uptime: number | null;
   mode: UptimeMode;
   isPreview: boolean;
 }) {
-  const [selected, setSelected] = useState(months[months.length - 1]);
+  const desc = useMemo(() => months.toReversed(), [months]);
+  const selected = month && months.includes(month) ? month : desc[0];
+  // the month in progress drops out of the URL
+  const setSelected = (key: string) =>
+    onMonthChange(key === desc[0] ? null : key);
   const items = useMemo(() => historyItems(rows), [rows]);
-  const markers = useMemo(() => toMarkers(items), [items]);
-  // a UTC-only month groups its days, and so its events, in UTC
-  const zoneOf = (key: string) =>
-    timeZone !== "UTC" && utcOnlyMonths.includes(key) ? "UTC" : timeZone;
-  const pageDowns = months.map((key) =>
-    downtimeMinutes(pageMonthUptime(rows, key), key, zoneOf(key)),
+  const markers = useMemo(() => toMarkers(items, timeZone), [items, timeZone]);
+  const pageDowns = desc.map((key) =>
+    downtimeMinutes(pageMonthUptime(rows, key), key, timeZone),
   );
   const maxDown = Math.max(1, ...pageDowns.map((d) => d ?? 0));
-  const index = months.indexOf(selected);
-  const monthItems = eventsForMonth(items, selected, zoneOf(selected));
+  const index = desc.indexOf(selected);
+  const monthItems = eventsForMonth(items, selected, timeZone);
   const count = (kind: HistoryItem["kind"]) =>
     items.filter((item) => item.kind === kind).length;
   const totalDown = pageDowns.reduce<number>((a, d) => a + (d ?? 0), 0);
@@ -216,10 +249,17 @@ export function HistoryOverview({
           <ActivityPeriod>Pick a month for its events</ActivityPeriod>
         </ActivityHeader>
         <MetricStrip>
-          <MetricStripRow>
-            {months.map((key, i) => {
+          <MetricStripRow
+            className={cn(
+              desc.length > 12 && "@3xl:grid-flow-row @3xl:grid-cols-12",
+            )}
+          >
+            {desc.map((key, i) => {
               const down = pageDowns[i];
-              const dots = eventsForMonth(items, key, zoneOf(key)).toSorted(
+              const year = key.slice(0, 4);
+              // only where the strip crosses into an older year
+              const showYear = i > 0 && desc[i - 1].slice(0, 4) !== year;
+              const dots = eventsForMonth(items, key, timeZone).toSorted(
                 (a, b) => a.from.getTime() - b.from.getTime(),
               );
               return (
@@ -232,8 +272,8 @@ export function HistoryOverview({
                 >
                   <MetricStripLabel>
                     {format(monthDate(key), "MMM")}
-                    {zoneOf(key) !== timeZone ? (
-                      <span className="ml-1 text-xs">UTC</span>
+                    {showYear ? (
+                      <span className="ml-1 text-xs">{year}</span>
                     ) : null}
                   </MetricStripLabel>
                   <span
@@ -304,7 +344,7 @@ export function HistoryOverview({
           <EventGroupHint>
             {pct(pageMonthUptime(rows, selected))} ·{" "}
             {formatDowntime(pageDowns[index])} down
-            {index === months.length - 1 ? " · in progress" : ""}
+            {index === 0 ? " · in progress" : ""}
           </EventGroupHint>
         </EventGroupHeader>
         <EventList>
@@ -313,6 +353,7 @@ export function HistoryOverview({
               key={historyItemKey(item)}
               item={item}
               mode={mode}
+              timeZone={timeZone}
             />
           ))}
         </EventList>
@@ -334,43 +375,50 @@ export function HistoryOverview({
             Components
             <EventGroupCount>{rows.length}</EventGroupCount>
           </EventGroupTitle>
-          <EventGroupHint>Downtime per month, last 12 months</EventGroupHint>
+          <EventGroupHint>
+            Downtime per month, last {months.length} months
+          </EventGroupHint>
         </EventGroupHeader>
-        <div className="bg-card rounded-lg border px-3 py-2">
-          <ComponentList>
-            {rows.map((row) => {
-              const value = row.months[selected]?.percentage ?? null;
-              const downs = months.map((key) =>
-                downtimeMinutes(row.months[key]?.percentage, key, zoneOf(key)),
-              );
-              return (
-                <ComponentListItem key={row.component.id}>
-                  <ComponentListName>{row.component.name}</ComponentListName>
-                  <span className="ml-auto flex shrink-0 items-center gap-3">
-                    <DowntimeBars
-                      values={downs}
-                      selected={index}
-                      className="h-4 w-[72px]"
-                    />
-                    <span
-                      className={cn(
-                        "w-16 text-right font-mono text-xs tabular-nums",
-                        value === null && "text-muted-foreground/50",
-                      )}
-                    >
-                      {value === null
-                        ? "no data"
-                        : formatDowntime(downs[index])}
+        <EventList>
+          {rows.map((row) => {
+            const value = row.months[selected]?.percentage ?? null;
+            const counts = row.months[selected];
+            const downs = desc.map((key) =>
+              downtimeMinutes(row.months[key]?.percentage, key, timeZone),
+            );
+            return (
+              <EventRow key={row.component.id} className="flex gap-x-2">
+                <ComponentListName>{row.component.name}</ComponentListName>
+                <span className="ml-auto flex shrink-0 items-center gap-3">
+                  {counts && row.unit !== "time" ? (
+                    <span className="text-muted-foreground hidden font-mono text-xs tabular-nums @3xl:inline">
+                      {formatNumber(counts.error)} of{" "}
+                      {formatNumber(counts.ok + counts.degraded + counts.error)}{" "}
+                      {row.unit} failed
                     </span>
-                    <span className="text-muted-foreground hidden w-16 text-right font-mono text-xs tabular-nums sm:inline">
-                      {pct(value)}
-                    </span>
+                  ) : null}
+                  <DowntimeBars
+                    values={downs}
+                    selected={index}
+                    className="h-4"
+                    style={{ width: desc.length * 6 }}
+                  />
+                  <span
+                    className={cn(
+                      "w-16 text-right font-mono text-xs tabular-nums",
+                      value === null && "text-muted-foreground/50",
+                    )}
+                  >
+                    {value === null ? "no data" : formatDowntime(downs[index])}
                   </span>
-                </ComponentListItem>
-              );
-            })}
-          </ComponentList>
-        </div>
+                  <span className="text-muted-foreground hidden w-16 text-right font-mono text-xs tabular-nums sm:inline">
+                    {pct(value)}
+                  </span>
+                </span>
+              </EventRow>
+            );
+          })}
+        </EventList>
       </section>
     </div>
   );

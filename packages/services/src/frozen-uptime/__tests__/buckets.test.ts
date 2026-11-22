@@ -192,12 +192,13 @@ describe("toLocalDays", () => {
     });
   });
 
-  test("a row frozen without ranges keeps its UTC days", () => {
+  test("a row frozen without ranges splits its checks, failures stay on the main day", () => {
     const days: FrozenMonitorUptimeDay[] = [
-      { day: "2026-10-31", requests: { ok: 940, degraded: 0, error: 20 } },
+      { day: "2026-10-31", requests: { ok: 960, degraded: 0, error: 20 } },
     ];
     expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
-      { day: "2026-10-31", ok: 940, degraded: 0, error: 20 },
+      { day: "2026-10-31", ok: 920, degraded: 0, error: 20 },
+      { day: "2026-11-01", ok: 40, degraded: 0, error: 0 },
     ]);
   });
 

@@ -185,24 +185,24 @@ describe("mergeLocalDays", () => {
     expect(merged.runs).toEqual([{ day: "2026-06-29", ...c(6) }]);
   });
 
-  test("a clean heartbeat month stays in UTC days and is flagged", () => {
+  test("a heartbeat month without quarter-hours still regroups into local days", () => {
     const frozen = [
       {
         month: "2026-06-01",
-        days: [{ day: "2026-06-10", requests: c(24) }],
+        days: [
+          { day: "2026-06-10", requests: { ok: 24, degraded: 0, error: 2 } },
+        ],
       },
     ];
-    const args = { frozen, live: [], timeZone: "America/New_York" };
-
-    const heartbeat = mergeLocalDays({ ...args, quarterHours: false });
-    expect(heartbeat.requests).toEqual([{ day: "2026-06-10", ...c(24) }]);
-    expect(heartbeat.utcOnlyMonths).toEqual(new Set(["2026-06"]));
-
-    const check = mergeLocalDays(args);
-    expect(check.requests.map((d) => d.day)).toEqual([
-      "2026-06-09",
-      "2026-06-10",
+    const heartbeat = mergeLocalDays({
+      frozen,
+      live: [],
+      timeZone: "America/New_York",
+      quarterHours: false,
+    });
+    expect(heartbeat.requests).toEqual([
+      { day: "2026-06-09", ...c(4) },
+      { day: "2026-06-10", ok: 20, degraded: 0, error: 2 },
     ]);
-    expect(check.utcOnlyMonths).toEqual(new Set());
   });
 });

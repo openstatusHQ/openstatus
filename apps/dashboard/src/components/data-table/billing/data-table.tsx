@@ -107,6 +107,13 @@ function FeatureValue({
       <span className="text-muted-foreground/50">&#8208;</span>
     );
   }
+  if (feature.value === "uptime-history" && typeof limitValue === "number") {
+    return limitValue > 0 ? (
+      `${limitValue} months`
+    ) : (
+      <span className="text-muted-foreground/50">&#8208;</span>
+    );
+  }
   if (typeof limitValue === "number") {
     return new Intl.NumberFormat("us").format(limitValue);
   }

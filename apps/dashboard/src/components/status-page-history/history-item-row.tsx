@@ -23,7 +23,7 @@ import {
   EXCUSE_EFFECT_SHORT,
   type UptimeMode,
 } from "@/data/uptime-calculation.client";
-import { formatDurationShort, formatWindow } from "@/lib/formatter";
+import { formatDurationShort, formatWindow, inTimeZone } from "@/lib/formatter";
 
 // a hollow dot: the monitor's own window, apart from the page's solid maintenance
 const WINDOW_DOT = "border-info border-[1.5px] bg-transparent";
@@ -115,9 +115,12 @@ function href(item: HistoryItem, pageId: string): string | undefined {
 export function HistoryItemRow({
   item,
   mode,
+  timeZone,
 }: {
   item: HistoryItem;
   mode: UptimeMode;
+  /** the zone the month was grouped in, so a row never shows a neighbouring month */
+  timeZone: string;
 }) {
   const { id: pageId } = useParams<{ id: string }>();
   const meta = [
@@ -129,12 +132,17 @@ export function HistoryItemRow({
         ? "checks paused"
         : "alerts muted"
       : null,
-    item.to ? formatWindow(item.from, item.to) : "ongoing",
+    item.to
+      ? formatWindow(
+          inTimeZone(item.from, timeZone),
+          inTimeZone(item.to, timeZone),
+        )
+      : "ongoing",
   ].filter((m): m is string => m !== null);
 
   return (
     <EventRow>
-      <EventRowDate date={item.from} />
+      <EventRowDate date={item.from} timeZone={timeZone} />
       <HistoryItemStatus item={item} />
       <EventRowContent>
         <EventRowTitle href={href(item, pageId)}>{title(item)}</EventRowTitle>

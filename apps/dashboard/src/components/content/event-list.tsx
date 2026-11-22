@@ -10,7 +10,7 @@ import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Link } from "@/components/common/link";
 import { UserAvatar } from "@/components/common/user-avatar";
 import { useHydrated } from "@/hooks/use-hydrated";
-import { formatEventDate } from "@/lib/formatter";
+import { formatEventDate, inTimeZone } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 
 /**
@@ -71,10 +71,13 @@ export function EventRow({ className, ...props }: React.ComponentProps<"li">) {
 
 export function EventRowDate({
   date,
+  timeZone,
   className,
   ...props
 }: Omit<React.ComponentProps<"time">, "dateTime" | "children"> & {
   date: Date;
+  /** Show the day in this zone instead of the browser's. */
+  timeZone?: string;
 }) {
   // local-time text differs between server and browser
   const hydrated = useHydrated();
@@ -92,7 +95,9 @@ export function EventRowDate({
         )}
         {...props}
       >
-        {hydrated ? formatEventDate(date) : null}
+        {hydrated
+          ? formatEventDate(timeZone ? inTimeZone(date, timeZone) : date)
+          : null}
       </time>
     </HoverCardTimestamp>
   );

@@ -61,9 +61,13 @@ export function Client() {
   // recomputed when the UTC month rolls over under an open tab
   const now = useNow(60_000);
   const utcMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
-  const range = useMemo(() => reportRange(new Date()), [utcMonth]);
-
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const historyMonths = workspace?.limits["uptime-history"] || 12;
+  const range = useMemo(
+    () => reportRange(new Date(), historyMonths),
+    [utcMonth, historyMonths],
+  );
+
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: monitorId }),
   );
@@ -74,7 +78,7 @@ export function Client() {
     }),
     placeholderData: (previous) => previous,
   });
-  const isLimited = workspace?.limits["uptime-history"] === false;
+  const isLimited = workspace?.limits["uptime-history"] === 0;
   const { data: history } = useQuery({
     ...trpc.monitor.getUptimeHistory.queryOptions({ id: monitorId }),
     enabled: !!workspace && !isLimited,
@@ -129,8 +133,8 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>
-            Availability over the last 12 months from outages, with monthly
-            figures and daily check success. Months and days in UTC.
+            Availability over the last {historyMonths} months from outages, with
+            monthly figures and daily check success. Months and days in UTC.
           </SectionDescription>
         </SectionHeader>
         {!isLimited ? (

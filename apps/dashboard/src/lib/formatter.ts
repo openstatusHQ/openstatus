@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import {
   differenceInCalendarDays,
   endOfDay,
@@ -187,6 +188,19 @@ export function formatClockOrDay(date: Date, now = new Date()): string {
   return isSameDay(date, now)
     ? formatClock(date)
     : format(date, "MMM d, HH:mm");
+}
+
+/** `date`'s wall clock in `timeZone` as a local Date: date-fns 3 `format` ignores TZDate. */
+export function inTimeZone(date: Date, timeZone: string): Date {
+  const d = new TZDate(date, timeZone);
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    d.getHours(),
+    d.getMinutes(),
+    d.getSeconds(),
+  );
 }
 
 /** Under a day "02:00 – 06:00", else "Oct 11 – Oct 15" (with years when they differ); the row's date carries the day. */

@@ -1013,7 +1013,7 @@ describe("getUptimeHistory", () => {
 
   test("throws ForbiddenError when plan disables uptime-history", async () => {
     await withTestTransaction(async (tx) => {
-      // Free plan: limits["uptime-history"] === false. Guard fires before
+      // Free plan: limits["uptime-history"] === 0. Guard fires before
       // any page lookup, so a fake id is fine.
       await expect(
         getUptimeHistory({
@@ -1036,7 +1036,7 @@ describe("getUptimeHistory", () => {
         ...freeCtx,
         workspace: {
           ...freeCtx.workspace,
-          limits: { ...freeCtx.workspace.limits, "uptime-history": true },
+          limits: { ...freeCtx.workspace.limits, "uptime-history": 12 },
         },
         db: tx,
       };
@@ -1536,7 +1536,6 @@ describe("getUptimeHistory in the page's time zone", () => {
         error: 0,
       });
       expect(res.rows[0].months["2026-09"]?.error).toBe(20);
-      expect(res.utcOnlyMonths).toEqual([]);
     });
   });
 
@@ -1587,15 +1586,15 @@ describe("getUptimeHistory in the page's time zone", () => {
     });
   });
 
-  test("a month frozen without ranges is flagged UTC-only on a zoned page", async () => {
+  test("a month frozen without ranges still groups in the page's days", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };
       const testMonitor = await insertMonitor(tx);
       const berlin = await insertPage(tx, { defaultTimezone: "Europe/Berlin" });
-      const utc = await insertPage(tx);
-      for (const p of [berlin, utc]) {
-        await insertComponent(tx, { pageId: p.id, monitorId: testMonitor.id });
-      }
+      await insertComponent(tx, {
+        pageId: berlin.id,
+        monitorId: testMonitor.id,
+      });
       await insertFrozen(tx, {
         monitorId: testMonitor.id,
         month: "2026-08-01",
@@ -1607,19 +1606,19 @@ describe("getUptimeHistory in the page's time zone", () => {
         days: quietMonth("2026-09"),
       });
 
-      const read = (pageId: number) =>
-        getUptimeHistory({
-          ctx,
-          input: { pageId },
-          pipes: makePipes([]),
-          runsPipes: makeRunsPipes(),
-          now: new Date("2026-10-20T12:00:00.000Z"),
-          sleep: noSleep,
-        });
-      const zoned = await read(berlin.id);
-      expect(zoned.utcOnlyMonths).toEqual(["2026-08"]);
-      expect(zoned.rows[0].months["2026-08"]?.ok).toBe(31 * 100);
-      expect((await read(utc.id)).utcOnlyMonths).toEqual([]);
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: berlin.id },
+        pipes: makePipes([]),
+        runsPipes: makeRunsPipes(),
+        now: new Date("2026-10-20T12:00:00.000Z"),
+        sleep: noSleep,
+      });
+      // CEST: the last 2 UTC hours of 08-31 belong to 09-01
+      expect(res.rows[0].months["2026-08"]?.ok).toBe(
+        Math.round(3100 - 100 / 12),
+      );
+      expect(res.rows[0].months["2026-08"]?.error).toBe(31);
     });
   });
 });

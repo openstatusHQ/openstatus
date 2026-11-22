@@ -129,7 +129,7 @@ export type LocalDayCount = {
 
 /**
  * Regroup frozen UTC days into days of `timeZone`; totals turn fractional.
- * Months without their 15-minute ranges come back as UTC days unchanged.
+ * Without 15-minute ranges, failures land on the local day holding most of the UTC day.
  */
 export function toLocalDays(
   days: FrozenMonitorUptimeDay[],
@@ -137,7 +137,7 @@ export function toLocalDays(
   measure: "requests" | "runs",
   hasRanges = hasBadRanges(days),
 ): LocalDayCount[] {
-  const regroup = timeZone !== "UTC" && hasRanges;
+  const regroup = timeZone !== "UTC";
   const byDay = new Map<string, LocalDayCount>();
   const add = (day: string, ok: number, degraded: number, error: number) => {
     const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
@@ -151,6 +151,21 @@ export function toLocalDays(
     if (!counts) continue;
     if (!regroup) {
       add(d.day, counts.ok, counts.degraded, counts.error);
+      continue;
+    }
+    if (!hasRanges) {
+      // splitting failures evenly would draw phantom downtime on a neighbour day
+      const local = localGroups(d.day, timeZone);
+      const main = local.reduce((a, b) => (b.n > a.n ? b : a));
+      for (const g of local) {
+        const isMain = g === main;
+        add(
+          g.day,
+          (counts.ok * g.n) / BUCKETS_PER_DAY,
+          isMain ? counts.degraded : 0,
+          isMain ? counts.error : 0,
+        );
+      }
       continue;
     }
     const dayTotal = counts.ok + counts.degraded + counts.error;

@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "@openstatus/db";
+import { and, asc, eq, gte, isNull } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   frozenMonitorUptimeDaySchema,
@@ -9,6 +9,7 @@ import { defaultTb, getReadDb, type ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { monthRange } from "./compute";
 import { fetchLiveDays, mergeLocalDays } from "./live";
+import { historyStart } from "./months";
 import {
   countsRuns,
   FREEZE_CUTOFF_MS,
@@ -47,11 +48,13 @@ export async function getMonitorUptimeHistory(args: {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
   const input = GetMonitorUptimeHistoryInput.parse(args.input);
-  if (!ctx.workspace.limits["uptime-history"]) {
+  const historyMonths = ctx.workspace.limits["uptime-history"];
+  if (!historyMonths) {
     throw new ForbiddenError("Uptime history is not enabled on this plan.");
   }
   const db = getReadDb(ctx);
   const nowMs = (args.now ?? new Date()).getTime();
+  const firstMonth = historyStart(nowMs, historyMonths);
 
   const _monitor = await db.query.monitor.findFirst({
     where: (monitor, { and: andWhere, eq: eqWhere }) =>
@@ -76,6 +79,7 @@ export async function getMonitorUptimeHistory(args: {
         and(
           eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
           eq(frozenMonitorUptime.monitorId, _monitor.id),
+          gte(frozenMonitorUptime.month, firstMonth),
         ),
       )
       .orderBy(asc(frozenMonitorUptime.month)),
@@ -102,8 +106,9 @@ export async function getMonitorUptimeHistory(args: {
   const covered = (d: DayCount) => {
     const month = d.day.slice(0, 7);
     return (
-      frozenMonths.has(month) ||
-      nowMs - monthRange(`${month}-01`).start < FREEZE_CUTOFF_MS
+      d.day >= firstMonth &&
+      (frozenMonths.has(month) ||
+        nowMs - monthRange(`${month}-01`).start < FREEZE_CUTOFF_MS)
     );
   };
   const runs = local.runs.filter(covered);

@@ -44,6 +44,8 @@ export const GetUptimeHistoryInput = z.object({
   pageId: z.number().int().positive(),
   /** Count under another calculation; omitted, the page's own configuration. */
   mode: z.enum(pageCardValues).optional(),
+  /** Months to cover, capped at the plan's; omitted, a year or the plan's if fewer. */
+  months: z.number().int().positive().optional(),
 });
 export type GetUptimeHistoryInput = z.infer<typeof GetUptimeHistoryInput>;
 

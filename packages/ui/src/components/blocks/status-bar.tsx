@@ -813,7 +813,7 @@ export function StatusBarEvent({
   type: StatusEventType;
   isAggregated?: boolean;
   /** Overrides the type-derived dot color (e.g. the day's worst report impact). */
-  status?: Exclude<StatusType, "empty">;
+  status?: StatusType;
 }) {
   const labels = useStatusBlocksLabels();
   if (!from) return null;
@@ -831,9 +831,7 @@ export function StatusBarEvent({
         <div className="flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 shrink-0 rounded-lg"
-            style={{
-              backgroundColor: statusColors[status],
-            }}
+            style={{ backgroundColor: statusColors[status] }}
           />
           <div className="truncate">{name}</div>
         </div>

@@ -28,7 +28,7 @@ export const config: Record<
       { value: "regions", label: "Total regions" },
       { value: "max-regions", label: "Regions per monitor" },
       { value: "data-retention", label: "Data retention" },
-      { value: "uptime-history", label: "Uptime history (12 months)" },
+      { value: "uptime-history", label: "Uptime history" },
       { value: "response-logs", label: "Response Logs" },
       { value: "private-locations", label: "Private Locations" },
       { value: "otel", label: "OTel Exporter" },

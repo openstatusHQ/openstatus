@@ -32,7 +32,12 @@ import {
   type LocalDays,
   mergeLocalDays,
 } from "./live";
-import { canonicalTimeZone, monthOf, monthsBetween } from "./months";
+import {
+  canonicalTimeZone,
+  historyStart,
+  monthOf,
+  monthsBetween,
+} from "./months";
 import type { Counts } from "./quorum";
 import {
   FREEZE_CUTOFF_MS,
@@ -41,8 +46,6 @@ import {
   type UptimeRunsPipes,
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
-
-const HISTORY_MONTHS = 12;
 
 type DayCount = { day: string; ok: number; degraded: number; error: number };
 
@@ -106,10 +109,8 @@ type UptimeHistoryResult = {
   configuredMode: "requests" | "runs" | "duration" | "manual";
   /** the page's zone that months and days are grouped in */
   timeZone: string;
-  /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
+  /** oldest → newest, as many as the plan keeps, last entry = current month */
   months: string[];
-  /** months frozen without quarter-hour ranges, so still grouped in UTC days */
-  utcOnlyMonths: string[];
   createdAt: Date | null;
   /** live counts failed for a monitor, so recent months may be missing */
   partial: boolean;
@@ -123,11 +124,11 @@ type UptimeHistoryResult = {
   rows: UptimeHistoryRow[];
 };
 
-function monthKeys(now: Date, timeZone: string): string[] {
-  const current = monthOf(now, timeZone);
-  const [year, month] = current.split("-").map(Number);
-  const first = new Date(Date.UTC(year, month - HISTORY_MONTHS, 1));
-  return monthsBetween(first.toISOString(), current).map((m) => m.slice(0, 7));
+function monthKeys(now: Date, timeZone: string, count: number): string[] {
+  return monthsBetween(
+    historyStart(now, count, timeZone),
+    monthOf(now, timeZone),
+  ).map((m) => m.slice(0, 7));
 }
 
 function requestsMonth(days: DayCount[] | null): MonthValue {
@@ -269,9 +270,11 @@ export async function getUptimeHistory(args: {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
   const input = GetUptimeHistoryInput.parse(args.input);
-  if (!ctx.workspace.limits["uptime-history"]) {
+  const limit = ctx.workspace.limits["uptime-history"];
+  if (!limit) {
     throw new ForbiddenError("Uptime history is not enabled on this plan.");
   }
+  const historyMonths = Math.min(input.months ?? 12, limit);
   const db = getReadDb(ctx);
   const now = args.now ?? new Date();
   const nowMs = now.getTime();
@@ -316,7 +319,7 @@ export async function getUptimeHistory(args: {
   const countsRequests = mode === "requests" || mode === "runs";
 
   const timeZone = canonicalTimeZone(_page.defaultTimezone) ?? "UTC";
-  const months = monthKeys(now, timeZone);
+  const months = monthKeys(now, timeZone, historyMonths);
 
   const components = _page.pageComponents;
   const monitorIds = [
@@ -417,7 +420,7 @@ export async function getUptimeHistory(args: {
     return days.length > 0 ? days : null;
   }
 
-  const pastDays = HISTORY_MONTHS * 31 + 7;
+  const pastDays = historyMonths * 31 + 7;
   const rows: Omit<UptimeHistoryRow, keyof HistoryAnnotations>[] =
     components.map((c) => {
       const events = getEvents({
@@ -547,21 +550,11 @@ export async function getUptimeHistory(args: {
     reports: reports.size,
   };
 
-  // heartbeat months are measured in time, never from the frozen days
-  const utcOnlyMonths = new Set<string>();
-  for (const c of components) {
-    if (c.monitorId === null || c.monitor?.jobType === "heartbeat") continue;
-    for (const m of localDaysOf(c.monitorId).utcOnlyMonths) {
-      utcOnlyMonths.add(m);
-    }
-  }
-
   return {
     mode,
     configuredMode,
     timeZone,
     months,
-    utcOnlyMonths: months.filter((m) => utcOnlyMonths.has(m)),
     createdAt: _page.createdAt,
     partial: liveFailed.size > 0,
     runsPartial:

@@ -44,6 +44,7 @@ import {
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { CalculationSelect } from "@/components/status-page-history/calculation-select";
 import { HistoryOverview } from "@/components/status-page-history/history-overview";
+import { PeriodSelect } from "@/components/status-page-history/period-select";
 import {
   UptimeCalculation,
   UptimeModeTiles,
@@ -53,6 +54,7 @@ import {
   UPTIME_DOCS_URL,
   UPTIME_MODES,
 } from "@/data/uptime-calculation.client";
+import { defaultHistoryPeriod } from "@/data/uptime-history.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { buildExampleHistory } from "./examples";
@@ -61,7 +63,7 @@ import { searchParamsParsers } from "./search-params";
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const [{ calculation }, setSearchParams] =
+  const [{ calculation, period, month }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -69,15 +71,17 @@ export function Client() {
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const isLimited = workspace?.limits["uptime-history"] === false;
+  const historyLimit = workspace?.limits["uptime-history"] ?? 0;
+  const isLimited = workspace?.limits["uptime-history"] === 0;
 
   const { data: liveHistory } = useQuery({
     ...trpc.page.getUptimeHistory.queryOptions({
       id: Number.parseInt(id),
       mode: calculation ?? undefined,
+      months: period ?? undefined,
     }),
     enabled: !!workspace && !isLimited,
-    // switching the calculation keeps the last numbers until the new ones land
+    // switching calculation or period keeps the last numbers until the new ones land
     placeholderData: keepPreviousData,
   });
 
@@ -112,12 +116,11 @@ export function Client() {
 
   const overview = (
     <HistoryOverview
-      // a new calculation starts again from the latest month
-      key={current.value}
       rows={rows}
       months={history.months}
+      month={month}
+      onMonthChange={(next) => setSearchParams({ month: next })}
       timeZone={history.timeZone}
-      utcOnlyMonths={history.utcOnlyMonths}
       uptime={uptime}
       mode={current.value}
       isPreview={isPreview}
@@ -141,8 +144,16 @@ export function Client() {
             <CalculationSelect
               value={current.value}
               configured={configured.value}
-              configurationHref={configurationHref}
               onValueChange={(mode) => setSearchParams({ calculation: mode })}
+            />{" "}
+            over the{" "}
+            <PeriodSelect
+              value={Math.min(
+                period ?? defaultHistoryPeriod(historyLimit),
+                historyLimit,
+              )}
+              limit={historyLimit}
+              onValueChange={(next) => setSearchParams({ period: next })}
             />{" "}
             {isPreview ? (
               <>
@@ -189,15 +200,6 @@ export function Client() {
             couldn&apos;t be loaded, so the latest months may be incomplete.
           </Note>
         ) : null}
-        {!isLimited &&
-        history.timeZone !== "UTC" &&
-        history.utcOnlyMonths.length > 0 ? (
-          <Note size="sm">
-            <Info />
-            Months marked UTC were frozen before days could be regrouped, so
-            their days follow UTC rather than {history.timeZone}.
-          </Note>
-        ) : null}
       </Section>
       <Section id="history-overview">
         {isLimited ? (
@@ -238,15 +240,6 @@ export function Client() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         )}
-        {!isLimited ? (
-          <NoteDismissible cookieKey="note_status_page_history_missing_months">
-            <Info />
-            Is a month missing that your monitors were running? Let us know.
-            <FormDialogSupportContact>
-              <NoteButton variant="default">Contact us</NoteButton>
-            </FormDialogSupportContact>
-          </NoteDismissible>
-        ) : null}
       </Section>
       <Section id="uptime-calculation">
         <FormCard id="how-uptime-is-calculated">

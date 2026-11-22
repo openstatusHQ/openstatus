@@ -17,7 +17,7 @@ import {
 import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import { ValidationError } from "../errors";
-import { splitByMonth } from "../frozen-uptime/months";
+import { historyStart, splitByMonth } from "../frozen-uptime/months";
 import { getMonitorInWorkspace } from "../monitor/internal";
 import { clampInterval, floorPct, mergedDowntimeMs } from "../status-timeline";
 import {
@@ -155,8 +155,12 @@ export async function getMonitorReport(args: {
     r.resolvedAt ? [r.resolvedAt.getTime() - r.startedAt.getTime()] : [],
   );
 
-  const parts = ctx.workspace.limits["uptime-history"]
-    ? splitByMonth(window.start, window.end)
+  const historyMonths = ctx.workspace.limits["uptime-history"];
+  const firstMonth = historyStart(nowMs, historyMonths);
+  const parts = historyMonths
+    ? splitByMonth(window.start, window.end).filter(
+        (part) => part.month >= firstMonth,
+      )
     : [];
   const months = parts.map((part) => {
     const w = { start: part.start, end: part.end, now: nowMs };
