@@ -1,31 +1,88 @@
 "use client";
 
+import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import { Calendar } from "@openstatus/icons";
 import {
   StatusCalendar,
   type StatusCalendarMarker,
 } from "@openstatus/ui/components/blocks/status-calendar";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@openstatus/ui/components/ui/hover-card";
+import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
-import {
-  eachDayOfInterval,
-  format,
-  formatDistanceStrict,
-  startOfDay,
-} from "date-fns";
+import { addDays, eachDayOfInterval, format, startOfDay } from "date-fns";
+import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { truncatePercentage } from "@/lib/formatter";
+import { StatusBars } from "@/components/common/status-bars";
+import { StatusDot } from "@/components/common/status-dot";
+import {
+  Activity,
+  ActivityHeader,
+  type ActivityMark,
+  ActivityPeriod,
+  ActivityTitle,
+} from "@/components/content/activity";
+import {
+  ActivityCalendar,
+  ActivityCalendarCell,
+  ActivityCalendarGrid,
+  ActivityCalendarLegend,
+  ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
+  type ActivityDay,
+  type ActivityLink,
+} from "@/components/content/activity-calendar";
+import {
+  ComponentList,
+  ComponentListItem,
+  ComponentListName,
+} from "@/components/content/component-list";
+import {
+  EmptyStateDescription,
+  EmptyStateMedia,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  EventGroup,
+  EventGroupCount,
+  EventGroupEmpty,
+  EventGroupHeader,
+  EventGroupHint,
+  EventGroupTitle,
+} from "@/components/content/event-group";
+import {
+  EventList,
+  EventRow,
+  EventRowContent,
+  EventRowDate,
+  EventRowDuration,
+  EventRowMeta,
+  EventRowStatus,
+  EventRowTitle,
+} from "@/components/content/event-list";
+import {
+  MetricStrip,
+  MetricStripButton,
+  MetricStripItem,
+  MetricStripLabel,
+  MetricStripRow,
+  MetricStripValue,
+} from "@/components/metric/metric-strip";
+import { activityDayLines, spansOnDay } from "@/data/activity.client";
+import { downtimeActivity } from "@/data/incidents.client";
+import { maintenanceActivity } from "@/data/maintenances.client";
+import { impactDisplay } from "@/data/status-report-updates.client";
+import { impactLevels } from "@/data/status-reports.client";
+import {
+  formatDurationShort,
+  formatWindow,
+  truncatePercentage,
+} from "@/lib/formatter";
 
 import {
   type PageEvent,
   type Row,
   type UptimeHistory,
   downtimeMinutes,
-  eventFill,
   eventsInMonth,
   formatDowntime,
   monthDate,
@@ -36,42 +93,189 @@ import {
 const pct = (v: number | null | undefined) =>
   v === null || v === undefined ? "–" : `${truncatePercentage(v)}%`;
 
-function EventLine({ event }: { event: PageEvent }) {
+// prototype data has no impact rows; the real report carries its worst impact
+function reportImpact(event: PageEvent): PageComponentImpact {
+  return event.name.toLowerCase().includes("outage")
+    ? "partial_outage"
+    : "degraded_performance";
+}
+
+const durationOf = (e: PageEvent) =>
+  (e.to ?? new Date()).getTime() - e.from.getTime();
+
+function eventHref(event: PageEvent, pageId: string): string | undefined {
+  if (event.type === "report") return `/status-pages/${pageId}/status-reports`;
+  if (event.type === "maintenance")
+    return `/status-pages/${pageId}/maintenances`;
+  return undefined;
+}
+
+/** Same indicator + label as StatusReportRow, MaintenanceRow and MonitorIncidentRow with `kind`. */
+function HistoryEventStatus({ event }: { event: PageEvent }) {
+  if (event.type === "maintenance") {
+    return (
+      <EventRowStatus>
+        <StatusDot variant="info" />
+        <span>Maintenance</span>
+      </EventRowStatus>
+    );
+  }
+  if (event.type === "report") {
+    const impact = reportImpact(event);
+    return (
+      <EventRowStatus>
+        <StatusBars
+          level={impactLevels[impact]}
+          variant={impactDisplay(impact).variant}
+        />
+        <span>Report</span>
+      </EventRowStatus>
+    );
+  }
+  const { level } = downtimeActivity(durationOf(event));
   return (
-    <div className="flex items-start gap-2 text-xs">
-      <span
-        className={cn("mt-1 size-2 shrink-0 rounded-xs", eventFill[event.type])}
+    <EventRowStatus>
+      <StatusBars
+        level={level}
+        variant={level === 3 ? "destructive" : "warning"}
       />
-      <div className="grid min-w-0 gap-0.5">
-        <span className="text-foreground truncate">{event.name}</span>
-        <span className="text-muted-foreground truncate">
-          {format(event.from, "MMM d, HH:mm")} ·{" "}
-          {event.to ? formatDistanceStrict(event.from, event.to) : "ongoing"} ·{" "}
-          {event.components.join(", ")}
-        </span>
-      </div>
-    </div>
+      <span>Outage</span>
+    </EventRowStatus>
   );
 }
 
-function Legend() {
+function HistoryEventRow({ event }: { event: PageEvent }) {
+  const { id: pageId } = useParams<{ id: string }>();
   return (
-    <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-      {(
-        [
-          ["incident", "Outage"],
-          ["report", "Status report"],
-          ["maintenance", "Maintenance"],
-        ] as const
-      ).map(([type, label]) => (
-        <span key={type} className="flex items-center gap-1.5">
-          <span className={cn("size-2 rounded-xs", eventFill[type])} />
-          {label}
-        </span>
-      ))}
-    </div>
+    <EventRow>
+      <EventRowDate date={event.from} />
+      <HistoryEventStatus event={event} />
+      <EventRowContent>
+        <EventRowTitle href={eventHref(event, pageId)}>
+          {event.name}
+        </EventRowTitle>
+        <EventRowMeta>
+          <span>{event.components.join(", ")}</span>
+          {event.to ? <span>{formatWindow(event.from, event.to)}</span> : null}
+        </EventRowMeta>
+      </EventRowContent>
+      <EventRowDuration>
+        {formatDurationShort(durationOf(event))}
+      </EventRowDuration>
+    </EventRow>
   );
 }
+
+// ---------- year calendar: the dashboard's activity grid, Overview's day rules ----------
+
+type Entry = ActivityMark & { lead: string };
+
+const rank = (m: ActivityMark) =>
+  m.hatched ? 0 : m.scale === "failure" ? 4 + m.level : m.level;
+
+function activityDays(
+  events: PageEvent[],
+  from: Date,
+  now: Date,
+  pageId: string,
+): ActivityDay[] {
+  return eachDayOfInterval({ start: from, end: now }).map((date) => {
+    const start = startOfDay(date);
+    const end = addDays(start, 1);
+    const items = events.filter((e) => e.from < end && (e.to ?? now) >= start);
+    if (items.length === 0) return { date };
+    const span = (e: PageEvent) => ({ start: e.from, end: e.to });
+    const entries: Entry[] = [];
+    for (const e of items.filter((i) => i.type === "report")) {
+      const impact = reportImpact(e);
+      entries.push({
+        scale: "failure",
+        level: impactLevels[impact],
+        lead: `${impactDisplay(impact).label} · ${e.name}`,
+      });
+    }
+    const outages = items.filter((i) => i.type === "incident");
+    if (outages.length > 0) {
+      const down = spansOnDay(date, outages.map(span), now);
+      entries.push({
+        ...downtimeActivity(down),
+        lead: `${formatDurationShort(down)} down · ${outages[0].components.join(", ")}`,
+      });
+    }
+    const maintenances = items.filter((i) => i.type === "maintenance");
+    if (maintenances.length > 0) {
+      const planned = spansOnDay(date, maintenances.map(span), now);
+      entries.push({
+        ...maintenanceActivity(planned),
+        level: 2,
+        lead: `${formatDurationShort(planned)} · ${maintenances[0].name}`,
+      });
+    }
+    entries.sort((a, b) => rank(b) - rank(a));
+    const [top, ...rest] = entries;
+    const links: ActivityLink[] = items.flatMap((e) => {
+      const href = eventHref(e, pageId);
+      return href
+        ? [
+            {
+              href,
+              title: e.name,
+              kind: e.type === "report" ? "Report" : "Maintenance",
+            },
+          ]
+        : [];
+    });
+    return {
+      date,
+      scale: top.scale,
+      level: top.level,
+      hatched: top.hatched,
+      lines: activityDayLines(
+        top.lead,
+        rest.map((r) => r.lead.split(" · ")[0]),
+      ),
+      links: links.length > 0 ? links : undefined,
+    };
+  });
+}
+
+function YearCalendar({ events, from }: { events: PageEvent[]; from: Date }) {
+  const { id: pageId } = useParams<{ id: string }>();
+  const days = useMemo(
+    () => activityDays(events, from, new Date(), pageId),
+    [events, from, pageId],
+  );
+  return (
+    <ActivityCalendar>
+      <ActivityCalendarGrid days={days} />
+      <ActivityCalendarLegend>
+        <ActivityCalendarLegendItem>
+          <ActivityCalendarCell />
+          None
+        </ActivityCalendarLegendItem>
+        <ActivityCalendarLegendItem>
+          <ActivityCalendarCell level={1} />
+          Low
+        </ActivityCalendarLegendItem>
+        <ActivityCalendarLegendItem>
+          <ActivityCalendarCell level={2} />
+          Mid
+        </ActivityCalendarLegendItem>
+        <ActivityCalendarLegendItem>
+          <ActivityCalendarCell level={3} />
+          High
+        </ActivityCalendarLegendItem>
+        <ActivityCalendarLegendSeparator />
+        <ActivityCalendarLegendItem>
+          <ActivityCalendarCell scale="planned" level={2} />
+          Maintenance
+        </ActivityCalendarLegendItem>
+      </ActivityCalendarLegend>
+    </ActivityCalendar>
+  );
+}
+
+// ---------- month calendar: the public status page block ----------
 
 function toMarkers(events: PageEvent[]): StatusCalendarMarker[] {
   return events.flatMap((e) =>
@@ -90,7 +294,63 @@ function toMarkers(events: PageEvent[]): StatusCalendarMarker[] {
   );
 }
 
-/** Neutral bars, height relative to the largest value; null is no data. */
+// ---------- months: downtime bars on metric strip buttons ----------
+
+function MonthStrip({
+  history,
+  selected,
+  onSelect,
+}: {
+  history: UptimeHistory;
+  selected: string;
+  onSelect: (key: string) => void;
+}) {
+  const { months, rows } = history;
+  const downs = months.map((k) => downtimeMinutes(pageMonth(rows, k), k));
+  const max = Math.max(1, ...downs.map((d) => d ?? 0));
+  return (
+    <MetricStrip>
+      <MetricStripRow>
+        {months.map((key, i) => {
+          const d = downs[i];
+          return (
+            <MetricStripButton
+              key={key}
+              aria-pressed={key === selected}
+              aria-label={`${format(monthDate(key), "MMMM yyyy")}: ${formatDowntime(d)} downtime`}
+              onClick={() => onSelect(key)}
+            >
+              <MetricStripLabel>
+                {format(monthDate(key), "MMM")}
+              </MetricStripLabel>
+              {/* neutral on purpose: we don't know the customer's target */}
+              <span
+                aria-hidden
+                className="hidden h-8 w-full items-end border-b @3xl:flex"
+              >
+                {d !== null ? (
+                  <span
+                    className={cn(
+                      "w-full rounded-t-[2px]",
+                      key === selected
+                        ? "bg-foreground/70"
+                        : "bg-foreground/15",
+                    )}
+                    style={{ height: `${Math.max(6, (d / max) * 100)}%` }}
+                  />
+                ) : null}
+              </span>
+              <MetricStripValue className="text-sm">
+                {formatDowntime(d)}
+              </MetricStripValue>
+            </MetricStripButton>
+          );
+        })}
+      </MetricStripRow>
+    </MetricStrip>
+  );
+}
+
 function DowntimeSpark({
   values,
   selected,
@@ -100,7 +360,7 @@ function DowntimeSpark({
 }) {
   const max = Math.max(1, ...values.map((v) => v ?? 0));
   return (
-    <span aria-hidden className="flex h-[18px] w-[72px] items-end gap-px">
+    <span aria-hidden className="flex h-4 w-[72px] items-end gap-px">
       {values.map((v, i) =>
         v === null ? (
           <span
@@ -112,9 +372,9 @@ function DowntimeSpark({
             key={i}
             className={cn(
               "flex-1 rounded-[1px]",
-              i === selected ? "bg-foreground/80" : "bg-foreground/15",
+              i === selected ? "bg-foreground/70" : "bg-foreground/15",
             )}
-            style={{ height: `${Math.max(6, (v / max) * 100)}%` }}
+            style={{ height: `${Math.max(8, (v / max) * 100)}%` }}
           />
         ),
       )}
@@ -122,7 +382,7 @@ function DowntimeSpark({
   );
 }
 
-function ComponentList({
+function Components({
   rows,
   months,
   selected,
@@ -133,119 +393,34 @@ function ComponentList({
 }) {
   const index = months.indexOf(selected);
   return (
-    <div className="divide-y">
-      {rows.map((row) => {
-        const v = row.months[selected]?.percentage ?? null;
-        const downs = months.map((k) =>
-          downtimeMinutes(row.months[k]?.percentage, k),
-        );
-        return (
-          <div
-            key={row.component.id}
-            className="grid grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-3 py-2 text-sm"
-          >
-            <span className="truncate">{row.component.name}</span>
-            <DowntimeSpark values={downs} selected={index} />
-            <span
-              className={cn(
-                "text-right font-mono text-xs",
-                v === null && "text-muted-foreground/50",
-              )}
-            >
-              {pct(v)}
-              <span className="text-muted-foreground block text-[11px]">
-                {v === null ? "no data" : formatDowntime(downs[index])}
-              </span>
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function MonthStrip({
-  history,
-  events,
-  selected,
-  onSelect,
-}: {
-  history: UptimeHistory;
-  events: PageEvent[];
-  selected: string;
-  onSelect: (key: string) => void;
-}) {
-  const { months, rows } = history;
-  const downs = months.map((k) => downtimeMinutes(pageMonth(rows, k), k));
-  const max = Math.max(1, ...downs.map((d) => d ?? 0));
-  return (
-    <div className="grid grid-cols-6 border-y sm:grid-cols-12">
-      {months.map((key, i) => {
-        const isSelected = key === selected;
-        const monthEvents = eventsInMonth(events, key);
-        const d = downs[i];
-        return (
-          <HoverCard key={key} openDelay={150} closeDelay={50}>
-            <HoverCardTrigger asChild>
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => onSelect(key)}
-                className={cn(
-                  "hover:bg-muted/50 flex min-w-0 flex-col items-stretch gap-1.5 p-2 text-left transition-colors",
-                  isSelected && "bg-muted",
-                )}
-              >
+    <div className="bg-card rounded-lg border px-3 py-2">
+      <ComponentList>
+        {rows.map((row) => {
+          const v = row.months[selected]?.percentage ?? null;
+          const downs = months.map((k) =>
+            downtimeMinutes(row.months[k]?.percentage, k),
+          );
+          return (
+            <ComponentListItem key={row.component.id}>
+              <ComponentListName>{row.component.name}</ComponentListName>
+              <span className="ml-auto flex shrink-0 items-center gap-3">
+                <DowntimeSpark values={downs} selected={index} />
                 <span
                   className={cn(
-                    "text-muted-foreground text-xs",
-                    isSelected && "text-foreground font-medium",
+                    "w-16 text-right font-mono text-xs tabular-nums",
+                    v === null && "text-muted-foreground/50",
                   )}
                 >
-                  {format(monthDate(key), "MMM")}
+                  {v === null ? "no data" : formatDowntime(downs[index])}
                 </span>
-                <span className="flex h-10 items-end border-b">
-                  {d !== null ? (
-                    <span
-                      className={cn(
-                        "w-full rounded-t-[3px] transition-colors",
-                        isSelected ? "bg-foreground/80" : "bg-foreground/15",
-                      )}
-                      style={{ height: `${Math.max(4, (d / max) * 100)}%` }}
-                    />
-                  ) : null}
+                <span className="text-muted-foreground hidden w-16 text-right font-mono text-xs tabular-nums sm:inline">
+                  {pct(v)}
                 </span>
-                <span className="truncate font-mono text-xs">
-                  {formatDowntime(d)}
-                </span>
-                <span className="text-muted-foreground hidden truncate font-mono text-[11px] sm:block">
-                  {pct(pageMonth(rows, key))}
-                </span>
-                <span className="flex h-1.5 gap-0.5">
-                  {monthEvents.slice(0, 4).map((e) => (
-                    <span
-                      key={`${e.type}-${e.id}`}
-                      className={cn("size-1.5 rounded-full", eventFill[e.type])}
-                    />
-                  ))}
-                </span>
-              </button>
-            </HoverCardTrigger>
-            <HoverCardContent className="grid w-64 gap-2 p-3 text-xs">
-              <div className="flex justify-between font-medium">
-                <span>{format(monthDate(key), "MMMM yyyy")}</span>
-                <span className="font-mono">{pct(pageMonth(rows, key))}</span>
-              </div>
-              <span className="text-muted-foreground">
-                Downtime {formatDowntime(d)}
               </span>
-              {monthEvents.map((e) => (
-                <EventLine key={`${e.type}-${e.id}`} event={e} />
-              ))}
-            </HoverCardContent>
-          </HoverCard>
-        );
-      })}
+            </ComponentListItem>
+          );
+        })}
+      </ComponentList>
     </div>
   );
 }
@@ -253,95 +428,122 @@ function MonthStrip({
 export function HistoryOverview({ history }: { history: UptimeHistory }) {
   const { months, rows, summary } = history;
   const [selected, setSelected] = useState(months[months.length - 1]);
+  const [view, setView] = useState<"year" | "month">("year");
   const events = useMemo(() => pageEvents(rows), [rows]);
   const markers = useMemo(() => toMarkers(events), [events]);
-  const index = months.indexOf(selected);
-  const v = pageMonth(rows, selected);
-  const previous = index > 0 ? pageMonth(rows, months[index - 1]) : null;
-  const delta = v !== null && previous !== null ? v - previous : null;
+  const from = useMemo(() => monthDate(months[0]), [months]);
   const monthEvents = eventsInMonth(events, selected);
+  const v = pageMonth(rows, selected);
   const totalDown = months.reduce(
     (a, k) => a + (downtimeMinutes(pageMonth(rows, k), k) ?? 0),
     0,
   );
+  const isCurrent = selected === months[months.length - 1];
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg border">
-      <div className="flex flex-wrap items-end gap-x-8 gap-y-3 px-4 py-3">
-        {[
-          ["Uptime · 12 months", pct(summary.uptime)],
-          ["Downtime", formatDowntime(totalDown)],
-          ["Events", String(events.length)],
-          ["Components", String(rows.length)],
-        ].map(([label, value]) => (
-          <div key={label} className="grid gap-0.5">
-            <span className="text-muted-foreground text-xs">{label}</span>
-            <span className="font-mono text-lg font-medium">{value}</span>
-          </div>
-        ))}
-        <div className="ml-auto">
-          <Legend />
-        </div>
-      </div>
-      <MonthStrip
-        history={history}
-        events={events}
-        selected={selected}
-        onSelect={setSelected}
-      />
-      <div className="grid md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <StatusCalendar
-          markers={markers}
-          month={monthDate(selected)}
-          onMonthChange={(m) => {
-            const key = format(m, "yyyy-MM");
-            if (months.includes(key)) setSelected(key);
-          }}
-          disableFuture
-          className="rounded-none border-0 md:border-r"
-          title={
-            <span className="flex flex-wrap items-baseline gap-2">
-              All components
-              <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
-                {pct(v)}
-              </span>
-              {delta !== null ? (
-                <span className="text-muted-foreground font-mono text-xs">
-                  {delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(3)} pp
-                </span>
-              ) : null}
-            </span>
-          }
+    <div className="flex flex-col gap-6">
+      <MetricStrip>
+        <MetricStripRow>
+          <MetricStripItem>
+            <MetricStripLabel>Uptime</MetricStripLabel>
+            <MetricStripValue>{pct(summary.uptime)}</MetricStripValue>
+          </MetricStripItem>
+          <MetricStripItem>
+            <MetricStripLabel>Downtime</MetricStripLabel>
+            <MetricStripValue>{formatDowntime(totalDown)}</MetricStripValue>
+          </MetricStripItem>
+          <MetricStripItem>
+            <MetricStripLabel>Events</MetricStripLabel>
+            <MetricStripValue>{events.length}</MetricStripValue>
+          </MetricStripItem>
+          <MetricStripItem>
+            <MetricStripLabel>Components</MetricStripLabel>
+            <MetricStripValue>{rows.length}</MetricStripValue>
+          </MetricStripItem>
+        </MetricStripRow>
+      </MetricStrip>
+
+      <Activity>
+        <ActivityHeader>
+          <ActivityTitle>Downtime by month</ActivityTitle>
+          <ActivityPeriod>Pick a month for its events</ActivityPeriod>
+        </ActivityHeader>
+        <MonthStrip
+          history={history}
+          selected={selected}
+          onSelect={setSelected}
         />
-        <div className="grid content-start gap-5 border-t p-4 md:border-t-0">
-          <div className="grid gap-1">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium">Components</span>
-              <span className="text-muted-foreground text-xs">
-                Downtime, 12 months
-              </span>
-            </div>
-            <ComponentList rows={rows} months={months} selected={selected} />
-          </div>
-          <div className="grid gap-3">
-            <span className="text-sm font-medium">
-              Events{" "}
-              <span className="text-muted-foreground font-normal">
-                {monthEvents.length}
-              </span>
-            </span>
-            {monthEvents.length === 0 ? (
-              <span className="text-muted-foreground text-xs">
-                Nothing happened this month.
-              </span>
-            ) : (
-              monthEvents.map((e) => (
-                <EventLine key={`${e.type}-${e.id}`} event={e} />
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+      </Activity>
+
+      <Activity>
+        <ActivityHeader>
+          <ActivityTitle>Activity</ActivityTitle>
+          <Tabs
+            value={view}
+            onValueChange={(next) =>
+              setView(next === "month" ? "month" : "year")
+            }
+          >
+            <TabsList>
+              <TabsTrigger value="year">Year</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </ActivityHeader>
+        {view === "year" ? (
+          <YearCalendar events={events} from={from} />
+        ) : (
+          <StatusCalendar
+            markers={markers}
+            month={monthDate(selected)}
+            onMonthChange={(m) => {
+              const key = format(m, "yyyy-MM");
+              if (months.includes(key)) setSelected(key);
+            }}
+            disableFuture
+            title="All components"
+          />
+        )}
+      </Activity>
+
+      <EventGroup>
+        <EventGroupHeader>
+          <EventGroupTitle>
+            {format(monthDate(selected), "MMMM yyyy")}
+            <EventGroupCount>{monthEvents.length}</EventGroupCount>
+          </EventGroupTitle>
+          <EventGroupHint>
+            {pct(v)} · {formatDowntime(downtimeMinutes(v, selected))} down
+            {isCurrent ? " · in progress" : ""}
+          </EventGroupHint>
+        </EventGroupHeader>
+        <EventList>
+          {monthEvents.map((e) => (
+            <HistoryEventRow key={`${e.type}-${e.id}`} event={e} />
+          ))}
+        </EventList>
+        <EventGroupEmpty>
+          <EmptyStateMedia>
+            <Calendar />
+          </EmptyStateMedia>
+          <EmptyStateTitle>Quiet month</EmptyStateTitle>
+          <EmptyStateDescription>
+            No outages, status reports or maintenances.
+          </EmptyStateDescription>
+        </EventGroupEmpty>
+      </EventGroup>
+
+      {/* not an EventGroup: that hides itself without event rows */}
+      <section className="flex flex-col gap-2">
+        <EventGroupHeader>
+          <EventGroupTitle>
+            Components
+            <EventGroupCount>{rows.length}</EventGroupCount>
+          </EventGroupTitle>
+          <EventGroupHint>Downtime per month, last 12 months</EventGroupHint>
+        </EventGroupHeader>
+        <Components rows={rows} months={months} selected={selected} />
+      </section>
     </div>
   );
 }
