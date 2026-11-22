@@ -1,8 +1,8 @@
 "use client";
 
 import { Info, Lock } from "@openstatus/icons";
-import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
@@ -20,10 +20,8 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
-  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { columns as monthColumns } from "@/components/data-table/monitor-report-months/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
@@ -34,97 +32,130 @@ import {
   MetricStripRow,
   MetricStripValue,
 } from "@/components/metric/metric-strip";
-import { UptimeMetricTabs } from "@/components/metric/uptime-metric-tabs";
-import { CheckSuccessHeatmap } from "@/components/monitor-report/check-success-heatmap";
-import { DataTable } from "@/components/ui/data-table/data-table";
+import { MonitorHistoryOverview } from "@/components/monitor-history/monitor-history-overview";
+import { PeriodSelect } from "@/components/status-page-history/period-select";
+import {
+  type Checks,
+  checkSuccess,
+  historyMonths,
+  sumChecks,
+} from "@/data/monitor-history.client";
 import {
   exampleReportMonths,
   formatAvailability,
   rarelyOpensOutages,
   reportRange,
 } from "@/data/monitor-report.client";
-import { exampleUptimeCounts } from "@/data/uptime-history.client";
+import {
+  type CheckCounts,
+  checkHistorySince,
+  historyPeriodMonths,
+  exampleUptimeCounts,
+} from "@/data/uptime-history.client";
 import { useNow } from "@/hooks/use-now";
-import { formatDurationShort } from "@/lib/formatter";
+import { formatDurationShort, formatNumber } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
+
+function ChecksItem({
+  label,
+  checks,
+}: {
+  label: string;
+  checks: Checks | null;
+}) {
+  return (
+    <MetricStripItem>
+      <MetricStripLabel>{label}</MetricStripLabel>
+      <MetricStripValue>
+        {formatAvailability(checkSuccess(checks))}
+        {checks && checks.error > 0 ? (
+          <MetricStripAside className="hidden @3xl:inline">
+            {formatNumber(checks.error)} failed
+          </MetricStripAside>
+        ) : null}
+      </MetricStripValue>
+    </MetricStripItem>
+  );
+}
 
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const monitorId = Number.parseInt(id);
   const trpc = useTRPC();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [{ metric: requestedMetric }, setSearchParams] =
+  const [{ source: requestedSource, period, month }, setSearchParams] =
     useQueryStates(searchParamsParsers);
 
   // recomputed when the UTC month rolls over under an open tab
   const now = useNow(60_000);
   const utcMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const historyMonths = workspace?.limits["uptime-history"] || 12;
+  const historyLimit = workspace?.limits["uptime-history"] ?? 0;
+  const isLimited = !!workspace && historyLimit === 0;
+  const periodMonths = historyPeriodMonths(period, historyLimit);
   const range = useMemo(
-    () => reportRange(new Date(), historyMonths),
-    [utcMonth, historyMonths],
+    () => reportRange(new Date(), periodMonths),
+    [utcMonth, periodMonths],
   );
 
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: monitorId }),
   );
   const { data: report } = useQuery({
-    ...trpc.monitorIncident.report.queryOptions({
-      monitorId,
-      ...range,
-    }),
+    ...trpc.monitorIncident.report.queryOptions({ monitorId, ...range }),
     placeholderData: (previous) => previous,
   });
-  const isLimited = workspace?.limits["uptime-history"] === 0;
   const { data: history } = useQuery({
     ...trpc.monitor.getUptimeHistory.queryOptions({ id: monitorId }),
     enabled: !!workspace && !isLimited,
   });
 
+  const examples = useMemo(
+    () =>
+      isLimited
+        ? { months: exampleReportMonths(), requests: exampleUptimeCounts() }
+        : null,
+    [isLimited],
+  );
+
   if (!workspace || !monitor || !report) return null;
 
+  const reportMonths = examples?.months ?? report.months;
+  const from = reportMonths[0]?.month.slice(0, 10) ?? "";
+  const inWindow = (counts: CheckCounts[]) =>
+    counts.filter((c) => c.day >= from);
+  const requests = inWindow(examples?.requests ?? history?.days ?? []);
+  const runs = inWindow(history?.runs ?? []);
   // a failed runs read keeps the tab so its warning still shows
-  const showMetric =
+  const showRuns =
     !isLimited &&
     !!history?.runs &&
     (history.runs.length > 0 || history.runsPartial);
-  const metric = showMetric ? requestedMetric : "requests";
-  const counts = isLimited
-    ? exampleUptimeCounts()
-    : ((metric === "runs" ? history?.runs : history?.days) ?? []);
-  const partial = metric === "runs" ? history?.runsPartial : history?.partial;
+  const source =
+    requestedSource === "runs" && !showRuns ? "requests" : requestedSource;
+  const incidents = examples ? [] : report.incidents;
+  const months = historyMonths(reportMonths, incidents, requests, runs);
+  const since = checkHistorySince(history?.days ?? []);
+  const partial = source === "runs" ? history?.runsPartial : history?.partial;
 
-  const upgrade = (description: string) => (
-    <BillingOverlay>
-      <BillingOverlayButton
-        data-track="paywall_viewed"
-        data-limit="uptime-history"
-        onClick={() => setUpgradeOpen(true)}
-      >
-        <Lock />
-        Upgrade
-      </BillingOverlayButton>
-      <BillingOverlayDescription>{description}</BillingOverlayDescription>
-    </BillingOverlay>
-  );
-
-  const monthsTable = (
-    <div
-      aria-hidden={isLimited}
-      className={cn(
-        "overflow-x-auto",
-        isLimited && "pointer-events-none select-none",
-      )}
-    >
-      <DataTable
-        columns={monthColumns}
-        data={isLimited ? exampleReportMonths() : report.months}
-        defaultPagination={{ pageIndex: 0, pageSize: 24 }}
-      />
-    </div>
+  const overview = (
+    <MonitorHistoryOverview
+      title={monitor.name}
+      months={months}
+      incidents={incidents}
+      requests={requests}
+      runs={runs}
+      showRuns={showRuns}
+      source={source}
+      onSourceChange={(next) =>
+        setSearchParams({ source: next === "outages" ? null : next })
+      }
+      month={month}
+      onMonthChange={(next) => setSearchParams({ month: next })}
+      now={now}
+    />
   );
 
   return (
@@ -133,10 +164,30 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>
-            Availability over the last {historyMonths} months from outages, with
-            monthly figures and daily check success. Months and days in UTC.
+            {isLimited
+              ? "Example data. Upgrade to keep your monitor's history."
+              : source === "outages"
+                ? "Downtime per month from outages. Excused outages count as up."
+                : `Share of ${source} that passed, independent of outages.`}
           </SectionDescription>
         </SectionHeader>
+        {!isLimited ? (
+          <div>
+            {source === "outages"
+              ? "Availability from outages"
+              : `Check success from ${source}`}{" "}
+            over the{" "}
+            <PeriodSelect
+              value={periodMonths}
+              limit={historyLimit}
+              // a month outside the new period would linger in the URL
+              onValueChange={(next) =>
+                setSearchParams({ period: next, month: null })
+              }
+            />
+            . Months and days in UTC.
+          </div>
+        ) : null}
         {!isLimited ? (
           <NoteDismissible cookieKey="note_reports_global_monitors">
             <Info />
@@ -152,50 +203,7 @@ export function Client() {
             </FormDialogSupportContact>
           </NoteDismissible>
         ) : null}
-        <MetricStrip>
-          <MetricStripRow>
-            <MetricStripItem>
-              <MetricStripLabel>Availability</MetricStripLabel>
-              <MetricStripValue>
-                {formatAvailability(report.availability)}
-              </MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Downtime</MetricStripLabel>
-              <MetricStripValue>
-                {report.downtimeMs > 0
-                  ? formatDurationShort(report.downtimeMs)
-                  : "—"}
-                {report.excusedMs > 0 ? (
-                  <MetricStripAside>
-                    {formatDurationShort(report.excusedMs)} excused
-                  </MetricStripAside>
-                ) : null}
-              </MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Outages</MetricStripLabel>
-              <MetricStripValue>{report.outageCount}</MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Longest outage</MetricStripLabel>
-              <MetricStripValue>
-                {report.longestMs === null
-                  ? "—"
-                  : formatDurationShort(report.longestMs)}
-              </MetricStripValue>
-            </MetricStripItem>
-            <MetricStripItem>
-              <MetricStripLabel>Mean time to resolve</MetricStripLabel>
-              <MetricStripValue>
-                {report.mttrMs === null
-                  ? "—"
-                  : formatDurationShort(report.mttrMs)}
-              </MetricStripValue>
-            </MetricStripItem>
-          </MetricStripRow>
-        </MetricStrip>
-        {rarelyOpensOutages(monitor) ? (
+        {source === "outages" && rarelyOpensOutages(monitor) ? (
           <Note size="sm">
             <Info />
             {monitor.jobType === "heartbeat"
@@ -205,52 +213,85 @@ export function Client() {
               : "Monitors checked only from private locations rarely open outages, so availability often reads 100%."}
           </Note>
         ) : null}
-      </Section>
-      <Section id="months">
-        <SectionHeader>
-          <SectionTitle>Months</SectionTitle>
-          <SectionDescription>
-            Availability per month in UTC. Excused outages count as up.
-          </SectionDescription>
-        </SectionHeader>
-        {isLimited ? (
-          <BillingOverlayContainer>
-            {monthsTable}
-            {upgrade("See every month of availability.")}
-          </BillingOverlayContainer>
-        ) : (
-          monthsTable
-        )}
-      </Section>
-      <Section id="check-success">
-        <SectionHeaderRow>
-          <SectionHeader>
-            <SectionTitle>Check success rate</SectionTitle>
-            <SectionDescription>
-              Share of {metric} that passed each day, independent of outages.
-            </SectionDescription>
-          </SectionHeader>
-          {showMetric ? (
-            <UptimeMetricTabs
-              value={metric}
-              onValueChange={(m) => setSearchParams({ metric: m })}
-            />
-          ) : null}
-        </SectionHeaderRow>
-        {isLimited ? (
-          <BillingOverlayContainer>
-            <CheckSuccessHeatmap counts={counts} metric={metric} limited />
-            {upgrade(
-              "Keep every day of your monitor's uptime, year after year.",
+        {source !== "outages" && !isLimited && since && since > from ? (
+          <Note size="sm">
+            <Info />
+            Check history starts {format(parseISO(since), "MMM d, yyyy")}.
+            Availability before that comes from outage records.
+          </Note>
+        ) : null}
+        {source !== "outages" && !isLimited && partial ? (
+          <Note color="warning" size="sm">
+            <Info />
+            Recent {source} couldn&apos;t be loaded, so the last few weeks may
+            be incomplete.
+          </Note>
+        ) : null}
+        <MetricStrip>
+          <MetricStripRow>
+            <MetricStripItem>
+              <MetricStripLabel>Availability</MetricStripLabel>
+              <MetricStripValue>
+                {formatAvailability(report.availability)}
+                <MetricStripAside className="hidden @3xl:inline">
+                  outages
+                </MetricStripAside>
+              </MetricStripValue>
+            </MetricStripItem>
+            {isLimited ? null : (
+              <>
+                <ChecksItem label="Requests" checks={sumChecks(requests)} />
+                {showRuns ? (
+                  <ChecksItem label="Runs" checks={sumChecks(runs)} />
+                ) : null}
+              </>
             )}
+            <MetricStripItem>
+              <MetricStripLabel>Downtime</MetricStripLabel>
+              <MetricStripValue>
+                {report.downtimeMs > 0
+                  ? formatDurationShort(report.downtimeMs)
+                  : "—"}
+                {report.excusedMs > 0 ? (
+                  <MetricStripAside className="hidden @3xl:inline">
+                    {formatDurationShort(report.excusedMs)} excused
+                  </MetricStripAside>
+                ) : null}
+              </MetricStripValue>
+            </MetricStripItem>
+            <MetricStripItem>
+              <MetricStripLabel>Outages</MetricStripLabel>
+              <MetricStripValue>{report.outageCount}</MetricStripValue>
+            </MetricStripItem>
+          </MetricStripRow>
+        </MetricStrip>
+      </Section>
+      <Section id="history-overview">
+        {isLimited ? (
+          <BillingOverlayContainer>
+            <Section
+              aria-hidden
+              inert
+              className="pointer-events-none select-none"
+            >
+              {overview}
+            </Section>
+            <BillingOverlay>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="uptime-history"
+                onClick={() => setUpgradeOpen(true)}
+              >
+                <Lock />
+                Upgrade
+              </BillingOverlayButton>
+              <BillingOverlayDescription>
+                Keep every day of your monitor&apos;s uptime, year after year.
+              </BillingOverlayDescription>
+            </BillingOverlay>
           </BillingOverlayContainer>
         ) : (
-          <CheckSuccessHeatmap
-            counts={counts}
-            metric={metric}
-            partial={partial}
-            reportFrom={report.window.from}
-          />
+          overview
         )}
       </Section>
       <UpgradeDialog

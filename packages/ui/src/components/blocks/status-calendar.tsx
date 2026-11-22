@@ -88,8 +88,10 @@ export interface StatusCalendarProps {
    * pass the locale resolved from their i18n layer; defaults to en-US.
    */
   locale?: Locale;
-  /** Override how a single marker row renders inside the hover card. */
+  /** Override how a single marker row renders inside the hover card; null leaves it out. */
   renderMarkerRow?: (marker: StatusCalendarMarker) => ReactNode;
+  /** Summary above a day's markers; a day with one opens a card even without markers. */
+  renderDayCard?: (date: Date) => ReactNode;
   /**
    * Restrict which event types drive the calendar (day fills, hover cards, and
    * the forward-navigation cap). Markers of any other type are ignored. When
@@ -156,6 +158,7 @@ export function StatusCalendar({
   title,
   locale,
   renderMarkerRow,
+  renderDayCard,
   eventTypes,
 }: StatusCalendarProps) {
   const labels = useStatusBlocksLabels();
@@ -316,6 +319,10 @@ export function StatusCalendar({
   useEffect(() => {
     renderMarkerRowRef.current = renderMarkerRow;
   }, [renderMarkerRow]);
+  const renderDayCardRef = useRef(renderDayCard);
+  useEffect(() => {
+    renderDayCardRef.current = renderDayCard;
+  }, [renderDayCard]);
 
   const Day = useCallback(
     (dayProps: DayProps) => (
@@ -332,6 +339,7 @@ export function StatusCalendar({
         onBlurDay={handleBlur}
         onClose={close}
         renderMarkerRowRef={renderMarkerRowRef}
+        renderDayCardRef={renderDayCardRef}
         maxDay={maxDay}
       />
     ),
@@ -438,6 +446,7 @@ interface CalendarDayProps extends DayProps {
   renderMarkerRowRef: RefObject<
     ((marker: StatusCalendarMarker) => ReactNode) | undefined
   >;
+  renderDayCardRef: RefObject<((date: Date) => ReactNode) | undefined>;
   /** Days strictly after this are disabled; null disables blocking entirely. */
   maxDay: Date | null;
 }
@@ -458,6 +467,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       onBlurDay,
       onClose,
       renderMarkerRowRef,
+      renderDayCardRef,
       maxDay,
     },
     forwardedRef,
@@ -504,7 +514,13 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     const severity = filled.length > 0 ? worstSeverity(filled) : undefined;
     const open = activeDayKey === thisDayKey;
 
-    const hasMarkers = dayMarkers.length > 0;
+    const dayCard = renderDayCardRef.current?.(date) ?? null;
+    // a row that renders null only tints the day and stays out of the card
+    const rowFn = renderMarkerRowRef.current;
+    const rows = dayMarkers
+      .map((marker) => ({ marker, node: rowFn ? rowFn(marker) : undefined }))
+      .filter(({ node }) => node !== null);
+    const hasMarkers = rows.length > 0 || dayCard !== null;
     // Tinted-field: severity days get a soft fill that owns the hover state,
     // empty days fall back to the neutral accent hover.
     const dayClass = cn(
@@ -537,8 +553,9 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     const barItem: StatusBarData = {
       day: format(date, "yyyy-MM-dd"),
       bar: [],
-      card: [],
-      events: dayMarkers.map(markerToBarEvent),
+      // one placeholder so the card section renders; renderCard draws dayCard
+      card: dayCard ? [{ status: "empty", value: "" }] : [],
+      events: rows.map(({ marker }) => markerToBarEvent(marker)),
     };
     const indexByEventId = new Map<BarEvent["id"], number>(
       barItem.events.map((e, i) => [e.id, i]),
@@ -584,15 +601,15 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
         >
           <StatusBarCard
             item={barItem}
+            renderCard={() => <div key="day-card">{dayCard}</div>}
             renderEvent={(event, eventIndex) => {
-              const fn = renderMarkerRowRef.current;
               const idx = indexByEventId.get(event.id) ?? 0;
               return (
                 <div key={`${event.id}-${event.type}`}>
                   {eventIndex > 0 && (
                     <Separator className="-mx-2 my-2 data-[orientation=horizontal]:w-auto" />
                   )}
-                  {fn ? fn(dayMarkers[idx]) : <StatusBarEvent {...event} />}
+                  {rows[idx]?.node ?? <StatusBarEvent {...event} />}
                 </div>
               );
             }}

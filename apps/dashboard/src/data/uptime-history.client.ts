@@ -1,15 +1,17 @@
-import { eachDayOfInterval, endOfYear, startOfYear } from "date-fns";
+import { eachDayOfInterval, startOfYear } from "date-fns";
 
-import type { ActivityDay } from "@/components/content/activity-calendar";
 import { dayKey } from "@/data/activity.client";
-import type { HistoryMetric } from "@/data/status-page-history";
-import { formatNumber, truncatePercentage } from "@/lib/formatter";
+import { calendarDate } from "@/data/monitor-history.client";
 
 export const HISTORY_PERIODS = [3, 6, 12, 24] as const;
 export type HistoryPeriod = (typeof HISTORY_PERIODS)[number];
 
 /** Months shown when none is picked: a year, or all the plan keeps. */
 export const defaultHistoryPeriod = (limit: number) => Math.min(limit, 12);
+
+/** Months the history spans: the picked period capped at the plan, a year without history. */
+export const historyPeriodMonths = (period: number | null, limit: number) =>
+  Math.min(period ?? defaultHistoryPeriod(limit), limit) || 12;
 
 export type CheckCounts = {
   day: string;
@@ -18,102 +20,9 @@ export type CheckCounts = {
   error: number;
 };
 
-export type UptimeYear = {
-  year: number;
-  days: ActivityDay[];
-  /** (ok + degraded) / total, null without a single request or run */
-  uptime: number | null;
-  /** days with at least one failed request or run */
-  failedDays: number;
-};
-
-/** Truncated, never rounded up: 99.9999% must not read as 100%. */
-export function formatUptime(ratio: number, digits = 2): string {
-  return `${truncatePercentage(ratio * 100, digits)}%`;
-}
-
-function countLabel(count: number, metric: HistoryMetric): string {
-  return `${formatNumber(count)} ${count === 1 ? metric.slice(0, -1) : metric}`;
-}
-
-/** Muted without failures, else by failed share of the day's counts: < 1%, ≤ 5%, > 5%. */
-function dayMark(
-  counts: CheckCounts | undefined,
-  metric: HistoryMetric,
-): Partial<ActivityDay> {
-  const total = counts ? counts.ok + counts.degraded + counts.error : 0;
-  // a day without counts is no data, never downtime
-  if (!counts || total === 0) {
-    return { hatched: true, lines: [`No ${metric}`] };
-  }
-  const { degraded, error } = counts;
-  const failed = error / total;
-  return {
-    // degraded counts as up, like the uptime math
-    scale: "failure",
-    level: error === 0 ? 0 : failed < 0.01 ? 1 : failed <= 0.05 ? 2 : 3,
-    lines: [
-      `${formatUptime((total - error) / total)} uptime`,
-      [
-        countLabel(total, metric),
-        ...(error > 0 ? [`${formatNumber(error)} failed`] : []),
-        ...(degraded > 0 ? [`${formatNumber(degraded)} degraded`] : []),
-      ].join(" · "),
-    ],
-  };
-}
-
-/** Today's UTC day as a local-midnight date, so calendar cells line up with the UTC day keys. */
-export function utcToday(now = new Date()) {
-  return new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-}
-
 /** First UTC day with a count; frozen months are zero-filled before it. */
 export function checkHistorySince(counts: CheckCounts[]): string | undefined {
   return counts.find((c) => c.ok + c.degraded + c.error > 0)?.day;
-}
-
-/**
- * One calendar per year, newest first, from the oldest recorded day's year;
- * days before the first count are blank, days after today (UTC) are left empty.
- */
-export function uptimeYears(
-  counts: CheckCounts[],
-  now = new Date(),
-  metric: HistoryMetric = "requests",
-) {
-  const since = checkHistorySince(counts);
-  if (!since) return [];
-  const byDay = new Map(counts.map((c) => [c.day, c]));
-  const first = Number(since.slice(0, 4));
-  const today = utcToday(now);
-  const years: UptimeYear[] = [];
-  for (let year = today.getFullYear(); year >= first; year--) {
-    const start = startOfYear(new Date(year, 0, 1));
-    const end = endOfYear(start);
-    let up = 0;
-    let total = 0;
-    let failedDays = 0;
-    const days = eachDayOfInterval({ start, end }).map((date) => {
-      const key = dayKey(date);
-      if (date > today) return { date };
-      if (key < since) return { date, blank: true };
-      const c = byDay.get(key);
-      if (c) {
-        up += c.ok + c.degraded;
-        total += c.ok + c.degraded + c.error;
-        if (c.error > 0) failedDays++;
-      }
-      return { date, ...dayMark(c, metric) };
-    });
-    years.push({
-      year,
-      days,
-      uptime: total > 0 ? up / total : null,
-      failedDays,
-    });
-  }
-  return years;
 }
 
 /** Placeholder behind the upgrade overlay; seeded so it never reshuffles. */
@@ -123,7 +32,7 @@ export function exampleUptimeCounts(now = new Date()): CheckCounts[] {
     seed = (seed * 16807) % 2147483647;
     return seed / 2147483647;
   };
-  const end = utcToday(now);
+  const end = calendarDate(now.toISOString().slice(0, 10));
   const start = startOfYear(new Date(end.getFullYear() - 1, 0, 1));
   return eachDayOfInterval({ start, end }).map((date) => {
     const r = random();
