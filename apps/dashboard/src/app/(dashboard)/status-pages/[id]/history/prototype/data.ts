@@ -62,6 +62,69 @@ export function pageEvents(rows: Row[]): PageEvent[] {
   return [...map.values()].sort((a, b) => b.from.getTime() - a.from.getTime());
 }
 
+type Span = { from: Date; to: Date | null; components: string[] };
+
+/** Everything the history shows: public events plus dashboard-only annotations. */
+export type HistoryItem = Span &
+  (
+    | { kind: "event"; event: PageEvent }
+    | {
+        kind: "window";
+        id: number;
+        title: string;
+        mode: MaintenanceWindow["mode"];
+      }
+    | { kind: "excused"; id: number; reason: string | null }
+  );
+
+export function historyItems(rows: Row[]): HistoryItem[] {
+  const windows = new Map<number, HistoryItem>();
+  const excused: HistoryItem[] = [];
+  for (const row of rows) {
+    for (const w of row.maintenanceWindows) {
+      const existing = windows.get(w.id);
+      if (existing) existing.components.push(row.component.name);
+      else
+        windows.set(w.id, {
+          kind: "window",
+          id: w.id,
+          title: w.title,
+          mode: w.mode,
+          from: w.from,
+          to: w.to,
+          components: [row.component.name],
+        });
+    }
+    // an excused outage belongs to one monitor, so one per row
+    for (const o of row.excusedOutages) {
+      excused.push({
+        kind: "excused",
+        id: o.id,
+        reason: o.reason,
+        from: o.from,
+        to: o.to,
+        components: [row.component.name],
+      });
+    }
+  }
+  const events: HistoryItem[] = pageEvents(rows).map((event) => ({
+    kind: "event",
+    event,
+    from: event.from,
+    to: event.to,
+    components: event.components,
+  }));
+  return [...events, ...windows.values(), ...excused].sort(
+    (a, b) => b.from.getTime() - a.from.getTime(),
+  );
+}
+
+export function itemKey(item: HistoryItem): string {
+  return item.kind === "event"
+    ? `${item.event.type}-${item.event.id}`
+    : `${item.kind}-${item.id}`;
+}
+
 export function eventsInMonth<T extends { from: Date; to: Date | null }>(
   events: T[],
   key: string,
@@ -208,6 +271,52 @@ const EVENTS: Seed[] = [
   },
 ];
 
+type MaintenanceWindow = Row["maintenanceWindows"][number];
+
+// dashboard only: monitor maintenance windows and excused outages
+const WINDOWS: (Omit<Seed, "type"> & { mode: MaintenanceWindow["mode"] })[] = [
+  {
+    month: 0,
+    day: 15,
+    hours: 3,
+    name: "Kubernetes node upgrade",
+    components: [1, 3],
+    mode: "pause",
+  },
+  {
+    month: 2,
+    day: 20,
+    hours: 1.5,
+    name: "Cache warmup",
+    components: [2],
+    mode: "continue",
+  },
+  {
+    month: 7,
+    day: 6,
+    hours: 2,
+    name: "Search reindex",
+    components: [5],
+    mode: "pause",
+  },
+];
+const EXCUSED: (Omit<Seed, "type" | "name"> & { reason: string })[] = [
+  {
+    month: 0,
+    day: 9,
+    hours: 0.5,
+    components: [1],
+    reason: "Upstream DNS provider",
+  },
+  {
+    month: 3,
+    day: 27,
+    hours: 0.3,
+    components: [2],
+    reason: "Announced load test",
+  },
+];
+
 const STATUS: Record<RowEvent["type"], RowEvent["status"]> = {
   incident: "error",
   report: "degraded",
@@ -232,6 +341,21 @@ export function buildPrototypeHistory(now = new Date()): UptimeHistory {
     const to = new Date(from.getTime() + s.hours * 3_600_000);
     return { ...s, id: i + 1, from, to };
   });
+  const at = (
+    s: { month: number; day: number; hours: number },
+    hour: number,
+  ) => {
+    const from = new Date(
+      now.getFullYear(),
+      now.getMonth() - s.month,
+      s.day,
+      hour,
+    );
+    if (from > now) from.setDate(Math.max(1, now.getDate() - 1));
+    return { from, to: new Date(from.getTime() + s.hours * 3_600_000) };
+  };
+  const windows = WINDOWS.map((s, i) => ({ ...s, id: i + 1, ...at(s, 11) }));
+  const excused = EXCUSED.map((s, i) => ({ ...s, id: i + 1, ...at(s, 9) }));
 
   const rows: Row[] = COMPONENTS.map((c) => {
     const rng = mulberry32(c.id * 7919);
@@ -241,9 +365,14 @@ export function buildPrototypeHistory(now = new Date()): UptimeHistory {
     const total = unit === "requests" ? 30 * 1_440 : 30 * 86_400_000;
     const values = months.map((key, i): Value | null => {
       if (i < c.since) return null;
-      const hits = eventsInMonth(own, key).filter(
-        (e) => e.type !== "maintenance",
-      );
+      // requests mode: an excused outage's failed checks still count
+      const hits = [
+        ...eventsInMonth(own, key).filter((e) => e.type !== "maintenance"),
+        ...eventsInMonth(
+          excused.filter((e) => e.components.includes(c.id)),
+          key,
+        ).map((e) => ({ ...e, type: "incident" as const })),
+      ];
       const penalty = hits.reduce(
         (a, e) =>
           a + (e.type === "incident" ? 0.25 : 0.12) * Math.min(e.hours, 6),
@@ -287,8 +416,18 @@ export function buildPrototypeHistory(now = new Date()): UptimeHistory {
         from: e.from,
         to: e.to,
       })),
-      maintenanceWindows: [],
-      excusedOutages: [],
+      maintenanceWindows: windows
+        .filter((w) => w.components.includes(c.id))
+        .map(({ id, name, mode, from, to }) => ({
+          id,
+          title: name,
+          mode,
+          from,
+          to,
+        })),
+      excusedOutages: excused
+        .filter((o) => o.components.includes(c.id))
+        .map(({ id, reason, from, to }) => ({ id, reason, from, to })),
     };
   });
 

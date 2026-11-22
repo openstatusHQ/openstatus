@@ -6,9 +6,9 @@ import {
   StatusCalendar,
   type StatusCalendarMarker,
 } from "@openstatus/ui/components/blocks/status-calendar";
-import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { cn } from "@openstatus/ui/lib/utils";
-import { addDays, eachDayOfInterval, format, startOfDay } from "date-fns";
+import { eachDayOfInterval, format, startOfDay } from "date-fns";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -17,20 +17,9 @@ import { StatusDot } from "@/components/common/status-dot";
 import {
   Activity,
   ActivityHeader,
-  type ActivityMark,
   ActivityPeriod,
   ActivityTitle,
 } from "@/components/content/activity";
-import {
-  ActivityCalendar,
-  ActivityCalendarCell,
-  ActivityCalendarGrid,
-  ActivityCalendarLegend,
-  ActivityCalendarLegendItem,
-  ActivityCalendarLegendSeparator,
-  type ActivityDay,
-  type ActivityLink,
-} from "@/components/content/activity-calendar";
 import {
   ComponentList,
   ComponentListItem,
@@ -52,6 +41,7 @@ import {
 import {
   EventList,
   EventRow,
+  EventRowActions,
   EventRowContent,
   EventRowDate,
   EventRowDuration,
@@ -67,9 +57,8 @@ import {
   MetricStripRow,
   MetricStripValue,
 } from "@/components/metric/metric-strip";
-import { activityDayLines, spansOnDay } from "@/data/activity.client";
+import { entityKinds } from "@/data/entity-refs.client";
 import { downtimeActivity } from "@/data/incidents.client";
-import { maintenanceActivity } from "@/data/maintenances.client";
 import { impactDisplay } from "@/data/status-report-updates.client";
 import { impactLevels } from "@/data/status-reports.client";
 import {
@@ -79,14 +68,15 @@ import {
 } from "@/lib/formatter";
 
 import {
-  type PageEvent,
+  type HistoryItem,
   type Row,
   type UptimeHistory,
   downtimeMinutes,
   eventsInMonth,
   formatDowntime,
+  historyItems,
+  itemKey,
   monthDate,
-  pageEvents,
   pageMonth,
 } from "./data";
 
@@ -94,24 +84,94 @@ const pct = (v: number | null | undefined) =>
   v === null || v === undefined ? "–" : `${truncatePercentage(v)}%`;
 
 // prototype data has no impact rows; the real report carries its worst impact
-function reportImpact(event: PageEvent): PageComponentImpact {
-  return event.name.toLowerCase().includes("outage")
+function reportImpact(name: string): PageComponentImpact {
+  return name.toLowerCase().includes("outage")
     ? "partial_outage"
     : "degraded_performance";
 }
 
-const durationOf = (e: PageEvent) =>
-  (e.to ?? new Date()).getTime() - e.from.getTime();
+const durationOf = (item: HistoryItem) =>
+  (item.to ?? new Date()).getTime() - item.from.getTime();
 
-function eventHref(event: PageEvent, pageId: string): string | undefined {
-  if (event.type === "report") return `/status-pages/${pageId}/status-reports`;
-  if (event.type === "maintenance")
-    return `/status-pages/${pageId}/maintenances`;
-  return undefined;
+// ---------- one look per kind: row status, month dot, legend ----------
+
+type Kind = "incident" | "report" | "maintenance" | "window" | "excused";
+
+const kindOf = (item: HistoryItem): Kind =>
+  item.kind === "event" ? item.event.type : item.kind;
+
+// a hollow dot: the monitor-level window, apart from the page's solid maintenance
+const RING = "border-info border-[1.5px] bg-transparent";
+
+const dotClass: Record<Kind, string> = {
+  incident: "bg-destructive",
+  report: "bg-warning",
+  maintenance: "bg-info",
+  window: RING,
+  excused: "bg-muted-foreground/50",
+};
+
+const LEGEND: { label: string; kinds: { kind: Kind; label: string }[] }[] = [
+  {
+    label: "Public",
+    kinds: [
+      { kind: "incident", label: "Outage" },
+      { kind: "report", label: "Status report" },
+      { kind: "maintenance", label: "Maintenance" },
+    ],
+  },
+  {
+    label: "Dashboard only",
+    kinds: [
+      { kind: "excused", label: "Excused outage" },
+      { kind: "window", label: "Maintenance window" },
+    ],
+  },
+];
+
+function Legend() {
+  return (
+    <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+      {LEGEND.map((group, i) => (
+        <span
+          key={group.label}
+          className="flex flex-wrap items-center gap-x-3 gap-y-1"
+        >
+          {i > 0 ? <span aria-hidden className="bg-border h-3 w-px" /> : null}
+          <span className="font-mono text-[11px] uppercase">{group.label}</span>
+          {group.kinds.map(({ kind, label }) => (
+            <span key={kind} className="flex items-center gap-1.5">
+              <span className={cn("size-2 rounded-full", dotClass[kind])} />
+              {label}
+            </span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
 }
 
-/** Same indicator + label as StatusReportRow, MaintenanceRow and MonitorIncidentRow with `kind`. */
-function HistoryEventStatus({ event }: { event: PageEvent }) {
+/** Same indicator + label as the feature rows with `kind`. */
+function ItemStatus({ item }: { item: HistoryItem }) {
+  if (item.kind === "window") {
+    return (
+      <EventRowStatus>
+        <StatusDot className={RING} />
+        <span>Window</span>
+      </EventRowStatus>
+    );
+  }
+  const { level } = downtimeActivity(durationOf(item));
+  if (item.kind === "excused") {
+    // excused downtime drops the failure color, like MonitorIncidentRow
+    return (
+      <EventRowStatus>
+        <StatusBars level={level} variant="default" />
+        <span>Excused</span>
+      </EventRowStatus>
+    );
+  }
+  const { event } = item;
   if (event.type === "maintenance") {
     return (
       <EventRowStatus>
@@ -121,7 +181,7 @@ function HistoryEventStatus({ event }: { event: PageEvent }) {
     );
   }
   if (event.type === "report") {
-    const impact = reportImpact(event);
+    const impact = reportImpact(event.name);
     return (
       <EventRowStatus>
         <StatusBars
@@ -132,7 +192,6 @@ function HistoryEventStatus({ event }: { event: PageEvent }) {
       </EventRowStatus>
     );
   }
-  const { level } = downtimeActivity(durationOf(event));
   return (
     <EventRowStatus>
       <StatusBars
@@ -144,164 +203,113 @@ function HistoryEventStatus({ event }: { event: PageEvent }) {
   );
 }
 
-function HistoryEventRow({ event }: { event: PageEvent }) {
+function itemTitle(item: HistoryItem): string {
+  if (item.kind === "event") return item.event.name;
+  if (item.kind === "window") return item.title;
+  // an excused outage has no title; the monitor is the entry, as on Outages
+  return item.components[0] ?? "";
+}
+
+function itemHref(item: HistoryItem, pageId: string): string | undefined {
+  if (item.kind === "window") return entityKinds.maintenanceWindow.href();
+  if (item.kind === "excused") return undefined;
+  if (item.event.type === "report")
+    return `/status-pages/${pageId}/status-reports`;
+  if (item.event.type === "maintenance")
+    return `/status-pages/${pageId}/maintenances`;
+  return undefined;
+}
+
+function HistoryItemRow({ item }: { item: HistoryItem }) {
   const { id: pageId } = useParams<{ id: string }>();
+  const meta = [
+    item.kind === "excused" ? null : item.components.join(", "),
+    item.kind === "excused" ? (item.reason ?? "No reason") : null,
+    // requests mode: its failed checks are still in the numbers
+    item.kind === "excused" ? "still counts" : null,
+    item.kind === "window"
+      ? item.mode === "pause"
+        ? "checks paused"
+        : "alerts muted"
+      : null,
+    item.to ? formatWindow(item.from, item.to) : null,
+  ].filter((m): m is string => m !== null);
   return (
     <EventRow>
-      <EventRowDate date={event.from} />
-      <HistoryEventStatus event={event} />
+      <EventRowDate date={item.from} />
+      <ItemStatus item={item} />
       <EventRowContent>
-        <EventRowTitle href={eventHref(event, pageId)}>
-          {event.name}
+        <EventRowTitle href={itemHref(item, pageId)}>
+          {itemTitle(item)}
         </EventRowTitle>
         <EventRowMeta>
-          <span>{event.components.join(", ")}</span>
-          {event.to ? <span>{formatWindow(event.from, event.to)}</span> : null}
+          {meta.map((m) => (
+            <span key={m}>{m}</span>
+          ))}
         </EventRowMeta>
       </EventRowContent>
+      {item.kind !== "event" ? (
+        <EventRowActions>
+          <Badge
+            variant="outline"
+            className="text-muted-foreground font-mono text-[10px] uppercase"
+            title="Not shown on the public status page"
+          >
+            Dashboard only
+          </Badge>
+        </EventRowActions>
+      ) : null}
       <EventRowDuration>
-        {formatDurationShort(durationOf(event))}
+        {formatDurationShort(durationOf(item))}
       </EventRowDuration>
     </EventRow>
   );
 }
 
-// ---------- year calendar: the dashboard's activity grid, Overview's day rules ----------
+// ---------- month calendar: the public status page block ----------
 
-type Entry = ActivityMark & { lead: string };
-
-const rank = (m: ActivityMark) =>
-  m.hatched ? 0 : m.scale === "failure" ? 4 + m.level : m.level;
-
-function activityDays(
-  events: PageEvent[],
-  from: Date,
-  now: Date,
-  pageId: string,
-): ActivityDay[] {
-  return eachDayOfInterval({ start: from, end: now }).map((date) => {
-    const start = startOfDay(date);
-    const end = addDays(start, 1);
-    const items = events.filter((e) => e.from < end && (e.to ?? now) >= start);
-    if (items.length === 0) return { date };
-    const span = (e: PageEvent) => ({ start: e.from, end: e.to });
-    const entries: Entry[] = [];
-    for (const e of items.filter((i) => i.type === "report")) {
-      const impact = reportImpact(e);
-      entries.push({
-        scale: "failure",
-        level: impactLevels[impact],
-        lead: `${impactDisplay(impact).label} · ${e.name}`,
-      });
-    }
-    const outages = items.filter((i) => i.type === "incident");
-    if (outages.length > 0) {
-      const down = spansOnDay(date, outages.map(span), now);
-      entries.push({
-        ...downtimeActivity(down),
-        lead: `${formatDurationShort(down)} down · ${outages[0].components.join(", ")}`,
-      });
-    }
-    const maintenances = items.filter((i) => i.type === "maintenance");
-    if (maintenances.length > 0) {
-      const planned = spansOnDay(date, maintenances.map(span), now);
-      entries.push({
-        ...maintenanceActivity(planned),
-        level: 2,
-        lead: `${formatDurationShort(planned)} · ${maintenances[0].name}`,
-      });
-    }
-    entries.sort((a, b) => rank(b) - rank(a));
-    const [top, ...rest] = entries;
-    const links: ActivityLink[] = items.flatMap((e) => {
-      const href = eventHref(e, pageId);
-      return href
-        ? [
-            {
-              href,
-              title: e.name,
-              kind: e.type === "report" ? "Report" : "Maintenance",
-            },
-          ]
-        : [];
+// the block only tints by status, so excused outages (neutral) stay out of it
+function toMarkers(items: HistoryItem[]): StatusCalendarMarker[] {
+  return items.flatMap((item) => {
+    if (item.kind === "excused") return [];
+    const days = eachDayOfInterval({
+      start: startOfDay(item.from),
+      end: startOfDay(item.to ?? new Date()),
     });
-    return {
-      date,
-      scale: top.scale,
-      level: top.level,
-      hatched: top.hatched,
-      lines: activityDayLines(
-        top.lead,
-        rest.map((r) => r.lead.split(" · ")[0]),
-      ),
-      links: links.length > 0 ? links : undefined,
-    };
+    return days.map((date) =>
+      item.kind === "window"
+        ? {
+            id: `${itemKey(item)}-${date.getTime()}`,
+            date,
+            status: "info" as const,
+            type: "maintenance" as const,
+            name: `Window · ${item.title} · ${item.components.join(", ")}`,
+            from: item.from,
+            to: item.to,
+          }
+        : {
+            id: `${itemKey(item)}-${date.getTime()}`,
+            date,
+            status: item.event.status,
+            type: item.event.type,
+            name: `${item.event.name} · ${item.components.join(", ")}`,
+            from: item.from,
+            to: item.to,
+          },
+    );
   });
 }
 
-function YearCalendar({ events, from }: { events: PageEvent[]; from: Date }) {
-  const { id: pageId } = useParams<{ id: string }>();
-  const days = useMemo(
-    () => activityDays(events, from, new Date(), pageId),
-    [events, from, pageId],
-  );
-  return (
-    <ActivityCalendar>
-      <ActivityCalendarGrid days={days} />
-      <ActivityCalendarLegend>
-        <ActivityCalendarLegendItem>
-          <ActivityCalendarCell />
-          None
-        </ActivityCalendarLegendItem>
-        <ActivityCalendarLegendItem>
-          <ActivityCalendarCell level={1} />
-          Low
-        </ActivityCalendarLegendItem>
-        <ActivityCalendarLegendItem>
-          <ActivityCalendarCell level={2} />
-          Mid
-        </ActivityCalendarLegendItem>
-        <ActivityCalendarLegendItem>
-          <ActivityCalendarCell level={3} />
-          High
-        </ActivityCalendarLegendItem>
-        <ActivityCalendarLegendSeparator />
-        <ActivityCalendarLegendItem>
-          <ActivityCalendarCell scale="planned" level={2} />
-          Maintenance
-        </ActivityCalendarLegendItem>
-      </ActivityCalendarLegend>
-    </ActivityCalendar>
-  );
-}
-
-// ---------- month calendar: the public status page block ----------
-
-function toMarkers(events: PageEvent[]): StatusCalendarMarker[] {
-  return events.flatMap((e) =>
-    eachDayOfInterval({
-      start: startOfDay(e.from),
-      end: startOfDay(e.to ?? new Date()),
-    }).map((date) => ({
-      id: `${e.type}-${e.id}-${date.getTime()}`,
-      date,
-      status: e.status,
-      type: e.type,
-      name: `${e.name} · ${e.components.join(", ")}`,
-      from: e.from,
-      to: e.to,
-    })),
-  );
-}
-
-// ---------- months: downtime bars on metric strip buttons ----------
+// ---------- months: downtime bars + one dot per item ----------
 
 function MonthStrip({
   history,
+  items,
   selected,
   onSelect,
 }: {
   history: UptimeHistory;
+  items: HistoryItem[];
   selected: string;
   onSelect: (key: string) => void;
 }) {
@@ -313,12 +321,16 @@ function MonthStrip({
       <MetricStripRow>
         {months.map((key, i) => {
           const d = downs[i];
+          const monthItems = eventsInMonth(items, key).toSorted(
+            (a, b) => a.from.getTime() - b.from.getTime(),
+          );
           return (
             <MetricStripButton
               key={key}
               aria-pressed={key === selected}
-              aria-label={`${format(monthDate(key), "MMMM yyyy")}: ${formatDowntime(d)} downtime`}
+              aria-label={`${format(monthDate(key), "MMMM yyyy")}: ${formatDowntime(d)} downtime, ${monthItems.length} events`}
               onClick={() => onSelect(key)}
+              className="flex-wrap"
             >
               <MetricStripLabel>
                 {format(monthDate(key), "MMM")}
@@ -343,6 +355,20 @@ function MonthStrip({
               <MetricStripValue className="text-sm">
                 {formatDowntime(d)}
               </MetricStripValue>
+              <span
+                aria-hidden
+                className="order-last flex h-1.5 basis-full flex-wrap gap-0.5 overflow-hidden @3xl:basis-auto"
+              >
+                {monthItems.map((item) => (
+                  <span
+                    key={itemKey(item)}
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      dotClass[kindOf(item)],
+                    )}
+                  />
+                ))}
+              </span>
             </MetricStripButton>
           );
         })}
@@ -428,38 +454,35 @@ function Components({
 export function HistoryOverview({ history }: { history: UptimeHistory }) {
   const { months, rows, summary } = history;
   const [selected, setSelected] = useState(months[months.length - 1]);
-  const [view, setView] = useState<"year" | "month">("year");
-  const events = useMemo(() => pageEvents(rows), [rows]);
-  const markers = useMemo(() => toMarkers(events), [events]);
-  const from = useMemo(() => monthDate(months[0]), [months]);
-  const monthEvents = eventsInMonth(events, selected);
+  const items = useMemo(() => historyItems(rows), [rows]);
+  const markers = useMemo(() => toMarkers(items), [items]);
+  const monthItems = eventsInMonth(items, selected);
   const v = pageMonth(rows, selected);
   const totalDown = months.reduce(
     (a, k) => a + (downtimeMinutes(pageMonth(rows, k), k) ?? 0),
     0,
   );
   const isCurrent = selected === months[months.length - 1];
+  const count = (kind: HistoryItem["kind"]) =>
+    items.filter((i) => i.kind === kind).length;
 
   return (
     <div className="flex flex-col gap-6">
       <MetricStrip>
         <MetricStripRow>
-          <MetricStripItem>
-            <MetricStripLabel>Uptime</MetricStripLabel>
-            <MetricStripValue>{pct(summary.uptime)}</MetricStripValue>
-          </MetricStripItem>
-          <MetricStripItem>
-            <MetricStripLabel>Downtime</MetricStripLabel>
-            <MetricStripValue>{formatDowntime(totalDown)}</MetricStripValue>
-          </MetricStripItem>
-          <MetricStripItem>
-            <MetricStripLabel>Events</MetricStripLabel>
-            <MetricStripValue>{events.length}</MetricStripValue>
-          </MetricStripItem>
-          <MetricStripItem>
-            <MetricStripLabel>Components</MetricStripLabel>
-            <MetricStripValue>{rows.length}</MetricStripValue>
-          </MetricStripItem>
+          {[
+            ["Uptime", pct(summary.uptime)],
+            ["Downtime", formatDowntime(totalDown)],
+            ["Events", String(count("event"))],
+            ["Excused", String(count("excused"))],
+            ["Windows", String(count("window"))],
+            ["Components", String(rows.length)],
+          ].map(([label, value]) => (
+            <MetricStripItem key={label}>
+              <MetricStripLabel>{label}</MetricStripLabel>
+              <MetricStripValue>{value}</MetricStripValue>
+            </MetricStripItem>
+          ))}
         </MetricStripRow>
       </MetricStrip>
 
@@ -470,6 +493,7 @@ export function HistoryOverview({ history }: { history: UptimeHistory }) {
         </ActivityHeader>
         <MonthStrip
           history={history}
+          items={items}
           selected={selected}
           onSelect={setSelected}
         />
@@ -478,39 +502,25 @@ export function HistoryOverview({ history }: { history: UptimeHistory }) {
       <Activity>
         <ActivityHeader>
           <ActivityTitle>Activity</ActivityTitle>
-          <Tabs
-            value={view}
-            onValueChange={(next) =>
-              setView(next === "month" ? "month" : "year")
-            }
-          >
-            <TabsList>
-              <TabsTrigger value="year">Year</TabsTrigger>
-              <TabsTrigger value="month">Month</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </ActivityHeader>
-        {view === "year" ? (
-          <YearCalendar events={events} from={from} />
-        ) : (
-          <StatusCalendar
-            markers={markers}
-            month={monthDate(selected)}
-            onMonthChange={(m) => {
-              const key = format(m, "yyyy-MM");
-              if (months.includes(key)) setSelected(key);
-            }}
-            disableFuture
-            title="All components"
-          />
-        )}
+        <StatusCalendar
+          markers={markers}
+          month={monthDate(selected)}
+          onMonthChange={(m) => {
+            const key = format(m, "yyyy-MM");
+            if (months.includes(key)) setSelected(key);
+          }}
+          disableFuture
+          title="All components"
+        />
+        <Legend />
       </Activity>
 
       <EventGroup>
         <EventGroupHeader>
           <EventGroupTitle>
             {format(monthDate(selected), "MMMM yyyy")}
-            <EventGroupCount>{monthEvents.length}</EventGroupCount>
+            <EventGroupCount>{monthItems.length}</EventGroupCount>
           </EventGroupTitle>
           <EventGroupHint>
             {pct(v)} · {formatDowntime(downtimeMinutes(v, selected))} down
@@ -518,8 +528,8 @@ export function HistoryOverview({ history }: { history: UptimeHistory }) {
           </EventGroupHint>
         </EventGroupHeader>
         <EventList>
-          {monthEvents.map((e) => (
-            <HistoryEventRow key={`${e.type}-${e.id}`} event={e} />
+          {monthItems.map((item) => (
+            <HistoryItemRow key={itemKey(item)} item={item} />
           ))}
         </EventList>
         <EventGroupEmpty>
@@ -528,7 +538,7 @@ export function HistoryOverview({ history }: { history: UptimeHistory }) {
           </EmptyStateMedia>
           <EmptyStateTitle>Quiet month</EmptyStateTitle>
           <EmptyStateDescription>
-            No outages, status reports or maintenances.
+            No outages, status reports, maintenances or windows.
           </EmptyStateDescription>
         </EventGroupEmpty>
       </EventGroup>
