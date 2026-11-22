@@ -62,6 +62,11 @@ export function utcToday(now = new Date()) {
   return new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 }
 
+/** First UTC day with a count; frozen months are zero-filled before it. */
+export function checkHistorySince(counts: CheckCounts[]): string | undefined {
+  return counts.find((c) => c.ok + c.degraded + c.error > 0)?.day;
+}
+
 /**
  * One calendar per year, newest first, from the oldest recorded day's year;
  * days before the first count are blank, days after today (UTC) are left empty.
@@ -71,8 +76,7 @@ export function uptimeYears(
   now = new Date(),
   metric: HistoryMetric = "requests",
 ) {
-  // frozen months are zero-filled: the record starts at the first counted day
-  const since = counts.find((c) => c.ok + c.degraded + c.error > 0)?.day;
+  const since = checkHistorySince(counts);
   if (!since) return [];
   const byDay = new Map(counts.map((c) => [c.day, c]));
   const first = Number(since.slice(0, 4));
