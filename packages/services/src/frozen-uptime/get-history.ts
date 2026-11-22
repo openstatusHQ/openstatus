@@ -19,6 +19,7 @@ import {
   reportsOnlyDowntimeMs,
   requestsTally,
 } from "../status-timeline";
+import type { LocalDayCount } from "./buckets";
 import { monthRange } from "./compute";
 import {
   type HistoryAnnotations,
@@ -47,7 +48,7 @@ import {
 } from "./run";
 import { GetUptimeHistoryInput } from "./schemas";
 
-type DayCount = { day: string; ok: number; degraded: number; error: number };
+type DayCount = LocalDayCount;
 
 // native-unit numerators kept alongside the percentage so totals stay
 // additive (checks for requests mode, milliseconds for event math);
@@ -163,7 +164,9 @@ function durationMonth(
   // downtime is clipped to the checked days (a paused stretch can't exceed
   // the denominator) and the in-progress day is clamped to elapsed time so
   // 2h down on the 2nd isn't diluted by the rest of today
-  const windows = withChecks.map((d) => dayWindow(d.day, timeZone));
+  const windows = withChecks.map(
+    (d) => d.covered ?? dayWindow(d.day, timeZone),
+  );
   const { segments, totalMs } = dayCoverage(windows, nowMs);
   if (segments.length === 0 || totalMs <= 0) return null;
   const window = {

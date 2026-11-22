@@ -203,15 +203,19 @@ export function inTimeZone(date: Date, timeZone: string): Date {
   );
 }
 
-/** Under a day "02:00 – 06:00", else "Oct 11 – Oct 15" (with years when they differ); the row's date carries the day. */
-export function formatWindow(from: Date, to: Date): string {
+/**
+ * Under a day "02:00 – 06:00", else "Oct 11 – Oct 15" (with years when they differ); the row's date carries the day.
+ * With `timeZone`, clocks read in that zone while span and equality stay on the instants (DST fall-back repeats a wall hour).
+ */
+export function formatWindow(from: Date, to: Date, timeZone?: string): string {
+  const [f, t] = timeZone
+    ? [inTimeZone(from, timeZone), inTimeZone(to, timeZone)]
+    : [from, to];
   // "23:33 – 23:33" reads like a typo
-  if (isSameMinute(from, to)) return formatClock(from);
+  if (Math.abs(to.getTime() - from.getTime()) < 60_000 && isSameMinute(f, t)) {
+    return formatClock(f);
+  }
   const short = to.getTime() - from.getTime() < 24 * 60 * 60 * 1000;
-  const pattern = short
-    ? "HH:mm"
-    : isSameYear(from, to)
-      ? "MMM d"
-      : "MMM d, yyyy";
-  return `${format(from, pattern)} – ${format(to, pattern)}`;
+  const pattern = short ? "HH:mm" : isSameYear(f, t) ? "MMM d" : "MMM d, yyyy";
+  return `${format(f, pattern)} – ${format(t, pattern)}`;
 }

@@ -3,6 +3,8 @@ import type {
   FrozenMonitorUptimeDay,
 } from "@openstatus/db/src/schema";
 
+import { type DayWindow, dayWindow } from "../status-timeline/day-window";
+
 export const BUCKET_MINUTES = 15;
 export const BUCKETS_PER_DAY = (24 * 60) / BUCKET_MINUTES;
 
@@ -125,7 +127,23 @@ export type LocalDayCount = {
   ok: number;
   degraded: number;
   error: number;
+  /** set only when source UTC days cover part of the local day */
+  covered?: DayWindow;
 };
+
+/** Union of two spans of one local day; undefined = the whole day. */
+export function mergeCovered(
+  a: DayWindow | undefined,
+  b: DayWindow | undefined,
+  day: string,
+  timeZone: string,
+): DayWindow | undefined {
+  if (!a || !b) return undefined;
+  const start = Math.min(a.start, b.start);
+  const end = Math.max(a.end, b.end);
+  const full = dayWindow(day, timeZone);
+  return start <= full.start && end >= full.end ? undefined : { start, end };
+}
 
 /**
  * Regroup frozen UTC days into days of `timeZone`; totals turn fractional.
@@ -139,12 +157,41 @@ export function toLocalDays(
 ): LocalDayCount[] {
   const regroup = timeZone !== "UTC";
   const byDay = new Map<string, LocalDayCount>();
-  const add = (day: string, ok: number, degraded: number, error: number) => {
-    const acc = byDay.get(day) ?? { day, ok: 0, degraded: 0, error: 0 };
+  const add = (
+    day: string,
+    ok: number,
+    degraded: number,
+    error: number,
+    covered?: DayWindow,
+  ) => {
+    const acc = byDay.get(day);
+    if (!acc) {
+      const full = covered && dayWindow(day, timeZone);
+      const partial =
+        covered &&
+        full &&
+        (covered.start > full.start || covered.end < full.end);
+      byDay.set(day, {
+        day,
+        ok,
+        degraded,
+        error,
+        ...(partial ? { covered } : {}),
+      });
+      return;
+    }
     acc.ok += ok;
     acc.degraded += degraded;
     acc.error += error;
-    byDay.set(day, acc);
+    const merged = mergeCovered(acc.covered, covered, day, timeZone);
+    if (merged) acc.covered = merged;
+    else delete acc.covered;
+  };
+  // the part of a UTC day a local group spans, so duration mode never counts a full local day
+  const span = (utcDay: string, g: { first: number; n: number }) => {
+    const start =
+      Date.parse(`${utcDay}T00:00:00.000Z`) + g.first * MS_PER_BUCKET;
+    return { start, end: start + g.n * MS_PER_BUCKET };
   };
   for (const d of days) {
     const counts = d[measure];
@@ -164,6 +211,7 @@ export function toLocalDays(
           (counts.ok * g.n) / BUCKETS_PER_DAY,
           isMain ? counts.degraded : 0,
           isMain ? counts.error : 0,
+          span(d.day, g),
         );
       }
       continue;
@@ -181,7 +229,7 @@ export function toLocalDays(
     const okSum = groups.reduce((sum, g) => sum + g.ok, 0);
     const scale = okSum > 0 ? counts.ok / okSum : 0;
     for (const g of groups) {
-      add(g.day, g.ok * scale, g.bad.degraded, g.bad.error);
+      add(g.day, g.ok * scale, g.bad.degraded, g.bad.error, span(d.day, g));
     }
   }
   return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));

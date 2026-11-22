@@ -1,7 +1,12 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 import { describe, expect, test } from "vitest";
 
-import { rangesInBuckets, toLocalDays, toRanges } from "../buckets";
+import {
+  type LocalDayCount,
+  rangesInBuckets,
+  toLocalDays,
+  toRanges,
+} from "../buckets";
 
 describe("toRanges", () => {
   test("no failing buckets, no ranges", () => {
@@ -96,6 +101,9 @@ describe("rangesInBuckets", () => {
 });
 
 describe("toLocalDays", () => {
+  const counts = (days: LocalDayCount[]) =>
+    days.map(({ covered: _, ...d }) => d);
+
   // 10 checks per quarter-hour
   const quiet = (day: string): FrozenMonitorUptimeDay => ({
     day,
@@ -111,7 +119,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[94, 2, 0, 10]] },
       },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
+    expect(counts(toLocalDays(days, "Europe/Berlin", "requests"))).toEqual([
       { day: "2026-10-30", ok: 920, degraded: 0, error: 0 },
       { day: "2026-10-31", ok: 960, degraded: 0, error: 0 },
       { day: "2026-11-01", ok: 20, degraded: 0, error: 20 },
@@ -126,7 +134,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[73, 2, 0, 5]] },
       },
     ];
-    expect(toLocalDays(days, "Asia/Kolkata", "requests")).toEqual([
+    expect(counts(toLocalDays(days, "Asia/Kolkata", "requests"))).toEqual([
       { day: "2026-06-10", ok: 735, degraded: 0, error: 5 },
       { day: "2026-06-11", ok: 215, degraded: 0, error: 5 },
     ]);
@@ -140,7 +148,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[72, 2, 3, 0]] },
       },
     ];
-    expect(toLocalDays(days, "Asia/Kathmandu", "requests")).toEqual([
+    expect(counts(toLocalDays(days, "Asia/Kathmandu", "requests"))).toEqual([
       { day: "2026-06-10", ok: 727, degraded: 3, error: 0 },
       { day: "2026-06-11", ok: 227, degraded: 3, error: 0 },
     ]);
@@ -148,7 +156,7 @@ describe("toLocalDays", () => {
 
   test("the spring-forward day is 23 local hours long", () => {
     const days = ["2026-03-28", "2026-03-29", "2026-03-30"].map(quiet);
-    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
+    expect(counts(toLocalDays(days, "Europe/Berlin", "requests"))).toEqual([
       { day: "2026-03-28", ok: 920, degraded: 0, error: 0 },
       { day: "2026-03-29", ok: 920, degraded: 0, error: 0 },
       { day: "2026-03-30", ok: 960, degraded: 0, error: 0 },
@@ -164,7 +172,7 @@ describe("toLocalDays", () => {
         bad: { requests: [[92, 4, 0, 1]] },
       },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
+    expect(counts(toLocalDays(days, "Europe/Berlin", "requests"))).toEqual([
       { day: "2026-10-31", ok: 0, degraded: 0, error: 0 },
       { day: "2026-11-01", ok: 0, degraded: 0, error: 4 },
     ]);
@@ -184,7 +192,7 @@ describe("toLocalDays", () => {
       local.reduce((total, d) => total + d[key], 0);
     expect(sum("ok")).toBeCloseTo(20);
     expect(sum("error")).toBe(4);
-    expect(local[1]).toEqual({
+    expect(counts(local)[1]).toEqual({
       day: "2026-11-01",
       ok: 0,
       degraded: 0,
@@ -196,7 +204,7 @@ describe("toLocalDays", () => {
     const days: FrozenMonitorUptimeDay[] = [
       { day: "2026-10-31", requests: { ok: 960, degraded: 0, error: 20 } },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "requests")).toEqual([
+    expect(counts(toLocalDays(days, "Europe/Berlin", "requests"))).toEqual([
       { day: "2026-10-31", ok: 920, degraded: 0, error: 20 },
       { day: "2026-11-01", ok: 40, degraded: 0, error: 0 },
     ]);
@@ -212,9 +220,32 @@ describe("toLocalDays", () => {
         bad: { runs: [[94, 2, 0, 1]] },
       },
     ];
-    expect(toLocalDays(days, "Europe/Berlin", "runs")).toEqual([
+    expect(counts(toLocalDays(days, "Europe/Berlin", "runs"))).toEqual([
       { day: "2026-10-31", ok: 92, degraded: 0, error: 0 },
       { day: "2026-11-01", ok: 2, degraded: 0, error: 2 },
     ]);
+  });
+  test("an edge day covers only the hours its UTC day reaches", () => {
+    const local = toLocalDays(
+      [quiet("2026-10-31")],
+      "Europe/Berlin",
+      "requests",
+    );
+    expect(local.map((d) => d.covered)).toEqual([
+      {
+        start: Date.parse("2026-10-31T00:00:00.000Z"),
+        end: Date.parse("2026-10-31T23:00:00.000Z"),
+      },
+      {
+        start: Date.parse("2026-10-31T23:00:00.000Z"),
+        end: Date.parse("2026-11-01T00:00:00.000Z"),
+      },
+    ]);
+  });
+
+  test("a local day covered by both its UTC days has no partial span", () => {
+    const days = ["2026-10-30", "2026-10-31"].map(quiet);
+    const local = toLocalDays(days, "Europe/Berlin", "requests");
+    expect(local.find((d) => d.day === "2026-10-31")?.covered).toBeUndefined();
   });
 });

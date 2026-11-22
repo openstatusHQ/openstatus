@@ -154,11 +154,11 @@ month, the ranges sum exactly to that day's degraded and error counts.
 - **All or nothing.** `attachBadRanges` (`frozen-uptime/compute.ts`) adds the
   ranges only when every day adds up. One day off and the row is written
   without any, with a "bad ranges do not match the day counts" warning.
-- **Only rows with ranges can leave UTC.** `toLocalDays`
-  (`frozen-uptime/buckets.ts`) regroups them into the page time zone; any other
-  row comes back as UTC days and its month is listed in `utcOnlyMonths`, which
-  the dashboard labels "UTC". Around the frozen/live seam such a month can
-  double-count or drop a few hours on a page with another time zone.
+- **Rows without ranges regroup coarsely.** `toLocalDays`
+  (`frozen-uptime/buckets.ts`) still spreads their checks over the local days,
+  but every failure lands on the local day holding most of the UTC day.
+- **Partial local days carry `covered`.** A local day reached by only one UTC
+  day keeps the span it covers, so duration mode never counts it as 24 hours.
 - **Regrouped totals are estimates, failures are exact.** A UTC day's total is
   spread evenly over its 96 buckets, so local-day counts are fractional.
   Degraded and error counts move with their real quarter-hour.
@@ -166,9 +166,9 @@ month, the ranges sum exactly to that day's degraded and error counts.
   rows without them and only under the same sum check. Replacing counts is
   `refreezeMonitorMonths`, which works only while Tinybird still covers the
   whole month.
-- **Heartbeat rows never get ranges and never leave UTC.** They have no
-  quarter-hour data, so readers pass `quarterHours: false` to `mergeLocalDays`
-  even for a month without failures.
+- **Heartbeat rows never get ranges.** They have no quarter-hour data, so
+  readers pass `quarterHours: false` to `mergeLocalDays` even for a month
+  without failures.
 - **The bucket size is a contract across three places**: `BUCKET_MINUTES` in
   `frozen-uptime/buckets.ts`, the 0..95 bounds of `badRangeSchema` in
   `packages/db/src/schema/frozen_uptime/validation.ts`, and the `*_bad_15m`

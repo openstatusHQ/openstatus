@@ -200,9 +200,26 @@ describe("mergeLocalDays", () => {
       timeZone: "America/New_York",
       quarterHours: false,
     });
+    const at = (iso: string) => Date.parse(iso);
     expect(heartbeat.requests).toEqual([
-      { day: "2026-06-09", ...c(4) },
-      { day: "2026-06-10", ok: 20, degraded: 0, error: 2 },
+      {
+        day: "2026-06-09",
+        ...c(4),
+        covered: {
+          start: at("2026-06-10T00:00Z"),
+          end: at("2026-06-10T04:00Z"),
+        },
+      },
+      {
+        day: "2026-06-10",
+        ok: 20,
+        degraded: 0,
+        error: 2,
+        covered: {
+          start: at("2026-06-10T04:00Z"),
+          end: at("2026-06-11T00:00Z"),
+        },
+      },
     ]);
   });
 });

@@ -1,7 +1,12 @@
 import type { FrozenMonitorUptimeDay } from "@openstatus/db/src/schema";
 import type { OSTinybird } from "@openstatus/tinybird";
 
-import { hasBadRanges, type LocalDayCount, toLocalDays } from "./buckets";
+import {
+  hasBadRanges,
+  type LocalDayCount,
+  mergeCovered,
+  toLocalDays,
+} from "./buckets";
 import {
   type ChunkFailure,
   fetchFreezeCounts,
@@ -112,6 +117,14 @@ export function mergeLocalDays(args: {
       acc.ok += d.ok;
       acc.degraded += d.degraded;
       acc.error += d.error;
+      const covered = mergeCovered(
+        acc.covered,
+        d.covered,
+        d.day,
+        args.timeZone,
+      );
+      if (covered) acc.covered = covered;
+      else delete acc.covered;
     }
     return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
   };

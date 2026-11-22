@@ -175,6 +175,13 @@ describe("formatEventDate", () => {
 });
 
 describe("formatWindow", () => {
+  it("keeps the real span across a DST fall-back in a page zone", () => {
+    // 01:30 EDT and 01:30 EST, one hour apart
+    const from = new Date("2026-11-01T05:30:00.000Z");
+    const to = new Date("2026-11-01T06:30:00.000Z");
+    expect(formatWindow(from, to, "America/New_York")).toBe("01:30 – 01:30");
+  });
+
   it("uses clocks under a day, including across midnight", () => {
     expect(
       formatWindow(new Date(2026, 9, 17, 22, 0), new Date(2026, 9, 18, 0, 0)),
