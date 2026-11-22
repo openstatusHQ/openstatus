@@ -152,8 +152,10 @@ export default auth(async (req) => {
     }
   }
 
-  const hasWorkspaceSlug = req.cookies.has(WORKSPACE_SLUG_COOKIE);
+  const workspaceSlug = req.cookies.get(WORKSPACE_SLUG_COOKIE)?.value;
+  const hasWorkspaceSlug = workspaceSlug !== undefined;
   const ssoOrg = req.cookies.get(SSO_ORG_COOKIE)?.value;
+  let nextWorkspaceSlug = req.auth?.user?.id ? workspaceSlug : undefined;
 
   if (req.auth?.user?.id && (!hasWorkspaceSlug || ssoOrg)) {
     const rows = await db
@@ -175,12 +177,19 @@ export default auth(async (req) => {
     if (!query) {
       console.error(">> Should not happen, no workspace found for user");
     } else if (target || !hasWorkspaceSlug) {
-      response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug, {
-        path: "/",
-        maxAge: WORKSPACE_SLUG_MAX_AGE,
-        sameSite: "lax",
-      });
+      nextWorkspaceSlug = query.workspace.slug;
     }
+  }
+
+  // Re-set on every authenticated request: a sliding expiry, and it upgrades
+  // cookies written before they carried a maxAge (expiry isn't readable here).
+  if (nextWorkspaceSlug) {
+    response.cookies.set(WORKSPACE_SLUG_COOKIE, nextWorkspaceSlug, {
+      path: "/",
+      maxAge: WORKSPACE_SLUG_MAX_AGE,
+      sameSite: "lax",
+      secure: req.nextUrl.protocol === "https:",
+    });
   }
 
   if (ssoOrg) {
