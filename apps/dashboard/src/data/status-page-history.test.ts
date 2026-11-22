@@ -147,8 +147,9 @@ describe("monthMinutes / downtimeMinutes", () => {
   it("counts a whole past month in the page's zone", () => {
     const now = new Date("2026-12-15T00:00:00Z");
     expect(monthMinutes("2026-11", "UTC", now)).toBe(30 * 1440);
-    // a UTC+1 month starts and ends an hour earlier, same length
-    expect(monthMinutes("2026-11", "Europe/Berlin", now)).toBe(30 * 1440);
+    // Berlin falls back on 25 October, so its October runs an hour longer
+    expect(monthMinutes("2026-10", "UTC", now)).toBe(31 * 1440);
+    expect(monthMinutes("2026-10", "Europe/Berlin", now)).toBe(31 * 1440 + 60);
   });
 
   it("counts the current month only up to now", () => {

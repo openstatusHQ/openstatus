@@ -108,8 +108,7 @@ function href(item: HistoryItem, pageId: string): string | undefined {
   if (item.event.type === "report") {
     return `/status-pages/${pageId}/status-reports/${item.event.id}`;
   }
-  // maintenances have no detail route (sheet-edited on the list page)
-  return `/status-pages/${pageId}/maintenances`;
+  return `/status-pages/${pageId}/maintenances/${item.event.id}`;
 }
 
 export function HistoryItemRow({

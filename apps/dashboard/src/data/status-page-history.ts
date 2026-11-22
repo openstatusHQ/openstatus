@@ -132,17 +132,21 @@ export function historyItemKey(item: HistoryItem): string {
  */
 export function historyItems(rows: HistoryRow[]): HistoryItem[] {
   const items = new Map<string, HistoryItem>();
-  const add = (item: HistoryItem, component: string) => {
+  // names can repeat across components, so merge by component id
+  const seen = new Map<string, Set<number>>();
+  const add = (item: HistoryItem, componentId: number) => {
     const key = historyItemKey(item);
-    const existing = items.get(key);
-    if (existing) {
-      if (!existing.components.includes(component)) {
-        existing.components.push(component);
-      }
-    } else items.set(key, item);
+    const ids = seen.get(key);
+    if (!ids) {
+      seen.set(key, new Set([componentId]));
+      items.set(key, item);
+    } else if (!ids.has(componentId)) {
+      ids.add(componentId);
+      items.get(key)?.components.push(...item.components);
+    }
   };
   for (const row of rows) {
-    const { name, monitorId } = row.component;
+    const { id, name, monitorId } = row.component;
     for (const event of row.events) {
       add(
         {
@@ -153,7 +157,7 @@ export function historyItems(rows: HistoryRow[]): HistoryItem[] {
           to: event.to,
           components: [name],
         },
-        name,
+        id,
       );
     }
     for (const window of row.maintenanceWindows) {
@@ -165,7 +169,7 @@ export function historyItems(rows: HistoryRow[]): HistoryItem[] {
           to: window.to,
           components: [name],
         },
-        name,
+        id,
       );
     }
     for (const outage of row.excusedOutages) {
@@ -178,7 +182,7 @@ export function historyItems(rows: HistoryRow[]): HistoryItem[] {
           to: outage.to,
           components: [name],
         },
-        name,
+        id,
       );
     }
   }

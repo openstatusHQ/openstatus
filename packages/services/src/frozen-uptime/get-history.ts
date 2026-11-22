@@ -314,9 +314,12 @@ export async function getUptimeHistory(args: {
   const configuration = pageConfigurationSchema.safeParse(
     _page.configuration ?? {},
   );
-  const configuredMode = configuration.success
-    ? configuration.data.value
-    : "requests";
+  // a reports-only page counts reports whatever `value` was left at
+  const configuredMode = !configuration.success
+    ? "requests"
+    : configuration.data.type === "manual"
+      ? "manual"
+      : configuration.data.value;
   const mode = input.mode ?? configuredMode;
   // both count checks; each row carries requests and runs, the client picks
   const countsRequests = mode === "requests" || mode === "runs";

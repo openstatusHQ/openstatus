@@ -69,8 +69,11 @@ import {
 const pct = (v: number | null | undefined) =>
   v === null || v === undefined ? "–" : `${truncatePercentage(v)}%`;
 
-const formatDowntime = (minutes: number | null) =>
-  minutes === null ? "–" : formatDurationShort(minutes * 60_000);
+// counted checks only translate to time as an estimate of the month
+const formatDowntime = (minutes: number | null, estimate = false) =>
+  minutes === null
+    ? "–"
+    : `${estimate && minutes > 0 ? "~" : ""}${formatDurationShort(minutes * 60_000)}`;
 
 function monthDate(key: string): Date {
   const [year, month] = key.split("-").map(Number);
@@ -208,6 +211,7 @@ export function HistoryOverview({
   const count = (kind: HistoryItem["kind"]) =>
     items.filter((item) => item.kind === kind).length;
   const totalDown = pageDowns.reduce<number>((a, d) => a + (d ?? 0), 0);
+  const estimate = mode === "requests" || mode === "runs";
 
   return (
     <>
@@ -229,7 +233,7 @@ export function HistoryOverview({
             </MetricStripValue>
           </MetricStripItem>
           {[
-            ["Downtime", formatDowntime(totalDown)],
+            ["Downtime", formatDowntime(totalDown, estimate)],
             ["Events", String(count("event"))],
             ["Excused", String(count("excused"))],
             ["Windows", String(count("window"))],
@@ -266,7 +270,7 @@ export function HistoryOverview({
                 <MetricStripButton
                   key={key}
                   aria-pressed={key === selected}
-                  aria-label={`${monthKeyToFullLabel(key)}: ${formatDowntime(down)} downtime, ${dots.length} events`}
+                  aria-label={`${monthKeyToFullLabel(key)}: ${formatDowntime(down, estimate)} downtime, ${dots.length} events`}
                   onClick={() => setSelected(key)}
                   className="flex-wrap"
                 >
@@ -295,7 +299,7 @@ export function HistoryOverview({
                     ) : null}
                   </span>
                   <MetricStripValue className="text-sm">
-                    {formatDowntime(down)}
+                    {formatDowntime(down, estimate)}
                   </MetricStripValue>
                   <span
                     aria-hidden
@@ -343,7 +347,7 @@ export function HistoryOverview({
           </EventGroupTitle>
           <EventGroupHint>
             {pct(pageMonthUptime(rows, selected))} ·{" "}
-            {formatDowntime(pageDowns[index])} down
+            {formatDowntime(pageDowns[index], estimate)} down
             {index === 0 ? " · in progress" : ""}
           </EventGroupHint>
         </EventGroupHeader>
@@ -408,7 +412,9 @@ export function HistoryOverview({
                       value === null && "text-muted-foreground/50",
                     )}
                   >
-                    {value === null ? "no data" : formatDowntime(downs[index])}
+                    {value === null
+                      ? "no data"
+                      : formatDowntime(downs[index], row.unit !== "time")}
                   </span>
                   <span className="text-muted-foreground hidden w-16 text-right font-mono text-xs tabular-nums sm:inline">
                     {pct(value)}
@@ -418,6 +424,15 @@ export function HistoryOverview({
             );
           })}
         </EventList>
+        <EventGroupEmpty>
+          <EmptyStateMedia>
+            <Calendar />
+          </EmptyStateMedia>
+          <EmptyStateTitle>No components</EmptyStateTitle>
+          <EmptyStateDescription>
+            Add components to the page to track their uptime.
+          </EmptyStateDescription>
+        </EventGroupEmpty>
       </EventGroup>
     </>
   );

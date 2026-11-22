@@ -256,7 +256,11 @@ export function Client() {
       <Section id="history-overview">
         {isLimited ? (
           <BillingOverlayContainer>
-            <Section aria-hidden className="pointer-events-none select-none">
+            <Section
+              aria-hidden
+              inert
+              className="pointer-events-none select-none"
+            >
               {overview}
             </Section>
             <BillingOverlay>
