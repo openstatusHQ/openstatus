@@ -91,6 +91,7 @@ plan.md
 !.agents/skills/screenshot/
 !.agents/skills/grill-me/
 !.agents/skills/codebase-design/
+!.agents/skills/prototype/
 skills-lock.json
 .screenshots/
 .recordings/
