@@ -125,7 +125,7 @@ function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
       lead: `${formatDurationShort(down)} down · ${
         monitors.size === 1 ? [...monitors][0] : `${monitors.size} monitors`
       }`,
-      name: "Downtime",
+      name: "Outage",
     });
   }
   if (maintenance.length > 0) {
@@ -152,7 +152,7 @@ function linkOf(event: OverviewEvent): ActivityLink {
       return {
         href: `/monitors/${event.incident.monitor.id}/outages`,
         title: event.incident.monitor.name,
-        kind: "Downtime",
+        kind: "Outage",
       };
     case "managedIncident":
       return {

@@ -25,7 +25,7 @@ export type OverviewEvent =
   | { type: "maintenance"; maintenance: Maintenance };
 
 export const eventTypeConfig = {
-  incident: { label: "Downtime", icon: CloudOff },
+  incident: { label: "Outage", icon: CloudOff },
   managedIncident: { label: "Incident", icon: IncidentIcon },
   report: { label: "Status Report", icon: Report },
   maintenance: { label: "Maintenance", icon: MaintenanceIcon },
