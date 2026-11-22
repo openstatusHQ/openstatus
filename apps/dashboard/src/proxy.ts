@@ -18,7 +18,10 @@ import {
   AUTH_REDIRECT_COOKIE_OPTIONS,
 } from "@/lib/auth-redirect-cookie";
 import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
-import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
+import {
+  WORKSPACE_SLUG_COOKIE,
+  WORKSPACE_SLUG_MAX_AGE,
+} from "@/lib/workspace-cookie";
 
 const ATTRIBUTION_PARAMS = [
   "ref",
@@ -172,7 +175,11 @@ export default auth(async (req) => {
     if (!query) {
       console.error(">> Should not happen, no workspace found for user");
     } else if (target || !hasWorkspaceSlug) {
-      response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug);
+      response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug, {
+        path: "/",
+        maxAge: WORKSPACE_SLUG_MAX_AGE,
+        sameSite: "lax",
+      });
     }
   }
 
