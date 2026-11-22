@@ -49,6 +49,7 @@ import {
   historyItemKey,
   historyItemKind,
   historyItems,
+  monthKeyToDate,
   monthKeyToFullLabel,
   pageMonthUptime,
 } from "@/data/status-page-history";
@@ -74,11 +75,6 @@ const formatDowntime = (minutes: number | null, estimate = false) =>
   minutes === null
     ? "–"
     : `${estimate && minutes > 0 ? "~" : ""}${formatDurationShort(minutes * 60_000)}`;
-
-function monthDate(key: string): Date {
-  const [year, month] = key.split("-").map(Number);
-  return new Date(year, month - 1, 1);
-}
 
 /** Neutral bars: we don't know the customer's target, so height is the only signal. */
 function DowntimeBars({
@@ -275,7 +271,7 @@ export function HistoryOverview({
                   className="flex-wrap"
                 >
                   <MetricStripLabel>
-                    {format(monthDate(key), "MMM")}
+                    {format(monthKeyToDate(key), "MMM")}
                     {showYear ? (
                       <span className="ml-1 text-xs">{year}</span>
                     ) : null}
@@ -328,7 +324,7 @@ export function HistoryOverview({
         </ActivityHeader>
         <StatusCalendar
           markers={markers}
-          month={monthDate(selected)}
+          month={monthKeyToDate(selected)}
           onMonthChange={(m) => {
             const key = format(m, "yyyy-MM");
             if (months.includes(key)) setSelected(key);

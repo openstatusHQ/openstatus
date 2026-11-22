@@ -55,7 +55,7 @@ export function eventsForMonth<T extends Pick<HistoryEvent, "from" | "to">>(
   });
 }
 
-function monthKeyToDate(key: string): Date {
+export function monthKeyToDate(key: string): Date {
   const [year, month] = key.split("-").map(Number);
   return new Date(year, month - 1, 1);
 }
