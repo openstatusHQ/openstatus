@@ -15,6 +15,7 @@ import {
 import { buildPrototypeHistory } from "./data";
 import {
   VariantCalendar,
+  VariantCombined,
   VariantHeatmap,
   VariantLedger,
   VariantStrip,
@@ -22,6 +23,13 @@ import {
 } from "./variants";
 
 const VARIANTS = [
+  {
+    value: "combined",
+    label: "A+B · Strip + Calendar",
+    description:
+      "The year strip picks a month; the status page calendar block shows its days, with components and events beside it.",
+    Component: VariantCombined,
+  },
   {
     value: "strip",
     label: "A · Strip",
@@ -64,7 +72,7 @@ const VALUES = VARIANTS.map((v) => v.value);
 export function Client() {
   const [variant, setVariant] = useQueryState(
     "variant",
-    parseAsStringLiteral(VALUES).withDefault("strip"),
+    parseAsStringLiteral(VALUES).withDefault("combined"),
   );
   const history = useMemo(() => buildPrototypeHistory(), []);
   const current = VARIANTS.find((v) => v.value === variant) ?? VARIANTS[0];

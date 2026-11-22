@@ -553,3 +553,158 @@ export function VariantLedger({ history }: { history: UptimeHistory }) {
     </div>
   );
 }
+
+// ---------- A + B: strip picks the month, the calendar block details it ----------
+
+function MonthStrip({
+  history,
+  events,
+  selected,
+  onSelect,
+}: {
+  history: UptimeHistory;
+  events: PageEvent[];
+  selected: string;
+  onSelect: (key: string) => void;
+}) {
+  const { months, rows } = history;
+  return (
+    <div className="grid grid-cols-6 border-y sm:grid-cols-12">
+      {months.map((key, i) => {
+        const v = pageMonth(rows, key);
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={key === selected}
+            onClick={() => onSelect(key)}
+            className={cn(
+              "hover:bg-muted/50 flex flex-col items-stretch gap-1.5 p-2 text-left transition-colors",
+              key === selected && "bg-muted",
+            )}
+          >
+            <span
+              className={cn(
+                "text-muted-foreground text-xs",
+                i === months.length - 1 && "text-info",
+              )}
+            >
+              {format(monthDate(key), "MMM")}
+            </span>
+            <span
+              className={cn("h-10 rounded-sm", severityFill[severityOf(v)])}
+            />
+            <span className="font-mono text-xs">{pct(v)}</span>
+            <span className="flex h-1.5 gap-0.5">
+              {eventsInMonth(events, key)
+                .slice(0, 4)
+                .map((e) => (
+                  <span
+                    key={`${e.type}-${e.id}`}
+                    className={cn("size-1.5 rounded-full", eventFill[e.type])}
+                  />
+                ))}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function VariantCombined({ history }: { history: UptimeHistory }) {
+  const { months, rows, summary } = history;
+  const [selected, setSelected] = useState(months[months.length - 1]);
+  const events = useMemo(() => pageEvents(rows), [rows]);
+  const markers = useMemo(() => toMarkers(events), [events]);
+  const index = months.indexOf(selected);
+  const v = pageMonth(rows, selected);
+  const previous = index > 0 ? pageMonth(rows, months[index - 1]) : null;
+  const delta = v !== null && previous !== null ? v - previous : null;
+  const monthEvents = eventsInMonth(events, selected);
+
+  return (
+    <div className="bg-card overflow-hidden rounded-lg border">
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-3 px-4 py-3">
+        {[
+          ["Page uptime · 12 months", pct(summary.uptime)],
+          ["Events", String(events.length)],
+          ["Components", String(rows.length)],
+        ].map(([label, value]) => (
+          <div key={label} className="grid gap-0.5">
+            <span className="text-muted-foreground text-xs">{label}</span>
+            <span className="font-mono text-lg font-medium">{value}</span>
+          </div>
+        ))}
+        <div className="ml-auto">
+          <Legend />
+        </div>
+      </div>
+      <MonthStrip
+        history={history}
+        events={events}
+        selected={selected}
+        onSelect={setSelected}
+      />
+      <div className="grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <StatusCalendar
+          markers={markers}
+          month={monthDate(selected)}
+          onMonthChange={(m) => {
+            const key = format(m, "yyyy-MM");
+            if (months.includes(key)) setSelected(key);
+          }}
+          disableFuture
+          className="rounded-none border-0 md:border-r"
+          title={
+            <span className="flex items-baseline gap-2">
+              All components
+              <span
+                className={cn(
+                  "rounded px-1.5 py-0.5 font-mono text-xs",
+                  severityTint[severityOf(v)],
+                )}
+              >
+                {pct(v)}
+              </span>
+              {delta !== null ? (
+                <span
+                  className={cn(
+                    "font-mono text-xs",
+                    delta >= 0 ? "text-success" : "text-destructive",
+                  )}
+                >
+                  {delta >= 0 ? "+" : "−"}
+                  {Math.abs(delta).toFixed(3)} pp
+                </span>
+              ) : null}
+            </span>
+          }
+        />
+        <div className="grid content-start gap-5 border-t p-4 md:border-t-0">
+          <div className="grid gap-1">
+            <span className="text-sm font-medium">Components</span>
+            <ComponentMonthList rows={rows} month={selected} />
+          </div>
+          <div className="grid gap-3">
+            <span className="text-sm font-medium">
+              Events{" "}
+              <span className="text-muted-foreground font-normal">
+                {monthEvents.length}
+              </span>
+            </span>
+            {monthEvents.length === 0 ? (
+              <span className="text-muted-foreground text-xs">
+                Nothing happened this month.
+              </span>
+            ) : (
+              monthEvents.map((e) => (
+                <EventLine key={`${e.type}-${e.id}`} event={e} />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
