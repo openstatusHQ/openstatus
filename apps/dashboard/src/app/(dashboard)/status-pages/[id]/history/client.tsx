@@ -1,12 +1,28 @@
 "use client";
 
 import { Calendar, Info, Lock } from "@openstatus/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import NextLink from "next/link";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
@@ -45,10 +61,7 @@ import { FormDialogSupportContact } from "@/components/forms/support-contact/dia
 import { CalculationSelect } from "@/components/status-page-history/calculation-select";
 import { HistoryOverview } from "@/components/status-page-history/history-overview";
 import { PeriodSelect } from "@/components/status-page-history/period-select";
-import {
-  UptimeCalculation,
-  UptimeModeTiles,
-} from "@/components/status-pages/uptime-calculation";
+import { UptimeCalculation } from "@/components/status-pages/uptime-calculation";
 import { historyMetric, historyRows } from "@/data/status-page-history";
 import {
   UPTIME_DOCS_URL,
@@ -60,12 +73,17 @@ import { useTRPC } from "@/lib/trpc/client";
 import { buildExampleHistory } from "./examples";
 import { searchParamsParsers } from "./search-params";
 
+const formatUptime = (value: number | null | undefined) =>
+  typeof value === "number" ? `${value}%` : "…";
+
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const [{ calculation, period, month }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: page } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -84,6 +102,26 @@ export function Client() {
     // switching calculation or period keeps the last numbers until the new ones land
     placeholderData: keepPreviousData,
   });
+
+  // same key as the history above until another calculation is previewed
+  const { data: publicHistory } = useQuery({
+    ...trpc.page.getUptimeHistory.queryOptions({
+      id: Number.parseInt(id),
+      months: period ?? undefined,
+    }),
+    enabled: !!workspace && !isLimited,
+  });
+  const updateConfiguration = useMutation(
+    trpc.page.updatePageConfiguration.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: trpc.page.pathKey(),
+        });
+        await setSearchParams({ calculation: null });
+        setOpenConfirm(false);
+      },
+    }),
+  );
 
   const exampleHistory = useMemo(
     () => (isLimited ? buildExampleHistory() : null),
@@ -104,11 +142,24 @@ export function Client() {
   const current =
     UPTIME_MODES.find((m) => m.value === history.mode) ?? configured;
   const isPreview = current.value !== configured.value;
+  // the tab follows the click; `current` lags until its numbers land
+  const selected =
+    UPTIME_MODES.find((m) => m.value === calculation) ?? configured;
+  const isSettled = current.value === selected.value;
   const configurationHref = `/status-pages/${id}/components#components-configuration`;
   const countsRequests =
     current.value === "requests" || current.value === "runs";
   const showRuns = metric === "runs";
   const uptime = showRuns ? history.summary.runsUptime : history.summary.uptime;
+  const publicSummary = publicHistory?.summary;
+  const publicUptime =
+    configured.value === "runs"
+      ? publicSummary?.runsUptime
+      : publicSummary?.uptime;
+  const delta =
+    isSettled && typeof uptime === "number" && typeof publicUptime === "number"
+      ? uptime - publicUptime
+      : null;
   const partial = showRuns ? history.runsPartial : history.partial;
   const hasAnyData = rows.some((row) =>
     Object.values(row.months).some((value) => value !== null),
@@ -250,22 +301,50 @@ export function Client() {
               <span className="text-foreground font-medium">
                 {configured.label}
               </span>
-              . It applies to your public status page; the calculation above
-              only changes what you see here.{" "}
-              <Link href={UPTIME_DOCS_URL}>Learn more</Link>
+              . Open another tab to preview what would change, here and in the
+              history above. <Link href={UPTIME_DOCS_URL}>Learn more</Link>
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
           <FormCardContent>
-            <UptimeModeTiles mode={configured.value} />
-          </FormCardContent>
-          <FormCardSeparator />
-          <FormCardContent>
-            <UptimeCalculation mode={configured.value} />
+            <UptimeCalculation
+              mode={selected.value}
+              configured={configured.value}
+              onModeChange={(mode) =>
+                setSearchParams({
+                  calculation: mode === configured.value ? null : mode,
+                })
+              }
+            >
+              {selected.value !== configured.value ? (
+                <Note size="sm">
+                  <Info />
+                  <span>
+                    Page uptime, {history.months.length} months:{" "}
+                    <span className="font-mono">
+                      {formatUptime(publicUptime)}
+                    </span>
+                    {" → "}
+                    <span className="font-mono">
+                      {formatUptime(isSettled ? uptime : undefined)}
+                      {delta !== null
+                        ? ` (${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(3)})`
+                        : null}
+                    </span>
+                  </span>
+                  <NoteButton
+                    variant="default"
+                    onClick={() => setOpenConfirm(true)}
+                  >
+                    Use {selected.label}
+                  </NoteButton>
+                </Note>
+              ) : null}
+            </UptimeCalculation>
           </FormCardContent>
           <FormCardFooter className="flex-wrap">
             <FormCardFooterInfo>
-              Change it in{" "}
+              Also in{" "}
               <Link href={configurationHref}>
                 Components &gt; Components Configuration
               </Link>
@@ -275,11 +354,50 @@ export function Client() {
               </Link>
               .
             </FormCardFooterInfo>
-            <Button size="sm" asChild>
-              <NextLink href={configurationHref}>Change calculation</NextLink>
-            </Button>
           </FormCardFooter>
         </FormCard>
+        <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Use {selected.label}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your public status page switches from {configured.label} to{" "}
+                {selected.label}. The uptime visitors see changes right away.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={updateConfiguration.isPending}
+                onClick={(event) => {
+                  // stay open on error so it can be retried
+                  event.preventDefault();
+                  const manual = selected.value === "manual";
+                  toast.promise(
+                    updateConfiguration.mutateAsync({
+                      id: Number.parseInt(id),
+                      configuration: {
+                        ...page?.configuration,
+                        type: manual ? "manual" : "absolute",
+                        value: selected.value,
+                      },
+                    }),
+                    {
+                      loading: "Saving...",
+                      success: "Saved",
+                      error: (error) =>
+                        isTRPCClientError(error)
+                          ? error.message
+                          : "Failed to save",
+                    },
+                  );
+                }}
+              >
+                Use {selected.label}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Section>
     </SectionGroup>
   );

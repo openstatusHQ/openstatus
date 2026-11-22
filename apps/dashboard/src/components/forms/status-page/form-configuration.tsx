@@ -53,6 +53,7 @@ import {
 } from "@/components/forms/form-card";
 import { UptimeCalculation } from "@/components/status-pages/uptime-calculation";
 import {
+  UPTIME_MODES,
   configurationLabels,
   uptimeModeOf,
 } from "@/data/uptime-calculation.client";
@@ -117,6 +118,12 @@ export function FormConfiguration({
     | "true"
     | "false";
   const watchConfigurationDays = form.watch("configuration.days") ?? 45;
+  const mode = uptimeModeOf(watchConfigurationType, watchConfigurationValue);
+  const savedMode = uptimeModeOf(
+    String(defaultValues?.configuration.type),
+    String(defaultValues?.configuration.value),
+  );
+  const savedLabel = UPTIME_MODES.find((m) => m.value === savedMode)?.label;
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
@@ -184,7 +191,7 @@ export function FormConfiguration({
                     <FormLabel>Status source</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value) ?? "absolute"}
+                      value={String(field.value ?? "absolute")}
                       disabled={!hasMonitorComponents}
                     >
                       <FormControl>
@@ -212,7 +219,7 @@ export function FormConfiguration({
                     <FormLabel>Card shows</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value) ?? "requests"}
+                      value={String(field.value ?? "requests")}
                       disabled={
                         !hasMonitorComponents ||
                         watchConfigurationType === "manual"
@@ -277,11 +284,26 @@ export function FormConfiguration({
                     How uptime is calculated
                   </span>
                   <UptimeCalculation
-                    mode={uptimeModeOf(
-                      watchConfigurationType,
-                      watchConfigurationValue,
-                    )}
-                  />
+                    mode={mode}
+                    configured={savedMode}
+                    onModeChange={(next) => {
+                      const manual = next === "manual";
+                      form.setValue(
+                        "configuration.type",
+                        manual ? "manual" : "absolute",
+                        { shouldDirty: true },
+                      );
+                      form.setValue("configuration.value", next, {
+                        shouldDirty: true,
+                      });
+                    }}
+                  >
+                    {mode !== savedMode ? (
+                      <p className="text-muted-foreground">
+                        Visitors keep seeing {savedLabel} until you submit.
+                      </p>
+                    ) : null}
+                  </UptimeCalculation>
                 </div>
               ) : null}
             </FormCardContent>
