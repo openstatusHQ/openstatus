@@ -40,6 +40,9 @@ function getTitle(limit: keyof Limits | undefined, plan: WorkspacePlan) {
   if ((value === false || value === 0) && label) {
     return `${label} is not part of ${allPlans[plan].title}`;
   }
+  if (limit === "uptime-history" && typeof value === "number") {
+    return `${allPlans[plan].title} keeps ${value} months of uptime history`;
+  }
   if (typeof value === "string" && label) {
     return `${allPlans[plan].title} includes ${value} ${label.toLowerCase()}`;
   }

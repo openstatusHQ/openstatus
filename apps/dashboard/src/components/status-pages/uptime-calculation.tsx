@@ -184,8 +184,9 @@ export function UptimeCalculation({
         before={before.reports}
       />
       <p className="text-muted-foreground">
-        Heartbeat monitors are always counted by time. An outage and a report
-        over the same time count once.
+        {mode === "manual"
+          ? "Heartbeat monitors are counted by time, and only status reports count against them."
+          : "Heartbeat monitors are counted by time: outages and reports both count against them, and an outage and a report over the same time count once."}
         {current.notes.map((note) => ` ${note}`)} Excuse a resolved outage in{" "}
         <Link href={`${UPTIME_DOCS_URL}#excused-outages`}>
           Monitors &gt; Outages

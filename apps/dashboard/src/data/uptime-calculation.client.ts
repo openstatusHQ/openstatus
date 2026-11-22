@@ -134,7 +134,7 @@ function reportRows(mode: UptimeMode): UptimeRow[] {
       key: "degraded_performance",
       label: impactConfig.degraded_performance.label,
       hint: "slow but available",
-      cells: ["ignored", "ignored", "ignored"],
+      cells: [perCheck ? "ignored" : "up", "up", "up"],
     },
     {
       key: "legacy",
@@ -178,7 +178,9 @@ export const UPTIME_MATRIX: Record<
   manual: {
     monitors: monitorRows("manual", OUTAGE, "Degraded check"),
     reports: reportRows("manual"),
-    notes: ["Monitor months without checks show no data."],
+    notes: [
+      "Uptime monitor months without checks show no data; heartbeat months count from the first ping, even when silent.",
+    ],
   },
 };
 

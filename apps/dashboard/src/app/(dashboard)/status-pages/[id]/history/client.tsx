@@ -92,7 +92,7 @@ export function Client() {
   const historyLimit = workspace?.limits["uptime-history"] ?? 0;
   const isLimited = workspace?.limits["uptime-history"] === 0;
 
-  const { data: liveHistory } = useQuery({
+  const { data: liveHistory, isPlaceholderData } = useQuery({
     ...trpc.page.getUptimeHistory.queryOptions({
       id: Number.parseInt(id),
       mode: calculation ?? undefined,
@@ -145,7 +145,8 @@ export function Client() {
   // the tab follows the click; `current` lags until its numbers land
   const selected =
     UPTIME_MODES.find((m) => m.value === calculation) ?? configured;
-  const isSettled = current.value === selected.value;
+  // placeholder data is the previous calculation or period, not the selected one
+  const isSettled = !isPlaceholderData && current.value === selected.value;
   const configurationHref = `/status-pages/${id}/components#components-configuration`;
   const countsRequests =
     current.value === "requests" || current.value === "runs";
@@ -255,9 +256,9 @@ export function Client() {
       <Section id="history-overview">
         {isLimited ? (
           <BillingOverlayContainer>
-            <div aria-hidden className="pointer-events-none select-none">
+            <Section aria-hidden className="pointer-events-none select-none">
               {overview}
-            </div>
+            </Section>
             <BillingOverlay>
               <BillingOverlayButton
                 data-track="paywall_viewed"
@@ -268,7 +269,7 @@ export function Client() {
                 Upgrade
               </BillingOverlayButton>
               <BillingOverlayDescription>
-                Keep an overview of your uptime history for the last 12 months.
+                Keep an overview of your uptime history for up to 24 months.
               </BillingOverlayDescription>
             </BillingOverlay>
             <UpgradeDialog
@@ -320,7 +321,8 @@ export function Client() {
                 <Note size="sm">
                   <Info />
                   <span>
-                    Page uptime, {history.months.length} months:{" "}
+                    Page uptime, {(publicHistory ?? history).months.length}{" "}
+                    months:{" "}
                     <span className="font-mono">
                       {formatUptime(publicUptime)}
                     </span>
@@ -354,6 +356,7 @@ export function Client() {
               </Link>
               .
             </FormCardFooterInfo>
+            <div />
           </FormCardFooter>
         </FormCard>
         <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>

@@ -23,7 +23,7 @@ import {
   EXCUSE_EFFECT_SHORT,
   type UptimeMode,
 } from "@/data/uptime-calculation.client";
-import { formatDurationShort, formatWindow, inTimeZone } from "@/lib/formatter";
+import { formatDurationShort, formatWindow } from "@/lib/formatter";
 
 // a hollow dot: the monitor's own window, apart from the page's solid maintenance
 const WINDOW_DOT = "border-info border-[1.5px] bg-transparent";
@@ -132,12 +132,7 @@ export function HistoryItemRow({
         ? "checks paused"
         : "alerts muted"
       : null,
-    item.to
-      ? formatWindow(
-          inTimeZone(item.from, timeZone),
-          inTimeZone(item.to, timeZone),
-        )
-      : "ongoing",
+    item.to ? formatWindow(item.from, item.to, timeZone) : "ongoing",
   ].filter((m): m is string => m !== null);
 
   return (

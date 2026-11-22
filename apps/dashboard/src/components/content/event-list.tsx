@@ -96,7 +96,12 @@ export function EventRowDate({
         {...props}
       >
         {hydrated
-          ? formatEventDate(timeZone ? inTimeZone(date, timeZone) : date)
+          ? timeZone
+            ? formatEventDate(
+                inTimeZone(date, timeZone),
+                inTimeZone(new Date(), timeZone),
+              )
+            : formatEventDate(date)
           : null}
       </time>
     </HoverCardTimestamp>

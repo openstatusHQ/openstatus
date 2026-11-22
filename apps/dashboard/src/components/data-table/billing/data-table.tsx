@@ -107,9 +107,10 @@ function FeatureValue({
       <span className="text-muted-foreground/50">&#8208;</span>
     );
   }
-  if (feature.value === "uptime-history" && typeof limitValue === "number") {
-    return limitValue > 0 ? (
-      `${limitValue} months`
+  if (feature.value === "uptime-history") {
+    const months = plan.limits["uptime-history"];
+    return months > 0 ? (
+      `${months} months`
     ) : (
       <span className="text-muted-foreground/50">&#8208;</span>
     );

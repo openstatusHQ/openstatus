@@ -210,7 +210,7 @@ export function HistoryOverview({
   const totalDown = pageDowns.reduce<number>((a, d) => a + (d ?? 0), 0);
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
       <MetricStrip>
         <MetricStripRow>
           <MetricStripItem>
@@ -368,8 +368,7 @@ export function HistoryOverview({
         </EventGroupEmpty>
       </EventGroup>
 
-      {/* not an EventGroup: that hides itself without event rows */}
-      <section className="flex flex-col gap-2">
+      <EventGroup>
         <EventGroupHeader>
           <EventGroupTitle>
             Components
@@ -419,7 +418,7 @@ export function HistoryOverview({
             );
           })}
         </EventList>
-      </section>
-    </div>
+      </EventGroup>
+    </>
   );
 }

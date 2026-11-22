@@ -64,7 +64,7 @@ function exampleAnnotations(now: Date): Record<number, ExampleAnnotations> {
       ),
     );
   const span = (from: Date, hours: number) =>
-    new Date(from.getTime() + hours * HOUR);
+    new Date(Math.min(from.getTime() + hours * HOUR, now.getTime()));
   const event = (
     id: number,
     name: string,

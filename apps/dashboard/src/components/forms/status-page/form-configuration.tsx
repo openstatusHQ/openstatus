@@ -117,7 +117,6 @@ export function FormConfiguration({
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
-  const watchConfigurationDays = form.watch("configuration.days") ?? 45;
   const mode = uptimeModeOf(watchConfigurationType, watchConfigurationValue);
   const savedMode = uptimeModeOf(
     String(defaultValues?.configuration.type),
@@ -248,36 +247,12 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <Note className="col-span-full">
-                {hasMonitorComponents ? (
-                  <ul className="list-inside list-disc">
-                    <li>
-                      <span>Status source </span>
-                      <span className="font-medium">
-                        {configurationLabels.type[watchConfigurationType]}
-                      </span>
-                      : <span>{message.type[watchConfigurationType]}</span>
-                    </li>
-                    <li>
-                      <span>Card shows </span>
-                      <span className="font-medium">
-                        {configurationLabels.value[watchConfigurationValue] ??
-                          configurationLabels.value.manual}
-                      </span>
-                      :{" "}
-                      <span>
-                        {message.value[watchConfigurationValue] ??
-                          message.value.default}
-                      </span>
-                    </li>
-                  </ul>
-                ) : (
-                  <span>
-                    Add a monitor component to your status page to configure how
-                    its bars and cards display data.
-                  </span>
-                )}
-              </Note>
+              {hasMonitorComponents ? null : (
+                <Note className="col-span-full">
+                  Add a monitor component to your status page to configure how
+                  its bars and cards display data.
+                </Note>
+              )}
               {hasMonitorComponents ? (
                 <div className="col-span-full grid gap-2">
                   <span className="text-sm font-medium">
@@ -314,7 +289,7 @@ export function FormConfiguration({
                 name="configuration.uptime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Show Uptime</FormLabel>
+                    <FormLabel>Show uptime percentage</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "true"}
@@ -367,28 +342,6 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <Note className="col-span-full">
-                <ul className="list-inside list-disc">
-                  <li>
-                    <span>Show Uptime </span>
-                    <span className="font-medium capitalize">
-                      {String(watchConfigurationUptime)}
-                    </span>
-                    : <span>{message.uptime[watchConfigurationUptime]}</span>
-                  </li>
-                  <li>
-                    <span>History </span>
-                    <span className="font-medium">
-                      {String(watchConfigurationDays)} days
-                    </span>
-                    :{" "}
-                    <span>
-                      shows the last {String(watchConfigurationDays)} days of
-                      component history.
-                    </span>
-                  </li>
-                </ul>
-              </Note>
             </FormCardContent>
             <FormCardFooter className="flex-wrap">
               <FormCardFooterInfo>
@@ -434,26 +387,6 @@ export function FormConfiguration({
     </>
   );
 }
-
-const message = {
-  type: {
-    absolute: "bars show your monitor's real results for each day.",
-    manual:
-      "bars only change when you post a status report or maintenance. Monitor results are hidden.",
-  },
-  value: {
-    duration:
-      "cards show how long the monitor was operational, degraded or down.",
-    requests:
-      "cards show how many checks succeeded, degraded or failed in each region, including private locations and manual checks.",
-    runs: "cards count each scheduled check once across its cloud regions: it fails only when at least half of them fail. Private-only and heartbeat monitors show requests.",
-    default: "cards show only the worst status of the day.",
-  },
-  uptime: {
-    true: "shares the uptime percentage and current status of your endpoint.",
-    false: "shares only the current status.",
-  },
-} as const;
 
 // ?type=manual&value=manual&uptime=true&theme=default&days=45
 
