@@ -211,7 +211,7 @@ export function HistoryOverview({
   const count = (kind: HistoryItem["kind"]) =>
     items.filter((item) => item.kind === kind).length;
   const totalDown = pageDowns.reduce<number>((a, d) => a + (d ?? 0), 0);
-  const estimate = mode === "requests" || mode === "runs";
+  const estimate = rows.some((row) => row.unit !== "time");
 
   return (
     <>
