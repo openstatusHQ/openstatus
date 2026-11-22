@@ -32,13 +32,20 @@ import TrialEndingEmail, {
   trialEndingSubject,
 } from "../emails/trial-ending";
 import { sendBatchEmailHtml, sendEmail } from "./send";
+import { senderFrom, senderReplyTo } from "./sender";
 
-const RAW_FROM = "Thibault from openstatus <thibault@openstatus.dev>";
+const RAW_FROM = senderFrom(
+  "Thibault from openstatus <thibault@openstatus.dev>",
+);
 // Signed hybrid: personal name on the account subdomain, replies to a real inbox.
-const SIGNED_FROM = "Thibault from openstatus <thibault@mail.openstatus.dev>";
-const SIGNED_REPLY_TO = "thibault@openstatus.dev";
-const SYSTEM_FROM = "openstatus <notifications@mail.openstatus.dev>";
-const SUPPORT_EMAIL = "ping@openstatus.dev";
+const SIGNED_FROM = senderFrom(
+  "Thibault from openstatus <thibault@mail.openstatus.dev>",
+);
+const SIGNED_REPLY_TO = senderReplyTo("thibault@openstatus.dev");
+const SYSTEM_FROM = senderFrom(
+  "openstatus <notifications@mail.openstatus.dev>",
+);
+const SUPPORT_EMAIL = senderReplyTo("ping@openstatus.dev");
 
 const DAY_MS = 86_400_000;
 export const REMINDER_LEAD_DAYS = 3;

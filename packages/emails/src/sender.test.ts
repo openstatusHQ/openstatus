@@ -1,6 +1,35 @@
+import "./test-preload.ts";
 import { describe, expect, test } from "vitest";
 
-import { statusPageFrom } from "./sender";
+import { senderFrom, senderReplyTo, statusPageFrom } from "./sender";
+
+const OVERRIDE = "Status <noreply@status.example.com>";
+
+describe("senderFrom", () => {
+  test("keeps the default when EMAIL_FROM is unset", () => {
+    expect(senderFrom("openstatus <a@openstatus.dev>", "")).toBe(
+      "openstatus <a@openstatus.dev>",
+    );
+  });
+
+  test("uses EMAIL_FROM when set", () => {
+    expect(senderFrom("openstatus <a@openstatus.dev>", ` ${OVERRIDE} `)).toBe(
+      OVERRIDE,
+    );
+  });
+});
+
+describe("senderReplyTo", () => {
+  test("keeps the default when EMAIL_FROM is unset", () => {
+    expect(senderReplyTo("ping@openstatus.dev", "")).toBe(
+      "ping@openstatus.dev",
+    );
+  });
+
+  test("is dropped when EMAIL_FROM is set", () => {
+    expect(senderReplyTo("ping@openstatus.dev", OVERRIDE)).toBeUndefined();
+  });
+});
 
 describe("statusPageFrom", () => {
   test("quotes the page title", () => {
@@ -40,6 +69,18 @@ describe("statusPageFrom", () => {
     );
     expect(statusPageFrom(null)).toBe(
       '"openstatus" <notifications@subscribers.openstatus.dev>',
+    );
+  });
+
+  test("sends from the EMAIL_FROM address under the page title", () => {
+    expect(statusPageFrom("Acme", OVERRIDE)).toBe(
+      '"Acme" <noreply@status.example.com>',
+    );
+  });
+
+  test("accepts a bare EMAIL_FROM address", () => {
+    expect(statusPageFrom("Acme", "noreply@status.example.com")).toBe(
+      '"Acme" <noreply@status.example.com>',
     );
   });
 });

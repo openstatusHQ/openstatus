@@ -5,9 +5,12 @@ import IncidentCommanderEmail, {
   incidentCommanderSubject,
 } from "../emails/incident-commander";
 import { sendEmail } from "./send";
+import { senderFrom, senderReplyTo } from "./sender";
 
-const SYSTEM_FROM = "openstatus <notifications@notifications.openstatus.dev>";
-const SUPPORT_EMAIL = "ping@openstatus.dev";
+const SYSTEM_FROM = senderFrom(
+  "openstatus <notifications@notifications.openstatus.dev>",
+);
+const SUPPORT_EMAIL = senderReplyTo("ping@openstatus.dev");
 
 export async function sendIncidentCommander(
   req: IncidentCommanderProps & { to: string; idempotencyKey?: string },
