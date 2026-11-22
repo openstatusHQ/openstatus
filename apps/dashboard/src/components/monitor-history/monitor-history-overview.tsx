@@ -51,6 +51,7 @@ import {
   historyDays,
   historySourceLabel,
   isCheckMarker,
+  outageDurations,
   outageMarkers,
 } from "@/data/monitor-history.client";
 import { formatAvailability } from "@/data/monitor-report.client";
@@ -171,8 +172,21 @@ export function MonitorHistoryOverview({
   // the active check source, or requests on the outages tab
   const emptySource: CheckSource = source === "runs" ? "runs" : "requests";
   const emptyChecks = selected?.[emptySource];
-  const periodStart = `${months.at(-1)?.key}-01`;
   const today = now.toISOString().slice(0, 10);
+  const oldest = months.at(-1);
+  const periodStart = oldest ? `${oldest.key}-01` : today;
+  const durations =
+    source === "outages" && selected
+      ? outageDurations(selected.incidents)
+      : null;
+  const hint = [
+    durations
+      ? `Longest ${formatDurationShort(durations.longestMs)} · MTTR ${formatDurationShort(durations.meanMs)}`
+      : null,
+    index === 0 ? "In progress" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <>
@@ -328,9 +342,7 @@ export function MonitorHistoryOverview({
                 {monthKeyToFullLabel(selected.key)}
                 <EventGroupCount>{selected.incidents.length}</EventGroupCount>
               </EventGroupTitle>
-              {index === 0 ? (
-                <EventGroupHint>In progress</EventGroupHint>
-              ) : null}
+              {hint ? <EventGroupHint>{hint}</EventGroupHint> : null}
             </EventGroupHeader>
             <EventList>
               {selected.incidents.map((incident) => (

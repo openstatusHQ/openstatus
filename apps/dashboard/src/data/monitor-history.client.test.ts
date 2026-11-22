@@ -6,6 +6,7 @@ import {
   historyDays,
   historyMonths,
   isCheckMarker,
+  outageDurations,
   type MonitorHistoryIncident,
   outageMarkers,
   sumChecks,
@@ -34,6 +35,17 @@ describe("utcDays", () => {
     );
     expect(days.map((d) => d.key)).toEqual(["2026-10-31", "2026-11-01"]);
     expect(days[0].date.getDate()).toBe(31);
+  });
+
+  it("stops before an end at 00:00 UTC and keeps a zero-length span's own day", () => {
+    expect(
+      utcDays(
+        new Date("2026-10-31T23:30:00Z"),
+        new Date("2026-11-01T00:00:00Z"),
+      ).map((d) => d.key),
+    ).toEqual(["2026-10-31"]);
+    const instant = new Date("2026-11-01T00:00:00Z");
+    expect(utcDays(instant, instant).map((d) => d.key)).toEqual(["2026-11-01"]);
   });
 });
 
@@ -128,5 +140,19 @@ describe("historyMonths", () => {
       ["2026-10", 0],
       ["2026-09", 1],
     ]);
+  });
+});
+
+describe("outageDurations", () => {
+  it("skips excused and ongoing outages", () => {
+    expect(
+      outageDurations([
+        incident("2026-11-01T10:00:00Z", "2026-11-01T11:00:00Z"),
+        incident("2026-11-02T10:00:00Z", "2026-11-02T10:20:00Z"),
+        incident("2026-11-03T10:00:00Z", "2026-11-03T15:00:00Z", "2026-11-04"),
+        incident("2026-11-05T10:00:00Z", null),
+      ]),
+    ).toEqual({ longestMs: 3_600_000, meanMs: 40 * 60_000 });
+    expect(outageDurations([])).toBeNull();
   });
 });

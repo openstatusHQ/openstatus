@@ -315,14 +315,11 @@ export function StatusCalendar({
     return () => document.removeEventListener("mousedown", onDown);
   }, [activeDayKey, close]);
 
+  // assigned during render so cells read this render's callbacks, not the last one's
   const renderMarkerRowRef = useRef(renderMarkerRow);
-  useEffect(() => {
-    renderMarkerRowRef.current = renderMarkerRow;
-  }, [renderMarkerRow]);
+  renderMarkerRowRef.current = renderMarkerRow;
   const renderDayCardRef = useRef(renderDayCard);
-  useEffect(() => {
-    renderDayCardRef.current = renderDayCard;
-  }, [renderDayCard]);
+  renderDayCardRef.current = renderDayCard;
 
   const Day = useCallback(
     (dayProps: DayProps) => (
@@ -514,7 +511,8 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     const severity = filled.length > 0 ? worstSeverity(filled) : undefined;
     const open = activeDayKey === thisDayKey;
 
-    const dayCard = renderDayCardRef.current?.(date) ?? null;
+    // `cond && <X />` returns false; any falsy card means no card
+    const dayCard = renderDayCardRef.current?.(date) || null;
     // a row that renders null only tints the day and stays out of the card
     const rowFn = renderMarkerRowRef.current;
     const rows = dayMarkers

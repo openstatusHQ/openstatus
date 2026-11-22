@@ -91,7 +91,7 @@ export function calendarDate(key: string) {
   return new Date(y, m - 1, d);
 }
 
-/** UTC days a span touches; `start`/`end` bound each UTC day. */
+/** UTC days a span touches, end exclusive; `start`/`end` bound each UTC day. */
 export function utcDays(from: Date, to: Date) {
   const days: { key: string; date: Date; start: number; end: number }[] = [];
   let start = Date.UTC(
@@ -99,7 +99,8 @@ export function utcDays(from: Date, to: Date) {
     from.getUTCMonth(),
     from.getUTCDate(),
   );
-  while (start <= to.getTime()) {
+  // a span ending at 00:00 UTC doesn't touch the next day; a zero-length one keeps its own
+  while (start < to.getTime() || days.length === 0) {
     const key = new Date(start).toISOString().slice(0, 10);
     days.push({
       key,
@@ -163,6 +164,20 @@ export function checkMarkers(
 
 export const isCheckMarker = (marker: StatusCalendarMarker) =>
   String(marker.id).startsWith(CHECK_MARKER);
+
+/** Longest and mean resolved duration of a month's counted outages; null without one. */
+export function outageDurations(incidents: MonitorHistoryIncident[]) {
+  const durations = incidents.flatMap((i) =>
+    i.resolvedAt && !i.excusedAt
+      ? [new Date(i.resolvedAt).getTime() - new Date(i.startedAt).getTime()]
+      : [],
+  );
+  if (durations.length === 0) return null;
+  return {
+    longestMs: Math.max(...durations),
+    meanMs: durations.reduce((a, d) => a + d, 0) / durations.length,
+  };
+}
 
 export type HistoryDay = {
   outage: { downtimeMs: number; count: number; excused: number } | null;
