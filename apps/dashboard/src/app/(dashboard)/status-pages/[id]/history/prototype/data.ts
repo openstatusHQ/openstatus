@@ -5,36 +5,31 @@ export type Row = UptimeHistory["rows"][number];
 export type Value = NonNullable<Row["months"][string]>;
 export type RowEvent = Row["events"][number];
 
-export type Severity = "success" | "degraded" | "error" | "empty";
-
-/** Same thresholds the public status bar uses for its day colors. */
-export function severityOf(percentage: number | null | undefined): Severity {
-  if (percentage === null || percentage === undefined) return "empty";
-  if (percentage >= 99.9) return "success";
-  if (percentage >= 99) return "degraded";
-  return "error";
+/** Minutes the month has run so far; the current month is partial. */
+export function monthMinutes(key: string, now = new Date()): number {
+  const start = monthDate(key).getTime();
+  const [y, m] = key.split("-").map(Number);
+  const end = Math.min(new Date(y, m, 1).getTime(), now.getTime());
+  return Math.max(0, (end - start) / 60_000);
 }
 
-export const severityFill: Record<Severity, string> = {
-  success: "bg-success",
-  degraded: "bg-warning",
-  error: "bg-destructive",
-  empty: "bg-muted",
-};
+// prototype: derived from the percentage, so request-based months are an estimate
+export function downtimeMinutes(
+  percentage: number | null | undefined,
+  key: string,
+): number | null {
+  if (percentage === null || percentage === undefined) return null;
+  return (monthMinutes(key) * (100 - percentage)) / 100;
+}
 
-export const severityTint: Record<Severity, string> = {
-  success: "bg-success/10 text-success",
-  degraded: "bg-warning/10 text-warning",
-  error: "bg-destructive/10 text-destructive",
-  empty: "bg-muted/50 text-muted-foreground/60",
-};
-
-export const severityText: Record<Severity, string> = {
-  success: "text-success",
-  degraded: "text-warning",
-  error: "text-destructive",
-  empty: "text-muted-foreground/60",
-};
+export function formatDowntime(minutes: number | null): string {
+  if (minutes === null) return "–";
+  if (minutes < 1) return "<1m";
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
 
 export const eventFill: Record<RowEvent["type"], string> = {
   incident: "bg-destructive",
