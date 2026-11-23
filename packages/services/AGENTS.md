@@ -100,9 +100,10 @@ request inside their own workspace.
 
 `src/public-status-page` holds the reads behind the public status page, one
 verb per tRPC procedure. They take no `ServiceContext` (a visitor has no
-workspace or actor) and return rows; Tinybird series and display shaping stay
-in the router. `get` and `getLight` empty the content of a gated page rather
-than throwing, because a denied visitor still needs the chrome.
+workspace or actor) and return database-backed values; Tinybird series and
+display shaping stay in the router. `get` and `getLight` empty the content of
+a gated page rather than throwing, because a denied visitor still needs the
+chrome.
 
 ## Runtime constraints
 

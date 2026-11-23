@@ -1,5 +1,5 @@
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { constantTimeEqual } from "../page-access";
+import { isPasswordAuthorized } from "../page-access";
 import { bySlugOrDomain } from "./internal";
 import { PublicPasswordAuthorizedInput } from "./schemas";
 
@@ -17,9 +17,9 @@ export async function isPublicStatusPagePasswordAuthorized(args: {
   });
   if (!page || page.accessType !== "password") return false;
   // TODO: rate-limit — an unauthenticated caller can brute-force guesses here.
-  // A present-but-wrong `?pw=` must not fall through to a valid cookie.
-  return constantTimeEqual(
-    page.password,
-    input.queryPassword ?? input.cookiePassword,
-  );
+  return isPasswordAuthorized({
+    stored: page.password,
+    queryPassword: input.queryPassword,
+    cookiePassword: input.cookiePassword,
+  });
 }

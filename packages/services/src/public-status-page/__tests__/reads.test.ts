@@ -564,6 +564,34 @@ describe("monitor lists", () => {
 });
 
 describe("gate verbs", () => {
+  test("an empty stored password never authorizes", async () => {
+    await withTestTransaction(async (tx) => {
+      const page = await createPage(
+        workspaceId,
+        { accessType: "password", password: "" },
+        tx,
+      );
+      for (const [queryPassword, cookiePassword] of [
+        ["", null],
+        [null, ""],
+        [undefined, undefined],
+      ] as const) {
+        expect(
+          await isPublicStatusPagePasswordAuthorized({
+            input: { slug: page.slug, queryPassword, cookiePassword },
+            db: tx,
+          }),
+        ).toBe(false);
+      }
+      await expect(
+        verifyPublicStatusPagePassword({
+          input: { slug: page.slug, password: "" },
+          db: tx,
+        }),
+      ).rejects.toThrow("Invalid password");
+    });
+  });
+
   test("checkPublicEmailDomain refuses a page that is not email-gated", async () => {
     await withTestTransaction(async (tx) => {
       const page = await createPage(workspaceId, {}, tx);

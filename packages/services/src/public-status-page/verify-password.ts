@@ -1,6 +1,6 @@
 import { dbOnlyContext, type DB, getReadDb } from "../context";
 import { ValidationError } from "../errors";
-import { constantTimeEqual } from "../page-access";
+import { isPasswordAuthorized } from "../page-access";
 import { findPageBySlug } from "./internal";
 import { PublicPasswordInput } from "./schemas";
 
@@ -19,7 +19,13 @@ export async function verifyPublicStatusPagePassword(args: {
       "Page is not configured to allow password authentication",
     );
   }
-  if (!constantTimeEqual(page.password, input.password)) {
+  if (
+    !isPasswordAuthorized({
+      stored: page.password,
+      queryPassword: input.password,
+      cookiePassword: null,
+    })
+  ) {
     throw new ValidationError("Invalid password");
   }
   return true;
