@@ -17,6 +17,8 @@ describe("touchViewer", () => {
         .returning()
         .get();
 
+      // the column stores whole seconds
+      const before = Math.floor(Date.now() / 1000) * 1000;
       await touchViewer({ input: { id: row.id }, db: tx });
 
       const after = await tx
@@ -24,7 +26,7 @@ describe("touchViewer", () => {
         .from(viewer)
         .where(eq(viewer.id, row.id))
         .get();
-      expect(after?.updatedAt?.getTime()).toBeGreaterThan(0);
+      expect(after?.updatedAt?.getTime()).toBeGreaterThanOrEqual(before);
     });
   });
 });

@@ -18,6 +18,10 @@ incident calls `createMonitorIncident` or `autoResolveMonitorIncidents` as a
 `system` actor. One older writer still updates the table without a verb or an
 audit row: the legacy v1 incident `PUT`.
 
+`setMonitorIncidentScreenshot` is the one verb that writes without a workspace
+filter: the screenshot service is handed an incident id and nothing else. It
+audits in the incident's own workspace as a `system` actor.
+
 ## Shape of a verb
 
 - **One file per verb** under `packages/services/src/<entity>/` (`create.ts`,

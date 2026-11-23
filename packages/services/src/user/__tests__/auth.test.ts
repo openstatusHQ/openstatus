@@ -17,13 +17,14 @@ describe("createUserWithWorkspace", () => {
       const free = `free-${crypto.randomUUID()}`;
       await tx.insert(workspace).values({ slug: taken, name: "" });
       const slugs = [taken, free];
+      const id = crypto.randomUUID();
 
       const created = await createUserWithWorkspace({
-        input: { email: `  Sign.Up-${crypto.randomUUID()}@Example.com ` },
+        input: { email: `  Sign.Up-${id}@Example.com ` },
         generateSlug: () => slugs.shift() ?? free,
         db: tx,
       });
-      expect(created.email).toBe(created.email.trim().toLowerCase());
+      expect(created.email).toBe(`sign.up-${id}@example.com`);
 
       const memberships = await tx
         .select({ role: usersToWorkspaces.role, slug: workspace.slug })

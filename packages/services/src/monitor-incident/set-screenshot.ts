@@ -7,6 +7,7 @@ import {
 
 import { emitAudit } from "../audit";
 import { type DB, withTransaction, dbOnlyContext } from "../context";
+import { NotFoundError } from "../errors";
 import { SetMonitorIncidentScreenshotInput } from "./schemas";
 
 /**
@@ -50,7 +51,7 @@ export async function setMonitorIncidentScreenshot(args: {
       .from(workspace)
       .where(eq(workspace.id, before.workspaceId))
       .get();
-    if (!owner) return true;
+    if (!owner) throw new NotFoundError("workspace", before.workspaceId);
 
     await emitAudit(
       tx,

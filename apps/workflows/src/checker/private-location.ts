@@ -29,6 +29,25 @@ const payloadSchema = z.object({
   latency: z.number().optional(),
 });
 
+type MonitorStatus = z.infer<typeof monitorStatusSchema>;
+
+async function applyMonitorStatus(
+  monitor: { id: number; workspaceId: number | null },
+  status: MonitorStatus,
+) {
+  // An orphan monitor must not fail the report: its location status is stored.
+  if (monitor.workspaceId === null) {
+    logger.warning("Monitor has no workspace, status not updated", {
+      monitor_id: monitor.id,
+    });
+    return;
+  }
+  await setMonitorStatus({
+    ctx: await systemContext(monitor.workspaceId, "checker"),
+    input: { id: monitor.id, status },
+  });
+}
+
 export async function updateStatusPrivate(c: Context<Env>) {
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env().CRON_SECRET}`) {
@@ -220,10 +239,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await setMonitorStatus({
-            ctx: await systemContext(monitor.workspaceId, "checker"),
-            input: { id: monitorIdNumber, status: "error" },
-          });
+          await applyMonitorStatus(monitor, "error");
         }
 
         // Create incident only if private-only monitor AND threshold met
@@ -301,10 +317,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await setMonitorStatus({
-            ctx: await systemContext(monitor.workspaceId, "checker"),
-            input: { id: monitorIdNumber, status: "degraded" },
-          });
+          await applyMonitorStatus(monitor, "degraded");
         }
 
         // Resolve incident if private-only monitor AND threshold met
@@ -367,10 +380,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await setMonitorStatus({
-            ctx: await systemContext(monitor.workspaceId, "checker"),
-            input: { id: monitorIdNumber, status: "active" },
-          });
+          await applyMonitorStatus(monitor, "active");
         }
 
         // Resolve incident if private-only monitor AND threshold met

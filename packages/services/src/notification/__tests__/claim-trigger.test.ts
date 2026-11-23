@@ -39,6 +39,19 @@ describe("claimNotificationTrigger", () => {
       expect(await claim(1000)).toBe(true);
       expect(await claim(1000)).toBe(false);
       expect(await claim(2000)).toBe(true);
+
+      // scoped to the pair: another monitor claims the same run
+      const second = await createMonitor(fixture.workspace.id, {}, tx);
+      expect(
+        await claimNotificationTrigger({
+          input: {
+            monitorId: second.id,
+            notificationId: notification.id,
+            cronTimestamp: 1000,
+          },
+          db: tx,
+        }),
+      ).toBe(true);
     });
   });
 });
