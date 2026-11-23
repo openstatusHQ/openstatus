@@ -6,6 +6,7 @@ import {
   createNotification,
   deleteNotification,
   getNotification,
+  getNotificationLimit,
   listNotifications,
   updateNotification,
 } from "@openstatus/services/notification";
@@ -20,7 +21,6 @@ import {
   protoProviderToDb,
 } from "./converters";
 import { monitorNotFoundError, notificationIdRequiredError } from "./errors";
-import { getNotificationLimitInfo } from "./limits";
 import { sendTestNotification } from "./test-providers";
 
 type ProtoData = Parameters<typeof protoDataToDb>[1];
@@ -228,11 +228,12 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
     },
 
     async checkNotificationLimit(_req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
-      const limits = rpcCtx.workspace.limits;
-
-      const info = await getNotificationLimitInfo(workspaceId, limits);
-      return info;
+      try {
+        return await getNotificationLimit({
+          ctx: toServiceCtx(getRpcContext(ctx)),
+        });
+      } catch (err) {
+        toConnectError(err);
+      }
     },
   };

@@ -1,6 +1,4 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { and, db, eq, isNull, sql } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
@@ -51,31 +49,4 @@ export function checkMonitorConfigLimits(
       }
     }
   }
-}
-
-/**
- * Check workspace limits for creating a new monitor.
- * Throws ConnectError with PermissionDenied if any limit is exceeded.
- *
- * Create-only: the row-count cap must not run on update, or a workspace
- * sitting at its limit could no longer edit the monitors it already has.
- */
-export async function checkMonitorLimits(
-  workspaceId: number,
-  limits: Limits,
-  periodicity: Periodicity | undefined,
-  regions: Region[] | undefined,
-): Promise<void> {
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(monitor)
-    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
-    .get();
-
-  const count = countResult?.count ?? 0;
-  if (count >= limits.monitors) {
-    throw new ConnectError("Upgrade for more monitors", Code.PermissionDenied);
-  }
-
-  checkMonitorConfigLimits(limits, periodicity, regions);
 }
