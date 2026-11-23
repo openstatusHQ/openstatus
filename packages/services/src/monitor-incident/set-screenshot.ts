@@ -7,10 +7,12 @@ import {
 
 import { emitAudit } from "../audit";
 import { type DB, type ServiceContext, withTransaction } from "../context";
-import { NotFoundError } from "../errors";
 import { SetMonitorIncidentScreenshotInput } from "./schemas";
 
-/** Attach the screenshot taken when an outage opened or recovered. */
+/**
+ * Attach the screenshot taken when an outage opened or recovered. Returns
+ * false when the incident no longer exists.
+ */
 // Addressed by incident id alone: the screenshot job knows no workspace, so
 // the row is audited in the incident's own workspace as a system actor.
 // oxlint-disable-next-line openstatus/services-mutation-guards
@@ -18,20 +20,20 @@ export async function setMonitorIncidentScreenshot(args: {
   input: SetMonitorIncidentScreenshotInput;
   job: string;
   db?: DB;
-}): Promise<void> {
+}): Promise<boolean> {
   const input = SetMonitorIncidentScreenshotInput.parse(args.input);
   const column =
     input.kind === "incident"
       ? "incidentScreenshotUrl"
       : "recoveryScreenshotUrl";
 
-  await withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
     const before = await tx
       .select()
       .from(monitorIncidentTable)
       .where(eq(monitorIncidentTable.id, input.id))
       .get();
-    if (!before) throw new NotFoundError("incident", input.id);
+    if (!before) return false;
 
     const after = await tx
       .update(monitorIncidentTable)
@@ -39,16 +41,16 @@ export async function setMonitorIncidentScreenshot(args: {
       .where(eq(monitorIncidentTable.id, input.id))
       .returning()
       .get();
-    if (!after) throw new NotFoundError("incident", input.id);
+    if (!after) return false;
 
     // Incidents older than the workspace column have no trail to write to.
-    if (before.workspaceId === null) return;
+    if (before.workspaceId === null) return true;
     const owner = await tx
       .select()
       .from(workspace)
       .where(eq(workspace.id, before.workspaceId))
       .get();
-    if (!owner) return;
+    if (!owner) return true;
 
     await emitAudit(
       tx,
@@ -65,5 +67,6 @@ export async function setMonitorIncidentScreenshot(args: {
         after,
       },
     );
+    return true;
   });
 }

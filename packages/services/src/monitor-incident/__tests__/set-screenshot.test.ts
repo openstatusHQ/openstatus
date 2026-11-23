@@ -9,7 +9,6 @@ import {
   expectAuditRow,
   withTestTransaction,
 } from "../../../test/helpers";
-import { NotFoundError } from "../../errors";
 import { setMonitorIncidentScreenshot } from "../index.ts";
 
 let fixture: WorkspaceFixture;
@@ -58,15 +57,15 @@ describe("setMonitorIncidentScreenshot", () => {
     });
   });
 
-  test("throws for an unknown incident", async () => {
+  test("returns false for an unknown incident", async () => {
     await withTestTransaction(async (tx) => {
-      await expect(
-        setMonitorIncidentScreenshot({
+      expect(
+        await setMonitorIncidentScreenshot({
           input: { id: -1, kind: "incident", url: "https://s.test/a" },
           job: "screenshot-service",
           db: tx,
         }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      ).toBe(false);
     });
   });
 });
