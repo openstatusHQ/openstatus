@@ -162,7 +162,9 @@ export async function getMonitorSummary(args: {
     },
   );
 
-  const row = result.data[0];
+  // The pipes UNION ALL the current and previous window in no guaranteed order;
+  // only the current-window row carries a lastTimestamp.
+  const row = result.data.find((r) => !!r.lastTimestamp);
   if (!row) {
     return {
       monitorId: record.id,
