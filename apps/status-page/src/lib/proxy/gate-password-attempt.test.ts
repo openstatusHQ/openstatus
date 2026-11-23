@@ -30,10 +30,13 @@ function fakeLimiter(max = 3) {
   return { limiter, failures };
 }
 
-const passwordPage = { accessType: "password" as const, password: "s3cret" };
+const passwordPage = {
+  accessType: "password" as const,
+  password: "s3cret",
+  slug: "acme",
+};
 const base = {
   page: passwordPage,
-  host: "acme",
   clientIp: "10.0.0.1",
   queryPassword: null,
   cookiePassword: undefined,
@@ -44,7 +47,7 @@ describe("gatePasswordAttempt", () => {
     const { limiter, failures } = fakeLimiter();
     const result = await gatePasswordAttempt({
       ...base,
-      page: { accessType: "public", password: null },
+      page: { accessType: "public", password: null, slug: "acme" },
       queryPassword: "anything",
       limiter,
     });
@@ -176,5 +179,32 @@ describe("gatePasswordAttempt", () => {
     await gatePasswordAttempt({ ...base, queryPassword: "nope", limiter });
     await gatePasswordAttempt({ ...base, cookiePassword: "s3cret", limiter });
     expect(failures.get("acme:10.0.0.1")).toBe(1);
+  });
+
+  test("keys on the page slug, as the login form does on a custom domain", async () => {
+    const slugs: string[] = [];
+    await gatePasswordAttempt({
+      ...base,
+      page: { ...passwordPage, slug: "acme-status" },
+      queryPassword: "nope",
+      limiter: {
+        reserve: async (a) => {
+          slugs.push(a.slug);
+          return { locked: false, release: async () => {} };
+        },
+      },
+    });
+    expect(slugs).toEqual(["acme-status"]);
+  });
+
+  test("an empty password is not a guess", async () => {
+    const { limiter, failures } = fakeLimiter();
+    await gatePasswordAttempt({
+      ...base,
+      queryPassword: "",
+      cookiePassword: "",
+      limiter,
+    });
+    expect(failures.size).toBe(0);
   });
 });

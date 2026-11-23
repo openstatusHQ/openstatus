@@ -106,7 +106,6 @@ export default auth(async (req) => {
   const { queryPassword, cookiePassword, clearCookie } =
     await gatePasswordAttempt({
       page: _page,
-      host: initialRoute.prefix,
       clientIp,
       queryPassword: url.searchParams.get("pw"),
       cookiePassword: req.cookies.get(cookieKey)?.value,

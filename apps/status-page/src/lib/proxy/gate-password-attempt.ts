@@ -16,8 +16,7 @@ export type PasswordAttemptLimiter = {
  * cookie is cleared so a real visitor's stale cookie costs one failure.
  */
 export async function gatePasswordAttempt(args: {
-  page: Pick<Page, "accessType" | "password">;
-  host: string;
+  page: Pick<Page, "accessType" | "password" | "slug">;
   clientIp: string | null;
   queryPassword: string | null;
   cookiePassword: string | undefined;
@@ -30,11 +29,14 @@ export async function gatePasswordAttempt(args: {
   const { page, queryPassword, cookiePassword, limiter } = args;
   const untouched = { queryPassword, cookiePassword, clearCookie: false };
   if (page.accessType !== "password") return untouched;
+  // "" can never authorize (an empty stored password is rejected), so it is
+  // not a guess.
   if (!queryPassword && !cookiePassword) return untouched;
 
   const attempt: Attempt = {
     scope: "login",
-    slug: args.host,
+    // The login form posts the slug, also on a custom domain: share its bucket.
+    slug: page.slug,
     ip: args.clientIp,
   };
   const slot = await limiter.reserve(attempt);
