@@ -1,7 +1,6 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { zValidator } from "@hono/zod-validator";
-import { db, eq } from "@openstatus/db";
-import { monitorIncidentTable } from "@openstatus/db/src/schema/monitor_incidents/monitor_incident";
+import { setMonitorIncidentScreenshot } from "@openstatus/services/monitor-incident";
 import { Receiver } from "@upstash/qstash";
 import { Hono } from "hono";
 import playwright from "playwright";
@@ -76,31 +75,21 @@ app.post(
         }),
       );
 
-      if (data.kind === "incident") {
-        await db
-          .update(monitorIncidentTable)
-          .set({ incidentScreenshotUrl: url })
-          .where(eq(monitorIncidentTable.id, data.incidentId))
-          .run();
-      }
-      if (data.kind === "recovery") {
-        await db
-          .update(monitorIncidentTable)
-          .set({ recoveryScreenshotUrl: url })
-          .where(eq(monitorIncidentTable.id, data.incidentId))
-          .run();
-      }
+      await setMonitorIncidentScreenshot({
+        input: { id: data.incidentId, kind: data.kind, url },
+        job: "screenshot-service",
+      });
     } catch (e) {
       console.log("could not take screenshot timeout");
       if (data.kind === "incident") {
-        await db
-          .update(monitorIncidentTable)
-          .set({
-            incidentScreenshotUrl:
-              "https://screenshot.openstat.us/err-connection-timed-out.jpg",
-          })
-          .where(eq(monitorIncidentTable.id, data.incidentId))
-          .run();
+        await setMonitorIncidentScreenshot({
+          input: {
+            id: data.incidentId,
+            kind: "incident",
+            url: "https://screenshot.openstat.us/err-connection-timed-out.jpg",
+          },
+          job: "screenshot-service",
+        });
       }
       //
       console.log(e);

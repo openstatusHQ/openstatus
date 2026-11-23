@@ -15,8 +15,8 @@ same transaction: `monitorIncidentAuditStatement` builds the audit insert that
 runs in the batch next to the incident statement, so a failed audit row rolls
 the transition back. Every other job that opens or closes a monitor
 incident calls `createMonitorIncident` or `autoResolveMonitorIncidents` as a
-`system` actor. Two older writers still update the table without a verb or an
-audit row: the legacy v1 incident `PUT` and the screenshot service.
+`system` actor. One older writer still updates the table without a verb or an
+audit row: the legacy v1 incident `PUT`.
 
 ## Shape of a verb
 

@@ -5,6 +5,7 @@ import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
+import { claimNotificationTrigger } from "@openstatus/services/notification";
 import { Effect, Schedule } from "effect";
 
 import { checkerAudit } from "../utils/audit-log";
@@ -96,13 +97,23 @@ export const triggerNotifications = async ({
     });
     const monitor = selectMonitorSchema.parse(notif.monitor);
     try {
-      await insertNotificationTrigger({
-        monitorId: monitor.id,
-        notificationId: notif.notification.id,
-        cronTimestamp: cronTimestamp,
+      const claimed = await claimNotificationTrigger({
+        input: {
+          monitorId: monitor.id,
+          notificationId: notif.notification.id,
+          cronTimestamp,
+        },
       });
-    } catch (_e) {
-      logger.error("notification trigger already exists dont send again");
+      if (!claimed) {
+        logger.error("notification trigger already exists dont send again");
+        continue;
+      }
+    } catch (err) {
+      logger.error("Failed to claim notification trigger, not sending", {
+        monitor_id: monitorId,
+        notification_id: notif.notification.id,
+        error_message: err instanceof Error ? err.message : String(err),
+      });
       continue;
     }
     triggered.push({
@@ -231,23 +242,4 @@ export const triggerNotifications = async ({
   }
 
   return triggered;
-};
-
-const insertNotificationTrigger = async ({
-  monitorId,
-  notificationId,
-  cronTimestamp,
-}: {
-  monitorId: number;
-  notificationId: number;
-  cronTimestamp: number;
-}) => {
-  await db
-    .insert(schema.notificationTrigger)
-    .values({
-      monitorId: Number(monitorId),
-      notificationId: notificationId,
-      cronTimestamp: cronTimestamp,
-    })
-    .returning();
 };

@@ -9,7 +9,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
     "@hono/zod-validator": "catalog:",
-    "@openstatus/db": "workspace:*",
+    "@openstatus/services": "workspace:*",
     "@openstatus/utils": "workspace:^",
     "@t3-oss/env-core": "catalog:",
     "@upstash/qstash": "catalog:",

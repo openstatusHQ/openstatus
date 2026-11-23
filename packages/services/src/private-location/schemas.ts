@@ -1,3 +1,4 @@
+import { monitorStatus } from "@openstatus/db/src/schema/monitors/constants";
 import { z } from "zod";
 
 export const ListPrivateLocationsInput = z
@@ -43,6 +44,16 @@ export const SetPrivateLocationStatusInput = z.object({
 });
 export type SetPrivateLocationStatusInput = z.infer<
   typeof SetPrivateLocationStatusInput
+>;
+
+export const RecordPrivateLocationMonitorStatusInput = z.object({
+  monitorId: z.number().int(),
+  privateLocationId: z.number().int(),
+  status: z.enum(monitorStatus),
+  cronTimestamp: z.number().int(),
+});
+export type RecordPrivateLocationMonitorStatusInput = z.infer<
+  typeof RecordPrivateLocationMonitorStatusInput
 >;
 
 export const GetPrivateLocationInput = z.object({ id: z.number().int() });

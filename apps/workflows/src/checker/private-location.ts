@@ -1,16 +1,19 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, isNull, or, schema, sql } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, or, schema } from "@openstatus/db";
 import {
   monitorInMaintenance,
   monitorInWindow,
 } from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
+import { setMonitorStatus } from "@openstatus/services/monitor";
+import { recordPrivateLocationMonitorStatus } from "@openstatus/services/private-location";
 import type { Context } from "hono";
 import { z } from "zod";
 
 import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
+import { systemContext } from "../utils/system-context";
 import { triggerNotifications } from "./alerting";
 import { openIncident, resolveIncident } from "./incident-utils";
 
@@ -133,41 +136,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    const priorRow = await db
-      .select({ status: schema.privateLocationMonitorStatus.status })
-      .from(schema.privateLocationMonitorStatus)
-      .where(
-        and(
-          eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
-          eq(
-            schema.privateLocationMonitorStatus.privateLocationId,
-            privateLocationIdNumber,
-          ),
-        ),
-      )
-      .get();
-
-    const priorStatus = priorRow?.status ?? "active";
-
-    const upserted = await db
-      .insert(schema.privateLocationMonitorStatus)
-      .values({
+    const { changed } = await recordPrivateLocationMonitorStatus({
+      input: {
         monitorId: monitorIdNumber,
         privateLocationId: privateLocationIdNumber,
         status,
         cronTimestamp,
-      })
-      .onConflictDoUpdate({
-        target: [
-          schema.privateLocationMonitorStatus.monitorId,
-          schema.privateLocationMonitorStatus.privateLocationId,
-        ],
-        set: { status, cronTimestamp, updatedAt: new Date() },
-        setWhere: sql`excluded.cron_timestamp > ${schema.privateLocationMonitorStatus.cronTimestamp}`,
-      })
-      .returning();
+      },
+    });
 
-    if (upserted.length === 0 || status === priorStatus) {
+    if (!changed) {
       return c.json({ success: true }, 200);
     }
 
@@ -242,10 +220,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await db
-            .update(schema.monitor)
-            .set({ status: "error" })
-            .where(eq(schema.monitor.id, monitorIdNumber));
+          await setMonitorStatus({
+            ctx: await systemContext(monitor.workspaceId, "checker"),
+            input: { id: monitorIdNumber, status: "error" },
+          });
         }
 
         // Create incident only if private-only monitor AND threshold met
@@ -323,10 +301,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await db
-            .update(schema.monitor)
-            .set({ status: "degraded" })
-            .where(eq(schema.monitor.id, monitorIdNumber));
+          await setMonitorStatus({
+            ctx: await systemContext(monitor.workspaceId, "checker"),
+            input: { id: monitorIdNumber, status: "degraded" },
+          });
         }
 
         // Resolve incident if private-only monitor AND threshold met
@@ -389,10 +367,10 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await db
-            .update(schema.monitor)
-            .set({ status: "active" })
-            .where(eq(schema.monitor.id, monitorIdNumber));
+          await setMonitorStatus({
+            ctx: await systemContext(monitor.workspaceId, "checker"),
+            input: { id: monitorIdNumber, status: "active" },
+          });
         }
 
         // Resolve incident if private-only monitor AND threshold met

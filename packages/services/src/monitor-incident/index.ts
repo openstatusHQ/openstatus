@@ -15,6 +15,7 @@ export {
   type ListMonitorIncidentsResult,
 } from "./list";
 export { resolveMonitorIncident } from "./resolve";
+export { setMonitorIncidentScreenshot } from "./set-screenshot";
 export { unexcuseMonitorIncident } from "./unexcuse";
 
 export {
@@ -29,5 +30,6 @@ export {
   monitorIncidentListPeriods,
   ListMonitorIncidentsInput,
   ResolveMonitorIncidentInput,
+  SetMonitorIncidentScreenshotInput,
   UnexcuseMonitorIncidentInput,
 } from "./schemas";

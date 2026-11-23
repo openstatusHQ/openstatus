@@ -6,11 +6,9 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { apiKey } from "@openstatus/db/src/schema/api-keys";
-import {
-  shouldUpdateLastUsed,
-  verifyApiKeyHash,
-} from "@openstatus/db/src/utils/api-key";
+import { verifyApiKeyHash } from "@openstatus/db/src/utils/api-key";
 import { retryRead } from "@openstatus/services";
+import { updateApiKeyLastUsed } from "@openstatus/services/api-key";
 import { isAccessToken, verifyAccessToken } from "@openstatus/services/oauth";
 import { UnkeyCore } from "@unkey/api/core";
 import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
@@ -199,13 +197,10 @@ export async function validateKey(key: string): Promise<{
         }
 
         // Best-effort: a failed bookkeeping write must never fail auth.
-        if (shouldUpdateLastUsed(customKey.lastUsedAt)) {
-          await db
-            .update(apiKey)
-            .set({ lastUsedAt: new Date() })
-            .where(eq(apiKey.id, customKey.id))
-            .catch(() => {});
-        }
+        await updateApiKeyLastUsed({
+          id: customKey.id,
+          lastUsedAt: customKey.lastUsedAt,
+        }).catch(() => {});
         return {
           result: {
             valid: true,

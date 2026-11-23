@@ -1,95 +1,31 @@
-import { db, eq, sql } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  createUserWithWorkspace,
+  getUserByEmail as getUserByEmailService,
+  getUserForAuth,
+} from "@openstatus/services/user";
 import type { AdapterUser } from "next-auth/adapters";
 import * as randomWordSlugs from "random-word-slugs";
 
-/** Stored and looked up lowercase; the `user.email` index is an exact match. */
-export function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
+export { normalizeEmail } from "@openstatus/services/user";
+
+/** An ambiguous legacy email throws, failing the sign-in with `?error=Configuration`. */
+export function getUserByEmail(email: string) {
+  return getUserByEmailService({ input: { email } });
 }
 
-// Rows created before emails were normalized keep the OAuth profile's casing,
-// so an indexed exact match comes first and a `lower()` scan only on a miss.
-// Two case variants of one address cannot be told apart, so the sign-in fails
-// (`?error=Configuration`) rather than landing in either workspace.
-export async function getUserByEmail(email: string) {
-  const normalized = normalizeEmail(email);
-  const exact = await db
-    .select()
-    .from(user)
-    .where(eq(user.email, normalized))
-    .get();
-  if (exact) return exact;
-
-  const legacy = await db
-    .select()
-    .from(user)
-    .where(sql`lower(${user.email}) = ${normalized}`)
-    .limit(2)
-    .all();
-  if (legacy.length > 1) {
-    console.error("ambiguous legacy email, refusing sign-in", {
-      userIds: legacy.map((row) => row.id),
-    });
-    throw new Error("ambiguous legacy email");
-  }
-  return legacy[0] ?? null;
-}
-
-export async function createUser(data: AdapterUser) {
-  const newUser = await db
-    .insert(user)
-    .values({
-      email: normalizeEmail(data.email),
+export function createUser(data: AdapterUser) {
+  return createUserWithWorkspace({
+    input: {
+      email: data.email,
       photoUrl: data.image,
       name: data.name,
       firstName: data.firstName,
       lastName: data.lastName,
-    })
-    .returning()
-    .get();
-
-  let slug: string | undefined = undefined;
-
-  while (!slug) {
-    slug = randomWordSlugs.generateSlug(2);
-    const slugAlreadyExists = await db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.slug, slug))
-      .get();
-
-    if (slugAlreadyExists) {
-      console.warn(`slug already exists: '${slug} - recreating new one'`);
-      slug = undefined;
-    }
-  }
-
-  const newWorkspace = await db
-    .insert(workspace)
-    .values({ slug, name: "" })
-    .returning({ id: workspace.id })
-    .get();
-
-  await db
-    .insert(usersToWorkspaces)
-    .values({
-      userId: newUser.id,
-      workspaceId: newWorkspace.id,
-      role: "owner",
-    })
-    .returning()
-    .get();
-
-  return newUser;
+    },
+    generateSlug: () => randomWordSlugs.generateSlug(2),
+  });
 }
 
-export async function getUser(id: string) {
-  const _user = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, Number(id)))
-    .get();
-
-  return _user || null;
+export function getUser(id: string) {
+  return getUserForAuth({ input: { userId: Number(id) } });
 }
