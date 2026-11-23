@@ -35,6 +35,7 @@ export const sendAlert = async ({
           `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
         )}`,
       },
+      signal: AbortSignal.timeout(10_000),
     },
   );
   if (!res.ok) {
@@ -67,6 +68,7 @@ export const sendRecovery = async ({
           `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
         )}`,
       },
+      signal: AbortSignal.timeout(10_000),
     },
   );
   if (!res.ok) {
@@ -99,6 +101,7 @@ export const sendDegraded = async ({
           `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
         )}`,
       },
+      signal: AbortSignal.timeout(10_000),
     },
   );
   if (!res.ok) {

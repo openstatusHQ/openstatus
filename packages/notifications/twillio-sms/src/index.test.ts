@@ -96,6 +96,47 @@ describe("Twilio SMS Notifications", () => {
     expect(formData.get("Body")).toContain("status code 500");
   });
 
+  test("Send Alert aborts a stalled request after 10 seconds", async () => {
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((_url, init) => {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(init.signal?.reason);
+          });
+        });
+      });
+
+    vi.useFakeTimers();
+    try {
+      const monitor = createMockMonitor();
+      const notification = selectNotificationSchema.parse(
+        createMockNotification(),
+      );
+
+      const assertion = expect(
+        sendAlert({
+          // @ts-expect-error
+          monitor,
+          notification,
+          statusCode: 500,
+          message: "Something went wrong",
+          cronTimestamp: Date.now(),
+        }),
+      ).rejects.toThrow();
+      await vi.advanceTimersByTimeAsync(10_000);
+      await assertion;
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const signal = fetchMock.mock.calls[0][1]?.signal;
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("Send Alert without statusCode", async () => {
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(

@@ -40,6 +40,7 @@ export const sendAlert = async ({
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       console.log(`Failed to send alert notification: ${res.statusText}`);
@@ -81,6 +82,7 @@ export const sendDegraded = async ({
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       console.log(`Failed to send alert notification: ${res.statusText}`);
@@ -106,6 +108,7 @@ export const sendRecovery = async ({
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       console.log(`Failed to send alert notification: ${res.statusText}`);
@@ -140,6 +143,7 @@ export const sendTest = async ({
     const _res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
+      signal: AbortSignal.timeout(10_000),
     });
   } catch (err) {
     console.log(err);

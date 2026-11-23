@@ -96,6 +96,50 @@ describe("OpsGenie Notifications", () => {
     expect(body.details.message).toBe("Something went wrong");
   });
 
+  test("Send Alert aborts a stalled request after 10 seconds", async () => {
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((_url, init) => {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(init.signal?.reason);
+          });
+        });
+      });
+
+    vi.useFakeTimers();
+    try {
+      const monitor = createMockMonitor();
+      const notification = selectNotificationSchema.parse(
+        createMockNotification("us"),
+      );
+      const incident = createMockIncident();
+
+      const assertion = expect(
+        sendAlert({
+          // @ts-expect-error
+          monitor,
+          notification,
+          statusCode: 500,
+          message: "Something went wrong",
+          // @ts-expect-error
+          incident,
+          cronTimestamp: Date.now(),
+        }),
+      ).rejects.toThrow();
+      await vi.advanceTimersByTimeAsync(10_000);
+      await assertion;
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const signal = fetchMock.mock.calls[0][1]?.signal;
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("Send Alert with EU region", async () => {
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
