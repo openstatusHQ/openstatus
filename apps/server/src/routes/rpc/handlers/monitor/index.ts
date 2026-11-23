@@ -381,7 +381,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       });
       return { monitor: dbMonitorToHeartbeatProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 

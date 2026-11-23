@@ -72,6 +72,10 @@ const CREATE_BODIES: Record<string, (periodicity: string) => object> = {
       service: "checkout.v1.CheckoutService",
     },
   }),
+  // Heartbeats have a period instead of a periodicity.
+  CreateHeartbeatMonitor: () => ({
+    monitor: { name: "plan-limit-heartbeat", period: "3600", grace: "300" },
+  }),
 };
 
 describe("monitor cap", () => {
@@ -104,6 +108,23 @@ describe("monitor cap", () => {
       keyFor(workspaceId),
     );
     expect(res.status).toBe(200);
+  });
+
+  test("a heartbeat counts against the cap like any other monitor", async () => {
+    const workspaceId = await freeWorkspace();
+    const first = await monitorRpc(
+      "CreateHeartbeatMonitor",
+      CREATE_BODIES.CreateHeartbeatMonitor(""),
+      keyFor(workspaceId),
+    );
+    expect(first.status).toBe(200);
+
+    const second = await monitorRpc(
+      "CreateHTTPMonitor",
+      CREATE_BODIES.CreateHTTPMonitor("PERIODICITY_10M"),
+      keyFor(workspaceId),
+    );
+    expect(second.status).toBe(403);
   });
 
   test("the first monitor is created and the second is refused", async () => {
