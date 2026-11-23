@@ -3,7 +3,7 @@ builders:
   builder:
     # go-libsql links a prebuilt glibc static library through cgo, so build
     # natively on Debian for each target platform (no cross-compilation).
-    fromImage: golang:1.26-bookworm
+    fromImage: golang:1.27.3-bookworm
     label:
       org.opencontainers.image.stage: builder
     workdir: /go/src/app

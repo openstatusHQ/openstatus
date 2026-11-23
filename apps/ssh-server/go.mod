@@ -1,6 +1,6 @@
 module github.com/openstatusHQ/openstatus/apps/ssh-server
 
-go 1.25.1
+go 1.27.3
 
 require (
 	github.com/charmbracelet/bubbles v1.0.0

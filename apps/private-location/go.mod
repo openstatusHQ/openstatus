@@ -1,6 +1,6 @@
 module github.com/openstatushq/openstatus/apps/private-location
 
-go 1.25.2
+go 1.27.3
 
 require (
 	connectrpc.com/connect v1.19.1

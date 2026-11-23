@@ -3,11 +3,11 @@ effective: |
     builder:
       fromImage:
         path: golang
-        digest: sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107
+        digest: sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0
       label:
-        org.opencontainers.image.base.name: docker.io/golang:1.26-bookworm
+        org.opencontainers.image.base.digest: sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0
+        org.opencontainers.image.base.name: docker.io/golang:1.27.3-bookworm
         org.opencontainers.image.stage: builder
-        org.opencontainers.image.base.digest: sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107
       workdir: /go/src/app
       env:
         TZ: UTC
@@ -23,22 +23,22 @@ effective: |
     path: debian
     digest: sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
   label:
-    org.opencontainers.image.description: Private location orchestrator for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.base.name: docker.io/debian:bookworm-slim
+    org.opencontainers.image.description: Private location orchestrator for OpenStatus
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus Private Location
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.name: docker.io/debian:bookworm-slim
     org.opencontainers.image.base.digest: sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Private Location
+    io.dofigen.version: 2.8.0
   user:
     user: '1000'
     group: '1000'
   workdir: /opt/bin
   env:
-    TZ: UTC
-    USER: '1000'
     GIN_MODE: release
+    USER: '1000'
+    TZ: UTC
   copy:
   - fromBuilder: builder
     paths:
@@ -71,21 +71,21 @@ images:
   docker.io:
     library:
       golang:
-        1.26-bookworm:
-          digest: sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107
+        1.27.3-bookworm:
+          digest: sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0
       debian:
         bookworm-slim:
           digest: sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 resources:
   dofigen.yml:
-    hash: d04fca5247e646329f8612305da818b8d5ae47f9bae8c811690e0a61dd819b5d
+    hash: 66ed73d6f2f1aa132446ab8087a82c2298ba65a5334641d36b290b86b19b11c2
     content: |
       builders:
         # Stage 1: Build Go binary
         builder:
           # go-libsql links a prebuilt glibc static library through cgo, so build
           # natively on Debian for each target platform (no cross-compilation).
-          fromImage: golang:1.26-bookworm
+          fromImage: golang:1.27.3-bookworm
           label:
             org.opencontainers.image.stage: builder
           workdir: /go/src/app
