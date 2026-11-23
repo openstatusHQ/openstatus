@@ -11,6 +11,7 @@ import {
   selectWorkspaceSchema,
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
+import { ValidationError } from "@openstatus/services";
 import { countsRuns } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
@@ -40,6 +41,7 @@ import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
 
 import { visitorFromCtx } from "../lib/page-access";
+import { pagePasswordRateLimit } from "../lib/page-password-rate-limit";
 import { sendSubscriberVerification } from "../lib/subscriber-verification";
 import { toTRPCError } from "../service-adapter";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -1273,9 +1275,27 @@ export const statusPageRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
+      const attempt = {
+        scope: "login" as const,
+        slug: opts.input.slug,
+        ip: visitorFromCtx(opts.ctx).clientIp ?? null,
+      };
+      const limiter = pagePasswordRateLimit();
+      if (await limiter.isLocked(attempt)) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many password attempts. Try again later.",
+        });
+      }
+
       const verified = await callVisitorVerb(() =>
         verifyPublicStatusPagePassword({
           input: { slug: opts.input.slug, password: opts.input.password },
+        }).catch(async (err) => {
+          if (err instanceof ValidationError) {
+            await limiter.recordFailure(attempt);
+          }
+          throw err;
         }),
       );
 
@@ -1299,9 +1319,27 @@ export const statusPageRouter = createTRPCRouter({
         cookiePassword: z.string().nullish(),
       }),
     )
-    .query(async (opts) =>
-      isPublicStatusPagePasswordAuthorized({ input: opts.input }),
-    ),
+    .query(async (opts) => {
+      const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
+      // Nothing submitted is not a guess: anonymous feed reads must not count.
+      if (!submitted) {
+        return isPublicStatusPagePasswordAuthorized({ input: opts.input });
+      }
+
+      const attempt = {
+        scope: "check" as const,
+        slug: opts.input.slug,
+        ip: visitorFromCtx(opts.ctx).clientIp ?? null,
+      };
+      const limiter = pagePasswordRateLimit();
+      if (await limiter.isLocked(attempt)) return false;
+
+      const authorized = await isPublicStatusPagePasswordAuthorized({
+        input: opts.input,
+      });
+      if (!authorized) await limiter.recordFailure(attempt);
+      return authorized;
+    }),
 
   getSubscriberByToken: publicProcedure
     .input(z.object({ token: z.uuid(), domain: z.string().toLowerCase() }))

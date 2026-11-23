@@ -3,7 +3,7 @@ import { isPasswordAuthorized } from "../page-access";
 import { bySlugOrDomain } from "./internal";
 import { PublicPasswordAuthorizedInput } from "./schemas";
 
-/** A boolean, so the stored password never leaves the server. */
+/** A boolean, so the stored password never leaves the server. Callers rate-limit failed guesses. */
 export async function isPublicStatusPagePasswordAuthorized(args: {
   input: PublicPasswordAuthorizedInput;
   db?: DB;
@@ -16,7 +16,6 @@ export async function isPublicStatusPagePasswordAuthorized(args: {
     columns: { password: true, accessType: true },
   });
   if (!page || page.accessType !== "password") return false;
-  // TODO: rate-limit — an unauthenticated caller can brute-force guesses here.
   return isPasswordAuthorized({
     stored: page.password,
     queryPassword: input.queryPassword,

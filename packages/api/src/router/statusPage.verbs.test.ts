@@ -13,9 +13,18 @@ import {
 } from "@openstatus/db/src/test/factories";
 import { TRPCError } from "@trpc/server";
 import { NextRequest } from "next/server.js";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 
+import { MAX_PAGE_PASSWORD_FAILURES } from "../lib/page-password-rate-limit";
 import { appRouter } from "../root";
+import { resetRedisCounters } from "../test/upstash.mock";
 import { createInnerTRPCContext } from "../trpc";
 
 // tRPC codes and messages of the procedures backed by public-status-page verbs.
@@ -325,5 +334,103 @@ describe("isPasswordAuthorized", () => {
     expect(await sp.isPasswordAuthorized({ slug: "", queryPassword: "" })).toBe(
       false,
     );
+  });
+});
+
+describe("password rate limit", () => {
+  beforeEach(() => resetRedisCounters());
+
+  const fromIp = (ip: string) => caller({ "x-real-ip": ip });
+
+  async function failLogins(ip: string, times = MAX_PAGE_PASSWORD_FAILURES) {
+    for (let i = 0; i < times; i++) {
+      await trpcError(
+        fromIp(ip).verifyPassword({ slug: gated.slug, password: "nope" }),
+      );
+    }
+  }
+
+  test("verifyPassword refuses even the right password once an IP is locked", async () => {
+    await failLogins("10.9.0.1");
+    const err = await trpcError(
+      fromIp("10.9.0.1").verifyPassword({
+        slug: gated.slug,
+        password: PASSWORD,
+      }),
+    );
+    expect(err.code).toBe("TOO_MANY_REQUESTS");
+    expect(err.message).toBe("Too many password attempts. Try again later.");
+  });
+
+  test("verifyPassword still accepts the right password below the limit", async () => {
+    await failLogins("10.9.0.2", MAX_PAGE_PASSWORD_FAILURES - 1);
+    expect(
+      await fromIp("10.9.0.2").verifyPassword({
+        slug: gated.slug,
+        password: PASSWORD,
+      }),
+    ).toBe(true);
+  });
+
+  test("a locked IP does not lock out another IP", async () => {
+    await failLogins("10.9.0.3");
+    expect(
+      await fromIp("10.9.0.4").verifyPassword({
+        slug: gated.slug,
+        password: PASSWORD,
+      }),
+    ).toBe(true);
+  });
+
+  test("a successful login does not count", async () => {
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES + 1; i++) {
+      expect(
+        await fromIp("10.9.0.5").verifyPassword({
+          slug: gated.slug,
+          password: PASSWORD,
+        }),
+      ).toBe(true);
+    }
+  });
+
+  test("isPasswordAuthorized answers false once an IP is locked", async () => {
+    const sp = fromIp("10.9.0.6");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES; i++) {
+      expect(
+        await sp.isPasswordAuthorized({ slug: gated.slug, queryPassword: "x" }),
+      ).toBe(false);
+    }
+    expect(
+      await sp.isPasswordAuthorized({
+        slug: gated.slug,
+        cookiePassword: PASSWORD,
+      }),
+    ).toBe(false);
+  });
+
+  test("isPasswordAuthorized without a password does not count", async () => {
+    const sp = fromIp("10.9.0.7");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES + 1; i++) {
+      expect(await sp.isPasswordAuthorized({ slug: gated.slug })).toBe(false);
+    }
+    expect(
+      await sp.isPasswordAuthorized({
+        slug: gated.slug,
+        cookiePassword: PASSWORD,
+      }),
+    ).toBe(true);
+  });
+
+  test("a stale feed cookie does not lock the IP out of logging in", async () => {
+    const sp = fromIp("10.9.0.8");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES; i++) {
+      await sp.isPasswordAuthorized({
+        slug: gated.slug,
+        cookiePassword: "old-password",
+      });
+    }
+    expect(
+      await sp.verifyPassword({ slug: gated.slug, password: PASSWORD }),
+    ).toBe(true);
   });
 });
