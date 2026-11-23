@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   COMPONENTS_PER_SITEMAP,
+  componentChunk,
   componentChunkIndex,
   sitemapIds,
   sitemapIndexXml,
@@ -25,8 +26,18 @@ describe("sitemapIds", () => {
     ]);
   });
 
-  it("keeps every component file under the protocol limit", () => {
-    expect(COMPONENTS_PER_SITEMAP).toBeLessThanOrEqual(50_000);
+  it("splits components into files under the protocol limit with no gap or overlap", () => {
+    const entries = Array.from({ length: 88_095 }, (_, i) => i);
+    const chunks = sitemapIds(entries.length)
+      .map(componentChunkIndex)
+      .filter((chunk) => chunk !== null)
+      .map((chunk) => componentChunk(entries, chunk));
+
+    for (const chunk of chunks) {
+      expect(chunk.length).toBeGreaterThan(0);
+      expect(chunk.length).toBeLessThanOrEqual(50_000);
+    }
+    expect(chunks.flat()).toEqual(entries);
   });
 });
 

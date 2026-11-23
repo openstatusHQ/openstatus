@@ -17,8 +17,8 @@ import {
 } from "../content/utils";
 import type { Metadata } from "../content/utils/schema";
 import {
-  COMPONENTS_PER_SITEMAP,
   PAGES_SITEMAP_ID,
+  componentChunk,
   componentChunkIndex,
   listComponentEntries,
   listLiveServices,
@@ -53,9 +53,7 @@ export default async function sitemap(props: {
   if (id === PAGES_SITEMAP_ID) return pageEntries();
   const chunk = componentChunkIndex(id);
   if (chunk === null) return [];
-  const components = await listComponentEntries();
-  const start = chunk * COMPONENTS_PER_SITEMAP;
-  return components.slice(start, start + COMPONENTS_PER_SITEMAP);
+  return componentChunk(await listComponentEntries(), chunk);
 }
 
 async function pageEntries(): Promise<MetadataRoute.Sitemap> {

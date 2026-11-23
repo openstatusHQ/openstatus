@@ -29,6 +29,11 @@ export function componentChunkIndex(id: string): number | null {
   return /^\d+$/.test(digits) ? Number(digits) : null;
 }
 
+export function componentChunk<T>(entries: T[], chunk: number): T[] {
+  const start = chunk * COMPONENTS_PER_SITEMAP;
+  return entries.slice(start, start + COMPONENTS_PER_SITEMAP);
+}
+
 export function sitemapUrl(id: string): string {
   return `${SITE_URL}/sitemap/${id}.xml`;
 }

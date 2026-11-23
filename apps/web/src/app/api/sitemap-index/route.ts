@@ -11,7 +11,8 @@ export async function GET() {
   return new Response(sitemapIndexXml(sitemapIds(components.length)), {
     headers: {
       "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Cache-Control":
+        "public, max-age=3600, s-maxage=3600, stale-while-revalidate=3600",
     },
   });
 }
