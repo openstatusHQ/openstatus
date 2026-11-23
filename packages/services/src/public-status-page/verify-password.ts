@@ -4,7 +4,13 @@ import { isPasswordAuthorized } from "../page-access";
 import { findPageBySlug } from "./internal";
 import { PublicPasswordInput } from "./schemas";
 
-/** `null` when no page matches; throws when the password is wrong. */
+export class InvalidPagePasswordError extends ValidationError {
+  constructor() {
+    super("Invalid password");
+  }
+}
+
+/** `null` when no page matches; throws `InvalidPagePasswordError` for a wrong password. */
 export async function verifyPublicStatusPagePassword(args: {
   input: PublicPasswordInput;
   db?: DB;
@@ -26,7 +32,7 @@ export async function verifyPublicStatusPagePassword(args: {
       cookiePassword: null,
     })
   ) {
-    throw new ValidationError("Invalid password");
+    throw new InvalidPagePasswordError();
   }
   return true;
 }

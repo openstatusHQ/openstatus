@@ -19,6 +19,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 
 import {
   checkPublicEmailDomain,
+  InvalidPagePasswordError,
   getPublicMaintenance,
   getPublicStatusPage,
   getPublicStatusPageGate,
@@ -137,7 +138,7 @@ describe("unknown slugs", () => {
           input: { slug: UNKNOWN, queryPassword: "x" },
           db: tx,
         }),
-      ).toBe(false);
+      ).toBeNull();
     });
   });
 });
@@ -178,7 +179,7 @@ describe("slug lookup", () => {
           input: { slug: "", queryPassword: "" },
           db: tx,
         }),
-      ).toBe(false);
+      ).toBeNull();
     });
   });
 });
@@ -588,7 +589,7 @@ describe("gate verbs", () => {
           input: { slug: page.slug, password: "" },
           db: tx,
         }),
-      ).rejects.toThrow("Invalid password");
+      ).rejects.toBeInstanceOf(InvalidPagePasswordError);
     });
   });
 
@@ -637,6 +638,12 @@ describe("gate verbs", () => {
           db: tx,
         }),
       ).rejects.toThrow("not configured to allow password");
+      await expect(
+        verifyPublicStatusPagePassword({
+          input: { slug: page.slug, password: "s3cret" },
+          db: tx,
+        }),
+      ).rejects.not.toBeInstanceOf(InvalidPagePasswordError);
     });
   });
 
@@ -664,7 +671,7 @@ describe("gate verbs", () => {
       expect(await check(gated.slug, "", "s3cret")).toBe(false);
       expect(await check(gated.slug, "S3CRET")).toBe(false);
       // Only a password-gated page can authorize a password.
-      expect(await check(open.slug, "s3cret")).toBe(false);
+      expect(await check(open.slug, "s3cret")).toBeNull();
     });
   });
 });

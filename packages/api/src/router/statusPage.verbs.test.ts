@@ -24,7 +24,7 @@ import {
 
 import { MAX_PAGE_PASSWORD_FAILURES } from "../lib/page-password-rate-limit";
 import { appRouter } from "../root";
-import { resetRedisCounters } from "../test/upstash.mock";
+import { redisKeyCount, resetRedisCounters } from "../test/upstash.mock";
 import { createInnerTRPCContext } from "../trpc";
 
 // tRPC codes and messages of the procedures backed by public-status-page verbs.
@@ -419,6 +419,48 @@ describe("password rate limit", () => {
         cookiePassword: PASSWORD,
       }),
     ).toBe(true);
+  });
+
+  test("a parallel burst of wrong logins cannot pass the cap", async () => {
+    const sp = fromIp("10.9.1.1");
+    const results = await Promise.allSettled(
+      Array.from({ length: 30 }, () =>
+        sp.verifyPassword({ slug: gated.slug, password: "nope" }),
+      ),
+    );
+    const codes = results.map((r) =>
+      r.status === "rejected" ? (r.reason as TRPCError).code : "OK",
+    );
+    expect(codes.filter((c) => c === "BAD_REQUEST")).toHaveLength(
+      MAX_PAGE_PASSWORD_FAILURES,
+    );
+    expect(codes.filter((c) => c === "TOO_MANY_REQUESTS")).toHaveLength(
+      30 - MAX_PAGE_PASSWORD_FAILURES,
+    );
+  });
+
+  test("unknown pages and pages without a password gate do not count", async () => {
+    const sp = fromIp("10.9.1.2");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES + 1; i++) {
+      await trpcError(
+        sp.verifyPassword({ slug: "verbs-unknown", password: "x" }),
+      );
+      await trpcError(sp.verifyPassword({ slug: publicSlug, password: "x" }));
+      expect(
+        await sp.isPasswordAuthorized({
+          slug: `verbs-unknown-${i}`,
+          queryPassword: "x",
+        }),
+      ).toBe(false);
+      expect(
+        await sp.isPasswordAuthorized({ slug: publicSlug, queryPassword: "x" }),
+      ).toBe(false);
+    }
+    // Neither budget was touched for the gated page or the others.
+    expect(
+      await sp.verifyPassword({ slug: gated.slug, password: PASSWORD }),
+    ).toBe(true);
+    expect(redisKeyCount()).toBe(0);
   });
 
   test("a stale feed cookie does not lock the IP out of logging in", async () => {

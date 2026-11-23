@@ -11,7 +11,6 @@ import {
   selectWorkspaceSchema,
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
-import { ValidationError } from "@openstatus/services";
 import { countsRuns } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
@@ -32,6 +31,7 @@ import {
   getPublicStatusPageUptime,
   getPublicStatusReport,
   getPublicSubscriptionPage,
+  InvalidPagePasswordError,
   isPublicStatusPagePasswordAuthorized,
   listPublicStatusPageMonitors,
   verifyPublicStatusPagePassword,
@@ -1275,29 +1275,31 @@ export const statusPageRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const attempt = {
-        scope: "login" as const,
+      const slot = await pagePasswordRateLimit().reserve({
+        scope: "login",
         slug: opts.input.slug,
         ip: visitorFromCtx(opts.ctx).clientIp ?? null,
-      };
-      const limiter = pagePasswordRateLimit();
-      if (await limiter.isLocked(attempt)) {
+      });
+      if (slot.locked) {
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message: "Too many password attempts. Try again later.",
         });
       }
 
-      const verified = await callVisitorVerb(() =>
-        verifyPublicStatusPagePassword({
-          input: { slug: opts.input.slug, password: opts.input.password },
-        }).catch(async (err) => {
-          if (err instanceof ValidationError) {
-            await limiter.recordFailure(attempt);
-          }
+      const verified = await callVisitorVerb(async () => {
+        try {
+          const result = await verifyPublicStatusPagePassword({
+            input: { slug: opts.input.slug, password: opts.input.password },
+          });
+          await slot.release();
+          return result;
+        } catch (err) {
+          // Only a wrong password keeps the slot it reserved.
+          if (!(err instanceof InvalidPagePasswordError)) await slot.release();
           throw err;
-        }),
-      );
+        }
+      });
 
       if (!verified) {
         throw new TRPCError({
@@ -1321,24 +1323,28 @@ export const statusPageRouter = createTRPCRouter({
     )
     .query(async (opts) => {
       const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
-      // Nothing submitted is not a guess: anonymous feed reads must not count.
+      // Nothing (or "") submitted can never authorize, so it is not a guess:
+      // anonymous feed reads must not count.
       if (!submitted) {
-        return isPublicStatusPagePasswordAuthorized({ input: opts.input });
+        return (
+          (await isPublicStatusPagePasswordAuthorized({ input: opts.input })) ??
+          false
+        );
       }
 
-      const attempt = {
-        scope: "check" as const,
+      const slot = await pagePasswordRateLimit().reserve({
+        scope: "check",
         slug: opts.input.slug,
         ip: visitorFromCtx(opts.ctx).clientIp ?? null,
-      };
-      const limiter = pagePasswordRateLimit();
-      if (await limiter.isLocked(attempt)) return false;
+      });
+      if (slot.locked) return false;
 
       const authorized = await isPublicStatusPagePasswordAuthorized({
         input: opts.input,
       });
-      if (!authorized) await limiter.recordFailure(attempt);
-      return authorized;
+      // Only a wrong password for a gated page keeps the slot.
+      if (authorized !== false) await slot.release();
+      return authorized ?? false;
     }),
 
   getSubscriberByToken: publicProcedure

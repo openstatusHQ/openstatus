@@ -5,13 +5,26 @@ import {
   type PasswordAttemptLimiter,
 } from "./gate-password-attempt";
 
+// Mirrors the Redis limiter: reserve increments first, a refused attempt
+// gives its slot straight back, and release gives a slot back.
 function fakeLimiter(max = 3) {
   const failures = new Map<string, number>();
   const key = (a: { slug: string; ip: string | null }) => `${a.slug}:${a.ip}`;
   const limiter: PasswordAttemptLimiter = {
-    isLocked: async (a) => (failures.get(key(a)) ?? 0) >= max,
-    recordFailure: async (a) => {
-      failures.set(key(a), (failures.get(key(a)) ?? 0) + 1);
+    reserve: async (a) => {
+      const k = key(a);
+      const count = (failures.get(k) ?? 0) + 1;
+      failures.set(k, count);
+      const release = async () => {
+        const left = (failures.get(k) ?? 1) - 1;
+        if (left <= 0) failures.delete(k);
+        else failures.set(k, left);
+      };
+      if (count > max) {
+        await release();
+        return { locked: true, release: async () => {} };
+      }
+      return { locked: false, release };
     },
   };
   return { limiter, failures };
@@ -137,15 +150,31 @@ describe("gatePasswordAttempt", () => {
       ...base,
       queryPassword: "nope",
       limiter: {
-        isLocked: async (a) => {
+        reserve: async (a) => {
           scopes.push(a.scope);
-          return false;
-        },
-        recordFailure: async (a) => {
-          scopes.push(a.scope);
+          return { locked: false, release: async () => {} };
         },
       },
     });
-    expect(scopes).toEqual(["login", "login"]);
+    expect(scopes).toEqual(["login"]);
+  });
+
+  test("a parallel burst of wrong passwords cannot pass the cap", async () => {
+    const { limiter, failures } = fakeLimiter(3);
+    const results = await Promise.all(
+      Array.from({ length: 20 }, () =>
+        gatePasswordAttempt({ ...base, queryPassword: "nope", limiter }),
+      ),
+    );
+    // Only the first three reach the password check; the rest are refused.
+    expect(results.filter((r) => r.queryPassword === "nope")).toHaveLength(3);
+    expect(failures.get("acme:10.0.0.1")).toBe(3);
+  });
+
+  test("a right password gives its slot back", async () => {
+    const { limiter, failures } = fakeLimiter(3);
+    await gatePasswordAttempt({ ...base, queryPassword: "nope", limiter });
+    await gatePasswordAttempt({ ...base, cookiePassword: "s3cret", limiter });
+    expect(failures.get("acme:10.0.0.1")).toBe(1);
   });
 });

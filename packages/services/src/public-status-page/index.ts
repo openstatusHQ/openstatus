@@ -10,7 +10,10 @@ export { getPublicStatusPageUptime } from "./get-uptime";
 export { type PublicPageTree } from "./internal";
 export { isPublicStatusPagePasswordAuthorized } from "./is-password-authorized";
 export { listPublicStatusPageMonitors } from "./list-monitors";
-export { verifyPublicStatusPagePassword } from "./verify-password";
+export {
+  InvalidPagePasswordError,
+  verifyPublicStatusPagePassword,
+} from "./verify-password";
 
 export {
   PublicEmailDomainInput,

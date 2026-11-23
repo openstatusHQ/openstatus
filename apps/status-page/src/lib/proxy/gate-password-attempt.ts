@@ -4,8 +4,9 @@ import { isPasswordAuthorized } from "@openstatus/services/page-access";
 type Attempt = { scope: "login"; slug: string; ip: string | null };
 
 export type PasswordAttemptLimiter = {
-  isLocked(attempt: Attempt): Promise<boolean>;
-  recordFailure(attempt: Attempt): Promise<void>;
+  reserve(
+    attempt: Attempt,
+  ): Promise<{ locked: boolean; release(): Promise<void> }>;
 };
 
 /**
@@ -36,7 +37,8 @@ export async function gatePasswordAttempt(args: {
     slug: args.host,
     ip: args.clientIp,
   };
-  if (await limiter.isLocked(attempt)) {
+  const slot = await limiter.reserve(attempt);
+  if (slot.locked) {
     return {
       queryPassword: null,
       cookiePassword: undefined,
@@ -49,8 +51,9 @@ export async function gatePasswordAttempt(args: {
     queryPassword,
     cookiePassword,
   });
-  if (authorized) return untouched;
-
-  await limiter.recordFailure(attempt);
+  if (authorized) {
+    await slot.release();
+    return untouched;
+  }
   return { queryPassword, cookiePassword, clearCookie: !!cookiePassword };
 }
