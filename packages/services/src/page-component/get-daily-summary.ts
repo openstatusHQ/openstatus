@@ -1,5 +1,19 @@
-import { and, asc, eq, inArray } from "@openstatus/db";
-import { monitorIncidentTable, pageComponent } from "@openstatus/db/src/schema";
+import {
+  and,
+  asc,
+  eq,
+  exists,
+  gte,
+  inArray,
+  isNull,
+  ne,
+  or,
+} from "@openstatus/db";
+import {
+  monitorIncidentTable,
+  pageComponent,
+  statusReportUpdate,
+} from "@openstatus/db/src/schema";
 import type {
   PageComponentImpact,
   PageComponentType,
@@ -12,6 +26,7 @@ import { fetchMonitorDailyStats } from "../monitor/get-daily-summary";
 import {
   type DayStatus,
   type Event,
+  eventWindowStart,
   eventWorstImpact,
   fillStatusDataFor45Days,
   getEvents,
@@ -91,6 +106,10 @@ export async function getPageComponentDailySummary(args: {
     ),
   );
 
+  // Mirrors the drops in getEvents so history outside the window is never read;
+  // computed before getEvents' own threshold, so this is always a superset.
+  const windowStart = eventWindowStart(days);
+
   const [monitorStats, maintenances, reports, incidents] = await Promise.all([
     fetchMonitorDailyStats({
       db,
@@ -99,11 +118,28 @@ export async function getPageComponentDailySummary(args: {
       workspaceId: input.workspaceId,
     }),
     db.query.maintenance.findMany({
-      where: (m, { eq }) => eq(m.pageId, input.pageId),
+      where: (m) => and(eq(m.pageId, input.pageId), gte(m.to, windowStart)),
       with: { maintenancesToPageComponents: { with: { pageComponent: true } } },
     }),
     db.query.statusReport.findMany({
-      where: (r, { eq }) => eq(r.pageId, input.pageId),
+      where: (r) =>
+        and(
+          eq(r.pageId, input.pageId),
+          or(
+            ne(r.status, "resolved"),
+            exists(
+              db
+                .select({ id: statusReportUpdate.id })
+                .from(statusReportUpdate)
+                .where(
+                  and(
+                    eq(statusReportUpdate.statusReportId, r.id),
+                    gte(statusReportUpdate.date, windowStart),
+                  ),
+                ),
+            ),
+          ),
+        ),
       with: {
         statusReportsToPageComponents: { with: { pageComponent: true } },
         statusReportUpdates: {
@@ -115,7 +151,16 @@ export async function getPageComponentDailySummary(args: {
       ? db
           .select()
           .from(monitorIncidentTable)
-          .where(inArray(monitorIncidentTable.monitorId, monitorIds))
+          .where(
+            and(
+              inArray(monitorIncidentTable.monitorId, monitorIds),
+              isNull(monitorIncidentTable.excusedAt),
+              or(
+                isNull(monitorIncidentTable.resolvedAt),
+                gte(monitorIncidentTable.resolvedAt, windowStart),
+              ),
+            ),
+          )
           .all()
       : Promise.resolve([]),
   ]);
