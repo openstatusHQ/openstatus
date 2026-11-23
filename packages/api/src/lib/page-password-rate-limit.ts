@@ -27,6 +27,10 @@ const freeSlot: PasswordAttemptSlot = {
   locked: false,
   release: async () => {},
 };
+const lockedSlot: PasswordAttemptSlot = {
+  locked: true,
+  release: async () => {},
+};
 
 /**
  * Failed password guesses per (scope, page host, client IP). Each attempt
@@ -56,19 +60,27 @@ export function pagePasswordRateLimit(client?: Client) {
         console.warn("page password rate limit unavailable", e);
         return freeSlot;
       }
-      const release = async () => {
+      const giveBack = async () => {
         try {
           await decrOrDelete(redisClient, k);
+          return true;
         } catch (e) {
           console.warn("page password rate limit unavailable", e);
+          return false;
         }
       };
       // A refused attempt gives its slot straight back so the count stays put.
+      // If that fails, released slots may not have come back either, so the
+      // count can't be trusted: fail open, as when Redis is down.
       if (count > MAX_PAGE_PASSWORD_FAILURES) {
-        await release();
-        return { locked: true, release: async () => {} };
+        return (await giveBack()) ? lockedSlot : freeSlot;
       }
-      return { locked: false, release };
+      return {
+        locked: false,
+        release: async () => {
+          await giveBack();
+        },
+      };
     },
   };
 }

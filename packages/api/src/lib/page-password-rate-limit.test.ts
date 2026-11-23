@@ -137,4 +137,35 @@ describe("pagePasswordRateLimit", () => {
     expect((await limiter.reserve(attempt)).locked).toBe(false);
     expect(calls).toBe(3);
   });
+
+  test("fails open when a refused attempt cannot give its slot back", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const limiter = pagePasswordRateLimit({
+      eval: <TArgs extends unknown[], TData>(
+        script: string,
+        _keys: string[],
+        _args: TArgs,
+      ) =>
+        script === "incrWithTtl"
+          ? Promise.resolve([MAX_PAGE_PASSWORD_FAILURES + 1] as TData)
+          : Promise.reject(new Error("down")),
+    });
+    expect((await limiter.reserve(attempt)).locked).toBe(false);
+  });
+
+  test("still refuses when the over-limit slot is given back", async () => {
+    const limiter = pagePasswordRateLimit({
+      eval: <TArgs extends unknown[], TData>(
+        script: string,
+        _keys: string[],
+        _args: TArgs,
+      ) =>
+        Promise.resolve(
+          (script === "incrWithTtl"
+            ? [MAX_PAGE_PASSWORD_FAILURES + 1]
+            : MAX_PAGE_PASSWORD_FAILURES) as TData,
+        ),
+    });
+    expect((await limiter.reserve(attempt)).locked).toBe(true);
+  });
 });

@@ -36,6 +36,11 @@ describe("decrOrDelete", () => {
       },
       "k",
     );
-    expect(script).toMatch(/DECR[\s\S]*count <= 0[\s\S]*DEL/);
+    expect(script).toMatch(/local count = redis\.call\('DECR', KEYS\[1\]\)/);
+    expect(script).toMatch(
+      /if count <= 0 then\s+redis\.call\('DEL', KEYS\[1\]\)\s+return 0\s+end/,
+    );
+    // DEL appears only inside that guard.
+    expect(script.match(/'DEL'/g)).toHaveLength(1);
   });
 });
