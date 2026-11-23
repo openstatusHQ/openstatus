@@ -53,8 +53,14 @@ export async function getMonitorStatus(args: {
     )
     .all();
 
+  // The checker writes a row only on a status change, so a region that never
+  // left `active` has none; the scheduler (`buildTaskInputs`) reads it as active.
+  const byRegion = new Map(rows.map((r) => [r.region, r.status]));
   return {
     id: record.id,
-    regions: rows.map((r) => ({ region: r.region, status: r.status })),
+    regions: regions.map((region) => ({
+      region,
+      status: byRegion.get(region) ?? "active",
+    })),
   };
 }
