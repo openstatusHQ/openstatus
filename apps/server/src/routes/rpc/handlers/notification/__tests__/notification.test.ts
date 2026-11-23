@@ -231,6 +231,57 @@ describe("NotificationService.CreateNotification", () => {
       .where(eq(notification.id, Number(data.notification.id)));
   });
 
+  test("creates a ntfy notification with priorities", async () => {
+    const res = await connectRequest(
+      "CreateNotification",
+      {
+        name: `${TEST_PREFIX}-created-ntfy`,
+        provider: "NOTIFICATION_PROVIDER_NTFY",
+        data: {
+          ntfy: {
+            topic: "my-alerts",
+            serverUrl: "https://ntfy.example.com",
+            alertPriority: "NTFY_PRIORITY_URGENT",
+            recoveryPriority: "NTFY_PRIORITY_LOW",
+          },
+        },
+        monitorIds: [],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.notification.data.ntfy.alertPriority).toBe(
+      "NTFY_PRIORITY_URGENT",
+    );
+    expect(data.notification.data.ntfy.recoveryPriority).toBe(
+      "NTFY_PRIORITY_LOW",
+    );
+    // Unspecified is the proto default and is omitted from the JSON response.
+    expect(data.notification.data.ntfy.degradedPriority).toBeUndefined();
+
+    const record = await db
+      .select()
+      .from(notification)
+      .where(eq(notification.id, Number(data.notification.id)))
+      .get();
+    expect(JSON.parse(record?.data ?? "{}")).toEqual({
+      ntfy: {
+        topic: "my-alerts",
+        serverUrl: "https://ntfy.example.com",
+        alertPriority: "urgent",
+        recoveryPriority: "low",
+      },
+    });
+
+    // Clean up
+    await db
+      .delete(notification)
+      .where(eq(notification.id, Number(data.notification.id)));
+  });
+
   test("creates notification with multiple monitors", async () => {
     const res = await connectRequest(
       "CreateNotification",

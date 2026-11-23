@@ -4470,11 +4470,39 @@
             "type": ["string", "null"],
             "title": "token",
             "description": "Optional authentication token."
+          },
+          "alertPriority": {
+            "title": "alert_priority",
+            "description": "Priority of alert (down) notifications.",
+            "$ref": "#/components/schemas/openstatus.notification.v1.NtfyPriority"
+          },
+          "degradedPriority": {
+            "title": "degraded_priority",
+            "description": "Priority of degraded notifications.",
+            "$ref": "#/components/schemas/openstatus.notification.v1.NtfyPriority"
+          },
+          "recoveryPriority": {
+            "title": "recovery_priority",
+            "description": "Priority of recovery notifications.",
+            "$ref": "#/components/schemas/openstatus.notification.v1.NtfyPriority"
           }
         },
         "title": "NtfyData",
         "additionalProperties": false,
         "description": "NtfyData contains configuration for Ntfy notifications."
+      },
+      "openstatus.notification.v1.NtfyPriority": {
+        "type": "string",
+        "title": "NtfyPriority",
+        "enum": [
+          "NTFY_PRIORITY_UNSPECIFIED",
+          "NTFY_PRIORITY_MIN",
+          "NTFY_PRIORITY_LOW",
+          "NTFY_PRIORITY_DEFAULT",
+          "NTFY_PRIORITY_HIGH",
+          "NTFY_PRIORITY_URGENT"
+        ],
+        "description": "NtfyPriority is the ntfy message priority. The values match ntfy's 1-5 scale."
       },
       "openstatus.notification.v1.OpsgenieData": {
         "type": "object",

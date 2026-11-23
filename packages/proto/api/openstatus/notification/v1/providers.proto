@@ -69,6 +69,22 @@ message GrafanaOncallData {
   string webhook_url = 1 [(buf.validate.field).string.uri = true];
 }
 
+// NtfyPriority is the ntfy message priority. The values match ntfy's 1-5 scale.
+enum NtfyPriority {
+  // Unspecified priority: no Priority header is sent, ntfy uses its default.
+  NTFY_PRIORITY_UNSPECIFIED = 0;
+  // Minimum priority (1).
+  NTFY_PRIORITY_MIN = 1;
+  // Low priority (2).
+  NTFY_PRIORITY_LOW = 2;
+  // Default priority (3).
+  NTFY_PRIORITY_DEFAULT = 3;
+  // High priority (4).
+  NTFY_PRIORITY_HIGH = 4;
+  // Urgent priority (5).
+  NTFY_PRIORITY_URGENT = 5;
+}
+
 // NtfyData contains configuration for Ntfy notifications.
 message NtfyData {
   // Ntfy topic to publish to.
@@ -80,6 +96,12 @@ message NtfyData {
   string server_url = 2;
   // Optional authentication token.
   optional string token = 3;
+  // Priority of alert (down) notifications.
+  NtfyPriority alert_priority = 4 [(buf.validate.field).enum.defined_only = true];
+  // Priority of degraded notifications.
+  NtfyPriority degraded_priority = 5 [(buf.validate.field).enum.defined_only = true];
+  // Priority of recovery notifications.
+  NtfyPriority recovery_priority = 6 [(buf.validate.field).enum.defined_only = true];
 }
 
 // PagerDutyData contains configuration for PagerDuty notifications.

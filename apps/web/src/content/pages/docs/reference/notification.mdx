@@ -172,6 +172,7 @@ Sends notifications to an Ntfy topic.
 - **Ntfy topic** (required) — the topic name to which notifications will be published.
 - **Custom server URL** (optional) — the URL of a custom Ntfy server if not using the default.
 - **Bearer token** (optional) — an authentication token for accessing the Ntfy server.
+- **Alert, degraded and recovery priority** (optional) — the [ntfy message priority](https://docs.ntfy.sh/publish/#message-priority) (`min`, `low`, `default`, `high`, `urgent`) for each kind of notification. Unset, no priority is sent and the server uses its default.
 
 ## Related resources
 
