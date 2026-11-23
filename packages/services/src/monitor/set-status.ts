@@ -1,8 +1,8 @@
-import { and, eq } from "@openstatus/db";
+import { and, db as defaultDb, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
-import { type ServiceContext, getReadDb } from "../context";
+import type { ServiceContext } from "../context";
 import { SetMonitorStatusInput } from "./schemas";
 
 /**
@@ -20,7 +20,7 @@ export async function setMonitorStatus(args: {
   requireScope(ctx, "monitors:write");
   const input = SetMonitorStatusInput.parse(args.input);
 
-  const rows = await getReadDb(ctx)
+  const rows = await (ctx.db ?? defaultDb)
     .update(monitor)
     .set({ status: input.status })
     .where(

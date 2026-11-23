@@ -11,6 +11,7 @@ import {
   type ServiceContext,
   getReadDb,
   withTransaction,
+  dbOnlyContext,
 } from "../context";
 import { NotFoundError, PreconditionFailedError } from "../errors";
 import { assertSubscribersAllowed, parseWorkspaceForContext } from "./internal";
@@ -59,7 +60,7 @@ export async function createSlackSubscriber(args: {
 }): Promise<SlackSubscriberResult> {
   const input = CreateSlackSubscriberSchema.parse(args.input);
 
-  const readDb = getReadDb({ db: args.db } as ServiceContext);
+  const readDb = getReadDb(dbOnlyContext(args.db));
   const pageData = await readDb.query.page.findFirst({
     where: eq(page.id, input.pageId),
     with: { workspace: true },
@@ -78,7 +79,7 @@ export async function createSlackSubscriber(args: {
   });
   const name = channelLabel(input.channelId, input.channelName);
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     // Re-read inside the write so a page protected after the read above
     // can't still gain a subscriber.
     const current = await tx
@@ -196,7 +197,7 @@ export async function removeSlackSubscriber(args: {
 }): Promise<{ removed: boolean }> {
   const input = RemoveSlackSubscriberSchema.parse(args.input);
 
-  const readDb = getReadDb({ db: args.db } as ServiceContext);
+  const readDb = getReadDb(dbOnlyContext(args.db));
   const pageData = await readDb.query.page.findFirst({
     where: eq(page.id, input.pageId),
     with: { workspace: true },
@@ -206,7 +207,7 @@ export async function removeSlackSubscriber(args: {
   }
   const workspace = parseWorkspaceForContext(pageData.workspace);
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const existing = await tx.query.pageSubscriber.findFirst({
       where: and(
         eq(pageSubscriber.pageId, input.pageId),
@@ -259,7 +260,7 @@ export async function removeSlackTeamSubscribers(args: {
   db?: DB;
 }): Promise<number> {
   const { teamId } = args.input;
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const rows = await tx.query.pageSubscriber.findMany({
       where: and(
         eq(pageSubscriber.channelType, "slack"),
@@ -315,7 +316,7 @@ export async function listSlackSubscribersForChannel(args: {
   db?: DB;
 }): Promise<SlackSubscriptionSummary[]> {
   const input = ListSlackSubscribersSchema.parse(args.input);
-  const readDb = getReadDb({ db: args.db } as ServiceContext);
+  const readDb = getReadDb(dbOnlyContext(args.db));
 
   const rows = await readDb.query.pageSubscriber.findMany({
     where: and(

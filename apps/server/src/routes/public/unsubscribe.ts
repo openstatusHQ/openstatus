@@ -1,4 +1,5 @@
 import { getLogger } from "@logtape/logtape";
+import { NotFoundError } from "@openstatus/services";
 import {
   getSubscriberByToken,
   unsubscribeSubscriber,
@@ -48,7 +49,15 @@ unsubscribe.post("/:token", async (c) => {
     }
 
     // Set unsubscribedAt timestamp
-    await unsubscribeSubscriber({ input: { token } });
+    try {
+      await unsubscribeSubscriber({ input: { token } });
+    } catch (e) {
+      // deleted between the lookup above and the write
+      if (e instanceof NotFoundError) {
+        return c.json({ error: "Subscriber not found" }, 404);
+      }
+      throw e;
+    }
 
     // Return 200 OK on success
     return c.json({ message: "Successfully unsubscribed" }, 200);

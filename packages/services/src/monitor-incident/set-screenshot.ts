@@ -6,7 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import { type DB, withTransaction, dbOnlyContext } from "../context";
 import { SetMonitorIncidentScreenshotInput } from "./schemas";
 
 /**
@@ -27,7 +27,7 @@ export async function setMonitorIncidentScreenshot(args: {
       ? "incidentScreenshotUrl"
       : "recoveryScreenshotUrl";
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const before = await tx
       .select()
       .from(monitorIncidentTable)

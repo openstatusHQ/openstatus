@@ -77,6 +77,14 @@ export function getReadDb(ctx: ServiceContext): DB {
   return ctx.db ?? defaultDb;
 }
 
+/**
+ * Context for verbs that run before any workspace or actor is known.
+ */
+// safe because `withTransaction` and `getReadDb` only read `ctx.db`
+export function dbOnlyContext(db: DB | undefined): ServiceContext {
+  return { db } as ServiceContext;
+}
+
 type BatchItemLike = Parameters<DrizzleClient["batch"]>[0][number];
 
 type BatchResults<T extends readonly unknown[]> = {

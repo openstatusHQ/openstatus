@@ -13,6 +13,7 @@ import {
   type ServiceContext,
   getReadDb,
   withTransaction,
+  dbOnlyContext,
 } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { type PageVisitor, assertPageAccess } from "../page-access";
@@ -62,7 +63,7 @@ export async function upsertSelfSignupSubscriber(args: {
   const input = UpsertSelfSignupSubscriberInput.parse(args.input);
   const componentIds = input.componentIds ?? [];
 
-  const readDb = getReadDb({ db: args.db } as ServiceContext);
+  const readDb = getReadDb(dbOnlyContext(args.db));
   const pageData = await readDb.query.page.findFirst({
     where: eq(page.id, input.pageId),
     with: { workspace: true },
@@ -79,7 +80,7 @@ export async function upsertSelfSignupSubscriber(args: {
 
   const emailLower = input.email.toLowerCase();
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     if (componentIds.length > 0) {
       const valid = await tx
         .select({ id: pageComponent.id })

@@ -59,12 +59,14 @@ app.post(
       headless: true, // set this to true
     });
 
+    // Only capture and upload fall back to the placeholder: a failed database
+    // write must not replace a screenshot that was stored.
+    let url: string | undefined;
     try {
       const page = await browser.newPage();
       await page.goto(data.url, { waitUntil: "load" });
       const img = await page.screenshot({ fullPage: true });
       const id = `${data.incidentId}-${Date.now()}.png`;
-      const url = `https://screenshot.openstat.us/${id}`;
 
       await S3.send(
         new PutObjectCommand({
@@ -74,25 +76,20 @@ app.post(
           ContentType: "image/png",
         }),
       );
+      url = `https://screenshot.openstat.us/${id}`;
+    } catch (e) {
+      console.log("could not take screenshot timeout");
+      console.log(e);
+      if (data.kind === "incident") {
+        url = "https://screenshot.openstat.us/err-connection-timed-out.jpg";
+      }
+    }
 
+    if (url) {
       await setMonitorIncidentScreenshot({
         input: { id: data.incidentId, kind: data.kind, url },
         job: "screenshot-service",
       });
-    } catch (e) {
-      console.log("could not take screenshot timeout");
-      if (data.kind === "incident") {
-        await setMonitorIncidentScreenshot({
-          input: {
-            id: data.incidentId,
-            kind: "incident",
-            url: "https://screenshot.openstat.us/err-connection-timed-out.jpg",
-          },
-          job: "screenshot-service",
-        });
-      }
-      //
-      console.log(e);
     }
 
     return c.text("Screenshot saved");

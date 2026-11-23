@@ -1,7 +1,7 @@
 import { db as defaultDb, eq, sql } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import { type DB, withTransaction, dbOnlyContext } from "../context";
 import type { UserRecord } from "./get";
 import {
   CreateUserWithWorkspaceInput,
@@ -80,7 +80,7 @@ export async function createUserWithWorkspace(args: {
 }): Promise<UserRecord> {
   const input = CreateUserWithWorkspaceInput.parse(args.input);
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const newUser = await tx
       .insert(user)
       .values({

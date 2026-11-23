@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
-import { type DB, type ServiceContext, getReadDb } from "../context";
+import { type DB, getReadDb, dbOnlyContext } from "../context";
 import { NotFoundError } from "../errors";
 import { type PageVisitor, assertPageAccess } from "../page-access";
 import { HasPendingSubscriberInput } from "./schemas";
@@ -19,7 +19,7 @@ export async function hasPendingSubscriber(args: {
   db?: DB;
 }): Promise<boolean> {
   const input = HasPendingSubscriberInput.parse(args.input);
-  const db = getReadDb({ db: args.db } as ServiceContext);
+  const db = getReadDb(dbOnlyContext(args.db));
 
   // Gate first: pending state on a protected page is not public.
   if (args.visitor) {
