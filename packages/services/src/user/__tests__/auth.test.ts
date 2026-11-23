@@ -59,6 +59,17 @@ describe("getUserByEmail", () => {
         await getUserByEmail({ input: { email: `none-${id}@x.dev` }, db: tx }),
       ).toBeNull();
 
+      const normalized = await tx
+        .insert(user)
+        .values({ email: `plain-${id}@example.com` })
+        .returning()
+        .get();
+      const exact = await getUserByEmail({
+        input: { email: `Plain-${id}@example.com` },
+        db: tx,
+      });
+      expect(exact?.id).toBe(normalized.id);
+
       await tx.insert(user).values({ email: `LEGACY-${id}@example.com` });
       await expect(
         getUserByEmail({

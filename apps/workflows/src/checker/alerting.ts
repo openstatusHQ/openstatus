@@ -105,7 +105,10 @@ export const triggerNotifications = async ({
         },
       });
       if (!claimed) {
-        logger.error("notification trigger already exists dont send again");
+        logger.error("notification trigger already exists dont send again", {
+          monitor_id: monitorId,
+          notification_id: notif.notification.id,
+        });
         continue;
       }
     } catch (err) {

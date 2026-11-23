@@ -86,10 +86,15 @@ app.post(
     }
 
     if (url) {
-      await setMonitorIncidentScreenshot({
+      const stored = await setMonitorIncidentScreenshot({
         input: { id: data.incidentId, kind: data.kind, url },
         job: "screenshot-service",
       });
+      if (!stored) {
+        console.error(
+          `incident ${data.incidentId} not found, screenshot dropped`,
+        );
+      }
     }
 
     return c.text("Screenshot saved");

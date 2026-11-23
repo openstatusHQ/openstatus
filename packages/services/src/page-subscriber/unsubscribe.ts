@@ -49,7 +49,9 @@ export async function unsubscribeSubscriber(args: {
       .where(eq(pageSubscriber.id, row.id))
       .returning()
       .get();
-    const after = selectPageSubscriberSchema.parse(updated ?? row);
+    // deleted since the lookup above
+    if (!updated) throw new NotFoundError("page_subscriber");
+    const after = selectPageSubscriberSchema.parse(updated);
 
     const auditCtx: ServiceContext = {
       workspace: pageData.workspace,

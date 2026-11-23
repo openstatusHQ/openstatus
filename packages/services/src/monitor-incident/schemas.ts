@@ -36,7 +36,7 @@ export type UnexcuseMonitorIncidentInput = z.infer<
 export const SetMonitorIncidentScreenshotInput = z.object({
   id: z.number().int(),
   kind: z.enum(["incident", "recovery"]),
-  url: z.url(),
+  url: z.httpUrl(),
 });
 export type SetMonitorIncidentScreenshotInput = z.infer<
   typeof SetMonitorIncidentScreenshotInput
