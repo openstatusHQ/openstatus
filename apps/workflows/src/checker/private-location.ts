@@ -35,13 +35,8 @@ async function applyMonitorStatus(
   monitor: { id: number; workspaceId: number | null },
   status: MonitorStatus,
 ) {
-  // An orphan monitor must not fail the report: its location status is stored.
-  if (monitor.workspaceId === null) {
-    logger.warning("Monitor has no workspace, status not updated", {
-      monitor_id: monitor.id,
-    });
-    return;
-  }
+  // unreachable: private-only monitors without a workspace return earlier
+  if (monitor.workspaceId === null) return;
   await setMonitorStatus({
     ctx: await systemContext(monitor.workspaceId, "checker"),
     input: { id: monitor.id, status },
@@ -173,6 +168,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // Check if monitor has cloud regions
     const hasCloudRegions =
       monitor.regions && monitor.regions.trim().length > 0;
+
+    // The status of a monitor without a workspace cannot be stored, and the
+    // incident and notifications below are gated on it.
+    if (!hasCloudRegions && monitor.workspaceId === null) {
+      logger.warning("Private-only monitor has no workspace, report stored", {
+        monitor_id: monitor.id,
+      });
+      statusUpdate.orphan_skipped = true;
+      return c.json({ success: true }, 200);
+    }
 
     // Query all private locations for threshold check
     const allLocations = await db
