@@ -297,14 +297,6 @@ export async function writeComponentsPhase(
     .where(eq(pageComponent.workspaceId, workspaceId));
   const maxComponents = ctx.workspace.limits["page-components"];
   let remaining = maxComponents - (existingCount?.count ?? 0);
-  if (remaining <= 0) {
-    for (const resource of phase.resources) {
-      resource.status = "skipped";
-      resource.error = `Skipped: component limit reached (${maxComponents})`;
-    }
-    phase.status = "skipped";
-    return;
-  }
 
   for (const resource of phase.resources) {
     if (resource.status === "skipped") continue;
