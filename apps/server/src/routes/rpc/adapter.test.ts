@@ -4,6 +4,7 @@ import {
   ConcurrentUpdateError,
   ConflictError,
   ForbiddenError,
+  LimitExceededError,
   NotFoundError,
   type ServiceContext,
   ValidationError,
@@ -15,7 +16,7 @@ import {
 } from "@openstatus/services/test/helpers";
 import { beforeAll, describe, expect, test } from "vitest";
 
-import { toConnectError, toServiceCtx } from "./adapter";
+import { rethrowPlanLimit, toConnectError, toServiceCtx } from "./adapter";
 
 const wsStub = { id: 1, slug: "ws", name: "ws" } as unknown as Workspace;
 
@@ -177,5 +178,58 @@ describe("RPC runtime — read-only key on a write service verb", () => {
       expect(mapped).toBeInstanceOf(ConnectError);
       expect((mapped as ConnectError).code).toBe(Code.PermissionDenied);
     });
+  });
+});
+
+describe("rethrowPlanLimit", () => {
+  const thrown = (fn: () => never) => {
+    try {
+      fn();
+    } catch (err) {
+      return err;
+    }
+    throw new Error("expected a throw");
+  };
+
+  test("maps the named cap to PermissionDenied with the given message", () => {
+    const err = thrown(() =>
+      rethrowPlanLimit(
+        new LimitExceededError("monitors", 1, 1),
+        "monitors",
+        "Upgrade for more monitors",
+      ),
+    );
+    expect(err).toBeInstanceOf(ConnectError);
+    expect((err as ConnectError).code).toBe(Code.PermissionDenied);
+    expect((err as ConnectError).rawMessage).toBe("Upgrade for more monitors");
+  });
+
+  test("leaves a different cap to toConnectError", () => {
+    const err = thrown(() =>
+      rethrowPlanLimit(
+        new LimitExceededError("synthetic-checks", 30, 30),
+        "monitors",
+        "Upgrade for more monitors",
+      ),
+    );
+    expect((err as ConnectError).code).toBe(Code.ResourceExhausted);
+  });
+
+  test("maps other service errors like toConnectError", () => {
+    const err = thrown(() =>
+      rethrowPlanLimit(
+        new NotFoundError("page", 1),
+        "page-components",
+        "Upgrade for more page components",
+      ),
+    );
+    expect((err as ConnectError).code).toBe(Code.NotFound);
+  });
+
+  test("passes a ConnectError through untouched", () => {
+    const original = new ConnectError("nope", Code.InvalidArgument);
+    expect(thrown(() => rethrowPlanLimit(original, "monitors", "unused"))).toBe(
+      original,
+    );
   });
 });

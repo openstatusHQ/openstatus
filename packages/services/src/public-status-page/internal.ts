@@ -7,9 +7,10 @@ import {
 
 import type { DB } from "../context";
 
-// A host reaches its page through either the slug or the custom domain.
+// A host reaches its page through either the slug or the custom domain. Most
+// pages store "" as their custom domain, so "" must never match it.
 export const bySlugOrDomain = (slug: string) =>
-  sql`lower(${page.slug}) = ${slug} OR lower(${page.customDomain}) = ${slug}`;
+  sql`lower(${page.slug}) = ${slug} OR (${page.customDomain} != '' AND lower(${page.customDomain}) = ${slug})`;
 
 export function findPageBySlug(db: DB, slug: string) {
   return db.select().from(page).where(bySlugOrDomain(slug)).get();
