@@ -1,3 +1,4 @@
+import { pagePasswordRateLimit } from "@openstatus/api/src/lib/page-password-rate-limit";
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { resolveClientIp } from "@openstatus/services/page-access";
@@ -9,6 +10,7 @@ import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override"
 import { applyPageSlugPrefix } from "./lib/proxy/apply-page-slug-prefix";
 import { composePageAction } from "./lib/proxy/compose-page-action";
 import { detectMarkdown } from "./lib/proxy/detect-markdown";
+import { gatePasswordAttempt } from "./lib/proxy/gate-password-attempt";
 import { resolveUnresolvedHostAction } from "./lib/proxy/resolve-unresolved-host-action";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
@@ -100,7 +102,16 @@ export default auth(async (req) => {
   );
 
   const clientIp = resolveClientIp(req.headers);
-  const queryPassword = url.searchParams.get("pw");
+  const cookieKey = createProtectedCookieKey(_page.slug);
+  const { queryPassword, cookiePassword, clearCookie } =
+    await gatePasswordAttempt({
+      page: _page,
+      host: initialRoute.prefix,
+      clientIp,
+      queryPassword: url.searchParams.get("pw"),
+      cookiePassword: req.cookies.get(cookieKey)?.value,
+      limiter: pagePasswordRateLimit(),
+    });
 
   console.log("[proxy] request", {
     host,
@@ -124,8 +135,7 @@ export default auth(async (req) => {
     isSelfHosted,
     requestUrl: req.url,
     origin: req.nextUrl.origin,
-    cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
-      ?.value,
+    cookiePassword,
     queryPassword,
     redirectParam: sanitizeRedirectParam(url.searchParams.get("redirect")),
     authEmail: req.auth?.user?.email,
@@ -145,18 +155,22 @@ export default auth(async (req) => {
       ? { headers: withPasswordCookie(req.headers, _page.slug, queryPassword) }
       : undefined;
 
-  switch (action.type) {
-    case "redirect":
-      return NextResponse.redirect(action.url);
-    case "rewrite":
-      return rewriteWithVary(action.url, { request });
-    case "passthrough": {
-      if (!request) return passthroughResponse;
-      const response = NextResponse.next({ request });
-      response.headers.set("Vary", "Accept");
-      return response;
+  const response = (() => {
+    switch (action.type) {
+      case "redirect":
+        return NextResponse.redirect(action.url);
+      case "rewrite":
+        return rewriteWithVary(action.url, { request });
+      case "passthrough": {
+        if (!request) return passthroughResponse;
+        const next = NextResponse.next({ request });
+        next.headers.set("Vary", "Accept");
+        return next;
+      }
     }
-  }
+  })();
+  if (clearCookie) response.cookies.delete(cookieKey);
+  return response;
 });
 
 function withPasswordCookie(headers: Headers, slug: string, password: string) {

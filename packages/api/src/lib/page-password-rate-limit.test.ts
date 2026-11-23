@@ -41,6 +41,20 @@ describe("pagePasswordRateLimit", () => {
     expect(await limiter.isLocked(attempt)).toBe(false);
   });
 
+  test("is a no-op when no Redis URL is configured", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+    vi.stubEnv("KV_REST_API_URL", "");
+    try {
+      const limiter = pagePasswordRateLimit();
+      for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES; i++) {
+        await limiter.recordFailure(attempt);
+      }
+      expect(await limiter.isLocked(attempt)).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   test("fails open when Redis is unavailable", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const limiter = pagePasswordRateLimit({
