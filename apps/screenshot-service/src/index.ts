@@ -1,7 +1,6 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { zValidator } from "@hono/zod-validator";
-import { db, eq } from "@openstatus/db";
-import { monitorIncidentTable } from "@openstatus/db/src/schema/monitor_incidents/monitor_incident";
+import { setMonitorIncidentScreenshot } from "@openstatus/services/monitor-incident";
 import { Receiver } from "@upstash/qstash";
 import { Hono } from "hono";
 import playwright from "playwright";
@@ -60,12 +59,14 @@ app.post(
       headless: true, // set this to true
     });
 
+    // Only capture and upload fall back to the placeholder: a failed database
+    // write must not replace a screenshot that was stored.
+    let url: string | undefined;
     try {
       const page = await browser.newPage();
       await page.goto(data.url, { waitUntil: "load" });
       const img = await page.screenshot({ fullPage: true });
       const id = `${data.incidentId}-${Date.now()}.png`;
-      const url = `https://screenshot.openstat.us/${id}`;
 
       await S3.send(
         new PutObjectCommand({
@@ -75,35 +76,25 @@ app.post(
           ContentType: "image/png",
         }),
       );
-
-      if (data.kind === "incident") {
-        await db
-          .update(monitorIncidentTable)
-          .set({ incidentScreenshotUrl: url })
-          .where(eq(monitorIncidentTable.id, data.incidentId))
-          .run();
-      }
-      if (data.kind === "recovery") {
-        await db
-          .update(monitorIncidentTable)
-          .set({ recoveryScreenshotUrl: url })
-          .where(eq(monitorIncidentTable.id, data.incidentId))
-          .run();
-      }
+      url = `https://screenshot.openstat.us/${id}`;
     } catch (e) {
       console.log("could not take screenshot timeout");
-      if (data.kind === "incident") {
-        await db
-          .update(monitorIncidentTable)
-          .set({
-            incidentScreenshotUrl:
-              "https://screenshot.openstat.us/err-connection-timed-out.jpg",
-          })
-          .where(eq(monitorIncidentTable.id, data.incidentId))
-          .run();
-      }
-      //
       console.log(e);
+      if (data.kind === "incident") {
+        url = "https://screenshot.openstat.us/err-connection-timed-out.jpg";
+      }
+    }
+
+    if (url) {
+      const stored = await setMonitorIncidentScreenshot({
+        input: { id: data.incidentId, kind: data.kind, url },
+        job: "screenshot-service",
+      });
+      if (!stored) {
+        console.error(
+          `incident ${data.incidentId} not found, screenshot dropped`,
+        );
+      }
     }
 
     return c.text("Screenshot saved");

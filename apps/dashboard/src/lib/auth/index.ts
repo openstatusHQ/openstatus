@@ -3,9 +3,9 @@ import {
   readAttributionCookie,
   setupAnalytics,
 } from "@openstatus/analytics";
-import { db, eq } from "@openstatus/db";
-import { type User, user } from "@openstatus/db/src/schema";
+import type { User } from "@openstatus/db/src/schema";
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
+import { syncUserProfile } from "@openstatus/services/user";
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 import { headers } from "next/headers";
@@ -32,22 +32,6 @@ const hasWorkOS = Boolean(
 );
 
 export type { DefaultSession };
-
-async function syncUser(
-  userId: number,
-  fields: {
-    firstName?: string | null;
-    lastName?: string | null;
-    photoUrl?: string | null;
-    name?: string | null;
-  },
-) {
-  await db
-    .update(user)
-    .set({ ...fields, updatedAt: new Date() })
-    .where(eq(user.id, userId))
-    .run();
-}
 
 // Runs from the `signIn` event, not `createUser`: only `signIn` carries the
 // account, and it fires after the account row is linked, so nothing races the
@@ -129,23 +113,29 @@ const {
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
 
-        await syncUser(Number(params.user.id), {
-          firstName: params.profile.given_name,
-          lastName: params.profile.family_name || "",
-          photoUrl: params.profile.picture,
-          // keep the name in sync
-          name: `${params.profile.given_name} ${
-            params.profile.family_name || ""
-          }`.trim(),
+        await syncUserProfile({
+          input: {
+            userId: Number(params.user.id),
+            firstName: params.profile.given_name,
+            lastName: params.profile.family_name || "",
+            photoUrl: params.profile.picture,
+            // keep the name in sync
+            name: `${params.profile.given_name} ${
+              params.profile.family_name || ""
+            }`.trim(),
+          },
         });
       }
       if (params.account?.provider === "github") {
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
 
-        await syncUser(Number(params.user.id), {
-          name: params.profile.name,
-          photoUrl: String(params.profile.avatar_url),
+        await syncUserProfile({
+          input: {
+            userId: Number(params.user.id),
+            name: params.profile.name,
+            photoUrl: String(params.profile.avatar_url),
+          },
         });
       }
 
@@ -158,11 +148,14 @@ const {
         const [nameFirst, ...nameRest] = name?.split(" ") ?? [];
         const fullName = [given_name, family_name].filter(Boolean).join(" ");
 
-        await syncUser(Number(params.user.id), {
-          firstName: given_name ?? nameFirst,
-          lastName: family_name || nameRest.join(" "),
-          photoUrl: picture,
-          name: fullName || name,
+        await syncUserProfile({
+          input: {
+            userId: Number(params.user.id),
+            firstName: given_name ?? nameFirst,
+            lastName: family_name || nameRest.join(" "),
+            photoUrl: picture,
+            name: fullName || name,
+          },
         });
       }
 
@@ -172,11 +165,7 @@ const {
 
       if (params.account?.provider === "resend") {
         if (Number.isNaN(Number(params.user.id))) return true;
-        await db
-          .update(user)
-          .set({ updatedAt: new Date() })
-          .where(eq(user.id, Number(params.user.id)))
-          .run();
+        await syncUserProfile({ input: { userId: Number(params.user.id) } });
       }
 
       return true;

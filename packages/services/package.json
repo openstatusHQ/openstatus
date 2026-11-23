@@ -57,6 +57,10 @@
       "import": "./src/user/index.ts",
       "types": "./src/user/index.ts"
     },
+    "./viewer": {
+      "import": "./src/viewer/index.ts",
+      "types": "./src/viewer/index.ts"
+    },
     "./invitation": {
       "import": "./src/invitation/index.ts",
       "types": "./src/invitation/index.ts"

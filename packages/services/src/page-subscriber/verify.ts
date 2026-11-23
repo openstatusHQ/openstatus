@@ -5,7 +5,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  withTransaction,
+  dbOnlyContext,
+} from "../context";
 import { ValidationError } from "../errors";
 import { resolveSubscriberByToken } from "./internal";
 import { VerifySelfSignupSubscriberInput } from "./schemas";
@@ -70,7 +75,7 @@ export async function verifySelfSignupSubscriber(args: {
     throw new ValidationError("Verification token expired");
   }
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const before = selectPageSubscriberSchema.parse(row);
     const updated = await tx
       .update(pageSubscriber)

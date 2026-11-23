@@ -1,3 +1,4 @@
+export { claimNotificationTrigger } from "./claim-trigger";
 export { createNotification } from "./create";
 export { deleteNotification } from "./delete";
 export { assertProviderAllowed } from "./internal";
@@ -10,6 +11,7 @@ export {
 export { updateNotification } from "./update";
 
 export {
+  ClaimNotificationTriggerInput,
   CreateNotificationInput,
   DeleteNotificationInput,
   GetNotificationInput,

@@ -742,6 +742,72 @@ describe("updateStatusPrivate", () => {
     expect(monitorAfter?.status).toBe("error");
   });
 
+  test("private-only monitor without a workspace: stores the report, leaves the status and stays silent", async () => {
+    const orphan = await db
+      .insert(monitor)
+      .values({
+        workspaceId: null,
+        active: true,
+        url: "https://orphan.test",
+        name: "Orphan Private-Only Monitor",
+        periodicity: "1m",
+        regions: "",
+      })
+      .returning({ id: monitor.id })
+      .get();
+    const ORPHAN_MONITOR_ID = orphan.id;
+    try {
+      await db
+        .insert(privateLocationToMonitors)
+        .values({
+          privateLocationId: TEST_LOCATION_ID,
+          monitorId: ORPHAN_MONITOR_ID,
+          createdAt: new Date(),
+        })
+        .run();
+      await db
+        .insert(notificationsToMonitors)
+        .values({
+          monitorId: ORPHAN_MONITOR_ID,
+          notificationId: TEST_NOTIFICATION_ID,
+        })
+        .run();
+
+      const res = await post({
+        monitorId: String(ORPHAN_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp: Date.now(),
+      });
+
+      expect(res.status).toBe(200);
+      expect((await readRow(ORPHAN_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
+        "error",
+      );
+      const row = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, ORPHAN_MONITOR_ID))
+        .get();
+      expect(row?.status).toBe("active");
+      expect(mockEmailSendAlert).not.toHaveBeenCalled();
+    } finally {
+      await db
+        .delete(privateLocationMonitorStatus)
+        .where(eq(privateLocationMonitorStatus.monitorId, ORPHAN_MONITOR_ID))
+        .run();
+      await db
+        .delete(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.monitorId, ORPHAN_MONITOR_ID))
+        .run();
+      await db
+        .delete(privateLocationToMonitors)
+        .where(eq(privateLocationToMonitors.monitorId, ORPHAN_MONITOR_ID))
+        .run();
+      await db.delete(monitor).where(eq(monitor.id, ORPHAN_MONITOR_ID)).run();
+    }
+  });
+
   test("does not update monitor.status for monitors with cloud regions", async () => {
     // TEST_MONITOR_ID has regions: "ams" (cloud region)
     const res = await post({

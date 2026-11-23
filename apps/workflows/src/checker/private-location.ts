@@ -1,16 +1,19 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, isNull, or, schema, sql } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, or, schema } from "@openstatus/db";
 import {
   monitorInMaintenance,
   monitorInWindow,
 } from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
+import { setMonitorStatus } from "@openstatus/services/monitor";
+import { recordPrivateLocationMonitorStatus } from "@openstatus/services/private-location";
 import type { Context } from "hono";
 import { z } from "zod";
 
 import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
+import { systemContext } from "../utils/system-context";
 import { triggerNotifications } from "./alerting";
 import { openIncident, resolveIncident } from "./incident-utils";
 
@@ -25,6 +28,20 @@ const payloadSchema = z.object({
   statusCode: z.number().optional(),
   latency: z.number().optional(),
 });
+
+type MonitorStatus = z.infer<typeof monitorStatusSchema>;
+
+async function applyMonitorStatus(
+  monitor: { id: number; workspaceId: number | null },
+  status: MonitorStatus,
+) {
+  // unreachable: private-only monitors without a workspace return earlier
+  if (monitor.workspaceId === null) return;
+  await setMonitorStatus({
+    ctx: await systemContext(monitor.workspaceId, "checker"),
+    input: { id: monitor.id, status },
+  });
+}
 
 export async function updateStatusPrivate(c: Context<Env>) {
   const auth = c.req.header("Authorization");
@@ -133,41 +150,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    const priorRow = await db
-      .select({ status: schema.privateLocationMonitorStatus.status })
-      .from(schema.privateLocationMonitorStatus)
-      .where(
-        and(
-          eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
-          eq(
-            schema.privateLocationMonitorStatus.privateLocationId,
-            privateLocationIdNumber,
-          ),
-        ),
-      )
-      .get();
-
-    const priorStatus = priorRow?.status ?? "active";
-
-    const upserted = await db
-      .insert(schema.privateLocationMonitorStatus)
-      .values({
+    const { changed } = await recordPrivateLocationMonitorStatus({
+      input: {
         monitorId: monitorIdNumber,
         privateLocationId: privateLocationIdNumber,
         status,
         cronTimestamp,
-      })
-      .onConflictDoUpdate({
-        target: [
-          schema.privateLocationMonitorStatus.monitorId,
-          schema.privateLocationMonitorStatus.privateLocationId,
-        ],
-        set: { status, cronTimestamp, updatedAt: new Date() },
-        setWhere: sql`excluded.cron_timestamp > ${schema.privateLocationMonitorStatus.cronTimestamp}`,
-      })
-      .returning();
+      },
+    });
 
-    if (upserted.length === 0 || status === priorStatus) {
+    if (!changed) {
       return c.json({ success: true }, 200);
     }
 
@@ -176,6 +168,16 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // Check if monitor has cloud regions
     const hasCloudRegions =
       monitor.regions && monitor.regions.trim().length > 0;
+
+    // The status of a monitor without a workspace cannot be stored, and the
+    // incident and notifications below are gated on it.
+    if (!hasCloudRegions && monitor.workspaceId === null) {
+      logger.warning("Private-only monitor has no workspace, report stored", {
+        monitor_id: monitor.id,
+      });
+      statusUpdate.orphan_skipped = true;
+      return c.json({ success: true }, 200);
+    }
 
     // Query all private locations for threshold check
     const allLocations = await db
@@ -242,10 +244,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await db
-            .update(schema.monitor)
-            .set({ status: "error" })
-            .where(eq(schema.monitor.id, monitorIdNumber));
+          await applyMonitorStatus(monitor, "error");
         }
 
         // Create incident only if private-only monitor AND threshold met
@@ -323,10 +322,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await db
-            .update(schema.monitor)
-            .set({ status: "degraded" })
-            .where(eq(schema.monitor.id, monitorIdNumber));
+          await applyMonitorStatus(monitor, "degraded");
         }
 
         // Resolve incident if private-only monitor AND threshold met
@@ -389,10 +385,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
           });
-          await db
-            .update(schema.monitor)
-            .set({ status: "active" })
-            .where(eq(schema.monitor.id, monitorIdNumber));
+          await applyMonitorStatus(monitor, "active");
         }
 
         // Resolve incident if private-only monitor AND threshold met

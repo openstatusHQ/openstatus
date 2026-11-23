@@ -10,6 +10,7 @@ import {
   grpcTlsModes,
   monitorJobTypes,
   monitorMethods,
+  monitorStatus,
 } from "@openstatus/db/src/schema/monitors/constants";
 import {
   HEARTBEAT_GRACE_RANGE,
@@ -255,6 +256,12 @@ export const BulkUpdateMonitorsInput = z.object({
   active: z.boolean().optional(),
 });
 export type BulkUpdateMonitorsInput = z.infer<typeof BulkUpdateMonitorsInput>;
+
+export const SetMonitorStatusInput = z.object({
+  id: z.number().int(),
+  status: z.enum(monitorStatus),
+});
+export type SetMonitorStatusInput = z.infer<typeof SetMonitorStatusInput>;
 
 export const DeleteMonitorInput = z.object({ id: z.number().int() });
 export type DeleteMonitorInput = z.infer<typeof DeleteMonitorInput>;

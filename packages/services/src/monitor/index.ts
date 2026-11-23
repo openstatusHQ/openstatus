@@ -72,6 +72,7 @@ export {
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,
 } from "./heartbeat";
+export { setMonitorStatus } from "./set-status";
 export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
 export { assertMonitorUrlSafe } from "./url-safety";
 export {
@@ -105,6 +106,7 @@ export {
   monitorJobTypes,
   ListHeartbeatPingsInput,
   RegenerateHeartbeatTokenInput,
+  SetMonitorStatusInput,
   UpdateMonitorHeartbeatInput,
   monitorMethods,
   monitorPeriodicity,

@@ -1,6 +1,9 @@
 import { getLogger } from "@logtape/logtape";
-import { db, eq } from "@openstatus/db";
-import { pageSubscriber } from "@openstatus/db/src/schema";
+import { NotFoundError } from "@openstatus/services";
+import {
+  getSubscriberByToken,
+  unsubscribeSubscriber,
+} from "@openstatus/services/page-subscriber";
 import { Hono } from "hono";
 
 const logger = getLogger("api-server");
@@ -27,11 +30,7 @@ unsubscribe.post("/:token", async (c) => {
     }
 
     // Find the subscriber by token
-    const subscriber = await db
-      .select()
-      .from(pageSubscriber)
-      .where(eq(pageSubscriber.token, token))
-      .get();
+    const subscriber = await getSubscriberByToken({ input: { token } });
 
     // Return 404 if subscriber not found
     if (!subscriber) {
@@ -50,10 +49,15 @@ unsubscribe.post("/:token", async (c) => {
     }
 
     // Set unsubscribedAt timestamp
-    await db
-      .update(pageSubscriber)
-      .set({ unsubscribedAt: new Date() })
-      .where(eq(pageSubscriber.id, subscriber.id));
+    try {
+      await unsubscribeSubscriber({ input: { token } });
+    } catch (e) {
+      // deleted between the lookup above and the write
+      if (e instanceof NotFoundError) {
+        return c.json({ error: "Subscriber not found" }, 404);
+      }
+      throw e;
+    }
 
     // Return 200 OK on success
     return c.json({ message: "Successfully unsubscribed" }, 200);
