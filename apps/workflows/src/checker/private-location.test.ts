@@ -743,11 +743,9 @@ describe("updateStatusPrivate", () => {
   });
 
   test("private-only monitor without a workspace: stores the report, leaves the status and stays silent", async () => {
-    const ORPHAN_MONITOR_ID = 9104;
-    await db
+    const orphan = await db
       .insert(monitor)
       .values({
-        id: ORPHAN_MONITOR_ID,
         workspaceId: null,
         active: true,
         url: "https://orphan.test",
@@ -755,7 +753,9 @@ describe("updateStatusPrivate", () => {
         periodicity: "1m",
         regions: "",
       })
-      .run();
+      .returning({ id: monitor.id })
+      .get();
+    const ORPHAN_MONITOR_ID = orphan.id;
     try {
       await db
         .insert(privateLocationToMonitors)
