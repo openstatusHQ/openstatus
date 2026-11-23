@@ -17,9 +17,13 @@ import {
 } from "../content/utils";
 import type { Metadata } from "../content/utils/schema";
 import {
-  cachedListExternalComponentsBySlug,
-  cachedListExternalServices,
-} from "../lib/external-service-cache";
+  PAGES_SITEMAP_ID,
+  componentChunk,
+  componentChunkIndex,
+  listComponentEntries,
+  listLiveServices,
+  sitemapIds,
+} from "../lib/sitemap";
 
 export const revalidate = 3600;
 
@@ -37,16 +41,31 @@ const allTooling = getToolingPages().filter(isIndexable);
 const allCustomers = getCustomerPages().filter(isIndexable);
 const allDocs = getDocPages().filter(isIndexable);
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const externalServices = await cachedListExternalServices();
-  const externalServiceEntries: MetadataRoute.Sitemap = externalServices
-    .filter((s) => s.deletedAt == null)
-    .map((s) => ({
+export async function generateSitemaps() {
+  const components = await listComponentEntries();
+  return sitemapIds(components.length).map((id) => ({ id }));
+}
+
+export default async function sitemap(props: {
+  id: Promise<string>;
+}): Promise<MetadataRoute.Sitemap> {
+  const id = await props.id;
+  if (id === PAGES_SITEMAP_ID) return pageEntries();
+  const chunk = componentChunkIndex(id);
+  if (chunk === null) return [];
+  return componentChunk(await listComponentEntries(), chunk);
+}
+
+async function pageEntries(): Promise<MetadataRoute.Sitemap> {
+  const externalServices = await listLiveServices();
+  const externalServiceEntries: MetadataRoute.Sitemap = externalServices.map(
+    (s) => ({
       url: `https://www.openstatus.dev/status/${s.slug}`,
       lastModified: new Date().toISOString().slice(0, 10),
       changeFrequency: "hourly" as const,
       priority: 0.7,
-    }));
+    }),
+  );
 
   const externalServicesIndex: MetadataRoute.Sitemap = [
     {
@@ -56,22 +75,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
   ];
-
-  const componentEntriesByService = await Promise.all(
-    externalServices
-      .filter((s) => s.deletedAt == null)
-      .map(async (s) => {
-        const { components } = await cachedListExternalComponentsBySlug(s.slug);
-        return components.map((c) => ({
-          url: `https://www.openstatus.dev/status/${s.slug}/${c.slug}`,
-          lastModified: new Date().toISOString().slice(0, 10),
-          changeFrequency: "hourly" as const,
-          priority: 0.6,
-        }));
-      }),
-  );
-  const externalServiceComponentEntries: MetadataRoute.Sitemap =
-    componentEntriesByService.flat();
 
   const blogs = allPosts.map((post) => ({
     url: `https://www.openstatus.dev/blog/${post.slug}`,
@@ -264,6 +267,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...docsIndex,
     ...externalServicesIndex,
     ...externalServiceEntries,
-    ...externalServiceComponentEntries,
   ];
 }

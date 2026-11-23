@@ -256,6 +256,20 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // `app/sitemap.ts` owns `/sitemap.xml` even with `generateSitemaps`,
+        // so the index that lists its files is served from an API route.
+        // Host-scoped so status-page hosts proxied below keep their own.
+        {
+          source: "/sitemap.xml",
+          has: [
+            {
+              type: "host",
+              value:
+                "(?:(?:www\\.)?openstatus\\.dev|localhost|.+\\.vercel\\.app)",
+            },
+          ],
+          destination: "/api/sitemap-index",
+        },
         // `/openapi.json` is the path agents probe for an API description, and
         // they probe it on the site they were pointed at. The spec is generated
         // in apps/server, so proxy rather than keep a second copy in sync.
