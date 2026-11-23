@@ -192,6 +192,76 @@ describe("getMonitorSummary", () => {
       expect(summary.monitorId).toBe(row.id);
     });
   });
+
+  const metricsRow = (overrides: Record<string, unknown>) => ({
+    p50Latency: 100,
+    p75Latency: 100,
+    p90Latency: 100,
+    p95Latency: 100,
+    p99Latency: 100,
+    count: 10,
+    success: 10,
+    degraded: 0,
+    error: 0,
+    lastTimestamp: null,
+    ...overrides,
+  });
+
+  const tbReturning = (data: unknown[]) =>
+    ({
+      httpMetricsBiweekly: () => Promise.resolve({ data }),
+    }) as unknown as NonNullable<ServiceContext["tb"]>;
+
+  async function createHttpMonitor(tx: ServiceContext["db"], name: string) {
+    return createMonitor({
+      ctx: { ...teamCtx, db: tx },
+      input: {
+        name: `${TEST_PREFIX}-${name}`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: false,
+        regions: ["ams"],
+      },
+    });
+  }
+
+  test("picks the current-window row when the previous one comes first", async () => {
+    const lastTimestamp = Date.parse("2026-11-20T10:00:00.000Z");
+    const tb = tbReturning([
+      metricsRow({ success: 10, error: 0 }),
+      metricsRow({ success: 7, error: 3, lastTimestamp }),
+    ]);
+    await withTestTransaction(async (tx) => {
+      const row = await createHttpMonitor(tx, "row-order");
+      const summary = await getMonitorSummary({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "14d" },
+      });
+      expect(summary.totalSuccessful).toBe(7);
+      expect(summary.totalFailed).toBe(3);
+      expect(summary.lastPingAt).toBe(new Date(lastTimestamp).toISOString());
+    });
+  });
+
+  test("never reports the previous window when the current one is empty", async () => {
+    const tb = tbReturning([
+      metricsRow({ count: 0, success: 0, lastTimestamp: 0 }),
+      metricsRow({ success: 7, error: 3 }),
+    ]);
+    await withTestTransaction(async (tx) => {
+      const row = await createHttpMonitor(tx, "empty-current");
+      const summary = await getMonitorSummary({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "14d" },
+      });
+      expect(summary.totalSuccessful).toBe(0);
+      expect(summary.totalFailed).toBe(0);
+      expect(summary.lastPingAt).toBe("");
+    });
+  });
 });
 
 describe("fetchMonitorDailyStats", () => {
