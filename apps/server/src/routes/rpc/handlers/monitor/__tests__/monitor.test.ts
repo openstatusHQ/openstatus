@@ -3124,7 +3124,7 @@ describe("MonitorService.GetMonitorStatus", () => {
     }
   });
 
-  test("returns empty regions array when monitor has no status entries", async () => {
+  test("reports configured regions without status entries as active", async () => {
     // Create a monitor without status entries
     const noStatusMon = await db
       .insert(monitor)
@@ -3151,8 +3151,10 @@ describe("MonitorService.GetMonitorStatus", () => {
 
       const data = await res.json();
       expect(data.id).toBe(String(noStatusMon.id));
-      // Proto3 may omit empty arrays
-      expect(data.regions || []).toEqual([]);
+      expect(data.regions).toEqual([
+        { region: "REGION_FLY_AMS", status: "MONITOR_STATUS_ACTIVE" },
+        { region: "REGION_FLY_IAD", status: "MONITOR_STATUS_ACTIVE" },
+      ]);
     } finally {
       await db.delete(monitor).where(eq(monitor.id, noStatusMon.id));
     }

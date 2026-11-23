@@ -119,6 +119,40 @@ describe("getMonitorStatus", () => {
       ]);
     });
   });
+
+  test("reports a configured region without a status row as active", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-missing-row`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+          regions: ["ams", "iad", "gru"],
+        },
+      });
+      await tx
+        .insert(monitorStatusTable)
+        .values([{ monitorId: row.id, region: "iad", status: "error" }]);
+
+      const result = await getMonitorStatus({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorId: row.id },
+      });
+      const sorted = [...result.regions].sort((a, b) =>
+        a.region.localeCompare(b.region),
+      );
+      expect(sorted).toEqual([
+        { region: "ams", status: "active" },
+        { region: "gru", status: "active" },
+        { region: "iad", status: "error" },
+      ]);
+    });
+  });
 });
 
 describe("getMonitorSummary", () => {
