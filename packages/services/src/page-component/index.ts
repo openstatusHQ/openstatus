@@ -13,6 +13,7 @@ export {
   listPageComponents,
   type PageComponentWithRelations,
 } from "./list";
+export { getPageComponentNames } from "./lookup";
 export { updatePageComponentOrder } from "./update-order";
 
 export {

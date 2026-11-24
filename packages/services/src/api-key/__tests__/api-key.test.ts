@@ -13,6 +13,7 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import {
+  authenticateApiKey,
   createApiKey,
   listApiKeys,
   revokeApiKey,
@@ -354,6 +355,64 @@ describe("updateApiKeyLastUsed", () => {
         .where(eq(apiKey.id, key.id))
         .get();
       expect(row?.lastUsedAt).toBeInstanceOf(Date);
+    });
+  });
+});
+
+describe("authenticateApiKey", () => {
+  test("an unknown prefix is reported as unknown", async () => {
+    await withTestTransaction(async (tx) => {
+      const result = await authenticateApiKey(`os_${"0".repeat(32)}`, {
+        db: tx,
+      });
+      expect(result.status).toBe("unknown");
+    });
+  });
+
+  test("a valid token returns the key without its hash", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token, key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-auth-valid` },
+      });
+      const result = await authenticateApiKey(token, { db: tx });
+      expect(result.status).toBe("valid");
+      if (result.status !== "valid") return;
+      expect(result.key.id).toBe(key.id);
+      expect(result.key.workspaceId).toBe(teamCtx.workspace.id);
+      expect(result.key).not.toHaveProperty("hashedToken");
+    });
+  });
+
+  test("a matching prefix with the wrong secret is invalid", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-auth-invalid` },
+      });
+      const last = token.endsWith("a") ? "b" : "a";
+      const result = await authenticateApiKey(`${token.slice(0, -1)}${last}`, {
+        db: tx,
+      });
+      expect(result.status).toBe("invalid");
+    });
+  });
+
+  test("an expired key is reported as expired", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token, key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-auth-expired` },
+      });
+      await tx
+        .update(apiKey)
+        .set({ expiresAt: new Date(Date.now() - 60_000) })
+        .where(eq(apiKey.id, key.id));
+      const result = await authenticateApiKey(token, { db: tx });
+      expect(result.status).toBe("expired");
     });
   });
 });

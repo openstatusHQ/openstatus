@@ -140,6 +140,17 @@ export async function getWorkspaceByStripeId(args: {
 }
 
 /**
+ * Unparsed workspace row by id, for callers that resolve the workspace before
+ * a `ServiceContext` exists and map a miss or a bad row to their own errors.
+ */
+export async function getWorkspaceRowById(
+  id: number,
+  db: DB = defaultDb,
+): Promise<typeof workspace.$inferSelect | undefined> {
+  return db.select().from(workspace).where(eq(workspace.id, id)).get();
+}
+
+/**
  * Workspaces the given user belongs to. Called before `ctx.workspace` is
  * meaningful (list runs across every workspace the user has access to), so
  * the user id is passed explicitly in the input rather than read from ctx.

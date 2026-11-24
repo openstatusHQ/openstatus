@@ -10,6 +10,7 @@ export {
   type ListStatusReportsResult,
   type StatusReportWithRelations,
 } from "./list";
+export { getStatusReportTitleInWorkspace } from "./lookup";
 export { notifyStatusReport } from "./notify";
 export { resolveStatusReport } from "./resolve";
 export { updateStatusReport, updateStatusReportUpdate } from "./update";

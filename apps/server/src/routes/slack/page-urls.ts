@@ -1,26 +1,22 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, eq, inArray } from "@openstatus/db";
-import { page, pageComponent, statusReport } from "@openstatus/db/src/schema";
 import {
   incidentDashboardUrl,
   resolveDashboardUrl,
 } from "@openstatus/services/incident";
+import {
+  getPagePublicDomain,
+  getPageTitleInWorkspace,
+} from "@openstatus/services/page";
+import { getPageComponentNames } from "@openstatus/services/page-component";
+import { getStatusReportTitleInWorkspace } from "@openstatus/services/status-report";
 
 import { env } from "@/env";
 
 /**
- * Slack-message URL helpers. Pure transport-layer formatting — lives here
- * (not in `@openstatus/services`) because status-page URL construction is
- * display-only and doesn't belong in the write-path service layer. Kept
- * separate from `interactions.ts` so that file stays clean of db imports
- * and can be covered by the Biome ban.
+ * Slack-message URL helpers. Status-page URL construction is display-only, so
+ * it stays in the transport; tests swap this module out via the import map.
  */
 export async function getPageUrl(pageId: number): Promise<string | null> {
-  const statusPage = await db
-    .select({ slug: page.slug, customDomain: page.customDomain })
-    .from(page)
-    .where(eq(page.id, pageId))
-    .get();
+  const statusPage = await getPagePublicDomain(pageId);
 
   if (!statusPage) return null;
   return statusPage.customDomain
@@ -51,15 +47,11 @@ export async function getPageDashboardLink(
   workspaceId: number,
   pageId: number,
 ): Promise<{ title: string; url: string } | null> {
-  const statusPage = await db
-    .select({ title: page.title })
-    .from(page)
-    .where(and(eq(page.workspaceId, workspaceId), eq(page.id, pageId)))
-    .get();
+  const title = await getPageTitleInWorkspace({ workspaceId, pageId });
 
-  if (!statusPage) return null;
+  if (title === null) return null;
   return {
-    title: statusPage.title,
+    title,
     url: `${getDashboardBaseUrl()}/status-pages/${pageId}`,
   };
 }
@@ -73,29 +65,14 @@ export async function getComponentNames(
   workspaceId: number,
   ids: number[],
 ): Promise<Map<number, string>> {
-  if (ids.length === 0) return new Map();
-  const rows = await db
-    .select({ id: pageComponent.id, name: pageComponent.name })
-    .from(pageComponent)
-    .where(
-      and(
-        eq(pageComponent.workspaceId, workspaceId),
-        inArray(pageComponent.id, ids),
-      ),
-    )
-    .all();
-  return new Map(rows.map((r: { id: number; name: string }) => [r.id, r.name]));
+  return getPageComponentNames({ workspaceId, ids });
 }
 
 export async function getReportUrl(
   pageId: number,
   reportId: number,
 ): Promise<string | null> {
-  const statusPage = await db
-    .select({ slug: page.slug, customDomain: page.customDomain })
-    .from(page)
-    .where(eq(page.id, pageId))
-    .get();
+  const statusPage = await getPagePublicDomain(pageId);
 
   // Mirror `getPageUrl`'s null-on-missing contract. Previously a missing
   // page row produced `https://undefined.openstatus.dev/events/report/…`
@@ -118,16 +95,10 @@ export async function getStatusReportLink(
   workspaceId: number,
   statusReportId: number,
 ): Promise<{ title: string; url: string | null } | null> {
-  const report = await db
-    .select({ title: statusReport.title, pageId: statusReport.pageId })
-    .from(statusReport)
-    .where(
-      and(
-        eq(statusReport.workspaceId, workspaceId),
-        eq(statusReport.id, statusReportId),
-      ),
-    )
-    .get();
+  const report = await getStatusReportTitleInWorkspace({
+    workspaceId,
+    statusReportId,
+  });
 
   if (!report) return null;
   const url = report.pageId

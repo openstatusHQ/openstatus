@@ -1,5 +1,9 @@
 export { deleteIntegration } from "./delete";
 export { installSlackAgent } from "./install-slack-agent";
+export {
+  resolveSlackTeamWorkspace,
+  type SlackWorkspace,
+} from "./resolve-slack-team";
 export { getSlackConnection, type SlackConnection } from "./slack-connection";
 export { missingSlackScopes, SLACK_BOT_SCOPES } from "./slack-scopes";
 export {

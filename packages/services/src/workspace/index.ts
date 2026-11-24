@@ -2,6 +2,7 @@ export {
   getWorkspace,
   getWorkspaceByStripeId,
   getWorkspaceForMember,
+  getWorkspaceRowById,
   getWorkspaceUsage,
   listOwnedWorkspaces,
   listWorkspaceOwners,

@@ -1,6 +1,7 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, eq, or, sql } from "@openstatus/db";
+import { and, db as defaultDb, eq, or, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
+
+import type { DB } from "../context";
 
 const BASE_DOMAIN_SUFFIX = ".openstatus.dev";
 
@@ -9,6 +10,33 @@ export interface ResolvedPage {
   title: string;
   slug: string;
   customDomain: string | null;
+}
+
+/** Slug and custom domain of a page in any workspace, to build its public URL. */
+export async function getPagePublicDomain(
+  pageId: number,
+  db: DB = defaultDb,
+): Promise<{ slug: string; customDomain: string } | undefined> {
+  return db
+    .select({ slug: page.slug, customDomain: page.customDomain })
+    .from(page)
+    .where(eq(page.id, pageId))
+    .get();
+}
+
+/** The page's title, or `null` when the id is not a page of that workspace. */
+export async function getPageTitleInWorkspace(
+  args: { workspaceId: number; pageId: number },
+  db: DB = defaultDb,
+): Promise<string | null> {
+  const row = await db
+    .select({ title: page.title })
+    .from(page)
+    .where(
+      and(eq(page.workspaceId, args.workspaceId), eq(page.id, args.pageId)),
+    )
+    .get();
+  return row?.title ?? null;
 }
 
 function hostFromInput(raw: string): string | null {
@@ -30,20 +58,23 @@ function hostFromInput(raw: string): string | null {
  */
 export async function resolvePageFromUrl(
   raw: string,
+  db: DB = defaultDb,
 ): Promise<ResolvedPage | null> {
   const host = hostFromInput(raw);
   if (!host) return null;
+
+  const columns = {
+    id: page.id,
+    title: page.title,
+    slug: page.slug,
+    customDomain: page.customDomain,
+  };
 
   if (host.endsWith(BASE_DOMAIN_SUFFIX)) {
     const slug = host.slice(0, -BASE_DOMAIN_SUFFIX.length);
     if (!slug || slug.includes(".")) return null;
     const row = await db
-      .select({
-        id: page.id,
-        title: page.title,
-        slug: page.slug,
-        customDomain: page.customDomain,
-      })
+      .select(columns)
       .from(page)
       .where(eq(page.slug, slug))
       .get();
@@ -52,12 +83,7 @@ export async function resolvePageFromUrl(
 
   const bareHost = host.startsWith("www.") ? host.slice(4) : host;
   const row = await db
-    .select({
-      id: page.id,
-      title: page.title,
-      slug: page.slug,
-      customDomain: page.customDomain,
-    })
+    .select(columns)
     .from(page)
     .where(
       or(

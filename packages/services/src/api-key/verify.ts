@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/utils/api-key";
 
 import type { ServiceContext } from "../context";
+import { retryRead } from "../retry";
 import type { ApiKey } from "../types";
 import { UpdateApiKeyLastUsedInput, VerifyApiKeyInput } from "./schemas";
 
@@ -43,6 +44,39 @@ export async function verifyApiKey(
   if (key.expiresAt && key.expiresAt < new Date()) return null;
 
   return selectApiKeySchema.parse(key);
+}
+
+export type ApiKeyAuthResult =
+  | { status: "unknown" }
+  | { status: "invalid" }
+  | { status: "expired" }
+  | { status: "valid"; key: Omit<typeof apiKey.$inferSelect, "hashedToken"> };
+
+/**
+ * Request-auth check of an `os_` token. Unlike `verifyApiKey` it tells an
+ * unknown prefix (the caller falls back to Unkey) from a bad or expired key.
+ */
+export async function authenticateApiKey(
+  token: string,
+  opts: { db?: ServiceContext["db"] } = {},
+): Promise<ApiKeyAuthResult> {
+  const db = opts.db ?? defaultDb;
+  // "os_" (3) + 8 hex chars = 11-char prefix stored alongside the hash.
+  const prefix = token.slice(0, 11);
+
+  const row = await retryRead(() =>
+    db.select().from(apiKey).where(eq(apiKey.prefix, prefix)).get(),
+  );
+  if (!row) return { status: "unknown" };
+
+  const { hashedToken, ...key } = row;
+  if (!(await verifyApiKeyHash(token, hashedToken))) {
+    return { status: "invalid" };
+  }
+  if (key.expiresAt && key.expiresAt < new Date()) {
+    return { status: "expired" };
+  }
+  return { status: "valid", key };
 }
 
 /**

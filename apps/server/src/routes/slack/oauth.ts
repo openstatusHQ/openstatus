@@ -2,16 +2,12 @@ import crypto from "node:crypto";
 
 import { getLogger } from "@logtape/logtape";
 import { Events, setupAnalytics } from "@openstatus/analytics";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, eq } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  workspace as workspaceTable,
-} from "@openstatus/db/src/schema";
+import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import {
   installSlackAgent,
   SLACK_BOT_SCOPES,
 } from "@openstatus/services/integration";
+import { getWorkspaceRowById } from "@openstatus/services/workspace";
 import type { Context } from "hono";
 import { z } from "zod";
 
@@ -116,11 +112,7 @@ export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
     return c.redirect(`${config.dashboardUrl}/agents/slack?slack=error`);
   }
 
-  const workspaceRow = await db
-    .select()
-    .from(workspaceTable)
-    .where(eq(workspaceTable.id, state.workspaceId))
-    .get();
+  const workspaceRow = await getWorkspaceRowById(state.workspaceId);
   if (!workspaceRow) {
     logger.error("workspace not found at callback", {
       workspaceId: state.workspaceId,
