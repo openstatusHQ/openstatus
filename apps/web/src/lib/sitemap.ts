@@ -1,8 +1,9 @@
+import { listLiveComponentSlugs } from "@openstatus/services/external-service-component";
 import type { MetadataRoute } from "next";
 
 import {
   cachedListExternalServices,
-  cachedListLiveComponentSlugs,
+  cachedListRecentlyFetchedServiceIds,
 } from "./external-service-cache";
 
 export const SITE_URL = "https://www.openstatus.dev";
@@ -55,7 +56,9 @@ export async function listLiveServices() {
 // Sorted by service, so a component stays in the same file between rebuilds.
 export async function listComponentEntries(): Promise<MetadataRoute.Sitemap> {
   const today = new Date().toISOString().slice(0, 10);
-  const components = await cachedListLiveComponentSlugs();
+  const components = await listLiveComponentSlugs({
+    externalServiceIds: await cachedListRecentlyFetchedServiceIds(),
+  });
   return components.map((c) => ({
     url: `${SITE_URL}/status/${c.serviceSlug}/${c.componentSlug}`,
     lastModified: today,
