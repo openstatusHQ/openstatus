@@ -450,7 +450,9 @@ const servicesScopeMatchesFolder = {
 /**
  * The audit row must commit with the mutation: `emitAudit` takes the
  * transaction handed to the enclosing callback or `*InTx` helper (directly or
- * destructured from its args), never the module `db` or `ctx.db`.
+ * destructured from its args), never the module `db` or `ctx.db`. Member
+ * expressions (`opts.tx`) are rejected on purpose; passing a non-transaction
+ * parameter such as `ctx` is left to the `DB` type of the first argument.
  */
 const servicesAuditOnTx = {
   meta: {

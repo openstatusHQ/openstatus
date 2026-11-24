@@ -31,7 +31,7 @@ function walk(dir: string): string[] {
 
 const expected = new Set<string>();
 for (const file of walk(FIXTURES)) {
-  const rel = relative(REPO_ROOT, file);
+  const rel = relative(REPO_ROOT, file).replaceAll("\\", "/");
   readFileSync(file, "utf8")
     .split("\n")
     .forEach((text, i) => {
@@ -41,7 +41,30 @@ for (const file of walk(FIXTURES)) {
     });
 }
 
-let output: string;
+function fail(message: string): never {
+  console.error(message);
+  process.exit(1);
+}
+
+// Every plugin rule must run here and be pinned by at least one marker.
+const plugin = (await import("./oxlint-plugin-openstatus.js")).default as {
+  rules: Record<string, unknown>;
+};
+const fixtureConfig = JSON.parse(
+  readFileSync(join(REPO_ROOT, "scripts/oxlint-fixtures.json"), "utf8"),
+) as { rules: Record<string, unknown> };
+const markedRules = new Set([...expected].map((key) => key.split(" ")[1]));
+for (const rule of Object.keys(plugin.rules)) {
+  if (!(`openstatus/${rule}` in fixtureConfig.rules)) {
+    fail(`${rule} is not enabled in scripts/oxlint-fixtures.json.`);
+  }
+  if (!markedRules.has(rule)) {
+    fail(`${rule} has no "expect: ${rule}" marker in its bad fixture.`);
+  }
+}
+
+let output = "";
+let stderr = "";
 try {
   output = execFileSync(
     join(REPO_ROOT, "node_modules/.bin/oxlint"),
@@ -52,18 +75,28 @@ try {
       "json",
       FIXTURES,
     ],
-    { cwd: REPO_ROOT, encoding: "utf8" },
+    { cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
 } catch (error) {
   // oxlint exits non-zero because the bad fixtures report errors.
-  output = (error as { stdout?: string }).stdout ?? "";
+  const failed = error as { stdout?: string; stderr?: string };
+  output = failed.stdout ?? "";
+  stderr = failed.stderr ?? "";
 }
 
-const { diagnostics } = JSON.parse(output) as { diagnostics: Diagnostic[] };
+let diagnostics: Diagnostic[] = [];
+try {
+  ({ diagnostics } = JSON.parse(output) as { diagnostics: Diagnostic[] });
+} catch {
+  // Config and plugin load errors go to stdout, not stderr.
+  fail(`oxlint printed no JSON report:\n${output}${stderr}`);
+}
+
 const actual = new Set<string>();
 for (const d of diagnostics) {
   const rule = /^openstatus\((.+)\)$/.exec(d.code)?.[1] ?? d.code;
-  actual.add(`${d.filename}:${d.labels[0]?.span.line} ${rule}`);
+  const file = relative(REPO_ROOT, resolve(REPO_ROOT, d.filename));
+  actual.add(`${file.replaceAll("\\", "/")}:${d.labels[0]?.span.line} ${rule}`);
 }
 
 const missing = [...expected].filter((key) => !actual.has(key));
