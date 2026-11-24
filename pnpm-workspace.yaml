@@ -74,7 +74,7 @@ catalog:
   "@hono/zod-openapi": 1.6.3
   "@hono/zod-validator": 0.9.1
   "@hookform/devtools": 4.4.0
-  "@hookform/resolvers": 5.9.1
+  "@hookform/resolvers": 7.0.8
   "@libsql/client": 0.18.0
   "@logtape/logtape": 2.3.6
   "@logtape/otel": 2.3.6
@@ -179,7 +179,7 @@ catalog:
   jsonpath-plus: 11.3.0
   knip: 6.37.0
   limiter: 4.1.0
-  lucide-react: 0.525.0
+  lucide-react: 1.78.0
   mailchecker: 6.0.21
   marked: 18.2.1
   nanoid: 6.0.1
@@ -219,7 +219,7 @@ catalog:
   resend: 6.28.1
   sanitize-html: 2.17.7
   schema-dts: 2.1.0
-  shadcn: 3.8.5
+  shadcn: 4.23.0
   shiki: 4.6.0
   slugify: 1.6.9
   sonner: 2.0.8
