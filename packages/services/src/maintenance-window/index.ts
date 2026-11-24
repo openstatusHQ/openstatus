@@ -1,3 +1,7 @@
+export {
+  isMonitorInAnyMaintenance,
+  isMonitorInMaintenanceWindow,
+} from "./coverage";
 export { createMaintenanceWindow } from "./create";
 export { deleteMaintenanceWindow } from "./delete";
 export {

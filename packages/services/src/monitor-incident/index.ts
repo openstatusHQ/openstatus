@@ -3,6 +3,7 @@ export { monitorIncidentAuditStatement } from "./audit-statement";
 export { autoResolveMonitorIncidents } from "./auto-resolve";
 export { createMonitorIncident } from "./create";
 export { excuseMonitorIncident } from "./excuse";
+export { findMonitorIncident, findOpenMonitorIncident } from "./find";
 export {
   getMonitorReport,
   type MonitorReport,

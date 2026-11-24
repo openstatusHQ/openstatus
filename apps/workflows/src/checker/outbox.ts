@@ -1,28 +1,32 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, eq, inArray, lt, notInArray, sql } from "@openstatus/db";
 import type {
   MonitorIncident,
   Monitor,
   Notification,
 } from "@openstatus/db/src/schema";
 import {
-  notificationOutbox,
-  monitorIncidentTable,
-  monitor,
-  notification,
-  notificationDeadLetter,
-  notificationTrigger,
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { withBusyRetry } from "@openstatus/services";
+import {
+  claimOutboxRows,
+  deadLetterOutboxRows,
+  discardOutboxRows,
+  listExpiredOutboxRows,
+  loadOutboxDeliveryRows,
+  type OutboxRow,
+  releaseOutboxRows,
+  releaseWorkerOutboxClaims,
+  rescheduleOutboxRows,
+  settleDeliveredOutboxRows,
+  settleSkippedOutboxRows,
+  loadSmsQuotaBlocked,
+} from "@openstatus/services/notification";
 import * as Sentry from "@sentry/node";
 import { Effect, Exit, Queue } from "effect";
 
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
-import { loadSmsQuotaBlocked } from "./sms-quota";
 import { providerToFunction } from "./utils";
 
 const logger = getLogger(["workflow"]);
@@ -45,8 +49,6 @@ function leaseSeconds(limit: number, timeoutMs: number): number {
 }
 
 const workerId = crypto.randomUUID();
-
-type OutboxRow = typeof notificationOutbox.$inferSelect;
 
 type DeliveryOutcome =
   | { kind: "delivered"; row: OutboxRow }
@@ -95,54 +97,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/**
- * Claims only the oldest pending row per (monitor, notification), so an alert
- * and the recovery behind it can never be delivered out of order, including
- * across machines. `rolloutPct` gates which monitors the drainer owns; at 0 the
- * inline sender is still authoritative and nothing here is claimable.
- */
-async function claimRows(
-  limit: number,
-  rolloutPct: number,
-  lease: number,
-  monitorIds?: number[],
-): Promise<OutboxRow[]> {
-  const scope =
-    monitorIds === undefined
-      ? sql``
-      : sql` AND o.monitor_id IN (${sql.join(
-          monitorIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`;
-
-  return withBusyRetry(() =>
-    db
-      .update(notificationOutbox)
-      .set({
-        lockedBy: workerId,
-        lockedUntil: sql`min(unixepoch() + ${lease}, ${notificationOutbox.deadlineAt})`,
-        attempts: sql`${notificationOutbox.attempts} + 1`,
-      })
-      .where(
-        sql`${notificationOutbox.id} IN (
-          SELECT o.id FROM ${notificationOutbox} o
-          WHERE o.delivery_status = 'pending'
-            AND (o.monitor_id % 100) < ${rolloutPct}
-            AND o.next_attempt_at <= unixepoch()
-            AND o.deadline_at > unixepoch()${scope}
-            AND (o.locked_until IS NULL OR o.locked_until < unixepoch())
-            AND NOT EXISTS (
-              SELECT 1 FROM ${notificationOutbox} older
-              WHERE older.monitor_id = o.monitor_id
-                AND older.notification_id = o.notification_id
-                AND older.delivery_status = 'pending'
-                AND older.id < o.id)
-          ORDER BY o.id LIMIT ${limit})`,
-      )
-      .returning(),
-  );
-}
-
 type DeliveryDeps = {
   monitors: Map<number, Monitor>;
   notifications: Map<number, Notification>;
@@ -161,24 +115,15 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
     ),
   ];
 
-  const [monitorRows, notificationRows, incidentRows] = await withBusyRetry(
-    () =>
-      db.batch([
-        db.select().from(monitor).where(inArray(monitor.id, monitorIds)),
-        db
-          .select()
-          .from(notification)
-          .where(inArray(notification.id, notificationIds)),
-        db
-          .select()
-          .from(monitorIncidentTable)
-          .where(
-            incidentIds.length === 0
-              ? sql`1 = 0`
-              : inArray(monitorIncidentTable.id, incidentIds),
-          ),
-      ]),
-  );
+  const {
+    monitors: monitorRows,
+    notifications: notificationRows,
+    incidents: incidentRows,
+  } = await loadOutboxDeliveryRows({
+    monitorIds,
+    notificationIds,
+    incidentIds,
+  });
 
   const monitors = new Map<number, Monitor>();
   for (const row of monitorRows) {
@@ -205,7 +150,7 @@ async function loadDeps(rows: OutboxRow[]): Promise<DeliveryDeps> {
         .filter((id): id is number => id !== null),
     ),
   ];
-  const smsBlocked = await loadSmsQuotaBlocked(smsWorkspaces);
+  const smsBlocked = await loadSmsQuotaBlocked({ workspaceIds: smsWorkspaces });
 
   return { monitors, notifications, incidents, smsBlocked };
 }
@@ -280,32 +225,7 @@ function deliverRow(
 
 async function commitDelivered(rows: OutboxRow[]): Promise<void> {
   if (rows.length === 0) return;
-  const ids = rows.map((row) => row.id);
-
-  await withBusyRetry(() =>
-    db.batch([
-      db
-        .update(notificationOutbox)
-        .set({
-          deliveryStatus: "settled",
-          outcome: "delivered",
-          deliveredAt: Math.floor(Date.now() / 1000),
-          lockedBy: null,
-          lockedUntil: null,
-        })
-        .where(inArray(notificationOutbox.id, ids)),
-      db
-        .insert(notificationTrigger)
-        .values(
-          rows.map((row) => ({
-            monitorId: row.monitorId,
-            notificationId: row.notificationId,
-            cronTimestamp: row.cronTimestamp,
-          })),
-        )
-        .onConflictDoNothing(),
-    ]),
-  );
+  await settleDeliveredOutboxRows(rows);
 
   // Best-effort: the rows are settled and the triggers written. Throwing here
   // would abort the rest of the drain's commits and take the consumer loop down
@@ -334,97 +254,11 @@ async function commitDelivered(rows: OutboxRow[]): Promise<void> {
   }
 }
 
-async function commitSkipped(
-  entries: { row: OutboxRow; reason: string }[],
-): Promise<void> {
-  const [first, ...rest] = entries.map((entry) =>
-    db
-      .update(notificationOutbox)
-      .set({
-        deliveryStatus: "settled",
-        outcome: "skipped",
-        lockedBy: null,
-        lockedUntil: null,
-        lastError: entry.reason,
-      })
-      .where(eq(notificationOutbox.id, entry.row.id)),
-  );
-  if (first === undefined) return;
-  await withBusyRetry(() => db.batch([first, ...rest]));
-}
-
-/**
- * Hands the row back with its backoff recorded. `attempts` already counts this
- * claim, so the row carries how many sends it has cost across every worker.
- */
-async function commitRetry(
-  entries: { row: OutboxRow; error: string; nextAttemptAt: number }[],
-): Promise<void> {
-  const [first, ...rest] = entries.map((entry) =>
-    db
-      .update(notificationOutbox)
-      .set({
-        nextAttemptAt: entry.nextAttemptAt,
-        lockedBy: null,
-        lockedUntil: null,
-        lastError: entry.error.slice(0, 2000),
-      })
-      .where(eq(notificationOutbox.id, entry.row.id)),
-  );
-  if (first === undefined) return;
-  await withBusyRetry(() => db.batch([first, ...rest]));
-}
-
-async function commitReleased(rows: OutboxRow[]): Promise<void> {
-  if (rows.length === 0) return;
-  await withBusyRetry(() =>
-    db
-      .update(notificationOutbox)
-      .set({ lockedBy: null, lockedUntil: null })
-      .where(
-        inArray(
-          notificationOutbox.id,
-          rows.map((row) => row.id),
-        ),
-      ),
-  );
-}
-
 async function commitDead(
   entries: { row: OutboxRow; error: string }[],
 ): Promise<void> {
   if (entries.length === 0) return;
-  const diedAt = Math.floor(Date.now() / 1000);
-
-  await withBusyRetry(() =>
-    db.batch([
-      db.insert(notificationDeadLetter).values(
-        entries.map(({ row, error }) => ({
-          outboxId: row.id,
-          dedupKey: row.dedupKey,
-          monitorId: row.monitorId,
-          workspaceId: row.workspaceId,
-          notificationId: row.notificationId,
-          provider: row.provider,
-          eventType: row.eventType,
-          fromStatus: row.fromStatus,
-          toStatus: row.toStatus,
-          cronTimestamp: row.cronTimestamp,
-          incidentId: row.incidentId,
-          payload: row.payload,
-          attempts: row.attempts,
-          finalError: error.slice(0, 2000),
-          diedAt,
-        })),
-      ),
-      db.delete(notificationOutbox).where(
-        inArray(
-          notificationOutbox.id,
-          entries.map(({ row }) => row.id),
-        ),
-      ),
-    ]),
-  );
+  await deadLetterOutboxRows(entries);
 
   for (const { row, error } of entries) {
     logger.error("Notification dead-lettered", {
@@ -479,12 +313,14 @@ async function runDrain(options: DrainOptions): Promise<DrainSummary> {
   const limit = options.limit ?? CLAIM_LIMIT;
   const timeoutMs = options.timeoutMs ?? env().NOTIFICATION_TIMEOUT_MS;
   const rolloutPct = options.rolloutPct ?? env().OUTBOX_ROLLOUT_PCT;
-  const rows = await claimRows(
+  // At rolloutPct 0 the inline sender is still authoritative: nothing is claimable.
+  const rows = await claimOutboxRows({
+    workerId,
     limit,
     rolloutPct,
-    leaseSeconds(limit, timeoutMs),
-    options.monitorIds,
-  );
+    leaseSeconds: leaseSeconds(limit, timeoutMs),
+    monitorIds: options.monitorIds,
+  });
   if (rows.length === 0) {
     return {
       claimed: 0,
@@ -516,9 +352,17 @@ async function runDrain(options: DrainOptions): Promise<DrainSummary> {
   const dead = outcomes.filter((outcome) => outcome.kind === "dead");
 
   await commitDelivered(delivered);
-  await commitSkipped(skipped);
-  await commitReleased(released);
-  await commitRetry(retried);
+  await settleSkippedOutboxRows(
+    skipped.map((outcome) => ({ id: outcome.row.id, reason: outcome.reason })),
+  );
+  await releaseOutboxRows(released.map((row) => row.id));
+  await rescheduleOutboxRows(
+    retried.map((outcome) => ({
+      id: outcome.row.id,
+      error: outcome.error,
+      nextAttemptAt: outcome.nextAttemptAt,
+    })),
+  );
   await commitDead(dead);
 
   return {
@@ -550,19 +394,7 @@ export async function sweepExpiredOutbox(): Promise<{
 }> {
   const cutoff = Math.floor(Date.now() / 1000) - EXPIRED_GRACE_SECONDS;
 
-  const expired = await withBusyRetry(() =>
-    db
-      .select()
-      .from(notificationOutbox)
-      .where(
-        and(
-          eq(notificationOutbox.deliveryStatus, "pending"),
-          lt(notificationOutbox.deadlineAt, cutoff),
-        ),
-      )
-      .limit(200)
-      .all(),
-  );
+  const expired = await listExpiredOutboxRows({ before: cutoff, limit: 200 });
 
   if (expired.length === 0) return { deadLettered: 0, discarded: 0 };
 
@@ -577,14 +409,7 @@ export async function sweepExpiredOutbox(): Promise<{
   );
 
   if (neverOwned.length > 0) {
-    await withBusyRetry(() =>
-      db.delete(notificationOutbox).where(
-        inArray(
-          notificationOutbox.id,
-          neverOwned.map((row) => row.id),
-        ),
-      ),
-    );
+    await discardOutboxRows(neverOwned.map((row) => row.id));
     logger.info("Discarded outbox rows that were never owned", {
       count: neverOwned.length,
     });
@@ -688,20 +513,7 @@ export async function shutdownOutbox(graceMs?: number): Promise<void> {
   // Anything still sending keeps its lease: the provider call can succeed after
   // we stop watching, so the peer waits for the lease to lapse rather than
   // starting a second send while this one is outstanding.
-  const stillSending = [...inFlightSends];
-  await withBusyRetry(() =>
-    db
-      .update(notificationOutbox)
-      .set({ lockedBy: null, lockedUntil: null })
-      .where(
-        stillSending.length === 0
-          ? eq(notificationOutbox.lockedBy, workerId)
-          : and(
-              eq(notificationOutbox.lockedBy, workerId),
-              notInArray(notificationOutbox.id, stillSending),
-            ),
-      ),
-  );
+  await releaseWorkerOutboxClaims({ workerId, exceptIds: [...inFlightSends] });
 }
 
 async function waitForDrains(graceMs: number): Promise<void> {

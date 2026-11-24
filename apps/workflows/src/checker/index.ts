@@ -1,6 +1,7 @@
 import { getLogger } from "@logtape/logtape";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
+import { isMonitorInMaintenanceWindow } from "@openstatus/services/maintenance-window";
 import { Hono } from "hono";
 import { z } from "zod";
 
@@ -8,7 +9,6 @@ import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
-import { isInMaintenance } from "./maintenance";
 import { enqueueOutbox } from "./outbox";
 import { updateStatusPrivate } from "./private-location";
 import { EVENT_TYPE, applyStatusTransition, isStaleCheck } from "./transition";
@@ -137,7 +137,10 @@ checkerRoute.post("/updateStatus", async (c) => {
   // A recovery passes, or an outage open before the window would outlast it.
   if (
     status !== "active" &&
-    (await isInMaintenance(monitorIdNumber, new Date(cronTimestamp)))
+    (await isMonitorInMaintenanceWindow({
+      monitorId: monitorIdNumber,
+      at: new Date(cronTimestamp),
+    }))
   ) {
     statusUpdate.maintenance_skipped = true;
     return c.json({ success: true }, 200);

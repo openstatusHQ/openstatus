@@ -1,14 +1,12 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, eq, inArray, isNull, or, schema } from "@openstatus/db";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import {
-  monitorInMaintenance,
-  monitorInWindow,
-} from "@openstatus/db/src/maintenance";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
-import { setMonitorStatus } from "@openstatus/services/monitor";
-import { recordPrivateLocationMonitorStatus } from "@openstatus/services/private-location";
+import { isMonitorInAnyMaintenance } from "@openstatus/services/maintenance-window";
+import { findMonitor, setMonitorStatus } from "@openstatus/services/monitor";
+import {
+  countPrivateLocationsReporting,
+  findPrivateLocationAttachment,
+  recordPrivateLocationMonitorStatus,
+} from "@openstatus/services/private-location";
 import type { Context } from "hono";
 import { z } from "zod";
 
@@ -91,11 +89,7 @@ export async function updateStatusPrivate(c: Context<Env>) {
   };
 
   try {
-    const monitor = await db
-      .select()
-      .from(schema.monitor)
-      .where(eq(schema.monitor.id, monitorIdNumber))
-      .get();
+    const monitor = await findMonitor({ id: monitorIdNumber });
 
     if (!monitor || monitor.deletedAt || !monitor.active) {
       return c.json({ success: true }, 200);
@@ -105,48 +99,18 @@ export async function updateStatusPrivate(c: Context<Env>) {
     // check reported while it ran; a recovery always closes its outage
     const at = new Date(cronTimestamp);
     const activeMaintenance =
-      status === "active"
-        ? undefined
-        : await db
-            .select({ id: schema.monitor.id })
-            .from(schema.monitor)
-            .where(
-              and(
-                eq(schema.monitor.id, monitorIdNumber),
-                or(
-                  monitorInMaintenance(db, { at, mode: "pause" }),
-                  monitorInWindow(db, at),
-                ),
-              ),
-            )
-            .get();
+      status !== "active" &&
+      (await isMonitorInAnyMaintenance({ monitorId: monitorIdNumber, at }));
 
     if (activeMaintenance) {
       statusUpdate.maintenance_skipped = true;
       return c.json({ success: true }, 200);
     }
 
-    const attachment = await db
-      .select({ name: schema.privateLocation.name })
-      .from(schema.privateLocationToMonitors)
-      .innerJoin(
-        schema.privateLocation,
-        eq(
-          schema.privateLocation.id,
-          schema.privateLocationToMonitors.privateLocationId,
-        ),
-      )
-      .where(
-        and(
-          eq(schema.privateLocationToMonitors.monitorId, monitorIdNumber),
-          eq(
-            schema.privateLocationToMonitors.privateLocationId,
-            privateLocationIdNumber,
-          ),
-          isNull(schema.privateLocationToMonitors.deletedAt),
-        ),
-      )
-      .get();
+    const attachment = await findPrivateLocationAttachment({
+      monitorId: monitorIdNumber,
+      privateLocationId: privateLocationIdNumber,
+    });
 
     if (!attachment) {
       return c.json({ success: true }, 200);
@@ -181,43 +145,13 @@ export async function updateStatusPrivate(c: Context<Env>) {
       return c.json({ success: true }, 200);
     }
 
-    // Query all private locations for threshold check
-    const allLocations = await db
-      .select({ id: schema.privateLocationToMonitors.privateLocationId })
-      .from(schema.privateLocationToMonitors)
-      .where(
-        and(
-          eq(schema.privateLocationToMonitors.monitorId, monitorIdNumber),
-          isNull(schema.privateLocationToMonitors.deletedAt),
-        ),
-      )
-      .all();
-
-    const numberOfLocations = allLocations.length;
-    const locationIds = allLocations
-      .map((loc) => loc.id)
-      .filter((id): id is number => id !== null);
-
-    // Count how many locations report this status
-    const locationsWithStatus = await db
-      .select({
-        privateLocationId:
-          schema.privateLocationMonitorStatus.privateLocationId,
-      })
-      .from(schema.privateLocationMonitorStatus)
-      .where(
-        and(
-          eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
-          eq(schema.privateLocationMonitorStatus.status, status),
-          inArray(
-            schema.privateLocationMonitorStatus.privateLocationId,
-            locationIds,
-          ),
-        ),
-      )
-      .all();
-
-    const affectedLocationCount = locationsWithStatus.length;
+    const {
+      locationCount: numberOfLocations,
+      affectedCount: affectedLocationCount,
+    } = await countPrivateLocationsReporting({
+      monitorId: monitorIdNumber,
+      status,
+    });
 
     // Apply ≥50% threshold (matching cloud checker logic)
     const shouldTriggerIncident =
