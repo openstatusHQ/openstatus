@@ -1,4 +1,4 @@
-import { and, eq, isNotNull } from "@openstatus/db";
+import { and, db as defaultDb, eq, isNotNull } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   usersToWorkspaces,
@@ -36,8 +36,8 @@ export async function requireOwner(tx: DB, ctx: ServiceContext): Promise<void> {
 }
 
 export async function getWorkspaceByWorkosOrganization(
-  db: DB,
   organizationId: string,
+  db: DB = defaultDb,
 ): Promise<Workspace> {
   const row = await db
     .select()

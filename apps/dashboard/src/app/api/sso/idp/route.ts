@@ -1,5 +1,3 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db } from "@openstatus/db";
 import {
   getWorkspaceByWorkosOrganization,
   isWorkOSConfigured,
@@ -45,7 +43,6 @@ export async function GET(req: NextRequest) {
   if (!organizationId) return denied(req);
 
   const workspace = await getWorkspaceByWorkosOrganization(
-    db,
     organizationId,
   ).catch(() => null);
   if (!workspace?.ssoEnabled) return denied(req);
