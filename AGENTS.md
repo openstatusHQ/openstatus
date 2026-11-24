@@ -7,7 +7,7 @@ this file never restates them.
 ## Verify your change
 
 ```sh
-pnpm verify        # oxfmt + oxlint + doc refs + tsc. No database, seconds.
+pnpm verify        # oxfmt + oxlint + doc refs + lint-rule fixtures + tsc. No database, seconds.
 pnpm verify:test   # tests for packages affected by your diff. Needs a database.
 ```
 

@@ -30,6 +30,8 @@ export default defineConfig({
     "unicorn/prefer-node-protocol": "error",
   },
   ignorePatterns: [
+    // Deliberately bad code, linted by scripts/check-lint-rules.mts.
+    "scripts/__fixtures__/**",
     "packages/ui/src/components/*.ts",
     "packages/ui/src/components/*.tsx",
     // Vendored from the data-table-filters shadcn registry — reformatting or

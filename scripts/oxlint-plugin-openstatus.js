@@ -10,6 +10,9 @@
  * a nested helper that never runs could satisfy. `requireScope` must appear in
  * the verb body itself, which is where the convention puts it. A guard, not a
  * proof — the audit tests are what actually pin the behaviour.
+ *
+ * Every rule has a bad/good fixture pair in `scripts/__fixtures__/oxlint`,
+ * checked by `pnpm check:lint-rules`. A new rule adds its pair there.
  */
 
 const FUNCTION_TYPES = [

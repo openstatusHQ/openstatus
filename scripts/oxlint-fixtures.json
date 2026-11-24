@@ -1,0 +1,11 @@
+{
+  "jsPlugins": ["./oxlint-plugin-openstatus.js"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "openstatus/services-mutation-guards": "error",
+    "openstatus/services-no-legacy-scope": "error",
+    "openstatus/services-read-verbs-require-scope": "error",
+    "openstatus/no-db-barrel-in-client": "error",
+    "openstatus/no-text-link-as-child": "error"
+  }
+}
