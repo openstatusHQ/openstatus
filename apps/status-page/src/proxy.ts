@@ -1,7 +1,6 @@
 import { pagePasswordRateLimit } from "@openstatus/api/src/lib/page-password-rate-limit";
-import { db, sql } from "@openstatus/db";
-import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { resolveClientIp } from "@openstatus/services/page-access";
+import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
 import { NextResponse } from "next/server";
 
 import { auth } from "./lib/auth";
@@ -80,22 +79,15 @@ export default auth(async (req) => {
     });
   }
 
-  const query = await db
-    .select()
-    .from(page)
-    .where(
-      sql`lower(${page.slug}) = ${initialRoute.prefix} OR lower(${page.customDomain}) = ${initialRoute.prefix}`,
-    )
-    .get();
-
-  const validation = selectPageSchema.safeParse(query);
+  const _page = await getPublicStatusPageRow({
+    input: { slug: initialRoute.prefix },
+  });
 
   // No page for this host/slug — never fall through to the theme explorer.
-  if (!validation.success) {
+  if (!_page) {
     return unresolvedHostResponse();
   }
 
-  const _page = validation.data;
   const route = applyPageSlugPrefix(
     applyPageLocaleOverride(initialRoute, _page),
     _page,

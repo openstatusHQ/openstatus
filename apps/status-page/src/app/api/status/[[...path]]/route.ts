@@ -1,6 +1,5 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
 import { resolveClientIp } from "@openstatus/services/page-access";
+import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
 import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -55,13 +54,9 @@ export async function GET(
     });
     if (!route) return json({ error: "Not Found" }, 404);
 
-    const row = await db
-      .select({ slug: page.slug })
-      .from(page)
-      .where(
-        sql`lower(${page.slug}) = ${route.prefix} OR lower(${page.customDomain}) = ${route.prefix}`,
-      )
-      .get();
+    const row = await getPublicStatusPageRow({
+      input: { slug: route.prefix },
+    });
     if (!row) return json({ error: "Not Found" }, 404);
 
     const queryClient = getQueryClient();

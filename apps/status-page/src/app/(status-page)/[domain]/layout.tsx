@@ -1,4 +1,4 @@
-import { pageConfigurationSchema } from "@openstatus/db/src/schema";
+import { parsePageConfiguration } from "@openstatus/services/page";
 import { generatePageStyles } from "@openstatus/theme-store";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
@@ -32,14 +32,8 @@ export default async function Layout({
 
   if (!page) return notFound();
 
-  // safeParse + fallback so a stale enum value in stored config (e.g. removed
-  // theme key) doesn't crash the layout.
-  const cfgResult = pageConfigurationSchema.safeParse(
-    page?.configuration ?? {},
-  );
-  const cfg = cfgResult.success
-    ? cfgResult.data
-    : pageConfigurationSchema.parse({});
+  // Falls back to defaults so a stale stored config can't crash the layout.
+  const cfg = parsePageConfiguration(page?.configuration);
 
   return (
     <HydrateClient>

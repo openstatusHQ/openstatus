@@ -1,5 +1,4 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
 import { NextResponse } from "next/server";
 
 import {
@@ -88,18 +87,7 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const { domain } = await props.params;
-  const prefix = domain.toLowerCase();
-
-  const row = await db
-    .select({
-      slug: page.slug,
-      accessType: page.accessType,
-    })
-    .from(page)
-    .where(
-      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
-    )
-    .get();
+  const row = await getPublicStatusPageRow({ input: { slug: domain } });
   if (!row) return notFound();
   // Only public pages get a discovery doc — don't leak title/description of
   // password/email/IP-gated pages. Gate on the cheap row before the full fetch.

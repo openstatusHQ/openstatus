@@ -4,6 +4,7 @@ export { getPublicStatusPageGate, type PublicStatusPageGate } from "./get-gate";
 export { getPublicStatusPageLight } from "./get-light";
 export { getPublicMaintenance } from "./get-maintenance";
 export { getPublicStatusPageMonitor } from "./get-monitor";
+export { getPublicStatusPageRow } from "./get-row";
 export { getPublicStatusReport } from "./get-report";
 export { getPublicSubscriptionPage } from "./get-subscription-page";
 export { getPublicStatusPageUptime } from "./get-uptime";

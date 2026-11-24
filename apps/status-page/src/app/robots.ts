@@ -1,5 +1,4 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
@@ -26,18 +25,8 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     ? resolveRoute({ host, urlHost: host, pathname: "/" })
     : null;
   const row = route
-    ? await db
-        .select({
-          slug: page.slug,
-          customDomain: page.customDomain,
-          allowIndex: page.allowIndex,
-        })
-        .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${route.prefix} OR lower(${page.customDomain}) = ${route.prefix}`,
-        )
-        .get()
-    : undefined;
+    ? await getPublicStatusPageRow({ input: { slug: route.prefix } })
+    : null;
 
   // The page owner opted out of indexing: disallow everything and omit the
   // sitemap so crawlers have nothing to follow.
@@ -60,7 +49,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   }
 
   const sitemap = row
-    ? `${getBaseUrl({ slug: row.slug, customDomain: row.customDomain ?? undefined })}/sitemap.xml`
+    ? `${getBaseUrl({ slug: row.slug, customDomain: row.customDomain || undefined })}/sitemap.xml`
     : undefined;
 
   return {
