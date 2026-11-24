@@ -1,16 +1,12 @@
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq, gte, inArray, lte } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
-  maintenance,
-  maintenancesToPageComponents,
   monitor,
   page,
   pageComponent,
   pageComponentGroup,
   pageConfigurationSchema,
   pageSubscriber,
-  statusReport,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type {
   ComponentDayBucket,
@@ -35,7 +31,10 @@ import {
   deletePage,
   getPage,
   getPageBySlug,
+  getPageOverallStatus,
+  getPageRow,
   getStatusPageContent,
+  type PageStatus,
   type StatusPageContent,
   listPages,
   updatePageAppearance,
@@ -122,8 +121,8 @@ import {
  * Normalize a service `Page` back into the converter's raw-db shape.
  *
  * The service parses `authEmailDomains` / `allowedIpRanges` into arrays
- * via `selectPageSchema`; the converters (shared with the 13 still-on-db
- * methods below) expect the comma-joined string form the DB stores.
+ * via `selectPageSchema`; the converters (shared with the methods below that
+ * still read the DB directly) expect the comma-joined string form it stores.
  */
 function serviceToConverterPage<
   P extends {
@@ -336,6 +335,21 @@ async function getMonitorById(id: number, workspaceId: number) {
 
 type ResolvedPage = NonNullable<Awaited<ReturnType<typeof getPageById>>>;
 
+async function getWorkspacePageForRead(
+  rpcCtx: ReturnType<typeof getRpcContext>,
+  id: string,
+): Promise<ResolvedPage> {
+  try {
+    return await getPageRow({
+      ctx: toServiceCtx(rpcCtx),
+      input: { id: parseEntityId(id, "page id") },
+    });
+  } catch (err) {
+    if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
+    toConnectError(err);
+  }
+}
+
 async function fetchStatusPageContent(
   pageData: ResolvedPage,
   prefetched?: StatusPageContent,
@@ -380,112 +394,27 @@ async function fetchStatusPageContent(
   };
 }
 
+const pageStatusToProto: Record<PageStatus, OverallStatus> = {
+  operational: OverallStatus.OPERATIONAL,
+  degraded: OverallStatus.DEGRADED,
+  maintenance: OverallStatus.MAINTENANCE,
+};
+
 async function computeOverallStatus(
   pageData: ResolvedPage,
   prefetched?: { id: number }[],
-  database: typeof db = db,
 ) {
-  const components =
-    prefetched ??
-    (await database
-      .select({ id: pageComponent.id })
-      .from(pageComponent)
-      .where(eq(pageComponent.pageId, pageData.id))
-      .all());
-
-  const componentIds = components.map((c) => c.id);
-  const now = new Date();
-
-  let hasActiveStatusReport = false;
-  const componentReportStatus = new Map<number, boolean>();
-
-  if (componentIds.length > 0) {
-    const activeReports = await database
-      .select({
-        componentId: statusReportsToPageComponents.pageComponentId,
-      })
-      .from(statusReportsToPageComponents)
-      .innerJoin(
-        statusReport,
-        eq(statusReportsToPageComponents.statusReportId, statusReport.id),
-      )
-      .where(
-        and(
-          inArray(statusReportsToPageComponents.pageComponentId, componentIds),
-          inArray(statusReport.status, [
-            "investigating",
-            "identified",
-            "monitoring",
-          ]),
-        ),
-      )
-      .all();
-
-    hasActiveStatusReport = activeReports.length > 0;
-
-    for (const report of activeReports) {
-      componentReportStatus.set(report.componentId, true);
-    }
-  }
-
-  let hasActiveMaintenance = false;
-  const componentMaintenanceStatus = new Map<number, boolean>();
-
-  const activeMaintenances = await database
-    .select()
-    .from(maintenance)
-    .where(
-      and(
-        eq(maintenance.pageId, pageData.id),
-        lte(maintenance.from, now),
-        gte(maintenance.to, now),
-      ),
-    )
-    .all();
-
-  hasActiveMaintenance = activeMaintenances.length > 0;
-
-  if (activeMaintenances.length > 0) {
-    const maintenanceIds = activeMaintenances.map((m) => m.id);
-    const maintenanceComponentAssocs = await database
-      .select()
-      .from(maintenancesToPageComponents)
-      .where(
-        inArray(maintenancesToPageComponents.maintenanceId, maintenanceIds),
-      )
-      .all();
-
-    for (const assoc of maintenanceComponentAssocs) {
-      componentMaintenanceStatus.set(assoc.pageComponentId, true);
-    }
-  }
-
-  const overallStatus = hasActiveStatusReport
-    ? OverallStatus.DEGRADED
-    : hasActiveMaintenance
-      ? OverallStatus.MAINTENANCE
-      : OverallStatus.OPERATIONAL;
-
-  const componentStatuses = components.map((c) => {
-    const hasReport = componentReportStatus.get(c.id) ?? false;
-    const hasMaintenance = componentMaintenanceStatus.get(c.id) ?? false;
-
-    const status = hasReport
-      ? OverallStatus.DEGRADED
-      : hasMaintenance
-        ? OverallStatus.MAINTENANCE
-        : OverallStatus.OPERATIONAL;
-
-    return {
+  const result = await getPageOverallStatus({
+    pageId: pageData.id,
+    componentIds: prefetched?.map((c) => c.id),
+  });
+  return {
+    overallStatus: pageStatusToProto[result.status],
+    componentStatuses: result.components.map((c) => ({
       $typeName: "openstatus.status_page.v1.ComponentStatus" as const,
       componentId: String(c.id),
-      status,
-    };
-  });
-
-  return {
-    overallStatus,
-    componentStatuses,
+      status: pageStatusToProto[c.status],
+    })),
   };
 }
 
@@ -1495,12 +1424,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
       identifierValue = req.identifier.value;
-      pageData = await getPageById(
-        parseEntityId(identifierValue, "page id"),
-        workspaceId,
+      pageData = await getWorkspacePageForRead(
+        getRpcContext(ctx),
+        identifierValue,
       );
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
@@ -1543,12 +1470,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
       identifierValue = req.identifier.value;
-      pageData = await getPageById(
-        parseEntityId(identifierValue, "page id"),
-        workspaceId,
+      pageData = await getWorkspacePageForRead(
+        getRpcContext(ctx),
+        identifierValue,
       );
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
@@ -1575,15 +1500,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async getStatusPageOverview(req, ctx) {
     try {
       const rpcCtx = getRpcContext(ctx);
-      const pageData = await getPageById(
-        parseEntityId(req.id, "page id"),
-        rpcCtx.workspace.id,
-      );
-
-      if (!pageData) {
-        throw statusPageNotFoundError(req.id);
-      }
-
+      const pageData = await getWorkspacePageForRead(rpcCtx, req.id);
       const pageContent = await getStatusPageContent({ pageId: pageData.id });
       const [content, status] = await Promise.all([
         fetchStatusPageContent(pageData, pageContent),
@@ -1620,10 +1537,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     if (req.identifier.case === "id") {
       identifierValue = req.identifier.value;
-      pageData = await getPageById(
-        parseEntityId(identifierValue, "page id"),
-        rpcCtx.workspace.id,
-      );
+      pageData = await getWorkspacePageForRead(rpcCtx, identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });

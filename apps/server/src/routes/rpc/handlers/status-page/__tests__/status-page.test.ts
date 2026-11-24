@@ -1,6 +1,8 @@
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   auditLog,
+  maintenance,
+  maintenancesToPageComponents,
   monitor,
   page,
   pageComponent,
@@ -3233,6 +3235,45 @@ describe("StatusPageService.GetOverallStatus", () => {
         .delete(statusReportsToPageComponents)
         .where(eq(statusReportsToPageComponents.statusReportId, report.id));
       await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
+  });
+
+  test("returns maintenance status for an ongoing maintenance", async () => {
+    const row = await db
+      .insert(maintenance)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        title: `${TEST_PREFIX}-maintenance`,
+        message: "",
+        from: new Date(Date.now() - 60 * 60 * 1000),
+        to: new Date(Date.now() + 60 * 60 * 1000),
+      })
+      .returning()
+      .get();
+    await db.insert(maintenancesToPageComponents).values({
+      maintenanceId: row.id,
+      pageComponentId: testComponentId,
+    });
+
+    try {
+      const res = await connectRequest(
+        "GetOverallStatus",
+        { id: String(testPageId) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.overallStatus).toBe("OVERALL_STATUS_MAINTENANCE");
+      expect(data.componentStatuses).toContainEqual({
+        componentId: String(testComponentId),
+        status: "OVERALL_STATUS_MAINTENANCE",
+      });
+    } finally {
+      await db
+        .delete(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, row.id));
+      await db.delete(maintenance).where(eq(maintenance.id, row.id));
     }
   });
 });
