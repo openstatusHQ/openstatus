@@ -5,11 +5,13 @@ import {
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import type { Invitation, Workspace } from "../types";
 import {
   GetInvitationByTokenInput,
+  GetInvitationInput,
   type ListInvitationsInput,
 } from "./schemas";
 
@@ -70,4 +72,24 @@ export async function getInvitationByToken(args: {
   return selectInvitationSchema
     .extend({ workspace: selectWorkspaceSchema })
     .parse(result);
+}
+
+/** One invitation of the caller's workspace, in any state. */
+export async function getInvitation(args: {
+  ctx: ServiceContext;
+  input: GetInvitationInput;
+}): Promise<Invitation> {
+  const { ctx } = args;
+  requireScope(ctx, "admin");
+  const input = GetInvitationInput.parse(args.input);
+  const db = ctx.db ?? defaultDb;
+
+  const row = await db.query.invitation.findFirst({
+    where: and(
+      eq(invitation.id, input.id),
+      eq(invitation.workspaceId, ctx.workspace.id),
+    ),
+  });
+  if (!row) throw new NotFoundError("invitation", input.id);
+  return selectInvitationSchema.parse(row);
 }

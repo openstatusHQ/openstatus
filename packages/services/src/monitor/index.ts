@@ -35,6 +35,7 @@ export {
 } from "./response-logs-cursor";
 export {
   getMonitor,
+  assertMonitorsInWorkspace,
   getMonitorRow,
   type ListMonitorsResult,
   listMonitorRows,

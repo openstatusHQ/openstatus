@@ -48,20 +48,10 @@ export default defineConfig({
   ],
   overrides: [
     {
-      // Ban @openstatus/db + drizzle imports in layers migrated onto
-      // @openstatus/services. Scope grows one domain per migration PR.
+      // No db client or query builder in layers migrated onto
+      // @openstatus/services. Schemas and constants stay importable.
       files: [
-        "packages/api/src/router/statusReport.ts",
-        "packages/api/src/router/maintenance.ts",
-        "packages/api/src/router/incident.ts",
-        "packages/api/src/router/monitor.ts",
-        "packages/api/src/router/pageComponent.ts",
-        "packages/api/src/router/page.ts",
-        "packages/api/src/router/workspace.ts",
-        "packages/api/src/router/user.ts",
-        "packages/api/src/router/invitation.ts",
-        "packages/api/src/router/apiKey.ts",
-        "packages/api/src/router/import.ts",
+        "packages/api/src/router/**",
         "apps/server/src/routes/rpc/**",
         "apps/server/src/routes/slack/interactions.ts",
         "apps/status-page/src/**",
@@ -69,9 +59,6 @@ export default defineConfig({
       excludeFiles: [
         "**/__tests__/**",
         "**/*.test.ts",
-        // Schema constants only (regions, periodicity, methods).
-        "apps/server/src/routes/rpc/handlers/monitor/limits.ts",
-        "apps/server/src/routes/rpc/handlers/monitor/validators.ts",
         // Infrastructure, not workspace data: the db health probe and the
         // Auth.js adapter that owns the viewer session tables.
         "apps/status-page/src/app/api/health/route.ts",
@@ -97,7 +84,12 @@ export default defineConfig({
             ],
             patterns: [
               {
-                group: ["@openstatus/db/**", "drizzle-orm/**"],
+                group: [
+                  "@openstatus/db/**",
+                  "!@openstatus/db/src/schema",
+                  "!@openstatus/db/src/schema/**",
+                  "drizzle-orm/**",
+                ],
                 allowTypeImports: true,
                 message: "Use @openstatus/services instead.",
               },

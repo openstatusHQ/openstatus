@@ -2,6 +2,7 @@ export { acceptInvitation } from "./accept";
 export { createInvitation } from "./create";
 export { deleteInvitation } from "./delete";
 export {
+  getInvitation,
   getInvitationByToken,
   type InvitationWithWorkspace,
   listInvitations,
@@ -12,5 +13,6 @@ export {
   CreateInvitationInput,
   DeleteInvitationInput,
   GetInvitationByTokenInput,
+  GetInvitationInput,
   ListInvitationsInput,
 } from "./schemas";

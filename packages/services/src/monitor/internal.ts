@@ -72,6 +72,29 @@ export async function getMonitorInWorkspaceIncludingDeleted(args: {
   return row;
 }
 
+/** First of `ids` that is not a live monitor of the workspace, if any. */
+export async function findMissingMonitorId(args: {
+  tx: DB;
+  workspaceId: number;
+  ids: number[];
+}): Promise<number | undefined> {
+  const ids = [...new Set(args.ids)];
+  if (ids.length === 0) return undefined;
+  const rows = await args.tx
+    .select({ id: monitor.id })
+    .from(monitor)
+    .where(
+      and(
+        inArray(monitor.id, ids),
+        eq(monitor.workspaceId, args.workspaceId),
+        isNull(monitor.deletedAt),
+      ),
+    )
+    .all();
+  const found = new Set(rows.map((r) => r.id));
+  return ids.find((id) => !found.has(id));
+}
+
 /**
  * Run before the update that pauses the monitors: a paused monitor is not
  * failing and its open outages auto-resolve. Stale per-region failures would
