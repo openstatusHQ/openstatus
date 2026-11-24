@@ -33,29 +33,29 @@ allowBuilds:
   protobufjs: true
   sharp: true
 # @google-cloud/pubsub pins semantic-conventions ~1.39 while the @opentelemetry/core
-# it shares with us resolves to the catalog's 1.43; the workflows side-car can only
+# it shares with us resolves to the catalog's 1.45; the workflows side-car can only
 # ship one copy. The package is constants only, and newer releases only add more.
 overrides:
-  "@google-cloud/pubsub>@opentelemetry/semantic-conventions": 1.43.0
+  "@google-cloud/pubsub>@opentelemetry/semantic-conventions": 1.45.0
 autoInstallPeers: true
 # `turbo` is deliberately pinned literally in package.json rather than listed
 # here: Vercel can't read a version through `catalog:`, and on failing to infer
 # it disables corepack and falls back to pnpm 9 — which ignores the `overrides`
 # above and fails the frozen install.
 catalog:
-  "@ai-sdk/anthropic": 4.0.59
-  "@ai-sdk/openai-compatible": 3.0.53
-  "@ai-sdk/react": 4.0.112
+  "@ai-sdk/anthropic": 4.0.107
+  "@ai-sdk/openai-compatible": 3.0.94
+  "@ai-sdk/react": 4.0.185
   "@auth/core": 0.41.3
   "@auth/drizzle-adapter": 1.11.3
-  "@aws-sdk/client-s3": 3.1137.0
-  "@bufbuild/buf": 1.73.0
-  "@bufbuild/protobuf": 2.15.0
-  "@bufbuild/protoc-gen-es": 2.15.0
+  "@aws-sdk/client-s3": 3.1175.0
+  "@bufbuild/buf": 1.75.0
+  "@bufbuild/protobuf": 2.17.0
+  "@bufbuild/protoc-gen-es": 2.17.0
   "@bufbuild/protovalidate": 1.3.0
   "@chronark/zod-bird": 1.0.0
-  "@connectrpc/connect": 2.2.0
-  "@connectrpc/connect-node": 2.2.0
+  "@connectrpc/connect": 2.3.0
+  "@connectrpc/connect-node": 2.3.0
   "@connectrpc/validate": 0.2.0
   "@date-fns/tz": 1.5.0
   "@date-fns/utc": 2.1.1
@@ -63,22 +63,22 @@ catalog:
   "@dnd-kit/modifiers": 9.0.0
   "@dnd-kit/sortable": 10.0.0
   "@dnd-kit/utilities": 3.2.2
-  "@google-cloud/pubsub": 6.2.0
-  "@google-cloud/tasks": 7.1.1
+  "@google-cloud/pubsub": 6.4.1
+  "@google-cloud/tasks": 7.3.1
   "@hono/mcp": 0.2.5
-  "@hono/node-server": 2.1.4
+  "@hono/node-server": 2.1.11
   "@hono/sentry": 1.2.2
   "@hono/zod-openapi": 1.6.3
   "@hono/zod-validator": 0.8.0
   "@hookform/devtools": 4.4.0
-  "@hookform/resolvers": 5.9.1
+  "@hookform/resolvers": 5.9.2
   "@libsql/client": 0.17.4
-  "@logtape/logtape": 2.3.6
-  "@logtape/otel": 2.3.6
-  "@logtape/sentry": 2.3.6
-  "@modelcontextprotocol/sdk": 1.30.0
-  "@openpanel/nextjs": 1.5.1
-  "@openpanel/sdk": 1.3.1
+  "@logtape/logtape": 2.4.2
+  "@logtape/otel": 2.4.2
+  "@logtape/sentry": 2.4.2
+  "@modelcontextprotocol/sdk": 1.32.2
+  "@openpanel/nextjs": 1.5.4
+  "@openpanel/sdk": 1.3.4
   "@openstatus/health": 0.1.4
   "@openstatus/health-fly": 0.1.4
   "@openstatus/health-hono": 0.1.4
@@ -88,71 +88,71 @@ catalog:
   "@openstatus/health-upstash": 0.1.4
   "@openstatus/health-vercel": 0.1.4
   "@opentelemetry/exporter-logs-otlp-http": 0.208.0
-  "@opentelemetry/resources": 2.11.0
+  "@opentelemetry/resources": 2.12.1
   "@opentelemetry/sdk-logs": 0.208.0
-  "@opentelemetry/semantic-conventions": 1.43.0
-  "@oxc-node/core": 0.1.5
-  "@radix-ui/react-accordion": 1.2.20
-  "@radix-ui/react-alert-dialog": 1.1.23
-  "@radix-ui/react-avatar": 1.2.6
-  "@radix-ui/react-checkbox": 1.3.11
-  "@radix-ui/react-collapsible": 1.1.20
-  "@radix-ui/react-context-menu": 2.3.7
-  "@radix-ui/react-dialog": 1.1.23
-  "@radix-ui/react-dropdown-menu": 2.1.24
-  "@radix-ui/react-hover-card": 1.1.23
-  "@radix-ui/react-label": 2.1.15
-  "@radix-ui/react-navigation-menu": 1.2.22
-  "@radix-ui/react-popover": 1.1.23
-  "@radix-ui/react-portal": 1.1.17
-  "@radix-ui/react-progress": 1.1.16
-  "@radix-ui/react-radio-group": 1.4.7
-  "@radix-ui/react-scroll-area": 1.2.18
-  "@radix-ui/react-select": 2.3.7
-  "@radix-ui/react-separator": 1.1.15
-  "@radix-ui/react-slider": 1.4.7
-  "@radix-ui/react-slot": 1.3.3
-  "@radix-ui/react-visually-hidden": 1.2.11
-  "@radix-ui/react-switch": 1.3.7
-  "@radix-ui/react-tabs": 1.1.21
-  "@radix-ui/react-toggle": 1.1.18
-  "@radix-ui/react-tooltip": 1.2.16
-  "@react-email/ui": 6.9.5
-  "@remotion/cli": 4.0.536
+  "@opentelemetry/semantic-conventions": 1.45.0
+  "@oxc-node/core": 0.1.7
+  "@radix-ui/react-accordion": 1.3.1
+  "@radix-ui/react-alert-dialog": 1.2.1
+  "@radix-ui/react-avatar": 1.3.1
+  "@radix-ui/react-checkbox": 1.4.1
+  "@radix-ui/react-collapsible": 1.2.1
+  "@radix-ui/react-context-menu": 2.4.1
+  "@radix-ui/react-dialog": 1.3.1
+  "@radix-ui/react-dropdown-menu": 2.2.1
+  "@radix-ui/react-hover-card": 1.2.1
+  "@radix-ui/react-label": 2.1.17
+  "@radix-ui/react-navigation-menu": 1.4.1
+  "@radix-ui/react-popover": 1.3.1
+  "@radix-ui/react-portal": 1.2.0
+  "@radix-ui/react-progress": 1.2.1
+  "@radix-ui/react-radio-group": 1.5.1
+  "@radix-ui/react-scroll-area": 1.4.0
+  "@radix-ui/react-select": 2.4.1
+  "@radix-ui/react-separator": 1.2.0
+  "@radix-ui/react-slider": 1.6.1
+  "@radix-ui/react-slot": 1.5.0
+  "@radix-ui/react-visually-hidden": 1.2.13
+  "@radix-ui/react-switch": 1.4.1
+  "@radix-ui/react-tabs": 1.2.1
+  "@radix-ui/react-toggle": 1.2.1
+  "@radix-ui/react-tooltip": 1.4.1
+  "@react-email/ui": 6.11.16
+  "@remotion/cli": 4.0.546
   "@scalar/hono-api-reference": 0.8.10
-  "@sentry/node": 10.75.1
-  "@sentry/nextjs": 10.75.1
-  "@slack/web-api": 8.1.1
+  "@sentry/node": 10.78.0
+  "@sentry/nextjs": 10.78.0
+  "@slack/web-api": 8.5.0
   "@t3-oss/env-core": 0.13.11
   "@t3-oss/env-nextjs": 0.13.11
-  "@tailwindcss/cli": 4.3.3
+  "@tailwindcss/cli": 4.3.5
   "@tailwindcss/container-queries": 0.1.1
-  "@tailwindcss/postcss": 4.3.3
+  "@tailwindcss/postcss": 4.3.5
   "@tailwindcss/typography": 0.5.20
-  "@tanstack/react-query": 5.103.2
-  "@tanstack/react-query-devtools": 5.103.2
+  "@tanstack/react-query": 5.108.4
+  "@tanstack/react-query-devtools": 5.108.4
   "@tanstack/react-table": 8.21.3
-  "@tanstack/react-virtual": 3.14.13
-  "@trpc/client": 11.19.0
-  "@trpc/next": 11.19.0
-  "@trpc/react-query": 11.19.0
-  "@trpc/server": 11.19.0
-  "@trpc/tanstack-react-query": 11.19.0
+  "@tanstack/react-virtual": 3.14.28
+  "@trpc/client": 11.29.11
+  "@trpc/next": 11.29.11
+  "@trpc/react-query": 11.29.11
+  "@trpc/server": 11.29.11
+  "@trpc/tanstack-react-query": 11.29.11
   "@turbo/gen": 2.11.2
   "@types/bcryptjs": 3.0.0
   "@types/dom-speech-recognition": 0.0.12
-  "@types/node": 26.6.2
+  "@types/node": 26.6.6
   "@types/react": 19.3.0
   "@types/react-dom": 19.3.0
-  "@types/sanitize-html": 2.16.1
+  "@types/sanitize-html": 2.16.2
   "@types/validator": 13.15.10
-  "@unkey/api": 2.5.1
-  "@upstash/qstash": 2.11.3
-  "@upstash/redis": 1.39.0
-  "@vercel/blob": 2.8.0
-  "@workos-inc/node": 10.13.0
+  "@unkey/api": 2.6.0
+  "@upstash/qstash": 2.12.2
+  "@upstash/redis": 1.41.0
+  "@vercel/blob": 2.9.0
+  "@workos-inc/node": 10.14.0
   "@xterm/headless": 6.0.0
-  ai: 7.0.109
+  ai: 7.0.180
   bcryptjs: 3.0.3
   class-variance-authority: 0.7.1
   clsx: 2.1.1
@@ -160,48 +160,48 @@ catalog:
   cobe: 0.6.5
   date-fns: 3.6.0
   date-fns-tz: 2.0.1
-  dotenv: 18.0.2
+  dotenv: 18.0.10
   drizzle-kit: 0.31.11
-  drizzle-orm: 0.45.3
+  drizzle-orm: 0.45.4
   drizzle-zod: 0.8.3
   effect: 4.0.0-rc.117
   feed: 4.2.2
-  geist: 1.7.2
+  geist: 1.9.2
   gray-matter: 4.0.3
-  hono: 4.13.8
+  hono: 4.13.21
   hono-rate-limiter: 0.4.2
   ip-cidr: 4.0.2
   isomorphic-dompurify: 3.23.0
   jsonpath-plus: 10.4.0
-  knip: 6.37.0
+  knip: 6.48.0
   limiter: 4.1.0
   lucide-react: 0.525.0
   mailchecker: 6.0.21
   marked: 15.0.12
-  nanoid: 6.0.1
+  nanoid: 6.0.2
   nanoid-dictionary: 5.0.0
-  next: 16.4.5
+  next: 16.4.6
   next-auth: 5.0.0-beta.32
-  next-intl: 4.14.6
+  next-intl: 4.16.0
   next-mdx-remote: 6.0.0
   next-plausible: 3.12.5
   next-themes: 0.4.6
   node-html-parser: 6.1.13
-  nuqs: 2.10.1
+  nuqs: 2.10.3
   oxfmt: 0.70.0
-  oxlint: 1.85.0
-  oxlint-tsgolint: 7.0.2002
+  oxlint: 1.95.0
+  oxlint-tsgolint: 7.0.2008
   percentile: 1.6.0
-  playwright: 1.63.0
-  postcss: 8.5.28
+  playwright: 1.65.1
+  postcss: 8.5.33
   qr-code-styling: 1.9.2
-  radix-ui: 1.6.7
+  radix-ui: 1.8.1
   random-word-slugs: 0.1.7
-  react: 19.3.0
+  react: 19.3.1
   react-day-picker: 8.10.2
-  react-dom: 19.3.0
-  react-email: 6.9.5
-  react-hook-form: 7.88.0
+  react-dom: 19.3.1
+  react-email: 6.11.16
+  react-hook-form: 7.92.0
   react-medium-image-zoom: 5.4.9
   reading-time: 1.5.0
   recharts: 2.15.4
@@ -211,9 +211,9 @@ catalog:
   remark-gfm: 4.0.1
   remark-parse: 11.0.0
   remark-rehype: 11.1.2
-  remotion: 4.0.536
-  resend: 6.28.1
-  sanitize-html: 2.17.7
+  remotion: 4.0.546
+  resend: 6.39.0
+  sanitize-html: 2.18.2
   schema-dts: 1.1.5
   shadcn: 3.8.5
   shiki: 3.23.0
@@ -221,17 +221,17 @@ catalog:
   sonner: 2.0.8
   stripe: 22.6.2
   sugar-high: 0.9.5
-  superjson: 2.2.6
-  tailwind-merge: 3.7.0
-  tailwindcss: 4.3.3
+  superjson: 2.2.7
+  tailwind-merge: 3.7.1
+  tailwindcss: 4.3.5
   tailwindcss-animate: 1.0.7
-  tsdown: 0.23.0
+  tsdown: 0.23.7
   tsup: 8.5.1
   tw-animate-css: 1.4.0
   typescript: 7.0.2
   unified: 11.0.5
   validator: 13.15.35
   vaul: 1.1.2
-  vite: 8.3.4
-  vitest: 5.0.3
-  zod: 4.6.5
+  vite: 8.3.8
+  vitest: 5.1.1
+  zod: 4.6.7
