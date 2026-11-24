@@ -74,6 +74,7 @@ export {
   ListIncidentsInput,
   SetIncidentStatusInput,
   UpdateIncidentInput,
+  incidentStatus,
 } from "./schemas";
 export { setIncidentStatus } from "./set-status";
 export {

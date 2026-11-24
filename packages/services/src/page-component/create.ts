@@ -4,7 +4,7 @@ import { monitor, pageComponent } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError, ForbiddenError } from "../errors";
+import { ConflictError, NotFoundError } from "../errors";
 import { assertWithinLimit } from "../limits";
 import { assertGroupOnPage, assertPageInWorkspace } from "./internal";
 import { CreatePageComponentInput } from "./schemas";
@@ -44,7 +44,9 @@ export async function createPageComponent(args: {
           ),
         )
         .get();
-      if (!row) throw new ForbiddenError("Invalid monitor IDs.");
+      // Absent, soft-deleted and foreign monitors read the same.
+      // safe: the schema's refine guarantees monitorId on this branch
+      if (!row) throw new NotFoundError("monitor", input.monitorId as number);
       name = name ?? row.name;
 
       // `(pageId, monitorId)` is UNIQUE — pre-check so a duplicate reads as a

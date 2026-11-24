@@ -1,13 +1,4 @@
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq } from "@openstatus/db";
-import {
-  monitor,
-  page,
-  pageComponent,
-  pageComponentGroup,
-  pageConfigurationSchema,
-  pageSubscriber,
-} from "@openstatus/db/src/schema";
 import type {
   ComponentDayBucket,
   ComponentEvent,
@@ -22,6 +13,7 @@ import {
 } from "@openstatus/proto/status_page/v1";
 import {
   ConflictError,
+  InternalServiceError,
   NotFoundError,
   ServiceError,
   withTransaction,
@@ -37,6 +29,7 @@ import {
   type PageStatus,
   type StatusPageContent,
   listPages,
+  parsePageConfiguration,
   updatePageAppearance,
   updatePageCustomDomain,
   updatePageCustomTheme,
@@ -48,6 +41,7 @@ import {
 import {
   createPageComponent,
   deletePageComponent,
+  getPageComponent,
   getPageComponentDailySummary,
   updatePageComponent,
 } from "@openstatus/services/page-component";
@@ -62,7 +56,7 @@ import {
   listPageSubscribers,
   unsubscribePageSubscriber,
   sendSubscriberVerification,
-  upsertSelfSignupSubscriber,
+  subscribeEmailInWorkspace,
 } from "@openstatus/services/page-subscriber";
 import {
   THEME_KEYS,
@@ -121,8 +115,8 @@ import {
  * Normalize a service `Page` back into the converter's raw-db shape.
  *
  * The service parses `authEmailDomains` / `allowedIpRanges` into arrays
- * via `selectPageSchema`; the converters (shared with the methods below that
- * still read the DB directly) expect the comma-joined string form it stores.
+ * via `selectPageSchema`; the converters expect the comma-joined string form
+ * the DB stores.
  */
 function serviceToConverterPage<
   P extends {
@@ -144,23 +138,12 @@ function serviceToConverterPage<
   };
 }
 
-/**
- * Helper to get a status page by ID with workspace scope.
- */
 function parseEntityId(value: string, label: string): number {
   return parseId(
     value,
     () =>
       new ConnectError(`Invalid ${label}: "${value}"`, Code.InvalidArgument),
   );
-}
-
-async function getPageById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(page)
-    .where(and(eq(page.id, id), eq(page.workspaceId, workspaceId)))
-    .get();
 }
 
 /**
@@ -272,70 +255,9 @@ function validateProtoCustomTheme(customTheme: CustomTheme): {
   return input;
 }
 
-/**
- * Helper to get a component by ID with workspace scope.
- */
-async function getComponentById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(pageComponent)
-    .where(
-      and(eq(pageComponent.id, id), eq(pageComponent.workspaceId, workspaceId)),
-    )
-    .get();
-}
+type ResolvedPage = Awaited<ReturnType<typeof getPageRow>>;
 
-/**
- * Helper to get a component group by ID with workspace scope.
- */
-async function getGroupById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(pageComponentGroup)
-    .where(
-      and(
-        eq(pageComponentGroup.id, id),
-        eq(pageComponentGroup.workspaceId, workspaceId),
-      ),
-    )
-    .get();
-}
-
-/**
- * Resolve a component group and assert it belongs to `pageId`. Workspace scope
- * alone isn't enough — a group from a sibling page would otherwise be accepted
- * and the component would render under a group it isn't on. Reported as
- * not-found so the check doesn't confirm the group exists on another page.
- */
-async function getGroupForPage(
-  groupId: string,
-  workspaceId: number,
-  pageId: number,
-) {
-  const group = await getGroupById(
-    parseEntityId(groupId, "group id"),
-    workspaceId,
-  );
-  if (!group || group.pageId !== pageId) {
-    throw componentGroupNotFoundError(groupId);
-  }
-  return group;
-}
-
-/**
- * Helper to get a monitor by ID with workspace scope.
- */
-async function getMonitorById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(monitor)
-    .where(and(eq(monitor.id, id), eq(monitor.workspaceId, workspaceId)))
-    .get();
-}
-
-type ResolvedPage = NonNullable<Awaited<ReturnType<typeof getPageById>>>;
-
-async function getWorkspacePageForRead(
+async function getWorkspacePage(
   rpcCtx: ReturnType<typeof getRpcContext>,
   id: string,
 ): Promise<ResolvedPage> {
@@ -347,6 +269,17 @@ async function getWorkspacePageForRead(
   } catch (err) {
     if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
     toConnectError(err);
+  }
+}
+
+/** Group misses are reported as not-found whether absent or on another page. */
+function rethrowGroupNotFound(err: unknown, groupId: string | undefined) {
+  if (
+    groupId &&
+    err instanceof NotFoundError &&
+    err.entity === "page_component_group"
+  ) {
+    throw componentGroupNotFoundError(groupId);
   }
 }
 
@@ -943,30 +876,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async addMonitorComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(
-      parseEntityId(req.pageId, "page id"),
-      workspaceId,
-    );
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
-    // Verify monitor exists and belongs to workspace
-    const monitorData = await getMonitorById(
-      parseEntityId(req.monitorId, "monitor id"),
-      workspaceId,
-    );
-    if (!monitorData) {
-      throw monitorNotFoundError(req.monitorId);
-    }
-
-    // Validate group exists if provided
-    if (req.groupId) {
-      await getGroupForPage(req.groupId, workspaceId, pageData.id);
-    }
+    const pageData = await getWorkspacePage(rpcCtx, req.pageId);
+    const monitorId = parseEntityId(req.monitorId, "monitor id");
+    const groupId = req.groupId ? parseEntityId(req.groupId, "group id") : null;
 
     try {
       const created = await createPageComponent({
@@ -974,16 +886,20 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         input: {
           pageId: pageData.id,
           type: "monitor",
-          monitorId: monitorData.id,
-          name: req.name ?? monitorData.name,
+          monitorId,
+          name: req.name,
           description: req.description ?? null,
           order: req.order ?? 0,
-          groupId: req.groupId ? parseEntityId(req.groupId, "group id") : null,
+          groupId,
         },
       });
 
       return { component: dbComponentToProto(created) };
     } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "monitor") {
+        throw monitorNotFoundError(req.monitorId);
+      }
+      rethrowGroupNotFound(err, req.groupId);
       rethrowPlanLimit(
         err,
         "page-components",
@@ -994,21 +910,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async addStaticComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(
-      parseEntityId(req.pageId, "page id"),
-      workspaceId,
-    );
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
-    // Validate group exists if provided
-    if (req.groupId) {
-      await getGroupForPage(req.groupId, workspaceId, pageData.id);
-    }
+    const pageData = await getWorkspacePage(rpcCtx, req.pageId);
+    const groupId = req.groupId ? parseEntityId(req.groupId, "group id") : null;
 
     try {
       const created = await createPageComponent({
@@ -1020,12 +923,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           name: req.name,
           description: req.description ?? null,
           order: req.order ?? 0,
-          groupId: req.groupId ? parseEntityId(req.groupId, "group id") : null,
+          groupId,
         },
       });
 
       return { component: dbComponentToProto(created) };
     } catch (err) {
+      rethrowGroupNotFound(err, req.groupId);
       rethrowPlanLimit(
         err,
         "page-components",
@@ -1060,31 +964,17 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async updateComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const id = req.id?.trim();
     if (!id) {
       throw pageComponentNotFoundError(req.id);
     }
 
-    const component = await getComponentById(
-      parseEntityId(id, "component id"),
-      workspaceId,
-    );
-    if (!component) {
-      throw pageComponentNotFoundError(id);
-    }
-
-    // Validate group exists if provided
-    if (req.groupId !== undefined && req.groupId !== "") {
-      await getGroupForPage(req.groupId, workspaceId, component.pageId);
-    }
-
     try {
       const updated = await updatePageComponent({
         ctx: toServiceCtx(rpcCtx),
         input: {
-          id: component.id,
+          id: parseEntityId(id, "component id"),
           name:
             req.name !== undefined && req.name !== "" ? req.name : undefined,
           description:
@@ -1103,24 +993,29 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
       return { component: dbComponentToProto(updated) };
     } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "page_component") {
+        throw pageComponentNotFoundError(id);
+      }
+      rethrowGroupNotFound(err, req.groupId);
       toConnectError(err);
     }
   },
 
   async getPageComponent(req, ctx) {
+    const id = req.id?.trim();
+    if (!id) throw pageComponentNotFoundError(req.id);
     try {
       const rpcCtx = getRpcContext(ctx);
-      const id = req.id?.trim();
-      if (!id) throw pageComponentNotFoundError(req.id);
-
-      const component = await getComponentById(
-        parseEntityId(id, "component id"),
-        rpcCtx.workspace.id,
-      );
-      if (!component) throw pageComponentNotFoundError(id);
+      const component = await getPageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: parseEntityId(id, "component id") },
+      });
 
       return { component: dbComponentToProto(component) };
     } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw pageComponentNotFoundError(id);
+      }
       toConnectError(err);
     }
   },
@@ -1131,16 +1026,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async createComponentGroup(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(
-      parseEntityId(req.pageId, "page id"),
-      workspaceId,
-    );
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
+    const pageData = await getWorkspacePage(rpcCtx, req.pageId);
 
     try {
       const created = await createPageComponentGroup({
@@ -1160,27 +1046,19 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async deleteComponentGroup(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const id = req.id?.trim();
     if (!id) {
       throw componentGroupNotFoundError(req.id);
     }
 
-    const group = await getGroupById(
-      parseEntityId(id, "group id"),
-      workspaceId,
-    );
-    if (!group) {
-      throw componentGroupNotFoundError(id);
-    }
-
     try {
       await deletePageComponentGroup({
         ctx: toServiceCtx(rpcCtx),
-        input: { id: group.id },
+        input: { id: parseEntityId(id, "group id") },
       });
     } catch (err) {
+      rethrowGroupNotFound(err, id);
       toConnectError(err);
     }
 
@@ -1189,26 +1067,17 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async updateComponentGroup(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const id = req.id?.trim();
     if (!id) {
       throw componentGroupNotFoundError(req.id);
     }
 
-    const group = await getGroupById(
-      parseEntityId(id, "group id"),
-      workspaceId,
-    );
-    if (!group) {
-      throw componentGroupNotFoundError(id);
-    }
-
     try {
       const updated = await updatePageComponentGroup({
         ctx: toServiceCtx(rpcCtx),
         input: {
-          id: group.id,
+          id: parseEntityId(id, "group id"),
           name:
             req.name !== undefined && req.name !== "" ? req.name : undefined,
           defaultOpen: req.defaultOpen,
@@ -1217,6 +1086,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
       return { group: dbGroupToProto(updated) };
     } catch (err) {
+      rethrowGroupNotFound(err, id);
       toConnectError(err);
     }
   },
@@ -1227,40 +1097,30 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async subscribeToPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
+    checkStatusSubscribersLimit(rpcCtx.workspace.limits);
 
-    checkStatusSubscribersLimit(limits);
-
-    const pageData = await getPageById(
-      parseEntityId(req.pageId, "page id"),
-      workspaceId,
-    );
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
+    let result: Awaited<ReturnType<typeof subscribeEmailInWorkspace>>;
+    try {
+      result = await subscribeEmailInWorkspace({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          email: req.email,
+          pageId: parseEntityId(req.pageId, "page id"),
+        },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "page") {
+        throw statusPageNotFoundError(req.pageId);
+      }
+      if (err instanceof InternalServiceError) {
+        throw subscriberCreateFailedError();
+      }
+      toConnectError(err);
     }
-
-    const result = await upsertSelfSignupSubscriber({
-      input: {
-        email: req.email,
-        pageId: pageData.id,
-      },
-      // API-key caller, page already resolved inside its own workspace.
-      visitor: null,
-    });
-
-    const row = await db
-      .select()
-      .from(pageSubscriber)
-      .where(eq(pageSubscriber.id, result.id))
-      .get();
-
-    if (!row) {
-      throw subscriberCreateFailedError();
-    }
+    const { subscriber, row } = result;
 
     try {
-      await sendSubscriberVerification({ subscriber: result });
+      await sendSubscriberVerification({ subscriber });
     } catch (err) {
       console.error("Failed to send verification email:", err);
     }
@@ -1339,16 +1199,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async unsubscribeFromPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(
-      parseEntityId(req.pageId, "page id"),
-      workspaceId,
-    );
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
+    const pageId = parseEntityId(req.pageId, "page id");
 
     if (req.identifier.case !== "email" && req.identifier.case !== "id") {
       throw identifierRequiredError();
@@ -1365,9 +1216,12 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     try {
       await unsubscribePageSubscriber({
         ctx: toServiceCtx(rpcCtx),
-        input: { pageId: pageData.id, identifier },
+        input: { pageId, identifier },
       });
     } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "page") {
+        throw statusPageNotFoundError(req.pageId);
+      }
       if (err instanceof NotFoundError) {
         throw subscriberNotFoundError(req.identifier.value);
       }
@@ -1418,17 +1272,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async getStatusPageContent(req, ctx) {
     // Note: This endpoint may be used publicly, so we need to handle
     // the case where we look up by slug without workspace scope
-    type PageData = Awaited<ReturnType<typeof getPageById>>;
-    let pageData: PageData;
+    let pageData: ResolvedPage | undefined;
     let identifierValue: string;
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
       identifierValue = req.identifier.value;
-      pageData = await getWorkspacePageForRead(
-        getRpcContext(ctx),
-        identifierValue,
-      );
+      pageData = await getWorkspacePage(getRpcContext(ctx), identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });
@@ -1464,17 +1314,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   },
 
   async getOverallStatus(req, ctx) {
-    type PageData = Awaited<ReturnType<typeof getPageById>>;
-    let pageData: PageData;
+    let pageData: ResolvedPage | undefined;
     let identifierValue: string;
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
       identifierValue = req.identifier.value;
-      pageData = await getWorkspacePageForRead(
-        getRpcContext(ctx),
-        identifierValue,
-      );
+      pageData = await getWorkspacePage(getRpcContext(ctx), identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });
@@ -1500,24 +1346,17 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async getStatusPageOverview(req, ctx) {
     try {
       const rpcCtx = getRpcContext(ctx);
-      const pageData = await getWorkspacePageForRead(rpcCtx, req.id);
+      const pageData = await getWorkspacePage(rpcCtx, req.id);
       const pageContent = await getStatusPageContent({ pageId: pageData.id });
       const [content, status] = await Promise.all([
         fetchStatusPageContent(pageData, pageContent),
         computeOverallStatus(pageData, pageContent.components),
       ]);
 
-      // legacy/pre-enforcement rows may hold an invalid configuration; fall back to defaults
-      const parsedConfig = pageConfigurationSchema.safeParse(
-        pageData.configuration ?? {},
-      );
-
       return {
         statusPage: dbPageToProto(pageData),
         configuration: dbConfigurationToProto(
-          parsedConfig.success
-            ? parsedConfig.data
-            : pageConfigurationSchema.parse({}),
+          parsePageConfiguration(pageData.configuration),
         ),
         ...content,
         overallStatus: status.overallStatus,
@@ -1529,15 +1368,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   },
 
   async getPageComponentDailySummary(req, ctx) {
-    type PageData = Awaited<ReturnType<typeof getPageById>>;
+    let pageData: ResolvedPage | undefined;
     const rpcCtx = getRpcContext(ctx);
-    let pageData: PageData;
     let identifierValue: string;
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
       identifierValue = req.identifier.value;
-      pageData = await getWorkspacePageForRead(rpcCtx, identifierValue);
+      pageData = await getWorkspacePage(rpcCtx, identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });

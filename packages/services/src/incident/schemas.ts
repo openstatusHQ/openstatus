@@ -4,6 +4,8 @@ import {
 } from "@openstatus/db/src/schema/incidents/constants";
 import { z } from "zod";
 
+export { incidentStatus };
+
 const id = z.number().int();
 const title = z.string().trim().min(1).max(256);
 const summary = z.string().trim().min(1).max(4000);

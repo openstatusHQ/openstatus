@@ -198,3 +198,9 @@ export const UpdatePageConfigurationInput = z.object({
 export type UpdatePageConfigurationInput = z.infer<
   typeof UpdatePageConfigurationInput
 >;
+
+/** Legacy rows may hold an invalid configuration; they read as the defaults. */
+export function parsePageConfiguration(value: unknown) {
+  const parsed = pageConfigurationSchema.safeParse(value ?? {});
+  return parsed.success ? parsed.data : pageConfigurationSchema.parse({});
+}
