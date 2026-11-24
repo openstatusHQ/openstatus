@@ -63,7 +63,6 @@ export {
   type HeartbeatSweepRow,
   listHeartbeatSweepCandidates,
   listStatusDriftCandidates,
-  type QuorumSql,
   type StatusDriftRow,
 } from "./sweeps";
 export {

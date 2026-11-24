@@ -5,11 +5,6 @@ import * as Sentry from "@sentry/node";
 
 import { triggerNotifications } from "../checker/alerting";
 import { enqueueOutbox } from "../checker/outbox";
-import {
-  csvRegionCountSql,
-  csvRegionMemberSql,
-  quorumMetSql,
-} from "../checker/quorum";
 import { EVENT_TYPE, evaluateTransition } from "../checker/transition";
 import { env } from "../env";
 
@@ -28,14 +23,7 @@ export function handleStatusDriftCron() {
 /** `workspaceId` narrows the sweep; the cron repairs every workspace. */
 export async function repairStatusDrift(workspaceId?: number) {
   const candidates = await withBusyRetry(() =>
-    listStatusDriftCandidates({
-      workspaceId,
-      quorum: {
-        met: quorumMetSql,
-        csvRegionCount: csvRegionCountSql,
-        csvRegionMember: csvRegionMemberSql,
-      },
-    }),
+    listStatusDriftCandidates({ workspaceId }),
   );
   if (candidates.length === 0) return { candidates: 0, repaired: 0 };
 

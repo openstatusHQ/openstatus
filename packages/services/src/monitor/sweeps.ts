@@ -1,4 +1,4 @@
-import { type SQL, db as defaultDb, sql } from "@openstatus/db";
+import { db as defaultDb, sql } from "@openstatus/db";
 import {
   monitorInMaintenance,
   monitorInWindow,
@@ -11,6 +11,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { DrizzleClient } from "../context";
+import { csvRegionCountSql, csvRegionMemberSql, quorumMetSql } from "./quorum";
 
 type SweepDb = Pick<DrizzleClient, "select" | "all">;
 
@@ -70,13 +71,6 @@ export async function listHeartbeatSweepCandidates(args: {
   `);
 }
 
-/** The checker's quorum rule, passed in so it keeps a single definition. */
-export type QuorumSql = {
-  met: (affected: SQL, total: SQL) => SQL;
-  csvRegionCount: () => SQL;
-  csvRegionMember: (region: SQL) => SQL;
-};
-
 export type StatusDriftRow = { monitor_id: number; status: MonitorStatus };
 
 /**
@@ -84,12 +78,11 @@ export type StatusDriftRow = { monitor_id: number; status: MonitorStatus };
  * itself does not have, across workspaces unless `workspaceId` narrows it.
  */
 export async function listStatusDriftCandidates(args: {
-  quorum: QuorumSql;
   workspaceId?: number;
   db?: SweepDb;
 }): Promise<StatusDriftRow[]> {
   const db = args.db ?? defaultDb;
-  const { quorum, workspaceId } = args;
+  const { workspaceId } = args;
   return db.all<StatusDriftRow>(sql`
     SELECT ${monitorStatusTable.monitorId} AS monitor_id,
            ${monitorStatusTable.status} AS status
@@ -103,9 +96,9 @@ export async function listStatusDriftCandidates(args: {
       -- no alerts during maintenance; a failure repair waits for the window to end
       AND (${monitorStatusTable.status} = 'active'
         OR NOT ${monitorInWindow(db, new Date())})
-      AND ${quorum.csvRegionMember(sql`${monitorStatusTable.region}`)}
+      AND ${csvRegionMemberSql(sql`${monitorStatusTable.region}`)}
     GROUP BY ${monitorStatusTable.monitorId}, ${monitorStatusTable.status}
-    HAVING ${quorum.met(sql`count(*)`, quorum.csvRegionCount())}
+    HAVING ${quorumMetSql(sql`count(*)`, csvRegionCountSql())}
     LIMIT ${DRIFT_CANDIDATE_LIMIT}
   `);
 }

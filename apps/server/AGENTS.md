@@ -36,9 +36,8 @@ and both must stay:
 
 New endpoints call a service verb rather than query Drizzle directly:
 `oxlint.config.ts` bans runtime `@openstatus/db` and `drizzle-orm` imports
-everywhere outside its exemption list. Existing offenders carry an inline
-disable; a migration removes it, and a disable that suppresses nothing fails
-`pnpm lint`.
+everywhere outside its exemption list, and a disable that suppresses nothing
+fails `pnpm lint`.
 
 ## Route config
 
