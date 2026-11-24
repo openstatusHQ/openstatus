@@ -64,13 +64,18 @@ export default defineConfig({
         "packages/api/src/router/import.ts",
         "apps/server/src/routes/rpc/**",
         "apps/server/src/routes/slack/interactions.ts",
+        "apps/status-page/src/**",
       ],
       excludeFiles: [
         "**/__tests__/**",
         "**/*.test.ts",
-        // Request validation reads schema constants (regions, periodicity, methods).
+        // Schema constants only (regions, periodicity, methods).
         "apps/server/src/routes/rpc/handlers/monitor/limits.ts",
         "apps/server/src/routes/rpc/handlers/monitor/validators.ts",
+        // Infrastructure, not workspace data: the db health probe and the
+        // Auth.js adapter that owns the viewer session tables.
+        "apps/status-page/src/app/api/health/route.ts",
+        "apps/status-page/src/lib/auth/adapter.ts",
       ],
       rules: {
         "no-restricted-imports": [

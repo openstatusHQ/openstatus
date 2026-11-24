@@ -1469,6 +1469,9 @@ importers:
       '@openstatus/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@openstatus/regions':
+        specifier: workspace:*
+        version: link:../../packages/regions
       '@openstatus/services':
         specifier: workspace:*
         version: link:../../packages/services
