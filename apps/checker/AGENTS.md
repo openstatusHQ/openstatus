@@ -1,6 +1,6 @@
 # AGENTS.md — apps/checker
 
-Go 1.25, the only non-TypeScript tier in the repo along with
+Go 1.27, the only non-TypeScript tier in the repo along with
 `apps/private-location`. It probes customer endpoints from ~35 fly.io regions on
 512 MB VMs and writes results straight to Tinybird.
 

@@ -38,7 +38,7 @@ jobs:
       - name: 🐹 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "stable"
+          go-version: "1.27.3"
 
       - name: 📥 Install protoc-gen-connect-openapi
         run: go install github.com/sudorandom/protoc-gen-connect-openapi@v0.25.5
