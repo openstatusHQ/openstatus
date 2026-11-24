@@ -9,6 +9,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   getExternalComponentBySlug,
   listExternalComponentsBySlug,
+  listLiveComponentSlugs,
   upsertExternalComponentsForService,
 } from "../index";
 
@@ -542,6 +543,54 @@ describe("listExternalComponentsBySlug", () => {
     });
     expect(service).toBeNull();
     expect(components).toEqual([]);
+  });
+});
+
+describe("listLiveComponentSlugs", () => {
+  const component = (name: string, position: number) => ({
+    upstreamComponentId: name,
+    name,
+    position,
+    indicator: "none",
+    status: "operational",
+  });
+
+  test("lists live, supported components by service slug then position", async () => {
+    const later = await seedService({ slug: `${TEST_PREFIX}-live-b` });
+    const earlier = await seedService({ slug: `${TEST_PREFIX}-live-a` });
+    const custom = await seedService({
+      slug: `${TEST_PREFIX}-live-custom`,
+      apiConfigType: "custom",
+    });
+    const deleted = await seedService({ slug: `${TEST_PREFIX}-live-deleted` });
+    await db
+      .update(externalService)
+      .set({ deletedAt: new Date() })
+      .where(eq(externalService.id, deleted))
+      .run();
+
+    await upsertExternalComponentsForService({
+      externalServiceId: later,
+      components: [component("beta", 1)],
+    });
+    await upsertExternalComponentsForService({
+      externalServiceId: earlier,
+      components: [component("second", 2), component("first", 1)],
+    });
+    for (const id of [custom, deleted]) {
+      await upsertExternalComponentsForService({
+        externalServiceId: id,
+        components: [component("hidden", 1)],
+      });
+    }
+
+    const slugs = await listLiveComponentSlugs({});
+    const ours = slugs.filter((s) => s.serviceSlug.startsWith(TEST_PREFIX));
+    expect(ours).toEqual([
+      { serviceSlug: `${TEST_PREFIX}-live-a`, componentSlug: "first" },
+      { serviceSlug: `${TEST_PREFIX}-live-a`, componentSlug: "second" },
+      { serviceSlug: `${TEST_PREFIX}-live-b`, componentSlug: "beta" },
+    ]);
   });
 });
 

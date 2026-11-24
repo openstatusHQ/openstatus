@@ -11,11 +11,13 @@ export {
   type ExternalComponentListItem,
   type GetComponentBySlugResult,
   type ListComponentsBySlugResult,
+  type LiveComponentSlug,
   COMPONENT_SUPPORTED_API_CONFIG_TYPES,
   getExternalComponentBySlug,
   listExternalComponentsByRefs,
   listExternalComponentsByServiceId,
   listExternalComponentsBySlug,
+  listLiveComponentSlugs,
   supportsComponents,
 } from "./list";
 export {
