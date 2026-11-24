@@ -63,14 +63,19 @@ export default {
   create(context) {
     const textLinkNames = new Set();
     return {
-      ImportDeclaration(node) {
-        if (node.source?.value !== TEXT_LINK_SOURCE) return;
-        for (const specifier of node.specifiers) {
-          if (
-            specifier.type === "ImportSpecifier" &&
-            specifier.imported?.name === "Link"
-          ) {
-            textLinkNames.add(specifier.local.name);
+      // Collected up front so JSX above the import is checked too.
+      Program(node) {
+        textLinkNames.clear();
+        for (const statement of node.body) {
+          if (statement.type !== "ImportDeclaration") continue;
+          if (statement.source?.value !== TEXT_LINK_SOURCE) continue;
+          for (const specifier of statement.specifiers) {
+            if (
+              specifier.type === "ImportSpecifier" &&
+              specifier.imported?.name === "Link"
+            ) {
+              textLinkNames.add(specifier.local.name);
+            }
           }
         }
       },

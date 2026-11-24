@@ -27,7 +27,7 @@ export default {
         if (calleeName(node) !== "requireScope") return;
         const arg = node.arguments[1];
         if (!arg) return;
-        if (arg.type !== "Literal") {
+        if (arg.type !== "Literal" || typeof arg.value !== "string") {
           context.report({ node: arg, messageId: "nonLiteral" });
           return;
         }

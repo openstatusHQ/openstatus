@@ -9,3 +9,7 @@ function writesAll(ctx: ServiceContext) {
 function dynamic(ctx: ServiceContext, scope: string) {
   requireScope(ctx, scope); // expect: services-no-legacy-scope
 }
+
+function numeric(ctx: ServiceContext) {
+  requireScope(ctx, 123); // expect: services-no-legacy-scope
+}

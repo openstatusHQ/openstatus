@@ -13,6 +13,7 @@ export function calleeName(node) {
   // `foo.bar()` — only the property matters here.
   if (
     callee.type === "MemberExpression" &&
+    !callee.computed &&
     callee.property?.type === "Identifier"
   ) {
     return callee.property.name;
@@ -54,6 +55,7 @@ export function boundNames(pattern, out = new Set()) {
   return out;
 }
 
+/** `requireScope` is synchronous and returns nothing, so only the bare statement form occurs. */
 export function isRequireScopeStatement(statement) {
   return (
     statement.type === "ExpressionStatement" &&
@@ -113,4 +115,11 @@ export function lateRequireScope(fn) {
     .slice(0, first)
     .every((statement) => isParamDestructuring(statement, params));
   return early ? null : statements[first];
+}
+
+/** Whether `inner` lies inside `outer` in the source. */
+export function isWithin(inner, outer) {
+  const [start, end] = inner.range ?? [inner.start, inner.end];
+  const [outerStart, outerEnd] = outer.range ?? [outer.start, outer.end];
+  return start >= outerStart && end <= outerEnd;
 }

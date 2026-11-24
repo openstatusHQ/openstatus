@@ -1,3 +1,11 @@
+export function AboveTheImport() {
+  return (
+    <Button asChild>
+      <Link href="/top">top</Link> {/* expect: no-text-link-as-child */}
+    </Button>
+  );
+}
+
 import { Link, Link as TextLink } from "@/components/common/link";
 
 export function Direct() {

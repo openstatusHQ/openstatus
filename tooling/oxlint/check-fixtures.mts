@@ -32,7 +32,7 @@ function walk(dir: string): string[] {
   });
 }
 
-const expected = new Set<string>();
+const expected: string[] = [];
 const unmarkedBad: string[] = [];
 for (const file of walk(FIXTURES)) {
   const rel = relative(REPO_ROOT, file).replaceAll("\\", "/");
@@ -46,7 +46,7 @@ for (const file of walk(FIXTURES)) {
     .split("\n")
     .forEach((text, i) => {
       for (const [, rule] of text.matchAll(MARKER)) {
-        expected.add(`${rel}:${i + 1} ${rule}`);
+        expected.push(`${rel}:${i + 1} ${rule}`);
       }
     });
 }
@@ -66,7 +66,7 @@ const plugin = (await import("./plugin.js")).default as {
 const fixtureConfig = JSON.parse(readFileSync(CONFIG, "utf8")) as {
   rules: Record<string, unknown>;
 };
-const markedRules = new Set([...expected].map((key) => key.split(" ")[1]));
+const markedRules = new Set(expected.map((key) => key.split(" ")[1]));
 for (const rule of Object.keys(plugin.rules)) {
   if (!(`openstatus/${rule}` in fixtureConfig.rules)) {
     fail(`${rule} is not enabled in tooling/oxlint/fixtures.json.`);
@@ -86,9 +86,14 @@ try {
   );
 } catch (error) {
   // oxlint exits non-zero because the bad fixtures report errors.
-  const failed = error as { stdout?: string; stderr?: string };
+  const failed = error as {
+    stdout?: string;
+    stderr?: string;
+    message?: string;
+  };
   output = failed.stdout ?? "";
-  stderr = failed.stderr ?? "";
+  // No output at all (a missing binary): keep the spawn error itself.
+  stderr = failed.stderr || failed.message || "";
 }
 
 let diagnostics: Diagnostic[] = [];
@@ -99,19 +104,31 @@ try {
   fail(`oxlint printed no JSON report:\n${output}${stderr}`);
 }
 
-const actual = new Set<string>();
+const actual: string[] = [];
 for (const d of diagnostics) {
   const rule = /^openstatus\((.+)\)$/.exec(d.code)?.[1] ?? d.code;
   const file = relative(REPO_ROOT, resolve(REPO_ROOT, d.filename));
-  actual.add(`${file.replaceAll("\\", "/")}:${d.labels[0]?.span.line} ${rule}`);
+  actual.push(
+    `${file.replaceAll("\\", "/")}:${d.labels[0]?.span.line} ${rule}`,
+  );
 }
 
-const missing = [...expected].filter((key) => !actual.has(key));
-const unexpected = [...actual].filter((key) => !expected.has(key));
+// Compare counts, so a rule that reports one line twice fails too.
+function minus(left: string[], right: string[]): string[] {
+  const remaining = [...right];
+  return left.filter((key) => {
+    const i = remaining.indexOf(key);
+    if (i === -1) return true;
+    remaining.splice(i, 1);
+    return false;
+  });
+}
+const missing = minus(expected, actual);
+const unexpected = minus(actual, expected);
 
 if (missing.length > 0 || unexpected.length > 0) {
   for (const key of missing) console.error(`missing report:    ${key}`);
   for (const key of unexpected) console.error(`unexpected report: ${key}`);
   process.exit(1);
 }
-console.log(`Lint rule fixtures match (${expected.size} reports).`);
+console.log(`Lint rule fixtures match (${expected.length} reports).`);

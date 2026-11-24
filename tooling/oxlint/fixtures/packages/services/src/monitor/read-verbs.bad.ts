@@ -22,3 +22,8 @@ export async function getParsedWidget(args: { ctx: ServiceContext; input: unknow
   requireScope(args.ctx, "monitors:read"); // expect: services-read-verbs-require-scope
   return input;
 }
+
+export async function getWidgetForEdit(args: { ctx: ServiceContext }) { // expect: services-read-verbs-require-scope
+  requireScope(args.ctx, "monitors:write");
+  return args;
+}

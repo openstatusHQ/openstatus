@@ -3,6 +3,7 @@ import {
   calleeName,
   functionName,
   lateRequireScope,
+  isWithin,
 } from "../lib/ast.js";
 
 /**
@@ -43,6 +44,7 @@ export default {
       if (depth === 0) {
         outermost = node;
         outermostName = functionName(node, pendingName);
+        pendingName = null;
         calls.clear();
         bodyCalls.clear();
       }
@@ -92,7 +94,9 @@ export default {
         const name = calleeName(node);
         if (!name) return;
         calls.add(name);
-        if (depth === 1) bodyCalls.add(name);
+        // Parameter defaults run before the body, so they don't count as it.
+        const inParams = outermost?.params.some((p) => isWithin(node, p));
+        if (depth === 1 && !inParams) bodyCalls.add(name);
       },
     };
     for (const type of FUNCTION_TYPES) {

@@ -20,13 +20,17 @@ export default {
     let isClientFile = false;
 
     return {
+      // A directive only counts in the prologue, before any other statement.
       Program(node) {
-        isClientFile = node.body.some(
-          (statement) =>
+        isClientFile = false;
+        for (const statement of node.body) {
+          const isDirective =
             statement.type === "ExpressionStatement" &&
             statement.expression?.type === "Literal" &&
-            statement.expression.value === "use client",
-        );
+            typeof statement.expression.value === "string";
+          if (!isDirective) break;
+          if (statement.expression.value === "use client") isClientFile = true;
+        }
       },
       ImportDeclaration(node) {
         if (!isClientFile) return;
@@ -36,7 +40,8 @@ export default {
         const hasValueSpecifier = node.specifiers.some(
           (specifier) => specifier.importKind !== "type",
         );
-        if (!hasValueSpecifier) return;
+        // A bare `import "…/schema"` still loads the whole barrel.
+        if (node.specifiers.length > 0 && !hasValueSpecifier) return;
 
         context.report({
           node,

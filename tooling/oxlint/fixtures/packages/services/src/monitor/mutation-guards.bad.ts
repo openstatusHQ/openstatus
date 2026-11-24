@@ -39,3 +39,13 @@ export async function tagWidget(args: { ctx: ServiceContext }) {
     await emitAudit(tx, ctx, {});
   });
 }
+
+// A default parameter runs before the body; it is not the verb's own check.
+export async function archiveWidget( // expect: services-mutation-guards
+  args: { ctx: ServiceContext },
+  _checked = requireScope(args.ctx, "monitors:write"),
+) {
+  return withTransaction(args.ctx, async (tx) => {
+    await emitAudit(tx, args.ctx, {});
+  });
+}
