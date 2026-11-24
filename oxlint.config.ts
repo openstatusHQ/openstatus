@@ -62,59 +62,38 @@ export default defineConfig({
         "packages/api/src/router/invitation.ts",
         "packages/api/src/router/apiKey.ts",
         "packages/api/src/router/import.ts",
-        "apps/server/src/routes/rpc/handlers/health/**",
-        "apps/server/src/routes/rpc/handlers/status-report/**",
-        "apps/server/src/routes/rpc/handlers/maintenance/**",
-        "apps/server/src/routes/rpc/handlers/notification/**",
-        "apps/server/src/routes/rpc/handlers/incident/**",
-        "apps/server/src/routes/rpc/handlers/status-page/**",
+        "apps/server/src/routes/rpc/**",
         "apps/server/src/routes/slack/interactions.ts",
       ],
       excludeFiles: [
         "**/__tests__/**",
         "**/*.test.ts",
-        // Still read db directly: limits.ts queries quotas, converters.ts needs
-        // db enum shapes for proto round-trip. Exempt until they move to services.
-        "apps/server/src/routes/rpc/handlers/notification/limits.ts",
-        "apps/server/src/routes/rpc/handlers/notification/converters.ts",
-        // Type-only imports of db shapes for proto conversion and plan limits.
-        "apps/server/src/routes/rpc/handlers/status-page/converters.ts",
-        "apps/server/src/routes/rpc/handlers/status-page/limits.ts",
+        // Request validation reads schema constants (regions, periodicity, methods).
+        "apps/server/src/routes/rpc/handlers/monitor/limits.ts",
+        "apps/server/src/routes/rpc/handlers/monitor/validators.ts",
       ],
       rules: {
         "no-restricted-imports": [
           "error",
           {
+            // Type imports carry no runtime access, so db shapes stay usable.
             paths: [
               {
                 name: "@openstatus/db",
+                allowTypeImports: true,
                 message:
                   "Use @openstatus/services instead (domain has migrated to the service layer).",
               },
               {
-                name: "@openstatus/db/src/schema",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "@openstatus/db/src/schema/plan/utils",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "@openstatus/db/src/schema/plan/schema",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "@openstatus/db/src/schema/plan/config",
-                message: "Use @openstatus/services instead.",
-              },
-              {
                 name: "drizzle-orm",
+                allowTypeImports: true,
                 message: "Use @openstatus/services instead.",
               },
             ],
             patterns: [
               {
                 group: ["@openstatus/db/**", "drizzle-orm/**"],
+                allowTypeImports: true,
                 message: "Use @openstatus/services instead.",
               },
             ],

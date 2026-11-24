@@ -35,8 +35,11 @@ export {
 } from "./response-logs-cursor";
 export {
   getMonitor,
+  getMonitorRow,
   type ListMonitorsResult,
+  listMonitorRows,
   listMonitors,
+  parseMonitorRow,
   type MonitorListItem,
   type MonitorWithRelations,
 } from "./list";
@@ -68,6 +71,8 @@ export {
   type HeartbeatPingLog,
   listHeartbeatPings,
   type HeartbeatPingResult,
+  type HeartbeatPingState,
+  listHeartbeatStates,
   recordHeartbeatPing,
   regenerateHeartbeatToken,
   updateMonitorHeartbeat,

@@ -269,3 +269,64 @@ export async function getMonitor(args: {
   // oxlint-disable-next-line typescript/no-non-null-assertion -- always defined for len === 1
   return enriched!;
 }
+
+/** One monitor in the caller's workspace, raw DB shape, without relations. */
+export async function getMonitorRow(args: {
+  ctx: ServiceContext;
+  input: GetMonitorInput;
+}): Promise<typeof monitor.$inferSelect> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = GetMonitorInput.parse(args.input);
+  return getMonitorInWorkspace({
+    tx: ctx.db ?? defaultDb,
+    id: input.id,
+    workspaceId: ctx.workspace.id,
+  });
+}
+
+/** `null` for a stored row that no longer matches the monitor schema. */
+export function parseMonitorRow(row: unknown): Monitor | null {
+  const parsed = selectMonitorSchema.safeParse(row);
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * A page of monitors without relations, in id order. Rows that no longer
+ * parse are skipped but still counted in `totalSize`.
+ */
+export async function listMonitorRows(args: {
+  ctx: ServiceContext;
+  input: { limit: number; offset: number };
+}): Promise<{ monitors: Monitor[]; totalSize: number }> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const db = ctx.db ?? defaultDb;
+  const where = and(
+    eq(monitor.workspaceId, ctx.workspace.id),
+    isNull(monitor.deletedAt),
+  );
+
+  const [countRow, rows] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitor)
+      .where(where)
+      .get(),
+    db
+      .select()
+      .from(monitor)
+      .where(where)
+      .orderBy(asc(monitor.id))
+      .limit(args.input.limit)
+      .offset(args.input.offset)
+      .all(),
+  ]);
+
+  const monitors: Monitor[] = [];
+  for (const row of rows) {
+    const parsed = parseMonitorRow(row);
+    if (parsed) monitors.push(parsed);
+  }
+  return { monitors, totalSize: countRow?.count ?? 0 };
+}
