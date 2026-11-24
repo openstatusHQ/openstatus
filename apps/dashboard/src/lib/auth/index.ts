@@ -170,8 +170,14 @@ const {
 
       return true;
     },
-    async session(params) {
-      return params.session;
+    async session({ session, user }) {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: String(user.id),
+        },
+      };
     },
   },
   events: {
