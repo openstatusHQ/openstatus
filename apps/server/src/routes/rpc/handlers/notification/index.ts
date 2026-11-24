@@ -47,9 +47,9 @@ function protoDataToServiceInput(
 }
 
 /** An unusable monitor id gets the documented monitor-not-found error. */
-function rethrowMonitorNotFound(err: unknown, monitorIds: string[]): never {
+function rethrowMonitorNotFound(err: unknown): never {
   if (err instanceof NotFoundError && err.entity === "monitor") {
-    throw monitorNotFoundError(monitorIds.join(","));
+    throw monitorNotFoundError(String(err.id));
   }
   throw err;
 }
@@ -69,7 +69,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
             data: protoDataToServiceInput(req.provider, req.data) as never,
             monitors: req.monitorIds.map((id) => Number(id)),
           },
-        }).catch((err) => rethrowMonitorNotFound(err, req.monitorIds));
+        }).catch(rethrowMonitorNotFound);
         // Re-fetch to get the authoritative persisted monitor set —
         // mirrors the `updateNotification` pattern and removes the
         // approximation that used to echo `req.monitorIds` deduped.
@@ -172,7 +172,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
               ? req.monitorIds.map((mid) => Number(mid))
               : existing.monitors.map((m) => m.id),
           },
-        }).catch((err) => rethrowMonitorNotFound(err, req.monitorIds));
+        }).catch(rethrowMonitorNotFound);
 
         const full = await getNotification({ ctx: sCtx, input: { id } });
         return {
