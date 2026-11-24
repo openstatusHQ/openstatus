@@ -3,9 +3,11 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import { isExpectedTRPCError } from "@openstatus/api/src/trpc-errors";
+import { sentryPrivacyDefaults } from "@openstatus/utils/src/sentry";
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
+  ...sentryPrivacyDefaults,
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Adjust this value in production, or use tracesSampler for greater control

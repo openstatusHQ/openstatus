@@ -21,6 +21,7 @@
     "@openstatus/services": "workspace:*",
     "@openstatus/status-fetcher": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
+    "@openstatus/utils": "workspace:*",
     "@opentelemetry/exporter-logs-otlp-http": "catalog:",
     "@opentelemetry/resources": "catalog:",
     "@opentelemetry/sdk-logs": "catalog:",

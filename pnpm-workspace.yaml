@@ -35,8 +35,11 @@ allowBuilds:
 # @google-cloud/pubsub pins semantic-conventions ~1.39 while the @opentelemetry/core
 # it shares with us resolves to the catalog's 1.43; the workflows side-car can only
 # ship one copy. The package is constants only, and newer releases only add more.
+# Its ~1.9 pin on @opentelemetry/api clashes the same way with the 1.10 that
+# OTel sdk-logs 3 needs; api 1.x minors are backward compatible.
 overrides:
   "@google-cloud/pubsub>@opentelemetry/semantic-conventions": 1.43.0
+  "@google-cloud/pubsub>@opentelemetry/api": 1.10.0
 autoInstallPeers: true
 # `turbo` is deliberately pinned literally in package.json rather than listed
 # here: Vercel can't read a version through `catalog:`, and on failing to infer
@@ -65,14 +68,14 @@ catalog:
   "@dnd-kit/utilities": 3.2.2
   "@google-cloud/pubsub": 6.2.0
   "@google-cloud/tasks": 7.1.1
-  "@hono/mcp": 0.2.5
+  "@hono/mcp": 0.3.5
   "@hono/node-server": 2.1.4
   "@hono/sentry": 1.2.2
   "@hono/zod-openapi": 1.6.3
-  "@hono/zod-validator": 0.8.0
+  "@hono/zod-validator": 0.9.1
   "@hookform/devtools": 4.4.0
   "@hookform/resolvers": 5.9.1
-  "@libsql/client": 0.17.4
+  "@libsql/client": 0.18.0
   "@logtape/logtape": 2.3.6
   "@logtape/otel": 2.3.6
   "@logtape/sentry": 2.3.6
@@ -87,11 +90,12 @@ catalog:
   "@openstatus/health-unkey": 0.1.4
   "@openstatus/health-upstash": 0.1.4
   "@openstatus/health-vercel": 0.1.4
-  "@opentelemetry/exporter-logs-otlp-http": 0.208.0
-  "@opentelemetry/resources": 2.11.0
-  "@opentelemetry/sdk-logs": 0.208.0
+  "@opentelemetry/api": 1.10.0
+  "@opentelemetry/exporter-logs-otlp-http": 0.301.2
+  "@opentelemetry/resources": 3.1.1
+  "@opentelemetry/sdk-logs": 3.1.1
   "@opentelemetry/semantic-conventions": 1.43.0
-  "@oxc-node/core": 0.1.5
+  "@oxc-node/core": 1.0.2
   "@radix-ui/react-accordion": 1.2.20
   "@radix-ui/react-alert-dialog": 1.1.23
   "@radix-ui/react-avatar": 1.2.6
@@ -119,9 +123,9 @@ catalog:
   "@radix-ui/react-tooltip": 1.2.16
   "@react-email/ui": 6.9.5
   "@remotion/cli": 4.0.536
-  "@scalar/hono-api-reference": 0.8.10
-  "@sentry/node": 10.75.1
-  "@sentry/nextjs": 10.75.1
+  "@scalar/hono-api-reference": 0.12.24
+  "@sentry/node": 11.17.0
+  "@sentry/nextjs": 11.17.0
   "@slack/web-api": 8.1.1
   "@t3-oss/env-core": 0.13.11
   "@t3-oss/env-nextjs": 0.13.11
@@ -150,34 +154,34 @@ catalog:
   "@upstash/qstash": 2.11.3
   "@upstash/redis": 1.39.0
   "@vercel/blob": 2.8.0
-  "@workos-inc/node": 10.13.0
+  "@workos-inc/node": 12.4.0
   "@xterm/headless": 6.0.0
   ai: 7.0.109
   bcryptjs: 3.0.3
   class-variance-authority: 0.7.1
   clsx: 2.1.1
   cmdk: 1.1.1
-  cobe: 0.6.5
+  cobe: 2.0.1
   date-fns: 3.6.0
-  date-fns-tz: 2.0.1
+  date-fns-tz: 3.2.0
   dotenv: 18.0.2
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.3
   drizzle-zod: 0.8.3
   effect: 4.0.0-rc.117
-  feed: 4.2.2
+  feed: 6.0.0
   geist: 1.7.2
   gray-matter: 4.0.3
   hono: 4.13.8
-  hono-rate-limiter: 0.4.2
+  hono-rate-limiter: 0.5.4
   ip-cidr: 4.0.2
-  isomorphic-dompurify: 3.23.0
-  jsonpath-plus: 10.4.0
+  isomorphic-dompurify: 4.8.0
+  jsonpath-plus: 11.3.0
   knip: 6.37.0
   limiter: 4.1.0
   lucide-react: 0.525.0
   mailchecker: 6.0.21
-  marked: 15.0.12
+  marked: 18.2.1
   nanoid: 6.0.1
   nanoid-dictionary: 5.0.0
   next: 16.4.5
@@ -186,9 +190,9 @@ catalog:
   next-mdx-remote: 6.0.0
   next-plausible: 3.12.5
   next-themes: 0.4.6
-  node-html-parser: 6.1.13
+  node-html-parser: 9.0.7
   nuqs: 2.10.1
-  oxfmt: 0.70.0
+  oxfmt: 0.80.0
   oxlint: 1.85.0
   oxlint-tsgolint: 7.0.2002
   percentile: 1.6.0
@@ -207,26 +211,26 @@ catalog:
   recharts: 2.15.4
   rehype-autolink-headings: 7.1.0
   rehype-react: 8.0.0
-  rehype-slug: 5.1.0
+  rehype-slug: 6.0.0
   remark-gfm: 4.0.1
   remark-parse: 11.0.0
   remark-rehype: 11.1.2
   remotion: 4.0.536
   resend: 6.28.1
   sanitize-html: 2.17.7
-  schema-dts: 1.1.5
+  schema-dts: 2.1.0
   shadcn: 3.8.5
-  shiki: 3.23.0
+  shiki: 4.6.0
   slugify: 1.6.9
   sonner: 2.0.8
   stripe: 22.6.2
-  sugar-high: 0.9.5
+  sugar-high: 2.7.0
   superjson: 2.2.6
   tailwind-merge: 3.7.0
   tailwindcss: 4.3.3
   tailwindcss-animate: 1.0.7
-  tsdown: 0.23.0
-  tsup: 8.5.1
+  tsdown: 0.23.7
+  tsup: 9.0.0
   tw-animate-css: 1.4.0
   typescript: 7.0.2
   unified: 11.0.5

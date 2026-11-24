@@ -1,12 +1,8 @@
-import { WorkOS } from "@workos-inc/node";
+import { type Connection, WorkOS } from "@workos-inc/node";
 
 import { PreconditionFailedError } from "../errors";
 
-export type WorkOSConnectionState =
-  | "draft"
-  | "active"
-  | "inactive"
-  | "validating";
+export type WorkOSConnectionState = Connection["state"];
 
 /**
  * Structural port covering only the calls we make. Defined by our needs rather
