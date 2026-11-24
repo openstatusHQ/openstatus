@@ -2,18 +2,18 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetPrivateLocation } from "@/components/forms/private-location/sheet";
+import type { DataTableRow } from "@/components/ui/data-table/features";
 import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type PrivateLocation = RouterOutputs["privateLocation"]["list"][number];
 
 interface DataTableRowActionsProps {
-  row: Row<PrivateLocation>;
+  row: DataTableRow<PrivateLocation>;
 }
 
 export function DataTableRowActions(props: DataTableRowActionsProps) {

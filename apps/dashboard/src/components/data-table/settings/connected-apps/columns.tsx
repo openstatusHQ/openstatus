@@ -1,9 +1,9 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { ScopeBadge } from "@/components/common/scope-badge";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { formatDate } from "@/lib/formatter";
 
 import { TableCellEmpty } from "../../table-cell-empty";
@@ -17,7 +17,7 @@ function userLabel(user: Grant["user"]): string {
   return name || user.email || `User ${user.id}`;
 }
 
-export const columns: ColumnDef<Grant>[] = [
+export const columns: DataTableColumnDef<Grant>[] = [
   {
     accessorKey: "clientName",
     header: "App",

@@ -10,23 +10,22 @@ import {
   TableRow,
 } from "@openstatus/ui/components/ui/table";
 import { cn } from "@openstatus/ui/lib/utils";
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender, useTable } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { getColumns } from "@/components/data-table/response-logs/columns";
 import type { ResponseLog } from "@/components/data-table/response-logs/data-table-basics";
 import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
+import {
+  type DataTableColumnDef,
+  dataTableFeatures,
+} from "@/components/ui/data-table/features";
 
 // The `get` shape, so the row also satisfies the Sheet's input.
 export type OnboardingChecksRow = ResponseLog;
 
-const COLUMNS: ColumnDef<OnboardingChecksRow>[] = getColumns([]);
+const COLUMNS: DataTableColumnDef<OnboardingChecksRow>[] = getColumns([]);
 
 export function OnboardingChecksTable({
   rows,
@@ -49,10 +48,12 @@ export function OnboardingChecksTable({
   // make the Sheet point at a stale object reference.
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: rows,
     columns: COLUMNS,
-    getCoreRowModel: getCoreRowModel(),
+    // every streamed region stays visible; the shared features paginate
+    manualPagination: true,
     initialState: {
       columnVisibility: { trigger: false },
     },

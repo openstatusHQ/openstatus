@@ -16,11 +16,12 @@ import {
 } from "@openstatus/ui/components/data-table-filters/data-table-cell/index";
 import { DataTableColumnHeader } from "@openstatus/ui/components/data-table-filters/data-table-column-header";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
+import type { DataTableColumnDef } from "@openstatus/ui/lib/data-table-filters/data-table/features";
 import {
   defineFilters,
   getValueAtKey,
 } from "@openstatus/ui/lib/data-table-filters/filters/index";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import type { JSX } from "react";
 
 import { resolveColumns } from "../col";
@@ -188,9 +189,9 @@ function renderCell(
  * ];
  * ```
  */
-export function generateColumns<TData>(
+export function generateColumns<TData extends RowData>(
   schema: TableSchemaDefinition,
-): ColumnDef<TData>[] {
+): DataTableColumnDef<TData>[] {
   // One interpretation of filter semantics, shared with the SQL and in-memory
   // engines. `filterFn` returns a *function*, so the consuming table no longer
   // has to register `filterFns: { inDateRange, arrSome }` — a contract that was
@@ -239,7 +240,7 @@ export function generateColumns<TData>(
           ? { size: config.size, minSize: config.size, maxSize: config.size }
           : {}),
         meta: { label: config.label, kind: "select", hidden: config.hidden },
-      } as ColumnDef<TData>;
+      } as DataTableColumnDef<TData>;
     }
 
     const isDotted = key.includes(".");
@@ -316,12 +317,12 @@ export function generateColumns<TData>(
         // Same reader as the filter engine: a flat `"timing.dns"` key wins,
         // a nested `{ timing: { dns } }` row is walked.
         accessorFn: (row: TData) => getValueAtKey(row, key),
-      } as ColumnDef<TData>;
+      } as DataTableColumnDef<TData>;
     }
 
     return {
       ...base,
       accessorKey: key,
-    } as ColumnDef<TData>;
+    } as DataTableColumnDef<TData>;
   });
 }

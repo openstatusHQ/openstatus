@@ -3,10 +3,10 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { ShieldUser } from "@openstatus/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import type { DataTableRow } from "@/components/ui/data-table/features";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
@@ -14,7 +14,7 @@ import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
 type Member = RouterOutputs["member"]["list"][number];
 
 interface DataTableRowActionsProps {
-  row: Row<Member>;
+  row: DataTableRow<Member>;
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {

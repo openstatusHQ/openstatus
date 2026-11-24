@@ -3,10 +3,10 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { getMonitorHealth } from "@/data/monitors.client";
 import { formatDistanceToNowShort } from "@/lib/formatter";
 
@@ -24,7 +24,7 @@ type Monitor = RouterOutputs["monitor"]["list"][number] & {
     | false;
 };
 
-export const columns: ColumnDef<Monitor>[] = [
+export const columns: DataTableColumnDef<Monitor>[] = [
   {
     id: "select",
     meta: { ghost: false },

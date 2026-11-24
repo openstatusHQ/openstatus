@@ -10,7 +10,6 @@ import {
 } from "@openstatus/ui/components/ui/hover-card";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
-import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
@@ -27,6 +26,7 @@ import {
 } from "@/components/content/range-plot";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import type { RegionMetric } from "@/data/region-metrics";
 
 const PERCENTILES = [
@@ -193,7 +193,7 @@ function percentileColumn(
   key: "p50" | "p90" | "p99",
   loading: boolean,
   degradedAfter: number | null,
-): ColumnDef<RegionMetric> {
+): DataTableColumnDef<RegionMetric> {
   return {
     id: key,
     // regions without data sort last instead of as 0 ms
@@ -241,7 +241,7 @@ export function getColumns({
   degradedAfter: number | null;
   /** No rows: the axis would squeeze into a collapsed column. */
   empty?: boolean;
-}): ColumnDef<RegionMetric>[] {
+}): DataTableColumnDef<RegionMetric>[] {
   return [
     {
       accessorKey: "region",

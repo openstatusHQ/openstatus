@@ -9,14 +9,16 @@ import {
   DropdownMenuSeparator,
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import { Settings2 } from "lucide-react";
 
-interface DataTableViewOptionsProps<TData> {
-  table: Table<TData>;
+import type { DataTableTable } from "@/components/ui/data-table/features";
+
+interface DataTableViewOptionsProps<TData extends RowData> {
+  table: DataTableTable<TData>;
 }
 
-export function DataTableViewOptions<TData>({
+export function DataTableViewOptions<TData extends RowData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
   return (

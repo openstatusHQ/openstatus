@@ -25,7 +25,6 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { SelectTrigger } from "@radix-ui/react-select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Table } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
 import * as React from "react";
 import { toast } from "sonner";
@@ -35,6 +34,7 @@ import {
   DataTableActionBarAction,
   DataTableActionBarSelection,
 } from "@/components/ui/data-table/data-table-action-bar";
+import type { DataTableTable } from "@/components/ui/data-table/features";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
@@ -45,7 +45,7 @@ const ACTIVE = [
 ];
 
 interface MonitorDataTableActionBarProps {
-  table: Table<Monitor>;
+  table: DataTableTable<Monitor>;
 }
 
 export function MonitorDataTableActionBar({

@@ -3,7 +3,6 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { buildCurlCommand } from "@openstatus/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,12 +10,13 @@ import { toast } from "sonner";
 
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import type { DataTableRow } from "@/components/ui/data-table/features";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 interface DataTableRowActionsProps {
-  row: Row<Monitor>;
+  row: DataTableRow<Monitor>;
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {

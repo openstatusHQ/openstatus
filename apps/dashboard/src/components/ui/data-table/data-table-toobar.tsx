@@ -2,20 +2,21 @@
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { DataTableViewOptions } from "@/components/ui/data-table/data-table-view-options";
+import type { DataTableTable } from "@/components/ui/data-table/features";
 
-export interface DataTableToolbarProps<TData> {
-  table: Table<TData>;
+export interface DataTableToolbarProps<TData extends RowData> {
+  table: DataTableTable<TData>;
 }
 
-export function DataTableToolbar<TData>({
+export function DataTableToolbar<TData extends RowData>({
   table,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.state.columnFilters.length > 0;
 
   return (
     <div className="flex items-center justify-between">

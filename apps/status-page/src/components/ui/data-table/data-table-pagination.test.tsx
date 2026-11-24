@@ -1,10 +1,8 @@
 import {
   type ColumnDef,
+  type RowSelectionState,
   type SortingState,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -14,6 +12,7 @@ import {
   DataTablePagination,
   DataTablePaginationSimple,
 } from "./data-table-pagination";
+import { type DataTableFeatures, dataTableFeatures } from "./features";
 
 type Row = { n: number };
 const rows: Row[] = Array.from({ length: 25 }, (_, n) => ({ n }));
@@ -24,14 +23,13 @@ function Pagination({
   simple = false,
 }: {
   pageIndex: number;
-  selected?: Record<string, boolean>;
+  selected?: RowSelectionState;
   simple?: boolean;
 }) {
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: rows,
     columns: [{ accessorKey: "n" }],
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: { pageIndex, pageSize: 10 },
       rowSelection: selected,
@@ -96,7 +94,7 @@ describe("DataTableColumnHeader", () => {
     sorting: SortingState;
     enableSorting?: boolean;
   }) {
-    const columns: ColumnDef<Row>[] = [
+    const columns: ColumnDef<DataTableFeatures, Row>[] = [
       {
         accessorKey: "n",
         enableSorting,
@@ -105,11 +103,10 @@ describe("DataTableColumnHeader", () => {
         ),
       },
     ];
-    const table = useReactTable({
+    const table = useTable({
+      features: dataTableFeatures,
       data: rows,
       columns,
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
       state: { sorting },
     });
     const header = table.getHeaderGroups()[0].headers[0];

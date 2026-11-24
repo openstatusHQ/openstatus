@@ -31,7 +31,7 @@ export function DataTableViewOptions() {
   const [drag, setDrag] = useState(false);
   const [search, setSearch] = useState("");
 
-  const columnOrder = table.getState().columnOrder;
+  const columnOrder = table.state.columnOrder;
 
   const sortedColumns = useMemo(
     () =>

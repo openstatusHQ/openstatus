@@ -3,9 +3,9 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Success, Globe, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import type { Table } from "@tanstack/react-table";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import type { DataTableTable } from "@/components/ui/data-table/features";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 
@@ -32,9 +32,9 @@ function filterAvailable<T extends { value: string }>(
 export function SubscribersDataTableToolbar({
   table,
 }: {
-  table: Table<Subscriber>;
+  table: DataTableTable<Subscriber>;
 }) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.state.columnFilters.length > 0;
 
   const statusFacets = table.getColumn("status")?.getFacetedUniqueValues();
   const sourceFacets = table.getColumn("source")?.getFacetedUniqueValues();

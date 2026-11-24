@@ -13,9 +13,9 @@ import {
   AvatarImage,
 } from "@openstatus/ui/components/ui/avatar";
 import { Badge } from "@openstatus/ui/components/ui/badge";
-import type { ColumnDef } from "@tanstack/react-table";
 import type { ComponentType } from "react";
 
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { cn } from "@/lib/utils";
 
 import { TableCellDate } from "../table-cell-date";
@@ -57,7 +57,7 @@ const viaSource: Record<
   mcp: { Icon: ModelContextProtocolIcon, label: "MCP Server" },
 };
 
-export const columns: ColumnDef<AuditLog>[] = [
+export const columns: DataTableColumnDef<AuditLog>[] = [
   {
     accessorKey: "user",
     header: "Actor",

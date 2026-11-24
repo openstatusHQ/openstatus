@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,11 +14,13 @@ import {
   ChevronsRight,
 } from "lucide-react";
 
-export interface DataTablePaginationProps<TData> {
-  table: Table<TData>;
+import type { DataTableTable } from "./features";
+
+export interface DataTablePaginationProps<TData extends RowData> {
+  table: DataTableTable<TData>;
 }
 
-export function DataTablePagination<TData>({
+export function DataTablePagination<TData extends RowData>({
   table,
 }: DataTablePaginationProps<TData>) {
   return (
@@ -31,13 +33,13 @@ export function DataTablePagination<TData>({
         <div className="flex items-center space-x-2">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
-            value={`${table.getState().pagination.pageSize}`}
+            value={`${table.state.pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
+              <SelectValue placeholder={table.state.pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
               {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -49,8 +51,7 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -95,7 +96,7 @@ export function DataTablePagination<TData>({
   );
 }
 
-export function DataTablePaginationSimple<TData>({
+export function DataTablePaginationSimple<TData extends RowData>({
   table,
 }: DataTablePaginationProps<TData>) {
   return (

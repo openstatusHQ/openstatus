@@ -8,20 +8,22 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import { Loader, X } from "lucide-react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import type { DataTableTable } from "@/components/ui/data-table/features";
+
 export interface DataTableActionBarProps<
-  TData,
+  TData extends RowData,
 > extends React.ComponentProps<"div"> {
-  table: Table<TData>;
+  table: DataTableTable<TData>;
   visible?: boolean;
   container?: Element | DocumentFragment | null;
 }
 
-function DataTableActionBar<TData>({
+function DataTableActionBar<TData extends RowData>({
   table,
   visible: visibleProp,
   container: containerProp,
@@ -121,11 +123,11 @@ function DataTableActionBarAction({
   );
 }
 
-interface DataTableActionBarSelectionProps<TData> {
-  table: Table<TData>;
+interface DataTableActionBarSelectionProps<TData extends RowData> {
+  table: DataTableTable<TData>;
 }
 
-function DataTableActionBarSelection<TData>({
+function DataTableActionBarSelection<TData extends RowData>({
   table,
 }: DataTableActionBarSelectionProps<TData>) {
   const onClearSelection = React.useCallback(() => {

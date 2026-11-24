@@ -1,10 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { cn } from "@/lib/utils";
 
 import { TableCellBadge } from "../table-cell-badge";
@@ -21,7 +21,7 @@ const statusClassName: Record<string, string> = {
   error: "text-destructive",
 };
 
-export const columns: ColumnDef<PrivateLocation>[] = [
+export const columns: DataTableColumnDef<PrivateLocation>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
