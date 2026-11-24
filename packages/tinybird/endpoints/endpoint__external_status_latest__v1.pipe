@@ -15,6 +15,9 @@ SQL >
     FROM external_status__v1
     {% if defined(ids) %}
     WHERE id IN {{ Array(ids, 'String') }}
+    {% else %}
+    -- the unfiltered read only feeds freshness checks (2h); skip the 60-day tail
+    WHERE fetched_at >= toUnixTimestamp64Milli(now64(3) - INTERVAL 1 DAY)
     {% end %}
     GROUP BY id
 
