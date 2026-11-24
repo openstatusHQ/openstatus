@@ -22,6 +22,7 @@ export {
   type SlackSubscriberResult,
   type SlackSubscriptionSummary,
 } from "./slack";
+export { subscribeEmailInWorkspace } from "./subscribe-in-workspace";
 export { unsubscribeSubscriber } from "./unsubscribe";
 export { unsubscribePageSubscriber } from "./unsubscribe-in-workspace";
 export { updatePageSubscriberChannel } from "./update";

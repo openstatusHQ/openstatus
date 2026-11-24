@@ -8,7 +8,11 @@ export {
   type GetPageComponentDailySummaryResult,
   type PageComponentDailySummary,
 } from "./get-daily-summary";
-export { listPageComponents, type PageComponentWithRelations } from "./list";
+export {
+  getPageComponent,
+  listPageComponents,
+  type PageComponentWithRelations,
+} from "./list";
 export { updatePageComponentOrder } from "./update-order";
 
 export {

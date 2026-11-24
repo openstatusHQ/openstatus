@@ -47,6 +47,7 @@ export {
   ListPagesInput,
   NewPageInput,
   pageAccessTypes,
+  parsePageConfiguration,
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
   UpdatePageCustomThemeInput,

@@ -67,6 +67,7 @@ export default defineConfig({
         "apps/server/src/routes/rpc/handlers/maintenance/**",
         "apps/server/src/routes/rpc/handlers/notification/**",
         "apps/server/src/routes/rpc/handlers/incident/**",
+        "apps/server/src/routes/rpc/handlers/status-page/**",
         "apps/server/src/routes/slack/interactions.ts",
       ],
       excludeFiles: [
@@ -76,6 +77,9 @@ export default defineConfig({
         // db enum shapes for proto round-trip. Exempt until they move to services.
         "apps/server/src/routes/rpc/handlers/notification/limits.ts",
         "apps/server/src/routes/rpc/handlers/notification/converters.ts",
+        // Type-only imports of db shapes for proto conversion and plan limits.
+        "apps/server/src/routes/rpc/handlers/status-page/converters.ts",
+        "apps/server/src/routes/rpc/handlers/status-page/limits.ts",
       ],
       rules: {
         "no-restricted-imports": [
