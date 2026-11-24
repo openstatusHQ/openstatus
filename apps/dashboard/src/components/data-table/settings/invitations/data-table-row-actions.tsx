@@ -2,15 +2,15 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import type { DataTableRow } from "@/components/ui/data-table/features";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Invitation = RouterOutputs["invitation"]["list"][number];
 
 interface DataTableRowActionsProps {
-  row: Row<Invitation>;
+  row: DataTableRow<Invitation>;
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {

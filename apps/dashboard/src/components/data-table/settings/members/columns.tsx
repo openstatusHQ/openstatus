@@ -3,8 +3,8 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
 
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -13,7 +13,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 
 type Member = RouterOutputs["member"]["list"][number];
 
-export const columns: ColumnDef<Member>[] = [
+export const columns: DataTableColumnDef<Member>[] = [
   {
     id: "name",
     header: "Name",

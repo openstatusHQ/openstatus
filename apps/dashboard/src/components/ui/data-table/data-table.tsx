@@ -10,21 +10,13 @@ import {
   TableRow,
 } from "@openstatus/ui/components/ui/table";
 import {
-  type ColumnDef,
   type ColumnFiltersState,
+  type ColumnVisibilityState,
   type PaginationState,
-  type Row,
+  type RowData,
   type SortingState,
-  type VisibilityState,
   flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import * as React from "react";
 import { Fragment } from "react";
@@ -43,19 +35,24 @@ import {
 } from "./data-table-empty";
 import type { DataTablePaginationProps } from "./data-table-pagination";
 import type { DataTableToolbarProps } from "./data-table-toobar";
+import {
+  type DataTableColumnDef,
+  type DataTableRow,
+  dataTableFeatures,
+} from "./features";
 
-export interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+export interface DataTableProps<TData extends RowData> {
+  columns: DataTableColumnDef<TData>[];
   data: TData[];
-  rowComponent?: React.ComponentType<{ row: Row<TData> }>;
+  rowComponent?: React.ComponentType<{ row: DataTableRow<TData> }>;
   toolbarComponent?: React.ComponentType<DataTableToolbarProps<TData>>;
   actionBar?: React.ComponentType<DataTableActionBarProps<TData>>;
   paginationComponent?: React.ComponentType<DataTablePaginationProps<TData>>;
   /** First-run body when `data` is empty, a `DataTableEmpty` so it covers the ghost rows; a filter mismatch has its own row. */
   emptyState?: React.ReactNode;
-  onRowClick?: (row: Row<TData>) => void;
+  onRowClick?: (row: DataTableRow<TData>) => void;
   defaultSorting?: SortingState;
-  defaultColumnVisibility?: VisibilityState;
+  defaultColumnVisibility?: ColumnVisibilityState;
   defaultColumnFilters?: ColumnFiltersState;
   defaultPagination?: PaginationState;
   autoResetPageIndex?: boolean;
@@ -67,11 +64,13 @@ export interface DataTableProps<TData, TValue> {
   setSorting?: React.Dispatch<React.SetStateAction<SortingState>>;
   pagination?: PaginationState;
   setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
-  columnVisibility?: VisibilityState;
-  setColumnVisibility?: React.Dispatch<React.SetStateAction<VisibilityState>>;
+  columnVisibility?: ColumnVisibilityState;
+  setColumnVisibility?: React.Dispatch<
+    React.SetStateAction<ColumnVisibilityState>
+  >;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   rowComponent,
@@ -93,12 +92,12 @@ export function DataTable<TData, TValue>({
   setPagination,
   columnVisibility,
   setColumnVisibility,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   // oxlint-disable-next-line typescript/no-explicit-any
   const [globalFilter, setGlobalFilter] = React.useState<any>();
   const [rowSelection, setRowSelection] = React.useState({});
   const [internalColumnVisibility, setInternalColumnVisibility] =
-    React.useState<VisibilityState>(defaultColumnVisibility);
+    React.useState<ColumnVisibilityState>(defaultColumnVisibility);
   const [internalPagination, setInternalPagination] =
     React.useState<PaginationState>(defaultPagination);
   const [internalColumnFilters, setInternalColumnFilters] =
@@ -113,17 +112,19 @@ export function DataTable<TData, TValue>({
   const setSortingState = setSorting ?? setInternalSorting;
   const paginationState = pagination ?? internalPagination;
   const setPaginationState = setPagination ?? setInternalPagination;
-  const columnVisibilityState = columnVisibility ?? internalColumnVisibility;
+  const columnColumnVisibilityState =
+    columnVisibility ?? internalColumnVisibility;
   const setColumnVisibilityState =
     setColumnVisibility ?? setInternalColumnVisibility;
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     initialState: { pagination: defaultPagination },
     state: {
       sorting: sortingState,
-      columnVisibility: columnVisibilityState,
+      columnVisibility: columnColumnVisibilityState,
       rowSelection,
       pagination: paginationState,
       columnFilters: columnFiltersState,
@@ -136,13 +137,6 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibilityState,
     onPaginationChange: setPaginationState,
     onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getExpandedRowModel: getExpandedRowModel(),
     autoResetPageIndex,
     // @ts-expect-error as we have an id in the data
     getRowCanExpand: (row) => Boolean(row.original.id),

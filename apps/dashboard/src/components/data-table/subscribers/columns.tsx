@@ -8,8 +8,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import type { ColumnDef } from "@tanstack/react-table";
 
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { formatDate } from "@/lib/formatter";
 
 import { TableCellEmpty } from "../table-cell-empty";
@@ -29,7 +29,7 @@ function detectFlavorBadge(url: string | null) {
   return FLAVOR_LABELS[detectWebhookFlavor(url)];
 }
 
-export const columns: ColumnDef<Subscriber>[] = [
+export const columns: DataTableColumnDef<Subscriber>[] = [
   {
     id: "destination",
     header: "Destination",

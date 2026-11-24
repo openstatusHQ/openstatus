@@ -1,6 +1,6 @@
 "use client";
 
-// REMINDER: React Compiler is not compatible with Tanstack Table v8 https://github.com/TanStack/table/issues/5567
+// Builder reads (row.getIsSelected(), …) are invisible to the React Compiler.
 "use no memo";
 
 import { Loading } from "@openstatus/icons";
@@ -22,11 +22,12 @@ import type { DataTableFilterField } from "@openstatus/ui/components/data-table-
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useHotKey } from "@openstatus/ui/hooks/use-hot-key";
 import { useLocalStorage } from "@openstatus/ui/hooks/use-local-storage";
-import { getFacetedUniqueValuesFlattened } from "@openstatus/ui/lib/data-table-filters/data-table/faceted";
 import {
-  arrSome,
-  inDateRange,
-} from "@openstatus/ui/lib/data-table-filters/filterfns";
+  type DataTableColumnDef,
+  type DataTableRow,
+  type DataTableTable,
+  dataTableFeatures,
+} from "@openstatus/ui/lib/data-table-filters/data-table/features";
 import {
   getColumnOrderKey,
   getColumnVisibilityKey,
@@ -40,45 +41,35 @@ import {
   type RefetchOptions,
 } from "@tanstack/react-query";
 import type {
-  ColumnDef,
   ColumnFiltersState,
-  Row,
+  RowData,
   RowSelectionState,
   SortingState,
   TableOptions,
-  Table as TTable,
-  VisibilityState,
+  ColumnVisibilityState,
 } from "@tanstack/react-table";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getFacetedMinMaxValues as getTTableFacetedMinMaxValues,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender, useTable } from "@tanstack/react-table";
 import * as React from "react";
 
 // TODO: add a possible chartGroupBy
-export interface DataTableInfiniteProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  getRowClassName?: (row: Row<TData>) => string;
+export interface DataTableInfiniteProps<TData extends RowData, TValue> {
+  columns: DataTableColumnDef<TData>[];
+  getRowClassName?: (row: DataTableRow<TData>) => string;
   // REMINDER: make sure to pass the correct id to access the rows
-  getRowId?: TableOptions<TData>["getRowId"];
+  getRowId?: TableOptions<typeof dataTableFeatures, TData>["getRowId"];
   data: TData[];
   defaultColumnFilters?: ColumnFiltersState;
   defaultColumnSorting?: SortingState;
   defaultRowSelection?: RowSelectionState;
-  defaultColumnVisibility?: VisibilityState;
+  defaultColumnVisibility?: ColumnVisibilityState;
   filterFields?: DataTableFilterField<TData>[];
   // REMINDER: close to the same signature as the `getFacetedUniqueValues` of the `useReactTable`
   getFacetedUniqueValues?: (
-    table: TTable<TData>,
+    table: DataTableTable<TData>,
     columnId: string,
   ) => Map<string, number>;
   getFacetedMinMaxValues?: (
-    table: TTable<TData>,
+    table: DataTableTable<TData>,
     columnId: string,
   ) => undefined | [number, number];
   totalRows?: number;
@@ -92,7 +83,7 @@ export interface DataTableInfiniteProps<TData, TValue> {
     options?: FetchNextPageOptions | undefined,
   ) => Promise<unknown>;
   refetch: (options?: RefetchOptions | undefined) => void;
-  renderLiveRow?: (props?: { row: Row<TData> }) => React.ReactNode;
+  renderLiveRow?: (props?: { row: DataTableRow<TData> }) => React.ReactNode;
   // Used to store column order and visibility in local storage for specific data-table namespace
   tableId?: string;
   /** Server-read initial state of the filter controls panel. */
@@ -107,7 +98,7 @@ export interface DataTableInfiniteProps<TData, TValue> {
   className?: string;
 }
 
-export function DataTableInfinite<TData, TValue>({
+export function DataTableInfinite<TData extends RowData, TValue>({
   columns,
   getRowClassName,
   getRowId,
@@ -150,7 +141,7 @@ export function DataTableInfinite<TData, TValue>({
     [],
   );
   const [columnVisibility, setColumnVisibility] =
-    useLocalStorage<VisibilityState>(
+    useLocalStorage<ColumnVisibilityState>(
       getColumnVisibilityKey(tableId),
       defaultColumnVisibility,
     );
@@ -197,7 +188,8 @@ export function DataTableInfinite<TData, TValue>({
     return () => observer.unobserve(topBar);
   }, [topBarRef]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     state: {
@@ -215,13 +207,6 @@ export function DataTableInfinite<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnOrderChange: setColumnOrder,
-    getSortedRowModel: getSortedRowModel(),
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValuesFlattened(),
-    getFacetedMinMaxValues: getTTableFacetedMinMaxValues(),
-    filterFns: { inDateRange, arrSome },
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: { getRowClassName },
   });
@@ -255,9 +240,9 @@ export function DataTableInfinite<TData, TValue>({
     }
     return colSizes;
   }, [
-    table.getState().columnSizingInfo,
-    table.getState().columnSizing,
-    table.getState().columnVisibility,
+    table.state.columnResizing,
+    table.state.columnSizing,
+    table.state.columnVisibility,
   ]);
 
   useHotKey(() => {
@@ -273,7 +258,7 @@ export function DataTableInfinite<TData, TValue>({
         .map((c) => c.id)
         .join(","),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.getState().columnVisibility],
+    [table.state.columnVisibility],
   );
   const columnOrderString = React.useMemo(
     () => columnOrder.join(","),
@@ -289,7 +274,7 @@ export function DataTableInfinite<TData, TValue>({
 
   // Stable callback for row clicks — lifted here so Row doesn't need useFilterActions
   const onRowClick = React.useCallback(
-    (row: Row<TData>) => {
+    (row: DataTableRow<TData>) => {
       if (hasSelectColumn) {
         setFilters({ uuid: detailRowId === row.id ? null : row.id });
       } else {
@@ -337,7 +322,7 @@ export function DataTableInfinite<TData, TValue>({
             <div className="flex h-[46px] items-center justify-between gap-3">
               <p className="text-foreground px-2 font-medium">Filters</p>
               <div>
-                {table.getState().columnFilters.length ? (
+                {table.state.columnFilters.length ? (
                   <DataTableResetButton />
                 ) : null}
               </div>
@@ -563,7 +548,7 @@ function FilterPanel({ children }: { children: React.ReactNode }) {
  * e.g. DataTableFilterControls, DataTableFilterCommand, DataTableToolbar, DataTableHeader
  */
 
-function Row<TData>({
+function Row<TData extends RowData>({
   row,
   table,
   selected,
@@ -572,13 +557,13 @@ function Row<TData>({
   visibleColumnIds,
   columnOrder,
 }: {
-  row: Row<TData>;
-  table: TTable<TData>;
+  row: DataTableRow<TData>;
+  table: DataTableTable<TData>;
   // REMINDER: row.getIsSelected(); - just for memoization
   selected?: boolean;
   // When multi-select is enabled, the BYOS uuid for detail sheet (undefined = single-select mode)
   detailRowId?: string | null;
-  onRowClick: (row: Row<TData>) => void;
+  onRowClick: (row: DataTableRow<TData>) => void;
   // REMINDER: for memoization - triggers re-render when columns change
   visibleColumnIds: string;
   columnOrder: string;

@@ -2,18 +2,18 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
+import type { DataTableRow } from "@/components/ui/data-table/features";
 import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
 
 interface DataTableRowActionsProps {
-  row: Row<Notifier>;
+  row: DataTableRow<Notifier>;
 }
 
 export function DataTableRowActions(props: DataTableRowActionsProps) {

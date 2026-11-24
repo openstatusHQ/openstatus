@@ -1,17 +1,17 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 
 import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusPage = RouterOutputs["page"]["list"][number];
 
-export const columns: ColumnDef<StatusPage>[] = [
+export const columns: DataTableColumnDef<StatusPage>[] = [
   {
     accessorKey: "title",
     header: "Title",

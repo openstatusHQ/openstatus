@@ -4,15 +4,15 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Tag, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
-import type { Table } from "@tanstack/react-table";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import type { DataTableTable } from "@/components/ui/data-table/features";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 type MonitorTag = RouterOutputs["monitorTag"]["list"][number];
 
 export interface MonitorDataTableToolbarProps {
-  table: Table<Monitor>;
+  table: DataTableTable<Monitor>;
   tags: MonitorTag[];
 }
 
@@ -20,14 +20,14 @@ export function MonitorDataTableToolbar({
   table,
   tags,
 }: MonitorDataTableToolbarProps) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.state.columnFilters.length > 0;
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center space-x-2">
         <Input
           placeholder="Filter by name, url, type..."
-          value={(table.getState().globalFilter as string) ?? ""}
+          value={(table.state.globalFilter as string) ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
           className="h-8 w-[150px] shadow-none lg:w-[250px]"
         />

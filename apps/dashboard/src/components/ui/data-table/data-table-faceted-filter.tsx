@@ -15,12 +15,14 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
-import type { Column } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import { Check, PlusCircle } from "lucide-react";
 import type * as React from "react";
 
-interface DataTableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>;
+import type { DataTableColumn } from "@/components/ui/data-table/features";
+
+interface DataTableFacetedFilterProps<TData extends RowData, TValue> {
+  column?: DataTableColumn<TData, TValue>;
   title?: string;
   icon?: React.ComponentType<{ className?: string }>;
   options: {
@@ -30,7 +32,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   }[];
 }
 
-export function DataTableFacetedFilter<TData, TValue>({
+export function DataTableFacetedFilter<TData extends RowData, TValue>({
   column,
   title,
   icon: Icon,

@@ -2,10 +2,10 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { Badge } from "@openstatus/ui/components/ui/badge";
-import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { type NotifierProvider, config } from "@/data/notifications.client";
 
 import { TableCellBadge } from "../table-cell-badge";
@@ -14,7 +14,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
 
-export const columns: ColumnDef<Notifier>[] = [
+export const columns: DataTableColumnDef<Notifier>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (

@@ -1,9 +1,9 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { ScopeBadge } from "@/components/common/scope-badge";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { formatDate } from "@/lib/formatter";
 
 import { TableCellEmpty } from "../../table-cell-empty";
@@ -11,7 +11,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 
 type ApiKey = RouterOutputs["apiKey"]["list"][number];
 
-export const columns: ColumnDef<ApiKey>[] = [
+export const columns: DataTableColumnDef<ApiKey>[] = [
   {
     accessorKey: "name",
     header: "Name",

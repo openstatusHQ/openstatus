@@ -8,22 +8,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { HoverCardTiming } from "@/components/common/hover-card-timing";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellRegion } from "@/components/data-table/table-cell-region";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 
 import { TableCellEmpty } from "../table-cell-empty";
 import type { ResponseLog } from "./data-table-basics";
 
-// export const columns: ColumnDef<ResponseLog>[] =
+// export const columns: DataTableColumnDef<ResponseLog>[] =
 export function getColumns(
   privateLocations: PrivateLocation[],
-): ColumnDef<ResponseLog>[] {
+): DataTableColumnDef<ResponseLog>[] {
   return [
     {
       accessorKey: "requestStatus",

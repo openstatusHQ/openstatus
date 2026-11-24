@@ -3,9 +3,9 @@
 import type { RouterOutputs } from "@openstatus/api";
 import { Database, Account, Close, Speed } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import type { Table } from "@tanstack/react-table";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import type { DataTableTable } from "@/components/ui/data-table/features";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 
@@ -28,9 +28,9 @@ function toOptions(values: Iterable<string>, labels?: Record<string, string>) {
 export function AuditLogsDataTableToolbar({
   table,
 }: {
-  table: Table<AuditLog>;
+  table: DataTableTable<AuditLog>;
 }) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.state.columnFilters.length > 0;
 
   const actionFacets = table.getColumn("action")?.getFacetedUniqueValues();
   const actorTypeFacets = table

@@ -1,18 +1,19 @@
 import { ChevronDown, ChevronUp } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import type { DataTableColumn } from "@openstatus/ui/lib/data-table-filters/data-table/features";
 import { cn } from "@openstatus/ui/lib/utils";
-import type { Column } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import type React from "react";
 
 interface DataTableColumnHeaderProps<
-  TData,
+  TData extends RowData,
   TValue,
 > extends React.ComponentProps<typeof Button> {
-  column: Column<TData, TValue>;
+  column: DataTableColumn<TData, TValue>;
   title: string;
 }
 
-export function DataTableColumnHeader<TData, TValue>({
+export function DataTableColumnHeader<TData extends RowData, TValue>({
   column,
   title,
   className,

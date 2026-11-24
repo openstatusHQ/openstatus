@@ -37,7 +37,7 @@ export function useDataTableStoreSync() {
   const lastSentUuidRef = useRef<string>("");
   const isInitialMount = useRef(true);
 
-  const columnFilters = table.getState().columnFilters;
+  const columnFilters = table.state.columnFilters;
 
   // Sync column filters
   useEffect(() => {

@@ -1,9 +1,13 @@
-import { FilterFn } from "@tanstack/react-table";
+import type { FilterFn, TableFeatures } from "@tanstack/react-table";
 import { isSameDay } from "date-fns";
 
 import { isArrayOfDates } from "./is-array";
 
-export const inDateRange: FilterFn<unknown> = (row, columnId, value) => {
+export const inDateRange: FilterFn<TableFeatures, Record<string, unknown>> = (
+  row,
+  columnId,
+  value,
+) => {
   const date = new Date(row.getValue(columnId));
   const [start, end] = value as Date[];
 
@@ -19,7 +23,11 @@ export const inDateRange: FilterFn<unknown> = (row, columnId, value) => {
 inDateRange.autoRemove = (val: unknown) =>
   !Array.isArray(val) || !val.length || !isArrayOfDates(val);
 
-export const arrSome: FilterFn<unknown> = (row, columnId, filterValue) => {
+export const arrSome: FilterFn<TableFeatures, Record<string, unknown>> = (
+  row,
+  columnId,
+  filterValue,
+) => {
   if (!Array.isArray(filterValue)) return false;
   return filterValue.some((val) => row.getValue<unknown[]>(columnId) === val);
 };

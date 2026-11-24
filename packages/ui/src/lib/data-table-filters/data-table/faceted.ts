@@ -1,4 +1,10 @@
-import type { RowModel, Table as TTable } from "@tanstack/react-table";
+import type {
+  RowData,
+  RowModel,
+  Table as TTable,
+  TableFeatures,
+  columnFacetingFeature,
+} from "@tanstack/react-table";
 
 import type { FacetMetadataSchema } from "./types";
 
@@ -9,15 +15,16 @@ import type { FacetMetadataSchema } from "./types";
  *
  * Works for both array and non-array columns.
  */
-export function getFacetedUniqueValuesFlattened<TData>(): (
-  table: TTable<TData>,
+type FacetingFeatures = { columnFacetingFeature: typeof columnFacetingFeature };
+
+export function getFacetedUniqueValuesFlattened(): (
+  table: TTable<FacetingFeatures, RowData>,
   columnId: string,
 ) => () => Map<unknown, number> {
   return (table, columnId) => {
     return () => {
-      const facetedRowModel: RowModel<TData> | undefined = table
-        .getColumn(columnId)
-        ?.getFacetedRowModel();
+      const facetedRowModel: RowModel<FacetingFeatures, RowData> | undefined =
+        table.getColumn(columnId)?.getFacetedRowModel();
       if (!facetedRowModel) return new Map();
 
       const counts = new Map<unknown, number>();
@@ -36,20 +43,28 @@ export function getFacetedUniqueValuesFlattened<TData>(): (
   };
 }
 
-export function getFacetedUniqueValues<TData>(
-  facets?: Record<string, FacetMetadataSchema>,
-) {
-  return (_: TTable<TData>, columnId: string): Map<string, number> => {
+export function getFacetedUniqueValues<
+  TFeatures extends TableFeatures,
+  TData extends RowData,
+>(facets?: Record<string, FacetMetadataSchema>) {
+  return (
+    _: TTable<TFeatures, TData>,
+    columnId: string,
+  ): Map<string, number> => {
     return new Map(
       facets?.[columnId]?.rows?.map(({ value, total }) => [value, total]) || [],
     );
   };
 }
 
-export function getFacetedMinMaxValues<TData>(
-  facets?: Record<string, FacetMetadataSchema>,
-) {
-  return (_: TTable<TData>, columnId: string): [number, number] | undefined => {
+export function getFacetedMinMaxValues<
+  TFeatures extends TableFeatures,
+  TData extends RowData,
+>(facets?: Record<string, FacetMetadataSchema>) {
+  return (
+    _: TTable<TFeatures, TData>,
+    columnId: string,
+  ): [number, number] | undefined => {
     const min = facets?.[columnId]?.min;
     const max = facets?.[columnId]?.max;
     if (typeof min === "number" && typeof max === "number") return [min, max];

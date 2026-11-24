@@ -4,7 +4,7 @@ import { Filter } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { TableCell, TableRow } from "@openstatus/ui/components/ui/table";
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 
 import {
   EmptyStateActions,
@@ -13,6 +13,7 @@ import {
   EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import type { DataTableTable } from "@/components/ui/data-table/features";
 import { cn } from "@/lib/utils";
 
 // pill widths cycle per cell so the ghost rows read as rows, not a grid
@@ -22,11 +23,15 @@ const GHOST_ROWS = 5;
 const GHOST_HEIGHT = `${GHOST_ROWS * 2.5}rem`;
 
 /** Real table rows, so the ghost cells share the header column widths. */
-export function DataTableGhostRows<TData>({ table }: { table: Table<TData> }) {
+export function DataTableGhostRows<TData extends RowData>({
+  table,
+}: {
+  table: DataTableTable<TData>;
+}) {
   const columns = table.getVisibleLeafColumns();
   // TanStack fills in a header for every column; only labeled ones get a pill.
-  // Internal API: if it ever goes away, unlabeled columns merely get a pill too.
-  const defaultHeader = table._getDefaultColumnDef?.().header;
+  // Memoized, so the identity check below holds.
+  const defaultHeader = table.getDefaultColumnDef().header;
   const labeled = (column: (typeof columns)[number]) =>
     column.columnDef.meta?.ghost !== false &&
     column.columnDef.header !== defaultHeader &&
@@ -79,10 +84,10 @@ export function DataTableEmpty({
 }
 
 /** Rows exist but the filters match none of them. */
-export function DataTableEmptyFiltered<TData>({
+export function DataTableEmptyFiltered<TData extends RowData>({
   table,
 }: {
-  table: Table<TData>;
+  table: DataTableTable<TData>;
 }) {
   return (
     <EmptyStateContainer inline plain className="px-4">

@@ -2,11 +2,11 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Pill } from "@/components/common/pill";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import type { DataTableColumnDef } from "@/components/ui/data-table/features";
 import { config, getMetadata } from "@/data/audit-logs.client";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ type AuditLog = RouterOutputs["tinybird"]["auditLog"]["data"][number];
 
 export function getColumns(
   privateLocations?: PrivateLocation[],
-): ColumnDef<AuditLog>[] {
+): DataTableColumnDef<AuditLog>[] {
   const metadata = getMetadata(privateLocations);
   return [
     {

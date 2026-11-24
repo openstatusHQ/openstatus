@@ -61,7 +61,7 @@ export function DataTableFilterAICommand({
     filterFields: _filterFields,
     getFacetedUniqueValues,
   } = useDataTable();
-  const columnFilters = table.getState().columnFilters;
+  const columnFilters = table.state.columnFilters;
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState<boolean>(false);
   const [currentWord, setCurrentWord] = useState<string>("");
@@ -158,9 +158,9 @@ export function DataTableFilterAICommand({
       setAIQuery(null);
     },
     onStart() {
-      previousFiltersRef.current = table
-        .getState()
-        .columnFilters.map(({ id, value }) => ({ id, value }));
+      previousFiltersRef.current = table.state.columnFilters.map(
+        ({ id, value }) => ({ id, value }),
+      );
       // Clear existing filters before AI applies new ones (replace-all strategy)
       applyFilterSet([]);
     },
@@ -187,7 +187,7 @@ export function DataTableFilterAICommand({
 
     const searchParams = columnParser.parse(inputValue);
 
-    const currentFilters = table.getState().columnFilters;
+    const currentFilters = table.state.columnFilters;
     const currentEnabledFilters = currentFilters.filter((filter) => {
       const field = _filterFields?.find((field) => field.value === filter.id);
       return !field?.commandDisabled;

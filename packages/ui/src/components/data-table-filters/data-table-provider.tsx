@@ -1,13 +1,16 @@
 import { ControlsProvider } from "@openstatus/ui/components/data-table-filters/controls";
 import { DataTableFilterField } from "@openstatus/ui/components/data-table-filters/types";
 import type {
-  ColumnDef,
+  DataTableColumnDef,
+  DataTableTable,
+} from "@openstatus/ui/lib/data-table-filters/data-table/features";
+import type {
   ColumnFiltersState,
+  ColumnVisibilityState,
   PaginationState,
+  RowData,
   RowSelectionState,
   SortingState,
-  Table,
-  VisibilityState,
 } from "@tanstack/react-table";
 import { createContext, useContext, useMemo } from "react";
 
@@ -21,15 +24,18 @@ interface DataTableStateContextType {
   sorting: SortingState;
   rowSelection: RowSelectionState;
   columnOrder: string[];
-  columnVisibility: VisibilityState;
+  columnVisibility: ColumnVisibilityState;
   pagination: PaginationState;
   enableColumnOrdering: boolean;
 }
 
-interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
-  table: Table<TData>;
+interface DataTableBaseContextType<
+  TData extends RowData = RowData,
+  TValue = unknown,
+> {
+  table: DataTableTable<TData>;
   filterFields: DataTableFilterField<TData>[];
-  columns: ColumnDef<TData, TValue>[];
+  columns: DataTableColumnDef<TData>[];
   isLoading?: boolean;
   /**
    * Whether the facet counts are still in flight. Separate from `isLoading`,
@@ -43,16 +49,19 @@ interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
   totalRows?: number;
   filterRows?: number;
   getFacetedUniqueValues?: (
-    table: Table<TData>,
+    table: DataTableTable<TData>,
     columnId: string,
   ) => Map<string, number>;
   getFacetedMinMaxValues?: (
-    table: Table<TData>,
+    table: DataTableTable<TData>,
     columnId: string,
   ) => undefined | [number, number];
 }
 
-interface DataTableContextType<TData = unknown, TValue = unknown>
+interface DataTableContextType<
+  TData extends RowData = RowData,
+  TValue = unknown,
+>
   extends DataTableStateContextType, DataTableBaseContextType<TData, TValue> {}
 
 export const DataTableContext = createContext<DataTableContextType<
@@ -60,7 +69,15 @@ export const DataTableContext = createContext<DataTableContextType<
   any
 > | null>(null);
 
-export function DataTableProvider<TData, TValue>({
+// safe because the provider and every `useDataTable` reader below it are
+// rendered for the same table, so they agree on TData.
+function toUntypedContext<TData extends RowData, TValue>(
+  value: DataTableContextType<TData, TValue>,
+) {
+  return value as unknown as DataTableContextType<any, any>;
+}
+
+export function DataTableProvider<TData extends RowData, TValue>({
   children,
   controlsDefaultOpen,
   ...props
@@ -104,7 +121,7 @@ export function DataTableProvider<TData, TValue>({
   );
 
   return (
-    <DataTableContext.Provider value={value}>
+    <DataTableContext.Provider value={toUntypedContext(value)}>
       <ControlsProvider defaultOpen={controlsDefaultOpen}>
         <DataTableStoreSync />
         {children}
@@ -113,7 +130,7 @@ export function DataTableProvider<TData, TValue>({
   );
 }
 
-export function useDataTable<TData, TValue>() {
+export function useDataTable<TData extends RowData, TValue>() {
   const context = useContext(DataTableContext);
 
   if (!context) {
