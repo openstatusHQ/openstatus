@@ -2,7 +2,7 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "unicorn", "oxc"],
-  jsPlugins: ["./scripts/oxlint-plugin-openstatus.js"],
+  jsPlugins: ["./tooling/oxlint/plugin.js"],
   categories: {
     correctness: "warn",
   },
@@ -30,8 +30,8 @@ export default defineConfig({
     "unicorn/prefer-node-protocol": "error",
   },
   ignorePatterns: [
-    // Deliberately bad code, linted by scripts/check-lint-rules.mts.
-    "scripts/__fixtures__/**",
+    // Deliberately bad code, linted by tooling/oxlint/check-fixtures.mts.
+    "tooling/oxlint/fixtures/**",
     "packages/ui/src/components/*.ts",
     "packages/ui/src/components/*.tsx",
     // Vendored from the data-table-filters shadcn registry — reformatting or

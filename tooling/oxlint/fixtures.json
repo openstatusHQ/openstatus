@@ -1,5 +1,5 @@
 {
-  "jsPlugins": ["./oxlint-plugin-openstatus.js"],
+  "jsPlugins": ["./plugin.js"],
   "categories": {
     "correctness": "off"
   },

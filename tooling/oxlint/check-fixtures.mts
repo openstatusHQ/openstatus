@@ -1,5 +1,5 @@
 /**
- * Runs the openstatus oxlint rules over `scripts/__fixtures__/oxlint` and fails
+ * Runs the openstatus oxlint rules over `tooling/oxlint/fixtures` and fails
  * unless the reports match the `expect: <rule>` markers line for line. A rule
  * that silently stops matching then fails here instead of passing everywhere.
  *
@@ -11,8 +11,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const FIXTURES = join(REPO_ROOT, "scripts/__fixtures__/oxlint");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(HERE, "../..");
+const FIXTURES = join(HERE, "fixtures");
+const CONFIG = join(HERE, "fixtures.json");
 const MARKER = /expect: ([a-z-]+)/g;
 
 type Diagnostic = {
@@ -47,16 +49,16 @@ function fail(message: string): never {
 }
 
 // Every plugin rule must run here and be pinned by at least one marker.
-const plugin = (await import("./oxlint-plugin-openstatus.js")).default as {
+const plugin = (await import("./plugin.js")).default as {
   rules: Record<string, unknown>;
 };
-const fixtureConfig = JSON.parse(
-  readFileSync(join(REPO_ROOT, "scripts/oxlint-fixtures.json"), "utf8"),
-) as { rules: Record<string, unknown> };
+const fixtureConfig = JSON.parse(readFileSync(CONFIG, "utf8")) as {
+  rules: Record<string, unknown>;
+};
 const markedRules = new Set([...expected].map((key) => key.split(" ")[1]));
 for (const rule of Object.keys(plugin.rules)) {
   if (!(`openstatus/${rule}` in fixtureConfig.rules)) {
-    fail(`${rule} is not enabled in scripts/oxlint-fixtures.json.`);
+    fail(`${rule} is not enabled in tooling/oxlint/fixtures.json.`);
   }
   if (!markedRules.has(rule)) {
     fail(`${rule} has no "expect: ${rule}" marker in its bad fixture.`);
@@ -68,13 +70,7 @@ let stderr = "";
 try {
   output = execFileSync(
     join(REPO_ROOT, "node_modules/.bin/oxlint"),
-    [
-      "-c",
-      join(REPO_ROOT, "scripts/oxlint-fixtures.json"),
-      "-f",
-      "json",
-      FIXTURES,
-    ],
+    ["-c", CONFIG, "-f", "json", FIXTURES],
     { cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
 } catch (error) {
