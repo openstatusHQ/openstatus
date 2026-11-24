@@ -188,6 +188,7 @@ describe("getPageOverallStatus", () => {
         pageId: page.id,
       });
       expect(result.status).toBe("operational");
+      expect(result.components[0]?.status).toBe("operational");
     });
   });
 
@@ -221,6 +222,46 @@ describe("getPageOverallStatus", () => {
       });
       expect(result.status).toBe("maintenance");
       expect(result.components[0]?.status).toBe("operational");
+    });
+  });
+
+  test("a page-wide report without components degrades the page and outranks a maintenance", async () => {
+    await withTestTransaction(async (tx) => {
+      const { page, components } = await pageWithComponents(tx, 1);
+      await addReport(tx, page.id, [], "investigating");
+      await addMaintenance(tx, page.id, [components[0]?.id ?? 0], ongoing());
+      const result = await getPageOverallStatus({
+        ctx: { db: tx },
+        pageId: page.id,
+      });
+      expect(result.status).toBe("degraded");
+      expect(result.components[0]?.status).toBe("maintenance");
+    });
+  });
+
+  test("a resolved page-wide report counts for nothing", async () => {
+    await withTestTransaction(async (tx) => {
+      const { page } = await pageWithComponents(tx, 1);
+      await addReport(tx, page.id, [], "resolved");
+      const result = await getPageOverallStatus({
+        ctx: { db: tx },
+        pageId: page.id,
+      });
+      expect(result.status).toBe("operational");
+    });
+  });
+
+  test("without component ids, components come in display order", async () => {
+    await withTestTransaction(async (tx) => {
+      const wsId = teamCtx.workspace.id;
+      const p = await createPage(wsId, {}, tx);
+      const late = await createPageComponent(wsId, p.id, { order: 2 }, tx);
+      const early = await createPageComponent(wsId, p.id, { order: 1 }, tx);
+      const result = await getPageOverallStatus({
+        ctx: { db: tx },
+        pageId: p.id,
+      });
+      expect(result.components.map((c) => c.id)).toEqual([early.id, late.id]);
     });
   });
 

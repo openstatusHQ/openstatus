@@ -23,9 +23,9 @@ const ACTIVE_REPORT_STATUSES = [
 ] as const;
 
 /**
- * An active status report degrades its components and the page; otherwise a
- * maintenance in progress puts them in maintenance. Gating is the caller's
- * job, as for `getStatusPageContent`.
+ * An active status report degrades the page and the components it names;
+ * otherwise a maintenance in progress puts them in maintenance. Gating is the
+ * caller's job, as for `getStatusPageContent`.
  */
 export async function getPageOverallStatus(args: {
   ctx?: { db?: DB };
@@ -44,10 +44,11 @@ export async function getPageOverallStatus(args: {
         .select({ id: pageComponent.id })
         .from(pageComponent)
         .where(eq(pageComponent.pageId, pageId))
+        .orderBy(pageComponent.order, pageComponent.id)
         .all()
     ).map((c) => c.id);
 
-  const [reportRows, activeMaintenances] = await Promise.all([
+  const [reportRows, pageReports, activeMaintenances] = await Promise.all([
     componentIds.length > 0
       ? db
           .select({
@@ -69,6 +70,18 @@ export async function getPageOverallStatus(args: {
           )
           .all()
       : Promise.resolve([]),
+    // A report may cover the whole page without naming components.
+    db
+      .select({ id: statusReport.id })
+      .from(statusReport)
+      .where(
+        and(
+          eq(statusReport.pageId, pageId),
+          inArray(statusReport.status, [...ACTIVE_REPORT_STATUSES]),
+        ),
+      )
+      .limit(1)
+      .all(),
     db
       .select({ id: maintenance.id })
       .from(maintenance)
@@ -103,7 +116,7 @@ export async function getPageOverallStatus(args: {
 
   return {
     status:
-      reportRows.length > 0
+      reportRows.length > 0 || pageReports.length > 0
         ? "degraded"
         : activeMaintenances.length > 0
           ? "maintenance"

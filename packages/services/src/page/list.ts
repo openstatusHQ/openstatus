@@ -183,14 +183,11 @@ export async function getPageRow(args: {
   requireScope(ctx, "pages:read");
   const input = GetPageInput.parse(args.input);
 
-  const row = await getReadDb(ctx)
-    .select()
-    .from(page)
-    .where(and(eq(page.id, input.id), eq(page.workspaceId, ctx.workspace.id)))
-    .get();
-
-  if (!row) throw new NotFoundError("page", input.id);
-  return row;
+  return getPageInWorkspace({
+    tx: getReadDb(ctx),
+    id: input.id,
+    workspaceId: ctx.workspace.id,
+  });
 }
 
 /** NotFound rather than Forbidden so a miss is no existence oracle. */
