@@ -45,6 +45,7 @@ export async function createPageComponent(args: {
         )
         .get();
       // Absent, soft-deleted and foreign monitors read the same.
+      // safe: the schema's refine guarantees monitorId on this branch
       if (!row) throw new NotFoundError("monitor", input.monitorId as number);
       name = name ?? row.name;
 

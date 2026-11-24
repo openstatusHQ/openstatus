@@ -112,6 +112,12 @@ export default defineConfig({
                 message: "Use @openstatus/services instead.",
               },
             ],
+            patterns: [
+              {
+                group: ["@openstatus/db/**", "drizzle-orm/**"],
+                message: "Use @openstatus/services instead.",
+              },
+            ],
           },
         ],
       },

@@ -1,6 +1,5 @@
 import { resolveChatModel } from "@openstatus/ai";
 import { Events } from "@openstatus/analytics";
-import { incidentStatus } from "@openstatus/db/src/schema/incidents/constants";
 import { sendIncidentCommander } from "@openstatus/emails";
 import {
   AddIncidentNoteInput,
@@ -40,6 +39,7 @@ import {
   listLinkedStatusReportIds,
   type IncidentEffects,
   incidentEffects,
+  incidentStatus,
   resolveDashboardUrl,
   setIncidentStatus,
   unbindIncidentSlackChannel,

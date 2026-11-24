@@ -274,8 +274,12 @@ async function getWorkspacePage(
 
 /** Group misses are reported as not-found whether absent or on another page. */
 function rethrowGroupNotFound(err: unknown, groupId: string | undefined) {
-  if (err instanceof NotFoundError && err.entity === "page_component_group") {
-    throw componentGroupNotFoundError(groupId ?? "");
+  if (
+    groupId &&
+    err instanceof NotFoundError &&
+    err.entity === "page_component_group"
+  ) {
+    throw componentGroupNotFoundError(groupId);
   }
 }
 
