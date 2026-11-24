@@ -2,6 +2,7 @@ export { claimNotificationTrigger } from "./claim-trigger";
 export { createNotification } from "./create";
 export { deleteNotification } from "./delete";
 export { assertProviderAllowed } from "./internal";
+export { getNotificationLimit, type NotificationLimit } from "./limit";
 export {
   getNotification,
   type ListNotificationsResult,

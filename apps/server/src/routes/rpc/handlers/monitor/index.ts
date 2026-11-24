@@ -49,7 +49,7 @@ import {
   getCheckerTimeout,
   getCheckerUrl,
 } from "../../../../libs/checker";
-import { toConnectError, toServiceCtx } from "../../adapter";
+import { rethrowPlanLimit, toConnectError, toServiceCtx } from "../../adapter";
 import { type RpcContext, getRpcContext } from "../../interceptors";
 import { parseId } from "../../parse";
 import {
@@ -92,7 +92,7 @@ import {
   encodePingCursor,
   toHeartbeatPing,
 } from "./heartbeat-pings";
-import { checkMonitorConfigLimits, checkMonitorLimits } from "./limits";
+import { checkMonitorConfigLimits } from "./limits";
 import {
   toHTTPResponseLogDetail,
   toHTTPResponseLogListItem,
@@ -214,7 +214,6 @@ async function applyUpdate<T>(
 export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
   async createHTTPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
@@ -226,8 +225,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Validate required fields (proto validation handles name, url, periodicity)
     validateCommonMonitorFields(mon);
 
-    // Check workspace limits
-    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+    checkMonitorConfigLimits(limits, mon.periodicity, mon.regions);
 
     try {
       const created = await createMonitor({
@@ -251,13 +249,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
       return { monitor: dbMonitorToHttpProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 
   async createTCPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
@@ -269,8 +266,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Validate required fields (proto validation handles name, uri, periodicity)
     validateCommonMonitorFields(mon);
 
-    // Check workspace limits
-    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+    checkMonitorConfigLimits(limits, mon.periodicity, mon.regions);
 
     try {
       const created = await createMonitor({
@@ -287,13 +283,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
       return { monitor: dbMonitorToTcpProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 
   async createDNSMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
@@ -305,8 +300,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Validate required fields (proto validation handles name, uri, periodicity)
     validateCommonMonitorFields(mon);
 
-    // Check workspace limits
-    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+    checkMonitorConfigLimits(limits, mon.periodicity, mon.regions);
 
     try {
       const created = await createMonitor({
@@ -323,13 +317,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
       return { monitor: dbMonitorToDnsProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 
   async createICMPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
@@ -341,8 +334,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Validate required fields (proto validation handles name, uri, periodicity)
     validateCommonMonitorFields(mon);
 
-    // Check workspace limits
-    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+    checkMonitorConfigLimits(limits, mon.periodicity, mon.regions);
 
     try {
       const created = await createMonitor({
@@ -359,7 +351,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
       return { monitor: dbMonitorToIcmpProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 
@@ -389,7 +381,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       });
       return { monitor: dbMonitorToHeartbeatProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 
@@ -477,7 +469,6 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async createGRPCMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
@@ -489,8 +480,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Validate required fields (proto validation handles name, uri, periodicity)
     validateCommonMonitorFields(mon);
 
-    // Check workspace limits
-    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+    checkMonitorConfigLimits(limits, mon.periodicity, mon.regions);
 
     try {
       const created = await createMonitor({
@@ -511,7 +501,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
       return { monitor: dbMonitorToGrpcProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(err, "monitors", "Upgrade for more monitors");
     }
   },
 

@@ -141,6 +141,10 @@
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
     },
+    "./public-status-page": {
+      "import": "./src/public-status-page/index.ts",
+      "types": "./src/public-status-page/index.ts"
+    },
     "./external-service": {
       "import": "./src/external-service/index.ts",
       "types": "./src/external-service/index.ts"

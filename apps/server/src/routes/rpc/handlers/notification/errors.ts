@@ -94,29 +94,6 @@ export function notificationUpdateFailedError(
 }
 
 /**
- * Creates a "notification limit reached" error.
- */
-export function notificationLimitReachedError(): ConnectError {
-  return createError(
-    "You have reached your notification channel limit. Upgrade to add more.",
-    Code.ResourceExhausted,
-    ErrorReason.NOTIFICATION_LIMIT_REACHED,
-  );
-}
-
-/**
- * Creates a "provider not allowed" error for limited providers.
- */
-export function providerNotAllowedError(provider: string): ConnectError {
-  return createError(
-    `The ${provider} provider requires an upgraded plan.`,
-    Code.PermissionDenied,
-    ErrorReason.PROVIDER_NOT_ALLOWED,
-    { provider },
-  );
-}
-
-/**
  * Creates a "provider not supported" error.
  */
 export function providerNotSupportedError(provider: string): ConnectError {

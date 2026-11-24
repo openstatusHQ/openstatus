@@ -1,30 +1,18 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
-  maintenance,
-  notExcused,
-  page,
   pageCardValues,
-  pageComponent,
   pageConfigurationSchema,
-  privateLocationToMonitors,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
-  selectPageSchema,
   selectPublicMonitorSchema,
   selectPublicPageLightSchemaWithRelation,
   selectPublicPageSchemaWithRelation,
   selectStatusReportPageSchema,
   selectWorkspaceSchema,
-  statusReport,
   timeZoneSchema,
 } from "@openstatus/db/src/schema";
 import { countsRuns } from "@openstatus/services/frozen-uptime";
 import { getStatusUpdateTypes } from "@openstatus/services/page";
-import {
-  constantTimeEqual,
-  isEmailDomainAuthorized,
-} from "@openstatus/services/page-access";
 import {
   getSubscriberByToken,
   hasPendingSubscriber,
@@ -33,16 +21,29 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
+import {
+  checkPublicEmailDomain,
+  getPublicMaintenance,
+  getPublicStatusPage,
+  getPublicStatusPageGate,
+  getPublicStatusPageLight,
+  getPublicStatusPageMonitor,
+  getPublicStatusPageUptime,
+  getPublicStatusReport,
+  getPublicSubscriptionPage,
+  InvalidPagePasswordError,
+  isPublicStatusPagePasswordAuthorized,
+  listPublicStatusPageMonitors,
+  verifyPublicStatusPagePassword,
+} from "@openstatus/services/public-status-page";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 import { z } from "zod";
 
-import {
-  assertPageAccess,
-  resolvePageAccess,
-  visitorFromCtx,
-} from "../lib/page-access";
+import { visitorFromCtx } from "../lib/page-access";
+import { pagePasswordRateLimit } from "../lib/page-password-rate-limit";
 import { sendSubscriberVerification } from "../lib/subscriber-verification";
+import { toTRPCError } from "../service-adapter";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -75,26 +76,17 @@ import {
 
 // NOTE: this router is used on status pages only - do not confuse with the page router which is used in the dashboard for the config
 
-// Gate fields for getGate, reusing selectPageSchema's stringToArray transforms
-// so authEmailDomains / allowedIpRanges come back as arrays like getLight.
-const gateFieldsSchema = selectPageSchema.pick({
-  slug: true,
-  customDomain: true,
-  accessType: true,
-  authEmailDomains: true,
-  allowedIpRanges: true,
-  homepageUrl: true,
-  contactUrl: true,
-  defaultTimezone: true,
-});
-
 // Password for cookie-less server callers (feeds, `?pw=` links).
 const queryPasswordSchema = z.string().nullish();
 const cardTypeSchema = z.enum([...pageCardValues, "dominant"]);
 
-// A host reaches its page through either the slug or the custom domain.
-const bySlugOrDomain = (slug: string) =>
-  sql`lower(${page.slug}) = ${slug} OR lower(${page.customDomain}) = ${slug}`;
+async function callVisitorVerb<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    toTRPCError(err);
+  }
+}
 
 export function sortStatusReportsByLatestUpdate<
   T extends { id: number; statusReportUpdates: { date: Date }[] },
@@ -188,59 +180,12 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        with: {
-          workspace: true,
-          statusReports: {
-            // TODO: we need to order the based on statusReportUpdates instead
-            // orderBy: (reports, { desc }) => desc(reports.createdAt),
-            with: {
-              statusReportUpdates: {
-                orderBy: (reports, { desc }) => desc(reports.date),
-                with: { statusReportUpdateToPageComponents: true },
-              },
-              statusReportsToPageComponents: { with: { pageComponent: true } },
-            },
-          },
-          maintenances: {
-            with: {
-              maintenanceUpdates: {
-                orderBy: (updates, { desc }) => [
-                  desc(updates.date),
-                  desc(updates.id),
-                ],
-              },
-              maintenancesToPageComponents: { with: { pageComponent: true } },
-            },
-            orderBy: (maintenances, { desc }) => desc(maintenances.from),
-          },
-          pageComponents: {
-            with: {
-              monitor: {
-                with: {
-                  monitorIncidents: {
-                    where: notExcused,
-                  },
-                },
-              },
-              group: true,
-            },
-            orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
-          },
-          pageComponentGroups: true,
-        },
+      const result = await getPublicStatusPage({
+        input: { slug: opts.input.slug },
+        visitor: visitorFromCtx(opts.ctx, opts.input.pw),
       });
-
-      if (!_page) return null;
-
-      // Denied visitors still need the page chrome (login, layout, OG).
-      if (!resolvePageAccess(opts.ctx, _page, opts.input.pw).ok) {
-        _page.statusReports = [];
-        _page.maintenances = [];
-        _page.pageComponents = [];
-        _page.pageComponentGroups = [];
-      }
+      if (!result) return null;
+      const { page: _page, privateLocationCounts } = result;
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
       const pageComponents = selectPageComponentWithMonitorRelation
@@ -348,31 +293,6 @@ export const statusPageRouter = createTRPCRouter({
           groupOrder: c.groupOrder,
         };
       });
-
-      // Add privateLocationCount to each monitor
-      const privateLocationCounts = new Map<number, number>();
-      if (monitors.length > 0) {
-        const monitorIds = monitors.map((m) => m.id);
-        const privateLocations =
-          await opts.ctx.db.query.privateLocationToMonitors.findMany({
-            where: and(
-              inArray(privateLocationToMonitors.monitorId, monitorIds),
-              isNull(privateLocationToMonitors.deletedAt),
-            ),
-            columns: {
-              monitorId: true,
-            },
-          });
-
-        // Count private locations per monitor
-        for (const pl of privateLocations) {
-          if (pl.monitorId === null) continue;
-          privateLocationCounts.set(
-            pl.monitorId,
-            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1,
-          );
-        }
-      }
 
       // Create new array with privateLocationCount included (no mutation/cast)
       const monitorsWithPrivateLocationCount = monitors.map((m) => ({
@@ -628,58 +548,11 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      // Single query with all relations
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        with: {
-          workspace: true,
-          statusReports: {
-            with: {
-              statusReportUpdates: {
-                orderBy: (reports, { desc }) => desc(reports.date),
-                with: { statusReportUpdateToPageComponents: true },
-              },
-              statusReportsToPageComponents: { with: { pageComponent: true } },
-            },
-          },
-          maintenances: {
-            with: {
-              maintenanceUpdates: {
-                orderBy: (updates, { desc }) => [
-                  desc(updates.date),
-                  desc(updates.id),
-                ],
-              },
-              maintenancesToPageComponents: { with: { pageComponent: true } },
-            },
-            orderBy: (maintenances, { desc }) => desc(maintenances.from),
-          },
-          pageComponents: {
-            with: {
-              monitor: {
-                with: {
-                  monitorIncidents: {
-                    where: notExcused,
-                  },
-                },
-              },
-              group: true,
-            },
-            orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
-          },
-          pageComponentGroups: true,
-        },
+      const _page = await getPublicStatusPageLight({
+        input: { slug: opts.input.slug },
+        visitor: visitorFromCtx(opts.ctx, opts.input.pw),
       });
-
       if (!_page) return null;
-
-      // Denied visitors still need the page chrome (login, layout, OG).
-      if (!resolvePageAccess(opts.ctx, _page, opts.input.pw).ok) {
-        _page.statusReports = [];
-        _page.maintenances = [];
-        _page.pageComponents = [];
-        _page.pageComponentGroups = [];
-      }
 
       // Extract monitor components for backwards compatibility
       const monitorComponents = _page.pageComponents.filter(
@@ -746,29 +619,7 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        columns: {
-          slug: true,
-          customDomain: true,
-          accessType: true,
-          authEmailDomains: true,
-          allowedIpRanges: true,
-          homepageUrl: true,
-          contactUrl: true,
-          defaultTimezone: true,
-        },
-        with: { workspace: true },
-      });
-
-      if (!_page) return null;
-
-      const ws = selectWorkspaceSchema.safeParse(_page.workspace);
-      const whiteLabel = ws.data?.limits["white-label"] ?? false;
-
-      const { workspace: _workspace, ...rest } = _page;
-      const gate = gateFieldsSchema.parse(rest);
-      return { ...gate, whiteLabel };
+      return getPublicStatusPageGate({ input: { slug: opts.input.slug } });
     }),
 
   getMaintenance: publicProcedure
@@ -782,34 +633,12 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db
-        .select()
-        .from(page)
-        .where(bySlugOrDomain(opts.input.slug))
-        .get();
-
-      if (!_page) return null;
-
-      assertPageAccess(opts.ctx, _page, opts.input.pw);
-
-      const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
-        where: and(
-          eq(maintenance.id, opts.input.id),
-          eq(maintenance.pageId, _page.id),
-        ),
-        with: {
-          maintenanceUpdates: {
-            orderBy: (updates, { desc }) => [
-              desc(updates.date),
-              desc(updates.id),
-            ],
-          },
-          maintenancesToPageComponents: {
-            with: { pageComponent: { with: { monitor: true } } },
-          },
-        },
-      });
-
+      const _maintenance = await callVisitorVerb(() =>
+        getPublicMaintenance({
+          input: { slug: opts.input.slug, id: opts.input.id },
+          visitor: visitorFromCtx(opts.ctx, opts.input.pw),
+        }),
+      );
       if (!_maintenance) return null;
 
       const props: z.infer<typeof selectMaintenancePageSchema> = _maintenance;
@@ -835,43 +664,19 @@ export const statusPageRouter = createTRPCRouter({
       const input = opts.input;
       if (!input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(input.slug),
-        with: {
-          maintenances: {
-            with: {
-              maintenancesToPageComponents: { with: { pageComponent: true } },
-            },
+      const result = await callVisitorVerb(() =>
+        getPublicStatusPageUptime({
+          input: {
+            slug: input.slug,
+            pageComponentIds: input.pageComponentIds
+              .map(Number)
+              .filter(Number.isFinite),
           },
-          statusReports: {
-            with: {
-              statusReportsToPageComponents: { with: { pageComponent: true } },
-              statusReportUpdates: {
-                with: { statusReportUpdateToPageComponents: true },
-              },
-            },
-          },
-          pageComponents: {
-            where: inArray(
-              pageComponent.id,
-              input.pageComponentIds.map(Number),
-            ),
-            with: {
-              monitor: {
-                with: {
-                  monitorIncidents: {
-                    where: notExcused,
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (!_page) return null;
-
-      assertPageAccess(opts.ctx, _page, input.pw);
+          visitor: visitorFromCtx(opts.ctx, input.pw),
+        }),
+      );
+      if (!result) return null;
+      const { page: _page, privateLocationCounts } = result;
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
@@ -910,24 +715,15 @@ export const statusPageRouter = createTRPCRouter({
 
       // No public regions alone doesn't make a monitor private-only: it may
       // have no locations at all, so confirm an active private assignment.
-      const noRegionMonitorIds = monitors
-        .filter((c) => c.monitor.regions.length === 0)
-        .map((c) => c.monitor.id);
-      const privateOnlyMonitorIds = new Set<number>();
-      if (noRegionMonitorIds.length > 0) {
-        const rows = await opts.ctx.db.query.privateLocationToMonitors.findMany(
-          {
-            where: and(
-              inArray(privateLocationToMonitors.monitorId, noRegionMonitorIds),
-              isNull(privateLocationToMonitors.deletedAt),
-            ),
-            columns: { monitorId: true },
-          },
-        );
-        for (const row of rows) {
-          if (row.monitorId !== null) privateOnlyMonitorIds.add(row.monitorId);
-        }
-      }
+      const privateOnlyMonitorIds = new Set(
+        monitors
+          .filter(
+            (c) =>
+              c.monitor.regions.length === 0 &&
+              privateLocationCounts.has(c.monitor.id),
+          )
+          .map((c) => c.monitor.id),
+      );
 
       return pageComponents.map((c) => {
         const events = getEvents({
@@ -1051,32 +847,12 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db
-        .select()
-        .from(page)
-        .where(bySlugOrDomain(opts.input.slug))
-        .get();
-
-      if (!_page) return null;
-
-      assertPageAccess(opts.ctx, _page, opts.input.pw);
-
-      const _report = await opts.ctx.db.query.statusReport.findFirst({
-        where: and(
-          eq(statusReport.id, opts.input.id),
-          eq(statusReport.pageId, _page.id),
-        ),
-        with: {
-          statusReportsToPageComponents: {
-            with: { pageComponent: { with: { monitor: true } } },
-          },
-          statusReportUpdates: {
-            orderBy: (reports, { desc }) => desc(reports.date),
-            with: { statusReportUpdateToPageComponents: true },
-          },
-        },
-      });
-
+      const _report = await callVisitorVerb(() =>
+        getPublicStatusReport({
+          input: { slug: opts.input.slug, id: opts.input.id },
+          visitor: visitorFromCtx(opts.ctx, opts.input.pw),
+        }),
+      );
       if (!_report) return null;
 
       const result: z.infer<typeof selectStatusReportPageSchema> = _report;
@@ -1172,25 +948,17 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      // NOTE: revalidate the public monitors first
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        with: {
-          pageComponents: {
-            with: {
-              monitor: true,
-            },
-          },
-        },
-      });
-
-      if (!_page) return null;
-
-      assertPageAccess(opts.ctx, _page, opts.input.pw);
+      const components = await callVisitorVerb(() =>
+        listPublicStatusPageMonitors({
+          input: { slug: opts.input.slug },
+          visitor: visitorFromCtx(opts.ctx, opts.input.pw),
+        }),
+      );
+      if (!components) return null;
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
-        .parse(_page.pageComponents);
+        .parse(components);
 
       const publicMonitors = pageComponents
         .filter(isMonitorComponent)
@@ -1228,25 +996,17 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        with: {
-          pageComponents: {
-            where: eq(pageComponent.monitorId, opts.input.id),
-            with: {
-              monitor: true,
-            },
-          },
-        },
-      });
-
-      if (!_page) return null;
-
-      assertPageAccess(opts.ctx, _page, opts.input.pw);
+      const components = await callVisitorVerb(() =>
+        getPublicStatusPageMonitor({
+          input: { slug: opts.input.slug, id: opts.input.id },
+          visitor: visitorFromCtx(opts.ctx, opts.input.pw),
+        }),
+      );
+      if (!components) return null;
 
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
-        .parse(_page.pageComponents);
+        .parse(components);
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
@@ -1350,12 +1110,12 @@ export const statusPageRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        with: {
-          workspace: true,
-        },
-      });
+      const _page = await callVisitorVerb(() =>
+        getPublicSubscriptionPage({
+          input: { slug: opts.input.slug },
+          visitor: visitorFromCtx(opts.ctx),
+        }),
+      );
 
       if (!_page) {
         throw new TRPCError({
@@ -1364,28 +1124,10 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      assertPageAccess(opts.ctx, _page);
-
-      const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
-
-      if (!workspace.success) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Workspace data is invalid",
-        });
-      }
-
-      if (!workspace.data.limits["status-subscribers"]) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Upgrade to use status subscribers",
-        });
-      }
-
       // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
       const isPending = await hasPendingSubscriber({
         input: { email: opts.input.email, pageId: _page.id },
-        // gated by `assertPageAccess` above
+        // gated by `getPublicSubscriptionPage` above
         visitor: null,
       });
       if (isPending) {
@@ -1480,9 +1222,11 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-      });
+      const _page = await callVisitorVerb(() =>
+        checkPublicEmailDomain({
+          input: { slug: opts.input.slug, email: opts.input.email },
+        }),
+      );
 
       if (!_page) {
         throw new TRPCError({
@@ -1491,24 +1235,6 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      if (_page.accessType !== "email-domain") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "Page is not configured to allow email domain authentication",
-        });
-      }
-
-      const allowedDomains = _page.authEmailDomains?.split(",") ?? [];
-
-      if (!isEmailDomainAuthorized(opts.input.email, allowedDomains)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid email domain",
-        });
-      }
-
-      // Public procedure: never return the raw row (password, IP allow-list).
       return {
         email: opts.input.email,
         slug: opts.input.slug,
@@ -1549,28 +1275,36 @@ export const statusPageRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
+      const slot = await pagePasswordRateLimit().reserve({
+        scope: "login",
+        slug: opts.input.slug,
+        ip: visitorFromCtx(opts.ctx).clientIp ?? null,
+      });
+      if (slot.locked) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many password attempts. Try again later.",
+        });
+      }
+
+      const verified = await callVisitorVerb(async () => {
+        try {
+          const result = await verifyPublicStatusPagePassword({
+            input: { slug: opts.input.slug, password: opts.input.password },
+          });
+          await slot.release();
+          return result;
+        } catch (err) {
+          // Only a wrong password keeps the slot it reserved.
+          if (!(err instanceof InvalidPagePasswordError)) await slot.release();
+          throw err;
+        }
       });
 
-      if (!_page) {
+      if (!verified) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Page not found",
-        });
-      }
-
-      if (_page.accessType !== "password") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Page is not configured to allow password authentication",
-        });
-      }
-
-      if (!constantTimeEqual(_page.password, opts.input.password)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid password",
         });
       }
 
@@ -1588,16 +1322,29 @@ export const statusPageRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: bySlugOrDomain(opts.input.slug),
-        columns: { password: true, accessType: true },
-      });
-      if (!_page || _page.accessType !== "password") return false;
-      // TODO: rate-limit — an unauthenticated caller can brute-force guesses here.
-      // Query param wins over cookie: a present-but-wrong `?pw=` must not fall
-      // through to a valid cookie. Mirrors isPasswordAuthorized on the proxy.
       const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
-      return constantTimeEqual(_page.password, submitted);
+      // Nothing (or "") submitted can never authorize, so it is not a guess:
+      // anonymous feed reads must not count.
+      if (!submitted) {
+        return (
+          (await isPublicStatusPagePasswordAuthorized({ input: opts.input })) ??
+          false
+        );
+      }
+
+      const slot = await pagePasswordRateLimit().reserve({
+        scope: "check",
+        slug: opts.input.slug,
+        ip: visitorFromCtx(opts.ctx).clientIp ?? null,
+      });
+      if (slot.locked) return false;
+
+      const authorized = await isPublicStatusPagePasswordAuthorized({
+        input: opts.input,
+      });
+      // Only a wrong password for a gated page keeps the slot.
+      if (authorized !== false) await slot.release();
+      return authorized ?? false;
     }),
 
   getSubscriberByToken: publicProcedure

@@ -26,7 +26,6 @@ import {
 } from "@openstatus/proto/status_page/v1";
 import {
   ConflictError,
-  LimitExceededError,
   NotFoundError,
   ServiceError,
   withTransaction,
@@ -72,7 +71,7 @@ import {
   validateCustomTheme,
 } from "@openstatus/theme-store";
 
-import { toConnectError, toServiceCtx } from "../../adapter";
+import { rethrowPlanLimit, toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import { parseId } from "../../parse";
 import { dbImpactToProto } from "../status-report/converters";
@@ -115,7 +114,6 @@ import {
   checkEmailDomainProtectionLimit,
   checkIpRestrictionLimit,
   checkNoIndexLimit,
-  checkPageComponentLimits,
   checkPasswordProtectionLimit,
   checkStatusSubscribersLimit,
 } from "./limits";
@@ -640,24 +638,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           allowIndex,
           customTheme,
         },
-      }).catch((err) => {
-        // Same handler-layer remap as the `i18n` pre-check above —
-        // preserve `PermissionDenied` (403) for "plan quota reached"
-        // on `status-pages`. The service throws `LimitExceededError`
-        // which the Connect adapter maps to `ResourceExhausted`
-        // (429), but the gRPC contract here is 403 for "upgrade
-        // required".
-        if (
-          err instanceof LimitExceededError &&
-          err.message.startsWith("status-pages")
-        ) {
-          throw new ConnectError(
-            "Upgrade for more status pages.",
-            Code.PermissionDenied,
-          );
-        }
-        throw err;
-      });
+      }).catch((err) =>
+        rethrowPlanLimit(err, "status-pages", "Upgrade for more status pages."),
+      );
 
       return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
     } catch (err) {
@@ -1032,7 +1015,6 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async addMonitorComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
 
     // Verify page exists and belongs to workspace
     const pageData = await getPageById(
@@ -1042,9 +1024,6 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     if (!pageData) {
       throw statusPageNotFoundError(req.pageId);
     }
-
-    // Check workspace limits for page components
-    await checkPageComponentLimits(pageData.id, limits);
 
     // Verify monitor exists and belongs to workspace
     const monitorData = await getMonitorById(
@@ -1076,14 +1055,17 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
       return { component: dbComponentToProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(
+        err,
+        "page-components",
+        "Upgrade for more page components",
+      );
     }
   },
 
   async addStaticComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
 
     // Verify page exists and belongs to workspace
     const pageData = await getPageById(
@@ -1093,9 +1075,6 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     if (!pageData) {
       throw statusPageNotFoundError(req.pageId);
     }
-
-    // Check workspace limits for page components
-    await checkPageComponentLimits(pageData.id, limits);
 
     // Validate group exists if provided
     if (req.groupId) {
@@ -1118,7 +1097,11 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
       return { component: dbComponentToProto(created) };
     } catch (err) {
-      toConnectError(err);
+      rethrowPlanLimit(
+        err,
+        "page-components",
+        "Upgrade for more page components",
+      );
     }
   },
 

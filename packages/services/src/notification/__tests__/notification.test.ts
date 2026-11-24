@@ -25,6 +25,7 @@ import {
 } from "../../errors";
 import { createNotification } from "../create";
 import { deleteNotification } from "../delete";
+import { getNotificationLimit } from "../limit";
 import { getNotification, listNotifications } from "../list";
 import { updateNotification } from "../update";
 
@@ -541,5 +542,45 @@ describe("group scopes", () => {
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
+  });
+});
+
+describe("getNotificationLimit", () => {
+  test("counts the workspace's channels against its plan cap", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      expect(await getNotificationLimit({ ctx })).toEqual({
+        currentCount: 0,
+        maxCount: 1,
+        limitReached: false,
+      });
+
+      await createNotification({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-limit`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [],
+        },
+      });
+
+      expect(await getNotificationLimit({ ctx })).toEqual({
+        currentCount: 1,
+        maxCount: 1,
+        limitReached: true,
+      });
+    });
+  });
+
+  test("rejects other-group key", async () => {
+    const ctx = makeApiKeyCtx(teamCtx.workspace, {
+      keyId: "k-monitors",
+      userId: 1,
+      scopes: ["monitors:read"],
+    });
+    await expect(getNotificationLimit({ ctx })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
   });
 });

@@ -1,6 +1,8 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
   ConcurrentUpdateError,
+  LimitExceededError,
+  type LimitKey,
   type ServiceContext,
   ServiceError,
 } from "@openstatus/services";
@@ -72,4 +74,19 @@ export function toConnectError(err: unknown): never {
   // interceptor holds the `RpcContext`, so it's the only layer that can put
   // the request id in both the log line and the client's message.
   throw err;
+}
+
+/**
+ * The public API reports a reached plan cap as PermissionDenied ("upgrade"),
+ * not the ResourceExhausted that `toConnectError` gives `LIMIT_EXCEEDED`.
+ */
+export function rethrowPlanLimit(
+  err: unknown,
+  limit: LimitKey,
+  message: string,
+): never {
+  if (err instanceof LimitExceededError && err.limit === limit) {
+    throw new ConnectError(message, Code.PermissionDenied);
+  }
+  toConnectError(err);
 }

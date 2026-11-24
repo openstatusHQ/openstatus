@@ -1,31 +1,5 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { count, db, eq } from "@openstatus/db";
-import { page, pageComponent } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
-
-/**
- * Check workspace limits for creating a new status page.
- * Throws ConnectError with PermissionDenied if limit is exceeded.
- */
-export async function checkStatusPageLimits(
-  workspaceId: number,
-  limits: Limits,
-): Promise<void> {
-  // Check status page count limit
-  const countResult = await db
-    .select({ count: count() })
-    .from(page)
-    .where(eq(page.workspaceId, workspaceId))
-    .get();
-
-  const currentCount = countResult?.count ?? 0;
-  if (currentCount >= limits["status-pages"]) {
-    throw new ConnectError(
-      "Upgrade for more status pages",
-      Code.PermissionDenied,
-    );
-  }
-}
 
 /**
  * Check if custom domain feature is available on the workspace plan.
@@ -100,29 +74,6 @@ export function checkStatusSubscribersLimit(limits: Limits): void {
   if (!limits["status-subscribers"]) {
     throw new ConnectError(
       "Upgrade to use status subscribers",
-      Code.PermissionDenied,
-    );
-  }
-}
-
-/**
- * Check workspace limits for creating a new page component.
- * Throws ConnectError with PermissionDenied if limit is exceeded.
- */
-export async function checkPageComponentLimits(
-  pageId: number,
-  limits: Limits,
-): Promise<void> {
-  const countResult = await db
-    .select({ count: count() })
-    .from(pageComponent)
-    .where(eq(pageComponent.pageId, pageId))
-    .get();
-
-  const currentCount = countResult?.count ?? 0;
-  if (currentCount >= limits["page-components"]) {
-    throw new ConnectError(
-      "Upgrade for more page components",
       Code.PermissionDenied,
     );
   }
