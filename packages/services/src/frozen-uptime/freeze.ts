@@ -16,6 +16,7 @@ import { FreezeMonitorMonthInput } from "./schemas";
  * month was already frozen; `replace` overwrites it in the same statement.
  * Deliberately no audit row — system cron writes would be pure volume.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- system cron write, deliberately not audited (see above)
 export async function freezeMonitorMonth(args: {
   ctx: ServiceContext;
   input: FreezeMonitorMonthInput;

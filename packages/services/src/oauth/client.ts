@@ -20,6 +20,7 @@ export type RegisteredClient = {
 };
 
 /** RFC 7591 dynamic registration. Public clients only; every redirect URI must pass the allowlist. */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- public OAuth registration, before any workspace or actor exists
 export async function registerClient(args: {
   input: RegisterClientInput;
   db?: DB;

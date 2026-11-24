@@ -49,3 +49,14 @@ export async function archiveWidget( // expect: services-mutation-guards
     await emitAudit(tx, args.ctx, {});
   });
 }
+
+// Writes on the client itself, without opening a transaction.
+export async function insertWidgetRaw(args: { ctx: ServiceContext }) { // expect: services-mutation-guards
+  await db.insert(monitor).values({ workspaceId: args.ctx.workspace.id });
+}
+
+export async function renameWidgetRaw(args: { ctx: ServiceContext }) { // expect: services-mutation-guards
+  const { ctx } = args;
+  requireScope(ctx, "monitors:write");
+  await (ctx.db ?? defaultDb).update(monitor).set({ name: "x" });
+}

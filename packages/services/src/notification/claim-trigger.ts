@@ -11,6 +11,7 @@ import { ClaimNotificationTriggerInput } from "./schemas";
  * No `ServiceContext` and no audit row: delivery bookkeeping on the alerting
  * path, not workspace configuration.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- delivery bookkeeping with no actor; the notification itself is the record
 export async function claimNotificationTrigger(args: {
   input: ClaimNotificationTriggerInput;
   db?: DB;

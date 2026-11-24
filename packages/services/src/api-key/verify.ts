@@ -51,6 +51,7 @@ export async function verifyApiKey(
  * when skipped. No ctx required — called from the request auth path
  * which runs before workspace resolution.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- debounced last-used stamp on the request path, not audited
 export async function updateApiKeyLastUsed(
   input: UpdateApiKeyLastUsedInput,
   opts: { db?: ServiceContext["db"] } = {},

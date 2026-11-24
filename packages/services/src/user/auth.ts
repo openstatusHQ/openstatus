@@ -130,6 +130,7 @@ export async function createUserWithWorkspace(args: {
 }
 
 /** Refresh the profile fields an identity provider sent on sign-in. */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- profile fields from the identity provider at sign-in, outside any workspace
 export async function syncUserProfile(args: {
   input: SyncUserProfileInput;
   db?: DB;

@@ -26,3 +26,12 @@ export async function pageWidgets(args: { ctx: ServiceContext; limit?: number })
     await emitAudit(tx, ctx, { limit });
   });
 }
+
+// The caller owns the transaction, the scope check and the audit row.
+async function renameWidgetInTx(tx: DB, id: number) {
+  await tx.update(monitor).set({ name: "x" }).where(eq(monitor.id, id));
+}
+
+function forget(cache: Map<number, string>, id: number) {
+  cache.delete(id);
+}

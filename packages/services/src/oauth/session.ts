@@ -35,6 +35,7 @@ import {
  * and redirect URI failures throw without a redirect target; everything after
  * that carries the redirect so the route can send the error back per RFC 6749.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- pending authorize session, before any workspace or actor exists
 export async function createSession(args: {
   input: CreateSessionInput;
   db?: DB;

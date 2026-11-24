@@ -10,6 +10,7 @@ import { AttachFrozenBadRangesInput } from "./schemas";
  * Add 15-minute ranges to one frozen row; false when it was re-frozen since
  * `expected` was read. Deliberately no audit row, like `freezeMonitorMonth`.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- system cron write, deliberately not audited (see above)
 export async function attachFrozenBadRanges(args: {
   ctx: ServiceContext;
   input: AttachFrozenBadRangesInput;

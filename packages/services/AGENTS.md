@@ -66,8 +66,10 @@ or destructured from its args) named as the transaction: `tx`, `rtx` or
   `entity-refs.coverage.test.ts` until it is mapped there or listed as not a ref.
 
 A missing `emitAudit` or `requireScope` is a defect, not a style nit. Both are
-lint-enforced; if a verb genuinely needs neither, the inline disable must carry
-a reason.
+lint-enforced for any function that opens a transaction or writes on the client
+itself (`db.insert`, `ctx.db.update`, ...); a write through a `tx` parameter
+belongs to the caller. If a verb genuinely needs neither, the inline disable
+must carry a reason.
 
 ## Scope enforcement
 

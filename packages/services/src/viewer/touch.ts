@@ -10,6 +10,7 @@ import { TouchViewerInput } from "./schemas";
  * No `ServiceContext` and no audit row: a viewer is an anonymous visitor of a
  * gated page, outside any workspace.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- anonymous status-page viewer, outside any workspace
 export async function touchViewer(args: {
   input: TouchViewerInput;
   db?: DB;

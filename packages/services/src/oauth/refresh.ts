@@ -22,6 +22,7 @@ const invalidGrant = (message: string) =>
  * Rotate in place. The predicate pins the hash being replaced and the live
  * state, so a concurrent refresh or revoke makes this match nothing.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- refresh-token rotation inside the token grant, before an actor context exists
 async function rotate(
   db: DB,
   grant: GrantRow,
