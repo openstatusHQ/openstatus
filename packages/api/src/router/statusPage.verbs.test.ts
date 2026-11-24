@@ -224,6 +224,19 @@ describe("subscribe", () => {
     );
     expect(err.code).toBe("UNAUTHORIZED");
   });
+
+  test("BAD_REQUEST for a component of another page", async () => {
+    const err = await trpcError(
+      caller().subscribe({
+        slug: publicSlug,
+        email: "a@acme.com",
+        subscribeComponents: true,
+        pageComponents: [gated.componentId],
+      }),
+    );
+    expect(err.code).toBe("BAD_REQUEST");
+    expect(err.message).toBe("Some components do not belong to this page");
+  });
 });
 
 describe("validateEmailDomain", () => {

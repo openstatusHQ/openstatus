@@ -16,6 +16,7 @@ import { getStatusUpdateTypes } from "@openstatus/services/page";
 import {
   getSubscriberByToken,
   hasPendingSubscriber,
+  sendSubscriberVerification,
   unsubscribeSubscriber,
   updateSubscriberScope,
   upsertSelfSignupSubscriber,
@@ -42,7 +43,6 @@ import { z } from "zod";
 
 import { visitorFromCtx } from "../lib/page-access";
 import { pagePasswordRateLimit } from "../lib/page-password-rate-limit";
-import { sendSubscriberVerification } from "../lib/subscriber-verification";
 import { toTRPCError } from "../service-adapter";
 import { cachedPipe } from "../tb-cache";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -1147,11 +1147,13 @@ export const statusPageRouter = createTRPCRouter({
       }
 
       // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
-      const isPending = await hasPendingSubscriber({
-        input: { email: opts.input.email, pageId: _page.id },
-        // gated by `getPublicSubscriptionPage` above
-        visitor: null,
-      });
+      const isPending = await callVisitorVerb(() =>
+        hasPendingSubscriber({
+          input: { email: opts.input.email, pageId: _page.id },
+          // gated by `getPublicSubscriptionPage` above
+          visitor: null,
+        }),
+      );
       if (isPending) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -1160,16 +1162,18 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      const subscription = await upsertSelfSignupSubscriber({
-        input: {
-          email: opts.input.email,
-          pageId: _page.id,
-          componentIds: opts.input.subscribeComponents
-            ? opts.input.pageComponents
-            : [],
-        },
-        visitor: visitorFromCtx(opts.ctx),
-      });
+      const subscription = await callVisitorVerb(() =>
+        upsertSelfSignupSubscriber({
+          input: {
+            email: opts.input.email,
+            pageId: _page.id,
+            componentIds: opts.input.subscribeComponents
+              ? opts.input.pageComponents
+              : [],
+          },
+          visitor: visitorFromCtx(opts.ctx),
+        }),
+      );
 
       // Already verified — no need to send another verification email
       if (subscription.acceptedAt) {
@@ -1179,7 +1183,9 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      await sendSubscriberVerification(opts.ctx.db, subscription.id);
+      await callVisitorVerb(() =>
+        sendSubscriberVerification({ subscriber: subscription }),
+      );
 
       return { id: subscription.id };
     }),

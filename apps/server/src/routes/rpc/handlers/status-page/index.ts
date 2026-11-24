@@ -62,9 +62,9 @@ import {
   countPageSubscribers,
   listPageSubscribers,
   unsubscribePageSubscriber,
+  sendSubscriberVerification,
   upsertSelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-import { getChannel } from "@openstatus/subscriptions";
 import {
   THEME_KEYS,
   type ThemeKey,
@@ -1330,32 +1330,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw subscriberCreateFailedError();
     }
 
-    if (!result.acceptedAt) {
-      const verifyUrl = pageData.customDomain
-        ? `https://${pageData.customDomain}/verify/${result.token}`
-        : `https://${pageData.slug}.openstatus.dev/verify/${result.token}`;
-
-      const channel = getChannel("email");
-      if (channel?.sendVerification) {
-        try {
-          await channel.sendVerification(
-            {
-              id: result.id,
-              pageId: pageData.id,
-              pageName: pageData.title,
-              pageSlug: pageData.slug,
-              customDomain: pageData.customDomain,
-              componentIds: [],
-              channelType: "email",
-              email: result.email,
-              token: result.token ?? undefined,
-            },
-            verifyUrl,
-          );
-        } catch (err) {
-          console.error("Failed to send verification email:", err);
-        }
-      }
+    try {
+      await sendSubscriberVerification({ subscriber: result });
+    } catch (err) {
+      console.error("Failed to send verification email:", err);
     }
 
     return {
