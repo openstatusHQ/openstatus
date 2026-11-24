@@ -1,6 +1,6 @@
 ---
 title: "Uptime That Outlives the Data"
-description: "How we built long-term uptime history, excused outages and maintenance windows on top of check data that only lives for a few weeks."
+description: "How we built long-term uptime history, excused outages and maintenance windows on top of check data we stored but only showed for 30 days."
 author: "Maximilian Kaske"
 publishedAt: "2026-11-21"
 category: "engineering"
@@ -9,7 +9,7 @@ image: "/assets/posts/uptime-that-outlives-the-data/uptime-that-outlives-the-dat
 
 For a long time, openstatus could tell you how a monitor did this week, up to 30 days, but not how it did last March.
 
-That sounds like a small gap until a customer asks for an SLA report. "What was our uptime in Q2?" is a fair question, and the honest answer was "we don't know anymore". Raw check results live in Tinybird and age out after a few months. Once they were gone, so was your history.
+That sounds like a small gap until a customer asks for an SLA report. "What was our uptime in Q2?" is a fair question, and the honest answer was "we can't show you". The data was there: every check result is stored in Tinybird. But the dashboard and status pages read rolled-up views that only reach back a few weeks, and months of raw results are too many to query on every page load. We had the history and no way to display it.
 
 This post is about how we fixed that, and about the things we had to fix along the way once we started looking at months of data instead of days.
 
@@ -17,11 +17,11 @@ This post is about how we fixed that, and about the things we had to fix along t
 
 The idea is simple: once a month is over, write down what happened and never touch it again.
 
-Every monitor gets one frozen row per month in a table in Turso. The row holds daily counts: how many checks succeeded, how many were degraded, how many failed. That's a few kilobytes per monitor-month, and it never expires.
+Every monitor gets one frozen row per month in our database. The row holds daily counts: how many checks succeeded, how many were degraded, how many failed. That's a few kilobytes per monitor-month, and it never expires.
 
 A monthly job in our workflows app waits until a month has been over for 48 hours and then freezes every monitor that doesn't have a row yet. A monitor paused halfway through the month still gets frozen, because its uptime for the first half was real.
 
-The freeze has to happen while Tinybird still has the data. That window used to be about two weeks, which is not a lot of room if a run fails on a weekend. We extended Tinybird's retention to give it about six. If monitors are still unfrozen three days before the cutoff, we get an error report. If a frozen row turns out to be wrong, it can be replaced with one request, as long as the month is still inside that window.
+The freeze reads from those rolled-up views, so it has to happen while they still cover the month. That window used to be about two weeks, which is not a lot of room if a run fails on a weekend. We extended their retention to give it about six. Past the cutoff the job refuses to run, because a late freeze would read partial data and write days with zero checks that never get corrected. If monitors are still unfrozen three days before the cutoff, we get an error report. If a frozen row turns out to be wrong, it can be replaced with one request, as long as the month is still inside that window.
 
 A status page's **History** tab reads frozen rows for finished months and live Tinybird data for the current one. You don't see the seam. It shows downtime per month across the page's components, and picking a month opens it as a calendar with that month's events and the downtime of each component.
 
@@ -56,7 +56,7 @@ Each day can carry a list of failure ranges, at 15-minute resolution:
 
 This is a one-minute monitor checking from six regions, with a 20-minute outage at the end of the day. A range is `[firstBucket, count, degraded, error]`: starting at quarter-hour 94 (23:30 UTC), one bucket, 15 failed runs (90 failed requests, one per region). Consecutive buckets with identical counts merge into one range, so a monitor that's down all day stores a single `[0, 96, 0, 15]`. A healthy day stores nothing extra at all.
 
-To read a month in any time zone, we take the day totals for the days fully inside it and move the failures from the edge days into the right month based on their buckets. Fifteen minutes is fine enough for every UTC offset in use today, since even the odd ones like India or Nepal land on a quarter-hour.
+To read a month in any time zone, we take the day totals for the days fully inside it and move the failures from the edge days into the right month based on their buckets. Passing checks have no buckets, so we spread them evenly across the day and only the failures keep their exact quarter-hour. Fifteen minutes is fine enough for every UTC offset in use today, since even the odd ones like India or Nepal land on a quarter-hour.
 
 Because a frozen row is write-once, the freeze checks itself: the ranges for a day must add up to that day's failure counts. If they don't, the row is frozen without ranges and we hear about it. A row without ranges still has correct monthly totals, it just can't be regrouped.
 
@@ -92,7 +92,7 @@ A monitor's **History** tab shows the measures side by side: availability from o
 
 Once uptime is something you hand to a customer, a single bad data point matters more. A probe blip from one of our regions, or a migration you announced weeks ago, shouldn't cost you a tenth of a percent forever.
 
-Outages now have their own **Outages** tab on every monitor: a calendar of the last year's downtime and the list of every outage behind it. From there you can excuse an outage and give a reason.
+Outages now have their own **Outages** tab on every monitor: a calendar of the last year's downtime and the list of every outage behind it. From there you can excuse an outage and give a reason. Only a resolved outage can be excused: excusing an open one would show your page as operational while you're down.
 
 An excused outage is hidden from your public status page, and wherever uptime is measured in time it counts as up: the monitor's availability, heartbeat monitors and pages that count time per status. It doesn't rewrite check results, though. If a page counts requests or runs, the failed checks stay failed, because they did fail.
 
@@ -134,15 +134,15 @@ Looking at long ranges turned up issues that are invisible in a 24-hour chart:
 - **Paused and deleted monitors left outages open.** An outage that never closes eats every month after it. Pausing or deleting a monitor now resolves its open outages.
 - **A queued result could reopen an outage.** A check result that was queued just before a pause could arrive afterwards and leave a stale error behind, which opened an outage on resume. The checker now only writes status for active monitors.
 - **Heartbeat history started too early.** It started at the monitor's creation date, so a monitor set up on Monday but first pinged on Friday looked like it had four days of missing data. It now starts on the day of the first ping.
-- **Outages were changed from several places.** Our cloud checker, the private-location checker and a cleanup cron all wrote to the incident table directly. They now all go through the same service calls, which check permissions and write an audit row in the same transaction.
+- **Outages were changed from several places.** Our cloud checker, the private-location checker and a cleanup cron all wrote to the incident table directly. The private-location checker and the cron now go through the same service calls, which check permissions and write an [audit row](/blog/audit-humans-and-agents) in the same transaction. The cloud checker is the one exception: it runs on every check, so it writes the outage and its audit row together in a single batch instead.
 
 
 ## Where to find it
 
-- **Status page > History**: page uptime and downtime per month, the month calendar with its events and the downtime of each component, and a preview of the other calculations.
-- **Monitor > History**: availability, requests and runs next to each other, with downtime or failed checks per month and per day.
-- **Monitor > Outages**: every outage with its downtime calendar, and where you excuse one.
-- **Maintenance Windows** in the sidebar: planned work, paused or kept checking.
+- [**Status Pages > History**](https://app.openstatus.dev/status-pages/_/history): page uptime and downtime per month, the month calendar with its events and the downtime of each component, and a preview of the other calculations.
+- [**Monitors > History**](https://app.openstatus.dev/monitors/_/history): availability, requests and runs next to each other, with downtime or failed checks per month and per day.
+- [**Monitors > Outages**](https://app.openstatus.dev/monitors/_/outages): every outage with its downtime calendar, and where you excuse one.
+- [**Maintenance Windows**](https://app.openstatus.dev/maintenance-windows): planned work, paused or kept checking.
 
 How far back you can look depends on your plan: 3 months on Starter, 12 on Pro and 24 on Scale. The frozen rows are kept regardless, so a longer period on a bigger plan shows months you already had.
 
