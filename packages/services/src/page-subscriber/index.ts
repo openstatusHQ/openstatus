@@ -14,6 +14,7 @@ export {
   type PageSubscriberListItem,
 } from "./list";
 export { sendPageSubscriberTestWebhook } from "./send-test-webhook";
+export { sendSubscriberVerification } from "./send-verification";
 export {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
