@@ -39,7 +39,11 @@ import type {
   PrivateLocation,
 } from "../types";
 import { getMonitorInWorkspace } from "./internal";
-import { GetMonitorInput, ListMonitorsInput } from "./schemas";
+import {
+  GetMonitorInput,
+  ListMonitorRowsInput,
+  ListMonitorsInput,
+} from "./schemas";
 
 export type MonitorListItem = Monitor & {
   tags: MonitorTag[];
@@ -297,10 +301,11 @@ export function parseMonitorRow(row: unknown): Monitor | null {
  */
 export async function listMonitorRows(args: {
   ctx: ServiceContext;
-  input: { limit: number; offset: number };
+  input: ListMonitorRowsInput;
 }): Promise<{ monitors: Monitor[]; totalSize: number }> {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
+  const input = ListMonitorRowsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
   const where = and(
     eq(monitor.workspaceId, ctx.workspace.id),
@@ -318,8 +323,8 @@ export async function listMonitorRows(args: {
       .from(monitor)
       .where(where)
       .orderBy(asc(monitor.id))
-      .limit(args.input.limit)
-      .offset(args.input.offset)
+      .limit(input.limit)
+      .offset(input.offset)
       .all(),
   ]);
 

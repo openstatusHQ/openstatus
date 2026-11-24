@@ -138,6 +138,15 @@ describe("listMonitorRows", () => {
     });
   });
 
+  test("rejects a non-positive limit or a negative offset", async () => {
+    for (const input of [
+      { limit: 0, offset: 0 },
+      { limit: 10, offset: -1 },
+    ]) {
+      await expect(listMonitorRows({ ctx: teamCtx, input })).rejects.toThrow();
+    }
+  });
+
   test("needs monitors:read", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
@@ -184,6 +193,28 @@ describe("listHeartbeatStates", () => {
         kind: "fail",
         nextDueAt: due,
       });
+    });
+  });
+
+  test("skips soft-deleted and non-heartbeat monitors", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = teamCtx.workspace.id;
+      const deleted = await createMonitor(
+        ws,
+        { jobType: "heartbeat", deletedAt: new Date() },
+        tx,
+      );
+      const http = await createMonitor(ws, { jobType: "http" }, tx);
+      const at = new Date("2026-01-01T00:00:00Z");
+      await tx.insert(monitorHeartbeatState).values([
+        { monitorId: deleted.id, lastPingAt: at },
+        { monitorId: http.id, lastPingAt: at },
+      ]);
+      const states = await listHeartbeatStates({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorIds: [deleted.id, http.id] },
+      });
+      expect(states.size).toBe(0);
     });
   });
 

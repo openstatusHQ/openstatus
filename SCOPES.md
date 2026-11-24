@@ -59,7 +59,7 @@ key form read it.
 
 ## Service verbs by scope
 
-Generated from `requireScope` calls on 2026-10-30. Regenerate with
+Generated from `requireScope` calls on 2026-11-24. Regenerate with
 `grep -rn 'requireScope(ctx, "' packages/services/src --include='*.ts' | grep -v __tests__`.
 
 | Scope | Verbs |
@@ -67,7 +67,7 @@ Generated from `requireScope` calls on 2026-10-30. Regenerate with
 | `monitors:read` | getMonitor, getMonitorRow, listMonitors, listMonitorRows, listMonitorTags, getMonitorStatus, getMonitorSummary, getResponseLog, getResponseLogFacets, listResponseLogs, listResponseLogsInfinite, getHeartbeatState, listHeartbeatStates, listHeartbeatPings, getMonitorIncident, listMonitorIncidents, getMonitorReport, getUptimeHistory, getMonitorUptimeHistory, listMaintenanceWindows, getMaintenanceWindow |
 | `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, setMonitorStatus, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, updateMonitorHeartbeat, regenerateHeartbeatToken, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, createMonitorIncident, autoResolveMonitorIncidents, acknowledgeMonitorIncident, resolveMonitorIncident, excuseMonitorIncident, unexcuseMonitorIncident, freezeMonitorMonth, attachFrozenBadRanges, createMaintenanceWindow, updateMaintenanceWindow, endMaintenanceWindow, deleteMaintenanceWindow, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `pages:read` | listPages, getPage, getPageRow, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponent, getPageComponentDailySummary, listPageComponentGroups, previewImport |
-| `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
+| `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageTimezone, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `incidents:read` | listStatusReports, getStatusReport, listIncidents, getIncident, getIncidentBySlackChannel, getIncidentForStatusReport, listLinkedStatusReportIds, listIncidentEvents, getIncidentEvent, getPostmortem, listMaintenances, getMaintenance, getMaintenanceUpdate |
 | `incidents:write` | createStatusReport, updateStatusReport, deleteStatusReport, addStatusReportUpdate, updateStatusReportUpdate, deleteStatusReportUpdate, notifyStatusReport, declareIncident, updateIncident, setIncidentStatus, acknowledgeIncident, closeIncident, deleteIncident, addIncidentNote, linkIncidentStatusReport, unlinkIncidentStatusReport, bindIncidentSlackChannel, unbindIncidentSlackChannel, draftPostmortem, approvePostmortem, createMaintenance, updateMaintenance, deleteMaintenance, addMaintenanceUpdate, updateMaintenanceUpdate, deleteMaintenanceUpdate, notifyMaintenance |
 | `notifications:read` | listNotifications, getNotification, getNotificationLimit |
@@ -75,6 +75,7 @@ Generated from `requireScope` calls on 2026-10-30. Regenerate with
 | `subscribers:read` | listPageSubscribers, countPageSubscribers; `listAuditLogs` / `getAuditLog` hide `page_subscriber` rows without it |
 | `subscribers:write` | createPageSubscriber, subscribeEmailInWorkspace, updatePageSubscriberChannel, unsubscribePageSubscriber, deletePageSubscriber, sendPageSubscriberTestWebhook |
 | `admin` | createApiKey, revokeApiKey (except self-revoke), createInvitation, acceptInvitation, deleteInvitation, deleteMember, transferOwnership, enableSso, disableSso, joinSsoWorkspace, syncSsoDomain, removeSsoDomain, createSsoPortalLink, exchangeCode, revokeGrant, revokeGrantAsOwner, installSlackAgent, uninstallSlackAgent, deleteIntegration, createSlackUserMapping, updateWorkspaceName, updateWorkspacePlan, updateWorkspaceLimits, updateWorkspaceStripeId, markWorkspaceTrialed, previewWorkspaceDowngrade, downgradeWorkspaceToFree, deleteAccount |
+| `any` | submitFeedback, hasSubmittedFeedback |
 
 Read verbs that take no `ctx` (status-page visitor paths, cron jobs, token
 lookups) carry no scope by design; the lint rule

@@ -401,6 +401,8 @@ export async function listHeartbeatStates(args: {
       and(
         inArray(monitorHeartbeatState.monitorId, ids),
         eq(monitor.workspaceId, ctx.workspace.id),
+        eq(monitor.jobType, "heartbeat"),
+        isNull(monitor.deletedAt),
       ),
     )
     .all();

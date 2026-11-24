@@ -149,8 +149,6 @@ async function validateAndGetMonitor(
   return dbMon;
 }
 
-type ParsedMonitor = Monitor;
-
 function heartbeatStatesByMonitor(rpcCtx: RpcContext, monitorIds: number[]) {
   return listHeartbeatStates({
     ctx: toServiceCtx(rpcCtx),
@@ -169,7 +167,7 @@ async function applyUpdate<T>(
   rpcCtx: RpcContext,
   monitorId: number,
   updateValues: Omit<UpdateMonitorConfigInput, "id">,
-  converter: (data: ParsedMonitor) => T,
+  converter: (data: Monitor) => T,
 ): Promise<{ monitor: T }> {
   try {
     const updated = await updateMonitorConfig({
