@@ -13,6 +13,8 @@ export default defineConfig({
   sortPackageJson: true,
   sortTailwindcss: { functions: ["cn", "cva", "clsx"] },
   ignorePatterns: [
+    // Deliberately bad code, linted by tooling/oxlint/check-fixtures.mts.
+    "tooling/oxlint/fixtures/**",
     "packages/ui/src/components/*.ts",
     "packages/ui/src/components/*.tsx",
     "apps/dashboard/src/scripts/*.ts",

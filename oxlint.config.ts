@@ -2,7 +2,7 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "unicorn", "oxc"],
-  jsPlugins: ["./scripts/oxlint-plugin-openstatus.js"],
+  jsPlugins: ["./tooling/oxlint/plugin.js"],
   categories: {
     correctness: "warn",
   },
@@ -30,6 +30,8 @@ export default defineConfig({
     "unicorn/prefer-node-protocol": "error",
   },
   ignorePatterns: [
+    // Deliberately bad code, linted by tooling/oxlint/check-fixtures.mts.
+    "tooling/oxlint/fixtures/**",
     "packages/ui/src/components/*.ts",
     "packages/ui/src/components/*.tsx",
     // Vendored from the data-table-filters shadcn registry — reformatting or
@@ -112,6 +114,9 @@ export default defineConfig({
       excludeFiles: ["**/__tests__/**", "**/*.test.ts"],
       rules: {
         "openstatus/services-mutation-guards": "error",
+        "openstatus/services-audit-on-tx": "error",
+        // Group from the folder; non-group folders are skipped by the rule.
+        "openstatus/services-scope-matches-folder": "error",
         // The package stays Edge-safe by design.
         "no-restricted-imports": [
           "error",

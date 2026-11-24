@@ -37,5 +37,8 @@ jobs:
       - name: 🔗 Doc references
         run: pnpm check:docs
 
+      - name: 🧷 Lint rule fixtures
+        run: pnpm check:lint-rules
+
       - name: 🔍 Check
         run: pnpm check
