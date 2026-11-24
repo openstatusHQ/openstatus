@@ -1,4 +1,3 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
   maintenanceUpdate,

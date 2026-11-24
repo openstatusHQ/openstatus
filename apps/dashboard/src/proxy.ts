@@ -6,10 +6,8 @@ import {
   parseAttribution,
   serializeAttribution,
 } from "@openstatus/analytics/src/attribution";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { asc, db, eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
+import { resolveUserWorkspaces } from "@openstatus/services/user";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -154,26 +152,22 @@ export default auth(async (req) => {
   const ssoOrg = req.cookies.get(SSO_ORG_COOKIE)?.value;
 
   if (req.auth?.user?.id && (!hasWorkspaceSlug || ssoOrg)) {
-    const rows = await db
-      .select()
-      .from(usersToWorkspaces)
-      .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-      .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-      .where(eq(user.id, Number.parseInt(req.auth.user.id)))
-      .orderBy(asc(usersToWorkspaces.createdAt))
-      .all();
+    const resolved = await resolveUserWorkspaces({
+      userId: Number.parseInt(req.auth.user.id),
+    });
+    const workspaces = resolved?.workspaces ?? [];
 
     // The cookie only *selects* among workspaces the user already belongs to —
     // it can never grant access, so a forged value is inert.
     const target = ssoOrg
-      ? rows.find((row) => row.workspace.workosOrganizationId === ssoOrg)
+      ? workspaces.find((w) => w.workosOrganizationId === ssoOrg)
       : undefined;
-    const query = target ?? rows[0];
+    const query = target ?? workspaces[0];
 
     if (!query) {
       console.error(">> Should not happen, no workspace found for user");
     } else if (target || !hasWorkspaceSlug) {
-      response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug);
+      response.cookies.set(WORKSPACE_SLUG_COOKIE, query.slug);
     }
   }
 

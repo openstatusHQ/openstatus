@@ -1,9 +1,5 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, gte, lte } from "@openstatus/db";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db } from "@openstatus/db/src/db";
-import { user } from "@openstatus/db/src/schema";
 import { FeedbackEmail, sendEmail } from "@openstatus/emails";
+import { listSignupEmails } from "@openstatus/services/user";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -17,20 +13,14 @@ export async function GET(request: NextRequest) {
   const date2 = new Date();
   date2.setDate(date2.getDate() - 14);
 
-  const users = await db
-    .select({ email: user.email })
-    .from(user)
-    .where(and(gte(user.createdAt, date1), lte(user.createdAt, date2)))
-    .all();
+  const emails = await listSignupEmails({ from: date1, to: date2 });
 
   let sent = 0;
-  for (const u of users) {
-    if (!u.email || u.email.trim() === "") continue;
-
+  for (const email of emails) {
     await sendEmail({
       from: "Thibault from openstatus <thibault@openstatus.dev>",
       subject: "One quick question",
-      to: [u.email],
+      to: [email],
       react: FeedbackEmail(),
     });
     sent++;

@@ -1,9 +1,8 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, schema } from "@openstatus/db";
-import { autoResolveMonitorIncidents } from "@openstatus/services/monitor-incident";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, eq, inArray, isNull, ne } from "drizzle-orm";
+import {
+  autoResolveMonitorIncidents,
+  listRecoveredMonitorsWithOpenIncidents,
+} from "@openstatus/services/monitor-incident";
 import { Hono } from "hono";
 
 import { env } from "../env";
@@ -33,25 +32,9 @@ incidentRoute.get("/cleanup", async (c) => {
 export async function resolveStaleIncidents(
   workspaceId?: number,
 ): Promise<number> {
-  const unresolvedIncidentMonitorIds = db
-    .select({ monitorId: schema.monitorIncidentTable.monitorId })
-    .from(schema.monitorIncidentTable)
-    .where(isNull(schema.monitorIncidentTable.resolvedAt));
-
-  const monitors = await db
-    .select({ id: schema.monitor.id, workspaceId: schema.monitor.workspaceId })
-    .from(schema.monitor)
-    .where(
-      and(
-        inArray(schema.monitor.id, unresolvedIncidentMonitorIds),
-        eq(schema.monitor.active, true),
-        ne(schema.monitor.status, "error"),
-        workspaceId === undefined
-          ? undefined
-          : eq(schema.monitor.workspaceId, workspaceId),
-      ),
-    )
-    .all();
+  const monitors = await listRecoveredMonitorsWithOpenIncidents({
+    workspaceId,
+  });
 
   let updated = 0;
   for (const monitor of monitors) {

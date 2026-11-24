@@ -1,17 +1,13 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
-import {
-  monitor,
-  privateLocation,
-  privateLocationToMonitors,
-  selectWorkspaceSchema,
-  user,
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
-import { setPrivateLocationStatus } from "@openstatus/services/private-location";
+import type { ServiceContext } from "@openstatus/services";
+import { listMembers } from "@openstatus/services/member";
+import {
+  countScheduledMonitors,
+  listReportingPrivateLocations,
+  setPrivateLocationStatus,
+} from "@openstatus/services/private-location";
+import { systemContext } from "@openstatus/services/workspace";
 import type { Context } from "hono";
 
 import { env } from "../env";
@@ -33,17 +29,7 @@ type HealthSummary = { checked: number; toError: number; toActive: number };
 export async function runPrivateLocationHealth(
   now: Date = new Date(),
 ): Promise<HealthSummary> {
-  const locations = await db
-    .select({
-      id: privateLocation.id,
-      name: privateLocation.name,
-      status: privateLocation.status,
-      lastSeenAt: privateLocation.lastSeenAt,
-      workspaceId: privateLocation.workspaceId,
-    })
-    .from(privateLocation)
-    .where(isNotNull(privateLocation.lastSeenAt))
-    .all();
+  const locations = await listReportingPrivateLocations();
 
   const summary: HealthSummary = {
     checked: locations.length,
@@ -65,41 +51,27 @@ export async function runPrivateLocationHealth(
 
     if (nextStatus === null) continue;
 
-    const workspaceRow = await db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.id, location.workspaceId))
-      .get();
-    if (!workspaceRow) continue;
+    const ctx = await systemContext(
+      location.workspaceId,
+      "private-location-health",
+    ).catch(() => null);
+    if (!ctx) continue;
 
     await setPrivateLocationStatus({
-      ctx: {
-        workspace: selectWorkspaceSchema.parse(workspaceRow),
-        actor: { type: "system", job: "private-location-health" },
-      },
+      ctx,
       input: { id: location.id, status: nextStatus },
     });
 
     if (nextStatus === "error") summary.toError++;
     else summary.toActive++;
 
-    const scheduled = await db
-      .select({ id: monitor.id })
-      .from(privateLocationToMonitors)
-      .innerJoin(monitor, eq(privateLocationToMonitors.monitorId, monitor.id))
-      .where(
-        and(
-          eq(privateLocationToMonitors.privateLocationId, location.id),
-          isNull(privateLocationToMonitors.deletedAt),
-          eq(monitor.active, true),
-          isNull(monitor.deletedAt),
-        ),
-      )
-      .all();
-    const monitorCount = scheduled.length;
+    const monitorCount = await countScheduledMonitors({
+      ctx,
+      privateLocationId: location.id,
+    });
 
     await notifyMembers({
-      workspaceId: location.workspaceId,
+      ctx,
       monitorCount,
       locationName: location.name,
       status: nextStatus === "error" ? "error" : "recovered",
@@ -111,21 +83,15 @@ export async function runPrivateLocationHealth(
 }
 
 async function notifyMembers(args: {
-  workspaceId: number;
+  ctx: ServiceContext;
   locationName: string;
   status: "error" | "recovered";
   lastSeenAt: Date;
   monitorCount: number;
 }) {
-  const members = await db
-    .select({ email: user.email })
-    .from(usersToWorkspaces)
-    .innerJoin(user, eq(usersToWorkspaces.userId, user.id))
-    .where(eq(usersToWorkspaces.workspaceId, args.workspaceId))
-    .all();
-
+  const members = await listMembers({ ctx: args.ctx });
   const to = members
-    .map((m) => m.email)
+    .map((m) => m.user.email)
     .filter((email): email is string => !!email && email.trim() !== "");
 
   if (to.length === 0) return;
@@ -140,7 +106,7 @@ async function notifyMembers(args: {
     });
   } catch (error) {
     logger.error("Failed to send private location alert", {
-      workspace_id: args.workspaceId,
+      workspace_id: args.ctx.workspace.id,
       location_name: args.locationName,
       error_message: error instanceof Error ? error.message : String(error),
     });

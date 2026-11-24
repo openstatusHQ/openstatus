@@ -106,6 +106,9 @@ export default defineConfig({
         "apps/workflows/src/health.ts",
         "apps/dashboard/src/lib/auth/adapter.ts",
         "apps/status-page/src/lib/auth/adapter.ts",
+        // Delivery library that services dispatches through: services depends
+        // on it, so it cannot import services back.
+        "packages/subscriptions/src/**",
         // The workflows client wiring, and the documented checker ingest batch
         // (see packages/services/AGENTS.md).
         "apps/workflows/src/lib/db.ts",
