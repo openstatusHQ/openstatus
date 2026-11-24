@@ -7,8 +7,9 @@ import {
   isDbWrite,
 } from "../lib/ast.js";
 
-// Marks a write on the client itself, outside any transaction callback.
+// Marks an insert/update/delete on the client itself (`db`, `ctx.db`, ...).
 const DB_WRITE = Symbol("db-write");
+
 /**
  * Keys off behaviour, not filename: a top-level function that opens a
  * transaction, or writes on the client itself (`db.insert(...)`, `ctx.db.update(...)`),
