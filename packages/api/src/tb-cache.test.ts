@@ -11,7 +11,9 @@ describe("cachedPipe (no Redis)", () => {
   });
 
   afterEach(() => {
-    process.env.UPSTASH_REDIS_REST_URL = url;
+    // assigning `undefined` would store the truthy string "undefined"
+    if (url === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
+    else process.env.UPSTASH_REDIS_REST_URL = url;
     vi.useRealTimers();
   });
 

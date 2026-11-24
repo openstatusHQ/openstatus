@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const store = new Map<string, string>();
 const set = vi.fn(async (key: string, value: unknown, _opts: unknown) => {
@@ -25,6 +25,13 @@ vi.mock("@openstatus/upstash", async () => {
 const { cachedPipe } = await import("./tb-cache");
 
 describe("cachedPipe (Redis)", () => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+
+  afterEach(() => {
+    if (url === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
+    else process.env.UPSTASH_REDIS_REST_URL = url;
+  });
+
   beforeEach(() => {
     process.env.UPSTASH_REDIS_REST_URL = "http://redis.test";
     store.clear();
