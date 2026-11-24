@@ -1,5 +1,7 @@
 import { CloudTasksClient, type protos } from "@google-cloud/tasks";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db, eq, ne, not } from "@openstatus/db";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {

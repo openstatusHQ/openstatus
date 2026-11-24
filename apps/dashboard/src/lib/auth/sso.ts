@@ -1,4 +1,3 @@
-import { db } from "@openstatus/db";
 import {
   getWorkspaceByWorkosOrganization,
   isEmailAllowedForWorkspace,
@@ -34,13 +33,12 @@ export async function authorizeSsoSignIn(
   if (!organizationId || !email) return false;
 
   const workspace = await getWorkspaceByWorkosOrganization(
-    db,
     organizationId,
   ).catch(() => null);
 
   if (!workspace || !workspace.ssoEnabled) return false;
 
-  return isEmailAllowedForWorkspace(workspace.id, email, db);
+  return isEmailAllowedForWorkspace(workspace.id, email);
 }
 
 /**
@@ -57,7 +55,6 @@ export async function joinWorkspaceViaSso(args: {
   userId: number;
 }): Promise<void> {
   const workspace = await getWorkspaceByWorkosOrganization(
-    db,
     args.organizationId,
   ).catch(() => null);
 

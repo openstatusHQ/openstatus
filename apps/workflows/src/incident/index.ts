@@ -1,6 +1,8 @@
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db, schema } from "@openstatus/db";
 import { autoResolveMonitorIncidents } from "@openstatus/services/monitor-incident";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 

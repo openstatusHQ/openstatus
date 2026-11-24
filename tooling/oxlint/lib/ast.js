@@ -123,3 +123,45 @@ export function isWithin(inner, outer) {
   const [outerStart, outerEnd] = outer.range ?? [outer.start, outer.end];
   return start >= outerStart && end <= outerEnd;
 }
+
+const WRITE_METHODS = new Set(["insert", "update", "delete"]);
+
+/** Whether an expression is the db client: `db`, `defaultDb`, `ctx.db`, or a fallback between them. */
+function isDbReceiver(expr) {
+  switch (expr?.type) {
+    case "Identifier":
+      return expr.name === "db" || expr.name === "defaultDb";
+    case "MemberExpression":
+      return (
+        !expr.computed &&
+        expr.property?.type === "Identifier" &&
+        expr.property.name === "db"
+      );
+    case "LogicalExpression":
+      return isDbReceiver(expr.left) || isDbReceiver(expr.right);
+    case "ConditionalExpression":
+      return isDbReceiver(expr.consequent) || isDbReceiver(expr.alternate);
+    case "ParenthesizedExpression":
+    case "TSNonNullExpression":
+    case "TSAsExpression":
+      return isDbReceiver(expr.expression);
+    default:
+      return false;
+  }
+}
+
+/**
+ * `db.insert(...)`, `ctx.db.update(...)`, `(ctx.db ?? defaultDb).delete(...)`:
+ * a write on the client itself. A `tx` receiver belongs to a caller's
+ * transaction, and `Map#delete` or `Set#delete` has no db receiver.
+ */
+export function isDbWrite(node) {
+  const callee = node.callee;
+  return (
+    callee?.type === "MemberExpression" &&
+    !callee.computed &&
+    callee.property?.type === "Identifier" &&
+    WRITE_METHODS.has(callee.property.name) &&
+    isDbReceiver(callee.object)
+  );
+}

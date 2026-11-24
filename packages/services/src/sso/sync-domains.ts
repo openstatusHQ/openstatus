@@ -21,7 +21,7 @@ export async function syncSsoDomain(args: {
   const input = SyncSsoDomainInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
-    const ws = await getWorkspaceByWorkosOrganization(tx, input.organizationId);
+    const ws = await getWorkspaceByWorkosOrganization(input.organizationId, tx);
     const scopedCtx: ServiceContext = { ...ctx, workspace: ws, db: tx };
 
     const existing = await tx
@@ -159,7 +159,7 @@ export async function removeSsoDomain(args: {
   const input = RemoveSsoDomainInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
-    const ws = await getWorkspaceByWorkosOrganization(tx, input.organizationId);
+    const ws = await getWorkspaceByWorkosOrganization(input.organizationId, tx);
     const scopedCtx: ServiceContext = { ...ctx, workspace: ws, db: tx };
 
     const existing = await tx

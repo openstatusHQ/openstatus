@@ -1,4 +1,3 @@
-import { db } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
 import { NotFoundError } from "@openstatus/services";
 import {
@@ -33,10 +32,7 @@ export async function POST(req: NextRequest) {
   const { organizationId, domain } = event;
 
   try {
-    const workspace = await getWorkspaceByWorkosOrganization(
-      db,
-      organizationId,
-    );
+    const workspace = await getWorkspaceByWorkosOrganization(organizationId);
     const ctx: ServiceContext = {
       workspace,
       actor: { type: "system", job: "workos-webhook" },

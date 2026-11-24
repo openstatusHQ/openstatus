@@ -1,4 +1,6 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db as defaultDb, eq, schema } from "@openstatus/db";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { monitorInWindow } from "@openstatus/db/src/maintenance";
 
 /** True when a maintenance window of either mode covered the monitor when its check ran. */

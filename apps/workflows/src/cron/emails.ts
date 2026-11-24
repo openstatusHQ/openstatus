@@ -1,5 +1,7 @@
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, eq, gte, inArray, lte } from "@openstatus/db";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db } from "@openstatus/db";
 import {
   integration,

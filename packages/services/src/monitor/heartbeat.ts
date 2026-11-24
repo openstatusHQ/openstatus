@@ -228,6 +228,7 @@ export type HeartbeatPingResult =
  * like a check result. Only the deadline drives alerting; the sweep in
  * `apps/workflows` applies the transitions.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- public ping authenticated by its token, not audited like a check result
 export async function recordHeartbeatPing(args: {
   token: string;
   at: Date;

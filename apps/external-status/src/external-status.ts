@@ -1,5 +1,4 @@
 import { getLogger } from "@logtape/logtape";
-import { db } from "@openstatus/db";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
 import { applyDetectedProvider } from "@openstatus/services/external-service";
@@ -211,7 +210,6 @@ export function runIncidentPhase(
         Effect.flatMap((incidents) =>
           runUpsert({ entry, fetcher }, () =>
             upsertExternalIncidentsForService({
-              ctx: { db },
               externalServiceId: row.id,
               incidents: incidents.map(toUpsertInput),
               now: tickStartedAt,
@@ -263,7 +261,6 @@ function runComponentPhase(
         Effect.flatMap((components) =>
           runUpsert({ entry, fetcher }, () =>
             upsertExternalComponentsForService({
-              ctx: { db },
               externalServiceId: row.id,
               components: components.map(toComponentUpsertInput),
               now: tickStartedAt,
@@ -486,7 +483,6 @@ function applyDetection(args: {
   return Effect.tryPromise({
     try: () =>
       applyDetectedProvider({
-        ctx: { db },
         input: {
           serviceId: row.id,
           expected: {
@@ -636,7 +632,7 @@ export async function runExternalStatusTick(): Promise<{
   components: PhaseCounts;
   detect: DetectCounts;
 }> {
-  const services = await listExternalServices({ ctx: { db } });
+  const services = await listExternalServices({});
 
   const triplets = buildTriplets(services);
   const tickStartedAt = new Date();

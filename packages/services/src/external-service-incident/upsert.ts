@@ -89,6 +89,7 @@ function incidentsEqual(existing: ExistingRow, desired: DesiredRow): boolean {
   );
 }
 
+// oxlint-disable-next-line openstatus/services-mutation-guards -- system ingest of third-party status pages, no workspace or actor
 export async function upsertExternalIncidentsForService(args: {
   ctx?: { db?: DrizzleClient };
   externalServiceId: number;

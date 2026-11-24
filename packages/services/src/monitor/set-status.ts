@@ -12,6 +12,7 @@ import { SetMonitorStatusInput } from "./schemas";
  * Not audited: the status follows check results, and the outage it opens or
  * closes is audited as a `monitor_incident` row.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- status follows check results; the outage is audited as a monitor_incident row
 export async function setMonitorStatus(args: {
   ctx: ServiceContext;
   input: SetMonitorStatusInput;

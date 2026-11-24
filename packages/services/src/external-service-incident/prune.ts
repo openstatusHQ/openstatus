@@ -10,6 +10,7 @@ export type PruneRawPayloadsResult = {
   purged: number;
 };
 
+// oxlint-disable-next-line openstatus/services-mutation-guards -- system cleanup of third-party status-page payloads, no workspace or actor
 export async function pruneStaleRawPayloads(args: {
   ctx?: { db?: DB };
   olderThanDays?: number;

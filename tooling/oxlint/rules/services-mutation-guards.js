@@ -4,12 +4,17 @@ import {
   functionName,
   lateRequireScope,
   isWithin,
+  isDbWrite,
 } from "../lib/ast.js";
+
+// Marks an insert/update/delete on the client itself (`db`, `ctx.db`, ...).
+const DB_WRITE = Symbol("db-write");
 
 /**
  * Keys off behaviour, not filename: a top-level function that opens a
- * transaction is a mutation, and every mutation must check the actor's scope
- * and leave an audit row.
+ * transaction, or writes on the client itself (`db.insert(...)`, `ctx.db.update(...)`),
+ * is a mutation, and every mutation must check the actor's scope and leave an
+ * audit row. A write through a `tx` parameter belongs to the caller's mutation.
  *
  * It matches call names, not the call graph. `emitAudit` therefore counts from
  * anywhere in the verb (it belongs inside the `withTransaction` callback), which
@@ -22,11 +27,11 @@ export default {
     type: "problem",
     docs: {
       description:
-        "A services function that calls withTransaction must also call requireScope and emitAudit.",
+        "A services function that writes to the database (withTransaction, or an insert/update/delete on the client) must also call requireScope and emitAudit.",
     },
     messages: {
       missing:
-        "`{{name}}` opens a transaction but never calls {{missing}}. Every mutation in @openstatus/services must check the actor's scope and emit an audit row — see packages/services/AGENTS.md. If this verb genuinely needs neither, disable this rule inline with the reason above it.",
+        "`{{name}}` writes to the database but never calls {{missing}}. Every mutation in @openstatus/services must check the actor's scope and emit an audit row — see packages/services/AGENTS.md. If this verb genuinely needs neither, disable this rule inline with the reason above it.",
       late: "`{{name}}` runs code before `requireScope`. Check the scope first, before parsing input or reading anything; only destructuring the arguments may precede it.",
     },
   },
@@ -55,7 +60,7 @@ export default {
       depth -= 1;
       if (depth !== 0 || outermost === null) return;
 
-      if (calls.has("withTransaction")) {
+      if (calls.has("withTransaction") || calls.has(DB_WRITE)) {
         const missing = [];
         if (!bodyCalls.has("requireScope")) missing.push("requireScope");
         if (!calls.has("emitAudit")) missing.push("emitAudit");
@@ -91,6 +96,7 @@ export default {
         }
       },
       CallExpression(node) {
+        if (isDbWrite(node)) calls.add(DB_WRITE);
         const name = calleeName(node);
         if (!name) return;
         calls.add(name);

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db, eq, or, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 

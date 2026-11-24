@@ -23,6 +23,7 @@ export function isAccessToken(token: string): boolean {
  * known, so no `ServiceContext`. `last_used_at` is bumped best-effort with the
  * same debounce as API keys.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- runs before the workspace is known; the last-used stamp is not audited
 export async function verifyAccessToken(
   token: string,
   opts: { db?: DB; now?: Date } = {},

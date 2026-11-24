@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, count, db, eq, gte, inArray } from "@openstatus/db";
 import {
   notification,

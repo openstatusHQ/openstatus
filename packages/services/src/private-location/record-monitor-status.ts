@@ -12,6 +12,7 @@ import { RecordPrivateLocationMonitorStatusInput } from "./schemas";
  * No `ServiceContext` and no audit row: this is check telemetry on the ingest
  * path, one write per check, not workspace configuration.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- a check result reported by a private location, not audited
 export async function recordPrivateLocationMonitorStatus(args: {
   input: RecordPrivateLocationMonitorStatusInput;
   db?: DB;

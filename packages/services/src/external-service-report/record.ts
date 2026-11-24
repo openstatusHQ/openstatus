@@ -20,6 +20,7 @@ export type RecordExternalReportResult = {
   componentId: number | null;
 };
 
+// oxlint-disable-next-line openstatus/services-mutation-guards -- system ingest of third-party status pages, no workspace or actor
 export async function recordExternalServiceReport(args: {
   ctx?: GlobalReadContext;
   input: RecordExternalReportInput;

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { type SQL, sql } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import { monitor, monitorStatusTable } from "@openstatus/db/src/schema";

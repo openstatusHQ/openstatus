@@ -1,6 +1,7 @@
 import "server-only";
 import { type AppRouter, appRouter, t } from "@openstatus/api";
 import type { Context } from "@openstatus/api/src/trpc";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db } from "@openstatus/db";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import { cache } from "react";

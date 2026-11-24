@@ -1,5 +1,6 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import {
   and,
   db,

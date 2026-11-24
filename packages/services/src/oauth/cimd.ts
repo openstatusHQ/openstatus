@@ -251,6 +251,7 @@ export const KNOWN_CLIENT_DOCUMENTS: Record<string, ClientMetadataDocument> = {
  * same domain-ownership check when it was stored. A 404 or an invalid body is
  * still a hard failure so a de-registered client does not live on.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- caches OAuth client metadata, before any workspace or actor exists
 export async function resolveUrlClient(
   db: DB,
   clientId: string,

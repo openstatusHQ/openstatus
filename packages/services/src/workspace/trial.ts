@@ -68,6 +68,7 @@ export async function isTrialEligibleWorkspace(args: {
  * Records that the workspace used its trial. Keeps the first date on
  * redelivery; returns false when it was already marked.
  */
+// oxlint-disable-next-line openstatus/services-mutation-guards -- billing bookkeeping; whether it needs an audit row is still open
 export async function markWorkspaceTrialed(args: {
   ctx: ServiceContext;
 }): Promise<boolean> {

@@ -1,4 +1,6 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, gte, lte } from "@openstatus/db";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db } from "@openstatus/db/src/db";
 import { user } from "@openstatus/db/src/schema";
 import { FeedbackEmail, sendEmail } from "@openstatus/emails";

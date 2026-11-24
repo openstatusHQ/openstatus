@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 import { getLogger } from "@logtape/logtape";
 import { Events, setupAnalytics } from "@openstatus/analytics";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db, eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,

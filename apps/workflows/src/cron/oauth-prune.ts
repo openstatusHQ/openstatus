@@ -1,5 +1,4 @@
 import { getLogger } from "@logtape/logtape";
-import { db } from "@openstatus/db";
 import {
   type PruneExpiredResult,
   pruneExpired,
@@ -12,7 +11,7 @@ import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 const logger = getLogger(["workflow", "oauth-prune"]);
 
 export async function runOAuthPruneTick(): Promise<PruneExpiredResult> {
-  return pruneExpired({ ctx: { db } });
+  return pruneExpired();
 }
 
 export async function handleOAuthPruneCron(c: Context) {

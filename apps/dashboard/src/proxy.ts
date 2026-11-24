@@ -6,6 +6,7 @@ import {
   parseAttribution,
   serializeAttribution,
 } from "@openstatus/analytics/src/attribution";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { asc, db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
