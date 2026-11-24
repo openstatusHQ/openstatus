@@ -1,6 +1,6 @@
 module github.com/openstatushq/openstatus/apps/checker
 
-go 1.25.2
+go 1.27.3
 
 require (
 	cloud.google.com/go/auth v0.20.0

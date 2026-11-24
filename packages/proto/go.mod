@@ -1,6 +1,6 @@
 module github.com/openstatushq/openstatus/packages/proto
 
-go 1.25.2
+go 1.27.3
 
 tool (
 	connectrpc.com/connect

@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # builder
-FROM golang@sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107 AS builder
+FROM golang@sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0 AS builder
 LABEL \
-    org.opencontainers.image.base.digest="sha256:dc9ad6c05acc7a88e5b71bde60a5fe3bd4b9f0db209011711b464107438a8107" \
-    org.opencontainers.image.base.name="docker.io/golang:1.26-bookworm" \
+    org.opencontainers.image.base.digest="sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0" \
+    org.opencontainers.image.base.name="docker.io/golang:1.27.3-bookworm" \
     org.opencontainers.image.stage="builder"
 ENV \
     TZ="UTC" \
@@ -32,9 +32,9 @@ LABEL \
     org.opencontainers.image.title="OpenStatus Private Location" \
     org.opencontainers.image.vendor="OpenStatus"
 ENV \
-    TZ="UTC" \
+    GIN_MODE="release" \
     USER="1000" \
-    GIN_MODE="release"
+    TZ="UTC"
 WORKDIR /opt/bin
 COPY \
     --from=builder \

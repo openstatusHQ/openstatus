@@ -4,6 +4,7 @@ import { z } from "zod";
 import { monitorRegions } from "../../db/src/schema/constants";
 import { frozenMonitorUptimeMonthSchema } from "../../db/src/schema/frozen_uptime/month";
 import { env } from "./env";
+import { withStatusErrors } from "./fetch";
 import {
   headersSchema,
   timingPhasesSchema,
@@ -479,10 +480,12 @@ export class OSTinybird {
       }
       this.tb = new NoopTinybird();
     } else {
-      this.tb = new Client({
-        token: config.token,
-        baseUrl: config.baseUrl || TINYBIRD_DEFAULT_URL,
-      });
+      this.tb = withStatusErrors(
+        new Client({
+          token: config.token,
+          baseUrl: config.baseUrl || TINYBIRD_DEFAULT_URL,
+        }),
+      );
     }
   }
 

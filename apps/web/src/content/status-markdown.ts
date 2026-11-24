@@ -1,3 +1,8 @@
+import {
+  cachedExternalStatusComponentHistory,
+  cachedExternalStatusHistory,
+  cachedExternalStatusLatest,
+} from "@openstatus/api/src/tb-cache";
 import { listExternalComponentsBySlug } from "@openstatus/services/external-service-component";
 import {
   type ExternalIncidentListItem,
@@ -27,7 +32,6 @@ import {
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
 } from "../lib/external-service-cache";
-import { tb } from "../lib/tb";
 import { canonicalUrl, frontmatter } from "./frontmatter";
 import { sections } from "./sections";
 import {
@@ -142,7 +146,7 @@ export async function generateStatusIndexMarkdown(): Promise<string> {
   );
   const [latestRes, windowRes] = await Promise.all([
     safePipeData(
-      tb.externalStatusLatest({}),
+      cachedExternalStatusLatest({}),
       "externalStatusLatest (markdown index)",
     ),
     getServiceReportWindows({
@@ -217,11 +221,11 @@ export async function generateStatusDetailMarkdown(
   const [latestRes, historyRes, windowRes, recentRes, activeRes, compRes] =
     await Promise.allSettled([
       safePipeData(
-        tb.externalStatusLatest({ ids: slugChain }),
+        cachedExternalStatusLatest({ ids: slugChain }),
         "externalStatusLatest (markdown detail)",
       ),
       safePipeData(
-        tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
+        cachedExternalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
         "externalStatusHistory (markdown detail)",
       ),
       getServiceReportWindows({ serviceIds: [service.id], since }),
@@ -337,7 +341,7 @@ export async function generateStatusComponentMarkdown(
   const since = new Date(Date.now() - REPORT_WINDOW_MS);
   const [historyRes, incidentsRes, windowRes] = await Promise.allSettled([
     safePipeData(
-      tb.externalStatusComponentHistory({
+      cachedExternalStatusComponentHistory({
         component_ids: [String(component.id)],
         days: HISTORY_DAYS,
       }),

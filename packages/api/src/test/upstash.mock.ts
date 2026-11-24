@@ -1,8 +1,10 @@
 // Test double for @openstatus/upstash, swapped in via test.importmap.json.
 // Keeps tests off a real Upstash Redis instance.
-// Counters (`incrWithTtl`) and sets (`addDistinctWithTtl`) expire like Redis
-// keys, so rate limiters built on them behave as against Redis. A client other
-// than this double is passed through, so tests can inject one.
+export { cacheThrough } from "@openstatus/upstash/src/redis/cache-through";
+
+// Counters (`incrWithTtl`, readable through `get`) and sets
+// (`addDistinctWithTtl`) expire like Redis keys, so rate limiters built on them
+// behave as against Redis. A client other than this double is passed through.
 const counters = new Map<string, { count: number; expiresAt: number }>();
 const sets = new Map<string, { members: Set<string>; expiresAt: number }>();
 
