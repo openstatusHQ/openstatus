@@ -1,10 +1,12 @@
 import { db, eq } from "@openstatus/db";
 import {
+  monitor,
   notification,
   notificationsToMonitors,
   workspace,
 } from "@openstatus/db/src/schema";
 import {
+  createMonitor,
   createNotification,
   createTestWorkspace,
   createWorkspace,
@@ -942,5 +944,31 @@ describe("NotificationService.SendTestNotification", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("NotificationService monitor errors", () => {
+  test("names the one monitor that is not usable", async () => {
+    const foreign = await createMonitor(OTHER_WORKSPACE_ID);
+    try {
+      const res = await connectRequest(
+        "CreateNotification",
+        {
+          name: `${TEST_PREFIX}-foreign-monitor`,
+          provider: "NOTIFICATION_PROVIDER_DISCORD",
+          data: {
+            discord: { webhookUrl: "https://discord.com/api/webhooks/1/a" },
+          },
+          monitorIds: ["1", String(foreign.id)],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get("error-reason")).toBe("MONITOR_NOT_FOUND");
+      expect(res.headers.get("error-monitor-id")).toBe(String(foreign.id));
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, foreign.id));
+    }
   });
 });
