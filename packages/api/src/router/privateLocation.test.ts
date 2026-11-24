@@ -155,7 +155,7 @@ test("privateLocation.new rejects monitors from another workspace", async () => 
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 
@@ -197,7 +197,7 @@ test("privateLocation.update rejects monitors from another workspace", async () 
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 

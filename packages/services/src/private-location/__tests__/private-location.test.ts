@@ -198,7 +198,7 @@ describe("createPrivateLocation", () => {
             monitors: [otherWorkspaceMonitorId],
           },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 
@@ -212,7 +212,7 @@ describe("createPrivateLocation", () => {
             monitors: [deletedMonitorId],
           },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 
@@ -432,7 +432,7 @@ describe("updatePrivateLocation", () => {
           ctx,
           input: { id: created.id, monitors: [deletedMonitorId] },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 

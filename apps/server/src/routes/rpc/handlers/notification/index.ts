@@ -1,6 +1,6 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import type { NotificationService } from "@openstatus/proto/notification/v1";
-import { ForbiddenError, requireScope } from "@openstatus/services";
+import { NotFoundError, requireScope } from "@openstatus/services";
 import {
   assertProviderAllowed,
   createNotification,
@@ -46,17 +46,9 @@ function protoDataToServiceInput(
   return JSON.parse(protoDataToDb(provider, data));
 }
 
-/**
- * Remap the service's `ForbiddenError` (thrown by `validateMonitorIds`
- * on an unknown or cross-workspace monitor) to `monitorNotFoundError`
- * (Code.NotFound / HTTP 404). The service deliberately doesn't
- * distinguish "monitor doesn't exist" from "monitor in another
- * workspace" (an existence-leak guard), but the Connect contract
- * surfaces this as 404 so clients keying on the status code get the
- * same "resource not accessible" signal regardless of cause.
- */
+/** An unusable monitor id gets the documented monitor-not-found error. */
 function rethrowMonitorNotFound(err: unknown, monitorIds: string[]): never {
-  if (err instanceof ForbiddenError && err.message.startsWith("Monitor ")) {
+  if (err instanceof NotFoundError && err.entity === "monitor") {
     throw monitorNotFoundError(monitorIds.join(","));
   }
   throw err;

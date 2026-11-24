@@ -4,6 +4,7 @@ export const ErrorReason = {
   PRIVATE_LOCATION_NOT_FOUND: "PRIVATE_LOCATION_NOT_FOUND",
   PRIVATE_LOCATION_ID_REQUIRED: "PRIVATE_LOCATION_ID_REQUIRED",
   INVALID_MONITOR_ID: "INVALID_MONITOR_ID",
+  MONITOR_NOT_FOUND: "MONITOR_NOT_FOUND",
 } as const;
 
 export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason];
@@ -56,5 +57,14 @@ export function invalidMonitorIdError(monitorId: string): ConnectError {
     ErrorReason.INVALID_MONITOR_ID,
     // Raw input may hold CR/LF, which `Headers` rejects.
     { "monitor-id": encodeURIComponent(monitorId) },
+  );
+}
+
+export function monitorNotFoundError(monitorId: string): ConnectError {
+  return createError(
+    "Monitor not found",
+    Code.NotFound,
+    ErrorReason.MONITOR_NOT_FOUND,
+    { "monitor-id": monitorId },
   );
 }

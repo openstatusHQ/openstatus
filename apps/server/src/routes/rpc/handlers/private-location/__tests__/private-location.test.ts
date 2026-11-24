@@ -241,7 +241,7 @@ describe("PrivateLocationService.CreatePrivateLocation", () => {
     expect(res.status).toBe(403);
   });
 
-  test("returns 403 for a monitor in another workspace", async () => {
+  test("returns 404 for a monitor in another workspace", async () => {
     const res = await connectRequest(
       "CreatePrivateLocation",
       {
@@ -251,10 +251,11 @@ describe("PrivateLocationService.CreatePrivateLocation", () => {
       { "x-openstatus-key": authKey },
     );
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+    expect(res.headers.get("error-reason")).toBe("MONITOR_NOT_FOUND");
   });
 
-  test("returns 403 for a soft-deleted monitor", async () => {
+  test("returns 404 for a soft-deleted monitor", async () => {
     const res = await connectRequest(
       "CreatePrivateLocation",
       {
@@ -264,7 +265,7 @@ describe("PrivateLocationService.CreatePrivateLocation", () => {
       { "x-openstatus-key": authKey },
     );
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   test("returns 400 when name is empty", async () => {
