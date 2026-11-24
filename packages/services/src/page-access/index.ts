@@ -13,6 +13,9 @@ export {
 export { isIpAllowed } from "./is-ip-allowed";
 export {
   assertPageAccess,
+  checkPageAccess,
   type PageVisitor,
+  type PasswordAttemptLimiter,
+  requirePageAccess,
   resolvePageAccess,
 } from "./resolve-page-access";

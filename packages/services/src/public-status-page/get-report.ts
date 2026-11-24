@@ -2,7 +2,7 @@ import { and, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { assertPageAccess, type PageVisitor } from "../page-access";
+import { requirePageAccess, type PageVisitor } from "../page-access";
 import { findPageBySlug } from "./internal";
 import { PublicPageEntityInput } from "./schemas";
 
@@ -16,7 +16,7 @@ export async function getPublicStatusReport(args: {
 
   const page = await findPageBySlug(db, input.slug);
   if (!page) return null;
-  assertPageAccess(page, args.visitor);
+  await requirePageAccess(page, args.visitor);
 
   const row = await db.query.statusReport.findFirst({
     where: and(eq(statusReport.id, input.id), eq(statusReport.pageId, page.id)),

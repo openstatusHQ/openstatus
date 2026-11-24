@@ -1,5 +1,5 @@
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { assertPageAccess, type PageVisitor } from "../page-access";
+import { requirePageAccess, type PageVisitor } from "../page-access";
 import { bySlugOrDomain } from "./internal";
 import { PublicPageInput } from "./schemas";
 
@@ -17,6 +17,6 @@ export async function listPublicStatusPageMonitors(args: {
     with: { pageComponents: { with: { monitor: true } } },
   });
   if (!page) return null;
-  assertPageAccess(page, args.visitor);
+  await requirePageAccess(page, args.visitor);
   return page.pageComponents;
 }

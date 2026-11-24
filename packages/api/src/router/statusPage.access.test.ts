@@ -8,9 +8,17 @@ import {
 import { TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { NextRequest } from "next/server.js";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 
 import { appRouter } from "../root";
+import { resetRedisCounters } from "../test/upstash.mock";
 import { createInnerTRPCContext, createTRPCContext } from "../trpc";
 
 const PASSWORD = "s3cret-pw";
@@ -30,6 +38,10 @@ function caller(opts?: { headers?: Record<string, string>; email?: string }) {
     }),
   );
 }
+
+// Denied-visitor cases send wrong passwords on purpose; keep each test's
+// password budget fresh so they don't lock the page for the next one.
+beforeEach(() => resetRedisCounters());
 
 beforeAll(async () => {
   const fixture = await createTestWorkspace();

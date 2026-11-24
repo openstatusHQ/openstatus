@@ -2,7 +2,7 @@ import { inArray } from "@openstatus/db";
 import { notExcused, pageComponent } from "@openstatus/db/src/schema";
 
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { assertPageAccess, type PageVisitor } from "../page-access";
+import { requirePageAccess, type PageVisitor } from "../page-access";
 import {
   bySlugOrDomain,
   componentMonitorIds,
@@ -44,7 +44,7 @@ export async function getPublicStatusPageUptime(args: {
     },
   });
   if (!page) return null;
-  assertPageAccess(page, args.visitor);
+  await requirePageAccess(page, args.visitor);
 
   const privateLocationCounts = await countActivePrivateLocations(
     db,

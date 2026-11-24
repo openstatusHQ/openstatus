@@ -1,5 +1,5 @@
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { type PageVisitor, resolvePageAccess } from "../page-access";
+import { type PageVisitor, checkPageAccess } from "../page-access";
 import {
   findPageTree,
   type PublicPageTree,
@@ -17,7 +17,7 @@ export async function getPublicStatusPageLight(args: {
 
   const tree = await findPageTree(db, input.slug);
   if (!tree) return null;
-  return resolvePageAccess(tree, args.visitor).ok
+  return (await checkPageAccess(tree, args.visitor)).ok
     ? tree
     : withoutGatedContent(tree);
 }

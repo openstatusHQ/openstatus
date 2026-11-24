@@ -3,7 +3,7 @@ import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 import { type DB, getReadDb, dbOnlyContext } from "../context";
 import { NotFoundError } from "../errors";
-import { type PageVisitor, assertPageAccess } from "../page-access";
+import { type PageVisitor, requirePageAccess } from "../page-access";
 import { HasPendingSubscriberInput } from "./schemas";
 
 /**
@@ -27,7 +27,7 @@ export async function hasPendingSubscriber(args: {
       where: eq(page.id, input.pageId),
     });
     if (!pageData) throw new NotFoundError("page", input.pageId);
-    assertPageAccess(pageData, args.visitor);
+    await requirePageAccess(pageData, args.visitor);
   }
 
   const existing = await db.query.pageSubscriber.findFirst({

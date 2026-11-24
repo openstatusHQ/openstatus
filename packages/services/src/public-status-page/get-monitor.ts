@@ -2,7 +2,7 @@ import { eq } from "@openstatus/db";
 import { pageComponent } from "@openstatus/db/src/schema";
 
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { assertPageAccess, type PageVisitor } from "../page-access";
+import { requirePageAccess, type PageVisitor } from "../page-access";
 import { bySlugOrDomain } from "./internal";
 import { PublicPageEntityInput } from "./schemas";
 
@@ -25,6 +25,6 @@ export async function getPublicStatusPageMonitor(args: {
     },
   });
   if (!page) return null;
-  assertPageAccess(page, args.visitor);
+  await requirePageAccess(page, args.visitor);
   return page.pageComponents;
 }

@@ -16,7 +16,7 @@ import {
   dbOnlyContext,
 } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
-import { type PageVisitor, assertPageAccess } from "../page-access";
+import { type PageVisitor, requirePageAccess } from "../page-access";
 import { assertSubscribersAllowed, parseWorkspaceForContext } from "./internal";
 import { UpsertSelfSignupSubscriberInput } from "./schemas";
 
@@ -71,7 +71,7 @@ export async function upsertSelfSignupSubscriber(args: {
   if (!pageData) {
     throw new NotFoundError("page", input.pageId);
   }
-  if (args.visitor) assertPageAccess(pageData, args.visitor);
+  if (args.visitor) await requirePageAccess(pageData, args.visitor);
   const workspace = parseWorkspaceForContext(pageData.workspace);
   // Plan-gate before any DB writes — same upsell semantics as the
   // dashboard `createPageSubscriber` path. Free-plan pages don't
