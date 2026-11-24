@@ -148,15 +148,15 @@ export async function removeDomainFromVercelIfUnused(
   domain: string,
   opts?: { excludePageId?: number },
 ) {
-  const holder = await findCustomDomainHolder({
+  const holderPageId = await findCustomDomainHolder({
     domain,
     excludePageId: opts?.excludePageId,
   });
 
-  if (holder) {
+  if (holderPageId) {
     console.warn("Skipping Vercel domain removal, still in use:", {
       domain,
-      pageId: holder,
+      pageId: holderPageId,
     });
     return null;
   }

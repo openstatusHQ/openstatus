@@ -155,6 +155,7 @@ export default auth(async (req) => {
     const resolved = await resolveUserWorkspaces({
       userId: Number.parseInt(req.auth.user.id),
     });
+    // A soft-deleted account with a surviving session resolves to null.
     const workspaces = resolved?.workspaces ?? [];
 
     // The cookie only *selects* among workspaces the user already belongs to —
@@ -165,7 +166,9 @@ export default auth(async (req) => {
     const query = target ?? workspaces[0];
 
     if (!query) {
-      console.error(">> Should not happen, no workspace found for user");
+      if (resolved) {
+        console.error(">> Should not happen, no workspace found for user");
+      }
     } else if (target || !hasWorkspaceSlug) {
       response.cookies.set(WORKSPACE_SLUG_COOKIE, query.slug);
     }

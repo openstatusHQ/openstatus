@@ -1,6 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { EmailClient } from "@openstatus/emails";
-import type { ServiceContext } from "@openstatus/services";
+import { NotFoundError, type ServiceContext } from "@openstatus/services";
 import { listMembers } from "@openstatus/services/member";
 import {
   countScheduledMonitors,
@@ -51,10 +51,14 @@ export async function runPrivateLocationHealth(
 
     if (nextStatus === null) continue;
 
+    // A deleted workspace skips its location; any other error stops the run.
     const ctx = await systemContext(
       location.workspaceId,
       "private-location-health",
-    ).catch(() => null);
+    ).catch((error) => {
+      if (error instanceof NotFoundError) return null;
+      throw error;
+    });
     if (!ctx) continue;
 
     await setPrivateLocationStatus({
