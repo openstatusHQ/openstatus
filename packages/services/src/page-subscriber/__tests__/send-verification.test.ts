@@ -83,6 +83,13 @@ describe("sendSubscriberVerification", () => {
     ).rejects.toBeInstanceOf(InternalServiceError);
   });
 
+  test("throws an internal error when the channel cannot send verifications", async () => {
+    getChannel.mockReturnValueOnce({});
+    await expect(
+      sendSubscriberVerification({ subscriber: pending }),
+    ).rejects.toBeInstanceOf(InternalServiceError);
+  });
+
   test("propagates a send failure to the caller", async () => {
     sendVerification.mockRejectedValueOnce(new Error("resend down"));
     await expect(

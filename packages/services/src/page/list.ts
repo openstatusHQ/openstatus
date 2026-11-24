@@ -171,6 +171,25 @@ export async function getPageCustomDomain(args: {
   return row.customDomain;
 }
 
+/**
+ * Single-row page read in the caller's workspace, raw DB shape like
+ * `getPageBySlug`. Use `getPage` when the relations are needed.
+ */
+export async function getPageRow(args: {
+  ctx: ServiceContext;
+  input: GetPageInput;
+}): Promise<typeof page.$inferSelect> {
+  const { ctx } = args;
+  requireScope(ctx, "pages:read");
+  const input = GetPageInput.parse(args.input);
+
+  return getPageInWorkspace({
+    tx: getReadDb(ctx),
+    id: input.id,
+    workspaceId: ctx.workspace.id,
+  });
+}
+
 /** NotFound rather than Forbidden so a miss is no existence oracle. */
 export async function assertCustomDomainInWorkspace(args: {
   ctx: ServiceContext;
