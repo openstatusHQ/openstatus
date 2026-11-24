@@ -18,7 +18,7 @@ export default {
     },
     messages: {
       notTx:
-        "`emitAudit` writes on `{{arg}}`, which is not a transaction parameter (\`tx\`) of an enclosing function, so the audit row may commit separately from the mutation. Pass the `tx` of the surrounding `withTransaction` callback or `*InTx` helper.",
+        "`emitAudit` writes on `{{arg}}`, which is not a transaction parameter (`tx`) of an enclosing function, so the audit row may commit separately from the mutation. Pass the `tx` of the surrounding `withTransaction` callback or `*InTx` helper.",
     },
   },
   create(context) {
