@@ -41,6 +41,72 @@ function functionName(node, assignedName) {
   return assignedName ?? "<anonymous>";
 }
 
+/** Every name a parameter list binds, through destructuring and defaults. */
+function boundNames(pattern, out = new Set()) {
+  if (!pattern) return out;
+  switch (pattern.type) {
+    case "Identifier":
+      out.add(pattern.name);
+      break;
+    case "ObjectPattern":
+      for (const p of pattern.properties) {
+        boundNames(p.type === "RestElement" ? p.argument : p.value, out);
+      }
+      break;
+    case "ArrayPattern":
+      for (const el of pattern.elements) boundNames(el, out);
+      break;
+    case "AssignmentPattern":
+      boundNames(pattern.left, out);
+      break;
+    case "RestElement":
+      boundNames(pattern.argument, out);
+      break;
+    case "TSParameterProperty":
+      boundNames(pattern.parameter, out);
+      break;
+  }
+  return out;
+}
+
+function isRequireScopeStatement(statement) {
+  return (
+    statement.type === "ExpressionStatement" &&
+    statement.expression?.type === "CallExpression" &&
+    calleeName(statement.expression) === "requireScope"
+  );
+}
+
+/** `const { ctx } = args;`: destructuring one of the function's own parameters. */
+function isParamDestructuring(statement, params) {
+  return (
+    statement.type === "VariableDeclaration" &&
+    statement.declarations.every(
+      (d) =>
+        d.id?.type === "ObjectPattern" &&
+        d.init?.type === "Identifier" &&
+        params.has(d.init.name),
+    )
+  );
+}
+
+/**
+ * The first body-level `requireScope` when something other than destructuring
+ * the parameters runs before it; `null` when it comes first or is absent.
+ */
+function lateRequireScope(fn) {
+  if (fn.body?.type !== "BlockStatement") return null;
+  const params = new Set();
+  for (const p of fn.params) boundNames(p, params);
+  const statements = fn.body.body;
+  const first = statements.findIndex(isRequireScopeStatement);
+  if (first <= 0) return null;
+  const early = statements
+    .slice(0, first)
+    .every((statement) => isParamDestructuring(statement, params));
+  return early ? null : statements[first];
+}
+
 const servicesMutationGuards = {
   meta: {
     type: "problem",
@@ -51,6 +117,7 @@ const servicesMutationGuards = {
     messages: {
       missing:
         "`{{name}}` opens a transaction but never calls {{missing}}. Every mutation in @openstatus/services must check the actor's scope and emit an audit row — see packages/services/AGENTS.md. If this verb genuinely needs neither, disable this rule inline with the reason above it.",
+      late: "`{{name}}` runs code before `requireScope`. Check the scope first, before parsing input or reading anything; only destructuring the arguments may precede it.",
     },
   },
   create(context) {
@@ -90,6 +157,14 @@ const servicesMutationGuards = {
               name: outermostName,
               missing: missing.map((name) => `\`${name}\``).join(" or "),
             },
+          });
+        }
+        const late = lateRequireScope(outermost);
+        if (late) {
+          context.report({
+            node: late,
+            messageId: "late",
+            data: { name: outermostName },
           });
         }
       }
@@ -298,30 +373,20 @@ const servicesReadVerbsRequireScope = {
     messages: {
       missing:
         "`{{name}}` reads on behalf of an actor but never calls `requireScope`. Read verbs require `<group>:read` as their first line — see packages/services/AGENTS.md. If this export is not an actor-facing verb, disable this rule inline with the reason above it.",
-      wrongGroup:
-        "`{{name}}` lives in the `{{group}}` group but requires `{{scope}}`. Read verbs require `{{group}}:read` (or `{{group}}:write` when they probe or send).",
+      late: "`{{name}}` runs code before `requireScope`. Check the scope first, before parsing input or reading anything; only destructuring the arguments may precede it.",
     },
   },
   create(context) {
-    const group = groupForFile(context.filename ?? context.getFilename?.());
     function check(fn, name) {
       if (!name || !READ_VERB_PREFIX.test(name)) return;
       if (!takesServiceContext(fn.params[0])) return;
-      const scopes = bodyRequiredScopes(fn);
-      if (scopes.length === 0) {
+      if (bodyRequiredScopes(fn).length === 0) {
         context.report({ node: fn, messageId: "missing", data: { name } });
         return;
       }
-      if (!group) return;
-      const allowed = new Set([`${group}:read`, `${group}:write`]);
-      for (const scope of scopes) {
-        if (allowed.has(scope)) continue;
-        context.report({
-          node: fn,
-          messageId: "wrongGroup",
-          data: { name, group, scope },
-        });
-      }
+      const late = lateRequireScope(fn);
+      if (late)
+        context.report({ node: late, messageId: "late", data: { name } });
     }
     return {
       ExportNamedDeclaration(node) {
@@ -343,6 +408,96 @@ const servicesReadVerbsRequireScope = {
         }
       },
     };
+  },
+};
+
+/**
+ * A group folder's verbs require that group. Cross-group verbs (an import
+ * writing every entity) disable this inline and name the extra groups.
+ */
+const servicesScopeMatchesFolder = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "A requireScope in a services group folder must name that folder's group.",
+    },
+    messages: {
+      wrongGroup:
+        "This file is in the `{{group}}` group but requires `{{scope}}`. Require `{{group}}:read` or `{{group}}:write`; a verb that genuinely spans groups disables this inline and names them.",
+    },
+  },
+  create(context) {
+    const group = groupForFile(context.filename ?? context.getFilename?.());
+    if (!group) return {};
+    return {
+      CallExpression(node) {
+        if (calleeName(node) !== "requireScope") return;
+        const arg = node.arguments[1];
+        if (arg?.type !== "Literal" || typeof arg.value !== "string") return;
+        const [scopeGroup] = arg.value.split(":");
+        if (!arg.value.includes(":") || scopeGroup === group) return;
+        context.report({
+          node: arg,
+          messageId: "wrongGroup",
+          data: { group, scope: arg.value },
+        });
+      },
+    };
+  },
+};
+
+/**
+ * The audit row must commit with the mutation: `emitAudit` takes the
+ * transaction handed to the enclosing callback or `*InTx` helper (directly or
+ * destructured from its args), never the module `db` or `ctx.db`.
+ */
+const servicesAuditOnTx = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "emitAudit must write on the transaction passed to an enclosing function.",
+    },
+    messages: {
+      notTx:
+        "`emitAudit` writes on `{{arg}}`, which is not a parameter of an enclosing function, so the audit row commits separately from the mutation. Pass the `tx` of the surrounding `withTransaction` callback or `*InTx` helper.",
+    },
+  },
+  create(context) {
+    const scopes = [];
+    const visitor = {
+      // `const { tx, ctx } = args;` keeps `tx` a parameter of the helper.
+      VariableDeclarator(node) {
+        const params = scopes.at(-1);
+        if (!params || node.id?.type !== "ObjectPattern") return;
+        if (node.init?.type !== "Identifier" || !params.has(node.init.name)) {
+          return;
+        }
+        boundNames(node.id, params);
+      },
+      CallExpression(node) {
+        if (calleeName(node) !== "emitAudit") return;
+        const arg = node.arguments[0];
+        if (!arg) return;
+        const name = arg.type === "Identifier" ? arg.name : null;
+        if (name && scopes.some((params) => params.has(name))) return;
+        context.report({
+          node: arg,
+          messageId: "notTx",
+          data: { arg: context.sourceCode?.getText?.(arg) ?? name ?? "it" },
+        });
+      },
+    };
+    for (const type of FUNCTION_TYPES) {
+      visitor[type] = (node) => {
+        const params = new Set();
+        for (const p of node.params) boundNames(p, params);
+        scopes.push(params);
+      };
+      visitor[`${type}:exit`] = () => scopes.pop();
+    }
+    return visitor;
   },
 };
 
@@ -459,6 +614,8 @@ export default {
     "services-mutation-guards": servicesMutationGuards,
     "services-no-legacy-scope": servicesNoLegacyScope,
     "services-read-verbs-require-scope": servicesReadVerbsRequireScope,
+    "services-scope-matches-folder": servicesScopeMatchesFolder,
+    "services-audit-on-tx": servicesAuditOnTx,
     "no-db-barrel-in-client": noDbBarrelInClient,
     "no-text-link-as-child": noTextLinkAsChild,
   },

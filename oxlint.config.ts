@@ -114,6 +114,9 @@ export default defineConfig({
       excludeFiles: ["**/__tests__/**", "**/*.test.ts"],
       rules: {
         "openstatus/services-mutation-guards": "error",
+        "openstatus/services-audit-on-tx": "error",
+        // Group from the folder; non-group folders are skipped by the rule.
+        "openstatus/services-scope-matches-folder": "error",
         // The package stays Edge-safe by design.
         "no-restricted-imports": [
           "error",

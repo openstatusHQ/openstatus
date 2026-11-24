@@ -196,6 +196,7 @@ export async function revokeGrantAsOwner(
     actor: { type: "user", userId: grant.userId },
     db,
   };
+  // oxlint-disable-next-line openstatus/services-mutation-guards -- the ctx to check is built from the grant's workspace
   requireScope(ctx, "admin");
   await withTransaction(ctx, (tx) =>
     revokeGrantRows(tx, ctx, [grant], reason, now),

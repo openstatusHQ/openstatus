@@ -2,8 +2,8 @@ export async function listWidgets(args: { ctx: ServiceContext }) { // expect: se
   return [args];
 }
 
-export async function getWidget(args: { ctx: ServiceContext }) { // expect: services-read-verbs-require-scope
-  requireScope(args.ctx, "pages:read");
+export async function getWidget(args: { ctx: ServiceContext }) {
+  requireScope(args.ctx, "pages:read"); // expect: services-scope-matches-folder
   return null;
 }
 
@@ -15,4 +15,10 @@ export const searchWidgets = async ({ ctx }: { ctx: ServiceContext }) => { // ex
 export async function streamWidgets(args: { ctx: ServiceContext }) { // expect: services-read-verbs-require-scope
   const check = () => requireScope(args.ctx, "monitors:read");
   return check;
+}
+
+export async function getParsedWidget(args: { ctx: ServiceContext; input: unknown }) {
+  const input = GetWidgetInput.parse(args.input);
+  requireScope(args.ctx, "monitors:read"); // expect: services-read-verbs-require-scope
+  return input;
 }

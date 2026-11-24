@@ -70,12 +70,15 @@ export async function runImport(args: {
   requireScope(ctx, "pages:write");
   const input = RunImportInput.parse(args.input);
   if (input.options?.includeMonitors !== false) {
+    // oxlint-disable-next-line openstatus/services-scope-matches-folder -- the import writes monitors
     requireScope(ctx, "monitors:write");
   }
   if (input.options?.includeStatusReports !== false) {
+    // oxlint-disable-next-line openstatus/services-scope-matches-folder -- the import writes reports and maintenances
     requireScope(ctx, "incidents:write");
   }
   if (input.options?.includeSubscribers) {
+    // oxlint-disable-next-line openstatus/services-scope-matches-folder -- the import writes subscribers when asked
     requireScope(ctx, "subscribers:write");
   }
   const tx = ctx.db ?? defaultDb;

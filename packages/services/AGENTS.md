@@ -35,7 +35,8 @@ audits in the incident's own workspace as a `system` actor.
   `requireScope(ctx, "<group>:read")`, unless they probe or send, which makes
   them writes whatever the name (`streamMonitorPreview` requires
   `monitors:write`); admin verbs with `requireScope(ctx, "admin")`. Lint
-  checks the group against the folder.
+  checks the group against the folder, and that only destructuring the
+  arguments (`const { ctx } = args;`) comes before the first `requireScope`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
@@ -47,7 +48,8 @@ audits in the incident's own workspace as a `system` actor.
 ## Audit log
 
 `emitAudit(tx, ctx, entry)` runs inside the same transaction as the mutation.
-Fail-closed: a failed audit insert rolls the mutation back.
+Fail-closed: a failed audit insert rolls the mutation back. Lint requires its
+first argument to be the `tx` handed to the enclosing callback or helper.
 
 - Updates pass both `before` (pre-mutation snapshot) and `after` (the
   `.returning()` row); `changed_fields` is diffed automatically and no-op updates

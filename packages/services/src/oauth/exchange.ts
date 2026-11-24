@@ -56,6 +56,7 @@ export async function exchangeCode(args: {
     actor: { type: "user", userId: code.userId },
     db,
   };
+  // oxlint-disable-next-line openstatus/services-mutation-guards -- the ctx to check is built from the code just looked up
   requireScope(ctx, "admin");
 
   if (code.consumedAt) {
