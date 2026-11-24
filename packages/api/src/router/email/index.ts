@@ -20,6 +20,7 @@ export const emailRouter = createTRPCRouter({
           ctx: toServiceCtx(opts.ctx),
           input: { id: opts.input.id },
         }).catch((err) => {
+          // An unknown or foreign id sends nothing, as before.
           if (err instanceof NotFoundError) return null;
           toTRPCError(err);
         });

@@ -1,8 +1,6 @@
-import { and, eq, inArray, isNull } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
-
 import type { DB } from "../context";
 import { ForbiddenError } from "../errors";
+import { findMissingMonitorId } from "../monitor/internal";
 
 /**
  * Ensure every id in `monitorIds` belongs to the given workspace and is not
@@ -16,19 +14,12 @@ export async function assertMonitorsInWorkspace(args: {
   workspaceId: number;
   monitorIds: number[];
 }): Promise<void> {
-  const { tx, workspaceId, monitorIds } = args;
-  if (monitorIds.length === 0) return;
-
-  const uniqueIds = Array.from(new Set(monitorIds));
-
-  const valid = await tx.query.monitor.findMany({
-    where: and(
-      eq(monitor.workspaceId, workspaceId),
-      inArray(monitor.id, uniqueIds),
-      isNull(monitor.deletedAt),
-    ),
+  const missing = await findMissingMonitorId({
+    tx: args.tx,
+    workspaceId: args.workspaceId,
+    ids: args.monitorIds,
   });
-  if (valid.length !== uniqueIds.length) {
+  if (missing !== undefined) {
     throw new ForbiddenError("Invalid monitor IDs.");
   }
 }

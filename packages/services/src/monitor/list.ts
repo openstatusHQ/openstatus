@@ -39,7 +39,7 @@ import type {
   Notification,
   PrivateLocation,
 } from "../types";
-import { getMonitorInWorkspace } from "./internal";
+import { findMissingMonitorId, getMonitorInWorkspace } from "./internal";
 import {
   GetMonitorInput,
   ListMonitorRowsInput,
@@ -344,20 +344,10 @@ export async function assertMonitorsInWorkspace(args: {
 }): Promise<void> {
   const { ctx } = args;
   requireScope(ctx, "monitors:read");
-  const ids = [...new Set(args.input.ids)];
-  if (ids.length === 0) return;
-  const rows = await (ctx.db ?? defaultDb)
-    .select({ id: monitor.id })
-    .from(monitor)
-    .where(
-      and(
-        inArray(monitor.id, ids),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ),
-    )
-    .all();
-  const found = new Set(rows.map((r) => r.id));
-  const missing = ids.find((id) => !found.has(id));
+  const missing = await findMissingMonitorId({
+    tx: ctx.db ?? defaultDb,
+    workspaceId: ctx.workspace.id,
+    ids: args.input.ids,
+  });
   if (missing !== undefined) throw new NotFoundError("monitor", missing);
 }
