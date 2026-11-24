@@ -1,4 +1,12 @@
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  db as defaultDb,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  sql,
+} from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import {
   type pageAccessTypes,
@@ -64,11 +72,11 @@ export async function assertSlugAvailable(args: {
 
 /** Assert no other page, in any workspace, already serves this custom domain. */
 export async function assertCustomDomainAvailable(args: {
-  tx: DB;
+  tx?: DB;
   customDomain: string | null | undefined;
   excludePageId?: number;
 }): Promise<void> {
-  const { tx, customDomain, excludePageId } = args;
+  const { tx = defaultDb, customDomain, excludePageId } = args;
   if (!customDomain) return;
   const rows = await tx
     .select({ id: page.id })
@@ -167,4 +175,26 @@ export function assertAccessTypeAllowed(
   if (args.allowIndex === false && limits["no-index"] === false) {
     throw new LimitExceededError("no-index", 0);
   }
+}
+
+/** Id of a page, in any workspace, still holding `domain` (case-insensitive). */
+export async function findCustomDomainHolder(args: {
+  domain: string;
+  excludePageId?: number;
+  db?: DB;
+}): Promise<number | undefined> {
+  const db = args.db ?? defaultDb;
+  const row = await db
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${args.domain.toLowerCase()}`,
+        args.excludePageId !== undefined
+          ? ne(page.id, args.excludePageId)
+          : undefined,
+      ),
+    )
+    .get();
+  return row?.id;
 }

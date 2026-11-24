@@ -95,8 +95,6 @@ async function cancelReminders(
   }
 }
 
-type Db = Parameters<typeof getWorkspaceByStripeId>[0]["db"];
-
 // Stripe cancels a trial without a card at `trial_end`, but its cycle
 // processing can lag behind that timestamp by a little.
 const TRIAL_END_SLACK_S = 60 * 60;
@@ -117,17 +115,13 @@ async function endedDuringTrial(
   );
 }
 
-async function getOwnerEmails(db: NonNullable<Db>, workspaceId: number) {
-  const owners = await listWorkspaceOwners({ input: { workspaceId }, db });
+async function getOwnerEmails(workspaceId: number) {
+  const owners = await listWorkspaceOwners({ input: { workspaceId } });
   return owners.map((owner) => owner.email);
 }
 
-async function getBillingRecipients(
-  db: NonNullable<Db>,
-  workspaceId: number,
-  customerId: string,
-) {
-  const owners = await getOwnerEmails(db, workspaceId);
+async function getBillingRecipients(workspaceId: number, customerId: string) {
+  const owners = await getOwnerEmails(workspaceId);
   const customer = await stripe.customers.retrieve(customerId);
   return {
     to: billingRecipients(owners, customer.deleted ? null : customer.email),
@@ -160,7 +154,6 @@ type StripeWorkspace = NonNullable<
 // Never throws: runs after DB writes and emails, so a failure here would make
 // Stripe redeliver the event and resend them.
 async function trackForWorkspaceOwner(args: {
-  db: NonNullable<Db>;
   ws: StripeWorkspace;
   event: EventProps;
   props?: Record<string, unknown>;
@@ -168,7 +161,6 @@ async function trackForWorkspaceOwner(args: {
   try {
     const owners = await listWorkspaceOwners({
       input: { workspaceId: args.ws.id },
-      db: args.db,
     });
     // Owners come back unordered: with several, picking one would attribute
     // billing to an arbitrary profile, so only the workspace group gets it.
@@ -188,21 +180,19 @@ async function trackForWorkspaceOwner(args: {
 }
 
 async function sendCancellationEmails(args: {
-  db: NonNullable<Db>;
   ws: StripeWorkspace;
   customerId: string;
   current: Stripe.Subscription;
   plan: string;
   eventId: string;
 }) {
-  const { db, ws, customerId, current, plan, eventId } = args;
+  const { ws, customerId, current, plan, eventId } = args;
   const endsAt = getCurrentPeriodEnd(current);
-  const { to, owners } = await getBillingRecipients(db, ws.id, customerId);
+  const { to, owners } = await getBillingRecipients(ws.id, customerId);
   const preview = await previewWorkspaceDowngrade({
     ctx: {
       workspace: ws,
       actor: { type: "system", job: "stripe-subscription-updated" },
-      db,
     },
   });
   const loss = toPlanLoss(preview, preview.customDomains, preview.ssoEnabled);
@@ -331,7 +321,6 @@ export const webhookRouter = createTRPCRouter({
 
     const ws = await getWorkspaceByStripeId({
       input: { stripeId: customerId },
-      db: opts.ctx.db,
     });
     if (!ws) {
       throw new TRPCError({
@@ -368,7 +357,6 @@ export const webhookRouter = createTRPCRouter({
       ctx: {
         workspace: ws,
         actor: { type: "system", job: "stripe-subscription-updated" },
-        db: opts.ctx.db,
       },
       input: {
         plan: built.plan,
@@ -398,7 +386,6 @@ export const webhookRouter = createTRPCRouter({
       try {
         if (isCancelling) {
           await sendCancellationEmails({
-            db: opts.ctx.db,
             ws,
             customerId,
             current,
@@ -421,7 +408,6 @@ export const webhookRouter = createTRPCRouter({
       current.status === "active"
     ) {
       await trackForWorkspaceOwner({
-        db: opts.ctx.db,
         ws: { ...ws, plan: built.plan },
         event: Events.ConvertTrial,
         props: { toPlan: built.plan, ...billingProps(current) },
@@ -435,7 +421,6 @@ export const webhookRouter = createTRPCRouter({
       const newIndex = planOrder.indexOf(newPlan ?? "free");
 
       await trackForWorkspaceOwner({
-        db: opts.ctx.db,
         ws: { ...ws, plan: newPlan },
         event:
           newIndex > oldIndex
@@ -452,11 +437,9 @@ export const webhookRouter = createTRPCRouter({
       if (!subscription) return;
       const ws = await getWorkspaceByStripeId({
         input: { stripeId: customerIdOf(subscription) },
-        db: opts.ctx.db,
       });
       if (!ws) return;
       await trackForWorkspaceOwner({
-        db: opts.ctx.db,
         ws,
         event: Events.AddTrialPaymentMethod,
         props: {
@@ -489,7 +472,6 @@ export const webhookRouter = createTRPCRouter({
 
     const ws = await getWorkspaceByStripeId({
       input: { stripeId: customerId },
-      db: opts.ctx.db,
     });
     if (!ws) {
       throw new TRPCError({
@@ -527,7 +509,6 @@ export const webhookRouter = createTRPCRouter({
     const wsCtx: ServiceContext = {
       workspace: ws,
       actor: { type: "system", job: "stripe-session-completed" },
-      db: opts.ctx.db,
     };
 
     await updateWorkspacePlan({
@@ -553,7 +534,6 @@ export const webhookRouter = createTRPCRouter({
       // A redelivered event must not count the trial twice.
       if (firstMark) {
         await trackForWorkspaceOwner({
-          db: opts.ctx.db,
           ws: { ...ws, plan: built.plan },
           event: Events.StartTrial,
           props: {
@@ -568,7 +548,6 @@ export const webhookRouter = createTRPCRouter({
     }
 
     await trackForWorkspaceOwner({
-      db: opts.ctx.db,
       ws: { ...ws, plan: built.plan },
       event: Events.UpgradeWorkspace,
       props: {
@@ -593,7 +572,6 @@ export const webhookRouter = createTRPCRouter({
 
     const ws = await getWorkspaceByStripeId({
       input: { stripeId: customerId },
-      db: opts.ctx.db,
     });
     if (!ws) {
       throw new TRPCError({
@@ -611,18 +589,13 @@ export const webhookRouter = createTRPCRouter({
           ctx: {
             workspace: ws,
             actor: { type: "system", job: "stripe-trial-will-end" },
-            db: opts.ctx.db,
           },
         }).catch((err) => {
           // The reminder matters more than the loss lines.
           console.error("Failed to preview trial downgrade:", err);
           return undefined;
         });
-    const { to, owners } = await getBillingRecipients(
-      opts.ctx.db,
-      ws.id,
-      customerId,
-    );
+    const { to, owners } = await getBillingRecipients(ws.id, customerId);
     const trialEnd = new Date(subscription.trial_end * 1000);
     const plan = ws.plan ?? "starter";
     await sendTrialEnding({
@@ -657,7 +630,6 @@ export const webhookRouter = createTRPCRouter({
     }
 
     await trackForWorkspaceOwner({
-      db: opts.ctx.db,
       ws,
       event: Events.NotifyTrialEnding,
       props: { hasPaymentMethod: withCard },
@@ -683,7 +655,6 @@ export const webhookRouter = createTRPCRouter({
 
     const ws = await getWorkspaceByStripeId({
       input: { stripeId: customerId },
-      db: opts.ctx.db,
     });
 
     if (!ws) {
@@ -705,7 +676,6 @@ export const webhookRouter = createTRPCRouter({
     const ctx: ServiceContext = {
       workspace: ws,
       actor: { type: "system", job: "stripe-subscription-deleted" },
-      db: opts.ctx.db,
     };
 
     // A trial that ran out without a card, or was cancelled mid-trial, is
@@ -730,7 +700,7 @@ export const webhookRouter = createTRPCRouter({
     const eventId = opts.input.event.id;
     let owners: Array<string | null> = [];
     try {
-      owners = await getOwnerEmails(opts.ctx.db, ws.id);
+      owners = await getOwnerEmails(ws.id);
       const customer = await stripe.customers.retrieve(customerId);
       await sendPlanDowngraded({
         to: billingRecipients(owners, customer.deleted ? null : customer.email),
@@ -760,7 +730,7 @@ export const webhookRouter = createTRPCRouter({
     // commit: a Vercel error must not fail the webhook into Stripe retries.
     for (const domain of customDomains) {
       try {
-        await removeDomainFromVercelIfUnused(opts.ctx.db, domain);
+        await removeDomainFromVercelIfUnused(domain);
       } catch (err) {
         console.error("Failed to release domain from Vercel:", {
           domain,
@@ -770,7 +740,6 @@ export const webhookRouter = createTRPCRouter({
     }
 
     await trackForWorkspaceOwner({
-      db: opts.ctx.db,
       ws: { ...ws, plan: "free" },
       event:
         reason === "subscription_deleted"

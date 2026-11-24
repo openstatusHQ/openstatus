@@ -23,7 +23,6 @@ export const userRouter = createTRPCRouter({
       // rolled back if the delete fails, the user simply retries.
       const owned = await listOwnedWorkspaces({
         input: { userId: ctx.user.id },
-        db: ctx.db,
       });
       // A signup workspace has no plan column yet — that is free.
       if (
@@ -35,13 +34,12 @@ export const userRouter = createTRPCRouter({
       }
       const customDomains = await cancelOwnedTrials({
         userId: ctx.user.id,
-        db: ctx.db,
       });
       // `userId` is derived from `ctx.actor` inside the service — no
       // input needed.
       await deleteAccount({ ctx: toServiceCtx(ctx) });
       for (const domain of customDomains) {
-        await removeDomainFromVercelIfUnused(ctx.db, domain).catch((error) =>
+        await removeDomainFromVercelIfUnused(domain).catch((error) =>
           console.error("Failed to release domain from Vercel:", {
             domain,
             error,

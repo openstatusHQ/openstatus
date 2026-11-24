@@ -1,4 +1,3 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db, desc, eq } from "@openstatus/db";
 import { integration, pageSubscriber } from "@openstatus/db/src/schema";
 import type {

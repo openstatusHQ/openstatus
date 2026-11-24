@@ -14,6 +14,7 @@ export {
   listMonitorIncidents,
   type ListMonitorIncidentsResult,
 } from "./list";
+export { listRecoveredMonitorsWithOpenIncidents } from "./recovered";
 export { resolveMonitorIncident } from "./resolve";
 export { setMonitorIncidentScreenshot } from "./set-screenshot";
 export { unexcuseMonitorIncident } from "./unexcuse";
