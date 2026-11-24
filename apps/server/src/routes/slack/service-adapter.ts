@@ -1,4 +1,5 @@
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db, eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,

@@ -1,4 +1,5 @@
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db, eq } from "@openstatus/db";
 import {
   type Scope,
@@ -6,6 +7,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { apiKey } from "@openstatus/db/src/schema/api-keys";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { verifyApiKeyHash } from "@openstatus/db/src/utils/api-key";
 import { retryRead } from "@openstatus/services";
 import { updateApiKeyLastUsed } from "@openstatus/services/api-key";

@@ -34,9 +34,11 @@ and both must stay:
     only; a new service needs an entry in `RPC_SERVICE_GROUP`, a method that
     belongs to another group needs one in `RPC_METHOD_GROUP`.
 
-New endpoints should call a service verb rather than query Drizzle directly;
-`oxlint.config.ts` already bans `@openstatus/db` and `drizzle-orm` imports in
-the handlers that have migrated, and that list grows one domain per PR.
+New endpoints call a service verb rather than query Drizzle directly:
+`oxlint.config.ts` bans runtime `@openstatus/db` and `drizzle-orm` imports
+everywhere outside its exemption list. Existing offenders carry an inline
+disable; a migration removes it, and a disable that suppresses nothing fails
+`pnpm lint`.
 
 ## Route config
 

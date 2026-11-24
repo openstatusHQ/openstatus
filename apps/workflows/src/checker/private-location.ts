@@ -1,5 +1,7 @@
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db, eq, inArray, isNull, or, schema } from "@openstatus/db";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import {
   monitorInMaintenance,
   monitorInWindow,

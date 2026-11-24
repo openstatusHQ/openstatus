@@ -5,6 +5,7 @@ import {
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { db } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 import { LimitExceededError } from "@openstatus/services";

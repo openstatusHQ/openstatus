@@ -1,5 +1,8 @@
 import { defineConfig } from "oxlint";
 
+const DB_MESSAGE =
+  'Go through @openstatus/services. Database access outside it is a defect; see AGENTS.md "Architecture".';
+
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "unicorn", "oxc"],
   jsPlugins: ["./tooling/oxlint/plugin.js"],
@@ -28,6 +31,36 @@ export default defineConfig({
     "react/no-danger": "error",
     "react/exhaustive-deps": "warn",
     "unicorn/prefer-node-protocol": "error",
+    // Database access goes through @openstatus/services; the override below
+    // lists the places allowed to reach the client directly. Type imports
+    // and schema sub-paths (zod schemas, enum constants) stay importable.
+    "no-restricted-imports": [
+      "error",
+      {
+        paths: [
+          {
+            name: "@openstatus/db",
+            allowTypeImports: true,
+            message: DB_MESSAGE,
+          },
+          { name: "drizzle-orm", allowTypeImports: true, message: DB_MESSAGE },
+        ],
+        patterns: [
+          {
+            group: [
+              "@openstatus/db/**",
+              "!@openstatus/db/src/schema",
+              "!@openstatus/db/src/schema/**",
+              // Environment validation only; no client.
+              "!@openstatus/db/env.mjs",
+              "drizzle-orm/**",
+            ],
+            allowTypeImports: true,
+            message: DB_MESSAGE,
+          },
+        ],
+      },
+    ],
   },
   ignorePatterns: [
     // Deliberately bad code, linted by tooling/oxlint/check-fixtures.mts.
@@ -50,55 +83,35 @@ export default defineConfig({
   ],
   overrides: [
     {
-      // No db client or query builder in layers migrated onto
-      // @openstatus/services. Schemas and constants stay importable.
+      // Allowed to reach the database directly. Each entry carries its reason;
+      // everything else imports @openstatus/services.
       files: [
-        "packages/api/src/router/**",
-        "apps/server/src/routes/rpc/**",
-        "apps/server/src/routes/slack/interactions.ts",
-        "apps/status-page/src/**",
-      ],
-      excludeFiles: [
+        // The db package itself, tests, seeds and one-off scripts.
+        "packages/db/**",
         "**/__tests__/**",
         "**/*.test.ts",
-        // Infrastructure, not workspace data: the db health probe and the
-        // Auth.js adapter that owns the viewer session tables.
+        "**/*.test.tsx",
+        "**/test/**",
+        "scripts/**",
+        "apps/*/src/scripts/**",
+        "packages/*/scripts/**",
+        // Legacy REST API, scheduled for removal. Delete this line with it.
+        "apps/server/src/routes/v1/**",
+        // Infrastructure: health probes ping the client, and the Auth.js
+        // adapters own the session tables.
+        "apps/dashboard/src/app/api/health/route.ts",
+        "apps/external-status/src/health.ts",
+        "apps/server/src/routes/health.ts",
         "apps/status-page/src/app/api/health/route.ts",
+        "apps/workflows/src/health.ts",
+        "apps/dashboard/src/lib/auth/adapter.ts",
         "apps/status-page/src/lib/auth/adapter.ts",
+        // The workflows client wiring, and the documented checker ingest batch
+        // (see packages/services/AGENTS.md).
+        "apps/workflows/src/lib/db.ts",
+        "apps/workflows/src/checker/transition.ts",
       ],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            // Type imports carry no runtime access, so db shapes stay usable.
-            paths: [
-              {
-                name: "@openstatus/db",
-                allowTypeImports: true,
-                message:
-                  "Use @openstatus/services instead (domain has migrated to the service layer).",
-              },
-              {
-                name: "drizzle-orm",
-                allowTypeImports: true,
-                message: "Use @openstatus/services instead.",
-              },
-            ],
-            patterns: [
-              {
-                group: [
-                  "@openstatus/db/**",
-                  "!@openstatus/db/src/schema",
-                  "!@openstatus/db/src/schema/**",
-                  "drizzle-orm/**",
-                ],
-                allowTypeImports: true,
-                message: "Use @openstatus/services instead.",
-              },
-            ],
-          },
-        ],
-      },
+      rules: { "no-restricted-imports": "off" },
     },
     {
       // Tests legitimately use `any` for spies/fixtures.

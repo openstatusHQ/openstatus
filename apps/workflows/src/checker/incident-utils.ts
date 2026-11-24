@@ -1,4 +1,5 @@
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db, eq, isNull, schema } from "@openstatus/db";
 import { ConflictError } from "@openstatus/services";
 import {

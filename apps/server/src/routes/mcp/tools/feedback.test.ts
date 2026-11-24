@@ -67,7 +67,6 @@ function submitTool(ctx: ServiceContext, slackWebhookUrl?: string) {
   );
   if (!tool) throw new Error("submit_feedback not registered");
   return (args: Record<string, unknown>) =>
-    // oxlint-disable-next-line typescript/no-explicit-any -- minimal `extra` for a unit test
     (tool.handler as any)(args, {}) as Promise<{
       isError?: boolean;
       structuredContent?: unknown;

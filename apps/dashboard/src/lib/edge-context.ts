@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { asc, db, eq, schema } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
 

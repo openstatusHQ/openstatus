@@ -2,6 +2,7 @@ import { PubSub, type Topic } from "@google-cloud/pubsub";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { inArray } from "@openstatus/db";
 import {
   monitorStatusTable,

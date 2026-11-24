@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db, desc, eq, sql } from "@openstatus/db";
 import {
   integration,

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
 import { and, db as defaultDb, ne, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { TRPCError } from "@trpc/server";

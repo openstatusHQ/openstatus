@@ -26,7 +26,8 @@ workflows pin the same node. Never float one back to `@latest` or
 
 - **`packages/services`** owns every workspace-scoped mutation. tRPC routers,
   Hono routes, MCP tools and jobs are thin adapters over it. Inline DB access in
-  a router is a defect — see `packages/services/AGENTS.md`.
+  a router is a defect — see `packages/services/AGENTS.md`. Lint bans the db
+  client and Drizzle outside the exemptions in `oxlint.config.ts`.
 - **Turso (libSQL) holds application data**, through Drizzle in `packages/db`.
   **Tinybird holds monitoring time-series**, through `packages/tinybird`. The two
   are linked by id only: no cross-store transaction, no join across the boundary,
