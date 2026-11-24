@@ -49,7 +49,9 @@ audits in the incident's own workspace as a `system` actor.
 
 `emitAudit(tx, ctx, entry)` runs inside the same transaction as the mutation.
 Fail-closed: a failed audit insert rolls the mutation back. Lint requires its
-first argument to be the `tx` handed to the enclosing callback or helper.
+first argument to be a parameter of an enclosing callback or helper (directly
+or destructured from its args) named as the transaction: `tx`, `rtx` or
+`…Tx`.
 
 - Updates pass both `before` (pre-mutation snapshot) and `after` (the
   `.returning()` row); `changed_fields` is diffed automatically and no-op updates

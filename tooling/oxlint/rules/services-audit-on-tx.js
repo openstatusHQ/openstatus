@@ -1,11 +1,13 @@
 import { FUNCTION_TYPES, calleeName, boundNames } from "../lib/ast.js";
 
+// `tx`, `rtx`, `outerTx`: the transaction, not `ctx` or another db handle.
+const TX_NAME = /^r?tx$|[a-z]Tx$/;
 /**
  * The audit row must commit with the mutation: `emitAudit` takes the
  * transaction handed to the enclosing callback or `*InTx` helper (directly or
- * destructured from its args), never the module `db` or `ctx.db`. Member
- * expressions (`opts.tx`) are rejected on purpose; passing a non-transaction
- * parameter such as `ctx` is left to the `DB` type of the first argument.
+ * destructured from its args) and named for it, never the module `db`,
+ * `ctx.db` or a `db` parameter. Member expressions (`opts.tx`) are rejected
+ * on purpose.
  */
 export default {
   meta: {
@@ -16,7 +18,7 @@ export default {
     },
     messages: {
       notTx:
-        "`emitAudit` writes on `{{arg}}`, which is not a parameter of an enclosing function, so the audit row commits separately from the mutation. Pass the `tx` of the surrounding `withTransaction` callback or `*InTx` helper.",
+        "`emitAudit` writes on `{{arg}}`, which is not a transaction parameter (\`tx\`) of an enclosing function, so the audit row may commit separately from the mutation. Pass the `tx` of the surrounding `withTransaction` callback or `*InTx` helper.",
     },
   },
   create(context) {
@@ -26,7 +28,8 @@ export default {
       VariableDeclarator(node) {
         const params = scopes.at(-1);
         if (!params || node.id?.type !== "ObjectPattern") return;
-        if (node.init?.type !== "Identifier" || !params.has(node.init.name)) {
+        const source = node.init?.type === "Identifier" ? node.init.name : null;
+        if (!source || !scopes.some((scope) => scope.has(source))) {
           return;
         }
         boundNames(node.id, params);
@@ -36,7 +39,9 @@ export default {
         const arg = node.arguments[0];
         if (!arg) return;
         const name = arg.type === "Identifier" ? arg.name : null;
-        if (name && scopes.some((params) => params.has(name))) return;
+        if (name && TX_NAME.test(name) && scopes.some((p) => p.has(name))) {
+          return;
+        }
         context.report({
           node: arg,
           messageId: "notTx",

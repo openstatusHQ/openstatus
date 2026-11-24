@@ -69,10 +69,33 @@ export function isParamDestructuring(statement, params) {
     statement.declarations.every(
       (d) =>
         d.id?.type === "ObjectPattern" &&
+        isInertPattern(d.id) &&
         d.init?.type === "Identifier" &&
         params.has(d.init.name),
     )
   );
+}
+
+/** A pattern that runs no code: no computed keys, defaults only literals. */
+function isInertPattern(pattern) {
+  switch (pattern?.type) {
+    case "Identifier":
+      return true;
+    case "ObjectPattern":
+      return pattern.properties.every((p) =>
+        p.type === "RestElement"
+          ? isInertPattern(p.argument)
+          : !p.computed && isInertPattern(p.value),
+      );
+    case "ArrayPattern":
+      return pattern.elements.every((el) => el === null || isInertPattern(el));
+    case "AssignmentPattern":
+      return pattern.right?.type === "Literal" && isInertPattern(pattern.left);
+    case "RestElement":
+      return isInertPattern(pattern.argument);
+    default:
+      return false;
+  }
 }
 
 /**

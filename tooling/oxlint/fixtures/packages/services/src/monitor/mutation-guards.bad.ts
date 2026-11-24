@@ -22,3 +22,20 @@ export async function renameWidget(args: { ctx: ServiceContext; input: unknown }
     await emitAudit(tx, args.ctx, { input });
   });
 }
+
+// A default that parses runs before the scope check.
+export async function moveWidget(args: { ctx: ServiceContext; input: unknown }) {
+  const { ctx, input = MoveInput.parse(args) } = args;
+  requireScope(ctx, "monitors:write"); // expect: services-mutation-guards
+  return withTransaction(ctx, async (tx) => {
+    await emitAudit(tx, ctx, { input });
+  });
+}
+
+export async function tagWidget(args: { ctx: ServiceContext }) {
+  const { [pickKey()]: ctx } = args;
+  requireScope(ctx, "monitors:write"); // expect: services-mutation-guards
+  return withTransaction(ctx, async (tx) => {
+    await emitAudit(tx, ctx, {});
+  });
+}

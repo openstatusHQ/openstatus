@@ -16,6 +16,7 @@ const REPO_ROOT = resolve(HERE, "../..");
 const FIXTURES = join(HERE, "fixtures");
 const CONFIG = join(HERE, "fixtures.json");
 const MARKER = /expect: ([a-z-]+)/g;
+const MARKER_ANY = /expect: [a-z-]+/;
 
 type Diagnostic = {
   code: string;
@@ -32,8 +33,15 @@ function walk(dir: string): string[] {
 }
 
 const expected = new Set<string>();
+const unmarkedBad: string[] = [];
 for (const file of walk(FIXTURES)) {
   const rel = relative(REPO_ROOT, file).replaceAll("\\", "/");
+  if (
+    /\.bad\.tsx?$/.test(file) &&
+    !MARKER_ANY.test(readFileSync(file, "utf8"))
+  ) {
+    unmarkedBad.push(rel);
+  }
   readFileSync(file, "utf8")
     .split("\n")
     .forEach((text, i) => {
@@ -47,6 +55,9 @@ function fail(message: string): never {
   console.error(message);
   process.exit(1);
 }
+
+for (const rel of unmarkedBad)
+  fail(`${rel} is a bad fixture with no expect marker.`);
 
 // Every plugin rule must run here and be pinned by at least one marker.
 const plugin = (await import("./plugin.js")).default as {
