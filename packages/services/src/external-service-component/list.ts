@@ -45,8 +45,6 @@ export type ExternalComponentListItem = {
 const COMPONENT_STALE_MS = 24 * 60 * 60 * 1000;
 
 const TB_BATCH_SIZE = 100;
-// Caps in-flight Tinybird requests: an unbounded fan-out exhausts sockets and fds.
-const TB_CONCURRENCY = 4;
 
 // must stay in sync with fetchers that implement `fetchComponents` in @openstatus/status-fetcher
 export const COMPONENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
@@ -74,14 +72,9 @@ async function fetchLatestByIds(ids: string[]): Promise<LatestFetchedResult> {
     return { errored: true, byId: new Map() };
   }
   const byId = new Map<string, number>();
-  const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
-    chunks.push(ids.slice(i, i + TB_BATCH_SIZE));
-  }
-  let next = 0;
-  const worker = async () => {
-    while (next < chunks.length) {
-      const chunk = chunks[next++];
+  try {
+    for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
+      const chunk = ids.slice(i, i + TB_BATCH_SIZE);
       const { data } = await defaultTb.externalStatusComponentLatest({
         component_ids: chunk,
       });
@@ -89,11 +82,6 @@ async function fetchLatestByIds(ids: string[]): Promise<LatestFetchedResult> {
         byId.set(row.component_id, row.last_fetched_at);
       }
     }
-  };
-  try {
-    await Promise.all(
-      Array.from({ length: Math.min(TB_CONCURRENCY, chunks.length) }, worker),
-    );
     return { errored: false, byId };
   } catch (err) {
     console.warn(
@@ -196,11 +184,10 @@ export async function listExternalComponentsBySlug(args: {
 
 export type LiveComponentSlug = { serviceSlug: string; componentSlug: string };
 
-// Every component a service page lists, ordered by service slug then page order.
-// Two DB queries and batched Tinybird reads, however many services.
+// Components of live, supported services, ordered by service slug then page order.
+// Unlike the service page, no 24h staleness filter: that needs Tinybird reads.
 export async function listLiveComponentSlugs(args: {
   ctx?: GlobalReadContext;
-  now?: Date;
 }): Promise<LiveComponentSlug[]> {
   const { ctx } = args;
   const db = ctx?.db ?? defaultDb;
@@ -216,7 +203,6 @@ export async function listLiveComponentSlugs(args: {
   const rows = await retryRead(() =>
     db
       .select({
-        id: externalServiceComponent.id,
         externalServiceId: externalServiceComponent.externalServiceId,
         slug: externalServiceComponent.slug,
       })
@@ -233,21 +219,10 @@ export async function listLiveComponentSlugs(args: {
       )
       .all(),
   );
-  const supported = rows.filter((r) => slugById.has(r.externalServiceId));
-  if (supported.length === 0) return [];
 
-  const { errored, byId } = await fetchLatestByIds(
-    supported.map((r) => String(r.id)),
-  );
-  const cutoff = (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS;
-
-  return supported.flatMap((r) => {
-    const lastFetchedAt = byId.get(String(r.id)) ?? null;
-    if (!errored && (lastFetchedAt === null || lastFetchedAt < cutoff)) {
-      return [];
-    }
-    const serviceSlug = slugById.get(r.externalServiceId) ?? "";
-    return [{ serviceSlug, componentSlug: r.slug }];
+  return rows.flatMap((r) => {
+    const serviceSlug = slugById.get(r.externalServiceId);
+    return serviceSlug ? [{ serviceSlug, componentSlug: r.slug }] : [];
   });
 }
 
