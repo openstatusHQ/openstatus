@@ -17,6 +17,10 @@ export function redisKeyCount() {
   return counters.size + sets.size;
 }
 
+export function redisSetSize(key: string) {
+  return liveSet(key)?.members.size ?? 0;
+}
+
 function liveSet(key: string) {
   const entry = sets.get(key);
   if (entry && entry.expiresAt <= Date.now()) {
@@ -61,18 +65,23 @@ export function addDistinctWithTtl(
   key: string,
   member: string,
   ttl: number,
+  max: number,
 ) {
   if (client !== noopRedis) {
     return client.eval(
       "addDistinctWithTtl",
       [key],
-      [member, ttl],
+      [member, ttl, max],
     ) as Promise<number>;
   }
   const entry = liveSet(key) ?? {
     members: new Set<string>(),
     expiresAt: Date.now() + ttl * 1000,
   };
+  // Mirrors the script: a full set stores no new member and answers max + 1.
+  if (entry.members.size >= max && !entry.members.has(member)) {
+    return Promise.resolve(max + 1);
+  }
   entry.members.add(member);
   sets.set(key, entry);
   return Promise.resolve(entry.members.size);

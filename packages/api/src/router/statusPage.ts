@@ -1277,7 +1277,6 @@ export const statusPageRouter = createTRPCRouter({
 
       const limiter = pagePasswordRateLimit();
       const attempt = {
-        scope: "login" as const,
         slug: opts.input.slug,
         ip: visitorFromCtx(opts.ctx).clientIp ?? null,
       };
@@ -1328,7 +1327,8 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
       // Nothing (or "") submitted can never authorize, so it is not a guess:
-      // anonymous feed reads must not count.
+      // anonymous feed reads must not count. Shares the login form's budget; a
+      // stale feed cookie counts once, as one distinct value.
       if (!submitted) {
         return (
           (await isPublicStatusPagePasswordAuthorized({ input: opts.input })) ??
@@ -1338,7 +1338,6 @@ export const statusPageRouter = createTRPCRouter({
 
       const limiter = pagePasswordRateLimit();
       const attempt = {
-        scope: "check" as const,
         slug: opts.input.slug,
         ip: visitorFromCtx(opts.ctx).clientIp ?? null,
       };

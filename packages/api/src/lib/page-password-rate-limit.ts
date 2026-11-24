@@ -8,7 +8,6 @@ const MAX_SLUG_LENGTH = 255;
 type Client = Parameters<typeof countDistinct>[0];
 
 export type PasswordAttempt = {
-  scope: "login" | "check";
   slug: string;
   ip: string | null;
 };
@@ -37,20 +36,22 @@ async function guessDigest(slug: string, password: string) {
 }
 
 /**
- * Distinct wrong passwords per (scope, page host, client IP) in a 15 minute
- * window. A right password only reads the count, so concurrent visitors never
+ * Distinct wrong passwords per (page slug, client IP) in a 15 minute window,
+ * shared by every entry point: the login form, the proxy, the feed check and
+ * the page procedures. A right password only reads the count, so concurrent visitors never
  * hold the limit; a repeated wrong value (a stale cookie, a polling tab) counts
  * once. Callers compare first: a wrong password calls `recordFailure`, a right
  * one `isLocked`. Each is one Redis call, so a burst cannot slip past the cap.
- * Requests without an IP share a bucket per host.
+ * Requests without an IP share a bucket per page. A no-op without a Redis URL,
+ * and Redis errors let the attempt through.
  */
 export function pagePasswordRateLimit(client?: Client) {
   // Redis is optional when self-hosting, and the client retries for seconds
   // against a missing URL: without one, there is no limit.
   if (!client && !redisConfigured()) return noLimit;
   const redisClient = client ?? redis;
-  const key = ({ scope, slug, ip }: PasswordAttempt) =>
-    `ratelimit:page-password:${scope}:${slug.slice(0, MAX_SLUG_LENGTH)}:${ip ?? "unknown"}`;
+  const key = ({ slug, ip }: PasswordAttempt) =>
+    `ratelimit:page-password:${slug.slice(0, MAX_SLUG_LENGTH)}:${ip ?? "unknown"}`;
 
   return {
     async isLocked(attempt: PasswordAttempt) {
@@ -70,6 +71,7 @@ export function pagePasswordRateLimit(client?: Client) {
           key(attempt),
           await guessDigest(attempt.slug, password),
           WINDOW_SECONDS,
+          MAX_PAGE_PASSWORD_FAILURES,
         );
         return { locked: count > MAX_PAGE_PASSWORD_FAILURES };
       } catch (e) {

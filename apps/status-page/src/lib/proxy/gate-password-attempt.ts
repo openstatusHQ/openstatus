@@ -1,7 +1,7 @@
 import type { Page } from "@openstatus/db/src/schema";
 import { isPasswordAuthorized } from "@openstatus/services/page-access";
 
-type Attempt = { scope: "login"; slug: string; ip: string | null };
+type Attempt = { slug: string; ip: string | null };
 
 export type PasswordAttemptLimiter = {
   isLocked(attempt: Attempt): Promise<boolean>;
@@ -34,7 +34,6 @@ export async function gatePasswordAttempt(args: {
   if (!submitted) return untouched;
 
   const attempt: Attempt = {
-    scope: "login",
     // The login form posts the slug, also on a custom domain: share its bucket.
     slug: page.slug,
     ip: args.clientIp,

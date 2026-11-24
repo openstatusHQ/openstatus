@@ -101,10 +101,13 @@ workspace.
 
 A visitor may carry a `PasswordAttemptLimiter`. On a password page these checks
 compare the presented password first, then make one call: a wrong one is
-recorded, a right one is refused while the page and IP are locked. The limit
-counts distinct wrong values, so a stale cookie sent by every procedure of a
-page render costs one. Visitors behind one IP share a budget, so ten wrong
-guesses from that IP lock everyone on it out for the window.
+recorded, a right one is refused while the page and IP are locked. The tRPC
+limiter (`packages/api/src/lib/page-password-rate-limit.ts`) counts distinct
+wrong values per page slug and IP in one budget shared by every entry point, so
+a stale cookie sent by every procedure of a page render costs one. Visitors
+behind one IP share it: ten distinct wrong passwords on one page lock everyone
+on that IP out of that page for the window. It is a no-op without a Redis URL
+and lets attempts through when Redis errors.
 
 `src/public-status-page` holds the reads behind the public status page, one
 verb per tRPC procedure. They take no `ServiceContext` (a visitor has no

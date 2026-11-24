@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { redisKeyCount, resetRedisCounters } from "../test/upstash.mock";
+import {
+  redisKeyCount,
+  redisSetSize,
+  resetRedisCounters,
+} from "../test/upstash.mock";
 import {
   MAX_PAGE_PASSWORD_FAILURES,
   pagePasswordRateLimit,
 } from "./page-password-rate-limit";
 
-const attempt = { scope: "login" as const, slug: "acme", ip: "10.0.0.1" };
+const attempt = { slug: "acme", ip: "10.0.0.1" };
 
 beforeEach(() => resetRedisCounters());
 
@@ -67,6 +71,19 @@ describe("pagePasswordRateLimit", () => {
     expect(redisKeyCount()).toBe(0);
   });
 
+  test("a locked bucket stores no further guesses", async () => {
+    const limiter = pagePasswordRateLimit();
+    await failDistinct(limiter, MAX_PAGE_PASSWORD_FAILURES);
+    for (let i = 0; i < 100; i++) {
+      expect((await limiter.recordFailure(attempt, `more-${i}`)).locked).toBe(
+        true,
+      );
+    }
+    expect(redisSetSize(`ratelimit:page-password:acme:10.0.0.1`)).toBe(
+      MAX_PAGE_PASSWORD_FAILURES,
+    );
+  });
+
   test("a parallel burst of distinct guesses locks the bucket", async () => {
     const limiter = pagePasswordRateLimit();
     await Promise.all(
@@ -86,13 +103,12 @@ describe("pagePasswordRateLimit", () => {
     expect(await limiter.isLocked(attempt)).toBe(false);
   });
 
-  test("keeps separate budgets per IP, host and scope", async () => {
+  test("keeps separate budgets per IP and page", async () => {
     const limiter = pagePasswordRateLimit();
     await failDistinct(limiter, MAX_PAGE_PASSWORD_FAILURES);
     expect(await limiter.isLocked(attempt)).toBe(true);
     expect(await limiter.isLocked({ ...attempt, ip: "10.0.0.2" })).toBe(false);
     expect(await limiter.isLocked({ ...attempt, slug: "other" })).toBe(false);
-    expect(await limiter.isLocked({ ...attempt, scope: "check" })).toBe(false);
   });
 
   test("requests without an IP share one bucket per host", async () => {

@@ -9,21 +9,15 @@ import {
 // password only reads the lock.
 function fakeLimiter(max = 3) {
   const failures = new Map<string, Set<string>>();
-  const calls: { kind: string; scope: string; slug: string; value?: string }[] =
-    [];
+  const calls: { kind: string; slug: string; value?: string }[] = [];
   const key = (a: { slug: string; ip: string | null }) => `${a.slug}:${a.ip}`;
   const limiter: PasswordAttemptLimiter = {
     isLocked: async (a) => {
-      calls.push({ kind: "isLocked", scope: a.scope, slug: a.slug });
+      calls.push({ kind: "isLocked", slug: a.slug });
       return (failures.get(key(a))?.size ?? 0) >= max;
     },
     recordFailure: async (a, password) => {
-      calls.push({
-        kind: "recordFailure",
-        scope: a.scope,
-        slug: a.slug,
-        value: password,
-      });
+      calls.push({ kind: "recordFailure", slug: a.slug, value: password });
       const set = failures.get(key(a)) ?? new Set<string>();
       set.add(password);
       failures.set(key(a), set);
@@ -135,7 +129,7 @@ describe("gatePasswordAttempt", () => {
     });
     expect(result.clearCookie).toBe(true);
     expect(calls).toEqual([
-      { kind: "recordFailure", scope: "login", slug: "acme", value: "nope" },
+      { kind: "recordFailure", slug: "acme", value: "nope" },
     ]);
   });
 
@@ -182,7 +176,7 @@ describe("gatePasswordAttempt", () => {
     expect(result.queryPassword).toBe("s3cret");
   });
 
-  test("uses the login scope and the page slug, as the login form does", async () => {
+  test("keys on the page slug, as the login form does", async () => {
     const { limiter, calls } = fakeLimiter();
     await gatePasswordAttempt({
       ...base,
@@ -191,12 +185,7 @@ describe("gatePasswordAttempt", () => {
       limiter,
     });
     expect(calls).toEqual([
-      {
-        kind: "recordFailure",
-        scope: "login",
-        slug: "acme-status",
-        value: "nope",
-      },
+      { kind: "recordFailure", slug: "acme-status", value: "nope" },
     ]);
   });
 

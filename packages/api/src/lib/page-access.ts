@@ -1,6 +1,5 @@
 import {
   type PageVisitor,
-  type PasswordAttemptLimiter,
   resolveClientIp,
 } from "@openstatus/services/page-access";
 
@@ -19,17 +18,7 @@ export function visitorFromCtx(
     queryPassword,
     email: ctx.session?.user?.email,
     clientIp: ctx.req ? resolveClientIp(ctx.req.headers) : null,
-    passwordAttempts: loginPasswordAttempts(),
-  };
-}
-
-// Shares the login form's and the proxy's budget, so guesses spread across
-// procedures still hit one cap.
-function loginPasswordAttempts(): PasswordAttemptLimiter {
-  const limiter = pagePasswordRateLimit();
-  return {
-    isLocked: (attempt) => limiter.isLocked({ scope: "login", ...attempt }),
-    recordFailure: (attempt, password) =>
-      limiter.recordFailure({ scope: "login", ...attempt }, password),
+    // One budget per page and IP across every entry point.
+    passwordAttempts: pagePasswordRateLimit(),
   };
 }
