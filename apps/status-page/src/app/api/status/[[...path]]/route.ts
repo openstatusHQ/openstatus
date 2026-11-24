@@ -1,5 +1,5 @@
 import { resolveClientIp } from "@openstatus/services/page-access";
-import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
+import { getPublicStatusPageIndexing } from "@openstatus/services/public-status-page";
 import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -54,7 +54,7 @@ export async function GET(
     });
     if (!route) return json({ error: "Not Found" }, 404);
 
-    const row = await getPublicStatusPageRow({
+    const row = await getPublicStatusPageIndexing({
       input: { slug: route.prefix },
     });
     if (!row) return json({ error: "Not Found" }, 404);

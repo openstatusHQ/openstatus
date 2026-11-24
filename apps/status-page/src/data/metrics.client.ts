@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { ALL_REGIONS } from "@openstatus/regions";
 
 import type { MetricCard } from "../components/content/metric-card";
 import { formatDateTime, formatMilliseconds } from "../lib/formatter";
@@ -10,8 +10,7 @@ import type { Region } from "./regions";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
-export const REGIONS =
-  monitorRegions as unknown as (typeof monitorRegions)[number][];
+export const REGIONS = ALL_REGIONS as unknown as (typeof ALL_REGIONS)[number][];
 export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
 export const INTERVALS = [5, 15, 30, 60, 120, 240, 480, 1440] as const;
 export const TRIGGER = ["api", "cron"] as const;

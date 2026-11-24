@@ -3,7 +3,7 @@ import { page } from "@openstatus/db/src/schema";
 import { createPage } from "@openstatus/db/src/test/factories";
 import { beforeAll, describe, expect, test } from "vitest";
 
-import { getPublicStatusPageRow } from "..";
+import { getPublicStatusPageIndexing, getPublicStatusPageRow } from "..";
 import {
   createWorkspaceFixture,
   withTestTransaction,
@@ -67,6 +67,31 @@ describe("getPublicStatusPageRow", () => {
         .where(eq(page.id, p.id));
       expect(
         await getPublicStatusPageRow({ input: { slug: p.slug }, db: tx }),
+      ).toBeNull();
+    });
+  });
+});
+
+describe("getPublicStatusPageIndexing", () => {
+  test("returns only the routing and indexing fields", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await createPage(
+        workspaceId,
+        { accessType: "password", password: "s3cret", allowIndex: false },
+        tx,
+      );
+      const row = await getPublicStatusPageIndexing({
+        input: { slug: p.slug.toUpperCase() },
+        db: tx,
+      });
+      expect(row).toEqual({
+        slug: p.slug,
+        customDomain: "",
+        accessType: "password",
+        allowIndex: false,
+      });
+      expect(
+        await getPublicStatusPageIndexing({ input: { slug: "" }, db: tx }),
       ).toBeNull();
     });
   });

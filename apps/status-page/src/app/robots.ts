@@ -1,4 +1,4 @@
-import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
+import { getPublicStatusPageIndexing } from "@openstatus/services/public-status-page";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
@@ -25,7 +25,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     ? resolveRoute({ host, urlHost: host, pathname: "/" })
     : null;
   const row = route
-    ? await getPublicStatusPageRow({ input: { slug: route.prefix } })
+    ? await getPublicStatusPageIndexing({ input: { slug: route.prefix } })
     : null;
 
   // The page owner opted out of indexing: disallow everything and omit the

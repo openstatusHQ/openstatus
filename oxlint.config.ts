@@ -72,7 +72,6 @@ export default defineConfig({
         // Schema constants only (regions, periodicity, methods).
         "apps/server/src/routes/rpc/handlers/monitor/limits.ts",
         "apps/server/src/routes/rpc/handlers/monitor/validators.ts",
-        "apps/status-page/src/data/metrics.client.ts",
         // Infrastructure, not workspace data: the db health probe and the
         // Auth.js adapter that owns the viewer session tables.
         "apps/status-page/src/app/api/health/route.ts",

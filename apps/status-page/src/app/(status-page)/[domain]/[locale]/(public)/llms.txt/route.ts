@@ -1,4 +1,4 @@
-import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
+import { getPublicStatusPageIndexing } from "@openstatus/services/public-status-page";
 import { NextResponse } from "next/server";
 
 import {
@@ -87,7 +87,7 @@ export async function GET(
   props: { params: Promise<{ domain: string }> },
 ) {
   const { domain } = await props.params;
-  const row = await getPublicStatusPageRow({ input: { slug: domain } });
+  const row = await getPublicStatusPageIndexing({ input: { slug: domain } });
   if (!row) return notFound();
   // Only public pages get a discovery doc — don't leak title/description of
   // password/email/IP-gated pages. Gate on the cheap row before the full fetch.

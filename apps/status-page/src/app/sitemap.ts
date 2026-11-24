@@ -1,4 +1,4 @@
-import { getPublicStatusPageRow } from "@openstatus/services/public-status-page";
+import { getPublicStatusPageIndexing } from "@openstatus/services/public-status-page";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
@@ -20,7 +20,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const route = resolveRoute({ host, urlHost: host ?? "", pathname: "/" });
   if (!route) return [];
 
-  const row = await getPublicStatusPageRow({ input: { slug: route.prefix } });
+  const row = await getPublicStatusPageIndexing({
+    input: { slug: route.prefix },
+  });
   // Only public, indexable pages belong in a sitemap — gated content must not
   // be advertised to crawlers.
   if (!row || !row.allowIndex || row.accessType !== "public") return [];

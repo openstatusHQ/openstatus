@@ -1,6 +1,10 @@
 export { checkPublicEmailDomain } from "./check-email-domain";
 export { getPublicStatusPage, type PublicStatusPage } from "./get";
 export { getPublicStatusPageGate, type PublicStatusPageGate } from "./get-gate";
+export {
+  getPublicStatusPageIndexing,
+  type PublicStatusPageIndexing,
+} from "./get-indexing";
 export { getPublicStatusPageLight } from "./get-light";
 export { getPublicMaintenance } from "./get-maintenance";
 export { getPublicStatusPageMonitor } from "./get-monitor";
