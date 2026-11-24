@@ -24,3 +24,11 @@ export {
   resolveUserWorkspaces,
 } from "./active-workspace";
 export { listSignupEmails, listSignupEmailsBySlack } from "./signups";
+export {
+  getFreeWorkspaceOfUser,
+  getLatestSessionExpiry,
+  getUserContact,
+  type InactiveFreeUser,
+  listFreeUsersLastSeenBefore,
+  listFreeUsersWithoutSession,
+} from "./inactive";

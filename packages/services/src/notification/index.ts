@@ -4,6 +4,12 @@ export { deleteNotification } from "./delete";
 export { assertProviderAllowed } from "./internal";
 export { getNotificationLimit, type NotificationLimit } from "./limit";
 export {
+  listOutboxRowsWithoutTrigger,
+  listTriggersWithoutOutboxRow,
+  type OutboxShadowKey,
+  pruneNotificationOutbox,
+} from "./outbox";
+export {
   getNotification,
   type ListNotificationsResult,
   listNotifications,

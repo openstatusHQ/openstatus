@@ -16,7 +16,7 @@ import {
 } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-import { countPausedMonitors, listMonitorsToCheck } from "./monitors-to-check";
+import { countPausedMonitors, listMonitorsToCheck } from "../dispatch";
 
 const HOUR_MS = 3_600_000;
 
@@ -47,7 +47,7 @@ afterAll(async () => {
 });
 
 async function dispatchedIds(now: Date) {
-  const rows = await listMonitorsToCheck(db, "1h", now);
+  const rows = await listMonitorsToCheck({ db, periodicity: "1h", now });
   return rows.filter((r) => r.workspaceId === workspaceId).map((r) => r.id);
 }
 
@@ -84,10 +84,16 @@ describe("listMonitorsToCheck during maintenance", () => {
       to: new Date(from + HOUR_MS),
     });
 
-    expect(await countPausedMonitors(db, "1h", new Date(from))).toBe(1);
-    expect(await countPausedMonitors(db, "1h", new Date(from + HOUR_MS))).toBe(
-      0,
-    );
+    expect(
+      await countPausedMonitors({ db, periodicity: "1h", now: new Date(from) }),
+    ).toBe(1);
+    expect(
+      await countPausedMonitors({
+        db,
+        periodicity: "1h",
+        now: new Date(from + HOUR_MS),
+      }),
+    ).toBe(0);
   });
 
   test("a continue window does not exclude its monitors", async () => {

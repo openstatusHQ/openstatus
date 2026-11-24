@@ -1,7 +1,13 @@
+export { countActiveMonitors, listActiveMonitorIds } from "./active";
 export { cloneMonitor } from "./clone";
 export { createMonitor } from "./create";
 export { fetchMonitorDailyStats } from "./get-daily-summary";
 export { deleteMonitor, deleteMonitors } from "./delete";
+export {
+  countPausedMonitors,
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "./dispatch";
 export {
   getMonitorStatus,
   type GetMonitorStatusResult,
@@ -44,6 +50,13 @@ export {
   type MonitorListItem,
   type MonitorWithRelations,
 } from "./list";
+export {
+  type HeartbeatSweepRow,
+  listHeartbeatSweepCandidates,
+  listStatusDriftCandidates,
+  type QuorumSql,
+  type StatusDriftRow,
+} from "./sweeps";
 export {
   updateMonitorNotifiers,
   updateMonitorSchedulingRegions,
