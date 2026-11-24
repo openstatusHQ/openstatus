@@ -12,11 +12,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import {
-  ForbiddenError,
-  MonitorNotInWorkspaceError,
-  NotFoundError,
-} from "../../errors";
+import { ForbiddenError, NotFoundError } from "../../errors";
 import { createPageComponent } from "../create";
 import { getPageComponent } from "../list";
 
@@ -82,23 +78,31 @@ describe("getPageComponent", () => {
 });
 
 describe("createPageComponent monitor errors", () => {
-  test("a monitor from another workspace is a MonitorNotInWorkspaceError, still a ForbiddenError", async () => {
+  test("a foreign, a soft-deleted and an unknown monitor are the same NotFound", async () => {
     await withTestTransaction(async (tx) => {
       const p = await createPage(teamCtx.workspace.id, {}, tx);
       const foreign = await createMonitor(otherCtx.workspace.id, {}, tx);
-      const err = await createPageComponent({
-        ctx: { ...teamCtx, db: tx },
-        input: {
-          pageId: p.id,
-          type: "monitor",
-          monitorId: foreign.id,
-          order: 0,
-        },
-      }).catch((e) => e);
-      expect(err).toBeInstanceOf(MonitorNotInWorkspaceError);
-      expect(err).toBeInstanceOf(ForbiddenError);
-      expect((err as MonitorNotInWorkspaceError).monitorId).toBe(foreign.id);
-      expect((err as Error).message).toBe("Invalid monitor IDs.");
+      const deleted = await createMonitor(
+        teamCtx.workspace.id,
+        { deletedAt: new Date() },
+        tx,
+      );
+      const errors = [];
+      for (const monitorId of [foreign.id, deleted.id, 99_999_999]) {
+        errors.push(
+          await createPageComponent({
+            ctx: { ...teamCtx, db: tx },
+            input: { pageId: p.id, type: "monitor", monitorId, order: 0 },
+          }).catch((e) => e),
+        );
+      }
+      for (const [i, err] of errors.entries()) {
+        expect(err).toBeInstanceOf(NotFoundError);
+        expect((err as NotFoundError).entity).toBe("monitor");
+        expect((err as Error).message).toBe(
+          `monitor ${[foreign.id, deleted.id, 99_999_999][i]} not found`,
+        );
+      }
     });
   });
 });

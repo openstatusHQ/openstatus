@@ -24,7 +24,6 @@ export {
   ForbiddenError,
   InternalServiceError,
   LimitExceededError,
-  MonitorNotInWorkspaceError,
   NotFoundError,
   PreconditionFailedError,
   ServiceError,

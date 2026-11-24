@@ -14,7 +14,6 @@ import {
 import {
   ConflictError,
   InternalServiceError,
-  MonitorNotInWorkspaceError,
   NotFoundError,
   ServiceError,
   withTransaction,
@@ -893,7 +892,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
       return { component: dbComponentToProto(created) };
     } catch (err) {
-      if (err instanceof MonitorNotInWorkspaceError) {
+      if (err instanceof NotFoundError && err.entity === "monitor") {
         throw monitorNotFoundError(req.monitorId);
       }
       rethrowGroupNotFound(err, req.groupId);

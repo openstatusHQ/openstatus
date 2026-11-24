@@ -498,7 +498,7 @@ describe("createPageComponent", () => {
             order: 0,
           },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 
@@ -610,7 +610,7 @@ describe("createPageComponent", () => {
           ctx,
           input: { ...input, monitorId: freeMonitorId },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });

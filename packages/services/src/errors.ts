@@ -37,13 +37,6 @@ export class ForbiddenError extends ServiceError {
   }
 }
 
-/** A monitor id outside the caller's workspace, or soft-deleted. */
-export class MonitorNotInWorkspaceError extends ForbiddenError {
-  constructor(public monitorId: number) {
-    super("Invalid monitor IDs.");
-  }
-}
-
 export class UnauthorizedError extends ServiceError {
   constructor(message: string) {
     super("UNAUTHORIZED", message);
