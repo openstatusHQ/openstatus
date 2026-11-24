@@ -110,7 +110,14 @@ SLACK_SUPPORT_WEBHOOK_URL=your_slack_webhook_url
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 ```
 
+### **Status Page & Routing (Optional)**
+```bash
+# Public status page base URL for subscription links and notification emails
+STATUS_PAGE_BASE_URL=https://status.your-domain.com
+```
+
 ### **External Services (Optional)**
+
 ```bash
 OPENSTATUS_INGEST_URL=https://openstatus-private-location.fly.dev
 SCREENSHOT_SERVICE_URL=your_screenshot_service_url

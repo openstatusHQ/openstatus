@@ -1,4 +1,5 @@
 import { Settings, Copy, Delete } from "@openstatus/icons";
+import { getStatusPageBaseUrl } from "@openstatus/utils";
 
 /** An open report first, then by title. */
 export function compareStatusPages(
@@ -15,7 +16,11 @@ export function getPageUrl(page: {
   slug: string;
   customDomain: string | null;
 }): string {
-  return `https://${page.customDomain || `${page.slug}.openstatus.dev`}`;
+  return getStatusPageBaseUrl({
+    slug: page.slug,
+    customDomain: page.customDomain,
+    nodeEnv: "production",
+  });
 }
 
 export const actions = [
