@@ -6,10 +6,12 @@ import {
 } from "@openstatus/db/src/schema";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+import { defaultTb } from "../../context";
 import {
   getExternalComponentBySlug,
   listExternalComponentsBySlug,
   listLiveComponentSlugs,
+  listRecentlyFetchedServiceIds,
   upsertExternalComponentsForService,
 } from "../index";
 
@@ -591,6 +593,78 @@ describe("listLiveComponentSlugs", () => {
       { serviceSlug: `${TEST_PREFIX}-live-a`, componentSlug: "second" },
       { serviceSlug: `${TEST_PREFIX}-live-b`, componentSlug: "beta" },
     ]);
+  });
+  test("keeps only the given services when externalServiceIds is set", async () => {
+    const kept = await seedService({ slug: `${TEST_PREFIX}-only-a` });
+    const dropped = await seedService({ slug: `${TEST_PREFIX}-only-b` });
+    for (const id of [kept, dropped]) {
+      await upsertExternalComponentsForService({
+        externalServiceId: id,
+        components: [component("api", 1)],
+      });
+    }
+
+    const slugs = await listLiveComponentSlugs({ externalServiceIds: [kept] });
+    expect(slugs).toEqual([
+      { serviceSlug: `${TEST_PREFIX}-only-a`, componentSlug: "api" },
+    ]);
+  });
+});
+
+describe("listRecentlyFetchedServiceIds", () => {
+  const now = new Date("2026-11-24T12:00:00Z");
+  const hoursAgo = (h: number) => now.getTime() - h * 60 * 60 * 1000;
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  // safe because the code under test only calls the pipe and reads `data`.
+  function stubLatestPipe(pipe: ReturnType<typeof vi.fn>) {
+    vi.stubEnv("TINY_BIRD_API_KEY", "test");
+    vi.spyOn(defaultTb, "externalStatusLatest", "get").mockReturnValue(
+      pipe as never,
+    );
+  }
+
+  test("keeps component-capable services fetched in the last 24h, by slug or alias", async () => {
+    const fresh = await seedService({ slug: `${TEST_PREFIX}-fresh` });
+    const renamed = await seedService({
+      slug: `${TEST_PREFIX}-renamed`,
+      aliases: [`${TEST_PREFIX}-old-name`],
+    });
+    await seedService({ slug: `${TEST_PREFIX}-stale` });
+    await seedService({ slug: `${TEST_PREFIX}-unseen` });
+    await seedService({
+      slug: `${TEST_PREFIX}-fresh-custom`,
+      apiConfigType: "custom",
+    });
+    stubLatestPipe(
+      vi.fn().mockResolvedValue({
+        data: [
+          { id: `${TEST_PREFIX}-fresh`, last_fetched_at: hoursAgo(1) },
+          { id: `${TEST_PREFIX}-old-name`, last_fetched_at: hoursAgo(2) },
+          { id: `${TEST_PREFIX}-stale`, last_fetched_at: hoursAgo(25) },
+          { id: `${TEST_PREFIX}-fresh-custom`, last_fetched_at: hoursAgo(1) },
+        ],
+      }),
+    );
+
+    const ids = await listRecentlyFetchedServiceIds({ now });
+    expect(new Set(ids)).toEqual(new Set([fresh, renamed]));
+  });
+
+  test("returns null when Tinybird fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    stubLatestPipe(vi.fn().mockRejectedValue(new Error("boom")));
+
+    expect(await listRecentlyFetchedServiceIds({ now })).toBeNull();
+  });
+
+  test("returns null without a Tinybird key", async () => {
+    vi.stubEnv("TINY_BIRD_API_KEY", "");
+    expect(await listRecentlyFetchedServiceIds({ now })).toBeNull();
   });
 });
 

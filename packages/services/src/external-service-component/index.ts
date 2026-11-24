@@ -18,6 +18,7 @@ export {
   listExternalComponentsByServiceId,
   listExternalComponentsBySlug,
   listLiveComponentSlugs,
+  listRecentlyFetchedServiceIds,
   supportsComponents,
 } from "./list";
 export {

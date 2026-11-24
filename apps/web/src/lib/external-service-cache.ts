@@ -5,7 +5,7 @@ import {
 import {
   getExternalComponentBySlug,
   listExternalComponentsBySlug,
-  listLiveComponentSlugs,
+  listRecentlyFetchedServiceIds,
 } from "@openstatus/services/external-service-component";
 import { unstable_cache } from "next/cache";
 
@@ -37,9 +37,9 @@ export const cachedGetExternalComponentBySlug = unstable_cache(
   { revalidate: REVALIDATE_SECONDS, tags: [TAG] },
 );
 
-// Outside a cache scope the Tinybird reads (revalidate: 0) make the prerendered sitemap bail out to dynamic.
-export const cachedListLiveComponentSlugs = unstable_cache(
-  async () => listLiveComponentSlugs({}),
-  ["external-service-components:live-slugs"],
+// Outside a cache scope the Tinybird read (revalidate: 0) makes the prerendered sitemap bail out to dynamic.
+export const cachedListRecentlyFetchedServiceIds = unstable_cache(
+  async () => listRecentlyFetchedServiceIds({}),
+  ["external-services:recently-fetched-ids"],
   { revalidate: REVALIDATE_SECONDS, tags: [TAG] },
 );
