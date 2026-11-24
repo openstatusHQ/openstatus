@@ -287,6 +287,12 @@ export const ListMonitorsInput = z.object({
 });
 export type ListMonitorsInput = z.infer<typeof ListMonitorsInput>;
 
+export const ListMonitorRowsInput = ListMonitorsInput.pick({
+  limit: true,
+  offset: true,
+});
+export type ListMonitorRowsInput = z.input<typeof ListMonitorRowsInput>;
+
 export const monitorTimeRange = ["1d", "7d", "14d"] as const;
 export type MonitorTimeRange = (typeof monitorTimeRange)[number];
 

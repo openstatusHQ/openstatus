@@ -1,8 +1,5 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
-import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
-import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
   GetMonitorResponse,
@@ -23,6 +20,7 @@ import { GRPCTlsMode, TimeRange } from "@openstatus/proto/monitor/v1";
 import {
   ForbiddenError,
   LimitExceededError,
+  type Monitor,
   NotFoundError,
   ValidationError,
 } from "@openstatus/services";
@@ -32,12 +30,16 @@ import {
   createMonitor,
   deleteMonitor,
   getHeartbeatState,
+  getMonitorRow,
   getMonitorStatus,
   getMonitorSummary,
   getPrivateLocationIdsByMonitor,
   getResponseLog,
   listHeartbeatPings,
+  listHeartbeatStates,
+  listMonitorRows,
   listResponseLogs,
+  parseMonitorRow,
   regenerateHeartbeatToken,
   triggerMonitorRun,
   updateMonitorConfig,
@@ -71,7 +73,6 @@ import {
   stringToRegion,
   stringsToRegions,
   timeRangeToKey,
-  type HeartbeatPingState,
 } from "./converters";
 import {
   cursorInvalidError,
@@ -111,24 +112,17 @@ function parseMonitorId(id: string): number {
   return parseId(id, () => monitorIdInvalidError(id));
 }
 
-/**
- * Helper to get a monitor by ID with workspace scope.
- */
-async function getMonitorById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.id, id),
-        eq(monitor.workspaceId, workspaceId),
-        isNull(monitor.deletedAt),
-      ),
-    )
-    .get();
+/** `undefined` when the monitor isn't in the caller's workspace. */
+async function findMonitor(rpcCtx: RpcContext, id: number) {
+  try {
+    return await getMonitorRow({ ctx: toServiceCtx(rpcCtx), input: { id } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return undefined;
+    toConnectError(err);
+  }
 }
 
-type DBMonitor = NonNullable<Awaited<ReturnType<typeof getMonitorById>>>;
+type DBMonitor = NonNullable<Awaited<ReturnType<typeof findMonitor>>>;
 
 /**
  * Helper to validate and get a monitor for update operations.
@@ -136,14 +130,14 @@ type DBMonitor = NonNullable<Awaited<ReturnType<typeof getMonitorById>>>;
  */
 async function validateAndGetMonitor(
   id: string | undefined,
-  workspaceId: number,
+  rpcCtx: RpcContext,
   expectedJobType: "http" | "tcp" | "dns" | "icmp" | "grpc" | "heartbeat",
 ): Promise<DBMonitor> {
   if (!id || id.trim() === "") {
     throw monitorIdRequiredError();
   }
 
-  const dbMon = await getMonitorById(parseMonitorId(id), workspaceId);
+  const dbMon = await findMonitor(rpcCtx, parseMonitorId(id));
   if (!dbMon) {
     throw monitorNotFoundError(id);
   }
@@ -155,33 +149,11 @@ async function validateAndGetMonitor(
   return dbMon;
 }
 
-type ParsedMonitor = ReturnType<typeof selectMonitorSchema.parse>;
-
-async function heartbeatStatesByMonitor(
-  ids: number[],
-): Promise<Map<number, HeartbeatPingState>> {
-  if (ids.length === 0) return new Map();
-  const rows = await db
-    .select({
-      monitorId: monitorHeartbeatState.monitorId,
-      lastPingAt: monitorHeartbeatState.lastPingAt,
-      lastPingKind: monitorHeartbeatState.lastPingKind,
-      nextDueAt: monitorHeartbeatState.nextDueAt,
-    })
-    .from(monitorHeartbeatState)
-    .where(inArray(monitorHeartbeatState.monitorId, ids))
-    .all();
-  const map = new Map<number, HeartbeatPingState>();
-  for (const row of rows) {
-    if (row.lastPingAt) {
-      map.set(row.monitorId, {
-        at: row.lastPingAt,
-        kind: row.lastPingKind,
-        nextDueAt: row.nextDueAt,
-      });
-    }
-  }
-  return map;
+function heartbeatStatesByMonitor(rpcCtx: RpcContext, monitorIds: number[]) {
+  return listHeartbeatStates({
+    ctx: toServiceCtx(rpcCtx),
+    input: { monitorIds },
+  });
 }
 
 function heartbeatTypeHint(jobType: string): string | undefined {
@@ -195,7 +167,7 @@ async function applyUpdate<T>(
   rpcCtx: RpcContext,
   monitorId: number,
   updateValues: Omit<UpdateMonitorConfigInput, "id">,
-  converter: (data: ParsedMonitor) => T,
+  converter: (data: Monitor) => T,
 ): Promise<{ monitor: T }> {
   try {
     const updated = await updateMonitorConfig({
@@ -387,20 +359,16 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async updateHeartbeatMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const dbMon = await validateAndGetMonitor(
-      req.id,
-      rpcCtx.workspace.id,
-      "heartbeat",
-    );
+    const dbMon = await validateAndGetMonitor(req.id, rpcCtx, "heartbeat");
     if (!req.monitor) {
-      const parsed = selectMonitorSchema.safeParse(dbMon);
-      if (!parsed.success) {
+      const parsed = parseMonitorRow(dbMon);
+      if (!parsed) {
         throw monitorParseFailedError(req.id);
       }
-      const states = await heartbeatStatesByMonitor([dbMon.id]);
+      const states = await heartbeatStatesByMonitor(rpcCtx, [dbMon.id]);
       return {
         monitor: dbMonitorToHeartbeatProto(
-          parsed.data,
+          parsed,
           states.get(dbMon.id) ?? null,
         ),
       };
@@ -430,7 +398,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       updateValues,
       (data) => data,
     );
-    const states = await heartbeatStatesByMonitor([updated.id]);
+    const states = await heartbeatStatesByMonitor(rpcCtx, [updated.id]);
     return {
       monitor: dbMonitorToHeartbeatProto(
         updated,
@@ -447,7 +415,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         ctx: toServiceCtx(rpcCtx),
         input: { id },
       });
-      const states = await heartbeatStatesByMonitor([updated.id]);
+      const states = await heartbeatStatesByMonitor(rpcCtx, [updated.id]);
       return {
         monitor: dbMonitorToHeartbeatProto(
           updated,
@@ -459,8 +427,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         throw monitorNotFoundError(req.id);
       }
       if (err instanceof ValidationError) {
-        const jobType =
-          (await getMonitorById(id, rpcCtx.workspace.id))?.jobType ?? "unknown";
+        const jobType = (await findMonitor(rpcCtx, id))?.jobType ?? "unknown";
         throw monitorTypeMismatchError(req.id, "heartbeat", jobType);
       }
       toConnectError(err);
@@ -507,10 +474,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async updateHTTPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
-    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "http");
+    const dbMon = await validateAndGetMonitor(req.id, rpcCtx, "http");
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -520,12 +486,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
-      const parsed = selectMonitorSchema.safeParse(dbMon);
-      if (!parsed.success) {
+      const parsed = parseMonitorRow(dbMon);
+      if (!parsed) {
         throw monitorParseFailedError(req.id);
       }
       return {
-        monitor: dbMonitorToHttpProto(parsed.data, privateLocationIds),
+        monitor: dbMonitorToHttpProto(parsed, privateLocationIds),
       };
     }
 
@@ -587,10 +553,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async updateTCPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
-    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "tcp");
+    const dbMon = await validateAndGetMonitor(req.id, rpcCtx, "tcp");
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -600,12 +565,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
-      const parsed = selectMonitorSchema.safeParse(dbMon);
-      if (!parsed.success) {
+      const parsed = parseMonitorRow(dbMon);
+      if (!parsed) {
         throw monitorParseFailedError(req.id);
       }
       return {
-        monitor: dbMonitorToTcpProto(parsed.data, privateLocationIds),
+        monitor: dbMonitorToTcpProto(parsed, privateLocationIds),
       };
     }
 
@@ -639,10 +604,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async updateDNSMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
-    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "dns");
+    const dbMon = await validateAndGetMonitor(req.id, rpcCtx, "dns");
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -652,12 +616,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
-      const parsed = selectMonitorSchema.safeParse(dbMon);
-      if (!parsed.success) {
+      const parsed = parseMonitorRow(dbMon);
+      if (!parsed) {
         throw monitorParseFailedError(req.id);
       }
       return {
-        monitor: dbMonitorToDnsProto(parsed.data, privateLocationIds),
+        monitor: dbMonitorToDnsProto(parsed, privateLocationIds),
       };
     }
 
@@ -697,10 +661,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async updateICMPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
-    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "icmp");
+    const dbMon = await validateAndGetMonitor(req.id, rpcCtx, "icmp");
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -710,12 +673,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
-      const parsed = selectMonitorSchema.safeParse(dbMon);
-      if (!parsed.success) {
+      const parsed = parseMonitorRow(dbMon);
+      if (!parsed) {
         throw monitorParseFailedError(req.id);
       }
       return {
-        monitor: dbMonitorToIcmpProto(parsed.data, privateLocationIds),
+        monitor: dbMonitorToIcmpProto(parsed, privateLocationIds),
       };
     }
 
@@ -749,10 +712,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async updateGRPCMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
     const limits = rpcCtx.workspace.limits;
 
-    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "grpc");
+    const dbMon = await validateAndGetMonitor(req.id, rpcCtx, "grpc");
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -762,12 +724,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
-      const parsed = selectMonitorSchema.safeParse(dbMon);
-      if (!parsed.success) {
+      const parsed = parseMonitorRow(dbMon);
+      if (!parsed) {
         throw monitorParseFailedError(req.id);
       }
       return {
-        monitor: dbMonitorToGrpcProto(parsed.data, privateLocationIds),
+        monitor: dbMonitorToGrpcProto(parsed, privateLocationIds),
       };
     }
 
@@ -905,41 +867,20 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async listMonitors(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
     const offset = req.offset ?? 0;
 
-    // Build query conditions
-    const conditions = [
-      eq(monitor.workspaceId, workspaceId),
-      isNull(monitor.deletedAt),
-    ];
-
-    // Get total count
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(monitor)
-      .where(and(...conditions))
-      .get();
-
-    const totalCount = countResult?.count ?? 0;
-
-    // Get monitors
-    const monitors = await db
-      .select()
-      .from(monitor)
-      .where(and(...conditions))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    // Parse first so private-location ids can be resolved in one batched query
-    const parsedMonitors: ParsedMonitor[] = [];
-    for (const m of monitors) {
-      const parsed = selectMonitorSchema.safeParse(m);
-      if (parsed.success) parsedMonitors.push(parsed.data); // Skip invalid monitors
+    let page: Awaited<ReturnType<typeof listMonitorRows>>;
+    try {
+      page = await listMonitorRows({
+        ctx: toServiceCtx(rpcCtx),
+        input: { limit, offset },
+      });
+    } catch (err) {
+      toConnectError(err);
     }
+    const { monitors: parsedMonitors, totalSize: totalCount } = page;
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -954,6 +895,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const grpcMonitors: GRPCMonitor[] = [];
     const heartbeatMonitors: HeartbeatMonitor[] = [];
     const heartbeatStates = await heartbeatStatesByMonitor(
+      rpcCtx,
       parsedMonitors.filter((m) => m.jobType === "heartbeat").map((m) => m.id),
     );
 
@@ -1020,21 +962,20 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async getMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     // Get the monitor
-    const dbMon = await getMonitorById(parseMonitorId(req.id), workspaceId);
+    const dbMon = await findMonitor(rpcCtx, parseMonitorId(req.id));
     if (!dbMon) {
       throw monitorNotFoundError(req.id);
     }
 
     // Parse monitor data
-    const parsed = selectMonitorSchema.safeParse(dbMon);
-    if (!parsed.success) {
+    const parsed = parseMonitorRow(dbMon);
+    if (!parsed) {
       throw monitorParseFailedError(req.id);
     }
 
-    const monitorData = parsed.data;
+    const monitorData = parsed;
 
     const plMap = await getPrivateLocationIdsByMonitor({
       ctx: toServiceCtx(rpcCtx),
@@ -1213,8 +1154,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       }
       if (err instanceof ValidationError) {
         const jobType =
-          (await getMonitorById(parseMonitorId(req.id), rpcCtx.workspace.id))
-            ?.jobType ?? "unknown";
+          (await findMonitor(rpcCtx, parseMonitorId(req.id)))?.jobType ??
+          "unknown";
         throw monitorTypeMismatchError(
           req.id,
           "http",
@@ -1250,8 +1191,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       }
       if (err instanceof ValidationError) {
         const jobType =
-          (await getMonitorById(parseMonitorId(req.id), rpcCtx.workspace.id))
-            ?.jobType ?? "unknown";
+          (await findMonitor(rpcCtx, parseMonitorId(req.id)))?.jobType ??
+          "unknown";
         throw monitorTypeMismatchError(
           req.id,
           "http",
@@ -1309,8 +1250,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         throw responseLogsNotEnabledError();
       }
       if (err instanceof ValidationError) {
-        const jobType =
-          (await getMonitorById(id, rpcCtx.workspace.id))?.jobType ?? "unknown";
+        const jobType = (await findMonitor(rpcCtx, id))?.jobType ?? "unknown";
         throw monitorTypeMismatchError(req.id, "heartbeat", jobType);
       }
       toConnectError(err);

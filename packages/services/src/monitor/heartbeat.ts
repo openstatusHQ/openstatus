@@ -1,4 +1,13 @@
-import { and, db as defaultDb, eq, isNull, lt, or, sql } from "@openstatus/db";
+import {
+  and,
+  db as defaultDb,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+} from "@openstatus/db";
 import {
   type HeartbeatPingKind,
   monitor,
@@ -361,4 +370,52 @@ export async function listHeartbeatPings(args: {
     data,
     nextCursor: data.length === input.limit && last ? last.timestamp : null,
   };
+}
+
+export type HeartbeatPingState = {
+  at: Date;
+  kind: HeartbeatPingKind;
+  nextDueAt: Date | null;
+};
+
+/** Last ping per heartbeat monitor in the workspace; monitors never pinged are absent. */
+export async function listHeartbeatStates(args: {
+  ctx: ServiceContext;
+  input: { monitorIds: number[] };
+}): Promise<Map<number, HeartbeatPingState>> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const ids = args.input.monitorIds;
+  if (ids.length === 0) return new Map();
+
+  const rows = await (ctx.db ?? defaultDb)
+    .select({
+      monitorId: monitorHeartbeatState.monitorId,
+      lastPingAt: monitorHeartbeatState.lastPingAt,
+      lastPingKind: monitorHeartbeatState.lastPingKind,
+      nextDueAt: monitorHeartbeatState.nextDueAt,
+    })
+    .from(monitorHeartbeatState)
+    .innerJoin(monitor, eq(monitor.id, monitorHeartbeatState.monitorId))
+    .where(
+      and(
+        inArray(monitorHeartbeatState.monitorId, ids),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        eq(monitor.jobType, "heartbeat"),
+        isNull(monitor.deletedAt),
+      ),
+    )
+    .all();
+
+  const states = new Map<number, HeartbeatPingState>();
+  for (const row of rows) {
+    if (row.lastPingAt) {
+      states.set(row.monitorId, {
+        at: row.lastPingAt,
+        kind: row.lastPingKind,
+        nextDueAt: row.nextDueAt,
+      });
+    }
+  }
+  return states;
 }
