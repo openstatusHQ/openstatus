@@ -2,7 +2,7 @@ import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 
 import { dbOnlyContext, type DB, getReadDb } from "../context";
 import { ForbiddenError, ValidationError } from "../errors";
-import { assertPageAccess, type PageVisitor } from "../page-access";
+import { requirePageAccess, type PageVisitor } from "../page-access";
 import { bySlugOrDomain } from "./internal";
 import { PublicPageInput } from "./schemas";
 
@@ -20,7 +20,7 @@ export async function getPublicSubscriptionPage(args: {
     with: { workspace: true },
   });
   if (!page) return null;
-  assertPageAccess(page, args.visitor);
+  await requirePageAccess(page, args.visitor);
 
   const workspace = selectWorkspaceSchema.safeParse(page.workspace);
   if (!workspace.success) {

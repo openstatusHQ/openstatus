@@ -22,7 +22,15 @@ import {
 } from "../../../test/helpers";
 import type { DB } from "../../context";
 import { ForbiddenError, UnauthorizedError } from "../../errors";
-import { type PageVisitor, pageAccessCookieKey } from "../../page-access";
+import {
+  type PageVisitor,
+  type PasswordAttemptLimiter,
+  pageAccessCookieKey,
+} from "../../page-access";
+import {
+  hasPendingSubscriber,
+  upsertSelfSignupSubscriber,
+} from "../../page-subscriber";
 
 let workspaceId: number;
 
@@ -241,6 +249,111 @@ describe("public page", () => {
         db: tx,
       });
       expect(full?.page.pageComponents).toHaveLength(1);
+    });
+  });
+});
+
+describe("password rate limit", () => {
+  const lockedLimiter: PasswordAttemptLimiter = {
+    isLocked: async () => true,
+    recordFailure: async () => {},
+  };
+
+  function countingLimiter() {
+    const counts = { isLocked: 0, recordFailure: 0 };
+    const limiter: PasswordAttemptLimiter = {
+      isLocked: async () => {
+        counts.isLocked++;
+        return false;
+      },
+      recordFailure: async () => {
+        counts.recordFailure++;
+      },
+    };
+    return { limiter, counts };
+  }
+
+  const passwordGate = { accessType: "password" as const, password: "s3cret" };
+
+  test("a locked visitor is refused the right password by every verb", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await gatedPage(tx, passwordGate);
+      const visitor: PageVisitor = {
+        queryPassword: "s3cret",
+        passwordAttempts: lockedLimiter,
+      };
+      for (const call of Object.values(hardGated(tx, p, visitor))) {
+        await expect(call()).rejects.toBeInstanceOf(UnauthorizedError);
+      }
+      await expect(
+        upsertSelfSignupSubscriber({
+          input: { email: "a@acme.com", pageId: p.page.id },
+          visitor,
+          db: tx,
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedError);
+      await expect(
+        hasPendingSubscriber({
+          input: { email: "a@acme.com", pageId: p.page.id },
+          visitor,
+          db: tx,
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedError);
+
+      const full = await getPublicStatusPage({
+        input: { slug: p.page.slug },
+        visitor,
+        db: tx,
+      });
+      expect(full?.page.title).toBe(p.page.title);
+      expect(full?.page.pageComponents).toEqual([]);
+    });
+  });
+
+  test("the right password only reads the lock; a wrong one is recorded", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await gatedPage(tx, passwordGate);
+      const right = countingLimiter();
+      await getPublicStatusReport({
+        input: { slug: p.page.slug, id: p.report.id },
+        visitor: { queryPassword: "s3cret", passwordAttempts: right.limiter },
+        db: tx,
+      });
+      expect(right.counts).toEqual({ isLocked: 1, recordFailure: 0 });
+
+      const wrong = countingLimiter();
+      await expect(
+        getPublicStatusReport({
+          input: { slug: p.page.slug, id: p.report.id },
+          visitor: { queryPassword: "nope", passwordAttempts: wrong.limiter },
+          db: tx,
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedError);
+      expect(wrong.counts).toEqual({ isLocked: 0, recordFailure: 1 });
+    });
+  });
+
+  test("public pages and other gates never touch the limiter", async () => {
+    await withTestTransaction(async (tx) => {
+      for (const gate of [
+        { accessType: "public" as const },
+        {
+          accessType: "ip-restriction" as const,
+          allowedIpRanges: "10.0.0.0/8",
+        },
+      ]) {
+        const p = await gatedPage(tx, gate);
+        const { limiter, counts } = countingLimiter();
+        const visitor: PageVisitor = {
+          clientIp: "10.1.2.3",
+          queryPassword: "anything",
+          passwordAttempts: limiter,
+        };
+        for (const call of Object.values(hardGated(tx, p, visitor))) {
+          await call();
+        }
+        expect(counts).toEqual({ isLocked: 0, recordFailure: 0 });
+      }
     });
   });
 });

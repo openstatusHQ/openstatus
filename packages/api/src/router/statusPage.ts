@@ -1297,31 +1297,34 @@ export const statusPageRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const slot = await pagePasswordRateLimit().reserve({
-        scope: "login",
+      const limiter = pagePasswordRateLimit();
+      const attempt = {
         slug: opts.input.slug,
         ip: visitorFromCtx(opts.ctx).clientIp ?? null,
-      });
-      if (slot.locked) {
-        throw new TRPCError({
+      };
+      const tooMany = () =>
+        new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message: "Too many password attempts. Try again later.",
         });
-      }
 
       const verified = await callVisitorVerb(async () => {
         try {
-          const result = await verifyPublicStatusPagePassword({
+          return await verifyPublicStatusPagePassword({
             input: { slug: opts.input.slug, password: opts.input.password },
           });
-          await slot.release();
-          return result;
         } catch (err) {
-          // Only a wrong password keeps the slot it reserved.
-          if (!(err instanceof InvalidPagePasswordError)) await slot.release();
+          if (err instanceof InvalidPagePasswordError) {
+            const { locked } = await limiter.recordFailure(
+              attempt,
+              opts.input.password,
+            );
+            if (locked) throw tooMany();
+          }
           throw err;
         }
       });
+      if (verified && (await limiter.isLocked(attempt))) throw tooMany();
 
       if (!verified) {
         throw new TRPCError({
@@ -1346,7 +1349,8 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
       // Nothing (or "") submitted can never authorize, so it is not a guess:
-      // anonymous feed reads must not count.
+      // anonymous feed reads must not count. Shares the login form's budget; a
+      // stale feed cookie counts once, as one distinct value.
       if (!submitted) {
         return (
           (await isPublicStatusPagePasswordAuthorized({ input: opts.input })) ??
@@ -1354,18 +1358,20 @@ export const statusPageRouter = createTRPCRouter({
         );
       }
 
-      const slot = await pagePasswordRateLimit().reserve({
-        scope: "check",
+      const limiter = pagePasswordRateLimit();
+      const attempt = {
         slug: opts.input.slug,
         ip: visitorFromCtx(opts.ctx).clientIp ?? null,
-      });
-      if (slot.locked) return false;
-
+      };
       const authorized = await isPublicStatusPagePasswordAuthorized({
         input: opts.input,
       });
-      // Only a wrong password for a gated page keeps the slot.
-      if (authorized !== false) await slot.release();
+      // null: no password-gated page matched, so nothing to count.
+      if (authorized === false) {
+        await limiter.recordFailure(attempt, submitted);
+        return false;
+      }
+      if (authorized && (await limiter.isLocked(attempt))) return false;
       return authorized ?? false;
     }),
 

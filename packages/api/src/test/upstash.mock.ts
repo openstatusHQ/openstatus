@@ -2,18 +2,34 @@
 // Keeps tests off a real Upstash Redis instance.
 export { cacheThrough } from "@openstatus/upstash/src/redis/cache-through";
 
-// Counters written by `incrWithTtl` expire like Redis keys and are readable
-// through `get`, so rate limiters built on them behave as against Redis. A
-// client other than this double is passed through, so tests can inject one.
+// Counters (`incrWithTtl`, readable through `get`) and sets
+// (`addDistinctWithTtl`) expire like Redis keys, so rate limiters built on them
+// behave as against Redis. A client other than this double is passed through.
 const counters = new Map<string, { count: number; expiresAt: number }>();
+const sets = new Map<string, { members: Set<string>; expiresAt: number }>();
 
 export function resetRedisCounters() {
   counters.clear();
+  sets.clear();
 }
 
 export function redisKeyCount() {
   for (const key of counters.keys()) live(key);
-  return counters.size;
+  for (const key of sets.keys()) liveSet(key);
+  return counters.size + sets.size;
+}
+
+export function redisSetSize(key: string) {
+  return liveSet(key)?.members.size ?? 0;
+}
+
+function liveSet(key: string) {
+  const entry = sets.get(key);
+  if (entry && entry.expiresAt <= Date.now()) {
+    sets.delete(key);
+    return undefined;
+  }
+  return entry;
 }
 
 function live(key: string) {
@@ -46,17 +62,38 @@ export function incrWithTtl(client: EvalClient, keys: string[], ttl: number) {
   );
 }
 
-export function decrOrDelete(client: EvalClient, key: string) {
+export function addDistinctWithTtl(
+  client: EvalClient,
+  key: string,
+  member: string,
+  ttl: number,
+  max: number,
+) {
   if (client !== noopRedis) {
-    return client.eval("decrOrDelete", [key], []) as Promise<number>;
+    return client.eval(
+      "addDistinctWithTtl",
+      [key],
+      [member, ttl, max],
+    ) as Promise<number>;
   }
-  const entry = live(key);
-  if (!entry || entry.count <= 1) {
-    counters.delete(key);
-    return Promise.resolve(0);
+  const entry = liveSet(key) ?? {
+    members: new Set<string>(),
+    expiresAt: Date.now() + ttl * 1000,
+  };
+  // Mirrors the script: a full set stores no new member and answers max + 1.
+  if (entry.members.size >= max && !entry.members.has(member)) {
+    return Promise.resolve(max + 1);
   }
-  entry.count -= 1;
-  return Promise.resolve(entry.count);
+  entry.members.add(member);
+  sets.set(key, entry);
+  return Promise.resolve(entry.members.size);
+}
+
+export function countDistinct(client: EvalClient, key: string) {
+  if (client !== noopRedis) {
+    return client.eval("countDistinct", [key], []) as Promise<number>;
+  }
+  return Promise.resolve(liveSet(key)?.members.size ?? 0);
 }
 
 const noopRedis = {

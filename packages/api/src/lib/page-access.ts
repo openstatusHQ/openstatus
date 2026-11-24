@@ -4,6 +4,7 @@ import {
 } from "@openstatus/services/page-access";
 
 import type { Context } from "../trpc";
+import { pagePasswordRateLimit } from "./page-password-rate-limit";
 
 type Ctx = Pick<Context, "req" | "session">;
 
@@ -17,5 +18,7 @@ export function visitorFromCtx(
     queryPassword,
     email: ctx.session?.user?.email,
     clientIp: ctx.req ? resolveClientIp(ctx.req.headers) : null,
+    // One budget per page and IP across every entry point.
+    passwordAttempts: pagePasswordRateLimit(),
   };
 }

@@ -21,6 +21,19 @@ type AccessRow = Pick<
   keyof typeof accessFieldsSchema.shape
 >;
 
+/** Counts wrong page passwords; the transport supplies one backed by its store. */
+type PasswordAttempt = { slug: string; ip: string | null };
+
+/**
+ * Counts wrong page passwords; the transport supplies one backed by its store.
+ * Compare first, then make exactly one call: `recordFailure` for a wrong
+ * password, `isLocked` for a right one.
+ */
+export type PasswordAttemptLimiter = {
+  isLocked(attempt: PasswordAttempt): Promise<boolean>;
+  recordFailure(attempt: PasswordAttempt, password: string): Promise<unknown>;
+};
+
 /** What an anonymous status-page visitor presented, extracted by the transport. */
 export type PageVisitor = {
   // A getter: only the gate knows the page slug the cookie is keyed on.
@@ -28,6 +41,8 @@ export type PageVisitor = {
   queryPassword?: string | null;
   email?: string | null;
   clientIp?: string | null;
+  /** Without one, password checks are not rate-limited. */
+  passwordAttempts?: PasswordAttemptLimiter;
 };
 
 export function resolvePageAccess(
@@ -54,8 +69,44 @@ export function resolvePageAccess(
   });
 }
 
-export function assertPageAccess(row: AccessRow, visitor: PageVisitor): void {
+const deniedPassword: MarkdownGateResult = {
+  ok: false,
+  status: 401,
+  body: "Unauthorized",
+};
+
+/**
+ * `resolvePageAccess`, counting a presented password against the visitor's
+ * limiter. Once locked, every password is refused, the right one included.
+ */
+export async function checkPageAccess(
+  row: AccessRow,
+  visitor: PageVisitor,
+): Promise<MarkdownGateResult> {
+  const limiter = visitor.passwordAttempts;
+  if (!limiter || row.accessType !== "password") {
+    return resolvePageAccess(row, visitor);
+  }
+  const submitted =
+    visitor.queryPassword ?? visitor.getCookie?.(pageAccessCookieKey(row.slug));
+  // Nothing (or "") presented can never authorize, so it is not a guess.
+  if (!submitted) return resolvePageAccess(row, visitor);
+
+  const attempt = { slug: row.slug, ip: visitor.clientIp ?? null };
   const gate = resolvePageAccess(row, visitor);
+  if (!gate.ok) {
+    await limiter.recordFailure(attempt, submitted);
+    return gate;
+  }
+  return (await limiter.isLocked(attempt)) ? deniedPassword : gate;
+}
+
+/** Throws unless `checkPageAccess` lets the visitor in. */
+export async function requirePageAccess(
+  row: AccessRow,
+  visitor: PageVisitor,
+): Promise<void> {
+  const gate = await checkPageAccess(row, visitor);
   if (gate.ok) return;
   throw gate.status === 401
     ? new UnauthorizedError("Page access denied.")

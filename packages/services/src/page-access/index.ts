@@ -12,7 +12,9 @@ export {
 } from "./evaluate-markdown-gate";
 export { isIpAllowed } from "./is-ip-allowed";
 export {
-  assertPageAccess,
+  checkPageAccess,
   type PageVisitor,
+  type PasswordAttemptLimiter,
+  requirePageAccess,
   resolvePageAccess,
 } from "./resolve-page-access";

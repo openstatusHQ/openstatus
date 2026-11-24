@@ -345,7 +345,7 @@ describe("password rate limit", () => {
   async function failLogins(ip: string, times = MAX_PAGE_PASSWORD_FAILURES) {
     for (let i = 0; i < times; i++) {
       await trpcError(
-        fromIp(ip).verifyPassword({ slug: gated.slug, password: "nope" }),
+        fromIp(ip).verifyPassword({ slug: gated.slug, password: `nope-${i}` }),
       );
     }
   }
@@ -397,7 +397,10 @@ describe("password rate limit", () => {
     const sp = fromIp("10.9.0.6");
     for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES; i++) {
       expect(
-        await sp.isPasswordAuthorized({ slug: gated.slug, queryPassword: "x" }),
+        await sp.isPasswordAuthorized({
+          slug: gated.slug,
+          queryPassword: `x-${i}`,
+        }),
       ).toBe(false);
     }
     expect(
@@ -424,8 +427,8 @@ describe("password rate limit", () => {
   test("a parallel burst of wrong logins cannot pass the cap", async () => {
     const sp = fromIp("10.9.1.1");
     const results = await Promise.allSettled(
-      Array.from({ length: 30 }, () =>
-        sp.verifyPassword({ slug: gated.slug, password: "nope" }),
+      Array.from({ length: 30 }, (_, i) =>
+        sp.verifyPassword({ slug: gated.slug, password: `nope-${i}` }),
       ),
     );
     const codes = results.map((r) =>
@@ -474,5 +477,189 @@ describe("password rate limit", () => {
     expect(
       await sp.verifyPassword({ slug: gated.slug, password: PASSWORD }),
     ).toBe(true);
+  });
+});
+
+describe("password rate limit across page procedures", () => {
+  beforeEach(() => resetRedisCounters());
+
+  const fromIp = (ip: string) => caller({ "x-real-ip": ip });
+
+  async function failReports(ip: string, times = MAX_PAGE_PASSWORD_FAILURES) {
+    for (let i = 0; i < times; i++) {
+      await trpcError(
+        fromIp(ip).getReport({
+          slug: gated.slug,
+          id: gated.reportId,
+          pw: `nope-${i}`,
+        }),
+      );
+    }
+  }
+
+  test("wrong guesses on one procedure lock every procedure for that IP", async () => {
+    await failReports("10.8.0.1");
+    const sp = fromIp("10.8.0.1");
+    for (const call of [
+      () =>
+        sp.getReport({ slug: gated.slug, id: gated.reportId, pw: PASSWORD }),
+      () =>
+        sp.getMaintenance({
+          slug: gated.slug,
+          id: gated.maintenanceId,
+          pw: PASSWORD,
+        }),
+      () =>
+        sp.getUptime({
+          slug: gated.slug,
+          pw: PASSWORD,
+          pageComponentIds: [String(gated.componentId)],
+          barType: "manual",
+        }),
+      () => sp.getMonitors({ slug: gated.slug, pw: PASSWORD }),
+      () =>
+        sp.getMonitor({ slug: gated.slug, id: gated.monitorId, pw: PASSWORD }),
+    ]) {
+      const err = await trpcError(call());
+      expect(err.code).toBe("UNAUTHORIZED");
+    }
+    // get keeps the page frame but drops the content.
+    const page = await sp.get({ slug: gated.slug, pw: PASSWORD });
+    expect(page?.pageComponents ?? []).toEqual([]);
+  });
+
+  test("they share the login form's budget", async () => {
+    await failReports("10.8.0.2");
+    const err = await trpcError(
+      fromIp("10.8.0.2").verifyPassword({
+        slug: gated.slug,
+        password: PASSWORD,
+      }),
+    );
+    expect(err.code).toBe("TOO_MANY_REQUESTS");
+  });
+
+  test("wrong logins lock the page procedures too", async () => {
+    const sp = fromIp("10.8.0.3");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES; i++) {
+      await trpcError(
+        sp.verifyPassword({ slug: gated.slug, password: `nope-${i}` }),
+      );
+    }
+    const err = await trpcError(
+      sp.getReport({ slug: gated.slug, id: gated.reportId, pw: PASSWORD }),
+    );
+    expect(err.code).toBe("UNAUTHORIZED");
+  });
+
+  test("the right password never counts", async () => {
+    const sp = fromIp("10.8.0.4");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES + 2; i++) {
+      expect(
+        (
+          await sp.getReport({
+            slug: gated.slug,
+            id: gated.reportId,
+            pw: PASSWORD,
+          })
+        )?.id,
+      ).toBe(gated.reportId);
+    }
+  });
+
+  test("a locked IP does not affect another", async () => {
+    await failReports("10.8.0.5");
+    expect(
+      (
+        await fromIp("10.8.0.6").getReport({
+          slug: gated.slug,
+          id: gated.reportId,
+          pw: PASSWORD,
+        })
+      )?.id,
+    ).toBe(gated.reportId);
+  });
+
+  test("a parallel burst of wrong guesses locks the page", async () => {
+    const sp = fromIp("10.8.0.7");
+    const results = await Promise.allSettled(
+      Array.from({ length: 30 }, (_, i) =>
+        sp.getReport({ slug: gated.slug, id: gated.reportId, pw: `nope-${i}` }),
+      ),
+    );
+    // Wrong and locked both answer 401 here, so the lock shows on the next
+    // right password rather than in these codes.
+    expect(
+      results.every(
+        (r) =>
+          r.status === "rejected" &&
+          (r.reason as TRPCError).code === "UNAUTHORIZED",
+      ),
+    ).toBe(true);
+    const err = await trpcError(
+      sp.getReport({ slug: gated.slug, id: gated.reportId, pw: PASSWORD }),
+    );
+    expect(err.code).toBe("UNAUTHORIZED");
+  });
+
+  test("a stale password repeated by every procedure of a render counts once", async () => {
+    const sp = fromIp("10.8.0.9");
+    for (let i = 0; i < 3; i++) {
+      await Promise.allSettled([
+        sp.get({ slug: gated.slug, pw: "old-password" }),
+        sp.getReport({
+          slug: gated.slug,
+          id: gated.reportId,
+          pw: "old-password",
+        }),
+        sp.getMonitors({ slug: gated.slug, pw: "old-password" }),
+        sp.getMonitor({
+          slug: gated.slug,
+          id: gated.monitorId,
+          pw: "old-password",
+        }),
+        sp.getUptime({
+          slug: gated.slug,
+          pw: "old-password",
+          pageComponentIds: [String(gated.componentId)],
+          barType: "manual",
+        }),
+      ]);
+    }
+    expect(
+      (
+        await sp.getReport({
+          slug: gated.slug,
+          id: gated.reportId,
+          pw: PASSWORD,
+        })
+      )?.id,
+    ).toBe(gated.reportId);
+  });
+
+  test("many concurrent visitors with the right password never lock each other out", async () => {
+    const sp = fromIp("10.8.0.10");
+    const reports = await Promise.all(
+      Array.from({ length: MAX_PAGE_PASSWORD_FAILURES * 5 }, () =>
+        sp.getReport({ slug: gated.slug, id: gated.reportId, pw: PASSWORD }),
+      ),
+    );
+    expect(reports.every((r) => r?.id === gated.reportId)).toBe(true);
+  });
+
+  test("requests without a password do not count", async () => {
+    const sp = fromIp("10.8.0.8");
+    for (let i = 0; i < MAX_PAGE_PASSWORD_FAILURES + 2; i++) {
+      await trpcError(sp.getReport({ slug: gated.slug, id: gated.reportId }));
+    }
+    expect(
+      (
+        await sp.getReport({
+          slug: gated.slug,
+          id: gated.reportId,
+          pw: PASSWORD,
+        })
+      )?.id,
+    ).toBe(gated.reportId);
   });
 });

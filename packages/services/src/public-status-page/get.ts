@@ -1,5 +1,5 @@
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { type PageVisitor, resolvePageAccess } from "../page-access";
+import { type PageVisitor, checkPageAccess } from "../page-access";
 import {
   componentMonitorIds,
   countActivePrivateLocations,
@@ -26,7 +26,7 @@ export async function getPublicStatusPage(args: {
   const tree = await findPageTree(db, input.slug);
   if (!tree) return null;
 
-  const page = resolvePageAccess(tree, args.visitor).ok
+  const page = (await checkPageAccess(tree, args.visitor)).ok
     ? tree
     : withoutGatedContent(tree);
   const privateLocationCounts = await countActivePrivateLocations(
