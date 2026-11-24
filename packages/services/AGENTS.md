@@ -95,8 +95,16 @@ write tools.
 (password, email domain, IP range). It is pure — the transport builds a
 `PageVisitor` — and the status-page proxy imports it, so keep it Edge-safe.
 A verb reachable by visitors takes a `visitor` argument and calls
-`assertPageAccess`; `null` is only for callers that already authorized the
-request inside their own workspace.
+`requirePageAccess` (or `checkPageAccess` to degrade instead of throwing);
+`null` is only for callers that already authorized the request inside their own
+workspace.
+
+A visitor may carry a `PasswordAttemptLimiter`. On a password page these checks
+compare the presented password first, then make one call: a wrong one is
+recorded, a right one is refused while the page and IP are locked. The limit
+counts distinct wrong values, so a stale cookie sent by every procedure of a
+page render costs one. Visitors behind one IP share a budget, so ten wrong
+guesses from that IP lock everyone on it out for the window.
 
 `src/public-status-page` holds the reads behind the public status page, one
 verb per tRPC procedure. They take no `ServiceContext` (a visitor has no

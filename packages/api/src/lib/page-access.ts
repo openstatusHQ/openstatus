@@ -28,6 +28,8 @@ export function visitorFromCtx(
 function loginPasswordAttempts(): PasswordAttemptLimiter {
   const limiter = pagePasswordRateLimit();
   return {
-    reserve: (attempt) => limiter.reserve({ scope: "login", ...attempt }),
+    isLocked: (attempt) => limiter.isLocked({ scope: "login", ...attempt }),
+    recordFailure: (attempt, password) =>
+      limiter.recordFailure({ scope: "login", ...attempt }, password),
   };
 }

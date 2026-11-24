@@ -16,8 +16,10 @@ The gate decision lives in `packages/services/src/page-access`, so every
 transport shares it. The `statusPage` tRPC procedures enforce it themselves:
 `get`/`getLight` return chrome only to a denied caller — login, layout and OG
 still render from them — and the detail procedures throw. A new procedure that
-returns page content must call `assertPageAccess` from
-`packages/api/src/lib/page-access.ts`. `guardTRPCSource` filters on a spoofable
+returns page content must read through a
+`packages/services/src/public-status-page` verb that calls `requirePageAccess`,
+with a visitor from `visitorFromCtx` (`packages/api/src/lib/page-access.ts`),
+which carries the password rate limit. `guardTRPCSource` filters on a spoofable
 header and is not a security boundary.
 
 Never log or report tRPC `input` — it carries page passwords and subscriber

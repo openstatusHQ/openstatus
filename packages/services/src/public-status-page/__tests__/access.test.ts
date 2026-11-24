@@ -255,20 +255,19 @@ describe("public page", () => {
 
 describe("password rate limit", () => {
   const lockedLimiter: PasswordAttemptLimiter = {
-    reserve: async () => ({ locked: true, release: async () => {} }),
+    isLocked: async () => true,
+    recordFailure: async () => {},
   };
 
   function countingLimiter() {
-    const counts = { reserved: 0, released: 0 };
+    const counts = { isLocked: 0, recordFailure: 0 };
     const limiter: PasswordAttemptLimiter = {
-      reserve: async () => {
-        counts.reserved++;
-        return {
-          locked: false,
-          release: async () => {
-            counts.released++;
-          },
-        };
+      isLocked: async () => {
+        counts.isLocked++;
+        return false;
+      },
+      recordFailure: async () => {
+        counts.recordFailure++;
       },
     };
     return { limiter, counts };
@@ -311,7 +310,7 @@ describe("password rate limit", () => {
     });
   });
 
-  test("the right password reserves and releases; a wrong one only reserves", async () => {
+  test("the right password only reads the lock; a wrong one is recorded", async () => {
     await withTestTransaction(async (tx) => {
       const p = await gatedPage(tx, passwordGate);
       const right = countingLimiter();
@@ -320,7 +319,7 @@ describe("password rate limit", () => {
         visitor: { queryPassword: "s3cret", passwordAttempts: right.limiter },
         db: tx,
       });
-      expect(right.counts).toEqual({ reserved: 1, released: 1 });
+      expect(right.counts).toEqual({ isLocked: 1, recordFailure: 0 });
 
       const wrong = countingLimiter();
       await expect(
@@ -330,7 +329,7 @@ describe("password rate limit", () => {
           db: tx,
         }),
       ).rejects.toBeInstanceOf(UnauthorizedError);
-      expect(wrong.counts).toEqual({ reserved: 1, released: 0 });
+      expect(wrong.counts).toEqual({ isLocked: 0, recordFailure: 1 });
     });
   });
 
@@ -353,7 +352,7 @@ describe("password rate limit", () => {
         for (const call of Object.values(hardGated(tx, p, visitor))) {
           await call();
         }
-        expect(counts.reserved).toBe(0);
+        expect(counts).toEqual({ isLocked: 0, recordFailure: 0 });
       }
     });
   });

@@ -22,12 +22,16 @@ type AccessRow = Pick<
 >;
 
 /** Counts wrong page passwords; the transport supplies one backed by its store. */
+type PasswordAttempt = { slug: string; ip: string | null };
+
+/**
+ * Counts wrong page passwords; the transport supplies one backed by its store.
+ * Compare first, then make exactly one call: `recordFailure` for a wrong
+ * password, `isLocked` for a right one.
+ */
 export type PasswordAttemptLimiter = {
-  /** Reserve before checking; `release` unless the password was wrong. */
-  reserve(attempt: {
-    slug: string;
-    ip: string | null;
-  }): Promise<{ locked: boolean; release(): Promise<void> }>;
+  isLocked(attempt: PasswordAttempt): Promise<boolean>;
+  recordFailure(attempt: PasswordAttempt, password: string): Promise<unknown>;
 };
 
 /** What an anonymous status-page visitor presented, extracted by the transport. */
@@ -65,14 +69,6 @@ export function resolvePageAccess(
   });
 }
 
-export function assertPageAccess(row: AccessRow, visitor: PageVisitor): void {
-  const gate = resolvePageAccess(row, visitor);
-  if (gate.ok) return;
-  throw gate.status === 401
-    ? new UnauthorizedError("Page access denied.")
-    : new ForbiddenError("Page access denied.");
-}
-
 const deniedPassword: MarkdownGateResult = {
   ok: false,
   status: 401,
@@ -96,17 +92,16 @@ export async function checkPageAccess(
   // Nothing (or "") presented can never authorize, so it is not a guess.
   if (!submitted) return resolvePageAccess(row, visitor);
 
-  const slot = await limiter.reserve({
-    slug: row.slug,
-    ip: visitor.clientIp ?? null,
-  });
-  if (slot.locked) return deniedPassword;
+  const attempt = { slug: row.slug, ip: visitor.clientIp ?? null };
   const gate = resolvePageAccess(row, visitor);
-  if (gate.ok) await slot.release();
-  return gate;
+  if (!gate.ok) {
+    await limiter.recordFailure(attempt, submitted);
+    return gate;
+  }
+  return (await limiter.isLocked(attempt)) ? deniedPassword : gate;
 }
 
-/** `assertPageAccess`, counting a presented password against the visitor's limiter. */
+/** Throws unless `checkPageAccess` lets the visitor in. */
 export async function requirePageAccess(
   row: AccessRow,
   visitor: PageVisitor,

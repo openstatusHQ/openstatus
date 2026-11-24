@@ -19,29 +19,27 @@ const passwordPage: Row = {
   allowedIpRanges: null,
 };
 
-// Mirrors the Redis limiter: reserve counts first, a refused attempt gives its
-// slot straight back, release gives one back.
+// Mirrors the Redis limiter: distinct wrong values per page and IP, a right
+// password only reads the lock.
 function fakeLimiter(max = 3) {
-  const counts = new Map<string, number>();
-  const calls: { slug: string; ip: string | null }[] = [];
+  const failures = new Map<string, Set<string>>();
+  const calls: { kind: string; slug: string; ip: string | null }[] = [];
+  const bucket = (a: { slug: string; ip: string | null }) =>
+    `${a.slug}:${a.ip}`;
   const limiter: PasswordAttemptLimiter = {
-    reserve: async (attempt) => {
-      calls.push(attempt);
-      const key = `${attempt.slug}:${attempt.ip}`;
-      const count = (counts.get(key) ?? 0) + 1;
-      counts.set(key, count);
-      const release = async () => {
-        counts.set(key, (counts.get(key) ?? 1) - 1);
-      };
-      if (count > max) {
-        await release();
-        return { locked: true, release: async () => {} };
-      }
-      return { locked: false, release };
+    isLocked: async (attempt) => {
+      calls.push({ kind: "isLocked", ...attempt });
+      return (failures.get(bucket(attempt))?.size ?? 0) >= max;
+    },
+    recordFailure: async (attempt, password) => {
+      calls.push({ kind: "recordFailure", ...attempt });
+      const set = failures.get(bucket(attempt)) ?? new Set<string>();
+      set.add(password);
+      failures.set(bucket(attempt), set);
     },
   };
   const kept = (slug = "acme", ip: string | null = "10.0.0.1") =>
-    counts.get(`${slug}:${ip}`) ?? 0;
+    failures.get(`${slug}:${ip}`)?.size ?? 0;
   return { limiter, calls, kept };
 }
 
@@ -91,7 +89,7 @@ describe("checkPageAccess", () => {
     expect(calls).toEqual([]);
   });
 
-  test("the right password passes and gives its slot back", async () => {
+  test("the right password passes and only reads the lock", async () => {
     const { limiter, kept } = fakeLimiter();
     for (let i = 0; i < 5; i++) {
       expect(
@@ -104,7 +102,7 @@ describe("checkPageAccess", () => {
     expect(kept()).toBe(0);
   });
 
-  test("a wrong password keeps its slot", async () => {
+  test("a wrong password is recorded", async () => {
     const { limiter, kept } = fakeLimiter();
     const gate = await checkPageAccess(
       passwordPage,
@@ -119,7 +117,7 @@ describe("checkPageAccess", () => {
     for (let i = 0; i < 3; i++) {
       await checkPageAccess(
         passwordPage,
-        visitor(limiter, { queryPassword: "nope" }),
+        visitor(limiter, { queryPassword: `nope-${i}` }),
       );
     }
     expect(
@@ -136,7 +134,9 @@ describe("checkPageAccess", () => {
       { ...passwordPage, slug: "acme-status" },
       visitor(limiter, { queryPassword: "nope", clientIp: null }),
     );
-    expect(calls).toEqual([{ slug: "acme-status", ip: null }]);
+    expect(calls).toEqual([
+      { kind: "recordFailure", slug: "acme-status", ip: null },
+    ]);
   });
 
   test("reads the cookie keyed on the page slug", async () => {
@@ -152,18 +152,24 @@ describe("checkPageAccess", () => {
     expect(kept()).toBe(0);
   });
 
-  test("a parallel burst of wrong passwords stops at the cap", async () => {
+  test("a parallel burst of distinct wrong passwords locks the page", async () => {
     const { limiter, kept } = fakeLimiter(3);
     const gates = await Promise.all(
-      Array.from({ length: 20 }, () =>
+      Array.from({ length: 20 }, (_, i) =>
         checkPageAccess(
           passwordPage,
-          visitor(limiter, { queryPassword: "nope" }),
+          visitor(limiter, { queryPassword: `burst-${i}` }),
         ),
       ),
     );
     expect(gates.every((g) => !g.ok)).toBe(true);
-    expect(kept()).toBe(3);
+    expect(kept()).toBe(20);
+    expect(
+      await checkPageAccess(
+        passwordPage,
+        visitor(limiter, { queryPassword: "s3cret" }),
+      ),
+    ).toMatchObject({ ok: false, status: 401 });
   });
 
   test("other gates are not rate-limited", async () => {
