@@ -1,7 +1,7 @@
-import { type SQL, and, db, eq, inArray } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { ALL_REGIONS as monitorRegions } from "@openstatus/regions";
 import {
+  assertMonitorsInWorkspace,
+  getMonitorRow,
   getResponseLogFacets,
   listResponseLogsInfinite,
   ResponseLogFilters,
@@ -19,14 +19,14 @@ type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
 // Read-only ownership check before querying Tinybird by monitor id.
-async function getMonitorOrThrow(workspaceId: number, monitorId: number) {
-  const row = await db.query.monitor.findFirst({
-    where: and(eq(monitor.id, monitorId), eq(monitor.workspaceId, workspaceId)),
-  });
-  if (!row) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Monitor not found" });
-  }
-  return row;
+function getMonitorOrThrow(
+  ctx: Parameters<typeof toServiceCtx>[0],
+  monitorId: number,
+) {
+  return getMonitorRow({
+    ctx: toServiceCtx(ctx),
+    input: { id: monitorId },
+  }).catch(toTRPCError);
 }
 
 // Free workspaces only get up to 7d; longer windows are blocked server-side.
@@ -414,10 +414,7 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      await getMonitorOrThrow(
-        opts.ctx.workspace.id,
-        Number.parseInt(opts.input.monitorId),
-      );
+      await getMonitorOrThrow(opts.ctx, Number.parseInt(opts.input.monitorId));
 
       // only 90d is gated here; 30d is the default uptime MV used by all windows
       if (opts.ctx.workspace.plan === "free" && opts.input.period === "90d") {
@@ -439,10 +436,7 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      await getMonitorOrThrow(
-        opts.ctx.workspace.id,
-        Number.parseInt(opts.input.monitorId),
-      );
+      await getMonitorOrThrow(opts.ctx, Number.parseInt(opts.input.monitorId));
 
       return await tb.getAuditLog({
         monitorId: `monitor:${opts.input.monitorId}`,
@@ -461,10 +455,7 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      await getMonitorOrThrow(
-        opts.ctx.workspace.id,
-        Number.parseInt(opts.input.monitorId),
-      );
+      await getMonitorOrThrow(opts.ctx, Number.parseInt(opts.input.monitorId));
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
@@ -491,10 +482,7 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      await getMonitorOrThrow(
-        opts.ctx.workspace.id,
-        Number.parseInt(opts.input.monitorId),
-      );
+      await getMonitorOrThrow(opts.ctx, Number.parseInt(opts.input.monitorId));
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
@@ -524,7 +512,7 @@ export const tinybirdRouter = createTRPCRouter({
     )
     .query(async (opts) => {
       const _monitor = await getMonitorOrThrow(
-        opts.ctx.workspace.id,
+        opts.ctx,
         Number.parseInt(opts.input.monitorId),
       );
 
@@ -543,21 +531,10 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-        inArray(monitor.id, opts.input.monitorIds.map(Number)),
-      ];
-
-      const _monitors = await db.query.monitor.findMany({
-        where: and(...whereConditions),
-      });
-
-      if (_monitors.length !== opts.input.monitorIds.length) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Some monitors not found",
-        });
-      }
+      await assertMonitorsInWorkspace({
+        ctx: toServiceCtx(opts.ctx),
+        input: { ids: opts.input.monitorIds.map(Number) },
+      }).catch(toTRPCError);
 
       const procedure = getGlobalMetricsProcedure(opts.input.type);
       return await procedure(opts.input);
@@ -576,10 +553,7 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      await getMonitorOrThrow(
-        opts.ctx.workspace.id,
-        Number.parseInt(opts.input.monitorId),
-      );
+      await getMonitorOrThrow(opts.ctx, Number.parseInt(opts.input.monitorId));
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
@@ -616,10 +590,7 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      await getMonitorOrThrow(
-        opts.ctx.workspace.id,
-        Number.parseInt(opts.input.monitorId),
-      );
+      await getMonitorOrThrow(opts.ctx, Number.parseInt(opts.input.monitorId));
 
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;

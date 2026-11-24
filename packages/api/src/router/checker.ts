@@ -8,9 +8,9 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { and, db, eq } from "@openstatus/db";
-import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
-import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
+import { ALL_REGIONS } from "@openstatus/regions";
+import type { Monitor } from "@openstatus/services";
+import { getMonitorRow, parseMonitorRow } from "@openstatus/services/monitor";
 import {
   GRPC_TLS_MODES,
   buildCheckerPayload,
@@ -22,7 +22,10 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+
+const monitorRegionSchema = z.enum(ALL_REGIONS);
 
 const ABORT_TIMEOUT = 10000;
 const CHECKER_BASE_URL = (
@@ -572,9 +575,7 @@ export async function testGrpc(input: z.infer<typeof grpcTestInput>) {
   }
 }
 
-export async function triggerChecker(
-  input: z.infer<typeof selectMonitorSchema>,
-) {
+export async function triggerChecker(input: Monitor) {
   if (process.env.NODE_ENV !== "production") {
     return;
   }
@@ -604,7 +605,7 @@ export async function triggerChecker(
   await Promise.allSettled(allResult);
 }
 
-function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
+function generateUrl({ row }: { row: Monitor }) {
   switch (row.jobType) {
     case "http":
       return `${CHECKER_BASE_URL}/checker/http?monitor_id=${row.id}`;
@@ -658,23 +659,17 @@ export const checkerRouter = createTRPCRouter({
   triggerChecker: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const m = await db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-      if (!m) {
+      const row = await getMonitorRow({
+        ctx: toServiceCtx(opts.ctx),
+        input: { id: opts.input.id },
+      }).catch(toTRPCError);
+      const input = parseMonitorRow(row);
+      if (!input) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Monitor has invalid data",
         });
       }
-      const input = selectMonitorSchema.parse(m);
 
       return await triggerChecker(input);
     }),

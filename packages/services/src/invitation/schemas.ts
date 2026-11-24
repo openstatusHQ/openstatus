@@ -14,6 +14,9 @@ export type CreateInvitationInput = z.infer<typeof CreateInvitationInput>;
 export const DeleteInvitationInput = z.object({ id: z.number().int() });
 export type DeleteInvitationInput = z.infer<typeof DeleteInvitationInput>;
 
+export const GetInvitationInput = z.object({ id: z.number().int() });
+export type GetInvitationInput = z.infer<typeof GetInvitationInput>;
+
 export const ListInvitationsInput = z.object({}).strict();
 export type ListInvitationsInput = z.infer<typeof ListInvitationsInput>;
 

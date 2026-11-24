@@ -12,7 +12,12 @@ import {
 import type { DrizzleTx, ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { listHeartbeatStates } from "../heartbeat";
-import { getMonitorRow, listMonitorRows, parseMonitorRow } from "../list";
+import {
+  assertMonitorsInWorkspace,
+  getMonitorRow,
+  listMonitorRows,
+  parseMonitorRow,
+} from "../list";
 
 let teamCtx: ServiceContext;
 let otherCtx: ServiceContext;
@@ -224,5 +229,48 @@ describe("listHeartbeatStates", () => {
       input: { monitorIds: [] },
     });
     expect(states.size).toBe(0);
+  });
+});
+
+describe("assertMonitorsInWorkspace", () => {
+  test("passes for live monitors of the workspace, ignoring repeats", async () => {
+    await withTestTransaction(async (tx) => {
+      const a = await createMonitor(teamCtx.workspace.id, {}, tx);
+      const b = await createMonitor(teamCtx.workspace.id, {}, tx);
+      await expect(
+        assertMonitorsInWorkspace({
+          ctx: { ...teamCtx, db: tx },
+          input: { ids: [a.id, b.id, a.id] },
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  test("names the first foreign, deleted or unknown id", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = teamCtx.workspace.id;
+      const mine = await createMonitor(ws, {}, tx);
+      const foreign = await createMonitor(otherCtx.workspace.id, {}, tx);
+      const deleted = await createMonitor(ws, { deletedAt: new Date() }, tx);
+      for (const bad of [foreign.id, deleted.id, 99_999_999]) {
+        const err = await assertMonitorsInWorkspace({
+          ctx: { ...teamCtx, db: tx },
+          input: { ids: [mine.id, bad] },
+        }).catch((e) => e);
+        expect(err).toBeInstanceOf(NotFoundError);
+        expect((err as Error).message).toBe(`monitor ${bad} not found`);
+      }
+    });
+  });
+
+  test("needs monitors:read", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        assertMonitorsInWorkspace({
+          ctx: keyCtx(tx, ["pages:write"]),
+          input: { ids: [1] },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
   });
 });

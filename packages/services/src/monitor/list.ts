@@ -31,6 +31,7 @@ import {
 
 import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
 import type {
   MonitorIncident,
   Monitor,
@@ -334,4 +335,29 @@ export async function listMonitorRows(args: {
     if (parsed) monitors.push(parsed);
   }
   return { monitors, totalSize: countRow?.count ?? 0 };
+}
+
+/** Throws `NotFoundError` for the first id that is not a live monitor of the workspace. */
+export async function assertMonitorsInWorkspace(args: {
+  ctx: ServiceContext;
+  input: { ids: number[] };
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const ids = [...new Set(args.input.ids)];
+  if (ids.length === 0) return;
+  const rows = await (ctx.db ?? defaultDb)
+    .select({ id: monitor.id })
+    .from(monitor)
+    .where(
+      and(
+        inArray(monitor.id, ids),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ),
+    )
+    .all();
+  const found = new Set(rows.map((r) => r.id));
+  const missing = ids.find((id) => !found.has(id));
+  if (missing !== undefined) throw new NotFoundError("monitor", missing);
 }
