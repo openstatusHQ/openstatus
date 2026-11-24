@@ -1,4 +1,4 @@
-import { and, count, eq, gte, isNull } from "@openstatus/db";
+import { and, count, db as defaultDb, eq, gte, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorRun,
@@ -94,9 +94,9 @@ export async function getWorkspaceLimit(
  * without a counter a compile error rather than a runtime surprise.
  */
 export async function countWorkspaceUsage(
-  tx: DB,
   workspaceId: number,
   limit: LimitKey,
+  tx: DB = defaultDb,
 ): Promise<number> {
   switch (limit) {
     // Soft-deleted monitors don't consume quota; `active`/`status` are
@@ -163,7 +163,7 @@ export async function assertWithinLimit(args: {
   const { tx, workspaceId, limit, delta = 1 } = args;
 
   const max = await getWorkspaceLimit(tx, workspaceId, limit);
-  const current = await countWorkspaceUsage(tx, workspaceId, limit);
+  const current = await countWorkspaceUsage(workspaceId, limit, tx);
   if (current + delta > max) {
     throw new LimitExceededError(limit, max, current);
   }

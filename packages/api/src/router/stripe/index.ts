@@ -63,18 +63,16 @@ const url =
 
 // The slug is input, so the target may differ from the active `ctx.workspace`.
 async function resolveWorkspaceCtx(opts: {
-  ctx: { db: ServiceContext["db"]; user: { id: number } };
+  ctx: { user: { id: number } };
   input: { workspaceSlug: string };
 }) {
   const access = await getWorkspaceForMember({
     input: { slug: opts.input.workspaceSlug, userId: opts.ctx.user.id },
-    db: opts.ctx.db,
   });
   if (!access) return;
   const ctx: ServiceContext = {
     workspace: access.workspace,
     actor: { type: "user", userId: opts.ctx.user.id },
-    db: opts.ctx.db,
   };
   return { ctx, email: access.email };
 }
@@ -522,11 +520,7 @@ export const stripeRouter = createTRPCRouter({
           });
         }
 
-        const current = await countWorkspaceUsage(
-          opts.ctx.db,
-          ws.id,
-          opts.input.feature,
-        );
+        const current = await countWorkspaceUsage(ws.id, opts.input.feature);
         if (current > resolved.newLimit) {
           throw new TRPCError({
             code: "BAD_REQUEST",

@@ -77,7 +77,7 @@ export const pageRouter = createTRPCRouter({
         // attachment is recoverable while a failed delete is not
         if (customDomain) {
           try {
-            await removeDomainFromVercelIfUnused(ctx.db, customDomain);
+            await removeDomainFromVercelIfUnused(customDomain);
           } catch (err) {
             console.error("Failed to release domain from Vercel:", {
               domain: customDomain,
@@ -249,7 +249,6 @@ export const pageRouter = createTRPCRouter({
         // Before touching Vercel: a conflict after the add/remove below
         // would leave Vercel out of sync with the row.
         await assertCustomDomainAvailable({
-          tx: ctx.db,
           customDomain: newDomain,
           excludePageId: input.id,
         });
@@ -260,7 +259,7 @@ export const pageRouter = createTRPCRouter({
         if (oldDomain) {
           // this page's row still holds oldDomain until the update below,
           // so exclude it — any other holder keeps the domain on Vercel
-          await removeDomainFromVercelIfUnused(ctx.db, oldDomain, {
+          await removeDomainFromVercelIfUnused(oldDomain, {
             excludePageId: input.id,
           });
         }

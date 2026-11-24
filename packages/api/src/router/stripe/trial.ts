@@ -83,7 +83,7 @@ export async function checkTrialEligibility(args: {
     return { eligible: false, reason: "not_eligible" };
   }
 
-  const providers = await listUserProviders({ input: { userId }, db: ctx.db });
+  const providers = await listUserProviders({ input: { userId } });
   if (!providers.some((p) => TRIAL_PROVIDERS.includes(p))) {
     const sso = providers.includes("workos") || providers.includes("oidc");
     return { eligible: false, reason: sso ? "sso" : "email" };

@@ -17,9 +17,9 @@ export async function getNotificationLimit(args: {
   requireScope(ctx, "notifications:read");
   const maxCount = ctx.workspace.limits["notification-channels"];
   const currentCount = await countWorkspaceUsage(
-    ctx.db ?? defaultDb,
     ctx.workspace.id,
     "notification-channels",
+    ctx.db ?? defaultDb,
   );
   return { currentCount, maxCount, limitReached: currentCount >= maxCount };
 }

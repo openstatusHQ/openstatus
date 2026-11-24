@@ -1,6 +1,4 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db as defaultDb, ne, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { findCustomDomainHolder } from "@openstatus/services/page";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -147,27 +145,18 @@ function toDomainError(domain: string, code?: string): TRPCError {
 // hold the same domain — detaching it from Vercel would take their status
 // page down. Only remove once no page row (minus excludePageId) references it.
 export async function removeDomainFromVercelIfUnused(
-  db: typeof defaultDb,
   domain: string,
   opts?: { excludePageId?: number },
 ) {
-  const holder = await db
-    .select({ id: page.id })
-    .from(page)
-    .where(
-      and(
-        sql`lower(${page.customDomain}) = ${domain.toLowerCase()}`,
-        opts?.excludePageId !== undefined
-          ? ne(page.id, opts.excludePageId)
-          : undefined,
-      ),
-    )
-    .get();
+  const holder = await findCustomDomainHolder({
+    domain,
+    excludePageId: opts?.excludePageId,
+  });
 
   if (holder) {
     console.warn("Skipping Vercel domain removal, still in use:", {
       domain,
-      pageId: holder.id,
+      pageId: holder,
     });
     return null;
   }
