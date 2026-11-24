@@ -183,7 +183,7 @@ describe("updatePageComponentOrder", () => {
     });
   });
 
-  test("rejects cross-workspace monitorId with ForbiddenError", async () => {
+  test("rejects cross-workspace monitorId with NotFoundError", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
         updatePageComponentOrder({
@@ -201,7 +201,7 @@ describe("updatePageComponentOrder", () => {
             groups: [],
           },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 

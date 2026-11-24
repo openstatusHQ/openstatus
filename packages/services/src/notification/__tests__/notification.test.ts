@@ -253,7 +253,7 @@ describe("createNotification", () => {
     });
   });
 
-  test("throws ForbiddenError for cross-workspace monitor", async () => {
+  test("throws NotFoundError for cross-workspace monitor", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
         createNotification({
@@ -265,7 +265,7 @@ describe("createNotification", () => {
             monitors: [teamMonitorId], // team's monitor
           },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });

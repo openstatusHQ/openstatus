@@ -22,7 +22,7 @@ export class ServiceError extends Error {
 export class NotFoundError extends ServiceError {
   constructor(
     public entity: string,
-    id?: string | number,
+    public id?: string | number,
   ) {
     super(
       "NOT_FOUND",

@@ -18,6 +18,7 @@ import {
 } from "./converters";
 import {
   invalidMonitorIdError,
+  monitorNotFoundError,
   privateLocationIdRequiredError,
   privateLocationNotFoundError,
 } from "./errors";
@@ -29,6 +30,13 @@ import { checkPrivateLocationsEnabled } from "./limits";
 function toPrivateLocationConnectError(err: unknown, id: string): never {
   if (err instanceof NotFoundError && err.entity === "private_location") {
     throw privateLocationNotFoundError(id);
+  }
+  rethrowMonitorNotFound(err);
+}
+
+function rethrowMonitorNotFound(err: unknown): never {
+  if (err instanceof NotFoundError && err.entity === "monitor") {
+    throw monitorNotFoundError(String(err.id));
   }
   toConnectError(err);
 }
@@ -77,7 +85,7 @@ export const privateLocationServiceImpl: ServiceImpl<
         ),
       };
     } catch (err) {
-      toConnectError(err);
+      rethrowMonitorNotFound(err);
     }
   },
 

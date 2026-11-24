@@ -1,5 +1,5 @@
-import { and, eq, inArray, isNull } from "@openstatus/db";
-import { monitor, notification } from "@openstatus/db/src/schema";
+import { and, eq } from "@openstatus/db";
+import { notification } from "@openstatus/db/src/schema";
 import {
   type NotificationProvider,
   discordDataSchema,
@@ -19,12 +19,8 @@ import {
 import type { ZodType } from "zod";
 
 import type { DB } from "../context";
-import {
-  ForbiddenError,
-  LimitExceededError,
-  NotFoundError,
-  ValidationError,
-} from "../errors";
+import { LimitExceededError, NotFoundError, ValidationError } from "../errors";
+import { findMissingMonitorId } from "../monitor/internal";
 import type { Workspace } from "../types";
 import type { NotificationDataInput } from "./schemas";
 
@@ -52,26 +48,13 @@ export async function validateMonitorIds(args: {
   workspaceId: number;
   monitorIds: ReadonlyArray<number>;
 }): Promise<number[]> {
-  const { tx, workspaceId, monitorIds } = args;
-  if (monitorIds.length === 0) return [];
-  const ids = Array.from(new Set(monitorIds));
-  const rows = await tx
-    .select({ id: monitor.id })
-    .from(monitor)
-    .where(
-      and(
-        inArray(monitor.id, ids),
-        eq(monitor.workspaceId, workspaceId),
-        isNull(monitor.deletedAt),
-      ),
-    )
-    .all();
-  const valid = new Set(rows.map((r) => r.id));
-  for (const id of ids) {
-    if (!valid.has(id)) {
-      throw new ForbiddenError(`Monitor ${id} is not accessible.`);
-    }
-  }
+  const ids = Array.from(new Set(args.monitorIds));
+  const missing = await findMissingMonitorId({
+    tx: args.tx,
+    workspaceId: args.workspaceId,
+    ids,
+  });
+  if (missing !== undefined) throw new NotFoundError("monitor", missing);
   return ids;
 }
 

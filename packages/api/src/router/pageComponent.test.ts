@@ -56,7 +56,7 @@ test("pageComponent.updateOrder rejects monitorId from another workspace", async
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 
@@ -91,7 +91,7 @@ test("pageComponent.updateOrder rejects monitorId from another workspace in grou
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 
