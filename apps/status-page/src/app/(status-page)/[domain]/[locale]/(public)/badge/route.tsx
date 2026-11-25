@@ -3,6 +3,8 @@ import { getStatus } from "@openstatus/react";
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 
+import { BADGE_CACHE_CONTROL } from "../../../../../../lib/http/badge-cache-control";
+
 // Keep the `label` size within a maximum of 'Operational' to stay within the `SIZE` restriction
 const statusDictionary: Record<Status, { label: string; color: string }> = {
   operational: {
@@ -73,6 +75,6 @@ export async function GET(
       {label}
       <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
     </div>,
-    { ...s },
+    { ...s, headers: { "Cache-Control": BADGE_CACHE_CONTROL } },
   );
 }

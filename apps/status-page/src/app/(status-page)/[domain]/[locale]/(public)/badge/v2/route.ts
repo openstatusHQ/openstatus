@@ -2,6 +2,8 @@ import type { Status } from "@openstatus/react";
 import { getStatus } from "@openstatus/react";
 import type { NextRequest } from "next/server";
 
+import { BADGE_CACHE_CONTROL } from "../../../../../../../lib/http/badge-cache-control";
+
 const statusDictionary: Record<Status, { label: string; hexColor: string }> = {
   operational: {
     label: "All Systems Operational",
@@ -89,6 +91,9 @@ export async function GET(
   `;
 
   return new Response(svg, {
-    headers: { "Content-Type": "image/svg+xml" },
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": BADGE_CACHE_CONTROL,
+    },
   });
 }
