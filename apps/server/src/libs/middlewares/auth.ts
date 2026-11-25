@@ -1,17 +1,12 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, eq } from "@openstatus/db";
-import {
-  type Scope,
-  selectWorkspaceSchema,
-  workspace,
-} from "@openstatus/db/src/schema";
-import { apiKey } from "@openstatus/db/src/schema/api-keys";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { verifyApiKeyHash } from "@openstatus/db/src/utils/api-key";
+import { type Scope, selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import { retryRead } from "@openstatus/services";
-import { updateApiKeyLastUsed } from "@openstatus/services/api-key";
+import {
+  authenticateApiKey,
+  updateApiKeyLastUsed,
+} from "@openstatus/services/api-key";
 import { isAccessToken, verifyAccessToken } from "@openstatus/services/oauth";
+import { getWorkspaceRowById } from "@openstatus/services/workspace";
 import { UnkeyCore } from "@unkey/api/core";
 import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
@@ -25,9 +20,7 @@ import { MISSING_CREDENTIALS_MESSAGE, extractCredential } from "./credentials";
 const logger = getLogger("api-server");
 
 export async function lookupWorkspace(workspaceId: number) {
-  const _workspace = await retryRead(() =>
-    db.select().from(workspace).where(eq(workspace.id, workspaceId)).get(),
-  );
+  const _workspace = await retryRead(() => getWorkspaceRowById(workspaceId));
 
   if (!_workspace) {
     throw new OpenStatusApiError({
@@ -179,25 +172,22 @@ export async function validateKey(key: string): Promise<{
      */
     if (key.startsWith("os_")) {
       // 1. Try custom DB first
-      const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
-      const customKey = await retryRead(() =>
-        db.select().from(apiKey).where(eq(apiKey.prefix, prefix)).get(),
-      );
+      const custom = await authenticateApiKey(key);
 
-      if (customKey) {
-        if (!(await verifyApiKeyHash(key, customKey.hashedToken))) {
-          return {
-            result: { valid: false },
-            error: { message: "Invalid API Key" },
-          };
-        }
-        if (customKey.expiresAt && customKey.expiresAt < new Date()) {
-          return {
-            result: { valid: false },
-            error: { message: "API Key expired" },
-          };
-        }
-
+      if (custom.status === "invalid") {
+        return {
+          result: { valid: false },
+          error: { message: "Invalid API Key" },
+        };
+      }
+      if (custom.status === "expired") {
+        return {
+          result: { valid: false },
+          error: { message: "API Key expired" },
+        };
+      }
+      if (custom.status === "valid") {
+        const customKey = custom.key;
         // Best-effort: a failed bookkeeping write must never fail auth.
         await updateApiKeyLastUsed({
           id: customKey.id,

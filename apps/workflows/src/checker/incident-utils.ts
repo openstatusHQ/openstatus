@@ -1,10 +1,10 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, eq, isNull, schema } from "@openstatus/db";
+import type { monitorIncidentTable } from "@openstatus/db/src/schema";
 import { ConflictError } from "@openstatus/services";
 import {
   autoResolveMonitorIncidents,
   createMonitorIncident,
+  findOpenMonitorIncident,
 } from "@openstatus/services/monitor-incident";
 
 import { checkerAudit } from "../utils/audit-log";
@@ -12,23 +12,7 @@ import { systemContext } from "../utils/system-context";
 
 const logger = getLogger(["workflow"]);
 
-type MonitorIncident = typeof schema.monitorIncidentTable.$inferSelect;
-
-/**
- * Finds an open incident (not resolved) for the given monitor.
- */
-export async function findOpenIncident(monitorId: number) {
-  return db
-    .select()
-    .from(schema.monitorIncidentTable)
-    .where(
-      and(
-        eq(schema.monitorIncidentTable.monitorId, monitorId),
-        isNull(schema.monitorIncidentTable.resolvedAt),
-      ),
-    )
-    .get();
-}
+type MonitorIncident = typeof monitorIncidentTable.$inferSelect;
 
 /** Opens an incident, or returns the one already open (`created: false`). */
 export async function openIncident(params: {
@@ -46,7 +30,7 @@ export async function openIncident(params: {
     return { incident, created: true };
   } catch (error) {
     if (!(error instanceof ConflictError)) throw error;
-    const incident = await findOpenIncident(monitorId);
+    const incident = await findOpenMonitorIncident({ monitorId });
     return { incident: incident ?? null, created: false };
   }
 }

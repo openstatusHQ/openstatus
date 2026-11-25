@@ -6,6 +6,10 @@ export {
   listReportingPrivateLocations,
 } from "./health";
 export { listPrivateLocations } from "./list";
+export {
+  countPrivateLocationsReporting,
+  findPrivateLocationAttachment,
+} from "./monitor-locations";
 export { recordPrivateLocationMonitorStatus } from "./record-monitor-status";
 export { setPrivateLocationStatus } from "./set-status";
 export { updatePrivateLocation } from "./update";

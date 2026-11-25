@@ -19,6 +19,7 @@ import {
   createTestWorkspace,
   linkNotificationToMonitor,
 } from "@openstatus/db/src/test/factories";
+import { isMonitorInMaintenanceWindow } from "@openstatus/services/maintenance-window";
 import {
   afterAll,
   afterEach,
@@ -34,7 +35,6 @@ import {
 import { env } from "../env";
 import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { checkerRoute } from "./index";
-import { isInMaintenance } from "./maintenance";
 import { providerToFunction } from "./utils";
 
 const HOUR_MS = 3_600_000;
@@ -311,21 +311,28 @@ describe("updateStatus for a monitor that pauses during maintenance", () => {
   });
 });
 
-describe("isInMaintenance", () => {
+describe("isMonitorInMaintenanceWindow", () => {
   test("the end instant is outside the window, the instant before is inside", async () => {
     const { monitorId, endAt } = await monitorUnderMaintenance("continue");
     const to = new Date(Math.floor(Date.now() / 1000) * 1000 + HOUR_MS);
     await endAt(to);
 
-    expect(await isInMaintenance(monitorId, to)).toBe(false);
-    expect(await isInMaintenance(monitorId, new Date(to.getTime() - 1))).toBe(
-      true,
+    expect(await isMonitorInMaintenanceWindow({ monitorId, at: to })).toBe(
+      false,
     );
+    expect(
+      await isMonitorInMaintenanceWindow({
+        monitorId,
+        at: new Date(to.getTime() - 1),
+      }),
+    ).toBe(true);
   });
 
   test("a status-page maintenance does not count", async () => {
     const { monitorId } = await monitorUnderMaintenance("status_page");
-    expect(await isInMaintenance(monitorId, new Date())).toBe(false);
+    expect(
+      await isMonitorInMaintenanceWindow({ monitorId, at: new Date() }),
+    ).toBe(false);
   });
 });
 

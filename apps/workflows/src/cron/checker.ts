@@ -2,15 +2,17 @@ import { PubSub, type Topic } from "@google-cloud/pubsub";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { inArray } from "@openstatus/db";
 import {
-  monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
+import {
+  countPausedMonitors,
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "@openstatus/services/monitor";
 import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
 
@@ -24,7 +26,6 @@ import {
   buildTaskInputs,
   publishCheckerTasks,
 } from "./checker-payload";
-import { countPausedMonitors, listMonitorsToCheck } from "./monitors-to-check";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
@@ -101,7 +102,7 @@ export async function sendCheckerTasks(
 
   const timestamp = Date.now();
 
-  const result = await listMonitorsToCheck(db, periodicity);
+  const result = await listMonitorsToCheck({ db, periodicity });
 
   logger.info("Starting cron job", {
     periodicity,
@@ -120,11 +121,11 @@ export async function sendCheckerTasks(
       periodicity,
       monitor_count: result.length,
       // a count that fails must not fail a dispatch that already went out
-      paused_count: await countPausedMonitors(
+      paused_count: await countPausedMonitors({
         db,
         periodicity,
-        new Date(timestamp),
-      ).catch(() => null),
+        now: new Date(timestamp),
+      }).catch(() => null),
       success_count: success,
       failed_count: failed,
       duration_ms: Date.now() - timestamp,
@@ -139,11 +140,7 @@ export async function sendCheckerTasks(
 
   // Batch fetch all monitor statuses in a single query (N+1 fix)
   const monitorIds = monitors.data.map((m) => m.id);
-  const rawStatuses = await db
-    .select()
-    .from(monitorStatusTable)
-    .where(inArray(monitorStatusTable.monitorId, monitorIds))
-    .all();
+  const rawStatuses = await listMonitorRegionStatuses({ db, monitorIds });
 
   const statusMap = new Map<
     number,

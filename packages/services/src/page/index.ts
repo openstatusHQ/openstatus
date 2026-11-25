@@ -9,6 +9,12 @@ export {
   findCustomDomainHolder,
 } from "./internal";
 export {
+  getPagePublicDomain,
+  getPageTitleInWorkspace,
+  type ResolvedPage,
+  resolvePageFromUrl,
+} from "./lookup";
+export {
   type MaintenanceContent,
   type StatusPageContent,
   type StatusReportContent,

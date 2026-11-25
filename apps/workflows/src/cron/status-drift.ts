@@ -1,55 +1,14 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, sql } from "@openstatus/db";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { monitorInWindow } from "@openstatus/db/src/maintenance";
-import type { MonitorStatus } from "@openstatus/db/src/schema";
-import { monitor, monitorStatusTable } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
+import { listStatusDriftCandidates } from "@openstatus/services/monitor";
 import * as Sentry from "@sentry/node";
 
 import { triggerNotifications } from "../checker/alerting";
 import { enqueueOutbox } from "../checker/outbox";
-import {
-  csvRegionCountSql,
-  csvRegionMemberSql,
-  quorumMetSql,
-} from "../checker/quorum";
 import { EVENT_TYPE, evaluateTransition } from "../checker/transition";
 import { env } from "../env";
 
 const logger = getLogger(["workflow"]);
-
-const CANDIDATE_LIMIT = 200;
-
-type DriftRow = { monitor_id: number; status: MonitorStatus };
-
-/**
- * Finds monitors whose regions already carry a quorum for a status the monitor
- * itself does not have, using the same quorum rule as a live check.
- */
-async function findDrift(workspaceId?: number): Promise<DriftRow[]> {
-  return withBusyRetry(() =>
-    db.all<DriftRow>(sql`
-      SELECT ${monitorStatusTable.monitorId} AS monitor_id,
-             ${monitorStatusTable.status} AS status
-      FROM ${monitorStatusTable}
-      JOIN ${monitor} ON ${monitor.id} = ${monitorStatusTable.monitorId}
-      WHERE ${monitor.deletedAt} IS NULL
-        AND ${monitor.active} = 1
-        AND ${workspaceId === undefined ? sql`1 = 1` : sql`${monitor.workspaceId} = ${workspaceId}`}
-        AND ${monitor.regions} <> ''
-        AND ${monitorStatusTable.status} <> ${monitor.status}
-        -- no alerts during maintenance; a failure repair waits for the window to end
-        AND (${monitorStatusTable.status} = 'active'
-          OR NOT ${monitorInWindow(db, new Date())})
-        AND ${csvRegionMemberSql(sql`${monitorStatusTable.region}`)}
-      GROUP BY ${monitorStatusTable.monitorId}, ${monitorStatusTable.status}
-      HAVING ${quorumMetSql(sql`count(*)`, csvRegionCountSql())}
-      LIMIT ${CANDIDATE_LIMIT}
-    `),
-  );
-}
 
 /**
  * Safety net for the gap between the region write and the transition batch:
@@ -63,7 +22,9 @@ export function handleStatusDriftCron() {
 
 /** `workspaceId` narrows the sweep; the cron repairs every workspace. */
 export async function repairStatusDrift(workspaceId?: number) {
-  const candidates = await findDrift(workspaceId);
+  const candidates = await withBusyRetry(() =>
+    listStatusDriftCandidates({ workspaceId }),
+  );
   if (candidates.length === 0) return { candidates: 0, repaired: 0 };
 
   let repaired = 0;

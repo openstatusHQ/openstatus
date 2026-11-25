@@ -1,32 +1,36 @@
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, count, db, eq, gte, inArray } from "@openstatus/db";
+import { and, count, db as defaultDb, eq, gte, inArray } from "@openstatus/db";
 import {
   notification,
   notificationTrigger,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
-import { withBusyRetry } from "@openstatus/services";
+
+import { withBusyRetry } from "../retry";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
+ * Per workspace, whether its SMS sends over the last 30 days exceed its limit.
  * `cron_timestamp` is stored in milliseconds; comparing it against a
- * seconds-resolution cutoff made the window unbounded, so every workspace that
- * had ever passed its limit stayed blocked.
+ * seconds-resolution cutoff made the window unbounded.
  *
  * Two round trips regardless of how many workspaces are asked about.
  */
-export async function loadSmsQuotaBlocked(
-  workspaceIds: number[],
-): Promise<Map<number, boolean>> {
+export async function loadSmsQuotaBlocked(args: {
+  workspaceIds: number[];
+}): Promise<Map<number, boolean>> {
+  const { workspaceIds } = args;
   const blocked = new Map<number, boolean>();
   if (workspaceIds.length === 0) return blocked;
 
   const [workspaceRows, notificationRows] = await withBusyRetry(() =>
-    db.batch([
-      db.select().from(workspace).where(inArray(workspace.id, workspaceIds)),
-      db
+    defaultDb.batch([
+      defaultDb
+        .select()
+        .from(workspace)
+        .where(inArray(workspace.id, workspaceIds)),
+      defaultDb
         .select({ id: notification.id, workspaceId: notification.workspaceId })
         .from(notification)
         .where(
@@ -51,7 +55,7 @@ export async function loadSmsQuotaBlocked(
     notificationIds.length === 0
       ? []
       : await withBusyRetry(() =>
-          db
+          defaultDb
             .select({
               notificationId: notificationTrigger.notificationId,
               total: count(),

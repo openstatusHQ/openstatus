@@ -1,17 +1,15 @@
 import { CloudTasksClient, type protos } from "@google-cloud/tasks";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, eq, ne, not } from "@openstatus/db";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
-  monitor,
-  monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
+import {
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "@openstatus/services/monitor";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
@@ -55,18 +53,7 @@ export const cron = async ({
 
   const timestamp = Date.now();
 
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        ne(monitor.jobType, "heartbeat"),
-        not(monitorInMaintenance(db, { at: new Date(), mode: "pause" })),
-      ),
-    )
-    .all();
+  const result = await listMonitorsToCheck({ periodicity });
 
   console.log(`Start cron for ${periodicity}`);
 
@@ -82,11 +69,7 @@ export const cron = async ({
   for (const row of monitors.data) {
     // const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
-    const result = await db
-      .select()
-      .from(monitorStatusTable)
-      .where(eq(monitorStatusTable.monitorId, row.id))
-      .all();
+    const result = await listMonitorRegionStatuses({ monitorIds: [row.id] });
     const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
     if (!monitorStatus.success) {
       console.error(

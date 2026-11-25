@@ -1,16 +1,18 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, eq, schema } from "@openstatus/db";
 import type { MonitorIncident } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { claimNotificationTrigger } from "@openstatus/services/notification";
+import { findMonitorIncident } from "@openstatus/services/monitor-incident";
+import {
+  claimNotificationTrigger,
+  listMonitorNotificationTargets,
+  loadSmsQuotaBlocked,
+} from "@openstatus/services/notification";
 import { Effect, Schedule } from "effect";
 
 import { checkerAudit } from "../utils/audit-log";
-import { loadSmsQuotaBlocked } from "./sms-quota";
 import { providerToFunction } from "./utils";
 
 const logger = getLogger("workflow");
@@ -45,9 +47,7 @@ export const triggerNotifications = async ({
   let incident: MonitorIncident | undefined;
   if (incidentId) {
     try {
-      incident = await db.query.monitorIncidentTable.findFirst({
-        where: eq(schema.monitorIncidentTable.id, incidentId),
-      });
+      incident = await findMonitorIncident({ id: incidentId });
     } catch (err) {
       logger.warn("Failed to fetch incident data", {
         incident_id: incidentId,
@@ -56,19 +56,9 @@ export const triggerNotifications = async ({
     }
   }
 
-  const notifications = await db
-    .select()
-    .from(schema.notificationsToMonitors)
-    .innerJoin(
-      schema.notification,
-      eq(schema.notification.id, schema.notificationsToMonitors.notificationId),
-    )
-    .innerJoin(
-      schema.monitor,
-      eq(schema.monitor.id, schema.notificationsToMonitors.monitorId),
-    )
-    .where(eq(schema.monitor.id, Number(monitorId)))
-    .all();
+  const notifications = await listMonitorNotificationTargets({
+    monitorId: Number(monitorId),
+  });
   for (const notif of notifications) {
     // for sms check we are in the quota
     if (notif.notification.provider === "sms") {
@@ -77,7 +67,9 @@ export const triggerNotifications = async ({
         continue;
       }
       if (!smsQuota.has(notificationWorkspaceId)) {
-        const blocked = await loadSmsQuotaBlocked([notificationWorkspaceId]);
+        const blocked = await loadSmsQuotaBlocked({
+          workspaceIds: [notificationWorkspaceId],
+        });
         smsQuota.set(
           notificationWorkspaceId,
           blocked.get(notificationWorkspaceId) ?? true,

@@ -6,7 +6,12 @@ export {
   type PublicApiKey,
 } from "./list";
 export { revokeApiKey } from "./revoke";
-export { updateApiKeyLastUsed, verifyApiKey } from "./verify";
+export {
+  type ApiKeyAuthResult,
+  authenticateApiKey,
+  updateApiKeyLastUsed,
+  verifyApiKey,
+} from "./verify";
 export {
   CreateApiKeyInput,
   ListApiKeysInput,

@@ -1,18 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import {
-  and,
-  db,
-  desc,
-  eq,
-  isNull,
-  lte,
-  max,
-  or,
-  schema,
-} from "@openstatus/db";
-import { selectWorkspaceSchema, user } from "@openstatus/db/src/schema";
 import {
   monitorDeactivationEmail,
   monitorPausedEmail,
@@ -21,7 +8,18 @@ import {
   type EmailHtml,
   sendBatchEmailHtml,
 } from "@openstatus/emails/src/send";
-import { bulkUpdateMonitors } from "@openstatus/services/monitor";
+import {
+  bulkUpdateMonitors,
+  countActiveMonitors,
+  listActiveMonitorIds,
+} from "@openstatus/services/monitor";
+import {
+  getFreeWorkspaceOfUser,
+  getLatestSessionExpiry,
+  getUserContact,
+  listFreeUsersLastSeenBefore,
+  listFreeUsersWithoutSession,
+} from "@openstatus/services/user";
 import { Redis } from "@openstatus/upstash";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
@@ -84,82 +82,12 @@ export async function LaunchMonitorWorkflow() {
   const twoMonthAgo = new Date().setMonth(new Date().getMonth() - 2);
 
   const date = new Date(twoMonthAgo);
-  // User without session
-  const userWithoutSession = db
-    .select({
-      userId: schema.user.id,
-      email: schema.user.email,
-      updatedAt: schema.user.updatedAt,
-    })
-    .from(schema.user)
-    .leftJoin(schema.session, eq(schema.session.userId, schema.user.id))
-    .where(isNull(schema.session.userId))
-    .as("query");
   // Only free users monitors are paused
   // We don't need to handle multi users per workspace because free workspaces only have one user
-  // Only free users monitors are paused
-
-  const u1 = await db
-    .select({
-      userId: userWithoutSession.userId,
-      email: userWithoutSession.email,
-      workspaceId: schema.workspace.id,
-    })
-    .from(userWithoutSession)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-    )
-    .where(
-      and(
-        or(
-          lte(userWithoutSession.updatedAt, date),
-          isNull(userWithoutSession.updatedAt),
-        ),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
-    );
+  const u1 = await listFreeUsersWithoutSession({ before: date });
 
   console.log(`Found ${u1.length} users without session to start the workflow`);
-  const maxSessionPerUser = db
-    .select({
-      userId: schema.user.id,
-      email: schema.user.email,
-      lastConnection: max(schema.session.expires).as("lastConnection"),
-    })
-    .from(schema.user)
-    .innerJoin(schema.session, eq(schema.session.userId, schema.user.id))
-    .groupBy(schema.user.id)
-    .as("maxSessionPerUser");
-  // Only free users monitors are paused
-  // We don't need to handle multi users per workspace because free workspaces only have one user
-  // Only free users monitors are paused
-
-  const u = await db
-    .select({
-      userId: maxSessionPerUser.userId,
-      email: maxSessionPerUser.email,
-      workspaceId: schema.workspace.id,
-    })
-    .from(maxSessionPerUser)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-    )
-    .where(
-      and(
-        lte(maxSessionPerUser.lastConnection, date),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
-    );
+  const u = await listFreeUsersLastSeenBefore({ before: date });
   const usersMap = new Map<number, (typeof u)[number]>();
   for (const entry of [...u, ...u1]) {
     usersMap.set(entry.userId, entry);
@@ -204,14 +132,9 @@ async function workflowInit({
     return;
   }
   // check if user has some running monitors
-  const nbRunningMonitor = await db.$count(
-    schema.monitor,
-    and(
-      eq(schema.monitor.workspaceId, user.workspaceId),
-      eq(schema.monitor.active, true),
-      isNull(schema.monitor.deletedAt),
-    ),
-  );
+  const nbRunningMonitor = await countActiveMonitors({
+    workspaceId: user.workspaceId,
+  });
   if (nbRunningMonitor === 0) {
     console.log(`user has no running monitors for ${user.userId}`);
     return;
@@ -348,25 +271,17 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
     const workspace = await getUserWorkspace(userId);
     let pausedCount = 0;
     if (workspace) {
-      const activeMonitors = await db
-        .select({ id: schema.monitor.id })
-        .from(schema.monitor)
-        .where(
-          and(
-            eq(schema.monitor.workspaceId, workspace.id),
-            eq(schema.monitor.active, true),
-            isNull(schema.monitor.deletedAt),
-          ),
-        )
-        .all();
-      pausedCount = activeMonitors.length;
-      if (activeMonitors.length > 0) {
+      const activeMonitorIds = await listActiveMonitorIds({
+        workspaceId: workspace.id,
+      });
+      pausedCount = activeMonitorIds.length;
+      if (activeMonitorIds.length > 0) {
         await bulkUpdateMonitors({
           ctx: {
             workspace,
             actor: { type: "system", job: "monitor-auto-pause" },
           },
-          input: { ids: activeMonitors.map((m) => m.id), active: false },
+          input: { ids: activeMonitorIds, active: false },
         });
       }
     }
@@ -401,20 +316,11 @@ async function hasUserLoggedIn({
   userId: number;
   date: Date;
 }) {
-  const userResult = await db
-    .select({ lastSession: schema.session.expires })
-    .from(schema.session)
-    .where(eq(schema.session.userId, userId))
-    .orderBy(desc(schema.session.expires));
-
-  if (userResult.length === 0) {
+  const lastSession = await getLatestSessionExpiry({ userId });
+  if (lastSession === null) {
     return false;
   }
-  const user = userResult[0];
-  if (user.lastSession === null) {
-    return false;
-  }
-  return user.lastSession > date;
+  return lastSession > date;
 }
 
 async function CreateTask({
@@ -482,11 +388,7 @@ export const workflowStep = ["14days", "3days", "paused"] as const;
 export const workflowStepSchema = z.enum(workflowStep);
 
 async function getUser(userId: number) {
-  const currentUser = await db
-    .select()
-    .from(user)
-    .where(eq(schema.user.id, userId))
-    .get();
+  const currentUser = await getUserContact({ userId });
 
   if (!currentUser) {
     throw new Error("User not found");
@@ -518,14 +420,9 @@ async function sendWorkflowEmail({
 async function getPauseContext(userId: number) {
   const workspace = await getUserWorkspace(userId);
   if (!workspace) return {};
-  const monitorCount = await db.$count(
-    schema.monitor,
-    and(
-      eq(schema.monitor.workspaceId, workspace.id),
-      eq(schema.monitor.active, true),
-      isNull(schema.monitor.deletedAt),
-    ),
-  );
+  const monitorCount = await countActiveMonitors({
+    workspaceId: workspace.id,
+  });
   return {
     monitorCount: monitorCount || undefined,
     workspaceSlug: workspace.slug,
@@ -533,23 +430,5 @@ async function getPauseContext(userId: number) {
 }
 
 async function getUserWorkspace(userId: number) {
-  const row = await db
-    .select({ workspace: schema.workspace })
-    .from(schema.user)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(schema.user.id, schema.usersToWorkspaces.userId),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-    )
-    .where(
-      and(
-        eq(schema.user.id, userId),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
-    )
-    .get();
-  return row ? selectWorkspaceSchema.parse(row.workspace) : undefined;
+  return getFreeWorkspaceOfUser({ userId });
 }

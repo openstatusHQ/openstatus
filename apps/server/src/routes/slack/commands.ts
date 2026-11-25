@@ -1,5 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 import { ForbiddenError, PreconditionFailedError } from "@openstatus/services";
+import { resolvePageFromUrl } from "@openstatus/services/page";
 import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
@@ -21,7 +22,6 @@ import {
   requireSlackMember,
   slackAgentAllowed,
 } from "./require-slack-member";
-import { resolvePageFromUrl } from "./resolve-page";
 import { type EphemeralReply, respondLater } from "./response-url";
 import { resolveWorkspace } from "./workspace-resolver";
 

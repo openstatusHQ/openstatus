@@ -1,11 +1,6 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, sql } from "@openstatus/db";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { monitorInMaintenance } from "@openstatus/db/src/maintenance";
-import type { MonitorStatus } from "@openstatus/db/src/schema";
-import { monitor, monitorHeartbeatState } from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
+import { listHeartbeatSweepCandidates } from "@openstatus/services/monitor";
 import { HEARTBEAT_REGION, formatHeartbeatSeconds } from "@openstatus/utils";
 
 import { triggerNotifications } from "../checker/alerting";
@@ -20,58 +15,6 @@ import {
 import { env } from "../env";
 
 const logger = getLogger(["workflow-otel"]);
-
-const CANDIDATE_LIMIT = 500;
-
-type SweepRow = {
-  monitor_id: number;
-  status: MonitorStatus;
-  last_ping_at: number;
-  last_ping_kind: "success" | "fail";
-  next_due_at: number;
-  heartbeat_period: number | null;
-  heartbeat_grace: number | null;
-};
-
-/**
- * Heartbeats whose signal disagrees with their status: overdue or reporting a
- * `/fail` but not down, or pinged successfully again while down. Paused,
- * deleted and never-pinged heartbeats are left alone; a maintenance holds back
- * failures only, so an outage open before it still closes.
- */
-async function findCandidates(now: number): Promise<SweepRow[]> {
-  return withBusyRetry(() =>
-    db.all<SweepRow>(sql`
-      SELECT ${monitor.id} AS monitor_id,
-             ${monitor.status} AS status,
-             ${monitorHeartbeatState.lastPingAt} AS last_ping_at,
-             ${monitorHeartbeatState.lastPingKind} AS last_ping_kind,
-             ${monitorHeartbeatState.nextDueAt} AS next_due_at,
-             ${monitor.heartbeatPeriod} AS heartbeat_period,
-             ${monitor.heartbeatGrace} AS heartbeat_grace
-      FROM ${monitorHeartbeatState}
-      JOIN ${monitor} ON ${monitor.id} = ${monitorHeartbeatState.monitorId}
-      WHERE ${monitor.jobType} = 'heartbeat'
-        AND ${monitor.active} = 1
-        AND ${monitor.deletedAt} IS NULL
-        AND ${monitorHeartbeatState.nextDueAt} IS NOT NULL
-        AND ${monitorHeartbeatState.lastPingAt} IS NOT NULL
-        AND (
-          (
-            (${monitorHeartbeatState.nextDueAt} < ${now} OR ${monitorHeartbeatState.lastPingKind} = 'fail')
-            AND ${monitor.status} <> 'error'
-            AND NOT ${monitorInMaintenance(db, { at: new Date(now), mode: "pause" })}
-          )
-          OR (
-            ${monitorHeartbeatState.nextDueAt} >= ${now}
-            AND ${monitorHeartbeatState.lastPingKind} <> 'fail'
-            AND ${monitor.status} = 'error'
-          )
-        )
-      LIMIT ${CANDIDATE_LIMIT}
-    `),
-  );
-}
 
 export function failedPingMessage(row: { last_ping_at: number }): string {
   return `Job reported a failure at ${new Date(row.last_ping_at).toISOString()}`;
@@ -117,7 +60,9 @@ async function deliver(
 }
 
 export async function handleHeartbeatSweepCron(now = Date.now()) {
-  const candidates = await findCandidates(now);
+  const candidates = await withBusyRetry(() =>
+    listHeartbeatSweepCandidates({ now }),
+  );
   let down = 0;
   let recovered = 0;
 

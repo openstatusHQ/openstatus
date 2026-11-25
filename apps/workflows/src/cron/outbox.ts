@@ -1,12 +1,10 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { and, db, lt, sql } from "@openstatus/db";
-import {
-  monitorTransition,
-  notificationOutbox,
-  notificationTrigger,
-} from "@openstatus/db/src/schema";
 import { withBusyRetry } from "@openstatus/services";
+import {
+  listOutboxRowsWithoutTrigger,
+  listTriggersWithoutOutboxRow,
+  pruneNotificationOutbox,
+} from "@openstatus/services/notification";
 import * as Sentry from "@sentry/node";
 
 import { drainUntilEmpty, sweepExpiredOutbox } from "../checker/outbox";
@@ -35,30 +33,16 @@ export async function handleOutboxRetentionCron() {
   const outboxCutoff = nowSeconds - OUTBOX_RETENTION_DAYS * 24 * 60 * 60;
   const decisionCutoff = nowSeconds - DECISION_RETENTION_DAYS * 24 * 60 * 60;
 
-  const [outboxDeleted, decisionsDeleted] = await withBusyRetry(() =>
-    db.batch([
-      // Pending rows older than the retention window are unreachable: the
-      // delivery deadline is minutes, not weeks.
-      db
-        .delete(notificationOutbox)
-        .where(lt(notificationOutbox.createdAt, outboxCutoff))
-        .returning({ id: notificationOutbox.id }),
-      db
-        .delete(monitorTransition)
-        .where(lt(monitorTransition.createdAt, decisionCutoff))
-        .returning({ id: monitorTransition.id }),
-    ]),
+  const { outboxDeleted, decisionsDeleted } = await withBusyRetry(() =>
+    pruneNotificationOutbox({ outboxCutoff, decisionCutoff }),
   );
 
   logger.info("Outbox retention", {
-    outbox_deleted: outboxDeleted.length,
-    decisions_deleted: decisionsDeleted.length,
+    outbox_deleted: outboxDeleted,
+    decisions_deleted: decisionsDeleted,
   });
 
-  return {
-    outboxDeleted: outboxDeleted.length,
-    decisionsDeleted: decisionsDeleted.length,
-  };
+  return { outboxDeleted, decisionsDeleted };
 }
 
 /**
@@ -70,45 +54,10 @@ export async function handleOutboxShadowCron() {
   const since = Date.now() - SHADOW_WINDOW_MS;
 
   const missingTrigger = await withBusyRetry(() =>
-    db
-      .select({
-        monitorId: notificationOutbox.monitorId,
-        notificationId: notificationOutbox.notificationId,
-        cronTimestamp: notificationOutbox.cronTimestamp,
-      })
-      .from(notificationOutbox)
-      .where(
-        and(
-          sql`${notificationOutbox.cronTimestamp} >= ${since}`,
-          sql`NOT EXISTS (
-            SELECT 1 FROM ${notificationTrigger}
-            WHERE ${notificationTrigger.monitorId} = ${notificationOutbox.monitorId}
-              AND ${notificationTrigger.notificationId} = ${notificationOutbox.notificationId}
-              AND ${notificationTrigger.cronTimestamp} = ${notificationOutbox.cronTimestamp})`,
-        ),
-      )
-      .all(),
+    listOutboxRowsWithoutTrigger({ since }),
   );
-
   const missingOutbox = await withBusyRetry(() =>
-    db
-      .select({
-        monitorId: notificationTrigger.monitorId,
-        notificationId: notificationTrigger.notificationId,
-        cronTimestamp: notificationTrigger.cronTimestamp,
-      })
-      .from(notificationTrigger)
-      .where(
-        and(
-          sql`${notificationTrigger.cronTimestamp} >= ${since}`,
-          sql`NOT EXISTS (
-            SELECT 1 FROM ${notificationOutbox}
-            WHERE ${notificationOutbox.monitorId} = ${notificationTrigger.monitorId}
-              AND ${notificationOutbox.notificationId} = ${notificationTrigger.notificationId}
-              AND ${notificationOutbox.cronTimestamp} = ${notificationTrigger.cronTimestamp})`,
-        ),
-      )
-      .all(),
+    listTriggersWithoutOutboxRow({ since }),
   );
 
   const result = {

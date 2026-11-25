@@ -1,7 +1,14 @@
+export { countActiveMonitors, listActiveMonitorIds } from "./active";
 export { cloneMonitor } from "./clone";
 export { createMonitor } from "./create";
+export { findMonitor } from "./find";
 export { fetchMonitorDailyStats } from "./get-daily-summary";
 export { deleteMonitor, deleteMonitors } from "./delete";
+export {
+  countPausedMonitors,
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "./dispatch";
 export {
   getMonitorStatus,
   type GetMonitorStatusResult,
@@ -18,6 +25,14 @@ export {
   type ResponseLogFacet,
 } from "./get-response-log-facets";
 export { getPrivateLocationIdsByMonitor } from "./private-locations";
+export {
+  csvRegionCountSql,
+  csvRegionMemberSql,
+  type QuorumParams,
+  quorumCountSql,
+  quorumGuardSql,
+  quorumMetSql,
+} from "./quorum";
 export {
   listResponseLogs,
   type ListResponseLogsResult,
@@ -44,6 +59,12 @@ export {
   type MonitorListItem,
   type MonitorWithRelations,
 } from "./list";
+export {
+  type HeartbeatSweepRow,
+  listHeartbeatSweepCandidates,
+  listStatusDriftCandidates,
+  type StatusDriftRow,
+} from "./sweeps";
 export {
   updateMonitorNotifiers,
   updateMonitorSchedulingRegions,

@@ -1,11 +1,7 @@
 import { getLogger } from "@logtape/logtape";
-// oxlint-disable-next-line no-restricted-imports -- existing offender, migrate to @openstatus/services
-import { db, eq } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  workspace as workspaceTable,
-} from "@openstatus/db/src/schema";
+import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
+import { getWorkspaceRowById } from "@openstatus/services/workspace";
 import type { WebClient } from "@slack/web-api";
 
 import type { PendingAction } from "./confirmation-store";
@@ -43,11 +39,7 @@ export async function toServiceCtx(args: {
   requestId?: string;
 }): Promise<ServiceContext> {
   const [row, permalink] = await Promise.all([
-    db
-      .select()
-      .from(workspaceTable)
-      .where(eq(workspaceTable.id, args.pending.workspaceId))
-      .get(),
+    getWorkspaceRowById(args.pending.workspaceId),
     permalinkFor(args.slack, args.channelId, args.messageTs),
   ]);
   if (!row) {
