@@ -14,6 +14,49 @@ export const WELCOME_TEXT =
 export const CATCH_UP_REQUEST =
   "Catch me up: summarize what is happening in this channel. If it looks like an ongoing issue and no status report is open, draft one.";
 
+export const CHANNEL_INTRO_TEXT =
+  "Hey, I'm openstatus. Mention me and I'll turn this channel's conversation into a status page update.";
+
+/** Posted for the whole channel when someone adds the bot; the action card stays private. */
+export function buildChannelIntroBlocks(botUserId: string): KnownBlock[] {
+  const bot = `<@${botUserId}>`;
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `:wave: Hey, I'm openstatus. Tag me with ${bot} and I'll turn what's being said here into a status page update, check on your monitors, or catch you up on the channel.`,
+      },
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: [
+          "*Try asking me*",
+          "• " + bot + " `summarize this thread and draft a status report`",
+          "• " + bot + " `are any of my monitors failing right now?`",
+          "• " +
+            bot +
+            " `schedule maintenance on the API tomorrow from 2 to 3am UTC`",
+        ].join("\n"),
+      },
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: [
+          "*A few things worth knowing*",
+          "• I draft, you approve: nothing reaches your status page until someone clicks *Approve*.",
+          "• Tag me again in the thread to keep going, and I'll pick up the conversation so far.",
+          "• `/openstatus help` lists every command, including `/openstatus incident` to run an incident from Slack.",
+        ].join("\n"),
+      },
+    },
+  ];
+}
+
 export function buildWelcomeBlocks(botUserId: string): KnownBlock[] {
   const bot = `<@${botUserId}>`;
   return [

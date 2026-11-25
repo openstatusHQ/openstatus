@@ -217,6 +217,13 @@ describe("handleSlackEvent", () => {
       },
     });
     const welcome = await waitForCall("postEphemeral");
+    const intro = slackTestState.calls.find((m) => m.method === "postMessage");
+    expect(intro?.args.channel).toBe("C_NEW");
+    expect(intro?.args.user).toBeUndefined();
+    const introBlocks = JSON.stringify(intro?.args.blocks);
+    expect(introBlocks).toContain("<@UBOT>");
+    expect(introBlocks).toContain("Try asking me");
+    expect(introBlocks).not.toContain("welcome_catch_up");
     expect(welcome?.args.channel).toBe("C_NEW");
     expect(welcome?.args.user).toBe("U1");
     const blocks = JSON.stringify(welcome?.args.blocks);
@@ -1958,6 +1965,36 @@ describe("hardening", () => {
     expect(String(notice?.args.text)).toContain("/settings/billing");
     // The plan notice must not use up the account-link card's window.
     expect(redisStore.has(`slack:linkcard:T_FREE:${user}`)).toBe(false);
+  });
+
+  test("a workspace without the Slack agent gets no channel intro", async () => {
+    slackTestState.resolveWorkspace = () =>
+      Promise.resolve({
+        workspace: {
+          id: 1,
+          name: "Free",
+          slug: "free",
+          plan: "free",
+          limits: {},
+        },
+        botToken: "xoxb-test",
+        botUserId: "UBOT",
+      });
+    await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_FREE",
+      event_id: `evt_free_join_${Date.now()}`,
+      event: {
+        type: "member_joined_channel",
+        user: "UBOT",
+        inviter: "U1",
+        channel: "C_NEW",
+      },
+    });
+    await waitForCall("postEphemeral");
+    expect(slackTestState.calls.some((m) => m.method === "postMessage")).toBe(
+      false,
+    );
   });
 
   test("the same event id is processed once, across instances", async () => {
