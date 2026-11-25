@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -104,6 +105,7 @@ export function ChartAreaPercentiles({
         }}
       >
         <ChartLegend
+          itemSorter={bySeriesOrder(chartConfig)}
           verticalAlign={legendVerticalAlign}
           content={
             <ChartLegendBadge
@@ -128,9 +130,10 @@ export function ChartAreaPercentiles({
             />
           }
         />
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} yAxisId="percentile" />
         <XAxis dataKey="timestamp" hide={xAxisHide} />
         <ChartTooltip
+          itemSorter={bySeriesOrder(chartConfig)}
           cursor={false}
           content={
             <ChartTooltipContent

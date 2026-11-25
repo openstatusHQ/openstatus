@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -27,13 +28,13 @@ const chartConfig = {
     label: "Success",
     color: "var(--color-success)",
   },
-  degraded: {
-    label: "Degraded",
-    color: "var(--color-warning)",
-  },
   error: {
     label: "Error",
     color: "var(--color-destructive)",
+  },
+  degraded: {
+    label: "Degraded",
+    color: "var(--color-warning)",
   },
 } satisfies ChartConfig;
 
@@ -78,6 +79,7 @@ export function ChartBarUptime({
       >
         <CartesianGrid vertical={false} />
         <ChartTooltip
+          itemSorter={bySeriesOrder(chartConfig)}
           cursor={false}
           content={
             <ChartTooltipContent
@@ -108,7 +110,10 @@ export function ChartBarUptime({
             formatAxisTick(new Date(value), period, interval)
           }
         />
-        <ChartLegend content={<ChartLegendContent />} />
+        <ChartLegend
+          itemSorter={bySeriesOrder(chartConfig)}
+          content={<ChartLegendContent />}
+        />
       </BarChart>
     </ChartContainer>
   );

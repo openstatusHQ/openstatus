@@ -8,6 +8,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 import {
@@ -112,6 +113,7 @@ export function ChartAreaTimingPhases({
           }
         />
         <ChartTooltip
+          itemSorter={bySeriesOrder(chartConfig)}
           cursor={false}
           content={
             <ChartTooltipContent
@@ -221,7 +223,10 @@ export function ChartAreaTimingPhases({
           orientation="right"
           tickFormatter={(value) => `${value}ms`}
         />
-        <ChartLegend content={<ChartLegendContent />} />
+        <ChartLegend
+          itemSorter={bySeriesOrder(chartConfig)}
+          content={<ChartLegendContent />}
+        />
       </AreaChart>
     </ChartContainer>
   );

@@ -43,7 +43,7 @@ export function SimpleChart({ data, className }: SimpleChartProps) {
             <ChartTooltipContent
               indicator="dot"
               labelFormatter={(value) => {
-                return new Date(value).toLocaleDateString("en-US", {
+                return new Date(String(value)).toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "short",
                   hour: "numeric",

@@ -8,6 +8,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -98,6 +99,7 @@ export function Chart({ checks, desc, onToggleSort }: ChartProps) {
                 tickFormatter={(value) => `${value}ms`}
               />
               <ChartTooltip
+                itemSorter={bySeriesOrder(chartConfig)}
                 content={
                   <ChartTooltipContent
                     className="min-w-56 gap-3 rounded-none p-3 text-sm"
@@ -107,7 +109,7 @@ export function Chart({ checks, desc, onToggleSort }: ChartProps) {
                         <div className="flex items-center justify-between gap-4">
                           <span>{region.location}</span>
                           <span className="text-muted-foreground">
-                            {formatRegionCode(label)}
+                            {formatRegionCode(String(label))}
                           </span>
                         </div>
                       );

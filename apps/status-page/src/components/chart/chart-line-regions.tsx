@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import {
@@ -141,6 +142,7 @@ export function ChartLineRegions({
         <CartesianGrid vertical={false} />
         <XAxis dataKey="timestamp" />
         <ChartTooltip
+          itemSorter={bySeriesOrder(chartConfig)}
           cursor={false}
           content={
             <ChartTooltipContent
@@ -185,6 +187,7 @@ export function ChartLineRegions({
           tickFormatter={(value) => `${value}ms`}
         />
         <ChartLegend
+          itemSorter={bySeriesOrder(chartConfig)}
           verticalAlign="top"
           content={
             <ChartLegendBadge

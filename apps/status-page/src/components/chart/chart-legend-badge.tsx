@@ -9,8 +9,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useExtracted } from "next-intl";
 import * as React from "react";
-import type * as RechartsPrimitive from "recharts";
-import type { Payload } from "recharts/types/component/DefaultLegendContent";
+import type { DefaultLegendContentProps, LegendPayload } from "recharts";
 
 import { getPayloadConfigFromPayload } from "../../lib/chart";
 
@@ -26,12 +25,12 @@ export function ChartLegendBadge({
   annotation,
   tooltip,
 }: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+  Pick<DefaultLegendContentProps, "payload" | "verticalAlign"> & {
     hideIcon?: boolean;
     nameKey?: string;
     // NOTE: additional props compared to default shadcn/ui Legend component
-    handleActive?: (item: Payload) => void;
-    active?: Payload["dataKey"][];
+    handleActive?: (item: LegendPayload) => void;
+    active?: LegendPayload["dataKey"][];
     maxActive?: number;
     annotation?: Record<string, string | number | undefined>;
     tooltip?: Record<string, string | undefined>;

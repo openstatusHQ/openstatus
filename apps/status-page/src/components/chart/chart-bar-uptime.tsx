@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -61,6 +62,7 @@ export function ChartBarUptime({
       <BarChart accessibilityLayer data={data} barCategoryGap={2}>
         <CartesianGrid vertical={false} />
         <ChartTooltip
+          itemSorter={bySeriesOrder(chartConfig)}
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
@@ -97,6 +99,7 @@ export function ChartBarUptime({
           axisLine={false}
         />
         <ChartLegend
+          itemSorter={bySeriesOrder(chartConfig)}
           verticalAlign="top"
           content={
             <ChartLegendBadge
