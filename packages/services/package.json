@@ -192,7 +192,7 @@
     "@openstatus/utils": "workspace:*",
     "@workos-inc/node": "catalog:",
     "effect": "catalog:",
-    "ip-cidr": "catalog:",
+    "ip-address": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

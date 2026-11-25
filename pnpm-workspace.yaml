@@ -40,6 +40,18 @@ allowBuilds:
 overrides:
   "@google-cloud/pubsub>@opentelemetry/semantic-conventions": 1.45.0
   "@google-cloud/pubsub>@opentelemetry/api": 1.10.0
+  # Security fixes for transitive dependencies whose parent still resolves a
+  # vulnerable version and has no release that moves past it. Each pin is the
+  # first version that clears every OSV advisory on the resolved one; drop a
+  # pin once its parent resolves a clean version on its own.
+  "body-parser@2.3.0": 2.4.0
+  "minimizer-webpack-plugin>sharp": ^0.35.5
+  "undici@6.28.1": 6.29.1
+  "undici@7.29.1": 7.30.2
+  "undici@8.11.0": 8.12.2
+  # socks (via the shadcn CLI) and express-rate-limit resolve older ip-address
+  # releases that still carry advisories; one pin covers the whole graph.
+  "ip-address": 10.7.4
 autoInstallPeers: true
 # `turbo` is deliberately pinned literally in package.json rather than listed
 # here: Vercel can't read a version through `catalog:`, and on failing to infer
@@ -174,7 +186,7 @@ catalog:
   gray-matter: 4.0.3
   hono: 4.13.21
   hono-rate-limiter: 0.5.4
-  ip-cidr: 4.0.2
+  ip-address: 10.7.4
   isomorphic-dompurify: 4.8.0
   jsonpath-plus: 11.3.0
   knip: 6.48.0
