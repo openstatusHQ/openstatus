@@ -60,6 +60,15 @@ describe("audit snapshots carry no secrets", () => {
         ctx: txCtx,
         input: { id: page.id, accessType: "password", password },
       });
+      const [update] = await readAuditLog({
+        workspaceId: team.workspace.id,
+        entityType: "page",
+        entityId: page.id,
+        db: tx,
+      });
+      // A set or rotated password still diffs; only its value is hidden.
+      expect(update?.changedFields).toContain("password");
+      expect(update?.after?.password).toBe("[redacted]");
       await deletePage({ ctx: txCtx, input: { id: page.id } });
 
       await expectNotAudited(tx, [password]);
