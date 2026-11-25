@@ -1,4 +1,5 @@
-import { appRouter, createTRPCContext } from "@openstatus/api";
+import { statusPageAppRouter } from "@openstatus/api/src/status-page";
+import { createTRPCContext } from "@openstatus/api/src/trpc";
 import { createTRPCOnError } from "@openstatus/api/src/trpc-errors";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
@@ -6,9 +7,8 @@ import type { NextRequest } from "next/server";
 import { auth } from "../../../../../lib/auth";
 import { guardTRPCSource } from "../../../../../lib/trpc/shared";
 
-// Runs on the Node.js runtime (Vercel Fluid compute). The whole tRPC surface
-// is served here — several routers pull Node-only deps (@slack/web-api, email
-// and notification SDKs) that are not Edge-safe.
+// Only the statusPage router is mounted: this app is public, so dashboard
+// procedures must not be reachable from it.
 
 const handler = (req: NextRequest) => {
   const blocked = guardTRPCSource(req);
@@ -16,9 +16,9 @@ const handler = (req: NextRequest) => {
 
   return fetchRequestHandler({
     endpoint: "/api/trpc/lambda",
-    router: appRouter,
+    router: statusPageAppRouter,
     req: req,
-    createContext: () => createTRPCContext({ req, auth }),
+    createContext: () => createTRPCContext({ req, viewerAuth: auth }),
     onError: createTRPCOnError("lambda"),
   });
 };

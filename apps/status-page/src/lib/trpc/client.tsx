@@ -1,6 +1,6 @@
 "use client";
 
-import type { AppRouter } from "@openstatus/api";
+import type { StatusPageAppRouter } from "@openstatus/api/src/status-page";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCClient } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
@@ -9,7 +9,7 @@ import { useState } from "react";
 import { endingLink, sentryLoggerLink } from "./shared";
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
-  createTRPCContext<AppRouter>();
+  createTRPCContext<StatusPageAppRouter>();
 
 function makeQueryClient() {
   return new QueryClient({
@@ -39,7 +39,7 @@ function getQueryClient() {
 export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   const [trpcClient] = useState(() =>
-    createTRPCClient<AppRouter>({
+    createTRPCClient<StatusPageAppRouter>({
       links: [
         sentryLoggerLink(),
         endingLink({

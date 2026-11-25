@@ -6,7 +6,7 @@ import {
 import type { Context } from "../trpc";
 import { pagePasswordRateLimit } from "./page-password-rate-limit";
 
-type Ctx = Pick<Context, "req" | "session">;
+type Ctx = Pick<Context, "req" | "viewer">;
 
 /** `queryPassword` is for cookie-less server callers (feeds, `?pw=` links). */
 export function visitorFromCtx(
@@ -16,7 +16,7 @@ export function visitorFromCtx(
   return {
     getCookie: (name) => ctx.req?.cookies.get(name)?.value,
     queryPassword,
-    email: ctx.session?.user?.email,
+    email: ctx.viewer?.email,
     clientIp: ctx.req ? resolveClientIp(ctx.req.headers) : null,
     // One budget per page and IP across every entry point.
     passwordAttempts: pagePasswordRateLimit(),

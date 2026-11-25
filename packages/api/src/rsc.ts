@@ -19,7 +19,7 @@ import { type ReactNode, cache, createElement } from "react";
 import { type AppRouter, appRouter } from "./root";
 import { createTRPCContext } from "./trpc";
 
-type AuthFn = NonNullable<Parameters<typeof createTRPCContext>[0]["auth"]>;
+type ContextOptions = Parameters<typeof createTRPCContext>[0];
 
 /**
  * Builds the per-app RSC tRPC helpers around a direct, in-process router proxy
@@ -28,7 +28,8 @@ type AuthFn = NonNullable<Parameters<typeof createTRPCContext>[0]["auth"]>;
  */
 export function createServerHelpers(opts: {
   makeQueryClient: () => QueryClient;
-  auth?: AuthFn;
+  auth?: ContextOptions["auth"];
+  viewerAuth?: ContextOptions["viewerAuth"];
 }) {
   // Stable per-request getter so the same client is reused across a request.
   const getQueryClient = cache(opts.makeQueryClient);
@@ -44,6 +45,7 @@ export function createServerHelpers(opts: {
         headers: new Headers(incoming),
       }),
       auth: opts.auth,
+      viewerAuth: opts.viewerAuth,
     });
   });
 

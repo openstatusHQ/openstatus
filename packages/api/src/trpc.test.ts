@@ -2,6 +2,8 @@ import { NextRequest } from "next/server.js";
 import { expect, test } from "vitest";
 
 import type { ResolveActiveWorkspaceResult } from "./auth/resolve-active-workspace";
+import { appRouter } from "./root";
+import { statusPageAppRouter } from "./status-page";
 import {
   createInnerTRPCContext,
   createTRPCContext,
@@ -27,6 +29,26 @@ test("protected procedure rejects without a session", async () => {
   const caller = testRouter.createCaller(ctx);
 
   await expect(caller.whoami()).rejects.toThrow("UNAUTHORIZED");
+});
+
+test("a viewer session never authenticates a protected procedure", async () => {
+  const ctx = await createTRPCContext({
+    req: makeRequest("workspace-slug=love-openstatus"),
+    viewerAuth: async () => ({ user: { id: "1", email: "viewer@acme.com" } }),
+  });
+  const caller = testRouter.createCaller(ctx);
+
+  expect(ctx.session).toBeNull();
+  expect(ctx.viewer).toEqual({ email: "viewer@acme.com" });
+  await expect(caller.whoami()).rejects.toThrow("UNAUTHORIZED");
+});
+
+test("the status-page router exposes only statusPage procedures", () => {
+  const paths = Object.keys(statusPageAppRouter._def.procedures);
+
+  expect(paths.length).toBeGreaterThan(0);
+  expect(paths.every((path) => path.startsWith("statusPage."))).toBe(true);
+  expect(Object.keys(appRouter._def.procedures)).toContain("workspace.get");
 });
 
 test("protected procedure resolves seeded user and workspace", async () => {
