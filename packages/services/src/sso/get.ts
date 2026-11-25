@@ -1,3 +1,4 @@
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { resolveWorkOS } from "./client";
 import { isWorkOSConfigured } from "./client";
@@ -25,6 +26,7 @@ export type SsoConfig = {
 export async function getSsoConfig(args: {
   ctx: ServiceContext;
 }): Promise<SsoConfig> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
 
   const rows = await listSsoDomains(ctx);

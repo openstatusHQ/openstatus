@@ -395,6 +395,8 @@ export const listResponseLogsTool: AgentTool<
   inputSchema: ListResponseLogsInputShape,
   outputSchema: ListResponseLogsOutput,
   async run({ ctx, input }) {
+    // The monitor is read below before the verb checks the scope.
+    requireScope(ctx, "monitors:read");
     const to = input.to ? Date.parse(input.to) : Date.now();
     const window = input.from
       ? { from: Date.parse(input.from), to }

@@ -95,6 +95,7 @@ export async function reconcileSsoDomains(args: {
   workos: WorkOSClient;
   local: SsoDomainState[];
 }): Promise<SsoDomainState[]> {
+  requireScope(args.ctx, "admin");
   const { ctx, organizationId, workos, local } = args;
 
   const organization =

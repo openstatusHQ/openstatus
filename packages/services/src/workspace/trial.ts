@@ -12,8 +12,9 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
+import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import type { DB, ServiceContext } from "../context";
+import { type DB, type ServiceContext, withTransaction } from "../context";
 import type { Workspace } from "../types";
 import { OwnedWorkspacesInput } from "./schemas";
 
@@ -38,6 +39,7 @@ export function getTrialDaysLeft(
 export async function isTrialEligibleWorkspace(args: {
   ctx: ServiceContext;
 }): Promise<boolean> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
   const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;
@@ -68,21 +70,37 @@ export async function isTrialEligibleWorkspace(args: {
  * Records that the workspace used its trial. Keeps the first date on
  * redelivery; returns false when it was already marked.
  */
-// oxlint-disable-next-line openstatus/services-mutation-guards -- billing bookkeeping; whether it needs an audit row is still open
 export async function markWorkspaceTrialed(args: {
   ctx: ServiceContext;
 }): Promise<boolean> {
   const { ctx } = args;
   requireScope(ctx, "admin");
-  const db = ctx.db ?? defaultDb;
 
-  const rows = await db
-    .update(workspace)
-    .set({ trialedAt: new Date() })
-    .where(and(eq(workspace.id, ctx.workspace.id), isNull(workspace.trialedAt)))
-    .returning({ id: workspace.id })
-    .all();
-  return rows.length > 0;
+  return withTransaction(ctx, async (tx) => {
+    const existing = await tx
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, ctx.workspace.id))
+      .get();
+    const updated = await tx
+      .update(workspace)
+      .set({ trialedAt: new Date() })
+      .where(
+        and(eq(workspace.id, ctx.workspace.id), isNull(workspace.trialedAt)),
+      )
+      .returning()
+      .get();
+    if (!existing || !updated) return false;
+
+    await emitAudit(tx, ctx, {
+      action: "workspace.update",
+      entityType: "workspace",
+      entityId: ctx.workspace.id,
+      before: existing,
+      after: updated,
+    });
+    return true;
+  });
 }
 
 /** Workspaces the user owns that are mid-trial. */

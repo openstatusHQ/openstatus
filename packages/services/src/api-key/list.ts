@@ -1,6 +1,7 @@
 import { db as defaultDb, eq, inArray } from "@openstatus/db";
 import { apiKey, selectApiKeySchema, user } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import type { ApiKey } from "../types";
 import type { ListApiKeysInput } from "./schemas";
@@ -46,6 +47,7 @@ export async function listApiKeys(args: {
   ctx: ServiceContext;
   input?: ListApiKeysInput;
 }): Promise<ApiKeyWithCreator[]> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
 

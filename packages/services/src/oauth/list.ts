@@ -2,6 +2,7 @@ import { and, eq, gt, isNull } from "@openstatus/db";
 import { oauthClient, oauthGrant, user } from "@openstatus/db/src/schema";
 import type { Scope } from "@openstatus/db/src/schema/api-keys/constants";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 
 export type ConnectedApp = {
@@ -25,6 +26,7 @@ export async function listGrants(args: {
   ctx: ServiceContext;
   now?: Date;
 }): Promise<ConnectedApp[]> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const db = getReadDb(ctx);
   const now = args.now ?? new Date();

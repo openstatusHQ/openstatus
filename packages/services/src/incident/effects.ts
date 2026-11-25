@@ -83,6 +83,7 @@ export function incidentDashboardUrl(
   return `${dashboardUrl}/incidents/${incidentId}`;
 }
 
+// oxlint-disable-next-line openstatus/services-verbs-require-scope -- names the acting user in a message whose verb already checked its scope
 export async function actorDisplayName(
   ctx: ServiceContext,
 ): Promise<string | null> {

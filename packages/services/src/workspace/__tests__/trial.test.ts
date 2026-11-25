@@ -8,7 +8,7 @@ import {
 } from "@openstatus/db/src/test/factories";
 import { describe, expect, test } from "vitest";
 
-import { makeUserCtx } from "../../../test/helpers";
+import { expectAuditRow, makeUserCtx } from "../../../test/helpers";
 import {
   getTrialDaysLeft,
   isTrialEligibleWorkspace,
@@ -184,7 +184,13 @@ describe("markWorkspaceTrialed", () => {
       userId: user.id,
     });
 
-    await markWorkspaceTrialed({ ctx });
+    expect(await markWorkspaceTrialed({ ctx })).toBe(true);
+    await expectAuditRow({
+      workspaceId: ws.id,
+      action: "workspace.update",
+      entityType: "workspace",
+      entityId: ws.id,
+    });
     const stamped = await db
       .select({ trialedAt: workspace.trialedAt })
       .from(workspace)
@@ -196,7 +202,7 @@ describe("markWorkspaceTrialed", () => {
       .update(workspace)
       .set({ trialedAt: first })
       .where(eq(workspace.id, ws.id));
-    await markWorkspaceTrialed({ ctx });
+    expect(await markWorkspaceTrialed({ ctx })).toBe(false);
     const kept = await db
       .select({ trialedAt: workspace.trialedAt })
       .from(workspace)

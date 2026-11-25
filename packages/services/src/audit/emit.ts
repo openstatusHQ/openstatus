@@ -7,6 +7,7 @@ import {
   extractActorId,
   tryGetActorUserId,
 } from "../context";
+import { redactSecrets } from "./redact";
 
 /** Keys excluded from the top-level diff — always churny, never informative. */
 const DIFF_IGNORE = new Set(["updatedAt", "createdAt"]);
@@ -106,14 +107,16 @@ export async function emitAudit(
 ): Promise<void> {
   const parsed = auditEntrySchema.parse(entry);
 
-  const before = parsed.before;
-  const after = parsed.after;
   const metadata = "metadata" in parsed ? parsed.metadata : undefined;
 
+  // Diff the raw snapshots so a rotated secret still counts as a change.
   const changedFields =
-    before !== undefined && after !== undefined
-      ? diffTopLevel(before, after)
+    parsed.before !== undefined && parsed.after !== undefined
+      ? diffTopLevel(parsed.before, parsed.after)
       : null;
+  const before =
+    parsed.before && redactSecrets(parsed.entityType, parsed.before);
+  const after = parsed.after && redactSecrets(parsed.entityType, parsed.after);
 
   // No-op update: caller passed both snapshots and nothing changed.
   // Skip the insert — an empty-diff row has no informational value

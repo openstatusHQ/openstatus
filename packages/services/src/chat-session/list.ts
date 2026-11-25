@@ -4,6 +4,7 @@ import {
   chatSession,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { UnauthorizedError } from "../errors";
 
@@ -17,6 +18,7 @@ export type ChatSessionSummary = {
 export async function listChatSessions(args: {
   ctx: ServiceContext;
 }): Promise<ChatSessionSummary[]> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const userId = tryGetActorUserId(ctx.actor);
   if (userId == null) {

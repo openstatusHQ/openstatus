@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "@openstatus/db";
 import { slackUser, user, usersToWorkspaces } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { GetSlackUserMappingInput } from "./schemas";
 
@@ -12,6 +13,7 @@ export async function getSlackUserMapping(args: {
   ctx: ServiceContext;
   input: GetSlackUserMappingInput;
 }): Promise<number | null> {
+  requireScope(args.ctx, "admin");
   const input = GetSlackUserMappingInput.parse(args.input);
   const row = await getReadDb(args.ctx)
     .select({ userId: slackUser.userId })

@@ -5,6 +5,7 @@ import {
   chatSession,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -22,6 +23,7 @@ export async function createChatSession(args: {
   ctx: ServiceContext;
   input: CreateChatSessionInput;
 }): Promise<ChatSessionRow> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const input = CreateChatSessionInput.parse(args.input);
 

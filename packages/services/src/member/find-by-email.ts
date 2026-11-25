@@ -8,6 +8,7 @@ import { FindMemberByEmailInput } from "./schemas";
  * The one live member with this email, case-insensitively, else `null`.
  * Ambiguity is `null` too: callers use this to attribute, never to guess.
  */
+// oxlint-disable-next-line openstatus/services-verbs-require-scope -- resolves an assignee for an incident action whose caller checked the incident scope
 export async function findMemberIdByEmail(args: {
   ctx: ServiceContext;
   input: FindMemberByEmailInput;

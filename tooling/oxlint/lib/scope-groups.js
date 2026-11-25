@@ -2,9 +2,26 @@
 
 import { calleeName } from "./ast.js";
 
-/** `args: { ctx: ServiceContext; ... }`, or a destructured `{ ctx }`. */
+function isServiceContextType(annotation) {
+  return (
+    annotation?.type === "TSTypeReference" &&
+    annotation.typeName?.type === "Identifier" &&
+    annotation.typeName.name === "ServiceContext"
+  );
+}
+
+/**
+ * `args: { ctx: ServiceContext; ... }`, a destructured `{ ctx }`, or a
+ * positional `ctx: ServiceContext`.
+ */
 export function takesServiceContext(param) {
   if (!param) return false;
+  if (
+    param.type === "Identifier" &&
+    isServiceContextType(param.typeAnnotation?.typeAnnotation)
+  ) {
+    return true;
+  }
   if (param.type === "ObjectPattern") {
     return param.properties.some(
       (p) =>
@@ -21,9 +38,7 @@ export function takesServiceContext(param) {
       m.type === "TSPropertySignature" &&
       m.key?.type === "Identifier" &&
       m.key.name === "ctx" &&
-      m.typeAnnotation?.typeAnnotation?.type === "TSTypeReference" &&
-      m.typeAnnotation.typeAnnotation.typeName?.type === "Identifier" &&
-      m.typeAnnotation.typeAnnotation.typeName.name === "ServiceContext",
+      isServiceContextType(m.typeAnnotation?.typeAnnotation),
   );
 }
 

@@ -6,6 +6,7 @@ import { type ServiceContext, getReadDb } from "../context";
 import { GetMemberDisplayNameInput } from "./schemas";
 
 /** The display name of a live member of this workspace, or `null`. */
+// oxlint-disable-next-line openstatus/services-verbs-require-scope -- resolves a name for an incident action whose caller checked the incident scope
 export async function getMemberDisplayName(args: {
   ctx: ServiceContext;
   input: GetMemberDisplayNameInput;

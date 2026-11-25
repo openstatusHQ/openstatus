@@ -29,6 +29,7 @@ function parseJson(value: string | null): unknown {
 }
 
 /** The workspace's Slack agent install, bot token included. Server-side only. */
+// oxlint-disable-next-line openstatus/services-verbs-require-scope -- lookup behind incident side effects whose verb checked the incident scope; admin would refuse MCP keys
 export async function getSlackConnection(args: {
   ctx: ServiceContext;
 }): Promise<SlackConnection | null> {

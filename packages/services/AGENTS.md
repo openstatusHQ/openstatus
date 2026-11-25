@@ -35,8 +35,10 @@ audits in the incident's own workspace as a `system` actor.
   `requireScope(ctx, "<group>:read")`, unless they probe or send, which makes
   them writes whatever the name (`streamMonitorPreview` requires
   `monitors:write`); admin verbs with `requireScope(ctx, "admin")`. Lint
-  checks the group against the folder, and that only destructuring the
-  arguments (`const { ctx } = args;`) comes before the first `requireScope`.
+  requires it in every exported function taking a `ServiceContext` (helpers
+  taking the caller's `tx` excepted), checks the group against the folder,
+  and that only destructuring the arguments (`const { ctx } = args;`) comes
+  before the first `requireScope`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
@@ -57,6 +59,13 @@ or destructured from its args) named as the transaction: `tx`, `rtx` or
   `.returning()` row); `changed_fields` is diffed automatically and no-op updates
   are skipped. Creates pass only `after`, deletes only `before`.
 - **Strip secrets from snapshots** — credentials, bot tokens, raw API keys.
+  A secret kept on the row itself (page password, notification config,
+  subscriber token and webhook URL) is listed in `SECRET_FIELDS` in
+  `src/audit/redact.ts`; `emitAudit` diffs the raw values, then stores
+  `[redacted]`, so a rotation still lands in `changed_fields`. Only top-level
+  snapshot fields are covered: never put a secret in `metadata` or nest one.
+  `audit/__tests__/no-secrets.test.ts` writes each one and fails if it reaches
+  a row.
 - Action names are `{entity}.{verb}`; new variants go in the discriminated union
   at `packages/db/src/schema/audit_logs/validation.ts`.
 - An entity type the dashboard can show also gets an `entityKinds` entry in
@@ -89,6 +98,8 @@ Credentials still hold the legacy umbrellas: `write` covers every group scope,
 `read` covers every `<group>:read`. Never require a
 bare `read` / `write` in a verb — `matchesScope` in `src/auth` is the one
 place that knows what the umbrellas expand to, and lint rejects the literals.
+The audit-log reads are the one exception: the log spans every group, so they
+require `read` with an inline disable.
 
 `requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
 `subscriber` actors and active for `apiKey` and `mcp`. MCP tools declare
