@@ -195,23 +195,43 @@ describe("JsonBodyAssertion", () => {
     );
   });
 
-  // JSONPath returns an array, which is compared to the target as-is, so
-  // these fail today. Un-ignore once the matched value is unwrapped.
-  it.skip("passes eq when the matched value equals the target", () => {
+  it("passes eq when the matched value equals the target", () => {
     expect(json("$.status", "eq", "ok").assert(http({ body })).success).toBe(
       true,
     );
   });
 
-  it.skip("fails not_eq when the matched value equals the target", () => {
+  it("fails not_eq when the matched value equals the target", () => {
     expect(
       json("$.status", "not_eq", "ok").assert(http({ body })).success,
     ).toBe(false);
   });
 
-  it.skip("matches substrings with contains", () => {
+  it("matches substrings with contains", () => {
     expect(
       json("$.status", "contains", "o").assert(http({ body })).success,
+    ).toBe(true);
+  });
+
+  it("treats a path with no match as empty", () => {
+    expect(json("$.missing", "empty", "").assert(http({ body })).success).toBe(
+      true,
+    );
+  });
+
+  it("JSON-serializes non-string matched values instead of lossy coercion", () => {
+    const richBody = JSON.stringify({ items: [], meta: { a: 1 }, code: 200 });
+    expect(
+      json("$.items", "empty", "").assert(http({ body: richBody })).success,
+    ).toBe(false);
+    expect(
+      json("$.items", "eq", "[]").assert(http({ body: richBody })).success,
+    ).toBe(true);
+    expect(
+      json("$.meta", "eq", '{"a":1}').assert(http({ body: richBody })).success,
+    ).toBe(true);
+    expect(
+      json("$.code", "eq", "200").assert(http({ body: richBody })).success,
     ).toBe(true);
   });
 });

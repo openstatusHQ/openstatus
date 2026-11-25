@@ -367,9 +367,13 @@ export class JsonBodyAssertion implements Assertion {
     }
     try {
       const json = JSON.parse(req.body);
-      // jsonpath-plus returns the match array; evaluateString only uses
-      // `includes`/`===`, which arrays support, so this keeps prior behaviour.
-      const value = JSONPath({ path: this.schema.path, json }) as string;
+      const matches = JSONPath({ path: this.schema.path, json });
+      const value =
+        Array.isArray(matches) && matches.length > 0
+          ? typeof matches[0] === "string"
+            ? matches[0]
+            : (JSON.stringify(matches[0]) ?? "")
+          : "";
       const { success, message } = evaluateString(
         value,
         this.schema.compare,
