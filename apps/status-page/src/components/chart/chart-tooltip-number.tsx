@@ -6,9 +6,12 @@ import type {
 
 interface ChartTooltipNumberProps {
   chartConfig: ChartConfig;
-  value: ValueType;
-  name: NameType;
-  labelFormatter?: (value: ValueType, name: NameType) => React.ReactNode;
+  value: ValueType | undefined;
+  name: NameType | undefined;
+  labelFormatter?: (
+    value: ValueType | undefined,
+    name: NameType | undefined,
+  ) => React.ReactNode;
 }
 
 export function ChartTooltipNumber({

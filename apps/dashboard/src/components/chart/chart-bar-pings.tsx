@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
+import { bySeriesOrder } from "@openstatus/ui/lib/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import type { PingDay } from "@/data/heartbeat.client";
@@ -40,6 +41,7 @@ export function ChartBarPings({ data }: { data: PingDay[] }) {
       >
         <CartesianGrid vertical={false} />
         <ChartTooltip
+          itemSorter={bySeriesOrder(chartConfig)}
           cursor={false}
           content={
             <ChartTooltipContent
@@ -71,7 +73,10 @@ export function ChartBarPings({ data }: { data: PingDay[] }) {
             formatAxisTick(new Date(value), "30d", DAY_MINUTES)
           }
         />
-        <ChartLegend content={<ChartLegendContent />} />
+        <ChartLegend
+          itemSorter={bySeriesOrder(chartConfig)}
+          content={<ChartLegendContent />}
+        />
       </BarChart>
     </ChartContainer>
   );

@@ -7,8 +7,8 @@ import type {
 
 interface ChartTooltipNumberProps {
   chartConfig: ChartConfig;
-  value: ValueType;
-  name: NameType;
+  value: ValueType | undefined;
+  name: NameType | undefined;
 }
 
 export function ChartTooltipNumber({
@@ -36,7 +36,7 @@ export function ChartTooltipNumberRaw({
   style,
   className,
 }: {
-  value: ValueType;
+  value: ValueType | undefined;
   label: React.ReactNode;
   /** `null` for values that carry their own unit, such as "2h 32m" */
   unit?: string | null;
