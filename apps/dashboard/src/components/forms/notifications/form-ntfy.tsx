@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ntfyPriority } from "@openstatus/db/src/schema/notifications/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
@@ -12,6 +13,13 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
@@ -36,6 +44,24 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const priorityFields = [
+  {
+    name: "data.alertPriority",
+    label: "Alert Priority",
+    description: "Priority of the message when a monitor goes down.",
+  },
+  {
+    name: "data.degradedPriority",
+    label: "Degraded Priority",
+    description: "Priority of the message when a monitor is degraded.",
+  },
+  {
+    name: "data.recoveryPriority",
+    label: "Recovery Priority",
+    description: "Priority of the message when a monitor recovers.",
+  },
+] as const;
 
 export function FormNtfy({
   defaultValues,
@@ -205,6 +231,37 @@ export function FormNtfy({
               </FormItem>
             )}
           />
+          {priorityFields.map((priorityField) => (
+            <FormField
+              key={priorityField.name}
+              control={form.control}
+              name={priorityField.name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{priorityField.label}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Server default" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ntfyPriority.map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          {priority}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  <FormDescription>{priorityField.description}</FormDescription>
+                </FormItem>
+              )}
+            />
+          ))}
           <div>
             <Button
               variant="outline"

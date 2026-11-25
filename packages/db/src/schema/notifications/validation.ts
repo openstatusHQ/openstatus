@@ -2,7 +2,7 @@ import { safeUrlSchema } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import * as z from "zod";
 
-import { notificationProvider } from "./constants";
+import { notificationProvider, ntfyPriority } from "./constants";
 import { notification } from "./notification";
 import { notificationDeadLetter, notificationOutbox } from "./outbox";
 
@@ -38,11 +38,18 @@ export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
 export const emailSchema = z.email();
 export const urlSchema = safeUrlSchema;
 
+export const ntfyPrioritySchema = z.enum(ntfyPriority);
+export type NtfyPriority = z.infer<typeof ntfyPrioritySchema>;
+
 export const ntfyDataSchema = z.object({
   ntfy: z.object({
     topic: z.string().prefault(""),
     serverUrl: safeUrlSchema.prefault("https://ntfy.sh"),
     token: z.string().optional(),
+    // Unset sends no `Priority` header, so ntfy uses its default (3).
+    alertPriority: ntfyPrioritySchema.optional(),
+    degradedPriority: ntfyPrioritySchema.optional(),
+    recoveryPriority: ntfyPrioritySchema.optional(),
   }),
 });
 export const webhookDataSchema = z.object({

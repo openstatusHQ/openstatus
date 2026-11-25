@@ -1,4 +1,7 @@
-import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import {
+  ntfyDataSchema,
+  selectNotificationSchema,
+} from "@openstatus/db/src/schema";
 import {
   afterEach,
   beforeEach,
@@ -202,6 +205,120 @@ describe("Ntfy Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[1].body).toContain("is degraded");
+  });
+
+  const createMockNotificationWithPriorities = () => ({
+    id: 1,
+    name: "Ntfy Notification",
+    provider: "ntfy",
+    workspaceId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    data: JSON.stringify({
+      ntfy: {
+        topic: "my-topic",
+        alertPriority: "urgent",
+        degradedPriority: "high",
+        recoveryPriority: "low",
+      },
+    }),
+  });
+
+  test("Send Alert with alert priority", async () => {
+    const monitor = createMockMonitor();
+    const notification = selectNotificationSchema.parse(
+      createMockNotificationWithPriorities(),
+    );
+
+    await sendAlert({
+      // @ts-expect-error
+      monitor,
+      notification,
+      statusCode: 500,
+      message: "Error",
+      cronTimestamp: Date.now(),
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
+    expect(callArgs[1].headers.Priority).toBe("urgent");
+  });
+
+  test("Send Degraded with degraded priority", async () => {
+    const monitor = createMockMonitor();
+    const notification = selectNotificationSchema.parse(
+      createMockNotificationWithPriorities(),
+    );
+
+    await sendDegraded({
+      // @ts-expect-error
+      monitor,
+      notification,
+      cronTimestamp: Date.now(),
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
+    expect(callArgs[1].headers.Priority).toBe("high");
+  });
+
+  test("Send Recovery with recovery priority", async () => {
+    const monitor = createMockMonitor();
+    const notification = selectNotificationSchema.parse(
+      createMockNotificationWithPriorities(),
+    );
+
+    await sendRecovery({
+      // @ts-expect-error
+      monitor,
+      notification,
+      cronTimestamp: Date.now(),
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
+    expect(callArgs[1].headers.Priority).toBe("low");
+  });
+
+  test("Send without priority leaves the Priority header out", async () => {
+    const monitor = createMockMonitor();
+    const notification = selectNotificationSchema.parse(
+      createMockNotification(),
+    );
+
+    await sendAlert({
+      // @ts-expect-error
+      monitor,
+      notification,
+      statusCode: 500,
+      message: "Error",
+      cronTimestamp: Date.now(),
+    });
+    await sendDegraded({
+      // @ts-expect-error
+      monitor,
+      notification,
+      cronTimestamp: Date.now(),
+    });
+    await sendRecovery({
+      // @ts-expect-error
+      monitor,
+      notification,
+      cronTimestamp: Date.now(),
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    for (const callArgs of fetchMock.mock.calls) {
+      expect(callArgs[1].headers).not.toHaveProperty("Priority");
+    }
+  });
+
+  test("Reject a priority ntfy does not know", () => {
+    const result = ntfyDataSchema.safeParse({
+      ntfy: { topic: "my-topic", alertPriority: "critical" },
+    });
+
+    expect(result.success).toBe(false);
   });
 
   test("Send Test with default server", async () => {

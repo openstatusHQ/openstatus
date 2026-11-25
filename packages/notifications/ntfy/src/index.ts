@@ -1,9 +1,14 @@
-import { ntfyDataSchema } from "@openstatus/db/src/schema";
+import { type NtfyPriority, ntfyDataSchema } from "@openstatus/db/src/schema";
 import {
   type NotificationContext,
   monitorTarget,
 } from "@openstatus/notification-base";
 import { safeFetch } from "@openstatus/utils";
+
+// ntfy reads the message priority from the `Priority` header; without it the
+// server uses its default (3).
+const priorityHeader = (priority?: NtfyPriority) =>
+  priority ? { Priority: priority } : undefined;
 
 export const sendAlert = async ({
   monitor,
@@ -31,6 +36,7 @@ export const sendAlert = async ({
     body,
     headers: {
       ...authorization,
+      ...priorityHeader(notificationData.ntfy.alertPriority),
     },
   });
   if (!res.ok) {
@@ -61,6 +67,7 @@ export const sendRecovery = async ({
     body,
     headers: {
       ...authorization,
+      ...priorityHeader(notificationData.ntfy.recoveryPriority),
     },
   });
   if (!res.ok) {
@@ -92,6 +99,7 @@ export const sendDegraded = async ({
     body,
     headers: {
       ...authorization,
+      ...priorityHeader(notificationData.ntfy.degradedPriority),
     },
   });
   if (!res.ok) {

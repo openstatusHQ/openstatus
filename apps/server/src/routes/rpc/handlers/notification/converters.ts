@@ -1,6 +1,9 @@
 import { create } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
-import type { NotificationProvider as DBNotificationProvider } from "@openstatus/db/src/schema";
+import type {
+  NotificationProvider as DBNotificationProvider,
+  NtfyPriority as DBNtfyPriority,
+} from "@openstatus/db/src/schema";
 import type {
   Notification,
   NotificationData,
@@ -11,6 +14,7 @@ import {
   NotificationProvider,
   NotificationSchema,
   NotificationSummarySchema,
+  NtfyPriority,
   OpsgenieRegion,
 } from "@openstatus/proto/notification/v1";
 
@@ -136,6 +140,37 @@ export function protoProviderToDb(
   return mapped;
 }
 
+const ntfyPriorityMapping: Record<DBNtfyPriority, NtfyPriority> = {
+  min: NtfyPriority.MIN,
+  low: NtfyPriority.LOW,
+  default: NtfyPriority.DEFAULT,
+  high: NtfyPriority.HIGH,
+  urgent: NtfyPriority.URGENT,
+};
+
+/**
+ * Maps a DB ntfy priority to the proto enum. Unset maps to UNSPECIFIED.
+ */
+export function dbNtfyPriorityToProto(
+  priority: DBNtfyPriority | undefined,
+): NtfyPriority {
+  return priority
+    ? (ntfyPriorityMapping[priority] ?? NtfyPriority.UNSPECIFIED)
+    : NtfyPriority.UNSPECIFIED;
+}
+
+/**
+ * Maps a proto ntfy priority to the DB value. UNSPECIFIED maps to unset.
+ */
+export function protoNtfyPriorityToDb(
+  priority: NtfyPriority,
+): DBNtfyPriority | undefined {
+  const entry = Object.entries(ntfyPriorityMapping).find(
+    ([, value]) => value === priority,
+  );
+  return entry ? (entry[0] as DBNtfyPriority) : undefined;
+}
+
 /**
  * Parses DB JSON data string to proto NotificationData.
  */
@@ -216,6 +251,13 @@ export function dbDataToProto(
               topic: data.ntfy.topic || "",
               serverUrl: data.ntfy.serverUrl || "https://ntfy.sh",
               token: data.ntfy.token,
+              alertPriority: dbNtfyPriorityToProto(data.ntfy.alertPriority),
+              degradedPriority: dbNtfyPriorityToProto(
+                data.ntfy.degradedPriority,
+              ),
+              recoveryPriority: dbNtfyPriorityToProto(
+                data.ntfy.recoveryPriority,
+              ),
             },
           };
         }
@@ -353,6 +395,13 @@ export function protoDataToDb(
           topic: data.data.value.topic,
           serverUrl: data.data.value.serverUrl,
           token: data.data.value.token,
+          alertPriority: protoNtfyPriorityToDb(data.data.value.alertPriority),
+          degradedPriority: protoNtfyPriorityToDb(
+            data.data.value.degradedPriority,
+          ),
+          recoveryPriority: protoNtfyPriorityToDb(
+            data.data.value.recoveryPriority,
+          ),
         },
       });
     case "pagerduty":
