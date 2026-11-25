@@ -14,7 +14,6 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     FLY_REGION: z.enum(monitorRegions),
     CRON_SECRET: z.string(),
-    QSTASH_TOKEN: z.string(),
     NODE_ENV: z.string().prefault("development"),
     SUPER_ADMIN_TOKEN: z.string(),
     RESEND_API_KEY: z.string(),
